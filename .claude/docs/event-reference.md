@@ -2,7 +2,7 @@
 
 On-demand reference for event structure, examples, and patterns. For best practices, see CLAUDE.md.
 
-In every example below, replace `TAG`, `tag_ns`, and the namespace number with the values for your event. `tag_ns` is whatever the file declared via `add_namespace = ...` at the top.
+In every example below, replace `TAG`, `tag_ns`, and the namespace number with your event's values. `tag_ns` is whatever the file declared via `add_namespace = ...` at the top.
 
 ## Example: Basic Triggered Event
 
@@ -21,16 +21,12 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = -0.01 }
 		add_relative_party_popularity = yes
 
-		ai_chance = {
-			base = 1
-		}
+		ai_chance = { base = 1 }
 	}
 
 	option = {
 		name = tag_ns.N.b
-		ai_chance = {
-			base = 0
-		}
+		ai_chance = { base = 0 }
 	}
 }
 ```
@@ -40,30 +36,19 @@ country_event = {
 Each option's log must match its own ID — copy-paste errors between `.a` and `.b` (or `.b` and `.c`) are common:
 
 ```
-country_event = {
-	id = tag_ns.N
-	title = tag_ns.N.t
-	desc = tag_ns.N.d
-	picture = GFX_some_picture
-	is_triggered_only = yes
-
 	option = {
 		name = tag_ns.N.a
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"  # .a not .b
-		# ...
 	}
-
 	option = {
 		name = tag_ns.N.b
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"  # .b not .a
-		# ...
 	}
-}
 ```
 
 ## Example: Multi-Option Cross-Country Event
 
-When an event is fired to a different country than the one that initiated the action, AI weighting must reflect that country's situation (opinion, influence, ideology) — never base-only random chance. In the template below, `SNDR` is the sender (whoever fired the event) and the receiver is the current scope (`This`):
+When an event fires to a different country than the one that initiated the action, AI weighting must reflect that country's situation (opinion, influence, ideology), never base-only random chance. Here `SNDR` is the sender (whoever fired the event) and the receiver is the current scope (`This`):
 
 ```
 country_event = {
@@ -80,9 +65,7 @@ country_event = {
 		name = tag_ns.N.a
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
 		# rejection effects...
-		SNDR = {
-			country_event = { id = tag_ns.M days = 1 }   # tell the sender we rejected
-		}
+		SNDR = { country_event = { id = tag_ns.M days = 1 } }   # tell sender we rejected
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -100,9 +83,7 @@ country_event = {
 		name = tag_ns.N.b
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"
 		# acceptance effects...
-		SNDR = {
-			country_event = { id = tag_ns.K days = 1 }   # tell the sender we accepted
-		}
+		SNDR = { country_event = { id = tag_ns.K days = 1 } }   # tell sender we accepted
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -158,7 +139,7 @@ flat_productivity_change_effect = yes
 
 News events use `news_event` (not `country_event`) and `major = yes` so all countries see them. Separate the namespace from the parent events (e.g., `add_namespace = my_news` alongside `add_namespace = my_events`).
 
-Use option `trigger` blocks to give different response text to involved parties, regional neighbors, and the rest of the world. Every country must match exactly one option — ensure the trigger conditions are exhaustive and mutually exclusive.
+Use option `trigger` blocks to give different response text to involved parties, regional neighbors, and the rest of the world. Every country must match exactly one option — ensure trigger conditions are exhaustive and mutually exclusive.
 
 ```
 news_event = {
@@ -192,7 +173,7 @@ news_event = {
 
 ## Conditional Descriptions
 
-Use `text =` inside desc blocks for conditional descriptions — **not** `desc =`:
+Use `text =` inside desc blocks for conditional descriptions, **not** `desc =`:
 
 ```
 # Correct
@@ -210,7 +191,7 @@ desc = {
 
 ## Cross-Country Event Chains
 
-When firing follow-up events to other countries, wrap in `hidden_effect` so the chain consequences don't appear in the firing option's tooltip:
+When firing follow-up events to other countries, wrap in `hidden_effect` so chain consequences don't appear in the firing option's tooltip:
 
 ```
 option = {
@@ -223,6 +204,23 @@ option = {
 	ai_chance = { base = 80 }
 }
 ```
+
+## `random_events` Dispatch (on_actions)
+
+Events registered inside an `on_actions` `random_events = { … }` block are picked by **weighted roll against the `0 = N` "nothing happens" slot**, not by MTTH alone:
+
+```
+random_events = {
+    2500 = 0          # weight assigned to "no event fires" this tick
+    100 = brotherhood.6
+    100 = brotherhood.7
+}
+```
+
+- A single roll runs each tick the parent `on_action` fires. Each candidate's chance is `weight / sum_of_weights`. The `0` slot exists so most ticks produce nothing.
+- `is_triggered_only = yes` events selected this way still check their own `trigger = { … }` block. If the trigger fails on the rolled country, **nothing fires that tick** — the roll does not retry. Tight triggers thin out effective fire rates a lot.
+- **`mean_time_to_happen` is NOT dead inside `random_events`**: the engine multiplies the candidate's effective weight by the MTTH `factor` modifiers that match the rolled scope. This lets you globally register an event but still tune per-country pacing via MTTH modifier blocks (e.g., "fire 1.5× more often when `neutrality > 0.40`"). Keep MTTH blocks on events listed in `random_events` whenever you want per-country weight tuning.
+- Prefer `random_events` over hand-rolled `random_list` inside on_action effects for systems that should fire across many countries — cheaper than iterating arrays and adds a uniform global cadence.
 
 ## Content Guidelines for Events
 

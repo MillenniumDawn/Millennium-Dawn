@@ -10,7 +10,7 @@ On-demand reference for focus tree structure, property order, and examples. For 
 | `01-04_` | Shared/joint trees (EU, African Union, etc.) |
 | `05_`    | Country-specific trees                       |
 
-The prefix number forces load order: shared trees load before country-specific ones.
+Prefix number forces load order: shared trees load before country-specific ones.
 
 ## Focus Tree Container
 
@@ -87,35 +87,14 @@ focus = {
 
 ## Example: Bankruptcy Guard in `ai_will_do`
 
-High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) must prevent the AI from queueing them during financial collapse. This is done in `ai_will_do` — not `available` — so the player is never blocked:
+High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) must prevent the AI from queueing them during financial collapse. Do this in `ai_will_do`, not `available`, so the player is never blocked:
 
 ```
 focus = {
 	id = ISR_milk_and_honey
-	icon = ISR_peace_isr
-
-	x = 2
-	y = 4
-	relative_position_id = ISR_binational_state
-
+	# ...
 	cost = 10
-
-	search_filters = { FOCUS_FILTER_ISRPOLIT FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
-
-	available = {
-		OR = {
-			emerging_anarchist_communism_are_in_power = yes
-			emerging_communist_state_are_in_power = yes
-			# ...
-		}
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus ISR_milk_and_honey executed"
-		two_random_industrial_complex = yes
-		two_state_infrastructure = yes
-	}
-
+	# ...
 	ai_will_do = {
 		base = 3
 		modifier = {
@@ -141,7 +120,6 @@ focus = {
 	bypass = {
 		has_country_flag = ISR_start_operation
 	}
-
 	# ...
 }
 ```
@@ -153,48 +131,24 @@ When a focus fires an event to another country, always show the accept outcome. 
 Both branches have real outcomes (include both):
 
 ```
-focus = {
-	id = ISR_passover_massacre
-	# ...
-	completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus ISR_passover_massacre executed"
-		PAL = {
-			country_event = {
-				id = israel.68
-				days = 1
-			}
-		}
-		custom_effect_tooltip = TT_IF_THEY_REJECT
-		effect_tooltip = {
-			custom_effect_tooltip = oper_def_shiel_tt
-		}
-		custom_effect_tooltip = TT_IF_THEY_ACCEPT
-		effect_tooltip = {
-			custom_effect_tooltip = oper_city_wall_tt
-		}
-	}
+completion_reward = {
+	log = "[GetDateText]: [This.GetName]: focus ISR_passover_massacre executed"
+	PAL = { country_event = { id = israel.68 days = 1 } }
+	custom_effect_tooltip = TT_IF_THEY_REJECT
+	effect_tooltip = { custom_effect_tooltip = oper_def_shiel_tt }
+	custom_effect_tooltip = TT_IF_THEY_ACCEPT
+	effect_tooltip = { custom_effect_tooltip = oper_city_wall_tt }
 }
 ```
 
-Accept-only (reject is a no-op — omit the reject block):
+Accept-only (reject is a no-op, omit the reject block):
 
 ```
-focus = {
-	id = TAG_propose_trade_deal
-	# ...
-	completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus TAG_propose_trade_deal executed"
-		OTHER = {
-			country_event = {
-				id = namespace.N
-				days = 1
-			}
-		}
-		custom_effect_tooltip = TT_IF_THEY_ACCEPT
-		effect_tooltip = {
-			custom_effect_tooltip = TAG_trade_deal_effects_tt
-		}
-	}
+completion_reward = {
+	log = "[GetDateText]: [This.GetName]: focus TAG_propose_trade_deal executed"
+	OTHER = { country_event = { id = namespace.N days = 1 } }
+	custom_effect_tooltip = TT_IF_THEY_ACCEPT
+	effect_tooltip = { custom_effect_tooltip = TAG_trade_deal_effects_tt }
 }
 ```
 
@@ -203,25 +157,21 @@ focus = {
 Always check `country_exists` before targeting another country with wargoals:
 
 ```
-focus = {
-	id = ISR_down_with_imperialism
-	# ...
-	available = {
-		country_exists = USA
-		NOT = { has_war_with = USA }
-		# ideology checks...
-	}
+available = {
+	country_exists = USA
+	NOT = { has_war_with = USA }
+	# ideology checks...
+}
 
-	completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus ISR_down_with_imperialism executed"
-		set_temp_variable = { wargoal_on = USA }
-		set_temp_variable = { wargoal_type = 1 }
-		add_threat_from_wargoal_effect = yes
-		create_wargoal = {
-			type = topple_government
-			target = USA
-			expire = 365
-		}
+completion_reward = {
+	log = "[GetDateText]: [This.GetName]: focus ISR_down_with_imperialism executed"
+	set_temp_variable = { wargoal_on = USA }
+	set_temp_variable = { wargoal_type = 1 }
+	add_threat_from_wargoal_effect = yes
+	create_wargoal = {
+		type = topple_government
+		target = USA
+		expire = 365
 	}
 }
 ```

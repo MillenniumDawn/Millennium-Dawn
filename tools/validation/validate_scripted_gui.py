@@ -250,8 +250,7 @@ class ScriptedGuiValidator(BaseValidator):
         self._gui_element_files: Dict[str, str] = {}
         # element_name -> .gui file path
         self._gui_scripted_window_elements: Dict[str, Set[str]] = defaultdict(set)
-        # window_name -> set of child element names (one level deep)
-        # currently unused for tier-2 unused-button check, populated for future use
+        # window_name -> set of child element names (one level deep); currently unused
 
         self._sgui_blocks: List[Dict] = []
         # Each: { name, window_name, parent_window_name, parent_window_token,
@@ -268,8 +267,8 @@ class ScriptedGuiValidator(BaseValidator):
     ) -> None:
         """Override: in staged_only mode, suppress issues whose file isn't in
         the staged set so pre-commit only reports on what the commit changes."""
-        if self.staged_only and self._staged_set:
-            if _normalise_path(file) not in self._staged_set:
+        if self.staged_only:
+            if not self._staged_set or _normalise_path(file) not in self._staged_set:
                 return
         super().add_issue(severity, category, message, file, line)
 
@@ -318,7 +317,6 @@ class ScriptedGuiValidator(BaseValidator):
             if not name_m:
                 continue
             name = name_m.group(1)
-            # Skip nested elements' own definitions — we want all element types
             self._gui_elements[name] = (type_name, rel, line_no)
             self._gui_element_files[name] = rel
             if type_name.lower() == "containerwindowtype":

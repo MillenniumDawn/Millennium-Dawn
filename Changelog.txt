@@ -30,6 +30,7 @@ v2.0.0
   - Added two biofuel Special Projects under the Energy tag: early E10 Ethanol Blending (gated on fuel_refining) and advanced FlexFuel and Butanol Synthesis (gated on fuel_efficiency4, requires E10 as parent), with SP_UNLOCK_PROJECT tooltips on both prerequisite techs (Issue #568)
 
  AI:
+  - [CAN] Fixed the "North American Status Quo" strategy plan never activating, plus a duplicate AI strategy entry
   - AI countries now auto-vote in UN Security Council and General Assembly votes according to their accept, reject, or abstain preferences
   - Non-state actors now run a gated monthly recognition campaign instead of broadcasting recognition requests every cycle
   - Added AI desire logic to negotiate_operative_release: base 15, opinion/faction/power rank bonuses, PP gating, interest rate kill switch
@@ -136,6 +137,8 @@ v2.0.0
   - Reduced AI air assault brigade template from 15 to 12 battalions
   - Fixed AI marines generic template incorrectly using Light_armor_Bat instead of armor_Bat
   - Reverted DEPLOY_MIN_EQUIPMENT_WAR_FACTOR from 0.60 to 0.90 (vanilla) so AI waits until divisions are 90% equipped before deploying during wartime
+  - [ITA] Added DEFAULT handler to ITA_ai_behavior game rule so the AI always gets a strategy plan when the rule is left at default, biased toward the historical Democratic Party path (Issue #177)
+  - [ITA] Reweighted ITA RANDOM ai_behavior list toward historical coalitions: Democratic Party and Forza at 50 weight, other paths at 10 to 20 (Issue #177)
   - Removed propaganda_campaign_decision and its mutual exclusion blocks from all three combat influencer decisions; cleaned up its money system cost calculation, scripted localisation entry, and loc keys
   - Rebalanced combat_foreign_influence: reduced percent_change from 3.5 to 2.5 and softened AI modifier factors from 2 to 1.5
   - Overhauled AI weights for combat influencer decisions: corrected variable scope errors, switched to step-based domestic influence scaling, added same-bloc ally de-influence penalty for NATO/EU members, added financial guard, and fixed second influencer threshold
@@ -278,9 +281,15 @@ v2.0.0
   - Reduced generic_military_intervention modifier values (volunteers/lend lease tension from -0.50 to -0.25, volunteer divisions required from -0.25 to -0.15, guarantee tension from -0.25 to -0.15, trade opinion factor from 0.25 to 0.15)
   - Increased internet station state building cap from 6 to 11
   - [BRA] AI now more likely to take the administrative reform focus when corruption is high
+  - [ITA] Trimmed Italy's starting multipurpose modifier values: interest rate multiplier from -5 to -3, stability factor from -0.1 to -0.05, research speed from -0.1 to -0.05, building speed from -0.05 to -0.03, and reform expectance drift base from -0.14 to -0.07 (Issue #1130)
+  - [ITA] Softened ruling-party popularity to stability feedback from 0.15 to 0.08 to slow the late-game stability spiral (Issue #1130)
+  - [ITA] Clamped the reform expectancy stability component so a stability spiral cannot compound reform pressure past the 30% stability floor (Issue #1130)
+  - [ITA] Halved the mafia-strength stability drain coefficient from -0.005 to -0.0025 (Issue #1130)
+  - [ITA] Clamped ITA_stability_factor_var to plus or minus 0.2 to prevent runaway accumulation from the weekly stability modifier (Issue #1130)
   - Rebalanced landmark bonuses to a small stability boost plus tourism income for whichever country owns the state
 
  Bugfix:
+  - [FRA] Fixed "Strength in the EU" applying the European Commitment opinion modifier to France itself; the loop now skips ROOT (Issue #1553)
   - Removed the empty political_advisor slots in the government idea category that left the engine "You can select a: Political Advisor" alert nagging forever with no UI to fill them (Issue #786); intel advisor characters remain defined pending a follow-up assignment system
   - Fixed divisions auto-deploying with as little as 60% equipment during wartime; restored vanilla 90% threshold (DEPLOY_MIN_EQUIPMENT_WAR_FACTOR)
   - Fixed APC, motorized infantry, and motorized command vehicles getting corrupted stats in the equipment designer (most visibly the 4th Generation APC Hull's speed forced to 0) caused by stray equipment-need blocks inside land equipment doctrine reward modifiers
@@ -289,6 +298,7 @@ v2.0.0
   - [GER] Restored the Innere Führung idea swap on the "Reform of the Zentrum Innere Führung" focus, which had been dropped due to a casing error
   - Fixed drone reconnaissance raid granting no reward on success; now grants the targeted drone recon buff scaling with success level
   - Fixed influence military aid not deducting equipment from the sender; also added equipment quantity previews to the package size picker
+  - [TUR] Fixed the "Incentivised Farming" national spirit disappearing immediately after completing the "Subsidise Farming" focus; the idea's cancel and allowed_civil_war blocks were missing emerging_reactionaries_are_in_power and neutrality_neutral_libertarians_are_in_power, and allowed_civil_war had its conditions implicitly AND'd instead of OR'd (Issue #1541)
   - Fixed PMC units failing to spawn after hiring while still charging the player
   - Fixed drone swarm raids not splitting damage across targeted divisions
   - Fixed drone raid AI suppressing raids even during active war
@@ -627,6 +637,9 @@ v2.0.0
   - [RAJ/PAK/CHI] Fixed the Kashmir border clash decision categories firing for the overlord when India was a puppet of a third-party country; the category visible blocks only blocked the puppet-of-each-other and same-faction cases, so RAJ AI kept taking attack decisions and pulling the overlord's troops and generals (including field marshals) onto the Indian border via start_border_war — added is_subject = no checks for both belligerents in each category (Issue #1473)
   - [BLR/EGY/SOV] Cleaned up the fertilizer-capacity variable writes in BLR_GrodnoAzot, BLR_Chinese_kal, EGY_evergrow, and SOV_economic_grodno_annex; the initialisers used redundant TAG-prefixed set_variable while tooltips read the bare names, so the writes now match the loc and the rest of the focus-tree convention (Issue #1442)
   - Fixed the Anti-Ship Drone Missile modules contributing nothing when paired with conventional naval armament on the same plane; the five tiers now apply a small flat baseline plus a multiplier to naval strike attack and targetting on naval bomber and port strike missions, so the drones act as a force multiplier on whatever primary anti-ship weapon the plane carries (Issue #1166)
+  - [ITA/GER] Fixed AI and player investment building nuclear reactors in countries with a policy ban; added country_can_build_nuclear_reactors scripted trigger that both the investment GUI gate (investments_building_reactor_available) and the AI investment scorer (AI_get_nuclear_reactor_score) consult, covering ITA_nuclear_power_banned and GER_idea_carbon_neutral (Issue #1130)
+  - [ITA] Fixed mafia event spam firing 2 to 6 events per month even when all four organisations were at Negligible strength; counter increments now gate by the relevant organisation's strength tier (Negligible skips entirely, Low at 25%, Medium and Endemic at 50%) with a 14-day global cooldown (Issue #1130)
+  - Fixed civil-war participants being dismissed from NATO and flagged by the EU breach-of-values system as starting an offensive war; added has_civil_war guards to dismissal_rule_offensive_war and check_breach_of_EU_value, and excluded same-original_tag enemies from the EU peace check
   - [HKG] Fixed HKG_carrier_construction calling a non-existent decision unlock_eastern_maritime_shipbuilding_group; the focus now sets the eastern_maritime_shipbuilding_group_unlocked country flag and emits the MIO unlock tooltip, so completing the carrier branch actually grants the Eastern Maritime Shipbuilding Group MIO (Issue #1505)
   - [CMW] Fixed the Parliament of the Commonwealth focus re-establishing elections for generic-tree countries like Taliban-led Afghanistan; the joint_focus completion_reward broadcasts to every participant, so the enable_elections call now lives in completion_reward_joint_originator and iterates Commonwealth members explicitly via every_country (Issue #1507)
   - Fixed licensed attack helicopters rendering as tanks because no generic attack_helicopter_1/2/3_entity existed; added the missing fallback entities reusing SOV_Mi24_mesh so any country without a TAG- or culture-specific override now shows a helicopter (Issue #1467)
@@ -769,11 +782,13 @@ v2.0.0
     - Scenario features a global war between the humanity and a Chimera nation, monsters inspired by the BETA from the anime/manga series "Muv Luv"
     - BETA have unique unit models and are extremely powerful, but they do not have access to the full range of equipment and are limited to a few unit types
     - Entire world forms megastates and alliances to combat the BETA, gaining whole new focus tree, decisions, events and HACS Combat Mechs units to fight them off
+  - [ENG] Added UK Air OOB, ground force are also reworked
   - [JAP] Add Japan Air OOB and better GFX, rework Ground and Navy OOB, add starting production
   - Removed generic eastern europe scientist Victor Kozin because of the too low quality portrait
   - [POL] State Run Economy decision category no longer has slow decisions, instead it has quick to use buttons.
   - [BUL] Changes some effects in the Expansion Branch to reflect the situation better (Credit to Natha4796BG)
   - [TAT] IT branch in economic focus tree
+  - Reworked Muslim Brotherhood content: new sponsor/suppressor decisions (including a rescind-designation decision to reverse terrorist branding), covert operations, transnational opinion modifiers, and idempotent mutual-relations on government change
 
  Database:
   - Land drone technologies now properly give the Ranger Light Recce company recon bonuses like all other recon units
@@ -809,7 +824,14 @@ v2.0.0
   - CSTO should now accurately be blocked to just the joining of Post-Soviet States
   - Fixed the faction goal "Establish a Marine Corps" requiring a unit type that simply does not exist
   - Fixed the faction goal "Crush Democracy" being available to everyone including democracies
-  - CSTO faction goal "Secure Central Asia" can now be completed when they are subjects themselves
+  - [SOV] Fixed the CSTO goal "Secure Central Asia" being uncompletable when puppeting Uzbekistan or Turkmenistan (Issue #1547)
+  - [SIN] Singapore now pursues Major Non-NATO Ally status instead of NATO membership (Issue #1554)
+  - Fixed the faction goal "Inflict Damage on the Aggressors" placeholder tooltip and broken state collection
+  - Fixed the NATO goal "Stabilizing the Balkans" never being pursued and auto-completing prematurely
+  - Fixed the NATO goal "Democracy in Europe" ignoring its fascist/nationalist/communist exclusion (NOT-block bug)
+  - Fixed the Axis of Resistance faction goals being gated to the CSTO template instead of faction_template_aor
+  - Added 5 Anti-Zombie Coalition faction goals: Hold the Line, Sanctuary, Reclaim the Cradle, Total Eradication, and Against All Odds
+  - Rebuilt the AI faction theater system for the modern map (10 theaters)
 
  Graphics:
   - Fixed a handful of missing texticons for various unit definitions such as Stealth Corvettes, Stealth Destroyers, Stealth Frigates and more unit types
@@ -987,6 +1009,7 @@ v2.0.0
   - Reduced duplicate model definitions to improve performance by relying on graphical culture groups
   - Removed 249 orphaned pdxmesh definitions to reduce mod load time and memory footprint (Issue #1393)
   - Removed 9 redundant country flags that mirrored idea lifetimes by swapping check sites to has_idea ([POL] depression flag, [NKO] 8 SPA bonus flags)
+  - Converted 127 two-bucket random_list calls with an empty bucket to random = { chance = N effect } across 42 files for a lighter engine path; three-plus-bucket and two-non-empty-bucket lists are preserved as random_list
   - [SOV] Consolidated three Gazprom/Rosneft capitalisation_*_calculate clusters into single init-add-apply units (5 gas-stream blocks, 7 Gazprom oil-province blocks, 8 Rosneft oil-province blocks): drops ~120 lines from 99_SOV_scripted_effects.txt and 20 redundant _support helper calls per monthly tick (Issue #1452)
 
  Quality of Life:

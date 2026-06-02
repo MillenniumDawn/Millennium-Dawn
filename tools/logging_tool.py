@@ -3,13 +3,15 @@
 """
 Logging Tool
 
-This script here handles logging and adding of logging within the mod.
+Adds or removes debug log lines in the mod's focus, event, idea, decision, and
+technology files.
 
 Usage:
-    python3 calculate_days.py
+    python3 logging_tool.py <mod_path> [--remove]
 """
 
 import argparse
+import io
 import os
 import re
 import sys
@@ -42,8 +44,8 @@ def check_triggered(line_number, lines):
     return False
 
 
-def focus_add(cpath):
-    ttime = 0
+def focus_add(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "common", "national_focus")):
         if ".txt" in filename:
             file = open(
@@ -60,7 +62,6 @@ def focus_add(cpath):
             idss = []
             new_focus = False
             find_coml = False
-            timestart = time.time()
             shared_focus = False
             shared_focuseseses = []
             for line in lines:
@@ -93,11 +94,16 @@ def focus_add(cpath):
                     if idss != [] or ids != []:
                         idss.pop()
                         ids.pop()
-            time1 = time.time() - timestart
             line_number = 0
             file.close()
-            outputfile = open(
-                os.path.join(cpath, "common", "national_focus", filename), "w", "utf-8"
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(
+                    os.path.join(cpath, "common", "national_focus", filename),
+                    "w",
+                    "utf-8",
+                )
             )
             outputfile.truncate()
             for line in lines:
@@ -131,14 +137,14 @@ def focus_add(cpath):
                             + '"\n'
                         )
                     outputfile.write(replacement_text)
+                    changes += 1
                 else:
                     outputfile.write(line)
-            time2 = time.time() - timestart - time1
-            ttime += time1 + time2
-    return ttime
+    return changes
 
 
-def focus_remove(cpath):
+def focus_remove(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "common", "national_focus")):
         if ".txt" in filename:
             outputfile = open(
@@ -151,8 +157,14 @@ def focus_remove(cpath):
                 continue
             lines = outputfile.readlines()
             outputfile.close()
-            outputfile = open(
-                os.path.join(cpath, "common", "national_focus", filename), "w", "utf-8"
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(
+                    os.path.join(cpath, "common", "national_focus", filename),
+                    "w",
+                    "utf-8",
+                )
             )
             outputfile.truncate()
             for line in lines:
@@ -160,10 +172,12 @@ def focus_remove(cpath):
                     outputfile.write(line)
                 else:
                     outputfile.write("")
+                    changes += 1
+    return changes
 
 
-def event_add(cpath):
-    ttime = 0
+def event_add(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "events")):
         if ".txt" in filename:
             file = open(os.path.join(cpath, "events", filename), "r", "utf-8-sig")
@@ -181,7 +195,6 @@ def event_add(cpath):
             ids = []
             idss = []
 
-            timestart = time.time()
             for line in lines:
                 line_number += 1
                 if line.strip().startswith("#") or "immediate = {log = " in line:
@@ -218,10 +231,13 @@ def event_add(cpath):
                             ids.append(line_number)
                         else:
                             triggered = False
-            time1 = time.time() - timestart
             line_number = 0
             file.close()
-            outputfile = open(os.path.join(cpath, "events", filename), "w", "utf-8-sig")
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(os.path.join(cpath, "events", filename), "w", "utf-8-sig")
+            )
             outputfile.truncate()
             for line in lines:
                 line_number += 1
@@ -242,14 +258,14 @@ def event_add(cpath):
                         + '"}\n'
                     )
                     outputfile.write(replacement_text)
+                    changes += 1
                 else:
                     outputfile.write(line)
-            time2 = time.time() - timestart - time1
-            ttime += time1 + time2
-    return ttime
+    return changes
 
 
-def event_remove(cpath):
+def event_remove(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "events")):
         if ".txt" in filename:
             outputfile = open(os.path.join(cpath, "events", filename), "r", "utf-8-sig")
@@ -262,21 +278,26 @@ def event_remove(cpath):
                 print(filename)
                 continue
             outputfile.close()
-            outputfile = open(os.path.join(cpath, "events", filename), "w", "utf-8-sig")
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(os.path.join(cpath, "events", filename), "w", "utf-8-sig")
+            )
             outputfile.truncate()
             for line in lines:
                 if "immediate = {log = " not in line:
                     outputfile.write(line)
                 else:
+                    changes += 1
                     if "}" in line:
                         outputfile.write("")
                     else:
                         outputfile.write("\timmediate = {\n")
+    return changes
 
 
-def idea_add(cpath):
-    ttime = 0
-    timestart = time.time()
+def idea_add(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "common", "ideas")):
         if ".txt" in filename and filename.startswith("_") is False:
             file = open(os.path.join(cpath, "common", "ideas", filename), "r", "utf-8")
@@ -305,8 +326,12 @@ def idea_add(cpath):
                     level -= line.count("}")
             file.close()
             line_number = 0
-            outputfile = open(
-                os.path.join(cpath, "common", "ideas", filename), "w", "utf-8"
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(
+                    os.path.join(cpath, "common", "ideas", filename), "w", "utf-8"
+                )
             )
             outputfile.truncate()
             for line in lines:
@@ -327,14 +352,14 @@ def idea_add(cpath):
                         + '" }\n'
                     )
                     outputfile.write(replacement_text)
+                    changes += 1
                 else:
                     outputfile.write(line)
-    time1 = time.time() - timestart
-    ttime += time1
-    return ttime
+    return changes
 
 
-def idea_remove(cpath):
+def idea_remove(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "common", "ideas")):
         if ".txt" in filename and filename.startswith("_") is False:
             outputfile = open(
@@ -345,19 +370,25 @@ def idea_remove(cpath):
                 continue
             lines = outputfile.readlines()
             outputfile.close()
-            outputfile = open(
-                os.path.join(cpath, "common", "ideas", filename), "w", "utf-8"
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(
+                    os.path.join(cpath, "common", "ideas", filename), "w", "utf-8"
+                )
             )
             outputfile.truncate()
             for line in lines:
-                if "on_add = {log = " not in line:
+                if "on_add = { log = " not in line:
                     outputfile.write(line)
                 else:
                     outputfile.write("")
+                    changes += 1
+    return changes
 
 
-def decision_add(cpath):
-    timestart = time.time()
+def decision_add(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "common", "decisions")):
         if "categories" in filename:
             continue
@@ -404,9 +435,14 @@ def decision_add(cpath):
             index = [-1, -1, -1, False]
             main_line_numbers = list(found_decisions.keys())
 
-            with open(
-                os.path.join(cpath, "common", "decisions", filename), "w", "utf-8"
-            ) as outputfile:
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(
+                    os.path.join(cpath, "common", "decisions", filename), "w", "utf-8"
+                )
+            )
+            with outputfile:
                 outputfile.truncate()
                 for line_number, line in enumerate(lines):
                     if line.strip().startswith("#"):
@@ -419,6 +455,7 @@ def decision_add(cpath):
                         if index[3] is True:
                             id += " target: [From.GetName]"
                     elif line_number == index[0]:
+                        changes += 1
                         if "}" in line:
                             temp = line.split("{")
                             replacement_text = (
@@ -436,6 +473,7 @@ def decision_add(cpath):
                                 + '"\n'
                             )
                     elif line_number == index[1]:
+                        changes += 1
                         if "}" in line:
                             temp = line.split("{")
                             replacement_text = (
@@ -453,6 +491,7 @@ def decision_add(cpath):
                                 + '"\n'
                             )
                     elif line_number == index[2]:
+                        changes += 1
                         if "}" in line:
                             temp = line.split("{")
                             replacement_text = (
@@ -470,10 +509,11 @@ def decision_add(cpath):
                                 + '"\n'
                             )
                     outputfile.write(replacement_text)
-    return time.time() - timestart
+    return changes
 
 
-def decision_remove(cpath):
+def decision_remove(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "common", "decisions")):
         if ".txt" in filename and "categories" not in filename:
             outputfile = open(
@@ -484,22 +524,28 @@ def decision_remove(cpath):
                 continue
             lines = outputfile.readlines()
             outputfile.close()
-            outputfile = open(
-                os.path.join(cpath, "common", "decisions", filename), "w", "utf-8"
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(
+                    os.path.join(cpath, "common", "decisions", filename), "w", "utf-8"
+                )
             )
             outputfile.truncate()
             for line in lines:
                 if 'log = "[GetDateText]' not in line:
                     outputfile.write(line)
                 else:
+                    changes += 1
                     if "complete_effect" in line:
                         outputfile.write("complete_effect = {\n\t\t}\n")
                     else:
                         outputfile.write("")
+    return changes
 
 
-def tech_add(cpath):
-    ttime = time.time()
+def tech_add(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "common", "technologies")):
         if ".txt" in filename:
             file = open(
@@ -531,8 +577,14 @@ def tech_add(cpath):
                     level -= line.count("}")
             file.close()
             line_number = 0
-            outputfile = open(
-                os.path.join(cpath, "common", "technologies", filename), "w", "utf-8"
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(
+                    os.path.join(cpath, "common", "technologies", filename),
+                    "w",
+                    "utf-8",
+                )
             )
             outputfile.truncate()
             for line in lines:
@@ -552,12 +604,14 @@ def tech_add(cpath):
                         + '" }\n'
                     )
                     outputfile.write(replacement_text)
+                    changes += 1
                 else:
                     outputfile.write(line)
-    return time.time() - ttime
+    return changes
 
 
-def tech_remove(cpath):
+def tech_remove(cpath, dry_run=False):
+    changes = 0
     for filename in listdir(os.path.join(cpath, "common", "technologies")):
         if ".txt" in filename:
             outputfile = open(
@@ -570,14 +624,21 @@ def tech_remove(cpath):
                 continue
             lines = outputfile.readlines()
             outputfile.close()
-            outputfile = open(
-                os.path.join(cpath, "common", "technologies", filename), "w", "utf-8"
+            outputfile = (
+                io.StringIO()
+                if dry_run
+                else open(
+                    os.path.join(cpath, "common", "technologies", filename),
+                    "w",
+                    "utf-8",
+                )
             )
             outputfile.truncate()
             for x in range(len(lines)):
                 line = lines[x]
                 if 'log = "[GetDateText]' in line:
                     outputfile.write("")
+                    changes += 1
                 elif (
                     "on_research_complete" in line
                     and 'log = "[GetDateText]' in lines[x + 1]
@@ -585,10 +646,13 @@ def tech_remove(cpath):
                 ):
                     print("Deleted logging at line", x, "in file", filename)
                     outputfile.write("")
+                    changes += 1
                 elif 'log = "[GetDateText]' in lines[x - 1] and "}" in line:
                     outputfile.write("")
+                    changes += 1
                 else:
                     outputfile.write(line)
+    return changes
 
 
 def main():
@@ -616,20 +680,23 @@ def main():
     parser.add_argument(
         "--skip-tech", action="store_true", help="Skip processing technologies"
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would change without modifying any files",
+    )
 
     args = parser.parse_args()
 
-    # Handle paths with spaces by reconstructing from sys.argv if needed
+    # argparse splits an unquoted path on spaces; rejoin the pieces here.
     cpath = args.path
     if len(sys.argv) > 2:
-        # Find where the path argument starts and reconstruct it
         path_start = None
         for i, arg in enumerate(sys.argv[1:], 1):
             if not arg.startswith("--") and path_start is None:
                 path_start = i
                 break
         if path_start and not os.path.exists(cpath):
-            # Reconstruct path from remaining arguments that aren't flags
             path_parts = [cpath]
             for arg in sys.argv[path_start + 1 :]:
                 if not arg.startswith("--"):
@@ -639,49 +706,40 @@ def main():
             cpath = " ".join(path_parts)
 
     print(f"Processing mod at: {cpath}")
-    print(f"Mode: {'Removing' if args.remove else 'Adding'} logs")
+    mode = "Removing" if args.remove else "Adding"
+    print(f"Mode: {mode} logs{' (dry run)' if args.dry_run else ''}")
 
-    ttime = 0
+    total_changes = 0
+    start = time.time()
 
     if not args.skip_events:
         print("Processing events...")
-        if args.remove:
-            event_remove(cpath)
-        else:
-            ttime += event_add(cpath)
+        fn = event_remove if args.remove else event_add
+        total_changes += fn(cpath, dry_run=args.dry_run)
 
     if not args.skip_focus:
         print("Processing national focus...")
-        if args.remove:
-            focus_remove(cpath)
-        else:
-            ttime += focus_add(cpath)
+        fn = focus_remove if args.remove else focus_add
+        total_changes += fn(cpath, dry_run=args.dry_run)
 
     if not args.skip_ideas:
         print("Processing ideas...")
-        if args.remove:
-            idea_remove(cpath)
-        else:
-            ttime += idea_add(cpath)
+        fn = idea_remove if args.remove else idea_add
+        total_changes += fn(cpath, dry_run=args.dry_run)
 
     if not args.skip_decisions:
         print("Processing decisions...")
-        if args.remove:
-            decision_remove(cpath)
-        else:
-            ttime += decision_add(cpath)
+        fn = decision_remove if args.remove else decision_add
+        total_changes += fn(cpath, dry_run=args.dry_run)
 
     if not args.skip_tech:
         print("Processing technologies...")
-        if args.remove:
-            tech_remove(cpath)
-        else:
-            ttime += tech_add(cpath)
+        fn = tech_remove if args.remove else tech_add
+        total_changes += fn(cpath, dry_run=args.dry_run)
 
-    if not args.remove and not args.dry_run:
-        print("Total Time: %.3f ms" % (ttime * 1000))
-
-    print(f"\n{'Would modify' if args.dry_run else 'Modified'} {total_changes} entries")
+    print("Total Time: %.3f ms" % ((time.time() - start) * 1000))
+    verb = "Would modify" if args.dry_run else "Modified"
+    print(f"{verb} {total_changes} entries")
     print("Processing complete!")
 
 

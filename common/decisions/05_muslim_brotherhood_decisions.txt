@@ -1,0 +1,334 @@
+### Muslim Brotherhood transnational contest
+# Sponsor decisions project the movement abroad; suppressor decisions roll it back.
+# FROM = the targeted country in targeted decisions.
+
+muslim_brotherhood_sponsor = {
+
+	MB_build_network_hub = {
+		icon = GFX_decision_secur_brotheryes_button
+
+		cost = 150
+
+		available = {
+			is_muslim_brotherhood = yes
+			NOT = { has_war = yes }
+			NOT = { has_idea = muslim_brotherhood_faction_member }
+		}
+
+		visible = {
+			NOT = { has_idea = muslim_brotherhood_faction_member }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MB_build_network_hub"
+			add_ideas = muslim_brotherhood_faction_member
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 3
+				neutrality > 0.4
+			}
+		}
+	}
+
+	MB_fund_affiliates = {
+		icon = GFX_decision_secur_brother_button
+
+		target_array = global.possible_muslim_brotherhood_nation
+		target_trigger = {
+			FROM = {
+				mb_eligible_brotherhood_target = yes
+				neutrality < 0.6
+			}
+		}
+
+		cost = 75
+		days_re_enable = 90
+
+		available = {
+			has_idea = muslim_brotherhood_faction_member
+			FROM = {
+				mb_eligible_brotherhood_target = yes
+				neutrality < 0.6
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MB_fund_affiliates on [FROM.GetName]"
+			FROM = {
+				add_popularity = { ideology = neutrality popularity = 0.04 }
+				recalculate_party = yes
+			}
+			remove_opinion_modifier = { target = FROM modifier = MB_sponsored_network }
+			FROM = { remove_opinion_modifier = { target = ROOT modifier = MB_sponsored_network } }
+			add_opinion_modifier = { target = FROM modifier = MB_sponsored_network }
+			reverse_add_opinion_modifier = { target = FROM modifier = MB_sponsored_network }
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							has_idea = muslim_brotherhood_crackdown
+						}
+						remove_opinion_modifier = { target = ROOT modifier = MB_funding_subversion }
+						add_opinion_modifier = { target = ROOT modifier = MB_funding_subversion }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 3
+				FROM = { neutrality > 0.3 }
+			}
+			modifier = {
+				factor = 2
+				FROM = { is_neighbor_of = ROOT }
+			}
+		}
+	}
+
+	MB_diplomatic_solidarity = {
+		icon = generic_political_discourse
+
+		cost = 50
+		days_re_enable = 365
+
+		available = {
+			is_muslim_brotherhood = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MB_diplomatic_solidarity"
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							is_muslim_brotherhood = yes
+						}
+						remove_opinion_modifier = { target = ROOT modifier = MB_solidarity }
+						ROOT = { remove_opinion_modifier = { target = PREV modifier = MB_solidarity } }
+						add_opinion_modifier = { target = ROOT modifier = MB_solidarity }
+						ROOT = { add_opinion_modifier = { target = PREV modifier = MB_solidarity } }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+}
+
+muslim_brotherhood_suppressor = {
+
+	MB_bankroll_crackdown = {
+		icon = GFX_decision_oppression
+
+		target_array = global.possible_muslim_brotherhood_nation
+		target_trigger = {
+			FROM = {
+				mb_eligible_brotherhood_target = yes
+				NOT = { has_idea = muslim_brotherhood_crackdown }
+			}
+		}
+
+		cost = 75
+		days_re_enable = 90
+
+		available = {
+			FROM = {
+				mb_eligible_brotherhood_target = yes
+				NOT = { has_idea = muslim_brotherhood_crackdown }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MB_bankroll_crackdown on [FROM.GetName]"
+			FROM = {
+				add_popularity = { ideology = neutrality popularity = -0.03 }
+				recalculate_party = yes
+				country_event = { id = brotherhood.11 days = 2 }
+			}
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							is_muslim_brotherhood = yes
+						}
+						remove_opinion_modifier = { target = ROOT modifier = MB_funding_repression }
+						add_opinion_modifier = { target = ROOT modifier = MB_funding_repression }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 4
+				FROM = { neutrality > 0.4 }
+			}
+		}
+	}
+
+	MB_designate_terrorist_organization = {
+		icon = GFX_decision_oppression
+
+		cost = 100
+
+		visible = {
+			NOT = { has_country_flag = mb_designated_terrorist }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MB_designate_terrorist_organization"
+			set_country_flag = mb_designated_terrorist
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_wahabi_ulema_opinion = yes
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = { NOT = { tag = ROOT } }
+						if = {
+							limit = { is_muslim_brotherhood = yes }
+							add_opinion_modifier = { target = ROOT modifier = MB_branded_terrorist }
+						}
+						else_if = {
+							limit = { has_country_flag = mb_designated_terrorist }
+							add_opinion_modifier = { target = ROOT modifier = MB_counter_bloc }
+							ROOT = { add_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
+						}
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				has_idea = muslim_brotherhood_crackdown
+			}
+		}
+	}
+
+	MB_rescind_terrorist_designation = {
+		icon = generic_political_discourse
+
+		cost = 50
+		days_re_enable = 365
+
+		visible = {
+			has_country_flag = mb_designated_terrorist
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MB_rescind_terrorist_designation"
+			clr_country_flag = mb_designated_terrorist
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_wahabi_ulema_opinion = yes
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = { NOT = { tag = ROOT } }
+						remove_opinion_modifier = { target = ROOT modifier = MB_branded_terrorist }
+						remove_opinion_modifier = { target = ROOT modifier = MB_counter_bloc }
+						ROOT = { remove_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				has_government = democratic
+				neutrality > 0.45
+			}
+			modifier = {
+				add = 1
+				NOT = { has_idea = muslim_brotherhood_crackdown }
+				neutrality > 0.5
+			}
+		}
+	}
+
+	MB_counter_sponsor_influence = {
+		icon = generic_political_discourse
+
+		target_array = global.possible_muslim_brotherhood_nation
+		target_trigger = {
+			FROM = {
+				mb_eligible_brotherhood_target = yes
+				neutrality > 0.3
+			}
+		}
+
+		cost = 60
+		days_re_enable = 60
+
+		available = {
+			FROM = {
+				mb_eligible_brotherhood_target = yes
+				neutrality > 0.3
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MB_counter_sponsor_influence on [FROM.GetName]"
+			FROM = {
+				add_popularity = { ideology = neutrality popularity = -0.03 }
+				recalculate_party = yes
+			}
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 4
+				FROM = { neutrality > 0.45 }
+			}
+		}
+	}
+}

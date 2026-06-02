@@ -25,28 +25,56 @@ from validator_common import (
     should_skip_file,
 )
 
-# 25 chars on each side covers `set_variable = {` plus a short var name.
-SET_CONTEXT_WINDOW = 25
+# Look-behind window for deciding whether a matched variable is the left-hand
+# target of a `set_variable` assignment. `set_variable = {` is 17 chars; 40
+# gives margin while staying tight enough never to reach a prior statement.
+SET_LOOKBACK_WINDOW = 40
 
 _SET_SHORT_RE = re.compile(r"set_variable = ([^ \t\n\}]+)")
+# Char class includes A-Z so tag-prefixed targets (e.g. GER_event_counter_1_wot,
+# ITA_ageing_population_var) are captured whole instead of having their uppercase
+# prefix silently dropped — which previously made every such name fail to match
+# its own reads and get reported as unused.
 _SET_LONG_RE = re.compile(
-    r"set_variable = \{[^}]*?([a-z0-9_@\.\^\[\]]+)\s*=",
+    r"set_variable = \{[^}]*?([A-Za-z0-9_@\.\^\[\]]+)\s*=",
     flags=re.MULTILINE | re.DOTALL,
 )
 _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
 
+# A matched variable is a set-target when `set_variable = {?` sits immediately
+# before it (only whitespace, an optional brace, and an optional scope chain
+# between). Anchored at the end of the look-behind slice so a `set_variable` on
+# a *following* line can never be mistaken for the current match's context, and
+# so a value on the RHS of an assignment (`set_variable = { x = y }` → `y`) is
+# correctly counted as a read. The `(?:scope\.)*` tail lets the scope-stripped
+# target (see _strip_scope_prefix) still be recognised inside a scoped write
+# like `set_variable = { THIS.eurosceptic = ... }`.
+_SET_TARGET_PREFIX_RE = re.compile(r"set_variable\s*=\s*\{?\s*(?:[a-z_][a-z0-9_]*\.)*$")
 
-def _scan_set_variables(filename: str, lowercase: bool) -> Tuple[List[str], str]:
-    text = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
+
+def _strip_scope_prefix(name: str) -> str:
+    """Reduce a scope-qualified set_variable target to its bare variable name.
+
+    `set_variable = { PREV.foo = ... }` stores `foo` on the PREV scope, but the
+    same variable is read elsewhere as `THIS.foo`, `var:foo`, or bare `foo`.
+    Matching the scope-prefixed capture against those reads fails and the var is
+    wrongly reported unused, so track the bare name. `global.` vars are a real
+    namespace (always read as `global.X`) and are left intact.
+    """
+    if "." not in name or name.startswith("global."):
+        return name
+    return name.rsplit(".", 1)[1]
+
+
+def _scan_set_variables(text: str) -> List[str]:
     variables: List[str] = []
     if "set_variable =" in text:
         variables.extend(_SET_SHORT_RE.findall(text))
         variables.extend(
             m for m in _SET_LONG_RE.findall(text) if m not in _SET_LONG_RESERVED
         )
-    return variables, os.path.basename(filename)
+        variables = [_strip_scope_prefix(v) for v in variables]
+    return variables
 
 
 def process_file_for_set_variables(
@@ -54,60 +82,105 @@ def process_file_for_set_variables(
 ) -> Tuple[List[str], Dict[str, str]]:
     if should_skip_file(filename):
         return [], {}
-    namespace = f"set_variables.scan.lc={int(lowercase)}"
-    variables, basename = disk_cache.per_file_cached(
-        mod_path,
-        namespace,
-        filename,
-        lambda: _scan_set_variables(filename, lowercase),
-    )
-    return variables, {v: basename for v in variables}
-
-
-def _count_vars_in_file(
-    filename: str, tracked_vars: frozenset, lowercase: bool
-) -> Dict[str, int]:
     text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
-    if not text or not tracked_vars:
-        return {}
-    pattern = re.compile(r"\b(" + "|".join(re.escape(v) for v in tracked_vars) + r")\b")
-    ref_counts: Dict[str, int] = {}
-    set_counts: Dict[str, int] = {}
-    for m in pattern.finditer(text):
-        var = m.group(1)
-        start = max(0, m.start() - SET_CONTEXT_WINDOW)
-        end = min(len(text), m.end() + SET_CONTEXT_WINDOW)
-        if "set_variable" in text[start:end]:
-            set_counts[var] = set_counts.get(var, 0) + 1
-        else:
-            ref_counts[var] = ref_counts.get(var, 0) + 1
-    return {
-        v: ref_counts[v] - set_counts.get(v, 0)
-        for v in ref_counts
-        if ref_counts[v] - set_counts.get(v, 0) > 0
-    }
+    namespace = f"set_variables.scan.lc={int(lowercase)}"
+    variables = disk_cache.per_file_cached_by_content(
+        mod_path, namespace, filename, text, lambda: _scan_set_variables(text)
+    )
+    basename = os.path.basename(filename)
+    return variables, {v: basename for v in variables}
 
 
-def count_all_variables_in_file(
-    args: Tuple[str, frozenset, bool, str],
-) -> Dict[str, int]:
-    # Cache namespace includes a hash of tracked_vars: the alternation regex
-    # output is only reusable when the input set is unchanged. Typical PRs
-    # don't add/remove set_variable definitions, so the hash is stable.
-    filename, tracked_vars, lowercase, mod_path = args
-    if should_skip_file(filename) or not tracked_vars:
+# Maximal identifier run, including scope-chain dots (e.g. "this.foo",
+# "global.bar.GetName"). A maximal word run is exactly a `\bWORD\b` span, so
+# tokenising and looking each run up in a lowercased name set reproduces the
+# old `\b(v1|v2|...)\b` IGNORECASE alternation without compiling a ~3,900-branch
+# regex per file. `\w` (Unicode, like the engine's `\b`) is used rather than an
+# ASCII class so boundaries fall exactly where the old alternation put them:
+# a non-ASCII letter such as the Ö in `additional_income_GER_Ökosteuer` is a
+# word char and must not split the name (an ASCII class would, spuriously
+# matching the `kosteuer` tail that pass 1 also mis-captures).
+_RUN_RE = re.compile(r"\w+(?:\.\w+)*")
+_WORD_RE = re.compile(r"\w+")
+
+# Pass-2 per-worker state, populated once by _pass2_init via the Pool
+# initializer instead of being re-pickled in every task's args (the old args
+# tuple shipped the full ~3,900-element tracked set to each of ~8,800 files).
+_W_MOD_PATH: str = ""
+_W_BARE: Dict[str, str] = {}
+_W_DOTTED: Dict[str, str] = {}
+_W_NAMESPACE: str = ""
+
+
+def _pass2_init(mod_path, bare_map, dotted_map, namespace):
+    global _W_MOD_PATH, _W_BARE, _W_DOTTED, _W_NAMESPACE
+    _W_MOD_PATH = mod_path
+    _W_BARE = bare_map
+    _W_DOTTED = dotted_map
+    _W_NAMESPACE = namespace
+
+
+def _is_definition(text: str, start: int) -> bool:
+    # A match is the left-hand target of a set_variable assignment (a
+    # definition, not a use) when `set_variable = {? (scope.)*` sits directly
+    # before it. Identical to the old per-match look-behind.
+    before = text[max(0, start - SET_LOOKBACK_WINDOW) : start]
+    return _SET_TARGET_PREFIX_RE.search(before) is not None
+
+
+def _count_refs_in_text(text: str) -> Dict[str, int]:
+    bare = _W_BARE
+    dotted = _W_DOTTED
+    counts: Dict[str, int] = {}
+    for m in _RUN_RE.finditer(text):
+        run = m.group()
+        base = m.start()
+        if "." not in run:
+            orig = bare.get(run)
+            if orig is not None and not _is_definition(text, base):
+                counts[orig] = counts.get(orig, 0) + 1
+            continue
+        # Dotted run: walk segments left-to-right, mirroring the old
+        # alternation's non-overlapping match. A tracked global.X (the only
+        # kind of dotted target — scope prefixes are stripped to bare names)
+        # is matched as a segment-aligned prefix, so it still hits inside a
+        # longer chain like global.X.GetFlag, and is consumed as a unit so its
+        # tail segment is not also counted as a bare X. Any other segment
+        # (THIS.foo, root.bar) is matched as a bare name, exactly as the old
+        # `\bX\b` did for the inner token of a scope chain.
+        segs = list(_WORD_RE.finditer(run))
+        j = 0
+        n = len(segs)
+        while j < n:
+            sm = segs[j]
+            seg = sm.group()
+            if seg == "global" and j + 1 < n:
+                cand = "global." + segs[j + 1].group()
+                orig = dotted.get(cand)
+                if orig is not None:
+                    if not _is_definition(text, base + sm.start()):
+                        counts[orig] = counts.get(orig, 0) + 1
+                    j += 2
+                    continue
+            orig = bare.get(seg)
+            if orig is not None and not _is_definition(text, base + sm.start()):
+                counts[orig] = counts.get(orig, 0) + 1
+            j += 1
+    return counts
+
+
+def count_all_variables_in_file(filename: str) -> Dict[str, int]:
+    # Per-worker globals (set by _pass2_init) hold the tracked maps and cache
+    # namespace, so each task carries only the filename string.
+    if should_skip_file(filename):
         return {}
-    tracked_hash = hashlib.sha1(
-        "|".join(sorted(tracked_vars)).encode("utf-8")
-    ).hexdigest()[:16]
-    namespace = f"set_variables.counts.lc={int(lowercase)}.{tracked_hash}"
-    return disk_cache.per_file_cached(
-        mod_path,
-        namespace,
-        filename,
-        lambda: _count_vars_in_file(filename, tracked_vars, lowercase),
+    text = FileOpener.open_text_file(filename, lowercase=True, strip_comments_flag=True)
+    if not text:
+        return {}
+    return disk_cache.per_file_cached_by_content(
+        _W_MOD_PATH, _W_NAMESPACE, filename, text, lambda: _count_refs_in_text(text)
     )
 
 
@@ -136,10 +209,15 @@ class SetVariables:
             process_file_for_set_variables, lowercase=lowercase, mod_path=mod_path
         )
 
-        p = pool if pool else Pool(processes=workers)
-        results = p.map(process_func, files_to_scan, chunksize=50)
-        if not pool:
-            p.close()
+        if pool is not None:
+            # Reuse the caller's pool (e.g. the shared self._pool); it owns the
+            # lifecycle, so don't close it here.
+            results = pool.map(process_func, files_to_scan, chunksize=50)
+        elif workers == 1:
+            results = [process_func(f) for f in files_to_scan]
+        else:
+            with Pool(processes=workers) as p:
+                results = p.map(process_func, files_to_scan, chunksize=50)
 
         for vars_list, paths_dict in results:
             variables.extend(vars_list)
@@ -172,6 +250,7 @@ class Validator(BaseValidator):
             return_paths=True,
             staged_files=self.staged_files,
             workers=self.workers,
+            pool=self._pool,
         )
 
         unique_vars = {}
@@ -186,37 +265,67 @@ class Validator(BaseValidator):
         self.log(f"Found {len(cleaned_vars)} unique variables set via set_variable")
         self.log(f"Checking reference counts with {self.workers} workers...")
 
-        # Build the full file list once, then scan every file once for ALL variables —
-        # O(files) instead of O(variables × files) with the old per-variable approach.
+        # Scan every file once with a single tokenizer pass — no per-file regex
+        # build. .yml is restricted to English; other languages are Paratranz
+        # mirrors that only echo the same [?var] references, adding no signal.
         if self.staged_files:
             files_to_scan = [
-                f for f in self.staged_files if f.endswith(".txt") or f.endswith(".yml")
+                f
+                for f in self.staged_files
+                if f.endswith(".txt")
+                or (
+                    f.endswith(".yml")
+                    and "localisation/english/" in f.replace("\\", "/")
+                )
             ]
         else:
             txt_files = list(
                 glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
             )
             yml_files = list(
-                glob.iglob(os.path.join(self.mod_path, "**", "*.yml"), recursive=True)
+                glob.iglob(
+                    os.path.join(
+                        self.mod_path, "localisation", "english", "**", "*.yml"
+                    ),
+                    recursive=True,
+                )
             )
             files_to_scan = txt_files + yml_files
 
-        tracked_vars = frozenset(cleaned_vars)
-        args_list = [(f, tracked_vars, True, self.mod_path) for f in files_to_scan]
+        # Partition into bare names and global.-dotted names (lowercased -> orig
+        # case). A scoped read like THIS.foo stores/reads bare `foo`; a global.X
+        # is its own namespace and is matched whole — see _count_refs_in_text.
+        bare_map: Dict[str, str] = {}
+        dotted_map: Dict[str, str] = {}
+        for var in cleaned_vars:
+            if "." in var:
+                dotted_map[var.lower()] = var
+            else:
+                bare_map[var.lower()] = var
+        tracked_hash = hashlib.sha1(
+            "|".join(sorted(cleaned_vars)).encode("utf-8")
+        ).hexdigest()[:16]
+        namespace = f"set_variables.counts.lc=1.{tracked_hash}"
 
         var_ref_counts = {var: 0 for var in cleaned_vars}
-        if self._pool is not None:
-            all_file_counts = self._pool.map(
-                count_all_variables_in_file, args_list, chunksize=20
-            )
-        else:
-            with Pool(processes=self.workers) as p:
-                all_file_counts = p.map(
-                    count_all_variables_in_file, args_list, chunksize=20
-                )
-        for file_counts in all_file_counts:
-            for var, count in file_counts.items():
-                var_ref_counts[var] = var_ref_counts.get(var, 0) + count
+        if files_to_scan and (bare_map or dotted_map):
+            if self.workers == 1:
+                _pass2_init(self.mod_path, bare_map, dotted_map, namespace)
+                all_file_counts = [
+                    count_all_variables_in_file(f) for f in files_to_scan
+                ]
+            else:
+                with Pool(
+                    processes=self.workers,
+                    initializer=_pass2_init,
+                    initargs=(self.mod_path, bare_map, dotted_map, namespace),
+                ) as p:
+                    all_file_counts = p.map(
+                        count_all_variables_in_file, files_to_scan, chunksize=20
+                    )
+            for file_counts in all_file_counts:
+                for var, count in file_counts.items():
+                    var_ref_counts[var] = var_ref_counts.get(var, 0) + count
 
         for var, ref_count in var_ref_counts.items():
             if ref_count <= self.min_references:

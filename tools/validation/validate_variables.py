@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-##########################
-# Comprehensive Variable and Event Target Validation Script (Multiprocessing Optimized)
-# Validates flags (country/state/global) and event targets
-# Checks for: cleared but not set, used but not set, and unused items
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Optimized with multiprocessing for significantly faster execution
-##########################
+# Variable and event target validation: checks flags (country/state/global) and
+# event targets for cleared-but-not-set, used-but-not-set, and unused items.
+# Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323).
 import glob
 import os
 import re
@@ -24,8 +20,7 @@ from validator_common import (
     should_skip_file,
 )
 
-# Module-level regex for per-file flag-syntax check (process_file_for_flag_syntax).
-# Compiled once per worker process import instead of once per file scanned.
+# Compiled at module load (once per worker process) instead of once per file scanned.
 _FLAG_BLOCK_RE = re.compile(
     r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{[^}]*\}",
 )
@@ -37,16 +32,11 @@ _FLAG_LONG_FORM_RE = re.compile(
 
 
 def _scan_flags_in_file(
-    filename: str, lowercase: bool, flag_type: str
+    text: str, flag_type: str
 ) -> Tuple[List[str], List[str], List[str]]:
-    text = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
     set_list: List[str] = []
     used_list: List[str] = []
     cleared_list: List[str] = []
-    if not text:
-        return set_list, used_list, cleared_list
 
     if f"set_{flag_type}_flag =" in text:
         set_list.extend(re.findall(r"set_" + flag_type + r"_flag = ([^ \t\n]+)", text))
@@ -84,13 +74,19 @@ def process_file_for_all_flags(
     filename, lowercase, flag_type, mod_path = args
     if should_skip_file(filename):
         return {}, {}, {}
+    text = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
+    if not text:
+        return {}, {}, {}
     basename = os.path.basename(filename)
     namespace = f"variables.flags.{flag_type}.lc={int(lowercase)}"
-    set_list, used_list, cleared_list = disk_cache.per_file_cached(
+    set_list, used_list, cleared_list = disk_cache.per_file_cached_by_content(
         mod_path,
         namespace,
         filename,
-        lambda: _scan_flags_in_file(filename, lowercase, flag_type),
+        text,
+        lambda: _scan_flags_in_file(text, flag_type),
     )
     return (
         {m: basename for m in set_list},
@@ -139,24 +135,16 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     return (days_issues, long_form_issues)
 
 
-def process_file_for_all_targets(
-    args: Tuple[str, bool],
+def _scan_targets_in_text(
+    text_file: str, filename: str
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
-    """Single-pass worker: extract set, used, and cleared event targets.
+    """Extract set/used/cleared event targets from one file's text.
 
-    Returns (set_paths, used_paths, cleared_paths) dicts mapping target → basename.
-    Replaces three separate pool scans with one.
+    `filename` only drives stable per-file branches (tag_aliases path check,
+    basename labelling), so the result is deterministic for a (path, content)
+    pair and safe to content-cache.
     """
-    filename, lowercase = args
-
-    if should_skip_file(filename):
-        return ({}, {}, {})
-
     basename = os.path.basename(filename)
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
-
     set_paths: Dict[str, str] = {}
     used_paths: Dict[str, str] = {}
     cleared_paths: Dict[str, str] = {}
@@ -191,6 +179,34 @@ def process_file_for_all_targets(
             cleared_paths[m] = basename
 
     return (set_paths, used_paths, cleared_paths)
+
+
+def process_file_for_all_targets(
+    args: Tuple[str, bool, str],
+) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
+    """Single-pass worker: extract set, used, and cleared event targets.
+
+    Returns (set_paths, used_paths, cleared_paths) dicts mapping target → basename.
+    Replaces three separate pool scans with one.
+    """
+    filename, lowercase, mod_path = args
+
+    if should_skip_file(filename):
+        return ({}, {}, {})
+
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
+    if not text_file:
+        return ({}, {}, {})
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        f"variables.targets.lc={int(lowercase)}",
+        filename,
+        text_file,
+        lambda: _scan_targets_in_text(text_file, filename),
+    )
 
 
 def _map_with_optional_pool(func, args_list, workers, pool, chunksize=50):
@@ -244,7 +260,7 @@ class EventTargets:
         if files_to_scan is None:
             files_to_scan = _collect_txt_files(mod_path, staged_files)
 
-        args_list = [(f, lowercase) for f in files_to_scan]
+        args_list = [(f, lowercase, mod_path) for f in files_to_scan]
         results = _map_with_optional_pool(
             process_file_for_all_targets, args_list, workers, pool
         )

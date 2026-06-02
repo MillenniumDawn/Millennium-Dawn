@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# Idea Validation Script
-# Validates idea definitions and usage in Millennium Dawn
+# Idea validation: checks idea definitions and usage in Millennium Dawn.
 # Checks for:
 #   1. Undefined idea references (has_idea / add_ideas / remove_ideas / swap_ideas)
 #   2. Redundant allowed_civil_war = { always = no } (HOI4 default)
@@ -15,7 +13,6 @@
 #      (matching or absent) desc, where switching the duplicates to `name = <base>`
 #      lets you drop the redundant loc keys. Advisory only — never an error.
 #   6. Missing localisation keys for ideas (opt-in: --missing-loc)
-##########################
 import os
 import re
 import sys
@@ -25,6 +22,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -192,19 +190,27 @@ class IdeaIssue:
 
 
 def _parse_ideas_from_file(
-    filepath: str,
+    filepath: str, mod_path: str
 ) -> Tuple[Dict[str, Tuple[str, Optional[str]]], List[IdeaIssue]]:
-    """Parse one ideas file and return (defined_ideas, issues).
-
-    defined_ideas maps idea_name -> (category_name, name_override_or_None).
-    issues is a list of IdeaIssue for problems found during parsing.
-    """
+    """Read one ideas file and return (defined_ideas, issues), content-cached."""
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
     )
     if not text:
         return {}, []
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "ideas.defs", filepath, text, lambda: _parse_ideas_from_text(text)
+    )
 
+
+def _parse_ideas_from_text(
+    text: str,
+) -> Tuple[Dict[str, Tuple[str, Optional[str]]], List[IdeaIssue]]:
+    """Parse ideas-file text and return (defined_ideas, issues).
+
+    defined_ideas maps idea_name -> (category_name, name_override_or_None).
+    issues is a list of IdeaIssue for problems found during parsing.
+    """
     defined: Dict[str, Tuple[str, Optional[str]]] = {}
     issues: List[IdeaIssue] = []
 
@@ -319,9 +325,17 @@ def _parse_ideas_from_file(
     return defined, issues
 
 
-def _check_file_for_refs(args: Tuple[str]) -> List[str]:
+def _scan_idea_refs(text: str) -> List[str]:
+    """Return every raw idea reference token in the text (unfiltered)."""
+    refs: List[str] = []
+    refs.extend(_IDEA_REF_SIMPLE.findall(text))
+    refs.extend(_extract_swap_idea_refs(text))
+    return refs
+
+
+def _check_file_for_refs(args: Tuple[str, frozenset, str]) -> List[str]:
     """Pool worker: return undefined idea references found in one file."""
-    filepath, defined_ideas_frozen = args
+    filepath, defined_ideas_frozen, mod_path = args
     if should_skip_file(filepath):
         return []
     text = FileOpener.open_text_file(
@@ -336,9 +350,11 @@ def _check_file_for_refs(args: Tuple[str]) -> List[str]:
     ):
         return []
 
-    refs: List[str] = []
-    refs.extend(_IDEA_REF_SIMPLE.findall(text))
-    refs.extend(_extract_swap_idea_refs(text))
+    # Cache the raw (filter-independent) ref extraction; the filter below depends
+    # on the volatile defined-set, so it must run per call after the cache hit.
+    refs = disk_cache.per_file_cached_by_content(
+        mod_path, "ideas.refs", filepath, text, lambda: _scan_idea_refs(text)
+    )
 
     results: List[str] = []
     basename = os.path.basename(filepath)
@@ -389,7 +405,7 @@ class Validator(BaseValidator):
         ideas_by_file: Dict[str, List[str]] = {}
 
         for filepath in idea_files:
-            defined, issues = _parse_ideas_from_file(filepath)
+            defined, issues = _parse_ideas_from_file(filepath, self.mod_path)
             all_defined.update(defined)
             ideas_by_file[filepath] = list(defined.keys())
             if issues:
@@ -422,7 +438,6 @@ class Validator(BaseValidator):
         self._log_section("Checking for undefined idea references...")
         self.log(f"  Known defined ideas: {len(defined_ideas)}")
 
-        # Scan all .txt files for idea references
         scan_files = self._collect_files(
             [
                 "common/national_focus/**/*.txt",
@@ -435,7 +450,7 @@ class Validator(BaseValidator):
         self.log(f"  Scanning {len(scan_files)} files for idea references...")
 
         defined_frozen = frozenset(defined_ideas.keys())
-        args_list = [(f, defined_frozen) for f in scan_files]
+        args_list = [(f, defined_frozen, self.mod_path) for f in scan_files]
 
         raw_results = self._pool_map(_check_file_for_refs, args_list)
         results: List[str] = []
@@ -687,7 +702,6 @@ class Validator(BaseValidator):
         self.log(f"  Found {len(defined_ideas)} defined ideas total")
 
         if self.staged_only:
-            # In staged mode, only run quality checks on staged idea files
             staged_files_set = set(self.staged_files or [])
             staged_issues = {
                 fp: issues
@@ -703,7 +717,6 @@ class Validator(BaseValidator):
                 self.validate_idea_quality(staged_issues)
             else:
                 self.log("  No staged idea files — skipping quality checks")
-            # Undefined refs: only scan staged files for broken references
             self.validate_undefined_idea_refs(defined_ideas)
             ideas_for_consolidation = staged_ideas_by_file
         else:
