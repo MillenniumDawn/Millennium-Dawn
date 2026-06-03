@@ -28,25 +28,38 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issue = await github.rest.issues.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
+            try {
+              const issue = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
 
-            if (issue.data.type) {
-              console.log(`Issue #${context.issue.number} already has type: ${issue.data.type.name}`);
-              return;
+              if (issue.data.type) {
+                console.log(`Issue #${context.issue.number} already has type: ${issue.data.type.name}`);
+                return;
+              }
+
+              // The discord-bug-bot types its own issues at creation time. If a
+              // bot marker label is present, leave typing to it rather than
+              // racing to stamp Task on a half-created issue.
+              const labels = (issue.data.labels || []).map(l => (typeof l === 'string' ? l : l.name));
+              if (labels.includes('from-discord')) {
+                console.log(`Issue #${context.issue.number} is bot-owned (from-discord); leaving type to the bot.`);
+                return;
+              }
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                type: 'Task',
+              });
+
+              console.log(`Set type to Task on issue #${context.issue.number}`);
+            } catch (err) {
+              core.warning(`default-type skipped for #${context.issue.number}: ${err.message}`);
             }
-
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              type: 'Task',
-            });
-
-            console.log(`Set type to Task on issue #${context.issue.number}`);
 
   milestone:
     runs-on: ubuntu-latest
