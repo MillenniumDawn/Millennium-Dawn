@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# Shared validation infrastructure: common classes, helpers, and the base
-# validator used by all validation scripts.
+"""Shared validation infrastructure: common classes, helpers, and the base validator."""
 import glob
 import json
 import logging
@@ -453,12 +452,9 @@ class BaseValidator:
     ) -> Dict[str, Any]:
         """Parse files matching *patterns* -> ``{path: parse_fn(text, path)}``.
 
-        Standard "scan many files of one kind, parse each independently" pass.
-        Reads case-preserving by default (HOI4 is case-sensitive on Linux, so
-        validators must match and report the exact case as written), strips
-        comments, and per-file disk-caches each parse keyed on content — a
-        re-run only re-parses files whose content changed. *namespace* keys the
-        cache per validator/pass; give each call a distinct one.
+        Reads case-preserving (HOI4 is case-sensitive on Linux), strips comments
+        by default, and disk-caches each parse keyed on content. *namespace*
+        keys the cache per validator/pass; give each call a distinct one.
         """
         results: Dict[str, Any] = {}
         for path in self._collect_files(patterns, ignore_staged=ignore_staged):
@@ -612,17 +608,10 @@ class BaseValidator:
         severity: str = Severity.ERROR,
         category: str = "",
     ):
-        """Report results with specified severity level.
+        """Report results from str / (message, file, line) / Issue entries.
 
-        Each entry in ``results`` may be:
-          - ``str`` — legacy form. Auto-parsed via ``_parse_result_location``
-            so standard ``path:line - msg`` strings get structured into an
-            ``Issue`` with ``file`` / ``line`` populated.
-          - ``(message, file, line)`` tuple — explicit structured form.
-          - ``Issue`` instance — used directly.
-
-        This is the single source of truth for counting and recording issues.
-        Do NOT call add_error/add_warning separately for results passed here.
+        Single source of truth for counting and recording issues — do NOT call
+        add_error/add_warning separately for results passed here.
         """
         color = Colors.RED if severity == Severity.ERROR else Colors.YELLOW
 
@@ -767,15 +756,9 @@ class BaseValidator:
     ) -> List[str]:
         """Collect mod files matching glob patterns, with staged-file support.
 
-        In staged mode, filters self.staged_files by extension and a coarse
-        directory hint derived from each pattern's first non-wildcard segment.
-        In full mode, expands each pattern via glob.iglob relative to mod_path.
-        Always applies should_skip_file; extra_skip adds validator-local filtering.
-
-        Pass ``ignore_staged=True`` for cross-reference resolution passes that
-        must always scan the entire repo regardless of staged mode — e.g.
-        confirming a tag/idea/effect is defined somewhere even if its
-        definition file isn't part of the current change set.
+        Pass ``ignore_staged=True`` for definition-lookup passes that must scan
+        the full repo even in staged mode (e.g. confirming a tag or idea is
+        defined somewhere, not just in the staged change set).
         """
         extensions = list(
             {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}

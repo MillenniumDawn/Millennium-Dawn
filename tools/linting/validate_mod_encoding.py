@@ -1,30 +1,12 @@
 #!/usr/bin/env python3
-"""
-HOI4 Mod File UTF-8 Encoding Validator
-
-This script validates that .mod files are properly encoded as UTF-8.
-
-Usage:
-    python validate_mod_encoding.py [files...]
-
-Arguments:
-    files: List of .mod files to check
-"""
+"""Validate that .mod files are properly encoded as UTF-8."""
 
 import sys
 from pathlib import Path
 
 
 def validate_mod_file(file_path: Path) -> bool:
-    """
-    Validate a single .mod file for UTF-8 encoding.
-
-    Args:
-        file_path: Path to the .mod file to validate
-
-    Returns:
-        True if file is valid UTF-8, False otherwise
-    """
+    """Return True if file_path is valid UTF-8, False otherwise."""
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             file.read()

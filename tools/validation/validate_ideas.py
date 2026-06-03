@@ -1,18 +1,5 @@
 #!/usr/bin/env python3
-# Idea validation: checks idea definitions and usage in Millennium Dawn.
-# Checks for:
-#   1. Undefined idea references (has_idea / add_ideas / remove_ideas / swap_ideas)
-#   2. Redundant allowed_civil_war = { always = no } (HOI4 default)
-#   3. Redundant allowed = { always = no } in country/hidden_ideas categories
-#      Note: removing allowed = { always = no } trades slightly more memory
-#      usage (the engine keeps the idea in its per-country candidate pool)
-#      for faster load times (skips the allowed evaluation at game start).
-#   4. on_add blocks containing only log = "..." lines (no real effect — drop the block)
-#   5. Loc-consolidation suggestions (opt-in: --suggest-consolidation) — sibling
-#      ideas in the same file that share an identical English display name and
-#      (matching or absent) desc, where switching the duplicates to `name = <base>`
-#      lets you drop the redundant loc keys. Advisory only — never an error.
-#   6. Missing localisation keys for ideas (opt-in: --missing-loc)
+"""Validate idea definitions and usage in Millennium Dawn."""
 import os
 import re
 import sys

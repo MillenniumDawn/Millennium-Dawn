@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
-##########################
-# Scripted Effect Parameter Validation Script
-# Validates that callers of documented scripted effects pass required temp variables.
-#
-# Checks:
-#   1. Auto-discover parameter contracts from scripted effect comment blocks and
-#      usage patterns in common/scripted_effects/*.txt
-#   2. Validate that each call site sets required temp variables before the call
-#      in the same or outer scope (temp vars set earlier in the scope chain are
-#      visible to callers at deeper non-scope-changing nesting)
-#   3. Warn on orphaned temp variable sets (set but no matching effect call anywhere
-#      in the same scope block)
-#   4. Warn on scope boundary violations (temp vars set inside a scope-changing
-#      block, e.g. random_other_country = { ... }, but the effect call is outside)
-##########################
+"""Validate that callers of documented scripted effects pass required temp variables.
+
+Auto-discovers parameter contracts from "# Parameters:" comment blocks in
+common/scripted_effects/*.txt and validates each call site sets required vars
+before calling. Warns on scope-boundary violations (temp var set inside a
+scope-changing block, but the effect call is outside).
+"""
 import glob
 import os
 import re
@@ -28,10 +20,8 @@ from validator_common import (
     strip_comments,
 )
 
-# ---------------------------------------------------------------------------
-# Hardcoded contracts for well-documented effects.  Auto-discovery below fills
-# in additional contracts from "# Parameters:" comment blocks.
-# ---------------------------------------------------------------------------
+# Hardcoded contracts for well-documented effects. Auto-discovery fills in
+# additional contracts from "# Parameters:" comment blocks.
 
 # Mapping: effect_name -> { "required": [...], "optional": [...] }
 HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
@@ -81,16 +71,11 @@ HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
     },
 }
 
-# ---------------------------------------------------------------------------
-# Keywords that introduce a new scripting scope (country/state/leader scopes).
-# When a temp variable is set inside one of these blocks it is local to that
-# scope and NOT available in the parent scope after the block closes.
-#
-# The every_/random_ scope iterators are derived from the canonical
-# HOI4_BUILTIN_BLOCKS set so a newly-added iterator only has to be registered
-# in one place. The remaining entries (relation/magic scopes, loops, and the
-# var:X = { } variable scope) aren't all engine "blocks", so they stay explicit.
-# ---------------------------------------------------------------------------
+# Scope keywords: a temp var set inside one of these blocks is NOT available
+# in the parent scope after the block closes.
+# The every_/random_ iterators come from HOI4_BUILTIN_BLOCKS so a newly-added
+# iterator only needs to be registered there. Remaining entries (relation/magic
+# scopes, loops, var:X = {}) aren't engine "blocks", so they stay explicit.
 _SCOPE_ITERATORS = {
     b for b in HOI4_BUILTIN_BLOCKS if b.startswith(("every_", "random_"))
 } - {
@@ -112,7 +97,6 @@ SCOPE_CHANGING_KEYWORDS: Set[str] = _SCOPE_ITERATORS | {
     "for_each_loop",
 }
 
-# Regex patterns
 _SET_TEMP_RE = re.compile(
     r"\bset_temp_variable\s*=\s*\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=",
 )
@@ -216,11 +200,6 @@ def _parse_effect_contracts_from_file(
         i += 1
 
     return contracts
-
-
-# ---------------------------------------------------------------------------
-# Token-based scope walker
-# ---------------------------------------------------------------------------
 
 
 def _normalize_multiline_set_temp(text: str) -> str:

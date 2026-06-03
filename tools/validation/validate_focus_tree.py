@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# Focus Tree Structural Validation Script
-# Validates focus tree definitions for structural integrity
-# Checks for:
-#   1. Duplicate focus IDs across all files
-#   2. Orphan focuses (prerequisite targets not found in the same tree)
-#   3. Missing prerequisite targets (referenced focus IDs not defined anywhere)
-#   4. Missing localisation keys (focus ID and focus ID_desc)
-#   5. Dependency cycles in prerequisite chains
-##########################
+"""Validate focus tree structural integrity in Millennium Dawn."""
 import os
 import re
 import sys
@@ -30,10 +21,6 @@ from validator_common import (
     strip_comments,
 )
 
-# ---------------------------------------------------------------------------
-# Regex patterns
-# ---------------------------------------------------------------------------
-
 # Opening of a focus_tree or top-level focus definition block
 # (shared_focus and joint_focus are both standalone definitions that can be
 # referenced as prerequisites — they live outside any focus_tree wrapper)
@@ -50,11 +37,6 @@ _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 
 # shared_focus reference inside a focus_tree block (not a definition)
 _SHARED_REF_RE = re.compile(r"\bshared_focus\s*=\s*(\w+)")
-
-
-# ---------------------------------------------------------------------------
-# Per-file parsing (pool workers)
-# ---------------------------------------------------------------------------
 
 
 def _line_of(text: str, pos: int) -> int:
@@ -198,11 +180,6 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
         pos = end
 
     return result
-
-
-# ---------------------------------------------------------------------------
-# Validator
-# ---------------------------------------------------------------------------
 
 
 class Validator(BaseValidator):

@@ -1,31 +1,11 @@
 #!/usr/bin/env python3
-##########################
-# GFX Sprite Reference Validation Script
-#
-# Validates that sprite names referenced in .gui files, scripted GUIs, and
-# scripted localisation are defined in interface/*.gfx files.
-#
-# Checks:
-#   1. Build GFX definition set from all interface/*.gfx files
-#   2. Validate spriteType / quadTextureSprite / background references in .gui files
-#   3. Validate image = "GFX_xxx" references in common/scripted_guis/*.txt
-#   4. Validate localization_key = "GFX_xxx" in common/scripted_localisation/*.txt
-#   5. Unused GFX definitions (warning; skipped in staged mode; capped at 50)
-#
-# Note: validate_scripted_gui.py already checks spriteType/quadTextureSprite in
-# .gui files at WARNING level. This validator promotes those to ERROR, adds
-# background= and scripted-GUI image= coverage, and adds unused-sprite reporting.
-#
-# Usage:
-#   python3 tools/validation/validate_gfx_references.py [OPTIONS]
-#
-# Options:
-#   --path PATH         Path to mod root (default: auto-detected)
-#   --strict            Exit 1 if any errors found
-#   --no-color          Disable colour output
-#   --staged            Only validate staged .gui/.gfx/.txt files
-#   --workers N         Worker processes (default: CPU count / 2)
-##########################
+"""Validate GFX sprite references in interface/*.gui, scripted_guis, and scripted_localisation.
+
+Checks sprites referenced in .gui files (spriteType/quadTextureSprite/background),
+scripted_gui image= properties, and scripted_localisation localization_key= against
+the set defined in interface/*.gfx. Promotes .gui errors from WARNING to ERROR for
+MD-authored files; vanilla-override files stay at WARNING.
+"""
 import glob
 import os
 import re
@@ -50,9 +30,6 @@ from validator_common import (
     run_validator_main,
 )
 
-# ---------------------------------------------------------------------------
-# MD-authored file detection
-# ---------------------------------------------------------------------------
 # .gui files in MD fall into two categories:
 #   1. MD-authored: files the mod team wrote from scratch (scripted GUIs,
 #      country-specific GUIs, feature GUIs). Missing sprites here are real bugs.
@@ -89,11 +66,8 @@ def _is_md_gui_file(filepath: str) -> bool:
     return os.path.basename(filepath) not in _VANILLA_GUI_BASENAMES
 
 
-# ---------------------------------------------------------------------------
-# Helpers — HOI4/Clausewitz comment stripping for .gfx and .gui files
-# These use C-style // and /* */ comments, NOT the # used by .txt scripts.
+# .gfx and .gui files use C-style // and /* */ comments, NOT the # used by .txt scripts.
 # strip_comments() from shared_utils strips # comments; do NOT use it here.
-# ---------------------------------------------------------------------------
 
 _BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 _LINE_COMMENT_RE = re.compile(r"//.*")
@@ -113,10 +87,6 @@ def _strip_comments(text: str) -> str:
     text = _HASH_COMMENT_RE.sub("", text)
     return text
 
-
-# ---------------------------------------------------------------------------
-# Regex constants
-# ---------------------------------------------------------------------------
 
 # All sprite type block openers in .gfx files; all use `name = "GFX_xxx"`.
 # We collect any `name = "GFX_xxx"` inside any of these blocks.
@@ -180,7 +150,6 @@ def _find_vanilla_interface_dir() -> Optional[str]:
     return None
 
 
-# Max unused sprites to list before summarising remainder
 _UNUSED_SPRITE_LIMIT = 50
 
 
@@ -197,11 +166,6 @@ def _is_flag_sprite(name: str) -> bool:
 def _is_likely_vanilla(name: str) -> bool:
     """Return True for names that are almost certainly vanilla sprites."""
     return any(name.startswith(p) for p in _VANILLA_PREFIXES)
-
-
-# ---------------------------------------------------------------------------
-# Per-file worker functions (top-level so they're picklable)
-# ---------------------------------------------------------------------------
 
 
 # Per-file parsers take (filepath, mod_path) and disk-cache their result keyed
@@ -319,21 +283,12 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
-# ---------------------------------------------------------------------------
-# Validator
-# ---------------------------------------------------------------------------
-
-
 class GfxReferenceValidator(BaseValidator):
     TITLE = "GFX SPRITE REFERENCE VALIDATION"
     STAGED_EXTENSIONS = [".gui", ".gfx", ".txt"]
 
     def __init__(self, mod_path: str, **kwargs):
         super().__init__(mod_path, **kwargs)
-
-    # ------------------------------------------------------------------
-    # Build phases
-    # ------------------------------------------------------------------
 
     def _build_gfx_definitions(self) -> Tuple[Set[str], Set[str]]:
         """Scan all interface/*.gfx files and return (all_defined, mod_defined).
@@ -425,10 +380,6 @@ class GfxReferenceValidator(BaseValidator):
             f"  Scanned {len(sloc_files)} scripted_localisation files; found {len(all_refs)} GFX references"
         )
         return all_refs
-
-    # ------------------------------------------------------------------
-    # Check phases
-    # ------------------------------------------------------------------
 
     def _check_undefined_refs(
         self,
@@ -555,18 +506,12 @@ class GfxReferenceValidator(BaseValidator):
             category="unused-sprite",
         )
 
-    # ------------------------------------------------------------------
-    # Entry point
-    # ------------------------------------------------------------------
-
     def run_validations(self) -> None:
-        # Phase 1: build the complete definition set (always full-repo scan)
         defined, mod_defined = self._build_gfx_definitions()
-        # Case-insensitive index of mod-only sprites for Linux case-mismatch
-        # diagnostics — never suggest a vanilla-only sprite as the canonical name.
+        # Case-insensitive index of mod-only sprites — never suggest a
+        # vanilla-only sprite as the canonical name for a case-mismatch.
         mod_defined_ci = casefold_index(mod_defined)
 
-        # Phase 2: collect all references from the (possibly staged) files
         gui_refs = self._collect_gui_refs(defined)
         sgui_refs = self._collect_sgui_refs(defined)
         sloc_refs = self._collect_sloc_refs(defined)
@@ -601,8 +546,7 @@ class GfxReferenceValidator(BaseValidator):
             mod_defined_ci=mod_defined_ci,
         )
 
-        # Phase 4: unused sprites — only against mod-defined; vanilla sprites the
-        # mod doesn't redefine aren't ours to flag as unused.
+        # Unused-sprite check is mod-only; vanilla sprites the mod doesn't redefine aren't ours to flag.
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
         self._check_unused_sprites(mod_defined, all_referenced)
 

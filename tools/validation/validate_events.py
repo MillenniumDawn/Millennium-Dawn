@@ -1,24 +1,9 @@
 #!/usr/bin/env python3
-##########################
-# Event Validation Script (Multiprocessing Optimized)
-# Validates event definitions for common issues
-# Checks for:
-#   1. Events with unsupported title/desc combinations
-#      (having both block { } and inline value for title or desc)
-#   2. Events missing is_triggered_only = yes
-#   3. Redundant long-form event calls (id-only)
-#   4. Triggered-only events never referenced
-#   5. Missing localisation keys
-#   6. news_event without major = yes (fires for only one country)
-#   7. news_event with fire_only_once = yes + major (only one country sees it)
-#   8. mean_time_to_happen with is_triggered_only (MTTH does nothing)
-#   9. Duplicate event IDs
-#  10. Event namespace not declared via add_namespace
-#  11. Hidden events carrying option blocks (should run from immediate)
-#  12. Hidden events carrying pointless localisation (never displayed)
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Adapted for Millennium Dawn with multiprocessing
-##########################
+"""Validate event definitions in Millennium Dawn.
+
+Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
+adapted for Millennium Dawn with multiprocessing.
+"""
 import os
 import re
 import sys

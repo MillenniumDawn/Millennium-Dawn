@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
-##########################
-# Modifier Name Validation Script
-# Validates modifier names used inside modifier = { } blocks in Millennium Dawn
-# Checks for:
-#   1. Unknown modifier names (not seen 3+ times across the codebase)
-#   2. Possible typos (single-occurrence names that don't match known-good patterns)
-#
-# Approach: build a known-good set from codebase frequency (3+ uses = valid).
-# Custom MD modifiers in common/modifiers/ and common/dynamic_modifiers/ are
-# always valid. Single-use names that start with md_ or MD_ are also valid.
-# Targeted modifiers (XXX_opinion, XXX_autonomy_gain) are skipped.
-##########################
+"""Validate modifier names inside modifier = {} blocks in Millennium Dawn.
+
+Builds a known-good set from codebase frequency (3+ uses = valid). Custom MD
+modifiers in common/modifiers/ and common/dynamic_modifiers/ are always valid.
+Targeted modifiers (XXX_opinion, XXX_autonomy_gain) are skipped.
+"""
 import os
 import re
 import sys
@@ -29,12 +23,8 @@ from validator_common import (
     should_skip_file,
 )
 
-# ---------------------------------------------------------------------------
-# Keys that can appear inside modifier = { } blocks but are NOT modifier names
-# ---------------------------------------------------------------------------
-
-# These are HOI4 structural / ai-weight / targeted-modifier keys that appear
-# inside blocks named "modifier" but carry no game-modifier meaning.
+# HOI4 structural / ai-weight / targeted-modifier keys that appear inside
+# blocks named "modifier" but carry no game-modifier meaning.
 _NON_MODIFIER_KEYS: FrozenSet[str] = frozenset(
     {
         # AI weight modifier fields
@@ -67,7 +57,6 @@ _NON_MODIFIER_KEYS: FrozenSet[str] = frozenset(
 # We detect these by looking for them as the FIRST assignment key in the block.
 _AI_WEIGHT_INDICATOR_KEYS: FrozenSet[str] = frozenset({"factor", "base", "add"})
 
-# Keys that introduce sub-blocks we should skip when looking for modifier names
 _SKIP_BLOCK_KEYS: FrozenSet[str] = frozenset(
     {
         "targeted_modifier",
@@ -78,15 +67,13 @@ _SKIP_BLOCK_KEYS: FrozenSet[str] = frozenset(
     }
 )
 
-# Regex patterns for skipping obviously parametric / targeted modifier entries
-# e.g. TAG_opinion, TAG_autonomy_gain, TAG_acceptance where TAG is a 3-letter tag.
+# Parametric/targeted modifier entries (e.g. TAG_opinion, TAG_autonomy_gain) — skip these.
 _TARGETED_MODIFIER_RE = re.compile(r"^[A-Z]{2,3}_[a-z]")
 
 # A modifier name is lowercase with underscores (and optionally digits).
 # Some MD custom modifiers use mixed case (e.g. MD_something) — allow those.
 _MODIFIER_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$|^[A-Z][A-Za-z0-9_]*$")
 
-# Minimum frequency threshold for a modifier name to be "known good"
 _FREQUENCY_THRESHOLD = 3
 
 # Parametric modifier families. HOI4 generates one concrete modifier per game
@@ -314,16 +301,8 @@ def _extract_modifier_names_from_body(body: str) -> List[str]:
     return names
 
 
-# ---------------------------------------------------------------------------
-# Pool workers (module-level for pickling)
-# ---------------------------------------------------------------------------
-
-
 def _harvest_modifiers_from_file(args: Tuple[str, str]) -> List[str]:
-    """Pool worker: extract all modifier names from a single file.
-
-    Used for building the known-good frequency table.
-    """
+    """Pool worker: extract all modifier names from a single file."""
     filepath, mod_path = args
     if should_skip_file(filepath):
         return []
@@ -435,11 +414,6 @@ def _check_file_for_unknown_modifiers(
     return [
         (name, rel, lineno) for name, rel, lineno in parsed if name not in known_good
     ]
-
-
-# ---------------------------------------------------------------------------
-# Validator class
-# ---------------------------------------------------------------------------
 
 
 class Validator(BaseValidator):

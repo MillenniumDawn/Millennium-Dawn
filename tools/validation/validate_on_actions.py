@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# on_actions Reference Validation Script
-# Validates event references in on_actions files against defined event IDs
-# Checks for:
-#   1. Missing event references (event fired in on_actions but not defined)
-#   2. Non-triggered-only events referenced in on_actions (MTTH may double-fire)
-#   3. Duplicate event references within the same on_action trigger block
-##########################
+"""Validate event references in on_actions files against defined event IDs."""
 import os
 import re
 import sys
@@ -26,10 +19,6 @@ from validator_common import (
     run_validator_main,
     should_skip_file,
 )
-
-# ---------------------------------------------------------------------------
-# Regex patterns (module-level for pool workers)
-# ---------------------------------------------------------------------------
 
 # Declared namespaces: add_namespace = foo
 _ADD_NAMESPACE_RE = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
@@ -67,11 +56,6 @@ _SHORT_FORM_EVENT_RE = re.compile(
     r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
     r"\s*=\s*([A-Za-z_]\w*\.[A-Za-z0-9_.]+)"
 )
-
-
-# ---------------------------------------------------------------------------
-# Pool workers (module-level so multiprocessing can pickle them)
-# ---------------------------------------------------------------------------
 
 
 def _scan_event_text(text: str) -> Tuple[Set[str], Set[str]]:

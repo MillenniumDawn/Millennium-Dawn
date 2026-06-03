@@ -1,35 +1,9 @@
 #!/usr/bin/env python3
-##########################
-# Scripted GUI Validation Script
-#
-# Cross-references common/scripted_guis/*.txt against interface/*.gui,
-# interface/*.gfx, and localisation/english/*.yml to surface silent failures
-# in scripted GUIs — the class of bug where a name typo or missing reference
-# loads without error but does nothing at runtime.
-#
-# Tier 1 checks (high signal, catches real bugs we've hit in CPD work):
-#   1. <element>_click_enabled / _visible / _click / _hover / etc. references
-#      that don't match any button/icon defined in interface/*.gui
-#   2. Button or icon pdx_tooltip / pdx_tooltip_delayed referencing a non-existent
-#      English loc key
-#   3. [!trigger_name] formatters in loc strings that don't match any scripted_gui
-#      trigger definition
-#   4. window_name / parent_window_name / parent_window_token referencing a
-#      container that doesn't exist
-#   5. dynamic_lists entry_container referencing a non-existent container
-#   6. context_type with an invalid enum value
-#   7. spriteType / quadTextureSprite references that don't appear in any
-#      interface/*.gfx file
-#
-# Tier 2 checks (broader coverage):
-#   8. dirty = ... referencing a non-global variable (must use global. prefix)
-#   9. ai_test_scopes value not valid for the declared context_type
-#   10. Buttons/icons defined in .gui under a scripted-GUI window that have no
-#       corresponding triggers or effects (likely dead UI)
-#
-# Skip patterns: tutorial sprites, builtin Paradox elements, dynamic [VAR]
-# templates in meta_effect contexts.
-##########################
+"""Cross-reference scripted GUIs against interface/*.gui, *.gfx, and localisation.
+
+Surfaces silent failures where a name typo or missing reference loads without
+error but does nothing at runtime.
+"""
 import os
 import re
 import sys
@@ -210,11 +184,8 @@ def _normalise_path(p: str) -> str:
     return p.replace("\\", "/").lstrip("./")
 
 
-# ----------------------------------------------------------------------------
-# Pure per-file parsers (module-level so disk_cache results stay picklable and
-# the parse is computed only from the file's text). Each returns a structured
-# result that the validator merges into its self collections unchanged.
-# ----------------------------------------------------------------------------
+# Module-level so disk_cache results stay picklable and the parse is computed
+# only from the file's text.
 
 
 def _parse_gui_text(text: str, rel: str) -> Dict:

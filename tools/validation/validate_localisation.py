@@ -1,19 +1,9 @@
 #!/usr/bin/env python3
-##########################
-# Localisation Validation Script (Multiprocessing Optimized)
-# Validates localisation files for common issues
-# Checks for:
-#   1. Duplicated localisation keys
-#   2. Unpaired brackets in loc values
-#   3. Loc syntax issues (color symbol pairing)
-#   4. Missing mandatory l_english: line
-#   5. Invalid localization_key references
-#   6. Missing custom_effect_tooltip / custom_trigger_tooltip keys
-#   7. add_resistance_target tooltip issues
-#   8. Orphaned _tt tooltip keys (defined in loc but never referenced)
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Adapted for Millennium Dawn with multiprocessing
-##########################
+"""Validate localisation files for common issues in Millennium Dawn.
+
+Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
+adapted for Millennium Dawn with multiprocessing.
+"""
 import glob
 import logging
 import os

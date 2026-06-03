@@ -1,20 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# History Technology Dependency Validation Script
-# Validates that country history files include prerequisite technologies
-# when granting technologies via set_technology blocks, and that equipment
-# variant designs only use modules the country has unlocked.
-#
-# Checks:
-#   1. Builds a tech dependency graph from common/technologies/*.txt
-#   2. For each history/countries/*.txt, extracts set_technology blocks
-#   3. Verifies all transitive prerequisites are present
-#   4. Handles DLC if/else branches correctly
-#   5. Builds a module -> enabling-tech map from enable_equipment_modules blocks
-#   6. Verifies every module used in a create_equipment_variant is enabled by
-#      a technology the country has in any DLC branch (BBA and NSB content
-#      is interwoven — an NSB variant may use modules from BBA techs)
-##########################
+"""Validate technology prerequisites and equipment module unlocks in history files."""
 import glob
 import os
 import re

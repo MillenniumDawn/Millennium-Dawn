@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-Shared utilities for Millennium Dawn tools
-Common functionality shared between standardization and validation tools
-"""
+"""Shared utilities for Millennium Dawn tools (standardization and validation)."""
 
 import argparse
 import bisect
@@ -17,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-# Color coding for different log levels
 COLORS = {
     "SUCCESS": "\033[92m",  # Green
     "INFO": "\033[94m",  # Blue
@@ -125,16 +121,12 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
 
 
 def extract_block_from_text(text: str, start: int) -> Tuple[str, int]:
-    """Extract the body of a brace-delimited block from raw text.
+    """Char-accurate brace-block extractor for raw text.
 
-    Finds the first ``{`` at or after *start*, then returns ``(body, end_pos)``
-    where *body* is the text between the matching braces (exclusive) and
-    *end_pos* is the index just past the closing ``}``. Braces inside
-    double-quoted strings are ignored. Returns ``("", -1)`` when no opening
-    brace is found or the block never balances.
-
-    Char-accurate counterpart to ``extract_block`` (which works on a line list
-    and miscounts braces inside strings). Use this when scanning raw text.
+    Returns ``(body, end_pos)`` where *body* is the text between the matching
+    braces and *end_pos* is the index just past the closing ``}``. Braces
+    inside double-quoted strings are ignored. Returns ``("", -1)`` when no
+    opening brace is found or the block never balances.
     """
     open_pos = text.find("{", start)
     if open_pos == -1:
@@ -230,12 +222,7 @@ HOI4_INSTALL_PATHS = [
 
 
 def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
-    """Locate a vanilla Hearts of Iron IV install root.
-
-    Resolution order: *explicit_path* argument, then the ``$HOI4_PATH`` env
-    var, then ``HOI4_INSTALL_PATHS``. Returns the first existing directory, or
-    None if none are found.
-    """
+    """Return the first existing HOI4 install root, checking explicit_path, $HOI4_PATH, then HOI4_INSTALL_PATHS."""
     candidates: List[str] = []
     if explicit_path:
         candidates.append(explicit_path)
@@ -349,7 +336,7 @@ def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int
 
 
 def strip_comments(text: str) -> str:
-    """Remove comment-only lines and inline comments from text"""
+    """Remove comment-only lines and inline comments from text."""
     lines = text.split("\n")
     result = []
     for line in lines:
@@ -357,7 +344,6 @@ def strip_comments(text: str) -> str:
         if stripped.startswith("#"):
             result.append("")
             continue
-        # Strip inline comments, ignoring '#' inside quoted strings.
         in_quote = False
         for i, ch in enumerate(line):
             if ch == '"':
@@ -449,23 +435,13 @@ class DataCleaner:
             return input_iter
 
 
-# Timing utilities
-
-
 def timing_enabled() -> bool:
     """Return True unless MD_TIMING=0 is explicitly set."""
     return os.environ.get("MD_TIMING", "1") != "0"
 
 
 class Timer:
-    """Lightweight timer that prints elapsed time to stderr.
-
-    Enabled by default. Suppress with MD_TIMING=0.
-
-    Usage:
-        with Timer("file collection"):
-            files = collect(...)
-    """
+    """Lightweight timer that prints elapsed time to stderr. Suppress with MD_TIMING=0."""
 
     def __init__(self, label: str, enabled: Optional[bool] = None):
         self.label = label
@@ -537,19 +513,12 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     print(f"{'─' * (max_label + 18)}\033[0m", file=sys.stderr)
 
 
-# Linting script helpers: shared argparse, file collection, pool dispatch.
-
-
 def create_linting_parser(
     description: str,
     include_diff: bool = True,
     extra_args_fn=None,
 ) -> argparse.ArgumentParser:
-    """Standard argument parser for linting scripts.
-
-    Provides --mode, --base-branch, --files, --workers, and positional
-    filenames. Scripts can add custom arguments via extra_args_fn(parser).
-    """
+    """Standard argument parser for linting scripts. Custom args via extra_args_fn(parser)."""
     parser = argparse.ArgumentParser(description=description)
     modes = ["all", "staged"]
     if include_diff:
@@ -590,11 +559,7 @@ def collect_files_by_mode(
     root_dir: str,
     include_interface: bool = False,
 ) -> List[str]:
-    """Collect files based on parsed --mode / --files / positional args.
-
-    Returns a list of existing file paths, or an empty list if nothing
-    matched. Prints diagnostics for missing files.
-    """
+    """Collect files based on parsed --mode / --files / positional args."""
     if getattr(args, "filenames", None):
         files_list = args.filenames
     elif getattr(args, "files", None):
