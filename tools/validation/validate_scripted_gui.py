@@ -34,10 +34,11 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Dict, FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
     Colors,
@@ -208,29 +209,6 @@ def _normalise_path(p: str) -> str:
     return p.replace("\\", "/").lstrip("./")
 
 
-def _balance_braces(text: str, start: int) -> Optional[int]:
-    """Given text and a position right after an opening '{', return the position
-    of the matching closing '}', or None if unbalanced. Skips over braces inside
-    strings."""
-    depth = 1
-    i = start
-    n = len(text)
-    in_str = False
-    while i < n:
-        c = text[i]
-        if c == '"' and (i == 0 or text[i - 1] != "\\"):
-            in_str = not in_str
-        elif not in_str:
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    return i
-        i += 1
-    return None
-
-
 class ScriptedGuiValidator(BaseValidator):
     TITLE = "SCRIPTED GUI VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".gui", ".yml", ".gfx"]
@@ -308,10 +286,9 @@ class ScriptedGuiValidator(BaseValidator):
         for m in _GUI_TYPE_OPENER.finditer(text):
             type_name = m.group(1)
             block_start = m.end()
-            block_end = _balance_braces(text, block_start)
-            if block_end is None:
+            block, end = extract_block_from_text(text, block_start - 1)
+            if end == -1:
                 continue
-            block = text[block_start:block_end]
             line_no = text.count("\n", 0, m.start()) + 1
             name_m = _GUI_NAME.search(block)
             if not name_m:
@@ -365,10 +342,9 @@ class ScriptedGuiValidator(BaseValidator):
         if not outer:
             return
         outer_start = outer.end()
-        outer_end = _balance_braces(text, outer_start)
-        if outer_end is None:
+        outer_body, outer_end = extract_block_from_text(text, outer_start - 1)
+        if outer_end == -1:
             return
-        outer_body = text[outer_start:outer_end]
 
         # Walk through named blocks at depth 1 of outer_body
         i = 0
@@ -379,13 +355,12 @@ class ScriptedGuiValidator(BaseValidator):
                 break
             name = m.group(1)
             inner_start = m.end()
-            inner_end = _balance_braces(outer_body, inner_start)
-            if inner_end is None:
+            body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
+            if inner_end == -1:
                 break
-            body = outer_body[inner_start:inner_end]
             line_no = text.count("\n", 0, outer_start + m.start()) + 1
             self._record_sgui_block(name, body, rel, line_no)
-            i = inner_end + 1
+            i = inner_end
 
     def _record_sgui_block(self, name: str, body: str, file: str, line: int) -> None:
         block = {

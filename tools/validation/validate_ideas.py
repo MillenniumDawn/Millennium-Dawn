@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from validator_common import (
+    HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     Colors,
     FileOpener,
@@ -52,10 +53,12 @@ _SWAP_BLOCK_START = re.compile(r"\bswap_ideas\s*=\s*\{")
 # Hyphens are included so that identifiers like `NKO_Marxism-Leninism` are recognised.
 _IDEA_DEF_LINE = re.compile(r"^[\t ]*([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
 
-# HOI4 built-in inner keys that appear at depth 2 but are not idea definitions
-_HOI4_IDEA_INNER_KEYS: frozenset = frozenset(
+# Idea-schema inner keys that appear at depth 2 but are not idea definitions.
+# The control-flow / effect blocks (if, limit, modifier, scope iterators, etc.)
+# come from the canonical HOI4_BUILTIN_BLOCKS so they don't drift; only the
+# idea-specific schema keys are listed here.
+_HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
     {
-        "modifier",
         "equipment_bonus",
         "allowed",
         "allowed_civil_war",
@@ -82,18 +85,6 @@ _HOI4_IDEA_INNER_KEYS: frozenset = frozenset(
         "rule",
         "name",
         "priority",
-        "limit",
-        "if",
-        "else",
-        "else_if",
-        "hidden_effect",
-        "random_list",
-        "every_country",
-        "random_country",
-        "capital_scope",
-        "AND",
-        "OR",
-        "NOT",
     }
 )
 

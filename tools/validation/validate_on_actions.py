@@ -100,7 +100,7 @@ def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
     """Return (defined_ids, triggered_only_ids) from a single events/*.txt file."""
     filepath, mod_path = args
     try:
-        text = Path(filepath).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return set(), set()
     text = re.sub(r"#[^\n]*", "", text)
@@ -348,7 +348,7 @@ def _parse_on_actions_file(
     """Parse a single on_actions file and return all event references."""
     filepath, mod_path = args
     try:
-        text = Path(filepath).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return [], []
     text_clean = re.sub(r"#[^\n]*", "", text)

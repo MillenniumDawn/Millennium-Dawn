@@ -122,6 +122,71 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "occupied_countries.1.b",
         "occupied_countries.1.desc",
         "occupied_countries.1.title",
+        # Vanilla strategic-project / scientist tooltip keys.
+        "SP_UNLOCK_PROJECT",
+        "SP_UNLOCK_TECH",
+        "available_scientist_one_line_tt",
+        # Vanilla HOI4 building name keys (mod overrides only the _desc variants).
+        "air_base",
+        "infrastructure",
+        "nuclear_reactor",
+        "radar_station",
+        # Vanilla US Congress tooltip keys borrowed from MtG.
+        "mtg_usa_congress_add_state_tt",
+        "mtg_usa_congress_large_opposition_tt",
+        "mtg_usa_congress_large_support_tt",
+        "mtg_usa_congress_medium_opposition_tt",
+        "mtg_usa_congress_medium_support_tt",
+        "mtg_usa_congress_remove_state_tt",
+        "mtg_usa_congress_small_opposition_tt",
+        "mtg_usa_congress_small_support_tt",
+        "mtg_usa_house_large_opposition_tt",
+        "mtg_usa_house_large_support_tt",
+        "mtg_usa_house_medium_opposition_tt",
+        "mtg_usa_house_medium_support_tt",
+        "mtg_usa_house_small_opposition_tt",
+        "mtg_usa_house_small_support_tt",
+        "mtg_usa_senate_large_opposition_tt",
+        "mtg_usa_senate_large_support_tt",
+        "mtg_usa_senate_medium_opposition_tt",
+        "mtg_usa_senate_medium_support_tt",
+        "mtg_usa_senate_small_opposition_tt",
+        "mtg_usa_senate_small_support_tt",
+        "free_agency_upgrade_tt",
+        # Vanilla operative mission tooltip keys.
+        "OPERATIVE_MISSION_BOOST_IDEOLOGY_TT",
+        "OPERATIVE_MISSION_BUILD_INTEL_NETWORK_TT",
+        "OPERATIVE_MISSION_CONTROL_TRADE_TT",
+        "OPERATIVE_MISSION_COUNTER_INTELLIGENCE_TT",
+        "OPERATIVE_MISSION_DIPLOMATIC_PRESSURE_TT",
+        "OPERATIVE_MISSION_NO_MISSION_TT",
+        "OPERATIVE_MISSION_PROPAGANDA_TT",
+        "OPERATIVE_MISSION_QUIET_INTEL_NETWORK_TT",
+        "OPERATIVE_MISSION_ROOT_OUT_RESISTANCE_TT",
+        # Vanilla diplomatic action rule tooltip keys.
+        "RULE_ALLOW_GUARANTEES_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_GUARANTEES_SAME_IDEOLOGY_TOOLTIP",
+        "RULE_ALLOW_LEAVE_FACTION_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_LEND_LEASE_BLOCKED_TT",
+        "RULE_ALLOW_LEND_LEASE_SAME_FACTION_TT",
+        "RULE_ALLOW_LEND_LEASE_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_LICENSING_BLOCKED_TT",
+        "RULE_ALLOW_LICENSING_SAME_FACTION_TT",
+        "RULE_ALLOW_LICENSING_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT",
+        "RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_RELEASE_NATIONS_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_REVOKE_GUARANTEES_BLOCKED_TOOLTIP",
+        "RULE_ASSUME_LEADERSHIP_BLOCKED_TOOLTIP",
+        "RULE_BOOST_PARTY_AI_ONLY_TT",
+        "RULE_BOOST_PARTY_BLOCKED_TT",
+        "RULE_BOOST_PARTY_PLAYER_ONLY_TT",
+        "RULE_COUP_AI_ONLY_TT",
+        "RULE_COUP_BLOCKED_TT",
+        "RULE_KICK_FROM_FACTION_BLOCKED_TOOLTIP",
+        "RULE_VOLUNTEERS_BLOCKED_TT",
+        "RULE_VOLUNTEERS_SAME_IDEOLOGY_TT",
+        "RULE_WARGOALS_BLOCKED_TT",
     }
 )
 
@@ -733,7 +798,7 @@ class BaseValidator:
         all_keys: set = set()
         for filepath in yml_files:
             try:
-                with open(filepath, encoding="utf-8-sig", errors="ignore") as f:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
                     text = f.read()
             except Exception:
                 continue

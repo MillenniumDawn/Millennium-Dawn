@@ -37,16 +37,10 @@ CI_EXEMPT = {
     # ~22k pre-existing unreferenced textures plus a slow full-repo scan make
     # this a periodic mod-size audit, not a per-PR gate. Manual hook only.
     "validate_unused_textures.py",
-    # Suggestion-only (WARNING) simplification hints, wired nowhere yet. Move to
-    # the CI matrix with strict: false if/when we want the signal on PRs.
-    "validate_simplifications.py",
 }
 
 # Validators intentionally without a pre-commit hook. Each needs a reason.
-PRECOMMIT_EXEMPT = {
-    # See above: not wired anywhere yet.
-    "validate_simplifications.py",
-}
+PRECOMMIT_EXEMPT = set()
 
 # Validators whose --strict setting intentionally differs between pre-commit and
 # CI, because of a pre-existing backlog. Clear the backlog, then remove the

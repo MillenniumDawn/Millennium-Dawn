@@ -1,62 +1,31 @@
 #!/usr/bin/env python3
-"""Suggest replacing inline random-build limits with the shared triggers.
+"""Flag consecutive scope blocks that can be merged into one.
 
-When a random_owned_controlled_state (or every/random_controlled_state,
-random_owned_state) block's limit is a token-exact match of a build-location
-trigger in common/scripted_triggers/00_scripted_triggers.txt, flag it (WARNING)
-with the one-line replacement. The match is exact on purpose: a different
-size threshold, a missing or extra include_locked, or any added condition will
-not match, so it never suggests a behaviour-changing rewrite.
+Two sibling blocks that open the *same deterministic scope* back to back, with
+nothing but whitespace between them, can always be collapsed:
+
+    USA = { add_stability = 0.05 }
+    USA = { add_war_support = 0.05 }
+    # -> USA = { add_stability = 0.05 add_war_support = 0.05 }
+
+The same holds for state-id scopes (`123 = { } 123 = { }`), magic scopes
+(`PREV`, `FROM`, `ROOT.CAPITAL`, ...), relation scopes (`owner`, `controller`,
+`capital_scope`, ...) and variable scopes (`var:foo`, `event_target:bar`).
+
+Only deterministic scopes are flagged. Random scopes (`random_country`,
+`random_owned_state`, ...) pick a different target per block, iterators
+(`every_*`, `any_*`) iterate a set, and control-flow blocks (`if`, `limit`,
+`AND`, ...) are not scopes — merging any of those would change behaviour, so
+they are never suggested. Output is WARNING-only.
 """
 import os
 import re
+import sys
 
-from validator_common import (
-    BaseValidator,
-    Severity,
-    run_validator_main,
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-# Every shares_slots=yes building draws from the same pooled state slots, so one
-# free_shared_building_slots check covers them all.
-_SHARED_TRIGGER = "free_shared_building_slots"
-_SHARED_BUILDINGS = frozenset(
-    {
-        "industrial_complex",
-        "arms_factory",
-        "offices",
-        "synthetic_refinery",
-        "microchip_plant",
-        "energy_infrastructure",
-        "industrial_infrastructure",
-        "composite_plant",
-        "agriculture_district",
-    }
-)
-
-# building -> (trigger, include_locked, coastal). The flags must match what the
-# trigger encodes, or the inline limit isn't equivalent and is left alone.
-_BUILDING_TRIGGER = {
-    "dockyard": ("dockyard_random_build_loc", True, True),
-    "infrastructure": ("infrastructure_random_build_loc", False, False),
-    "nuclear_reactor": ("nuclear_reactor_random_build_loc", False, False),
-    "renewable_energy_infra": ("renewable_energy_infra_random_build_loc", False, False),
-    "air_base": ("air_base_random_build_loc", False, False),
-    "radar_station": ("radar_station_random_build_loc", False, False),
-    "anti_air_building": ("anti_air_random_build_loc", False, False),
-    "internet_station": ("network_infrastructure_random_build_loc", False, False),
-    "fuel_silo": ("fuel_reserve_random_build_loc", False, False),
-    "fossil_powerplant": ("fossil_powerplant_random_build_loc", False, False),
-}
-for _b in _SHARED_BUILDINGS:
-    _BUILDING_TRIGGER[_b] = (_SHARED_TRIGGER, True, False)
-
-_SCOPE_KEYWORDS = (
-    "random_owned_controlled_state",
-    "every_controlled_state",
-    "random_controlled_state",
-    "random_owned_state",
-)
+from shared_utils import extract_block_from_text, strip_comments
+from validator_common import BaseValidator, Severity, run_validator_main
 
 _SCAN_PATTERNS = [
     "common/national_focus/*.txt",
@@ -64,76 +33,102 @@ _SCAN_PATTERNS = [
     "common/decisions/*.txt",
     "common/decisions/**/*.txt",
     "common/scripted_effects/*.txt",
+    "common/scripted_effects/**/*.txt",
+    "common/scripted_triggers/*.txt",
+    "common/scripted_triggers/**/*.txt",
+    "common/on_actions/*.txt",
     "events/*.txt",
+    "events/**/*.txt",
 ]
 
+# Matches `HEADER = {`. The header charset covers tags, state ids, magic scopes,
+# and variable/target scopes (var:x, event_target:y, global.event_target:z^0).
+_OPEN_RE = re.compile(r"([\w.:^@\[\]-]+)\s*=\s*\{")
 
-def _tokens(s: str) -> list:
-    return s.replace("{", " { ").replace("}", " } ").replace(">", " > ").split()
+# Magic scopes that resolve to a single deterministic target. Dotted chains of
+# these (PREV.PREV, ROOT.CAPITAL) are deterministic too.
+_MAGIC = frozenset({"ROOT", "PREV", "FROM", "THIS", "OWNER", "CONTROLLER", "CAPITAL"})
 
+# Lower-case relation scopes that resolve to a single deterministic target.
+_RELATION_SCOPES = frozenset(
+    {"owner", "controller", "capital_scope", "overlord", "faction_leader"}
+)
 
-def _canon_limit(building: str, include_locked: bool, coastal: bool) -> list:
-    """Token list for the inline limit that a trigger exactly replaces."""
-    il = "include_locked = yes" if include_locked else ""
-    slot = f"free_building_slots = {{ building = {building} size > 0 {il} }}"
-    coastal_top = "is_coastal = yes" if coastal else ""
-    coastal_fallback = "is_coastal = yes" if coastal else ""
-    return _tokens(
-        f"limit = {{ {coastal_top} {slot} OR = {{ is_in_home_area = yes "
-        f"NOT = {{ owner = {{ any_owned_state = {{ {slot} {coastal_fallback} "
-        f"is_in_home_area = yes }} }} }} }} }}"
-    )
+# 3-letter all-caps tokens that are logical operators, not country tags.
+_NOT_TAGS = frozenset({"AND", "NOT"})
 
+# Parent blocks whose direct children are NOT a plain AND/sequential list, so
+# merging two same-header children would change meaning:
+#   OR             - operands are OR-ed; merging ANDs them
+#   count_triggers - counts how many children are true
+#   random_list    - numeric children are weight buckets, not state scopes
+_NO_MERGE_PARENTS = frozenset({"OR", "count_triggers", "random_list"})
 
-def _match_brace_block(lines: list, start: int) -> int:
-    depth = 0
-    for j in range(start, len(lines)):
-        depth += lines[j].count("{") - lines[j].count("}")
-        if depth == 0 and j > start:
-            return j
-    return len(lines) - 1
-
-
-def _find_limit(lines: list, start: int, end: int):
-    for k in range(start, end + 1):
-        if lines[k].strip().startswith("limit = {"):
-            return k, _match_brace_block(lines, k)
-    return None
+_TAG_RE = re.compile(r"^[A-Z]{3}$")
+_VAR_SCOPE_RE = re.compile(r"^(var|event_target|global\.event_target):")
 
 
-_SCOPE_RE = re.compile(r"^\s*(%s) = \{" % "|".join(_SCOPE_KEYWORDS))
-_BUILDING_RE = re.compile(r"building = (\w+)")
+def _is_magic_chain(header: str) -> bool:
+    return all(part in _MAGIC for part in header.split("."))
 
 
-def _scan_text(text: str):
-    """Return a list of (line, building, trigger) for each replaceable limit."""
-    lines = text.split("\n")
-    suggestions = []
-    for i, line in enumerate(lines):
-        m = _SCOPE_RE.match(line)
+def _is_mergeable_scope(header: str) -> bool:
+    """True when two adjacent `header = { }` blocks always merge safely."""
+    if header in _NOT_TAGS:
+        return False
+    if header in _RELATION_SCOPES:
+        return True
+    if header.isdigit():
+        return True
+    if _TAG_RE.match(header):
+        return True
+    if _VAR_SCOPE_RE.match(header):
+        return True
+    return _is_magic_chain(header)
+
+
+def _find_mergeable(text: str, base_line: int = 0, parent: str = ""):
+    """Return (line, header) for every block that repeats its immediately
+    preceding sibling's deterministic scope. Recurses into every block body so
+    nested scopes are covered; only direct siblings at one depth are compared.
+
+    *parent* is the header of the enclosing block; merging is suppressed under
+    OR-like / weighted parents where siblings are not a plain AND list.
+    """
+    results = []
+    pos = 0
+    n = len(text)
+    prev_header = None
+    prev_end = None  # index just past the previous sibling's closing brace
+    safe_context = parent not in _NO_MERGE_PARENTS
+    while pos < n:
+        m = _OPEN_RE.search(text, pos)
         if not m:
-            continue
-        end = _match_brace_block(lines, i)
-        block = "\n".join(lines[i : end + 1])
-        if "any_owned_state" not in block or "is_in_home_area" not in block:
-            continue
-        lim = _find_limit(lines, i, end)
-        if not lim:
-            continue
-        lk, le = lim
-        bm = _BUILDING_RE.search(block)
-        if not bm:
-            continue
-        building = bm.group(1)
-        spec = _BUILDING_TRIGGER.get(building)
-        if not spec:
-            continue
-        trigger, il, coastal = spec
-        if _tokens("\n".join(lines[lk : le + 1])) == _canon_limit(
-            building, il, coastal
+            break
+        header = m.group(1)
+        open_brace = m.end() - 1
+        body, end = extract_block_from_text(text, open_brace)
+        if end == -1:
+            break
+
+        if (
+            safe_context
+            and header == prev_header
+            and prev_end is not None
+            and _is_mergeable_scope(header)
+            and text[prev_end : m.start()].strip() == ""
         ):
-            suggestions.append((lk + 1, building, trigger))
-    return suggestions
+            line = base_line + text.count("\n", 0, m.start()) + 1
+            results.append((line, header))
+
+        body_start = open_brace + 1
+        child_base = base_line + text.count("\n", 0, body_start)
+        results.extend(_find_mergeable(body, child_base, header))
+
+        prev_header = header
+        prev_end = end
+        pos = end
+    return results
 
 
 class Validator(BaseValidator):
@@ -142,32 +137,29 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         files = self._collect_files(_SCAN_PATTERNS)
-        self.log(f"Scanning {len(files)} files for simplification opportunities")
+        self.log(f"Scanning {len(files)} files for mergeable scope blocks")
 
-        dedup_results = []
+        results = []
         for path in files:
             try:
-                with open(path, encoding="utf-8") as f:
-                    text = f.read()
-            except (OSError, UnicodeDecodeError):
-                continue
-            if "any_owned_state" not in text:
+                with open(path, encoding="utf-8-sig", errors="replace") as f:
+                    text = strip_comments(f.read())
+            except OSError:
                 continue
             rel = os.path.relpath(path, self.mod_path)
-            for line, building, trigger in _scan_text(text):
-                dedup_results.append(
+            for line, header in _find_mergeable(text):
+                results.append(
                     (
-                        f"inline build-location limit for '{building}' can be replaced "
-                        f"with `limit = {{ {trigger} = yes }}`",
+                        f"consecutive `{header} = {{ }}` blocks can be merged into one",
                         rel,
                         line,
                     )
                 )
 
         self._report(
-            dedup_results,
-            "No duplicated build-location limits found",
-            "Inline build-location limits that can use a shared trigger:",
+            results,
+            "No mergeable consecutive scope blocks found",
+            "Consecutive same-scope blocks that can be merged:",
             severity=Severity.WARNING,
             category="simplification",
         )
@@ -176,5 +168,5 @@ class Validator(BaseValidator):
 if __name__ == "__main__":
     run_validator_main(
         Validator,
-        "Suggest simplifications using shared triggers in Millennium Dawn mod",
+        "Suggest merging consecutive same-scope blocks in Millennium Dawn mod",
     )

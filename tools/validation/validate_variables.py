@@ -108,7 +108,7 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     try:
         from pathlib import Path as _Path
 
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return ([], [])
 

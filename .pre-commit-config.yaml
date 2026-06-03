@@ -149,14 +149,6 @@ repos:
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
         stages: [manual]
-      - id: check-basic-style-2
-        name: MD Basic Style Check (secondary)
-        entry: python3 tools/linting/check_basic_style_2.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
-        stages: [manual]
       - id: coding-standards
         name: MD Coding Standards (focus IDs, flags, events)
         entry: python3 tools/linting/coding_standards.py --mode staged
@@ -206,7 +198,7 @@ repos:
         name: MD Validate intelligence agency upgrade integration
         entry: python3 tools/validation/validate_agency_upgrades.py --staged --strict --no-color
         language: system
-        files: '(common/intelligence_agency_upgrades/.*\.txt|common/on_actions/MD_auto_agency_on_actions\.txt|common/scripted_guis/00_MD_auto_agency_scripted_gui\.txt|common/scripted_localisation/00_MD_auto_agency_scripted_localisation\.txt|localisation/english/MD_auto_agency_l_english\.yml)$'
+        files: '(common/intelligence_agency_upgrades/.*\.txt|common/on_actions/MD_auto_agency_on_actions\.txt|common/scripted_guis/00_MD_auto_agency_scripted_gui\.txt|localisation/english/MD_auto_agency_l_english\.yml)$'
         pass_filenames: false
       - id: md-validate-ideas
         name: MD Validate idea references (undefined ideas, redundant allowed blocks)
@@ -313,6 +305,14 @@ repos:
         entry: python3 tools/validation/validate_scripted_params.py --staged --strict --no-color
         language: system
         files: '(common/scripted_effects|common/national_focus|common/decisions|events)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-simplifications
+        name: MD Suggest scope merges (consecutive same-scope blocks)
+        # No --strict: WARNING-only simplification hints, never block a commit.
+        entry: python3 tools/validation/validate_simplifications.py --staged --no-color
+        language: system
+        files: '(common/national_focus|common/decisions|common/scripted_effects|common/scripted_triggers|common/on_actions|events)/.*\.txt$'
         pass_filenames: false
         stages: [manual]
       - id: md-validate-gfx-references

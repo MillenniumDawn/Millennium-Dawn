@@ -20,7 +20,13 @@ import re
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
-from validator_common import BaseValidator, Severity, run_validator_main, strip_comments
+from validator_common import (
+    HOI4_BUILTIN_BLOCKS,
+    BaseValidator,
+    Severity,
+    run_validator_main,
+    strip_comments,
+)
 
 # ---------------------------------------------------------------------------
 # Hardcoded contracts for well-documented effects.  Auto-discovery below fills
@@ -79,34 +85,18 @@ HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
 # Keywords that introduce a new scripting scope (country/state/leader scopes).
 # When a temp variable is set inside one of these blocks it is local to that
 # scope and NOT available in the parent scope after the block closes.
+#
+# The every_/random_ scope iterators are derived from the canonical
+# HOI4_BUILTIN_BLOCKS set so a newly-added iterator only has to be registered
+# in one place. The remaining entries (relation/magic scopes, loops, and the
+# var:X = { } variable scope) aren't all engine "blocks", so they stay explicit.
 # ---------------------------------------------------------------------------
-SCOPE_CHANGING_KEYWORDS: Set[str] = {
-    "every_country",
-    "random_country",
-    "every_possible_country",
-    "random_possible_country",
-    "every_other_country",
-    "random_other_country",
-    "every_allied_country",
-    "random_allied_country",
-    "every_enemy_country",
-    "random_enemy_country",
-    "every_neighbor_country",
-    "random_neighbor_country",
-    "every_occupied_country",
-    "random_occupied_country",
-    "every_country_with_original_tag",
-    "random_country_with_original_tag",
-    "every_state",
-    "random_state",
-    "every_owned_state",
-    "random_owned_state",
-    "every_army_leader",
-    "random_army_leader",
-    "every_navy_leader",
-    "random_navy_leader",
-    "every_unit_leader",
-    "random_unit_leader",
+_SCOPE_ITERATORS = {
+    b for b in HOI4_BUILTIN_BLOCKS if b.startswith(("every_", "random_"))
+} - {
+    "random_list"  # probability buckets, not a scope change
+}
+SCOPE_CHANGING_KEYWORDS: Set[str] = _SCOPE_ITERATORS | {
     "capital_scope",
     "owner",
     "controller",

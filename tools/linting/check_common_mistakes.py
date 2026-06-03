@@ -165,7 +165,7 @@ def _scan_script_completed(root_dir):
                     continue
                 fp = os.path.join(root, filename)
                 try:
-                    with open(fp, "r", encoding="utf-8", errors="ignore") as f:
+                    with open(fp, "r", encoding="utf-8", errors="replace") as f:
                         content = f.read()
                     for m in _RE_COMPLETE_FOCUS.finditer(content):
                         focuses.add(m.group(1))
@@ -1000,7 +1000,7 @@ def check_file(filepath):
     issues = []
 
     try:
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
     except Exception:
         return issues

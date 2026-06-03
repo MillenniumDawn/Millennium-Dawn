@@ -2,8 +2,7 @@
 """
 Fix styling issues in HOI4 mod files.
 
-Automatically fixes all issues detected by check_basic_style.py and
-check_basic_style_2.py:
+Automatically fixes all issues detected by check_basic_style.py:
   - 4-space indentation -> tabs
   - Missing/extra spaces around = signs
   - Missing spaces around { } braces

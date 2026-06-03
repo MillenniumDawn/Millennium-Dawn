@@ -55,7 +55,7 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     if _should_skip(filename):
         return {}
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
@@ -72,7 +72,7 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
     if _should_skip(filename):
         return []
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return []
     cleaned = re.sub(r"#[^\n]*", "", text)

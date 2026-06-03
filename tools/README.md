@@ -64,8 +64,7 @@ Style checkers, formatters, and encoding validators. These are used in pre-commi
 
 | Script                                | Description                                                                                                                                       |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **check_basic_style.py**              | Style checker for mod `.txt` files (pre-commit + CI)                                                                                              |
-| **check_basic_style_2.py**            | Extended style checker with additional rules (pre-commit + CI)                                                                                    |
+| **check_basic_style.py**              | Style checker for mod `.txt` files: brackets, indentation, brace/equal spacing, quotes (pre-commit + CI)                                          |
 | **check_braces.py**                   | Validates matching braces in mod script files                                                                                                     |
 | **check_common_mistakes.py**          | Detects common scripting mistakes: bad value ranges, `allowed`/`cancel` no-ops, `ai_will_do factor` vs `base`, division instead of multiplication |
 | **coding_standards.py**               | Enforces Millennium Dawn coding standards                                                                                                         |

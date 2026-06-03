@@ -124,6 +124,41 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     return block_lines, i  # position AFTER the block, not i-1
 
 
+def extract_block_from_text(text: str, start: int) -> Tuple[str, int]:
+    """Extract the body of a brace-delimited block from raw text.
+
+    Finds the first ``{`` at or after *start*, then returns ``(body, end_pos)``
+    where *body* is the text between the matching braces (exclusive) and
+    *end_pos* is the index just past the closing ``}``. Braces inside
+    double-quoted strings are ignored. Returns ``("", -1)`` when no opening
+    brace is found or the block never balances.
+
+    Char-accurate counterpart to ``extract_block`` (which works on a line list
+    and miscounts braces inside strings). Use this when scanning raw text.
+    """
+    open_pos = text.find("{", start)
+    if open_pos == -1:
+        return "", -1
+    n = len(text)
+    body_start = open_pos + 1
+    depth = 1
+    i = body_start
+    in_str = False
+    while i < n:
+        c = text[i]
+        if c == '"' and text[i - 1] != "\\":
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[body_start:i], i + 1
+        i += 1
+    return "", -1
+
+
 def compact_block(block_lines: List[str]) -> List[str]:
     """Completely compact a block by removing all internal blank lines"""
     if not block_lines:
@@ -170,6 +205,48 @@ def should_skip_file(
             if pattern in filename:
                 return True
     return False
+
+
+# Common Hearts of Iron IV install locations, checked when a validator needs
+# vanilla game files (defines, interface, gfx) that the mod doesn't ship.
+HOI4_INSTALL_PATHS = [
+    # Linux (Steam)
+    os.path.expanduser(
+        "~/.steam/debian-installation/steamapps/common/Hearts of Iron IV"
+    ),
+    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
+    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
+    # Windows (Steam)
+    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
+    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
+    # macOS (Steam)
+    os.path.expanduser(
+        "~/Library/Application Support/Steam/steamapps/common/Hearts of Iron IV"
+    ),
+    # Windows (GOG)
+    "C:/GOG Games/Hearts of Iron IV",
+    "C:/Program Files (x86)/GOG Galaxy/Games/Hearts of Iron IV",
+]
+
+
+def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
+    """Locate a vanilla Hearts of Iron IV install root.
+
+    Resolution order: *explicit_path* argument, then the ``$HOI4_PATH`` env
+    var, then ``HOI4_INSTALL_PATHS``. Returns the first existing directory, or
+    None if none are found.
+    """
+    candidates: List[str] = []
+    if explicit_path:
+        candidates.append(explicit_path)
+    env_path = os.environ.get("HOI4_PATH")
+    if env_path:
+        candidates.append(env_path)
+    candidates.extend(HOI4_INSTALL_PATHS)
+    for base in candidates:
+        if base and os.path.isdir(base):
+            return base
+    return None
 
 
 def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:

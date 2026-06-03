@@ -9,6 +9,9 @@ import re
 import sys
 from typing import Dict, List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import find_hoi4_install
 from validator_common import BaseValidator, Colors, run_validator_main
 
 # Pattern: NDefines.NAMESPACE.NAME = value
@@ -20,21 +23,11 @@ VANILLA_DEFINE_RE = re.compile(r"^\s+(\w+)\s*=")
 # Pattern for namespace blocks in vanilla: NAMESPACE = {
 VANILLA_NAMESPACE_RE = re.compile(r"^(\w+)\s*=\s*\{")
 
-# Common Steam install locations
-STEAM_PATHS = [
-    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
-    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
-    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
-    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
-    os.path.expanduser(
-        "~/Library/Application Support/Steam/steamapps/common/Hearts of Iron IV"
-    ),
-]
-
 
 def find_vanilla_defines() -> Optional[str]:
     """Auto-detect the vanilla 00_defines.lua path."""
-    for base in STEAM_PATHS:
+    base = find_hoi4_install()
+    if base:
         path = os.path.join(base, "common", "defines", "00_defines.lua")
         if os.path.isfile(path):
             return path

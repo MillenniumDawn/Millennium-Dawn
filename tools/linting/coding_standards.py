@@ -19,7 +19,7 @@ _RE_OPTION = re.compile(r"\boption\s*=\s*\{")
 
 def get_tags(rootDir):
     tags = []
-    with open(rootDir, "r", encoding="utf-8", errors="ignore") as file:
+    with open(rootDir, "r", encoding="utf-8", errors="replace") as file:
         content = file.readlines()
         for line in content:
             if not line.startswith("#") and line.strip():
@@ -49,7 +49,7 @@ def hasFocusFormat(focus_id):
 def checkFocuses(filepath):
     warning_count_file = 0
     lineNum = 0
-    with open(filepath, "r", encoding="utf-8", errors="ignore") as file:
+    with open(filepath, "r", encoding="utf-8", errors="replace") as file:
         content = file.readlines()
         braces = 0
         current_focus_id = ""
@@ -137,57 +137,6 @@ def checkFocuses(filepath):
     return warning_count_file
 
 
-def check_ideas(filepath):
-    error_count_file = 0
-    lineNum = 0
-    pdxIdeaCode = [
-        "allowed",
-        "modifier",
-        "country",
-        "allowed_civil_war",
-        "OR",
-        "AND",
-        "ideas",
-        "NOT",
-        "CANCEL",
-        "on_add",
-        "available",
-        "ai_will_do",
-        "rule",
-        "do_effect",
-    ]
-
-    pdxIdeaCode = [element.lower() for element in pdxIdeaCode]
-    with open(filepath, "r", encoding="utf-8", errors="ignore") as file:
-        content = file.readlines()
-        braces = 0
-        for line in content:
-            lineNum += 1
-            if not line.startswith("#") and line.strip():
-                if "{" in line:
-                    braces += 1
-                if braces == 3:
-                    hasIdea = re.search(r"([A-Za-z0-9_-]+)\s?=\s?{", line, re.M | re.I)
-                    if hasIdea:
-                        countryIdea = re.search(
-                            r"([A-Z]{3}_[a-z0-9_-]+)\s?=\s?{", line, re.M
-                        )
-                        genericIdea = re.search(r"([a-z0-9_-]+)\s?=\s?{", line, re.M)
-                        if not countryIdea and not genericIdea:
-                            print(
-                                "ERROR: "
-                                + hasIdea.group(1)
-                                + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
-                                    clean_filepath(filepath), lineNum
-                                )
-                            )
-                            error_count_file += 1
-                if "}" in line:
-                    braces -= 1
-
-    return error_count_file
-
-
 def check_event_for_logs(filepath):
     warning_count_file = 0
     lineNum = 0
@@ -198,7 +147,7 @@ def check_event_for_logs(filepath):
     inNewsEvent = False
     eventBraces = 0
 
-    with open(filepath, "r", encoding="utf-8", errors="ignore") as file:
+    with open(filepath, "r", encoding="utf-8", errors="replace") as file:
         content = file.readlines()
         braces = 0
         for line in content:
@@ -273,84 +222,6 @@ def check_event_for_logs(filepath):
                         hasOtherDefinitions = 0
 
     return warning_count_file
-
-
-def check_Flags(filepath):
-    error_count_file = 0
-    lineNum = 0
-
-    with open(filepath, "r", encoding="utf-8", errors="ignore") as file:
-        content = file.readlines()
-        advFlag = 0
-        isGlobalFlag = 0
-        countryFlags = []
-        globalFlags = []
-        for line in content:
-            lineNum += 1
-            if not line.startswith("#") and line.strip():
-                if (
-                    "set_country_flag" in line
-                    or "has_country_flag" in line
-                    or "set_global_flag" in line
-                    or "has_global_flag" in line
-                ):
-                    if advFlag == 0:
-                        hasSimpleFlag = re.search(
-                            r"[a-z_]+_flag\s?=\s?([A-Za-z0-9-_]+)", line, re.M
-                        )
-                        hasAdvFlag = re.search(
-                            r"[a-z_]+_flag\s?=\s?{", line, re.M | re.I
-                        )
-                        if hasAdvFlag:
-                            advFlag = 1
-                            if "global_flag" in line:
-                                isGlobalFlag = 1
-                        elif hasSimpleFlag:
-                            simpleFlagFormat = re.search(
-                                r"([a-z_]+_flag\s?=\s?)([A-Z0-9]{1}([a-z0-9]+)?_[A-Z0-9]{1}([a-z0-9]+)?)(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?$",
-                                line,
-                                re.M | re.I,
-                            )
-                            if not simpleFlagFormat:
-                                print(
-                                    "ERROR: "
-                                    + hasSimpleFlag.group(1)
-                                    + " is formatted incorrectly, must be The_Flags_Name in {0} Line number: {1}".format(
-                                        clean_filepath(filepath), lineNum
-                                    )
-                                )
-                                error_count_file += 1
-                            else:
-                                if "global_flag" in line:
-                                    globalFlags.append(hasSimpleFlag.group(1))
-                                else:
-                                    countryFlags.append(hasSimpleFlag.group(1))
-
-                if advFlag == 1 and ("flag=" in line or "flag =" in line):
-                    hasAdvFlag2 = re.search(r"flag\s?=\s([a-zA-Z0-9\-\_]+)", line, re.M)
-                    if hasAdvFlag2:
-                        advFlag = 0
-                        advFlagFormat = re.search(
-                            r"flag\s?=\s?(([A-Z0-9]{1}([a-z0-9]+)?_[A-Z0-9]{1}([a-z0-9]+)?)(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?$)",
-                            line,
-                            re.M,
-                        )
-                        if not advFlagFormat:
-                            print(
-                                "ERROR: "
-                                + hasAdvFlag2.group(1)
-                                + " is formatted incorrectly, must be The_Flags_Name {0} Line number: {1}".format(
-                                    clean_filepath(filepath), lineNum
-                                )
-                            )
-                            error_count_file += 1
-                        else:
-                            if isGlobalFlag == 1:
-                                globalFlags.append(hasAdvFlag2.group(1))
-                                isGlobalFlag = 0
-                            else:
-                                countryFlags.append(hasAdvFlag2.group(1))
-    return error_count_file, globalFlags, countryFlags
 
 
 def main():

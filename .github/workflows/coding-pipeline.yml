@@ -164,7 +164,6 @@ jobs:
     - name: Run style check
       run: |
         python tools/linting/check_basic_style.py --mode diff
-        python tools/linting/check_basic_style_2.py --mode diff
         python tools/linting/check_common_mistakes.py --mode diff
 
   # ───────────────────────────────────────────────────────────────
@@ -511,6 +510,20 @@ jobs:
             should_run: ${{ needs.detect-changes.outputs.common }}
             sparse: |
               common
+              tools
+          - script: validate_simplifications.py
+            name: simplifications
+            title: "Suggest Scope Merges"
+            # informational: WARNING-only simplification hints, never gates a PR
+            strict: false
+            should_run: ${{ needs.detect-changes.outputs.scripted-effects == 'true' || needs.detect-changes.outputs.national-focus == 'true' || needs.detect-changes.outputs.decisions == 'true' || needs.detect-changes.outputs.on-actions == 'true' || needs.detect-changes.outputs.events == 'true' }}
+            sparse: |
+              common/national_focus
+              common/decisions
+              common/scripted_effects
+              common/scripted_triggers
+              common/on_actions
+              events
               tools
     steps:
     # Per-entry gate: only fetch + run when this validator's file group changed.

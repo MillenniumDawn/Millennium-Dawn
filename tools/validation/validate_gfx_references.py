@@ -34,7 +34,12 @@ from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import compute_line_offsets, line_for_offset
+from shared_utils import (
+    compute_line_offsets,
+    extract_block_from_text,
+    find_hoi4_install,
+    line_for_offset,
+)
 from validator_common import BaseValidator, Colors, Severity, run_validator_main
 
 # ---------------------------------------------------------------------------
@@ -167,27 +172,11 @@ _VANILLA_PREFIXES = (
     "GFX_politics_",
 )
 
-# Common Steam install locations for vanilla HOI4 — used to detect vanilla
-# interface/*.gfx for sprite resolution. Mirrors validate_defines.py.
-_VANILLA_HOI4_PATHS = [
-    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
-    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
-    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
-    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
-    os.path.expanduser(
-        "~/Library/Application Support/Steam/steamapps/common/Hearts of Iron IV"
-    ),
-]
-
 
 def _find_vanilla_interface_dir() -> Optional[str]:
     """Return the vanilla HOI4 interface/ directory if discoverable."""
-    env_path = os.environ.get("HOI4_PATH")
-    if env_path:
-        interface = os.path.join(env_path, "interface")
-        if os.path.isdir(interface):
-            return interface
-    for base in _VANILLA_HOI4_PATHS:
+    base = find_hoi4_install()
+    if base:
         interface = os.path.join(base, "interface")
         if os.path.isdir(interface):
             return interface
@@ -213,31 +202,6 @@ def _is_likely_vanilla(name: str) -> bool:
     return any(name.startswith(p) for p in _VANILLA_PREFIXES)
 
 
-def _balance_braces(text: str, start: int) -> Optional[int]:
-    """Return position of the closing '}' matching the '{' at text[start-1].
-
-    ``start`` is the index *after* the opening brace. Returns None if the
-    text is unbalanced.
-    """
-    depth = 1
-    i = start
-    n = len(text)
-    in_str = False
-    while i < n:
-        c = text[i]
-        if c == '"' and (i == 0 or text[i - 1] != "\\"):
-            in_str = not in_str
-        elif not in_str:
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    return i
-        i += 1
-    return None
-
-
 # ---------------------------------------------------------------------------
 # Per-file worker functions (top-level so they're picklable)
 # ---------------------------------------------------------------------------
@@ -256,15 +220,13 @@ def _parse_gfx_file(filepath: str) -> Set[str]:
 
     for m in _GFX_SPRITE_TYPES.finditer(text):
         block_start = m.end()
-        block_end = _balance_braces(text, block_start)
-        if block_end is None:
+        snippet, end = extract_block_from_text(text, block_start - 1)
+        if end == -1:
             # Unbalanced braces: fall back to scanning the rest of the line.
             line_end = text.find("\n", m.start())
             snippet = text[
                 block_start : line_end if line_end != -1 else block_start + 200
             ]
-        else:
-            snippet = text[block_start:block_end]
         nm = _GFX_NAME.search(snippet)
         if nm:
             names.add(nm.group(1))

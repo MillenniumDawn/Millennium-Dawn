@@ -19,6 +19,7 @@ from typing import Dict, FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import compute_line_offsets, line_for_offset
 from validator_common import (
     BaseValidator,
     FileOpener,
@@ -153,23 +154,11 @@ def _extract_modifier_blocks(text: str) -> List[Tuple[int, str]]:
     skip_depth_stack: List[int] = []  # stack of depths at which skip-blocks started
     current_depth = 0
 
-    lines = text.split("\n")
-    # Build a cumulative-offset table so we can map char offset → line number
-    cum_offsets: List[int] = []
-    off = 0
-    for line in lines:
-        cum_offsets.append(off)
-        off += len(line) + 1  # +1 for \n
+    # Map char offset → 1-based line number via the shared bisect helper.
+    _line_offsets = compute_line_offsets(text)
 
     def char_to_lineno(pos: int) -> int:
-        lo, hi = 0, len(cum_offsets) - 1
-        while lo < hi:
-            mid = (lo + hi + 1) // 2
-            if cum_offsets[mid] <= pos:
-                lo = mid
-            else:
-                hi = mid - 1
-        return lo + 1  # 1-based
+        return line_for_offset(_line_offsets, pos)
 
     i = 0
     current_depth = 0

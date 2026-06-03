@@ -11,10 +11,14 @@
 ##########################
 import os
 import re
+import sys
 from collections import defaultdict
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import extract_block_from_text as _extract_block
 from validator_common import (
     BaseValidator,
     Colors,
@@ -49,25 +53,6 @@ _SHARED_REF_RE = re.compile(r"\bshared_focus\s*=\s*(\w+)")
 # ---------------------------------------------------------------------------
 # Per-file parsing (pool workers)
 # ---------------------------------------------------------------------------
-
-
-def _extract_block(text: str, start: int) -> Tuple[str, int]:
-    """Return the content between the first { after *start* and its matching },
-    and the position right after the closing }.  Returns ("", start) on failure."""
-    open_pos = text.find("{", start)
-    if open_pos == -1:
-        return "", start
-    depth = 1
-    i = open_pos + 1
-    while i < len(text) and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    if depth != 0:
-        return "", start
-    return text[open_pos + 1 : i - 1], i
 
 
 def _line_of(text: str, pos: int) -> int:
@@ -116,7 +101,7 @@ def parse_focus_file(args: Tuple[str, str]) -> Dict:
     """Read one focus tree file and return its parsed structure, content-cached."""
     filepath, mod_path = args
     try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="ignore") as fh:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
             raw = fh.read()
     except Exception:
         return {"filepath": filepath, "trees": [], "shared_defs": {}}

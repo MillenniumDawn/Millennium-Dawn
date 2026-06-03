@@ -23,6 +23,7 @@ from typing import Dict, List, Tuple
 
 import disk_cache
 from validator_common import (
+    KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
     Colors,
     FileOpener,
@@ -32,73 +33,10 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = ["FR_loc", "00_operations", "MD_dm_modifiers"]
 
-# Vanilla or known loc keys that are valid but not defined in mod localisation files
-VANILLA_LOC_KEYS = {
-    "SP_UNLOCK_PROJECT",
-    "SP_UNLOCK_TECH",
-    "available_scientist_one_line_tt",
-    # Vanilla HOI4 building name keys (mod overrides only the _desc variants)
-    "air_base",
-    "infrastructure",
-    "nuclear_reactor",
-    "radar_station",
-    # Vanilla US Congress keys borrowed from MTG
-    "mtg_usa_congress_add_state_tt",
-    "mtg_usa_congress_large_opposition_tt",
-    "mtg_usa_congress_large_support_tt",
-    "mtg_usa_congress_medium_opposition_tt",
-    "mtg_usa_congress_medium_support_tt",
-    "mtg_usa_congress_remove_state_tt",
-    "mtg_usa_congress_small_opposition_tt",
-    "mtg_usa_congress_small_support_tt",
-    "mtg_usa_house_large_opposition_tt",
-    "mtg_usa_house_large_support_tt",
-    "mtg_usa_house_medium_opposition_tt",
-    "mtg_usa_house_medium_support_tt",
-    "mtg_usa_house_small_opposition_tt",
-    "mtg_usa_house_small_support_tt",
-    "mtg_usa_senate_large_opposition_tt",
-    "mtg_usa_senate_large_support_tt",
-    "mtg_usa_senate_medium_opposition_tt",
-    "mtg_usa_senate_medium_support_tt",
-    "mtg_usa_senate_small_opposition_tt",
-    "mtg_usa_senate_small_support_tt",
-    "free_agency_upgrade_tt",
-    # Vanilla operative mission tooltip keys
-    "OPERATIVE_MISSION_BOOST_IDEOLOGY_TT",
-    "OPERATIVE_MISSION_BUILD_INTEL_NETWORK_TT",
-    "OPERATIVE_MISSION_CONTROL_TRADE_TT",
-    "OPERATIVE_MISSION_COUNTER_INTELLIGENCE_TT",
-    "OPERATIVE_MISSION_DIPLOMATIC_PRESSURE_TT",
-    "OPERATIVE_MISSION_NO_MISSION_TT",
-    "OPERATIVE_MISSION_PROPAGANDA_TT",
-    "OPERATIVE_MISSION_QUIET_INTEL_NETWORK_TT",
-    "OPERATIVE_MISSION_ROOT_OUT_RESISTANCE_TT",
-    # Vanilla diplomatic action rule tooltip keys (defined in vanilla loc)
-    "RULE_ALLOW_GUARANTEES_BLOCKED_TOOLTIP",
-    "RULE_ALLOW_GUARANTEES_SAME_IDEOLOGY_TOOLTIP",
-    "RULE_ALLOW_LEAVE_FACTION_BLOCKED_TOOLTIP",
-    "RULE_ALLOW_LEND_LEASE_BLOCKED_TT",
-    "RULE_ALLOW_LEND_LEASE_SAME_FACTION_TT",
-    "RULE_ALLOW_LEND_LEASE_SAME_IDEOLOGY_TT",
-    "RULE_ALLOW_LICENSING_BLOCKED_TT",
-    "RULE_ALLOW_LICENSING_SAME_FACTION_TT",
-    "RULE_ALLOW_LICENSING_SAME_IDEOLOGY_TT",
-    "RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT",
-    "RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT",
-    "RULE_ALLOW_RELEASE_NATIONS_BLOCKED_TOOLTIP",
-    "RULE_ALLOW_REVOKE_GUARANTEES_BLOCKED_TOOLTIP",
-    "RULE_ASSUME_LEADERSHIP_BLOCKED_TOOLTIP",
-    "RULE_BOOST_PARTY_AI_ONLY_TT",
-    "RULE_BOOST_PARTY_BLOCKED_TT",
-    "RULE_BOOST_PARTY_PLAYER_ONLY_TT",
-    "RULE_COUP_AI_ONLY_TT",
-    "RULE_COUP_BLOCKED_TT",
-    "RULE_KICK_FROM_FACTION_BLOCKED_TOOLTIP",
-    "RULE_VOLUNTEERS_BLOCKED_TT",
-    "RULE_VOLUNTEERS_SAME_IDEOLOGY_TT",
-    "RULE_WARGOALS_BLOCKED_TT",
-}
+# Vanilla / reused-vanilla loc keys that are valid but not defined in the mod's
+# localisation files. Single source of truth lives in validator_common so the
+# focus/idea loc loaders and this reference checker share one allowlist.
+VANILLA_LOC_KEYS = KNOWN_VANILLA_LOC_KEYS
 
 
 def _should_skip(filename: str) -> bool:

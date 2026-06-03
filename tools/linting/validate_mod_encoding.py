@@ -51,19 +51,20 @@ def main():
         return 1
 
     files = [Path(f) for f in sys.argv[1:]]
-    all_valid = True
+    valid_count = 0
+    error_count = 0
 
     for file_path in files:
-        if not validate_mod_file(file_path):
-            all_valid = False
+        if validate_mod_file(file_path):
+            valid_count += 1
+        else:
+            error_count += 1
 
     # Summary for multiple files
     if len(files) > 1:
-        valid_count = sum(1 for f in files if f.suffix == ".mod")
-        error_count = len(files) - valid_count if not all_valid else 0
-        print(f"\nSummary: {valid_count - error_count} valid, {error_count} errors")
+        print(f"\nSummary: {valid_count} valid, {error_count} errors")
 
-    return 0 if all_valid else 1
+    return 0 if error_count == 0 else 1
 
 
 if __name__ == "__main__":
