@@ -46,8 +46,11 @@ def render(
 
     parts.append(_render_metadata_strip(ctx))
     parts.append("")
-    parts.append(_render_summary_table(runs))
-    parts.append("")
+
+    summary = _render_summary_table(runs)
+    if summary:
+        parts.append(summary)
+        parts.append("")
 
     errored_or_warned = [
         i for i in issues if i.severity in (Severity.ERROR, Severity.WARNING)
@@ -79,12 +82,21 @@ def _humanize(slug: str) -> str:
     return slug.replace("-", " ").replace("_", " ").title()
 
 
+def _plural(n: int, word: str) -> str:
+    """'5', 'error' → '5 errors'. Thousands-separated, pluralised on n != 1."""
+    return f"{n:,} {word}{'s' if n != 1 else ''}"
+
+
+def _totals(runs: List[ValidatorRun]) -> Tuple[int, int]:
+    return sum(r.errors for r in runs), sum(r.warnings for r in runs)
+
+
 def _count_label(errors: int, warnings: int) -> str:
     parts = []
     if errors:
-        parts.append(f"{errors:,} error{'s' if errors != 1 else ''}")
+        parts.append(_plural(errors, "error"))
     if warnings:
-        parts.append(f"{warnings:,} warning{'s' if warnings != 1 else ''}")
+        parts.append(_plural(warnings, "warning"))
     return ", ".join(parts) or "0 issues"
 
 
@@ -103,30 +115,21 @@ def _render_verdict(runs: List[ValidatorRun]) -> str:
     """A GitHub alert callout giving an at-a-glance pass/fail verdict."""
     if not runs:
         return ""
-    total_errors = sum(r.errors for r in runs)
-    total_warnings = sum(r.warnings for r in runs)
+    total_errors, total_warnings = _totals(runs)
 
     if total_errors:
-        line = (
-            f"{total_errors:,} error{'s' if total_errors != 1 else ''} "
-            "must be fixed before merge."
-        )
+        line = f"{_plural(total_errors, 'error')} must be fixed before merge."
         if total_warnings:
-            line += (
-                f" ({total_warnings:,} warning"
-                f"{'s' if total_warnings != 1 else ''}, advisory.)"
-            )
+            line += f" ({_plural(total_warnings, 'warning')}, advisory.)"
         return f"> [!CAUTION]\n> ❌ {line}"
 
     if total_warnings:
-        line = (
-            f"{total_warnings:,} warning{'s' if total_warnings != 1 else ''} "
-            "to review. None block merge."
-        )
+        line = f"{_plural(total_warnings, 'warning')} to review. None block merge."
         return f"> [!WARNING]\n> ⚠️ {line}"
 
-    n = len(runs)
-    return f"> [!NOTE]\n> ✅ All {n} validator{'s' if n != 1 else ''} passed. Nothing to fix."
+    return (
+        f"> [!NOTE]\n> ✅ All {_plural(len(runs), 'validator')} passed. Nothing to fix."
+    )
 
 
 # ── Metadata strip ─────────────────────────────────────────────────────────────
@@ -152,20 +155,20 @@ def _render_summary_table(runs: List[ValidatorRun]) -> str:
     if not runs:
         return "_No validator results found._"
 
-    with_findings = [r for r in runs if r.errors or r.warnings]
-    passed = [r for r in runs if not (r.errors or r.warnings)]
-    total_errors = sum(r.errors for r in runs)
-    total_warnings = sum(r.warnings for r in runs)
+    with_findings: List[ValidatorRun] = []
+    passed_count = 0
+    for r in runs:
+        if r.errors or r.warnings:
+            with_findings.append(r)
+        else:
+            passed_count += 1
 
-    # All clean — skip the table entirely, just say so.
+    # All clean — the verdict banner already states this; no table to show.
     if not with_findings:
-        n = len(runs)
-        return (
-            f"## Summary\n\n✅ All {n} validator{'s' if n != 1 else ''} "
-            "passed with no issues."
-        )
+        return ""
 
     # Only validators with findings get a row; the rest fold into one line.
+    total_errors, total_warnings = _totals(with_findings)
     header = "| Validator | Errors | Warnings |\n|-----------|-------:|---------:|"
     rows = [
         f"| {_severity_icon(r.errors, r.warnings)} {r.title} | {r.errors:,} | {r.warnings:,} |"
@@ -174,10 +177,9 @@ def _render_summary_table(runs: List[ValidatorRun]) -> str:
     rows.append(f"| **Total** | **{total_errors:,}** | **{total_warnings:,}** |")
 
     out = "## Summary\n\n" + header + "\n" + "\n".join(rows)
-    if passed:
+    if passed_count:
         out += (
-            f"\n\n✅ {len(passed)} other validator"
-            f"{'s' if len(passed) != 1 else ''} passed with no issues."
+            f"\n\n✅ {_plural(passed_count, 'other validator')} passed with no issues."
         )
     return out
 
@@ -289,7 +291,7 @@ def _file_ref(issue: Issue, ctx: ReportContext) -> str:
     have the repo + commit to build a URL."""
     label = f"{issue.file}:{issue.line}" if issue.line else issue.file
     code = f"`{label}`"
-    if ctx and ctx.repo and ctx.commit_sha and issue.file:
+    if ctx.repo and ctx.commit_sha and issue.file:
         url = f"https://github.com/{ctx.repo}/blob/{ctx.commit_sha}/{issue.file}"
         if issue.line:
             url += f"#L{issue.line}"
