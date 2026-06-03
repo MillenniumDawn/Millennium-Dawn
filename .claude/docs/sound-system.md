@@ -1,8 +1,6 @@
 # Sound System Reference
 
-How Millennium Dawn defines sound effects, combat sounds, and country voicelines.
-
-Music is documented in `.claude/docs/music-system.md`.
+How MD defines sound effects, combat sounds, and country voicelines. Music: see `.claude/docs/music-system.md`.
 
 ## File types
 
@@ -62,12 +60,7 @@ sound/
 ## Sound definition format
 
 ```
-sound = {
-    name = <name>
-    file = <path>
-    always_load = <bool>
-    volume = <float>
-}
+sound = { name = <name> file = <path> always_load = <bool> volume = <float> }
 ```
 
 | Field         | Purpose                                          |
@@ -87,27 +80,19 @@ soundeffect = {
     falloff = <name>
     sounds = {
         sound = <name>
-        weighted_sound = {
-            sound = <name>
-            weight = int
-        }
+        weighted_sound = { sound = <name> weight = int }
     }
-
     loop = <bool>
     is3d = <bool>
     random_sound_when_looping = <bool>
-
     max_audible = <int>
     max_audible_behaviour = fail
-
     volume = <float>
     fade_in = <float>
     fade_out = <float>
-
     delay_random_offset = { <float> <float> }
     volume_random_offset = { <float> <float> }
     playbackrate_random_offset = { <float> <float> }
-
     prevent_random_repetition = <bool>
 }
 ```
@@ -132,12 +117,7 @@ soundeffect = {
 Controls how 3D sounds attenuate with distance:
 
 ```
-falloff = {
-    name = <name>
-    min_distance = <float>
-    max_distance = <float>
-    height_scale = <float>
-}
+falloff = { name = <name> min_distance = <float> max_distance = <float> height_scale = <float> }
 ```
 
 | Field          | Purpose                                            |
@@ -155,9 +135,7 @@ Categories apply a compressor to grouped soundeffects:
 ```
 category = {
     name = <name>
-    soundeffects = {
-        <soundeffect_name>
-    }
+    soundeffects = { <soundeffect_name> }
     compressor = {
         enabled = yes
         pregain = <float>
@@ -181,8 +159,6 @@ category = {
 
 ### Global compressors
 
-Two built-in global compressors exist:
-
 - `master_compressor` — applied to all sound effects
 - `music_compressor` — applied to all music
 
@@ -195,13 +171,7 @@ Maps unit types to sound effects that play during battle animations:
 ```
 infantry_sound = {
     sound_effect = "infantry_rifle_layers"
-    units = {
-        infantry
-        paratrooper
-        mountaineers
-        marine
-        motorized
-    }
+    units = { infantry paratrooper mountaineers marine motorized }
     divisions_range = { 5 -1 }
 }
 ```
@@ -247,15 +217,14 @@ sound/<tag>/<prefix>_<type>_<NNN>.wav
 
 Examples: `us_idle_001.wav`, `us_move_003.wav`, `gr_positive_007.wav`
 
-The prefix is **not always the tag** — it may be an abbreviation (e.g., `us` for USA,
-`pe` for PER, `gr` for GRE, `as` for AST).
+The prefix is **not always the tag** — it may be an abbreviation (e.g., `us` for USA, `pe` for PER, `gr` for GRE, `as` for AST).
 
 ### Voiceline structure in `vo.asset`
 
-The file has three layers:
+Three layers:
 
 1. **Category block** — a `Voices` category listing all `TAG_infantry_*` soundeffect names
-2. **Sound definitions** — individual `sound = { name = "xx_type_NNN" file = "tag/xx_type_NNN.wav" }` entries
+2. **Sound definitions** — `sound = { name = "xx_type_NNN" file = "tag/xx_type_NNN.wav" }` entries
 3. **Soundeffect definitions** — `soundeffect = { name = TAG_infantry_type ... }` grouping the sounds
 
 Example soundeffect:
@@ -263,12 +232,7 @@ Example soundeffect:
 ```
 soundeffect = {
     name = "USA_infantry_idle"
-    sounds = {
-        sound = us_idle_001
-        sound = us_idle_002
-        sound = us_idle_003
-        ...
-    }
+    sounds = { sound = us_idle_001 sound = us_idle_002 sound = us_idle_003 ... }
     max_audible = 1
     max_audible_behaviour = fail
     volume = 0.65
@@ -280,24 +244,17 @@ soundeffect = {
 
 ### Adding voicelines for a new country
 
-1. **Record/source WAV files** — see audio requirements below
-2. **Create directory** `sound/<tag_lowercase>/` and place WAV files there
+1. **Record/source WAV files** — see audio requirements below.
+2. **Create directory** `sound/<tag_lowercase>/` and place WAV files there.
 3. **Add sound definitions** to `vo.asset`:
    ```
-   sound = {
-       name = "xx_idle_001"
-       file = "tag/xx_idle_001.wav"
-   }
+   sound = { name = "xx_idle_001" file = "tag/xx_idle_001.wav" }
    ```
 4. **Add soundeffect definitions** to `vo.asset` for each of the 5 types:
    ```
    soundeffect = {
        name = "TAG_infantry_idle"
-       sounds = {
-           sound = xx_idle_001
-           sound = xx_idle_002
-           ...
-       }
+       sounds = { sound = xx_idle_001 sound = xx_idle_002 ... }
        max_audible = 1
        max_audible_behaviour = fail
        volume = 0.65

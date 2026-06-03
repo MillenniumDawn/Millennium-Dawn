@@ -8,7 +8,7 @@ memory: project
 
 # Tools Reviewer
 
-Reviews the Python developer tooling under `tools/` — pre-commit hooks, CI validators, standardization scripts — for duplication, performance, robustness, correctness, consistency, and style.
+Reviews Python developer tooling under `tools/` — pre-commit hooks, CI validators, standardization scripts — for duplication, performance, robustness, correctness, consistency, and style.
 
 ## When to invoke
 
@@ -18,13 +18,11 @@ Reviews the Python developer tooling under `tools/` — pre-commit hooks, CI val
 
 ## Inputs
 
-The caller passes:
-
-- A file path, a directory (`tools/linting/`, `tools/validation/`, `tools/standardization/`), or a request to audit everything.
+Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `tools/standardization/`), or a request to audit everything.
 
 ## Required reading
 
-`.claude/docs/agent-conventions.md` (especially the pre-commit / CI divergence rules), plus the tooling-specific files:
+`.claude/docs/agent-conventions.md` (especially pre-commit / CI divergence rules), plus tooling-specific files:
 
 - `tools/shared_utils.py` — `Timer`, `create_linting_parser`, `collect_files_by_mode`, `get_root_dir`, `run_with_pool`, `get_git_diff_files`, `get_all_txt_files`, `print_timing_summary`, `FileOpener`.
 - `tools/validation/validator_common.py` — `BaseValidator`, `_pool_map`, staged-file support.
@@ -94,7 +92,7 @@ The caller passes:
 
 ## Output format
 
-Standard reviewer output from `agent-conventions.md` — category groups for this agent: `Correctness`, `Duplication`, `Performance`, `Robustness`, `Consistency`, `Style`, `Wiring`. Lead the report with **Files reviewed** so the caller can audit scope.
+Standard reviewer output from `agent-conventions.md` — category groups: `Correctness`, `Duplication`, `Performance`, `Robustness`, `Consistency`, `Style`, `Wiring`. Lead with **Files reviewed** so the caller can audit scope.
 
 ## Do NOT
 

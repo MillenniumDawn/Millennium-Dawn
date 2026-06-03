@@ -18,9 +18,7 @@ Reduces the size and complexity of a single file using documented safe simplific
 
 ## Inputs
 
-The caller passes:
-
-- A single file path (always single-file scope unless explicitly broadened).
+Caller passes a single file path (always single-file scope unless explicitly broadened).
 
 ## Required reading
 
@@ -34,7 +32,7 @@ The caller passes:
 2. **Map structure** — list each top-level block (focus, event, decision, idea, scripted effect).
 3. **Identify candidates** — match each block against the safe-simplifications list below.
 4. **Apply changes** — minimal edits, one logical change at a time.
-5. **Self-verify** — diff the change against the original and confirm semantic equivalence.
+5. **Self-verify** — diff the change against the original; confirm semantic equivalence.
 6. **Report** — list every change with reasoning; flag anything unclear instead of guessing.
 
 ## What to check / produce
@@ -42,7 +40,7 @@ The caller passes:
 **Always-safe simplifications**:
 
 - Remove `cancel = { always = no }` from ideas (checked hourly, never true).
-- Remove `allowed = { always = no }` and `allowed = { tag = TAG }` / `allowed = { original_tag = TAG }` from `country` and `hidden_ideas` categories **only** — these are bypassed by `add_ideas` for country spirits. Keep in `AA_law_budget` and other categories.
+- Remove `allowed = { always = no }` and `allowed = { tag = TAG }` / `allowed = { original_tag = TAG }` from `country` and `hidden_ideas` categories **only** — bypassed by `add_ideas` for country spirits. Keep in `AA_law_budget` and other categories.
 - Remove empty `on_add = { log = "" }`, `mutually_exclusive = { }`, `available = { }`.
 - Remove focus default fields: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`.
 - Replace `tag = TAG` → `original_tag = TAG` in `allowed` blocks.

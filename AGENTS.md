@@ -32,7 +32,7 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 
 - Tabs for indentation; `{` on same line, `}` on own line at outer indent; 1 blank line between elements
 - Simple checks on one line: `available = { has_country_flag = some_flag }`
-- No unnecessary comments (see `.claude/rules/general-rules.md`)
+- Comments are small, targeted, and load-bearing: add one only when the _why_ is non-obvious and removing it would lose real information. Cut anything that restates the code, narrates a change, or points at callers (see `.claude/rules/general-rules.md`; Python tooling: `tools/COMMENT_STYLE.md`)
 - Remove unused/commented-out code
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`)
@@ -112,6 +112,16 @@ Equipment variants (`common/ai_equipment/`): see `.claude/docs/ai-equipment-refe
 ## Git Commits
 
 - Do NOT add `Co-Authored-By` or sign commits — the project does not use commit signing
+
+## Output Style
+
+Keep all output token-efficient: conversation replies, agent hand-back reports, PR/issue/Changelog text, and commit messages alike.
+
+- Lead with the conclusion (the answer, what changed, what was found). Cut preamble and restating the request.
+- Report facts, not process. Skip "I read X, then I...", tool-by-tool narration, and self-congratulation.
+- No padding confirmations ("As requested, I have successfully..."). State the result plainly.
+- Prefer terse bullets and `file:line` references over prose paragraphs. Drop empty sections rather than writing "N/A".
+- Be complete, not verbose: never drop a real finding, caveat, path, or identifier to save space. Trim words, not information.
 
 ## Key Resources
 
