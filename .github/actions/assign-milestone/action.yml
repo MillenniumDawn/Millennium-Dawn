@@ -1,29 +1,32 @@
-name: Auto Assign Milestone
+name: Assign Milestone
+description: Assign the lowest open milestone to an issue or PR by number.
 
-on:
-  pull_request_target:
-    types: [opened]
+inputs:
+  issue-number:
+    description: Issue or PR number to assign a milestone to
+    required: true
+  github-token:
+    description: GitHub token with issues:write permission
+    required: true
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
+runs:
+  using: composite
+  steps:
+    - name: Assign earliest open milestone
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const issueNumber = parseInt('${{ inputs.issue-number }}', 10);
+          try {
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
 
-jobs:
-  assign-milestone:
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-    steps:
-      - name: Assign earliest open milestone
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const pr = context.payload.pull_request;
-
-            if (pr.milestone) {
-              console.log(`PR #${pr.number} already has milestone: ${pr.milestone.title}`);
+            if (issue.data.milestone) {
+              console.log(`#${issueNumber} already has milestone: ${issue.data.milestone.title}`);
               return;
             }
 
@@ -58,8 +61,11 @@ jobs:
             await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: pr.number,
+              issue_number: issueNumber,
               milestone: milestone.number,
             });
 
-            console.log(`Assigned milestone "${milestone.title}" to PR #${pr.number}`);
+            console.log(`Assigned milestone "${milestone.title}" to #${issueNumber}`);
+          } catch (err) {
+            core.warning(`assign-milestone skipped for #${issueNumber}: ${err.message}`);
+          }
