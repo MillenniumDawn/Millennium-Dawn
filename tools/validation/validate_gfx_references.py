@@ -34,6 +34,7 @@ from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import disk_cache
 from shared_utils import (
     compute_line_offsets,
     extract_block_from_text,
@@ -196,99 +197,119 @@ def _is_likely_vanilla(name: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _parse_gfx_file(filepath: str) -> Set[str]:
-    """Return the set of GFX sprite names defined in a .gfx file."""
+# Per-file parsers take (filepath, mod_path) and disk-cache their result keyed
+# on file content, so a warm run only re-parses changed files. .gfx/.gui scans
+# cover all of interface/, so the cache is the bulk of the speedup.
+
+
+def _read_raw(filepath: str) -> Optional[str]:
     try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            return fh.read()
     except Exception:
+        return None
+
+
+def _parse_gfx_file(args: Tuple[str, str]) -> Set[str]:
+    """Return the set of GFX sprite names defined in a .gfx file."""
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
         return set()
 
-    text = _strip_comments(raw)
-    names: Set[str] = set()
+    def _compute():
+        text = _strip_comments(raw)
+        names: Set[str] = set()
+        for m in _GFX_SPRITE_TYPES.finditer(text):
+            block_start = m.end()
+            snippet, end = extract_block_from_text(text, block_start - 1)
+            if end == -1:
+                # Unbalanced braces: fall back to scanning the rest of the line.
+                line_end = text.find("\n", m.start())
+                snippet = text[
+                    block_start : line_end if line_end != -1 else block_start + 200
+                ]
+            nm = _GFX_NAME.search(snippet)
+            if nm:
+                names.add(nm.group(1))
+        return names
 
-    for m in _GFX_SPRITE_TYPES.finditer(text):
-        block_start = m.end()
-        snippet, end = extract_block_from_text(text, block_start - 1)
-        if end == -1:
-            # Unbalanced braces: fall back to scanning the rest of the line.
-            line_end = text.find("\n", m.start())
-            snippet = text[
-                block_start : line_end if line_end != -1 else block_start + 200
-            ]
-        nm = _GFX_NAME.search(snippet)
-        if nm:
-            names.add(nm.group(1))
-
-    return names
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.gfx", filepath, raw, _compute
+    )
 
 
-def _parse_gui_file(
-    filepath: str,
-) -> List[Tuple[str, str, int]]:
+def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a .gui file."""
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
-    except Exception:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
         return []
 
-    text = _strip_comments(raw)
-    offsets = compute_line_offsets(raw)
-    results = []
-    for m in _GUI_REF.finditer(text):
-        sprite = m.group(2)
-        if _is_dynamic(sprite):
-            continue
-        line = line_for_offset(offsets, m.start())
-        results.append((sprite, filepath, line))
-    return results
+    def _compute():
+        text = _strip_comments(raw)
+        offsets = compute_line_offsets(raw)
+        results = []
+        for m in _GUI_REF.finditer(text):
+            sprite = m.group(2)
+            if _is_dynamic(sprite):
+                continue
+            line = line_for_offset(offsets, m.start())
+            results.append((sprite, filepath, line))
+        return results
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.gui", filepath, raw, _compute
+    )
 
 
-def _parse_sgui_file(
-    filepath: str,
-) -> List[Tuple[str, str, int]]:
+def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_gui .txt file."""
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
-    except Exception:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
         return []
 
-    # scripted_gui .txt files use # comments (Clausewitz script style)
-    # but the image = "GFX_xxx" attribute pattern is the same.
-    # We don't strip # comments here to avoid stripping scripted loc keys
-    # that start with # — just use raw text.
-    offsets = compute_line_offsets(raw)
-    results = []
-    for m in _SGUI_IMAGE_REF.finditer(raw):
-        sprite = m.group(1)
-        if _is_dynamic(sprite):
-            continue
-        line = line_for_offset(offsets, m.start())
-        results.append((sprite, filepath, line))
-    return results
+    def _compute():
+        # scripted_gui .txt files use # comments (Clausewitz script style) but the
+        # image = "GFX_xxx" attribute pattern is the same. We don't strip # comments
+        # here to avoid stripping scripted loc keys that start with # — use raw text.
+        offsets = compute_line_offsets(raw)
+        results = []
+        for m in _SGUI_IMAGE_REF.finditer(raw):
+            sprite = m.group(1)
+            if _is_dynamic(sprite):
+                continue
+            line = line_for_offset(offsets, m.start())
+            results.append((sprite, filepath, line))
+        return results
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.sgui", filepath, raw, _compute
+    )
 
 
-def _parse_sloc_file(
-    filepath: str,
-) -> List[Tuple[str, str, int]]:
+def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_localisation .txt file."""
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
-    except Exception:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
         return []
 
-    offsets = compute_line_offsets(raw)
-    results = []
-    for m in _SLOC_KEY_REF.finditer(raw):
-        sprite = m.group(1)
-        if _is_dynamic(sprite):
-            continue
-        line = line_for_offset(offsets, m.start())
-        results.append((sprite, filepath, line))
-    return results
+    def _compute():
+        offsets = compute_line_offsets(raw)
+        results = []
+        for m in _SLOC_KEY_REF.finditer(raw):
+            sprite = m.group(1)
+            if _is_dynamic(sprite):
+                continue
+            line = line_for_offset(offsets, m.start())
+            results.append((sprite, filepath, line))
+        return results
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.sloc", filepath, raw, _compute
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -321,7 +342,9 @@ class GfxReferenceValidator(BaseValidator):
         self._log_section("Building GFX sprite definition set")
         # Always scan the full repo — definitions must come from anywhere.
         gfx_files = self._collect_files(["interface/*.gfx"], ignore_staged=True)
-        results = self._pool_map(_parse_gfx_file, gfx_files)
+        results = self._pool_map(
+            _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
+        )
         mod_defined: Set[str] = set()
         for s in results:
             mod_defined.update(s)
@@ -333,7 +356,9 @@ class GfxReferenceValidator(BaseValidator):
         vanilla_dir = _find_vanilla_interface_dir()
         if vanilla_dir:
             vanilla_gfx = glob.glob(os.path.join(vanilla_dir, "*.gfx"))
-            vanilla_results = self._pool_map(_parse_gfx_file, vanilla_gfx)
+            vanilla_results = self._pool_map(
+                _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
+            )
             vanilla_defined: Set[str] = set()
             for s in vanilla_results:
                 vanilla_defined.update(s)
@@ -355,7 +380,9 @@ class GfxReferenceValidator(BaseValidator):
         self._log_section("Collecting GFX references from interface/*.gui files")
         gui_files = self._collect_files(["interface/*.gui"])
         all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(_parse_gui_file, gui_files):
+        for batch in self._pool_map(
+            _parse_gui_file, [(f, self.mod_path) for f in gui_files]
+        ):
             all_refs.extend(batch)
         self.log(
             f"  Scanned {len(gui_files)} .gui files; found {len(all_refs)} GFX references"
@@ -367,7 +394,9 @@ class GfxReferenceValidator(BaseValidator):
         self._log_section("Collecting GFX image= references from scripted_guis/*.txt")
         sgui_files = self._collect_files(["common/scripted_guis/*.txt"])
         all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(_parse_sgui_file, sgui_files):
+        for batch in self._pool_map(
+            _parse_sgui_file, [(f, self.mod_path) for f in sgui_files]
+        ):
             all_refs.extend(batch)
         self.log(
             f"  Scanned {len(sgui_files)} scripted_gui files; found {len(all_refs)} GFX image= references"
@@ -381,7 +410,9 @@ class GfxReferenceValidator(BaseValidator):
         )
         sloc_files = self._collect_files(["common/scripted_localisation/*.txt"])
         all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(_parse_sloc_file, sloc_files):
+        for batch in self._pool_map(
+            _parse_sloc_file, [(f, self.mod_path) for f in sloc_files]
+        ):
             all_refs.extend(batch)
         self.log(
             f"  Scanned {len(sloc_files)} scripted_localisation files; found {len(all_refs)} GFX references"
