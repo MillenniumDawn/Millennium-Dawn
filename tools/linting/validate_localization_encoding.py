@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
-"""
-HOI4 Localization Encoding Validator
-
-This script validates and fixes UTF-8 BOM encoding for Hearts of Iron IV localization files.
-HOI4 requires localization YAML files to be encoded as UTF-8 with BOM.
-
-Usage:
-    python validate_localization_encoding.py [--fix] [files...]
-
-Arguments:
-    --fix: Automatically add UTF-8 BOM to files that are missing it
-    files: List of files to check (if not provided, checks all English localization files)
-"""
+"""Validate and optionally fix UTF-8 BOM encoding for HOI4 localisation files."""
 
 import argparse
 import codecs

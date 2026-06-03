@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# Shared validation infrastructure: common classes, helpers, and the base
-# validator used by all validation scripts.
+"""Shared validation infrastructure: common classes, helpers, and the base validator."""
 import glob
 import json
 import logging
@@ -10,7 +9,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -122,8 +121,88 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "occupied_countries.1.b",
         "occupied_countries.1.desc",
         "occupied_countries.1.title",
+        # Vanilla strategic-project / scientist tooltip keys.
+        "SP_UNLOCK_PROJECT",
+        "SP_UNLOCK_TECH",
+        "available_scientist_one_line_tt",
+        # Vanilla HOI4 building name keys (mod overrides only the _desc variants).
+        "air_base",
+        "infrastructure",
+        "nuclear_reactor",
+        "radar_station",
+        # Vanilla US Congress tooltip keys borrowed from MtG.
+        "mtg_usa_congress_add_state_tt",
+        "mtg_usa_congress_large_opposition_tt",
+        "mtg_usa_congress_large_support_tt",
+        "mtg_usa_congress_medium_opposition_tt",
+        "mtg_usa_congress_medium_support_tt",
+        "mtg_usa_congress_remove_state_tt",
+        "mtg_usa_congress_small_opposition_tt",
+        "mtg_usa_congress_small_support_tt",
+        "mtg_usa_house_large_opposition_tt",
+        "mtg_usa_house_large_support_tt",
+        "mtg_usa_house_medium_opposition_tt",
+        "mtg_usa_house_medium_support_tt",
+        "mtg_usa_house_small_opposition_tt",
+        "mtg_usa_house_small_support_tt",
+        "mtg_usa_senate_large_opposition_tt",
+        "mtg_usa_senate_large_support_tt",
+        "mtg_usa_senate_medium_opposition_tt",
+        "mtg_usa_senate_medium_support_tt",
+        "mtg_usa_senate_small_opposition_tt",
+        "mtg_usa_senate_small_support_tt",
+        "free_agency_upgrade_tt",
+        # Vanilla operative mission tooltip keys.
+        "OPERATIVE_MISSION_BOOST_IDEOLOGY_TT",
+        "OPERATIVE_MISSION_BUILD_INTEL_NETWORK_TT",
+        "OPERATIVE_MISSION_CONTROL_TRADE_TT",
+        "OPERATIVE_MISSION_COUNTER_INTELLIGENCE_TT",
+        "OPERATIVE_MISSION_DIPLOMATIC_PRESSURE_TT",
+        "OPERATIVE_MISSION_NO_MISSION_TT",
+        "OPERATIVE_MISSION_PROPAGANDA_TT",
+        "OPERATIVE_MISSION_QUIET_INTEL_NETWORK_TT",
+        "OPERATIVE_MISSION_ROOT_OUT_RESISTANCE_TT",
+        # Vanilla diplomatic action rule tooltip keys.
+        "RULE_ALLOW_GUARANTEES_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_GUARANTEES_SAME_IDEOLOGY_TOOLTIP",
+        "RULE_ALLOW_LEAVE_FACTION_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_LEND_LEASE_BLOCKED_TT",
+        "RULE_ALLOW_LEND_LEASE_SAME_FACTION_TT",
+        "RULE_ALLOW_LEND_LEASE_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_LICENSING_BLOCKED_TT",
+        "RULE_ALLOW_LICENSING_SAME_FACTION_TT",
+        "RULE_ALLOW_LICENSING_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT",
+        "RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_RELEASE_NATIONS_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_REVOKE_GUARANTEES_BLOCKED_TOOLTIP",
+        "RULE_ASSUME_LEADERSHIP_BLOCKED_TOOLTIP",
+        "RULE_BOOST_PARTY_AI_ONLY_TT",
+        "RULE_BOOST_PARTY_BLOCKED_TT",
+        "RULE_BOOST_PARTY_PLAYER_ONLY_TT",
+        "RULE_COUP_AI_ONLY_TT",
+        "RULE_COUP_BLOCKED_TT",
+        "RULE_KICK_FROM_FACTION_BLOCKED_TOOLTIP",
+        "RULE_VOLUNTEERS_BLOCKED_TT",
+        "RULE_VOLUNTEERS_SAME_IDEOLOGY_TT",
+        "RULE_WARGOALS_BLOCKED_TT",
     }
 )
+
+
+def casefold_index(names) -> dict:
+    """Return a dict mapping each name lowercased to its canonical form.
+
+    Used to build a case-insensitive lookup for Linux case-mismatch detection.
+    """
+    return {n.lower(): n for n in names}
+
+
+def case_mismatch(ref: str, ci_index: dict):
+    """Return the canonical name when *ref* matches case-insensitively but not
+    exactly (a Linux-only bug), else None."""
+    hit = ci_index.get(ref.lower())
+    return hit if (hit is not None and hit != ref) else None
 
 
 def scan_meta_constructed_names(files, defined_names):
@@ -361,6 +440,36 @@ class BaseValidator:
             self._shared_cache[key] = factory_fn()
         return self._shared_cache[key]
 
+    def parse_files_cached(
+        self,
+        patterns: List[str],
+        namespace: str,
+        parse_fn: Callable[[str, str], Any],
+        *,
+        lowercase: bool = False,
+        strip_comments_flag: bool = True,
+        ignore_staged: bool = False,
+    ) -> Dict[str, Any]:
+        """Parse files matching *patterns* -> ``{path: parse_fn(text, path)}``.
+
+        Reads case-preserving (HOI4 is case-sensitive on Linux), strips comments
+        by default, and disk-caches each parse keyed on content. *namespace*
+        keys the cache per validator/pass; give each call a distinct one.
+        """
+        results: Dict[str, Any] = {}
+        for path in self._collect_files(patterns, ignore_staged=ignore_staged):
+            text = FileOpener.open_text_file(
+                path, lowercase=lowercase, strip_comments_flag=strip_comments_flag
+            )
+            results[path] = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                namespace,
+                path,
+                text,
+                lambda t=text, p=path: parse_fn(t, p),
+            )
+        return results
+
     def log(self, message: str, level: str = "info"):
         # Respect MD_LOG_LEVEL — skip messages below the configured threshold.
         if level == "info" and _LOG_LEVEL != "INFO":
@@ -499,17 +608,10 @@ class BaseValidator:
         severity: str = Severity.ERROR,
         category: str = "",
     ):
-        """Report results with specified severity level.
+        """Report results from str / (message, file, line) / Issue entries.
 
-        Each entry in ``results`` may be:
-          - ``str`` — legacy form. Auto-parsed via ``_parse_result_location``
-            so standard ``path:line - msg`` strings get structured into an
-            ``Issue`` with ``file`` / ``line`` populated.
-          - ``(message, file, line)`` tuple — explicit structured form.
-          - ``Issue`` instance — used directly.
-
-        This is the single source of truth for counting and recording issues.
-        Do NOT call add_error/add_warning separately for results passed here.
+        Single source of truth for counting and recording issues — do NOT call
+        add_error/add_warning separately for results passed here.
         """
         color = Colors.RED if severity == Severity.ERROR else Colors.YELLOW
 
@@ -561,8 +663,12 @@ class BaseValidator:
                     f"  {color if self.use_colors else ''}{display_text}{Colors.ENDC if self.use_colors else ''}",
                     "error" if actual_severity == Severity.ERROR else "warning",
                 )
-                if category:
-                    self._issues.append(issue)
+                # Always record the issue so the JSON sidecar (and the CI
+                # report built from it) reflects every finding. Previously this
+                # was gated on `category`, so any _report call without a
+                # category bumped errors_found (failing the build) while
+                # contributing nothing to the report — findings vanished.
+                self._issues.append(issue)
                 if actual_severity == Severity.ERROR:
                     self.errors_found += 1
                 else:
@@ -650,15 +756,9 @@ class BaseValidator:
     ) -> List[str]:
         """Collect mod files matching glob patterns, with staged-file support.
 
-        In staged mode, filters self.staged_files by extension and a coarse
-        directory hint derived from each pattern's first non-wildcard segment.
-        In full mode, expands each pattern via glob.iglob relative to mod_path.
-        Always applies should_skip_file; extra_skip adds validator-local filtering.
-
-        Pass ``ignore_staged=True`` for cross-reference resolution passes that
-        must always scan the entire repo regardless of staged mode — e.g.
-        confirming a tag/idea/effect is defined somewhere even if its
-        definition file isn't part of the current change set.
+        Pass ``ignore_staged=True`` for definition-lookup passes that must scan
+        the full repo even in staged mode (e.g. confirming a tag or idea is
+        defined somewhere, not just in the staged change set).
         """
         extensions = list(
             {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}
@@ -733,7 +833,7 @@ class BaseValidator:
         all_keys: set = set()
         for filepath in yml_files:
             try:
-                with open(filepath, encoding="utf-8-sig", errors="ignore") as f:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
                     text = f.read()
             except Exception:
                 continue

@@ -1,32 +1,9 @@
 #!/usr/bin/env python3
-# Decision validation: checks decision definitions and usage.
-# Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
-# adapted for Millennium Dawn with multiprocessing.
-# Checks for:
-#   1. Duplicated decisions
-#   2. Unused decisions (always=no in allowed but never manually activated)
-#   3. Unused decision categories (empty categories not used in BOP)
-#   4. Decisions with AI factor issues
-#   5. Custom cost trigger validation (tooltip presence)
-#   6. Targeted decisions without targets (performance issue)
-#   7. Decisions with targets but no target_trigger (performance issue)
-#   8. Decisions using FROM without a target set (undefined scope)
-#   9. Decisions without allowed check in unchecked categories
-#  10. Random list without explicit fixed_random_seed
-#  11. Redundant tag checks (allowed already pins tag)
-#  12. Allowed redundant with parent category
-#  13. Political power charge in effects (hidden or double cost)
-#  14. Identical visible and available blocks
-#  15. Bare trigger names missing has_ prefix
-#  16. Missing localisation keys
-#  17. Visible block in missions (does nothing; use activation instead)
-#  18. war_with_on_* = FROM in targeted decisions (use war_with_target_on_*)
-#  19. cancel_if_not_visible without a visible block (dead code)
-#  20. Custom cost with PP but no ai_hint_pp_cost (AI unaware of cost)
-#  21. Incompatible state_target value with explicit targets
-#  22. Mission-only attributes on regular decisions (silently ignored)
-#  23. remove_effect without days_remove or remove_trigger (dead code)
-#  24. targets_dynamic / target_non_existing without targets (meaningless)
+"""Validate decision definitions and usage in Millennium Dawn.
+
+Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
+adapted for Millennium Dawn with multiprocessing.
+"""
 import glob
 import os
 import re

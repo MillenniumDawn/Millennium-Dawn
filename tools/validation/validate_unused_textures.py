@@ -5,10 +5,14 @@ sprite refs don't get flagged; pass --hoi4-path to override."""
 import glob
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import find_hoi4_install
 from validator_common import (
     BaseValidator,
     Colors,
@@ -27,21 +31,6 @@ _DOUBLE_SLASH = re.compile(r"/{2,}")
 TEXTURE_EXTENSIONS = [".dds", ".tga", ".png"]
 
 EXTRA_SKIP_PATTERNS = ["resources", "loadingscreens"]
-
-COMMON_HOI4_PATHS = [
-    # Linux (Steam)
-    os.path.expanduser(
-        "~/.steam/debian-installation/steamapps/common/Hearts of Iron IV"
-    ),
-    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
-    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
-    # Windows (Steam)
-    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
-    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
-    # Windows (GOG)
-    "C:/GOG Games/Hearts of Iron IV",
-    "C:/Program Files (x86)/GOG Galaxy/Games/Hearts of Iron IV",
-]
 
 
 def find_texture_files(mod_path: str) -> Set[str]:
@@ -187,12 +176,12 @@ class Validator(BaseValidator):
                 )
                 self.hoi4_path = None
 
-        # Auto-detect
-        for path in COMMON_HOI4_PATHS:
-            if os.path.exists(path):
-                self.hoi4_path = path
-                self.log(f"Auto-detected HoI4 installation: {self.hoi4_path}")
-                return
+        # Auto-detect (also honours $HOI4_PATH)
+        detected = find_hoi4_install()
+        if detected:
+            self.hoi4_path = detected
+            self.log(f"Auto-detected HoI4 installation: {self.hoi4_path}")
+            return
 
         self.log(
             f"{Colors.YELLOW if self.use_colors else ''}Warning: Could not find HoI4 installation. Vanilla .gfx files will not be checked.{Colors.ENDC if self.use_colors else ''}",

@@ -1,32 +1,25 @@
 #!/usr/bin/env python3
-##########################
-# Focus Tree Structural Validation Script
-# Validates focus tree definitions for structural integrity
-# Checks for:
-#   1. Duplicate focus IDs across all files
-#   2. Orphan focuses (prerequisite targets not found in the same tree)
-#   3. Missing prerequisite targets (referenced focus IDs not defined anywhere)
-#   4. Missing localisation keys (focus ID and focus ID_desc)
-#   5. Dependency cycles in prerequisite chains
-##########################
+"""Validate focus tree structural integrity in Millennium Dawn."""
 import os
 import re
+import sys
 from collections import defaultdict
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import extract_block_from_text as _extract_block
 from validator_common import (
     BaseValidator,
     Colors,
     Severity,
+    case_mismatch,
+    casefold_index,
     run_validator_main,
     should_skip_file,
     strip_comments,
 )
-
-# ---------------------------------------------------------------------------
-# Regex patterns
-# ---------------------------------------------------------------------------
 
 # Opening of a focus_tree or top-level focus definition block
 # (shared_focus and joint_focus are both standalone definitions that can be
@@ -44,30 +37,6 @@ _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 
 # shared_focus reference inside a focus_tree block (not a definition)
 _SHARED_REF_RE = re.compile(r"\bshared_focus\s*=\s*(\w+)")
-
-
-# ---------------------------------------------------------------------------
-# Per-file parsing (pool workers)
-# ---------------------------------------------------------------------------
-
-
-def _extract_block(text: str, start: int) -> Tuple[str, int]:
-    """Return the content between the first { after *start* and its matching },
-    and the position right after the closing }.  Returns ("", start) on failure."""
-    open_pos = text.find("{", start)
-    if open_pos == -1:
-        return "", start
-    depth = 1
-    i = open_pos + 1
-    while i < len(text) and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    if depth != 0:
-        return "", start
-    return text[open_pos + 1 : i - 1], i
 
 
 def _line_of(text: str, pos: int) -> int:
@@ -116,7 +85,7 @@ def parse_focus_file(args: Tuple[str, str]) -> Dict:
     """Read one focus tree file and return its parsed structure, content-cached."""
     filepath, mod_path = args
     try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="ignore") as fh:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
             raw = fh.read()
     except Exception:
         return {"filepath": filepath, "trees": [], "shared_defs": {}}
@@ -211,11 +180,6 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
         pos = end
 
     return result
-
-
-# ---------------------------------------------------------------------------
-# Validator
-# ---------------------------------------------------------------------------
 
 
 class Validator(BaseValidator):
@@ -405,6 +369,7 @@ class Validator(BaseValidator):
         parsed = self._get_parsed_files()
         _, focus_info = self._build_focus_registry(parsed)
         all_defined: FrozenSet[str] = frozenset(focus_info.keys())
+        defined_ci = casefold_index(all_defined)
 
         results = []
         seen_missing: Set[str] = set()
@@ -422,13 +387,25 @@ class Validator(BaseValidator):
                             and prereq_id not in seen_missing
                         ):
                             seen_missing.add(prereq_id)
-                            results.append(
-                                (
-                                    f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')",
-                                    rel,
-                                    sdata["line"],
+                            canonical = case_mismatch(prereq_id, defined_ci)
+                            if canonical:
+                                results.append(
+                                    (
+                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')"
+                                        f": case-mismatch reference '{prereq_id}' — defined as '{canonical}'"
+                                        " (works on Windows, fails on Linux)",
+                                        rel,
+                                        sdata["line"],
+                                    )
                                 )
-                            )
+                            else:
+                                results.append(
+                                    (
+                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')",
+                                        rel,
+                                        sdata["line"],
+                                    )
+                                )
             # Check focuses inside trees
             for tree in pf["trees"]:
                 for focus_id, line, prereq_groups in tree["focuses"]:
@@ -439,13 +416,25 @@ class Validator(BaseValidator):
                                 and prereq_id not in seen_missing
                             ):
                                 seen_missing.add(prereq_id)
-                                results.append(
-                                    (
-                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')",
-                                        rel,
-                                        line,
+                                canonical = case_mismatch(prereq_id, defined_ci)
+                                if canonical:
+                                    results.append(
+                                        (
+                                            f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')"
+                                            f": case-mismatch reference '{prereq_id}' — defined as '{canonical}'"
+                                            " (works on Windows, fails on Linux)",
+                                            rel,
+                                            line,
+                                        )
                                     )
-                                )
+                                else:
+                                    results.append(
+                                        (
+                                            f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')",
+                                            rel,
+                                            line,
+                                        )
+                                    )
 
         self._report(
             results,
