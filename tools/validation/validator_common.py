@@ -659,8 +659,12 @@ class BaseValidator:
                     f"  {color if self.use_colors else ''}{display_text}{Colors.ENDC if self.use_colors else ''}",
                     "error" if actual_severity == Severity.ERROR else "warning",
                 )
-                if category:
-                    self._issues.append(issue)
+                # Always record the issue so the JSON sidecar (and the CI
+                # report built from it) reflects every finding. Previously this
+                # was gated on `category`, so any _report call without a
+                # category bumped errors_found (failing the build) while
+                # contributing nothing to the report — findings vanished.
+                self._issues.append(issue)
                 if actual_severity == Severity.ERROR:
                     self.errors_found += 1
                 else:

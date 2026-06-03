@@ -89,6 +89,33 @@ def _parse_ci():
     return result
 
 
+def test_should_run_expressions_render_strings():
+    """A matrix `should_run` that does boolean logic must coerce to a string.
+
+    The step guard is `if: matrix.validator.should_run == 'true'`. A bare
+    boolean expression (`${{ A == 'true' || B == 'true' }}`) yields boolean
+    true; GitHub coerces `true == 'true'` to `1 == NaN` = false, so every step
+    silently skips and the validator never runs or reports. Any expression
+    using `||`/`==` must end with `&& 'true' || 'false'` to stay a string.
+    """
+    wf = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    offenders = []
+    for job in ("validate-core", "validate-targeted"):
+        for entry in wf["jobs"][job]["strategy"]["matrix"]["validator"]:
+            expr = entry.get("should_run")
+            if not isinstance(expr, str):
+                continue
+            does_logic = "||" in expr or "==" in expr
+            coerces_to_string = "'true'" in expr and "'false'" in expr
+            if does_logic and not coerces_to_string:
+                offenders.append(f"{entry.get('script')}: {expr}")
+    assert not offenders, (
+        "These should_run expressions evaluate to a boolean and fail the "
+        "`== 'true'` step guard (validator silently skips). Wrap as "
+        "`(<expr>) && 'true' || 'false'`:\n" + "\n".join(offenders)
+    )
+
+
 @pytest.fixture(scope="module")
 def disk():
     return _discover_disk_validators()
