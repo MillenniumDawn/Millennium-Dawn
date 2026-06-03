@@ -19,6 +19,7 @@ from typing import Dict, FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import disk_cache
 from shared_utils import compute_line_offsets, line_for_offset
 from validator_common import (
     BaseValidator,
@@ -318,11 +319,12 @@ def _extract_modifier_names_from_body(body: str) -> List[str]:
 # ---------------------------------------------------------------------------
 
 
-def _harvest_modifiers_from_file(filepath: str) -> List[str]:
+def _harvest_modifiers_from_file(args: Tuple[str, str]) -> List[str]:
     """Pool worker: extract all modifier names from a single file.
 
     Used for building the known-good frequency table.
     """
+    filepath, mod_path = args
     if should_skip_file(filepath):
         return []
     text = FileOpener.open_text_file(
@@ -331,21 +333,27 @@ def _harvest_modifiers_from_file(filepath: str) -> List[str]:
     if not text or "modifier" not in text:
         return []
 
-    names: List[str] = []
-    for _lineno, body in _extract_modifier_blocks(text):
-        if _is_ai_weight_block(body):
-            continue
-        names.extend(_extract_modifier_names_from_body(body))
-    return names
+    def _compute():
+        names: List[str] = []
+        for _lineno, body in _extract_modifier_blocks(text):
+            if _is_ai_weight_block(body):
+                continue
+            names.extend(_extract_modifier_names_from_body(body))
+        return names
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "modifiers.harvest", filepath, text, _compute
+    )
 
 
-def _harvest_flat_modifiers_from_traits_file(filepath: str) -> List[str]:
+def _harvest_flat_modifiers_from_traits_file(args: Tuple[str, str]) -> List[str]:
     """Pool worker: extract top-level modifier keys from traits files.
 
     Traits files (common/country_leader/*.txt, common/characters/*.txt) often
     place modifier keys directly at the trait body level (not in modifier = {}).
     We harvest these to supplement the known-good set.
     """
+    filepath, mod_path = args
     if should_skip_file(filepath):
         return []
     text = FileOpener.open_text_file(
@@ -354,27 +362,31 @@ def _harvest_flat_modifiers_from_traits_file(filepath: str) -> List[str]:
     if not text:
         return []
 
-    # Collect keys that appear at depth 2 (inside leader_traits = { trait = { KEY = VAL } })
-    # We do a simple heuristic: any `[a-z_]+ = <number>` at exactly 2 braces deep.
-    names: List[str] = []
-    depth = 0
-    in_string = False
-    for line in text.split("\n"):
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        opens = stripped.count("{")
-        closes = stripped.count("}")
-        new_depth = depth + opens - closes
-        # At depth 2 we're inside a trait body
-        if depth == 2 and opens == 0 and closes == 0:
-            m = re.match(r"^([a-z][a-z0-9_]*)\s*=\s*(-?[0-9])", stripped)
-            if m:
-                key = m.group(1)
-                if key not in _NON_MODIFIER_KEYS and _MODIFIER_NAME_RE.match(key):
-                    names.append(key)
-        depth = new_depth
-    return names
+    def _compute():
+        # Collect keys that appear at depth 2 (inside leader_traits = { trait = { KEY = VAL } })
+        # We do a simple heuristic: any `[a-z_]+ = <number>` at exactly 2 braces deep.
+        names: List[str] = []
+        depth = 0
+        for line in text.split("\n"):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            opens = stripped.count("{")
+            closes = stripped.count("}")
+            new_depth = depth + opens - closes
+            # At depth 2 we're inside a trait body
+            if depth == 2 and opens == 0 and closes == 0:
+                m = re.match(r"^([a-z][a-z0-9_]*)\s*=\s*(-?[0-9])", stripped)
+                if m:
+                    key = m.group(1)
+                    if key not in _NON_MODIFIER_KEYS and _MODIFIER_NAME_RE.match(key):
+                        names.append(key)
+            depth = new_depth
+        return names
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "modifiers.traits", filepath, text, _compute
+    )
 
 
 def _is_parametric_modifier(name: str) -> bool:
@@ -402,17 +414,27 @@ def _check_file_for_unknown_modifiers(
     if not text or "modifier" not in text:
         return []
 
-    results: List[Tuple[str, str, int]] = []
     rel = os.path.relpath(filepath, mod_path)
 
-    for lineno, body in _extract_modifier_blocks(text):
-        if _is_ai_weight_block(body):
-            continue
-        for name in _extract_modifier_names_from_body(body):
-            if name not in known_good:
-                results.append((name, rel, lineno))
+    def _compute():
+        # Parse all modifier names in the file (independent of known_good so the
+        # cached value is a pure function of file content); the known_good filter
+        # is applied below on the cached result.
+        parsed: List[Tuple[str, str, int]] = []
+        for lineno, body in _extract_modifier_blocks(text):
+            if _is_ai_weight_block(body):
+                continue
+            for name in _extract_modifier_names_from_body(body):
+                parsed.append((name, rel, lineno))
+        return parsed
 
-    return results
+    parsed = disk_cache.per_file_cached_by_content(
+        mod_path, "modifiers.check", filepath, text, _compute
+    )
+
+    return [
+        (name, rel, lineno) for name, rel, lineno in parsed if name not in known_good
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -484,14 +506,18 @@ class Validator(BaseValidator):
 
         # Harvest modifier = {} blocks from main files
         block_results = self._pool_map(
-            _harvest_modifiers_from_file, other_files, chunksize=50
+            _harvest_modifiers_from_file,
+            [(f, self.mod_path) for f in other_files],
+            chunksize=50,
         )
         for batch in block_results:
             all_names.extend(batch)
 
         # Harvest flat keys from traits files
         trait_results = self._pool_map(
-            _harvest_flat_modifiers_from_traits_file, traits_files, chunksize=50
+            _harvest_flat_modifiers_from_traits_file,
+            [(f, self.mod_path) for f in traits_files],
+            chunksize=50,
         )
         for batch in trait_results:
             all_names.extend(batch)
