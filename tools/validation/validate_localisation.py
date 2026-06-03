@@ -18,10 +18,14 @@ import glob
 import logging
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import extract_block_from_text
 from validator_common import (
     KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
@@ -271,21 +275,11 @@ def _extract_not_blocks(text: str) -> List[str]:
         m = _NOT_OPEN_RE.search(text, i)
         if not m:
             break
-        start = m.end()
-        depth = 1
-        j = start
-        while j < len(text) and depth > 0:
-            ch = text[j]
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-            j += 1
-        if depth == 0:
-            out.append(text[start : j - 1])
-            i = j
-        else:
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
             break
+        out.append(body)
+        i = end
     return out
 
 
