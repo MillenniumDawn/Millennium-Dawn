@@ -67,6 +67,40 @@ _NO_MERGE_PARENTS = frozenset({"OR", "count_triggers", "random_list"})
 _TAG_RE = re.compile(r"^[A-Z]{3}$")
 _VAR_SCOPE_RE = re.compile(r"^(var|event_target|global\.event_target):")
 
+# Scope-expansion simplifications: a `TAG = { <single trigger> }` block whose
+# body is one trigger that has a flat country-scoped equivalent. Opening a TAG
+# scope just to check one boolean is an unnecessary scope switch (see AGENTS.md
+# "Minimize scope expansion"). Only single-condition bodies are flagged; a flat
+# form with NOT/relative scopes (e.g. exists = no) is context-dependent and left
+# alone.
+_TAG_BLOCK_RE = re.compile(r"\b([A-Z]{3})\s*=\s*\{")
+_SINGLE_TRIGGER_RE = re.compile(r"^([a-z_]+)\s*=\s*(\w+)$")
+_FLAT_EQUIV = {
+    ("exists", "yes"): "country_exists = {tag}",
+    ("is_puppet", "yes"): "is_puppet_of = {tag}",
+}
+
+
+def _find_scope_expansion(text: str):
+    """Return (line, tag, flat_form) for each `TAG = { single trigger }` block
+    that collapses to a flat country trigger."""
+    results = []
+    for m in _TAG_BLOCK_RE.finditer(text):
+        tag = m.group(1)
+        if tag in _NOT_TAGS:
+            continue
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            continue
+        sm = _SINGLE_TRIGGER_RE.match(body.strip())
+        if not sm:
+            continue
+        flat = _FLAT_EQUIV.get((sm.group(1), sm.group(2)))
+        if flat:
+            line = text.count("\n", 0, m.start()) + 1
+            results.append((line, tag, flat.format(tag=tag)))
+    return results
+
 
 def _is_magic_chain(header: str) -> bool:
     return all(part in _MAGIC for part in header.split("."))
@@ -137,7 +171,7 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         files = self._collect_files(_SCAN_PATTERNS)
-        self.log(f"Scanning {len(files)} files for mergeable scope blocks")
+        self.log(f"Scanning {len(files)} files for simplification opportunities")
 
         results = []
         for path in files:
@@ -155,11 +189,19 @@ class Validator(BaseValidator):
                         line,
                     )
                 )
+            for line, tag, flat in _find_scope_expansion(text):
+                results.append(
+                    (
+                        f"`{tag} = {{ ... }}` scope opened for one trigger; use `{flat}`",
+                        rel,
+                        line,
+                    )
+                )
 
         self._report(
             results,
-            "No mergeable consecutive scope blocks found",
-            "Consecutive same-scope blocks that can be merged:",
+            "No scope simplification opportunities found",
+            "Scope simplifications (merge same-scope blocks / collapse one-trigger scopes):",
             severity=Severity.WARNING,
             category="simplification",
         )
