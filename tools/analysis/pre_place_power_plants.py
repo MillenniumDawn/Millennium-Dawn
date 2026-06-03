@@ -11,7 +11,7 @@ so nuclear comes online on the first tick instead of after a manual refresh.
 
 Re-run this tool after any change that shifts the per-country energy balance:
     - energy formula constants in common/scripted_effects/!_energy_effects.txt
-    - per-country `startup_composite_fac_needed` seeds in history/countries/
+    - per-country composite seeds in tools/analysis/composite_factory_seeds.csv
     - state ownership, population, productivity, or building counts in history/states/
     - state-level nuclear_reactor placement (changes the baked stockpile)
     - ideas that touch `energy_use_*`, `energy_gain_*`, or `fossil_*` modifiers
@@ -105,17 +105,45 @@ def collect_state_renewable_vars(content, state):
                 pass
 
 
+COMPOSITE_SEED_CSV = os.path.join(THIS_DIR, "composite_factory_seeds.csv")
+
+
+def load_composite_seed_values():
+    """Return {tag: seed} from composite_factory_seeds.csv.
+
+    These were formerly `startup_composite_fac_needed` set_variable seeds in
+    history/countries/. The runtime effect that read them (composite_building_add_multi)
+    was removed once its output got baked into state history, so the seeds now live
+    here as pure tool input. Missing file or row → seed defaults to 0.
+    """
+    seeds = {}
+    if not os.path.exists(COMPOSITE_SEED_CSV):
+        return seeds
+    with open(COMPOSITE_SEED_CSV, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or line.lower().startswith("tag,"):
+                continue
+            parts = line.split(",")
+            if len(parts) < 2:
+                continue
+            try:
+                seeds[parts[0].strip()] = int(parts[1].strip())
+            except ValueError:
+                continue
+    return seeds
+
+
 def parse_composite_seeds():
     """Return {tag: count} for each country that had the composite special project
     completed at startup. Mirrors the old runtime: 1 plant from composite_building_add
-    plus N from composite_building_add_multi (where N = startup_composite_fac_needed seed).
+    plus N from composite_building_add_multi (where N = the per-country seed in
+    composite_factory_seeds.csv).
     """
+    seed_values = load_composite_seed_values()
     seeds = {}
     project_pat = re.compile(
         r"complete_special_project\s*=\s*sp:sp_composite_production\b"
-    )
-    var_pat = re.compile(
-        r"set_variable\s*=\s*\{\s*startup_composite_fac_needed\s*=\s*(\d+)\s*\}"
     )
     for fname in os.listdir(COUNTRIES_DIR):
         if not fname.endswith(".txt"):
@@ -127,9 +155,7 @@ def parse_composite_seeds():
             content = f.read()
         if not project_pat.search(content):
             continue
-        m = var_pat.search(content)
-        seed = int(m.group(1)) if m else 0
-        seeds[tag] = seed + 1
+        seeds[tag] = seed_values.get(tag, 0) + 1
     return seeds
 
 
