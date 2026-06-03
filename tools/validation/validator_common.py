@@ -10,7 +10,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -425,6 +425,39 @@ class BaseValidator:
         if key not in self._shared_cache:
             self._shared_cache[key] = factory_fn()
         return self._shared_cache[key]
+
+    def parse_files_cached(
+        self,
+        patterns: List[str],
+        namespace: str,
+        parse_fn: Callable[[str, str], Any],
+        *,
+        lowercase: bool = False,
+        strip_comments_flag: bool = True,
+        ignore_staged: bool = False,
+    ) -> Dict[str, Any]:
+        """Parse files matching *patterns* -> ``{path: parse_fn(text, path)}``.
+
+        Standard "scan many files of one kind, parse each independently" pass.
+        Reads case-preserving by default (HOI4 is case-sensitive on Linux, so
+        validators must match and report the exact case as written), strips
+        comments, and per-file disk-caches each parse keyed on content — a
+        re-run only re-parses files whose content changed. *namespace* keys the
+        cache per validator/pass; give each call a distinct one.
+        """
+        results: Dict[str, Any] = {}
+        for path in self._collect_files(patterns, ignore_staged=ignore_staged):
+            text = FileOpener.open_text_file(
+                path, lowercase=lowercase, strip_comments_flag=strip_comments_flag
+            )
+            results[path] = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                namespace,
+                path,
+                text,
+                lambda t=text, p=path: parse_fn(t, p),
+            )
+        return results
 
     def log(self, message: str, level: str = "info"):
         # Respect MD_LOG_LEVEL — skip messages below the configured threshold.
