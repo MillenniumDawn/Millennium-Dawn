@@ -76,3 +76,4 @@ class ReportContext:
     workflow_run_url: Optional[str] = None
     artifact_url: Optional[str] = None
     date_utc: Optional[str] = None
+    repo: Optional[str] = None  # "owner/name", used to build blob links to file:line

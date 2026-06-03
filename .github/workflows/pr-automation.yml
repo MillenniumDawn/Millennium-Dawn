@@ -1,4 +1,4 @@
-name: Auto Assign PR Author
+name: PR Automation
 
 on:
   pull_request_target:
@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  assign:
+  assign-author:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -22,3 +22,21 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           gh pr edit "$PR_NUMBER" --repo "$REPO" --add-assignee "$PR_AUTHOR"
+
+  milestone:
+    if: github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout composite action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
+      - uses: ./.github/actions/assign-milestone
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

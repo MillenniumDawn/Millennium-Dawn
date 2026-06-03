@@ -11,18 +11,20 @@ on:
     - 'localisation/**'
     - 'interface/**'
     - 'gfx/**'
-    - 'tools/validation/**'
-    - 'tools/standardization/**'
+    # Tooling paths are intentionally absent: the validator jobs gate on
+    # detect-changes (content groups), so a tooling-only PR would trigger the
+    # workflow but skip every validator, posting an empty report. Changes under
+    # tools/ are smoke-tested by tools-validation.yml instead.
     - '.github/workflows/coding-pipeline.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Least privilege: validator jobs run PR-authored code and only need to read.
+# The validation-report job declares its own pull-requests/checks write scope.
 permissions:
   contents: read
-  pull-requests: write
-  checks: write
 
 jobs:
   # ───────────────────────────────────────────────────────────────
@@ -516,10 +518,10 @@ jobs:
       contents: read
       pull-requests: write
       checks: write
-    if: >-
-      always() &&
-      github.event_name == 'pull_request' &&
-      !cancelled()
+    # Run the report whether validators passed or failed, but not if the run
+    # was cancelled. (The workflow only triggers on pull_request, so no event
+    # guard is needed.)
+    if: ${{ !cancelled() }}
     steps:
     # Checkout the report generator + the report_lib package it imports.
     # Stays much smaller than a full checkout — we skip everything else.
