@@ -377,8 +377,11 @@ class FileOpener:
 
     @classmethod
     def open_text_file(
-        cls, filename: str, lowercase: bool = True, strip_comments_flag: bool = False
+        cls, filename: str, lowercase: bool = False, strip_comments_flag: bool = False
     ) -> str:
+        # Linux-first default: HOI4 is case-sensitive on Linux, so validators
+        # must match and report the exact case as written. Pass lowercase=True
+        # only for deliberately case-insensitive lookups.
         cache_key = (filename, lowercase, strip_comments_flag)
         cached = cls._cache.get(cache_key)
         if cached is not None:

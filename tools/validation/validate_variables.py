@@ -599,7 +599,12 @@ class Validator(BaseValidator):
         for filename in yml_files_to_scan:
             if should_skip_file(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
+            # Lowercased on purpose: case-insensitive scan for
+            # [target.GetName]/[event_target:target.GetAdjective] loc usage so a
+            # target isn't falsely reported unused over a case difference.
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=True, strip_comments_flag=True
+            )
 
             if ".get" in text_file:
                 not_encountered_targets = [

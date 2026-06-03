@@ -305,9 +305,14 @@ def _scan_idea_refs(text: str) -> List[str]:
     return refs
 
 
-def _check_file_for_refs(args: Tuple[str, frozenset, str]) -> List[str]:
-    """Pool worker: return undefined idea references found in one file."""
-    filepath, defined_ideas_frozen, mod_path = args
+def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
+    """Pool worker: return undefined idea references found in one file.
+
+    *defined_ci* maps lower-cased idea name -> canonical name; a ref that misses
+    case-sensitively but hits here is a case mismatch that works on Windows and
+    silently fails on Linux, so it gets a distinct, louder message.
+    """
+    filepath, defined_ideas_frozen, defined_ci, mod_path = args
     if should_skip_file(filepath):
         return []
     text = FileOpener.open_text_file(
@@ -340,7 +345,14 @@ def _check_file_for_refs(args: Tuple[str, frozenset, str]) -> List[str]:
         # Skip pure numbers and very short tokens that are clearly not idea names
         if idea.isdigit() or len(idea) < 3:
             continue
-        results.append(f"{basename}: undefined idea reference '{idea}'")
+        canonical = defined_ci.get(idea.lower())
+        if canonical and canonical != idea:
+            results.append(
+                f"{basename}: case-mismatch idea reference '{idea}' — defined as "
+                f"'{canonical}' (works on Windows, fails on Linux)"
+            )
+        else:
+            results.append(f"{basename}: undefined idea reference '{idea}'")
     return results
 
 
@@ -422,7 +434,9 @@ class Validator(BaseValidator):
         self.log(f"  Scanning {len(scan_files)} files for idea references...")
 
         defined_frozen = frozenset(defined_ideas.keys())
-        args_list = [(f, defined_frozen, self.mod_path) for f in scan_files]
+        # Case-insensitive index for Linux case-mismatch diagnostics.
+        defined_ci = {name.lower(): name for name in defined_ideas}
+        args_list = [(f, defined_frozen, defined_ci, self.mod_path) for f in scan_files]
 
         raw_results = self._pool_map(_check_file_for_refs, args_list)
         results: List[str] = []
