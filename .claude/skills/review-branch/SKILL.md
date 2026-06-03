@@ -9,9 +9,9 @@ Steps:
    git diff origin/main...HEAD
    ```
 
-2. Review every changed file against the rules in CLAUDE.md, `.claude/rules/localisation-rules.md`, and `.claude/docs/hoi4-data-structures.md`. Reference `docs/src/content/resources/code-resource.md` for MD-specific modifiers, scripted effects (building effects, treasury, debt, influence, political, energy), and building costs. Check for issues in five categories:
+2. Review every changed file against the rules in CLAUDE.md, `.claude/rules/localisation-rules.md`, and `.claude/docs/hoi4-data-structures.md`. Reference `docs/src/content/resources/code-resource.md` for MD-specific modifiers, scripted effects (building effects, treasury, debt, influence, political, energy), and building costs. Check five categories:
 
-**Coding Standards** — apply all rules from CLAUDE.md. Watch especially for these commonly missed or silently broken patterns:
+**Coding Standards** (apply all CLAUDE.md rules). Watch especially for these commonly missed or silently broken patterns:
 
 - Misspelled or wrong-case IDs in `has_idea`/`add_ideas`/`remove_ideas`/`has_completed_focus` — HOI4 checks are **case-sensitive** and fail silently with no error
 - `ai_will_do = { factor = N }` at root — use `base = N`; `factor` at root is deprecated
@@ -22,14 +22,14 @@ Steps:
 - GUI button with `trigger` but no `effects` block — clicking does nothing
 - N separate `foo_0..foo_N` scripted effects — flag for refactor to parameterized helper + array
 
-**Performance** — apply Performance Tips from CLAUDE.md. Watch especially for:
+**Performance** (apply CLAUDE.md Performance Tips). Watch especially for:
 
 - `every_country`/`any_country`/`random_country` without an array — 200+ evaluations per tick
 - `every_state`/`any_state` without a narrow `limit` — 800+ evaluations
 - Complex triggers in decision `visible` blocks — evaluated every frame
 - GUI `dirty` variable set to `global.date` or `global.num_days` — GUI redraws every tick; use a purpose-built counter incremented only on relevant state changes
 
-**Logic & Correctness** — bugs and broken game state risks:
+**Logic & Correctness** (bugs and broken game state risks):
 
 - Scoping into a tag without `country_exists` guard
 - `clr_country_flag`/`clr_global_flag` on a flag never set
@@ -59,7 +59,7 @@ Steps:
 - GUI `dirty` variable set to `global.date` or `global.num_days` — causes the GUI to redraw every tick. Use a purpose-built counter variable incremented only when relevant game state changes (e.g., `TAG_update_dirty_variable` scripted effect).
 - Stacked multiplier overflow — when several negative `*_factor` modifiers are applied to the same variable (e.g., `migration_rate_value_multiplier`), the product can approach zero or go negative, producing division-by-near-zero results. Use `clamp_variable` / `clamp_temp_variable = { var = X min = 0.01 }` before using the variable in a calculation.
 
-**Localisation** — apply all rules from `.claude/rules/localisation-rules.md`. Key structural checks for changed files:
+**Localisation** (apply all `.claude/rules/localisation-rules.md` rules). Key structural checks for changed files:
 
 - Every new script object (focus, decision, event, idea, MIO, subideology) has matching loc keys
 - Events have `.t`, `.d`, and all option keys (`ID.a`, `ID.b`, …)
@@ -67,7 +67,7 @@ Steps:
 - No empty `""` or `"TODO"` strings; no undefined `[variable]` substitutions
 - **[critical]** Loc key collisions between focuses and ideas — when an idea uses `name = X` and a focus also has `id = X`, both share the `X` / `X_desc` loc keys. If the `.yml` defines `X:` twice (once for the focus, once for the idea) the duplicate-key rule silently overwrites one. To check: grep the `.yml` for duplicate keys (`sort | uniq -d`), and for any `name = X` in changed ideas, grep `id = X` in `common/national_focus/`. Rename the idea's `name =` if a focus uses the same key.
 
-**Content Design** — quick-catch items from `docs/src/content/resources/content-review-guide.md`. For the full content audit (economic balance, political neutrality, military guidelines, visual, AI game rules), run `/content-review`:
+**Content Design** (quick-catch items from `docs/src/content/resources/content-review-guide.md`). For the full content audit (economic balance, political neutrality, military, visual, AI game rules), run `/content-review`:
 
 - `add_ai_strategy` used in effects (harmful to AI performance — consult AI team)
 - Free cores without a mechanic (require 80% compliance or integration system)
@@ -80,17 +80,15 @@ Steps:
 
 3. **Launch adversarial-review in parallel**
 
-   While performing the review above, launch a `general-purpose` subagent with the `adversarial-review` skill in the same message. Pass it the branch diff context and instruct it to run a full adversarial edge-case review on all changed files.
-
-   Wait for both the main review and the adversarial agent to complete before proceeding.
+   While doing the review above, launch a `general-purpose` subagent with the `adversarial-review` skill in the same message. Pass it the branch diff context and instruct it to run a full adversarial edge-case review on all changed files. Wait for both the main review and the adversarial agent before proceeding.
 
 4. **Merge findings**
 
-   Combine the main review output and the adversarial-review output into a single report per file.
+   Combine the main review and adversarial-review output into a single report per file.
 
    **Deduplication rules:**
-   - If the main review and adversarial agent flag the same line for the same underlying issue, keep the adversarial agent's explanation (it focuses on the _scenario_ that breaks, which is more actionable).
-   - If they flag the same line for different reasons, list both under one entry.
+   - Same line, same underlying issue: keep the adversarial agent's explanation (it focuses on the _scenario_ that breaks, more actionable).
+   - Same line, different reasons: list both under one entry.
    - Never drop a finding just because it appears in both reports.
 
 5. Output: list issues per file with line numbers. Flag crash/broken-state risks as **critical**. End with total count or "No issues found".
