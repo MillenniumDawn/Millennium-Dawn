@@ -168,6 +168,55 @@ jobs:
         python tools/linting/check_common_mistakes.py --mode diff
 
   # ───────────────────────────────────────────────────────────────
+  # Structural lint — file-integrity checks that otherwise only run as
+  # local pre-commit hooks. Catches regressions from commits made via the
+  # GitHub web UI or with hooks disabled (braces, loc BOM, .mod encoding).
+  # ───────────────────────────────────────────────────────────────
+  structural-lint:
+    name: Structural Lint
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true' ||
+      needs.detect-changes.outputs.localisation == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common
+          events
+          history
+          localisation
+          tools
+
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: '3.x'
+
+    # NUL-delimited so filenames with spaces / apostrophes (e.g.
+    # "Cote d'Ivoire.txt") survive the pipe. xargs runs the checker in
+    # batches; its exit status is non-zero if any batch fails.
+    - name: Check braces
+      run: |
+        git ls-files -z -- common events history \
+          | grep -zE '\.txt$' \
+          | grep -zvE '(^|/)(Changelog|AUTHORS)\.txt$|(^|/)descriptions.*\.txt$' \
+          | xargs -0 -r python3 tools/linting/check_braces.py
+
+    - name: Check localisation UTF-8 BOM
+      run: python3 tools/linting/validate_localization_encoding.py
+
+    - name: Check .mod file encoding
+      run: |
+        git ls-files -z -- '*.mod' ':!resources' \
+          | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
+
+  # ───────────────────────────────────────────────────────────────
   # Core validators — broad scope, run when most game files change
   # ───────────────────────────────────────────────────────────────
   validate-core:
