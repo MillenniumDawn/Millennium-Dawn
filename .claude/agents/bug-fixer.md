@@ -14,13 +14,11 @@ Picks up open GitHub bugs (or scans for common bug patterns when idle), traces r
 
 - User asks to fix bugs, resolve issues, or clean up code problems.
 - An issue number or `gh` URL is mentioned.
-- No active task — sweep for the bug patterns listed below.
+- No active task — sweep for the bug patterns below.
 
 ## Inputs
 
-The caller passes:
-
-- An issue number, an issue URL, a file path, or nothing (idle scan mode).
+Caller passes an issue number, an issue URL, a file path, or nothing (idle scan mode).
 
 ## Required reading
 
@@ -28,11 +26,11 @@ The caller passes:
 
 ## Workflow
 
-1. **Triage** — If given an issue: `gh issue view <N>`. Otherwise `gh issue list --label bug` and pick one. If idle: scan for patterns below.
-2. **Reproduce / locate** — Grep / read the referenced files. Confirm the bug exists in current `main` before changing anything.
-3. **Diagnose** — Identify the smallest scope that contains the root cause. Trace scopes, triggers, namespaces.
-4. **Fix** — Apply the minimal correct fix following project conventions. Do NOT refactor unrelated code in the same pass.
-5. **Report** — Hand back the diagnosis, the patch, and a single verification step.
+1. **Triage** — given an issue: `gh issue view <N>`. Otherwise `gh issue list --label bug` and pick one. If idle: scan for patterns below.
+2. **Reproduce / locate** — grep / read the referenced files. Confirm the bug exists in current `main` before changing anything.
+3. **Diagnose** — identify the smallest scope containing the root cause. Trace scopes, triggers, namespaces.
+4. **Fix** — apply the minimal correct fix following project conventions. Do NOT refactor unrelated code in the same pass.
+5. **Report** — hand back the diagnosis, the patch, and a single verification step.
 
 ## What to check / produce
 

@@ -2,8 +2,6 @@
 
 Patterns for reducing complexity, eliminating copy-paste drift, and making scripts easier to maintain.
 
----
-
 ## Array Lookup Tables
 
 When you have N parallel values indexed by a small integer type (1..N), use an array instead of N individual variables.
@@ -35,11 +33,9 @@ set_temp_variable = { idx = type }
 set_variable = { cost = global.build_cost_array^idx }
 ```
 
-**Why:** Eliminates copy-paste drift, reduces script size by ~80%, and adding a new type is one line instead of two.
+**Why:** Eliminates copy-paste drift, reduces script size by ~80%, adding a new type is one line instead of two.
 
 **Caveat:** HOI4 arrays are zero-indexed. Reserve `^0` as a safe default (set to 0 or a sentinel) so an uninitialized index doesn't read garbage.
-
----
 
 ## Parameterized Scripted Localisation
 
@@ -75,8 +71,6 @@ defined_text = {
 ```
 
 **Why:** Scripted loc has no arrays or parameterized blocks. A temp variable set by the caller is the only way to share logic across slots.
-
----
 
 ## Extract Repeated Tail Blocks into Helpers
 
@@ -119,8 +113,6 @@ AI_record_score = yes
 
 **Why:** ~40 lines of duplication removed per score function. If the randomization range needs tuning, one change updates every score type.
 
----
-
 ## Replace Nested `if` Toggle with `if/else`
 
 ### Before
@@ -139,8 +131,6 @@ else = { set_variable = { page = 1 } }
 
 **Why:** Two-state toggles are cleaner with `if/else`. The `else` branch is guaranteed to execute when the `if` doesn't, removing the need for a second trigger check.
 
----
-
 ## Consolidate Identical-Body `else_if` Chains into `OR`
 
 When N consecutive `else_if` branches all execute the same effects, collapse them into one branch with an `OR` limit.
@@ -148,26 +138,11 @@ When N consecutive `else_if` branches all execute the same effects, collapse the
 ### Before (N branches, same body)
 
 ```
-else_if = {
-    limit = { has_country_flag = flag_A }
-    add_stability = 0.05
-}
-else_if = {
-    limit = { has_country_flag = flag_B }
-    add_stability = 0.05
-}
-else_if = {
-    limit = { has_country_flag = flag_C }
-    add_stability = 0.05
-}
-else_if = {
-    limit = { has_country_flag = flag_D }
-    add_stability = 0.05
-}
-else_if = {
-    limit = { has_country_flag = flag_E }
-    add_stability = 0.05
-}
+else_if = { limit = { has_country_flag = flag_A } add_stability = 0.05 }
+else_if = { limit = { has_country_flag = flag_B } add_stability = 0.05 }
+else_if = { limit = { has_country_flag = flag_C } add_stability = 0.05 }
+else_if = { limit = { has_country_flag = flag_D } add_stability = 0.05 }
+else_if = { limit = { has_country_flag = flag_E } add_stability = 0.05 }
 ```
 
 ### After (one branch, OR'd conditions)
@@ -187,13 +162,11 @@ else_if = {
 }
 ```
 
-**Go a step further — use `else` when exhaustive:** If the preceding `if/else_if` chain already guarantees at least one condition must be true (e.g., the earlier branches covered all lower values of a sequential range), use a bare `else = { ... }` instead of the `OR` block — it's shorter and can't drift.
+**Go a step further, use `else` when exhaustive:** If the preceding `if/else_if` chain already guarantees at least one condition must be true (e.g., earlier branches covered all lower values of a sequential range), use a bare `else = { ... }` instead of the `OR` block. Shorter and can't drift.
 
-**Why:** Eliminates copy-paste drift — adding a new condition doesn't risk forgetting to update one branch. Reduces script size. If the body needs changing, it's one edit instead of N.
+**Why:** Eliminates copy-paste drift, adding a new condition doesn't risk forgetting to update one branch. Reduces script size. If the body changes, it's one edit instead of N.
 
-**When NOT to use:** If the branches have side effects that interact (e.g., scoping to different targets, setting variables the next branch reads), or if evaluation order matters between conditions that could both be true. `OR` short-circuits logic — all conditions are effectively equal.
-
----
+**When NOT to use:** If the branches have side effects that interact (e.g., scoping to different targets, setting variables the next branch reads), or if evaluation order matters between conditions that could both be true. `OR` short-circuits logic, all conditions are effectively equal.
 
 ## Consolidate Decision Templates with `meta_effect`
 
@@ -212,15 +185,13 @@ meta_effect = {
 }
 ```
 
-**Why:** The N decisions still exist as separate objects (engine requirement — decision IDs must be static), but their activation logic is a single block. Adding a new slot is a parameter increment instead of N more lines.
+**Why:** The N decisions still exist as separate objects (engine requirement, decision IDs must be static), but their activation logic is a single block. Adding a new slot is a parameter increment instead of N more lines.
 
-**Caveat:** `meta_effect` runs at parse time, not runtime. It cannot reference runtime variables in its parameter substitution — only static text or `[]`-formatted variables.
-
----
+**Caveat:** `meta_effect` runs at parse time, not runtime. It cannot reference runtime variables in its parameter substitution, only static text or `[]`-formatted variables.
 
 ## Consolidate `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop`
 
-When a focus, decision, or event shows a tooltip for effects applied to every member of an array, the old pattern duplicated the same logic twice — once in `effect_tooltip` (for display) and once in `for_each_scope_loop` (for execution). The `for_each_scope_loop` block accepts a `tooltip` parameter, which combines both.
+When a focus, decision, or event shows a tooltip for effects applied to every member of an array, the old pattern duplicated the same logic twice: once in `effect_tooltip` (for display) and once in `for_each_scope_loop` (for execution). The `for_each_scope_loop` block accepts a `tooltip` parameter, which combines both.
 
 ### Before (self-targeting effects)
 
@@ -281,11 +252,9 @@ for_each_scope_loop = {
 
 - `tooltip = TT_ALL_*` replaces both `custom_effect_tooltip` and `effect_tooltip`.
 - The effects live in one place: inside the `for_each_scope_loop`.
-- When opinion modifiers target the focus-completing country, add `NOT = { tag = ROOT }` to prevent self-targeting. Use `ROOT` (not `PREV`) — `ROOT` is the fixed original scope, while `PREV` shifts if the loop is nested inside another scope change.
+- When opinion modifiers target the focus-completing country, add `NOT = { tag = ROOT }` to prevent self-targeting. Use `ROOT` (not `PREV`): `ROOT` is the fixed original scope, while `PREV` shifts if the loop is nested inside another scope change.
 
-**Why:** Eliminates ~4–8 lines of duplication per call site. Across ~50+ EU/NATO/CSTO/AU focus trees, scripted effects, and GUI buttons, this removes hundreds of redundant lines and prevents drift between tooltip text and real execution. See `.claude/docs/performance-patterns.md` for the performance impact of double-evaluation.
-
----
+**Why:** Eliminates ~4-8 lines of duplication per call site. Across ~50+ EU/NATO/CSTO/AU focus trees, scripted effects, and GUI buttons, this removes hundreds of redundant lines and prevents drift between tooltip text and real execution. See `.claude/docs/performance-patterns.md` for the performance impact of double-evaluation.
 
 ## Merge Consecutive Same-Tag Scope Blocks
 
@@ -317,11 +286,9 @@ ALG = {
 }
 ```
 
-**Why:** Each `TAG = { }` scope switch creates a separate indented block in the player-facing tooltip. Two consecutive `ALG = { }` blocks show the ALG header twice, making the tooltip noisy and harder to scan. Merging produces a single clean block.
+**Why:** Each `TAG = { }` scope switch creates a separate indented block in the player-facing tooltip. Two consecutive `ALG = { }` blocks show the ALG header twice, making the tooltip noisy. Merging produces a single clean block.
 
 **When NOT to merge:** If the two blocks are separated by an `if`/`else` that conditionally gates one of them, or if the second block is inside a different trigger/effect context (e.g., one is in `effect_tooltip` and the other is in `hidden_effect`), they cannot be merged.
-
----
 
 ## Prefer `multiply_variable` Over `divide_variable`
 
@@ -341,11 +308,9 @@ multiply_variable = { var = my_ratio value = 0.01 }
 
 **Why:** `multiply_variable` is a single engine operation with no zero-division risk. `0.01` is the exact reciprocal of `100`, so the result is identical. Prefer multiplication for all constant divisors.
 
----
-
 ## Prefer `random` Over Two-Bucket `random_list` With an Empty Side
 
-When a `random_list` has exactly two buckets and one of them is empty (a "do nothing" placeholder for the "miss" case), collapse it to `random = { chance = N effect }`. Same semantics, lighter engine path, less script.
+When a `random_list` has exactly two buckets and one is empty (a "do nothing" placeholder for the "miss" case), collapse it to `random = { chance = N effect }`. Same semantics, lighter engine path, less script.
 
 ### Before
 
@@ -381,11 +346,9 @@ random = {
 }
 ```
 
-**Why:** `random_list` builds a weighted-list dispatch table internally; the engine resolves the active bucket on every fire. `random = { chance = N effect }` is a direct Bernoulli trial — one roll, branch, done. The pattern is also less code and easier to read at a glance: the player/dev sees the probability and the effect together.
+**Why:** `random_list` builds a weighted-list dispatch table internally; the engine resolves the active bucket on every fire. `random = { chance = N effect }` is a direct Bernoulli trial: one roll, branch, done. Also less code and easier to read: the probability and effect appear together.
 
-**When NOT to convert:** Three or more buckets, or two non-empty buckets with different effects. Those genuinely need `random_list`. The chance value also has to be the weight of the non-empty bucket — `random_list = { 80 = {} 20 = { effect } }` becomes `random = { chance = 20 effect }`, not `chance = 80`.
-
----
+**When NOT to convert:** Three or more buckets, or two non-empty buckets with different effects. Those genuinely need `random_list`. The chance value must be the weight of the non-empty bucket: `random_list = { 80 = {} 20 = { effect } }` becomes `random = { chance = 20 effect }`, not `chance = 80`.
 
 ## Add Mutual Exclusion Guards When Splitting `every_country` with `OR`
 

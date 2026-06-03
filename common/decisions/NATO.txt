@@ -2025,6 +2025,11 @@ generic_coalition_politics_decisions = {
 			is_in_faction = no
 			NOT = { has_idea = Major_Non_NATO_Ally }
 			NOT = { has_idea = NATO_member }
+			# Only nations with a real military or arms base apply. Keeps microstates (Andorra, Monaco, etc.) out of the pool.
+			OR = {
+				has_army_manpower = { size > 10000 }
+				num_of_military_factories > 2
+			}
 		}
 
 		available = {
@@ -2079,7 +2084,18 @@ generic_coalition_politics_decisions = {
 		}
 
 		ai_will_do = {
-			base = 5
+			base = 3
+			# Don't bother applying unless a NATO leader actually values us
+			modifier = {
+				factor = 0
+				NOT = {
+					any_of_scopes = {
+						array = global.nato_members
+						is_faction_leader = yes
+						has_opinion = { target = ROOT value > 25 }
+					}
+				}
+			}
 			modifier = {
 				CHI = { has_war_with = ROOT }
 				add = 5
@@ -2121,17 +2137,14 @@ generic_coalition_politics_decisions = {
 					has_government = fascism
 				}
 			}
+			# Pursue protection when the AI feels threatened; far less inclined when it does not
 			modifier = {
-				factor = 0
-				threat < 0.30
-			}
-			modifier = {
-				threat > 0.29
-				add = 3
-			}
-			modifier = {
-				threat > 0.50
+				check_variable = { ai_attitude_is_threatened > 0 }
 				add = 5
+			}
+			modifier = {
+				factor = 0.2
+				check_variable = { ai_attitude_is_threatened = 0 }
 			}
 			modifier = {
 				num_of_factories > 30

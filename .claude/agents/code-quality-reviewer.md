@@ -18,9 +18,7 @@ Reviews a file or branch diff against Millennium Dawn conventions and reports is
 
 ## Inputs
 
-The caller passes:
-
-- A file path, a directory, or `git diff main...HEAD`. If unclear, default to recent git changes.
+Caller passes a file path, a directory, or `git diff main...HEAD`. If unclear, default to recent git changes.
 
 ## Required reading
 
@@ -28,7 +26,7 @@ The caller passes:
 
 ## Workflow
 
-1. **Identify scope** — Confirm which files are in review. List them back to the caller.
+1. **Identify scope** — confirm which files are in review; list them back to the caller.
 2. **Read each file in full** — no skimming; tooltips and ai_will_do at the bottom matter.
 3. **Categorize findings** — Correctness > Performance > Readability > Best Practices > Localisation.
 4. **Cross-check known false positives** before flagging — see the doc.
@@ -36,7 +34,7 @@ The caller passes:
 
 ## What to check / produce
 
-**Correctness traps** — all cross-cutting HOI4 rules in `agent-conventions.md` apply. Additionally watch for:
+**Correctness traps** — all cross-cutting HOI4 rules in `agent-conventions.md` apply. Additionally:
 
 - Tautological `OR` inside `ai_will_do` (e.g. `OR = { is_historical_focus_on = yes / no }`) — always-true blocks doing nothing.
 - Decision `allowed` containing dynamic conditions (date / factory count / opinion) — should move to `available` or `visible`.
@@ -70,7 +68,7 @@ The caller passes:
 
 ## Output format
 
-Standard reviewer output from `agent-conventions.md` — `Summary` / `Findings by category` / `Severity counts` / `Open questions`. Category groups for this agent: `Correctness`, `Performance`, `Readability`, `Best Practices`, `Localisation`.
+Standard reviewer output from `agent-conventions.md` — `Summary` / `Findings by category` / `Severity counts` / `Open questions`. Category groups: `Correctness`, `Performance`, `Readability`, `Best Practices`, `Localisation`.
 
 ## Do NOT
 

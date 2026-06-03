@@ -5,29 +5,26 @@ Run the full Millennium Dawn content review checklist against a file or the curr
 - With `file_path`: review that specific file against all content guidelines.
 - Without argument: review all changed files on the current branch against `main`.
 
-The authoritative checklist lives in `docs/src/content/resources/content-review-guide.md` and `docs/src/content/resources/new-general-guidelines.md`. Read both before starting if they haven't been read in this session. The condensed reference at `.claude/docs/content-guidelines.md` is a useful quick summary but is not exhaustive — always defer to the full docs.
-
----
+The authoritative checklist lives in `docs/src/content/resources/content-review-guide.md` and `docs/src/content/resources/new-general-guidelines.md`. Read both before starting if not yet read this session. The condensed `.claude/docs/content-guidelines.md` is a quick summary but not exhaustive; always defer to the full docs.
 
 ## Execution
 
 ### 1. Gather context
 
-**File mode** (user provided a path):
+**File mode** (path provided):
 
 - Read the file and identify its type (focus tree, events, characters/generals, OOB, decisions, etc.).
 - Read `docs/src/content/resources/content-review-guide.md`, `docs/src/content/resources/new-general-guidelines.md`, and `.claude/docs/content-guidelines.md`.
 
 **Branch mode** (no argument):
 
-- Run: `git diff origin/main...HEAD`
-- Run: `git log origin/main..HEAD --oneline`
-- Identify the list of changed files and their types.
+- Run `git diff origin/main...HEAD` and `git log origin/main..HEAD --oneline`.
+- Identify the changed files and their types.
 - Read `docs/src/content/resources/content-review-guide.md`, `docs/src/content/resources/new-general-guidelines.md`, and `.claude/docs/content-guidelines.md`.
 
 ### 2. Apply the checklist
 
-For each file in scope, check the categories below. Skip categories that don't apply to the file type — don't check admiral counts in a decisions file, don't check building costs in a character file.
+For each file in scope, check the categories below. Skip categories that don't apply to the file type (no admiral counts in a decisions file, no building costs in a character file).
 
 #### Economic
 
@@ -61,9 +58,7 @@ For each file in scope, check the categories below. Skip categories that don't a
 
 #### Military (character/OOB files)
 
-Count formulas, skill levels by region, and skill point calculations are in `.claude/docs/content-guidelines.md` under "Generals & Admirals". Read that section before running these checks.
-
-Check:
+Count formulas, skill levels by region, and skill point calculations are in `.claude/docs/content-guidelines.md` under "Generals & Admirals". Read that section first. Check:
 
 - General, Field Marshal, and Admiral counts outside the formula range (exceptions allowed for famous commanders)
 - Skill levels outside the expected region range without justification
@@ -94,14 +89,12 @@ Check:
 - New tags (new countries) missing any of: OOB, name lists, political structuring, starting laws, starting leader
 - No changelog entry added for the content — developers must document their additions in `Changelog.txt`
 
----
-
 ### 3. Output
 
 For each file reviewed, report:
 
-1. **File** — path and file type.
-2. **Issues** — numbered list with category labels (`[Economic]`, `[Political]`, `[Visual]`, `[Military]`, `[AI]`, `[Code]`, `[Misc]`) and line numbers where applicable.
+1. **File**: path and file type.
+2. **Issues**: numbered list with category labels (`[Economic]`, `[Political]`, `[Visual]`, `[Military]`, `[AI]`, `[Code]`, `[Misc]`) and line numbers where applicable.
 3. Mark anything that must be fixed before merge as **[blocker]**.
 
 End with a total issue count per category, or "No content issues found."
