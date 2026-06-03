@@ -41,7 +41,14 @@ from shared_utils import (
     find_hoi4_install,
     line_for_offset,
 )
-from validator_common import BaseValidator, Colors, Severity, run_validator_main
+from validator_common import (
+    BaseValidator,
+    Colors,
+    Severity,
+    case_mismatch,
+    casefold_index,
+    run_validator_main,
+)
 
 # ---------------------------------------------------------------------------
 # MD-authored file detection
@@ -430,6 +437,7 @@ class GfxReferenceValidator(BaseValidator):
         source_label: str,
         category: str,
         gui_mode: bool = False,
+        mod_defined_ci: Optional[dict] = None,
     ) -> None:
         """Report any sprite names in refs that are not in defined.
 
@@ -438,10 +446,15 @@ class GfxReferenceValidator(BaseValidator):
         those files legitimately reference vanilla sprites the mod doesn't
         redefine. MD-authored .gui files and all scripted_gui/.txt files
         get ERROR severity.
+
+        *mod_defined_ci* is the casefold index of mod-only sprites (not
+        vanilla). When a ref misses case-sensitively but hits here, the
+        message is upgraded to a Linux case-mismatch diagnostic.
         """
         errors: List[Tuple[str, str, int]] = []
         warnings: List[Tuple[str, str, int]] = []
         seen: Set[Tuple[str, str, int]] = set()
+        ci = mod_defined_ci or {}
 
         for sprite, filepath, line in refs:
             if sprite in defined:
@@ -455,7 +468,15 @@ class GfxReferenceValidator(BaseValidator):
             if key in seen:
                 continue
             seen.add(key)
-            entry = (f"Undefined sprite '{sprite}'", rel, line)
+            canonical = case_mismatch(sprite, ci)
+            if canonical:
+                msg = (
+                    f"Undefined sprite '{sprite}': case-mismatch reference '{sprite}'"
+                    f" — defined as '{canonical}' (works on Windows, fails on Linux)"
+                )
+            else:
+                msg = f"Undefined sprite '{sprite}'"
+            entry = (msg, rel, line)
             if gui_mode and not _is_md_gui_file(filepath):
                 warnings.append(entry)
             else:
@@ -541,6 +562,9 @@ class GfxReferenceValidator(BaseValidator):
     def run_validations(self) -> None:
         # Phase 1: build the complete definition set (always full-repo scan)
         defined, mod_defined = self._build_gfx_definitions()
+        # Case-insensitive index of mod-only sprites for Linux case-mismatch
+        # diagnostics — never suggest a vanilla-only sprite as the canonical name.
+        mod_defined_ci = casefold_index(mod_defined)
 
         # Phase 2: collect all references from the (possibly staged) files
         gui_refs = self._collect_gui_refs(defined)
@@ -554,6 +578,7 @@ class GfxReferenceValidator(BaseValidator):
             source_label=".gui files",
             category="undefined-sprite",
             gui_mode=True,
+            mod_defined_ci=mod_defined_ci,
         )
 
         self._log_section("Checking undefined GFX sprite references in scripted_guis")
@@ -562,6 +587,7 @@ class GfxReferenceValidator(BaseValidator):
             defined,
             source_label="scripted_guis",
             category="undefined-sprite",
+            mod_defined_ci=mod_defined_ci,
         )
 
         self._log_section(
@@ -572,6 +598,7 @@ class GfxReferenceValidator(BaseValidator):
             defined,
             source_label="scripted_localisation",
             category="undefined-sprite",
+            mod_defined_ci=mod_defined_ci,
         )
 
         # Phase 4: unused sprites — only against mod-defined; vanilla sprites the

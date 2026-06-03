@@ -191,6 +191,21 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
 )
 
 
+def casefold_index(names) -> dict:
+    """Return a dict mapping each name lowercased to its canonical form.
+
+    Used to build a case-insensitive lookup for Linux case-mismatch detection.
+    """
+    return {n.lower(): n for n in names}
+
+
+def case_mismatch(ref: str, ci_index: dict):
+    """Return the canonical name when *ref* matches case-insensitively but not
+    exactly (a Linux-only bug), else None."""
+    hit = ci_index.get(ref.lower())
+    return hit if (hit is not None and hit != ref) else None
+
+
 def scan_meta_constructed_names(files, defined_names):
     """Return the subset of *defined_names* called via meta_effect/meta_trigger
     template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).

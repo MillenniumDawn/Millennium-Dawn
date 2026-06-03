@@ -23,6 +23,8 @@ from validator_common import (
     BaseValidator,
     Colors,
     Severity,
+    case_mismatch,
+    casefold_index,
     run_validator_main,
     should_skip_file,
     strip_comments,
@@ -390,6 +392,7 @@ class Validator(BaseValidator):
         parsed = self._get_parsed_files()
         _, focus_info = self._build_focus_registry(parsed)
         all_defined: FrozenSet[str] = frozenset(focus_info.keys())
+        defined_ci = casefold_index(all_defined)
 
         results = []
         seen_missing: Set[str] = set()
@@ -407,13 +410,25 @@ class Validator(BaseValidator):
                             and prereq_id not in seen_missing
                         ):
                             seen_missing.add(prereq_id)
-                            results.append(
-                                (
-                                    f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')",
-                                    rel,
-                                    sdata["line"],
+                            canonical = case_mismatch(prereq_id, defined_ci)
+                            if canonical:
+                                results.append(
+                                    (
+                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')"
+                                        f": case-mismatch reference '{prereq_id}' — defined as '{canonical}'"
+                                        " (works on Windows, fails on Linux)",
+                                        rel,
+                                        sdata["line"],
+                                    )
                                 )
-                            )
+                            else:
+                                results.append(
+                                    (
+                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')",
+                                        rel,
+                                        sdata["line"],
+                                    )
+                                )
             # Check focuses inside trees
             for tree in pf["trees"]:
                 for focus_id, line, prereq_groups in tree["focuses"]:
@@ -424,13 +439,25 @@ class Validator(BaseValidator):
                                 and prereq_id not in seen_missing
                             ):
                                 seen_missing.add(prereq_id)
-                                results.append(
-                                    (
-                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')",
-                                        rel,
-                                        line,
+                                canonical = case_mismatch(prereq_id, defined_ci)
+                                if canonical:
+                                    results.append(
+                                        (
+                                            f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')"
+                                            f": case-mismatch reference '{prereq_id}' — defined as '{canonical}'"
+                                            " (works on Windows, fails on Linux)",
+                                            rel,
+                                            line,
+                                        )
                                     )
-                                )
+                                else:
+                                    results.append(
+                                        (
+                                            f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')",
+                                            rel,
+                                            line,
+                                        )
+                                    )
 
         self._report(
             results,

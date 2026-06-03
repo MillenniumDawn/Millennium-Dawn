@@ -21,6 +21,8 @@ from validator_common import (
     BaseValidator,
     FileOpener,
     Severity,
+    case_mismatch,
+    casefold_index,
     run_validator_main,
     should_skip_file,
 )
@@ -413,18 +415,31 @@ class Validator(BaseValidator):
         self.log(
             f"  Defined event IDs: {len(all_defined)}, on_actions references: {len(all_refs)}"
         )
+        defined_ci = casefold_index(all_defined)
 
         results = []
         for eid, block_name, line, filepath in sorted(all_refs, key=lambda x: x[2]):
             if eid not in all_defined:
                 relpath = os.path.relpath(filepath, self.mod_path)
-                results.append(
-                    (
-                        f"Undefined event '{eid}' referenced in on_action '{block_name}'",
-                        relpath,
-                        line,
+                canonical = case_mismatch(eid, defined_ci)
+                if canonical:
+                    results.append(
+                        (
+                            f"Undefined event '{eid}' referenced in on_action '{block_name}'"
+                            f": case-mismatch reference '{eid}' — defined as '{canonical}'"
+                            " (works on Windows, fails on Linux)",
+                            relpath,
+                            line,
+                        )
                     )
-                )
+                else:
+                    results.append(
+                        (
+                            f"Undefined event '{eid}' referenced in on_action '{block_name}'",
+                            relpath,
+                            line,
+                        )
+                    )
 
         self._report(
             results,

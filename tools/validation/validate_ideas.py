@@ -29,6 +29,8 @@ from validator_common import (
     Colors,
     FileOpener,
     Severity,
+    case_mismatch,
+    casefold_index,
     run_validator_main,
     should_skip_file,
 )
@@ -345,8 +347,8 @@ def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
         # Skip pure numbers and very short tokens that are clearly not idea names
         if idea.isdigit() or len(idea) < 3:
             continue
-        canonical = defined_ci.get(idea.lower())
-        if canonical and canonical != idea:
+        canonical = case_mismatch(idea, defined_ci)
+        if canonical:
             results.append(
                 f"{basename}: case-mismatch idea reference '{idea}' — defined as "
                 f"'{canonical}' (works on Windows, fails on Linux)"
@@ -435,7 +437,7 @@ class Validator(BaseValidator):
 
         defined_frozen = frozenset(defined_ideas.keys())
         # Case-insensitive index for Linux case-mismatch diagnostics.
-        defined_ci = {name.lower(): name for name in defined_ideas}
+        defined_ci = casefold_index(defined_ideas)
         args_list = [(f, defined_frozen, defined_ci, self.mod_path) for f in scan_files]
 
         raw_results = self._pool_map(_check_file_for_refs, args_list)

@@ -133,6 +133,19 @@ To bypass for a single commit (not recommended):
 git commit --no-verify
 ```
 
+### Pre-commit stages
+
+Most MD validators are set to `stages: [manual]` in `.pre-commit-config.yaml` and do **not** run on ordinary `git commit`. This keeps commit latency low for contributors. The heavy cross-reference validators (`validate_scripted_gui`, `validate_localisation`, `validate_scripted_localisation`) and most others are in this category. They run in CI instead; see the comments in `.pre-commit-config.yaml` for per-hook rationale.
+
+A handful of lighter validators (`validate_oob_units`, `validate_ai_roles`, `validate_defines`, `validate_ai_navy`, `validate_ai_equipment`, `validate_agency_upgrades`, `validate_ideas`, `validate_events`) run on every commit without a `stages` restriction.
+
+To run a manual hook locally:
+
+```bash
+pre-commit run md-validate-scripted-gui --hook-stage manual
+pre-commit run --hook-stage manual   # all manual hooks at once
+```
+
 ---
 
 ## Architecture
@@ -142,8 +155,9 @@ All validators extend `BaseValidator` from `validator_common.py`. To add a new v
 1. Create `validate_<name>.py` in this directory
 2. Subclass `BaseValidator`, set `TITLE = "..."`, implement `run_validations()`
 3. Use `self.add_error(category, message, file, line)` / `self.add_warning(...)` to record issues
-4. Call `run_validator_main(YourValidator, "Description")` at the bottom
-5. `run_all_validators.py` auto-discovers it on the next run — no registration needed
+4. To parse many files, call `self.parse_files_cached(patterns, namespace, parse_fn)` — it's staged-aware, case-preserving, and disk-caches each parse keyed on file content. Use a unique `namespace` string per call to avoid cache collisions.
+5. Call `run_validator_main(YourValidator, "Description")` at the bottom
+6. `run_all_validators.py` auto-discovers it on the next run — no registration needed
 
 `validator_common.py` also provides `strip_comments()`, `FileOpener`, `DataCleaner`, `HOI4_BUILTIN_BLOCKS`, and `scan_meta_constructed_names()` for use in validators.
 
@@ -151,15 +165,16 @@ Module-level constants and pool-worker functions (those passed to `_pool_map`) m
 
 ### `validator_common.py` public API
 
-| Symbol                                              | Type      | Description                                                                                                            |
-| --------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `BaseValidator`                                     | class     | Base for all validators. Provides `_pool_map`, `_collect_files`, `_report`, `_log_section`, timing, and JSON output    |
-| `scan_meta_constructed_names(files, defined_names)` | function  | Scan files for `meta_effect`/`meta_trigger` template patterns and match against defined names                          |
-| `HOI4_BUILTIN_BLOCKS`                               | frozenset | All known HOI4 built-in effect/trigger block names                                                                     |
-| `Colors`                                            | class     | ANSI escape codes for colored output (`HEADER`, `BLUE`, `CYAN`, `GREEN`, `YELLOW`, `RED`, `ENDC`, `BOLD`, `UNDERLINE`) |
-| `Severity`                                          | class     | String constants: `Severity.ERROR = "error"`, `Severity.WARNING = "warning"`                                           |
-| `Issue`                                             | dataclass | Structured issue with `severity`, `category`, `message`, `file`, `line` fields and `to_dict()` / `to_key()` methods    |
-| `MD_LOG_LEVEL`                                      | env var   | Set to `ERROR` / `WARNING` (default) / `INFO` to control per-validator verbosity                                       |
+| Symbol                                                                                                                               | Type      | Description                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BaseValidator`                                                                                                                      | class     | Base for all validators. Provides `_pool_map`, `_collect_files`, `_report`, `_log_section`, timing, and JSON output                                                                                                                                        |
+| `BaseValidator.parse_files_cached(patterns, namespace, parse_fn, *, lowercase=False, strip_comments_flag=True, ignore_staged=False)` | method    | Collect files matching glob patterns (staged-aware), read each case-preserving, strip comments, and per-file disk-cache the result keyed on content; returns `{path: parse_fn(text, path)}`. Use this as the standard way to parse many files of one kind. |
+| `scan_meta_constructed_names(files, defined_names)`                                                                                  | function  | Scan files for `meta_effect`/`meta_trigger` template patterns and match against defined names                                                                                                                                                              |
+| `HOI4_BUILTIN_BLOCKS`                                                                                                                | frozenset | All known HOI4 built-in effect/trigger block names                                                                                                                                                                                                         |
+| `Colors`                                                                                                                             | class     | ANSI escape codes for colored output (`HEADER`, `BLUE`, `CYAN`, `GREEN`, `YELLOW`, `RED`, `ENDC`, `BOLD`, `UNDERLINE`)                                                                                                                                     |
+| `Severity`                                                                                                                           | class     | String constants: `Severity.ERROR = "error"`, `Severity.WARNING = "warning"`                                                                                                                                                                               |
+| `Issue`                                                                                                                              | dataclass | Structured issue with `severity`, `category`, `message`, `file`, `line` fields and `to_dict()` / `to_key()` methods                                                                                                                                        |
+| `MD_LOG_LEVEL`                                                                                                                       | env var   | Set to `ERROR` / `WARNING` (default) / `INFO` to control per-validator verbosity                                                                                                                                                                           |
 
 ---
 
