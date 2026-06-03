@@ -91,6 +91,7 @@ _HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
 # Categories where `allowed = { always = no }` is flagged as redundant
 # Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
 # (those without slot=/character_slot= or with hidden=yes)
+from shared_utils import extract_block_from_text  # noqa: E402
 from shared_utils import (  # noqa: E402
     get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
 )
@@ -112,17 +113,7 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
     """Return every idea name referenced inside swap_ideas = { ... } blocks."""
     refs: List[str] = []
     for m in _SWAP_BLOCK_START.finditer(text):
-        start = m.end()
-        depth = 1
-        i = start
-        n = len(text)
-        while i < n and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        block = text[start : i - 1]
+        block, _ = extract_block_from_text(text, m.end() - 1)
         refs.extend(_IDEA_REF_SWAP.findall(block))
     return refs
 
@@ -144,17 +135,7 @@ def _on_add_is_log_only(idea_text: str) -> bool:
     """
     found_any = False
     for m in _ON_ADD_BLOCK_START.finditer(idea_text):
-        start = m.end()
-        depth = 1
-        i = start
-        n = len(idea_text)
-        while i < n and depth > 0:
-            if idea_text[i] == "{":
-                depth += 1
-            elif idea_text[i] == "}":
-                depth -= 1
-            i += 1
-        body = idea_text[start : i - 1]
+        body, _ = extract_block_from_text(idea_text, m.end() - 1)
         found_any = True
 
         non_log = False

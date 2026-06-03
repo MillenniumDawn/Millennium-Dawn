@@ -9,10 +9,14 @@
 ##########################
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
     FileOpener,
@@ -74,16 +78,7 @@ def _scan_event_text(text: str) -> Tuple[Set[str], Set[str]]:
     triggered_only_ids: Set[str] = set()
 
     for m in _EVENT_BLOCK_OPEN_RE.finditer(text):
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        body = text[start : i - 1]
+        body, _ = extract_block_from_text(text, m.end() - 1)
 
         id_match = _EVENT_ID_IN_BODY_RE.search(body)
         if not id_match:
@@ -117,16 +112,7 @@ def _extract_random_events_ids(text: str) -> Set[str]:
     """Return all event IDs found inside random_events = { ... } blocks."""
     ids: Set[str] = set()
     for m in _RANDOM_EVENTS_BLOCK_RE.finditer(text):
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        body = text[start : i - 1]
+        body, _ = extract_block_from_text(text, m.end() - 1)
         for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
             ids.add(entry.group(1))
     return ids
@@ -163,18 +149,10 @@ def _compute_gate_index(text: str) -> List[Tuple[int, int]]:
     """
     spans: List[Tuple[int, int]] = []
     for m in _GATE_BLOCK_RE.finditer(text):
-        # Find the opening brace this match ends with
         open_pos = m.end() - 1
-        depth = 1
-        i = m.end()
-        n = len(text)
-        while i < n and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        spans.append((open_pos, i))
+        _, end = extract_block_from_text(text, open_pos)
+        # On imbalance the gate extends to EOF (matches the old scan).
+        spans.append((open_pos, end if end != -1 else len(text)))
     return spans
 
 

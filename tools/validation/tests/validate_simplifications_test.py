@@ -9,6 +9,7 @@ under OR / random_list / count_triggers, and never for non-deterministic
 from validate_simplifications import (
     _find_mergeable,
     _find_scope_expansion,
+    _find_two_bucket_random,
     strip_comments,
 )
 
@@ -19,6 +20,10 @@ def _merge_lines(text):
 
 def _expansion(text):
     return [(tag, flat) for _, tag, flat in _find_scope_expansion(strip_comments(text))]
+
+
+def _random(text):
+    return [chance for _, chance in _find_two_bucket_random(strip_comments(text))]
 
 
 # --- scope-merge: positive cases -------------------------------------------
@@ -131,3 +136,31 @@ def test_exists_no_left_alone():
 
 def test_non_tag_scope_not_flagged_for_expansion():
     assert _expansion("owner = { exists = yes }\n") == []
+
+
+# --- two-bucket random_list ------------------------------------------------
+
+
+def test_5050_empty_bucket_collapses():
+    text = "random_list = { 50 = { add_to_variable = { x = 1 } } 50 = {} }\n"
+    assert _random(text) == [50]
+
+
+def test_weighted_empty_bucket_computes_chance():
+    # 30 fires the effect, 70 does nothing -> 30% chance.
+    text = "random_list = { 30 = { add_stability = 0.1 } 70 = { } }\n"
+    assert _random(text) == [30]
+
+
+def test_both_buckets_nonempty_not_flagged():
+    text = "random_list = { 50 = { add_stability = 0.1 } 50 = { add_war_support = 0.1 } }\n"
+    assert _random(text) == []
+
+
+def test_three_buckets_not_flagged():
+    text = "random_list = { 33 = { a = yes } 33 = { b = yes } 34 = {} }\n"
+    assert _random(text) == []
+
+
+def test_both_empty_not_flagged():
+    assert _random("random_list = { 50 = {} 50 = {} }\n") == []

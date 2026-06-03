@@ -102,6 +102,52 @@ def _find_scope_expansion(text: str):
     return results
 
 
+# random_list with exactly two weight buckets where one is empty is a Bernoulli
+# trial in the wrong syntax; it collapses to a single `random = { chance = N }`.
+# Three+ buckets, or two non-empty buckets, must stay (see AGENTS.md).
+_RANDOM_LIST_RE = re.compile(r"\brandom_list\s*=\s*\{")
+_WEIGHT_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
+
+
+def _find_two_bucket_random(text: str):
+    """Return (line, chance) for each two-bucket random_list with one empty
+    bucket, where chance is the probability the non-empty bucket fires."""
+    results = []
+    for m in _RANDOM_LIST_RE.finditer(text):
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            continue
+        buckets = []  # (weight, is_empty) for each direct-child bucket
+        pos = 0
+        malformed = False
+        while pos < len(body):
+            bm = _OPEN_RE.search(body, pos)
+            if not bm:
+                break
+            bbody, bend = extract_block_from_text(body, bm.end() - 1)
+            if bend == -1:
+                malformed = True
+                break
+            if not _WEIGHT_RE.match(bm.group(1)):
+                malformed = True  # non-weight child: not a plain bucket list
+                break
+            buckets.append((float(bm.group(1)), bbody.strip() == ""))
+            pos = bend
+        if malformed or len(buckets) != 2:
+            continue
+        empties = [w for w, e in buckets if e]
+        non_empty = [w for w, e in buckets if not e]
+        if len(empties) != 1 or len(non_empty) != 1:
+            continue
+        total = empties[0] + non_empty[0]
+        if total <= 0:
+            continue
+        chance = round(100 * non_empty[0] / total)
+        line = text.count("\n", 0, m.start()) + 1
+        results.append((line, chance))
+    return results
+
+
 def _is_magic_chain(header: str) -> bool:
     return all(part in _MAGIC for part in header.split("."))
 
@@ -193,6 +239,15 @@ class Validator(BaseValidator):
                 results.append(
                     (
                         f"`{tag} = {{ ... }}` scope opened for one trigger; use `{flat}`",
+                        rel,
+                        line,
+                    )
+                )
+            for line, chance in _find_two_bucket_random(text):
+                results.append(
+                    (
+                        f"two-bucket random_list with an empty bucket; use "
+                        f"`random = {{ chance = {chance} ... }}`",
                         rel,
                         line,
                     )

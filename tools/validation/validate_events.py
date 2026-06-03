@@ -21,10 +21,14 @@
 ##########################
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
     Colors,
@@ -148,16 +152,7 @@ def _extract_random_event_ids(text: str) -> set:
     """
     ids: set = set()
     for m in _RANDOM_EVENTS_PATTERN.finditer(text):
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        body = text[start : i - 1]
+        body, _ = extract_block_from_text(text, m.end() - 1)
         for id_match in _RANDOM_EVENT_ID_PATTERN.finditer(body):
             ids.add(id_match.group(1))
     return ids
@@ -168,16 +163,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
     meta: List[dict] = []
     for m in _EVENT_TYPE_PATTERN.finditer(text):
         event_type = m.group(1)
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        body = text[start : i - 1]
+        body, _ = extract_block_from_text(text, m.end() - 1)
 
         id_match = _EVENT_ID_PATTERN.search(body)
         if not id_match:

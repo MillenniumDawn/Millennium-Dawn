@@ -106,6 +106,10 @@ _MUTUALLY_EXCLUSIVE_TRIGGERS = {
 # from CLAUDE.md is `NOT = { has_idea = intervention_isolation
 # has_idea = intervention_local_security }` — silently true forever because no
 # country has both intervention doctrines at once.
+# Keep in sync with the mutually-exclusive idea slots defined in common/ideas/.
+# Hand-maintained: add a group here when a new exclusive-idea slot is introduced
+# (grep common/ideas/ for the slot's idea names), or the AND/NOT-trap check
+# silently won't cover it.
 _MUTEX_IDEA_GROUPS = {
     "intervention_doctrine": {
         "intervention_isolation",
@@ -392,6 +396,10 @@ _RE_ADD_TO_VAR = re.compile(
 )
 _RE_DIVIDE_VAR = re.compile(r"\bdivide_variable\s*=\s*\{\s*(\S+)\s*=\s*(\S+)\s*\}")
 _RE_EVERY_COUNTRY_OPEN = re.compile(r"^\s*every_country\s*=\s*\{")
+# Maps each bloc-membership idea to the global array that should track it.
+# MD-specific; hand-maintained. When a new bloc with a membership idea + backing
+# array is added (see common/ideas/ and the bloc's scripted_effects), add it here
+# or the idea/array consistency check won't cover it.
 _MEMBER_IDEA_TO_ARRAY = {
     "EU_member": "global.EU_member",
     "NATO_member": "global.nato_members",

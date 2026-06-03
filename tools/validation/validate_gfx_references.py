@@ -52,44 +52,33 @@ from validator_common import BaseValidator, Colors, Severity, run_validator_main
 #      reference thousands of vanilla sprites the mod doesn't redefine. Missing
 #      sprites here are almost always vanilla refs — flag as WARNING only.
 #
-# Heuristic: a .gui file is MD-authored if its basename (without extension) starts
-# with a known MD or country prefix. Everything else is treated as a vanilla override.
+# A file is a vanilla override iff its basename matches a vanilla interface/*.gui
+# filename, listed in vanilla_gui_files.txt. Everything else is MD-authored. This
+# means new MD content of any naming convention is classified correctly with no
+# edits here; the manifest only needs regenerating on a HOI4 version bump (see
+# gen_vanilla_gui_manifest.py).
 
-_MD_GUI_PREFIXES = (
-    "MD_",
-    "EH_",
-    "ENG_",
-    "GER_",
-    "LBA_",
-    "Iran_",
-    "Iraq_",
-    "bos_",
-    "cze_",
-    "Counter_",
-    "agriculture_",
-    "SIN_",
-    "HKG_",
-    "HOL_",
-    "NKO_",
-    "GRE_",
-    "CYP_",
-    "SCO_",
-    "RAJ_",
-    "SUB_",
-    "PER_",
-    "ALG_",
-    "artsakh_",
-    "israel_",
-    "singapore_",
-    "divisions_summary",
-    "!MD_",
-)
+_VANILLA_GUI_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_gui_files.txt")
+
+
+def _load_vanilla_gui_basenames() -> frozenset:
+    try:
+        with open(_VANILLA_GUI_MANIFEST, encoding="utf-8") as fh:
+            return frozenset(
+                line.strip() for line in fh if line.strip() and not line.startswith("#")
+            )
+    except OSError:
+        # No manifest: treat every .gui as MD-authored (fail loud as ERRORs
+        # rather than silently downgrading real missing-sprite bugs).
+        return frozenset()
+
+
+_VANILLA_GUI_BASENAMES = _load_vanilla_gui_basenames()
 
 
 def _is_md_gui_file(filepath: str) -> bool:
     """Return True if this .gui file is MD-authored (not a vanilla override)."""
-    basename = os.path.basename(filepath)
-    return any(basename.startswith(p) for p in _MD_GUI_PREFIXES)
+    return os.path.basename(filepath) not in _VANILLA_GUI_BASENAMES
 
 
 # ---------------------------------------------------------------------------
