@@ -211,47 +211,47 @@ def _find_mergeable(text: str, base_line: int = 0, parent: str = ""):
     return results
 
 
+def _scan_file(text: str, path: str):
+    """Return [(message, line)] for one comment-stripped file. Pure function of
+    *text*, so parse_files_cached can content-cache it."""
+    findings = []
+    for line, header in _find_mergeable(text):
+        findings.append(
+            (f"consecutive `{header} = {{ }}` blocks can be merged into one", line)
+        )
+    for line, tag, flat in _find_scope_expansion(text):
+        findings.append(
+            (f"`{tag} = {{ ... }}` scope opened for one trigger; use `{flat}`", line)
+        )
+    for line, chance in _find_two_bucket_random(text):
+        findings.append(
+            (
+                f"two-bucket random_list with an empty bucket; use "
+                f"`random = {{ chance = {chance} ... }}`",
+                line,
+            )
+        )
+    return findings
+
+
 class Validator(BaseValidator):
     TITLE = "SIMPLIFICATION SUGGESTIONS"
     STAGED_EXTENSIONS = [".txt"]
 
     def run_validations(self):
-        files = self._collect_files(_SCAN_PATTERNS)
-        self.log(f"Scanning {len(files)} files for simplification opportunities")
+        # parse_files_cached reads case-preserving + comment-stripped and
+        # content-caches each file's findings, so a warm run only re-scans
+        # changed files.
+        parsed = self.parse_files_cached(
+            _SCAN_PATTERNS, "simplifications.scan", _scan_file
+        )
+        self.log(f"Scanned {len(parsed)} files for simplification opportunities")
 
         results = []
-        for path in files:
-            try:
-                with open(path, encoding="utf-8-sig", errors="replace") as f:
-                    text = strip_comments(f.read())
-            except OSError:
-                continue
+        for path, findings in parsed.items():
             rel = os.path.relpath(path, self.mod_path)
-            for line, header in _find_mergeable(text):
-                results.append(
-                    (
-                        f"consecutive `{header} = {{ }}` blocks can be merged into one",
-                        rel,
-                        line,
-                    )
-                )
-            for line, tag, flat in _find_scope_expansion(text):
-                results.append(
-                    (
-                        f"`{tag} = {{ ... }}` scope opened for one trigger; use `{flat}`",
-                        rel,
-                        line,
-                    )
-                )
-            for line, chance in _find_two_bucket_random(text):
-                results.append(
-                    (
-                        f"two-bucket random_list with an empty bucket; use "
-                        f"`random = {{ chance = {chance} ... }}`",
-                        rel,
-                        line,
-                    )
-                )
+            for message, line in findings:
+                results.append((message, rel, line))
 
         self._report(
             results,

@@ -38,6 +38,7 @@ from typing import Dict, FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import disk_cache
 from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
@@ -209,6 +210,137 @@ def _normalise_path(p: str) -> str:
     return p.replace("\\", "/").lstrip("./")
 
 
+# ----------------------------------------------------------------------------
+# Pure per-file parsers (module-level so disk_cache results stay picklable and
+# the parse is computed only from the file's text). Each returns a structured
+# result that the validator merges into its self collections unchanged.
+# ----------------------------------------------------------------------------
+
+
+def _parse_gui_text(text: str, rel: str) -> Dict:
+    """Parse one .gui file's text. Returns the GUI-element data this file
+    contributes, keyed by collection name. Mutates nothing."""
+    elements: Dict[str, Tuple[str, str, int]] = {}
+    element_files: Dict[str, str] = {}
+    containers: List[str] = []
+    tooltip_refs: List[Tuple[str, str, str, str, int]] = []
+    sprite_refs: List[Tuple[str, str, int]] = []
+
+    for m in _GUI_TYPE_OPENER.finditer(text):
+        type_name = m.group(1)
+        block_start = m.end()
+        block, end = extract_block_from_text(text, block_start - 1)
+        if end == -1:
+            continue
+        line_no = text.count("\n", 0, m.start()) + 1
+        name_m = _GUI_NAME.search(block)
+        if not name_m:
+            continue
+        name = name_m.group(1)
+        elements[name] = (type_name, rel, line_no)
+        element_files[name] = rel
+        if type_name.lower() == "containerwindowtype":
+            containers.append(name)
+        for tm in _GUI_TOOLTIP.finditer(block):
+            attr = tm.group(1)
+            loc_key = tm.group(2)
+            tm_line = line_no + block[: tm.start()].count("\n")
+            tooltip_refs.append((name, attr, loc_key, rel, tm_line))
+        for sm in _GUI_SPRITE.finditer(block):
+            sprite_name = sm.group(2)
+            sm_line = line_no + block[: sm.start()].count("\n")
+            sprite_refs.append((sprite_name, rel, sm_line))
+
+    return {
+        "elements": elements,
+        "element_files": element_files,
+        "containers": containers,
+        "tooltip_refs": tooltip_refs,
+        "sprite_refs": sprite_refs,
+    }
+
+
+def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict:
+    """Build a single scripted_gui block dict from its body text."""
+    block = {
+        "name": name,
+        "file": file,
+        "line": line,
+        "window_name": None,
+        "parent_window_name": None,
+        "parent_window_token": None,
+        "context_type": None,
+        "dirty": None,
+        "ai_test_scopes": [],
+        "handlers": set(),
+        "entry_containers": [],
+    }
+    m = _SGUI_CONTEXT.search(body)
+    if m:
+        block["context_type"] = m.group(1)
+    m = _SGUI_WINDOW.search(body)
+    if m:
+        block["window_name"] = m.group(1)
+    m = _SGUI_PARENT_NAME.search(body)
+    if m:
+        block["parent_window_name"] = m.group(1)
+    m = _SGUI_PARENT_TOKEN.search(body)
+    if m:
+        block["parent_window_token"] = m.group(1)
+    m = _SGUI_DIRTY.search(body)
+    if m:
+        block["dirty"] = m.group(1)
+    for sm in _SGUI_AI_TEST_SCOPES.finditer(body):
+        block["ai_test_scopes"].append(sm.group(1))
+    for ec in _SGUI_ENTRY_CONTAINER.finditer(body):
+        block["entry_containers"].append(ec.group(1))
+    for hm in _SGUI_HANDLER.finditer(body):
+        elem = hm.group(1)
+        kind = hm.group(2)
+        block["handlers"].add((elem, kind))
+    return block
+
+
+def _parse_scripted_gui_text(text: str, rel: str) -> Tuple[List[Dict], Set[str]]:
+    """Parse one scripted_gui .txt file's text. Returns
+    (list_of_block_dicts, set_of_trigger_names). Mutates nothing."""
+    blocks: List[Dict] = []
+    trigger_names: Set[str] = set()
+
+    outer = re.search(r"\bscripted_gui\s*=\s*\{", text)
+    if not outer:
+        return blocks, trigger_names
+    outer_start = outer.end()
+    outer_body, outer_end = extract_block_from_text(text, outer_start - 1)
+    if outer_end == -1:
+        return blocks, trigger_names
+
+    i = 0
+    n = len(outer_body)
+    while i < n:
+        m = _SGUI_BLOCK_OPENER.search(outer_body, i)
+        if not m:
+            break
+        name = m.group(1)
+        inner_start = m.end()
+        body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
+        if inner_end == -1:
+            break
+        line_no = text.count("\n", 0, outer_start + m.start()) + 1
+        block = _parse_one_sgui_block(name, body, rel, line_no)
+        for elem, kind in block["handlers"]:
+            trigger_names.add(f"{elem}_{kind}")
+        blocks.append(block)
+        i = inner_end
+
+    return blocks, trigger_names
+
+
+def _parse_gfx_text(text: str) -> Set[str]:
+    """Parse one .gfx file's text. Returns the set of sprite names it defines."""
+    return {m.group(1) for m in _GFX_SPRITE_NAME.finditer(text)}
+
+
 class ScriptedGuiValidator(BaseValidator):
     TITLE = "SCRIPTED GUI VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".gui", ".yml", ".gfx"]
@@ -282,33 +414,18 @@ class ScriptedGuiValidator(BaseValidator):
             return
 
         rel = os.path.relpath(filepath, self.mod_path)
-        # For every <type> = { ... } block, find its name + tooltip + sprite
-        for m in _GUI_TYPE_OPENER.finditer(text):
-            type_name = m.group(1)
-            block_start = m.end()
-            block, end = extract_block_from_text(text, block_start - 1)
-            if end == -1:
-                continue
-            line_no = text.count("\n", 0, m.start()) + 1
-            name_m = _GUI_NAME.search(block)
-            if not name_m:
-                continue
-            name = name_m.group(1)
-            self._gui_elements[name] = (type_name, rel, line_no)
-            self._gui_element_files[name] = rel
-            if type_name.lower() == "containerwindowtype":
-                self._gui_containers.add(name)
-            # Capture tooltip references on this element
-            for tm in _GUI_TOOLTIP.finditer(block):
-                attr = tm.group(1)
-                loc_key = tm.group(2)
-                tm_line = line_no + block[: tm.start()].count("\n")
-                self._gui_tooltip_refs.append((name, attr, loc_key, rel, tm_line))
-            # Capture sprite references on this element
-            for sm in _GUI_SPRITE.finditer(block):
-                sprite_name = sm.group(2)
-                sm_line = line_no + block[: sm.start()].count("\n")
-                self._gui_sprite_refs.append((sprite_name, rel, sm_line))
+        data = disk_cache.per_file_cached_by_content(
+            self.mod_path,
+            "sgui.gui",
+            filepath,
+            text,
+            lambda: _parse_gui_text(text, rel),
+        )
+        self._gui_elements.update(data["elements"])
+        self._gui_element_files.update(data["element_files"])
+        self._gui_containers.update(data["containers"])
+        self._gui_tooltip_refs.extend(data["tooltip_refs"])
+        self._gui_sprite_refs.extend(data["sprite_refs"])
 
     def _parse_scripted_gui_files(self) -> None:
         self._log_section("Parsing common/scripted_guis/*.txt files")
@@ -337,71 +454,15 @@ class ScriptedGuiValidator(BaseValidator):
             return
 
         rel = os.path.relpath(filepath, self.mod_path)
-        # Find the outer `scripted_gui = {` and parse each named block inside.
-        outer = re.search(r"\bscripted_gui\s*=\s*\{", text)
-        if not outer:
-            return
-        outer_start = outer.end()
-        outer_body, outer_end = extract_block_from_text(text, outer_start - 1)
-        if outer_end == -1:
-            return
-
-        # Walk through named blocks at depth 1 of outer_body
-        i = 0
-        n = len(outer_body)
-        while i < n:
-            m = _SGUI_BLOCK_OPENER.search(outer_body, i)
-            if not m:
-                break
-            name = m.group(1)
-            inner_start = m.end()
-            body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
-            if inner_end == -1:
-                break
-            line_no = text.count("\n", 0, outer_start + m.start()) + 1
-            self._record_sgui_block(name, body, rel, line_no)
-            i = inner_end
-
-    def _record_sgui_block(self, name: str, body: str, file: str, line: int) -> None:
-        block = {
-            "name": name,
-            "file": file,
-            "line": line,
-            "window_name": None,
-            "parent_window_name": None,
-            "parent_window_token": None,
-            "context_type": None,
-            "dirty": None,
-            "ai_test_scopes": [],
-            "handlers": set(),
-            "entry_containers": [],
-        }
-        m = _SGUI_CONTEXT.search(body)
-        if m:
-            block["context_type"] = m.group(1)
-        m = _SGUI_WINDOW.search(body)
-        if m:
-            block["window_name"] = m.group(1)
-        m = _SGUI_PARENT_NAME.search(body)
-        if m:
-            block["parent_window_name"] = m.group(1)
-        m = _SGUI_PARENT_TOKEN.search(body)
-        if m:
-            block["parent_window_token"] = m.group(1)
-        m = _SGUI_DIRTY.search(body)
-        if m:
-            block["dirty"] = m.group(1)
-        for sm in _SGUI_AI_TEST_SCOPES.finditer(body):
-            block["ai_test_scopes"].append(sm.group(1))
-        for ec in _SGUI_ENTRY_CONTAINER.finditer(body):
-            block["entry_containers"].append(ec.group(1))
-        for hm in _SGUI_HANDLER.finditer(body):
-            elem = hm.group(1)
-            kind = hm.group(2)
-            block["handlers"].add((elem, kind))
-            # Compose trigger name for [!] resolution
-            self._sgui_trigger_names.add(f"{elem}_{kind}")
-        self._sgui_blocks.append(block)
+        blocks, trigger_names = disk_cache.per_file_cached_by_content(
+            self.mod_path,
+            "sgui.scripted",
+            filepath,
+            text,
+            lambda: _parse_scripted_gui_text(text, rel),
+        )
+        self._sgui_blocks.extend(blocks)
+        self._sgui_trigger_names.update(trigger_names)
 
     def _parse_gfx_files(self) -> None:
         self._log_section("Parsing interface/*.gfx files for sprite names")
@@ -419,8 +480,14 @@ class ScriptedGuiValidator(BaseValidator):
                     text = fh.read()
             except Exception:
                 continue
-            for m in _GFX_SPRITE_NAME.finditer(text):
-                self._gfx_sprites.add(m.group(1))
+            names = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "sgui.gfx",
+                filepath,
+                text,
+                lambda text=text: _parse_gfx_text(text),
+            )
+            self._gfx_sprites.update(names)
         self.log(f"  Indexed {len(self._gfx_sprites)} GFX sprite names")
 
     def _load_loc_keys_and_cache(self) -> FrozenSet[str]:
