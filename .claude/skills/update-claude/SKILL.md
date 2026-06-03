@@ -10,17 +10,17 @@ Review the full conversation and extract:
 
 - **What was built or changed** — new files, refactored systems, validator additions, etc.
 - **Patterns discovered** — recurring issues, anti-patterns, common mistakes found during the work.
-- **Rules applied or created** — any coding conventions, scripting patterns, or process rules that emerged.
+- **Rules applied or created** — coding conventions, scripting patterns, or process rules that emerged.
 - **Decisions made** — architectural choices, tradeoffs, why something was done a certain way.
 
 ### 2. Identify generalizable improvements
 
-For each pattern or rule discovered, assess whether it applies broadly or only to the specific task:
+For each pattern or rule, assess whether it applies broadly or only to the specific task:
 
-- **Broad rules** go in `.claude/rules/general-rules.md` or `.claude/rules/localisation-rules.md`
-- **Documentation references** go in `.claude/docs/`
-- **Skill improvements** go in `.claude/skills/*/SKILL.md`
-- **Project context** (non-obvious, persists across sessions) goes in memory
+- **Broad rules** → `.claude/rules/general-rules.md` or `.claude/rules/localisation-rules.md`
+- **Documentation references** → `.claude/docs/`
+- **Skill improvements** → `.claude/skills/*/SKILL.md`
+- **Project context** (non-obvious, persists across sessions) → memory
 
 Filter ruthlessly — only propose additions that:
 
@@ -35,13 +35,13 @@ Read the current state of:
 - `CLAUDE.md` — is the skill table up to date?
 - `.claude/rules/general-rules.md` — any rules that conflict with what we learned?
 - `.claude/rules/localisation-rules.md` — any gaps?
-- `AGENTS.md` — any conventions that need updating?
+- `AGENTS.md` — any conventions needing updates?
 
-Flag anything that is outdated or contradicts current practice.
+Flag anything outdated or contradicting current practice.
 
 ### 4. Propose changes
 
-Present a structured list of proposed changes:
+Present a structured list:
 
 ```
 ## Rules to add/update
@@ -59,7 +59,7 @@ Present a structured list of proposed changes:
 
 ### 5. Apply changes (with confirmation)
 
-After presenting the proposals, ask the user which ones to apply. Then:
+After presenting the proposals, ask the user which to apply. Then:
 
 - Edit the relevant files directly
 - Update `CLAUDE.md` skill table if new skills were added
@@ -67,7 +67,7 @@ After presenting the proposals, ask the user which ones to apply. Then:
 
 ## Important Notes
 
-- Do NOT add implementation details, file paths, or architecture that can be derived from reading the code.
+- Do NOT add implementation details, file paths, or architecture derivable from reading the code.
 - Do NOT duplicate what's already in AGENTS.md or existing rules files.
 - Focus on **why** not **what** — rules should explain the reasoning so edge cases can be judged.
 - Keep rules concise — one pattern per entry, with a wrong/right example where helpful.

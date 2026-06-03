@@ -13,14 +13,13 @@ Scripted GUIs are defined in `common/scripted_guis/*.txt` and assign scripted fu
 
 ## Structure
 
-Every scripted GUI lives inside a `scripted_gui = { ... }` container block:
+Every scripted GUI lives inside a `scripted_gui = { ... }` container:
 
 ```
 scripted_gui = {
 	my_gui_name = {
 		context_type = player_context
 		window_name = "my_gui_window"
-
 		visible = { }
 		effects = { }
 		triggers = { }
@@ -33,7 +32,7 @@ scripted_gui = {
 
 ## Required Properties
 
-1. **`context_type`** — determines scope and available data (see Context Types below)
+1. **`context_type`** — determines scope and available data (see Context Types)
 2. **`window_name`** — must reference an independent `containerWindowType` name in an `interface/*.gui` file
 
 ## Context Types
@@ -49,14 +48,13 @@ scripted_gui = {
 | `country_mapicon`          | Displayed country | Player country | Shows next to every country on the world map                                           |
 | `state_mapicon`            | Displayed state   | Player country | Shows next to every state on the world map                                             |
 
-**Note:** `diplomatic_action` context logs harmless parse errors (`Unexpected token: context_type`) during load. This is a known engine quirk — the GUIs work correctly at runtime when invoked through `scripted_diplomatic_actions`.
+**Note:** `diplomatic_action` context logs harmless parse errors (`Unexpected token: context_type`) during load. Known engine quirk — the GUIs work correctly at runtime when invoked through `scripted_diplomatic_actions`.
 
 ## Parent Window
 
 - `parent_window_token` — attach to a base game window (e.g., `top_bar`, `decision_tab`, `politics_tab`)
 - `parent_window_name` — attach to a named container; use `_instance` suffix for nested containers
-- `decision_category` context GUIs should **not** have a parent window
-- `diplomatic_action` context GUIs should **not** have a parent window
+- `decision_category` and `diplomatic_action` context GUIs should **not** have a parent window
 
 ## Effects Block
 
@@ -87,7 +85,7 @@ triggers = {
 - `_click_enabled` — when the element is clickable (greyed out otherwise)
 - `_visible` — when the element is visible (hidden elements are also unclickable by AI)
 - `_click_enabled` overrides modifier-specific variants like `_right_click_enabled`
-- Temporary variables set inside trigger blocks can be used in `properties` and `dynamic_lists`
+- Temp variables set inside trigger blocks can be used in `properties` and `dynamic_lists`
 
 ## Properties Block
 
@@ -130,28 +128,22 @@ For large GUIs, use a dirty variable to avoid per-tick updates:
 dirty = my_update_variable
 ```
 
-The GUI only refreshes when this variable's value changes. This does **not** affect visibility checks.
+The GUI only refreshes when this variable's value changes. Does **not** affect visibility checks.
 
 **Only bump the dirty variable from player-initiated paths.** A shared GUI's dirty variable refreshes any open instance — AI-side state changes that bump it wake every player's open GUI for no visible benefit. Guard the bump with `is_ai = no`:
 
 ```
 # Wrong — AI changes wake every player's open GUI
-my_effect = {
-    add_to_variable = { global.my_dirty = 1 }
-    # ...actual logic...
-}
+my_effect = { add_to_variable = { global.my_dirty = 1 } # ... }
 
 # Right — player paths only
 my_effect = {
-    if = {
-        limit = { ROOT = { is_ai = no } }
-        add_to_variable = { global.my_dirty = 1 }
-    }
+    if = { limit = { ROOT = { is_ai = no } } add_to_variable = { global.my_dirty = 1 } }
     # ...actual logic...
 }
 ```
 
-This matters most for any GUI the AI also interacts with — peace deal builders, investment dialogs, scripted-effect-driven menus.
+Matters most for any GUI the AI also interacts with — peace deal builders, investment dialogs, scripted-effect-driven menus.
 
 ## AI Configuration
 
@@ -172,10 +164,7 @@ ai_weights = {
 	my_button_click = {
 		ai_will_do = {
 			base = 1
-			modifier = {
-				factor = 0
-				<triggers>
-			}
+			modifier = { factor = 0 <triggers> }
 		}
 	}
 }

@@ -4,13 +4,13 @@ How to write PR descriptions for Millennium Dawn. Applies to any agent (Claude, 
 
 ## Principles
 
-1. **Lead with the user-visible change.** First sentence. What does the player or modder notice that's different?
-2. **Tight, not exhaustive.** 5–15 lines of body. Cover what changed, why, and what to watch for — nothing more.
+1. **Lead with the user-visible change** in the first sentence. What does the player or modder notice that's different?
+2. **Tight, not exhaustive.** 5–15 lines of body: what changed, why, what to watch for. Nothing more.
 3. **No marketing.** No "comprehensive", "robust", "extensive". State facts.
-4. **No exhaustive change logs.** The diff and commit history have that. The PR body summarises.
+4. **No exhaustive change logs.** The diff and commit history have that; the PR body summarises.
 5. **No emoji, no AI attribution footers.** Per `~/.claude/CLAUDE.md`: never add "Generated with Claude Code" or co-author trailers.
 6. **No "this PR ..." preamble.** The reader already knows it's a PR.
-7. **No em dashes** (`—`). Use a period when the clause stands alone, a comma for participial phrases, or a colon when introducing a list. Em dashes read as soft AI-generated connectors and almost always replace one of those three. (Same rule applies to player-facing loc — see `.claude/rules/localisation-rules.md`.)
+7. **No em dashes** (`—`). Use a period when the clause stands alone, a comma for participial phrases, a colon when introducing a list. Same rule applies to player-facing loc (see `.claude/rules/localisation-rules.md`).
 
 ## Structure
 
@@ -33,7 +33,7 @@ How to write PR descriptions for Millennium Dawn. Applies to any agent (Claude, 
 - [ ] <One or two key smoke checks. Skip detailed enumeration.>
 ```
 
-Section order is fixed. Omit a section by leaving it out entirely — don't write "N/A".
+Section order is fixed. Omit a section by leaving it out entirely; don't write "N/A".
 
 ## Length budget
 
@@ -51,10 +51,9 @@ If the PR is large (multiple subsystems, weeks of work), use one paragraph per s
 
 - "This PR adds X, Y, Z and improves A, B, C". Start with "Adds X." Drop "this PR".
 - "Comprehensive overhaul" / "robust" / "complete refactor". Say what the actual change is.
-- "All tests pass" / "Pre-commit hooks pass" — that's the default state and CI shows it. Mention only when _manually_ verified or _bypassed_.
+- "All tests pass" / "Pre-commit hooks pass" — default state, CI shows it. Mention only when _manually_ verified or _bypassed_.
 - File-by-file changelog — the diff has it. Summarise by subsystem if needed.
-- "Co-Authored-By:" trailers from AI agents. Forbidden globally per user CLAUDE.md.
-- Generated-with-Claude footers. Same reason.
+- "Co-Authored-By:" trailers and Generated-with-Claude footers. Forbidden globally per user CLAUDE.md.
 - Lists of every commit on the branch.
 - Restatements of the commit messages.
 - Detailed test instructions when "load a save, do X" suffices.
@@ -136,10 +135,8 @@ All tests pass.
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-That last example breaks: AI attribution footers (forbidden), marketing language, exhaustive enumeration, redundant "this PR adds", redundant "all tests pass", emoji.
+That breaks: AI attribution footers (forbidden), marketing language, exhaustive enumeration, redundant "this PR adds", redundant "all tests pass", emoji.
 
 ## How to enforce this
 
-When an agent uses `gh pr create`, the agent reads this doc first if it's been recently touched on the branch. Otherwise the agent applies the principles from memory.
-
-For repeat offenders, paste the relevant "Bad" example into your reply and reference this doc.
+When an agent uses `gh pr create`, it reads this doc first if it's been recently touched on the branch; otherwise it applies the principles from memory. For repeat offenders, paste the relevant "Bad" example into your reply and reference this doc.
