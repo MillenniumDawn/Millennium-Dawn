@@ -695,7 +695,6 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for loc-consolidation opportunities...")
 
-        sys.path.insert(0, os.path.dirname(__file__))
         from validate_localisation import get_all_loc_keys
 
         loc_values, _ = get_all_loc_keys(self.mod_path, lowercase=False)
@@ -758,7 +757,6 @@ class Validator(BaseValidator):
     ):
         self._log_section("Checking for ideas with missing localisation keys...")
 
-        sys.path.insert(0, os.path.dirname(__file__))
         from validate_localisation import get_all_loc_keys
 
         loc_dict, _ = get_all_loc_keys(self.mod_path, lowercase=False)
@@ -805,7 +803,6 @@ class Validator(BaseValidator):
         point at vanilla pictures (e.g. `picture = generic_military_reform`)
         don't false-positive.
         """
-        sys.path.insert(0, os.path.dirname(__file__))
         import glob as _glob
 
         from validate_gfx_references import (
@@ -902,7 +899,6 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking GFX_idea_categories frame coverage...")
 
-        sys.path.insert(0, os.path.dirname(__file__))
         from validate_gfx_references import _find_vanilla_interface_dir
 
         categories = get_all_idea_categories(self.mod_path)

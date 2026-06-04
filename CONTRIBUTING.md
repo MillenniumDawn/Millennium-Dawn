@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Millennium Dawn!
 
 - [Documentation Site](https://millenniumdawn.github.io/Millennium-Dawn/)
 - [Discord](http://discord.gg/millenniumdawn)
-- [Git Setup & Usage Guide](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/manual-install-instructions/) — Cloning, branches, commits, PRs
+- [Git Setup & Usage Guide](#development-setup) — Cloning, branches, commits, PRs
 - [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/code-stylization-guide/) — Formatting and code structure
 - [Content Review Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/content-review-guide/) — Quality checklist and developer expectations
 - [Focus Tree Design Principles](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/focus-tree-design-principles/) — Branch structure, pacing, choices

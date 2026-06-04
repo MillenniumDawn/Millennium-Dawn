@@ -86,7 +86,7 @@ Once you're comfortable with the basics:
 
 If you are interested in developing content for Millennium Dawn:
 
-- Read the [Git Setup & Usage Guide](/player-tutorials/manual-install-instructions/) to get the dev version running
+- Read the [Git Setup & Usage Guide](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) to get the dev version running
 - See the [Contributing Guidelines](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) for code standards and the PR process
 - Check the [Content Review Guide](/dev-resources/content-review-guide/) to understand quality expectations
 

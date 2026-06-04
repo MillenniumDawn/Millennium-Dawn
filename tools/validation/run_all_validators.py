@@ -71,18 +71,19 @@ def launch_validator(
     script_path = os.path.join(SCRIPTS_DIR, script_name)
     output_path = os.path.join(output_dir, f"{name}.txt")
 
-    cmd = (
-        [
-            sys.executable,
-            script_path,
-            "--path",
-            mod_path,
-            "--output",
-            output_path,
-        ]
-        + extra_flags
-        + _VALIDATOR_EXTRA_FLAGS.get(name, [])
-    )
+    combined_flags: List[str] = []
+    for flag in extra_flags + _VALIDATOR_EXTRA_FLAGS.get(name, []):
+        if flag not in combined_flags:
+            combined_flags.append(flag)
+
+    cmd = [
+        sys.executable,
+        script_path,
+        "--path",
+        mod_path,
+        "--output",
+        output_path,
+    ] + combined_flags
 
     return subprocess.Popen(
         cmd,
