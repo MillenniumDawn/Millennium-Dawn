@@ -6,10 +6,50 @@ reader, and the idea_categories.txt classification helpers in shared_utils.
 
 from shared_utils import get_all_idea_categories, get_non_selectable_idea_categories
 from validate_ideas import (
+    _IDEA_REF_BLOCK,
+    _IDEA_REF_GENEROUS,
+    _WORD_TOKEN,
     _idea_categories_frame_count,
     _missing_icon_message,
     _parse_ideas_from_text,
 )
+
+
+def _refs(text):
+    out = set(_IDEA_REF_GENEROUS.findall(text))
+    for m in _IDEA_REF_BLOCK.finditer(text):
+        out.update(_WORD_TOKEN.findall(m.group(1)))
+    return out
+
+
+def test_unused_ref_scan_single_block_timed_swap():
+    text = """
+    completion_reward = { add_ideas = SPIRIT_one }
+    add_ideas = { SPIRIT_two SPIRIT_three }
+    add_timed_idea = { idea = SPIRIT_four days = 30 }
+    swap_ideas = { remove_idea = SPIRIT_five add_idea = SPIRIT_six }
+    has_idea = SPIRIT_seven
+    """
+    refs = _refs(text)
+    assert {
+        "SPIRIT_one",
+        "SPIRIT_two",
+        "SPIRIT_three",
+        "SPIRIT_four",
+        "SPIRIT_five",
+        "SPIRIT_six",
+        "SPIRIT_seven",
+    } <= refs
+
+
+def test_unused_ref_scan_ignores_unrelated_keys():
+    # A name that only appears as an idea *definition* (not a reference keyword)
+    # must not count as referenced.
+    refs = _refs(
+        "DEAD_idea = {\n picture = x\n modifier = { stability_factor = 0.1 }\n}"
+    )
+    assert "DEAD_idea" not in refs
+
 
 SPRITES = frozenset({"GFX_idea_known_pic", "GFX_idea_AUTO", "GFX_idea_shared_key"})
 HIDDEN = frozenset({"hidden_ideas"})

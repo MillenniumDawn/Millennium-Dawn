@@ -367,6 +367,44 @@ def _scan_idea_refs(text: str) -> List[str]:
     return refs
 
 
+# Generous reference scan for the unused-idea check: any keyword that can name
+# an idea, plus block forms. Over-matching is safe here — it only marks more
+# ideas as "used", which makes the unused report conservative (fewer false
+# positives). `idea =` catches add_timed_idea/modify_timed_idea blocks.
+_IDEA_REF_GENEROUS = re.compile(
+    r"\b(?:has_idea|add_ideas|remove_ideas|add_idea|remove_idea|swap_idea|idea)"
+    r"\s*=\s*([A-Za-z0-9_.\-]+)"
+)
+_IDEA_REF_BLOCK = re.compile(r"\b(?:add_ideas|remove_ideas)\s*=\s*\{([^{}]*)\}")
+_WORD_TOKEN = re.compile(r"[A-Za-z0-9_.\-]+")
+
+
+def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
+    """Pool worker: every idea name a file references, for the unused check.
+
+    Captures single (`add_ideas = X`), block (`add_ideas = { X Y }`), timed
+    (`idea = X`) and swap (`add_idea`/`remove_idea`) forms. Content-cached.
+    """
+    filepath, mod_path = args
+    if should_skip_file(filepath):
+        return []
+    text = FileOpener.open_text_file(
+        filepath, lowercase=False, strip_comments_flag=True
+    )
+    if not text:
+        return []
+
+    def _compute() -> List[str]:
+        refs = set(_IDEA_REF_GENEROUS.findall(text))
+        for m in _IDEA_REF_BLOCK.finditer(text):
+            refs.update(_WORD_TOKEN.findall(m.group(1)))
+        return sorted(refs)
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "ideas.refs_for_unused", filepath, text, _compute
+    )
+
+
 def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
     """Pool worker: return undefined idea references found in one file.
 
@@ -425,6 +463,7 @@ class Validator(BaseValidator):
     def __init__(self, *args, **kwargs):
         self.missing_loc = kwargs.pop("missing_loc", False)
         self.missing_icons = kwargs.pop("missing_icons", False)
+        self.unused_ideas = kwargs.pop("unused_ideas", False)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
 
@@ -906,6 +945,67 @@ class Validator(BaseValidator):
             category="idea-category-icon-frames",
         )
 
+    def validate_unused_ideas(
+        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
+    ):
+        """Flag script-added ideas that are defined but never referenced.
+
+        Scoped to non-selectable categories (country spirits, hidden_ideas):
+        those ideas only enter play through `add_ideas` / `swap_ideas` / timed
+        ideas in focuses, events, decisions, scripted effects or history. One
+        that is referenced nowhere is dead weight. Selectable categories
+        (manufacturers, designers, budget sliders) are excluded — the player
+        picks those in the UI, so they are never `add_ideas`'d by design.
+
+        Reference matching is deliberately generous (it also accepts a bare
+        `idea = X`), so a few ideas built from a runtime-constructed name can
+        still slip through; this is a WARNING, never an error.
+        """
+        self._log_section("Checking for unused ideas (defined but never referenced)...")
+
+        non_selectable = _get_non_selectable_idea_categories(self.mod_path)
+        candidates = {
+            name: cat
+            for name, (cat, _ovr, _pic) in defined_ideas.items()
+            if cat in non_selectable and cat != "character"
+        }
+        if not candidates:
+            self.log("  No non-selectable ideas to check.")
+            return
+
+        scan_files = self._collect_files(
+            [
+                "common/**/*.txt",
+                "events/**/*.txt",
+                "history/**/*.txt",
+            ]
+        )
+        self.log(
+            f"  Scanning {len(scan_files)} files for references to "
+            f"{len(candidates)} non-selectable ideas..."
+        )
+        ref_lists = self._pool_map(
+            _scan_idea_refs_for_unused, [(f, self.mod_path) for f in scan_files]
+        )
+        referenced: Set[str] = set()
+        for sub in ref_lists:
+            referenced.update(sub)
+
+        grouped: Dict[str, List[str]] = defaultdict(list)
+        for name in sorted(candidates):
+            if name not in referenced:
+                grouped[candidates[name]].append(name)
+
+        self._report_grouped(
+            grouped,
+            "✓ All non-selectable ideas are referenced",
+            "Unused ideas (defined in a script-added category but never "
+            "add_ideas'd / swap_ideas'd / referenced anywhere):",
+            severity=Severity.WARNING,
+            category="unused-idea",
+            max_detail_per_file=10,
+        )
+
     def run_validations(self):
         # Always parse all ideas — needed as the reference set even in staged mode
         defined_ideas, issues_by_file, ideas_by_file = self._parse_all_ideas()
@@ -958,6 +1058,13 @@ class Validator(BaseValidator):
                 "Skipping missing icon check (pass --missing-icons to enable)"
             )
 
+        if self.unused_ideas:
+            self.validate_unused_ideas(defined_ideas)
+        else:
+            self._log_section(
+                "Skipping unused idea check (pass --unused-ideas to enable)"
+            )
+
 
 def _add_extra_args(parser):
     parser.add_argument(
@@ -971,6 +1078,12 @@ def _add_extra_args(parser):
         action="store_true",
         dest="missing_icons",
         help="Enable the missing icon check (flags ideas whose picture sprite is undefined)",
+    )
+    parser.add_argument(
+        "--unused-ideas",
+        action="store_true",
+        dest="unused_ideas",
+        help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced",
     )
     parser.add_argument(
         "--suggest-consolidation",
