@@ -32,11 +32,14 @@ _SHARED_FOCUS_DEF_START = re.compile(r"\b(?:shared_focus|joint_focus)\s*=\s*\{")
 _FOCUS_ID_RE = re.compile(r"\bfocus\s*=\s*\{")
 _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 
-# focus icon: `icon = X` or `icon = "GFX_X"`. The value resolves verbatim to a
+# focus icon: `icon = X` or `icon = "GFX X"`. The value resolves verbatim to a
 # spriteType of that exact name (MD uses bare names like `money` as well as
 # GFX_-prefixed ones), so it is checked against the full sprite-name index.
+# Quoted values are captured whole, including embedded/trailing spaces, because
+# the engine matches the sprite name verbatim (a quoted value with a space is a
+# real, distinct sprite name, not two tokens).
 _FOCUS_BLOCK_START = re.compile(r"\b(?:focus|shared_focus|joint_focus)\s*=\s*\{")
-_ICON_LINE_RE = re.compile(r'\bicon\s*=\s*"?([^\s"{}]+)"?')
+_ICON_LINE_RE = re.compile(r'\bicon\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
 
 # prerequisite blocks: prerequisite = { focus = A  focus = B }
 _PREREQ_BLOCK_RE = re.compile(r"\bprerequisite\s*=\s*\{([^}]*)\}", re.DOTALL)
@@ -134,7 +137,7 @@ def _extract_focus_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int
             idm = _ID_LINE_RE.search(body)
             icm = _ICON_LINE_RE.search(body)
             if idm and icm:
-                icon = icm.group(1)
+                icon = icm.group(1) if icm.group(1) is not None else icm.group(2)
                 if "[" not in icon and "]" not in icon:
                     out.append(
                         (idm.group(1), icon, filepath, _line_of(text, m.start()))

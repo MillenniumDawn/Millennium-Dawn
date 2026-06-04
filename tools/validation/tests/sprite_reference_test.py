@@ -38,6 +38,17 @@ def test_event_picture_regex_matches_quoted_and_unquoted():
     )
 
 
+def test_event_picture_regex_keeps_frame_and_hyphen():
+    # Sprite names can carry a `.N` frame suffix or a hyphen; both are part of
+    # the name, not a delimiter (regression: stopping at `.`/`-` flagged the
+    # real sprite GFX_CTC.5 / GFX_Polizistin-Kiesewetter as undefined).
+    assert _EVENT_PICTURE_REF.search("picture = GFX_CTC.5").group(1) == "GFX_CTC.5"
+    assert (
+        _EVENT_PICTURE_REF.search("picture = GFX_Polizistin-Kiesewetter").group(1)
+        == "GFX_Polizistin-Kiesewetter"
+    )
+
+
 def test_extract_event_pictures(tmp_path):
     f = _write(
         tmp_path,
@@ -65,12 +76,18 @@ def test_extract_focus_icons_bare_and_gfx(tmp_path):
         " focus = {\n  id = f_brics\n  icon = GFX_brics\n  x = 2\n  y = 1\n }\n"
         " focus = {\n  id = f_dynamic\n  icon = [GetIcon]\n  x = 3\n  y = 1\n }\n"
         " focus = {\n  id = f_noicon\n  x = 4\n  y = 1\n }\n"
+        ' focus = {\n  id = f_spaced\n  icon = "Finnish Air_Force"\n  x = 5\n  y = 1\n }\n'
         "}\n",
     )
     by_id = {
         fid: icon for fid, icon, _fp, _line in _extract_focus_icons((f, str(tmp_path)))
     }
-    assert by_id == {"f_money": "money", "f_brics": "GFX_brics"}
+    assert by_id == {
+        "f_money": "money",
+        "f_brics": "GFX_brics",
+        # a quoted value with a space is one verbatim sprite name, not two tokens
+        "f_spaced": "Finnish Air_Force",
+    }
     # dynamic [...] and no-icon focuses are skipped
     assert "f_dynamic" not in by_id
     assert "f_noicon" not in by_id

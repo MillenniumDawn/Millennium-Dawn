@@ -30,8 +30,10 @@ _LONG_FORM_PATTERN = re.compile(
     r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )
 
-# Event picture: `picture = GFX_xxx` (always GFX_-prefixed, resolves to that sprite).
-_EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_]+)"?')
+# Event picture: `picture = GFX_xxx` (always GFX_-prefixed, resolves to that
+# sprite). Sprite names may contain `.` (frame suffixes like GFX_CTC.5) and `-`
+# (e.g. GFX_Polizistin-Kiesewetter), so both are part of the captured name.
+_EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_.\-]+)"?')
 
 
 def _should_skip(filename: str) -> bool:
@@ -198,7 +200,6 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, *args, **kwargs):
-        self.missing_pictures = kwargs.pop("missing_pictures", False)
         super().__init__(*args, **kwargs)
         self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
@@ -613,18 +614,27 @@ class Validator(BaseValidator):
         )
 
     def validate_event_pictures(self):
-        """Flag events whose `picture = GFX_x` sprite is not defined.
+        """Flag events whose `picture = GFX_x` sprite is not MD-defined.
 
-        An event's picture resolves directly to the named sprite; when it is
-        absent from every interface/*.gfx (mod or vanilla) the event renders a
-        blank picture box. Mod and vanilla sprites both count.
+        An event's picture resolves directly to the named sprite. MD events must
+        not rely on vanilla event pictures, so this checks against the mod's own
+        interface/*.gfx only (no vanilla) — which also keeps it accurate in CI,
+        where the vanilla install is absent. A missing sprite renders a blank
+        picture box, so it is an error.
         """
         self._log_section("Checking for events with missing pictures...")
 
-        sprites = build_sprite_index(
-            self.mod_path, gfx_only=True, pool_map=self._pool_map
-        )
         files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+
+        sprites = build_sprite_index(
+            self.mod_path,
+            gfx_only=True,
+            pool_map=self._pool_map,
+            include_vanilla=False,
+        )
         refs = self._pool_map(_extract_event_pictures, files)
 
         results: List[str] = []
@@ -641,9 +651,9 @@ class Validator(BaseValidator):
 
         self._report(
             sorted(results),
-            "✓ All event pictures are defined",
-            "Events with missing pictures (picture sprite not defined in interface/*.gfx):",
-            severity=Severity.WARNING,
+            "✓ All event pictures are MD-defined",
+            "Events with missing pictures (picture sprite not defined in the mod's interface/*.gfx; MD must not use vanilla event pictures):",
+            severity=Severity.ERROR,
             category="missing-event-picture",
         )
 
@@ -659,27 +669,8 @@ class Validator(BaseValidator):
         self.validate_hidden_event_localisation()
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
-
-        if self.missing_pictures:
-            self.validate_event_pictures()
-        else:
-            self._log_section(
-                "Skipping missing picture check (pass --missing-pictures to enable)"
-            )
-
-
-def _add_extra_args(parser):
-    parser.add_argument(
-        "--missing-pictures",
-        action="store_true",
-        dest="missing_pictures",
-        help="Flag events whose picture sprite is undefined in interface/*.gfx",
-    )
+        self.validate_event_pictures()
 
 
 if __name__ == "__main__":
-    run_validator_main(
-        Validator,
-        "Validate events in Millennium Dawn mod",
-        extra_args_fn=_add_extra_args,
-    )
+    run_validator_main(Validator, "Validate events in Millennium Dawn mod")

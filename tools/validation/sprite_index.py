@@ -44,9 +44,9 @@ def _names_in_file(filepath: str) -> List[str]:
 
 
 def build_sprite_index(
-    mod_path: str, gfx_only: bool = False, pool_map=None
+    mod_path: str, gfx_only: bool = False, pool_map=None, include_vanilla: bool = True
 ) -> frozenset:
-    """Return every sprite name defined in mod + vanilla interface/*.gfx.
+    """Return every sprite name defined in interface/*.gfx.
 
     Args:
         mod_path: mod root; its `interface/` is scanned.
@@ -54,9 +54,15 @@ def build_sprite_index(
             pictures are always prefixed; focus icons are not).
         pool_map: optional BaseValidator._pool_map for parallel reads; falls
             back to a sequential scan when None.
+        include_vanilla: when True, also scan the vanilla HOI4 install (if
+            discoverable). Event pictures must be MD-defined, so the event check
+            passes False — that keeps it accurate in CI, where vanilla is absent.
+            Focus/idea icons may legitimately reuse vanilla sprites, so those
+            keep the default.
     """
     interface_dirs: List[Optional[str]] = [os.path.join(mod_path, "interface")]
-    interface_dirs.append(_find_vanilla_interface_dir())
+    if include_vanilla:
+        interface_dirs.append(_find_vanilla_interface_dir())
 
     gfx_files: List[str] = []
     for d in interface_dirs:

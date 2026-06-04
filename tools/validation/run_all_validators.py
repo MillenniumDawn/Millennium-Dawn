@@ -24,7 +24,6 @@ _NON_VALIDATOR_SCRIPTS = frozenset(
 # off — its ~7.8k backlog would drown the report; run it on demand instead.
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
     "ideas": ["--missing-icons"],
-    "events": ["--missing-pictures"],
     "focus-tree": ["--missing-icons"],
 }
 
