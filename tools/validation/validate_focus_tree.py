@@ -632,9 +632,17 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for focuses with missing icons...")
 
-        sprites = build_sprite_index(
-            self.mod_path, gfx_only=False, pool_map=self._pool_map
-        )
+        # Built sequentially (no pool_map): a sub-second scan that can't be left
+        # empty by a 'spawn' pool worker that fails to start. An empty index
+        # would otherwise flag every focus icon as missing.
+        sprites = build_sprite_index(self.mod_path, gfx_only=False)
+        if len(sprites) < 1000:
+            self.log(
+                f"  Only {len(sprites)} GFX sprites loaded — sprite definitions "
+                "did not load; skipping the icon check",
+                "warning",
+            )
+            return
         files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
         icon_lists = self._pool_map(
             _extract_focus_icons, [(f, self.mod_path) for f in files]

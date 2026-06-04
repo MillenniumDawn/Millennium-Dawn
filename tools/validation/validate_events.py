@@ -629,12 +629,27 @@ class Validator(BaseValidator):
             self.log("  No event files in scope — skipping")
             return
 
+        # Built sequentially (no pool_map): scanning ~150 .gfx files takes well
+        # under a second, and a sequential read can't be left empty by a pool
+        # worker that fails to start under the 'spawn' start method.
         sprites = build_sprite_index(
             self.mod_path,
             gfx_only=True,
-            pool_map=self._pool_map,
             include_vanilla=False,
         )
+        # Sanity guard: the mod defines tens of thousands of GFX sprites. If the
+        # index comes back near-empty, sprite definitions failed to load (wrong
+        # path, unreadable interface/*.gfx, a broken pool worker) — flagging
+        # every picture as missing would be thousands of false errors. Skip
+        # loudly instead so a load failure can't break CI or a commit.
+        if len(sprites) < 1000:
+            self.log(
+                f"  Only {len(sprites)} GFX sprites loaded from "
+                f"{os.path.join(self.mod_path, 'interface')}/*.gfx — sprite "
+                "definitions did not load; skipping the picture check",
+                "warning",
+            )
+            return
         refs = self._pool_map(_extract_event_pictures, files)
 
         results: List[str] = []
