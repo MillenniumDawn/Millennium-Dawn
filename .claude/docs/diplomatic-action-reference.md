@@ -1,11 +1,11 @@
 # Scripted Diplomatic Actions Reference
 
-Scripted diplomatic actions live in `common/scripted_diplomatic_actions/`. All `.txt` files in that directory are loaded by the game. Current files:
+Scripted diplomatic actions live in `common/scripted_diplomatic_actions/`. All `.txt` files there are loaded. Current files:
 
-- `00_scripted_diplomatic_actions.txt` — Core diplomatic actions (trade agreements, debt assumption, enforce peace, energy load sharing, embassies, etc.)
-- `01_peace_deal_diplomatic_actions.txt` — Peace deal related actions
+- `00_scripted_diplomatic_actions.txt` — Core actions (trade agreements, debt assumption, enforce peace, energy load sharing, embassies, etc.)
+- `01_peace_deal_diplomatic_actions.txt` — Peace deal actions
 - `02_ai_attach_diplomatic_actions.txt` — AI attach/detach actions
-- `MD_missile_scripted_diplomatic_actions.txt` — Missile-related diplomatic actions
+- `MD_missile_scripted_diplomatic_actions.txt` — Missile-related actions
 
 ## Scope Rules
 
@@ -17,11 +17,9 @@ In all blocks within a scripted diplomatic action:
 | `THIS`  | The **target** (country receiving the action)                                                                                   |
 | `PREV`  | Context-dependent — in `visible`/`selectable`, `PREV` inside a `ROOT = { }` block refers to `THIS` (the target), and vice versa |
 
-**Important:** `selectable` evaluates in the **target's** scope by default. Bare conditions (without explicit `ROOT = { }` or `THIS = { }`) check `THIS`. Always be explicit about scope.
+**Important:** `selectable` evaluates in the **target's** scope by default. Bare conditions (no explicit `ROOT = { }`/`THIS = { }`) check `THIS`. Always be explicit about scope.
 
 ## Block Order & Structure
-
-Every diplomatic action follows this block order:
 
 ```
 action_name = {
@@ -54,11 +52,11 @@ action_name = {
 
 ## Cooldown Pattern
 
-To prevent spamming a diplomatic action, use a timed country flag. The standard pattern:
+Prevent spamming with a timed country flag.
 
 ### 1. Set the flag on completion and/or rejection
 
-In `complete_effect` and `reject_effect`, set a timed flag on ROOT (the sender) scoped to the target:
+In `complete_effect` and `reject_effect`, set a timed flag on ROOT (sender) scoped to the target:
 
 ```
 ROOT = {
@@ -66,13 +64,11 @@ ROOT = {
 }
 ```
 
-- `@PREV` resolves to the target's ID since we're inside a `ROOT = { }` block where PREV = THIS (target).
-- Use `days = 90` as the standard cooldown (adjust per action — e.g., 270 for energy load sharing rejections).
-- Set the flag in **both** `complete_effect` and `reject_effect` if you want the cooldown regardless of outcome.
+- `@PREV` resolves to the target's ID since inside a `ROOT = { }` block PREV = THIS (target).
+- `days = 90` is the standard cooldown (adjust per action — e.g., 270 for energy load sharing rejections).
+- Set the flag in **both** `complete_effect` and `reject_effect` for a cooldown regardless of outcome.
 
 ### 2. Check the flag in `visible`
-
-Add the cooldown check in `visible` so the action is hidden during the cooldown:
 
 ```
 visible = {
@@ -96,7 +92,7 @@ modifier = {
 
 ## Pending Offer Pattern
 
-To prevent a country from sending the same action to multiple targets simultaneously:
+Prevent sending the same action to multiple targets at once.
 
 ### 1. Set a variable in `on_sent_effect`
 
@@ -121,11 +117,11 @@ modifier = {
 }
 ```
 
-Note: `NOT = { check_variable = { var = 0 } }` means "var is set and non-zero" — this is the standard idiom for "has a pending offer".
+Note: `NOT = { check_variable = { var = 0 } }` means "var is set and non-zero" — the standard idiom for "has a pending offer".
 
 ## AI Acceptance Structure
 
-`ai_acceptance` uses named condition blocks. Each block has a `base` and optional `modifier` entries:
+`ai_acceptance` uses named condition blocks, each with a `base` and optional `modifier` entries:
 
 ```
 ai_acceptance = {
@@ -154,9 +150,45 @@ ai_acceptance = {
 }
 ```
 
+### Mirror Rule (when the action has a custom GUI showing acceptance math)
+
+If your action's scripted GUI shows the player an "AI will accept (+N) / will not accept" breakdown, keep **three** sources in sync. The engine reads `ai_acceptance`; the GUI cannot, so it shows a scripted-trigger calculation that manually mirrors the engine math.
+
+Three updates per new modifier:
+
+1. **Engine math** — `ai_acceptance = { X_factor = { base = N modifier = { ... } } }` in the diplomatic action file.
+2. **Mirror calculation** — scripted trigger re-implementing the same logic, accumulating into a temp variable:
+   ```
+   X_AI_will_accept_calculation = {
+       # ...existing components, each accumulating into X_acceptance_temp...
+       set_temp_variable = { X_factor_temp = 0 }
+       if = {
+           limit = { ...same conditions as the engine modifier... }
+           set_temp_variable = { X_factor_temp = N }
+       }
+       add_to_temp_variable = { X_acceptance_temp = X_factor_temp }
+   }
+   ```
+3. **Player breakdown line** — `defined_text` in scripted localisation, plus a loc string and a reference in the headline tooltip key:
+   ```
+   defined_text = {
+       name = X_ai_accept_factor
+       text = {
+           trigger = { ...same logic, sets X_factor_temp... }
+           localization_key = "X_ai_accept_factor_tt"
+       }
+   }
+   # In .yml:
+   X_ai_accept_factor_tt: "Factor Name: [?X_factor_temp|0+]\n"
+   # In the headline title TT:
+   X_AIA_title_TEXT_DELAYED: "Breakdown: ...[X_ai_accept_factor]..."
+   ```
+
+Forgetting any of the three causes the player-facing score to diverge silently from the engine score (player sees "will accept (+20)", clicks send, gets rejected). Always-check-three. Concrete examples: CPD's `CPD_AI_will_accept_calculation` (in `00_peace_deal_triggers.txt`) and the `CPD_ai_accept_*` defined_text entries.
+
 ## AI Desire Structure
 
-`ai_desire` controls how eagerly the AI initiates the action. Standard gates:
+`ai_desire` controls how eagerly the AI initiates. Standard gates:
 
 ```
 ai_desire = {

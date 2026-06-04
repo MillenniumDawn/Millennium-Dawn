@@ -1,21 +1,5 @@
 #!/usr/bin/env python3
-"""
-Fix styling issues in HOI4 mod files.
-
-Automatically fixes all issues detected by check_basic_style.py and
-check_basic_style_2.py:
-  - 4-space indentation -> tabs
-  - Missing/extra spaces around = signs
-  - Missing spaces around { } braces
-  - === separator lines in comments (-> ---)
-  - Multiple consecutive spaces (collapsed to single)
-  - Trailing whitespace
-  - Trailing blank lines
-
-Reports but does not fix:
-  - Odd number of quotation marks (needs manual review)
-  - Mismatched braces (structural issue)
-"""
+"""Auto-fix styling issues detected by check_basic_style.py."""
 
 import os
 import re

@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# Shared Validation Infrastructure
-# Common classes, functions, and base validator used by all validation scripts
-##########################
+"""Shared validation infrastructure: common classes, helpers, and the base validator."""
 import glob
 import json
 import logging
@@ -12,15 +9,18 @@ import sys
 import time
 from dataclasses import dataclass, field
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import (
     DataCleaner,
     FileOpener,
+    compute_line_offsets,
     create_validation_parser,
     find_line_number,
     get_staged_files,
+    line_for_offset,
     log_message,
     print_timing_summary,
     run_validator_main,
@@ -38,6 +38,171 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 _META_TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
 )
+
+
+# Loc keys that live in vanilla HOI4 (not the mod's localisation/ tree) and are
+# inherited by MD decisions/events/focuses that override or reuse the vanilla
+# object. The base loc loader scans only the mod, so without this allowlist
+# these resolve fine at runtime but get flagged as "missing loc key".
+#
+# Verified against vanilla install at
+# steamapps/common/Hearts of Iron IV/localisation/english/.
+KNOWN_VANILLA_LOC_KEYS = frozenset(
+    {
+        # lar_decisions_l_english.yml — La Resistance agent recruitment.
+        # MD's 99_lar_agent_recruitment_decisions.txt redefines all 16 decisions;
+        # the seven non-Europe _state variants use `name = recruit_in_europe_state`
+        # to share the vanilla string.
+        "recruit_in_europe",
+        "recruit_in_europe_state",
+        "recruit_in_north_america",
+        "recruit_in_south_america",
+        "recruit_in_africa",
+        "recruit_in_middle_east",
+        "recruit_in_asia",
+        "recruit_in_australia",
+        "recruit_in_india",
+        # decisions_l_english.yml — shared cost-tooltip strings used as
+        # custom_cost_text on MD decisions.
+        "decision_cost_CP_15",
+        "decision_cost_CP_25_pp_50",
+        "decision_cost_civ_factory_1",
+        # mtg_decisions_l_english.yml — MtG USA political decisions reused
+        # verbatim by MD's USA content.
+        "USA_amend_the_budget",
+        "USA_beat_up_opposition",
+        "USA_give_tax_break",
+        "USA_medium_lobby_effort",
+        "USA_pay_farm_subsidies",
+        "USA_research_grants",
+        "USA_small_lobby_effort",
+        "USA_special_measures",
+        "USA_statehood_for_puerto_rico",
+        # Vanilla focus names reused intact by MD focus trees (string fits the
+        # in-game label — e.g. "Greater Finland", "Worker's Rights").
+        "EST_new_economic_policy",  # ideas_l_english.yml
+        "FIN_greater_finland",  # aat_focus_l_english.yml
+        "GER_workers_rights",  # wuw_focus_l_english.yml
+        "GER_workers_rights_desc",
+        "ITA_all_roads_lead_to_rome",  # bba_focus_l_english.yml
+        "ITA_all_roads_lead_to_rome_desc",
+        "POL_armia_ludowa",  # focus_poland_l_english.yml
+        "POL_armia_ludowa_desc",
+        "RAJ_agrarian_society",  # ideas_l_english.yml
+        "RAJ_agrarian_society_desc",
+        "RAJ_indian_national_congress",
+        "RAJ_indian_national_congress_desc",
+        "RAJ_industrial_expansion",
+        "RAJ_industrial_expansion_desc",
+        # lar_events_l_english.yml — La Resistance operation events reused by
+        # MD's intel/raid systems.
+        "lar_bruneval_raid.1.a",
+        "lar_bruneval_raid.1.desc",
+        "lar_bruneval_raid.1.t",
+        "lar_bruneval_raid.2.desc",
+        "lar_bruneval_raid.2.t",
+        "lar_capture_tito.1.a",
+        "lar_capture_tito.1.desc",
+        "lar_capture_tito.1.t",
+        "lar_collab_gov.1.d",
+        "lar_collab_gov.1.t",
+        "lar_heavy_water.1.a",
+        "lar_heavy_water.1.t",
+        "lar_heavy_water.2.a",
+        "lar_heavy_water.2.desc",
+        "lar_heavy_water.2.t",
+        "lar_rescue_mussolini.1.a",
+        "lar_rescue_mussolini.1.desc",
+        "lar_rescue_mussolini.1.t",
+        "lar_rescue_mussolini.2.a",
+        "lar_rescue_mussolini.2.desc",
+        "lar_rescue_mussolini.2.t",
+        "occupied_countries.1.a",
+        "occupied_countries.1.b",
+        "occupied_countries.1.desc",
+        "occupied_countries.1.title",
+        # Vanilla strategic-project / scientist tooltip keys.
+        "SP_UNLOCK_PROJECT",
+        "SP_UNLOCK_TECH",
+        "available_scientist_one_line_tt",
+        # Vanilla HOI4 building name keys (mod overrides only the _desc variants).
+        "air_base",
+        "infrastructure",
+        "nuclear_reactor",
+        "radar_station",
+        # Vanilla US Congress tooltip keys borrowed from MtG.
+        "mtg_usa_congress_add_state_tt",
+        "mtg_usa_congress_large_opposition_tt",
+        "mtg_usa_congress_large_support_tt",
+        "mtg_usa_congress_medium_opposition_tt",
+        "mtg_usa_congress_medium_support_tt",
+        "mtg_usa_congress_remove_state_tt",
+        "mtg_usa_congress_small_opposition_tt",
+        "mtg_usa_congress_small_support_tt",
+        "mtg_usa_house_large_opposition_tt",
+        "mtg_usa_house_large_support_tt",
+        "mtg_usa_house_medium_opposition_tt",
+        "mtg_usa_house_medium_support_tt",
+        "mtg_usa_house_small_opposition_tt",
+        "mtg_usa_house_small_support_tt",
+        "mtg_usa_senate_large_opposition_tt",
+        "mtg_usa_senate_large_support_tt",
+        "mtg_usa_senate_medium_opposition_tt",
+        "mtg_usa_senate_medium_support_tt",
+        "mtg_usa_senate_small_opposition_tt",
+        "mtg_usa_senate_small_support_tt",
+        "free_agency_upgrade_tt",
+        # Vanilla operative mission tooltip keys.
+        "OPERATIVE_MISSION_BOOST_IDEOLOGY_TT",
+        "OPERATIVE_MISSION_BUILD_INTEL_NETWORK_TT",
+        "OPERATIVE_MISSION_CONTROL_TRADE_TT",
+        "OPERATIVE_MISSION_COUNTER_INTELLIGENCE_TT",
+        "OPERATIVE_MISSION_DIPLOMATIC_PRESSURE_TT",
+        "OPERATIVE_MISSION_NO_MISSION_TT",
+        "OPERATIVE_MISSION_PROPAGANDA_TT",
+        "OPERATIVE_MISSION_QUIET_INTEL_NETWORK_TT",
+        "OPERATIVE_MISSION_ROOT_OUT_RESISTANCE_TT",
+        # Vanilla diplomatic action rule tooltip keys.
+        "RULE_ALLOW_GUARANTEES_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_GUARANTEES_SAME_IDEOLOGY_TOOLTIP",
+        "RULE_ALLOW_LEAVE_FACTION_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_LEND_LEASE_BLOCKED_TT",
+        "RULE_ALLOW_LEND_LEASE_SAME_FACTION_TT",
+        "RULE_ALLOW_LEND_LEASE_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_LICENSING_BLOCKED_TT",
+        "RULE_ALLOW_LICENSING_SAME_FACTION_TT",
+        "RULE_ALLOW_LICENSING_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT",
+        "RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_RELEASE_NATIONS_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_REVOKE_GUARANTEES_BLOCKED_TOOLTIP",
+        "RULE_ASSUME_LEADERSHIP_BLOCKED_TOOLTIP",
+        "RULE_BOOST_PARTY_AI_ONLY_TT",
+        "RULE_BOOST_PARTY_BLOCKED_TT",
+        "RULE_BOOST_PARTY_PLAYER_ONLY_TT",
+        "RULE_COUP_AI_ONLY_TT",
+        "RULE_COUP_BLOCKED_TT",
+        "RULE_KICK_FROM_FACTION_BLOCKED_TOOLTIP",
+        "RULE_VOLUNTEERS_BLOCKED_TT",
+        "RULE_VOLUNTEERS_SAME_IDEOLOGY_TT",
+        "RULE_WARGOALS_BLOCKED_TT",
+    }
+)
+
+
+def casefold_index(names) -> dict:
+    """Return a dict mapping each name lowercased to its canonical form.
+
+    Used to build a case-insensitive lookup for Linux case-mismatch detection.
+    """
+    return {n.lower(): n for n in names}
+
+
+def case_mismatch(ref: str, ci_index: dict):
+    """Return the canonical name when *ref* matches case-insensitively but not
+    exactly (a Linux-only bug), else None."""
+    hit = ci_index.get(ref.lower())
+    return hit if (hit is not None and hit != ref) else None
 
 
 def scan_meta_constructed_names(files, defined_names):
@@ -83,9 +248,8 @@ def scan_meta_constructed_names(files, defined_names):
     return used
 
 
-# Log level from environment — controls output verbosity across all validators.
-# Set MD_LOG_LEVEL=ERROR to see only errors, WARNING (default) for errors+Warnings,
-# or INFO for full output (equivalent to the pre-MD_LOG_LEVEL behaviour).
+# Output verbosity across all validators. MD_LOG_LEVEL=ERROR shows only errors,
+# WARNING (default) shows errors and warnings, INFO shows full output.
 _LOG_LEVEL = os.environ.get("MD_LOG_LEVEL", "WARNING").upper()
 if _LOG_LEVEL == "ERROR":
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s")
@@ -239,6 +403,8 @@ class BaseValidator:
         self.output_lines = []
         self._pool: Optional[Pool] = None
         self._regex_cache: Dict[str, re.Pattern] = {}
+        self._line_offsets_cache: Dict[str, List[int]] = {}
+        self._shared_cache: Dict[str, object] = {}
         self._issues: List[Issue] = []
         self._section_timings: List[Tuple[str, float]] = []
         self._section_start: Optional[float] = None
@@ -258,6 +424,51 @@ class BaseValidator:
         if key not in self._regex_cache:
             self._regex_cache[key] = re.compile(pattern, flags)
         return self._regex_cache[key]
+
+    def line_offsets(self, path: str, text: str) -> List[int]:
+        # Pool workers must use compute_line_offsets() from shared_utils — this
+        # cache only spans the main process.
+        cached = self._line_offsets_cache.get(path)
+        if cached is None:
+            cached = compute_line_offsets(text)
+            self._line_offsets_cache[path] = cached
+        return cached
+
+    def cached(self, key: str, factory_fn):
+        # Pool workers don't see this cache; populate from the main process.
+        if key not in self._shared_cache:
+            self._shared_cache[key] = factory_fn()
+        return self._shared_cache[key]
+
+    def parse_files_cached(
+        self,
+        patterns: List[str],
+        namespace: str,
+        parse_fn: Callable[[str, str], Any],
+        *,
+        lowercase: bool = False,
+        strip_comments_flag: bool = True,
+        ignore_staged: bool = False,
+    ) -> Dict[str, Any]:
+        """Parse files matching *patterns* -> ``{path: parse_fn(text, path)}``.
+
+        Reads case-preserving (HOI4 is case-sensitive on Linux), strips comments
+        by default, and disk-caches each parse keyed on content. *namespace*
+        keys the cache per validator/pass; give each call a distinct one.
+        """
+        results: Dict[str, Any] = {}
+        for path in self._collect_files(patterns, ignore_staged=ignore_staged):
+            text = FileOpener.open_text_file(
+                path, lowercase=lowercase, strip_comments_flag=strip_comments_flag
+            )
+            results[path] = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                namespace,
+                path,
+                text,
+                lambda t=text, p=path: parse_fn(t, p),
+            )
+        return results
 
     def log(self, message: str, level: str = "info"):
         # Respect MD_LOG_LEVEL — skip messages below the configured threshold.
@@ -279,12 +490,10 @@ class BaseValidator:
         self.output_lines.append(file_msg)
 
     def _log_section(self, title: str):
-        """Emit the standard section header and start timing this section.
+        """Emit the section header and start timing this section.
 
-        Each call closes the previous section's timer (if any) and starts a
-        new one.  Call ``_finish_sections`` after all checks to close the last
-        section and (when ``MD_TIMING`` is enabled) print a per-check timing
-        summary to stderr.
+        Each call closes the previous section's timer (if any). Call
+        ``_finish_sections`` after all checks to close the last section.
         """
         if self._section_start is not None:
             elapsed = time.perf_counter() - self._section_start
@@ -313,7 +522,7 @@ class BaseValidator:
                     f.write("\n".join(self.output_lines))
                 logging.info(f"Results saved to: {self.output_file}")
             except Exception as e:
-                logging.error(f"Failed to save output to {self.output_file}: {e}")
+                logging.error(f"Failed to write results to {self.output_file}: {e}")
 
         json_file = (
             os.path.splitext(self.output_file)[0] + ".json"
@@ -326,7 +535,7 @@ class BaseValidator:
                     f.write(self.get_issues_json())
                 logging.info(f"JSON results saved to: {json_file}")
             except Exception as e:
-                logging.error(f"Failed to save JSON to {json_file}: {e}")
+                logging.error(f"Failed to serialize JSON to {json_file}: {e}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
@@ -342,11 +551,11 @@ class BaseValidator:
             self.warnings_found += 1
 
     def add_error(self, category: str, message: str, file: str = "", line: int = 0):
-        """Convenience method to add an ERROR level issue."""
+        """Add an ERROR-level issue."""
         self.add_issue(Severity.ERROR, category, message, file, line)
 
     def add_warning(self, category: str, message: str, file: str = "", line: int = 0):
-        """Convenience method to add a WARNING level issue."""
+        """Add a WARNING-level issue."""
         self.add_issue(Severity.WARNING, category, message, file, line)
 
     # Regex patterns for auto-extracting (file, line) from common result string
@@ -399,17 +608,10 @@ class BaseValidator:
         severity: str = Severity.ERROR,
         category: str = "",
     ):
-        """Report results with specified severity level.
+        """Report results from str / (message, file, line) / Issue entries.
 
-        Each entry in ``results`` may be:
-          - ``str`` — legacy form. Auto-parsed via ``_parse_result_location``
-            so standard ``path:line - msg`` strings get structured into an
-            ``Issue`` with ``file`` / ``line`` populated.
-          - ``(message, file, line)`` tuple — explicit structured form.
-          - ``Issue`` instance — used directly.
-
-        This is the single source of truth for counting and recording issues.
-        Do NOT call add_error/add_warning separately for results passed here.
+        Single source of truth for counting and recording issues — do NOT call
+        add_error/add_warning separately for results passed here.
         """
         color = Colors.RED if severity == Severity.ERROR else Colors.YELLOW
 
@@ -454,20 +656,27 @@ class BaseValidator:
                     )
                     display_text = text  # preserve original formatting in the log
 
+                # Count by the issue's own severity so a pre-built WARNING Issue
+                # passed via a severity=ERROR call doesn't corrupt the counters.
+                actual_severity = issue.severity if isinstance(r, Issue) else severity
                 self.log(
                     f"  {color if self.use_colors else ''}{display_text}{Colors.ENDC if self.use_colors else ''}",
-                    "error" if severity == Severity.ERROR else "warning",
+                    "error" if actual_severity == Severity.ERROR else "warning",
                 )
-                if category:
-                    self._issues.append(issue)
+                # Always record the issue so the JSON sidecar (and the CI
+                # report built from it) reflects every finding. Previously this
+                # was gated on `category`, so any _report call without a
+                # category bumped errors_found (failing the build) while
+                # contributing nothing to the report — findings vanished.
+                self._issues.append(issue)
+                if actual_severity == Severity.ERROR:
+                    self.errors_found += 1
+                else:
+                    self.warnings_found += 1
             self.log(
                 f"{color if self.use_colors else ''}{len(results)} issue(s) found{Colors.ENDC if self.use_colors else ''}",
                 "error" if severity == Severity.ERROR else "warning",
             )
-            if severity == Severity.ERROR:
-                self.errors_found += len(results)
-            else:
-                self.warnings_found += len(results)
         else:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
@@ -486,34 +695,54 @@ class BaseValidator:
             "issues": [issue.to_dict() for issue in self._issues],
         }
 
-    def get_full_path(
-        self, basename: str, item: str, file_patterns: Optional[List[str]] = None
-    ) -> Optional[str]:
-        if file_patterns is None:
-            file_patterns = ["**/*.txt"]
-        for pattern in file_patterns:
+    def _basename_index(self, patterns: Tuple[str, ...]) -> Dict[str, List[str]]:
+        # Without this cache, get_full_path() re-globs **/*.txt for every call —
+        # validate_variables makes hundreds of those per run.
+        key = "_basename_index:" + "|".join(patterns)
+        existing = self._shared_cache.get(key)
+        if existing is not None:
+            return existing
+
+        tracked: List[str] = []
+        seen: Set[str] = set()
+        for pattern in patterns:
             for filename in glob.iglob(
                 os.path.join(self.mod_path, pattern), recursive=True
             ):
-                if os.path.basename(filename) == basename:
-                    if should_skip_file(filename):
-                        continue
-                    try:
-                        with open(filename, "r", encoding="utf-8-sig") as f:
-                            content = f.read()
-                            if item in content:
-                                return filename
-                    except Exception:
-                        pass
+                if filename not in seen:
+                    seen.add(filename)
+                    tracked.append(filename)
+
+        def _build():
+            index: Dict[str, List[str]] = {}
+            for filename in tracked:
+                if should_skip_file(filename):
+                    continue
+                index.setdefault(os.path.basename(filename), []).append(filename)
+            return index
+
+        index = disk_cache.aggregate_cached(self.mod_path, key, tracked, _build)
+        self._shared_cache[key] = index
+        return index
+
+    def get_full_path(
+        self, basename: str, item: str, file_patterns: Optional[List[str]] = None
+    ) -> Optional[str]:
+        patterns = tuple(file_patterns) if file_patterns else ("**/*.txt",)
+        index = self._basename_index(patterns)
+        for filename in index.get(basename, ()):
+            try:
+                content = FileOpener.open_text_file(filename, lowercase=False)
+                if item in content:
+                    return filename
+            except Exception:
+                pass
         return None
 
     def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
-        """Run func over args_list using the validator's shared worker pool.
-
-        Falls back to sequential execution when workers == 1 (avoids Pool
-        startup overhead for small staged commits on low-end hardware).
-        """
-        if self.workers == 1 or self._pool is None and len(args_list) < 10:
+        # Falls back to sequential when workers == 1 so low-end machines don't
+        # eat the Pool startup cost on a small staged commit.
+        if self.workers == 1 or (self._pool is None and len(args_list) < 10):
             return [func(a) for a in args_list]
         if self._pool is None:
             raise RuntimeError("_pool_map called outside run_all_validations")
@@ -527,15 +756,9 @@ class BaseValidator:
     ) -> List[str]:
         """Collect mod files matching glob patterns, with staged-file support.
 
-        In staged mode, filters self.staged_files by extension and a coarse
-        directory hint derived from each pattern's first non-wildcard segment.
-        In full mode, expands each pattern via glob.iglob relative to mod_path.
-        Always applies should_skip_file; extra_skip adds validator-local filtering.
-
-        Pass ``ignore_staged=True`` for cross-reference resolution passes that
-        must always scan the entire repo regardless of staged mode — e.g.
-        confirming a tag/idea/effect is defined somewhere even if its
-        definition file isn't part of the current change set.
+        Pass ``ignore_staged=True`` for definition-lookup passes that must scan
+        the full repo even in staged mode (e.g. confirming a tag or idea is
+        defined somewhere, not just in the staged change set).
         """
         extensions = list(
             {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}
@@ -600,17 +823,22 @@ class BaseValidator:
         return result
 
     def _load_localisation_keys(self) -> frozenset:
-        """Load all defined keys from English localisation yml files."""
+        """Load all defined keys from English localisation yml files.
+
+        Also includes vanilla-provided keys that MD decisions/events override
+        but reuse the vanilla loc string for (see ``KNOWN_VANILLA_LOC_KEYS``).
+        """
         yml_files = self._collect_files(["localisation/english/**/*.yml"])
-        key_pattern = re.compile(r"^[ \t]*([\w.]+)\s*:", re.MULTILINE)
+        key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
         all_keys: set = set()
         for filepath in yml_files:
             try:
-                with open(filepath, encoding="utf-8-sig", errors="ignore") as f:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
                     text = f.read()
             except Exception:
                 continue
             all_keys.update(key_pattern.findall(text))
+        all_keys.update(KNOWN_VANILLA_LOC_KEYS)
         return frozenset(all_keys)
 
     def run_validations(self):

@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-###############################################################################
-# Run all validation scripts in parallel (cross-platform)
-# Usage:
-#   python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
-###############################################################################
+# Run all validation scripts in parallel (cross-platform).
+# Usage: python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
 import argparse
 import glob
 import json
@@ -17,40 +14,30 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 
 
-def discover_validators(include_slow: bool = False) -> List[Tuple[str, str, str]]:
-    """Auto-discover validators from the validation directory.
+_NON_VALIDATOR_SCRIPTS = frozenset(
+    ("validate_tools.py", "validate_staged.py", "run_all_validators.py")
+)
 
-    Args:
-        include_slow: If True, include slow validators (set-variables, unused-scripted, etc.)
-    """
+# Opt-in flags that only one validator understands, applied by its discovered
+# `name` (validate_ideas.py -> "ideas"). The suite is non-strict by default, so
+# these surface as warnings without gating. --missing-loc is intentionally left
+# off — its ~7.8k backlog would drown the report; run it on demand instead.
+_VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
+    "ideas": ["--missing-icons"],
+    "focus-tree": ["--missing-icons"],
+}
+
+
+def discover_validators() -> List[Tuple[str, str, str]]:
+    """Return (name, script_name, label) for every validate_*.py in this dir."""
     validators = []
-
-    # Validators that are slow and should be opt-in
-    SLOW_VALIDATORS = {
-        "set-variables",
-        "unused-scripted",
-        "unused-textures",
-        "variables",
-    }
-
     for script_path in glob.glob(os.path.join(SCRIPTS_DIR, "validate_*.py")):
         script_name = os.path.basename(script_path)
-
-        if script_name in (
-            "validate_tools.py",
-            "validate_staged.py",
-            "run_all_validators.py",
-        ):
+        if script_name in _NON_VALIDATOR_SCRIPTS:
             continue
-
         name = script_name.replace("validate_", "").replace(".py", "").replace("_", "-")
-
-        if not include_slow and name in SLOW_VALIDATORS:
-            continue
-
         label = _extract_label_from_script(script_path, name)
         validators.append((name, script_name, label))
-
     validators.sort(key=lambda x: x[0])
     return validators
 
@@ -84,6 +71,11 @@ def launch_validator(
     script_path = os.path.join(SCRIPTS_DIR, script_name)
     output_path = os.path.join(output_dir, f"{name}.txt")
 
+    combined_flags: List[str] = []
+    for flag in extra_flags + _VALIDATOR_EXTRA_FLAGS.get(name, []):
+        if flag not in combined_flags:
+            combined_flags.append(flag)
+
     cmd = [
         sys.executable,
         script_path,
@@ -91,7 +83,7 @@ def launch_validator(
         mod_path,
         "--output",
         output_path,
-    ] + extra_flags
+    ] + combined_flags
 
     return subprocess.Popen(
         cmd,
@@ -115,6 +107,19 @@ def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
     return 0, 0
 
 
+def _issue_sort_key(issue: Dict):
+    line = issue.get("line", 0)
+    if not isinstance(line, int):
+        line = 0
+    return (
+        str(issue.get("file", "")),
+        line,
+        str(issue.get("severity", "")),
+        str(issue.get("category", "")),
+        str(issue.get("message", "")),
+    )
+
+
 def collect_all_issues(
     output_dir: str, validators: List[Tuple[str, str, str]]
 ) -> List[Dict]:
@@ -128,6 +133,11 @@ def collect_all_issues(
             try:
                 with open(json_path, "r", encoding="utf-8") as f:
                     issues = json.load(f)
+                    # Sort before the first-seen dedup: some validators emit
+                    # same-key (file/line/severity/category) issues in
+                    # nondeterministic order, which would otherwise make the
+                    # surviving representative vary between runs.
+                    issues.sort(key=_issue_sort_key)
                     for issue in issues:
                         key = (
                             issue.get("file", ""),
@@ -222,6 +232,16 @@ def main():
     parser.add_argument("--staged", action="store_true")
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--no-color", action="store_true")
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help=(
+            "Bypass the .validation_cache/ disk cache for this run. Use when "
+            "iterating on validator logic — cache keys on file stat, not on "
+            "validator source, so logic changes are otherwise invisible until "
+            "CACHE_VERSION bumps. Sets MD_NO_CACHE=1 for child validators."
+        ),
+    )
     parser.add_argument("--format", choices=["text", "json", "both"], default="text")
     parser.add_argument(
         "--output", "-o", type=str, help="Output file for combined report"
@@ -231,11 +251,6 @@ def main():
         type=str,
         default=".",
         help="Path to the mod folder (default: current directory)",
-    )
-    parser.add_argument(
-        "--include-slow",
-        action="store_true",
-        help="Include slow validators (set-variables, unused-scripted, variables, unused-textures)",
     )
     args = parser.parse_args()
 
@@ -254,10 +269,24 @@ def main():
     if args.no_color:
         extra_flags.append("--no-color")
 
-    output_dir = tempfile.mkdtemp()
-    VALIDATORS = discover_validators(include_slow=args.include_slow)
+    if args.no_cache:
+        # subprocess.Popen inherits the parent env by default, so setting
+        # this once here propagates to every spawned validator.
+        os.environ["MD_NO_CACHE"] = "1"
+
+    VALIDATORS = discover_validators()
     mod_path = os.path.abspath(args.path)
 
+    # TemporaryDirectory guarantees cleanup even on crashes — the previous
+    # mkdtemp + per-file os.remove pattern leaked the dir on every non-clean
+    # run (strict failures, partial crashes, KeyboardInterrupt).
+    with tempfile.TemporaryDirectory(prefix="md_validators_") as output_dir:
+        exit_code = _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path)
+
+    sys.exit(exit_code)
+
+
+def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     print(
         f"{Colors.CYAN}{'=' * 80}{Colors.NC}\n"
         f"{Colors.CYAN}Running Millennium Dawn Validation Suite{Colors.NC}\n"
@@ -268,19 +297,17 @@ def main():
     for name, script, label in VALIDATORS:
         print(f"  - {name}: {label}")
 
-    if not args.include_slow:
-        print(
-            "\n  (Use --include-slow to also run: set-variables, unused-scripted, variables, unused-textures)\n"
-        )
+    print()
 
-    # Launch all validators in parallel
+    # Unbounded subprocess fan-out is intentional: capping concurrency or
+    # forcing per-child --workers starves the regex-heavy slow validators
+    # (verified slower in practice; the suite is I/O-bound, not CPU-bound).
     processes = {}
     for name, script, _label in VALIDATORS:
         processes[name] = launch_validator(
             script, extra_flags, output_dir, name, mod_path
         )
 
-    # Collect results in order
     total_errors = 0
     total_warnings = 0
     crashed_validators = []
@@ -307,59 +334,46 @@ def main():
 
     if total_errors == 0 and total_warnings == 0:
         print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.NC}")
+        return 0
 
-        for name, _, _ in VALIDATORS:
-            txt_path = os.path.join(output_dir, f"{name}.txt")
-            json_path = os.path.join(output_dir, f"{name}.json")
-            for path in [txt_path, json_path]:
-                if os.path.exists(path):
-                    os.remove(path)
-        try:
-            os.rmdir(output_dir)
-        except:
-            pass
+    report = generate_combined_report(
+        output_dir, VALIDATORS, crashed_validators, not args.no_color
+    )
 
-        sys.exit(0)
-    else:
-        report = generate_combined_report(
-            output_dir, VALIDATORS, crashed_validators, not args.no_color
-        )
+    if args.format in ("json", "both"):
+        combined_json = {
+            "validators": len(VALIDATORS),
+            "total_errors": total_errors,
+            "total_warnings": total_warnings,
+            "issues": collect_all_issues(output_dir, VALIDATORS),
+        }
+        json_output = json.dumps(combined_json, indent=2)
+        if args.output:
+            with open(args.output.replace(".txt", ".json"), "w") as f:
+                f.write(json_output)
 
-        if args.format in ("json", "both"):
-            combined_json = {
-                "validators": len(VALIDATORS),
-                "total_errors": total_errors,
-                "total_warnings": total_warnings,
-                "issues": collect_all_issues(output_dir, VALIDATORS),
-            }
-            json_output = json.dumps(combined_json, indent=2)
-            if args.output:
-                with open(args.output.replace(".txt", ".json"), "w") as f:
-                    f.write(json_output)
-
-        if args.format in ("text", "both"):
-            if args.output:
-                with open(args.output, "w") as f:
-                    f.write(report)
-                print(
-                    f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.NC}"
-                )
-            else:
-                print(f"\n{report}")
-
-        exit_code = 1 if args.strict else 0
-        if total_errors > 0:
+    if args.format in ("text", "both"):
+        if args.output:
+            with open(args.output, "w") as f:
+                f.write(report)
             print(
-                f"{Colors.RED}✗ VALIDATION FAILED \u2014 {total_errors} error(s), "
-                f"{total_warnings} warning(s){Colors.NC}"
+                f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.NC}"
             )
         else:
-            print(
-                f"{Colors.YELLOW}⚠ VALIDATION COMPLETED WITH WARNINGS \u2014 "
-                f"{total_warnings} warning(s){Colors.NC}"
-            )
+            print(f"\n{report}")
 
-        sys.exit(exit_code)
+    if total_errors > 0:
+        print(
+            f"{Colors.RED}✗ VALIDATION FAILED \u2014 {total_errors} error(s), "
+            f"{total_warnings} warning(s){Colors.NC}"
+        )
+    else:
+        print(
+            f"{Colors.YELLOW}⚠ VALIDATION COMPLETED WITH WARNINGS \u2014 "
+            f"{total_warnings} warning(s){Colors.NC}"
+        )
+
+    return 1 if args.strict else 0
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ on_actions = {
 
 			if = { limit = { NOT = { has_global_flag = on_weekly_global_done } }
 				set_global_flag = { flag = on_weekly_global_done value = 1 days = 7 }
-				missile_ui_update = yes
+				international_systems_update = yes
 				add_to_variable = { global.md_gui_dirty = 1 }
 				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
 					set_variable = { global.md_gui_dirty = 1 }
@@ -22,8 +22,13 @@ on_actions = {
 			nuclear_reactor_fuel_consumption = yes
 
 			# Remove weekly rate from treasury
-			if = { limit = { has_country_flag = int_reinvestment_flag }
+			if = { limit = { check_variable = { int_reinvest_mode = 1 } }
 				add_to_variable = { int_investments = int_investments_rate }
+			}
+			else_if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+				set_temp_variable = { _split_reinvest = int_investments_rate }
+				multiply_temp_variable = { _split_reinvest = 0.5 }
+				add_to_variable = { int_investments = _split_reinvest }
 			}
 
 			# No longer subject stop paying for subsidies
@@ -1031,76 +1036,8 @@ on_actions = {
 					productivity_growth_effect = yes
 				}
 
-				missile_ui_update = yes
+				international_systems_update = yes
 
-				if = { limit = { has_game_rule = { rule = rule_disable_muslim_brotherhood_civil_war option = no } }
-					for_each_loop = {
-						array = global.possible_muslim_brotherhood_nation
-						value = v
-						var:v = {
-							if = {
-								limit = {
-									NOT = {
-										has_government = neutrality
-										has_country_flag = muslim_brotherhood_flag
-										has_country_flag = BROTHER_civil_war_has_started
-									}
-									has_elections = no
-								}
-								if = {
-									limit = {
-										has_idea = muslim_brotherhood_crackdown
-										neutrality > 0.2
-									}
-
-									random_list = {
-										25 = {
-											# Brutality of Crackdown Backfires
-											country_event = brotherhood.7
-										}
-										25 = {
-											# Muslim Brotherhood Terrorists Raid Prison
-											country_event = brotherhood.8
-										}
-										25 = {
-											# Muslim Brotherhood Terror-Cell Dismantled
-											country_event = brotherhood.9
-										}
-										25 = {
-
-										}
-									}
-								}
-
-								# Muslim Brotherhood Protestors Demand Elections
-								if = {
-									limit = {
-										NOT = { has_country_flag = recently_had_muslim_brotherhood_demanded_election }
-										NOT = { has_idea = muslim_brotherhood_crackdown }
-										neutrality > 0.35
-									}
-									random = {
-										chance = 40
-										country_event = brotherhood.6
-									}
-								}
-
-								# Muslim Brotherhood Insurgency Turns Civil War
-								if = {
-									limit = {
-										has_idea = muslim_brotherhood_crackdown
-										NOT = { has_war = yes }
-										neutrality > 0.5
-									}
-									random = {
-										chance = 35
-										country_event = brotherhood.10
-									}
-								}
-							}
-						}
-					}
-				}
 
 				# Arab Spring Monthly Tick
 				# DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME

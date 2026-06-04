@@ -98,7 +98,6 @@ class EventStandardizer(BaseStandardizer):
             "comments_after_options": [],
         }
 
-        # Determine event type from first line
         first_line = block_lines[0].strip()
         for event_type in _EVENT_TYPES:
             if event_type in first_line:
@@ -135,7 +134,7 @@ class EventStandardizer(BaseStandardizer):
                 current_section = section
                 continue
             else:
-                # This is a comment or unrecognized line - add to current section
+                # Comment or unrecognized line: bucket it under the current section.
                 props[f"comments_after_{current_section}"].append(block_lines[i])
 
             i += 1

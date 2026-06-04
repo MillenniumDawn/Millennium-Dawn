@@ -2011,8 +2011,8 @@ generic_coalition_politics_decisions = {
 		icon = GFX_decision_generic_join_nato
 
 		cost = 50
-		days_remove = 14
-		days_re_enable = 60
+		days_remove = 30
+		days_re_enable = 180
 
 		visible = {
 			NOT = { has_global_flag = GAME_RULE_nato_disabled }
@@ -2022,8 +2022,14 @@ generic_coalition_politics_decisions = {
 				NOT = { has_country_flag = collapsed_nation }
 			}
 			is_subject = no
+			is_in_faction = no
 			NOT = { has_idea = Major_Non_NATO_Ally }
 			NOT = { has_idea = NATO_member }
+			# Only nations with a real military or arms base apply. Keeps microstates (Andorra, Monaco, etc.) out of the pool.
+			OR = {
+				has_army_manpower = { size > 10000 }
+				num_of_military_factories > 2
+			}
 		}
 
 		available = {
@@ -2032,9 +2038,18 @@ generic_coalition_politics_decisions = {
 				has_government = neutrality
 			}
 			NOT = { has_country_flag = MNNA_rejected_recently }
-			NOT = { is_in_faction_with = CHI }
-			NOT = { is_in_faction_with = SOV }
-			NOT = { is_in_faction_with = PER }
+			if = {
+				limit = { NOT = { CHI = { has_idea = NATO_member } } }
+				NOT = { is_in_faction_with = CHI }
+			}
+			if = {
+				limit = { NOT = { SOV = { has_idea = NATO_member } } }
+				NOT = { is_in_faction_with = SOV }
+			}
+			if = {
+				limit = { NOT = { PER = { has_idea = NATO_member } } }
+				NOT = { is_in_faction_with = PER }
+			}
 			custom_trigger_tooltip = {
 				tooltip = nato_leader_not_at_war_with_us_tt
 				any_of_scopes = {
@@ -2046,10 +2061,6 @@ generic_coalition_politics_decisions = {
 		}
 
 		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision request_MNNA_status"
-		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove request_MNNA_status"
@@ -2073,22 +2084,33 @@ generic_coalition_politics_decisions = {
 		}
 
 		ai_will_do = {
-			base = 30
+			base = 3
+			# Don't bother applying unless a NATO leader actually values us
+			modifier = {
+				factor = 0
+				NOT = {
+					any_of_scopes = {
+						array = global.nato_members
+						is_faction_leader = yes
+						has_opinion = { target = ROOT value > 25 }
+					}
+				}
+			}
 			modifier = {
 				CHI = { has_war_with = ROOT }
-				add = 50
+				add = 5
 			}
 			modifier = {
 				SOV = { has_war_with = ROOT }
-				add = 50
+				add = 5
 			}
 			modifier = {
 				PER = { has_war_with = ROOT }
-				add = 40
+				add = 4
 			}
 			modifier = {
 				has_war = yes
-				add = 20
+				add = 5
 			}
 			modifier = {
 				any_of_scopes = {
@@ -2096,7 +2118,7 @@ generic_coalition_politics_decisions = {
 					is_faction_leader = yes
 					has_opinion = { target = ROOT value > 75 }
 				}
-				add = 15
+				add = 5
 			}
 			modifier = {
 				factor = 0
@@ -2113,6 +2135,41 @@ generic_coalition_politics_decisions = {
 					has_government = communism
 					has_government = nationalist
 					has_government = fascism
+				}
+			}
+			# Pursue protection when the AI feels threatened; far less inclined when it does not
+			modifier = {
+				check_variable = { ai_attitude_is_threatened > 0 }
+				add = 5
+			}
+			modifier = {
+				factor = 0.2
+				check_variable = { ai_attitude_is_threatened = 0 }
+			}
+			modifier = {
+				num_of_factories > 30
+				add = 5
+			}
+			modifier = {
+				has_army_manpower = { size > 200000 }
+				add = 5
+			}
+			modifier = {
+				OR = {
+					western_conservatism_are_in_power = yes
+					western_liberals_are_in_power = yes
+				}
+				add = 5
+			}
+			modifier = {
+				factor = 0.5
+				has_stability < 0.30
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					is_in_faction_with = SOV
+					is_in_faction_with = CHI
 				}
 			}
 		}

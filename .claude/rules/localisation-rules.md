@@ -3,36 +3,38 @@
 ## Language & Encoding
 
 - English is the only language to edit. All other language files are managed via Paratranz — **do not touch them**.
-- All `.yml` files must be **UTF-8 with BOM** encoding.
-- File header must be `l_english:` on the first line with no leading whitespace.
-- Use **1 space** of indentation for each key (not tabs).
+- All `.yml` files must be **UTF-8 with BOM**.
+- First line must be `l_english:` with no leading whitespace.
+- Use **1 space** of indentation per key (not tabs).
 
 ## File Naming
 
-- **All country-specific localisation** (events, focuses, decisions, ideas, missions for a single country) goes in the **single unified file**: `MD_focus_TAG_l_english.yml`. Do **not** create separate files per subsystem (e.g., `MD_TAG_rebellion_l_english.yml`, `MD_TAG_events_l_english.yml`). One country, one loc file.
-- Only create a **separate** loc file for a standalone cross-country mechanic or system that is not owned by any single country (e.g., `MD_NATO_events_l_english.yml`, `MD_tooltips_l_english.yml`).
+- **All country-specific localisation** (events, focuses, decisions, ideas, missions for one country) goes in the **single unified file** `MD_focus_TAG_l_english.yml`. Do **not** split per subsystem (e.g., `MD_TAG_rebellion_l_english.yml`, `MD_TAG_events_l_english.yml`). One country, one loc file.
+- Only create a **separate** loc file for a standalone cross-country mechanic owned by no single country (e.g., `MD_NATO_events_l_english.yml`, `MD_tooltips_l_english.yml`).
 - Check existing files in `localisation/english/` for the naming pattern before creating new ones.
 
 ## Key Formatting
 
-- Keys use **no trailing version number**: write `key: "value"`, not `key:0 "value"`.
-- Key naming mirrors the associated script ID exactly (e.g., focus `SER_free_market_capitalism` → `SER_free_market_capitalism: "..."`, `SER_free_market_capitalism_desc: "..."`).
-- Focus/decision/event keys follow the pattern: `ID`, `ID_desc` (tooltip body). Events also need `ID.t` (title), `ID.d` (description), and `ID.a`, `ID.b`, … (option names).
+- Keys use **no trailing version number**: `key: "value"`, not `key:0 "value"`.
+- Key naming mirrors the script ID exactly (e.g., focus `SER_free_market_capitalism` → `SER_free_market_capitalism: "..."`, `SER_free_market_capitalism_desc: "..."`).
+- Focus/decision/event keys: `ID`, `ID_desc` (tooltip body). Events also need `ID.t` (title), `ID.d` (description), and `ID.a`, `ID.b`, … (option names).
 - Every new script object (focus, decision, event, idea, MIO, subideology) needs matching loc keys before it goes in.
-- Undefined `[variable]` substitutions in loc strings — every `[Foo.GetBar]` or `[my_var]` must correspond to a real scope getter or set variable. A missing or misspelled getter renders as an empty string or literal `[variable_name]` in-game.
+- Undefined `[variable]` substitutions: every `[Foo.GetBar]` or `[my_var]` must correspond to a real scope getter or set variable. A missing or misspelled getter renders as an empty string or literal `[variable_name]` in-game.
 
 ## Writing Style
 
-- **Grammar and correctness first.** Proofread for subject-verb agreement, punctuation, and sentence completeness.
-- **Be concise.** Remove filler words and redundant phrasing. Prefer shorter sentences.
+- **Grammar and correctness first.** Proofread for subject-verb agreement, punctuation, sentence completeness.
+- **Be concise.** Remove filler and redundancy. Prefer shorter sentences.
 - **No excessive hyphenation.** Only hyphenate compound modifiers before a noun (e.g., "pro-Western government"), not elsewhere.
 - **No ellipsis abuse.** Do not use `...` in descriptions or tooltips.
+- **No em dashes** (`—`) in player-facing strings. Use a period when the clause stands alone ("Their economy answers to us. Their borders remain intact."), a comma for a participial phrase ("...transfers weekly, appearing as a new expense..."), or a colon to introduce a list or requirement ("Requires war contribution: one battle won or three months at war."). Em dashes read as soft connectors and almost always replace one of those three.
 - Capitalize proper nouns, party names, ideology group names, and in-game concepts (e.g., Political Power, Stability).
-- Do not use all-caps for emphasis; use in-game formatting codes instead if needed (e.g., `£icon`, `§Y...§!`).
+- No all-caps for emphasis; use in-game formatting codes if needed (e.g., `£icon`, `§Y...§!`).
+- **No padding filler.** Every sentence should carry real information — founding facts, political orientation, mechanical implication, alignment. Sentences that restate the title or fill space with "the party has remained influential over the years" add nothing. Applies to subideology descs, focus descs, idea descs, event flavour, and option text alike.
 
 ## Subideology Localisation Format
 
-Three keys are required for every country subideology entry:
+Three keys required per country subideology entry:
 
 ```plaintext
 TAG.ideology: "£PARTY_ICON (ABBRV) - Party Name"
@@ -44,11 +46,7 @@ Rules:
 
 - **Short name** (`TAG.ideology`): icon + abbreviation in parentheses + dash + English party name.
 - **Icon** (`TAG.ideology_icon`): icon reference only, no extra text.
-- **Description** (`TAG.ideology_desc`):
-  - Opens with the dominant ideology group in parentheses (e.g., `(Classic Liberalism)`), then the full English party name, then native-language names in parentheses listed as `Language: Native Name`, comma-separated, followed by the abbreviation.
-  - A `\n\n` separates the header line from the body paragraph.
-  - Body paragraph: 2–5 sentences covering founding, political orientation, notable history, and international alignments. Written in third person, past/present mix, encyclopedic tone.
-  - Do not pad with vague filler sentences.
+- **Description** (`TAG.ideology_desc`): opens with the dominant ideology group in parentheses (e.g., `(Classic Liberalism)`), then the full English party name, then native-language names in parentheses as `Language: Native Name`, comma-separated, followed by the abbreviation. A `\n\n` separates the header line from the body. Body: 2–5 sentences covering founding, political orientation, notable history, and international alignments. Third person, past/present mix, encyclopedic tone. The "no padding filler" rule applies.
 
 Example:
 
@@ -60,34 +58,34 @@ MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (A
 
 ## Event Localisation
 
-- `ID.t`: Short, punchy title — no more than 6–8 words.
+- `ID.t`: short, punchy title, no more than 6–8 words.
 - `ID.d`: 1–3 sentences of flavour or context. No mechanical descriptions (those belong in option text or tooltips).
-- `ID.a`, `ID.b`, …: Option names should read as a player decision or action, not a description (e.g., `"Provide funding"` not `"The government provides funding"`).
+- `ID.a`, `ID.b`, …: option names read as a player decision or action, not a description (e.g., `"Provide funding"` not `"The government provides funding"`).
 
 ## Ideas & Focuses
 
-- Name (`name: "..."`) should be title-cased, concise (3–6 words typical).
-- Description should explain what the idea represents in 1–3 sentences. Do not repeat modifier values verbatim; describe their political or economic meaning.
+- Name (`name: "..."`) title-cased, concise (3–6 words typical).
+- Description explains what the idea represents in 1–3 sentences. Do not repeat modifier values verbatim; describe their political or economic meaning.
 
 ## YAML Validity
 
-HOI4 localisation files are checked by `check-yaml` in the pre-commit hook. The HOI4 format is not strict YAML, so several patterns cause parse failures:
+HOI4 loc files are checked by `check-yaml` in the pre-commit hook. The HOI4 format is not strict YAML, so several patterns cause parse failures:
 
-- **Embedded double quotes**: `"He called it "important""` is invalid. Use `\"important\"` for emphasis, or rephrase to remove the inner quotes entirely.
-- **Mixed indentation**: All keys in a file must be consistently indented (all with 1 leading space, or all without). Mixing indented and non-indented keys in the same file causes YAML to see two separate mappings. Remove stray spaces to make indentation uniform.
-- **Colons in values**: A bare colon followed by a space inside a quoted string can confuse some parsers — wrap the value in quotes as usual and this is safe, but watch for unquoted values.
+- **Embedded double quotes**: `"He called it "important""` is invalid. Use `\"important\"` or rephrase to remove the inner quotes.
+- **Mixed indentation**: all keys must be consistently indented (all with 1 leading space, or all without). Mixing makes YAML see two separate mappings. Remove stray spaces.
+- **Colons in values**: a bare colon followed by a space inside a quoted string can confuse some parsers — wrap values in quotes (safe) and watch for unquoted values.
 
 ## Loc Key Collisions Between Game Objects
 
-An idea's `name = X` field redirects **both** the displayed name and the tooltip description: the game looks up `X` for the name and `X_desc` for the description. The idea's own ID is no longer used for loc.
+An idea's `name = X` redirects **both** the displayed name and the tooltip description: the game looks up `X` for the name and `X_desc` for the description. The idea's own ID is no longer used for loc.
 
-This creates a collision risk when an idea shares a name with a focus, decision, event, or other idea:
+Collision risk when an idea shares a name with a focus, decision, event, or other idea:
 
-- A focus `id = ENG_british_commercial_spaceport` and an idea `name = ENG_british_commercial_spaceport` will both read from the same `ENG_british_commercial_spaceport` / `_desc` loc keys.
+- A focus `id = ENG_british_commercial_spaceport` and idea `name = ENG_british_commercial_spaceport` both read the same `ENG_british_commercial_spaceport` / `_desc` keys.
 - If both define those keys in the same `.yml`, YAML treats it as a duplicate and the later definition wins — the focus name silently changes to the idea's text (or vice versa).
-- Even if only one side defines the keys, the other game object will display whatever text happens to be there — usually wrong.
+- Even if only one side defines the keys, the other object displays whatever text is there, usually wrong.
 
-**Rule:** When picking a `name = X` for an idea, choose a key that no focus, decision, or other idea uses. If the idea's display text matches the focus's display text intentionally (e.g., the focus awards the idea and they share branding), still use a distinct key — they may need to diverge later, and identical text in two keys is cheap.
+**Rule:** Pick a `name = X` that no focus, decision, or other idea uses. Even when the display text intentionally matches a focus (e.g., the focus awards the idea and they share branding), use a distinct key — they may need to diverge later, and identical text in two keys is cheap.
 
 Quick check before merging:
 
@@ -96,7 +94,7 @@ Quick check before merging:
 grep -rn "id = KEY\b\|^\s*KEY:\s*\"" common/ localisation/english/
 ```
 
-If you see hits in both `common/national_focus/` and `common/ideas/` for the same KEY, rename one side.
+Hits in both `common/national_focus/` and `common/ideas/` for the same KEY = rename one side.
 
 ## Common Mistakes to Avoid
 

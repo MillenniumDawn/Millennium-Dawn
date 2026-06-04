@@ -19,7 +19,7 @@ import re
 import sys
 from collections import defaultdict
 
-BASE_DIR = os.path.join(os.path.dirname(__file__), "..")
+BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..")
 STATES_DIR = os.path.join(BASE_DIR, "history", "states")
 COUNTRIES_DIR = os.path.join(BASE_DIR, "history", "countries")
 IDEAS_DIR = os.path.join(BASE_DIR, "common", "ideas")
@@ -119,15 +119,7 @@ def parse_all_ideas():
 
 def _extract_ideas_from_content(content, idea_modifiers):
     """Extract idea definitions and their modifiers from file content."""
-    # Remove comments
     content = re.sub(r"#[^\n]*", "", content)
-
-    # Tokenize: we need to find idea blocks and their modifier sub-blocks
-    # Strategy: find top-level idea names by looking for patterns like:
-    #   idea_name = { ... modifier = { key = val ... } ... }
-
-    # Find all potential idea definitions (word = {) at reasonable indent levels
-    # Ideas are typically at depth 2 (inside a category block)
     tokens = _tokenize(content)
     _parse_idea_tokens(tokens, idea_modifiers)
 
@@ -171,7 +163,6 @@ def _parse_idea_tokens(tokens, idea_modifiers):
     """Parse tokenized content to extract idea modifier values."""
     i = 0
     depth = 0
-    # Track context: we want ideas at depth >= 2
     context_stack = []
 
     while i < len(tokens):
@@ -189,13 +180,11 @@ def _parse_idea_tokens(tokens, idea_modifiers):
             next_type, next_val = tokens[i + 1]
             if next_type == "EQ":
                 key = tval
-                i += 2  # skip past '='
+                i += 2
                 if i < len(tokens):
                     val_type, val_val = tokens[i]
                     if val_type == "OPEN":
-                        # This is a block: key = { ... }
                         if depth >= 1 and key == "modifier":
-                            # Extract modifiers from this block
                             parent = context_stack[-1][0] if context_stack else None
                             if parent:
                                 mods = _extract_modifier_block(tokens, i)
@@ -206,11 +195,9 @@ def _parse_idea_tokens(tokens, idea_modifiers):
                                         idea_modifiers[parent][mk] = (
                                             idea_modifiers[parent].get(mk, 0) + mv
                                         )
-                        # Push context
                         context_stack.append((key, depth + 1))
-                        # Don't increment i here; the OPEN will be handled next loop
+                        # Don't increment i; the OPEN is handled next loop iteration.
                     elif val_type in ("WORD", "STR"):
-                        # key = value (simple assignment)
                         i += 1
                     else:
                         i += 1
@@ -239,7 +226,6 @@ def _extract_modifier_block(tokens, start_idx):
             depth -= 1
             i += 1
         elif depth == 1 and ttype == "WORD" and tval in GDP_MODIFIER_KEYS:
-            # Look for = value
             if i + 2 < len(tokens) and tokens[i + 1][0] == "EQ":
                 val_tok = tokens[i + 2]
                 if val_tok[0] in ("WORD", "STR"):
@@ -271,7 +257,6 @@ def parse_country_history(tag):
                 continue
 
             ideas = []
-            # Find add_ideas blocks
             for m in re.finditer(r"add_ideas\s*=\s*\{([^}]+)\}", content):
                 block = m.group(1)
                 for line in block.split("\n"):
@@ -279,7 +264,6 @@ def parse_country_history(tag):
                     if line and "=" not in line:
                         ideas.append(line)
 
-            # Find seeded gdp_per_capita
             seeded_gdpc = None
             m = re.search(
                 r"set_variable\s*=\s*\{\s*gdp_per_capita\s*=\s*([\d.]+)\s*\}",
@@ -288,8 +272,8 @@ def parse_country_history(tag):
             if m:
                 seeded_gdpc = float(m.group(1))
 
-            # Find seeded resource extraction dynamic modifier variables
-            # (e.g., doti_resource_extraction for USA DOI)
+            # Seeded resource extraction dynamic modifier vars (e.g.
+            # doti_resource_extraction for the USA Declaration of Independence).
             dynamic_resource_vars = {}
             for vm in re.finditer(
                 r"set_variable\s*=\s*\{\s*(\w+resource_extraction\w*)\s*=\s*([-\d.]+)\s*\}",
@@ -297,12 +281,23 @@ def parse_country_history(tag):
             ):
                 dynamic_resource_vars[vm.group(1)] = float(vm.group(2))
 
+            capital = None
+            m = re.search(r"^\s*capital\s*=\s*(\d+)", content, re.MULTILINE)
+            if m:
+                capital = int(m.group(1))
+
             return {
                 "ideas": ideas,
                 "seeded_gdpc": seeded_gdpc,
                 "dynamic_resource_vars": dynamic_resource_vars,
+                "capital": capital,
             }
-    return {"ideas": [], "seeded_gdpc": None, "dynamic_resource_vars": {}}
+    return {
+        "ideas": [],
+        "seeded_gdpc": None,
+        "dynamic_resource_vars": {},
+        "capital": None,
+    }
 
 
 # ─── State Parsing ─────────────────────────────────────────────────────────────
@@ -312,10 +307,15 @@ def parse_state_file(filepath):
     """Parse a state history file and extract relevant economic data."""
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
+    return parse_state_file_from_content(content, os.path.basename(filepath))
 
+
+def parse_state_file_from_content(content, name=""):
+    """Parse already-loaded state file text. Callers that already have content in
+    hand should use this directly to avoid a second disk read."""
     state = {
         "id": None,
-        "name": os.path.basename(filepath),
+        "name": name,
         "owner": None,
         "manpower": 0,
         "productivity": 0,
@@ -416,7 +416,6 @@ def calculate_gdp(states, modifier_stack=None):
         else 0
     )
 
-    # Aggregate buildings and resources
     buildings = defaultdict(int)
     base_resources = defaultdict(float)
     for s in states:
@@ -425,7 +424,7 @@ def calculate_gdp(states, modifier_stack=None):
         for rname, rcount in s["resources"].items():
             base_resources[rname] += rcount
 
-    # Apply per-resource modifiers (from environmental ideas etc.)
+    # Per-resource modifiers come from environmental ideas.
     total_resources = 0
     for rname, base_amount in base_resources.items():
         factor_key = RESOURCE_FACTOR_KEYS.get(rname)
@@ -473,9 +472,7 @@ def calculate_gdp(states, modifier_stack=None):
     for bname, (base, bonus_rate, mod_key) in BUILDING_GDP_FORMULA.items():
         count = buildings.get(bname, 0)
         if count > 0:
-            # base contribution
             contribution = count * base
-            # productivity bonus contribution
             if mod_key and bonus_rate > 0:
                 mod_val = modifier_stack.get(mod_key, 0)
                 contribution += count * bonus_rate * mod_val
@@ -484,11 +481,11 @@ def calculate_gdp(states, modifier_stack=None):
             building_breakdown[bname] = contribution
 
     # --- Healthcare GDP (lines 5029-5043) ---
-    # Find health idea level from modifier stack or ideas
+    # Health level is resolved later from the health_idea parameter in
+    # finalize_gdp, not here.
     health_mult = 0
     for hkey, hmult in HEALTH_GDP_MULT.items():
-        # We detect health level from ideas passed in; stored in result
-        pass  # handled below via health_idea parameter
+        pass
 
     # --- Total pre-healthcare GDP ---
     productivity_mult = overall_productivity * 0.001
@@ -515,6 +512,37 @@ def calculate_gdp(states, modifier_stack=None):
     }
 
 
+def compute_country_gdp(tag, states, idea_db, country_data=None):
+    """End-to-end per-country GDP: parse history → modifier stack → calculate → finalize.
+    Returns the result dict (with `tag` / `starting_ideas` / `seeded_gdpc` attached),
+    or None if calculate_gdp produced no result. Pass `country_data` (from
+    parse_country_history) to skip the re-parse when the caller has it cached."""
+    if country_data is None:
+        country_data = parse_country_history(tag)
+    starting_ideas = country_data["ideas"]
+    seeded_gdpc = country_data["seeded_gdpc"]
+    modifier_stack = build_modifier_stack(starting_ideas, idea_db)
+
+    for var_val in country_data["dynamic_resource_vars"].values():
+        for rkey in RESOURCE_FACTOR_KEYS.values():
+            modifier_stack[rkey] = modifier_stack.get(rkey, 0) + var_val
+
+    health_idea = None
+    for idea in starting_ideas:
+        if idea in HEALTH_GDP_MULT:
+            health_idea = idea
+            break
+
+    result = calculate_gdp(states, modifier_stack)
+    if result is None:
+        return None
+    result["tag"] = tag
+    result["starting_ideas"] = starting_ideas
+    result["seeded_gdpc"] = seeded_gdpc
+    finalize_gdp(result, health_idea, seeded_gdpc)
+    return result
+
+
 def finalize_gdp(result, health_idea=None, seeded_gdpc=None):
     """Apply productivity multiplier and healthcare GDP.
 
@@ -529,7 +557,6 @@ def finalize_gdp(result, health_idea=None, seeded_gdpc=None):
 
     health_mult = HEALTH_GDP_MULT.get(health_idea, 0) if health_idea else 0
 
-    # Start with non-healthcare GDP
     gdp_total = gdp_pre_healthcare * productivity_mult
     gdp_from_healthcare_pre = 0
 
@@ -590,12 +617,10 @@ def main():
     verbose = "-v" in args or "--verbose" in args
     args = [a for a in args if a not in ("-v", "--verbose")]
 
-    # Parse all idea definitions
     print("Loading idea definitions...", file=sys.stderr)
     idea_db = parse_all_ideas()
     print(f"  Loaded {len(idea_db)} ideas with GDP modifiers", file=sys.stderr)
 
-    # Parse all state files
     print("Loading state files...", file=sys.stderr)
     country_states = defaultdict(list)
     for fname in os.listdir(STATES_DIR):
@@ -622,31 +647,8 @@ def main():
                 print(f"WARNING: No states found for {tag}")
             continue
 
-        states = country_states[tag]
-        country_data = parse_country_history(tag)
-        starting_ideas = country_data["ideas"]
-        seeded_gdpc = country_data["seeded_gdpc"]
-        modifier_stack = build_modifier_stack(starting_ideas, idea_db)
-
-        # Apply dynamic resource extraction modifiers if found
-        for var_name, var_val in country_data["dynamic_resource_vars"].items():
-            # These typically apply to all resource types
-            for rkey in RESOURCE_FACTOR_KEYS.values():
-                modifier_stack[rkey] = modifier_stack.get(rkey, 0) + var_val
-
-        # Detect health idea
-        health_idea = None
-        for idea in starting_ideas:
-            if idea in HEALTH_GDP_MULT:
-                health_idea = idea
-                break
-
-        result = calculate_gdp(states, modifier_stack)
+        result = compute_country_gdp(tag, country_states[tag], idea_db)
         if result:
-            result["tag"] = tag
-            result["starting_ideas"] = starting_ideas
-            result["seeded_gdpc"] = seeded_gdpc
-            finalize_gdp(result, health_idea, seeded_gdpc)
             results.append(result)
 
     if top_n:
@@ -703,7 +705,6 @@ def main():
                     else:
                         print(f"    {bname:<25} x{bcount:>4}")
 
-            # Show active modifiers
             ms = r["modifier_stack"]
             active = {k: v for k, v in ms.items() if abs(v) > 0.001}
             if active and verbose:
@@ -713,7 +714,6 @@ def main():
                 for mk in sorted(active):
                     print(f"    {mk:<45} {active[mk]:+.3f}")
             elif active:
-                # Show count
                 print(f"\n  Modifiers: {len(active)} active (use -v for details)")
             print("")
 

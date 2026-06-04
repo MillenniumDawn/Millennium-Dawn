@@ -149,14 +149,6 @@ repos:
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
         stages: [manual]
-      - id: check-basic-style-2
-        name: MD Basic Style Check (secondary)
-        entry: python3 tools/linting/check_basic_style_2.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
-        stages: [manual]
       - id: coding-standards
         name: MD Coding Standards (focus IDs, flags, events)
         entry: python3 tools/linting/coding_standards.py --mode staged
@@ -206,7 +198,7 @@ repos:
         name: MD Validate intelligence agency upgrade integration
         entry: python3 tools/validation/validate_agency_upgrades.py --staged --strict --no-color
         language: system
-        files: '(common/intelligence_agency_upgrades/.*\.txt|common/on_actions/MD_auto_agency_on_actions\.txt|common/scripted_guis/00_MD_auto_agency_scripted_gui\.txt|common/scripted_localisation/00_MD_auto_agency_scripted_localisation\.txt|localisation/english/MD_auto_agency_l_english\.yml)$'
+        files: '(common/intelligence_agency_upgrades/.*\.txt|common/on_actions/MD_auto_agency_on_actions\.txt|common/scripted_guis/00_MD_auto_agency_scripted_gui\.txt|localisation/english/MD_auto_agency_l_english\.yml)$'
         pass_filenames: false
       - id: md-validate-ideas
         name: MD Validate idea references (undefined ideas, redundant allowed blocks)
@@ -214,6 +206,131 @@ repos:
         language: system
         files: '(common/ideas|common/national_focus|common/decisions|events)/.*\.txt$|localisation/english/.*\.yml$'
         pass_filenames: false
+      - id: md-validate-scripted-gui
+        name: MD Validate scripted GUI cross-references
+        # Cross-references scripted_guis with interface/.gui, interface/.gfx and
+        # localisation/english/*.yml. Catches silent failures (dead handlers,
+        # missing tooltip loc keys, broken [!] formatters, missing windows or
+        # containers). Runs on changes to any of those file kinds; reports only
+        # issues involving the staged files.
+        entry: python3 tools/validation/validate_scripted_gui.py --staged --strict --no-color
+        language: system
+        files: '(common/scripted_guis/.*\.txt|interface/.*\.(gui|gfx)|localisation/english/.*\.yml)$'
+        pass_filenames: false
+        # Manual: rebuilds the full interface/*.gfx + *.gui index every run (~1.3s)
+        # and the loc trigger fires it on most commits. CI gates it; run locally
+        # with: pre-commit run md-validate-scripted-gui --hook-stage manual
+        stages: [manual]
+      - id: md-validate-events
+        name: MD Validate event definitions
+        entry: python3 tools/validation/validate_events.py --staged --strict --no-color
+        language: system
+        files: 'events/.*\.txt$'
+        pass_filenames: false
+      - id: md-validate-scripted-localisation
+        name: MD Validate scripted localisation references
+        entry: python3 tools/validation/validate_scripted_localisation.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common/scripted_localisation/.*\.txt|interface/.*\.gfx)$'
+        pass_filenames: false
+        # Manual: full-repo cross-reference scan (~1.3s). CI gates it.
+        stages: [manual]
+      - id: md-validate-localisation
+        name: MD Validate localisation (duplicates, color codes, headers)
+        entry: python3 tools/validation/validate_localisation.py --staged --strict --no-color --workers 4
+        language: system
+        files: 'localisation/english/.*\.yml$'
+        pass_filenames: false
+        # Manual: scans all localisation/english/*.yml every run (~0.8s) and the
+        # .yml trigger fires it on most content commits. CI gates it.
+        stages: [manual]
+      - id: md-validate-cosmetic-tags
+        name: MD Validate cosmetic tag references
+        entry: python3 tools/validation/validate_cosmetic_tags.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common|events|history)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-decisions
+        name: MD Validate decision definitions
+        entry: python3 tools/validation/validate_decisions.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common/decisions|common/balance_of_power)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-variables
+        name: MD Validate variable and event target references
+        entry: python3 tools/validation/validate_variables.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common|events|history)/.*\.txt$|localisation/english/.*\.yml$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-history-techs
+        name: MD Validate history technology dependencies
+        entry: python3 tools/validation/validate_history_techs.py --staged --strict --no-color
+        language: system
+        files: '(common/technologies|history/countries)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-unused-scripted
+        name: MD Validate unused scripted effects and triggers
+        entry: python3 tools/validation/validate_unused_scripted.py --staged --strict --no-color
+        language: system
+        files: '(common/scripted_effects|common/scripted_triggers)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-factions
+        name: MD Validate faction system references
+        entry: python3 tools/validation/validate_factions.py --staged --strict --no-color
+        language: system
+        files: 'common/factions/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-focus-tree
+        name: MD Validate focus tree structure (orphans, cycles, duplicates)
+        entry: python3 tools/validation/validate_focus_tree.py --staged --strict --no-color
+        language: system
+        files: 'common/national_focus/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-modifiers
+        name: MD Validate modifier names (unknown/typo detection)
+        # No --strict: frequency-based detection has inherent false positives
+        # for rarely-used but valid vanilla modifiers
+        entry: python3 tools/validation/validate_modifiers.py --staged --no-color
+        language: system
+        files: '(common/ideas|common/national_focus|common/decisions|common/dynamic_modifiers)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-on-actions
+        name: MD Validate on_actions event references
+        entry: python3 tools/validation/validate_on_actions.py --staged --strict --no-color
+        language: system
+        files: '(common/on_actions|events)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-scripted-params
+        name: MD Validate scripted effect parameter contracts
+        entry: python3 tools/validation/validate_scripted_params.py --staged --strict --no-color
+        language: system
+        files: '(common/scripted_effects|common/national_focus|common/decisions|events)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-simplifications
+        name: MD Suggest scope merges (consecutive same-scope blocks)
+        # No --strict: WARNING-only simplification hints, never block a commit.
+        entry: python3 tools/validation/validate_simplifications.py --staged --no-color
+        language: system
+        files: '(common/national_focus|common/decisions|common/scripted_effects|common/scripted_triggers|common/on_actions|events)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-gfx-references
+        name: MD Validate GFX sprite references (.gui vs .gfx)
+        entry: python3 tools/validation/validate_gfx_references.py --staged --strict --no-color
+        language: system
+        files: '(interface/.*\.(gui|gfx)|common/scripted_guis/.*\.txt|common/scripted_localisation/.*\.txt)$'
+        pass_filenames: false
+        stages: [manual]
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
         # Manual: full-repo scan is slow and currently reports ~22k legacy
@@ -226,10 +343,13 @@ repos:
         files: '\.(gfx|asset|dds|tga|png)$'
         pass_filenames: false
         stages: [manual]
-      # NOTE: validate_set_variables.py exists but is intentionally not wired
-      # anywhere. False-positive volume at repo scale makes it too noisy as a
-      # gate. Run manually when investigating a specific variable:
-      #   python3 tools/validation/validate_set_variables.py --staged
+      - id: md-validate-set-variables
+        name: MD Validate set_variable references
+        entry: python3 tools/validation/validate_set_variables.py --staged --no-color --workers 4
+        language: system
+        files: '(common|events|history)/.*\.txt$|localisation/english/.*\.yml$'
+        pass_filenames: false
+        stages: [manual]
       - id: validate-staged
         name: MD Validate staged files
         entry: python3 tools/validate_staged.py

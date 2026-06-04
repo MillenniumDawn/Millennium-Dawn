@@ -22,6 +22,9 @@ MAX_ISSUES_STEP_SUMMARY = 1000
 # How many issues to show inside one collapsed category block.
 MAX_PER_CATEGORY = 100
 
+# Shown once above the issue list when there is anything to fix.
+_LEGEND = "_Errors block merge. Warnings are advisory and won't fail CI._"
+
 
 def render(
     runs: List[ValidatorRun],
@@ -35,16 +38,27 @@ def render(
     parts.append(REPORT_MARKER)
     parts.append("# Validation Report")
     parts.append("")
+
+    verdict = _render_verdict(runs)
+    if verdict:
+        parts.append(verdict)
+        parts.append("")
+
     parts.append(_render_metadata_strip(ctx))
     parts.append("")
-    parts.append(_render_summary_table(runs))
-    parts.append("")
+
+    summary = _render_summary_table(runs)
+    if summary:
+        parts.append(summary)
+        parts.append("")
 
     errored_or_warned = [
         i for i in issues if i.severity in (Severity.ERROR, Severity.WARNING)
     ]
     if errored_or_warned:
         parts.append("---")
+        parts.append("")
+        parts.append(_LEGEND)
         parts.append("")
         parts.append(_render_issues(errored_or_warned, ctx, max_visible))
         parts.append("")
@@ -68,21 +82,54 @@ def _humanize(slug: str) -> str:
     return slug.replace("-", " ").replace("_", " ").title()
 
 
+def _plural(n: int, word: str) -> str:
+    """'5', 'error' → '5 errors'. Thousands-separated, pluralised on n != 1."""
+    return f"{n:,} {word}{'s' if n != 1 else ''}"
+
+
+def _totals(runs: List[ValidatorRun]) -> Tuple[int, int]:
+    return sum(r.errors for r in runs), sum(r.warnings for r in runs)
+
+
 def _count_label(errors: int, warnings: int) -> str:
     parts = []
     if errors:
-        parts.append(f"{errors:,} error{'s' if errors != 1 else ''}")
+        parts.append(_plural(errors, "error"))
     if warnings:
-        parts.append(f"{warnings:,} warning{'s' if warnings != 1 else ''}")
+        parts.append(_plural(warnings, "warning"))
     return ", ".join(parts) or "0 issues"
 
 
 def _severity_icon(errors: int, warnings: int) -> str:
     if errors:
-        return "✗"
+        return "❌"
     if warnings:
-        return "⚠"
-    return "✓"
+        return "⚠️"
+    return "✅"
+
+
+# ── Verdict banner ─────────────────────────────────────────────────────────────
+
+
+def _render_verdict(runs: List[ValidatorRun]) -> str:
+    """A GitHub alert callout giving an at-a-glance pass/fail verdict."""
+    if not runs:
+        return ""
+    total_errors, total_warnings = _totals(runs)
+
+    if total_errors:
+        line = f"{_plural(total_errors, 'error')} must be fixed before merge."
+        if total_warnings:
+            line += f" ({_plural(total_warnings, 'warning')}, advisory.)"
+        return f"> [!CAUTION]\n> ❌ {line}"
+
+    if total_warnings:
+        line = f"{_plural(total_warnings, 'warning')} to review. None block merge."
+        return f"> [!WARNING]\n> ⚠️ {line}"
+
+    return (
+        f"> [!NOTE]\n> ✅ All {_plural(len(runs), 'validator')} passed. Nothing to fix."
+    )
 
 
 # ── Metadata strip ─────────────────────────────────────────────────────────────
@@ -108,22 +155,33 @@ def _render_summary_table(runs: List[ValidatorRun]) -> str:
     if not runs:
         return "_No validator results found._"
 
-    header = (
-        "| Validator | Errors | Warnings | Status |\n"
-        "|-----------|-------:|---------:|:------:|"
-    )
-    rows = []
-    total_errors = 0
-    total_warnings = 0
-    for run in runs:
-        rows.append(
-            f"| {run.title} | {run.errors:,} | {run.warnings:,} | {run.status_symbol()} |"
-        )
-        total_errors += run.errors
-        total_warnings += run.warnings
-    rows.append(f"| **Total** | **{total_errors:,}** | **{total_warnings:,}** |  |")
+    with_findings: List[ValidatorRun] = []
+    passed_count = 0
+    for r in runs:
+        if r.errors or r.warnings:
+            with_findings.append(r)
+        else:
+            passed_count += 1
 
-    return "## Summary\n\n" + header + "\n" + "\n".join(rows)
+    # All clean — the verdict banner already states this; no table to show.
+    if not with_findings:
+        return ""
+
+    # Only validators with findings get a row; the rest fold into one line.
+    total_errors, total_warnings = _totals(with_findings)
+    header = "| Validator | Errors | Warnings |\n|-----------|-------:|---------:|"
+    rows = [
+        f"| {_severity_icon(r.errors, r.warnings)} {r.title} | {r.errors:,} | {r.warnings:,} |"
+        for r in with_findings
+    ]
+    rows.append(f"| **Total** | **{total_errors:,}** | **{total_warnings:,}** |")
+
+    out = "## Summary\n\n" + header + "\n" + "\n".join(rows)
+    if passed_count:
+        out += (
+            f"\n\n✅ {_plural(passed_count, 'other validator')} passed with no issues."
+        )
+    return out
 
 
 # ── Issues section ─────────────────────────────────────────────────────────────
@@ -192,7 +250,7 @@ def _render_issues(issues: List[Issue], ctx: ReportContext, max_visible: int) ->
             overflow += cat_overflow
             rendered_count += len(to_render)
 
-            bullets = [_render_bullet(i) for i in to_render]
+            bullets = [_render_bullet(i, ctx) for i in to_render]
             if cat_overflow:
                 bullets.append(f"_…and {cat_overflow:,} more in this category._")
 
@@ -228,14 +286,25 @@ def _render_issues(issues: List[Issue], ctx: ReportContext, max_visible: int) ->
     return "\n".join(sections)
 
 
-def _render_bullet(issue: Issue) -> str:
-    marker = "✗" if issue.severity == Severity.ERROR else "⚠"
+def _file_ref(issue: Issue, ctx: ReportContext) -> str:
+    """`file:line` as inline code, linked to the blob at the head SHA when we
+    have the repo + commit to build a URL."""
+    label = f"{issue.file}:{issue.line}" if issue.line else issue.file
+    code = f"`{label}`"
+    if ctx.repo and ctx.commit_sha and issue.file:
+        url = f"https://github.com/{ctx.repo}/blob/{ctx.commit_sha}/{issue.file}"
+        if issue.line:
+            url += f"#L{issue.line}"
+        return f"[{code}]({url})"
+    return code
+
+
+def _render_bullet(issue: Issue, ctx: ReportContext) -> str:
+    marker = "❌" if issue.severity == Severity.ERROR else "⚠️"
     also = f" _(also: {', '.join(issue.detected_by)})_" if issue.detected_by else ""
 
-    if issue.file and issue.line:
-        return f"- {marker} `{issue.file}:{issue.line}` — {issue.message}{also}"
     if issue.file:
-        return f"- {marker} `{issue.file}` — {issue.message}{also}"
+        return f"- {marker} {_file_ref(issue, ctx)} — {issue.message}{also}"
     return f"- {marker} {issue.message}{also}"
 
 

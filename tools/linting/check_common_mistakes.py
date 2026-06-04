@@ -13,6 +13,9 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - Multiple values of a single-valued trigger (has_government, tag, original_tag,
     has_country_leader_ideology) at the same AND/NOT depth — always false (AND) or
     always true (NOT); caller meant OR = { ... } or separate NOT blocks.
+  - Multiple has_idea checks from the same mutex group (e.g. intervention doctrines)
+    at the same AND/NOT depth — same logic as above; only one slot can be filled at a
+    time so the block is always false (AND) or always true (NOT).
   - Consecutive same-tag scope blocks that should be merged
   - send_embargo/break_embargo without has_dlc = "By Blood Alone" guard
   - divide_variable by a variable without a zero guard
@@ -97,6 +100,37 @@ _MUTUALLY_EXCLUSIVE_TRIGGERS = {
     "has_country_leader_ideology",
 }
 
+# Idea slots where only one idea from the group can be active at a time. Two
+# `has_idea = X` checks for ideas in the same group inside a single AND block
+# are always false; inside a NOT block they are always true. The classic bug
+# from CLAUDE.md is `NOT = { has_idea = intervention_isolation
+# has_idea = intervention_local_security }` — silently true forever because no
+# country has both intervention doctrines at once.
+# Keep in sync with the mutually-exclusive idea slots defined in common/ideas/.
+# Hand-maintained: add a group here when a new exclusive-idea slot is introduced
+# (grep common/ideas/ for the slot's idea names), or the AND/NOT-trap check
+# silently won't cover it.
+_MUTEX_IDEA_GROUPS = {
+    "intervention_doctrine": {
+        "intervention_isolation",
+        "intervention_local_security",
+        "intervention_limited_interventionism",
+        "intervention_regional_interventionism",
+        "intervention_global_interventionism",
+    },
+}
+# Reverse index: idea -> group_name (for O(1) lookup)
+_IDEA_TO_MUTEX_GROUP = {
+    idea: group_name
+    for group_name, ideas in _MUTEX_IDEA_GROUPS.items()
+    for idea in ideas
+}
+# Token scanner for the mutex check: finds braces and has_idea tokens in order so
+# single-line patterns like `NOT = { has_idea = X has_idea = Y }` are caught.
+_RE_MUTEX_TOKEN = re.compile(r"\{|\}|has_idea\s*=\s*(\w+)")
+_RE_NOT_EQ = re.compile(r"\bNOT\s*=\s*$")
+_RE_OR_EQ = re.compile(r"\bOR\s*=\s*$")
+
 # Populated by main() before spawning Pool workers; inherited via fork on Unix.
 _SCRIPT_COMPLETED_FOCUSES: set = set()
 _SCRIPT_COMPLETED_DECISIONS: set = set()
@@ -135,7 +169,7 @@ def _scan_script_completed(root_dir):
                     continue
                 fp = os.path.join(root, filename)
                 try:
-                    with open(fp, "r", encoding="utf-8", errors="ignore") as f:
+                    with open(fp, "r", encoding="utf-8", errors="replace") as f:
                         content = f.read()
                     for m in _RE_COMPLETE_FOCUS.finditer(content):
                         focuses.add(m.group(1))
@@ -277,6 +311,77 @@ def _check_mutually_exclusive_contradictions(lines):
     return issues
 
 
+def _check_has_idea_mutex_in_not_block(lines):
+    """Flag NOT/AND blocks containing 2+ has_idea checks from the same mutex group.
+
+    Example bug (from raid_target_eligible before fix):
+        NOT = {
+            has_idea = intervention_local_security
+            has_idea = intervention_isolation
+        }
+    Both ideas are in the intervention-doctrine mutex group. A country can hold
+    at most one at a time, so the AND inside NOT is always false, and the NOT
+    is always true — the gate it was supposed to enforce is silently bypassed.
+    Caller almost always meant `NOT = { OR = { ... } }` or separate NOT blocks.
+
+    Inside a non-NOT AND block, two same-group has_idea checks are always false
+    (a country can't be in both slots), so the entire surrounding modifier or
+    trigger never fires — usually also a bug.
+    """
+    issues = []
+    # Stack entries: (is_or, is_not, {group_name: [(line_num, idea_name), ...]})
+    stack = [(False, False, {})]
+
+    for i, line in enumerate(lines):
+        code = line.split("#")[0]
+        if not code.strip():
+            continue
+
+        last_end = 0
+        for m in _RE_MUTEX_TOKEN.finditer(code):
+            tok = m.group(0)
+            if tok == "{":
+                preceding = code[last_end : m.start()]
+                is_not = bool(_RE_NOT_EQ.search(preceding))
+                is_or = bool(_RE_OR_EQ.search(preceding))
+                stack.append((is_or, is_not, {}))
+            elif tok == "}":
+                if len(stack) > 1:
+                    popped_or, popped_not, popped_groups = stack.pop()
+                    # OR is the intended way to express "any of these mutex ideas"
+                    if popped_or:
+                        last_end = m.end()
+                        continue
+                    for group_name, entries in popped_groups.items():
+                        ideas_set = {idea for _, idea in entries}
+                        if len(ideas_set) < 2:
+                            continue
+                        first_line = entries[0][0]
+                        ideas_str = ", ".join(sorted(ideas_set))
+                        if popped_not:
+                            msg = (
+                                f"NOT = {{ }} contains multiple {group_name} ideas "
+                                f"({ideas_str}) -- always true since they're mutually "
+                                f"exclusive; use NOT = {{ OR = {{ ... }} }} or "
+                                f"separate NOT blocks per idea"
+                            )
+                        else:
+                            msg = (
+                                f"AND block contains multiple {group_name} ideas "
+                                f"({ideas_str}) -- always false since they're mutually "
+                                f"exclusive; wrap in OR = {{ }} to match any"
+                            )
+                        issues.append((first_line, msg))
+            else:
+                idea = m.group(1)
+                group = _IDEA_TO_MUTEX_GROUP.get(idea)
+                if group is not None:
+                    stack[-1][2].setdefault(group, []).append((i + 1, idea))
+            last_end = m.end()
+
+    return issues
+
+
 _RE_DAYS_MISSION_TIMEOUT = re.compile(r"\bdays_mission_timeout\s*=")
 
 # --- New patterns for branch-cleanup checks ---
@@ -291,6 +396,10 @@ _RE_ADD_TO_VAR = re.compile(
 )
 _RE_DIVIDE_VAR = re.compile(r"\bdivide_variable\s*=\s*\{\s*(\S+)\s*=\s*(\S+)\s*\}")
 _RE_EVERY_COUNTRY_OPEN = re.compile(r"^\s*every_country\s*=\s*\{")
+# Maps each bloc-membership idea to the global array that should track it.
+# MD-specific; hand-maintained. When a new bloc with a membership idea + backing
+# array is added (see common/ideas/ and the bloc's scripted_effects), add it here
+# or the idea/array consistency check won't cover it.
 _MEMBER_IDEA_TO_ARRAY = {
     "EU_member": "global.EU_member",
     "NATO_member": "global.nato_members",
@@ -899,7 +1008,7 @@ def check_file(filepath):
     issues = []
 
     try:
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
     except Exception:
         return issues
@@ -928,7 +1037,6 @@ def check_file(filepath):
     for line_num, line in enumerate(lines, 1):
         stripped = line.strip()
 
-        # Brace/category tracking is only needed for idea files
         if is_ideas:
             brace_depth += stripped.count("{") - stripped.count("}")
 
@@ -1082,6 +1190,7 @@ def check_file(filepath):
     for ln, msg in find_redundant_and_blocks(lines):
         issues.append((ln, msg))
     issues.extend(_check_mutually_exclusive_contradictions(lines))
+    issues.extend(_check_has_idea_mutex_in_not_block(lines))
 
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))

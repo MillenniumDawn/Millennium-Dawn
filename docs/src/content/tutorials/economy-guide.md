@@ -70,6 +70,13 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Military Equipment Requirements](#military-equipment-requirements)
   - [Building Employment Values](#building-employment-values)
 - [MD-Specific Buildings](#md-specific-buildings)
+  - [Offices](#offices-1)
+  - [Network Infrastructure](#network-infrastructure)
+  - [Agriculture Districts](#agriculture-districts-1)
+  - [Microchip Plants](#microchip-plants-1)
+  - [Composite Plants](#composite-plants-1)
+  - [Energy Buildings](#energy-buildings)
+  - [Infrastructure Keystones](#infrastructure-keystones)
 - [Immigration](#immigration)
 - [International Investments](#international-investments)
   - [International Market](#international-market)
@@ -1004,9 +1011,9 @@ Offices are a purely economic building that generates corporate tax income. They
 - **Building Slots**: Shares building slots with other production buildings
 - **Max Level**: 50 per state
 
-### Internet Stations
+### Network Infrastructure
 
-Internet stations represent a country's internet and telecommunications capacity. Each level provides a **+5% state productivity growth modifier**, making it one of the best long-term investments for increasing building output.
+Network infrastructure represents a country's internet and telecommunications capacity. Each level provides a **+5% state productivity growth modifier**, making it one of the best long-term investments for increasing building output.
 
 - **Max Level**: 6 per state
 - **Upkeep**: Costs a small weekly infrastructure expense per level

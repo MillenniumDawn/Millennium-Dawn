@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# Scripted Localisation Validation Script (Multiprocessing Optimized)
-# Validates scripted localisation definitions and usage
-# Checks for: used but not defined, defined but not used, GFX_ icons not defined in .gfx files
-# Based on Millennium Dawn validation framework
-# Optimized with multiprocessing for significantly faster execution
-##########################
+"""Validate scripted localisation definitions and usage in Millennium Dawn."""
 import glob
 import os
 import re
@@ -13,6 +7,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -26,11 +21,20 @@ from validator_common import (
 )
 
 
-# Multiprocessing helper functions
+def _scan_defined_locs(text: str, basename: str) -> Tuple[List[str], Dict[str, str]]:
+    localisations: List[str] = []
+    paths: Dict[str, str] = {}
+    if "defined_text" in text and "name =" in text:
+        for match in re.findall(r"name\s*=\s*([a-zA-Z_0-9]+)", text):
+            localisations.append(match)
+            paths[match] = basename
+    return (localisations, paths)
+
+
 def process_file_for_defined_localisations(
-    args: Tuple[str, bool],
+    args: Tuple[str, bool, str],
 ) -> Tuple[List[str], Dict[str, str]]:
-    filename, lowercase = args
+    filename, lowercase, mod_path = args
 
     if should_skip_file(filename):
         return ([], {})
@@ -38,30 +42,37 @@ def process_file_for_defined_localisations(
     if "00_scripted_localisation_FR_loc" in filename:
         return ([], {})
 
-    localisations = []
-    paths = {}
-    basename = os.path.basename(filename)
-
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
+    basename = os.path.basename(filename)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        f"scripted_loc.defined.lc={int(lowercase)}",
+        filename,
+        text_file,
+        lambda: _scan_defined_locs(text_file, basename),
+    )
 
-    if "defined_text" in text_file and "name =" in text_file:
-        pattern_matches = re.findall(
-            r"name\s*=\s*([a-zA-Z_0-9]+)", text_file if lowercase else text_file
-        )
-        if len(pattern_matches) > 0:
-            for match in pattern_matches:
-                localisations.append(match)
-                paths[match] = basename
 
-    return (localisations, paths)
+def _scan_loc_tokens(text: str, is_scripted_loc_file: bool) -> Set[str]:
+    if is_scripted_loc_file:
+        # Only bracket tokens — full tokenisation would treat `name = X` as a usage.
+        tokens: Set[str] = set(re.findall(r"\[(\w+)\]", text))
+        tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text))
+        return tokens
+    # Tokenise once; also extract [name] and [Scope.name] bracket calls
+    # (\w catches digit-prefixed names missed by [A-Za-z_][A-Za-z0-9_]*).
+    tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text))
+    tokens |= set(re.findall(r"\[(\w+)\]", text))
+    tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text))
+    return tokens
 
 
 def process_file_for_used_localisations(
-    args: Tuple[str, Set[str], bool],
+    args: Tuple[str, Set[str], bool, str],
 ) -> Tuple[List[str], Dict[str, str]]:
-    filename, search_names, lowercase = args
+    filename, search_names, lowercase, mod_path = args
 
     if should_skip_file(filename):
         return ([], {})
@@ -72,30 +83,21 @@ def process_file_for_used_localisations(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
 
-    if "scripted_localisation" in filename:
-        # Only extract bracket tokens — full tokenisation would treat `name = X` as a usage.
-        bracket_tokens: set = set(re.findall(r"\[(\w+)\]", text_file))
-        bracket_tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text_file))
-        search_lower = {n.lower(): n for n in search_names}
-        found_original = {
-            search_lower[t.lower()] for t in bracket_tokens if t.lower() in search_lower
-        }
-        if not found_original:
-            return ([], {})
-        localisations = list(found_original)
-        paths = {name: basename for name in found_original}
-        return (localisations, paths)
-
-    # Tokenise once; also extract [name] and [Scope.name] bracket calls
-    # (\w catches digit-prefixed names missed by [A-Za-z_][A-Za-z0-9_]*).
-    all_tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text_file))
-    all_tokens |= set(re.findall(r"\[(\w+)\]", text_file))
-    all_tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text_file))
+    # Cache the file's token set (independent of search_names); intersect after
+    # the cache hit so a changing defined-set never invalidates the entry.
+    is_sl = "scripted_localisation" in filename
+    tokens = disk_cache.per_file_cached_by_content(
+        mod_path,
+        f"scripted_loc.tokens.lc={int(lowercase)}.{'b' if is_sl else 't'}",
+        filename,
+        text_file,
+        lambda: _scan_loc_tokens(text_file, is_sl),
+    )
 
     # Case-insensitive intersection — recover original casing for downstream matching.
     search_lower = {n.lower(): n for n in search_names}
     found_original = {
-        search_lower[t.lower()] for t in all_tokens if t.lower() in search_lower
+        search_lower[t.lower()] for t in tokens if t.lower() in search_lower
     }
 
     if not found_original:
@@ -130,11 +132,12 @@ class ScriptedLocalisation:
             pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
             files_to_scan = glob.glob(pattern)
 
-        args_list = [(f, lowercase) for f in files_to_scan]
+        args_list = [(f, lowercase, mod_path) for f in files_to_scan]
         p = pool if pool else Pool(processes=workers)
         results = p.map(process_file_for_defined_localisations, args_list, chunksize=10)
         if not pool:
             p.close()
+            p.join()
 
         for locs_list, paths_dict in results:
             localisations.extend(locs_list)
@@ -178,11 +181,12 @@ class ScriptedLocalisation:
             )
             files_to_scan = gui_files + yml_files + txt_files
 
-        args_list = [(f, search_names, lowercase) for f in files_to_scan]
+        args_list = [(f, search_names, lowercase, mod_path) for f in files_to_scan]
         p = pool if pool else Pool(processes=workers)
         results = p.map(process_file_for_used_localisations, args_list, chunksize=50)
         if not pool:
             p.close()
+            p.join()
 
         found_names = set()
         for locs_list, paths_dict in results:
@@ -276,11 +280,7 @@ class Validator(BaseValidator):
         # Preemptive slot libraries — defined for all possible slots even if only a
         # subset are active.  Suppress unused warnings for the unoccupied slots rather
         # than requiring every slot to have a live caller.
-        UNUSED_ONLY_FALSE_POSITIVES = [
-            # EU parliament PG-party support locs: defined for all 24 party groups but
-            # the GUI display path uses the _icon and _loc_key variants instead.
-            "eu_parl_pg_party_",
-        ]
+        UNUSED_ONLY_FALSE_POSITIVES = ("eu_parl_pg_party_",)
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
         defined_locs_lower = [loc.lower() for loc in defined_locs]
@@ -410,6 +410,10 @@ class Validator(BaseValidator):
             "button",
             "tooltip",
             "euxxx_ep_agenda",
+            # Plain loc keys used as $KEY$ nested substitution wrappers in formable
+            # state integration tooltips \u2014 not scripted localisations
+            "gip",
+            "gis",
             "\u00a7",
             "\u00a3",
             "$",
@@ -427,15 +431,22 @@ class Validator(BaseValidator):
                 return_paths=True,
                 staged_files=self.staged_files,
                 workers=self.workers,
+                pool=self._pool,
             )
         )
+        # Usage scan ALWAYS goes full-repo — even in staged mode. Restricting
+        # the usage scan to staged files only would falsely flag any defined-
+        # text whose only consumer lives in a non-staged file (e.g. editing
+        # 99_PER_scripted_localisation.txt would report every loc as unused
+        # if the matching 99_PER_scripted_guis.txt isn't also staged).
         used_locs, used_paths = ScriptedLocalisation.get_all_used_localisations(
             mod_path=self.mod_path,
             defined_names=set(defined_locs),
             lowercase=False,
             return_paths=True,
-            staged_files=self.staged_files,
+            staged_files=None,
             workers=self.workers,
+            pool=self._pool,
         )
 
         self.validate_missing_scripted_localisations(

@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-##########################
-# Unused Scripted Effects & Triggers Validation
-# Finds scripted effects and triggers that are defined but never called
-# Checks:
-#   1. Scripted effects defined in common/scripted_effects/ but never used
-#   2. Scripted triggers defined in common/scripted_triggers/ but never used
-##########################
+# Find scripted effects and triggers defined in common/scripted_effects/ and
+# common/scripted_triggers/ that are never called anywhere in the mod.
 import glob
 import os
 import re
+import sys
 from pathlib import Path
 from typing import List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import disk_cache
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -127,40 +126,45 @@ def extract_definitions(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     Returns list of (name, filename, line_number) tuples.
     """
     filename, mod_path = args
-    results = []
 
     try:
         with open(filename, "r", encoding="utf-8-sig") as f:
             content = f.read()
     except Exception:
+        return []
+
+    def _compute():
+        results = []
+        clean_content = strip_comments(content)
+
+        # Find top-level definitions by tracking brace depth
+        lines = clean_content.split("\n")
+        brace_depth = 0
+        for line_num, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+
+            # Only match definitions at brace depth 0 (top level)
+            if brace_depth == 0:
+                m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", stripped)
+                if m:
+                    name = m.group(1)
+                    if name not in HOI4_BUILTIN_BLOCKS:
+                        rel_path = os.path.relpath(filename, mod_path)
+                        results.append((name, rel_path, line_num))
+
+            # Track brace depth
+            brace_depth += stripped.count("{") - stripped.count("}")
+
         return results
 
-    clean_content = strip_comments(content)
-
-    # Find top-level definitions by tracking brace depth
-    lines = clean_content.split("\n")
-    brace_depth = 0
-    for line_num, line in enumerate(lines, 1):
-        stripped = line.strip()
-        if not stripped:
-            continue
-
-        # Only match definitions at brace depth 0 (top level)
-        if brace_depth == 0:
-            m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", stripped)
-            if m:
-                name = m.group(1)
-                if name not in HOI4_BUILTIN_BLOCKS:
-                    rel_path = os.path.relpath(filename, mod_path)
-                    results.append((name, rel_path, line_num))
-
-        # Track brace depth
-        brace_depth += stripped.count("{") - stripped.count("}")
-
-    return results
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "unused_scripted.definitions", filename, content, _compute
+    )
 
 
-def scan_file_for_usages(args: Tuple[str, Set[str]]) -> Set[str]:
+def scan_file_for_usages(args: Tuple[str, Set[str], str]) -> Set[str]:
     """Scan a file for usages of any of the given names.
 
     A usage is when a name appears as a whole word — guarded by
@@ -170,24 +174,28 @@ def scan_file_for_usages(args: Tuple[str, Set[str]]) -> Set[str]:
     ``custom_effect_tooltip = name``) before trusting the hit for
     definition-directory files.
     """
-    filename, names_to_find = args
-    found = set()
+    filename, names_to_find, mod_path = args
 
     try:
         with open(filename, "r", encoding="utf-8-sig") as f:
             content = f.read()
     except Exception:
-        return found
+        return set()
 
-    content = strip_comments(content)
+    # Cache the content-dependent token extraction (the expensive part); the
+    # intersection with names_to_find is cheap and varies per call, so it stays
+    # outside the cache.
+    def _compute():
+        cleaned = strip_comments(content)
+        # Collect every identifier-like token in the file once, then intersect.
+        # Cheaper than running a word-boundary regex per name when names_to_find
+        # is large.
+        return set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", cleaned))
 
-    # Collect every identifier-like token in the file once, then intersect.
-    # Cheaper than running a word-boundary regex per name when names_to_find
-    # is large.
-    tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", content))
-    found = names_to_find & tokens
-
-    return found
+    tokens = disk_cache.per_file_cached_by_content(
+        mod_path, "unused_scripted.tokens", filename, content, _compute
+    )
+    return names_to_find & tokens
 
 
 class Validator(BaseValidator):
@@ -249,7 +257,7 @@ class Validator(BaseValidator):
             (def_files if def_dir in f.replace("\\", "/") else other_files).append(f)
 
         # First pass: find all names used in non-definition files
-        args_list = [(f, all_names) for f in other_files]
+        args_list = [(f, all_names, self.mod_path) for f in other_files]
         results = self._pool_map(scan_file_for_usages, args_list)
 
         used_names = set()
@@ -260,7 +268,7 @@ class Validator(BaseValidator):
         # within definition files (called by other scripted effects/triggers)
         remaining = all_names - used_names
         if remaining:
-            args_list = [(f, remaining) for f in def_files]
+            args_list = [(f, remaining, self.mod_path) for f in def_files]
             results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
 
             # For each name found in definition files, check if it appears
@@ -345,7 +353,7 @@ class Validator(BaseValidator):
                 other_files.append(f)
 
         # First pass: find all names used outside definition dirs
-        args_list = [(f, all_names) for f in other_files]
+        args_list = [(f, all_names, self.mod_path) for f in other_files]
         results = self._pool_map(scan_file_for_usages, args_list)
 
         used_names: set = set()
@@ -355,7 +363,7 @@ class Validator(BaseValidator):
         # Second pass: check cross-calls within definition files
         remaining = all_names - used_names
         if remaining:
-            args_list = [(f, remaining) for f in def_files]
+            args_list = [(f, remaining, self.mod_path) for f in def_files]
             def_results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
 
             potentially_used: set = set()

@@ -2,7 +2,7 @@
 
 ## System Architecture
 
-The AI system in Millennium Dawn has 5 layers that fire at different frequencies:
+5 AI layers firing at different frequencies:
 
 ```
 LAYER 1: INITIALIZATION (on_startup, once)
@@ -43,13 +43,11 @@ LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
   ai_spawn_units ──► spawn divisions when facing players
 ```
 
----
-
 ## On-Action Entry Points
 
 ### on_startup (`common/on_actions/00_on_actions.txt`)
 
-- **AI Template Init** (line ~1710): `is_ai = yes AND NOT ZOM` → `give_AI_templates` + `ai_update_build_units`. Also sets microstate tax rates and investment targets.
+- **AI Template Init** (line ~1710): every AI country (zombie/joke tags excluded, see `give_AI_templates`) → `give_AI_templates` + `ai_update_build_units`. Also sets microstate tax rates and investment targets.
 
 ### on_monthly (`common/on_actions/MD_on_actions.txt`)
 
@@ -68,35 +66,15 @@ LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
 - **AI Cyber** (line ~178): Rotates through 4 weekly batches → `ai_cyber_monthly`
 - **AI Counter-Terror** (same lines): `global.active_terror_orgs^num > 0` → `ct_ai_weekly`
 
-### on_justifying_wargoal_pulse (`00_on_actions.txt:184`)
+### Other on_actions
 
-- Daily: Target AI nation → `ai_update_build_units` (so it starts preparing)
-
-### on_puppet (`01_tfv_on_actions.txt:93`)
-
-- AI puppeted nations → `give_AI_templates` + `ai_update_build_units`
-
-### on_subject_free (`01_tfv_on_actions.txt:3`)
-
-- AI freed nations → `ai_update_build_units`
-
-### on_liberate (`01_tfv_on_actions.txt:117`)
-
-- All liberated nations → `ai_update_build_units` (unconditional)
-
-### on_declare_war (`00_on_actions.txt:2049`)
-
-- AI combatants with cyber capability → `ai_cyber_add_target` on each other
-
-### on_civil_war (`00_on_actions.txt:~1975`)
-
-- Rebel side → `ai_update_build_units` (unconditional)
-
-### on_join_faction / on_leave_faction (`MD_on_actions.txt:1270`)
-
-- AI reserve currency auto-switch (Chinese faction → yuan, Russian → rouble, else → dollar)
-
----
+- **on_justifying_wargoal_pulse** (`00_on_actions.txt:184`): Daily, target AI nation → `ai_update_build_units` (starts preparing)
+- **on_puppet** (`01_tfv_on_actions.txt:93`): AI puppeted nations → `give_AI_templates` + `ai_update_build_units`
+- **on_subject_free** (`01_tfv_on_actions.txt:3`): AI freed nations → `ai_update_build_units`
+- **on_liberate** (`01_tfv_on_actions.txt:117`): All liberated nations → `ai_update_build_units` (unconditional)
+- **on_declare_war** (`00_on_actions.txt:2049`): AI combatants with cyber capability → `ai_cyber_add_target` on each other
+- **on_civil_war** (`00_on_actions.txt:~1975`): Rebel side → `ai_update_build_units` (unconditional)
+- **on_join_faction / on_leave_faction** (`MD_on_actions.txt:1270`): AI reserve currency auto-switch (Chinese faction → yuan, Russian → rouble, else → dollar)
 
 ## Scripted Effects
 
@@ -108,8 +86,7 @@ Central threat-assessment system. Sets/clears `AI_is_threatened` flag. When set:
 - Division/ship/plane limiters expand (1.25x multiplier)
 - `ai_default_no_build_units` deactivates → unit training allowed
 
-Conditions for setting: war, subject, government+threat threshold, nationalist/fascism, potential enemies.
-Conditions for clearing: not subject, no war, below thresholds, no enemies.
+Sets flag on: war, subject, government+threat threshold, nationalist/fascism, potential enemies. Clears on: not subject, no war, below thresholds, no enemies.
 
 ### `ai_weapon_dump` (`99_weapon_dump_effects.txt`)
 
@@ -131,7 +108,7 @@ Monthly tax rate adjustment:
 
 ### AI Investment System (`99_AI_investment_scripted_effects.txt`)
 
-10 building type scoring effects. Each scores states with base value + bonuses/penalties:
+10 building-type scoring effects. Each scores states with base value + bonuses/penalties:
 
 - CIC (base 170), MIC (base 150), Dockyard (base 170), Infra (base 175), Offices (base 180)
 - AA (base 120), Radar (base 115), Airbase (base 130)
@@ -150,8 +127,6 @@ Monthly target selection scoring: player targets (+30 veteran), faction members 
 | `convert_l_inf_to_mot_inf`     | 300 days  | No war, util vehicles > 500, MIL > 10    | 5 L_Inf → motorized                   |
 | `convert_mot_to_mech_inf`      | 300 days  | No war, APC chassis > 500, MIL > 20      | 5 mot → mechanized                    |
 | `UKR_convert_stuff`            | Fire once | UKR, date > 2000.6, no war               | All militia → L_Inf, all L_Inf → mech |
-
----
 
 ## AI Strategy Files
 
@@ -174,7 +149,7 @@ my_strategy = {
 
 ### Reversed Strategies
 
-`reversed = yes` swaps direction: instead of "this country does X to id", it becomes "id does X to this country". Requires `enable_reverse = { ... }` (no default scope — must scope into a country).
+`reversed = yes` swaps direction: instead of "this country does X to id", it becomes "id does X to this country". Requires `enable_reverse = { ... }` (no default scope, must scope into a country).
 
 Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather than Iran supporting them).
 
@@ -204,10 +179,10 @@ Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather th
 
 **Division/Ship/Plane Limiters:**
 
-- `division_limiter`: factories × modifiers (war 1.75x, threatened 1.25x, major 1.15x, NATO -0.8x, EU -0.8x)
-- `division_limiter_potato_edition`: 0.5x base, extra penalties for CHI/SOV faction
-- `ship_limiter`: naval_factories × 7 (or ×3 potato)
-- `plane_limiter`: mil_factories × 80 + 50 (or ×40 potato)
+- `division_limiter`: factories × situational modifiers. Active war scales up (~1.75x, wars demand more divisions than peacetime), `AI_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
+- `division_limiter_potato_edition`: 0.5x base for the "performance" rule path, extra penalties for very large factions (CHI/SOV) so end-game stutter stays manageable.
+- `ship_limiter`: naval_factories × ~7 (or ×3 potato), tuned so a typical naval power lands at a plausible fleet size, not the engine's hard cap.
+- `plane_limiter`: mil_factories × ~80 + 50 (or ×40 potato), accounts for air industries producing many cheap units per factory vs ground.
 
 **Unit build controls:**
 
@@ -245,8 +220,8 @@ Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather th
 
 **Microchip/composite production:**
 
-- Nations consuming + importing more than producing → build chip/composite factories
-- Countries with strategies: USA, CHI, FRA, GER, JAP, KOR, CAN
+- Nations consuming + importing more than producing → build chip/composite factories.
+- Custom production strategies exist for the major industrial powers (currently USA, CHI, FRA, GER, JAP, KOR, CAN); other nations fall back to generic logic. Add a new strategy when a country becomes a significant chip/composite producer in scenario terms.
 
 ### `naval.txt` — Naval Behavior
 
@@ -282,11 +257,9 @@ Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather th
 
 **Notable diplomacy patterns:**
 
-- **Japan**: Most pacifist AI — `declare_war = -200` against 24 neighbors
+- **Japan**: Most pacifist AI, `declare_war = -200` against 24 neighbors
 - **SOV**: `declare_war = -4000` against nations guaranteed by TUR/CHI
 - **USA during War on Terror**: `pp_spend_priority` forces decision spending (decisions=250, all others=-9999)
-
----
 
 ## AI Strategy Plans (`common/ai_strategy_plans/`)
 
@@ -313,8 +286,6 @@ my_plan = {
 
 **Notable:** CAN nationalist plan sets `force_build_armies = 1000`, antagonizes USA. HOL all plans set `force_build_armies = 100`.
 
----
-
 ## AI Focuses (`common/ai_focuses/`)
 
 4 files defining research emphasis by AI posture:
@@ -327,8 +298,6 @@ my_plan = {
 | `ai_focus_military_equipment` | Infantry weapons, AT, AA, artillery, doctrine (SOV)  |
 
 Country-specific overrides: SOV (very high war production weights 55.0), USA (SAM in defense, lighter war production), RAJ (India-specific).
-
----
 
 ## AI Templates (`common/ai_templates/`)
 
@@ -392,8 +361,6 @@ Zombie: `zombie_horde`, `zombie_horde_runner`, `zombie_horde_brute`
 | Air_mech        | Air_Mech_generic         | 10-15                  |
 | Air_mech        | Air_Mech_division        | > 15                   |
 
----
-
 ## MTTH Blocks (Priority/Weight Syntax)
 
 Used throughout the AI system for priorities, weights, and `ai_will_do` values.
@@ -410,8 +377,6 @@ Used throughout the AI system for priorities, weights, and `ai_will_do` values.
 
 - `ai_will_do` — focuses, tech, decisions. AI picks highest value after generating random [0, value].
 - `ai_chance` — event options. Probability-proportional-to-size with d100. Min probability = 1%.
-
----
 
 ## Common Pitfalls
 

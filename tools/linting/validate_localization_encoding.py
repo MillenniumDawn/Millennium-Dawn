@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
-"""
-HOI4 Localization Encoding Validator
-
-This script validates and fixes UTF-8 BOM encoding for Hearts of Iron IV localization files.
-HOI4 requires localization YAML files to be encoded as UTF-8 with BOM.
-
-Usage:
-    python validate_localization_encoding.py [--fix] [files...]
-
-Arguments:
-    --fix: Automatically add UTF-8 BOM to files that are missing it
-    files: List of files to check (if not provided, checks all English localization files)
-"""
+"""Validate and optionally fix UTF-8 BOM encoding for HOI4 localisation files."""
 
 import argparse
 import codecs
@@ -40,7 +28,7 @@ class LocalizationValidator:
             True if file is valid or was fixed, False if errors occurred
         """
         try:
-            # Read file in binary mode to check BOM
+            # Binary mode so the BOM bytes are visible rather than stripped on decode
             with open(file_path, "rb") as f:
                 content = f.read()
 
@@ -55,7 +43,6 @@ class LocalizationValidator:
                     )
                     return False
 
-            # Verify the file is valid UTF-8
             try:
                 with open(file_path, "r", encoding="utf-8-sig") as f:
                     f.read()
@@ -82,10 +69,9 @@ class LocalizationValidator:
             True if file was fixed successfully, False otherwise
         """
         try:
-            # Verify content is valid UTF-8 before fixing
+            # Reject non-UTF-8 input before prepending a BOM would corrupt it
             content.decode("utf-8")
 
-            # Add BOM and write back
             with open(file_path, "wb") as f:
                 f.write(codecs.BOM_UTF8 + content)
 
@@ -136,7 +122,6 @@ class LocalizationValidator:
             for msg in self.errors:
                 print(msg, file=sys.stderr)
 
-        # Print summary counts
         total = len(self.valid) + len(self.fixed) + len(self.errors)
         if total > 1:
             print(
@@ -189,7 +174,6 @@ Examples:
 
     args = parser.parse_args()
 
-    # Determine which files to check
     if args.files:
         files = [Path(f) for f in args.files]
     else:
@@ -202,7 +186,6 @@ Examples:
             )
             return 1
 
-    # Validate files
     validator = LocalizationValidator(fix_mode=args.fix)
     success = validator.validate_files(files)
     validator.print_summary()

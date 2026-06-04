@@ -38,7 +38,7 @@ These are baseline expectations for all developers on the team:
 - **Ask when in doubt.** If you are unsure about a content decision, ask a lead developer or Council Member before proceeding.
 - **Review your own content first.** Complete this checklist and the standards in the [Code Resource](/dev-resources/code-resource/) before requesting a lead review.
 - **Read the [Focus Tree Design Principles](/dev-resources/focus-tree-design-principles/).** Familiarize yourself with the design philosophy for branch structure, pacing, and player choice.
-- **Set up your environment.** Run `python3 tools/setup.py` after cloning to install pre-commit hooks and tool dependencies. See the [Git Setup & Usage Guide](/player-tutorials/manual-install-instructions/) for full instructions.
+- **Set up your environment.** Run `python3 tools/setup.py` after cloning to install pre-commit hooks and tool dependencies. See the [Git Setup & Usage Guide](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) for full instructions.
 
 ---
 

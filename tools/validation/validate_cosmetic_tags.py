@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
-##########################
-# Cosmetic Tag Validation Script (Multiprocessing Optimized)
-# Validates cosmetic tag definitions and usage
-# Checks for:
-#   1. Missing cosmetic tags (has_cosmetic_tag but never set_cosmetic_tag)
-#   2. Unused cosmetic tags (set_cosmetic_tag but never referenced)
-#   3. Unused cosmetic tag colors (defined in cosmetic.txt but never set)
+# Validate cosmetic tag definitions and usage: missing tags (has_cosmetic_tag
+# but never set), unused tags (set but never referenced), and unused tag colors
+# (defined in cosmetic.txt but never set).
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Adapted for Millennium Dawn with multiprocessing
-##########################
 import glob
 import os
 import re
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -44,25 +39,9 @@ def _should_skip(filename: str) -> bool:
 # --- Multiprocessing helpers ---
 
 
-def process_file_for_has_cosmetic_tag(
-    args: Tuple[str, bool],
-) -> Tuple[Dict[str, int], Dict[str, str]]:
-    filename, lowercase = args
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
-    tags = {}
-    paths = {}
-    if "has_cosmetic_tag =" in text_file:
-        matches = re.findall(r"has_cosmetic_tag = (\S+)", text_file)
-        for match in matches:
-            if "[" not in match:
-                tags[match] = 0
-                paths[match] = os.path.basename(filename)
-    return (tags, paths)
-
-
-def process_file_for_set_cosmetic_tag(args: Tuple[str, bool]) -> Dict[str, int]:
+def process_file_for_set_cosmetic_tag(
+    args: Tuple[str, bool, List[str]],
+) -> Dict[str, int]:
     filename, lowercase, tags_to_find = args
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
@@ -76,13 +55,51 @@ def process_file_for_set_cosmetic_tag(args: Tuple[str, bool]) -> Dict[str, int]:
     return counts
 
 
+def _scan_both_cosmetic_tags(
+    text_file: str, basename: str
+) -> Tuple[Dict[str, int], Dict[str, str], Dict[str, int], Dict[str, str]]:
+    has_tags: Dict[str, int] = {}
+    has_paths: Dict[str, str] = {}
+    set_tags: Dict[str, int] = {}
+    set_paths: Dict[str, str] = {}
+    if "has_cosmetic_tag =" in text_file:
+        for match in re.findall(r"has_cosmetic_tag = (\S+)", text_file):
+            if "[" not in match:
+                has_tags[match] = 0
+                has_paths[match] = basename
+    if "set_cosmetic_tag =" in text_file:
+        for match in re.findall(r"set_cosmetic_tag = (\S+)", text_file):
+            set_tags[match] = 0
+            set_paths[match] = basename
+    return (has_tags, has_paths, set_tags, set_paths)
+
+
+def process_file_for_both_cosmetic_tags(
+    args: Tuple[str, bool, str],
+) -> Tuple[Dict[str, int], Dict[str, str], Dict[str, int], Dict[str, str]]:
+    # Returns (has_tags, has_paths, set_tags, set_paths). Dict values for the
+    # *_tags maps are initialised to 0 so callers can sum reference counts in.
+    filename, lowercase, mod_path = args
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
+    basename = os.path.basename(filename)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        f"cosmetic.both.lc={int(lowercase)}",
+        filename,
+        text_file,
+        lambda: _scan_both_cosmetic_tags(text_file, basename),
+    )
+
+
 def process_file_for_has_cosmetic_tag_lookup(args: Tuple[str, frozenset]) -> Set[str]:
     """Return subset of tags_to_find referenced via has_cosmetic_tag = TAG in this file."""
     filename, tags_to_find = args
     if _should_skip(filename):
         return set()
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return set()
     cleaned = re.sub(r"#[^\n]*", "", text)
@@ -98,7 +115,7 @@ def process_file_for_cosmetic_tag_in_loc(args: Tuple[str, frozenset]) -> Dict[st
     if _should_skip(filename):
         return {}
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
@@ -113,43 +130,44 @@ def process_file_for_cosmetic_tag_in_loc(args: Tuple[str, frozenset]) -> Dict[st
     return counts
 
 
-def process_file_for_set_cosmetic_tag_defined(
-    args: Tuple[str, bool],
-) -> Tuple[Dict[str, int], Dict[str, str]]:
-    filename, lowercase = args
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
-    tags = {}
-    paths = {}
-    if "set_cosmetic_tag =" in text_file:
-        matches = re.findall(r"set_cosmetic_tag = (\S+)", text_file)
-        for match in matches:
-            tags[match] = 0
-            paths[match] = os.path.basename(filename)
-    return (tags, paths)
-
-
 class Validator(BaseValidator):
     TITLE = "COSMETIC TAG VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".yml"]
+
+    def _scan_for_both_tags(self):
+        # Cached so validate_missing + validate_unused share one repo walk
+        # instead of each running its own pool scan.
+        def _build():
+            files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
+            args_list = [(f, False, self.mod_path) for f in files]
+            scan_results = self._pool_map(
+                process_file_for_both_cosmetic_tags, args_list
+            )
+            has_tags: Dict[str, int] = {}
+            has_paths: Dict[str, str] = {}
+            set_tags: Dict[str, int] = {}
+            set_paths: Dict[str, str] = {}
+            for h_t, h_p, s_t, s_p in scan_results:
+                for tag in h_t:
+                    has_tags[tag] = 0
+                    if tag not in has_paths:
+                        has_paths[tag] = h_p[tag]
+                for tag in s_t:
+                    set_tags[tag] = 0
+                    if tag not in set_paths:
+                        set_paths[tag] = s_p[tag]
+            return (has_tags, has_paths, set_tags, set_paths, files)
+
+        return self.cached("cosmetic_both_tags", _build)
 
     def validate_missing_cosmetic_tags(self, false_positives: list):
         self._log_section(
             "Checking missing cosmetic tags (has_cosmetic_tag but never set)..."
         )
 
-        files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
-
-        args_list = [(f, False) for f in files]
-        results = self._pool_map(process_file_for_has_cosmetic_tag, args_list)
-
-        cosmetic_tags = {}
-        paths = {}
-        for tags_dict, paths_dict in results:
-            for tag, count in tags_dict.items():
-                cosmetic_tags[tag] = 0
-                paths[tag] = paths_dict[tag]
+        cosmetic_tags_src, paths_src, _, _, _ = self._scan_for_both_tags()
+        cosmetic_tags = dict(cosmetic_tags_src)
+        paths = dict(paths_src)
 
         self.log(f"  Found {len(cosmetic_tags)} unique has_cosmetic_tag references")
         if len(cosmetic_tags) == 0:
@@ -191,17 +209,9 @@ class Validator(BaseValidator):
     def validate_unused_cosmetic_tags(self, false_positives: list):
         self._log_section("Checking unused cosmetic tags (set but never referenced)...")
 
-        files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
-
-        args_list = [(f, False) for f in files]
-        results = self._pool_map(process_file_for_set_cosmetic_tag_defined, args_list)
-
-        cosmetic_tags = {}
-        paths = {}
-        for tags_dict, paths_dict in results:
-            for tag in tags_dict:
-                cosmetic_tags[tag] = 0
-                paths[tag] = paths_dict[tag]
+        _, _, set_tags_src, set_paths_src, files = self._scan_for_both_tags()
+        cosmetic_tags = dict(set_tags_src)
+        paths = dict(set_paths_src)
 
         self.log(f"  Found {len(cosmetic_tags)} unique set_cosmetic_tag definitions")
         if len(cosmetic_tags) == 0:

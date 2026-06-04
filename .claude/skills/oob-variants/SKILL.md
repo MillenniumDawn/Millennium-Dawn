@@ -2,8 +2,6 @@ Reference guide for editing OOB (Order of Battle) files and equipment variants i
 
 This skill is not invocable — it documents patterns and conventions for OOB and variant work.
 
----
-
 ## File Structure
 
 ### OOB Files (`history/units/`)
@@ -40,8 +38,6 @@ if = {
     # BBA aircraft variants here
 }
 ```
-
----
 
 ## Equipment Variant Patterns
 
@@ -103,15 +99,13 @@ Source: `common/units/equipment/MD_x_tank_chassis.txt`
 | MBT_7        | 2025 | `medium_tank_chassis_5` |
 | MBT_8        | 2035 | `medium_tank_chassis_6` |
 
-**Generation mapping (APC/IFV — same pattern):** APC_1/IFV_1 = `_0` (1965), APC_2/IFV_2 = `_1` (1975), etc. through `_7` (2035).
+**APC/IFV (same pattern):** APC_1/IFV_1 = `_0` (1965), APC_2/IFV_2 = `_1` (1975), etc. through `_7` (2035).
 
 **Notes:**
 
-- Despite the HOI4 naming (`flame`, `amphibious`, `destroyer`), MD repurposes these chassis types for modern vehicle roles as shown above.
-- Attack and transport helicopters use `heavy_tank_chassis` / `heavy_tank_amphibious_chassis` — they are land equipment, not air.
-- SP Arty, MLRS, and SPAA have fewer generations (5 tiers: 0–4) compared to MBT/APC/IFV (8 tiers: 1–8).
-- Recon tanks have 6 tiers (0–5).
-- Helicopters have 5 tiers (1–5).
+- Despite HOI4 naming (`flame`, `amphibious`, `destroyer`), MD repurposes these chassis types for modern vehicle roles as shown above.
+- Attack and transport helicopters use `heavy_tank_chassis` / `heavy_tank_amphibious_chassis` — land equipment, not air.
+- SP Arty, MLRS, SPAA have 5 tiers (0–4) vs MBT/APC/IFV 8 tiers (1–8). Recon tanks: 6 tiers (0–5). Helicopters: 5 tiers (1–5).
 
 ### Key Tank Modules
 
@@ -141,8 +135,6 @@ Source: `common/units/equipment/MD_x_tank_chassis.txt`
 
 - `tank_diesel_engine_gen1` through `gen4` — Diesel engine generations
 - `tank_turbine_engine_gen1` through `gen2` — Gas turbine engines
-
----
 
 ## Aircraft
 
@@ -206,7 +198,7 @@ Carrier variants (CV prefix):
 | `_4`              | `gen_6_*`     | 2025       | Future variants                                    |
 | `_5`              | `gen_7_*`     | 2035       | Endgame variants                                   |
 
-**Important:** The generation suffix (`_0`, `_1`, `_2`, etc.) must match a technology that unlocks that equipment type. For example, `small_plane_strike_airframe_2` requires `gen_4_light` to be researched. If you create a variant with `type = small_plane_strike_airframe_3` but the country doesn't have `gen_5_light`, the variant exists but cannot be produced or added to stockpile.
+**Important:** The generation suffix (`_0`, `_1`, `_2`, etc.) must match a technology that unlocks that equipment type. E.g., `small_plane_strike_airframe_2` requires `gen_4_light`. If you create `type = small_plane_strike_airframe_3` but the country lacks `gen_5_light`, the variant exists but cannot be produced or added to stockpile.
 
 ### Aircraft Variant (BBA)
 
@@ -231,8 +223,6 @@ create_equipment_variant = { #Large Transport
     icon = "gfx/interface/technologies/TAG/AIR/image.dds"
 }
 ```
-
----
 
 ## Stockpile & Deployment
 
@@ -260,8 +250,6 @@ add_equipment_to_stockpile = {
 ```
 
 The state ID is the deployment location. `owner` is current owner, `creator` is who built it (affects variant lookup).
-
----
 
 ## Naval OOB
 
@@ -308,14 +296,14 @@ Source: `common/units/equipment/MD_mtg_ships.txt`
 | `attack_submarine_hull_N`  | `submarine` | 1–6   | 1965–2040  | Attack submarines (Los Angeles, Akula, Kilo) |
 | `missile_submarine_hull_N` | `submarine` | 1–6   | 1965–2040  | Missile submarines / SSBNs (Ohio, Typhoon)   |
 
-**OOB `definition` field values:** The `definition` field in ship entries maps to these roles: `corvette`, `frigate`, `destroyer`, `cruiser`, `battle_cruiser`, `battleship`, `helicopter_operator`, `carrier`, `submarine` (for both attack and missile subs).
+**OOB `definition` field values:** maps to these roles: `corvette`, `frigate`, `destroyer`, `cruiser`, `battle_cruiser`, `battleship`, `helicopter_operator`, `carrier`, `submarine` (for both attack and missile subs).
 
 **Notes:**
 
-- Stealth variants have significantly lower `surface_visibility` but higher build cost and use `composites` instead of `aluminium`
-- Battleship uses `battleship_hull_0` as its archetype (not a separate named archetype) — it's an `is_archetype = yes` hull
-- Ship hulls have zero intrinsic combat stats — all offense/defense comes from modules
-- Armor is zeroed out across all hulls; CIWS modules provide missile defense instead
+- Stealth variants have much lower `surface_visibility` but higher build cost and use `composites` instead of `aluminium`.
+- Battleship uses `battleship_hull_0` as its archetype (not a separate named archetype) — an `is_archetype = yes` hull.
+- Ship hulls have zero intrinsic combat stats — all offense/defense comes from modules.
+- Armor is zeroed out across all hulls; CIWS modules provide missile defense instead.
 
 ### Production Queue (in-progress builds)
 
@@ -335,8 +323,6 @@ instant_effect = {
 }
 ```
 
----
-
 ## Equipment Bonuses in Ideas
 
 When adding production bonuses in `common/ideas/`, target the **chassis archetype**, not individual equipment IDs. Each chassis type is independent for bonus purposes:
@@ -351,8 +337,6 @@ equipment_bonus = {
 
 A country with MBT bonuses does NOT automatically get APC or IFV bonuses — each must be listed separately.
 
----
-
 ## Common Pitfalls
 
 1. **Creator mismatch**: If a ship/plane uses `creator = SOV`, the variant must be defined in `SOV - Russia.txt`, not the country's own file. Countries that inherited Soviet equipment typically use `creator = SOV`.
@@ -365,27 +349,45 @@ A country with MBT bonuses does NOT automatically get APC or IFV bonuses — eac
 
 5. **Production bonuses**: Equipment bonuses in ideas target chassis types, not individual variants. If a country has `medium_tank_chassis` bonuses but not `medium_tank_amphibious_chassis` or `medium_tank_flame_chassis`, IFVs/APCs won't benefit.
 
-6. **Hull generation mismatch**: The hull type in the OOB (`corvette_hull_1`, `attack_submarine_hull_3`, etc.) must match the `type` in the variant's `create_equipment_variant` block. If the OOB says `corvette_hull_1` but the variant is defined on `corvette_hull_2`, the game logs `"does not have any equipment variant for type X version 0"`. To diagnose: find the `version_name` in the OOB, then grep for that name in the creator country's history file and compare the `type` field. Fix by changing the hull in the OOB to match the variant definition.
+6. **Hull generation mismatch**: The hull type in the OOB (`corvette_hull_1`, etc.) must match the `type` in the variant's `create_equipment_variant` block. Mismatch logs `"does not have any equipment variant for type X version 0"`. To diagnose: find the `version_name` in the OOB, grep for that name in the creator country's history file, compare the `type` field. Fix by changing the hull in the OOB to match the variant definition.
 
 7. **DLC gating**: Always place NSB variants inside `has_dlc = "No Step Back"` blocks and BBA variants inside `has_dlc = "By Blood Alone"` blocks. Provide fallback content in `else` blocks.
 
-8. **Helicopter chassis confusion**: Attack and transport helicopters use `heavy_tank_chassis` and `heavy_tank_amphibious_chassis` respectively — they are land equipment despite being aircraft. Don't confuse these with actual heavy tank or amphibious tank variants.
+8. **Helicopter chassis confusion**: Attack and transport helicopters use `heavy_tank_chassis` and `heavy_tank_amphibious_chassis` respectively — land equipment despite being aircraft. Don't confuse these with actual heavy tank or amphibious tank variants.
 
-9. **Transport airframe type**: Both `medium_plane_air_transport_airframe` and `large_plane_air_transport_airframe` use HOI4 type `suicide` internally (a quirk of the engine). This is normal — don't change it.
+9. **Transport airframe type**: Both `medium_plane_air_transport_airframe` and `large_plane_air_transport_airframe` use HOI4 type `suicide` internally (engine quirk). Normal — don't change it.
 
 10. **NSB vs Non-NSB Stockpile Types**: NSB and non-NSB OOB files use completely different equipment type systems. See "Stockpile Equipment Types" section below.
 
-11. **Aircraft variant name mismatches in events**: Events that create aircraft variants AND add them to stockpile must use matching names. A common bug is creating `"Variant A"` but adding `"Variant B"` to stockpile — the stockpile addition silently fails because the variant doesn't exist. Always verify the `create_equipment_variant` name matches the `add_equipment_to_stockpile` variant_name.
+11. **Aircraft variant name mismatches in events**: Events that create aircraft variants AND add them to stockpile must use matching names. A common bug is creating `"Variant A"` but adding `"Variant B"` to stockpile — the stockpile addition silently fails. Verify the `create_equipment_variant` name matches the `add_equipment_to_stockpile` variant_name.
 
-12. **Aircraft parent_version must chain correctly**: The first variant of any equipment type must have `parent_version = 0`. Setting `parent_version = 1` when no version 0 exists can prevent the variant from spawning. Each subsequent variant increments from an existing parent (e.g., if version 0 exists, version 1 can reference it).
+12. **Aircraft parent_version must chain correctly**: The first variant of any equipment type must have `parent_version = 0`. Setting `parent_version = 1` when no version 0 exists can prevent the variant from spawning. Each subsequent variant increments from an existing parent.
 
-13. **BBA OOB stockpile must be uncommented**: Air wings in BBA OOB files reference variants by name, but if the `add_equipment_to_stockpile` block is commented out or missing, the air wings will have no equipment to deploy. Always verify stockpile entries exist for all variants referenced in air_wings.
+13. **BBA OOB stockpile must be uncommented**: Air wings in BBA OOB files reference variants by name; if the `add_equipment_to_stockpile` block is commented out or missing, the air wings have no equipment to deploy. Verify stockpile entries exist for all variants referenced in air_wings.
 
-14. **Higher-generation aircraft variants require technology unlock**: Using `small_plane_strike_airframe_3` (gen 3, 2015+) requires `gen_5_light` technology. If an event creates a gen 3 variant but doesn't grant the tech, the equipment type isn't unlocked and stockpile additions fail. Add `set_technology = { gen_X_Y = 1 }` when introducing advanced variants via event/focus.
+14. **Higher-generation aircraft variants require technology unlock**: Using `small_plane_strike_airframe_3` (gen 3, 2015+) requires `gen_5_light`. If an event creates a gen 3 variant but doesn't grant the tech, the equipment type isn't unlocked and stockpile additions fail. Add `set_technology = { gen_X_Y = 1 }` when introducing advanced variants via event/focus.
 
-15. **BBA/non-BBA event consistency**: Events that add aircraft should have both BBA and non-BBA branches. Use `if = { limit = { has_dlc = "By Blood Alone" } }` for BBA variants with `variant_name`, and `else` for legacy types like `MR_Fighter3`. Don't only add the legacy type — BBA players will get nothing.
+15. **BBA/non-BBA event consistency**: Events that add aircraft should have both BBA and non-BBA branches. Use `if = { limit = { has_dlc = "By Blood Alone" } }` for BBA variants with `variant_name`, and `else` for legacy types like `MR_Fighter3`. Don't only add the legacy type — BBA players get nothing.
 
----
+## Module Technology Validation
+
+Pitfalls 2, 3, and 14 above are enforced automatically. `validate_history_techs.py` builds a module → enabling-tech map from every `enable_equipment_modules` block in `common/technologies/` and reports any `create_equipment_variant` using a module without the enabling tech in the country's `set_technology` block. It also checks each granted tech's prerequisite chain, is DLC-aware, and runs in CI.
+
+When adding or editing a variant, grant the enabling tech in the matching block:
+
+- Naval and base-game techs → the plain, un-DLC-gated `set_technology` block.
+- No Step Back techs → `set_technology` inside `if = { limit = { has_dlc = "No Step Back" } }`.
+- By Blood Alone techs → `set_technology` inside `if = { limit = { has_dlc = "By Blood Alone" } }`.
+
+Also grant the tech's prerequisites (whatever `leads_to_tech` it), or the prerequisite check fails. Run the validator before committing variant changes:
+
+```bash
+python3 tools/validation/validate_history_techs.py --strict
+```
+
+### Inherited-Technology Countries
+
+The release-only nations Alaska (ASK), Confederate States (CSA), Great Lakes Confederation (GLC) and New England (NEN) inherit their technology from the United States when they spawn. Their history files still carry an explicit `set_technology` block matching the equipment variants they define, so the designs stay valid and the validator passes whether the country is inspected at game start or after release. Keep that block in sync with their variants — inheritance happens at spawn and does not satisfy the static check.
 
 ## Stockpile Equipment Types (NSB vs Non-NSB)
 

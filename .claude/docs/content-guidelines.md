@@ -8,7 +8,7 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 - Building slots are included in the scripted effect cost; adjust if intentionally omitting
 - Trade opinion alone is shallow — always pair with a supplementary effect
 - Budget law changes alone are filler — add supporting effects
-- Tree must meet or exceed the generic tree baseline (114 focuses)
+- Country trees must meet or exceed the generic-tree focus count (currently ~114); a thinner tree feels worse than the generic fallback. Count what the generic tree provides before merging a new country.
 - Starting factories are set to match IRL GDP PPP and must not be changed
 
 ## Political
@@ -24,6 +24,7 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 ## Visual
 
 - Every focus needs an icon and `search_filters`
+- Decision `icon =` accepts the bare sprite stem; the engine auto-prepends `GFX_decision_` (so `icon = generic_political_discourse` == `icon = GFX_decision_generic_political_discourse`). Don't add the prefix to a working bare icon. See `decision-reference.md` → Icon Field.
 - Use tooltips for event outcomes triggered from focuses
 - Max 1 meme GFX per content set
 - No unlocalised strings; focus descriptions must not be blank or reuse the focus name
@@ -44,7 +45,7 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 - No empty trigger blocks (`allowed`, `available`, `cancel`, `bypass`)
 - Use `relative_position_id` in all focus trees
 - Tags must be capitalised in script IDs (e.g., `SPR_focus_name_here`)
-- High-cost focuses (`cost ≥ 8`, or `cost ≥ 5` tagged with military/economy/research `search_filters`) must have a `factor = 0` modifier in `ai_will_do` when `has_active_mission = bankruptcy_incoming_collapse` — prevents AI queueing expensive focuses during financial collapse without blocking the player
+- High-cost focuses must have a `factor = 0` modifier in `ai_will_do` when `has_active_mission = bankruptcy_incoming_collapse`. "High-cost" thresholds: `cost ≥ 8` for any focus, or `cost ≥ 5` if the focus has military / economy / research `search_filters`. **Why:** focuses at or above these costs commit enough treasury that an AI in active collapse digs deeper into debt; the lower threshold for econ/mil/research reflects that those focuses typically chain large monetary effects. The guard skips the AI without locking the player out.
 
 ## Balance & Tradeoffs
 
@@ -53,10 +54,9 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 - If an option is strictly dominated, buff the weaker path or remove it.
 - Currency and alliance transitions should never feel like a downgrade to the player.
 
-### Example: Currency Idea Lateral
+### Worked example: a lateral choice done well
 
-`cfa_franc_2` offers peak political power (+0.25) and construction speed (+0.25) at the cost of a heavy tax penalty (-0.10).
-`the_eco` trades some of that peak performance for stability (+0.05), lower consumer goods (-0.03), and a positive tax modifier (+0.05). Neither is strictly better — they support different playstyles.
+A real pair from the codebase: the CFA franc continuation idea (`cfa_franc_2`) offers peak political power (+0.25) and construction speed (+0.25) at the cost of a heavy tax penalty (−0.10). The ECO transition idea (`the_eco`) trades some peak performance for stability (+0.05), lower consumer goods (−0.03), and a positive tax modifier (+0.05). Neither is strictly better; each supports a different playstyle. **Use this as the test:** if a player could pick the same option every campaign without trade-off, the pair is not yet a real choice.
 
 ## Miscellaneous
 
