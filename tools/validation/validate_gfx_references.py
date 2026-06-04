@@ -110,6 +110,15 @@ _SGUI_IMAGE_REF = re.compile(r'\bimage\s*=\s*"(GFX_[^"\[]+)"')
 # Scripted localisation: localization_key = "GFX_xxx"
 _SLOC_KEY_REF = re.compile(r'\blocalization_key\s*=\s*"(GFX_[^"\[]+)"')
 
+# Any literal GFX_ sprite token in game script (event `picture = GFX_x`, focus
+# `icon = GFX_x`, decision icons, MIO/agency logos, portraits, etc.). Names can
+# carry `.` frame suffixes and `-`. Used only to mark sprites as referenced for
+# the unused-sprite check, so over-matching (e.g. a token in a string) is safe.
+_GFX_TOKEN_REF = re.compile(r"GFX_[A-Za-z0-9_.\-]+")
+_HASH_COMMENT = re.compile(r"#[^\n]*")
+# Idea `picture = X` resolves to the sprite `GFX_idea_X` (X is not GFX_-prefixed).
+_IDEA_PICTURE_REF = re.compile(r"^\s*picture\s*=\s*([A-Za-z0-9_.\-]+)", re.MULTILINE)
+
 # Auto-generated flag sprites — never defined in .gfx, built by the engine.
 # Matches GFX_flag_TAG, GFX_TAG_flag, GFX_shield_TAG etc.
 _FLAG_SPRITE_RE = re.compile(
@@ -260,6 +269,33 @@ def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
+def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
+    """Return every GFX sprite a game-script .txt file references.
+
+    Picks up literal `GFX_xxx` tokens (event pictures, focus/decision icons,
+    MIO and agency logos, portraits, etc.) plus idea `picture = X` entries,
+    which resolve to `GFX_idea_X`. Comment lines are stripped first so a
+    commented-out reference does not mask a genuinely unused sprite. Content-
+    cached, so a warm run only re-scans changed files.
+    """
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    def _compute() -> List[str]:
+        text = _HASH_COMMENT.sub("", raw)
+        refs = set(_GFX_TOKEN_REF.findall(text))
+        if os.sep + "ideas" + os.sep in filepath:
+            for m in _IDEA_PICTURE_REF.finditer(text):
+                refs.add("GFX_idea_" + m.group(1))
+        return sorted(refs)
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.script", filepath, raw, _compute
+    )
+
+
 def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_localisation .txt file."""
     filepath, mod_path = args
@@ -350,6 +386,30 @@ class GfxReferenceValidator(BaseValidator):
             f"  Scanned {len(gui_files)} .gui files; found {len(all_refs)} GFX references"
         )
         return all_refs
+
+    def _collect_script_refs(self) -> Set[str]:
+        """Return every GFX sprite referenced from game script (events, common, history).
+
+        Feeds the unused-sprite check so sprites used as event pictures, focus or
+        decision icons, MIO/agency logos, portraits, etc. are not mis-reported as
+        unused just because they are not referenced from interface/.
+        """
+        self._log_section(
+            "Collecting GFX references from game script (events/common/history)"
+        )
+        files = self._collect_files(
+            ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"],
+            ignore_staged=True,
+        )
+        refs: Set[str] = set()
+        for batch in self._pool_map(
+            _parse_script_refs, [(f, self.mod_path) for f in files]
+        ):
+            refs.update(batch)
+        self.log(
+            f"  Scanned {len(files)} script files; found {len(refs)} distinct GFX references"
+        )
+        return refs
 
     def _collect_sgui_refs(self, defined: Set[str]) -> List[Tuple[str, str, int]]:
         """Return undefined image= references from common/scripted_guis/*.txt."""
@@ -547,7 +607,10 @@ class GfxReferenceValidator(BaseValidator):
         )
 
         # Unused-sprite check is mod-only; vanilla sprites the mod doesn't redefine aren't ours to flag.
+        # A sprite is "used" if referenced anywhere — interface/ or game script.
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
+        if not self.staged_only:
+            all_referenced |= self._collect_script_refs()
         self._check_unused_sprites(mod_defined, all_referenced)
 
 
