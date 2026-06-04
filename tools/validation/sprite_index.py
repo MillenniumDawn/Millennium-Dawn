@@ -15,6 +15,7 @@ from typing import List, Optional
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+import disk_cache
 from shared_utils import extract_block_from_text
 from validate_gfx_references import _GFX_SPRITE_TYPES, _find_vanilla_interface_dir
 
@@ -23,13 +24,8 @@ _NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
 _GFX_COMMENT = re.compile(r"//[^\n]*|#[^\n]*|/\*.*?\*/", re.DOTALL)
 
 
-def _names_in_file(filepath: str) -> List[str]:
-    """Return every spriteType name defined in one .gfx file (block-scoped)."""
-    try:
-        with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
-        return []
+def _parse_names(raw: str) -> List[str]:
+    """Return every spriteType name in one .gfx file's text (block-scoped)."""
     text = _GFX_COMMENT.sub("", raw)
     names: List[str] = []
     for m in _GFX_SPRITE_TYPES.finditer(text):
@@ -41,6 +37,30 @@ def _names_in_file(filepath: str) -> List[str]:
         if nm:
             names.append(nm.group(1))
     return names
+
+
+def _names_in_file(filepath: str, mod_path: Optional[str] = None) -> List[str]:
+    """Return every spriteType name defined in one .gfx file.
+
+    When *mod_path* is given the parse is content-cached on disk, so a warm run
+    only re-parses .gfx files whose bytes changed (e.g. a newly added one).
+    """
+    try:
+        with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    if mod_path is None:
+        return _parse_names(raw)
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "sprite_index.names", filepath, raw, lambda: _parse_names(raw)
+    )
+
+
+def _names_in_file_pair(args) -> List[str]:
+    """Pool-worker wrapper: unpack ``(filepath, mod_path)`` for pool.map."""
+    filepath, mod_path = args
+    return _names_in_file(filepath, mod_path)
 
 
 def build_sprite_index(
@@ -71,11 +91,11 @@ def build_sprite_index(
 
     names = set()
     if pool_map is not None:
-        for sub in pool_map(_names_in_file, gfx_files):
+        for sub in pool_map(_names_in_file_pair, [(f, mod_path) for f in gfx_files]):
             names.update(sub)
     else:
         for f in gfx_files:
-            names.update(_names_in_file(f))
+            names.update(_names_in_file(f, mod_path))
 
     if gfx_only:
         names = {n for n in names if n.startswith("GFX_")}
