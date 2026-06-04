@@ -1,18 +1,5 @@
 #!/usr/bin/env python3
-# Idea validation: checks idea definitions and usage in Millennium Dawn.
-# Checks for:
-#   1. Undefined idea references (has_idea / add_ideas / remove_ideas / swap_ideas)
-#   2. Redundant allowed_civil_war = { always = no } (HOI4 default)
-#   3. Redundant allowed = { always = no } in country/hidden_ideas categories
-#      Note: removing allowed = { always = no } trades slightly more memory
-#      usage (the engine keeps the idea in its per-country candidate pool)
-#      for faster load times (skips the allowed evaluation at game start).
-#   4. on_add blocks containing only log = "..." lines (no real effect — drop the block)
-#   5. Loc-consolidation suggestions (opt-in: --suggest-consolidation) — sibling
-#      ideas in the same file that share an identical English display name and
-#      (matching or absent) desc, where switching the duplicates to `name = <base>`
-#      lets you drop the redundant loc keys. Advisory only — never an error.
-#   6. Missing localisation keys for ideas (opt-in: --missing-loc)
+"""Validate idea definitions and usage in Millennium Dawn."""
 import os
 import re
 import sys
@@ -24,10 +11,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from validator_common import (
+    HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     Colors,
     FileOpener,
     Severity,
+    case_mismatch,
+    casefold_index,
     run_validator_main,
     should_skip_file,
 )
@@ -52,10 +42,12 @@ _SWAP_BLOCK_START = re.compile(r"\bswap_ideas\s*=\s*\{")
 # Hyphens are included so that identifiers like `NKO_Marxism-Leninism` are recognised.
 _IDEA_DEF_LINE = re.compile(r"^[\t ]*([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
 
-# HOI4 built-in inner keys that appear at depth 2 but are not idea definitions
-_HOI4_IDEA_INNER_KEYS: frozenset = frozenset(
+# Idea-schema inner keys that appear at depth 2 but are not idea definitions.
+# The control-flow / effect blocks (if, limit, modifier, scope iterators, etc.)
+# come from the canonical HOI4_BUILTIN_BLOCKS so they don't drift; only the
+# idea-specific schema keys are listed here.
+_HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
     {
-        "modifier",
         "equipment_bonus",
         "allowed",
         "allowed_civil_war",
@@ -82,24 +74,13 @@ _HOI4_IDEA_INNER_KEYS: frozenset = frozenset(
         "rule",
         "name",
         "priority",
-        "limit",
-        "if",
-        "else",
-        "else_if",
-        "hidden_effect",
-        "random_list",
-        "every_country",
-        "random_country",
-        "capital_scope",
-        "AND",
-        "OR",
-        "NOT",
     }
 )
 
 # Categories where `allowed = { always = no }` is flagged as redundant
 # Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
 # (those without slot=/character_slot= or with hidden=yes)
+from shared_utils import extract_block_from_text  # noqa: E402
 from shared_utils import (  # noqa: E402
     get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
 )
@@ -121,17 +102,7 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
     """Return every idea name referenced inside swap_ideas = { ... } blocks."""
     refs: List[str] = []
     for m in _SWAP_BLOCK_START.finditer(text):
-        start = m.end()
-        depth = 1
-        i = start
-        n = len(text)
-        while i < n and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        block = text[start : i - 1]
+        block, _ = extract_block_from_text(text, m.end() - 1)
         refs.extend(_IDEA_REF_SWAP.findall(block))
     return refs
 
@@ -153,17 +124,7 @@ def _on_add_is_log_only(idea_text: str) -> bool:
     """
     found_any = False
     for m in _ON_ADD_BLOCK_START.finditer(idea_text):
-        start = m.end()
-        depth = 1
-        i = start
-        n = len(idea_text)
-        while i < n and depth > 0:
-            if idea_text[i] == "{":
-                depth += 1
-            elif idea_text[i] == "}":
-                depth -= 1
-            i += 1
-        body = idea_text[start : i - 1]
+        body, _ = extract_block_from_text(idea_text, m.end() - 1)
         found_any = True
 
         non_log = False
@@ -333,9 +294,14 @@ def _scan_idea_refs(text: str) -> List[str]:
     return refs
 
 
-def _check_file_for_refs(args: Tuple[str, frozenset, str]) -> List[str]:
-    """Pool worker: return undefined idea references found in one file."""
-    filepath, defined_ideas_frozen, mod_path = args
+def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
+    """Pool worker: return undefined idea references found in one file.
+
+    *defined_ci* maps lower-cased idea name -> canonical name; a ref that misses
+    case-sensitively but hits here is a case mismatch that works on Windows and
+    silently fails on Linux, so it gets a distinct, louder message.
+    """
+    filepath, defined_ideas_frozen, defined_ci, mod_path = args
     if should_skip_file(filepath):
         return []
     text = FileOpener.open_text_file(
@@ -368,7 +334,14 @@ def _check_file_for_refs(args: Tuple[str, frozenset, str]) -> List[str]:
         # Skip pure numbers and very short tokens that are clearly not idea names
         if idea.isdigit() or len(idea) < 3:
             continue
-        results.append(f"{basename}: undefined idea reference '{idea}'")
+        canonical = case_mismatch(idea, defined_ci)
+        if canonical:
+            results.append(
+                f"{basename}: case-mismatch idea reference '{idea}' — defined as "
+                f"'{canonical}' (works on Windows, fails on Linux)"
+            )
+        else:
+            results.append(f"{basename}: undefined idea reference '{idea}'")
     return results
 
 
@@ -450,7 +423,9 @@ class Validator(BaseValidator):
         self.log(f"  Scanning {len(scan_files)} files for idea references...")
 
         defined_frozen = frozenset(defined_ideas.keys())
-        args_list = [(f, defined_frozen, self.mod_path) for f in scan_files]
+        # Case-insensitive index for Linux case-mismatch diagnostics.
+        defined_ci = casefold_index(defined_ideas)
+        args_list = [(f, defined_frozen, defined_ci, self.mod_path) for f in scan_files]
 
         raw_results = self._pool_map(_check_file_for_refs, args_list)
         results: List[str] = []

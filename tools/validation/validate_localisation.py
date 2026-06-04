@@ -1,28 +1,23 @@
 #!/usr/bin/env python3
-##########################
-# Localisation Validation Script (Multiprocessing Optimized)
-# Validates localisation files for common issues
-# Checks for:
-#   1. Duplicated localisation keys
-#   2. Unpaired brackets in loc values
-#   3. Loc syntax issues (color symbol pairing)
-#   4. Missing mandatory l_english: line
-#   5. Invalid localization_key references
-#   6. Missing custom_effect_tooltip / custom_trigger_tooltip keys
-#   7. add_resistance_target tooltip issues
-#   8. Orphaned _tt tooltip keys (defined in loc but never referenced)
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Adapted for Millennium Dawn with multiprocessing
-##########################
+"""Validate localisation files for common issues in Millennium Dawn.
+
+Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
+adapted for Millennium Dawn with multiprocessing.
+"""
 import glob
 import logging
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import extract_block_from_text
 from validator_common import (
+    KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
     Colors,
     FileOpener,
@@ -32,73 +27,10 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = ["FR_loc", "00_operations", "MD_dm_modifiers"]
 
-# Vanilla or known loc keys that are valid but not defined in mod localisation files
-VANILLA_LOC_KEYS = {
-    "SP_UNLOCK_PROJECT",
-    "SP_UNLOCK_TECH",
-    "available_scientist_one_line_tt",
-    # Vanilla HOI4 building name keys (mod overrides only the _desc variants)
-    "air_base",
-    "infrastructure",
-    "nuclear_reactor",
-    "radar_station",
-    # Vanilla US Congress keys borrowed from MTG
-    "mtg_usa_congress_add_state_tt",
-    "mtg_usa_congress_large_opposition_tt",
-    "mtg_usa_congress_large_support_tt",
-    "mtg_usa_congress_medium_opposition_tt",
-    "mtg_usa_congress_medium_support_tt",
-    "mtg_usa_congress_remove_state_tt",
-    "mtg_usa_congress_small_opposition_tt",
-    "mtg_usa_congress_small_support_tt",
-    "mtg_usa_house_large_opposition_tt",
-    "mtg_usa_house_large_support_tt",
-    "mtg_usa_house_medium_opposition_tt",
-    "mtg_usa_house_medium_support_tt",
-    "mtg_usa_house_small_opposition_tt",
-    "mtg_usa_house_small_support_tt",
-    "mtg_usa_senate_large_opposition_tt",
-    "mtg_usa_senate_large_support_tt",
-    "mtg_usa_senate_medium_opposition_tt",
-    "mtg_usa_senate_medium_support_tt",
-    "mtg_usa_senate_small_opposition_tt",
-    "mtg_usa_senate_small_support_tt",
-    "free_agency_upgrade_tt",
-    # Vanilla operative mission tooltip keys
-    "OPERATIVE_MISSION_BOOST_IDEOLOGY_TT",
-    "OPERATIVE_MISSION_BUILD_INTEL_NETWORK_TT",
-    "OPERATIVE_MISSION_CONTROL_TRADE_TT",
-    "OPERATIVE_MISSION_COUNTER_INTELLIGENCE_TT",
-    "OPERATIVE_MISSION_DIPLOMATIC_PRESSURE_TT",
-    "OPERATIVE_MISSION_NO_MISSION_TT",
-    "OPERATIVE_MISSION_PROPAGANDA_TT",
-    "OPERATIVE_MISSION_QUIET_INTEL_NETWORK_TT",
-    "OPERATIVE_MISSION_ROOT_OUT_RESISTANCE_TT",
-    # Vanilla diplomatic action rule tooltip keys (defined in vanilla loc)
-    "RULE_ALLOW_GUARANTEES_BLOCKED_TOOLTIP",
-    "RULE_ALLOW_GUARANTEES_SAME_IDEOLOGY_TOOLTIP",
-    "RULE_ALLOW_LEAVE_FACTION_BLOCKED_TOOLTIP",
-    "RULE_ALLOW_LEND_LEASE_BLOCKED_TT",
-    "RULE_ALLOW_LEND_LEASE_SAME_FACTION_TT",
-    "RULE_ALLOW_LEND_LEASE_SAME_IDEOLOGY_TT",
-    "RULE_ALLOW_LICENSING_BLOCKED_TT",
-    "RULE_ALLOW_LICENSING_SAME_FACTION_TT",
-    "RULE_ALLOW_LICENSING_SAME_IDEOLOGY_TT",
-    "RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT",
-    "RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT",
-    "RULE_ALLOW_RELEASE_NATIONS_BLOCKED_TOOLTIP",
-    "RULE_ALLOW_REVOKE_GUARANTEES_BLOCKED_TOOLTIP",
-    "RULE_ASSUME_LEADERSHIP_BLOCKED_TOOLTIP",
-    "RULE_BOOST_PARTY_AI_ONLY_TT",
-    "RULE_BOOST_PARTY_BLOCKED_TT",
-    "RULE_BOOST_PARTY_PLAYER_ONLY_TT",
-    "RULE_COUP_AI_ONLY_TT",
-    "RULE_COUP_BLOCKED_TT",
-    "RULE_KICK_FROM_FACTION_BLOCKED_TOOLTIP",
-    "RULE_VOLUNTEERS_BLOCKED_TT",
-    "RULE_VOLUNTEERS_SAME_IDEOLOGY_TT",
-    "RULE_WARGOALS_BLOCKED_TT",
-}
+# Vanilla / reused-vanilla loc keys that are valid but not defined in the mod's
+# localisation files. Single source of truth lives in validator_common so the
+# focus/idea loc loaders and this reference checker share one allowlist.
+VANILLA_LOC_KEYS = KNOWN_VANILLA_LOC_KEYS
 
 
 def _should_skip(filename: str) -> bool:
@@ -333,21 +265,11 @@ def _extract_not_blocks(text: str) -> List[str]:
         m = _NOT_OPEN_RE.search(text, i)
         if not m:
             break
-        start = m.end()
-        depth = 1
-        j = start
-        while j < len(text) and depth > 0:
-            ch = text[j]
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-            j += 1
-        if depth == 0:
-            out.append(text[start : j - 1])
-            i = j
-        else:
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
             break
+        out.append(body)
+        i = end
     return out
 
 

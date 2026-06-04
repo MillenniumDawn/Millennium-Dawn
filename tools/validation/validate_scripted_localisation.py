@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# Scripted Localisation Validation Script (Multiprocessing Optimized)
-# Validates scripted localisation definitions and usage
-# Checks for: used but not defined, defined but not used, GFX_ icons not defined in .gfx files
-# Based on Millennium Dawn validation framework
-# Optimized with multiprocessing for significantly faster execution
-##########################
+"""Validate scripted localisation definitions and usage in Millennium Dawn."""
 import glob
 import os
 import re
@@ -27,7 +21,6 @@ from validator_common import (
 )
 
 
-# Multiprocessing helper functions
 def _scan_defined_locs(text: str, basename: str) -> Tuple[List[str], Dict[str, str]]:
     localisations: List[str] = []
     paths: Dict[str, str] = {}

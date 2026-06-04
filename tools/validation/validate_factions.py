@@ -27,11 +27,9 @@ VALID_RULE_TYPES = {
     "contribution_rule",
 }
 
-# Regex patterns
 # Top-level block: word = { at the start of a line (possibly indented by tabs)
 BLOCK_DEF_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
 
-# Property extraction
 MANIFEST_RE = re.compile(r"\bmanifest\s*=\s*(\w+)")
 ICON_RE = re.compile(r"\bicon\s*=\s*(\w+)")
 TYPE_RE = re.compile(r"\btype\s*=\s*(\w+)")
