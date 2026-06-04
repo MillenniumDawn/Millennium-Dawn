@@ -236,6 +236,87 @@ def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
     return None
 
 
+def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
+    """Parse common/idea_tags/*.txt and return every idea category in order.
+
+    Returns a list of dicts (definition order preserved) with keys:
+    `name`, `hidden` (bool), `has_slot` (bool), `has_char_slot` (bool),
+    `type` (str or None — e.g. national_spirit, army_spirit).
+
+    Definition order matters: the engine assigns each politics-view category
+    icon a frame of GFX_idea_categories by the order it appears here.
+
+    Args:
+        mod_root: Path to the mod root (auto-detected if None).
+    """
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+
+    tags_dir = os.path.join(mod_root, "common", "idea_tags")
+    if not os.path.isdir(tags_dir):
+        return []
+
+    out: List[Dict] = []
+
+    for fname in sorted(os.listdir(tags_dir)):
+        if not fname.endswith(".txt"):
+            continue
+        fpath = os.path.join(tags_dir, fname)
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                text = re.sub(r"#.*", "", f.read())
+        except Exception:
+            continue
+
+        m = re.search(r"idea_categories\s*=\s*\{", text)
+        if not m:
+            continue
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            i += 1
+        cat_block = text[start : i - 1] if depth == 0 else text[start:]
+
+        pos = 0
+        while True:
+            cat_m = re.search(r"(\w+)\s*=\s*\{", cat_block[pos:])
+            if not cat_m:
+                break
+            cat_name = cat_m.group(1)
+            cat_start = pos + cat_m.end()
+            cat_depth = 1
+            cat_i = cat_start
+            while cat_i < len(cat_block) and cat_depth > 0:
+                if cat_block[cat_i] == "{":
+                    cat_depth += 1
+                elif cat_block[cat_i] == "}":
+                    cat_depth -= 1
+                cat_i += 1
+            cat_body = (
+                cat_block[cat_start : cat_i - 1]
+                if cat_depth == 0
+                else cat_block[cat_start:]
+            )
+            type_m = re.search(r"\btype\s*=\s*(\w+)", cat_body)
+            out.append(
+                {
+                    "name": cat_name,
+                    "hidden": bool(re.search(r"\bhidden\s*=\s*yes\b", cat_body)),
+                    "has_slot": bool(re.search(r"\bslot\s*=", cat_body)),
+                    "has_char_slot": bool(re.search(r"\bcharacter_slot\s*=", cat_body)),
+                    "type": type_m.group(1) if type_m else None,
+                }
+            )
+            pos = cat_i
+
+    return out
+
+
 def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
     """Parse common/idea_tags/*.txt and return non-selectable idea category names.
 
@@ -250,70 +331,11 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
     Returns:
         frozenset of non-selectable category names (e.g. {'country', 'hidden_ideas'}).
     """
-    if mod_root is None:
-        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
-
-    tags_dir = os.path.join(mod_root, "common", "idea_tags")
-    if not os.path.isdir(tags_dir):
-        return frozenset({"country", "hidden_ideas"})
-
-    categories: Set[str] = set()
-
-    for fname in os.listdir(tags_dir):
-        if not fname.endswith(".txt"):
-            continue
-        fpath = os.path.join(tags_dir, fname)
-        try:
-            with open(fpath, "r", encoding="utf-8") as f:
-                text = f.read()
-                text = re.sub(r"#.*", "", text)
-        except Exception:
-            continue
-
-        m = re.search(r"idea_categories\s*=\s*\{", text)
-        if not m:
-            continue
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-                i += 1
-            elif text[i] == "}":
-                depth -= 1
-                i += 1
-            else:
-                i += 1
-        cat_block = text[start : i - 1] if depth == 0 else text[start:]
-
-        for cat_m in re.finditer(r"(\w+)\s*=\s*\{", cat_block):
-            cat_name = cat_m.group(1)
-            cat_start = cat_m.end()
-            cat_depth = 1
-            cat_i = cat_start
-            while cat_i < len(cat_block) and cat_depth > 0:
-                if cat_block[cat_i] == "{":
-                    cat_depth += 1
-                    cat_i += 1
-                elif cat_block[cat_i] == "}":
-                    cat_depth -= 1
-                    cat_i += 1
-                else:
-                    cat_i += 1
-            cat_body = (
-                cat_block[cat_start : cat_i - 1]
-                if cat_depth == 0
-                else cat_block[cat_start:]
-            )
-
-            has_hidden = bool(re.search(r"\bhidden\s*=\s*yes\b", cat_body))
-            has_slot = bool(re.search(r"\bslot\s*=", cat_body))
-            has_char_slot = bool(re.search(r"\bcharacter_slot\s*=", cat_body))
-
-            if has_hidden or (not has_slot and not has_char_slot):
-                categories.add(cat_name)
-
+    categories = {
+        c["name"]
+        for c in get_all_idea_categories(mod_root)
+        if c["hidden"] or (not c["has_slot"] and not c["has_char_slot"])
+    }
     return (
         frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
     )

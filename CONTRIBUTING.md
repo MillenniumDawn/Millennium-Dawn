@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Millennium Dawn!
 
 - [Documentation Site](https://millenniumdawn.github.io/Millennium-Dawn/)
 - [Discord](http://discord.gg/millenniumdawn)
-- [Git Setup & Usage Guide](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/manual-install-instructions/) — Cloning, branches, commits, PRs
+- [Git Setup & Usage Guide](#development-setup) — Cloning, branches, commits, PRs
 - [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/code-stylization-guide/) — Formatting and code structure
 - [Content Review Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/content-review-guide/) — Quality checklist and developer expectations
 - [Focus Tree Design Principles](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/focus-tree-design-principles/) — Branch structure, pacing, choices
@@ -125,6 +125,7 @@ See the [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Daw
 6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md) if this is your first contribution
 7. Push your branch and open a pull request on GitHub
 8. CI validation must pass and a team leader must approve before merge
+   1. The CI validation may be bypass by a team leader depending on their preferences and given the issues.
 
 ## Changelog Guidelines
 
