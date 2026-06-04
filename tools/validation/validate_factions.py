@@ -5,14 +5,13 @@
 import glob
 import os
 import re
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 
 from validator_common import (
     BaseValidator,
     Colors,
     FileOpener,
     run_validator_main,
-    strip_comments,
 )
 
 # Valid faction rule types per engine documentation

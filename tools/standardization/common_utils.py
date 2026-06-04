@@ -15,9 +15,7 @@ from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
-    compact_block,
     create_backup,
-    create_standard_parser,
     extract_block,
     log_message,
 )

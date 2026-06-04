@@ -13,12 +13,10 @@ from shared_utils import extract_block_from_text as _extract_block
 from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
-    Colors,
     Severity,
     case_mismatch,
     casefold_index,
     run_validator_main,
-    should_skip_file,
     strip_comments,
 )
 

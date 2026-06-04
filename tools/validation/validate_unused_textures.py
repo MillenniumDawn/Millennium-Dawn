@@ -98,7 +98,7 @@ def process_gfx_file(args: Tuple[str, str, Set[str], Dict[str, List[str]]]) -> S
                         for tex_path in filename_lookup[ref_filename]:
                             referenced_textures.add(tex_path)
 
-    except Exception as e:
+    except Exception:
         # Silently skip files that can't be read
         pass
 
@@ -187,7 +187,7 @@ class Validator(BaseValidator):
             f"{Colors.YELLOW if self.use_colors else ''}Warning: Could not find HoI4 installation. Vanilla .gfx files will not be checked.{Colors.ENDC if self.use_colors else ''}",
             "warning",
         )
-        self.log(f"  Use --hoi4-path to specify the installation directory.")
+        self.log("  Use --hoi4-path to specify the installation directory.")
 
     def _find_all_gfx_files(self, search_path: str = None) -> List[str]:
         """Find all .gfx files in the specified directory (mod or vanilla)."""

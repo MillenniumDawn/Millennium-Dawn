@@ -16,7 +16,6 @@ from typing import Dict, List, Tuple
 import disk_cache
 from validator_common import (
     BaseValidator,
-    Colors,
     DataCleaner,
     FileOpener,
     Severity,
