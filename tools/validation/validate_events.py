@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from shared_utils import extract_block_from_text
+from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
     Colors,
@@ -29,9 +30,28 @@ _LONG_FORM_PATTERN = re.compile(
     r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )
 
+# Event picture: `picture = GFX_xxx` (always GFX_-prefixed, resolves to that sprite).
+_EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_]+)"?')
+
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+
+
+def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: return (sprite, filename, line) for each event picture ref."""
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    text = re.sub(r"#[^\n]*", "", text)
+    out: List[Tuple[str, str, int]] = []
+    for m in _EVENT_PICTURE_REF.finditer(text):
+        line = text.count("\n", 0, m.start()) + 1
+        out.append((m.group(1), filename, line))
+    return out
 
 
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
@@ -178,6 +198,7 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, *args, **kwargs):
+        self.missing_pictures = kwargs.pop("missing_pictures", False)
         super().__init__(*args, **kwargs)
         self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
@@ -591,6 +612,41 @@ class Validator(BaseValidator):
             category="namespace-mismatch",
         )
 
+    def validate_event_pictures(self):
+        """Flag events whose `picture = GFX_x` sprite is not defined.
+
+        An event's picture resolves directly to the named sprite; when it is
+        absent from every interface/*.gfx (mod or vanilla) the event renders a
+        blank picture box. Mod and vanilla sprites both count.
+        """
+        self._log_section("Checking for events with missing pictures...")
+
+        sprites = build_sprite_index(
+            self.mod_path, gfx_only=True, pool_map=self._pool_map
+        )
+        files = self._collect_files(["events/**/*.txt"])
+        refs = self._pool_map(_extract_event_pictures, files)
+
+        results: List[str] = []
+        seen: Set[Tuple[str, str, int]] = set()
+        for sub in refs:
+            for sprite, filename, line in sub:
+                if sprite in sprites:
+                    continue
+                key = (sprite, filename, line)
+                if key in seen:
+                    continue
+                seen.add(key)
+                results.append(f"{os.path.basename(filename)}:{line} - {sprite}")
+
+        self._report(
+            sorted(results),
+            "✓ All event pictures are defined",
+            "Events with missing pictures (picture sprite not defined in interface/*.gfx):",
+            severity=Severity.WARNING,
+            category="missing-event-picture",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
@@ -604,6 +660,26 @@ class Validator(BaseValidator):
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
 
+        if self.missing_pictures:
+            self.validate_event_pictures()
+        else:
+            self._log_section(
+                "Skipping missing picture check (pass --missing-pictures to enable)"
+            )
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--missing-pictures",
+        action="store_true",
+        dest="missing_pictures",
+        help="Flag events whose picture sprite is undefined in interface/*.gfx",
+    )
+
 
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate events in Millennium Dawn mod")
+    run_validator_main(
+        Validator,
+        "Validate events in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
+    )
