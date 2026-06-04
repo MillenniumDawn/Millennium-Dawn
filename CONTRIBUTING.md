@@ -125,6 +125,7 @@ See the [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Daw
 6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md) if this is your first contribution
 7. Push your branch and open a pull request on GitHub
 8. CI validation must pass and a team leader must approve before merge
+   1. The CI validation may be bypass by a team leader depending on their preferences and given the issues.
 
 ## Changelog Guidelines
 
