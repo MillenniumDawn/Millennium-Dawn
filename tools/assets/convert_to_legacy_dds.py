@@ -83,7 +83,6 @@ def convert_dds_to_legacy(input_path: str, output_path: str | None = None) -> bo
         return False
 
     # ---- check pixel-format block ----------------------------------------- #
-    pf_flags = struct.unpack_from("<I", raw, 80)[0]
     pf_fourcc = struct.unpack_from("<I", raw, 84)[0]
 
     # --- already legacy? --------------------------------------------------- #
@@ -130,11 +129,8 @@ def convert_dds_to_legacy(input_path: str, output_path: str | None = None) -> bo
     # Copy the original 128-byte block (magic + header) and patch it
     new_header = bytearray(raw[:128])
 
-    # Replace pixel-format block (bytes 76–107 inside the file, i.e. 76–107)
+    # Replace pixel-format block (bytes 76–107 inside the file)
     new_header[76:108] = LEGACY_PIXELFORMAT
-
-    # Clear the DX10 FourCC that we just overwrote (sanity — already done above)
-    # Caps / reserved bytes stay the same
 
     # Write output
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)

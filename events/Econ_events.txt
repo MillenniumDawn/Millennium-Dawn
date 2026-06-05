@@ -53,8 +53,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: econvent.1.a executed"
 		small_expenditure = yes
 
-		random_list = {
-			40 = {
+		random = {
+			chance = 40
+
 				modifier = {
 					factor = 0.80
 					has_idea = recession
@@ -64,11 +65,9 @@ country_event = {
 					has_idea = depression
 				}
 				decrease_economic_growth = yes
-			}
-			60 = {
-				# No EFfect
-			}
+
 		}
+
 
 		set_temp_variable = { temp_opinion = -10 }
 		change_wall_street_opinion = yes
@@ -1829,21 +1828,55 @@ country_event = {
 			limit = {
 				influence_higher_10 = yes
 			}
-			random = {
-				chance = 10
-				modifier = {
-					factor = 5
-					is_subject_of = ROOT
+			if = {
+				limit = { is_subject_of = ROOT }
+				if = {
+					limit = {
+						OR = {
+							is_in_faction_with = ROOT
+							is_neighbor_of = ROOT
+						}
+					}
+					random = {
+						chance = 100
+						country_event = { id = econvent.12 random_days = 100 }
+					}
 				}
-				modifier = {
-					factor = 3
-					is_in_faction_with = ROOT
+				else = {
+					random = {
+						chance = 50
+						country_event = { id = econvent.12 random_days = 100 }
+					}
 				}
-				modifier = {
-					factor = 2
-					is_neighbor_of = ROOT
+			}
+			else_if = {
+				limit = { is_in_faction_with = ROOT }
+				if = {
+					limit = { is_neighbor_of = ROOT }
+					random = {
+						chance = 60
+						country_event = { id = econvent.12 random_days = 100 }
+					}
 				}
-				country_event = { id = econvent.12 random_days = 100 }
+				else = {
+					random = {
+						chance = 30
+						country_event = { id = econvent.12 random_days = 100 }
+					}
+				}
+			}
+			else_if = {
+				limit = { is_neighbor_of = ROOT }
+				random = {
+					chance = 20
+					country_event = { id = econvent.12 random_days = 100 }
+				}
+			}
+			else = {
+				random = {
+					chance = 10
+					country_event = { id = econvent.12 random_days = 100 }
+				}
 			}
 		}
 
@@ -1896,17 +1929,34 @@ country_event = {
 				add_ideas = depression
 			}
 		}
-		random = {
-			chance = 10
-			modifier = {
-				factor = 5
-				is_subject_of = ROOT
+		if = {
+			limit = { is_subject_of = ROOT }
+			if = {
+				limit = { is_in_faction_with = ROOT }
+				random = {
+					chance = 100
+					country_event = { id = econvent.12 random_days = 100 }
+				}
 			}
-			modifier = {
-				factor = 3
-				is_in_faction_with = ROOT
+			else = {
+				random = {
+					chance = 50
+					country_event = { id = econvent.12 random_days = 100 }
+				}
 			}
-			country_event = { id = econvent.12 random_days = 100 }
+		}
+		else_if = {
+			limit = { is_in_faction_with = ROOT }
+			random = {
+				chance = 30
+				country_event = { id = econvent.12 random_days = 100 }
+			}
+		}
+		else = {
+			random = {
+				chance = 10
+				country_event = { id = econvent.12 random_days = 100 }
+			}
 		}
 		clr_country_flag = disable_cycle_costs
 
@@ -2178,28 +2228,7 @@ country_event = {
 
 		# Free Industrial Complex
 		random_owned_controlled_state = {
-			limit = {
-				free_building_slots = {
-					building = industrial_complex
-					size > 0
-					include_locked = yes
-				}
-				OR = {
-					is_in_home_area = yes
-					NOT = {
-						owner = {
-							any_owned_state = {
-								free_building_slots = {
-									building = industrial_complex
-									size > 0
-									include_locked = yes
-								}
-								is_in_home_area = yes
-							}
-						}
-					}
-				}
-			}
+			limit = { free_shared_building_slots = yes }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = industrial_complex
@@ -2293,28 +2322,7 @@ country_event = {
 
 		# Free Industrial Complex
 		random_owned_controlled_state = {
-			limit = {
-				free_building_slots = {
-					building = offices
-					size > 0
-					include_locked = yes
-				}
-				OR = {
-					is_in_home_area = yes
-					NOT = {
-						owner = {
-							any_owned_state = {
-								free_building_slots = {
-									building = offices
-									size > 0
-									include_locked = yes
-								}
-								is_in_home_area = yes
-							}
-						}
-					}
-				}
-			}
+			limit = { free_shared_building_slots = yes }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = offices

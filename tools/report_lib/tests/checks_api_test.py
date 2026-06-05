@@ -137,7 +137,6 @@ def test_pick_annotations_errors_before_warnings():
 
 
 def test_pick_annotations_truncates_with_overflow_notice():
-    # Build MAX_ANNOTATIONS_PER_CHECK + 10 eligible issues
     issues = [
         Issue(
             severity=Severity.ERROR,

@@ -49,8 +49,8 @@ class ValidatorRun:
     """One validator's result, loaded from its artifact directory."""
 
     name: str  # slug used in CI (e.g. "events", "oob-units")
-    title: str  # pretty title for display
-    log_text: Optional[str] = None  # raw log content (may be None if log missing)
+    title: str
+    log_text: Optional[str] = None  # None when the log file is missing
     issues: List[Issue] = field(default_factory=list)
     status: str = "unknown"  # "passed" | "warnings" | "failed" | "no_output"
     errors: int = 0
@@ -76,3 +76,4 @@ class ReportContext:
     workflow_run_url: Optional[str] = None
     artifact_url: Optional[str] = None
     date_utc: Optional[str] = None
+    repo: Optional[str] = None  # "owner/name", used to build blob links to file:line

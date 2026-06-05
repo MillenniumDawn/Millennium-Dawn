@@ -15,7 +15,6 @@ permissions:
 
 jobs:
   validate-tools:
-    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,15 +50,20 @@ jobs:
 
   report-lib-tests:
     name: report_lib + validator unit tests
-    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 1
+          # config_drift_test reads these two config files to compare the
+          # validator set declared in each. pyproject.toml supplies the pytest
+          # testpaths so all four test dirs are collected.
           sparse-checkout: |
             tools
+            pyproject.toml
+            .pre-commit-config.yaml
+            .github/workflows/coding-pipeline.yml
           sparse-checkout-cone-mode: false
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -70,5 +74,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r tools/report_lib/requirements-dev.txt
       - name: Run pytest
+        # testpaths in pyproject.toml covers all four test dirs (tools/tests,
+        # report_lib/tests, validation/tests, linting/tests).
         run: |
-          python -m pytest tools/report_lib/tests/ tools/validation/tests/ -v
+          python -m pytest -v
+
+  ruff-lint:
+    name: ruff lint (tools)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            tools
+            pyproject.toml
+          sparse-checkout-cone-mode: false
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.x'
+      - name: Install ruff
+        run: pip install ruff==0.8.6
+      - name: Run ruff
+        run: ruff check tools --output-format=github

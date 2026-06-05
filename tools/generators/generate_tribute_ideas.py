@@ -3,14 +3,9 @@ import codecs
 import os
 import shutil
 
-# Global Init
-# country_tag_list: Country Tag List
-# inputpath: Path to the given directory
 country_tag_list = []
 inputpath = ""
 
-# Modfolder = the mod folder name
-# mod = The mod name
 modfolder = "Millennium_Dawn\\"
 mod = "Millennium_Dawn"
 newline = "\n\t\t\t"
@@ -19,13 +14,11 @@ modifiers = "\n\t\t\t\tcic_to_target_factor = 0.2\n\t\t\t\textra_trade_to_target
 
 
 def main():
-    path = os.path.abspath(os.path.join(os.path.dirname(mod), ".."))
     country_tag_list = createcountrytaglist()
     country_tag_list.extend(pulldynamictags())
 
     print("Creating Tribute Idea List")
     with open("tribute_ideas.txt", "w") as ffile:
-        count = 0
         ffile.write("ideas = {\n\tcountry = {\n\t\t")
         for fname in country_tag_list:
             ffile.write(f"tribute_idea_{fname} = {{{newline}")
@@ -37,7 +30,7 @@ def main():
                 f"picture = international_treaty2{newline}allowed = {{ always = no }}{newline}allowed_civil_war = {{ always = yes }}{newline}"
             )
             ffile.write(f"targeted_modifier = {{{newline2}tag = {fname}{modifiers}}}")
-            ffile.write(f"\n\t\t}}\n\t\t")
+            ffile.write("\n\t\t}\n\t\t")
         ffile.write("}\n}")
     with codecs.open("MD_tribute_ideas_l_english.yml", "w", "utf-8-sig") as ffile:
         ffile.write("l_english:\n")
@@ -54,7 +47,6 @@ def main():
 
 def createcountrytaglist():
     temp_array = []
-    # Country Tag List Array Creation
     tag_path = os.path.abspath(
         os.path.join(os.path.dirname(mod), "..\\common\\country_tags")
     )
@@ -76,7 +68,6 @@ def createcountrytaglist():
 
 def pulldynamictags():
     temp_array = []
-    # Country Tag List Array Creation
     tag_path = os.path.abspath(
         os.path.join(os.path.dirname(mod), "..\\common\\country_tags")
     )

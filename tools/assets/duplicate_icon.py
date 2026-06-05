@@ -2,8 +2,8 @@
 """
 Duplicate Icon Checker
 
-This script checks a focus file for all of it's icon definitions to see if there is an icon that is defined multiple times in a given focus file.
-The current state of the script you need to be in the tools directory.
+This script checks a focus file for all of its icon definitions to find any icon defined more than once in a given focus file.
+You must run the script from the tools directory.
 
 Usage:
     python duplicate_icon.py [files...]
@@ -15,10 +15,7 @@ Example:
     python3 duplicate_icon.py turkey.txt
 """
 
-import os
-import shutil
 import sys
-from tokenize import Ignore
 
 file = f"../common/national_focus/{sys.argv[1]}"
 

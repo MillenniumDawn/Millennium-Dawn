@@ -14,9 +14,9 @@ Steps:
    git diff origin/main...HEAD
    ```
 
-3. Scan the existing `Changelog.txt` for all category headings (lines matching ` CategoryName:`) and collect them into a list. **Only use categories that already exist in the file.** Do not invent new category names. If a change does not fit any existing category, use the closest match. The typical categories found in this file are: Achievements, AI, Balance, Bugfix, Content, Database, Factions, Game Rules, Graphics, Localization, Map, Map Modes, Performance, Quality of Life, Sound, Technology, User Interface.
+3. Scan `Changelog.txt` for all category headings (lines matching ` CategoryName:`) and collect them. **Only use categories that already exist in the file.** Do not invent new names. If a change doesn't fit any existing category, use the closest match. Typical categories: Achievements, AI, Balance, Bugfix, Content, Database, Factions, Game Rules, Graphics, Localization, Map, Map Modes, Performance, Quality of Life, Sound, Technology, User Interface.
 
-   Classify each change into one of those existing categories (skip empty categories). Focus on user-facing and gameplay-relevant changes — omit internal refactors or implementation details that don't affect the player experience unless they have a meaningful performance or correctness impact.
+   Classify each change into one existing category (skip empty categories). Focus on user-facing and gameplay-relevant changes; omit internal refactors or implementation details that don't affect the player unless they have meaningful performance or correctness impact.
 
 4. Write each entry following the `Changelog.txt` format:
    - 1 space before category name, followed by a colon (e.g., ` AI:`)

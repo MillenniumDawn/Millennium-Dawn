@@ -8,7 +8,7 @@ memory: project
 
 # Event Builder
 
-Authors and audits HOI4 events for Millennium Dawn: complete event blocks plus the matching English localisation, ready to paste.
+Authors and audits HOI4 events for Millennium Dawn: complete event blocks plus matching English localisation, ready to paste.
 
 ## When to invoke
 
@@ -18,9 +18,9 @@ Authors and audits HOI4 events for Millennium Dawn: complete event blocks plus t
 
 ## Inputs
 
-The caller passes:
+Caller passes:
 
-- The country tag (e.g. `EGY`), the trigger source (focus / decision / on_action / yearly), and a one-sentence description of the desired outcome.
+- Country tag (e.g. `EGY`), trigger source (focus / decision / on_action / yearly), and a one-sentence description of the desired outcome.
 - For fixes: a file path and the specific issue.
 
 ## Required reading
@@ -32,8 +32,8 @@ The caller passes:
 
 ## Workflow
 
-1. **Discover namespace** — Grep `add_namespace` at the top of the target events file. Every `id =` must match that namespace exactly.
-2. **Find next free ID** — Grep `id = TAG_namespace\.` to list used numbers and pick the next.
+1. **Discover namespace** — grep `add_namespace` at the top of the target events file. Every `id =` must match it exactly.
+2. **Find next free ID** — grep `id = TAG_namespace\.` to list used numbers and pick the next.
 3. **Draft the event** using the template below.
 4. **Draft localisation** for `ID.t`, `ID.d`, and every option (`.a`, `.b`, …).
 5. **Wire the caller** — provide the exact `country_event = { id = ... days = N }` line for the focus/decision/on_action that fires it.
@@ -82,7 +82,7 @@ modify_treasury_effect = yes
 # Presets: small_expenditure, medium_expenditure, large_expenditure
 ```
 
-**Localisation requirements**: `ID.t` (title, 6-8 words max), `ID.d` (1-3 sentences flavour, no mechanical detail), `ID.a` / `.b` / … (player action verbs, not narration). File must be UTF-8 with BOM, header `l_english:`, 1 space indent, no trailing `key:0`.
+**Localisation requirements**: `ID.t` (title, 6-8 words max), `ID.d` (1-3 sentences flavour, no mechanical detail), `ID.a` / `.b` / … (player action verbs, not narration). UTF-8 with BOM, header `l_english:`, 1 space indent, no trailing `key:0`.
 
 ## Output format
 
@@ -91,7 +91,7 @@ Return:
 - **Event block** — the full pasteable `country_event = { ... }` text.
 - **Localisation** — the `.yml` snippet (`ID.t`, `ID.d`, options).
 - **Caller wiring** — the exact lines to add in the focus/decision/effect that fires it.
-- **Notes** — anything the user must verify (picture exists, opinion modifiers wired, etc.).
+- **Notes** — anything to verify (picture exists, opinion modifiers wired, etc.).
 
 ## Do NOT
 

@@ -1,28 +1,22 @@
 #!/usr/bin/env python3
-##########################
-# on_actions Reference Validation Script
-# Validates event references in on_actions files against defined event IDs
-# Checks for:
-#   1. Missing event references (event fired in on_actions but not defined)
-#   2. Non-triggered-only events referenced in on_actions (MTTH may double-fire)
-#   3. Duplicate event references within the same on_action trigger block
-##########################
+"""Validate event references in on_actions files against defined event IDs."""
 import os
 import re
+import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import disk_cache
+from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
-    FileOpener,
     Severity,
+    case_mismatch,
+    casefold_index,
     run_validator_main,
-    should_skip_file,
 )
-
-# ---------------------------------------------------------------------------
-# Regex patterns (module-level for pool workers)
-# ---------------------------------------------------------------------------
 
 # Declared namespaces: add_namespace = foo
 _ADD_NAMESPACE_RE = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
@@ -62,35 +56,13 @@ _SHORT_FORM_EVENT_RE = re.compile(
 )
 
 
-# ---------------------------------------------------------------------------
-# Pool workers (module-level so multiprocessing can pickle them)
-# ---------------------------------------------------------------------------
-
-
-def _scan_event_file(filepath: str) -> Tuple[Set[str], Set[str]]:
-    """Return (defined_ids, triggered_only_ids) from a single events/*.txt file."""
+def _scan_event_text(text: str) -> Tuple[Set[str], Set[str]]:
+    """Parse comment-stripped events text -> (defined_ids, triggered_only_ids)."""
     defined_ids: Set[str] = set()
     triggered_only_ids: Set[str] = set()
 
-    try:
-        text = Path(filepath).read_text(encoding="utf-8-sig", errors="ignore")
-    except Exception:
-        return defined_ids, triggered_only_ids
-
-    # Strip comments
-    text = re.sub(r"#[^\n]*", "", text)
-
     for m in _EVENT_BLOCK_OPEN_RE.finditer(text):
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        body = text[start : i - 1]
+        body, _ = extract_block_from_text(text, m.end() - 1)
 
         id_match = _EVENT_ID_IN_BODY_RE.search(body)
         if not id_match:
@@ -103,20 +75,28 @@ def _scan_event_file(filepath: str) -> Tuple[Set[str], Set[str]]:
     return defined_ids, triggered_only_ids
 
 
+def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
+    """Return (defined_ids, triggered_only_ids) from a single events/*.txt file."""
+    filepath, mod_path = args
+    try:
+        text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return set(), set()
+    text = re.sub(r"#[^\n]*", "", text)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "on_actions.event_scan",
+        filepath,
+        text,
+        lambda: _scan_event_text(text),
+    )
+
+
 def _extract_random_events_ids(text: str) -> Set[str]:
     """Return all event IDs found inside random_events = { ... } blocks."""
     ids: Set[str] = set()
     for m in _RANDOM_EVENTS_BLOCK_RE.finditer(text):
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        body = text[start : i - 1]
+        body, _ = extract_block_from_text(text, m.end() - 1)
         for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
             ids.add(entry.group(1))
     return ids
@@ -153,18 +133,10 @@ def _compute_gate_index(text: str) -> List[Tuple[int, int]]:
     """
     spans: List[Tuple[int, int]] = []
     for m in _GATE_BLOCK_RE.finditer(text):
-        # Find the opening brace this match ends with
         open_pos = m.end() - 1
-        depth = 1
-        i = m.end()
-        n = len(text)
-        while i < n and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        spans.append((open_pos, i))
+        _, end = extract_block_from_text(text, open_pos)
+        # On imbalance the gate extends to EOF (matches the old scan).
+        spans.append((open_pos, end if end != -1 else len(text)))
     return spans
 
 
@@ -232,7 +204,6 @@ def _scan_on_action_block(
             eid = entry.group(1)
             _record(eid, body_offset + entry.start())
 
-    # Collect long-form calls
     for m in _LONG_FORM_EVENT_RE.finditer(text):
         _record(m.group(1), m.start())
 
@@ -250,31 +221,20 @@ def _scan_on_action_block(
     return refs, duplicates
 
 
-def _parse_on_actions_file(
-    filepath: str,
-) -> Tuple[
+def _parse_on_actions_text(text_clean: str, filepath: str) -> Tuple[
     List[Tuple[str, str, int, str]],  # (event_id, block_name, line, relpath)
     List[Tuple[str, str, int, str]],  # duplicates
 ]:
-    """Parse a single on_actions file and return all event references."""
+    """Parse comment-stripped on_actions text and return all event references."""
     all_refs: List[Tuple[str, str, int, str]] = []
     all_dupes: List[Tuple[str, str, int, str]] = []
 
-    try:
-        text = Path(filepath).read_text(encoding="utf-8-sig", errors="ignore")
-    except Exception:
-        return all_refs, all_dupes
-
     relpath = filepath
-    # Strip comments
-    text_clean = re.sub(r"#[^\n]*", "", text)
 
-    # Locate the outer on_actions = { ... } wrapper and iterate on_action blocks
     outer_re = re.compile(r"\bon_actions\s*=\s*\{")
     trigger_open_re = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*\{")
 
     for outer_m in outer_re.finditer(text_clean):
-        # Find the body of the on_actions block
         start = outer_m.end()
         depth = 1
         i = start
@@ -312,7 +272,6 @@ def _parse_on_actions_file(
                 pos = tm.end()
                 continue
 
-            # Extract this trigger block's body
             bstart = tm.end()
             bdepth = 1
             bi = bstart
@@ -342,6 +301,28 @@ def _parse_on_actions_file(
     return all_refs, all_dupes
 
 
+def _parse_on_actions_file(
+    args: Tuple[str, str],
+) -> Tuple[
+    List[Tuple[str, str, int, str]],
+    List[Tuple[str, str, int, str]],
+]:
+    """Parse a single on_actions file and return all event references."""
+    filepath, mod_path = args
+    try:
+        text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return [], []
+    text_clean = re.sub(r"#[^\n]*", "", text)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "on_actions.refs",
+        filepath,
+        text_clean,
+        lambda: _parse_on_actions_text(text_clean, filepath),
+    )
+
+
 class Validator(BaseValidator):
     TITLE = "ON_ACTIONS REFERENCE VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -366,7 +347,9 @@ class Validator(BaseValidator):
             return self._defined_ids_cache, self._triggered_only_cache
 
         event_files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
-        results = self._pool_map(_scan_event_file, event_files, chunksize=20)
+        results = self._pool_map(
+            _scan_event_file, [(f, self.mod_path) for f in event_files], chunksize=20
+        )
 
         all_defined: Set[str] = set()
         all_triggered: Set[str] = set()
@@ -390,7 +373,11 @@ class Validator(BaseValidator):
         all_refs: List[Tuple[str, str, int, str]] = []
         all_dupes: List[Tuple[str, str, int, str]] = []
 
-        results = self._pool_map(_parse_on_actions_file, on_actions_files, chunksize=10)
+        results = self._pool_map(
+            _parse_on_actions_file,
+            [(f, self.mod_path) for f in on_actions_files],
+            chunksize=10,
+        )
         for refs, dupes in results:
             all_refs.extend(refs)
             all_dupes.extend(dupes)
@@ -410,18 +397,31 @@ class Validator(BaseValidator):
         self.log(
             f"  Defined event IDs: {len(all_defined)}, on_actions references: {len(all_refs)}"
         )
+        defined_ci = casefold_index(all_defined)
 
         results = []
         for eid, block_name, line, filepath in sorted(all_refs, key=lambda x: x[2]):
             if eid not in all_defined:
                 relpath = os.path.relpath(filepath, self.mod_path)
-                results.append(
-                    (
-                        f"Undefined event '{eid}' referenced in on_action '{block_name}'",
-                        relpath,
-                        line,
+                canonical = case_mismatch(eid, defined_ci)
+                if canonical:
+                    results.append(
+                        (
+                            f"Undefined event '{eid}' referenced in on_action '{block_name}'"
+                            f": case-mismatch reference '{eid}' — defined as '{canonical}'"
+                            " (works on Windows, fails on Linux)",
+                            relpath,
+                            line,
+                        )
                     )
-                )
+                else:
+                    results.append(
+                        (
+                            f"Undefined event '{eid}' referenced in on_action '{block_name}'",
+                            relpath,
+                            line,
+                        )
+                    )
 
         self._report(
             results,

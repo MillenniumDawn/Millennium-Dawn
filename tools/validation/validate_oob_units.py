@@ -1,36 +1,82 @@
 #!/usr/bin/env python3
-##########################
-# OOB Unit Name Validation Script
-# Validates that unit names used in OOB files, AI templates, and namelists
-# reference canonical sub-unit definitions from common/units/*.txt.
+# Validate that unit names in OOB files, AI templates, and namelists reference
+# canonical sub-unit definitions from common/units/*.txt, suggesting the closest
+# case-insensitive match for likely typos.
 #
-# Checks:
-#   1. Parses common/units/*.txt to build a set of canonical sub-unit names
-#   2. Parses history/units/*.txt to extract unit names from regiments/support blocks
-#   3. Parses common/ai_templates/*.txt and common/scripted_effects/00_AI_templates.txt
-#   4. Parses common/units/names/00_*_names.txt block keys (legacy namelist schema)
-#   5. Parses common/units/names_ships/*.txt ship_types arrays (modern namelist schema)
-#   6. Reports any reference not in the canonical set
-#   7. Suggests closest case-insensitive match for likely typos
-#
-# Note: namelist blocks accept both sub_unit names AND equipment-type names
-# (used by air namelists like small_plane_airframe). The canonical set for
+# Namelist blocks accept both sub_unit names AND equipment-type names (air
+# namelists use keys like small_plane_airframe), so the canonical set for
 # namelist validation extends the sub_unit set with equipment names extracted
 # from `need = { ... }` blocks inside sub_unit definitions.
-##########################
 import glob
 import os
 import re
+import sys
 from difflib import get_close_matches
 from typing import Dict, List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import disk_cache
 from validator_common import (
     BaseValidator,
-    Colors,
     Severity,
     run_validator_main,
     strip_comments,
 )
+
+
+def _parse_canonical_units_file(content: str) -> Set[str]:
+    """Extract canonical sub-unit names from one common/units/*.txt file's content.
+
+    Unit names are top-level identifiers inside sub_units = { ... } blocks.
+    """
+    canonical = set()
+    content = strip_comments(content)
+    lines = content.split("\n")
+    i = 0
+    in_sub_units = False
+    brace_depth = 0
+    unit_brace_depth = 0
+    in_unit_def = False
+
+    while i < len(lines):
+        line = lines[i].strip()
+
+        if not in_sub_units:
+            if re.match(r"^sub_units\s*=\s*\{", line):
+                in_sub_units = True
+                brace_depth = 1
+                i += 1
+                continue
+            i += 1
+            continue
+
+        # Count braces on this line
+        for ch in line:
+            if ch == "{":
+                brace_depth += 1
+            elif ch == "}":
+                brace_depth -= 1
+
+        if brace_depth <= 0:
+            in_sub_units = False
+            i += 1
+            continue
+
+        # At depth 1 inside sub_units, look for unit_name = {
+        if not in_unit_def:
+            match = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", line)
+            if match and brace_depth >= 2:
+                canonical.add(match.group(1))
+                in_unit_def = True
+                unit_brace_depth = brace_depth
+        else:
+            if brace_depth < unit_brace_depth:
+                in_unit_def = False
+
+        i += 1
+
+    return canonical
 
 
 def parse_canonical_units(mod_path: str) -> Set[str]:
@@ -48,50 +94,13 @@ def parse_canonical_units(mod_path: str) -> Set[str]:
         except Exception:
             continue
 
-        content = strip_comments(content)
-        lines = content.split("\n")
-        i = 0
-        in_sub_units = False
-        brace_depth = 0
-        unit_brace_depth = 0
-        in_unit_def = False
-
-        while i < len(lines):
-            line = lines[i].strip()
-
-            if not in_sub_units:
-                if re.match(r"^sub_units\s*=\s*\{", line):
-                    in_sub_units = True
-                    brace_depth = 1
-                    i += 1
-                    continue
-                i += 1
-                continue
-
-            # Count braces on this line
-            for ch in line:
-                if ch == "{":
-                    brace_depth += 1
-                elif ch == "}":
-                    brace_depth -= 1
-
-            if brace_depth <= 0:
-                in_sub_units = False
-                i += 1
-                continue
-
-            # At depth 1 inside sub_units, look for unit_name = {
-            if not in_unit_def:
-                match = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", line)
-                if match and brace_depth >= 2:
-                    canonical.add(match.group(1))
-                    in_unit_def = True
-                    unit_brace_depth = brace_depth
-            else:
-                if brace_depth < unit_brace_depth:
-                    in_unit_def = False
-
-            i += 1
+        canonical |= disk_cache.per_file_cached_by_content(
+            mod_path,
+            "oob_units.canonical",
+            filepath,
+            content,
+            lambda content=content: _parse_canonical_units_file(content),
+        )
 
     return canonical
 
@@ -117,19 +126,30 @@ def parse_canonical_namelist_keys(mod_path: str, sub_units: Set[str]) -> Set[str
                 content = f.read()
         except Exception:
             continue
-        content = strip_comments(content)
 
-        # Find each `need = { ... }` or `need_equipment = { ... }` block and
-        # extract `key = N` entries inside it. These are equipment-type names.
-        for match in re.finditer(
-            r"\b(?:need|need_equipment)\s*=\s*\{([^{}]*)\}", content
-        ):
-            for entry in re.finditer(
-                r"([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\d+", match.group(1)
-            ):
-                valid.add(entry.group(1))
+        valid |= disk_cache.per_file_cached_by_content(
+            mod_path,
+            "oob_units.equipment",
+            filepath,
+            content,
+            lambda content=content: _parse_equipment_names_file(content),
+        )
 
     return valid
+
+
+def _parse_equipment_names_file(content: str) -> Set[str]:
+    """Extract equipment-type names from `need`/`need_equipment` blocks in one file."""
+    equipment = set()
+    content = strip_comments(content)
+
+    # Find each `need = { ... }` or `need_equipment = { ... }` block and
+    # extract `key = N` entries inside it. These are equipment-type names.
+    for match in re.finditer(r"\b(?:need|need_equipment)\s*=\s*\{([^{}]*)\}", content):
+        for entry in re.finditer(r"([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\d+", match.group(1)):
+            equipment.add(entry.group(1))
+
+    return equipment
 
 
 def _extract_namelist_block_keys(content: str) -> Set[str]:
@@ -217,7 +237,15 @@ def parse_division_group_keys(mod_path: str) -> Set[str]:
                 content = f.read()
         except OSError:
             continue
-        keys |= _extract_division_group_keys(strip_comments(content))
+        keys |= disk_cache.per_file_cached_by_content(
+            mod_path,
+            "oob_units.div_group_keys",
+            filepath,
+            content,
+            lambda content=content: _extract_division_group_keys(
+                strip_comments(content)
+            ),
+        )
     return keys
 
 
@@ -326,43 +354,31 @@ def _check_refs(
 
 
 def validate_oob_file(
-    args: Tuple[str, Set[str], Dict[str, str]],
+    args: Tuple[str, Set[str], Dict[str, str], str],
 ) -> List[str]:
     """Validate a single OOB or AI template file. Returns list of error strings."""
-    filepath, canonical, canonical_lower = args
+    filepath, canonical, canonical_lower, mod_path = args
     filename = os.path.basename(filepath)
 
     try:
         with open(filepath, "r", encoding="utf-8-sig") as f:
-            content = f.read()
+            raw = f.read()
     except Exception:
         return []
 
-    content = strip_comments(content)
-    refs = _extract_unit_refs_from_blocks(content)
+    refs = disk_cache.per_file_cached_by_content(
+        mod_path,
+        "oob_units.oob_refs",
+        filepath,
+        raw,
+        lambda: _extract_unit_refs_from_blocks(strip_comments(raw)),
+    )
     return _check_refs(refs, canonical, canonical_lower, filename, "unit")
 
 
-def validate_namelist_file(
-    args: Tuple[str, Set[str], Dict[str, str]],
-) -> List[str]:
-    """Validate a single namelist file. Returns list of error strings.
-
-    Handles two schemas:
-      - 00_TAG_names.txt: block keys at depth 2 inside `TAG = { ... }`
-      - *_ship_names.txt: tokens inside `ship_types = { ... }` arrays
-    """
-    filepath, canonical, canonical_lower = args
-    filename = os.path.basename(filepath)
-
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            content = f.read()
-    except Exception:
-        return []
-
+def _parse_namelist_file(content: str, parent: str) -> Tuple[Set[str], str]:
+    """Parse one namelist file's content into (refs, label) given its parent dir."""
     content = strip_comments(content)
-    parent = os.path.basename(os.path.dirname(filepath))
 
     if parent == "names":
         refs = _extract_namelist_block_keys(content)
@@ -374,27 +390,66 @@ def validate_namelist_file(
         refs = _extract_division_types_tokens(content)
         label = "division_types token"
     else:
+        refs = set()
+        label = ""
+
+    return refs, label
+
+
+def validate_namelist_file(
+    args: Tuple[str, Set[str], Dict[str, str], str],
+) -> List[str]:
+    """Validate a single namelist file. Returns list of error strings.
+
+    Handles two schemas:
+      - 00_TAG_names.txt: block keys at depth 2 inside `TAG = { ... }`
+      - *_ship_names.txt: tokens inside `ship_types = { ... }` arrays
+    """
+    filepath, canonical, canonical_lower, mod_path = args
+    filename = os.path.basename(filepath)
+
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            raw = f.read()
+    except Exception:
+        return []
+
+    parent = os.path.basename(os.path.dirname(filepath))
+    refs, label = disk_cache.per_file_cached_by_content(
+        mod_path,
+        "oob_units.namelist",
+        filepath,
+        raw,
+        lambda: _parse_namelist_file(raw, parent),
+    )
+    if not label:
         return []
 
     return _check_refs(refs, canonical, canonical_lower, filename, label)
 
 
 def validate_oob_division_groups_file(
-    args: Tuple[str, Set[str], Dict[str, str]],
+    args: Tuple[str, Set[str], Dict[str, str], str],
 ) -> List[str]:
     """Check that every `division_names_group = X` ref points to a real group."""
-    filepath, group_keys, group_keys_lower = args
+    filepath, group_keys, group_keys_lower, mod_path = args
     filename = os.path.basename(filepath)
 
     try:
         with open(filepath, "r", encoding="utf-8-sig") as f:
-            content = f.read()
+            raw = f.read()
     except OSError:
         return []
 
-    content = strip_comments(content)
+    refs = disk_cache.per_file_cached_by_content(
+        mod_path,
+        "oob_units.div_group_refs",
+        filepath,
+        raw,
+        lambda: _extract_division_names_group_refs(strip_comments(raw)),
+    )
     results = []
-    for ref, line_no in _extract_division_names_group_refs(content):
+    for ref, line_no in refs:
         if ref in group_keys:
             continue
         msg = (
@@ -454,7 +509,9 @@ class Validator(BaseValidator):
         files = self._get_files_to_check()
         self.log(f"  Found {len(files)} files to check")
 
-        args_list = [(f, self.canonical, self.canonical_lower) for f in files]
+        args_list = [
+            (f, self.canonical, self.canonical_lower, self.mod_path) for f in files
+        ]
 
         all_results = self._pool_map(validate_oob_file, args_list, chunksize=20)
 
@@ -482,7 +539,8 @@ class Validator(BaseValidator):
         self.log(f"  Found {len(files)} namelist files to check")
 
         args_list = [
-            (f, self.namelist_canonical, self.namelist_canonical_lower) for f in files
+            (f, self.namelist_canonical, self.namelist_canonical_lower, self.mod_path)
+            for f in files
         ]
         all_results = self._pool_map(validate_namelist_file, args_list, chunksize=20)
 
@@ -513,7 +571,7 @@ class Validator(BaseValidator):
         files = self._collect_files(["history/units/*.txt"])
         self.log(f"  Found {len(files)} OOB files to check")
 
-        args_list = [(f, group_keys, group_keys_lower) for f in files]
+        args_list = [(f, group_keys, group_keys_lower, self.mod_path) for f in files]
         all_results = self._pool_map(
             validate_oob_division_groups_file, args_list, chunksize=20
         )

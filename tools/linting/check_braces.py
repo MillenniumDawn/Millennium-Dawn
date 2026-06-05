@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
-"""
-Check for missing or mismatched braces in HOI4 mod files.
-This script validates that all opening braces { have matching closing braces }.
-"""
+"""Check for missing or mismatched braces in HOI4 mod files."""
 
 import sys
 from pathlib import Path
 
 
 def check_braces(file_path):
-    """
-    Check if braces are properly matched in a file.
-
-    Returns:
-        tuple: (is_valid, errors) where is_valid is bool and errors is list of error messages
-    """
+    """Return (is_valid, errors) after verifying all { } are properly matched."""
     errors = []
 
     try:
@@ -29,7 +21,6 @@ def check_braces(file_path):
     except Exception as e:
         return False, [f"Error reading file: {e}"]
 
-    # Track brace depth and positions
     brace_stack = []
     line_num = 1
     col_num = 1
@@ -69,7 +60,6 @@ def check_braces(file_path):
             else:
                 brace_stack.pop()
 
-    # Check for unclosed braces
     if brace_stack:
         for line, col in brace_stack:
             errors.append(

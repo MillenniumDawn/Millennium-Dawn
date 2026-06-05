@@ -9,7 +9,6 @@ the summary table.
 """
 
 import json
-import os
 import re
 from pathlib import Path
 from typing import List, Optional, Tuple

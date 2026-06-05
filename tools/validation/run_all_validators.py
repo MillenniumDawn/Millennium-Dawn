@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-###############################################################################
-# Run all validation scripts in parallel (cross-platform)
-# Usage:
-#   python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
-###############################################################################
+# Run all validation scripts in parallel (cross-platform).
+# Usage: python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
 import argparse
 import glob
 import json
@@ -20,6 +17,15 @@ TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 _NON_VALIDATOR_SCRIPTS = frozenset(
     ("validate_tools.py", "validate_staged.py", "run_all_validators.py")
 )
+
+# Opt-in flags that only one validator understands, applied by its discovered
+# `name` (validate_ideas.py -> "ideas"). The suite is non-strict by default, so
+# these surface as warnings without gating. --missing-loc is intentionally left
+# off — its ~7.8k backlog would drown the report; run it on demand instead.
+_VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
+    "ideas": ["--missing-icons"],
+    "focus-tree": ["--missing-icons"],
+}
 
 
 def discover_validators() -> List[Tuple[str, str, str]]:
@@ -65,6 +71,11 @@ def launch_validator(
     script_path = os.path.join(SCRIPTS_DIR, script_name)
     output_path = os.path.join(output_dir, f"{name}.txt")
 
+    combined_flags: List[str] = []
+    for flag in extra_flags + _VALIDATOR_EXTRA_FLAGS.get(name, []):
+        if flag not in combined_flags:
+            combined_flags.append(flag)
+
     cmd = [
         sys.executable,
         script_path,
@@ -72,7 +83,7 @@ def launch_validator(
         mod_path,
         "--output",
         output_path,
-    ] + extra_flags
+    ] + combined_flags
 
     return subprocess.Popen(
         cmd,
@@ -96,6 +107,19 @@ def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
     return 0, 0
 
 
+def _issue_sort_key(issue: Dict):
+    line = issue.get("line", 0)
+    if not isinstance(line, int):
+        line = 0
+    return (
+        str(issue.get("file", "")),
+        line,
+        str(issue.get("severity", "")),
+        str(issue.get("category", "")),
+        str(issue.get("message", "")),
+    )
+
+
 def collect_all_issues(
     output_dir: str, validators: List[Tuple[str, str, str]]
 ) -> List[Dict]:
@@ -109,6 +133,11 @@ def collect_all_issues(
             try:
                 with open(json_path, "r", encoding="utf-8") as f:
                     issues = json.load(f)
+                    # Sort before the first-seen dedup: some validators emit
+                    # same-key (file/line/severity/category) issues in
+                    # nondeterministic order, which would otherwise make the
+                    # surviving representative vary between runs.
+                    issues.sort(key=_issue_sort_key)
                     for issue in issues:
                         key = (
                             issue.get("file", ""),

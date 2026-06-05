@@ -15,9 +15,7 @@ from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
-    compact_block,
     create_backup,
-    create_standard_parser,
     extract_block,
     log_message,
 )
@@ -31,14 +29,11 @@ def compact_search_filters(block_lines: List[str]) -> str:
     entities = []
     for line in block_lines:
         if "search_filters" in line and "{" in line:
-            # Get everything after the first '{'
             after_brace = line.split("{", 1)[1]
-            # Remove everything after '}' if present
             after_brace = after_brace.split("}", 1)[0]
             tokens = after_brace.strip().split()
             entities.extend(tokens)
         elif "}" in line:
-            # Get everything before '}'
             before_brace = line.split("}", 1)[0]
             tokens = before_brace.strip().split()
             entities.extend(tokens)
@@ -53,14 +48,14 @@ def compact_search_filters(block_lines: List[str]) -> str:
 def compact_icon(block_lines: List[str]) -> str:
     """Compact icon block into a single line, handling both simple strings and multi-line blocks"""
     if not block_lines:
-        return "icon = GFX_goal_generic_support_the_left_wing"  # Default fallback
+        return "icon = GFX_goal_generic_support_the_left_wing"
 
     if len(block_lines) == 1:
         return block_lines[0].strip()
 
     compacted_lines = []
     for line in block_lines:
-        if line.strip():  # Only keep non-empty lines
+        if line.strip():
             compacted_lines.append(line.rstrip())
 
     return "\n".join(compacted_lines)

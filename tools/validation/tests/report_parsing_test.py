@@ -8,7 +8,6 @@ These tests verify the improvements shipped in Layer C3:
 """
 
 import tempfile
-from pathlib import Path
 
 from validator_common import BaseValidator, Issue, Severity
 
@@ -193,12 +192,12 @@ def test_report_mixed_input_shapes():
         assert issue.line == expected[1]
 
 
-def test_report_without_category_does_not_persist():
-    """Pre-existing behavior: no category => logged but not stored.
+def test_report_persists_issues_without_category():
+    """Every finding is stored, category or not.
 
-    Pinned as a test so we don't accidentally change the contract; a future
-    refactor that lifts this restriction must update both the contract and
-    the test together.
+    Issues must reach the JSON sidecar (and the CI report built from it) even
+    when the caller omits a category — otherwise a _report call would fail the
+    build (errors_found increments) while contributing nothing to the report.
     """
     v = _make_validator()
     v._report(
@@ -207,7 +206,6 @@ def test_report_without_category_does_not_persist():
         fail_msg="Found issues:",
         severity=Severity.ERROR,
     )
-    # Counters still increment (the results are real failures) but
-    # the issues aren't in _issues since category is empty.
     assert v.errors_found == 1
-    assert v._issues == []
+    assert len(v._issues) == 1
+    assert v._issues[0].category == ""

@@ -293,7 +293,6 @@ def format_focus_offset_block(block_lines):
     lines = []
     lines.append("\t\toffset = {")
 
-    # Extract properties
     x_val = ""
     y_val = ""
     trigger_lines = []
@@ -317,7 +316,6 @@ def format_focus_offset_block(block_lines):
 
         i += 1
 
-    # Format output with 3-tab indentation for properties
     if x_val:
         lines.append(f"\t\t\t{x_val}")
     if y_val:
@@ -546,7 +544,6 @@ def format_shortcut_block(block_lines):
     lines = []
     lines.append("\tshortcut = {")
 
-    # Extract properties
     name = ""
     target = ""
     scroll_wheel_factor = ""
@@ -573,7 +570,6 @@ def format_shortcut_block(block_lines):
 
         i += 1
 
-    # Format output
     if name:
         lines.append(f"\t\t{name}")
     if target:
@@ -599,7 +595,6 @@ def format_inlay_window_block(block_lines):
     lines = []
     lines.append("\tinlay_window = {")
 
-    # Extract properties
     window_id = ""
     position_lines = []
     override_position_lines = []
@@ -626,7 +621,6 @@ def format_inlay_window_block(block_lines):
 
         i += 1
 
-    # Format output
     if window_id:
         lines.append(f"\t\t{window_id}")
 
@@ -653,7 +647,6 @@ def format_offset_block(block_lines):
     lines = []
     lines.append("\toffset = {")
 
-    # Extract properties
     x_val = ""
     y_val = ""
     trigger_lines = []
@@ -677,7 +670,6 @@ def format_offset_block(block_lines):
 
         i += 1
 
-    # Format output
     if x_val:
         lines.append(f"\t\t{x_val}")
     if y_val:
@@ -732,7 +724,6 @@ def format_initial_show_position_block(block_lines):
     lines = []
     lines.append("\tinitial_show_position = {")
 
-    # Extract properties
     x_val = ""
     y_val = ""
     focus_val = ""
@@ -772,18 +763,15 @@ def format_initial_show_position_block(block_lines):
 
         i += 1
 
-    # Format output - prefer single line if simple
+    # Prefer single-line output when the block has only simple coordinates.
     if focus_val and not x_val and not y_val and not offset_lines and not other_lines:
-        # Simple case: just focus reference
         return [f"\tinitial_show_position = {{ {focus_val} }}"]
 
     if x_val and y_val and not focus_val and not offset_lines and not other_lines:
-        # Simple case: just x/y coordinates
         x_num = x_val.split("=", 1)[1].strip()
         y_num = y_val.split("=", 1)[1].strip()
         return [f"\tinitial_show_position = {{ x = {x_num} y = {y_num} }}"]
 
-    # Multi-line format
     if x_val:
         lines.append(f"\t\t{x_val}")
     if y_val:

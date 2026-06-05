@@ -20,9 +20,6 @@ from typing import Dict, List, Optional, Tuple
 
 from .models import Issue, Severity, ValidatorRun
 
-# GitHub caps any single POST/PATCH at 50 annotations. We can break through
-# that by PATCHing additional batches, so the visible cap below is the only
-# project-level knob — bump it to surface more issues per Check Run.
 ANNOTATIONS_PER_REQUEST = 50  # GitHub API hard limit per POST/PATCH
 MAX_ANNOTATIONS_PER_CHECK = 100  # total kept; multiple of ANNOTATIONS_PER_REQUEST
 MAX_MESSAGE_CHARS = 64_000  # API cap on output.text
@@ -47,7 +44,6 @@ def post_checks(
     results: List[Tuple[str, bool, str]] = []
     for run in runs:
         annotations = _pick_annotations(run)
-        # First batch goes in the initial POST; remaining batches go in PATCHes.
         first_batch = annotations[:ANNOTATIONS_PER_REQUEST]
         remaining = annotations[ANNOTATIONS_PER_REQUEST:]
 
