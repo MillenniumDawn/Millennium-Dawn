@@ -38,7 +38,7 @@ description: Collection of knowledge-based resources for Millennium Dawn develop
 **Git & Workflow**
 
 - [Git Conflict Resolution & Best Practices](https://youtu.be/edoJhO7ZkCs) — Video walkthrough of solving git conflicts in the MD workflow
-- [Git Setup & Usage Guide](/player-tutorials/manual-install-instructions/) — On-site guide covering cloning, branches, commits, and pull requests
+- [Git Setup & Usage Guide](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) — Cloning, branches, commits, and pull requests
 
 **Graphics Requests**
 

@@ -18,6 +18,15 @@ _NON_VALIDATOR_SCRIPTS = frozenset(
     ("validate_tools.py", "validate_staged.py", "run_all_validators.py")
 )
 
+# Opt-in flags that only one validator understands, applied by its discovered
+# `name` (validate_ideas.py -> "ideas"). The suite is non-strict by default, so
+# these surface as warnings without gating. --missing-loc is intentionally left
+# off — its ~7.8k backlog would drown the report; run it on demand instead.
+_VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
+    "ideas": ["--missing-icons"],
+    "focus-tree": ["--missing-icons"],
+}
+
 
 def discover_validators() -> List[Tuple[str, str, str]]:
     """Return (name, script_name, label) for every validate_*.py in this dir."""
@@ -62,6 +71,11 @@ def launch_validator(
     script_path = os.path.join(SCRIPTS_DIR, script_name)
     output_path = os.path.join(output_dir, f"{name}.txt")
 
+    combined_flags: List[str] = []
+    for flag in extra_flags + _VALIDATOR_EXTRA_FLAGS.get(name, []):
+        if flag not in combined_flags:
+            combined_flags.append(flag)
+
     cmd = [
         sys.executable,
         script_path,
@@ -69,7 +83,7 @@ def launch_validator(
         mod_path,
         "--output",
         output_path,
-    ] + extra_flags
+    ] + combined_flags
 
     return subprocess.Popen(
         cmd,

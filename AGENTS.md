@@ -16,7 +16,7 @@ Validation runs on GitHub CI at PR time — don't run proactively. Standardizati
 
 Pre-commit and CI do not run the same hook set. Things that pass locally can still fail CI, and vice versa:
 
-- `coding_standards.py`, `check_basic_style.py`, `check_basic_style_2.py`, `check_common_mistakes.py` are `stages: [manual]` in pre-commit but **unconditional** in `.github/workflows/coding-pipeline.yml`. They will not run on `git commit`; they will run on PRs. To preview locally: `pre-commit run --hook-stage manual --files <paths>`.
+- `coding_standards.py`, `check_basic_style.py`, `check_common_mistakes.py` are `stages: [manual]` in pre-commit but **unconditional** in `.github/workflows/coding-pipeline.yml`. They will not run on `git commit`; they will run on PRs. To preview locally: `pre-commit run --hook-stage manual --files <paths>`.
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `check_braces.py`, `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land broken braces or BOM regressions.
 - `validate_defines.py` runs on pre-commit but is **skipped on CI** (needs the vanilla `00_defines.lua` not present in the runner). Dead-renamed defines slip through CI unless caught locally.
