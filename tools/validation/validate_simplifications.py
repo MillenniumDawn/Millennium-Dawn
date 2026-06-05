@@ -82,6 +82,15 @@ _FLAT_EQUIV = {
 }
 
 
+def _effectively_empty(body: str) -> bool:
+    """True when *body* contains only whitespace and line comments."""
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            return False
+    return True
+
+
 def _find_scope_expansion(text: str):
     """Return (line, tag, flat_form) for each `TAG = { single trigger }` block
     that collapses to a flat country trigger."""
@@ -132,7 +141,7 @@ def _find_two_bucket_random(text: str):
             if not _WEIGHT_RE.match(bm.group(1)):
                 malformed = True  # non-weight child: not a plain bucket list
                 break
-            buckets.append((float(bm.group(1)), bbody.strip() == ""))
+            buckets.append((float(bm.group(1)), _effectively_empty(bbody)))
             pos = bend
         if malformed or len(buckets) != 2:
             continue
