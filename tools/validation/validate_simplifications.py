@@ -16,7 +16,15 @@ Only deterministic scopes are flagged. Random scopes (`random_country`,
 `random_owned_state`, ...) pick a different target per block, iterators
 (`every_*`, `any_*`) iterate a set, and control-flow blocks (`if`, `limit`,
 `AND`, ...) are not scopes — merging any of those would change behaviour, so
-they are never suggested. Output is WARNING-only.
+they are never suggested.
+
+Three more collapses are flagged on top of the same-scope merge:
+
+  * two-bucket `random_list` with one empty bucket -> `random = { chance = N }`
+  * runs of identical adjacent `create_unit` blocks -> one block + `count = N`
+  * empty `visible` / `available` / `allowed` blocks -> delete (engine default)
+
+Output is WARNING-only.
 """
 import os
 import re
@@ -24,7 +32,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import extract_block_from_text, strip_comments
+# strip_comments is re-exported here so validate_simplifications_test can import it.
+from shared_utils import extract_block_from_text, strip_comments  # noqa: F401
 from validator_common import BaseValidator, Severity, run_validator_main
 
 _SCAN_PATTERNS = [
@@ -81,6 +90,15 @@ _FLAT_EQUIV = {
 }
 
 
+def _effectively_empty(body: str) -> bool:
+    """True when *body* contains only whitespace and line comments."""
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            return False
+    return True
+
+
 def _find_scope_expansion(text: str):
     """Return (line, tag, flat_form) for each `TAG = { single trigger }` block
     that collapses to a flat country trigger."""
@@ -131,7 +149,7 @@ def _find_two_bucket_random(text: str):
             if not _WEIGHT_RE.match(bm.group(1)):
                 malformed = True  # non-weight child: not a plain bucket list
                 break
-            buckets.append((float(bm.group(1)), bbody.strip() == ""))
+            buckets.append((float(bm.group(1)), _effectively_empty(bbody)))
             pos = bend
         if malformed or len(buckets) != 2:
             continue
@@ -145,6 +163,76 @@ def _find_two_bucket_random(text: str):
         chance = round(100 * non_empty[0] / total)
         line = text.count("\n", 0, m.start()) + 1
         results.append((line, chance))
+    return results
+
+
+# Runs of byte-identical adjacent `create_unit` blocks collapse to one block
+# with `count = N`. Only direct siblings (whitespace-only between them) are
+# flagged: blocks each wrapped in their own `123 = { }` / `random_owned_state`
+# scope are separated by braces, so they never match here — the state-id case is
+# already covered by the same-scope merge detector, and merging random scopes
+# would change the spawn target. Blocks that already carry their own `count` are
+# skipped so the suggested total is never wrong.
+_CREATE_UNIT_RE = re.compile(r"\bcreate_unit\s*=\s*\{")
+_HAS_COUNT_RE = re.compile(r"\bcount\s*=")
+
+
+def _find_count_collapsible(text: str):
+    """Return (line, run_len) for each run of 2+ identical adjacent create_unit
+    blocks that collapse into one block with `count = run_len`. *line* is the
+    first block in the run."""
+    results = []
+    pos = 0
+    run_start_line = None
+    run_norm = None
+    run_len = 0
+    prev_end = None
+
+    def flush():
+        if run_len >= 2:
+            results.append((run_start_line, run_len))
+
+    while True:
+        m = _CREATE_UNIT_RE.search(text, pos)
+        if not m:
+            break
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            break
+        has_count = bool(_HAS_COUNT_RE.search(body))
+        norm = None if has_count else re.sub(r"\s+", "", body)
+        line = text.count("\n", 0, m.start()) + 1
+        adjacent = prev_end is not None and text[prev_end : m.start()].strip() == ""
+        if adjacent and norm is not None and norm == run_norm:
+            run_len += 1
+        else:
+            flush()
+            run_start_line = line
+            run_norm = norm
+            run_len = 1
+        prev_end = end
+        pos = end
+    flush()
+    return results
+
+
+# Empty `visible` / `available` / `allowed` blocks fall through to the engine
+# default (visible, available, allowed), so an effectively-empty one is dead
+# weight that can be deleted outright.
+_EMPTY_BLOCK_RE = re.compile(r"\b(visible|available|allowed)\s*=\s*\{")
+
+
+def _find_empty_trigger_blocks(text: str):
+    """Return (line, keyword) for each effectively-empty visible/available/
+    allowed block."""
+    results = []
+    for m in _EMPTY_BLOCK_RE.finditer(text):
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            continue
+        if _effectively_empty(body):
+            line = text.count("\n", 0, m.start()) + 1
+            results.append((line, m.group(1)))
     return results
 
 
@@ -230,6 +318,18 @@ def _scan_file(text: str, path: str):
                 f"`random = {{ chance = {chance} ... }}`",
                 line,
             )
+        )
+    for line, run_len in _find_count_collapsible(text):
+        findings.append(
+            (
+                f"{run_len} identical adjacent `create_unit` blocks; collapse "
+                f"into one with `count = {run_len}`",
+                line,
+            )
+        )
+    for line, keyword in _find_empty_trigger_blocks(text):
+        findings.append(
+            (f"empty `{keyword} = {{ }}` block is redundant; remove it", line)
         )
     return findings
 

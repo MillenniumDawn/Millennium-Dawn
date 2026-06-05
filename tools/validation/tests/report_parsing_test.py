@@ -8,7 +8,6 @@ These tests verify the improvements shipped in Layer C3:
 """
 
 import tempfile
-from pathlib import Path
 
 from validator_common import BaseValidator, Issue, Severity
 

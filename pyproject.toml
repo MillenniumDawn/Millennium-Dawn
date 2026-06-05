@@ -1,0 +1,54 @@
+# Python tooling configuration for the Millennium Dawn `tools/` developer scripts.
+# This is NOT a package definition — the tools are run as scripts, not installed.
+# It centralizes pytest, ruff, black, and isort so the CLI, pre-commit hooks,
+# and CI all read the same settings.
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tools/tests",
+    "tools/report_lib/tests",
+    "tools/validation/tests",
+    "tools/linting/tests",
+]
+python_files = ["*_test.py"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+# E + F are pyflakes/pycodestyle defaults: undefined names, unused imports and
+# variables, bare excepts, broken format strings — real correctness signal.
+select = ["E", "F"]
+ignore = [
+    # The tools deliberately mutate sys.path before importing sibling modules
+    # (validation/, report_lib/). That idiom is repo-wide, not a mistake.
+    "E402",
+    # `l`, `I`, `O` single-letter names appear in tight loops throughout; not
+    # worth the churn of renaming.
+    "E741",
+    # Line length is black's responsibility — black intentionally leaves long
+    # strings, URLs, and comments unwrapped, so E501 is pure noise here.
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Standalone tkinter GUI uses the conventional `from tkinter import *`.
+"tools/assets/gfx_entry_generator_gui.py" = ["F403", "F405"]
+# Library/hub modules re-export a public API surface (e.g. validator_common
+# re-exports run_validator_main from shared_utils). pyflakes can't see the
+# downstream consumers and flags the imports as unused — never auto-strip them.
+"tools/shared_utils.py" = ["F401"]
+"tools/loc.py" = ["F401"]
+"tools/logging_tool.py" = ["F401"]
+"tools/path_utils.py" = ["F401"]
+"tools/standardization/common_utils.py" = ["F401"]
+"tools/validation/validator_common.py" = ["F401"]
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+line_length = 88

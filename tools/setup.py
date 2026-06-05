@@ -25,7 +25,6 @@ Run this after cloning the repo. It will:
 """
 
 import os
-import shutil
 import subprocess
 import sys
 import sysconfig
@@ -424,7 +423,8 @@ def main() -> None:
             "  git commit                               Pre-commit hooks run automatically"
         )
         print("  python3 tools/run.py --list              See available dev tools")
-        print("  pytest tools/report_lib tools/validation Run tool test suite")
+        print("  pytest                                   Run tool test suite")
+        print("  ruff check tools                         Lint the tool scripts")
         if args.docs:
             print("  cd docs && bun run dev                   Preview docs site")
     else:

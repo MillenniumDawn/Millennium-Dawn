@@ -315,7 +315,7 @@ instant_effect = {
             creator = "UKR"
             version_name = "Grisha V Class"
         }
-        requested_factories = 0      # 0 = paused
+        requested_factories = 1      # 0 = paused
         progress = 0.80              # 80% complete
         efficiency = 30
         amount = 1

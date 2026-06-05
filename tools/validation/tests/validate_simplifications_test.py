@@ -7,6 +7,8 @@ under OR / random_list / count_triggers, and never for non-deterministic
 """
 
 from validate_simplifications import (
+    _find_count_collapsible,
+    _find_empty_trigger_blocks,
     _find_mergeable,
     _find_scope_expansion,
     _find_two_bucket_random,
@@ -24,6 +26,14 @@ def _expansion(text):
 
 def _random(text):
     return [chance for _, chance in _find_two_bucket_random(strip_comments(text))]
+
+
+def _count(text):
+    return [(line, n) for line, n in _find_count_collapsible(strip_comments(text))]
+
+
+def _empty(text):
+    return [kw for _, kw in _find_empty_trigger_blocks(strip_comments(text))]
 
 
 # --- scope-merge: positive cases -------------------------------------------
@@ -164,3 +174,86 @@ def test_three_buckets_not_flagged():
 
 def test_both_empty_not_flagged():
     assert _random("random_list = { 50 = {} 50 = {} }\n") == []
+
+
+# --- identical adjacent create_unit -> count -------------------------------
+
+
+def test_two_identical_create_units_collapse():
+    text = (
+        'create_unit = { division = "x" owner = ALG }\n'
+        'create_unit = { division = "x" owner = ALG }\n'
+    )
+    assert _count(text) == [(1, 2)]
+
+
+def test_three_identical_create_units_collapse_to_count_3():
+    body = 'create_unit = { division = "x" owner = RAJ }\n'
+    assert _count(body * 3) == [(1, 3)]
+
+
+def test_whitespace_only_difference_still_collapses():
+    text = (
+        'create_unit = {\n  division = "x"\n  owner = ALG\n}\n'
+        'create_unit = { division = "x" owner = ALG }\n'
+    )
+    assert _count(text) == [(1, 2)]
+
+
+def test_different_division_does_not_collapse():
+    text = (
+        'create_unit = { division = "x" owner = ALG }\n'
+        'create_unit = { division = "y" owner = ALG }\n'
+    )
+    assert _count(text) == []
+
+
+def test_state_wrapped_create_units_not_flagged_here():
+    # Each create_unit lives in its own state scope -> braces separate them, so
+    # the count detector skips it (the state-id merge detector covers this).
+    text = (
+        '410 = { create_unit = { division = "x" owner = AFG } }\n'
+        '410 = { create_unit = { division = "x" owner = AFG } }\n'
+    )
+    assert _count(text) == []
+
+
+def test_intervening_effect_breaks_run():
+    text = (
+        'create_unit = { division = "x" owner = ALG }\n'
+        "set_temp_variable = { t = 1 }\n"
+        'create_unit = { division = "x" owner = ALG }\n'
+    )
+    assert _count(text) == []
+
+
+def test_blocks_with_own_count_not_flagged():
+    text = (
+        'create_unit = { division = "x" owner = ALG count = 1 }\n'
+        'create_unit = { division = "x" owner = ALG count = 1 }\n'
+    )
+    assert _count(text) == []
+
+
+# --- empty visible / available / allowed -----------------------------------
+
+
+def test_empty_visible_flagged():
+    assert _empty("visible = { }\n") == ["visible"]
+
+
+def test_empty_available_multiline_flagged():
+    assert _empty("available = {\n\n}\n") == ["available"]
+
+
+def test_empty_block_with_only_comment_flagged():
+    assert _empty("visible = {\n\t# todo\n}\n") == ["visible"]
+
+
+def test_nonempty_visible_not_flagged():
+    assert _empty("visible = { has_country_flag = x }\n") == []
+
+
+def test_other_empty_blocks_not_flagged():
+    # Only visible/available/allowed are safe to delete; limit/trigger are not.
+    assert _empty("limit = { }\ntrigger = { }\n") == []

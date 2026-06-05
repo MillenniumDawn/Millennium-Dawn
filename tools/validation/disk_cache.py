@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, List, Optional, Tuple
 
 # Bump to invalidate every entry after a schema change.
-CACHE_VERSION = 3
+CACHE_VERSION = 4
 
 _CACHE_DIR_NAME = ".validation_cache"
 _PICKLE_ERRORS = (FileNotFoundError, EOFError, pickle.UnpicklingError, OSError)

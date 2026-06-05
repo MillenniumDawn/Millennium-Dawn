@@ -19,7 +19,6 @@ from shared_utils import extract_block_from_text
 from validator_common import (
     KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
-    Colors,
     FileOpener,
     run_validator_main,
     should_skip_file,

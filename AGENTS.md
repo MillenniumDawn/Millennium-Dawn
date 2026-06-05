@@ -32,7 +32,7 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 
 - Tabs for indentation; `{` on same line, `}` on own line at outer indent; 1 blank line between elements
 - Simple checks on one line: `available = { has_country_flag = some_flag }`
-- Comments are small, targeted, and load-bearing: add one only when the _why_ is non-obvious and removing it would lose real information. Cut anything that restates the code, narrates a change, or points at callers (see `.claude/rules/general-rules.md`; Python tooling: `tools/COMMENT_STYLE.md`)
+- Comments are small, targeted, and load-bearing: add one only when the _why_ is non-obvious and removing it would lose real information, and keep it to a single line. Cut anything that restates the code, narrates a change, points at callers, or justifies a mechanic in flavour prose (see `.claude/rules/general-rules.md`; Python tooling: `tools/COMMENT_STYLE.md`)
 - Remove unused/commented-out code
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`)

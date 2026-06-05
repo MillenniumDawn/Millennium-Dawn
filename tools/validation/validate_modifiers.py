@@ -9,7 +9,7 @@ import os
 import re
 import sys
 from collections import Counter
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -266,7 +266,6 @@ def _extract_modifier_names_from_body(body: str) -> List[str]:
     names: List[str] = []
     # Only look at top-level keys in the body (depth 0)
     depth = 0
-    in_string = False
     lines = body.split("\n")
     for line in lines:
         stripped = line.strip()

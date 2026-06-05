@@ -6,9 +6,9 @@ import difflib
 import glob
 import os
 import re
-from typing import Dict, List, Set, Tuple
+from typing import List, Set, Tuple
 
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+from validator_common import BaseValidator, run_validator_main, strip_comments
 
 # Regex to match role definitions: role = <name>
 ROLE_DEF_RE = re.compile(r"role\s*=\s*(\w+)")
