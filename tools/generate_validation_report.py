@@ -97,6 +97,7 @@ def main() -> int:
         workflow_run_url=args.workflow_run_url,
         artifact_url=args.artifact_url,
         date_utc=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        repo=args.github_repository,
     )
 
     body, step_body, runs, deduped, truncated = build_report(args.results_dir, ctx)
@@ -172,8 +173,15 @@ def main() -> int:
                 args.github_token,
             )
             (print if success else _err)(f"PR comment: {message}")
+            # A read-only GITHUB_TOKEN (fork PRs get one regardless of the
+            # workflow's permissions block) can't post comments. Don't fail the
+            # job over it — the report still uploads as an artifact. Mirrors the
+            # Checks API handling below.
             if not success:
-                return 1
+                _err(
+                    "PR comment could not be posted; continuing. "
+                    "See the validation-report artifact for the full report."
+                )
 
         if args.checks_api:
             if not args.commit_sha:

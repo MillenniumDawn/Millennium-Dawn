@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import os
 import shutil
-from tokenize import Ignore
 
 #############################1
 ###

@@ -16,7 +16,7 @@ Validation runs on GitHub CI at PR time — don't run proactively. Standardizati
 
 Pre-commit and CI do not run the same hook set. Things that pass locally can still fail CI, and vice versa:
 
-- `coding_standards.py`, `check_basic_style.py`, `check_basic_style_2.py`, `check_common_mistakes.py` are `stages: [manual]` in pre-commit but **unconditional** in `.github/workflows/coding-pipeline.yml`. They will not run on `git commit`; they will run on PRs. To preview locally: `pre-commit run --hook-stage manual --files <paths>`.
+- `coding_standards.py`, `check_basic_style.py`, `check_common_mistakes.py` are `stages: [manual]` in pre-commit but **unconditional** in `.github/workflows/coding-pipeline.yml`. They will not run on `git commit`; they will run on PRs. To preview locally: `pre-commit run --hook-stage manual --files <paths>`.
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `check_braces.py`, `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land broken braces or BOM regressions.
 - `validate_defines.py` runs on pre-commit but is **skipped on CI** (needs the vanilla `00_defines.lua` not present in the runner). Dead-renamed defines slip through CI unless caught locally.
@@ -32,7 +32,7 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 
 - Tabs for indentation; `{` on same line, `}` on own line at outer indent; 1 blank line between elements
 - Simple checks on one line: `available = { has_country_flag = some_flag }`
-- Comments are small, targeted, and load-bearing: add one only when the _why_ is non-obvious and removing it would lose real information. Cut anything that restates the code, narrates a change, or points at callers (see `.claude/rules/general-rules.md`; Python tooling: `tools/COMMENT_STYLE.md`)
+- Comments are small, targeted, and load-bearing: add one only when the _why_ is non-obvious and removing it would lose real information, and keep it to a single line. Cut anything that restates the code, narrates a change, points at callers, or justifies a mechanic in flavour prose (see `.claude/rules/general-rules.md`; Python tooling: `tools/COMMENT_STYLE.md`)
 - Remove unused/commented-out code
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`)

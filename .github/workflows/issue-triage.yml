@@ -1,0 +1,78 @@
+name: Issue Triage
+
+on:
+  issues:
+    types: [opened, transferred]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+    permissions: {}  # PROJECT_PAT does the work; GITHUB_TOKEN needs no permissions
+    steps:
+      - uses: actions/add-to-project@5afcf98fcd03f1c2f92c3c83f58ae24323cc57fd # v2.0.0
+        with:
+          project-url: https://github.com/orgs/MillenniumDawn/projects/3
+          github-token: ${{ secrets.PROJECT_PAT }}
+
+  default-type:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Default issue type to Task
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              const issue = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+
+              if (issue.data.type) {
+                console.log(`Issue #${context.issue.number} already has type: ${issue.data.type.name}`);
+                return;
+              }
+
+              // The discord-bug-bot types its own issues at creation time. If a
+              // bot marker label is present, leave typing to it rather than
+              // racing to stamp Task on a half-created issue.
+              const labels = (issue.data.labels || []).map(l => (typeof l === 'string' ? l : l.name));
+              if (labels.includes('from-discord')) {
+                console.log(`Issue #${context.issue.number} is bot-owned (from-discord); leaving type to the bot.`);
+                return;
+              }
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                type: 'Task',
+              });
+
+              console.log(`Set type to Task on issue #${context.issue.number}`);
+            } catch (err) {
+              core.warning(`default-type skipped for #${context.issue.number}: ${err.message}`);
+            }
+
+  milestone:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Checkout composite action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
+      - uses: ./.github/actions/assign-milestone
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

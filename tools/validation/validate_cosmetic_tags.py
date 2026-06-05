@@ -99,7 +99,7 @@ def process_file_for_has_cosmetic_tag_lookup(args: Tuple[str, frozenset]) -> Set
     if _should_skip(filename):
         return set()
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return set()
     cleaned = re.sub(r"#[^\n]*", "", text)
@@ -115,7 +115,7 @@ def process_file_for_cosmetic_tag_in_loc(args: Tuple[str, frozenset]) -> Dict[st
     if _should_skip(filename):
         return {}
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)

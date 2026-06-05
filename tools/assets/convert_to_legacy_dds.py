@@ -83,7 +83,6 @@ def convert_dds_to_legacy(input_path: str, output_path: str | None = None) -> bo
         return False
 
     # ---- check pixel-format block ----------------------------------------- #
-    pf_flags = struct.unpack_from("<I", raw, 80)[0]
     pf_fourcc = struct.unpack_from("<I", raw, 84)[0]
 
     # --- already legacy? --------------------------------------------------- #

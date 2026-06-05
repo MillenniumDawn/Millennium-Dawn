@@ -1,33 +1,22 @@
 #!/usr/bin/env python3
-##########################
-# Event Validation Script (Multiprocessing Optimized)
-# Validates event definitions for common issues
-# Checks for:
-#   1. Events with unsupported title/desc combinations
-#      (having both block { } and inline value for title or desc)
-#   2. Events missing is_triggered_only = yes
-#   3. Redundant long-form event calls (id-only)
-#   4. Triggered-only events never referenced
-#   5. Missing localisation keys
-#   6. news_event without major = yes (fires for only one country)
-#   7. news_event with fire_only_once = yes + major (only one country sees it)
-#   8. mean_time_to_happen with is_triggered_only (MTTH does nothing)
-#   9. Duplicate event IDs
-#  10. Event namespace not declared via add_namespace
-#  11. Hidden events carrying option blocks (should run from immediate)
-#  12. Hidden events carrying pointless localisation (never displayed)
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Adapted for Millennium Dawn with multiprocessing
-##########################
+"""Validate event definitions in Millennium Dawn.
+
+Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
+adapted for Millennium Dawn with multiprocessing.
+"""
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import extract_block_from_text
+from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
-    Colors,
     FileOpener,
     Severity,
     run_validator_main,
@@ -40,9 +29,30 @@ _LONG_FORM_PATTERN = re.compile(
     r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )
 
+# Event picture: `picture = GFX_xxx` (always GFX_-prefixed, resolves to that
+# sprite). Sprite names may contain `.` (frame suffixes like GFX_CTC.5) and `-`
+# (e.g. GFX_Polizistin-Kiesewetter), so both are part of the captured name.
+_EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_.\-]+)"?')
+
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+
+
+def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: return (sprite, filename, line) for each event picture ref."""
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    text = re.sub(r"#[^\n]*", "", text)
+    out: List[Tuple[str, str, int]] = []
+    for m in _EVENT_PICTURE_REF.finditer(text):
+        line = text.count("\n", 0, m.start()) + 1
+        out.append((m.group(1), filename, line))
+    return out
 
 
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
@@ -55,7 +65,7 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     if _should_skip(filename):
         return {}
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
@@ -72,7 +82,7 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
     if _should_skip(filename):
         return []
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return []
     cleaned = re.sub(r"#[^\n]*", "", text)
@@ -148,16 +158,7 @@ def _extract_random_event_ids(text: str) -> set:
     """
     ids: set = set()
     for m in _RANDOM_EVENTS_PATTERN.finditer(text):
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        body = text[start : i - 1]
+        body, _ = extract_block_from_text(text, m.end() - 1)
         for id_match in _RANDOM_EVENT_ID_PATTERN.finditer(body):
             ids.add(id_match.group(1))
     return ids
@@ -168,16 +169,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
     meta: List[dict] = []
     for m in _EVENT_TYPE_PATTERN.finditer(text):
         event_type = m.group(1)
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        body = text[start : i - 1]
+        body, _ = extract_block_from_text(text, m.end() - 1)
 
         id_match = _EVENT_ID_PATTERN.search(body)
         if not id_match:
@@ -620,6 +612,65 @@ class Validator(BaseValidator):
             category="namespace-mismatch",
         )
 
+    def validate_event_pictures(self):
+        """Flag events whose `picture = GFX_x` sprite is not MD-defined.
+
+        An event's picture resolves directly to the named sprite. MD events must
+        not rely on vanilla event pictures, so this checks against the mod's own
+        interface/*.gfx only (no vanilla) — which also keeps it accurate in CI,
+        where the vanilla install is absent. A missing sprite renders a blank
+        picture box, so it is an error.
+        """
+        self._log_section("Checking for events with missing pictures...")
+
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+
+        # Built sequentially (no pool_map): scanning ~150 .gfx files takes well
+        # under a second, and a sequential read can't be left empty by a pool
+        # worker that fails to start under the 'spawn' start method.
+        sprites = build_sprite_index(
+            self.mod_path,
+            gfx_only=True,
+            include_vanilla=False,
+        )
+        # Sanity guard: the mod defines tens of thousands of GFX sprites. If the
+        # index comes back near-empty, sprite definitions failed to load (wrong
+        # path, unreadable interface/*.gfx, a broken pool worker) — flagging
+        # every picture as missing would be thousands of false errors. Skip
+        # loudly instead so a load failure can't break CI or a commit.
+        if len(sprites) < 1000:
+            self.log(
+                f"  Only {len(sprites)} GFX sprites loaded from "
+                f"{os.path.join(self.mod_path, 'interface')}/*.gfx — sprite "
+                "definitions did not load; skipping the picture check",
+                "warning",
+            )
+            return
+        refs = self._pool_map(_extract_event_pictures, files)
+
+        results: List[str] = []
+        seen: Set[Tuple[str, str, int]] = set()
+        for sub in refs:
+            for sprite, filename, line in sub:
+                if sprite in sprites:
+                    continue
+                key = (sprite, filename, line)
+                if key in seen:
+                    continue
+                seen.add(key)
+                results.append(f"{os.path.basename(filename)}:{line} - {sprite}")
+
+        self._report(
+            sorted(results),
+            "✓ All event pictures are MD-defined",
+            "Events with missing pictures (picture sprite not defined in the mod's interface/*.gfx; MD must not use vanilla event pictures):",
+            severity=Severity.ERROR,
+            category="missing-event-picture",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
@@ -632,6 +683,7 @@ class Validator(BaseValidator):
         self.validate_hidden_event_localisation()
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
+        self.validate_event_pictures()
 
 
 if __name__ == "__main__":

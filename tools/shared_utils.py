@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-Shared utilities for Millennium Dawn tools
-Common functionality shared between standardization and validation tools
-"""
+"""Shared utilities for Millennium Dawn tools (standardization and validation)."""
 
 import argparse
 import bisect
@@ -17,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-# Color coding for different log levels
 COLORS = {
     "SUCCESS": "\033[92m",  # Green
     "INFO": "\033[94m",  # Blue
@@ -92,7 +88,7 @@ def create_validation_parser(description: str) -> argparse.ArgumentParser:
         "--workers",
         type=int,
         default=None,
-        help=f"Number of worker processes (default: auto-detect)",
+        help="Number of worker processes (default: auto-detect)",
     )
     return parser
 
@@ -122,6 +118,37 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
         i += 1
 
     return block_lines, i  # position AFTER the block, not i-1
+
+
+def extract_block_from_text(text: str, start: int) -> Tuple[str, int]:
+    """Char-accurate brace-block extractor for raw text.
+
+    Returns ``(body, end_pos)`` where *body* is the text between the matching
+    braces and *end_pos* is the index just past the closing ``}``. Braces
+    inside double-quoted strings are ignored. Returns ``("", -1)`` when no
+    opening brace is found or the block never balances.
+    """
+    open_pos = text.find("{", start)
+    if open_pos == -1:
+        return "", -1
+    n = len(text)
+    body_start = open_pos + 1
+    depth = 1
+    i = body_start
+    in_str = False
+    while i < n:
+        c = text[i]
+        if c == '"' and text[i - 1] != "\\":
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[body_start:i], i + 1
+        i += 1
+    return "", -1
 
 
 def compact_block(block_lines: List[str]) -> List[str]:
@@ -172,6 +199,124 @@ def should_skip_file(
     return False
 
 
+# Common Hearts of Iron IV install locations, checked when a validator needs
+# vanilla game files (defines, interface, gfx) that the mod doesn't ship.
+HOI4_INSTALL_PATHS = [
+    # Linux (Steam)
+    os.path.expanduser(
+        "~/.steam/debian-installation/steamapps/common/Hearts of Iron IV"
+    ),
+    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
+    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
+    # Windows (Steam)
+    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
+    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
+    # macOS (Steam)
+    os.path.expanduser(
+        "~/Library/Application Support/Steam/steamapps/common/Hearts of Iron IV"
+    ),
+    # Windows (GOG)
+    "C:/GOG Games/Hearts of Iron IV",
+    "C:/Program Files (x86)/GOG Galaxy/Games/Hearts of Iron IV",
+]
+
+
+def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
+    """Return the first existing HOI4 install root, checking explicit_path, $HOI4_PATH, then HOI4_INSTALL_PATHS."""
+    candidates: List[str] = []
+    if explicit_path:
+        candidates.append(explicit_path)
+    env_path = os.environ.get("HOI4_PATH")
+    if env_path:
+        candidates.append(env_path)
+    candidates.extend(HOI4_INSTALL_PATHS)
+    for base in candidates:
+        if base and os.path.isdir(base):
+            return base
+    return None
+
+
+def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
+    """Parse common/idea_tags/*.txt and return every idea category in order.
+
+    Returns a list of dicts (definition order preserved) with keys:
+    `name`, `hidden` (bool), `has_slot` (bool), `has_char_slot` (bool),
+    `type` (str or None — e.g. national_spirit, army_spirit).
+
+    Definition order matters: the engine assigns each politics-view category
+    icon a frame of GFX_idea_categories by the order it appears here.
+
+    Args:
+        mod_root: Path to the mod root (auto-detected if None).
+    """
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+
+    tags_dir = os.path.join(mod_root, "common", "idea_tags")
+    if not os.path.isdir(tags_dir):
+        return []
+
+    out: List[Dict] = []
+
+    for fname in sorted(os.listdir(tags_dir)):
+        if not fname.endswith(".txt"):
+            continue
+        fpath = os.path.join(tags_dir, fname)
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                text = re.sub(r"#.*", "", f.read())
+        except Exception:
+            continue
+
+        m = re.search(r"idea_categories\s*=\s*\{", text)
+        if not m:
+            continue
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            i += 1
+        cat_block = text[start : i - 1] if depth == 0 else text[start:]
+
+        pos = 0
+        while True:
+            cat_m = re.search(r"(\w+)\s*=\s*\{", cat_block[pos:])
+            if not cat_m:
+                break
+            cat_name = cat_m.group(1)
+            cat_start = pos + cat_m.end()
+            cat_depth = 1
+            cat_i = cat_start
+            while cat_i < len(cat_block) and cat_depth > 0:
+                if cat_block[cat_i] == "{":
+                    cat_depth += 1
+                elif cat_block[cat_i] == "}":
+                    cat_depth -= 1
+                cat_i += 1
+            cat_body = (
+                cat_block[cat_start : cat_i - 1]
+                if cat_depth == 0
+                else cat_block[cat_start:]
+            )
+            type_m = re.search(r"\btype\s*=\s*(\w+)", cat_body)
+            out.append(
+                {
+                    "name": cat_name,
+                    "hidden": bool(re.search(r"\bhidden\s*=\s*yes\b", cat_body)),
+                    "has_slot": bool(re.search(r"\bslot\s*=", cat_body)),
+                    "has_char_slot": bool(re.search(r"\bcharacter_slot\s*=", cat_body)),
+                    "type": type_m.group(1) if type_m else None,
+                }
+            )
+            pos = cat_i
+
+    return out
+
+
 def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
     """Parse common/idea_tags/*.txt and return non-selectable idea category names.
 
@@ -186,70 +331,11 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
     Returns:
         frozenset of non-selectable category names (e.g. {'country', 'hidden_ideas'}).
     """
-    if mod_root is None:
-        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
-
-    tags_dir = os.path.join(mod_root, "common", "idea_tags")
-    if not os.path.isdir(tags_dir):
-        return frozenset({"country", "hidden_ideas"})
-
-    categories: Set[str] = set()
-
-    for fname in os.listdir(tags_dir):
-        if not fname.endswith(".txt"):
-            continue
-        fpath = os.path.join(tags_dir, fname)
-        try:
-            with open(fpath, "r", encoding="utf-8") as f:
-                text = f.read()
-                text = re.sub(r"#.*", "", text)
-        except Exception:
-            continue
-
-        m = re.search(r"idea_categories\s*=\s*\{", text)
-        if not m:
-            continue
-        start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-                i += 1
-            elif text[i] == "}":
-                depth -= 1
-                i += 1
-            else:
-                i += 1
-        cat_block = text[start : i - 1] if depth == 0 else text[start:]
-
-        for cat_m in re.finditer(r"(\w+)\s*=\s*\{", cat_block):
-            cat_name = cat_m.group(1)
-            cat_start = cat_m.end()
-            cat_depth = 1
-            cat_i = cat_start
-            while cat_i < len(cat_block) and cat_depth > 0:
-                if cat_block[cat_i] == "{":
-                    cat_depth += 1
-                    cat_i += 1
-                elif cat_block[cat_i] == "}":
-                    cat_depth -= 1
-                    cat_i += 1
-                else:
-                    cat_i += 1
-            cat_body = (
-                cat_block[cat_start : cat_i - 1]
-                if cat_depth == 0
-                else cat_block[cat_start:]
-            )
-
-            has_hidden = bool(re.search(r"\bhidden\s*=\s*yes\b", cat_body))
-            has_slot = bool(re.search(r"\bslot\s*=", cat_body))
-            has_char_slot = bool(re.search(r"\bcharacter_slot\s*=", cat_body))
-
-            if has_hidden or (not has_slot and not has_char_slot):
-                categories.add(cat_name)
-
+    categories = {
+        c["name"]
+        for c in get_all_idea_categories(mod_root)
+        if c["hidden"] or (not c["has_slot"] and not c["has_char_slot"])
+    }
     return (
         frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
     )
@@ -272,7 +358,7 @@ def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int
 
 
 def strip_comments(text: str) -> str:
-    """Remove comment-only lines and inline comments from text"""
+    """Remove comment-only lines and inline comments from text."""
     lines = text.split("\n")
     result = []
     for line in lines:
@@ -280,7 +366,6 @@ def strip_comments(text: str) -> str:
         if stripped.startswith("#"):
             result.append("")
             continue
-        # Strip inline comments, ignoring '#' inside quoted strings.
         in_quote = False
         for i, ch in enumerate(line):
             if ch == '"':
@@ -300,8 +385,11 @@ class FileOpener:
 
     @classmethod
     def open_text_file(
-        cls, filename: str, lowercase: bool = True, strip_comments_flag: bool = False
+        cls, filename: str, lowercase: bool = False, strip_comments_flag: bool = False
     ) -> str:
+        # Linux-first default: HOI4 is case-sensitive on Linux, so validators
+        # must match and report the exact case as written. Pass lowercase=True
+        # only for deliberately case-insensitive lookups.
         cache_key = (filename, lowercase, strip_comments_flag)
         cached = cls._cache.get(cache_key)
         if cached is not None:
@@ -369,23 +457,13 @@ class DataCleaner:
             return input_iter
 
 
-# Timing utilities
-
-
 def timing_enabled() -> bool:
     """Return True unless MD_TIMING=0 is explicitly set."""
     return os.environ.get("MD_TIMING", "1") != "0"
 
 
 class Timer:
-    """Lightweight timer that prints elapsed time to stderr.
-
-    Enabled by default. Suppress with MD_TIMING=0.
-
-    Usage:
-        with Timer("file collection"):
-            files = collect(...)
-    """
+    """Lightweight timer that prints elapsed time to stderr. Suppress with MD_TIMING=0."""
 
     def __init__(self, label: str, enabled: Optional[bool] = None):
         self.label = label
@@ -445,7 +523,7 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     total = sum(t for _, t in timings)
     max_label = max(len(label) for label, _ in timings)
     print(f"\n\033[90m{'─' * (max_label + 18)}", file=sys.stderr)
-    print(f"  Timing summary:", file=sys.stderr)
+    print("  Timing summary:", file=sys.stderr)
     for label, elapsed in timings:
         bar_len = int(elapsed / total * 20) if total > 0 else 0
         bar = "█" * bar_len + "░" * (20 - bar_len)
@@ -457,19 +535,12 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     print(f"{'─' * (max_label + 18)}\033[0m", file=sys.stderr)
 
 
-# Linting script helpers: shared argparse, file collection, pool dispatch.
-
-
 def create_linting_parser(
     description: str,
     include_diff: bool = True,
     extra_args_fn=None,
 ) -> argparse.ArgumentParser:
-    """Standard argument parser for linting scripts.
-
-    Provides --mode, --base-branch, --files, --workers, and positional
-    filenames. Scripts can add custom arguments via extra_args_fn(parser).
-    """
+    """Standard argument parser for linting scripts. Custom args via extra_args_fn(parser)."""
     parser = argparse.ArgumentParser(description=description)
     modes = ["all", "staged"]
     if include_diff:
@@ -478,7 +549,7 @@ def create_linting_parser(
         "--mode",
         choices=modes,
         default="all",
-        help=f"Check mode (default: all)",
+        help="Check mode (default: all)",
     )
     if include_diff:
         parser.add_argument(
@@ -510,11 +581,7 @@ def collect_files_by_mode(
     root_dir: str,
     include_interface: bool = False,
 ) -> List[str]:
-    """Collect files based on parsed --mode / --files / positional args.
-
-    Returns a list of existing file paths, or an empty list if nothing
-    matched. Prints diagnostics for missing files.
-    """
+    """Collect files based on parsed --mode / --files / positional args."""
     if getattr(args, "filenames", None):
         files_list = args.filenames
     elif getattr(args, "files", None):

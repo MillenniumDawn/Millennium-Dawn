@@ -1,33 +1,12 @@
 #!/usr/bin/env python3
-"""
-Line Ending Normalizer
+"""Fix mixed line endings by converting CRLF to LF."""
 
-This script fixes mixed line endings by converting CRLF to LF for consistency
-across development platforms.
-
-Usage:
-    python fix_line_endings.py [files...]
-
-Arguments:
-    files: List of files to normalize line endings for
-"""
-
-import os
 import sys
 from pathlib import Path
-from typing import List
 
 
 def fix_line_endings(file_path: Path) -> bool:
-    """
-    Fix line endings in a single file by converting CRLF to LF.
-
-    Args:
-        file_path: Path to the file to fix
-
-    Returns:
-        True if file was modified, False if no changes needed
-    """
+    """Return True if the file was modified (CRLF -> LF), False if unchanged."""
     try:
         if not file_path.is_file():
             print(f"⚠️  {file_path}: Not a file, skipping")

@@ -61,7 +61,7 @@ GFX_NAME_RE = re.compile(r'name\s*=\s*"(GFX_\w+)"')
 
 def _read(path: Path) -> str:
     try:
-        return path.read_text(encoding="utf-8-sig", errors="ignore")
+        return path.read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return ""
 
@@ -97,7 +97,7 @@ def process_file_for_agency_calls(args):
     """Return (create_icons, upgrade_calls) as lists of (relpath, line, value)."""
     filepath, mod_path = args
     try:
-        raw = Path(filepath).read_text(encoding="utf-8-sig", errors="ignore")
+        raw = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return [], []
     stripped = strip_comments(raw)

@@ -11,18 +11,20 @@ on:
     - 'localisation/**'
     - 'interface/**'
     - 'gfx/**'
-    - 'tools/validation/**'
-    - 'tools/standardization/**'
+    # Tooling paths are intentionally absent: the validator jobs gate on
+    # detect-changes (content groups), so a tooling-only PR would trigger the
+    # workflow but skip every validator, posting an empty report. Changes under
+    # tools/ are smoke-tested by tools-validation.yml instead.
     - '.github/workflows/coding-pipeline.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Least privilege: validator jobs run PR-authored code and only need to read.
+# The validation-report job declares its own pull-requests/checks write scope.
 permissions:
   contents: read
-  pull-requests: write
-  checks: write
 
 jobs:
   # ───────────────────────────────────────────────────────────────
@@ -162,8 +164,56 @@ jobs:
     - name: Run style check
       run: |
         python tools/linting/check_basic_style.py --mode diff
-        python tools/linting/check_basic_style_2.py --mode diff
         python tools/linting/check_common_mistakes.py --mode diff
+
+  # ───────────────────────────────────────────────────────────────
+  # Structural lint — file-integrity checks that otherwise only run as
+  # local pre-commit hooks. Catches regressions from commits made via the
+  # GitHub web UI or with hooks disabled (braces, loc BOM, .mod encoding).
+  # ───────────────────────────────────────────────────────────────
+  structural-lint:
+    name: Structural Lint
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true' ||
+      needs.detect-changes.outputs.localisation == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common
+          events
+          history
+          localisation
+          tools
+
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: '3.x'
+
+    # NUL-delimited so filenames with spaces / apostrophes (e.g.
+    # "Cote d'Ivoire.txt") survive the pipe. xargs runs the checker in
+    # batches; its exit status is non-zero if any batch fails.
+    - name: Check braces
+      run: |
+        git ls-files -z -- common events history \
+          | grep -zE '\.txt$' \
+          | grep -zvE '(^|/)(Changelog|AUTHORS)\.txt$|(^|/)descriptions.*\.txt$' \
+          | xargs -0 -r python3 tools/linting/check_braces.py
+
+    - name: Check localisation UTF-8 BOM
+      run: python3 tools/linting/validate_localization_encoding.py
+
+    - name: Check .mod file encoding
+      run: |
+        git ls-files -z -- '*.mod' ':!resources' \
+          | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
 
   # ───────────────────────────────────────────────────────────────
   # Core validators — broad scope, run when most game files change
@@ -410,7 +460,7 @@ jobs:
           - script: validate_scripted_gui.py
             name: scripted-gui
             title: "Validate Scripted GUIs"
-            should_run: ${{ needs.detect-changes.outputs.scripted-guis == 'true' || needs.detect-changes.outputs.interface == 'true' }}
+            should_run: ${{ (needs.detect-changes.outputs.scripted-guis == 'true' || needs.detect-changes.outputs.interface == 'true') && 'true' || 'false' }}
             sparse: |
               common/scripted_guis
               interface
@@ -427,7 +477,7 @@ jobs:
           - script: validate_on_actions.py
             name: on-actions
             title: "Validate On Actions"
-            should_run: ${{ needs.detect-changes.outputs.on-actions == 'true' || needs.detect-changes.outputs.events == 'true' }}
+            should_run: ${{ (needs.detect-changes.outputs.on-actions == 'true' || needs.detect-changes.outputs.events == 'true') && 'true' || 'false' }}
             sparse: |
               common/on_actions
               events
@@ -435,7 +485,7 @@ jobs:
           - script: validate_scripted_params.py
             name: scripted-params
             title: "Validate Scripted Effect Parameters"
-            should_run: ${{ needs.detect-changes.outputs.scripted-effects == 'true' || needs.detect-changes.outputs.national-focus == 'true' || needs.detect-changes.outputs.decisions == 'true' || needs.detect-changes.outputs.events == 'true' }}
+            should_run: ${{ (needs.detect-changes.outputs.scripted-effects == 'true' || needs.detect-changes.outputs.national-focus == 'true' || needs.detect-changes.outputs.decisions == 'true' || needs.detect-changes.outputs.events == 'true') && 'true' || 'false' }}
             sparse: |
               common/scripted_effects
               common/national_focus
@@ -445,7 +495,7 @@ jobs:
           - script: validate_gfx_references.py
             name: gfx-references
             title: "Validate GFX Sprite References"
-            should_run: ${{ needs.detect-changes.outputs.interface == 'true' || needs.detect-changes.outputs.scripted-guis == 'true' }}
+            should_run: ${{ (needs.detect-changes.outputs.interface == 'true' || needs.detect-changes.outputs.scripted-guis == 'true') && 'true' || 'false' }}
             sparse: |
               interface
               common/scripted_guis
@@ -460,6 +510,20 @@ jobs:
             should_run: ${{ needs.detect-changes.outputs.common }}
             sparse: |
               common
+              tools
+          - script: validate_simplifications.py
+            name: simplifications
+            title: "Suggest Scope Merges"
+            # informational: WARNING-only simplification hints, never gates a PR
+            strict: false
+            should_run: ${{ (needs.detect-changes.outputs.scripted-effects == 'true' || needs.detect-changes.outputs.national-focus == 'true' || needs.detect-changes.outputs.decisions == 'true' || needs.detect-changes.outputs.on-actions == 'true' || needs.detect-changes.outputs.events == 'true') && 'true' || 'false' }}
+            sparse: |
+              common/national_focus
+              common/decisions
+              common/scripted_effects
+              common/scripted_triggers
+              common/on_actions
+              events
               tools
     steps:
     # Per-entry gate: only fetch + run when this validator's file group changed.
@@ -516,10 +580,10 @@ jobs:
       contents: read
       pull-requests: write
       checks: write
-    if: >-
-      always() &&
-      github.event_name == 'pull_request' &&
-      !cancelled()
+    # Run the report whether validators passed or failed, but not if the run
+    # was cancelled. (The workflow only triggers on pull_request, so no event
+    # guard is needed.)
+    if: ${{ !cancelled() }}
     steps:
     # Checkout the report generator + the report_lib package it imports.
     # Stays much smaller than a full checkout — we skip everything else.

@@ -8,10 +8,9 @@ import difflib
 import glob
 import os
 import re
-import sys
 from typing import Dict, List, Set, Tuple
 
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+from validator_common import BaseValidator, run_validator_main, strip_comments
 
 # Valid HOI4 naval mission types
 VALID_MISSIONS = {

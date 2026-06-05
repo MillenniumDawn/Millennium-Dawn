@@ -1,32 +1,24 @@
 #!/usr/bin/env python3
-##########################
-# Focus Tree Structural Validation Script
-# Validates focus tree definitions for structural integrity
-# Checks for:
-#   1. Duplicate focus IDs across all files
-#   2. Orphan focuses (prerequisite targets not found in the same tree)
-#   3. Missing prerequisite targets (referenced focus IDs not defined anywhere)
-#   4. Missing localisation keys (focus ID and focus ID_desc)
-#   5. Dependency cycles in prerequisite chains
-##########################
+"""Validate focus tree structural integrity in Millennium Dawn."""
 import os
 import re
+import sys
 from collections import defaultdict
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+from shared_utils import extract_block_from_text as _extract_block
+from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
-    Colors,
     Severity,
+    case_mismatch,
+    casefold_index,
     run_validator_main,
-    should_skip_file,
     strip_comments,
 )
-
-# ---------------------------------------------------------------------------
-# Regex patterns
-# ---------------------------------------------------------------------------
 
 # Opening of a focus_tree or top-level focus definition block
 # (shared_focus and joint_focus are both standalone definitions that can be
@@ -38,36 +30,21 @@ _SHARED_FOCUS_DEF_START = re.compile(r"\b(?:shared_focus|joint_focus)\s*=\s*\{")
 _FOCUS_ID_RE = re.compile(r"\bfocus\s*=\s*\{")
 _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 
+# focus icon: `icon = X` or `icon = "GFX X"`. The value resolves verbatim to a
+# spriteType of that exact name (MD uses bare names like `money` as well as
+# GFX_-prefixed ones), so it is checked against the full sprite-name index.
+# Quoted values are captured whole, including embedded/trailing spaces, because
+# the engine matches the sprite name verbatim (a quoted value with a space is a
+# real, distinct sprite name, not two tokens).
+_FOCUS_BLOCK_START = re.compile(r"\b(?:focus|shared_focus|joint_focus)\s*=\s*\{")
+_ICON_LINE_RE = re.compile(r'\bicon\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
+
 # prerequisite blocks: prerequisite = { focus = A  focus = B }
 _PREREQ_BLOCK_RE = re.compile(r"\bprerequisite\s*=\s*\{([^}]*)\}", re.DOTALL)
 _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 
 # shared_focus reference inside a focus_tree block (not a definition)
 _SHARED_REF_RE = re.compile(r"\bshared_focus\s*=\s*(\w+)")
-
-
-# ---------------------------------------------------------------------------
-# Per-file parsing (pool workers)
-# ---------------------------------------------------------------------------
-
-
-def _extract_block(text: str, start: int) -> Tuple[str, int]:
-    """Return the content between the first { after *start* and its matching },
-    and the position right after the closing }.  Returns ("", start) on failure."""
-    open_pos = text.find("{", start)
-    if open_pos == -1:
-        return "", start
-    depth = 1
-    i = open_pos + 1
-    while i < len(text) and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    if depth != 0:
-        return "", start
-    return text[open_pos + 1 : i - 1], i
 
 
 def _line_of(text: str, pos: int) -> int:
@@ -116,7 +93,7 @@ def parse_focus_file(args: Tuple[str, str]) -> Dict:
     """Read one focus tree file and return its parsed structure, content-cached."""
     filepath, mod_path = args
     try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="ignore") as fh:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
             raw = fh.read()
     except Exception:
         return {"filepath": filepath, "trees": [], "shared_defs": {}}
@@ -127,6 +104,47 @@ def parse_focus_file(args: Tuple[str, str]) -> Dict:
         filepath,
         text,
         lambda: _parse_focus_text(text, filepath),
+    )
+
+
+def _extract_focus_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int]]:
+    """Pool worker: return (focus_id, icon, filepath, line) for each focus.
+
+    Takes the first `icon =` inside each focus/shared_focus/joint_focus block.
+    Focuses that omit `icon` (or use a dynamic `[...]` value) are skipped.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[Tuple[str, str, str, int]]:
+        out: List[Tuple[str, str, str, int]] = []
+        pos = 0
+        while True:
+            m = _FOCUS_BLOCK_START.search(text, pos)
+            if not m:
+                break
+            body, end = _extract_block(text, m.start())
+            if not body:
+                pos = m.end()
+                continue
+            idm = _ID_LINE_RE.search(body)
+            icm = _ICON_LINE_RE.search(body)
+            if idm and icm:
+                icon = icm.group(1) if icm.group(1) is not None else icm.group(2)
+                if "[" not in icon and "]" not in icon:
+                    out.append(
+                        (idm.group(1), icon, filepath, _line_of(text, m.start()))
+                    )
+            pos = end
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.icons", filepath, text, _compute
     )
 
 
@@ -213,16 +231,12 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
     return result
 
 
-# ---------------------------------------------------------------------------
-# Validator
-# ---------------------------------------------------------------------------
-
-
 class Validator(BaseValidator):
     TITLE = "FOCUS TREE STRUCTURAL VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
     def __init__(self, mod_path: str, **kwargs):
+        self.missing_icons = kwargs.pop("missing_icons", False)
         super().__init__(mod_path, **kwargs)
         self._parsed_cache: Optional[List[Dict]] = None
         self._staged_paths: Optional[Set[str]] = None
@@ -405,6 +419,7 @@ class Validator(BaseValidator):
         parsed = self._get_parsed_files()
         _, focus_info = self._build_focus_registry(parsed)
         all_defined: FrozenSet[str] = frozenset(focus_info.keys())
+        defined_ci = casefold_index(all_defined)
 
         results = []
         seen_missing: Set[str] = set()
@@ -422,13 +437,25 @@ class Validator(BaseValidator):
                             and prereq_id not in seen_missing
                         ):
                             seen_missing.add(prereq_id)
-                            results.append(
-                                (
-                                    f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')",
-                                    rel,
-                                    sdata["line"],
+                            canonical = case_mismatch(prereq_id, defined_ci)
+                            if canonical:
+                                results.append(
+                                    (
+                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')"
+                                        f": case-mismatch reference '{prereq_id}' — defined as '{canonical}'"
+                                        " (works on Windows, fails on Linux)",
+                                        rel,
+                                        sdata["line"],
+                                    )
                                 )
-                            )
+                            else:
+                                results.append(
+                                    (
+                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{sfid}')",
+                                        rel,
+                                        sdata["line"],
+                                    )
+                                )
             # Check focuses inside trees
             for tree in pf["trees"]:
                 for focus_id, line, prereq_groups in tree["focuses"]:
@@ -439,13 +466,25 @@ class Validator(BaseValidator):
                                 and prereq_id not in seen_missing
                             ):
                                 seen_missing.add(prereq_id)
-                                results.append(
-                                    (
-                                        f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')",
-                                        rel,
-                                        line,
+                                canonical = case_mismatch(prereq_id, defined_ci)
+                                if canonical:
+                                    results.append(
+                                        (
+                                            f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')"
+                                            f": case-mismatch reference '{prereq_id}' — defined as '{canonical}'"
+                                            " (works on Windows, fails on Linux)",
+                                            rel,
+                                            line,
+                                        )
                                     )
-                                )
+                                else:
+                                    results.append(
+                                        (
+                                            f"Missing prerequisite target '{prereq_id}' (referenced by '{focus_id}')",
+                                            rel,
+                                            line,
+                                        )
+                                    )
 
         self._report(
             results,
@@ -581,6 +620,52 @@ class Validator(BaseValidator):
     # Entry point
     # -----------------------------------------------------------------------
 
+    def validate_focus_icons(self):
+        """Flag focuses whose `icon = X` sprite is not defined.
+
+        A focus icon resolves verbatim to a spriteType named exactly `X` (MD
+        uses bare names like `money` as well as `GFX_`-prefixed ones). When no
+        such sprite exists in any interface/*.gfx (mod or vanilla) the focus
+        shows a placeholder icon.
+        """
+        self._log_section("Checking for focuses with missing icons...")
+
+        # Built sequentially (no pool_map): a sub-second scan that can't be left
+        # empty by a 'spawn' pool worker that fails to start. An empty index
+        # would otherwise flag every focus icon as missing.
+        sprites = build_sprite_index(self.mod_path, gfx_only=False)
+        if len(sprites) < 1000:
+            self.log(
+                f"  Only {len(sprites)} GFX sprites loaded — sprite definitions "
+                "did not load; skipping the icon check",
+                "warning",
+            )
+            return
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        icon_lists = self._pool_map(
+            _extract_focus_icons, [(f, self.mod_path) for f in files]
+        )
+
+        results = []
+        for sub in icon_lists:
+            for focus_id, icon, fp, line in sub:
+                if icon in sprites:
+                    continue
+                if not self._is_reportable(fp):
+                    continue
+                rel = os.path.relpath(fp, self.mod_path)
+                results.append(
+                    (f"Missing icon sprite '{icon}' for focus '{focus_id}'", rel, line)
+                )
+
+        self._report(
+            results,
+            "No missing focus icons found",
+            "Focuses with missing icons (icon sprite not defined in interface/*.gfx):",
+            Severity.WARNING,
+            category="missing-focus-icon",
+        )
+
     def run_validations(self):
         self.validate_duplicate_focus_ids()
         self.validate_missing_prerequisite_targets()
@@ -588,8 +673,26 @@ class Validator(BaseValidator):
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
 
+        if self.missing_icons:
+            self.validate_focus_icons()
+        else:
+            self._log_section(
+                "Skipping missing icon check (pass --missing-icons to enable)"
+            )
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--missing-icons",
+        action="store_true",
+        dest="missing_icons",
+        help="Flag focuses whose icon sprite is undefined in interface/*.gfx",
+    )
+
 
 if __name__ == "__main__":
     run_validator_main(
-        Validator, "Validate focus tree structure in Millennium Dawn mod"
+        Validator,
+        "Validate focus tree structure in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
     )
