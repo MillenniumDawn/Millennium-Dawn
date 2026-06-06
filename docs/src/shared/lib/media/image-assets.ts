@@ -18,13 +18,9 @@ function modulePathToAssetUrl(modulePath: string): string | null {
 }
 
 const assetMap = new Map<string, ImageMetadata>();
-const rootUrlByMetadata = new WeakMap<ImageMetadata, string>();
 for (const [modulePath, metadata] of Object.entries(imageAssets)) {
   const key = modulePathToAssetUrl(modulePath);
-  if (key) {
-    assetMap.set(key, metadata);
-    rootUrlByMetadata.set(metadata, key);
-  }
+  if (key) assetMap.set(key, metadata);
 }
 
 export function getInternalImageAsset(src: string): ImageMetadata | undefined {
@@ -33,7 +29,10 @@ export function getInternalImageAsset(src: string): ImageMetadata | undefined {
 
 /** Root-relative `/assets/images/...` URL for an imported metadata object, if it is in the asset map. */
 export function getRootRelativeUrlForMetadata(meta: ImageMetadata): string | undefined {
-  return rootUrlByMetadata.get(meta);
+  for (const [url, m] of assetMap) {
+    if (m === meta) return url;
+  }
+  return undefined;
 }
 
 export function resolveImageSource(src: string | ImageMetadata): string | ImageMetadata {

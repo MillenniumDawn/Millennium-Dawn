@@ -17,31 +17,34 @@ default_naval_role_ratios = {
 
 		#Menial Nations and Custom AI Nations - Add to Custom AI if you are buildng custom AI- Default should not apply
 		ai_for_units_is_not_disabled = yes
-		NOT = { original_tag = USA } #United States
-		NOT = { original_tag = CHI } #China
-		NOT = { original_tag = AST } #Australia
-		NOT = { original_tag = BRA } #Brazil
-		NOT = { original_tag = CAN } #Canada
-		NOT = { original_tag = DEN } #Denmark
-		NOT = { original_tag = ENG } #United Kingdom
-		NOT = { original_tag = FRA } #France
-		NOT = { original_tag = GER } #Germany
-		NOT = { original_tag = GRE } #Greece
-		NOT = { original_tag = HOL } #Netherlands
-		NOT = { original_tag = ITA } #Italy
-		NOT = { original_tag = JAP } #Japan
-		NOT = { original_tag = KOR } #South Korea
-		NOT = { original_tag = NKO } #North Korea
-		NOT = { original_tag = POR } #Portugal
-		NOT = { original_tag = RAJ } #India
-		NOT = { original_tag = SOV } #Russia
-		NOT = { original_tag = SPR } #Spain
-		NOT = { original_tag = TUR } #Turkey
-		NOT = { original_tag = SWE } #Sweden
-		NOT = { original_tag = IND } #Indonesia
-		NOT = { original_tag = SIA } #Thailand
-		NOT = { original_tag = TAI } #Taiwan
-		NOT = { original_tag = EGY } #Egypt
+		NOT = {
+			#Custom AI
+			original_tag = USA #United States
+			original_tag = CHI #China
+			original_tag = AST #Australia
+			original_tag = BRA #Brazil
+			original_tag = CAN #Canada
+			original_tag = DEN #Denmark
+			original_tag = ENG #England
+			original_tag = FRA #France
+			original_tag = GER #Germany
+			original_tag = GRE #Greece
+			original_tag = HOL #Holland
+			original_tag = ITA #Italy
+			original_tag = JAP #Japan
+			original_tag = KOR #South Korea
+			original_tag = NKO #North Korea
+			original_tag = POR #Portugal
+			original_tag = RAJ #India
+			original_tag = SOV #Russia
+			original_tag = SPR #Spain
+			original_tag = TUR #Turkey
+			original_tag = SWE #Sweden
+			original_tag = IND #Indonesia
+			original_tag = SIA #Thailand
+			original_tag = TAI #Taiwan
+			original_tag = EGY #Egypt
+		}
 	}
 	enable = { always = yes }
 	abort_when_not_enabled = yes
@@ -65,10 +68,10 @@ peace_time_naval_missions = {
 	enable = { has_war = no }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = naval_mission_threshold id = "MISSION_PATROL" value = 20000 }
-	ai_strategy = { type = naval_mission_threshold id = "MISSION_STRIKE_FORCE" value = 18000 }
-	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_ESCORT" value = 22000 }
-	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_RAIDING" value = 18000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_PATROL" value = 50000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_STRIKE_FORCE" value = 40000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_ESCORT" value = 50000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_RAIDING" value = 40000 }
 }
 
 
@@ -90,24 +93,21 @@ halt_sub_missions = {
 
 conserve_fuel = {
 	allowed = { ai_for_units_is_not_disabled = yes }
-	enable = { fuel_ratio < 0.15 }
+	enable = { fuel_ratio < 0.25 }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = naval_mission_threshold id = "MISSION_STRIKE_FORCE" value = 120000 }
-	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_RAIDING" value = 120000 }
-	ai_strategy = { type = naval_mission_threshold id = "MISSION_MINES_PLANTING" value = 120000 }
-	ai_strategy = { type = naval_mission_threshold id = "MISSION_MINES_SWEEPING" value = 120000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_STRIKE_FORCE" value = 200000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_RAIDING" value = 200000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_MINES_PLANTING" value = 200000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_MINES_SWEEPING" value = 200000 }
 }
 
 conserve_fuel_if_fighting_landlocked_nations = {
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
-		has_war = yes
 		all_enemy_country = {
-			NOT = {
-				any_owned_state = {
-					is_coastal = yes
-				}
+			any_owned_state = {
+				is_coastal = no
 			}
 		}
 	}
@@ -481,61 +481,63 @@ ship_limiter = {
 		has_global_flag = GAME_RULE_division_limiter_enabled
 	}
 	enable = {
-		set_temp_variable = { ship_limit = num_of_naval_factories }
-		multiply_temp_variable = { ship_limit = 7 } # e.g. 5 factories -> 35
+		set_temp_variable = { ship_limit = num_of_naval_factories } # 5
+		multiply_temp_variable = { ship_limit = 7 } #50
 
 		if = { limit = { has_war = yes }
-			multiply_temp_variable = { ship_limit = 1.35 } # wartime boost -> 47
+			multiply_temp_variable = { ship_limit = 1.15 } # 57.50
 		}
 		else = {
-			multiply_temp_variable = { ship_limit = 0.80 } # peacetime reduction -> 28
+			multiply_temp_variable = { ship_limit = 0.65 } # 32.50
 		}
 
 		if = {
 			limit = {
-				has_country_flag = AI_is_threatened
+				OR = {
+					has_country_flag = ai_yes_unit_build
+					has_country_flag = AI_is_threatened
+				}
 			}
-			multiply_temp_variable = { ship_limit = 1.25 } # threatened nations build more
+			multiply_temp_variable = { ship_limit = 1.25 } #If the AI didn't have divisions it is now 75
 		}
 		if = { limit = { is_major = yes }
-			multiply_temp_variable = { ship_limit = 1.35 } # majors get a larger fleet cap
+			multiply_temp_variable = { ship_limit = 1.15 } #If the major is 86.25
 		}
 		if = { limit = { has_idea = NATO_member }
-			multiply_temp_variable = { ship_limit = 0.80 } # NATO members build fewer ships (shared security)
+			multiply_temp_variable = { ship_limit = 0.70 } #if the nation is in the EU 51.75
 		}
 		if = { limit = { has_idea = EU_member }
-			multiply_temp_variable = { ship_limit = 0.80 } # EU members build fewer ships
+			multiply_temp_variable = { ship_limit = 0.70 } #If the nation is also in NATO 31.05
 		}
 		if = { limit = { threat > 0.50 }
-			multiply_temp_variable = { ship_limit = 1.25 } # high threat raises cap
+			multiply_temp_variable = { ship_limit = 1.25 } #38 if true
 		}
 		else = {
-			multiply_temp_variable = { ship_limit = 0.85 } # low threat lowers cap
+			multiply_temp_variable = { ship_limit = 0.85 } #26.39
 		}
 
 		if = { limit = { is_in_faction = yes }
-			multiply_temp_variable = { ship_limit = 0.95 } # faction members build slightly fewer
+			multiply_temp_variable = { ship_limit = 0.90 } #73.9
 		}
 		if = { limit = { original_tag = USA }
 			multiply_temp_variable = { ship_limit = 1.25 }
 		}
-		round_temp_variable = ship_limit
+		round_temp_variable = ship_limit #27
 		check_variable = { num_ships > ship_limit }
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = unit_ratio id = convoy value = 250 }
-	ai_strategy = { type = role_ratio id = naval_corvettes value = -30 }
-	ai_strategy = { type = role_ratio id = naval_frigate value = -30 }
-	ai_strategy = { type = role_ratio id = naval_destroyer value = -30 }
-	ai_strategy = { type = role_ratio id = naval_screen_destroyer value = -30 }
-	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = -30 }
-	ai_strategy = { type = role_ratio id = naval_attack_submarine value = -30 }
-	ai_strategy = { type = role_ratio id = naval_missile_submarine value = -30 }
-	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = -30 }
-	ai_strategy = { type = role_ratio id = naval_carrier value = -30 }
-	ai_strategy = { type = role_ratio id = naval_cruiser value = -30 }
-	ai_strategy = { type = role_ratio id = naval_mine_sweeper value = -30 }
+	ai_strategy = { type = unit_ratio id = convoy value = 500 }
+	ai_strategy = { type = role_ratio id = naval_corvettes value = -50 }
+	ai_strategy = { type = role_ratio id = naval_frigate value = -50 }
+	ai_strategy = { type = role_ratio id = naval_destroyer value = -50 }
+	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = -50 }
+	ai_strategy = { type = role_ratio id = naval_attack_submarine value = -50 }
+	ai_strategy = { type = role_ratio id = naval_missile_submarine value = -50 }
+	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = -50 }
+	ai_strategy = { type = role_ratio id = naval_carrier value = -50 }
+	ai_strategy = { type = role_ratio id = naval_cruiser value = -50 }
+	ai_strategy = { type = role_ratio id = naval_mine_sweeper value = -50 }
 }
 
 ship_limiter_potato_edition = {
@@ -544,60 +546,62 @@ ship_limiter_potato_edition = {
 		has_global_flag = GAME_RULE_division_limiter_potato_edition_enabled
 	}
 	enable = {
-		set_temp_variable = { ship_limit = num_of_naval_factories }
-		multiply_temp_variable = { ship_limit = 3 } # e.g. 5 factories -> 15 (stricter than standard)
+		set_temp_variable = { ship_limit = num_of_naval_factories } # 5
+		multiply_temp_variable = { ship_limit = 3 } #50
 
 		if = { limit = { has_war = yes }
-			multiply_temp_variable = { ship_limit = 1.35 } # wartime boost -> 20
+			multiply_temp_variable = { ship_limit = 1.15 } # 57.50
 		}
 		else = {
-			multiply_temp_variable = { ship_limit = 0.80 } # peacetime reduction -> 12
+			multiply_temp_variable = { ship_limit = 0.65 } # 32.50
 		}
 
 		if = {
 			limit = {
-				has_country_flag = AI_is_threatened
+				OR = {
+					has_country_flag = ai_yes_unit_build
+					has_country_flag = AI_is_threatened
+				}
 			}
-			multiply_temp_variable = { ship_limit = 1.25 } # threatened nations build more
+			multiply_temp_variable = { ship_limit = 1.25 } #If the AI didn't have divisions it is now 75
 		}
 		if = { limit = { is_major = yes }
-			multiply_temp_variable = { ship_limit = 1.35 } # majors get a larger fleet cap
+			multiply_temp_variable = { ship_limit = 1.15 } #If the major is 86.25
 		}
 		if = { limit = { has_idea = NATO_member }
-			multiply_temp_variable = { ship_limit = 0.60 } # NATO members build fewer ships (potato: more aggressive)
+			multiply_temp_variable = { ship_limit = 0.50 } #if the nation is in the EU 51.75
 		}
 		if = { limit = { has_idea = EU_member }
-			multiply_temp_variable = { ship_limit = 0.60 } # EU members build fewer ships (potato: more aggressive)
+			multiply_temp_variable = { ship_limit = 0.50 } #If the nation is also in NATO 31.05
 		}
 		if = { limit = { threat > 0.50 }
-			multiply_temp_variable = { ship_limit = 1.25 } # high threat raises cap
+			multiply_temp_variable = { ship_limit = 1.25 } #38 if true
 		}
 		else = {
-			multiply_temp_variable = { ship_limit = 0.85 } # low threat lowers cap
+			multiply_temp_variable = { ship_limit = 0.85 } #26.39
 		}
 
 		if = { limit = { is_in_faction = yes }
-			multiply_temp_variable = { ship_limit = 0.95 } # faction members build slightly fewer
+			multiply_temp_variable = { ship_limit = 0.90 } #73.9
 		}
 		if = { limit = { original_tag = USA }
 			multiply_temp_variable = { ship_limit = 1.25 }
 		}
-		round_temp_variable = ship_limit
+		round_temp_variable = ship_limit #27
 		check_variable = { num_ships > ship_limit }
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = equipment_variant_production_factor id = convoy value = 250 }
-	ai_strategy = { type = unit_ratio id = convoy value = 250 }
-	ai_strategy = { type = role_ratio id = naval_corvettes value = -30 }
-	ai_strategy = { type = role_ratio id = naval_frigate value = -30 }
-	ai_strategy = { type = role_ratio id = naval_destroyer value = -30 }
-	ai_strategy = { type = role_ratio id = naval_screen_destroyer value = -30 }
-	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = -30 }
-	ai_strategy = { type = role_ratio id = naval_attack_submarine value = -30 }
-	ai_strategy = { type = role_ratio id = naval_missile_submarine value = -30 }
-	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = -30 }
-	ai_strategy = { type = role_ratio id = naval_carrier value = -30 }
-	ai_strategy = { type = role_ratio id = naval_cruiser value = -30 }
-	ai_strategy = { type = role_ratio id = naval_mine_sweeper value = -30 }
+	ai_strategy = { type = equipment_variant_production_factor id = convoy value = 500 }
+	ai_strategy = { type = unit_ratio id = convoy value = 500 }
+	ai_strategy = { type = role_ratio id = naval_corvettes value = -50 }
+	ai_strategy = { type = role_ratio id = naval_frigate value = -50 }
+	ai_strategy = { type = role_ratio id = naval_destroyer value = -50 }
+	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = -50 }
+	ai_strategy = { type = role_ratio id = naval_attack_submarine value = -50 }
+	ai_strategy = { type = role_ratio id = naval_missile_submarine value = -50 }
+	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = -50 }
+	ai_strategy = { type = role_ratio id = naval_carrier value = -50 }
+	ai_strategy = { type = role_ratio id = naval_cruiser value = -50 }
+	ai_strategy = { type = role_ratio id = naval_mine_sweeper value = -50 }
 }
