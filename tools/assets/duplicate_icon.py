@@ -15,10 +15,7 @@ Example:
     python3 duplicate_icon.py turkey.txt
 """
 
-import os
-import shutil
 import sys
-from tokenize import Ignore
 
 file = f"../common/national_focus/{sys.argv[1]}"
 

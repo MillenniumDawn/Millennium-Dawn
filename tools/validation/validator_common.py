@@ -876,7 +876,7 @@ class BaseValidator:
                 f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}"
             )
         else:
-            error_msg = f"✗ VALIDATION COMPLETE"
+            error_msg = "✗ VALIDATION COMPLETE"
             if self.errors_found > 0:
                 error_msg += f" - {self.errors_found} ERROR(S)"
             if self.warnings_found > 0:
