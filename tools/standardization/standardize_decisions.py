@@ -7,6 +7,7 @@ Standardizes HOI4 decision and decision category files according to Millennium D
 
 import argparse
 import os
+import re
 from typing import Any, Dict, List
 
 from common_utils import (
@@ -29,7 +30,13 @@ _CATEGORY_SINGLE_LINE_PROPS = {
     "visible_when_empty",
     "visibility_type",
 }
-_CATEGORY_BLOCK_PROPS = {"allowed", "visible", "target_root_trigger", "on_map_area"}
+_CATEGORY_BLOCK_PROPS = {
+    "allowed",
+    "available",
+    "visible",
+    "target_root_trigger",
+    "on_map_area",
+}
 
 
 def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
@@ -300,11 +307,18 @@ def detect_file_type(input_file: str) -> BaseStandardizer:
     """Detect whether the file contains decision categories or decisions."""
     try:
         with open(input_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        if "_category =" in content:
+            lines = f.readlines()
+        category_count = sum(
+            1 for line in lines if re.match(r"\s*\w+_category\s*=\s*\{", line)
+        )
+        decision_count = sum(
+            1 for line in lines if re.match(r"\s*\w+_decision\s*=\s*\{", line)
+        )
+        if category_count > 0 and category_count >= decision_count:
             return DecisionCategoryStandardizer(verbose=False)
         return DecisionStandardizer(verbose=False)
-    except Exception:
+    except Exception as e:
+        log_message("WARNING", f"Failed to detect file type for {input_file}: {e}")
         return DecisionStandardizer(verbose=False)
 
 
