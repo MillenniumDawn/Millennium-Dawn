@@ -25,7 +25,6 @@ _BLOCK_PROPS = {"allowed", "visible", "available", "complete_effect", "ai_will_d
 _CATEGORY_SINGLE_LINE_PROPS = {
     "icon",
     "picture",
-    "priority",
     "scripted_gui",
     "visible_when_empty",
     "visibility_type",
@@ -115,6 +114,15 @@ class DecisionCategoryStandardizer(BaseStandardizer):
 
             if prop_name in _CATEGORY_SINGLE_LINE_PROPS:
                 props[prop_name] = line
+            elif prop_name == "priority":
+                # priority can be `priority = 200` (single-line) or `priority = { base = 100 }` (block)
+                if "{" in line:
+                    block, next_i = extract_block(block_lines, i)
+                    props["priority"] = block
+                    i = next_i
+                    continue
+                else:
+                    props["priority"] = line
             elif prop_name in _CATEGORY_BLOCK_PROPS:
                 block, next_i = extract_block(block_lines, i)
                 props[prop_name].append(block)
@@ -147,7 +155,11 @@ class DecisionCategoryStandardizer(BaseStandardizer):
             lines.append(f"\t{props['picture']}")
 
         if props["priority"]:
-            lines.append(f"\t{props['priority']}")
+            if isinstance(props["priority"], list):
+                lines.extend(reindent_block(props["priority"], 1))
+                lines.append("")
+            else:
+                lines.append(f"\t{props['priority']}")
 
         if props["scripted_gui"]:
             lines.append(f"\t{props['scripted_gui']}")
