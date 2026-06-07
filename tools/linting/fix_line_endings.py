@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Fix mixed line endings by converting CRLF to LF."""
 
-import os
 import sys
 from pathlib import Path
-from typing import List
 
 
 def fix_line_endings(file_path: Path) -> bool:

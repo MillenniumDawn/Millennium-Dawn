@@ -319,7 +319,8 @@ def _count_refs(path, tracked):
     dotted = {v.lower(): v for v in tracked if "." in v}
     sv._pass2_init("", bare, dotted, "test")
     text = FileOpener.open_text_file(path, lowercase=True, strip_comments_flag=True)
-    return sv._count_refs_in_text(text)
+    counts, _dynamic = sv._count_refs_in_text(text)
+    return counts
 
 
 def test_scan_captures_tag_prefixed_target_whole(tmp_path):
@@ -429,6 +430,76 @@ def test_scope_prefixed_var_only_set_still_flagged(tmp_path):
     f.write_text("set_variable = { THIS.never_read_var = 1 }\n")
     counts = _count_refs(str(f), frozenset(["never_read_var"]))
     assert counts.get("never_read_var", 0) == 0
+
+
+def test_scan_captures_non_ascii_target_whole(tmp_path):
+    """A set_variable target containing a non-ASCII letter (e.g. the Ö in
+    additional_income_GER_Ökosteuer) must be captured whole, not truncated to the
+    post-Ö tail (`kosteuer`), which never matched its own reads."""
+    f = tmp_path / "x.txt"
+    f.write_text("set_variable = { additional_income_GER_Ökosteuer = 1 }\n")
+    variables = _scan_set_vars(str(f))
+    assert "additional_income_GER_Ökosteuer" in variables
+    assert "kosteuer" not in variables
+
+
+def test_non_ascii_var_set_and_read_not_flagged(tmp_path):
+    """A non-ASCII-named var that is set and also read must show a positive ref
+    count — the whole-name capture must line up with the tokenized read."""
+    f = tmp_path / "x.txt"
+    f.write_text(
+        "set_variable = { additional_income_GER_Ökosteuer = GER.gdp_per_capita }\n"
+        "add_to_variable = { additional_income_rate = additional_income_GER_Ökosteuer }\n"
+    )
+    counts = _count_refs(str(f), frozenset(["additional_income_GER_Ökosteuer"]))
+    assert counts.get("additional_income_GER_Ökosteuer", 0) == 1
+
+
+def test_dynamic_ref_pattern_matches_indexed_siblings():
+    """A runtime-interpolated read (`foo_[idx]_bar`) yields an anchored pattern
+    that matches its literally-set siblings but stays specific."""
+    import re
+
+    from validate_set_variables import _dynamic_ref_pattern
+
+    pat = _dynamic_ref_pattern("global.eu_draft_party_[mep_sup_n]_variable")
+    assert pat is not None
+    rx = re.compile(pat)
+    assert rx.match("global.eu_draft_party_0_variable")
+    assert rx.match("global.eu_draft_party_15_variable")
+    assert not rx.match("global.eu_draft_party_0")  # suffix is required
+    # No literal text to anchor on (bare interpolation / loc getter) — must not
+    # produce a pattern, or it would match every tracked var.
+    assert _dynamic_ref_pattern("[getname]") is None
+
+
+def test_dynamic_ref_pattern_strips_scope_prefix():
+    """A scoped dynamic read (`this.foo_[i]`) must match the bare name the var is
+    tracked under after scope stripping."""
+    import re
+
+    from validate_set_variables import _dynamic_ref_pattern
+
+    rx = re.compile(_dynamic_ref_pattern("this.mep_party_[p_n3]"))
+    assert rx.match("mep_party_0")
+
+
+def test_count_refs_collects_dynamic_pattern_for_indexed_read(tmp_path):
+    """A `global.X_[idx]_Y` read must surface a dynamic pattern that matches the
+    literally-set sibling, so the validator can suppress the false 'unused'."""
+    import re
+
+    import validate_set_variables as sv
+    from shared_utils import FileOpener
+
+    sv._pass2_init("", {}, {}, "test")
+    f = tmp_path / "x.txt"
+    f.write_text(
+        "check_variable = { global.EU_draft_party_[MEP_sup_n]_variable > 0 }\n"
+    )
+    text = FileOpener.open_text_file(str(f), lowercase=True, strip_comments_flag=True)
+    _counts, dynamic = sv._count_refs_in_text(text)
+    assert any(re.compile(p).match("global.eu_draft_party_7_variable") for p in dynamic)
 
 
 # ---------------------------------------------------------------------------

@@ -88,7 +88,7 @@ def create_validation_parser(description: str) -> argparse.ArgumentParser:
         "--workers",
         type=int,
         default=None,
-        help=f"Number of worker processes (default: auto-detect)",
+        help="Number of worker processes (default: auto-detect)",
     )
     return parser
 
@@ -523,7 +523,7 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     total = sum(t for _, t in timings)
     max_label = max(len(label) for label, _ in timings)
     print(f"\n\033[90m{'─' * (max_label + 18)}", file=sys.stderr)
-    print(f"  Timing summary:", file=sys.stderr)
+    print("  Timing summary:", file=sys.stderr)
     for label, elapsed in timings:
         bar_len = int(elapsed / total * 20) if total > 0 else 0
         bar = "█" * bar_len + "░" * (20 - bar_len)
@@ -549,7 +549,7 @@ def create_linting_parser(
         "--mode",
         choices=modes,
         default="all",
-        help=f"Check mode (default: all)",
+        help="Check mode (default: all)",
     )
     if include_diff:
         parser.add_argument(

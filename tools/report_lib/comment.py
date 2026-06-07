@@ -7,7 +7,6 @@ to cleanly take over comments posted before the marker existed.
 """
 
 import json
-import sys
 import urllib.error
 import urllib.request
 from typing import Optional, Tuple

@@ -17,7 +17,6 @@ from shared_utils import extract_block_from_text
 from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
-    Colors,
     FileOpener,
     Severity,
     run_validator_main,

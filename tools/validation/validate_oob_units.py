@@ -19,7 +19,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache
 from validator_common import (
     BaseValidator,
-    Colors,
     Severity,
     run_validator_main,
     strip_comments,

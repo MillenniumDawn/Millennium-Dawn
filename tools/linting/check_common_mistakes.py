@@ -142,8 +142,6 @@ from shared_utils import (
     Timer,
     collect_files_by_mode,
     create_linting_parser,
-    get_all_txt_files,
-    get_git_diff_files,
     get_non_selectable_idea_categories,
     get_root_dir,
     print_timing_summary,
@@ -671,7 +669,6 @@ def _check_embargo_dlc_guard(lines):
 
     for i, line in enumerate(lines):
         code = line.split("#")[0]
-        stripped = code.strip()
 
         if _RE_DLC_BBA.search(code):
             if dlc_guard_stack:
@@ -733,7 +730,6 @@ def _check_divide_variable_zero_guard(lines):
 
     for i, line in enumerate(lines):
         code = line.split("#")[0]
-        stripped = code.strip()
 
         opens = code.count("{")
         closes = code.count("}")
@@ -887,7 +883,6 @@ def _check_is_x_nation_runtime(lines):
 
     for i, line in enumerate(lines, 1):
         code = line.split("#")[0]
-        stripped = code.strip()
 
         # Track brace depth
         opens = code.count("{")

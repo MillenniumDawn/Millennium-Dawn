@@ -10,7 +10,7 @@ Layout:
 """
 
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from .comment import REPORT_MARKER
 from .models import Issue, ReportContext, Severity, ValidatorRun
