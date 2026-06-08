@@ -1,36 +1,53 @@
 scripted_gui = {
-	# Hides Topbar Money Container
-	hide_money = {
-		context_type = player_context
+	### AC System ###
+	investments_treasury = {
+		context_type = selected_state_context
 
-		window_name = "topbar_hide_money_container"
+		window_name = "investments_treasury_container"
+
+		parent_window_token = selected_state_view
+
+		visible = {
+			NOT = { is_owned_by = ROOT }
+			ROOT = { NOT = { has_country_flag = investments_hide_investment_window } }
+		}
+	}
+
+	investments_int_investments = {
+		context_type = selected_state_context
+
+		window_name = "investments_int_investments_container"
+
+		parent_window_token = selected_state_view
+
+		visible = {
+			NOT = { is_owned_by = ROOT }
+			ROOT = { NOT = { has_country_flag = investments_hide_investment_window } }
+		}
+	}
+
+	topbar_economy_buttons_container = {
+		window_name = "MD_topbar_economy_buttons_container"
+		context_type = player_context
 
 		dirty = global.update_monie_ui
 
-		visible = {
-			ROOT = { NOT = { has_country_flag = hide_money } }
+		triggers = {
+			topbar_hide_money_bg_visible = {
+				ROOT = { NOT = { has_country_flag = hide_money } }
+			}
+			topbar_show_money_bg_visible = {
+				ROOT = { has_country_flag = hide_money }
+			}
 		}
 
 		effects = {
+			# Hides Topbar Money Container
 			topbar_hide_money_bg_click = {
 				ROOT = { set_country_flag = hide_money }
 				update_money_dirty_variable = yes
 			}
-		}
-	}
-	# Shows Topbar Money Container
-	show_money = {
-		context_type = player_context
-
-		window_name = "topbar_show_money_container"
-
-		dirty = global.update_monie_ui
-
-		visible = {
-			ROOT = { has_country_flag = hide_money }
-		}
-
-		effects = {
+			# Shows Topbar Money Container
 			topbar_show_money_bg_click = {
 				ROOT = { clr_country_flag = hide_money }
 				update_money_dirty_variable = yes
@@ -38,12 +55,9 @@ scripted_gui = {
 		}
 	}
 
-	# Topbar Containers
-	# Debt Container within the topbar
-	debt = {
+	topbar_economy_stats_container = {
+		window_name = "MD_topbar_economy_stats_container"
 		context_type = player_context
-
-		window_name = "topbar_debt_container"
 
 		dirty = global.update_monie_ui
 
@@ -255,6 +269,46 @@ scripted_gui = {
 			topbar_debt_bg_alt_shift_right_click = {
 				enable_automatic_debt_repayment_effect = yes
 			}
+			#Sell off investments
+			topbar_int_investments_bg_right_click = {
+				subtract_from_variable = { int_investments = 1 }
+				add_to_variable = { treasury = 0.60 }
+				ingame_update_setup = yes
+			}
+			topbar_int_investments_bg_control_right_click = {
+				subtract_from_variable = { int_investments = 10 }
+				add_to_variable = { treasury = 6.0 }
+				ingame_update_setup = yes
+			}
+			topbar_int_investments_bg_shift_right_click = {
+				subtract_from_variable = { int_investments = 100 }
+				add_to_variable = { treasury = 60 }
+				ingame_update_setup = yes
+			}
+
+			# Reinvestment Feature - cycles off -> reinvest 100% -> 50/50 split -> off
+			topbar_int_investments_bg_shift_click = {
+				if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+					set_variable = { int_reinvest_mode = 0 }
+				}
+				else_if = { limit = { check_variable = { int_reinvest_mode = 1 } }
+					set_variable = { int_reinvest_mode = 2 }
+				}
+				else = {
+					set_variable = { int_reinvest_mode = 1 }
+				}
+				ingame_update_setup = yes
+			}
+
+			topbar_int_investments_bg_control_click = {
+				if = { limit = { has_country_flag = int_auto_reject_investment_flag }
+					clr_country_flag = int_auto_reject_investment_flag
+				}
+				else = {
+					set_country_flag = int_auto_reject_investment_flag
+				}
+				ingame_update_setup = yes
+			}
 		}
 
 		triggers = {
@@ -274,12 +328,19 @@ scripted_gui = {
 			topbar_debt_bg_alt_click_enabled = {
 				check_variable = { debt > 0 }
 			}
+			topbar_int_investments_bg_right_click_enabled = {
+				check_variable = { int_investments > 1 }
+			}
+			topbar_int_investments_bg_control_right_click_enabled = {
+				check_variable = { int_investments > 10 }
+			}
+			topbar_int_investments_bg_shift_right_click_enabled = {
+				check_variable = { int_investments > 100 }
+			}
 		}
 
 		# AI Section
-		# ai_enabled enables the AI for this GUI
 		ai_enabled = { NOT = { original_tag = ZOM } }
-		# ai_test_interval is the time in hours that is used to test the ai_check
 		ai_test_interval = 120 # 5 Days
 		ai_check = { has_available_treasury = yes }
 		ai_max_weight_taken_per_test = 3 # Allow the AI to select up to 3 if necessary
@@ -387,260 +448,65 @@ scripted_gui = {
 			}
 		}
 	}
-	# Treasury Topbar Container
-	treasury = {
-		context_type = player_context
 
-		window_name = "topbar_treasury_container"
-
-		dirty = global.update_monie_ui
-
-		visible = {
-			ROOT = { NOT = { has_country_flag = hide_money } }
-		}
-
-		effects = {
-			topbar_treasury_bg_click = {
-				if = {
-					limit = {
-						OR = {
-							NOT = { has_country_flag = open_economy_screen }
-							is_ai = yes
-						}
-					}
-
-					set_country_flag = open_economy_screen
-				}
-				else = {
-					clr_country_flag = open_economy_screen
-				}
-			}
-		}
-	}
-	# International Investments Topbar Container
-	int_investments = {
-		context_type = player_context
-
-		window_name = "topbar_int_investments_container"
-
-		dirty = global.update_monie_ui
-
-		visible = {
-			ROOT = { NOT = { has_country_flag = hide_money } }
-		}
-
-		effects = {
-			#Sell off investments
-			topbar_int_investments_bg_right_click = {
-				subtract_from_variable = { int_investments = 1 }
-				add_to_variable = { treasury = 0.60 }
-				ingame_update_setup = yes
-			}
-			topbar_int_investments_bg_control_right_click = {
-				subtract_from_variable = { int_investments = 10 }
-				add_to_variable = { treasury = 6.0 }
-				ingame_update_setup = yes
-			}
-			topbar_int_investments_bg_shift_right_click = {
-				subtract_from_variable = { int_investments = 100 }
-				add_to_variable = { treasury = 60 }
-				ingame_update_setup = yes
-			}
-
-			# Reinvestment Feature - cycles off -> reinvest 100% -> 50/50 split -> off
-			topbar_int_investments_bg_shift_click = {
-				if = { limit = { check_variable = { int_reinvest_mode = 2 } }
-					set_variable = { int_reinvest_mode = 0 }
-				}
-				else_if = { limit = { check_variable = { int_reinvest_mode = 1 } }
-					set_variable = { int_reinvest_mode = 2 }
-				}
-				else = {
-					set_variable = { int_reinvest_mode = 1 }
-				}
-				ingame_update_setup = yes
-			}
-
-			topbar_int_investments_bg_control_click = {
-				if = { limit = { has_country_flag = int_auto_reject_investment_flag }
-					clr_country_flag = int_auto_reject_investment_flag
-				}
-				else = {
-					set_country_flag = int_auto_reject_investment_flag
-				}
-				ingame_update_setup = yes
-			}
-		}
-
-		triggers = {
-			topbar_int_investments_bg_right_click_enabled = {
-				check_variable = { int_investments > 1 }
-			}
-			topbar_int_investments_bg_control_right_click_enabled = {
-				check_variable = { int_investments > 10 }
-			}
-			topbar_int_investments_bg_shift_right_click_enabled = {
-				check_variable = { int_investments > 100 }
-			}
-		}
-	}
-
-	### AC System ###
-	investments_treasury = {
-		context_type = selected_state_context
-
-		window_name = "investments_treasury_container"
-
-		parent_window_token = selected_state_view
-
-		visible = {
-			NOT = { is_owned_by = ROOT }
-			ROOT = { NOT = { has_country_flag = investments_hide_investment_window } }
-		}
-	}
-
-	investments_int_investments = {
-		context_type = selected_state_context
-
-		window_name = "investments_int_investments_container"
-
-		parent_window_token = selected_state_view
-
-		visible = {
-			NOT = { is_owned_by = ROOT }
-			ROOT = { NOT = { has_country_flag = investments_hide_investment_window } }
-		}
-	}
-	### Diplomacy view other countries ###
-	treasury_dip = {
+	diplo_economy_stats_container = {
+		window_name = "MD_diplo_economy_stats_container"
 		context_type = selected_country_context
-
-		window_name = "diplo_treasury_container"
 		parent_window_token = selected_country_view_diplomacy
-	}
-	int_investments_dip = {
-		context_type = selected_country_context
 
-		window_name = "diplo_int_investments_container"
-		parent_window_token = selected_country_view_diplomacy
-	}
-	debt_dip = {
-		context_type = selected_country_context
-
-		window_name = "diplo_debt_container"
-		parent_window_token = selected_country_view_diplomacy
-	}
-	tax_rate_dip = {
-		context_type = selected_country_context
-
-		window_name = "tax_rate_diplo"
-		parent_window_token = selected_country_view_diplomacy
-	}
-	expense_gain_dip = {
-		context_type = selected_country_context
-
-		window_name = "diplo_daily_income_container"
-		parent_window_token = selected_country_view_diplomacy
-	}
-	tax_gain_dip = {
-		context_type = selected_country_context
-
-		window_name = "diplo_daily_expense_container"
-		parent_window_token = selected_country_view_diplomacy
 	}
 
-	# Open Economy Buttons
-	open_economy_construction_button = {
-		context_type = player_context
-		window_name = "construction_economy_open_button"
-		parent_window_token = construction_tab
-
-		effects = {
-			open_economy_construction_button_click = {
-				if = {
-					limit = { NOT = { has_country_flag = open_economy_screen } }
-					set_country_flag = open_economy_screen
-				}
-				else = {
-					clr_country_flag = open_economy_screen
-				}
-				update_money_dirty_variable = yes
-			}
-		}
+	tradeview_market_prices = {
+		window_name = "MD_tradeview_market_prices"
+        context_type = player_context
+		parent_window_token = trade_tab
 	}
-	open_economy_trade_button = {
-		context_type = player_context
-		window_name = "trade_economy_open_button"
+
+	countryeconomyview_tab = {
+		window_name = "MD_countryeconomyview_tabs"
+        context_type = player_context
 		parent_window_token = trade_tab
 
 		effects = {
-			open_economy_trade_button_click = {
-				if = {
-					limit = { NOT = { has_country_flag = open_economy_screen } }
-					set_country_flag = open_economy_screen
-				}
-				else = {
-					clr_country_flag = open_economy_screen
-				}
-				update_money_dirty_variable = yes
-			}
-		}
-	}
-	open_economy_political_button = {
-		context_type = player_context
-		window_name = "politics_economy_open_button"
-		parent_window_token = politics_tab
+            trade_tab_click = {
+				set_variable = { MD_tradeview_tab_trade_state = 1 }
+				set_variable = { MD_tradeview_tab_economy_state = 2 }
+            }
 
-		effects = {
-			open_economy_political_button_click = {
-				if = {
-					limit = { NOT = { has_country_flag = open_economy_screen } }
-					set_country_flag = open_economy_screen
-				}
-				else = {
-					clr_country_flag = open_economy_screen
-				}
+			economy_tab_click = {
+				set_variable = { MD_tradeview_tab_trade_state = 2 }
+				set_variable = { MD_tradeview_tab_economy_state = 1 }
 				update_money_dirty_variable = yes
+            }
+		}
+
+		properties = {
+			trade_tab = {
+				frame = MD_tradeview_tab_trade_state
+			}
+
+			economy_tab = {
+				frame = MD_tradeview_tab_economy_state
 			}
 		}
 	}
 
-	open_economy_main_button = {
-		context_type = player_context
-		window_name = "main_economy_open_button"
-		parent_window_name = "MapmodesInterface_Ingame"
-		dirty = global.update_monie_ui
-
-		effects = {
-			open_economy_main_screen_button_click = {
-				if = {
-					limit = { NOT = { has_country_flag = open_economy_screen } }
-					set_country_flag = open_economy_screen
-				}
-				else = {
-					clr_country_flag = open_economy_screen
-				}
-				update_money_dirty_variable = yes
-			}
-		}
-	}
-
-	# Economy/Budget Screen
-	budget_tab = {
-		context_type = player_context
-		window_name = "budget_tab"
+    countryeconomyview = {
+		window_name = "MD_countryeconomyview"
+        context_type = player_context
+		parent_window_token = trade_tab
 
 		dirty = global.update_monie_ui
 
 		visible = {
-			has_country_flag = open_economy_screen
+			AND = {
+				is_ai = no
+				check_variable = { MD_tradeview_tab_economy_state = 1 }
+			}
 		}
 
 		properties = {
 			# Project Property Files
-			lease_military_factories = { image = "[LeaseMilitaryFactoriesGlowTexture]" }
-			lease_civilian_factories = { image = "[LeaseCivilianFactoriesGlowTexture]" }
-			lease_naval_dockyards = { image = "[LeaseNavalDockyardsGlowTexture]" }
 			industrial_projects = { image = "[IndustrialProjectsEnabledTexture]" }
 			service_constructions = { image = "[OfficeProjectsEnabledTexture]" }
 			infrastructure_investiture = { image = "[InfraProjectsEnabledTexture]" }
@@ -655,9 +521,6 @@ scripted_gui = {
 				check_variable = { var = population_tax_rate value = 50 compare = less_than }
 				NOT = { has_country_flag = no_personal_tax_rate_change }
 				ROOT = { has_political_power > tax_rate_change }
-				if = { limit = { is_ai = yes }
-					NOT = { has_country_flag = temp_decrease_population_taxes }
-				}
 			}
 			increase_population_tax_shift_click_enabled = { #56-60 NO
 				check_variable = { var = population_tax_rate value = 0 compare = greater_than_or_equals }
@@ -669,9 +532,6 @@ scripted_gui = {
 				check_variable = { var = population_tax_rate value = 0 compare = greater_than }
 				NOT = { has_country_flag = no_personal_tax_rate_change }
 				ROOT = { has_political_power > tax_rate_change }
-				if = { limit = { is_ai = yes }
-					NOT = { has_country_flag = temp_increase_population_taxes }
-				}
 			}
 			decrease_population_tax_shift_click_enabled = { #0-5 NO
 				check_variable = { var = population_tax_rate value = 5 compare = greater_than_or_equals }
@@ -685,9 +545,6 @@ scripted_gui = {
 				check_variable = { var = corporate_tax_rate value = 50 compare = less_than }
 				NOT = { has_country_flag = no_corporate_tax_rate_change }
 				ROOT = { has_political_power > tax_rate_change }
-				if = { limit = { is_ai = yes }
-					NOT = { has_country_flag = temp_decrease_corporate_taxes }
-				}
 			}
 			increase_corporate_tax_shift_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than_or_equals }
@@ -700,9 +557,6 @@ scripted_gui = {
 				check_variable = { var = corporate_tax_rate value = 50 compare = less_than_or_equals }
 				NOT = { has_country_flag = no_corporate_tax_rate_change }
 				ROOT = { has_political_power > tax_rate_change }
-				if = { limit = { is_ai = yes }
-					NOT = { has_country_flag = temp_increase_corporate_taxes }
-				}
 			}
 			decrease_corporate_tax_shift_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 5 compare = greater_than_or_equals }
@@ -753,30 +607,41 @@ scripted_gui = {
 				is_full_state = yes
 			}
 
-			# - Lease Military Factories
-			# This action increases the number of leased military factories
-			lease_military_factories_click_enabled = {
-				#check_variable = { leased_military_factories < 20 } #use this as an hard cap on amount of mils leasable
-			}
-			lease_military_factories_right_click_enabled = {
-				check_variable = { leased_military_factories > 0 }
-			}
+			# - Lease Factories
+
 			# - Lease Civilian Industry
-			# This action increases the number of leased civilian factories
-			lease_civilian_factories_click_enabled = {
-				#check_variable = { leased_civilian_factories < 20 } #use this as an hard cap on amount of civs leasable
+			increase_leased_civilian_factories_click_enabled = {
+				#check_variable = { leased_civilian_factories < 20 } #use this as an hard cap on amount of leasable
 			}
-			lease_civilian_factories_right_click_enabled = {
+			decrease_leased_civilian_factories_click_enabled = {
 				check_variable = { leased_civilian_factories > 0 }
 			}
-			# - Lease Naval Dockyards
-			# This action increases the number of leased dockyards
-			lease_naval_dockyards_click_enabled = {
-				#check_variable = { leased_dockyards < 20 } #use this as an hard cap on amount of dockyards leasable
+
+			# - Lease Military Industry
+			increase_leased_military_factories_click_enabled = {
+				#check_variable = { leased_military_factories < 20 } #use this as an hard cap on amount of leasable
 			}
-			lease_naval_dockyards_right_click_enabled = {
+			decrease_leased_military_factories_click_enabled = {
+				check_variable = { leased_military_factories > 0 }
+			}
+
+			# - Lease Dockyard Industry
+			increase_leased_dockyards_click_enabled = {
+				#check_variable = { leased_dockyards < 20 } #use this as an hard cap on amount of leasable
+			}
+			decrease_leased_dockyards_click_enabled = {
 				check_variable = { leased_dockyards > 0 }
 			}
+
+			# - Lease Agricultrue Industry WIP
+			# increase_leased_agriculture_districts_click_enabled = {
+			# 	#check_variable = { leased_agriculture < 20 } #use this as an hard cap on amount of leasable
+			# }
+			# decrease_leased_agriculture_districts_click_enabled = {
+			# 	check_variable = { leased_agriculture > 0 }
+			# }
+
+
 			# - Industrial Projects
 			# This action triggers a hidden idea to increase industrial complex construction speed
 			industrial_projects_click_enabled = {
@@ -828,85 +693,138 @@ scripted_gui = {
 				}
 			}
 
-			# - Military Factories Employment
-			military_factory_employment_button_right_click_enabled = {
-				has_political_power > 20
-			}
 			# - Civilian Factories Employment
-			civilian_factory_employment_button_right_click_enabled = {
-				has_political_power > 20
+			increase_employment_civilian_factories_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { civilian_factory_employment_var < 1.0 }
+				}
 			}
-			# - Naval Factories Employment
-			naval_factory_employment_button_right_click_enabled = {
-				has_political_power > 20
-			}
-			# - Offices Employment
-			office_employment_button_click_right_enabled = {
-				has_political_power > 20
-			}
-			# - Military Factories Employment
-			military_factory_employment_button_click_enabled = {
-				has_political_power > 20
-			}
-			# - Civilian Factories Employment
-			civilian_factory_employment_button_click_enabled = {
-				has_political_power > 20
-			}
-			# - Naval Factories Employment
-			naval_factory_employment_button_click_enabled = {
-				has_political_power > 20
-			}
-			# - Offices Employment
-			office_employment_button_click_enabled = {
-				has_political_power > 20
-			}
-			# - Commercialized Agriculture District
-			agriculture_district_button_click_enabled = {
-				has_political_power > 20
-			}
-			# - Microchip Plant
-			microchip_plant_button_click_enabled = {
-				has_political_power > 20
-			}
-			# - Composite Plant
-			composite_plant_button_click_enabled = {
-				has_political_power > 20
-			}
-			# - Synthetic Refineries
-			synthetic_refineries_button_click_enabled = {
-				has_political_power > 20
+			decrease_employment_civilian_factories_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { civilian_factory_employment_var > 0 }
+				}
 			}
 
-			### BOTTOM BAR
-			bottom_bar_debt_bg_right_click_enabled = {
+			# - Military Factories Employment
+			increase_employment_military_factories_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { military_factory_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_military_factories_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { military_factory_employment_var > 0 }
+				}
+			}
+
+			# - Offices Employment
+			increase_employment_offices_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { office_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_offices_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { office_employment_var > 0 }
+				}
+			}
+
+			# - Naval Factories Employment
+			increase_employment_dockyards_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { naval_factory_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_dockyards_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { naval_factory_employment_var > 0 }
+				}
+			}
+
+			# - Commercialized Agriculture District
+			increase_employment_agriculture_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { agriculture_district_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_agriculture_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { agriculture_district_employment_var > 0 }
+				}
+			}
+
+			# - Synthetic Refineries
+			increase_employment_rafineries_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { synthetic_refinery_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_rafineries_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { synthetic_refinery_employment_var > 0 }
+				}
+			}
+
+			# - Microchip Plant
+			increase_employment_microchips_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { microchip_plant_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_microchips_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { microchip_plant_employment_var > 0 }
+				}
+			}
+
+			# - Composite Plant
+			increase_employment_composites_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { composite_plant_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_composites_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { composite_plant_employment_var > 0 }
+				}
+			}
+
+			# Stats
+			stats_balance_background_click_enabled = {
+				# check_variable = { treasury > 1 }
+			}
+
+			stats_debt_background_right_click_enabled = {
 				check_variable = { treasury > 1 }
 				check_variable = { debt > 1 }
 			}
-			bottom_bar_debt_bg_control_right_click_enabled = {
+			stats_debt_background_control_right_click_enabled = {
 				check_variable = { treasury > 10 }
 				check_variable = { debt > 10 }
 			}
-			bottom_bar_debt_bg_shift_right_click_enabled = {
+			stats_debt_background_shift_right_click_enabled = {
 				check_variable = { treasury > 100 }
 				check_variable = { debt > 100 }
-			}
-
-			bottom_bar_int_investments_bg_right_click_enabled = {
-				check_variable = { int_investments > 1 }
-			}
-			bottom_bar_int_investments_bg_control_right_click_enabled = {
-				check_variable = { int_investments > 10 }
-			}
-			bottom_bar_int_investments_bg_shift_right_click_enabled = {
-				check_variable = { int_investments > 100 }
 			}
 		}
 
 		effects = {
-			close_economy_screen_click = {
-				clr_country_flag = open_economy_screen
-				update_money_dirty_variable = yes
-			}
 			# Population Tax Increase/Decrease
 			increase_population_tax_click = {
 				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
@@ -922,9 +840,6 @@ scripted_gui = {
 				ingame_update_setup = yes
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1050 Pop Tax Rate Increases: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
-				}
-				if = { limit = { is_ai = yes }
-					set_country_flag = { flag = temp_increase_population_taxes value = 1 days = 3 }
 				}
 			}
 			increase_population_tax_shift_click = {
@@ -958,9 +873,6 @@ scripted_gui = {
 				ingame_update_setup = yes
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1052 Pop Tax Rate Decrease: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
-				}
-				if = { limit = { is_ai = yes }
-					set_country_flag = { flag = temp_decrease_population_taxes value = 1 days = 3 }
 				}
 			}
 			decrease_population_tax_shift_click = {
@@ -997,9 +909,6 @@ scripted_gui = {
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1054 Corp Tax Rate Increase: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
 				}
-				if = { limit = { is_ai = yes }
-					set_country_flag = { flag = temp_increase_corporate_taxes value = 1 days = 3 }
-				}
 			}
 			increase_corporate_tax_shift_click = {
 				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
@@ -1032,9 +941,6 @@ scripted_gui = {
 				ingame_update_setup = yes
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1056 Corp Tax Rate Decrease: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
-				}
-				if = { limit = { is_ai = yes }
-					set_country_flag = { flag = temp_decrease_corporate_taxes value = 1 days = 3 }
 				}
 			}
 			decrease_corporate_tax_shift_click = {
@@ -1077,11 +983,10 @@ scripted_gui = {
 					log = "[GetDateText]: [THIS.GetName]: DEBUG: CB Rate Decrease: [?previous_cb_rate]% -> [?cb_policy_rate]%"
 				}
 			}
-			# - Refresh Tax Rates
-			# Allows you to bypass the weekly refresh and refresh immediately, player only
-			refresh_tax_rates_bg_click = {
+			# Refresh Economy View Button
+			economy_refresh_button_click = {
 				if = { limit = { is_debug = yes }
-					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1049 Triggered Tax Rate Refresh"
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1048 Triggered Economy Refresh"
 				}
 				ingame_update_setup = yes
 			}
@@ -1126,9 +1031,11 @@ scripted_gui = {
 				log = "[GetDateText]: [ROOT.GetName]: GUI: Austerity Measures activated"
 			}
 
+			# Lease Factories WIP
+
 			# - Lease Military Factories
 			# This action increases the amount of leased military factories by 1
-			lease_military_factories_click = {
+			increase_leased_military_factories_click = {
 				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
 					if = { limit = { NOT = { has_country_flag = lease_military_factories_flag } }
 						set_country_flag = lease_military_factories_flag
@@ -1141,7 +1048,7 @@ scripted_gui = {
 				}
 			}
 			# This action decreases the amount of leased military factories by 1
-			lease_military_factories_right_click = {
+			decrease_leased_military_factories_click = {
 				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
 					if = { limit = { check_variable = { leased_military_factories = 1 } }
 						clr_country_flag = lease_military_factories_flag
@@ -1155,7 +1062,7 @@ scripted_gui = {
 			}
 			# - Lease Civilian Industry
 			# This action increases the amount of leased civilian factories by 1
-			lease_civilian_factories_click = {
+			increase_leased_civilian_factories_click = {
 				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
 					if = { limit = { NOT = { has_country_flag = lease_civilian_factories_flag } }
 						set_country_flag = lease_civilian_factories_flag
@@ -1168,7 +1075,7 @@ scripted_gui = {
 				}
 			}
 			# This action decreases the amount of leased civilian factories by 1
-			lease_civilian_factories_right_click = {
+			decrease_leased_civilian_factories_click = {
 				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
 					if = { limit = { check_variable = { leased_civilian_factories = 1 } }
 						clr_country_flag = lease_civilian_factories_flag
@@ -1182,7 +1089,7 @@ scripted_gui = {
 			}
 			# - Lease Naval Dockyards
 			# This action increases the amount of leased dockyards by 1
-			lease_naval_dockyards_click = {
+			increase_leased_dockyards_click = {
 				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
 					if = { limit = { NOT = { has_country_flag = lease_naval_dockyards_flag } }
 						set_country_flag = lease_naval_dockyards_flag
@@ -1195,7 +1102,7 @@ scripted_gui = {
 				}
 			}
 			# This action decreases the amount of leased dockyards by 1
-			lease_naval_dockyards_right_click = {
+			decrease_leased_dockyards_click = {
 				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
 					if = { limit = { check_variable = { leased_dockyards = 1 } }
 						clr_country_flag = lease_naval_dockyards_flag
@@ -1207,6 +1114,7 @@ scripted_gui = {
 					ingame_update_setup = yes
 				}
 			}
+
 			# - Industrial Projects
 			# This action triggers a hidden idea to increase industrial complex construction speed
 			industrial_projects_click = {
@@ -1278,9 +1186,10 @@ scripted_gui = {
 				ingame_update_setup = yes
 			}
 
-			# - Military Factories Employent
-			# This action reduces employment in this building type
-			military_factory_employment_button_right_click = {
+			# Employment
+			# - Military Factories Employment
+			# This action decreases employment in this building type
+			decrease_employment_military_factories_click = {
 				if = {
 					limit = { NOT = { check_variable = { military_factory_employment_var = 0 } } }
 					subtract_from_variable = { military_factory_employment_var = 0.05 }
@@ -1290,7 +1199,7 @@ scripted_gui = {
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			military_factory_employment_button_click = {
+			increase_employment_military_factories_click = {
 				if = {
 					limit = { NOT = { check_variable = { military_factory_employment_var = 1 } } }
 					add_to_variable = { military_factory_employment_var = 0.05 }
@@ -1299,253 +1208,151 @@ scripted_gui = {
 				clamp_variable = { var = military_factory_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
-			# - Civilian Factories Employent
-			# This action reduces employment in this building type
-			civilian_factory_employment_button_right_click = {
+			# - Civilian Factories Employment
+			# This action decreases employment in this building type
+			decrease_employment_civilian_factories_click = {
 				if = {
 					limit = { NOT = { check_variable = { civilian_factory_employment_var = 0 } } }
-					add_to_variable = { civilian_factory_employment_var = -0.05 }
+					subtract_from_variable = { civilian_factory_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = civilian_factory_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			civilian_factory_employment_button_click = {
+			increase_employment_civilian_factories_click = {
 				if = {
 					limit = { NOT = { check_variable = { civilian_factory_employment_var = 1 } } }
 					add_to_variable = { civilian_factory_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = civilian_factory_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
-			# - Naval Factories Employent
-			# This action reduces employment in this building type
-			naval_factory_employment_button_right_click = {
+			# - Naval Factories Employment
+			# This action decreases employment in this building type
+			decrease_employment_dockyards_click = {
 				if = {
 					limit = { NOT = { check_variable = { naval_factory_employment_var = 0 } } }
-					add_to_variable = { naval_factory_employment_var = -0.05 }
+					subtract_from_variable = { naval_factory_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = naval_factory_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			naval_factory_employment_button_click = {
+			increase_employment_dockyards_click = {
 				if = {
 					limit = { NOT = { check_variable = { naval_factory_employment_var = 1 } } }
 					add_to_variable = { naval_factory_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = naval_factory_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
-			# - Offices Employent
-			# This action reduces employment in this building type
-			office_employment_button_right_click = {
+			# - Offices Employment
+			# This action decreases employment in this building type
+			decrease_employment_offices_click = {
 				if = {
 					limit = { NOT = { check_variable = { office_employment_var = 0 } } }
-					add_to_variable = { office_employment_var = -0.05 }
+					subtract_from_variable = { office_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = office_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			office_employment_button_click = {
+			increase_employment_offices_click = {
 				if = {
 					limit = { NOT = { check_variable = { office_employment_var = 1 } } }
 					add_to_variable = { office_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = office_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# - Commercialized Agriculture District
-			# This action reduces employment in this building type
-			agriculture_district_button_right_click = {
+			# This action decreases employment in this building type
+			decrease_employment_agriculture_click = {
 				if = {
 					limit = { NOT = { check_variable = { agriculture_district_employment_var = 0 } } }
-					add_to_variable = { agriculture_district_employment_var = -0.05 }
+					subtract_from_variable = { agriculture_district_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = agriculture_district_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			agriculture_district_button_click = {
+			increase_employment_agriculture_click = {
 				if = {
 					limit = { NOT = { check_variable = { agriculture_district_employment_var = 1 } } }
 					add_to_variable = { agriculture_district_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = agriculture_district_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# - Microchip Plant
-			# This action reduces employment in this building type
-			microchip_plant_button_right_click = {
+			# This action decreases employment in this building type
+			decrease_employment_microchips_click = {
 				if = {
 					limit = { NOT = { check_variable = { microchip_plant_employment_var = 0 } } }
-					add_to_variable = { microchip_plant_employment_var = -0.05 }
+					subtract_from_variable = { microchip_plant_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = microchip_plant_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			microchip_plant_button_click = {
+			increase_employment_microchips_click = {
 				if = {
 					limit = { NOT = { check_variable = { microchip_plant_employment_var = 1 } } }
 					add_to_variable = { microchip_plant_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = microchip_plant_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# - Composite Plant
-			# This action reduces employment in this building type
-			composite_plant_button_right_click = {
+			# This action decreases employment in this building type
+			decrease_employment_composites_click = {
 				if = {
 					limit = { NOT = { check_variable = { composite_plant_employment_var = 0 } } }
-					add_to_variable = { composite_plant_employment_var = -0.05 }
+					subtract_from_variable = { composite_plant_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = composite_plant_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			composite_plant_button_click = {
+			increase_employment_composites_click = {
 				if = {
 					limit = { NOT = { check_variable = { composite_plant_employment_var = 1 } } }
 					add_to_variable = { composite_plant_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = composite_plant_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# - Synthetic Refineries
-			# This action reduces employment in this building type
-			synthetic_refineries_button_right_click = {
+			# This action decreases employment in this building type
+			decrease_employment_rafineries_click = {
 				if = {
 					limit = { NOT = { check_variable = { synthetic_refinery_employment_var = 0 } } }
-					add_to_variable = { synthetic_refinery_employment_var = -0.05 }
+					subtract_from_variable = { synthetic_refinery_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = synthetic_refinery_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			synthetic_refineries_button_click = {
+			increase_employment_rafineries_click = {
 				if = {
 					limit = { NOT = { check_variable = { synthetic_refinery_employment_var = 1 } } }
 					add_to_variable = { synthetic_refinery_employment_var = 0.05 }
 					add_political_power = -20
 				}
-				ingame_update_setup = yes
-			}
-
-
-			## BOTTOM BAR
-			bottom_bar_debt_bg_click = {
-				if = {
-					limit = { check_variable = { interest_rate < 20 } }
-					add_to_variable = { treasury = 1 }
-					add_to_variable = { debt = 1.01 }
-					ingame_update_setup = yes
-				}
-				if = { limit = { is_debug = yes }
-					log = "[GetDateText]: [THIS.GetName]: 1b debt taken (Total Debt: Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
-				}
-			}
-			bottom_bar_debt_bg_control_click = {
-				if = {
-					limit = { check_variable = { interest_rate < 20 } }
-					add_to_variable = { treasury = 10 }
-					add_to_variable = { debt = 10.1 }
-					ingame_update_setup = yes
-				}
-				if = { limit = { is_debug = yes }
-					log = "[GetDateText]: [THIS.GetName]: 10b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
-				}
-			}
-			bottom_bar_debt_bg_shift_click = {
-				if = {
-					limit = { check_variable = { interest_rate < 20 } }
-					add_to_variable = { treasury = 100 }
-					add_to_variable = { debt = 101 }
-					ingame_update_setup = yes
-				}
-				if = { limit = { is_debug = yes }
-					log = "[GetDateText]: [THIS.GetName]: 100b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
-				}
-			}
-			bottom_bar_debt_bg_alt_click = {
-				if = {
-					limit = { check_variable = { interest_rate < 20 } }
-					add_to_variable = { treasury = 1000 }
-					add_to_variable = { debt = 1010 }
-					ingame_update_setup = yes
-				}
-				if = { limit = { is_debug = yes }
-					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1000b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
-				}
-			}
-
-			  #Repay debt
-			bottom_bar_debt_bg_right_click = {
-				if = {
-					limit = { check_variable = { treasury > 1 } }
-					subtract_from_variable = { treasury = 1 }
-					subtract_from_variable = { debt = 1 }
-					ingame_update_setup = yes
-					log = "[GetDateText]: [THIS.GetName]: 1b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury]), Total Treasury Rate:[?treasury_rate]"
-				}
-			}
-			bottom_bar_debt_bg_control_right_click = {
-				if = {
-					limit = { check_variable = { treasury > 10 } }
-					subtract_from_variable = { treasury = 10 }
-					subtract_from_variable = { debt = 10 }
-					ingame_update_setup = yes
-					log = "[GetDateText]: [THIS.GetName]: 10b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
-				}
-			}
-			bottom_bar_debt_bg_shift_right_click = {
-				if = {
-					limit = { check_variable = { treasury > 100 } }
-					subtract_from_variable = { treasury = 100 }
-					subtract_from_variable = { debt = 100 }
-					ingame_update_setup = yes
-					log = "[GetDateText]: [THIS.GetName]: 100b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
-				}
-			}
-			#Pay off all debt
-			bottom_bar_debt_bg_alt_right_click = {
-				if = {
-					limit = { check_variable = { treasury > debt } }
-					subtract_from_variable = { treasury = debt }
-					subtract_from_variable = { debt = debt }
-					ingame_update_setup = yes
-				}
-			}
-			bottom_bar_debt_bg_alt_shift_right_click = {
-				enable_automatic_debt_repayment_effect = yes
-			}
-
-			bottom_bar_int_investments_bg_right_click = {
-				subtract_from_variable = { int_investments = 1 }
-				add_to_variable = { treasury = 0.60 }
-				ingame_update_setup = yes
-			}
-			bottom_bar_int_investments_bg_control_right_click = {
-				subtract_from_variable = { int_investments = 10 }
-				add_to_variable = { treasury = 6.0 }
-				ingame_update_setup = yes
-			}
-			bottom_bar_int_investments_bg_shift_right_click = {
-				subtract_from_variable = { int_investments = 100 }
-				add_to_variable = { treasury = 60 }
-				ingame_update_setup = yes
-			}
-			bottom_bar_int_investments_bg_shift_click = {
-				if = { limit = { check_variable = { int_reinvest_mode = 2 } }
-					set_variable = { int_reinvest_mode = 0 }
-				}
-				else_if = { limit = { check_variable = { int_reinvest_mode = 1 } }
-					set_variable = { int_reinvest_mode = 2 }
-				}
-				else = {
-					set_variable = { int_reinvest_mode = 1 }
-				}
+				clamp_variable = { var = synthetic_refinery_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 		}
