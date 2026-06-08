@@ -16,6 +16,7 @@ import disk_cache
 from shared_utils import extract_block_from_text
 from sprite_index import build_sprite_index
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     FileOpener,
     Severity,
@@ -23,7 +24,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
 _LONG_FORM_PATTERN = re.compile(
     r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",

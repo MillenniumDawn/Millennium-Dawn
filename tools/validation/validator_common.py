@@ -14,8 +14,11 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
+    Colors,
     DataCleaner,
     FileOpener,
+    clean_filepath,
     compute_line_offsets,
     create_validation_parser,
     find_line_number,
@@ -28,9 +31,6 @@ from shared_utils import (
     strip_comments,
     timing_enabled,
 )
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
@@ -259,18 +259,6 @@ else:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 
-class Colors:
-    HEADER = "\033[95m"
-    BLUE = "\033[94m"
-    CYAN = "\033[96m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-
-
 class Severity:
     ERROR = "error"
     WARNING = "warning"
@@ -378,6 +366,21 @@ HOI4_BUILTIN_BLOCKS = frozenset(
 
 
 class BaseValidator:
+    """Base class for all HOI4 content validators.
+
+    Subclass and implement ``run_validations(files)``. Use ``add_error()``
+    for structured issues (picked up by the PR report renderer) or
+    ``_report()`` for free-form output lines.
+
+    Common workflow in ``run_validations``:
+      1. Iterate over ``files``.
+      2. Call ``should_skip_file(path, EXTRA_SKIP_PATTERNS)`` to filter.
+      3. Use ``disk_cache.per_file_cached_by_content()`` for expensive per-file work.
+      4. Call ``self.add_error(category, message, file, line)`` for each issue found.
+
+    Entry point: ``run_validator_main(MyValidator, "description")`` in ``__main__``.
+    """
+
     TITLE = "VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
@@ -388,6 +391,7 @@ class BaseValidator:
         use_colors: bool = True,
         staged_only: bool = False,
         workers: int = None,
+        no_cache: bool = False,
         **kwargs,
     ):
         if not mod_path.endswith(os.sep):
@@ -399,6 +403,7 @@ class BaseValidator:
         self.use_colors = use_colors
         self.staged_only = staged_only
         self.workers = workers if workers else max(1, cpu_count() // 2)
+        self.no_cache = no_cache
         self.staged_files = None
         self.output_lines = []
         self._pool: Optional[Pool] = None
