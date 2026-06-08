@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Auto-fix styling issues detected by check_basic_style.py."""
+"""Auto-fix styling issues detected by validate_style.py."""
 
 import os
 import re

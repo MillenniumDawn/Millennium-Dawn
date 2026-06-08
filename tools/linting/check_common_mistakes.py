@@ -36,6 +36,7 @@ _RE_WAR_SUPPORT = re.compile(r"(?<!\w)has_war_support\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_STABILITY = re.compile(r"(?<!\w)has_stability\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_ALLOWED_ALWAYS_NO = re.compile(r"allowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_ALLOWED_OPEN = re.compile(r"allowed\s*=\s*\{")
+_RE_ALLOWED_OPEN_WB = re.compile(r"\ballowed\s*=\s*\{")
 _RE_ALLOWED_TAG = re.compile(r"allowed\s*=\s*\{\s*tag\s*=\s*\w+\s*\}")
 _RE_ALLOWED_CIVIL_WAR = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_CANCEL = re.compile(r"cancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
@@ -511,7 +512,7 @@ def _check_decision_allowed_dynamic(lines):
                         dbl_code = dbl.split("#")[0]
                         if (
                             not in_allowed
-                            and re.search(r"\ballowed\s*=\s*\{", dbl_code)
+                            and _RE_ALLOWED_OPEN_WB.search(dbl_code)
                             and "allowed_civil_war" not in dbl_code
                         ):
                             in_allowed = True
@@ -879,7 +880,7 @@ def _check_is_x_nation_runtime(lines):
         closes = code.count("}")
 
         # Check for allowed block start
-        if re.search(r"\ballowed\s*=\s*\{", code) and "allowed_civil_war" not in code:
+        if _RE_ALLOWED_OPEN_WB.search(code) and "allowed_civil_war" not in code:
             in_allowed = True
             allowed_depth = brace_depth + opens - closes
 

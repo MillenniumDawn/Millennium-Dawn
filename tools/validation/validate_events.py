@@ -7,6 +7,7 @@ adapted for Millennium Dawn with multiprocessing.
 import os
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -56,11 +57,17 @@ def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
     return out
 
 
+_ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
+
+
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     """Pool worker: count occurrences of each tracked event ID in one file.
 
-    Uses a word-boundary-aware approach so that an event ID appearing in a
-    log string or other text doesn't produce a false positive count.
+    Tokenizes the file body ONCE and counts whole-token matches against the
+    tracked-ID set, rather than scanning the file once per tracked ID. The `.`
+    is part of an identifier token, so `ALG_civilwar.1` and its loc keys
+    `ALG_civilwar.1.t` / `.d` / `.a` tokenize as distinct tokens and don't
+    inflate each other's counts.
     """
     filename, tracked_ids = args
     if _should_skip(filename):
@@ -70,11 +77,8 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
-    id_counts: Dict[str, int] = {}
-    for eid in tracked_ids:
-        if eid in cleaned:
-            id_counts[eid] = cleaned.count(eid)
-    return id_counts
+    counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
+    return {eid: counts[eid] for eid in tracked_ids if eid in counts}
 
 
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:

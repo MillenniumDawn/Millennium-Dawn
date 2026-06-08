@@ -95,17 +95,24 @@ def _check_indent_and_brackets(text: str, path: str):
     count_close_curly = 0
     indent_count = 0
     ignore_till_eol = False
+    in_string = False
     line_num = 1
 
     for c in text:
         if c == "\n":
             line_num += 1
             ignore_till_eol = False
+            in_string = False
             indent_count = 0
             continue
         if c != " ":
             indent_count = 0
         if ignore_till_eol:
+            continue
+        if c == '"':
+            in_string = not in_string
+            continue
+        if in_string:
             continue
         if c == "#":
             ignore_till_eol = True
@@ -191,9 +198,6 @@ def _check_spacing_and_quotes(text: str, path: str):
             if unstyled != 0:
                 warnings.append(("Missing space before or after '='", line_num))
 
-        if "    " in line:
-            warnings.append(("4-space indent in spacing check (use tab)", line_num))
-
         if brace_depth <= -1:
             warnings.append(("Running brace depth went negative", line_num))
             brace_depth = 0
@@ -210,9 +214,10 @@ def _check_focus_standards(text: str, path: str):
     has_search_filters = False
     in_focus_block = False
     in_completion_reward = False
-    in_focus_tree = False
     found_focus_id = False
     focus_line = 0
+    focus_open_depth = 0
+    completion_reward_depth = 0
 
     for line_num, line in enumerate(lines, 1):
         if line.startswith("#") or not line.strip():
@@ -223,26 +228,25 @@ def _check_focus_standards(text: str, path: str):
         if "}" in line:
             braces -= line.count("}")
 
-        if "focus_tree" in line and "{" in line:
-            in_focus_tree = True
-        elif in_focus_tree and braces == 0:
-            in_focus_tree = False
-
         if "completion_reward" in line and "{" in line:
             in_completion_reward = True
-        elif in_completion_reward and braces == 0:
+            completion_reward_depth = depth_before
+        elif in_completion_reward and braces == completion_reward_depth:
             in_completion_reward = False
 
         if in_focus_block and "search_filters" in line:
             has_search_filters = True
 
-        # Only match a NEW top-level focus = { (depth 0 before the opening brace)
-        if depth_before == 0 and re.match(r"^\s*focus\s*=\s*\{", line):
+        # A focus = { block sits inside focus_tree = { ... } (depth 1); a
+        # shared_focus = { block sits at the file top level (depth 0). Match
+        # either and remember the depth so the block closes at the right level.
+        if not in_focus_block and re.match(r"^\s*(?:shared_)?focus\s*=\s*\{", line):
             in_focus_block = True
             found_focus_id = False
             has_search_filters = False
             focus_line = line_num
-        elif in_focus_block and braces == 0:
+            focus_open_depth = depth_before
+        elif in_focus_block and braces == focus_open_depth:
             if found_focus_id and not has_search_filters:
                 warnings.append(
                     (f"Focus {current_focus_id} missing search_filters", focus_line)
@@ -254,7 +258,6 @@ def _check_focus_standards(text: str, path: str):
         if (
             in_focus_block
             and not in_completion_reward
-            and not in_focus_tree
             and not found_focus_id
             and ("id =" in line or "id=" in line)
         ):

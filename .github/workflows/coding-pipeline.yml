@@ -50,6 +50,8 @@ jobs:
       national-focus: ${{ steps.filter.outputs.national-focus }}
       on-actions:    ${{ steps.filter.outputs.on-actions }}
       scripted-effects: ${{ steps.filter.outputs.scripted-effects }}
+      style:         ${{ steps.filter.outputs.style }}
+      style-files:   ${{ steps.filter.outputs.style_files }}
     steps:
     # No checkout — on pull_request events dorny/paths-filter fetches the
     # changed-file list straight from the GitHub API, so cloning the repo
@@ -58,6 +60,9 @@ jobs:
       uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
       id: filter
       with:
+        # `style_files` (from list-files: shell) carries the changed .txt paths
+        # so the style job validates only the diff, not the whole repo.
+        list-files: shell
         filters: |
           common:
             - 'common/**'
@@ -96,48 +101,20 @@ jobs:
             - 'common/on_actions/**'
           scripted-effects:
             - 'common/scripted_effects/**'
+          style:
+            - 'common/**/*.txt'
+            - 'events/**/*.txt'
+            - 'history/**/*.txt'
 
   # ───────────────────────────────────────────────────────────────
-  # Linters — run when any game content files change
+  # Style & common-mistakes — diff-scoped to the changed .txt files only,
+  # so a PR is flagged for the style it introduced, not the repo-wide
+  # backlog. The changed-file list comes from detect-changes (style_files).
   # ───────────────────────────────────────────────────────────────
-  coding-standards:
-    name: Coding Standards
-    needs: [detect-changes]
-    if: >-
-      needs.detect-changes.outputs.common == 'true' ||
-      needs.detect-changes.outputs.events == 'true'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          common
-          events
-          history
-          localisation
-          interface
-          gfx/flags
-          tools
-          .claude
-          CLAUDE.md
-
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-
-    - name: Run coding standards check
-      run: python tools/validation/validate_style.py
-
   styling-check:
     name: Style Check
     needs: [detect-changes]
-    if: >-
-      needs.detect-changes.outputs.common == 'true' ||
-      needs.detect-changes.outputs.events == 'true' ||
-      needs.detect-changes.outputs.history == 'true'
+    if: needs.detect-changes.outputs.style == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -162,9 +139,22 @@ jobs:
         python-version: '3.x'
 
     - name: Run style check
+      env:
+        # Space-separated list of changed .txt files under common/events/history.
+        STYLE_FILES: ${{ needs.detect-changes.outputs.style-files }}
       run: |
-        python tools/validation/validate_style.py
-        python tools/linting/check_common_mistakes.py --mode diff
+        # Drop the files the pre-commit md-validate-style hook also excludes.
+        FILES=$(printf '%s\n' $STYLE_FILES \
+          | grep -vE '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' || true)
+        if [ -z "$FILES" ]; then
+          echo "No style-relevant files changed"
+          exit 0
+        fi
+        # validate_style.py is a BaseValidator: --staged reads the diff list
+        # from MD_STAGED_FILES (newline-separated). check_common_mistakes.py
+        # takes the same files as positional args.
+        MD_STAGED_FILES="$FILES" python3 tools/validation/validate_style.py --staged --strict --no-color
+        python3 tools/linting/check_common_mistakes.py $FILES
 
   # ───────────────────────────────────────────────────────────────
   # Structural lint — file-integrity checks that otherwise only run as

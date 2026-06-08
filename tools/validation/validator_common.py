@@ -744,14 +744,26 @@ class BaseValidator:
                 pass
         return None
 
-    def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
-        # Falls back to sequential when workers == 1 so low-end machines don't
-        # eat the Pool startup cost on a small staged commit.
-        if self.workers == 1 or (self._pool is None and len(args_list) < 10):
-            return [func(a) for a in args_list]
+    def _get_pool(self) -> Optional[Pool]:
+        """Lazily create the shared worker pool on first parallel use.
+
+        Tiny staged commits never reach a parallel code path, so the Pool is
+        never spawned and they don't pay the fork+teardown cost. Created once,
+        memoized, and torn down by run_all_validations().
+        """
+        if self.workers <= 1:
+            return None
         if self._pool is None:
-            raise RuntimeError("_pool_map called outside run_all_validations")
-        return self._pool.map(func, args_list, chunksize=chunksize)
+            self._pool = Pool(processes=self.workers)
+        return self._pool
+
+    def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
+        # Falls back to sequential when workers == 1 or the batch is small, so
+        # low-end machines and tiny staged commits don't eat the Pool startup
+        # cost. The Pool is created lazily on the first batch that uses it.
+        if self.workers == 1 or len(args_list) < 10:
+            return [func(a) for a in args_list]
+        return self._get_pool().map(func, args_list, chunksize=chunksize)
 
     def _collect_files(
         self,
@@ -864,8 +876,6 @@ class BaseValidator:
         if self.output_file:
             self.log(f"Output file: {self.output_file}")
 
-        if self.workers > 1:
-            self._pool = Pool(processes=self.workers)
         try:
             self.run_validations()
         finally:
