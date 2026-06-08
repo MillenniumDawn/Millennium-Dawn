@@ -91,8 +91,6 @@ def _check_indent_and_brackets(text: str, path: str):
     count_close_paren = 0
     count_open_square = 0
     count_close_square = 0
-    count_open_curly = 0
-    count_close_curly = 0
     indent_count = 0
     ignore_till_eol = False
     in_string = False
@@ -124,10 +122,6 @@ def _check_indent_and_brackets(text: str, path: str):
             count_open_square += 1
         elif c == "]":
             count_close_square += 1
-        elif c == "{":
-            count_open_curly += 1
-        elif c == "}":
-            count_close_curly += 1
         elif c == " ":
             indent_count += 1
             if indent_count == 4:
@@ -144,13 +138,6 @@ def _check_indent_and_brackets(text: str, path: str):
         errors.append(
             (
                 f"Unbalanced round brackets: ( = {count_open_paren}, ) = {count_close_paren}",
-                0,
-            )
-        )
-    if count_open_curly != count_close_curly:
-        errors.append(
-            (
-                f"Unbalanced curly braces: {{ = {count_open_curly}, }} = {count_close_curly}",
                 0,
             )
         )

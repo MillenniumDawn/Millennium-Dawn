@@ -60,9 +60,11 @@ jobs:
       uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
       id: filter
       with:
-        # `style_files` (from list-files: shell) carries the changed .txt paths
-        # so the style job validates only the diff, not the whole repo.
-        list-files: shell
+        # `style_files` (from list-files: json) carries the changed .txt paths
+        # so the style job validates only the diff, not the whole repo. JSON,
+        # not shell, so paths with spaces/apostrophes ("Cote D'Ivoire.txt")
+        # survive jq parsing instead of being word-split into garbage.
+        list-files: json
         filters: |
           common:
             - 'common/**'
@@ -140,21 +142,24 @@ jobs:
 
     - name: Run style check
       env:
-        # Space-separated list of changed .txt files under common/events/history.
-        STYLE_FILES: ${{ needs.detect-changes.outputs.style-files }}
+        # JSON array of changed .txt files under common/events/history.
+        STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
       run: |
-        # Drop the files the pre-commit md-validate-style hook also excludes.
-        FILES=$(printf '%s\n' $STYLE_FILES \
-          | grep -vE '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' || true)
-        if [ -z "$FILES" ]; then
+        # Newline-delimit the JSON array (newlines can't appear in these paths)
+        # and drop the files the pre-commit md-validate-style hook also excludes.
+        printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
+          | grep -vE '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
+          > style_files.txt || true
+        if [ ! -s style_files.txt ]; then
           echo "No style-relevant files changed"
           exit 0
         fi
-        # validate_style.py is a BaseValidator: --staged reads the diff list
-        # from MD_STAGED_FILES (newline-separated). check_common_mistakes.py
-        # takes the same files as positional args.
-        MD_STAGED_FILES="$FILES" python3 tools/validation/validate_style.py --staged --strict --no-color
-        python3 tools/linting/check_common_mistakes.py $FILES
+        # validate_style.py is a BaseValidator: --staged reads the diff list from
+        # MD_STAGED_FILES (newline-separated), so spaces/apostrophes are safe.
+        MD_STAGED_FILES="$(cat style_files.txt)" python3 tools/validation/validate_style.py --staged --strict --no-color
+        # check_common_mistakes.py takes the files as positional args; feed them
+        # NUL-delimited via xargs so spaces/apostrophes don't word-split.
+        tr '\n' '\0' < style_files.txt | xargs -0 -r python3 tools/linting/check_common_mistakes.py
 
   # ───────────────────────────────────────────────────────────────
   # Structural lint — file-integrity checks that otherwise only run as

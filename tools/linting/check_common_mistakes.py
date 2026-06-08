@@ -1235,10 +1235,11 @@ def main():
     print(f"------\nChecked {len(files_list)} files")
     if all_issues:
         print(f"Found {len(all_issues)} issue(s)")
-        print("Issues found (non-blocking)")
-    else:
-        print("No issues found")
-        print("Check PASSED")
+        print("Issues found - fix them before committing")
+        print_timing_summary(timings)
+        return 1
+    print("No issues found")
+    print("Check PASSED")
     print_timing_summary(timings)
     return 0
 
