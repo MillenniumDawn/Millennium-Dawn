@@ -293,3 +293,6021 @@ news_event = {
 		name = SyriaNews.9.a
 	}
 }
+
+add_namespace = SyriaFocus
+add_namespace = SyriaFocusNews
+
+#Fate of Rojava
+country_event = {
+	id = SyriaFocus.0
+	title = SyriaFocus.0.t
+	desc = SyriaFocus.0.desc
+	picture = GFX_SYR_rojava
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.0.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.0.a executed"		#The area belongs to Syria
+		ai_chance = {
+			base = 75
+			modifier = {
+				factor = 0.8
+				tag = FSA
+			}
+		}
+		ROJ = { country_event = { days = 5 id = SyriaFocus.1 } }
+	}
+	option = {
+		name = SyriaFocus.0.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.0.b executed"		#Offer them federal status
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0
+				tag = NUS
+			}
+			modifier = {
+				factor = 1.5
+				tag = FSA
+			}
+			modifier = {
+				factor = 0
+				original_tag = SYR
+				is_historical_focus_on = yes
+			}
+		}
+		ROJ = { country_event = { days = 5 id = SyriaFocus.4 } }
+	}
+	option = {
+		name = SyriaFocus.0.c
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.0.c executed"		#Let them be independent
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 0
+				tag = NUS
+			}
+			modifier = {
+				factor = 2
+				tag = FSA
+			}
+			modifier = {
+				factor = 0
+				original_tag = SYR
+				is_historical_focus_on = yes
+			}
+		}
+		add_political_power = -100
+		remove_state_core = 193
+		remove_state_core = 571
+		remove_state_core = 575
+		hidden_effect = { news_event = { id = SyriaFocusNews.0 hours = 6 } }
+	}
+}
+
+#Try to subjugate Rojava
+country_event = {
+	id = SyriaFocus.1
+	title = SyriaFocus.1.t
+	desc = SyriaFocus.1.desc
+	picture = GFX_SYR_rojava
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.1.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.1.a executed"		#Reject demands
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0.875
+				FROM = { tag = FSA }
+			}
+		}
+		FROM = { country_event = { days = 5 id = SyriaFocus.2 } }
+	}
+	option = {
+		name = SyriaFocus.1.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.1.b executed"		#Agree
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0
+				FROM = { tag = NUS }
+			}
+			modifier = {
+				factor = 1.5
+				FROM = { tag = FSA }
+			}
+		}
+		custom_effect_tooltip = GAME_OVER_TT
+		FROM = { country_event = { days = 5 id = SyriaFocus.3 } }
+	}
+}
+
+#Demands refused
+country_event = {
+	id = SyriaFocus.2
+	title = SyriaFocus.2.t
+	desc = SyriaFocus.2.desc
+	picture = GFX_SYR_rojava
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.2.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.2.a executed"		#Damn them
+		ai_chance = {
+			base = 90
+		}
+		set_temp_variable = { wargoal_on = ROJ }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = { type = annex_everything target = ROJ }
+		remove_state_core = 193
+		remove_state_core = 571
+		remove_state_core = 575
+		add_state_claim = 193
+		add_state_claim = 571
+		add_state_claim = 575
+		hidden_effect = { news_event = { id = SyriaFocusNews.3 hours = 6 } }
+		set_country_flag = SYR_Rojava_go_to_war
+		if = {
+			limit = { has_non_aggression_pact_with = ROJ }
+			diplomatic_relation = {
+				country = ROJ
+				relation = non_aggression_pact
+				active = no
+			}
+		}
+	}
+	option = {
+		name = SyriaFocus.2.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.2.b executed"		#Let them go
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0
+				original_tag = SYR
+				is_historical_focus_on = yes
+			}
+		}
+		add_political_power = -100
+		remove_state_core = 193
+		remove_state_core = 571
+		remove_state_core = 575
+		add_state_claim = 193
+		add_state_claim = 571
+		add_state_claim = 575
+		hidden_effect = { news_event = { id = SyriaFocusNews.0 hours = 6 } }
+	}
+}
+
+#Demands met
+country_event = {
+	id = SyriaFocus.3
+	title = SyriaFocus.3.t
+	desc = SyriaFocus.3.desc
+	picture = GFX_SYR_rojava
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.3.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.3.a executed"		#Huzzah
+		ai_chance = { base = 100 }
+		annex_country = { target = ROJ }
+		hidden_effect = { news_event = { id = SyriaFocusNews.1 hours = 6 } }
+	}
+
+}
+
+#Federal Status offered
+country_event = {
+	id = SyriaFocus.4
+	title = SyriaFocus.4.t
+	desc = SyriaFocus.4.desc
+	picture = GFX_SYR_rojava
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.4.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.4.a executed"		#This is what we wanted
+		FROM = {
+			country_event = { days = 5 id = SyriaFocus.5 }
+			set_country_flag = Promised_Federated_Syria
+		}
+
+		ai_chance = {
+			base = 80
+		}
+	}
+	option = {
+		name = SyriaFocus.4.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.4.b executed"		#We have new goals
+		FROM = { country_event = { days = 5 id = SyriaFocus.2 } }
+
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+#Federal Status accepted
+country_event = {
+	id = SyriaFocus.5
+	title = SyriaFocus.5.t
+	desc = SyriaFocus.5.desc
+	picture = GFX_SYR_rojava
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.5.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.5.a executed"		#Huzzah
+		ai_chance = { base = 100 }
+		every_owned_state = {
+			limit = {
+				is_core_of = ROJ
+			}
+			ROJ = { transfer_state = PREV }
+		}
+		if = {
+			limit = {
+				has_global_flag = GAME_RULE_allow_colored_puppets
+			}
+			set_autonomy = {
+				target = ROJ
+				autonomy_state = autonomy_autonomous_state_colored
+				end_wars = yes
+				end_civil_wars = yes
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = ROJ
+				autonomy_state = autonomy_autonomous_state
+				end_wars = yes
+				end_civil_wars = yes
+			}
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.2 hours = 6 } }
+	}
+}
+
+#Russian and Iranian opinion on SSNP
+country_event = {
+	id = SyriaFocus.6
+	title = SyriaFocus.6.t
+	desc = SyriaFocus.6.desc
+	picture = GFX_SYR_ssnp
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.6.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.6.a executed"		#Keep SSNP around
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 1.5
+				tag = SOV
+			}
+			modifier = {
+				factor = 0.5
+				tag = PER
+			}
+		}
+		set_country_flag = Opinion_On_SSNP_Keep
+		SYR = { country_event = SyriaFocus.7 }
+	}
+	option = {
+		name = SyriaFocus.6.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.6.b executed"		#Purge SSNP
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				tag = SOV
+			}
+			modifier = {
+				factor = 1.5
+				tag = PER
+			}
+		}
+		set_country_flag = Opinion_On_SSNP_Purge
+		SYR = { country_event = SyriaFocus.7 }
+	}
+}
+
+country_event = {
+	id = SyriaFocus.7
+	title = SyriaFocus.7.t
+	desc = {
+		text = SyriaFocus.7.Keep.desc
+		trigger = { FROM = { has_country_flag = Opinion_On_SSNP_Keep }
+		}
+	}
+	desc = {
+		text = SyriaFocus.7.Purge.desc
+		trigger = { FROM = { has_country_flag = Opinion_On_SSNP_Purge }
+		}
+	}
+	picture = GFX_SYR_ssnp
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.7.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.7.a executed"		#Noted
+		ai_chance = { base = 100 }
+	}
+}
+
+#SSNP Coup
+country_event = {
+	id = SyriaFocus.8
+	hidden = yes
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.8 executed"
+		random_list = {
+			10 = { country_event = SyriaFocus.9 }
+			70 = { country_event = SyriaFocus.10 }
+			20 = { country_event = SyriaFocus.11 }
+		}
+	}
+
+	trigger = {
+		tag = SYR
+	}
+}
+
+country_event = {
+	id = SyriaFocus.9
+	title = SyriaFocus.9.t
+	desc = SyriaFocus.9.d
+	picture = GFX_Assad_parade
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.9.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.9.a executed"
+		ai_chance = { base = 100 }
+		if = {
+			limit = { has_country_leader = { name = "Bashar Al Assad" ruling_only = yes } }
+			kill_country_leader = yes
+			set_global_flag = Al_Assad_Dead
+		}
+		if = {
+			limit = {
+				nationalist > 40
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.80
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				nationalist > 30
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.60
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				nationalist > 20
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.40
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				nationalist > 10
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.20
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.10
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+	}
+}
+
+country_event = {
+	id = SyriaFocus.10
+	title = SyriaFocus.10.t
+	desc = SyriaFocus.10.d
+	picture = GFX_SYR_ssnp
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.10.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.10.a executed"
+		ai_chance = { base = 100 }
+		if = {
+			limit = {
+				nationalist > 40
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.40
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				nationalist > 30
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.30
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				nationalist > 20
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.20
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.10
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+	}
+}
+
+country_event = {
+	id = SyriaFocus.11
+	title = SyriaFocus.11.t
+	desc = SyriaFocus.11.d
+	picture = GFX_SYR_ssnp
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.11.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.11.a executed"
+		ai_chance = { base = 100 }
+		if = {
+			limit = {
+				nationalist > 40
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.20
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				nationalist > 30
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.15
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.10
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+	}
+}
+
+#Russian and Iranian opinion on Palestinian Groups
+country_event = {
+	id = SyriaFocus.12
+	title = SyriaFocus.12.t
+	desc = SyriaFocus.12.desc
+	picture = GFX_palestinians_in_syria
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.12.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.12.a executed"		#Keep Palestinian groups around
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 1.5
+				tag = PER
+			}
+			modifier = {
+				factor = 0.5
+				tag = SOV
+			}
+		}
+		set_country_flag = Opinion_On_Palestinian_Groups_Keep
+		SYR = { country_event = SyriaFocus.13 }
+	}
+	option = {
+		name = SyriaFocus.12.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.12.b executed"		#Purge Palestinian groups
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				tag = PER
+			}
+			modifier = {
+				factor = 1.5
+				tag = SOV
+			}
+		}
+		set_country_flag = Opinion_On_Palestinian_Groups_Purge
+		SYR = { country_event = SyriaFocus.13 }
+	}
+}
+
+country_event = {
+	id = SyriaFocus.13
+	title = SyriaFocus.13.t
+	desc = {
+		text = SyriaFocus.13.Keep.desc
+		trigger = { FROM = { has_country_flag = Opinion_On_Palestinian_Groups_Keep }
+		}
+	}
+	desc = {
+		text = SyriaFocus.13.Purge.desc
+		trigger = { FROM = { has_country_flag = Opinion_On_Palestinian_Groups_Purge }
+		}
+	}
+	picture = GFX_palestinians_in_syria
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.13.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.13.a executed"		#Noted
+		ai_chance = { base = 100 }
+	}
+}
+
+#Russian and Iranian opinion on Shiite Groups
+country_event = {
+	id = SyriaFocus.14
+	title = SyriaFocus.14.t
+	desc = SyriaFocus.14.desc
+	picture = GFX_palestinians_in_syria
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.14.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.14.a executed"		#Keep Shiite groups around
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 1.8
+				tag = PER
+			}
+			modifier = {
+				factor = 0.8
+				tag = SOV
+			}
+		}
+		set_country_flag = Opinion_On_Shiite_Groups_Keep
+		SYR = { country_event = SyriaFocus.15 }
+	}
+	option = {
+		name = SyriaFocus.14.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.14.b executed"		#Purge Shiite groups
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.8
+				tag = PER
+			}
+			modifier = {
+				factor = 1.8
+				tag = SOV
+			}
+		}
+		set_country_flag = Opinion_On_Shiite_Groups_Purge
+		SYR = { country_event = SyriaFocus.15 }
+	}
+}
+
+country_event = {
+	id = SyriaFocus.15
+	title = SyriaFocus.15.t
+	desc = {
+		text = SyriaFocus.15.Keep.desc
+		trigger = { FROM = { has_country_flag = Opinion_On_Shiite_Groups_Keep }
+		}
+	}
+	desc = {
+		text = SyriaFocus.15.Purge.desc
+		trigger = { FROM = { has_country_flag = Opinion_On_Shiite_Groups_Purge }
+		}
+	}
+	picture = GFX_palestinians_in_syria
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.15.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.15.a executed"		#Noted
+		ai_chance = { base = 100 }
+	}
+}
+
+#Syria asks for protection
+country_event = {
+	id = SyriaFocus.16
+	title = SyriaFocus.16.t
+	desc = SyriaFocus.16.d
+	picture = GFX_Assad_parade
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.16.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.16.a executed"		#Agree to their request
+		ai_chance = { base = 90 }
+		FROM = {
+			set_temp_variable = { percent_change = 5 }
+			change_influence_percentage = yes
+		}
+		SYR = {
+			set_country_flag = SYR_Post_War_Tree_Finished
+			country_event = SyriaFocus.17
+		}
+		give_guarantee = FROM
+	}
+	option = {
+		name = SyriaFocus.16.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.16.b executed"		#Don't agree to their request
+		ai_chance = { base = 10 }
+		SYR = {
+			set_country_flag = SYR_Request_Rejected
+			country_event = SyriaFocus.18
+		}
+	}
+}
+
+country_event = {
+	id = SyriaFocus.17
+	title = SyriaFocus.17.t
+	desc = SyriaFocus.17.d
+	picture = GFX_Assad_parade
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.17.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.17.a executed"		#Noted
+		ai_chance = { base = 100 }
+		if = {
+			limit = {
+				has_idea = iranian_aid
+			}
+			remove_ideas = iranian_aid
+		}
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = FROM }
+		change_influence_percentage = yes
+	}
+}
+
+country_event = {
+	id = SyriaFocus.18
+	title = SyriaFocus.18.t
+	desc = SyriaFocus.18.d
+	picture = GFX_Assad_parade
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.18.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.18.a executed"		#Noted
+		ai_chance = { base = 100 }
+		if = {
+			limit = {
+				FROM = { tag = PER }
+				has_idea = iranian_aid
+			}
+			remove_ideas = iranian_aid
+		}
+		set_temp_variable = { percent_change = 2 }
+		change_domestic_influence_percentage = yes
+	}
+}
+
+#Fate of the Syrian Arab Army
+country_event = {
+	id = SyriaFocus.19
+	title = SyriaFocus.19.t
+	desc = SyriaFocus.19.d
+	picture = GFX_syrian_arab_army
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = { country_event = { id = SyriaFocus.20 days = 10 } }
+	}
+
+	option = {
+		name = SyriaFocus.19.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.19.a executed"				#Integrate them
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 3
+				num_divisions < 15			#If we took heavy casualties, integrate
+			}
+		}
+		add_popularity = { ideology = communism popularity = 0.1 }
+		# Reduction of 20% for the ruling party
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.20 }
+		set_temp_variable = { temp_outlook_increase = -0.10 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+		custom_effect_tooltip = TT_SYRIAN_ARAB_ARMY_REMNANTS
+		hidden_effect = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+
+				load_oob = Syrian_Arab_Army_Remnants_nsb
+			}
+			else = {
+				load_oob = Syrian_Arab_Army_Remnants_nonnsb
+			}
+		}
+	}
+	option = {
+		name = SyriaFocus.19.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.19.b executed"				#Disband them
+		ai_chance = {
+			base = 75
+			modifier = {
+				factor = 0.3
+				num_divisions < 15
+			}
+		}
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+	}
+}
+
+#Fate of ex-SAA generals
+country_event = {
+	id = SyriaFocus.20
+	title = SyriaFocus.20.t
+	desc = SyriaFocus.20.d
+	picture = GFX_syrian_arab_army
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.20.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.20.a executed"				#Let them join
+		ai_chance = { base = 30 }
+		add_popularity = { ideology = communism popularity = 0.05 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+		set_country_flag = SYR_unlock_ayyoub_qudsiyeh
+		effect_tooltip = {
+			create_corps_commander = {
+				name = "Abdel Fatah Qudsiyeh"
+				portrait_path = "gfx/leaders/SYR/Portrait_Abdel_Fatah_Qudsiyeh.dds"
+				traits = { trait_engineer }
+				skill = 2
+				attack_skill = 2
+				defense_skill = 2
+				planning_skill = 2
+				logistics_skill = 2
+			}
+		}
+	}
+	option = {
+		name = SyriaFocus.20.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.20.b executed"				#Put them in prison
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = SyriaFocus.20.c
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.20.c executed"				#Send them to the hangman
+		ai_chance = { base = 10 }
+		add_popularity = { ideology = fascism popularity = 0.05 }
+
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		if = { limit = { USA = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		if = { limit = { ENG = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		if = { limit = { FRA = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		if = { limit = { GER = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		random_country = {
+			limit = {
+				NOT = {
+					tag = USA
+					tag = ENG
+					tag = FRA
+					tag = GER
+				}
+				has_government = democratic
+			}
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+	}
+}
+
+### Political plurality ###
+#Baath Party
+country_event = {
+	id = SyriaFocus.21
+	title = SyriaFocus.21.t
+	desc = SyriaFocus.21.d
+	picture = GFX_baath_party
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = { country_event = { id = SyriaFocus.22 days = 10 } }
+	}
+
+	option = {
+		name = SyriaFocus.21.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.21.a executed"		#Ban them
+		ai_chance = { base = 80 }
+		add_ideas = baath_party_banned
+		set_temp_variable = { temp_opinion = -5 }
+		change_oligarchs_opinion = yes
+	}
+	option = {
+		name = SyriaFocus.21.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.21.b executed"		#Allow them
+		ai_chance = { base = 20 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_oligarchs_opinion = yes
+	}
+}
+
+#SSNP
+country_event = {
+	id = SyriaFocus.22
+	title = SyriaFocus.22.t
+	desc = SyriaFocus.22.d
+	picture = GFX_SYR_ssnp
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = { country_event = { id = SyriaFocus.23 days = 10 } }
+	}
+
+	option = {
+		name = SyriaFocus.22.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.22.a executed"		#Ban them
+		ai_chance = { base = 70 }
+		add_ideas = ssnp_party_banned
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_military_opinion = yes
+	}
+	option = {
+		name = SyriaFocus.22.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.22.b executed"		#Allow them
+		ai_chance = { base = 30 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+	}
+}
+
+#Salafist parties
+country_event = {
+	id = SyriaFocus.23
+	title = SyriaFocus.23.t
+	desc = SyriaFocus.23.d
+	picture = GFX_SYR_tahrir_al_sham
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.23.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.23.a executed"		#Ban them
+		ai_chance = { base = 70 }
+		add_ideas = salafist_party_banned
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_ulema_opinion = yes
+		if = {
+			limit = { has_country_flag = Promised_Representation_NUS }
+			custom_effect_tooltip = TT_SYR_PROMISED_REPRESENTATION_NUS
+			start_civil_war = { ideology = fascism }
+		}
+	}
+	option = {
+		name = SyriaFocus.23.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.23.b executed"		#Allow them
+		ai_chance = { base = 30 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_ulema_opinion = yes
+	}
+}
+
+### 2nd Civil War due to betraying Rojava ###
+#Initial starter
+country_event = {
+	id = SyriaFocus.24
+	title = SyriaFocus.24.t
+	desc = SyriaFocus.24.d
+	picture = GFX_SYR_rojava
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.24.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.24 executed"
+		ai_chance = { base = 100 }
+		hidden_effect = {
+			if = {
+				limit = { NOT = { country_exists = ROJ } }
+				release = ROJ
+				ROJ = { load_oob = ROJ_2017 }
+			}
+			if = {
+				limit = { ROJ = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = ROJ
+					autonomy_state = autonomy_free
+				}
+			}
+		}
+		declare_war_on = {
+			target = ROJ
+			type = annex_everything
+		}
+		hidden_effect = { country_event = { id = SyriaFocus.25 days = 30 random_days = 60 } }
+		hidden_effect = { news_event = { id = SyriaFocusNews.6 hours = 6 } }
+	}
+
+}
+
+#Druze rise up
+country_event = {
+	id = SyriaFocus.25
+	title = SyriaFocus.25.t
+	desc = SyriaFocus.25.d
+	picture = GFX_Druze
+	trigger = {
+		any_controlled_state = {
+			is_core_of = DRU
+		}
+		has_war_with = ROJ
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.25.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.25 executed"
+		ai_chance = { base = 100 }
+		hidden_effect = {
+			if = {
+				limit = { NOT = { country_exists = DRU } }
+				release = DRU
+				DRU = { load_oob = DRU_2017 }
+			}
+			if = {
+				limit = { DRU = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = DRU
+					autonomy_state = autonomy_free
+				}
+			}
+			#Set a random ideology
+			DRU = {
+				random_list = {
+					10 = {
+						set_politics = { ruling_party = democratic elections_allowed = yes }
+						add_popularity = { ideology = democratic popularity = 0.6 }
+					}
+					20 = {
+						set_politics = { ruling_party = communism elections_allowed = yes }
+						add_popularity = { ideology = communism popularity = 0.6 }
+					}
+					40 = {
+						set_politics = { ruling_party = neutrality elections_allowed = yes }
+						add_popularity = { ideology = neutrality popularity = 0.6 }
+					}
+					10 = {
+						set_politics = { ruling_party = nationalist elections_allowed = no }
+						add_popularity = { ideology = nationalist popularity = 0.6 }
+					}
+				}
+			}
+		}
+		declare_war_on = {
+			target = DRU
+			type = annex_everything
+		}
+		hidden_effect = { country_event = { id = SyriaFocus.26 days = 30 random_days = 60 } }
+	}
+
+}
+
+#Alawites rise up
+country_event = {
+	id = SyriaFocus.26
+	title = SyriaFocus.26.t
+	desc = SyriaFocus.26.d
+	picture = GFX_Alawites
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.26.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.26 executed"
+		ai_chance = { base = 100 }
+		hidden_effect = {
+			if = {
+				limit = { NOT = { country_exists = ALA } }
+				release = ALA
+				ALA = { load_oob = ALA_2017 }
+			}
+			if = {
+				limit = { ALA = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = ALA
+					autonomy_state = autonomy_free
+				}
+			}
+			#Set a random ideology
+			ALA = {
+				random_list = {
+					5 = {
+						set_politics = { ruling_party = democratic elections_allowed = yes }
+						add_popularity = { ideology = democratic popularity = 0.6 }
+					}
+					40 = {
+						set_politics = { ruling_party = communism elections_allowed = yes }
+						add_popularity = { ideology = communism popularity = 0.6 }
+					}
+					20 = {
+						set_politics = { ruling_party = neutrality elections_allowed = yes }
+						add_popularity = { ideology = neutrality popularity = 0.6 }
+					}
+					20 = {
+						set_politics = { ruling_party = nationalist elections_allowed = no }
+						add_popularity = { ideology = nationalist popularity = 0.6 }
+					}
+				}
+			}
+		}
+		declare_war_on = {
+			target = ALA
+			type = annex_everything
+		}
+	}
+
+}
+
+#Lebanese support against Hezbollah
+country_event = {
+	id = SyriaFocus.27
+	title = SyriaFocus.27.t
+	desc = SyriaFocus.27.d
+	picture = GFX_Hezbollah_Spies
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.27.a		#Deal
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.27.a executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0
+				FROM = { has_government = fascism }
+				NOT = { has_government = fascism }
+			}
+		}
+		set_country_flag = LEB_agreed_to_help_SYR
+		FROM = {
+			country_event = SyriaFocus.28
+			set_country_flag = LEB_agreed_to_help_SYR
+		}
+	}
+	option = {
+		name = SyriaFocus.27.b		#No deal
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.27.b executed"
+		ai_chance = {
+			base = 20
+		}
+		FROM = { country_event = SyriaFocus.29 }
+	}
+
+}
+
+#Lebanon agrees
+country_event = {
+	id = SyriaFocus.28
+	title = SyriaFocus.28.t
+	desc = SyriaFocus.28.d
+	picture = GFX_Hezbollah_Spies
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.28.a		#Ok
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.28.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+
+#Lebanon disagrees
+country_event = {
+	id = SyriaFocus.29
+	title = SyriaFocus.29.t
+	desc = SyriaFocus.29.d
+	picture = GFX_Hezbollah_Spies
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.29.a		#Ok
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.29.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+
+#Pressuring Lebanon
+country_event = {
+	id = SyriaFocus.30
+	title = SyriaFocus.30.t
+	desc = SyriaFocus.30.d
+	picture = GFX_Syrian_Occupation_Lebanon
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.30.a		#Submit
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.30.a executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 4
+				has_country_flag = LEB_agreed_to_help_SYR
+			}
+		}
+		FROM = { country_event = { id = SyriaFocus.31 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.30.b		#Resist
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.30.b executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0.25
+				has_country_flag = LEB_agreed_to_help_SYR
+			}
+		}
+		clr_country_flag = LEB_agreed_to_help_SYR
+		FROM = { clr_country_flag = LEB_agreed_to_help_SYR }
+		FROM = { country_event = { id = SyriaFocus.32 hours = 6 } }
+	}
+
+}
+
+#Lebanon agrees
+country_event = {
+	id = SyriaFocus.31
+	title = SyriaFocus.31.t
+	desc = SyriaFocus.31.d
+	picture = GFX_Syrian_Occupation_Lebanon
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.31.a		#Great
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.31.a executed"
+		ai_chance = { base = 100 }
+		if = {
+			limit = {
+				has_global_flag = GAME_RULE_allow_colored_puppets
+			}
+			set_autonomy = {
+				target = LEB
+				autonomy_state = autonomy_satellite_state_colored
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = LEB
+				autonomy_state = autonomy_satellite_state
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.7 hours = 6 } }
+	}
+
+}
+
+#Lebanon Resists
+country_event = {
+	id = SyriaFocus.32
+	title = SyriaFocus.32.t
+	desc = SyriaFocus.32.d
+	picture = GFX_Syrian_Occupation_Lebanon
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.32.a		#Damn
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.32.a executed"
+		ai_chance = { base = 100 }
+		set_temp_variable = { wargoal_on = LEB }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = {
+			type = puppet_wargoal_focus
+			target = LEB
+		}
+		set_country_flag = Occupy_Lebanon
+	}
+
+}
+
+#Succesful Hezbollah coup
+country_event = {
+	id = SyriaFocus.33
+	title = SyriaFocus.33.t
+	desc = SyriaFocus.33.d
+	picture = GFX_Hezbollah_Spies
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.33.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.33.a executed"
+		ai_chance = { base = 100 }
+		custom_effect_tooltip = GAME_OVER_TT
+		HEZ = {
+			annex_country = {
+				target = LEB
+				transfer_troops = yes
+			}
+			set_cosmetic_tag = LEB
+			set_country_flag = dynamic_flag
+			set_country_flag = dynamic_rebel_flag
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.8 hours = 6 } }
+	}
+
+}
+
+#Unsuccesful Hezbollah coup
+country_event = {
+	id = SyriaFocus.34
+	title = SyriaFocus.34.t
+	desc = SyriaFocus.34.d
+	picture = GFX_Hezbollah_Spies
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.34.a			#Retaliate
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.34.a executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+		declare_war_on = {
+			target = HEZ
+			type = annex_everything
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.9 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.34.b			#Do nothing
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.34.b executed"
+		ai_chance = { base = 20 }
+		hidden_effect = { news_event = { id = SyriaFocusNews.9 hours = 6 } }
+	}
+
+}
+
+#Pressuring Hezbollah
+country_event = {
+	id = SyriaFocus.35
+	title = SyriaFocus.35.t
+	desc = SyriaFocus.35.d
+	picture = GFX_Syrian_Occupation_Lebanon
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.35.a		#Submit
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.35.a executed"
+		ai_chance = {
+			base = 60
+		}
+		FROM = { country_event = { id = SyriaFocus.36 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.35.b		#Resist
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.35.b executed"
+		ai_chance = {
+			base = 40
+		}
+		FROM = { country_event = { id = SyriaFocus.37 hours = 6 } }
+	}
+
+}
+
+#Hezbollah agrees
+country_event = {
+	id = SyriaFocus.36
+	title = SyriaFocus.36.t
+	desc = SyriaFocus.36.d
+	picture = GFX_Syrian_Occupation_Lebanon
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.36.a		#Great
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.36.a executed"
+		ai_chance = { base = 100 }
+		set_autonomy = { target = HEZ autonomy_state = autonomy_satellite_state }
+		hidden_effect = { HEZ = { add_ideas = subject_neutral } }
+		hidden_effect = { news_event = { id = SyriaFocusNews.7 hours = 6 } }
+	}
+
+}
+
+#Hezbollah Resists
+country_event = {
+	id = SyriaFocus.37
+	title = SyriaFocus.37.t
+	desc = SyriaFocus.37.d
+	picture = GFX_Syrian_Occupation_Lebanon
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.37.a		#Damn
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.37.a executed"
+		ai_chance = { base = 100 }
+		set_temp_variable = { wargoal_on = HEZ }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = {
+			type = puppet_wargoal_focus
+			target = HEZ
+		}
+		set_country_flag = Occupy_Lebanon
+	}
+
+}
+
+#Syria Demands Golan
+country_event = {
+	id = SyriaFocus.38
+	title = SyriaFocus.38.t
+	desc = SyriaFocus.38.d
+	picture = GFX_Golan
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.38.a		#Never
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.84.a executed"
+		ai_chance = { base = 70 }
+	}
+	option = {
+		name = SyriaFocus.38.b		#In exchange for support for One-State solution
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.38.b executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 2
+				FROM = {
+					same_ideology = yes
+				}
+			}
+		}
+	}
+	option = {
+		name = SyriaFocus.38.c		#Sure
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.38.c executed"
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 2
+				FROM = {
+					same_ideology = yes
+				}
+			}
+		}
+	}
+
+}
+
+#Death of Hafez Al-Assad
+country_event = {
+	id = SyriaFocus.39
+	title = SyriaFocus.39.t
+	desc = SyriaFocus.39.d
+	picture = GFX_death_of_hafez_al_assad
+	trigger = {
+		has_country_leader = { name = "Hafez al-Assad" }
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.39.a		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.39.a executed"
+		ai_chance = { base = 100 }
+		kill_country_leader = yes
+		set_country_flag = Syria_Hafez_dead
+		complete_national_focus = SYR_death_of_hafez_al_assad
+		create_country_leader = {
+			name = "Abdul Halim Khaddam"
+			desc = ""
+			picture = "Abdul_Halim_Khaddam.dds"
+			expire = "2050.1.1"
+			ideology = Autocracy
+			traits = {
+				emerging_Autocracy
+			}
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.11 hours = 6 } }
+		hidden_effect = { country_event = { id = SyriaFocus.43 hours = 12 } }
+		hidden_effect = { country_event = { id = SyriaFocus.45 days = 60 random = 1440 } }
+	}
+
+}
+
+#Bashar Al-Assad Meets with military and security personnel
+country_event = {
+	id = SyriaFocus.40
+	title = SyriaFocus.40.t
+	desc = SyriaFocus.40.d
+	picture = GFX_Assad_parade
+
+	trigger = {
+		original_tag = SYR
+		has_country_leader = { name = "Hafez al-Assad" }
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.40.a		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.40.a executed"
+		ai_chance = { base = 30 }
+		add_political_power = -100
+		custom_effect_tooltip = TT_SYRIA_PRESENT_TO_INNER_CIRCLE
+		add_to_variable = { bashar_popularity = 10 }
+		hidden_effect = {
+			add_to_variable = { added_bashar_popularity = 10 }
+		}
+		add_popularity = { ideology = communism popularity = 0.10 }
+	}
+	option = {
+		name = SyriaFocus.40.b		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.40.b executed"
+		ai_chance = { base = 30 }
+		custom_effect_tooltip = TT_SYRIA_GATHER_PUBLIC_SUPPORT
+		add_to_variable = { bashar_popularity = 5 }
+		hidden_effect = {
+			add_to_variable = { added_bashar_popularity = 5 }
+		}
+		add_popularity = { ideology = communism popularity = 0.05 }
+	}
+	option = {
+		name = SyriaFocus.40.c		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.40.c executed"
+		ai_chance = { base = 30 }
+		add_political_power = -50
+	}
+
+}
+
+#Bushra Al-Assad does charity and tours the country
+country_event = {
+	id = SyriaFocus.41
+	title = SyriaFocus.41.t
+	desc = SyriaFocus.41.d
+	picture = GFX_bushra_al_assad
+
+	trigger = {
+		original_tag = SYR
+		has_country_leader = { name = "Hafez al-Assad" }
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.41.a		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.41.a executed"
+		ai_chance = { base = 30 }
+		add_political_power = -100
+		custom_effect_tooltip = TT_SYRIA_PRESENT_TO_INNER_CIRCLE
+		add_to_variable = { bushra_popularity = 10 }
+		hidden_effect = {
+			add_to_variable = { added_bushra_popularity = 10 }
+		}
+		add_popularity = { ideology = neutrality popularity = 0.10 }
+	}
+	option = {
+		name = SyriaFocus.41.b		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.41.b executed"
+		ai_chance = { base = 30 }
+		custom_effect_tooltip = TT_SYRIA_GATHER_PUBLIC_SUPPORT
+		add_to_variable = { bushra_popularity = 5 }
+		hidden_effect = {
+			add_to_variable = { added_bushra_popularity = 5 }
+		}
+		add_popularity = { ideology = neutrality popularity = 0.05 }
+	}
+	option = {
+		name = SyriaFocus.41.c		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.41.c executed"
+		ai_chance = { base = 30 }
+		add_political_power = -50
+	}
+
+}
+
+#Maher Al-Assad displays the military
+country_event = {
+	id = SyriaFocus.42
+	title = SyriaFocus.42.t
+	desc = SyriaFocus.42.d
+	picture = GFX_maher_al_assad
+
+	trigger = {
+		original_tag = SYR
+		has_country_leader = { name = "Hafez al-Assad" }
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.42.a		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.42.a executed"
+		ai_chance = { base = 30 }
+		add_political_power = -100
+		custom_effect_tooltip = TT_SYRIA_PRESENT_TO_INNER_CIRCLE
+		add_to_variable = { maher_popularity = 10 }
+		hidden_effect = {
+			add_to_variable = { added_maher_popularity = 10 }
+		}
+		add_popularity = { ideology = nationalist popularity = 0.10 }
+	}
+	option = {
+		name = SyriaFocus.42.b		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.42.b executed"
+		ai_chance = { base = 30 }
+		custom_effect_tooltip = TT_SYRIA_GATHER_PUBLIC_SUPPORT
+		add_to_variable = { maher_popularity = 5 }
+		hidden_effect = {
+			add_to_variable = { added_maher_popularity = 5 }
+		}
+		add_popularity = { ideology = nationalist popularity = 0.05 }
+	}
+	option = {
+		name = SyriaFocus.42.c		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.42.c executed"
+		ai_chance = { base = 30 }
+		add_political_power = -50
+	}
+
+}
+
+#Rifaat al-Assad looks for support
+country_event = {
+	id = SyriaFocus.43
+	hidden = yes
+
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = Rifaat_visited_saudi_arabia
+					has_country_flag = Rifaat_visited_Israel
+					has_country_flag = Rifaat_visited_USA
+				}
+			}
+			random_list = {
+				50 = {
+					SAU = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_saudi_arabia
+				}
+				30 = {
+					ISR = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_Israel
+				}
+				20 = {
+					USA = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_USA
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_flag = Rifaat_visited_saudi_arabia
+				NOT = {
+					has_country_flag = Rifaat_visited_Israel
+					has_country_flag = Rifaat_visited_USA
+				}
+			}
+			random_list = {
+				60 = {
+					ISR = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_Israel
+				}
+				40 = {
+					USA = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_USA
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_flag = Rifaat_visited_Israel
+				NOT = {
+					has_country_flag = Rifaat_visited_saudi_arabia
+					has_country_flag = Rifaat_visited_USA
+				}
+			}
+			random_list = {
+				70 = {
+					SAU = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_saudi_arabia
+				}
+				30 = {
+					USA = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_USA
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_flag = Rifaat_visited_USA
+				NOT = {
+					has_country_flag = Rifaat_visited_saudi_arabia
+					has_country_flag = Rifaat_visited_Israel
+				}
+			}
+			random_list = {
+				63 = {
+					SAU = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_saudi_arabia
+				}
+				37 = {
+					ISR = { country_event = { id = SyriaFocus.44 days = 3 } }
+					set_country_flag = Rifaat_visited_Israel
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_flag = Rifaat_visited_saudi_arabia
+				has_country_flag = Rifaat_visited_Israel
+				NOT = {
+					has_country_flag = Rifaat_visited_USA
+				}
+			}
+			USA = { country_event = { id = SyriaFocus.44 days = 3 } }
+			set_country_flag = Rifaat_visited_USA
+		}
+		else_if = {
+			limit = {
+				has_country_flag = Rifaat_visited_saudi_arabia
+				has_country_flag = Rifaat_visited_USA
+				NOT = {
+					has_country_flag = Rifaat_visited_Israel
+				}
+			}
+			ISR = { country_event = { id = SyriaFocus.44 days = 3 } }
+			set_country_flag = Rifaat_visited_Israel
+		}
+		else_if = {
+			limit = {
+				has_country_flag = Rifaat_visited_Israel
+				has_country_flag = Rifaat_visited_USA
+				NOT = {
+					has_country_flag = Rifaat_visited_saudi_arabia
+				}
+			}
+			SAU = { country_event = { id = SyriaFocus.44 days = 3 } }
+			set_country_flag = Rifaat_visited_saudi_arabia
+		}
+		else = {
+			set_country_flag = Rifaat_no_international_support
+		}
+	}
+}
+
+#Rifaat al-Assad asks for support
+country_event = {
+	id = SyriaFocus.44
+	title = SyriaFocus.44.t
+	desc = SyriaFocus.44.d
+	picture = GFX_rifaat_al_assad
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.44.a		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.44.a executed"
+		ai_chance = { base = 60 }
+		lose_pp_for_month = yes
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		SYR = { set_country_flag = Rifaat_international_support }
+		if = { limit = { has_government = democratic }
+			SYR = { set_country_flag = Rifaat_western }
+		}
+		if = { limit = { has_government = communism }
+			SYR = { set_country_flag = Rifaat_emerging }
+		}
+		if = { limit = { has_government = neutrality }
+			SYR = { set_country_flag = Rifaat_nonaligned }
+		}
+		if = { limit = { has_government = fascism }
+			SYR = { set_country_flag = Rifaat_salafist }
+		}
+		if = { limit = { has_government = nationalist }
+			SYR = { set_country_flag = Rifaat_nationalist }
+		}
+	}
+	option = {
+		name = SyriaFocus.44.b		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.44.b executed"
+		ai_chance = { base = 40 }
+		hidden_effect = { FROM = { country_event = { id = SyriaFocus.43 days = 3 } } }
+	}
+
+}
+
+#Statement of 99
+country_event = {
+	id = SyriaFocus.45
+	title = SyriaFocus.45.t
+	desc = SyriaFocus.45.d
+	picture = GFX_damascus_spring
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = { country_event = { id = SyriaFocus.46 days = 90 random = 1440 } }
+	}
+
+	option = {
+		name = SyriaFocus.45.a		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.45.a executed"
+		ai_chance = {
+			base = 70
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = SYR_NEW_ASSAD_FOCUS_PATH
+					has_global_flag = SYR_DAMASCUS_SPRING_FOCUS_PATH
+				}
+			}
+		}
+		set_temp_variable = { party_index = 12 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+	}
+	option = {
+		name = SyriaFocus.45.b		#
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.45.b executed"
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 0
+				OR = {
+					is_historical_focus_on = yes
+					has_global_flag = SYR_HISTORICAL_FOCUS_PATH
+					has_global_flag = SYR_IRON_LADY_FOCUS_PATH
+					has_global_flag = SYR_SYRIAN_SAVAGE_FOCUS_PATH
+				}
+			}
+		}
+		add_political_power = -150
+	}
+}
+
+#Statement of 1000
+country_event = {
+	id = SyriaFocus.46
+	title = SyriaFocus.46.t
+	desc = SyriaFocus.46.d
+	picture = GFX_damascus_spring
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.46.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.46.a executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0
+				OR = {
+					is_historical_focus_on = yes
+					has_global_flag = SYR_HISTORICAL_FOCUS_PATH
+					has_global_flag = SYR_IRON_LADY_FOCUS_PATH
+					has_global_flag = SYR_SYRIAN_SAVAGE_FOCUS_PATH
+				}
+			}
+		}
+		custom_effect_tooltip = TT_TEMPORARY_LEADER
+		hidden_effect = {
+			set_temp_variable = { election_year = global.year }
+			subtract_from_temp_variable = { election_year = 3 }
+			set_country_flag = Syrian_rebels
+			meta_effect = {
+				text = {
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = yes
+						last_election = "[YEAR].[MONTH].1"
+						election_frequency = 48
+					}
+				}
+				YEAR = "[?global.year]"
+				MONTH = "[?global.month]"
+			}
+		}
+		add_popularity = { ideology = neutrality popularity = 0.2 }
+		add_popularity = { ideology = democratic popularity = 0.2 }
+		add_popularity = { ideology = nationalist popularity = 0.2 }
+		custom_effect_tooltip = TT_SYR_EARLY_CIVIL_WAR_CHANCE
+		set_temp_variable = { total_added_popularity = 0 }
+		add_to_temp_variable = { total_added_popularity = added_bashar_popularity }
+		add_to_temp_variable = { total_added_popularity = added_bushra_popularity }
+		add_to_temp_variable = { total_added_popularity = added_maher_popularity }
+		multiply_temp_variable = { total_added_popularity = 0.33333 }
+		set_temp_variable = { civil_war_chance = total_added_popularity }
+		multiply_temp_variable = { civil_war_chance = 2 }
+		clamp_temp_variable = {
+			var = civil_war_chance
+			min = 0
+			max = 100
+		}
+		set_temp_variable = { remaining_chance = 100 }
+		subtract_from_temp_variable = { remaining_chance = civil_war_chance }
+		clamp_temp_variable = {
+			var = remaining_chance
+			min = 0
+			max = 100
+		}
+		random_list = {
+			50 = {
+				modifier = {
+					factor = remaining_chance
+				}
+			}
+			50 = {
+				modifier = {
+					factor = civil_war_chance
+				}
+				start_civil_war = {
+					ideology = communism
+					size = 0.3
+				}
+				set_global_flag = SYR_civil_war_started_early
+				if = {
+					limit = {
+						LEB = { is_subject_of = ROOT }
+					}
+					set_autonomy = {
+						target = LEB
+						autonomy_state = autonomy_free
+					}
+				}
+			}
+		}
+		complete_national_focus = SYR_flowers_of_damascus_spring
+		hidden_effect = { news_event = { id = SyriaFocusNews.12 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.46.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.46.b executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = SYR_NEW_ASSAD_FOCUS_PATH
+					has_global_flag = SYR_DAMASCUS_SPRING_FOCUS_PATH
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = Rifaat_no_international_support }
+			random = {
+				chance = 10
+				if = {
+					limit = { NOT = { has_government = neutrality } }
+					start_civil_war = {
+						ideology = neutrality
+						size = 0.3
+					}
+				}
+				if = {
+					limit = { has_government = neutrality }
+					start_civil_war = {
+						ideology = democratic
+						size = 0.3
+					}
+				}
+				hidden_effect = {
+					random_country_with_original_tag = {
+						original_tag_to_check = SYR
+						limit = {
+							NOT = { tag = SYR }
+						}
+						set_country_flag = Syrian_rebels
+					}
+				}
+				set_global_flag = SYR_civil_war_started_early
+				if = {
+					limit = {
+						LEB = { is_subject_of = ROOT }
+					}
+					set_autonomy = {
+						target = LEB
+						autonomy_state = autonomy_free
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = Rifaat_international_support }
+			random = {
+				chance = 20
+				if = {
+					limit = { NOT = { has_government = neutrality } }
+					start_civil_war = {
+						ideology = neutrality
+						size = 0.5
+					}
+				}
+				if = {
+					limit = { has_government = neutrality }
+					start_civil_war = {
+						ideology = democratic
+						size = 0.5
+					}
+				}
+				hidden_effect = {
+					random_country_with_original_tag = {
+						original_tag_to_check = SYR
+						limit = {
+							NOT = { tag = SYR }
+						}
+						set_country_flag = Syrian_rebels
+					}
+				}
+				set_global_flag = SYR_civil_war_started_early
+				every_country_with_original_tag = {
+					original_tag_to_check = SYR
+					limit = {
+						NOT = { has_idea = divided_syria }
+					}
+					add_ideas = divided_syria
+				}
+				if = {
+					limit = {
+						LEB = { is_subject_of = ROOT }
+					}
+					set_autonomy = {
+						target = LEB
+						autonomy_state = autonomy_free
+					}
+				}
+			}
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.13 hours = 6 } }
+	}
+
+}
+
+#Succesful assassination of Rafic Hariri
+country_event = {
+	id = SyriaFocus.47
+	title = SyriaFocus.47.t
+	desc = SyriaFocus.47.d
+	picture = GFX_rafic_hariri_assassination
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.47.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.47.a executed"
+		ai_chance = { base = 100 }
+		add_stability = -0.10
+		add_opinion_modifier = {
+			target = SYR
+			modifier = barbarian_practices
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.14 hours = 6 } }
+		hidden_effect = { SYR = { country_event = { id = SyriaFocus.49 days = 14 } } }
+	}
+
+}
+
+#Unsuccesful assassination of Rafic Hariri
+country_event = {
+	id = SyriaFocus.48
+	title = SyriaFocus.48.t
+	desc = SyriaFocus.48.d
+	picture = GFX_rafic_hariri_assassination
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.48.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.48.a executed"
+		ai_chance = { base = 100 }
+		add_opinion_modifier = {
+			target = SYR
+			modifier = barbarian_practices
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.15 hours = 6 } }
+		hidden_effect = { SYR = { country_event = { id = SyriaFocus.49 days = 14 } } }
+	}
+
+}
+
+#Cedar Revolution
+country_event = {
+	id = SyriaFocus.49
+	title = SyriaFocus.49.t
+	desc = SyriaFocus.49.d
+	picture = GFX_Syrian_Occupation_Lebanon
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.49.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.49.a executed"
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		add_timed_idea = { idea = international_sanctions days = 730 }
+	}
+
+	option = {
+		name = SyriaFocus.49.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.49.b executed"
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				has_global_flag = SYR_SYRIAN_SAVAGE_FOCUS_PATH
+			}
+		}
+		set_autonomy = {
+			target = LEB
+			autonomy_state = autonomy_free
+		}
+		LEB = {
+			if = {
+				limit = { has_government = democratic }
+				add_popularity = { ideology = democratic popularity = -0.10 }
+			}
+			if = {
+				limit = { has_government = communism }
+				add_popularity = { ideology = communism popularity = -0.10 }
+			}
+			if = {
+				limit = { has_government = neutrality }
+				add_popularity = { ideology = neutrality popularity = -0.10 }
+			}
+			if = {
+				limit = { has_government = nationalist }
+				add_popularity = { ideology = nationalist popularity = -0.10 }
+			}
+			if = {
+				limit = { has_government = fascism }
+				add_popularity = { ideology = fascism popularity = -0.10 }
+			}
+			set_temp_variable = { year_change = 5 }
+			set_election_year_60_months = yes
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.16 hours = 6 } }
+	}
+
+}
+
+#Hezbollah Raids
+country_event = {
+	id = SyriaFocus.50
+	title = SyriaFocus.50.t
+	desc = SyriaFocus.50.d
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.50.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.50.a executed"
+		ai_chance = { base = 100 }
+		declare_war_on = {
+			target = HEZ
+			type = annex_everything
+		}
+		HEZ = { country_event = { id = SyriaFocus.51 hours = 3 } }
+	}
+
+}
+
+#Lebanon retaliates
+country_event = {
+	id = SyriaFocus.51
+	title = SyriaFocus.51.t
+	desc = SyriaFocus.51.d
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.51.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.51.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+
+#Syria demands submission
+country_event = {
+	id = SyriaFocus.52
+	title = SyriaFocus.52.t
+	desc = SyriaFocus.52.d
+	picture = GFX_SYR_ssnp
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.52.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.52.a executed"
+		ai_chance = { base = 80 }
+		custom_effect_tooltip = GAME_OVER_TT
+		FROM = { country_event = { id = SyriaFocus.53 days = 1 } }
+	}
+
+	option = {
+		name = SyriaFocus.52.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.52.b executed"
+		ai_chance = { base = 20 }
+		FROM = { country_event = { id = SyriaFocus.54 days = 1 } }
+	}
+
+}
+
+#Lebanon submits
+country_event = {
+	id = SyriaFocus.53
+	title = SyriaFocus.53.t
+	desc = SyriaFocus.53.d
+	picture = GFX_SYR_ssnp
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.53.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.53.a executed"
+		ai_chance = { base = 100 }
+		202 = { add_core_of = ROOT }
+		203 = { add_core_of = ROOT }
+		553 = { add_core_of = ROOT }
+		201 = { add_core_of = ROOT }
+		annex_country = { target = FROM transfer_troops = yes }
+	}
+
+}
+
+#Lebanon refuses
+country_event = {
+	id = SyriaFocus.54
+	title = SyriaFocus.54.t
+	desc = SyriaFocus.54.d
+	picture = GFX_SYR_ssnp
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.54.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.54.a executed"
+		ai_chance = { base = 80 }
+		set_temp_variable = { wargoal_on = FROM }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = {
+			type = annex_everything
+			target = FROM
+		}
+	}
+	option = {
+		name = SyriaFocus.54.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.54.b executed"
+		ai_chance = { base = 20 }
+		202 = { remove_claim_by = ROOT }
+		203 = { remove_claim_by = ROOT }
+		553 = { remove_claim_by = ROOT }
+		201 = { remove_claim_by = ROOT }
+	}
+
+}
+
+#SSNP Coup in Jordan
+country_event = {
+	id = SyriaFocus.55
+	title = SyriaFocus.55.t
+	desc = SyriaFocus.55.d
+	picture = GFX_SYR_ssnp
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.55.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.55.a executed"
+		ai_chance = { base = 100 }
+		set_temp_variable = { rul_party_temp = 20 }
+		change_ruling_party_effect = yes
+		FROM = { country_event = SyriaFocus.56 }
+	}
+	option = {
+		name = SyriaFocus.55.b		#Can resist as player
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.55.b executed"
+		ai_chance = { base = 0 }
+		declare_war_on = {
+			target = SYR
+			type = annex_everything
+		}
+	}
+
+}
+
+#SSNP Coup in Jordan
+country_event = {
+	id = SyriaFocus.56
+	title = SyriaFocus.56.t
+	desc = SyriaFocus.56.d
+	picture = GFX_SYR_ssnp
+
+	is_triggered_only = yes
+
+	immediate = {
+		211 = { add_core_of = ROOT }
+		210 = { add_core_of = ROOT }
+		212 = { add_core_of = ROOT }
+	}
+
+	option = {
+		name = SyriaFocus.56.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.56.a executed"
+		ai_chance = { base = 80 }
+		annex_country = {
+			target = FROM
+			transfer_troops = yes
+		}
+		add_named_threat = {
+			threat = 5
+			name = SYR.Jordan_coup
+		}
+	}
+	option = {
+		name = SyriaFocus.56.b		#Can resist as player
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.56.b executed"
+		ai_chance = { base = 20 }
+		if = {
+			limit = {
+				has_global_flag = GAME_RULE_allow_colored_puppets
+			}
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_autonomous_state_colored
+				end_wars = yes
+				end_civil_wars = yes
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_autonomous_state
+				end_wars = yes
+				end_civil_wars = yes
+			}
+		}
+	}
+
+}
+
+#SSNP civil war in Jordan
+country_event = {
+	id = SyriaFocus.57
+	title = SyriaFocus.57.t
+	desc = SyriaFocus.57.d
+	picture = GFX_SYR_ssnp
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.57.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.57.a executed"
+		ai_chance = { base = 100 }
+		start_civil_war = {
+			ideology = nationalist
+		}
+		random_country_with_original_tag = {
+			original_tag_to_check = JOR
+			limit = {
+				has_government = nationalist
+			}
+			SYR = {
+				211 = { add_core_of = SYR }
+				210 = { add_core_of = SYR }
+				212 = { add_core_of = SYR }
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+				declare_war_on = {
+					target = JOR
+					type = annex_everything
+				}
+			}
+		}
+	}
+
+}
+
+#War between Jordan and Syria
+country_event = {
+	id = SyriaFocus.58
+	title = SyriaFocus.58.t
+	desc = SyriaFocus.58.d
+	picture = GFX_SYR_ssnp
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.58.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.58.a executed"
+		ai_chance = { base = 100 }
+		SYR = {
+			211 = { add_claim_by = SYR }
+			210 = { add_claim_by = SYR }
+			212 = { add_claim_by = SYR }
+			declare_war_on = {
+				target = JOR
+				type = annex_everything
+			}
+		}
+	}
+
+}
+
+#Palestinians Raid Israel from Jordan
+country_event = {
+	id = SyriaFocus.59
+	title = SyriaFocus.59.t
+	desc = SyriaFocus.59.d
+	picture = GFX_palestinians_in_syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.59.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.59.a executed"
+		ai_chance = { base = 100 }
+		if = {
+			limit = {
+				original_tag = ISR
+			}
+			add_stability = -0.10
+		}
+	}
+
+}
+
+#Palestinians Raid Israel from Jordan
+country_event = {
+	id = SyriaFocus.60
+	title = SyriaFocus.60.t
+	desc = SyriaFocus.60.d
+	picture = GFX_palestinians_in_syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.60.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.60.a executed"
+		ai_chance = { base = 100 }
+		declare_war_on = {
+			target = FROM
+			type = annex_everything
+		}
+		hidden_effect = { FROM = { add_state_core = 587 } }
+		hidden_effect = {
+			if = {
+				limit = {
+					country_exists = PAL
+					PAL = { is_subject = no }
+				}
+				PAL = { country_event = { id = SyriaFocus.61 hours = 6 } }
+			}
+			if = {
+				limit = {
+					country_exists = HAM
+					HAM = { is_subject = no }
+				}
+				HAM = { country_event = { id = SyriaFocus.61 hours = 6 } }
+			}
+		}
+	}
+
+}
+
+#Join Syria in a war against Israel
+country_event = {
+	id = SyriaFocus.61
+	title = SyriaFocus.61.t
+	desc = SyriaFocus.61.d
+	picture = GFX_palestinians_in_syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.61.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.61.a executed"
+		ai_chance = { base = 90 }
+		SYR = { country_event = { id = SyriaFocus.62 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.61.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.61.b executed"
+		ai_chance = { base = 10 }
+	}
+
+}
+
+#Join Syria in a war against Israel
+country_event = {
+	id = SyriaFocus.62
+	title = SyriaFocus.62.t
+	desc = SyriaFocus.62.d
+	picture = GFX_palestinians_in_syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.62.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.62.a executed"
+		ai_chance = { base = 90 }
+		if = {
+			limit = {
+				has_global_flag = GAME_RULE_allow_colored_puppets
+			}
+			set_autonomy = {
+				target = PREV
+				autonomy_state = autonomy_puppet_state_colored
+				end_wars = yes
+				end_civil_wars = yes
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = PREV
+				autonomy_state = autonomy_puppet_state
+				end_wars = yes
+				end_civil_wars = yes
+			}
+		}
+	}
+	option = {
+		name = SyriaFocus.62.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.62.b executed"
+		ai_chance = { base = 10 }
+	}
+
+}
+
+#Syria asks Sudan for alliance
+country_event = {
+	id = SyriaFocus.63
+	title = SyriaFocus.63.t
+	desc = SyriaFocus.63.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.63.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.63.a executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0
+				OR = {
+					AND = {
+						EGY = { has_government = democratic }
+						SUD = { has_government = democratic }
+					}
+					AND = {
+						EGY = { has_government = communism }
+						SUD = { has_government = communism }
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.25
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.5
+				is_in_faction = yes
+			}
+		}
+		FROM = { country_event = { id = md4.17 hours = 3 } }
+	}
+	option = {
+		name = SyriaFocus.63.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.63.b executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 5
+				OR = {
+					AND = {
+						EGY = { has_government = democratic }
+						SUD = { has_government = democratic }
+					}
+					AND = {
+						EGY = { has_government = communism }
+						SUD = { has_government = communism }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.5
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 4
+				has_war = yes
+			}
+			modifier = {
+				factor = 2
+				is_in_faction = yes
+			}
+		}
+		FROM = { country_event = { id = md4.18 hours = 3 } }
+	}
+
+}
+
+#Syria demands Sinai
+country_event = {
+	id = SyriaFocus.64
+	title = SyriaFocus.64.t
+	desc = SyriaFocus.64.d
+	picture = GFX_Greater_Syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.64.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.64.a executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0
+				TUR = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				factor = 0.5
+				strength_ratio = {
+					tag = FROM
+					ratio > 1
+				}
+			}
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+			modifier = {
+				factor = 0.5
+				strength_ratio = {
+					tag = FROM
+					ratio > 1
+				}
+				strength_ratio = {
+					tag = SUD
+					ratio > 1
+				}
+			}
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+				strength_ratio = {
+					tag = SUD
+					ratio < 1
+				}
+			}
+			modifier = {
+				factor = 2
+				FROM = { is_in_faction_with = SUD }
+			}
+		}
+		swap_ideas = {
+			remove_idea = full_control_of_suez
+			add_idea = partial_control_of_suez
+		}
+		SYR = { add_ideas = partial_control_of_suez }
+		213 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		set_country_flag = STATE_TRANSFER_ADD_CORES
+		FROM = { country_event = { id = md4.19 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.64.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.64.b executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 10
+				TUR = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio > 1
+				}
+			}
+			modifier = {
+				factor = 0.5
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio > 1
+				}
+				strength_ratio = {
+					tag = SUD
+					ratio > 1
+				}
+			}
+			modifier = {
+				factor = 0.5
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+				strength_ratio = {
+					tag = SUD
+					ratio < 1
+				}
+			}
+			modifier = {
+				factor = 0.5
+				FROM = { is_in_faction_with = SUD }
+			}
+		}
+		213 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		FROM = { country_event = { id = md4.20 hours = 6 } }
+	}
+
+}
+
+#Religious uprising in Iraq
+country_event = {
+	id = SyriaFocus.65
+	title = SyriaFocus.65.t
+	desc = SyriaFocus.65.d
+	picture = GFX_Greater_Syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.65.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.65.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+
+#Syria willing to make concessions to Kurdistan
+country_event = {
+	id = SyriaFocus.66
+	title = SyriaFocus.66.t
+	desc = SyriaFocus.66.d
+	picture = GFX_kurdistan
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.66.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.66.a executed"
+		ai_chance = { base = 80 }
+		FROM = { country_event = { id = SyriaFocus.67 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.66.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.66.b executed"
+		ai_chance = { base = 20 }
+		FROM = { country_event = { id = SyriaFocus.68 hours = 6 } }
+	}
+
+}
+
+#Syria willing to make concessions to Kurdistan - Kurdistan agrees
+country_event = {
+	id = SyriaFocus.67
+	title = SyriaFocus.67.t
+	desc = SyriaFocus.67.d
+	picture = GFX_kurdistan
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.67.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.67.a executed"
+		ai_chance = { base = 100 }
+		if = {
+			limit = { ROJ = { NOT = { is_subject_of = ROOT } } }
+			every_owned_state = {
+				limit = { is_core_of = KUR }
+				KUR = { transfer_state = PREV }
+			}
+			every_owned_state = {
+				limit = { is_core_of = KUR }
+				add_core_of = ROOT
+			}
+		}
+		if = {
+			limit = { ROJ = { is_subject_of = ROOT } }
+			KUR = { annex_country = { target = ROJ transfer_troops = yes } }
+			every_owned_state = {
+				limit = {
+					OR = {
+						is_core_of = KUR
+						is_core_of = ROJ
+					}
+				}
+				KUR = { transfer_state = PREV }
+			}
+			KUR = {
+				every_core_state = {
+					add_core_of = ROOT
+				}
+			}
+			ROJ = {
+				every_core_state = {
+					add_core_of = ROOT
+				}
+			}
+		}
+		puppet = KUR
+	}
+
+}
+
+#Syria willing to make concessions to Kurdistan - Kurdistan refuses
+country_event = {
+	id = SyriaFocus.68
+	title = SyriaFocus.68.t
+	desc = SyriaFocus.68.d
+	picture = GFX_kurdistan
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.68.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.68.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+
+#Syria demands Northern Saudi Arabia
+country_event = {
+	id = SyriaFocus.69
+	title = SyriaFocus.69.t
+	desc = SyriaFocus.69.d
+	picture = GFX_Greater_Syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.69.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.69.a executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0.5
+				strength_ratio = {
+					tag = FROM
+					ratio > 1
+				}
+			}
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+		}
+		932 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		933 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		set_country_flag = STATE_TRANSFER_ADD_CORES
+		FROM = { country_event = { id = md4.19 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.69.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.69.b executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio > 1
+				}
+			}
+			modifier = {
+				factor = 0.5
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+		}
+		932 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		933 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		FROM = { country_event = { id = md4.20 hours = 6 } }
+	}
+
+}
+
+#Syria asks Houthis for alliance
+country_event = {
+	id = SyriaFocus.70
+	title = SyriaFocus.70.t
+	desc = SyriaFocus.70.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.70.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.70.a executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0.2
+				NOT = { has_government = communism }
+			}
+		}
+		FROM = { country_event = { id = md4.17 hours = 3 } }
+	}
+	option = {
+		name = SyriaFocus.70.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.70.b executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0.4
+				NOT = { has_government = communism }
+			}
+		}
+		FROM = { country_event = { id = md4.18 hours = 3 } }
+	}
+
+}
+
+#Shia uprising in Saudi Arabia
+country_event = {
+	id = SyriaFocus.71
+	title = SyriaFocus.71.t
+	desc = SyriaFocus.71.d
+	picture = GFX_politics_shiite
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.71.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.71.a executed"
+		ai_chance = { base = 100 }
+		if = {
+			limit = { original_tag = QTF }
+			FROM = { country_event = { id = md4.17 hours = 3 } }
+		}
+	}
+
+}
+
+#Syria asks Azerbaijan for alliance
+country_event = {
+	id = SyriaFocus.72
+	title = SyriaFocus.72.t
+	desc = SyriaFocus.72.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	#Azerbaijan is pro-Israel and pro-Turkey, while Iran supports Armenia, meaning that the base chances are slightly for Azerbaijan joining Syria
+	option = {
+		name = SyriaFocus.72.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.72.a executed"
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 0.4
+				OR = {
+					AND = {
+						AZE = { has_government = democratic }
+						PER = { has_government = democratic }
+					}
+					AND = {
+						AZE = { has_government = communism }
+						PER = { has_government = communism }
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.25
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.5
+				is_in_faction = yes
+			}
+			modifier = {
+				factor = 0.5
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 0.25
+				OR = {
+					owns_state = 710
+					710 = {
+						NOT = { is_claimed_by = ROOT }
+						NOT = { is_core_of = ROOT }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.25
+				FROM = { has_completed_focus = SYR_divide_turkey }
+			}
+		}
+		FROM = { country_event = { id = md4.17 hours = 3 } }
+		add_state_core = 710
+	}
+	option = {
+		name = SyriaFocus.72.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.72.b executed"
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2.5
+				OR = {
+					AND = {
+						AZE = { has_government = democratic }
+						PER = { has_government = democratic }
+					}
+					AND = {
+						AZE = { has_government = communism }
+						PER = { has_government = communism }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.5
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 4
+				has_war = yes
+			}
+			modifier = {
+				factor = 2
+				is_in_faction = yes
+			}
+			modifier = {
+				factor = 2
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 4
+				OR = {
+					owns_state = 710
+					AND = {
+						710 = { NOT = { is_claimed_by = ROOT } }
+						710 = { NOT = { is_core_of = ROOT } }
+					}
+				}
+			}
+			modifier = {
+				factor = 4
+				FROM = { has_completed_focus = SYR_divide_turkey }
+			}
+		}
+		FROM = { country_event = { id = md4.18 hours = 3 } }
+	}
+
+}
+
+#Syria asks Armenia for alliance
+country_event = {
+	id = SyriaFocus.73
+	title = SyriaFocus.73.t
+	desc = SyriaFocus.73.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.73.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.73.a executed"
+		ai_chance = {
+			base = 70
+			modifier = {
+				factor = 3
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.25
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.5
+				KUR = { is_subject_of = FROM }
+			}
+		}
+		FROM = { country_event = { id = md4.17 hours = 3 } }
+		add_state_claim = 163
+		add_state_claim = 935
+	}
+	option = {
+		name = SyriaFocus.73.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.73.b executed"
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 0.33
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 4
+				has_war = yes
+			}
+			modifier = {
+				factor = 2
+				KUR = { is_subject_of = FROM }
+			}
+		}
+		FROM = { country_event = { id = md4.18 hours = 3 } }
+	}
+
+}
+
+#Syria asks Greece for alliance
+country_event = {
+	id = SyriaFocus.74
+	title = SyriaFocus.74.t
+	desc = SyriaFocus.74.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.74.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.74.a executed"
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_idea = NATO_member
+				TUR = { has_idea = NATO_member }
+			}
+			modifier = {
+				factor = 10
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.25
+				has_war = yes
+			}
+			modifier = {
+				factor = 3
+				TUR = { NOT = { has_idea = NATO_member } }
+			}
+			modifier = {
+				factor = 0.5
+				934 = {
+					NOT = { is_claimed_by = ROOT }
+					NOT = { is_core_of = ROOT }
+				}
+				156 = {
+					NOT = { is_claimed_by = ROOT }
+					NOT = { is_core_of = ROOT }
+				}
+				143 = {
+					NOT = { is_claimed_by = TUR }
+					NOT = { is_core_of = TUR }
+				}
+			}
+			modifier = {
+				factor = 0.2
+				OR = {
+					FROM = {
+						owns_any_state_of = {
+							145
+							146
+						}
+					}
+					FROM = {
+						any_subject_country = {
+							owns_any_state_of = {
+								145
+								146
+							}
+						}
+					}
+				}
+			}
+		}
+		FROM = { country_event = { id = md4.17 hours = 3 } }
+		add_state_claim = 156
+		add_state_claim = 934
+		NATO_leave = yes
+	}
+	option = {
+		name = SyriaFocus.74.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.74.b executed"
+		ai_chance = {
+			base = 90
+			modifier = {
+				factor = 1
+				has_idea = NATO_member
+				TUR = { has_idea = NATO_member }
+			}
+			modifier = {
+				factor = 0.1
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 4
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.3
+				TUR = { NOT = { has_idea = NATO_member } }
+			}
+			modifier = {
+				factor = 2
+				934 = {
+					NOT = { is_claimed_by = ROOT }
+					NOT = { is_core_of = ROOT }
+				}
+				156 = {
+					NOT = { is_claimed_by = ROOT }
+					NOT = { is_core_of = ROOT }
+				}
+				143 = {
+					NOT = { is_claimed_by = TUR }
+					NOT = { is_core_of = TUR }
+				}
+			}
+			modifier = {
+				factor = 5
+				OR = {
+					FROM = {
+						owns_any_state_of = {
+							145
+							146
+						}
+					}
+					FROM = {
+						any_subject_country = {
+							owns_any_state_of = {
+								145
+								146
+							}
+						}
+					}
+				}
+			}
+		}
+		FROM = { country_event = { id = md4.18 hours = 3 } }
+	}
+
+}
+
+#Syria demands Southern Turkey
+country_event = {
+	id = SyriaFocus.75
+	title = SyriaFocus.75.t
+	desc = SyriaFocus.75.d
+	picture = GFX_Greater_Syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.75.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.75.a executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0.5
+				strength_ratio = {
+					tag = FROM
+					ratio > 1
+				}
+			}
+			modifier = {
+				factor = 3
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+		}
+		if = {
+			limit = { SYR = { is_in_faction_with = GRE } }
+			GRE = {
+				transfer_state = 156
+				transfer_state = 934
+			}
+		}
+		if = {
+			limit = { SYR = { is_in_faction_with = ARM } }
+			ARM = {
+				transfer_state = 163
+				if = {
+					limit = { KUR = { NOT = { is_subject_of = SYR } } }
+					transfer_state = 935
+				}
+			}
+		}
+		if = {
+			limit = { owns_state = 158 }
+			158 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		if = {
+			limit = { owns_state = 161 }
+			161 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		if = {
+			limit = { owns_state = 162 }
+			162 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		if = {
+			limit = { owns_state = 992 }
+			992 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		if = {
+			limit = {
+				owns_state = 935
+				KUR = { is_subject_of = SYR }
+			}
+			935 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		set_country_flag = STATE_TRANSFER_ADD_CORES
+		SYR = { country_event = { id = md4.19 hours = 6 } }
+	}
+	option = {
+		name = SyriaFocus.75.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.75.b executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio > 1
+				}
+			}
+			modifier = {
+				factor = 0.3
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+		}
+		if = {
+			limit = { owns_state = 158 }
+			158 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		if = {
+			limit = { owns_state = 161 }
+			161 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		if = {
+			limit = { owns_state = 162 }
+			162 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		if = {
+			limit = { owns_state = 992 }
+			992 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		if = {
+			limit = {
+				owns_state = 935
+				KUR = { is_subject_of = FROM }
+			}
+			935 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		FROM = { country_event = { id = md4.20 hours = 6 } }
+	}
+
+}
+
+#Hamas takes control of Gaza
+country_event = {
+	id = SyriaFocus.76
+	title = SyriaFocus.76.t
+	desc = SyriaFocus.76.d
+	picture = GFX_new_intifada
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.76.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.76.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+#New Intifada
+country_event = {
+	id = SyriaFocus.77
+	title = SyriaFocus.77.t
+	desc = SyriaFocus.77.d
+	picture = GFX_new_intifada
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.77.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.77.a executed"
+		ai_chance = { base = 100 }
+		if = {
+			limit = { original_tag = ISR }
+			add_timed_idea = {
+				idea = israel_new_intifada
+				days = 360
+			}
+			set_temp_variable = { wargoal_on = HAM }
+			set_temp_variable = { wargoal_type = 2 }
+			add_threat_from_wargoal_effect = yes
+			create_wargoal = {
+				type = annex_everything
+				target = HAM
+			}
+		}
+		if = {
+			limit = { original_tag = HAM }
+			add_political_power = 150
+		}
+	}
+}
+
+#Syria offers alliance to defend Jerusalem (same event for both Israel and Palestine)
+country_event = {
+	id = SyriaFocus.78
+	title = SyriaFocus.78.t
+	desc = SyriaFocus.78.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.78.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.78.a executed"
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 1.2
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { has_government = fascism }
+					}
+					AND = {
+						original_tag = PAL
+						has_government = nationalist
+						FROM = { has_government = nationalist }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.2
+				original_tag = ISR
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.1
+				is_in_faction = yes
+			}
+		}
+		SYR = { add_to_faction = PREV }
+		FROM = { country_event = { id = md4.17 hours = 3 } }
+	}
+	option = {
+		name = SyriaFocus.78.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.78.b executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0.8
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { has_government = fascism }
+					}
+					AND = {
+						original_tag = PAL
+						has_government = nationalist
+						FROM = { has_government = nationalist }
+					}
+				}
+			}
+			modifier = {
+				factor = 5
+				original_tag = ISR
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 10
+				is_in_faction = yes
+			}
+		}
+		FROM = { country_event = { id = md4.18 hours = 3 } }
+	}
+
+}
+
+#Syria invites to Jerusalem Defence Pact
+country_event = {
+	id = SyriaFocus.79
+	title = SyriaFocus.79.t
+	desc = SyriaFocus.79.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.79.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.79.a executed"
+		ai_chance = {
+			base = 70
+			modifier = {
+				factor = 1.2
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { has_government = fascism }
+					}
+					AND = {
+						has_government = neutrality
+						FROM = { has_government = neutrality }
+					}
+					AND = {
+						has_government = nationalist
+						FROM = { has_government = nationalist }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.5
+				ISR = { has_government = nationalist }
+			}
+			modifier = {
+				factor = 0.2
+				NOT = { has_opinion_modifier = ISR_Arab_Conflict }
+			}
+		}
+		SYR = { add_to_faction = PREV }
+		FROM = { country_event = { id = md4.17 hours = 3 } }
+	}
+	option = {
+		name = SyriaFocus.79.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.79.b executed"
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 0.8
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { has_government = fascism }
+					}
+					AND = {
+						has_government = neutrality
+						FROM = { has_government = neutrality }
+					}
+					AND = {
+						has_government = nationalist
+						FROM = { has_government = nationalist }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.5
+				ISR = { has_government = nationalist }
+			}
+			modifier = {
+				factor = 5
+				NOT = { has_opinion_modifier = ISR_Arab_Conflict }
+			}
+		}
+		FROM = { country_event = { id = md4.18 hours = 3 } }
+	}
+
+}
+
+#Syria wants to join Peninshula shield
+country_event = {
+	id = SyriaFocus.80
+	title = SyriaFocus.80.t
+	desc = SyriaFocus.80.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.80.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.80.a executed"
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 1.5
+				has_government = fascism
+				FROM = { has_government = democratic }
+			}
+			modifier = {
+				factor = 1.5
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { has_government = fascism }
+					}
+					AND = {
+						has_government = nationalist
+						FROM = { has_government = nationalist }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.1
+				FROM = { has_idea = sunni }
+			}
+			modifier = {
+				factor = 1.2
+				LEB = { NOT = { is_subject_of = FROM } }
+			}
+			modifier = {
+				factor = 0.8
+				NOT = { has_country_leader = { name = "Fahd Bin Abdulaziz al-Saud" } }
+			}
+			modifier = {
+				factor = 0.3
+				FROM = { has_completed_focus = SYR_assassinate_lebanese_prime_minister }
+			}
+			modifier = {
+				factor = 0.3
+				FROM = { has_completed_focus = SYR_support_hezbollah }
+			}
+			modifier = {
+				factor = 0.1
+				has_opinion = {
+					target = FROM
+					value = -50
+				}
+			}
+		}
+		effect_tooltip = {
+			add_to_faction = FROM
+		}
+		FROM = { country_event = { id = SyriaFocus.81 hours = 3 } }
+	}
+	option = {
+		name = SyriaFocus.80.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.80.b executed"
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				has_government = fascism
+				FROM = { has_government = democratic }
+			}
+			modifier = {
+				factor = 0.5
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { has_government = fascism }
+					}
+					AND = {
+						has_government = nationalist
+						FROM = { has_government = nationalist }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.9
+				FROM = { has_idea = sunni }
+			}
+			modifier = {
+				factor = 0.8
+				LEB = { NOT = { is_subject_of = FROM } }
+			}
+			modifier = {
+				factor = 1.2
+				NOT = { has_country_leader = { name = "Fahd Bin Abdulaziz al-Saud" } }
+			}
+			modifier = {
+				factor = 3
+				FROM = { has_completed_focus = SYR_assassinate_lebanese_prime_minister }
+			}
+			modifier = {
+				factor = 3
+				FROM = { has_completed_focus = SYR_support_hezbollah }
+			}
+			modifier = {
+				factor = 10
+				has_opinion = {
+					target = FROM
+					value = -50
+				}
+			}
+		}
+		FROM = { country_event = { id = SyriaFocus.82 hours = 3 } }
+	}
+
+}
+
+#Syria Joins Peninsula Shield
+country_event = {
+	id = SyriaFocus.81
+	title = SyriaFocus.81.t
+	desc = SyriaFocus.81.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.81.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.81.a executed"
+		ai_chance = { base = 100 }
+		FROM = { add_to_faction = ROOT }
+	}
+
+}
+
+#Syria Doesn't join Peninsula Shield
+country_event = {
+	id = SyriaFocus.82
+	title = SyriaFocus.82.t
+	desc = SyriaFocus.82.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.82.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.82.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+
+#Syria wants to join Resistance Axis
+country_event = {
+	id = SyriaFocus.83
+	title = SyriaFocus.83.t
+	desc = SyriaFocus.83.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.83.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.83.a executed"
+		ai_chance = {
+			base = 90
+			modifier = {
+				factor = 0.8
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { NOT = { has_government = democratic } }
+					}
+					AND = {
+						has_government = communism
+						FROM = { NOT = { has_government = communism } }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { NOT = { has_government = fascism } }
+					}
+					AND = {
+						has_government = neutrality
+						FROM = { NOT = { has_government = neutrality } }
+					}
+					AND = {
+						has_government = nationalist
+						FROM = { NOT = { has_government = nationalist } }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.6
+				FROM = { has_idea = sunni }
+			}
+			modifier = {
+				factor = 0.2
+				FROM = { has_completed_focus = SYR_against_hezbollah }
+			}
+			modifier = {
+				factor = 0.4
+				OR = {
+					owns_state = 203
+					owns_state = 553
+					owns_state = 202
+					owns_state = 201
+					LEB = { is_subject_of = FROM }
+					HEZ = { is_subject_of = FROM }
+				}
+			}
+		}
+		effect_tooltip = {
+			add_to_faction = FROM
+		}
+		FROM = { country_event = { id = SyriaFocus.84 hours = 3 } }
+	}
+	option = {
+		name = SyriaFocus.83.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.83.b executed"
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 1.25
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { NOT = { has_government = democratic } }
+					}
+					AND = {
+						has_government = communism
+						FROM = { NOT = { has_government = communism } }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { NOT = { has_government = fascism } }
+					}
+					AND = {
+						has_government = neutrality
+						FROM = { NOT = { has_government = neutrality } }
+					}
+					AND = {
+						has_government = nationalist
+						FROM = { NOT = { has_government = nationalist } }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.6
+				FROM = { has_idea = sunni }
+			}
+			modifier = {
+				factor = 5
+				FROM = { has_completed_focus = SYR_against_hezbollah }
+			}
+			modifier = {
+				factor = 2.5
+				OR = {
+					owns_state = 203
+					owns_state = 553
+					owns_state = 202
+					owns_state = 201
+					LEB = { is_subject_of = FROM }
+					HEZ = { is_subject_of = FROM }
+				}
+			}
+		}
+		FROM = { country_event = { id = SyriaFocus.85 hours = 3 } }
+	}
+
+}
+
+#Syria Joins Resistance Axis
+country_event = {
+	id = SyriaFocus.84
+	title = SyriaFocus.84.t
+	desc = SyriaFocus.84.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.84.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.84.a executed"
+		ai_chance = { base = 100 }
+		FROM = { add_to_faction = ROOT }
+		add_ideas = faction_resistance_axis_member
+		every_other_country = {
+			limit = { is_subject_of = ROOT }
+			add_ideas = faction_resistance_axis_member
+		}
+	}
+
+}
+
+#Syria Doesn't join Resistance Axis
+country_event = {
+	id = SyriaFocus.85
+	title = SyriaFocus.85.t
+	desc = SyriaFocus.85.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.85.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.85.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+
+#fund voluntary organizations success
+country_event = {
+	id = SyriaFocus.86
+	title = SyriaFocus.86.t
+	desc = SyriaFocus.86.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.86.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.86.a executed"
+		ai_chance = { base = 100 }
+		add_timed_idea = {
+			idea = syria_new_voluntary_organizations
+			days = 100
+		}
+		decrease_corruption = yes
+		add_power_balance_value = {
+			id = Syria_centralization_balance_of_power_category
+			value = -0.05
+			tooltip_side = SYR_federalist_bop_left_side
+		}
+	}
+}
+
+#encourage economic self reliance success
+country_event = {
+	id = SyriaFocus.87
+	title = SyriaFocus.87.t
+	desc = SyriaFocus.87.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.87.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.87.a executed"
+		ai_chance = { base = 100 }
+		increase_economic_growth = yes
+		add_power_balance_value = {
+			id = Syria_centralization_balance_of_power_category
+			value = -0.05
+			tooltip_side = SYR_federalist_bop_left_side
+		}
+	}
+}
+
+#NPF leadership
+country_event = {
+	id = SyriaFocus.88
+	title = SyriaFocus.88.t
+	desc = SyriaFocus.88.d
+	picture = GFX_election
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.88.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.88.a executed"
+		ai_chance = { base = 50 }
+		complete_national_focus = SYR_NPF_victory
+		set_temp_variable = { add_col_one = 5 }
+		add_coalition_members_effect = yes
+		meta_effect = {
+			text = {
+				set_politics = {
+				ruling_party = nationalist
+				elections_allowed = yes
+				last_election = "[YEAR].[MONTH].1"
+				election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month]"
+		}
+		set_temp_variable = { rul_party_temp = 20 }
+		change_ruling_party_effect = yes
+		hidden_effect = {
+			set_variable = { term_limit = 2 }
+			set_variable = { current_term = 1 }
+		}
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.30 }
+		set_temp_variable = { temp_outlook_increase = 0.30 }
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		add_ideas = syrian_promises_of_change_nationalist
+		swap_ideas = {
+			remove_idea = oligarchs
+			add_idea = farmers
+		}
+		swap_ideas = {
+			remove_idea = iranian_quds_force
+			add_idea = the_military
+		}
+	}
+	option = {
+		name = SyriaFocus.88.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.88.b executed"
+		ai_chance = { base = 50 }
+		complete_national_focus = SYR_NPF_victory
+		set_temp_variable = { add_col_one = 20 }
+		add_coalition_members_effect = yes
+		meta_effect = {
+			text = {
+				set_politics = {
+				ruling_party = nationalist
+				elections_allowed = yes
+				last_election = "[YEAR].[MONTH].1"
+				election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month]"
+		}
+		set_temp_variable = { rul_party_temp = 5 }
+		change_ruling_party_effect = yes
+		hidden_effect = {
+			set_variable = { term_limit = 2 }
+			set_variable = { current_term = 1 }
+		}
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.30 }
+		set_temp_variable = { temp_outlook_increase = 0.30 }
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		add_ideas = syrian_promises_of_change_emerging
+		swap_ideas = {
+			remove_idea = oligarchs
+			add_idea = farmers
+		}
+		swap_ideas = {
+			remove_idea = iranian_quds_force
+			add_idea = the_military
+		}
+		swap_ideas = {
+			remove_idea = intelligence_community
+			add_idea = labour_unions
+		}
+	}
+}
+
+#Syrian 2000s elections
+country_event = {
+	id = SyriaFocus.89
+	title = SyriaFocus.89.t
+	desc = SyriaFocus.89.d
+	picture = GFX_election
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.89.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.89.a executed"
+		ai_chance = { base = 25 }
+		complete_national_focus = SYR_islamist_opposition_victory
+		set_temp_variable = { rul_party_temp = 12 }
+		change_ruling_party_effect = yes
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month]"
+		}
+		hidden_effect = {
+			set_variable = { term_limit = 2 }
+			set_variable = { current_term = 1 }
+		}
+		set_temp_variable = { party_index = 12 }
+		set_temp_variable = { party_popularity_increase = 0.40 }
+		set_temp_variable = { temp_outlook_increase = 0.40 }
+		add_relative_party_popularity = yes
+		add_popularity = { ideology = neutrality popularity = 0.40 }
+		add_ideas = syrian_promises_of_change_neutral
+		swap_ideas = {
+			remove_idea = oligarchs
+			add_idea = small_medium_business_owners
+		}
+		swap_ideas = {
+			remove_idea = iranian_quds_force
+			add_idea = the_ulema
+		}
+		swap_ideas = {
+			remove_idea = intelligence_community
+			add_idea = farmers
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = alawite_high_command
+					has_idea = alawite_high_command_strengthened
+				}
+			}
+			country_event = SyriaFocus.98
+		}
+	}
+	option = {
+		name = SyriaFocus.89.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.89.b executed"
+		ai_chance = { base = 25 }
+		country_event = SyriaFocus.90
+		if = {
+			limit = {
+				has_idea = alawite_high_command_strengthened
+			}
+			country_event = SyriaFocus.98
+		}
+	}
+	option = {
+		name = SyriaFocus.89.c
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.89.c executed"
+		ai_chance = { base = 25 }
+		country_event = SyriaFocus.88
+	}
+}
+
+#Western leadership
+country_event = {
+	id = SyriaFocus.90
+	title = SyriaFocus.90.t
+	desc = SyriaFocus.90.d
+	picture = GFX_election
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.90.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.90.a executed"
+		ai_chance = { base = 50 }
+		complete_national_focus = SYR_secular_opposition_victory
+		set_temp_variable = { add_col_one = 2 }
+		add_coalition_members_effect = yes
+		set_temp_variable = { rul_party_temp = 3 }
+		change_ruling_party_effect = yes
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month]"
+		}
+		hidden_effect = {
+			set_variable = { term_limit = 2 }
+			set_variable = { current_term = 1 }
+		}
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.30 }
+		set_temp_variable = { temp_outlook_increase = 0.30 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		add_ideas = syrian_promises_of_change_western
+		swap_ideas = {
+			remove_idea = oligarchs
+			add_idea = small_medium_business_owners
+		}
+		swap_ideas = {
+			remove_idea = iranian_quds_force
+			add_idea = labour_unions
+		}
+		swap_ideas = {
+			remove_idea = intelligence_community
+			add_idea = farmers
+		}
+	}
+	option = {
+		name = SyriaFocus.90.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.90.b executed"
+		ai_chance = { base = 50 }
+		complete_national_focus = SYR_secular_opposition_victory
+		set_temp_variable = { add_col_one = 3 }
+		add_coalition_members_effect = yes
+		set_temp_variable = { rul_party_temp = 2 }
+		change_ruling_party_effect = yes
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month]"
+		}
+		hidden_effect = {
+			set_variable = { term_limit = 2 }
+			set_variable = { current_term = 1 }
+		}
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.30 }
+		set_temp_variable = { temp_outlook_increase = 0.30 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		add_ideas = syrian_promises_of_change_western
+		swap_ideas = {
+			remove_idea = oligarchs
+			add_idea = small_medium_business_owners
+		}
+		swap_ideas = {
+			remove_idea = iranian_quds_force
+			add_idea = international_bankers
+		}
+		swap_ideas = {
+			remove_idea = intelligence_community
+			add_idea = farmers
+		}
+	}
+}
+
+#Western coalition
+country_event = {
+	id = SyriaFocus.91
+	title = SyriaFocus.91.t
+	desc = SyriaFocus.91.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.91.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.91.a executed"
+		ai_chance = { base = 50 }
+		set_temp_variable = { add_col_one = 17 }
+		add_coalition_members_effect = yes
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = SYR_GOVERNMENT_EXPANSION_EVENT_FED_EFFECT
+	}
+	option = {
+		name = SyriaFocus.91.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.91.b executed"
+		ai_chance = { base = 50 }
+		set_temp_variable = { add_col_one = 20 }
+		add_coalition_members_effect = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = SYR_GOVERNMENT_EXPANSION_EVENT_REP_EFFECT
+	}
+}
+
+#fund voluntary organizations failure
+country_event = {
+	id = SyriaFocus.92
+	title = SyriaFocus.92.t
+	desc = SyriaFocus.92.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.92.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.92.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+#local official accountability increase failure
+country_event = {
+	id = SyriaFocus.93
+	title = SyriaFocus.93.t
+	desc = SyriaFocus.93.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.93.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.93.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+#local official accountability increase success
+country_event = {
+	id = SyriaFocus.94
+	title = SyriaFocus.94.t
+	desc = SyriaFocus.94.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.94.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.94.a executed"
+		ai_chance = { base = 100 }
+		decrease_corruption = yes
+		set_temp_variable = { arg_popularity = 0.1 }
+		add_ruling_outlook_popularity = yes
+		add_power_balance_value = {
+			id = Syria_centralization_balance_of_power_category
+			value = 0.05
+			tooltip_side = SYR_republican_bop_right_side
+		}
+	}
+}
+
+#finding promising bureaucracy success
+country_event = {
+	id = SyriaFocus.95
+	title = SyriaFocus.95.t
+	desc = SyriaFocus.95.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.95.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.95.a executed"
+		ai_chance = { base = 100 }
+		add_timed_idea = {
+			idea = syria_promising_bureaucracy
+			days = 100
+		}
+		add_power_balance_value = {
+			id = Syria_centralization_balance_of_power_category
+			value = 0.05
+			tooltip_side = SYR_republican_bop_right_side
+		}
+		add_political_power = 75
+	}
+}
+
+#finding promising bureaucracy failure
+country_event = {
+	id = SyriaFocus.96
+	title = SyriaFocus.96.t
+	desc = SyriaFocus.96.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.96.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.96.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+# The Druze State Breaks Away
+country_event = {
+	id = SyriaFocus.97
+	title = SyriaFocus.97.t
+	desc = SyriaFocus.97.d
+	picture = GFX_election
+	is_triggered_only = yes
+	trigger = {
+		original_tag = SYR
+	}
+
+	immediate = {
+		set_country_flag = SYR_druze_has_spawned
+	}
+
+	# Alright
+	option = {
+		name = SyriaFocus.97.a #alright
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.97.a executed"
+		ai_chance = { base = 50 }
+		hidden_effect = {
+			if = {
+				limit = { NOT = { country_exists = DRU } }
+				release = DRU
+				DRU = { load_oob = DRU_2017 }
+			}
+			if = {
+				limit = { DRU = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = DRU
+					autonomy_state = autonomy_free
+				}
+			}
+			#Set a random ideology
+			DRU = {
+				random_list = {
+					10 = {
+						set_politics = { ruling_party = democratic elections_allowed = yes }
+						add_popularity = { ideology = democratic popularity = 0.6 }
+					}
+					20 = {
+						set_politics = { ruling_party = communism elections_allowed = yes }
+						add_popularity = { ideology = communism popularity = 0.6 }
+					}
+					40 = {
+						set_politics = { ruling_party = neutrality elections_allowed = yes }
+						add_popularity = { ideology = neutrality popularity = 0.6 }
+					}
+					10 = {
+						set_politics = { ruling_party = nationalist elections_allowed = no }
+						add_popularity = { ideology = nationalist popularity = 0.6 }
+					}
+				}
+				recalculate_party = yes
+			}
+		}
+	}
+	option = {
+		name = SyriaFocus.97.b #fight them
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.97.a executed"
+		ai_chance = { base = 50 }
+		hidden_effect = {
+			if = {
+				limit = { NOT = { country_exists = DRU } }
+				release = DRU
+				DRU = { load_oob = DRU_2017 }
+			}
+			if = {
+				limit = { DRU = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = DRU
+					autonomy_state = autonomy_free
+				}
+			}
+			#Set a random ideology
+			DRU = {
+				random_list = {
+					10 = {
+						set_politics = { ruling_party = democratic elections_allowed = yes }
+						add_popularity = { ideology = democratic popularity = 0.6 }
+					}
+					20 = {
+						set_politics = { ruling_party = communism elections_allowed = yes }
+						add_popularity = { ideology = communism popularity = 0.6 }
+					}
+					40 = {
+						set_politics = { ruling_party = neutrality elections_allowed = yes }
+						add_popularity = { ideology = neutrality popularity = 0.6 }
+					}
+					10 = {
+						set_politics = { ruling_party = nationalist elections_allowed = no }
+						add_popularity = { ideology = nationalist popularity = 0.6 }
+					}
+				}
+			}
+		}
+		declare_war_on = {
+			target = DRU
+			type = annex_everything
+		}
+	}
+}
+
+# Alawite Officers Break Away
+country_event = {
+	id = SyriaFocus.98
+	title = SyriaFocus.98.t
+	desc = SyriaFocus.98.d
+	picture = GFX_alawite_officers_event
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.98.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.98.a executed"
+		if = {
+			limit = { has_idea = alawite_high_command }
+			remove_ideas = alawite_high_command
+			remove_state_core = 189
+			add_ideas = military_power_vacuum
+			if = {
+				limit = { has_idea = intelligence_community }
+				set_temp_variable = { temp_opinion = -15 }
+				change_intelligence_community_opinion = yes
+			}
+			if = {
+				limit = { has_idea = iranian_quds_force }
+				set_temp_variable = { temp_opinion = -10 }
+				change_iranian_quds_force_opinion = yes
+			}
+			if = {
+				limit = { has_idea = oligarchs }
+				set_temp_variable = { temp_opinion = -5 }
+				change_oligarchs_opinion = yes
+			}
+			if = {
+				limit = { NOT = { country_exists = ALA } }
+				release = ALA
+				hidden_effect = {
+					ALA = { load_oob = ALA_2017 }
+				}
+			}
+			if = {
+				limit = { ALA = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = ALA
+					autonomy_state = autonomy_free
+				}
+			}
+			ALA = {
+				set_temp_variable = { rul_party_temp = 22 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
+				add_popularity = { ideology = nationalist popularity = 0.6 }
+			}
+		}
+		if = {
+			limit = { has_idea = alawite_high_command_strengthened }
+			remove_ideas = alawite_high_command_strengthened
+			add_timed_idea = { idea = military_power_vacuum days = 140 }
+			if = {
+				limit = { has_idea = intelligence_community }
+				set_temp_variable = { temp_opinion = -15 }
+				change_intelligence_community_opinion = yes
+			}
+			if = {
+				limit = { has_idea = iranian_quds_force }
+				set_temp_variable = { temp_opinion = -10 }
+				change_iranian_quds_force_opinion = yes
+			}
+			if = {
+				limit = { has_idea = oligarchs }
+				set_temp_variable = { temp_opinion = -5 }
+				change_oligarchs_opinion = yes
+			}
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.5
+			}
+			every_country_with_original_tag = {
+				original_tag_to_check = SYR
+				limit = {
+					NOT = { has_idea = alawite_high_command_strengthened }
+				}
+				remove_state_core = 189
+			}
+			if = {
+				limit = {
+					LEB = { is_subject_of = ROOT }
+				}
+				set_autonomy = {
+					target = LEB
+					autonomy_state = autonomy_free
+				}
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+#syrian green federalist movement formed
+country_event = {
+	id = SyriaFocus.99
+	title = SyriaFocus.99.t
+	desc = SyriaFocus.99.d
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.99.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.99.a executed"
+		ai_chance = { base = 100 }
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		set_country_flag = SYR_syrian_green_federalist_movement
+	}
+}
+
+#encourage economic self reliance failure
+country_event = {
+	id = SyriaFocus.100
+	title = SyriaFocus.100.t
+	desc = SyriaFocus.100.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.100.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.100.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+#encourage state level decision making failure
+country_event = {
+	id = SyriaFocus.101
+	title = SyriaFocus.101.t
+	desc = SyriaFocus.101.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.101.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.101.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+#encourage state level decision making success
+country_event = {
+	id = SyriaFocus.102
+	title = SyriaFocus.102.t
+	desc = SyriaFocus.102.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.102.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.102.a executed"
+		ai_chance = { base = 100 }
+		add_stability = 0.05
+		add_power_balance_value = {
+			id = Syria_centralization_balance_of_power_category
+			value = -0.05
+			tooltip_side = SYR_federalist_bop_left_side
+		}
+	}
+}
+
+#formation of the syrian federation
+country_event = {
+	id = SyriaFocus.103
+	title = SyriaFocus.103.t
+	desc = SyriaFocus.103.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.103.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.103.a executed"
+		ai_chance = { base = 100 }
+		add_stability = kurdish_status_stability_modifier
+		add_stability = alawite_status_stability_modifier
+		add_stability = druze_status_stability_modifier
+		add_ideas = syria_federal_government
+		remove_power_balance = {
+			id = Syria_centralization_balance_of_power_category
+		}
+	}
+}
+
+#formation of the syrian republic
+country_event = {
+	id = SyriaFocus.104
+	title = SyriaFocus.104.t
+	desc = SyriaFocus.104.d
+#	picture = GFX_army_coup_event
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.104.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.104.a executed"
+		ai_chance = { base = 100 }
+		add_stability = kurdish_status_stability_modifier
+		add_stability = alawite_status_stability_modifier
+		add_stability = druze_status_stability_modifier
+		add_ideas = syria_bureaucratic_government
+		remove_power_balance = {
+			id = Syria_centralization_balance_of_power_category
+		}
+	}
+}
+
+#fate of citizenship-denied kurds
+country_event = {
+	id = SyriaFocus.106
+	title = SyriaFocus.106.t
+	desc = SyriaFocus.106.d
+	picture = GFX_kurd_event
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.106.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.106.a executed"
+		ai_chance = { base = 100 }
+		remove_ideas = idea_syrian_kurds_without_citizenships
+	}
+	option = {
+		name = SyriaFocus.106.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.106.b executed"
+		ai_chance = { base = 100 }
+		add_political_power = 50
+	}
+}
+
+# Anime Industry Boom
+country_event = {
+	id = SyriaFocus.108
+	title = SyriaFocus.108.t
+	desc = {
+		text = SyriaFocus.108.d1
+		trigger = {
+			has_idea = syria_japanese_anime
+		}
+	}
+	desc = {
+		text = SyriaFocus.108.d2
+		trigger = {
+			has_idea = syria_chinese_anime
+		}
+	}
+		desc = {
+		text = SyriaFocus.108.d3
+		trigger = {
+			has_idea = syria_domestic_anime
+		}
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.108.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.108.a executed"
+		trigger = {
+			has_idea = syria_japanese_anime
+		}
+		swap_ideas = {
+			remove_idea = syria_japanese_anime
+			add_idea = syria_japanese_anime_success
+		}
+		reverse_add_opinion_modifier = { target = JAP modifier = trade_mission }
+		add_opinion_modifier = { target = JAP modifier = trade_mission }
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = JAP.id }
+		set_temp_variable = { influence_target = SYR.id }
+		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = SyriaFocus.108.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.108.b executed"
+		trigger = {
+			has_idea = syria_chinese_anime
+		}
+		swap_ideas = {
+			remove_idea = syria_chinese_anime
+			add_idea = syria_chinese_anime_success
+		}
+		reverse_add_opinion_modifier = { target = CHI modifier = trade_mission }
+		add_opinion_modifier = { target = CHI modifier = trade_mission }
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI.id }
+		set_temp_variable = { influence_target = SYR.id }
+		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = SyriaFocus.108.c
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.108.c executed"
+		trigger = {
+			has_idea = syria_domestic_anime
+		}
+		swap_ideas = {
+			remove_idea = syria_domestic_anime
+			add_idea = syria_domestic_anime_success
+		}
+		set_temp_variable = { percent_change = 5 }
+		change_domestic_influence_percentage = yes
+
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+#rojava breaks off 2000s
+country_event = {
+	id = SyriaFocus.111
+	title = SyriaFocus.111.t
+	desc = SyriaFocus.111.d
+	picture = GFX_SYR_rojava
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocus.111.a
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.111 executed"
+		ai_chance = { base = 100 }
+		hidden_effect = {
+			if = {
+				limit = { NOT = { country_exists = ROJ } }
+				release = ROJ
+				ROJ = { load_oob = ROJ_2017 }
+			}
+			if = {
+				limit = { ROJ = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = ROJ
+					autonomy_state = autonomy_free
+				}
+			}
+		}
+		declare_war_on = {
+			target = ROJ
+			type = annex_everything
+		}
+	}
+
+}
+
+###################
+### News Events ###
+###################
+
+#Rojava allowed to be independent
+news_event = {
+
+	id = SyriaFocusNews.0
+	title = SyriaFocusNews.0.t
+	desc = SyriaFocusNews.0.d
+	picture = GFX_news_rojava_victory
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.0.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Rojava annexed
+news_event = {
+
+	id = SyriaFocusNews.1
+	title = SyriaFocusNews.1.t
+	desc = SyriaFocusNews.1.d
+	picture = GFX_news_rojava_victory
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.1.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Rojava puppeted
+news_event = {
+
+	id = SyriaFocusNews.2
+	title = SyriaFocusNews.2.t
+	desc = SyriaFocusNews.2.d
+	picture = GFX_news_rojava_victory
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.2.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Rojava resists
+news_event = {
+
+	id = SyriaFocusNews.3
+	title = SyriaFocusNews.3.t
+	desc = SyriaFocusNews.3.d
+	picture = GFX_news_rojava_victory
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.3.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Attempted SSNP coup
+news_event = {
+
+	id = SyriaFocusNews.4
+	title = SyriaFocusNews.4.t
+	desc = {
+		text = SyriaFocusNews.4.d1
+		trigger = { SYR = { has_global_flag = Al_Assad_Dead } }
+	}
+	desc = {
+		text = SyriaFocusNews.4.d2
+		trigger = { SYR = { NOT = { has_global_flag = Al_Assad_Dead } } }
+	}
+	picture = GFX_news_SSNP
+
+	major = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { tag = SYR }
+	}
+
+	option = {
+		name = SyriaFocusNews.4.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Syria Federal Republic formed
+news_event = {
+
+	id = SyriaFocusNews.5
+	title = SyriaFocusNews.5.t
+	desc = SyriaFocusNews.5.d
+	picture = GFX_news_Syria_federal_republic
+
+	major = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { tag = FSA }
+	}
+
+	option = {
+		name = SyriaFocusNews.5.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Ethnic conflict in Syria
+news_event = {
+
+	id = SyriaFocusNews.6
+	title = SyriaFocusNews.6.t
+	desc = SyriaFocusNews.6.d
+	picture = GFX_news_event_war
+
+	major = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { tag = FSA }
+	}
+
+	option = {
+		name = SyriaFocusNews.6.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Puppeting of Lebanon
+news_event = {
+
+	id = SyriaFocusNews.7
+	title = SyriaFocusNews.7.t
+	desc = SyriaFocusNews.7.d
+	picture = GFX_news_Syrian_Occupation_Lebanon
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.7.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Hezbollah coup in Lebanon
+news_event = {
+
+	id = SyriaFocusNews.8
+	title = SyriaFocusNews.8.t
+	desc = SyriaFocusNews.8.d
+	picture = GFX_news_Hezbollah_Coup
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.8.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Hezbollah coup in Lebanon - failed
+news_event = {
+
+	id = SyriaFocusNews.9
+	title = SyriaFocusNews.9.t
+	desc = SyriaFocusNews.9.d
+	picture = GFX_news_Hezbollah_Coup
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.9.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Syria renounces claim on Golan
+news_event = {
+
+	id = SyriaFocusNews.10
+	title = SyriaFocusNews.10.t
+	desc = SyriaFocusNews.10.d
+	picture = GFX_news_Golan
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.10.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Hafez al-Assad Dies
+news_event = {
+
+	id = SyriaFocusNews.11
+	title = SyriaFocusNews.11.t
+	desc = SyriaFocusNews.11.d
+	picture = GFX_news_death_of_hafez_al_assad
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.11.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Syria adopts democracy
+news_event = {
+
+	id = SyriaFocusNews.12
+	title = SyriaFocusNews.12.t
+	desc = SyriaFocusNews.12.d
+	picture = GFX_news_damascus_spring
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.12.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Damascus Spring
+news_event = {
+
+	id = SyriaFocusNews.13
+	title = SyriaFocusNews.13.t
+	desc = SyriaFocusNews.13.d
+	picture = GFX_news_damascus_spring
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.13.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Assassination of Rafic Hariri
+news_event = {
+
+	id = SyriaFocusNews.14
+	title = SyriaFocusNews.14.t
+	desc = SyriaFocusNews.14.d
+	picture = GFX_news_rafic_hariri_assassination
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.14.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Unsuccessful assassination of Rafic Hariri
+news_event = {
+
+	id = SyriaFocusNews.15
+	title = SyriaFocusNews.15.t
+	desc = SyriaFocusNews.15.d
+	picture = GFX_news_rafic_hariri_assassination
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.15.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Cedar Revolution
+news_event = {
+
+	id = SyriaFocusNews.16
+	title = SyriaFocusNews.16.t
+	desc = SyriaFocusNews.16.d
+	picture = GFX_news_Syrian_Occupation_Lebanon
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.16.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Syria Annexes Lebanon
+news_event = {
+
+	id = SyriaFocusNews.17
+	title = SyriaFocusNews.17.t
+	desc = SyriaFocusNews.17.d
+	picture = GFX_news_Syrian_Occupation_Lebanon
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.17.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Syria withdraws from Lebanon
+news_event = {
+
+	id = SyriaFocusNews.18
+	title = SyriaFocusNews.18.t
+	desc = SyriaFocusNews.18.d
+	picture = GFX_news_Syrian_Occupation_Lebanon
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.18.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Declaration of Greater Syria
+news_event = {
+
+	id = SyriaFocusNews.19
+	title = SyriaFocusNews.19.t
+	desc = SyriaFocusNews.19.d
+	picture = GFX_news_Greater_Syria
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.19.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#New Intifada
+news_event = {
+
+	id = SyriaFocusNews.20
+	title = SyriaFocusNews.20.t
+	desc = SyriaFocusNews.20.d
+	picture = GFX_news_3rd_Intifada
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.20.a
+		ai_chance = { base = 100 }
+	}
+}
+
+#Formation of a new United Arab Republic
+news_event = {
+
+	id = SyriaFocusNews.21
+	title = SyriaFocusNews.21.t
+	desc = SyriaFocusNews.21.d
+	picture = GFX_news_united_arab_republic
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaFocusNews.21.a
+		ai_chance = { base = 100 }
+	}
+}
+
+### Druzes or FSA are willing to let go of Golan ###
+#Start negotiations
+country_event = {
+
+	id = SyriaDecisions.0
+	title = SyriaDecisions.0.t
+	desc = SyriaDecisions.0.desc
+	picture = GFX_Golan
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.0.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.0.a executed"		#Agree
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 2			#More helpful if it's the Druze asking
+				FROM = {
+					original_tag = DRU
+				}
+			}
+		}
+		FROM = { country_event = { id = SyriaDecisions.1 days = 3 } }
+		FROM = {
+			set_temp_variable = { percent_change = 2 }
+			change_influence_percentage = yes
+		}
+		if = {
+			limit = { FROM = { original_tag = DRU } }
+			add_ai_strategy = {
+				type = support
+				id = "DRU"
+				value = 200
+			}
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = "DRU"
+				value = 200
+			}
+		}
+		if = {
+			limit = { FROM = { original_tag = FSA } }
+			add_ai_strategy = {
+				type = support
+				id = "FSA"
+				value = 200
+			}
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = "FSA"
+				value = 200
+			}
+		}
+	}
+	option = {
+		name = SyriaDecisions.0.b
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.0.b executed"		#No
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 0.5
+				FROM = {
+					original_tag = DRU
+				}
+			}
+		}
+		FROM = { country_event = { id = SyriaDecisions.2 days = 3 } }
+	}
+}
+
+#Israel agrees
+country_event = {
+
+	id = SyriaDecisions.1
+
+	title = SyriaDecisions.1.t
+	desc = SyriaDecisions.1.desc
+	picture = GFX_Golan
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.1.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.1.a executed"		#Ok
+		ai_chance = {
+			base = 100
+		}
+		remove_state_core = 587
+		remove_state_claim = 587
+		hidden_effect = { news_event = { id = SyriaDecisionsNews.0 hours = 6 } }
+		set_country_flag = Relinquished_Golan
+	}
+}
+
+#Israel refuses
+country_event = {
+
+	id = SyriaDecisions.2
+
+	title = SyriaDecisions.2.t
+	desc = SyriaDecisions.2.desc
+	picture = GFX_Golan
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.2.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.2.a executed"		#Damn
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+### Alawite state is willing to let go of Hatay ###
+#Start negotiations
+country_event = {
+
+	id = SyriaDecisions.3
+
+	title = SyriaDecisions.3.t
+	desc = SyriaDecisions.3.desc
+	picture = GFX_Hatay
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.3.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.3.a executed"		#Agree
+		ai_chance = {
+			base = 80
+		}
+		FROM = { country_event = { id = SyriaDecisions.4 days = 3 } }
+		FROM = {
+			set_temp_variable = { percent_change = 2 }
+			change_influence_percentage = yes
+		}
+
+		add_ai_strategy = {
+			type = support
+			id = "ALA"
+			value = 200
+		}
+		add_ai_strategy = {
+			type = send_volunteers_desire
+			id = "ALA"
+			value = 200
+		}
+	}
+	option = {
+		name = SyriaDecisions.3.b
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.3.b executed"		#No
+		ai_chance = {
+			base = 20
+		}
+		FROM = { country_event = { id = SyriaDecisions.5 days = 3 } }
+	}
+}
+
+#Turkey agrees
+country_event = {
+
+	id = SyriaDecisions.4
+
+	title = SyriaDecisions.4.t
+	desc = SyriaDecisions.4.desc
+	picture = GFX_Hatay
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.4.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.4.a executed"		#Ok
+		ai_chance = {
+			base = 100
+		}
+		remove_state_core = 158
+		remove_state_claim = 158
+		hidden_effect = { news_event = { id = SyriaDecisionsNews.1 hours = 6 } }
+		set_country_flag = Relinquished_Hatay
+	}
+}
+
+#Turkey refuses
+country_event = {
+
+	id = SyriaDecisions.5
+
+	title = SyriaDecisions.5.t
+	desc = SyriaDecisions.5.desc
+	picture = GFX_Hatay
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.5.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.5.a executed"		#Damn
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+### Offer Rojava a deal ###
+country_event = {
+
+	id = SyriaDecisions.6
+
+	title = SyriaDecisions.6.t
+	desc = SyriaDecisions.6.desc
+	picture = GFX_SYR_rojava
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.6.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.6.a executed"		#Join the war
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0.125
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.8
+				FROM = { original_tag = SYR }
+			}
+		}
+		if = {
+			limit = {
+				FROM = {
+					original_tag = FSA
+					has_war_with = SYR
+				}
+			}
+			add_to_war = {
+				targeted_alliance = FSA
+				enemy = SYR
+			}
+		}
+		if = {
+			limit = {
+				FROM = {
+					original_tag = FSA
+					has_war_with = NUS
+				}
+			}
+			add_to_war = {
+				targeted_alliance = FSA
+				enemy = NUS
+			}
+		}
+		if = {
+			limit = {
+				FROM = {
+					original_tag = SYR
+					has_war_with = FSA
+				}
+			}
+			add_to_war = {
+				targeted_alliance = SYR
+				enemy = FSA
+			}
+		}
+		if = {
+			limit = {
+				FROM = {
+					original_tag = SYR
+					has_war_with = NUS
+				}
+			}
+			add_to_war = {
+				targeted_alliance = SYR
+				enemy = NUS
+			}
+		}
+		FROM = { country_event = { id = SyriaDecisions.7 days = 3 } }
+	}
+	option = {
+		name = SyriaDecisions.6.b
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.6.b executed"		#No
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 4.5
+				has_war = yes
+			}
+			modifier = {
+				factor = 1.25
+				FROM = { original_tag = SYR }
+			}
+		}
+		FROM = { country_event = { id = SyriaDecisions.8 days = 3 } }
+	}
+}
+
+#Rojava agrees
+country_event = {
+
+	id = SyriaDecisions.7
+
+	title = SyriaDecisions.7.t
+	desc = SyriaDecisions.7.desc
+	picture = GFX_SYR_rojava
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.7.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.7.a executed"		#Ok
+		ai_chance = {
+			base = 100
+		}
+		set_country_flag = Deal_With_Rojava
+		remove_state_core = 575
+		remove_state_core = 571
+		remove_state_core = 193
+		if = {
+			limit = { owns_state = 575 }
+			ROJ = { transfer_state = 575 }
+		}
+		if = {
+			limit = { owns_state = 571 }
+			ROJ = { transfer_state = 571 }
+		}
+		if = {
+			limit = { owns_state = 193 }
+			ROJ = { transfer_state = 193 }
+		}
+	}
+}
+
+#Rojava refuses
+country_event = {
+
+	id = SyriaDecisions.8
+
+	title = SyriaDecisions.8.t
+	desc = SyriaDecisions.8.desc
+	picture = GFX_SYR_rojava
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.8.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.8.a executed"		#Damn
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+#Hezbollah discovers Syrian spies
+country_event = {
+
+	id = SyriaDecisions.9
+
+	title = SyriaDecisions.9.t
+	desc = SyriaDecisions.9.desc
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = SyriaDecisions.9.a		#Execute them and strike back
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.9.a executed"
+		ai_chance = { base = 80 }
+		random_country = {
+			limit = {
+				NOT = { original_tag = HEZ }
+				has_country_flag = HEZ_Infiltrated_by_SYR
+			}
+			country_event = SyriaDecisions.10
+			clr_country_flag = HEZ_Infiltrated_by_SYR
+		}
+		start_border_war = {
+			change_state_after_war = no
+			attacker = {
+				state = 553
+				num_provinces = 1
+				on_win = SyriaDecisions.16
+				on_lose = SyriaDecisions.17
+				on_cancel = SyriaDecisions.17
+			}
+			defender = {
+				state = 184
+				num_provinces = 1
+				on_win = SyriaDecisions.16
+				on_lose = SyriaDecisions.17
+				on_cancel = SyriaDecisions.17
+			}
+		}
+		clr_country_flag = HEZ_Infiltrated_by_SYR
+		hidden_effect = { news_event = { id = SyriaDecisionsNews.3 hours = 6 } }
+	}
+	option = {
+		name = SyriaDecisions.9.b		#Return them and request compensation
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.9.b executed"
+		ai_chance = { base = 20 }
+		random_country = {
+			limit = {
+				NOT = { original_tag = HEZ }
+				has_country_flag = HEZ_Infiltrated_by_SYR
+			}
+			country_event = SyriaDecisions.11
+			clr_country_flag = HEZ_Infiltrated_by_SYR
+		}
+		clr_country_flag = HEZ_Infiltrated_by_SYR
+	}
+
+}
+#Hezbollah attacks
+country_event = {
+
+	id = SyriaDecisions.10
+
+	title = SyriaDecisions.10.t
+	desc = SyriaDecisions.10.desc
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisions.10.a		#Damn
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.10.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+#Hezbollah demands ransom for spies
+country_event = {
+
+	id = SyriaDecisions.11
+
+	title = SyriaDecisions.11.t
+	desc = SyriaDecisions.11.desc
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisions.11.a		#Pay up
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.11.a executed"
+		ai_chance = { base = 80 }
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		add_political_power = -50
+		FROM = { country_event = SyriaDecisions.12 }
+	}
+	option = {
+		name = SyriaDecisions.11.b		#Don't pay
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.11.b executed"
+		ai_chance = { base = 20 }
+		FROM = { country_event = SyriaDecisions.13 }
+		set_temp_variable = { temp_opinion = -5 }
+		change_intelligence_community_opinion = yes
+	}
+
+}
+#Syria pays
+country_event = {
+
+	id = SyriaDecisions.12
+
+	title = SyriaDecisions.12.t
+	desc = SyriaDecisions.12.desc
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisions.12.a		#Good
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.12.a executed"
+		ai_chance = { base = 100 }
+		set_temp_variable = { treasury_change = 1 }
+		modify_treasury_effect = yes
+		add_political_power = 50
+	}
+
+}
+#Syria refuses to pay
+country_event = {
+
+	id = SyriaDecisions.13
+
+	title = SyriaDecisions.13.t
+	desc = SyriaDecisions.13.desc
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisions.13.a		#Attack
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.13.a executed"
+		ai_chance = { base = 80 }
+		start_border_war = {
+			change_state_after_war = no
+			attacker = {
+				state = 553
+				num_provinces = 1
+				on_win = SyriaDecisions.16
+				on_lose = SyriaDecisions.17
+				on_cancel = SyriaDecisions.17
+			}
+			defender = {
+				state = 184
+				num_provinces = 1
+				on_win = SyriaDecisions.16
+				on_lose = SyriaDecisions.17
+				on_cancel = SyriaDecisions.17
+			}
+		}
+		hidden_effect = { news_event = { id = SyriaDecisionsNews.3 hours = 6 } }
+	}
+	option = {
+		name = SyriaDecisions.13.b		#Back down
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.13.b executed"
+		ai_chance = { base = 20 }
+	}
+
+}
+
+#Corruption in Hezbollah
+country_event = {
+
+	id = SyriaDecisions.14
+
+	title = SyriaDecisions.14.t
+	desc = SyriaDecisions.14.desc
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	immediate = {
+		hidden_effect = {
+			retire_country_leader = yes
+		}
+	}
+
+	option = {
+		name = SyriaDecisions.14.a		#Very suspicious
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.14.a executed"
+		ai_chance = { base = 100 }
+		clr_country_flag = Discord_Between_HEZ_PER
+		leave_faction = yes
+		hidden_effect = {
+			random_country = {
+				limit = { has_country_flag = Discord_Between_HEZ_PER }
+				clr_country_flag = Discord_Between_HEZ_PER
+			}
+		}
+	}
+
+}
+
+#Border war victory
+country_event = {
+
+	id = SyriaDecisions.16
+
+	title = SyriaDecisions.16.t
+	desc = SyriaDecisions.16.desc
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisions.16.a		#
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.16.a executed"
+		ai_chance = { base = 100 }
+		add_political_power = 100
+	}
+
+}
+
+#Border war defeat/failure
+country_event = {
+
+	id = SyriaDecisions.17
+
+	title = SyriaDecisions.17.t
+	desc = SyriaDecisions.17.desc
+	picture = GFX_Hezbollah_Spies
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisions.17.a		#
+		log = "[GetDateText]: [This.GetName]: SyriaDecisions.17.a executed"
+		ai_chance = { base = 100 }
+	}
+
+}
+
+#Golan deal
+news_event = {
+	id = SyriaDecisionsNews.0
+	title = SyriaDecisionsNews.0.t
+	desc = SyriaDecisionsNews.0.d
+	picture = GFX_news_Golan
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisionsNews.0.a
+	}
+}
+
+#Hatay deal
+news_event = {
+	id = SyriaDecisionsNews.1
+	title = SyriaDecisionsNews.1.t
+	desc = SyriaDecisionsNews.1.d
+	picture = GFX_news_Hatay
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisionsNews.1.a
+	}
+}
+
+#Rojava deal
+news_event = {
+	id = SyriaDecisionsNews.2
+	title = SyriaDecisionsNews.2.t
+	desc = SyriaDecisionsNews.2.d
+	picture = GFX_news_rojava_victory
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisionsNews.2.a
+	}
+}
+
+#Border war between Hezbollah and Syria
+news_event = {
+	id = SyriaDecisionsNews.3
+	title = SyriaDecisionsNews.3.t
+	desc = SyriaDecisionsNews.3.d
+	picture = GFX_news_Hezbollah_Syria
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SyriaDecisionsNews.3.a
+	}
+}
