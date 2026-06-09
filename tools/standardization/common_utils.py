@@ -18,6 +18,7 @@ from shared_utils import (
     create_backup,
     extract_block,
     log_message,
+    run_tool_main,
 )
 
 
@@ -229,26 +230,12 @@ def create_standardizer_parser(description: str) -> argparse.ArgumentParser:
 
 
 def run_standardizer(standardizer_class, description: str, argv=None):
-    """Run a standardizer with standard command line interface"""
+    """Run a standardizer with standard command line interface."""
     parser = create_standardizer_parser(description)
-    args = parser.parse_args(argv)
-
-    if not os.path.exists(args.input_file):
-        log_message("ERROR", f"File '{args.input_file}' does not exist")
-        sys.exit(1)
-
-    output_file = args.output if args.output else args.input_file
-    standardizer = standardizer_class(verbose=args.verbose)
-
-    if args.backup:
-        backup_file = create_backup(args.input_file)
-        if not backup_file:
-            sys.exit(1)
-
-    log_message("INFO", f"Starting standardization of {args.input_file}", args.verbose)
-
-    if standardizer.standardize_file(args.input_file, output_file):
-        log_message("SUCCESS", f"Standardization completed: {output_file}")
-    else:
-        log_message("ERROR", "Standardization failed")
-        sys.exit(1)
+    run_tool_main(
+        standardizer_class,
+        description=description,
+        method_name="standardize_file",
+        argv=argv,
+        parser=parser,
+    )

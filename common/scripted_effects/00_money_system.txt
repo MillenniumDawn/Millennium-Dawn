@@ -508,6 +508,7 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = seigniorage_base }
 		set_variable = { seigniorage_income_display = seigniorage_base }
 	}
+	else = { set_variable = { seigniorage_income_display = 0 } }
 	# Additional incomes, set income amount as a variable (weekly gain)
 	if = { limit = { original_tag = GRN }
 		if = {
@@ -796,10 +797,12 @@ calculate_additional_income_rate = {
 	#UK
 	else_if = {
 		limit = { original_tag = ADS }
+
 		if = {
-			limit = { has_idea = ENG_ADS_money }
-			set_variable = { additional_income_ENG_ADS_money = 2.0 }	#10% of GDP yearly estimated weekly
-			add_to_variable = { additional_income_rate = additional_income_ENG_ADS_money }
+			limit = { has_idea = GER_russian_buddies }
+			set_variable = { additional_income_GER_russian_buddies = gdp_total }
+			multiply_variable = { additional_income_GER_russian_buddies = 0.0004 } #2% of yearly GDP yearly estimated weekly
+			add_to_variable = { additional_income_rate = additional_income_GER_russian_buddies }
 		}
 	}
 	# Afghanistan
@@ -3622,6 +3625,17 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_SOV_nord_stream2_idea }
 		}
 	}
+	#United Kingdom - UK, Great Britian
+	else_if = {
+		limit = { original_tag = ENG }
+
+		if = {
+			limit = { has_idea = ENG_good_friday_agreement }
+			set_variable = { additional_expenditure_good_friday = gdp_total }
+			multiply_variable = { additional_expenditure_good_friday = 0.0003 }
+			add_to_variable = { additional_expenses_rate = additional_expenditure_good_friday }
+		}
+	}
 	else_if = {
 		limit = { original_tag = USA }
 		if = {
@@ -5790,39 +5804,6 @@ set_initial_cost_resources = {
 	set_variable = { global.starting_rubber_price = 0.09 }	#Based on rubber price
 	set_variable = { global.starting_microchips_price = 7.6 }
 	set_variable = { global.starting_composites_price = 7.4 }
-
-	set_variable = { global.oil_export = 3381 }
-	set_variable = { global.steel_export = 2537 }
-	set_variable = { global.alum_export = 1519 }
-	set_variable = { global.tungsten_export = 1474 }
-	set_variable = { global.chromium_export = 1300 }
-	set_variable = { global.rubber_export = 993 }
-	set_variable = { global.microchip_export = 285 }
-	set_variable = { global.composite_export = 861 }
-
-	set_global_flag = { flag = yearly_export_tracker value = 1 days = 365 }
-}
-
-yearly_global_export_normalization = {
-	set_variable = { global.oil_export = 0 }
-	set_variable = { global.steel_export = 0 }
-	set_variable = { global.alum_export = 0 }
-	set_variable = { global.tungsten_export = 0 }
-	set_variable = { global.chromium_export = 0 }
-	set_variable = { global.rubber_export = 0 }
-	set_variable = { global.microchip_export = 0 }
-	set_variable = { global.composite_export = 0 }
-
-	every_country = {
-		add_to_variable = { global.oil_export = resource_exported@oil }
-		add_to_variable = { global.steel_export = resource_exported@steel }
-		add_to_variable = { global.alum_export = resource_exported@aluminium }
-		add_to_variable = { global.tungsten_export = resource_exported@tungsten }
-		add_to_variable = { global.chromium_export = resource_exported@chromium }
-		add_to_variable = { global.rubber_export = resource_exported@rubber }
-		add_to_variable = { global.microchip_export = resource_exported@microchips }
-		add_to_variable = { global.composite_export = resource_exported@composites }
-	}
 }
 
 recalculate_resources_price = {
@@ -5907,14 +5888,14 @@ recalculate_resources_price = {
 	multiply_temp_variable = { composites_price_adjuster = sum_import_composites }
 
 	#Clamp the prices at their min / max after adjusting them for supply & demand
-	clamp_variable = { var = steel_price_adjuster min = 0.005 max = 0.120 }
-	clamp_variable = { var = oil_price_adjuster min = 1.36 max = 34 }
-	clamp_variable = { var = rubber_price_adjuster min = 0.018 max = 0.45 }
-	clamp_variable = { var = alum_price_adjuster min = 0.042 max = 1.05 }
-	clamp_variable = { var = tungsten_price_adjuster min = 0.056 max = 1.4 }
-	clamp_variable = { var = chromium_price_adjuster min = 0.036 max = 0.9 }
-	clamp_variable = { var = microchips_price_adjuster min = 1.58 max = 36.2 }
-	clamp_variable = { var = composites_price_adjuster min = 1.42 max = 35.4 }
+	clamp_temp_variable = { var = steel_price_adjuster min = 0.005 max = 0.120 }
+	clamp_temp_variable = { var = oil_price_adjuster min = 1.36 max = 34 }
+	clamp_temp_variable = { var = rubber_price_adjuster min = 0.018 max = 0.45 }
+	clamp_temp_variable = { var = alum_price_adjuster min = 0.042 max = 1.05 }
+	clamp_temp_variable = { var = tungsten_price_adjuster min = 0.056 max = 1.4 }
+	clamp_temp_variable = { var = chromium_price_adjuster min = 0.036 max = 0.9 }
+	clamp_temp_variable = { var = microchips_price_adjuster min = 1.58 max = 36.2 }
+	clamp_temp_variable = { var = composites_price_adjuster min = 1.42 max = 35.4 }
 
 	set_variable = { global.oil_price = oil_price_adjuster } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
 	set_variable = { global.steel_price = steel_price_adjuster } #Based on steel price
