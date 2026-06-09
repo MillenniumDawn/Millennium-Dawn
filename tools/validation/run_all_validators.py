@@ -10,6 +10,9 @@ import sys
 import tempfile
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import Colors
+
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 
@@ -219,14 +222,6 @@ def generate_combined_report(
     return "\n".join(lines)
 
 
-class Colors:
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    YELLOW = "\033[1;33m"
-    CYAN = "\033[0;36m"
-    NC = "\033[0m"
-
-
 def main():
     parser = argparse.ArgumentParser(description="Run all MD validators in parallel")
     parser.add_argument("--staged", action="store_true")
@@ -259,7 +254,7 @@ def main():
         Colors.GREEN = ""
         Colors.YELLOW = ""
         Colors.CYAN = ""
-        Colors.NC = ""
+        Colors.ENDC = ""
 
     extra_flags = []
     if args.staged:
@@ -288,9 +283,9 @@ def main():
 
 def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     print(
-        f"{Colors.CYAN}{'=' * 80}{Colors.NC}\n"
-        f"{Colors.CYAN}Running Millennium Dawn Validation Suite{Colors.NC}\n"
-        f"{Colors.CYAN}{'=' * 80}{Colors.NC}\n"
+        f"{Colors.CYAN}{'=' * 80}{Colors.ENDC}\n"
+        f"{Colors.CYAN}Running Millennium Dawn Validation Suite{Colors.ENDC}\n"
+        f"{Colors.CYAN}{'=' * 80}{Colors.ENDC}\n"
     )
 
     print(f"Discovered {len(VALIDATORS)} validators")
@@ -318,22 +313,24 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
 
         if error_count > 0 or warning_count > 0:
             print(
-                f"{Colors.RED}✗ {label}{Colors.NC} ({error_count} errors, {warning_count} warnings)"
+                f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)"
             )
             total_errors += error_count
             total_warnings += warning_count
         elif returncode != 0:
             # Non-zero exit with no JSON output means the validator itself crashed
-            print(f"{Colors.RED}✗ {label}{Colors.NC} (crashed, exit code {returncode})")
+            print(
+                f"{Colors.RED}✗ {label}{Colors.ENDC} (crashed, exit code {returncode})"
+            )
             crashed_validators.append(label)
             total_errors += 1
         else:
-            print(f"{Colors.GREEN}✓ {label}{Colors.NC}")
+            print(f"{Colors.GREEN}✓ {label}{Colors.ENDC}")
 
-    print(f"\n{Colors.CYAN}{'=' * 80}{Colors.NC}")
+    print(f"\n{Colors.CYAN}{'=' * 80}{Colors.ENDC}")
 
     if total_errors == 0 and total_warnings == 0:
-        print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.NC}")
+        print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.ENDC}")
         return 0
 
     report = generate_combined_report(
@@ -357,7 +354,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             with open(args.output, "w") as f:
                 f.write(report)
             print(
-                f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.NC}"
+                f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.ENDC}"
             )
         else:
             print(f"\n{report}")
@@ -365,12 +362,12 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     if total_errors > 0:
         print(
             f"{Colors.RED}✗ VALIDATION FAILED \u2014 {total_errors} error(s), "
-            f"{total_warnings} warning(s){Colors.NC}"
+            f"{total_warnings} warning(s){Colors.ENDC}"
         )
     else:
         print(
             f"{Colors.YELLOW}⚠ VALIDATION COMPLETED WITH WARNINGS \u2014 "
-            f"{total_warnings} warning(s){Colors.NC}"
+            f"{total_warnings} warning(s){Colors.ENDC}"
         )
 
     return 1 if args.strict else 0

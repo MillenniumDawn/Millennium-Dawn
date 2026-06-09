@@ -15,6 +15,7 @@ from shared_utils import (
     get_root_dir,
     print_timing_summary,
     run_with_pool,
+    strip_inline_comment,
 )
 
 __version__ = 2.0
@@ -151,7 +152,7 @@ def fix_file(filepath):
             fixed_lines.append(fixed)
 
             if '"' in line and not line.strip().startswith("#"):
-                code = line.split("#")[0] if "#" in line else line
+                code = strip_inline_comment(line) if "#" in line else line
                 if code.count('"') % 2 == 1:
                     unfixable.append(
                         f"  {clean_filepath(filepath)}:{line_num}: Possible missing quotation mark"
@@ -190,7 +191,7 @@ def fix_file_dry_run(filepath):
             total_fixes += fixes
 
             if '"' in line and not line.strip().startswith("#"):
-                code = line.split("#")[0] if "#" in line else line
+                code = strip_inline_comment(line) if "#" in line else line
                 if code.count('"') % 2 == 1:
                     unfixable.append(
                         f"  {clean_filepath(filepath)}:{line_num}: Possible missing quotation mark"

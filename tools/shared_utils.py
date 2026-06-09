@@ -114,8 +114,31 @@ def create_validation_parser(description: str) -> argparse.ArgumentParser:
     return parser
 
 
+def strip_inline_comment(line: str) -> str:
+    """Return *line* with any trailing ``#`` comment removed.
+
+    A ``#`` inside a double-quoted string is not a comment. Use this anywhere a
+    line's braces/tokens are counted so unbalanced braces inside comments don't
+    corrupt the count. Returns the code portion (trailing newline/space preserved
+    up to the cut), not stripped of surrounding whitespace.
+    """
+    if "#" not in line:
+        return line
+    in_str = False
+    for i, c in enumerate(line):
+        if c == '"' and (i == 0 or line[i - 1] != "\\"):
+            in_str = not in_str
+        elif c == "#" and not in_str:
+            return line[:i]
+    return line
+
+
 def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
-    """Extract a multi-line block by counting braces"""
+    """Extract a multi-line block by counting braces.
+
+    Inline comments are stripped before counting so a ``#`` comment containing an
+    unbalanced brace does not corrupt the depth.
+    """
     if start_index >= len(lines):
         return [], start_index
 
@@ -127,9 +150,10 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
         line = lines[i]
         block_lines.append(line)
 
-        brace_count += line.count("{") - line.count("}")
+        code = strip_inline_comment(line)
+        brace_count += code.count("{") - code.count("}")
 
-        if brace_count == 0 and "{" in lines[start_index]:
+        if brace_count == 0 and "{" in strip_inline_comment(lines[start_index]):
             i += 1
             break
         elif brace_count < 0:
@@ -641,13 +665,20 @@ def get_root_dir() -> str:
     )
 
 
-def run_with_pool(func, items: list, workers: int, chunksize: int = None):
+def run_with_pool(
+    func,
+    items: list,
+    workers: int,
+    chunksize: int = None,
+    initializer=None,
+    initargs=(),
+):
     """Run func over items using Pool when beneficial, sequential otherwise."""
     if len(items) < 10 or workers == 1:
         return [func(item) for item in items]
     from multiprocessing import Pool
 
-    with Pool(processes=workers) as pool:
+    with Pool(processes=workers, initializer=initializer, initargs=initargs) as pool:
         if chunksize:
             return pool.map(func, items, chunksize=chunksize)
         return pool.map(func, items)
