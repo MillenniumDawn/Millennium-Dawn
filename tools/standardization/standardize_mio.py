@@ -8,6 +8,7 @@ Millennium Dawn coding standards.
 from typing import Any, Dict, List
 
 from common_utils import BaseStandardizer, run_standardizer
+from shared_utils import compact_block, extract_block
 
 
 class MIOStandardizer(BaseStandardizer):
@@ -62,23 +63,23 @@ class MIOStandardizer(BaseStandardizer):
             if line.startswith("name ="):
                 props["name"] = line
             elif line.startswith("allowed ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["allowed"].append(block)
                 i = next_i
                 continue
             elif line.startswith("available ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["available"].append(block)
                 i = next_i
                 continue
             elif line.startswith("visible ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["visible"].append(block)
                 i = next_i
                 continue
             elif line.startswith("icon ="):
                 if "{" in line:
-                    block, next_i = self.extract_block(block_lines, i)
+                    block, next_i = extract_block(block_lines, i)
                     props["icon"].append(block)
                     i = next_i
                     continue
@@ -86,7 +87,7 @@ class MIOStandardizer(BaseStandardizer):
             elif line.startswith("include ="):
                 props["include"] = line
             elif line.startswith("ai_will_do ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["ai_will_do"].append(block)
                 i = next_i
                 continue
@@ -97,32 +98,32 @@ class MIOStandardizer(BaseStandardizer):
                 for name in self.MANUFACTURER_CALLBACK_NAMES
             ):
                 callback_name = line.split("=", 1)[0].strip()
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["on_callbacks"].append((callback_name, block))
                 i = next_i
                 continue
             elif line.startswith("equipment_type ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["equipment_type"].append(block)
                 i = next_i
                 continue
             elif line.startswith("research_categories ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["research_categories"].append(block)
                 i = next_i
                 continue
             elif line.startswith("tree_header_text ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["tree_header_text"].append(block)
                 i = next_i
                 continue
             elif line.startswith("initial_trait ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["initial_trait"].append(block)
                 i = next_i
                 continue
             elif line.startswith("trait ="):
-                block, next_i = self.extract_block(block_lines, i)
+                block, next_i = extract_block(block_lines, i)
                 props["traits"].append(block)
                 i = next_i
                 continue
@@ -132,33 +133,6 @@ class MIOStandardizer(BaseStandardizer):
             i += 1
 
         return props
-
-    def extract_block(
-        self, lines: List[str], start_index: int
-    ) -> tuple[List[str], int]:
-        """Extract a multi-line block by counting braces"""
-        if start_index >= len(lines):
-            return [], start_index
-
-        block_lines = []
-        brace_count = 0
-        i = start_index
-
-        while i < len(lines):
-            line = lines[i]
-            block_lines.append(line)
-
-            brace_count += line.count("{") - line.count("}")
-
-            if brace_count == 0 and "{" in lines[start_index]:
-                i += 1
-                break
-            elif brace_count < 0:
-                break
-
-            i += 1
-
-        return block_lines, i
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Format MIO according to Millennium Dawn standard"""
@@ -245,14 +219,6 @@ class MIOStandardizer(BaseStandardizer):
         lines.append("}")
         return self._clean_blank_lines(lines)
 
-    def compact_block(self, block_lines: List[str]) -> List[str]:
-        """Completely compact a block by removing all internal blank lines"""
-        compacted = []
-        for line in block_lines:
-            if line.strip():
-                compacted.append(line.rstrip())
-        return compacted
-
     def format_nested_block(
         self, block_lines: List[str], base_indent: str
     ) -> List[str]:
@@ -302,7 +268,7 @@ class MIOStandardizer(BaseStandardizer):
             if stripped.startswith("expenditure_for_mio_upgrade"):
                 i += 1
             elif "{" in stripped:
-                sub, next_i = self.extract_block(block_lines, i)
+                sub, next_i = extract_block(block_lines, i)
                 sub_content = " ".join(l.strip() for l in sub if l.strip())
                 if (
                     "free_trait_picks" in sub_content
@@ -335,7 +301,7 @@ class MIOStandardizer(BaseStandardizer):
         """
         for line in block_lines:
             if line.strip().startswith("#"):
-                return self.compact_block(block_lines)
+                return compact_block(block_lines)
 
         content_tokens = []
         for line in block_lines:
@@ -353,7 +319,7 @@ class MIOStandardizer(BaseStandardizer):
                 content_tokens.extend(stripped.rstrip("}").split())
 
         if not content_tokens:
-            return self.compact_block(block_lines)
+            return compact_block(block_lines)
         if len(content_tokens) == 1:
             return [f"{indent}{key} = {{ {content_tokens[0]} }}"]
 
@@ -372,26 +338,26 @@ class MIOStandardizer(BaseStandardizer):
         """
         for line in block_lines:
             if line.strip().startswith("#"):
-                return self.compact_block(block_lines)
+                return compact_block(block_lines)
 
         full = " ".join(l.strip() for l in block_lines if l.strip())
         if not full.startswith(key) or "{" not in full or "}" not in full:
-            return self.compact_block(block_lines)
+            return compact_block(block_lines)
 
         inner = full.split("{", 1)[1].rsplit("}", 1)[0].strip()
         if "{" in inner or "}" in inner:
-            return self.compact_block(block_lines)
+            return compact_block(block_lines)
 
         tokens = inner.split()
         if not tokens:
-            return self.compact_block(block_lines)
+            return compact_block(block_lines)
         if len(tokens) % 3 != 0:
-            return self.compact_block(block_lines)
+            return compact_block(block_lines)
 
         pairs = []
         for j in range(0, len(tokens), 3):
             if tokens[j + 1] != "=":
-                return self.compact_block(block_lines)
+                return compact_block(block_lines)
             pairs.append(f"{tokens[j]} = {tokens[j + 2]}")
 
         if len(pairs) == 1:
@@ -523,23 +489,23 @@ class MIOStandardizer(BaseStandardizer):
                 ("token =", "name =", "icon =", "special_trait_background =")
             ):
                 if "{" in stripped:
-                    sub, i = self.extract_block(block_lines, i)
-                    sections["identity"].extend(self.compact_block(sub))
+                    sub, i = extract_block(block_lines, i)
+                    sections["identity"].extend(compact_block(sub))
                 else:
                     sections["identity"].append(f"{inner_indent}{stripped}")
                     i += 1
             elif stripped.startswith("available ="):
-                sub, i = self.extract_block(block_lines, i)
+                sub, i = extract_block(block_lines, i)
                 sections["available"].extend(
                     self.format_nested_block(sub, inner_indent)
                 )
             elif stripped.startswith("visible ="):
-                sub, i = self.extract_block(block_lines, i)
+                sub, i = extract_block(block_lines, i)
                 sections["visible"].extend(self.format_nested_block(sub, inner_indent))
             elif stripped.startswith(("all_parents =", "any_parent =", "parent =")):
                 key_name = stripped.split("=", 1)[0].strip()
                 if "{" in stripped:
-                    sub, i = self.extract_block(block_lines, i)
+                    sub, i = extract_block(block_lines, i)
                     sections["parents"].extend(
                         self._normalize_token_list(sub, key_name, inner_indent)
                     )
@@ -548,36 +514,36 @@ class MIOStandardizer(BaseStandardizer):
                     i += 1
             elif stripped.startswith(("position =", "relative_position_id =")):
                 if "{" in stripped:
-                    sub, i = self.extract_block(block_lines, i)
-                    sections["position"].extend(self.compact_block(sub))
+                    sub, i = extract_block(block_lines, i)
+                    sections["position"].extend(compact_block(sub))
                 else:
                     sections["position"].append(f"{inner_indent}{stripped}")
                     i += 1
             elif stripped.startswith("mutually_exclusive ="):
-                sub, i = self.extract_block(block_lines, i)
+                sub, i = extract_block(block_lines, i)
                 sections["mutually_exclusive"].extend(
                     self.normalize_mutually_exclusive(sub, inner_indent)
                 )
             elif stripped.startswith("limit_to_equipment_type ="):
-                sub, i = self.extract_block(block_lines, i)
+                sub, i = extract_block(block_lines, i)
                 sections["limit"].extend(
                     self.normalize_limit_to_equipment_type(sub, inner_indent)
                 )
             elif stripped.startswith("equipment_bonus ="):
-                sub, i = self.extract_block(block_lines, i)
+                sub, i = extract_block(block_lines, i)
                 modifier_blocks["equipment_bonus"].append(sub)
             elif stripped.startswith("production_bonus ="):
-                sub, i = self.extract_block(block_lines, i)
+                sub, i = extract_block(block_lines, i)
                 modifier_blocks["production_bonus"].append(sub)
             elif stripped.startswith("organization_modifier ="):
-                sub, i = self.extract_block(block_lines, i)
+                sub, i = extract_block(block_lines, i)
                 modifier_blocks["organization_modifier"].append(sub)
             elif stripped.startswith("on_complete ="):
-                sub, i = self.extract_block(block_lines, i)
+                sub, i = extract_block(block_lines, i)
                 sections["on_complete"].extend(self.normalize_on_complete(sub))
             elif stripped.startswith("ai_will_do ="):
-                sub, i = self.extract_block(block_lines, i)
-                sections["ai_will_do"].extend(self.compact_block(sub))
+                sub, i = extract_block(block_lines, i)
+                sections["ai_will_do"].extend(compact_block(sub))
             else:
                 sections["other"].append(f"{inner_indent}{stripped}")
                 i += 1
@@ -653,7 +619,7 @@ class MIOStandardizer(BaseStandardizer):
         self, lines: List[str], blocks: List[List[str]], is_trait: bool = False
     ) -> None:
         for index, block in enumerate(blocks):
-            formatter = self.format_trait_block if is_trait else self.compact_block
+            formatter = self.format_trait_block if is_trait else compact_block
             for line in formatter(block[:]):
                 lines.append(line)
             if index < len(blocks) - 1:
