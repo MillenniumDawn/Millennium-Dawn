@@ -17,7 +17,6 @@ All temporary files and git state are cleaned up automatically.
 import os
 import subprocess
 import sys
-import tempfile
 import time
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

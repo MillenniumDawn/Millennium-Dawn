@@ -14,10 +14,8 @@ import disk_cache
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
-    Colors,
     Severity,
     run_validator_main,
-    scan_meta_constructed_names,
     should_skip_file,
     strip_comments,
 )

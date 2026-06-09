@@ -5,7 +5,7 @@ import os
 import re
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import disk_cache
 from validator_common import (

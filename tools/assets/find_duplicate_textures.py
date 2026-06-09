@@ -8,7 +8,6 @@ import os
 import re
 import sys
 from collections import defaultdict
-from pathlib import Path
 
 
 def find_gfx_files(root_dir):
@@ -173,11 +172,11 @@ def main():
         total_duplicates = sum(len(definitions) for definitions in duplicates.values())
         if duplicates:
             summary_lines = [
-                f"\nSummary:",
+                "\nSummary:",
                 f"   - {len(duplicates)} unique textures have duplicates",
                 f"   - {total_duplicates} total texture definitions",
                 f"   - {total_duplicates - len(duplicates)} duplicate definitions found",
-                f"   - Note: goals_shine.gfx and Modding resources are excluded (intentional duplicates)",
+                "   - Note: goals_shine.gfx and Modding resources are excluded (intentional duplicates)",
             ]
 
             for line in summary_lines:

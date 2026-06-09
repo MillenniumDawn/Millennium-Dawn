@@ -15,9 +15,7 @@ from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
-    compact_block,
     create_backup,
-    create_standard_parser,
     extract_block,
     log_message,
 )
@@ -179,10 +177,16 @@ class BaseStandardizer(ABC):
                 output_lines.append(line)
                 i += 1
 
+        if self.processed_count == 0:
+            log_message("INFO", "No blocks matched — skipping file write")
+            return True
+
         try:
-            with open(output_file, "w", encoding="utf-8") as f:
+            tmp_path = output_file + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 for line in output_lines:
                     f.write(line + "\n")
+            os.replace(tmp_path, output_file)
 
             end_time = time.time()
             elapsed_time = end_time - self.start_time
@@ -200,6 +204,11 @@ class BaseStandardizer(ABC):
 
         except Exception as e:
             log_message("ERROR", f"Failed to write {output_file}: {e}")
+            try:
+                if os.path.exists(output_file + ".tmp"):
+                    os.remove(output_file + ".tmp")
+            except OSError:
+                pass
             return False
 
         return True

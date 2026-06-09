@@ -41,6 +41,8 @@ For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki l
 
 For 3D unit models — the mesh/entity/animation chain, the `<TAG>` → `<graphical_culture>` → generic entity lookup, and `gfx/entities/` organisation — read `.claude/docs/entity-system.md`. That doc also covers landmark buildings (state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated `y`, and common rendering gotchas).
 
+For **power / energy work** — power-plant buildings (renewable / nuclear / fossil), energy technologies in `common/technologies/industry.txt`, the power-per-build-cost balance, and the renewable-hotspot state factor — read `.claude/docs/energy-power-balance.md`. It documents the S-curve tech design and points at the two tools that own it: `tools/balance/set_energy_tech_scurves.py` (re-tunes/writes the tech buffs) and `tools/analysis/renewable_power_per_cost.py` (charts/verifies the crossovers).
+
 # Comments
 
 Default to writing **no comments**. Only add one when the WHY is non-obvious:
@@ -56,6 +58,19 @@ Default to writing **no comments**. Only add one when the WHY is non-obvious:
 - Narrate the change ("Added for the X fix", "Handles case from issue #123") — that belongs in the commit message
 - Reference callers or downstream consumers ("used by Y", "called from Z") — these rot over time
 - Restate the effect name in prose (`# add stability` above `add_stability = 0.05`)
+- Justify a mechanic in flavour or game-world prose — the trigger and modifier already say what it models
+- Span multiple lines to walk through a block — if a block needs a paragraph, restructure or rename instead
+
+Keep any surviving comment to a single terse line. A comment that needs a paragraph is a sign the code, not the prose, needs work.
+
+```
+# Wrong — flavour narration restating the trigger/modifier in prose
+# Nationalised healthcare extends coverage to the worst-affected
+if = { limit = { has_idea = fully_nationalized_healthcare } add_to_variable = { hiv_improve_weight = 15 } }
+
+# Correct — no comment; the trigger and variable already read clearly
+if = { limit = { has_idea = fully_nationalized_healthcare } add_to_variable = { hiv_improve_weight = 15 } }
+```
 
 When in doubt, delete the comment. If the code is unclear without it, rename or restructure the code first.
 
