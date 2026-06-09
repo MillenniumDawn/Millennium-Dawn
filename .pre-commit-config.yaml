@@ -78,6 +78,16 @@ repos:
       - id: isort
         files: '^tools/.*\.py$'
         args: [--profile=black]
+  # ruff lints only (undefined names, unused imports/vars, bare excepts). black
+  # and isort own formatting and import order — ruff-format is intentionally not
+  # used. Config (select, ignores, per-file-ignores) lives in pyproject.toml.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        name: Lint Python (ruff)
+        files: '^tools/.*\.py$'
+        args: [--fix]
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
   - repo: https://github.com/rbubley/mirrors-prettier
@@ -125,6 +135,15 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: true
+      # Runs the full tools test suite before push (not on every commit).
+      # Enable with: pre-commit install --hook-type pre-push
+      - id: tools-pytest
+        name: Run tools test suite (pytest)
+        entry: python3 -m pytest
+        language: system
+        files: '^tools/.*\.py$'
+        pass_filenames: false
+        stages: [pre-push]
       # --- MD-specific hooks (manual by default) ---
       - id: md-fix-styling
         name: MD Fix Styling (auto-fix spaces/tabs/braces)

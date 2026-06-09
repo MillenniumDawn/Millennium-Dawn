@@ -16,7 +16,6 @@ from typing import Dict, List, Tuple
 import disk_cache
 from validator_common import (
     BaseValidator,
-    Colors,
     DataCleaner,
     FileOpener,
     Severity,
@@ -31,12 +30,13 @@ from validator_common import (
 SET_LOOKBACK_WINDOW = 40
 
 _SET_SHORT_RE = re.compile(r"set_variable = ([^ \t\n\}]+)")
-# Char class includes A-Z so tag-prefixed targets (e.g. GER_event_counter_1_wot,
-# ITA_ageing_population_var) are captured whole instead of having their uppercase
-# prefix silently dropped — which previously made every such name fail to match
-# its own reads and get reported as unused.
+# `\w` (Unicode) keeps tag-prefixed targets whole (GER_event_counter_1_wot,
+# ITA_ageing_population_var) AND non-ASCII names like additional_income_GER_Ökosteuer.
+# An ASCII-only class split on the Ö and captured only the `kosteuer` tail, which
+# never matched its own reads and so was wrongly reported as unused. `@.^[]` stay
+# for indexed/array and scoped targets.
 _SET_LONG_RE = re.compile(
-    r"set_variable = \{[^}]*?([A-Za-z0-9_@\.\^\[\]]+)\s*=",
+    r"set_variable = \{[^}]*?([\w@\.\^\[\]]+)\s*=",
     flags=re.MULTILINE | re.DOTALL,
 )
 _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
@@ -85,7 +85,7 @@ def process_file_for_set_variables(
     text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
-    namespace = f"set_variables.scan.lc={int(lowercase)}"
+    namespace = f"set_variables.scan.v2.lc={int(lowercase)}"
     variables = disk_cache.per_file_cached_by_content(
         mod_path, namespace, filename, text, lambda: _scan_set_variables(text)
     )
@@ -104,6 +104,48 @@ def process_file_for_set_variables(
 # matching the `kosteuer` tail that pass 1 also mis-captures).
 _RUN_RE = re.compile(r"\w+(?:\.\w+)*")
 _WORD_RE = re.compile(r"\w+")
+
+# Dynamic variable references: `prefix_[interpolated]_suffix`, e.g.
+# `global.EU_draft_party_[MEP_sup_n]_variable`. The `[...]` index is resolved at
+# runtime, so a static tokenizer never sees the concrete sibling name and the
+# literally-set `..._0_variable`, `..._7_variable`, … all look unused. We collect
+# these refs, turn each into an anchored regex (every `[...]` → `\w+`), and
+# suppress any tracked var a pattern matches. It is a widespread idiom (EU
+# parliament, espionage, investments, recognition, voting), so handling it once
+# clears a whole class of false positives rather than one variable family.
+_DYNAMIC_REF_RE = re.compile(r"[\w.:]*\[[^\]\s]+\][\w.]*")
+# Scope prefixes a read can carry that a set target is stored without (mirrors
+# _strip_scope_prefix). `global.` is its own namespace and is left intact.
+_SCOPE_PREFIXES = (
+    "this.",
+    "root.",
+    "prev.",
+    "from.",
+    "owner.",
+    "controller.",
+    "capital.",
+    "var:",
+)
+
+
+def _dynamic_ref_pattern(ref: str):
+    """Anchored regex for a dynamic ref, or None when nothing literal anchors it.
+
+    `ref` is already lowercased (pass 2 reads files lowercased). A leading scope
+    prefix is stripped so a scoped read (`this.foo_[i]`) matches the bare name the
+    var is tracked under. A ref with no literal text (a bare `[x]`, or loc noise
+    like `[GetName]`) would match every tracked var, so it is dropped.
+    """
+    if not ref.startswith("global."):
+        for prefix in _SCOPE_PREFIXES:
+            if ref.startswith(prefix):
+                ref = ref[len(prefix) :]
+                break
+    literals = re.split(r"\[[^\]]*\]", ref)
+    if not any(literals):
+        return None
+    return "^" + r"\w+".join(re.escape(part) for part in literals) + "$"
+
 
 # Pass-2 per-worker state, populated once by _pass2_init via the Pool
 # initializer instead of being re-pickled in every task's args (the old args
@@ -130,10 +172,16 @@ def _is_definition(text: str, start: int) -> bool:
     return _SET_TARGET_PREFIX_RE.search(before) is not None
 
 
-def _count_refs_in_text(text: str) -> Dict[str, int]:
+def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
     bare = _W_BARE
     dotted = _W_DOTTED
     counts: Dict[str, int] = {}
+    dynamic_patterns: set = set()
+    if "[" in text:
+        for dm in _DYNAMIC_REF_RE.finditer(text):
+            pattern = _dynamic_ref_pattern(dm.group())
+            if pattern is not None:
+                dynamic_patterns.add(pattern)
     for m in _RUN_RE.finditer(text):
         run = m.group()
         base = m.start()
@@ -168,17 +216,17 @@ def _count_refs_in_text(text: str) -> Dict[str, int]:
             if orig is not None and not _is_definition(text, base + sm.start()):
                 counts[orig] = counts.get(orig, 0) + 1
             j += 1
-    return counts
+    return counts, dynamic_patterns
 
 
-def count_all_variables_in_file(filename: str) -> Dict[str, int]:
+def count_all_variables_in_file(filename: str) -> Tuple[Dict[str, int], set]:
     # Per-worker globals (set by _pass2_init) hold the tracked maps and cache
     # namespace, so each task carries only the filename string.
     if should_skip_file(filename):
-        return {}
+        return {}, set()
     text = FileOpener.open_text_file(filename, lowercase=True, strip_comments_flag=True)
     if not text:
-        return {}
+        return {}, set()
     return disk_cache.per_file_cached_by_content(
         _W_MOD_PATH, _W_NAMESPACE, filename, text, lambda: _count_refs_in_text(text)
     )
@@ -305,9 +353,10 @@ class Validator(BaseValidator):
         tracked_hash = hashlib.sha1(
             "|".join(sorted(cleaned_vars)).encode("utf-8")
         ).hexdigest()[:16]
-        namespace = f"set_variables.counts.lc=1.{tracked_hash}"
+        namespace = f"set_variables.counts.lc=2.{tracked_hash}"
 
         var_ref_counts = {var: 0 for var in cleaned_vars}
+        dynamic_patterns: set = set()
         if files_to_scan and (bare_map or dotted_map):
             if self.workers == 1:
                 _pass2_init(self.mod_path, bare_map, dotted_map, namespace)
@@ -323,12 +372,19 @@ class Validator(BaseValidator):
                     all_file_counts = p.map(
                         count_all_variables_in_file, files_to_scan, chunksize=20
                     )
-            for file_counts in all_file_counts:
+            for file_counts, file_patterns in all_file_counts:
                 for var, count in file_counts.items():
                     var_ref_counts[var] = var_ref_counts.get(var, 0) + count
+                dynamic_patterns.update(file_patterns)
+
+        # A var read only through a runtime-built name (`foo_[idx]_bar`) has zero
+        # literal refs; suppress it if any collected dynamic pattern matches.
+        compiled_dynamic = [re.compile(p) for p in dynamic_patterns]
 
         for var, ref_count in var_ref_counts.items():
             if ref_count <= self.min_references:
+                if any(rx.match(var.lower()) for rx in compiled_dynamic):
+                    continue
                 basename = unique_vars[var]
                 ref_text = f"(refs: {ref_count})"
                 full_path = self.get_full_path(basename, var)

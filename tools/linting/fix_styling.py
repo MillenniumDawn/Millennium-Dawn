@@ -255,7 +255,7 @@ def main():
         all_unfixable.extend(unfixable)
 
     action = "Would fix" if args.dry_run else "Fixed"
-    print(f"\n------")
+    print("\n------")
     print(f"Processed {len(existing_files)} files")
     print(f"{action} {total_fixes} issues in {files_fixed} files")
 

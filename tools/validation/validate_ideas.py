@@ -766,7 +766,6 @@ class Validator(BaseValidator):
         )
 
         grouped: Dict[str, List[str]] = defaultdict(list)
-        ideas_by_file: Dict[str, List[str]] = defaultdict(list)
 
         for idea_name in sorted(defined_ideas):
             _cat, name_override, _pic = defined_ideas[idea_name]
