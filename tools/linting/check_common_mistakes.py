@@ -1094,6 +1094,51 @@ def _check_influence_setter_scope(lines):
     return issues
 
 
+def _check_check_var_ge_le(lines):
+    """Flag check_variable blocks using inline >= or <= (silently mis-parsed)."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if line.strip().startswith("#"):
+            continue
+        code_part = strip_inline_comment(line) if "#" in line else line
+        cv_match = _RE_CHECK_VAR_GE_LE.search(code_part)
+        if cv_match:
+            op = cv_match.group(1)
+            kind = "greater_than_or_equals" if op == ">=" else "less_than_or_equals"
+            issues.append(
+                (
+                    line_num,
+                    f"check_variable does not accept '{op}' inline (silently mis-parsed) -- "
+                    f"use compare = {kind} or rewrite as a strict inequality",
+                )
+            )
+    return issues
+
+
+def _check_tautological_or(lines):
+    """Flag OR = { X = yes X = no } blocks, which are always true."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if line.strip().startswith("#"):
+            continue
+        code_part = strip_inline_comment(line) if "#" in line else line
+        or_match = _RE_TAUTOLOGICAL_OR.search(code_part)
+        if (
+            or_match
+            and or_match.group(1) == or_match.group(3)
+            and ({or_match.group(2), or_match.group(4)} == {"yes", "no"})
+        ):
+            token = or_match.group(1)
+            issues.append(
+                (
+                    line_num,
+                    f"tautological OR = {{ {token} = yes {token} = no }} is always true -- "
+                    "remove the OR (fold any intended amount into base = N)",
+                )
+            )
+    return issues
+
+
 def check_file(filepath):
     """Check a single file for common mistakes. Returns list of (filepath, line_num, message) tuples."""
     issues = []
@@ -1274,33 +1319,6 @@ def check_file(filepath):
                 )
             )
 
-        cv_match = _RE_CHECK_VAR_GE_LE.search(code_part)
-        if cv_match:
-            op = cv_match.group(1)
-            kind = "greater_than_or_equals" if op == ">=" else "less_than_or_equals"
-            issues.append(
-                (
-                    line_num,
-                    f"check_variable does not accept '{op}' inline (silently mis-parsed) -- "
-                    f"use compare = {kind} or rewrite as a strict inequality",
-                )
-            )
-
-        or_match = _RE_TAUTOLOGICAL_OR.search(code_part)
-        if (
-            or_match
-            and or_match.group(1) == or_match.group(3)
-            and ({or_match.group(2), or_match.group(4)} == {"yes", "no"})
-        ):
-            token = or_match.group(1)
-            issues.append(
-                (
-                    line_num,
-                    f"tautological OR = {{ {token} = yes {token} = no }} is always true -- "
-                    "remove the OR (fold any intended amount into base = N)",
-                )
-            )
-
     for ln, msg in find_single_condition_or_blocks(lines):
         issues.append((ln, msg))
     for ln, msg in find_redundant_and_blocks(lines):
@@ -1322,6 +1340,8 @@ def check_file(filepath):
     issues.extend(_check_empty_log_only_blocks(lines))
     issues.extend(_check_is_x_nation_runtime(lines))
     issues.extend(_check_influence_setter_scope(lines))
+    issues.extend(_check_check_var_ge_le(lines))
+    issues.extend(_check_tautological_or(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 
