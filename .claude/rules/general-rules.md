@@ -41,6 +41,8 @@ For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki l
 
 For 3D unit models — the mesh/entity/animation chain, the `<TAG>` → `<graphical_culture>` → generic entity lookup, and `gfx/entities/` organisation — read `.claude/docs/entity-system.md`. That doc also covers landmark buildings (state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated `y`, and common rendering gotchas).
 
+For **power / energy work** — power-plant buildings (renewable / nuclear / fossil), energy technologies in `common/technologies/industry.txt`, the power-per-build-cost balance, and the renewable-hotspot state factor — read `.claude/docs/energy-power-balance.md`. It documents the S-curve tech design and points at the two tools that own it: `tools/balance/set_energy_tech_scurves.py` (re-tunes/writes the tech buffs) and `tools/analysis/renewable_power_per_cost.py` (charts/verifies the crossovers).
+
 # Comments
 
 Default to writing **no comments**. Only add one when the WHY is non-obvious:

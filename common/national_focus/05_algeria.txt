@@ -4340,13 +4340,8 @@ focus_tree = {
 			}
 			add_to_variable = { ALG_population_energy_consumption = 0.08 tooltip = pop_energy_use_multiplier_tt }
 			379 = {
-				set_variable = { state_renewable_capacity_factor_modifier_var = 0.15 }
-				meta_effect = {
-					text = {
-						add_state_modifier = { modifier = { state_renewable_capacity_factor_modifier = [NUM] } }
-					}
-					NUM = "[?state_renewable_capacity_factor_modifier_var]"
-				}
+				add_to_variable = { state_renewable_capacity_factor_modifier_var = 0.41 }
+				add_state_modifier = { modifier = { state_renewable_capacity_factor_modifier = 0.41 } }
 				one_state_fossil_fuel_powerplant = yes
 				one_state_infrastructure = yes
 				add_state_modifier = {
@@ -7302,6 +7297,7 @@ focus_tree = {
 				add_idea = ALG_air_reform2
 			}
 			add_tech_bonus = {
+				name = ALG_a_new_world_class_academy
 				bonus = 0.5
 				uses = 1
 				category = CAT_air_doctrine
@@ -7483,6 +7479,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ALG_expand_the_naval_academy"
 			add_tech_bonus = {
+				name = ALG_expand_the_naval_academy
 				bonus = 0.5
 				uses = 2
 				category = CAT_naval_doctrine
@@ -9198,7 +9195,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -8 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = ALG_russian_missiles
+				name = ALG_russian_missile_cooperation
 				bonus = 0.5
 				uses = 2
 				category = CAT_missile
@@ -9293,7 +9290,7 @@ focus_tree = {
 				add_idea = ALG_redmed_integrated_defense_systems
 			}
 			add_tech_bonus = {
-				name = ALG_convergence_tech
+				name = ALG_redmed_star_convergence
 				bonus = 0.75
 				uses = 2
 				category = CAT_drones
@@ -9975,7 +9972,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ALG_western_curriculum"
-			add_tech_bonus = { category = CAT_computing_tech uses = 2 bonus = 0.25 }
+			add_tech_bonus = {
+				name = ALG_western_curriculum
+				category = CAT_computing_tech
+				uses = 2
+				bonus = 0.25
+			}
 			subtract_from_variable = { var = ALG_people_grievance value = 2 }
 			custom_effect_tooltip = ALG_people_grievance_minus_2_tt
 			set_temp_variable = { treasury_change = -2.50 }
@@ -11394,52 +11396,30 @@ focus_tree = {
 
 		cost = 6
 
-	prerequisite = { focus = ALG_algerie_telecom_expansion }
+		prerequisite = { focus = ALG_algerie_telecom_expansion }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-	completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ALG_namibia_botswana_fiber_cable"
-			effect_tooltip = {
-				ALG = {
-					set_temp_variable = { treasury_change = -6 }
-					modify_treasury_effect = yes
-					385 = {
-						add_building_construction = {
-							type = internet_station
-							level = 1
-							instant_build = yes
-						}
-					}
-					386 = {
-						add_building_construction = {
-							type = internet_station
-							level = 1
-							instant_build = yes
-						}
-					}
+		completion_reward = {
+			log = "[GetDateText]: [ROOT.GetName]: Focus ALG_fiber_optic_program"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { NOT = { has_tech = internet1 } }
+				set_technology = { internet1 = 1 }
+			}
+			385 = {
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
 				}
-				ALG = {
-					set_temp_variable = { treasury_change = -6 }
-					modify_treasury_effect = yes
-					if = {
-						limit = { NOT = { has_tech = internet1 } }
-						set_technology = { internet1 = 1 }
-					}
-					385 = {
-						add_building_construction = {
-							type = internet_station
-							level = 1
-							instant_build = yes
-						}
-					}
-					386 = {
-						add_building_construction = {
-							type = internet_station
-							level = 1
-							instant_build = yes
-						}
-					}
+			}
+			386 = {
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
 				}
 			}
 		}
@@ -18315,8 +18295,10 @@ focus_tree = {
 			base = 10
 			modifier = {
 				factor = 1.5
-				has_government = fascism
-				has_government = neutrality
+				OR = {
+					has_government = fascism
+					has_government = neutrality
+				}
 			}
 		}
 	}
@@ -22853,43 +22835,31 @@ focus_tree = {
 
 		cost = 6
 
-	prerequisite = { focus = ALG_economic_cooperation }
-	prerequisite = { focus = ALG_security_cooperation }
+		prerequisite = { focus = ALG_economic_cooperation }
+		prerequisite = { focus = ALG_security_cooperation }
 
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 
-	completion_reward = {
-		log = "[GetDateText]: [Root.GetName]: Focus ALG_towards_maghreb_union"
-		swap_ideas = {
-			remove_idea = ALG_moroccan_reconciliation_B2
-			add_idea = ALG_moroccan_reconciliation_B_final
-		}
-		add_ideas = ALG_maghreb_cooperation_idea
-		add_opinion_modifier = {
-			modifier = supports_rival
-			target = SHA
-		}
-		reverse_add_opinion_modifier = {
-			modifier = supports_rival
-			target = SHA
-		}
-		add_opinion_modifier = {
-			modifier = declaration_of_friendship
-			target = MOR
-		}
-		reverse_add_opinion_modifier = {
-			modifier = declaration_of_friendship
-			target = MOR
-		}
-		373 = {
-			if = {
-				limit = { is_core_of = SHA }
-				remove_core_of = SHA
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_towards_maghreb_union"
+			swap_ideas = {
+				remove_idea = ALG_moroccan_reconciliation_B2
+				add_idea = ALG_moroccan_reconciliation_B_final
 			}
+			add_ideas = ALG_maghreb_cooperation_idea
+			add_opinion_modifier = { modifier = supports_rival target = SHA }
+			reverse_add_opinion_modifier = { modifier = supports_rival target = SHA }
+			add_opinion_modifier = { modifier = declaration_of_friendship target = MOR }
+			reverse_add_opinion_modifier = { modifier = declaration_of_friendship target = MOR }
+			373 = {
+				if = {
+					limit = { is_core_of = SHA }
+					remove_core_of = SHA
+				}
+				remove_claim_by = SHA
+			}
+			diplomatic_relation = { country = SHA relation = guarantee active = no }
 		}
-		373 = { remove_claim_by = SHA }
-		diplomatic_relation = { country = SHA relation = guarantee active = no }
-	}
 
 		ai_will_do = {
 			base = 10
@@ -23561,8 +23531,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 
 		available = {
-			has_government = neutrality
-			has_government = nationalist
+			OR = {
+				has_government = neutrality
+				has_government = nationalist
+			}
 		}
 
 		completion_reward = {

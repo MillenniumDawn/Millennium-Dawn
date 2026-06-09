@@ -56,8 +56,9 @@ repos:
         args: ['--maxkb=100000']  # Prevent files larger than 100MB
       - id: check-case-conflict
       - id: check-executables-have-shebangs
-        exclude: '\.txt$|\.mod$'
+        files: '^tools/'
       - id: check-shebang-scripts-are-executable
+        files: '^tools/'
       - id: fix-byte-order-marker
         exclude: 'localisation/.*\.yml$|^(gfx|map|interface|music|sound)/'
       - id: check-ast
@@ -128,13 +129,6 @@ repos:
         language: system
         files: '\.mod$'
         pass_filenames: true
-      - id: check-braces
-        name: Check for missing braces
-        entry: python3 tools/linting/check_braces.py
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: true
       # Runs the full tools test suite before push (not on every commit).
       # Enable with: pre-commit install --hook-type pre-push
       - id: tools-pytest
@@ -160,21 +154,13 @@ repos:
         files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
         pass_filenames: true
         stages: [manual]
-      - id: check-basic-style
-        name: MD Basic Style Check
-        entry: python3 tools/linting/check_basic_style.py --mode staged
+      - id: md-validate-style
+        name: MD Style & Standards (braces, indent, spacing, focus/event standards)
+        entry: python3 tools/validation/validate_style.py --staged --strict --no-color
         language: system
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-        stages: [manual]
-      - id: coding-standards
-        name: MD Coding Standards (focus IDs, flags, events)
-        entry: python3 tools/linting/coding_standards.py --mode staged
-        language: system
-        files: '(common/national_focus|events)/.*\.txt$'
-        pass_filenames: false
-        stages: [manual]
       - id: check-common-mistakes
         name: MD Common Mistakes (threat scale, value ranges, always=no, etc.)
         entry: python3 tools/linting/check_common_mistakes.py --mode staged

@@ -22,11 +22,15 @@ def dummy_validator(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Bug: count_event_ids_in_file returning empty dict for zero-count IDs
+# count_event_ids_in_file token-accurate counting
 # File: validate_events.py
-# Fix: Real function returns ONLY IDs present in the file; callers must
-#      pre-initialize the aggregate dict with zeros for every tracked ID.
-#      Tests pin both halves of that contract.
+# Contract:
+#   1. Returns ONLY IDs present in the file; callers pre-initialize the
+#      aggregate dict with zeros for every tracked ID.
+#   2. Counts whole identifier tokens, not substrings. A dotted ID like
+#      test.1 must NOT be inflated by its own loc keys test.1.t/.d/.a — those
+#      are distinct tokens. An event referenced only by its loc keys must
+#      still count as 1 (the definition) so it is reported unreferenced.
 # ---------------------------------------------------------------------------
 
 
@@ -54,6 +58,34 @@ def test_count_event_ids_in_file_returns_only_present_ids(tmp_path):
     assert (
         "test.999" not in result
     ), "Absent ID must NOT be in result — caller pre-initializes zeros"
+
+
+def test_count_event_ids_in_file_dotted_id_not_inflated_by_loc_keys(tmp_path):
+    """A dotted event ID referenced ONLY by its own loc keys (test.1.t/.d/.a)
+    must count as 1 — the bare definition. The tokenizer treats test.1 and
+    test.1.t as distinct tokens, so the loc keys don't inflate the count and
+    the event is correctly reported as unreferenced (count <= 1)."""
+    from validate_events import count_event_ids_in_file
+
+    events_dir = tmp_path / "events"
+    events_dir.mkdir()
+    fpath = events_dir / "test.txt"
+    fpath.write_text(
+        "add_namespace = test\n"
+        "country_event = {\n"
+        "    id = test.1\n"
+        "    is_triggered_only = yes\n"
+        "    title = test.1.t\n"
+        "    desc = test.1.d\n"
+        "    option = { name = test.1.a }\n"
+        "}\n"
+    )
+    tracked = frozenset(["test.1"])
+    result = count_event_ids_in_file((str(fpath), tracked))
+    assert result["test.1"] == 1, (
+        "Old substring count would report 4 (matching test.1 inside test.1.t/.d/.a) "
+        "and treat the event as referenced; token count must be 1"
+    )
 
 
 def test_count_event_ids_in_file_handles_referenced_event(tmp_path):
