@@ -185,7 +185,6 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "id": id_match.group(1),
                 "type": event_type,
                 "file": basename,
-                "is_major": "major = yes" in body,
                 "is_hidden": "hidden = yes" in body,
                 "is_triggered_only": "is_triggered_only = yes" in body,
                 "fire_only_once": "fire_only_once = yes" in body,
@@ -228,7 +227,7 @@ class Validator(BaseValidator):
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id, type, file, is_major, is_hidden,
+        Each metadata dict has: id, type, file, is_hidden,
         is_triggered_only, fire_only_once, has_mtth, option_count,
         title_desc_refs.
         """
@@ -437,36 +436,6 @@ class Validator(BaseValidator):
             "Triggered-only events with no references found:",
             Severity.WARNING,
             category="unreferenced-triggered-only",
-        )
-
-    def validate_news_event_major(self):
-        """Flag news_event definitions missing major = yes.
-
-        News events are country events under the hood — without major = yes
-        they only fire for the single receiving country, which is almost
-        always unintended. Hidden news events are exempted since they're
-        used as scripted-effect carriers, not player-facing news.
-        """
-        self._log_section("Checking news_events for missing major = yes...")
-
-        meta, _ = self._get_event_metadata()
-        results = []
-
-        for ev in meta:
-            if ev["type"] != "news_event":
-                continue
-            if ev["is_hidden"]:
-                continue
-            if ev["is_major"]:
-                continue
-            results.append(f"{ev['id']} - {ev['file']}")
-
-        self._report(
-            results,
-            "✓ All news_events have major = yes",
-            "news_events missing major = yes (will only fire for one country — add major = yes or use country_event):",
-            Severity.WARNING,
-            category="news-event-missing-major",
         )
 
     def validate_mtth_triggered_only(self):
@@ -682,7 +651,6 @@ class Validator(BaseValidator):
         self.validate_event_call_long_form()
         self.validate_triggered_only_unreferenced()
         self.validate_missing_localisation()
-        self.validate_news_event_major()
         self.validate_mtth_triggered_only()
         self.validate_hidden_event_options()
         self.validate_hidden_event_localisation()
