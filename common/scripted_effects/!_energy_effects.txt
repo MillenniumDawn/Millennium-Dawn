@@ -502,11 +502,12 @@ energy_on_daily = {
 random_renewable_variable_calculation = {
 	for_each_scope_loop = {
 		array = global.states
-		set_variable_to_random = { var = renewable_energy_random_var min = modifier@state_renewable_capacity_factor_modifier max = 1 }
-		# Calculate the Min / Max
-		set_variable = { min_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
-		set_variable = { max_renewable_energy_var = 1 }
-		add_to_variable = { max_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
+		# Monthly output: a random 0..1 fraction of the state's renewable factor (a multiplier averaging 1.0)
+		set_variable_to_random = { var = renewable_energy_random_var min = 0 max = 1 }
+		multiply_variable = { var = renewable_energy_random_var value = modifier@state_renewable_capacity_factor_modifier }
+		# Min / Max for UI info: lowest possible is 0, highest is the full factor
+		set_variable = { min_renewable_energy_var = 0 }
+		set_variable = { max_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
 	}
 }
 
