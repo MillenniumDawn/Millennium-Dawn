@@ -31,12 +31,12 @@ import os
 import re
 import sys
 
-# Compiled patterns — done once at import, not per file/line
 _RE_THREAT = re.compile(r"(?<!\w)threat\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_WAR_SUPPORT = re.compile(r"(?<!\w)has_war_support\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_STABILITY = re.compile(r"(?<!\w)has_stability\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_ALLOWED_ALWAYS_NO = re.compile(r"allowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_ALLOWED_OPEN = re.compile(r"allowed\s*=\s*\{")
+_RE_ALLOWED_OPEN_WB = re.compile(r"\ballowed\s*=\s*\{")
 _RE_ALLOWED_TAG = re.compile(r"allowed\s*=\s*\{\s*tag\s*=\s*\w+\s*\}")
 _RE_ALLOWED_CIVIL_WAR = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_CANCEL = re.compile(r"cancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
@@ -137,9 +137,9 @@ _SCRIPT_COMPLETED_DECISIONS: set = set()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from cleanup_or import find_redundant_and_blocks, find_single_condition_or_blocks
-from path_utils import clean_filepath
 from shared_utils import (
     Timer,
+    clean_filepath,
     collect_files_by_mode,
     create_linting_parser,
     get_non_selectable_idea_categories,
@@ -382,7 +382,6 @@ def _check_has_idea_mutex_in_not_block(lines):
 
 _RE_DAYS_MISSION_TIMEOUT = re.compile(r"\bdays_mission_timeout\s*=")
 
-# --- New patterns for branch-cleanup checks ---
 _RE_COUNTRY_SCOPE_OPEN = re.compile(
     r"^(\s*)([A-Z]{3}|FROM|ROOT|PREV|OWNER|CAPITAL)\s*=\s*\{"
 )
@@ -513,7 +512,7 @@ def _check_decision_allowed_dynamic(lines):
                         dbl_code = dbl.split("#")[0]
                         if (
                             not in_allowed
-                            and re.search(r"\ballowed\s*=\s*\{", dbl_code)
+                            and _RE_ALLOWED_OPEN_WB.search(dbl_code)
                             and "allowed_civil_war" not in dbl_code
                         ):
                             in_allowed = True
@@ -661,11 +660,8 @@ def _check_embargo_dlc_guard(lines):
     be inside an if block that checks has_dlc = "By Blood Alone".
     """
     issues = []
-    # Track enclosing if-blocks and whether they contain the DLC check.
-    # Stack entries: (brace_depth_at_open, has_dlc_guard)
     depth = 0
     dlc_guard_stack = []
-    # We track whether ANY enclosing if-block has the DLC guard.
 
     for i, line in enumerate(lines):
         code = line.split("#")[0]
@@ -718,10 +714,6 @@ def _check_divide_variable_zero_guard(lines):
       - Division inside an else block whose sibling if checks divisor = 0 or < threshold
     """
     issues = []
-    # Track guarded variables per scope depth.
-    # When we see a clamp or check_variable > 0 for a var, add it.
-    # When we enter an else block whose if checked var = 0 or var < N, add it.
-    # Pop when scope closes.
     guarded_vars = set()
     depth = 0
     depth_stack = []  # stack of (depth, set_of_vars_guarded_at_this_depth)
@@ -884,12 +876,11 @@ def _check_is_x_nation_runtime(lines):
     for i, line in enumerate(lines, 1):
         code = line.split("#")[0]
 
-        # Track brace depth
         opens = code.count("{")
         closes = code.count("}")
 
         # Check for allowed block start
-        if re.search(r"\ballowed\s*=\s*\{", code) and "allowed_civil_war" not in code:
+        if _RE_ALLOWED_OPEN_WB.search(code) and "allowed_civil_war" not in code:
             in_allowed = True
             allowed_depth = brace_depth + opens - closes
 
@@ -1081,7 +1072,6 @@ def check_file(filepath):
                     )
 
         if is_ideas and current_category in FLAGGED_IDEA_CATEGORIES:
-            # Single-line forms
             if _RE_ALLOWED_ALWAYS_NO.search(code_part):
                 issues.append(
                     (
@@ -1090,7 +1080,6 @@ def check_file(filepath):
                     )
                 )
             elif _RE_ALLOWED_OPEN.search(code_part) and "}" not in code_part:
-                # Opening of a multi-line allowed block — collect its contents
                 in_allowed_block = True
                 allowed_block_start_line = line_num
                 allowed_block_depth = brace_depth
@@ -1193,7 +1182,6 @@ def check_file(filepath):
         issues.extend(_check_decision_available_always_no(lines))
         issues.extend(_check_decision_allowed_dynamic(lines))
 
-    # Multi-line checks applicable to all script files
     issues.extend(_check_consecutive_scope_blocks(lines))
     issues.extend(_check_embargo_dlc_guard(lines))
     issues.extend(_check_divide_variable_zero_guard(lines))
@@ -1247,10 +1235,11 @@ def main():
     print(f"------\nChecked {len(files_list)} files")
     if all_issues:
         print(f"Found {len(all_issues)} issue(s)")
-        print("Issues found (non-blocking)")
-    else:
-        print("No issues found")
-        print("Check PASSED")
+        print("Issues found - fix them before committing")
+        print_timing_summary(timings)
+        return 1
+    print("No issues found")
+    print("Check PASSED")
     print_timing_summary(timings)
     return 0
 

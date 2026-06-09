@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache
 from shared_utils import extract_block_from_text
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
     FileOpener,
@@ -24,7 +25,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc", "00_operations", "MD_dm_modifiers"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS + ["00_operations", "MD_dm_modifiers"]
 
 # Vanilla / reused-vanilla loc keys that are valid but not defined in the mod's
 # localisation files. Single source of truth lives in validator_common so the

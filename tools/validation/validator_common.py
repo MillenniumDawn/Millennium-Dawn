@@ -14,8 +14,11 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
+    Colors,
     DataCleaner,
     FileOpener,
+    clean_filepath,
     compute_line_offsets,
     create_validation_parser,
     find_line_number,
@@ -28,9 +31,6 @@ from shared_utils import (
     strip_comments,
     timing_enabled,
 )
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
@@ -259,18 +259,6 @@ else:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 
-class Colors:
-    HEADER = "\033[95m"
-    BLUE = "\033[94m"
-    CYAN = "\033[96m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-
-
 class Severity:
     ERROR = "error"
     WARNING = "warning"
@@ -378,6 +366,21 @@ HOI4_BUILTIN_BLOCKS = frozenset(
 
 
 class BaseValidator:
+    """Base class for all HOI4 content validators.
+
+    Subclass and implement ``run_validations(files)``. Use ``add_error()``
+    for structured issues (picked up by the PR report renderer) or
+    ``_report()`` for free-form output lines.
+
+    Common workflow in ``run_validations``:
+      1. Iterate over ``files``.
+      2. Call ``should_skip_file(path, EXTRA_SKIP_PATTERNS)`` to filter.
+      3. Use ``disk_cache.per_file_cached_by_content()`` for expensive per-file work.
+      4. Call ``self.add_error(category, message, file, line)`` for each issue found.
+
+    Entry point: ``run_validator_main(MyValidator, "description")`` in ``__main__``.
+    """
+
     TITLE = "VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
@@ -388,6 +391,7 @@ class BaseValidator:
         use_colors: bool = True,
         staged_only: bool = False,
         workers: int = None,
+        no_cache: bool = False,
         **kwargs,
     ):
         if not mod_path.endswith(os.sep):
@@ -399,6 +403,7 @@ class BaseValidator:
         self.use_colors = use_colors
         self.staged_only = staged_only
         self.workers = workers if workers else max(1, cpu_count() // 2)
+        self.no_cache = no_cache
         self.staged_files = None
         self.output_lines = []
         self._pool: Optional[Pool] = None
@@ -739,14 +744,26 @@ class BaseValidator:
                 pass
         return None
 
-    def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
-        # Falls back to sequential when workers == 1 so low-end machines don't
-        # eat the Pool startup cost on a small staged commit.
-        if self.workers == 1 or (self._pool is None and len(args_list) < 10):
-            return [func(a) for a in args_list]
+    def _get_pool(self) -> Optional[Pool]:
+        """Lazily create the shared worker pool on first parallel use.
+
+        Tiny staged commits never reach a parallel code path, so the Pool is
+        never spawned and they don't pay the fork+teardown cost. Created once,
+        memoized, and torn down by run_all_validations().
+        """
+        if self.workers <= 1:
+            return None
         if self._pool is None:
-            raise RuntimeError("_pool_map called outside run_all_validations")
-        return self._pool.map(func, args_list, chunksize=chunksize)
+            self._pool = Pool(processes=self.workers)
+        return self._pool
+
+    def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
+        # Falls back to sequential when workers == 1 or the batch is small, so
+        # low-end machines and tiny staged commits don't eat the Pool startup
+        # cost. The Pool is created lazily on the first batch that uses it.
+        if self.workers == 1 or len(args_list) < 10:
+            return [func(a) for a in args_list]
+        return self._get_pool().map(func, args_list, chunksize=chunksize)
 
     def _collect_files(
         self,
@@ -859,8 +876,6 @@ class BaseValidator:
         if self.output_file:
             self.log(f"Output file: {self.output_file}")
 
-        if self.workers > 1:
-            self._pool = Pool(processes=self.workers)
         try:
             self.run_validations()
         finally:
