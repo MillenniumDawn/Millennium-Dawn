@@ -219,8 +219,8 @@ def energy_supply_non_fossil(states, modifier_stack, has_nuclear):
     for s in states:
         infra = s["buildings"].get("renewable_energy_infra", 0)
         if infra > 0:
-            min_factor = s.get("state_renewable_capacity_factor_modifier_var", 0.5)
-            avg_factor = (min_factor + 1) / 2
+            factor = s.get("state_renewable_capacity_factor_modifier_var", 1.0)
+            avg_factor = factor / 2  # monthly output = rand(0..1) * factor, so expected value is factor/2
             renewables += infra * RENEWABLE_BASE_GW * avg_factor
     ren_mult = 1 + modifier_stack.get("renewable_energy_gain_multiplier", 0)
     renewables *= ren_mult * energy_gain_mult
