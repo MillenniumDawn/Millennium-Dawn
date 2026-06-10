@@ -1,11 +1,458 @@
 scripted_gui = {
-	investments_treasury = {
+	show_ruling_party_addon_info = {
+		context_type = player_context
+		parent_window_token = politics_tab
+		window_name = "ruling_party_addon_info"
+	}
+
+	show_approval_rating_container = {
+		context_type = player_context
+		parent_window_token = politics_tab
+		window_name = "approval_rating_container"
+	}
+
+	tha_list_of_parties = {
+		context_type = player_context
+		parent_window_token = politics_tab
+		window_name = "list_of_parties_politics_tab"
+
+		dynamic_lists = {
+            parties_grid = {
+                array = pos_array
+                entry_container = "parties_grid_item_short"
+            }
+        }
+	}
+
+	countrypoliticsview_expanded_open_button = {
+		context_type = player_context
+		parent_window_token = politics_tab
+		window_name = "MD_countrypoliticsview_expanded_open_container"
+		# dirty = global.update_ideological_powers_ui
+
+		# visible = { is_ai = no }
+
+		effects = {
+			MD_countrypoliticsview_expanded_open_click = {
+				if = {
+					limit = { NOT = { has_country_flag = MD_politicsview_expanded_open } }
+					set_country_flag = MD_politicsview_expanded_open
+
+					set_variable = { sorting_button_outlook_status = 1 }
+					set_variable = { sorting_button_popularity_status = 2 }
+					set_variable = { sorting_button_banned_status = 2 }
+
+					clear_array = parties_list_sorted
+
+					for_each_loop = {
+						array = pos_array
+
+						set_temp_variable = { added = 0 }
+
+						for_each_loop = {
+							array = parties_list_sorted
+							index = sorted_i
+							value = sorted_v
+							break = added
+
+							if = {
+								limit = {
+									check_variable = { v < sorted_v }
+								}
+
+								add_to_array = {
+									array = parties_list_sorted
+									value = v
+									index = sorted_i
+								}
+
+								set_temp_variable = { added = 1 }
+							}
+						}
+
+						if = {
+							limit = { check_variable = { added = 0 } }
+
+							add_to_array = {
+								array = parties_list_sorted
+								value = v
+							}
+						}
+					}
+				}
+				else = {
+					clr_country_flag = MD_politicsview_expanded_open
+				}
+				# add_to_variable = { global.update_ideological_powers_ui = 1 }
+			}
+		}
+	}
+
+	countrypoliticsview_expanded = {
 		context_type = player_context
 		window_name = "MD_countrypoliticsview_expanded"
 		parent_window_token = politics_tab
 
 		visible = {
+			has_country_flag = MD_politicsview_expanded_open
+		}
+
+		triggers = {
+			# ideological powers
+			communist_category_glow_visible = {
+				OR = {
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
+			}
+			socialist_category_glow_visible = {
+				OR = {
+					western_social_democrats_are_in_power = yes	#socialsim
+					emerging_anarchist_communism_are_in_power = yes	#anarchist_communism
+					neutrality_neutral_green_are_in_power = yes	#Neutral_green
+					neutrality_neutral_social_are_in_power = yes	#neutral_Social
+				}
+			}
+			conservative_category_glow_visible = {
+				OR = {
+					western_conservatism_are_in_power = yes	#conservative
+					emerging_reactionaries_are_in_power = yes	#Conservative
+					emerging_moderate_shiite_are_in_power = yes	#Mod vilayat e faqih
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes	#muslim brotherhood
+					neutrality_neutral_conservatism_are_in_power = yes	#neutral conservative
+					nationalist_right_wing_populists_are_in_power = yes	#national populist
+				}
+			}
+			liberal_category_glow_visible = {
+				OR = {
+					has_country_leader_with_trait = western_technocrat
+					western_liberals_are_in_power = yes	#liberalism
+					neutrality_neutral_libertarians_are_in_power = yes	#Neutral_Libertarian
+				}
+			}
+			autocrat_category_glow_visible = {
+				OR = {
+					non_technocrats_western_autocrats_are_in_power = yes
+					emerging_autocracy_are_in_power = yes	#Emerging autocrats
+					neutrality_neutral_autocracy_are_in_power = yes	#Neutral autocrats
+					neutrality_neutral_oligarch_are_in_power = yes	#oligarchs
+					nationalist_fascist_are_in_power = yes	#fascists
+					nationalist_military_junta_are_in_power = yes	#military junta
+				}
+			}
+			monarchist_category_glow_visible = {
+				OR = {
+					salafist_kingdom_are_in_power = yes	#Kingdom
+					nationalist_monarchists_are_in_power = yes	#Monarchist
+				}
+			}
+			fundamentalist_category_glow_visible = {
+				OR = {
+					emerging_hardline_shiite_are_in_power = yes	#Vilayat_e_Faqih
+					salafist_caliphate_are_in_power = yes	#Caliphate
+				}
+			}
+
+			# parties
+			parties_sorted_by_outlook_bg_visible = {
+				check_variable = { sorting_button_outlook_status = 1 }
+			}
+			boost_button_click_enabled = {
+				set_temp_variable = { party_index = v }
+				outlook_larger_than_0_by_index = yes
+				
+				has_political_power > 99
+
+				NOT = {
+					set_temp_variable = { party_index = v }
+					is_party_banned_trigger = yes
+				}
+
+				# party
+				if = {
+					limit = { check_variable = { v = 1 } }
+					
+					has_country_leader_with_trait = western_technocrat
+				}
+
+				# countries
+				# if = { limit = { tag = ITA }
+				# 	has_country_flag = ITA_undemocratic_coup
+				# }
+			}
+			attack_button_click_enabled = {
+				# can't attack yourself or allies
+				NOT = {
+					custom_trigger_tooltip = {
+						tooltip = party_is_in_power_or_coalition_TT
+						OR = {
+							is_in_array = { ruling_party = v }
+							is_in_array = { gov_coalition_array = v }
+						}
+					}
+				}
+
+				custom_trigger_tooltip = {
+					tooltip = party_greater_than_election_threshold_by_index_tt
+					check_variable = { party_pop_array^party_index > election_threshold }
+				}
+
+				if = {
+					limit = {
+						set_temp_variable = { party_index = v }
+						is_party_banned_trigger = yes
+					}
+					has_political_power > 49
+					else = {
+						has_political_power > 99
+					}
+				}
+			}
+			ban_button_visible = {
+				NOT = {
+					set_temp_variable = { party_index = v }
+					is_party_banned_trigger = yes
+				}
+			}
+			ban_button_click_enabled = {
+				# can't attack yourself or allies
+				NOT = {
+					custom_trigger_tooltip = {
+						tooltip = party_is_in_power_or_coalition_TT
+						OR = {
+							is_in_array = { ruling_party = v }
+							is_in_array = { gov_coalition_array = v }
+						}
+					}
+				}
+
+				if = { limit = { has_elections = no }
+					has_political_power > 9
+					else = {
+						has_political_power > 99
+					}
+				}
+
+				if = { 
+					limit = {
+						OR = {
+							check_variable = { v = 1 }
+							check_variable = { v = 2 }
+							check_variable = { v = 3 }
+							check_variable = { v = 5 }
+							check_variable = { v = 12 }
+							check_variable = { v = 14 }
+							check_variable = { v = 15 }
+							check_variable = { v = 16 }
+							check_variable = { v = 17 }
+							check_variable = { v = 18 }
+							check_variable = { v = 20 }
+						}
+					}
+
+					has_elections = no
+				}
+			}
+			allow_button_visible = {
+				# must have party banned
+				if = {
+					limit = {
+						original_tag = PER
+					}
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
+				set_temp_variable = { party_index = v }
+				is_party_banned_trigger = yes
+			}
+			allow_button_click_enabled = {
+				has_political_power > 9
+				NOT = {
+					has_country_flag = partyall_banned
+				}
+				
+				set_temp_variable = { party_index = v }
+				party_allowed_to_ban_trigger = yes
+			}
+		}
+
+		effects = {
+			close_click = {
+				clr_country_flag = MD_politicsview_expanded_open
+			}
 			
+			# sort buttons
+			sorting_button_outlook_click = {
+				set_variable = { sorting_button_outlook_status = 1 }
+				set_variable = { sorting_button_popularity_status = 2 }
+				set_variable = { sorting_button_banned_status = 2 }
+
+				clear_array = parties_list_sorted
+
+				for_each_loop = {
+					array = pos_array
+
+					set_temp_variable = { added = 0 }
+
+					for_each_loop = {
+						array = parties_list_sorted
+						index = sorted_i
+						value = sorted_v
+						break = added
+
+						if = {
+							limit = {
+								check_variable = { v < sorted_v }
+							}
+
+							add_to_array = {
+								array = parties_list_sorted
+								value = v
+								index = sorted_i
+							}
+
+							set_temp_variable = { added = 1 }
+						}
+					}
+
+					if = {
+						limit = { check_variable = { added = 0 } }
+
+						add_to_array = {
+							array = parties_list_sorted
+							value = v
+						}
+					}
+				}
+			}
+
+			sorting_button_popularity_click = {
+				set_variable = { sorting_button_outlook_status = 2 }
+				set_variable = { sorting_button_popularity_status = 1 }
+				set_variable = { sorting_button_banned_status = 2 }
+
+				clear_array = parties_list_sorted
+				
+				for_each_loop = {
+					array = pos_array
+
+					add_to_array = {
+						array = parties_list_sorted
+						index = i
+						value = v
+					}
+				}
+			}
+
+			sorting_button_banned_click = {
+				set_variable = { sorting_button_outlook_status = 2 }
+				set_variable = { sorting_button_popularity_status = 2 }
+				set_variable = { sorting_button_banned_status = 1 }
+
+				clear_array = parties_list_sorted
+				
+				for_each_loop = {
+					array = pos_array
+
+					if = {
+						limit = {
+							set_temp_variable = { party_index = v }
+							is_party_banned_trigger = yes
+						}
+
+						add_to_array = {
+							array = parties_list_sorted
+							index = 0
+							value = v
+						}
+					}
+					else = {
+						add_to_array = {
+							array = parties_list_sorted
+							index = i
+							value = v
+						}
+					}
+				}
+			}
+
+			# action buttons
+			boost_button_click = {
+				add_political_power = -100
+
+				increase_corruption_chance = yes
+				newline = yes
+
+				set_temp_variable = { party_index = v }
+				set_temp_variable = { boost_multiplier = 1 }
+				add_to_temp_variable = { boost_multiplier = modifier@popularity_boost_modifier }
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				multiply_temp_variable = { party_popularity_increase = boost_multiplier }
+				clamp_temp_variable = { var = party_popularity_increase min = 0 max = 100 }
+				add_relative_party_popularity = yes
+			}
+
+			attack_button_click = {
+				if = {
+					limit = {
+						has_country_flag = party3_banned
+					}
+					add_political_power = -50
+					else = {
+						add_political_power = -100
+					}
+				}
+
+				set_temp_variable = { party_index = v }
+				set_temp_variable = { attack_multiplier = 1 }
+				add_to_temp_variable = { attack_multiplier = modifier@popularity_attack_modifier }
+				set_temp_variable = { party_popularity_increase = -0.02 }
+				multiply_temp_variable = { party_popularity_increase = attack_multiplier }
+				clamp_temp_variable = { var = party_popularity_increase min = -0.1 }
+				add_relative_party_popularity = yes
+			}
+
+			ban_button_click = {
+				if = { limit = { has_elections = no }
+					add_political_power = -10
+					else = {
+						add_political_power = -100
+					}
+				}
+				add_stability = -0.01
+				set_temp_variable = { party_index = v }
+				add_to_temp_variable = { party_index = 1 }
+				ban_party_scripted_call = yes
+			}
+			allow_button_click = {
+				add_political_power = -10
+				set_temp_variable = { party_index = v }
+				add_to_temp_variable = { party_index = 1 }
+				unban_party_scripted_call = yes
+			}
+		}
+
+		dynamic_lists = {
+            parties_grid = {
+                array = parties_list_sorted
+                entry_container = "parties_grid_item"
+            }
+        }
+
+		properties = {
+			sorting_button_outlook = {
+				frame = sorting_button_outlook_status
+			}
+			sorting_button_popularity = {
+				frame = sorting_button_popularity_status
+			}
+			sorting_button_banned = {
+				frame = sorting_button_banned_status
+			}
 		}
 	}
 }
