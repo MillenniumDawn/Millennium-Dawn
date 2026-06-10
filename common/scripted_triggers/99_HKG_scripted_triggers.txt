@@ -51,6 +51,24 @@ HKG_contract_can_solicit = {
 	check_variable = { HKG_contract_count < HKG_contract_max_slots }
 }
 
+# AI-only confidence gate: only solicit a new contract when Hong Kong can
+# realistically build and deliver the ships before the deadline, so the AI
+# never eats the Beijing displeasure penalty for a missed slot.
+HKG_contract_can_finish_in_time = {
+	# Must be able to lay down an escort hull at all.
+	HKG_contract_can_build_any = yes
+	# Dockyard capacity to actually produce within the 365-730 day deadlines.
+	num_of_naval_factories > 3
+	# Wartime diverts/blockades the yards; deliveries slip and the slot is missed.
+	has_war = no
+	# Don't stack contracts beyond what the yards can run in parallel:
+	# require one free yard's worth of slack per active contract.
+	custom_trigger_tooltip = {
+		tooltip = HKG_contract_yard_slack_tt
+		check_variable = { HKG_contract_count < num_of_naval_factories }
+	}
+}
+
 HKG_contract_destroyer_active = {
 	OR = {
 		AND = { check_variable = { HKG_contract_occupied_array^0 = 1 } check_variable = { HKG_contract_class_array^0 = 1 } check_variable = { HKG_contract_quota_array^0 > 0 } }

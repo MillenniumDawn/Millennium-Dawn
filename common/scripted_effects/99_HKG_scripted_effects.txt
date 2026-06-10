@@ -130,8 +130,30 @@ HKG_contract_refresh_gui = {
 	add_to_variable = { HKG_contract_gui_dirty = 1 }
 }
 
+CHI_contract_make_offer = {
+	set_temp_variable = { CHI_make_offer_class = CHI_contract_pick_class }
+	set_temp_variable = { CHI_make_offer_license = CHI_contract_pick_license }
+	set_temp_variable = { CHI_make_offer_tier = CHI_contract_pick_tier }
+	HKG = {
+		if = {
+			limit = {
+				HKG_contract_can_solicit = yes
+				NOT = { has_country_flag = HKG_contract_offer_pending }
+			}
+			set_variable = { HKG_contract_offer_class = CHI_make_offer_class }
+			set_variable = { HKG_contract_offer_license = CHI_make_offer_license }
+			set_variable = { HKG_contract_offer_tier = CHI_make_offer_tier }
+			HKG_contract_set_offer_terms = yes
+			set_country_flag = HKG_contract_offer_pending
+			add_to_variable = { HKG_contract_gui_dirty = 1 }
+			country_event = { id = HKG_contract.1 days = 2 }
+		}
+	}
+}
+
 HKG_contract_generate_offer = {
 	set_variable = { HKG_contract_offer_license = 0 }
+	set_variable = { HKG_contract_offer_tier = 1 }
 	random = {
 		chance = 30
 		set_variable = { HKG_contract_offer_license = 1 }
@@ -257,6 +279,18 @@ HKG_contract_set_offer_terms = {
 		round_variable = HKG_contract_offer_pp
 		round_variable = HKG_contract_offer_productivity
 		round_variable = HKG_contract_offer_deadline
+	}
+	if = {
+		limit = { check_variable = { HKG_contract_offer_tier = 2 } }
+		multiply_variable = { HKG_contract_offer_productivity = 1.2 }
+		multiply_variable = { HKG_contract_offer_funds = 1.15 }
+		round_variable = HKG_contract_offer_productivity
+		round_variable = HKG_contract_offer_funds
+	}
+	else_if = {
+		limit = { check_variable = { HKG_contract_offer_tier = 0 } }
+		multiply_variable = { HKG_contract_offer_funds = 0.8 }
+		round_variable = HKG_contract_offer_funds
 	}
 	set_variable = { HKG_contract_offer_advance = HKG_contract_offer_funds }
 	multiply_variable = { HKG_contract_offer_advance = 0.5 }
