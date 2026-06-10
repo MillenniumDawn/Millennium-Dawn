@@ -135,6 +135,7 @@ Moving toward The Generals' Republic (shifting to the right) strengthens the mil
 Moving toward The People's Republic (shifting to the left) builds protest momentum. Once the reformist side reaches sufficient dominance, the Breaking Point triggers, starting the democratic transition event chain.
 
 There are several ways to shift the Balance of Power:
+
 - Taking national focuses that increase or decrease the value
 - Choosing certain options in events
 - Cabinet minister appointments

@@ -3,8 +3,6 @@ title: Politics Guide
 description: Comprehensive guide to the political system in Millennium Dawn including ideologies, elections, coalitions, and government mechanics
 ---
 
-# Politics Guide
-
 Millennium Dawn features a detailed political system with 5 ideology groups, 24 subideologies, multi-party elections, coalition governments, approval ratings, and political laws. This guide explains how the political system works and how you can interact with it as a player.
 
 ## Table of Contents

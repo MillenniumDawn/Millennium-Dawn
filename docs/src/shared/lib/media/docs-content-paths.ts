@@ -23,10 +23,7 @@ export function getDocsPackageRoot(): string {
   }
 
   const docsNested = resolve(cwd, "docs");
-  if (
-    existsSync(resolve(docsNested, "astro.config.ts")) ||
-    existsSync(resolve(docsNested, "astro.config.mjs"))
-  ) {
+  if (existsSync(resolve(docsNested, "astro.config.ts")) || existsSync(resolve(docsNested, "astro.config.mjs"))) {
     cachedPackageRoot = docsNested;
     return cachedPackageRoot;
   }

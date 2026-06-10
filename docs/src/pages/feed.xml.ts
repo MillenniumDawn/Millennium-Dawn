@@ -5,11 +5,12 @@ import { withBase } from "@/shared/lib/routing/urls";
 import { SITE_DESCRIPTION, SITE_FALLBACK_ORIGIN, SITE_TITLE } from "@/shared/config/site";
 import { getChangelogPath, getDevDiaryPath } from "@/shared/lib/routing/content-routes";
 
-function mapItem(title: string, description: string | undefined, path: string) {
+function mapItem(title: string, description: string | undefined, path: string, pubDate?: Date) {
   return {
     title,
     description: description ?? "",
     link: withBase(path),
+    ...(pubDate ? { pubDate } : {}),
   };
 }
 
@@ -19,8 +20,10 @@ export async function GET(context: APIContext) {
 
   const items = [
     ...visibleChangelogs.map((entry) => mapItem(entry.data.title, entry.data.description, getChangelogPath(entry))),
-    ...devDiaries.map((entry) => mapItem(entry.data.title, entry.data.description, getDevDiaryPath(entry))),
-  ];
+    ...devDiaries.map((entry) =>
+      mapItem(entry.data.title, entry.data.description, getDevDiaryPath(entry), entry.data.date),
+    ),
+  ].sort((a, b) => (b.pubDate?.getTime() ?? 0) - (a.pubDate?.getTime() ?? 0));
 
   return rss({
     title: SITE_TITLE,

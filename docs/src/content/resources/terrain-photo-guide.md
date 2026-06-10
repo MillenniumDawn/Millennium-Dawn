@@ -3,8 +3,6 @@ title: Terrain Photo System
 description: How to add terrain photos to provinces in Millennium Dawn
 ---
 
-# Terrain Photo System
-
 The terrain photo system displays location-specific photographs in the province info panel when a player views a province. Each terrain photo requires entries in **3 files**, plus the image asset.
 
 ## Architecture
