@@ -18,12 +18,14 @@ export async function GET(context: APIContext) {
   const [changelogs, devDiaries] = await Promise.all([getCollection("changelogSections"), getCollection("devDiaries")]);
   const visibleChangelogs = changelogs.filter((entry) => !entry.data.hidden);
 
-  const items = [
-    ...visibleChangelogs.map((entry) => mapItem(entry.data.title, entry.data.description, getChangelogPath(entry))),
-    ...devDiaries.map((entry) =>
-      mapItem(entry.data.title, entry.data.description, getDevDiaryPath(entry), entry.data.date),
-    ),
-  ].sort((a, b) => (b.pubDate?.getTime() ?? 0) - (a.pubDate?.getTime() ?? 0));
+  const changelogItems = visibleChangelogs.map((entry) =>
+    mapItem(entry.data.title, entry.data.description, getChangelogPath(entry)),
+  );
+  const devDiaryItems = devDiaries
+    .map((entry) => mapItem(entry.data.title, entry.data.description, getDevDiaryPath(entry), entry.data.date))
+    .sort((a, b) => (b.pubDate?.getTime() ?? 0) - (a.pubDate?.getTime() ?? 0));
+
+  const items = [...changelogItems, ...devDiaryItems];
 
   return rss({
     title: SITE_TITLE,
