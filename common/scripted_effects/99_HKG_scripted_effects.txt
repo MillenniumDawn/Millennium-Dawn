@@ -36,8 +36,6 @@ calculate_sepcially_required_legco_seats = {
 	round_variable = HKG_legco_specially_required_seats
 }
 
-
-
 # Contract class enum: 1 = destroyer, 2 = frigate, 3 = attack submarine,
 # 4 = cruiser, 5 = aircraft carrier.
 
@@ -56,11 +54,13 @@ HKG_contract_initialize = {
 	set_variable = { HKG_contract_band_mid = 50 }
 	set_variable = { HKG_contract_band_high = 75 }
 	set_variable = { HKG_contract_standing_max = 100 }
-	set_variable = { HKG_contract_standing_gain = 10 }
+	set_variable = { HKG_contract_standing_gain = 2 }
 	set_variable = { HKG_contract_standing_loss = 15 }
 	set_variable = { HKG_contract_max_slots = 3 }
 	set_variable = { HKG_contract_grace = 90 }
 	set_variable = { HKG_contract_version = 2 }
+	set_variable = { HKG_contract_dockyard_output = 0 }
+	add_dynamic_modifier = { modifier = HKG_contract_shipbuilding_legacy }
 	HKG_contract_build_slots = yes
 	HKG_contract_refresh_gui = yes
 }
@@ -103,10 +103,15 @@ HKG_contract_migrate_v2 = {
 	set_variable = { HKG_contract_band_mid = 50 }
 	set_variable = { HKG_contract_band_high = 75 }
 	set_variable = { HKG_contract_standing_max = 100 }
-	set_variable = { HKG_contract_standing_gain = 10 }
+	set_variable = { HKG_contract_standing_gain = 2 }
 	set_variable = { HKG_contract_standing_loss = 15 }
 	clr_country_flag = HKG_contract_in_progress
 	clr_country_flag = HKG_contract_offer_pending
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = HKG_contract_shipbuilding_legacy } } }
+		set_variable = { HKG_contract_dockyard_output = 0 }
+		add_dynamic_modifier = { modifier = HKG_contract_shipbuilding_legacy }
+	}
 	HKG_contract_build_slots = yes
 	HKG_contract_refresh_gui = yes
 }
@@ -209,7 +214,7 @@ HKG_contract_set_offer_terms = {
 	if = {
 		limit = { check_variable = { HKG_contract_offer_class = 1 } }
 		set_variable = { HKG_contract_offer_quota = 2 }
-		set_variable = { HKG_contract_offer_deadline = 365 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 10 }
 		set_variable = { HKG_contract_offer_pp = 25 }
 		set_variable = { HKG_contract_offer_productivity = 10 }
@@ -218,7 +223,7 @@ HKG_contract_set_offer_terms = {
 	else_if = {
 		limit = { check_variable = { HKG_contract_offer_class = 2 } }
 		set_variable = { HKG_contract_offer_quota = 2 }
-		set_variable = { HKG_contract_offer_deadline = 400 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 14 }
 		set_variable = { HKG_contract_offer_pp = 25 }
 		set_variable = { HKG_contract_offer_productivity = 12 }
@@ -227,7 +232,7 @@ HKG_contract_set_offer_terms = {
 	else_if = {
 		limit = { check_variable = { HKG_contract_offer_class = 3 } }
 		set_variable = { HKG_contract_offer_quota = 1 }
-		set_variable = { HKG_contract_offer_deadline = 480 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 22 }
 		set_variable = { HKG_contract_offer_pp = 40 }
 		set_variable = { HKG_contract_offer_productivity = 20 }
@@ -236,7 +241,7 @@ HKG_contract_set_offer_terms = {
 	else_if = {
 		limit = { check_variable = { HKG_contract_offer_class = 4 } }
 		set_variable = { HKG_contract_offer_quota = 1 }
-		set_variable = { HKG_contract_offer_deadline = 540 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 30 }
 		set_variable = { HKG_contract_offer_pp = 45 }
 		set_variable = { HKG_contract_offer_productivity = 24 }
@@ -244,7 +249,7 @@ HKG_contract_set_offer_terms = {
 	}
 	else = {
 		set_variable = { HKG_contract_offer_quota = 1 }
-		set_variable = { HKG_contract_offer_deadline = 730 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 50 }
 		set_variable = { HKG_contract_offer_pp = 80 }
 		set_variable = { HKG_contract_offer_productivity = 45 }
@@ -420,6 +425,7 @@ HKG_contract_credit_delivery = {
 	if = {
 		limit = { check_variable = { target_slot > -1 } }
 		subtract_from_variable = { HKG_contract_quota_array^target_slot = 1 }
+		add_to_variable = { HKG_contract_dockyard_output = 0.01 }
 		if = {
 			limit = { check_variable = { HKG_contract_quota_array^target_slot < 1 } }
 			set_temp_variable = { done_slot = target_slot }
