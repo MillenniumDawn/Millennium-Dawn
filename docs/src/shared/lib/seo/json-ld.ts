@@ -61,8 +61,7 @@ export function buildBreadcrumbListJsonLd(input: {
     const isLast = index === segments.length - 1;
     const section = input.sections?.[segment];
     const segmentPath = `/${segments.slice(0, index + 1).join("/")}/`;
-    const segmentTitle =
-      section?.title ?? segment.replace(/-/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
+    const segmentTitle = section?.title ?? segment.replace(/-/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
     const segmentHref = section?.url ?? segmentPath;
 
     itemListElement.push({

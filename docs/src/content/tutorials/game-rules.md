@@ -44,10 +44,10 @@ Country-specific focus tree options and alternate paths.
 
 Controls special nation formation options.
 
-| Rule                            | Options | Default | Description                    |
-| ------------------------------- | ------- | ------- | ------------------------------ |
-| `rule_disable_formable_nations` | yes/no  | no      | Disable all formable nations   |
-| `allow_edgy_flags`              | yes/no  | no      | Allow alternate flag designs   |
+| Rule                            | Options | Default | Description                  |
+| ------------------------------- | ------- | ------- | ---------------------------- |
+| `rule_disable_formable_nations` | yes/no  | no      | Disable all formable nations |
+| `allow_edgy_flags`              | yes/no  | no      | Allow alternate flag designs |
 
 ## Organization Options (`MD_ORGANISATION_RULES`)
 

@@ -4,22 +4,12 @@ import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
-import remarkDirective from "remark-directive";
-import rehypeExternalLinks from "rehype-external-links";
-import { remarkCountryDirectives } from "./src/shared/lib/markdown/remark-country-directives";
-import { remarkRootRelativeToBase } from "./src/shared/lib/markdown/remark-root-relative";
-import { rehypeTailwindContent } from "./src/shared/lib/markdown/rehype-tailwind-content";
-import { rehypePreWrapper } from "./src/shared/lib/markdown/rehype-pre-wrapper";
-import { rehypeImageDimensions } from "./src/shared/lib/markdown/rehype-image-dimensions";
-import { rehypeTableScope } from "./src/shared/lib/markdown/rehype-table-scope";
-import { rehypeTableWrapper } from "./src/shared/lib/markdown/rehype-table-wrapper";
+import { markdownProcessor } from "./src/shared/lib/markdown/markdown-processor";
 import { hoiscriptLanguage } from "./src/shared/lib/markdown/shiki-hoiscript";
 import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
 import { copySrcImagesToDist } from "./src/integrations/copy-src-images-to-dist";
 import { getSitemapExcludedUrls } from "./src/integrations/sitemap-excluded-paths";
 import { viteServeSrcImages } from "./src/integrations/vite-serve-src-images";
-import { markdownSanitizeSchema } from "./src/shared/lib/markdown/markdown-sanitize-schema";
-import rehypeSanitize from "rehype-sanitize";
 
 const docsPackageRoot = fileURLToPath(new URL(".", import.meta.url));
 const sitemapExcludedUrls = getSitemapExcludedUrls();
@@ -59,22 +49,6 @@ export default defineConfig({
     shikiConfig: {
       langs: [hoiscriptLanguage],
     },
-    remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, SITE_BASE_PATH]],
-    rehypePlugins: [
-      rehypeImageDimensions,
-      [
-        rehypeExternalLinks,
-        {
-          target: "_blank",
-          rel: ["noopener", "noreferrer"],
-          content: { type: "text", value: " (opens in new tab)" },
-        },
-      ],
-      rehypeTableScope,
-      rehypeTableWrapper,
-      rehypePreWrapper,
-      rehypeTailwindContent,
-      [rehypeSanitize, markdownSanitizeSchema],
-    ],
+    processor: markdownProcessor,
   },
 });
