@@ -7,7 +7,7 @@ This guide covers all game rules available in Millennium Dawn for customizing yo
 
 ---
 
-# Game Rule Groups
+## Game Rule Groups
 
 ## AI Options (`MD_AI_RULES`)
 
@@ -146,7 +146,7 @@ Chaos mode options for randomized gameplay.
 
 ---
 
-# Vanilla Rules
+## Vanilla Rules
 
 Millennium Dawn inherits many vanilla HOI4 game rules:
 

@@ -1,7 +1,7 @@
 ---
 import faviconPng from "@/assets/images/favicon.png";
 import type { SeoMeta } from "@/shared/lib/seo";
-import { buildContentSecurityPolicy } from "@/shared/lib/seo";
+import { buildContentSecurityPolicy, serializeJsonLd } from "@/shared/lib/seo";
 import { buildThemeBootstrapScript } from "@/shared/lib/theme";
 import { toAbsolute, withBase } from "@/shared/lib/routing/urls";
 import { SITE_DESCRIPTION, SITE_LANGUAGE, SITE_ORGANIZATION_NAME, SITE_TITLE } from "@/shared/config/site";
@@ -22,7 +22,7 @@ const ogImageUrl = seo.image
     : toAbsolute(seo.image.path)
   : undefined;
 
-const websiteJsonLd = JSON.stringify({
+const websiteJsonLd = serializeJsonLd({
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: SITE_TITLE,
@@ -30,7 +30,7 @@ const websiteJsonLd = JSON.stringify({
   inLanguage: SITE_LANGUAGE,
 });
 
-const organizationJsonLd = JSON.stringify({
+const organizationJsonLd = serializeJsonLd({
   "@context": "https://schema.org",
   "@type": "Organization",
   name: SITE_ORGANIZATION_NAME,
@@ -86,7 +86,7 @@ const extraJsonLd = seo.extraJsonLd ?? [];
       <script type="application/ld+json" set:html={websiteJsonLd} is:inline />
       <script type="application/ld+json" set:html={organizationJsonLd} is:inline />
       {extraJsonLd.map((jsonLd) => (
-        <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline />
+        <script type="application/ld+json" set:html={serializeJsonLd(jsonLd)} is:inline />
       ))}
     </>
   )

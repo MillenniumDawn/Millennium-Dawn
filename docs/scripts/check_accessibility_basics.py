@@ -18,6 +18,11 @@ class A11yParser(HTMLParser):
         self.heading_count = 0
         self.html_lang_seen = False
         self.images_missing_alt: List[int] = []
+        self.misleading_new_tab_links: List[int] = []
+        self._anchor_text = ""
+        self._anchor_target: str | None = None
+        self._anchor_line = 0
+        self._in_anchor = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attr_map = {k: v for k, v in attrs}
@@ -35,6 +40,25 @@ class A11yParser(HTMLParser):
 
         if tag == "img" and "alt" not in attr_map:
             self.images_missing_alt.append(self.getpos()[0])
+
+        if tag == "a":
+            self._in_anchor = True
+            self._anchor_text = ""
+            self._anchor_target = (attr_map.get("target") or "").strip() or None
+            self._anchor_line = self.getpos()[0]
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "a" and self._in_anchor:
+            if "(opens in new tab)" in self._anchor_text and self._anchor_target != "_blank":
+                self.misleading_new_tab_links.append(self._anchor_line)
+            self._in_anchor = False
+            self._anchor_text = ""
+            self._anchor_target = None
+            self._anchor_line = 0
+
+    def handle_data(self, data: str) -> None:
+        if self._in_anchor:
+            self._anchor_text += data
 
 
 def iter_html_files(site_dir: Path) -> Iterable[Path]:
@@ -57,6 +81,11 @@ def check_file(path: Path) -> list[str]:
     if parser.images_missing_alt:
         lines = ", ".join(str(line) for line in parser.images_missing_alt[:10])
         issues.append(f"<img> without alt attribute at line(s): {lines}")
+    if parser.misleading_new_tab_links:
+        lines = ", ".join(str(line) for line in parser.misleading_new_tab_links[:10])
+        issues.append(
+            f"<a> labeled \"(opens in new tab)\" without target=\"_blank\" at line(s): {lines}"
+        )
 
     return issues
 

@@ -8,6 +8,7 @@ function sha256Base64(value: string): string {
 export function buildContentSecurityPolicy(): string {
   const themeScriptHash = sha256Base64(buildThemeBootstrapScript());
 
+  // frame-ancestors is ignored when CSP is delivered via <meta> (GitHub Pages cannot set response headers).
   return [
     "default-src 'self'",
     `script-src 'self' 'sha256-${themeScriptHash}'`,
@@ -17,7 +18,6 @@ export function buildContentSecurityPolicy(): string {
     "connect-src 'self'",
     "base-uri 'self'",
     "form-action 'none'",
-    "frame-ancestors 'none'",
     "object-src 'none'",
   ].join("; ");
 }

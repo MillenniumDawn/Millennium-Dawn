@@ -8,7 +8,7 @@
 
 ### Bun version
 
-The supported Bun release for this package is pinned in `package.json` as `packageManager` (for example `bun@1.3.11`). Treat that value as the canonical toolchain version: CI and other contributors use it, and Bun’s resolver and lockfile behavior can differ between releases, so drifting too far can cause “works on my machine” install or script failures. **Upgrade Bun on your machine from time to time** (security fixes and compatibility with newer tooling), and when this repo bumps the `packageManager` entry or refreshes `bun.lock`, align your local Bun to that version before working on docs.
+The supported Bun release for this package is pinned in `package.json` as `packageManager` (for example `bun@1.3.14`). Treat that value as the canonical toolchain version: CI and other contributors use it, and Bun’s resolver and lockfile behavior can differ between releases, so drifting too far can cause “works on my machine” install or script failures. **Upgrade Bun on your machine from time to time** (security fixes and compatibility with newer tooling), and when this repo bumps the `packageManager` entry or refreshes `bun.lock`, align your local Bun to that version before working on docs.
 
 ## Quick Start
 
@@ -37,6 +37,23 @@ Open the local site using the URL shown in the `astro dev` output.
 Add a Markdown file under `src/content/pages/` with frontmatter. Set `permalink` to the public URL (root-relative, trailing slash), for example `/mod-overview/`. The build creates the route automatically unless the page already has a dedicated route file (`faq`, `getting-started`, and `countries` are special cases).
 
 If you omit `permalink`, the URL defaults to `/<filename>/` (for example `mod-overview.md` → `/mod-overview/`).
+
+## Page headings (H1)
+
+Each published page must have **exactly one** `<h1>`. The layout supplies it for most collections — **do not** repeat the page title as `# Title` in the Markdown body.
+
+| Collection / route | Who renders the H1 | Body rule |
+| --- | --- | --- |
+| `src/content/pages/*.md` (catch-all) | Layout (`showPageTitle`) | Start with intro text or `##` sections — **no** `#` title line |
+| `getting-started`, `faq` | Layout (`showPageTitle`) | Same as pages above |
+| `src/content/tutorials/*.md` | Article hero | **No** `#` matching `title` in frontmatter; use `##` for sections |
+| `src/content/resources/*.md` | Article hero | Same as tutorials |
+| `src/content/changelogSections/*.md` | Article hero | Same as tutorials |
+| `src/content/devDiaries/*.{md,mdx}` | Article hero | Same as tutorials |
+| `src/content/countries/*.md` | Country layout | **No** `#` country name; use `##` for sections |
+| `src/content/misc/*.md` | Article hero | Same as tutorials |
+
+`bun run check:content-html` fails if a hero-collection file opens with `#` text that matches its frontmatter `title` (case-insensitive).
 
 ## Important Rules
 

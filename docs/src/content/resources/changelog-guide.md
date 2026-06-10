@@ -3,8 +3,6 @@ title: Changelog Guide
 description: Standards for writing changelog entries in Millennium Dawn.
 ---
 
-# Changelog Guide
-
 How to write changelog entries for Millennium Dawn. All contributors and agents must follow these standards.
 
 ## Purpose

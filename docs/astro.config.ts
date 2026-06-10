@@ -10,7 +10,6 @@ import { remarkCountryDirectives } from "./src/shared/lib/markdown/remark-countr
 import { remarkRootRelativeToBase } from "./src/shared/lib/markdown/remark-root-relative";
 import { rehypeTailwindContent } from "./src/shared/lib/markdown/rehype-tailwind-content";
 import { rehypePreWrapper } from "./src/shared/lib/markdown/rehype-pre-wrapper";
-import { rehypeImgAlt } from "./src/shared/lib/markdown/rehype-img-alt";
 import { rehypeImageDimensions } from "./src/shared/lib/markdown/rehype-image-dimensions";
 import { rehypeTableScope } from "./src/shared/lib/markdown/rehype-table-scope";
 import { rehypeTableWrapper } from "./src/shared/lib/markdown/rehype-table-wrapper";
@@ -27,6 +26,7 @@ const markdownSanitizeSchema = {
   ...defaultSchema,
   attributes: {
     ...defaultSchema.attributes,
+    a: [...(defaultSchema.attributes?.a ?? []), "target", "rel"],
     "*": [...(defaultSchema.attributes?.["*"] ?? []), "class", "className"],
   },
 };
@@ -68,7 +68,6 @@ export default defineConfig({
     },
     remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, SITE_BASE_PATH]],
     rehypePlugins: [
-      rehypeImgAlt,
       rehypeImageDimensions,
       [
         rehypeExternalLinks,

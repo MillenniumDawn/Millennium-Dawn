@@ -3,8 +3,6 @@ title: Add Landmarks
 description: How to add a new landmark building (3D model + spawn point + state placement) to Millennium Dawn
 ---
 
-# Add Landmarks
-
 Landmarks are special buildings that render a 3D model on the world map (Big Ben, Mt. Fuji, Statue of Liberty, etc.). Adding a new landmark requires **five files** to agree on which state, which province, and which world-space coordinates the model uses. If any one is wrong, you typically see the landmark icon appear in the state UI while the 3D model fails to render silently.
 
 ## Architecture

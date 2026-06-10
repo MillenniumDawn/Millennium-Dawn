@@ -1,3 +1,4 @@
+import { buildPageTokens } from "@/features/searchable-index/lib/page-tokens";
 import {
   SEARCH_INDEX_PAGINATION_ELLIPSIS_CLASS,
   SEARCH_INDEX_PAGINATION_PAGE_BUTTON_CLASS,
@@ -47,27 +48,6 @@ function getMatches(cards: HTMLElement[], query: string): HTMLElement[] {
   });
 }
 
-type PageToken = number | "ellipsis";
-
-function buildPageTokens(pageCount: number, currentPage: number): PageToken[] {
-  if (pageCount <= 5) return Array.from({ length: pageCount }, (_, index) => index + 1);
-
-  const pages = new Set<number>([1, pageCount, currentPage - 1, currentPage, currentPage + 1]);
-  const sorted = Array.from(pages)
-    .filter((page) => page >= 1 && page <= pageCount)
-    .sort((left, right) => left - right);
-
-  const tokens: PageToken[] = [];
-
-  sorted.forEach((page, index) => {
-    const previous = sorted[index - 1];
-    if (previous && page - previous > 1) tokens.push("ellipsis");
-    tokens.push(page);
-  });
-
-  return tokens;
-}
-
 function renderPageButtons(container: HTMLElement, pageCount: number, currentPage: number): void {
   const fragment = document.createDocumentFragment();
 
@@ -112,21 +92,10 @@ function updateCardVisibility(cards: HTMLElement[], matches: HTMLElement[], star
   });
 }
 
-function measureTallestPageHeight(
-  list: HTMLElement,
-  cards: HTMLElement[],
-  pageSize: number,
-): number {
-  const allMatches = cards.slice();
-  let tallestPageHeight = 0;
-
-  for (let start = 0; start < allMatches.length; start += pageSize) {
-    const end = start + pageSize;
-    updateCardVisibility(cards, allMatches, start, end);
-    tallestPageHeight = Math.max(tallestPageHeight, Math.ceil(list.getBoundingClientRect().height));
-  }
-
-  return tallestPageHeight;
+function measureListPageHeight(list: HTMLElement, cards: HTMLElement[], pageSize: number): number {
+  if (!cards.length) return 0;
+  updateCardVisibility(cards, cards, 0, pageSize);
+  return Math.ceil(list.getBoundingClientRect().height);
 }
 
 function lockListHeight(
@@ -149,7 +118,7 @@ function lockListHeight(
 }
 
 interface CardIndexRenderContext {
-  cachedTallestPageHeight: number;
+  cachedListPageHeight: number;
 }
 
 function renderCardIndex(dom: CardIndexDomRefs, state: CardIndexState, context: CardIndexRenderContext): void {
@@ -160,7 +129,7 @@ function renderCardIndex(dom: CardIndexDomRefs, state: CardIndexState, context: 
 
   const start = (state.currentPage - 1) * dom.pageSize;
   const end = start + dom.pageSize;
-  lockListHeight(dom.list, dom.cards, matches, start, end, context.cachedTallestPageHeight);
+  lockListHeight(dom.list, dom.cards, matches, start, end, context.cachedListPageHeight);
 
   if (dom.emptyState) dom.emptyState.hidden = matches.length > 0;
   if (dom.pagination) dom.pagination.hidden = matches.length <= dom.pageSize;
@@ -204,17 +173,17 @@ function initCardIndexRoot(root: HTMLElement): Cleanup {
     activeQuery: "",
   };
   const context: CardIndexRenderContext = {
-    cachedTallestPageHeight: 0,
+    cachedListPageHeight: 0,
   };
   let resizeFrame = 0;
 
-  const refreshTallestPageHeight = () => {
+  const refreshListPageHeight = () => {
     if (!dom.list) {
-      context.cachedTallestPageHeight = 0;
+      context.cachedListPageHeight = 0;
       return;
     }
 
-    context.cachedTallestPageHeight = measureTallestPageHeight(dom.list, dom.cards, dom.pageSize);
+    context.cachedListPageHeight = measureListPageHeight(dom.list, dom.cards, dom.pageSize);
   };
 
   const onFilterInput = () => {
@@ -253,7 +222,7 @@ function initCardIndexRoot(root: HTMLElement): Cleanup {
 
     resizeFrame = requestAnimationFrame(() => {
       resizeFrame = 0;
-      refreshTallestPageHeight();
+      refreshListPageHeight();
       renderCardIndex(dom, state, context);
     });
   };
@@ -272,7 +241,7 @@ function initCardIndexRoot(root: HTMLElement): Cleanup {
   }
   window.addEventListener("resize", onWindowResize);
 
-  refreshTallestPageHeight();
+  refreshListPageHeight();
   renderCardIndex(dom, state, context);
   root.dataset.cardIndexReady = "true";
 

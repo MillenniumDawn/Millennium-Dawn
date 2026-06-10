@@ -28,9 +28,13 @@ export interface SeoMeta {
 
 const DEFAULT_DESCRIPTION = SITE_DESCRIPTION;
 
-function ogImagePath(canonicalPath: string): string {
+export function ogImagePath(canonicalPath: string): string {
   const slug = canonicalPath.replace(/^\/+|\/+$/g, "");
   return slug ? `/open-graph/${slug}.png` : "/open-graph/index.png";
+}
+
+export function ogImageAbsoluteUrl(canonicalPath: string): string {
+  return toAbsolute(ogImagePath(canonicalPath));
 }
 
 function defaultOgImage(canonicalPath: string, title: string): SeoImage {
