@@ -112,13 +112,30 @@ function updateCardVisibility(cards: HTMLElement[], matches: HTMLElement[], star
   });
 }
 
+function measureTallestPageHeight(
+  list: HTMLElement,
+  cards: HTMLElement[],
+  pageSize: number,
+): number {
+  const allMatches = cards.slice();
+  let tallestPageHeight = 0;
+
+  for (let start = 0; start < allMatches.length; start += pageSize) {
+    const end = start + pageSize;
+    updateCardVisibility(cards, allMatches, start, end);
+    tallestPageHeight = Math.max(tallestPageHeight, Math.ceil(list.getBoundingClientRect().height));
+  }
+
+  return tallestPageHeight;
+}
+
 function lockListHeight(
   list: HTMLElement | null,
   cards: HTMLElement[],
   matches: HTMLElement[],
-  pageSize: number,
   currentStart: number,
   currentEnd: number,
+  cachedTallestPageHeight: number,
 ): void {
   if (!list) return;
 
@@ -127,19 +144,15 @@ function lockListHeight(
     return;
   }
 
-  let tallestPageHeight = 0;
-
-  for (let start = 0; start < matches.length; start += pageSize) {
-    const end = start + pageSize;
-    updateCardVisibility(cards, matches, start, end);
-    tallestPageHeight = Math.max(tallestPageHeight, Math.ceil(list.getBoundingClientRect().height));
-  }
-
   updateCardVisibility(cards, matches, currentStart, currentEnd);
-  list.style.minHeight = tallestPageHeight > 0 ? `${tallestPageHeight}px` : "0px";
+  list.style.minHeight = cachedTallestPageHeight > 0 ? `${cachedTallestPageHeight}px` : "0px";
 }
 
-function renderCardIndex(dom: CardIndexDomRefs, state: CardIndexState): void {
+interface CardIndexRenderContext {
+  cachedTallestPageHeight: number;
+}
+
+function renderCardIndex(dom: CardIndexDomRefs, state: CardIndexState, context: CardIndexRenderContext): void {
   const matches = getMatches(dom.cards, state.activeQuery);
   const totalPages = Math.max(1, Math.ceil(matches.length / dom.pageSize));
   if (state.currentPage > totalPages) state.currentPage = totalPages;
@@ -147,8 +160,7 @@ function renderCardIndex(dom: CardIndexDomRefs, state: CardIndexState): void {
 
   const start = (state.currentPage - 1) * dom.pageSize;
   const end = start + dom.pageSize;
-  updateCardVisibility(dom.cards, matches, start, end);
-  lockListHeight(dom.list, dom.cards, matches, dom.pageSize, start, end);
+  lockListHeight(dom.list, dom.cards, matches, start, end, context.cachedTallestPageHeight);
 
   if (dom.emptyState) dom.emptyState.hidden = matches.length > 0;
   if (dom.pagination) dom.pagination.hidden = matches.length <= dom.pageSize;
@@ -191,23 +203,35 @@ function initCardIndexRoot(root: HTMLElement): Cleanup {
     currentPage: 1,
     activeQuery: "",
   };
+  const context: CardIndexRenderContext = {
+    cachedTallestPageHeight: 0,
+  };
   let resizeFrame = 0;
+
+  const refreshTallestPageHeight = () => {
+    if (!dom.list) {
+      context.cachedTallestPageHeight = 0;
+      return;
+    }
+
+    context.cachedTallestPageHeight = measureTallestPageHeight(dom.list, dom.cards, dom.pageSize);
+  };
 
   const onFilterInput = () => {
     if (!dom.filterInput) return;
     state.activeQuery = (dom.filterInput.value || "").trim().toLowerCase();
     state.currentPage = 1;
-    renderCardIndex(dom, state);
+    renderCardIndex(dom, state, context);
   };
 
   const onPrevClick = () => {
     state.currentPage -= 1;
-    renderCardIndex(dom, state);
+    renderCardIndex(dom, state, context);
   };
 
   const onNextClick = () => {
     state.currentPage += 1;
-    renderCardIndex(dom, state);
+    renderCardIndex(dom, state, context);
   };
 
   const onPagesClick = (event: Event) => {
@@ -221,7 +245,7 @@ function initCardIndexRoot(root: HTMLElement): Cleanup {
     if (!Number.isFinite(nextPage)) return;
 
     state.currentPage = nextPage;
-    renderCardIndex(dom, state);
+    renderCardIndex(dom, state, context);
   };
 
   const onWindowResize = () => {
@@ -229,7 +253,8 @@ function initCardIndexRoot(root: HTMLElement): Cleanup {
 
     resizeFrame = requestAnimationFrame(() => {
       resizeFrame = 0;
-      renderCardIndex(dom, state);
+      refreshTallestPageHeight();
+      renderCardIndex(dom, state, context);
     });
   };
 
@@ -247,7 +272,8 @@ function initCardIndexRoot(root: HTMLElement): Cleanup {
   }
   window.addEventListener("resize", onWindowResize);
 
-  renderCardIndex(dom, state);
+  refreshTallestPageHeight();
+  renderCardIndex(dom, state, context);
   root.dataset.cardIndexReady = "true";
 
   return () => {

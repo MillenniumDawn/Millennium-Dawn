@@ -22,20 +22,33 @@ Open the local site using the URL shown in the `astro dev` output.
 
 ## Where to Edit Content
 
-- Regular pages: `src/content/pages/*.md`
-- Countries: `src/content/countries/*.md`
-- Changelogs: `src/content/changelogSections/*.md`
-- Tutorials: `src/content/tutorials/*.md`
-- Resources: `src/content/resources/*.md`
-- Dev diaries: `src/content/devDiaries/*.{md,mdx}` (MDX recommended so markdown images use `MarkdownImage` / `Picture`; plain `.md` compiles to HTML only)
-- Misc: `src/content/misc/*.md`
+| Content folder | Published URL pattern | Notes |
+| --- | --- | --- |
+| `src/content/pages/*.md` | `permalink` frontmatter (or `/<filename>/`) | See **Regular pages** below |
+| `src/content/countries/*.md` | `/countries/<slug>/` | Use `slug` frontmatter when the filename differs |
+| `src/content/changelogSections/*.md` | `/changelogs/<filename>/` | Listed on `/changelogs/` unless `hidden: true` |
+| `src/content/tutorials/*.md` | `/player-tutorials/<filename>/` | Index page is `/tutorials/` |
+| `src/content/resources/*.md` | `/dev-resources/<filename>/` | Index page is `/resources/` |
+| `src/content/devDiaries/*.{md,mdx}` | `permalink` or `/dev-diaries/<filename>/` | Prefer `.mdx` for optimized images |
+| `src/content/misc/*.md` | `/misc/<filename>/` | |
+
+### Regular pages
+
+Add a Markdown file under `src/content/pages/` with frontmatter. Set `permalink` to the public URL (root-relative, trailing slash), for example `/mod-overview/`. The build creates the route automatically unless the page already has a dedicated route file (`faq`, `getting-started`, and `countries` are special cases).
+
+If you omit `permalink`, the URL defaults to `/<filename>/` (for example `mod-overview.md` → `/mod-overview/`).
 
 ## Important Rules
 
 - If you change any Markdown under `src/content/**/*.md`, run **`bun run lint:md`** (and preferably **`bun run lint:remark`**) **before you commit**. The same checks run in CI; fixing MD/style issues locally avoids broken builds and noisy follow-up commits.
 - Use only Markdown + frontmatter.
 - Do not use Liquid (`{% ... %}` / `{{ ... }}`).
-- Use root-relative paths for internal links: `/tutorials/`, `/countries/germany/`.
+- Use root-relative paths for internal links. Folder names are **not** always the URL:
+  - Tutorial index: `/tutorials/`
+  - Individual tutorial: `/player-tutorials/<slug>/`
+  - Resource index: `/resources/`
+  - Individual resource: `/dev-resources/<slug>/`
+  - Country page: `/countries/germany/`
 - Do not manually add the `/Millennium-Dawn` prefix.
 
 ## Images and static files
@@ -58,8 +71,8 @@ title: "Page title"
 # Recommended: description for SEO and social cards
 description: "Short page description"
 
-# Optional: canonical URL
-permalink: "/player-tutorials/new-guide/"
+# Required for standalone pages: public URL (trailing slash)
+permalink: "/mod-overview/"
 
 # Optional: table of contents mode
 # Allowed values: "auto" or "off"
@@ -90,6 +103,17 @@ infobox:
 ---
 ```
 
+### Infobox stat labels
+
+In **Military & Industry** and **Economy** sections, stat `label` values must match exactly or the stat is dropped at build time:
+
+| Section kind | Accepted labels |
+| --- | --- |
+| Military & Industry | `Tag`, `Divisions`, `Total Factories`, `Military Ind.`, `Civilian Ind.`, `Naval Dockyards` |
+| Economy | `Treasury`, `Debt`, `Investments` |
+
+Overview sections accept any label. A mistyped label in a structured section fails `bun run check`.
+
 Country content is written in the Markdown body:
 
 ```md
@@ -102,11 +126,48 @@ Regular markdown text.
 | SPD   | Social Democracy | 28%        |
 ```
 
+## Custom content blocks
+
+### National spirits (`:::spirits`)
+
+Country pages can render a styled spirits list from a container directive. Body must be YAML listing items with `name`, `type`, and optional `desc`:
+
+```md
+:::spirits
+- name: EU Member
+  type: positive
+  desc: Access to EU mechanics
+- name: Aging Population
+  type: negative
+:::
+
+```
+
+`type` must be one of `positive`, `negative`, `mixed`, or `neutral`.
+
+### Dev diary image galleries
+
+Wrap consecutive images in a gallery container:
+
+```md
+<div class="dev-diary-gallery">
+
+![First screenshot](/assets/images/dev-diaries/054/example-a.png)
+![Second screenshot](/assets/images/dev-diaries/054/example-b.png)
+
+</div>
+```
+
+### `.md` vs `.mdx` for images
+
+Use `.mdx` under `src/content/devDiaries/` when the page has images. MDX routes markdown images through the responsive image pipeline (`MarkdownImage` / `Picture`). Plain `.md` bodies compile to basic `<img>` tags without AVIF/WebP `srcset`.
+
 ## Checks Before PR
 
 ```bash
 bun run lint:md
 bun run lint:remark
+bun run check:content-html
 bun run check
 bun run build
 bun run check:links

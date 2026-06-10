@@ -17,9 +17,19 @@ import { rehypeTableWrapper } from "./src/shared/lib/markdown/rehype-table-wrapp
 import { hoiscriptLanguage } from "./src/shared/lib/markdown/shiki-hoiscript";
 import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
 import { copySrcImagesToDist } from "./src/integrations/copy-src-images-to-dist";
+import { getSitemapExcludedUrls } from "./src/integrations/sitemap-excluded-paths";
 import { viteServeSrcImages } from "./src/integrations/vite-serve-src-images";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 
 const docsPackageRoot = fileURLToPath(new URL(".", import.meta.url));
+const sitemapExcludedUrls = getSitemapExcludedUrls();
+const markdownSanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    "*": [...(defaultSchema.attributes?.["*"] ?? []), "class", "className"],
+  },
+};
 
 // Astro and @tailwindcss/vite currently resolve different Vite type instances.
 const tailwindPlugins = tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
@@ -33,7 +43,13 @@ export default defineConfig({
   base: SITE_BASE_PATH,
   output: "static",
   trailingSlash: "always",
-  integrations: [mdx(), sitemap(), copySrcImagesToDist()],
+  integrations: [
+    mdx(),
+    sitemap({
+      filter: (page) => !sitemapExcludedUrls.has(page),
+    }),
+    copySrcImagesToDist(),
+  ],
   vite: {
     resolve: {
       alias: {
@@ -66,6 +82,7 @@ export default defineConfig({
       rehypeTableWrapper,
       rehypePreWrapper,
       rehypeTailwindContent,
+      [rehypeSanitize, markdownSanitizeSchema],
     ],
   },
 });

@@ -8,6 +8,12 @@ export interface SeoImage {
   alt?: string;
 }
 
+export interface ArticleSeoMeta {
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
+}
+
 export interface SeoMeta {
   title: string;
   description: string;
@@ -15,6 +21,9 @@ export interface SeoMeta {
   robots?: string;
   image?: SeoImage;
   seoEnabled: boolean;
+  ogType?: "website" | "article";
+  article?: ArticleSeoMeta;
+  extraJsonLd?: Record<string, unknown>[];
 }
 
 const DEFAULT_DESCRIPTION = SITE_DESCRIPTION;
@@ -40,6 +49,9 @@ export function buildSeoMeta(input: {
   robots?: string;
   seo?: boolean;
   image?: SeoImage;
+  ogType?: "website" | "article";
+  article?: ArticleSeoMeta;
+  extraJsonLd?: Record<string, unknown>[];
 }): SeoMeta {
   const canonicalPath = input.canonicalPath ?? "/";
   return {
@@ -48,6 +60,9 @@ export function buildSeoMeta(input: {
     canonical: toAbsolute(canonicalPath),
     robots: input.robots,
     seoEnabled: input.seo !== false,
+    ogType: input.ogType,
+    article: input.article,
+    extraJsonLd: input.extraJsonLd,
     image: input.image
       ? { ...input.image, path: withBase(input.image.path) }
       : {
