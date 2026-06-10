@@ -52,7 +52,7 @@ If a change does not fit an existing category, use the closest match. Do not inv
 **Rules:**
 
 - **1 space** before the category name.
-- **2 spaces + `- `** before each entry.
+- Prefix each entry with **two spaces**, a **hyphen**, and one **space**.
 - **`[TAG]` prefix** for country-specific changes; no prefix for global changes.
 - **Past tense** — describe what changed, not what will change.
 - **Specific** — name the exact focus ID, event ID, decision ID, or mechanic.
@@ -104,5 +104,5 @@ Before adding an entry, verify:
 
 ## Related Documentation
 
-- [Code Stylization Guide](/resources/code-stylization-guide/) — coding standards
-- [Event Reference](/resources/new-general-guidelines/) — event conventions
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/) — coding standards
+- [Event Reference](/dev-resources/new-general-guidelines/) — event conventions
