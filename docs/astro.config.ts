@@ -18,18 +18,11 @@ import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
 import { copySrcImagesToDist } from "./src/integrations/copy-src-images-to-dist";
 import { getSitemapExcludedUrls } from "./src/integrations/sitemap-excluded-paths";
 import { viteServeSrcImages } from "./src/integrations/vite-serve-src-images";
-import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import { markdownSanitizeSchema } from "./src/shared/lib/markdown/markdown-sanitize-schema";
+import rehypeSanitize from "rehype-sanitize";
 
 const docsPackageRoot = fileURLToPath(new URL(".", import.meta.url));
 const sitemapExcludedUrls = getSitemapExcludedUrls();
-const markdownSanitizeSchema = {
-  ...defaultSchema,
-  attributes: {
-    ...defaultSchema.attributes,
-    a: [...(defaultSchema.attributes?.a ?? []), "target", "rel"],
-    "*": [...(defaultSchema.attributes?.["*"] ?? []), "class", "className"],
-  },
-};
 
 // Astro and @tailwindcss/vite currently resolve different Vite type instances.
 const tailwindPlugins = tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
