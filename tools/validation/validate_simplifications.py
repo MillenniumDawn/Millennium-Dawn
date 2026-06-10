@@ -351,6 +351,7 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def run_validations(self):
+        self._log_section("Scanning for simplification opportunities...")
         # parse_files_cached reads case-preserving + comment-stripped and
         # content-caches each file's findings, so a warm run only re-scans
         # changed files.
@@ -359,6 +360,7 @@ class Validator(BaseValidator):
         )
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
 
+        self._log_section("Collecting and reporting results...")
         results = []
         for path, findings in parsed.items():
             rel = os.path.relpath(path, self.mod_path)
