@@ -185,6 +185,7 @@ Use `.mdx` under `src/content/devDiaries/` when the page has images. MDX routes 
 bun run lint:md
 bun run lint:remark
 bun run check:content-html
+bun run check:flags
 bun run check
 bun run build
 bun run check:links

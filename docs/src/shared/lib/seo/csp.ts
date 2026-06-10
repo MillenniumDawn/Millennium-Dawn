@@ -13,7 +13,7 @@ export function buildContentSecurityPolicy(): string {
     "default-src 'self'",
     `script-src 'self' 'sha256-${themeScriptHash}'`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https:",
+    "img-src 'self' data:",
     "font-src 'self'",
     "connect-src 'self'",
     "base-uri 'self'",
