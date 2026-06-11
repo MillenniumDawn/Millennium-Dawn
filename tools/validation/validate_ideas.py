@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate idea definitions and usage in Millennium Dawn."""
+import argparse
 import os
 import re
 import sys
@@ -973,7 +974,8 @@ class Validator(BaseValidator):
                 "common/**/*.txt",
                 "events/**/*.txt",
                 "history/**/*.txt",
-            ]
+            ],
+            ignore_staged=True,
         )
         self.log(
             f"  Scanning {len(scan_files)} files for references to "
@@ -1076,16 +1078,10 @@ def _add_extra_args(parser):
     )
     parser.add_argument(
         "--unused-ideas",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=True,
         dest="unused_ideas",
-        help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced",
-    )
-    parser.add_argument(
-        "--no-unused-ideas",
-        action="store_false",
-        dest="unused_ideas",
-        help="Disable the unused idea check (enabled by default)",
+        help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced (enabled by default; use --no-unused-ideas to disable)",
     )
     parser.add_argument(
         "--suggest-consolidation",
