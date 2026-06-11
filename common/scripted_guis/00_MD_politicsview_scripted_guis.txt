@@ -36,47 +36,34 @@ scripted_gui = {
 			MD_countrypoliticsview_expanded_open_click = {
 				if = {
 					limit = { NOT = { has_country_flag = MD_politicsview_expanded_open } }
+					
 					set_country_flag = MD_politicsview_expanded_open
 
 					set_variable = { sorting_button_outlook_status = 1 }
 					set_variable = { sorting_button_popularity_status = 2 }
 					set_variable = { sorting_button_banned_status = 2 }
 
+					generete_politics_pie_chart = yes
+
 					clear_array = parties_list_sorted
+
+					resize_array = {
+						array = parties_list_sorted
+						size = pos_array^num
+					}
 
 					for_each_loop = {
 						array = pos_array
 
-						set_temp_variable = { added = 0 }
-
-						for_each_loop = {
+						remove_from_array = {
 							array = parties_list_sorted
-							index = sorted_i
-							value = sorted_v
-							break = added
-
-							if = {
-								limit = {
-									check_variable = { v < sorted_v }
-								}
-
-								add_to_array = {
-									array = parties_list_sorted
-									value = v
-									index = sorted_i
-								}
-
-								set_temp_variable = { added = 1 }
-							}
+							index = v
 						}
 
-						if = {
-							limit = { check_variable = { added = 0 } }
-
-							add_to_array = {
-								array = parties_list_sorted
-								value = v
-							}
+						add_to_array = {
+							array = parties_list_sorted
+							index = v
+							value = v
 						}
 					}
 				}
@@ -98,6 +85,113 @@ scripted_gui = {
 		}
 
 		triggers = {
+			# propaganda
+			prowestern_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = prowestern_propaganda
+					}
+
+					set_temp_variable = { prowestern_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { prowestern_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = emerging_propaganda
+						has_country_flag = nonaligned_propaganda
+						has_country_flag = nationalist_propaganda
+						has_country_flag = fascism_propaganda
+					}	
+				}
+			}
+			emerging_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = emerging_propaganda
+					}
+
+					set_temp_variable = { emerging_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { emerging_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = prowestern_propaganda
+						has_country_flag = nonaligned_propaganda
+						has_country_flag = nationalist_propaganda
+						has_country_flag = fascism_propaganda
+					}	
+				}
+			}
+			nonaligned_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = nonaligned_propaganda
+					}
+
+					set_temp_variable = { nonaligned_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { nonaligned_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = emerging_propaganda
+						has_country_flag = prowestern_propaganda
+						has_country_flag = nationalist_propaganda
+						has_country_flag = fascism_propaganda
+					}	
+				}
+			}
+			nationalist_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = nationalist_propaganda
+					}
+
+					set_temp_variable = { nationalist_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { nationalist_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = emerging_propaganda
+						has_country_flag = nonaligned_propaganda
+						has_country_flag = prowestern_propaganda
+						has_country_flag = fascism_propaganda
+					}	
+				}
+			}
+			fascism_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = fascism_propaganda
+					}
+
+					set_temp_variable = { fascism_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { fascism_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = emerging_propaganda
+						has_country_flag = nonaligned_propaganda
+						has_country_flag = nationalist_propaganda
+						has_country_flag = prowestern_propaganda
+					}	
+				}
+			}
+
 			# ideological powers
 			IP_communist_glow_visible = {
 				OR = {
@@ -287,8 +381,60 @@ scripted_gui = {
 		}
 
 		effects = {
-			close_click = {
-				clr_country_flag = MD_politicsview_expanded_open
+			# propaganda buttons
+			prowestern_propaganda_button_click = {
+				if = {
+					limit = { has_country_flag = prowestern_propaganda }
+
+					clr_country_flag = prowestern_propaganda
+				}
+				else = {
+					set_country_flag = prowestern_propaganda
+				}
+			}
+
+			emerging_propaganda_button_click = {
+				if = {
+					limit = { has_country_flag = emerging_propaganda }
+
+					clr_country_flag = emerging_propaganda
+				}
+				else = {
+					set_country_flag = emerging_propaganda
+				}
+			}
+
+			nonaligned_propaganda_button_click = {
+				if = {
+					limit = { has_country_flag = nonaligned_propaganda }
+
+					clr_country_flag = nonaligned_propaganda
+				}
+				else = {
+					set_country_flag = nonaligned_propaganda
+				}
+			}
+
+			nationalist_propaganda_button_click = {
+				if = {
+					limit = { has_country_flag = nationalist_propaganda }
+
+					clr_country_flag = nationalist_propaganda
+				}
+				else = {
+					set_country_flag = nationalist_propaganda
+				}
+			}
+
+			fascism_propaganda_button_click = {
+				if = {
+					limit = { has_country_flag = fascism_propaganda }
+
+					clr_country_flag = fascism_propaganda
+				}
+				else = {
+					set_country_flag = fascism_propaganda
+				}
 			}
 
 			hold_reelections_button_click = {
@@ -428,6 +574,11 @@ scripted_gui = {
 				add_to_temp_variable = { party_index = 1 }
 				unban_party_scripted_call = yes
 			}
+
+			# close button
+			close_click = {
+				clr_country_flag = MD_politicsview_expanded_open
+			}
 		}
 
 		dynamic_lists = {
@@ -442,6 +593,24 @@ scripted_gui = {
         }
 
 		properties = {
+			# propaganda buttons
+			prowestern_propaganda_button = {
+				frame = prowestern_propaganda_frame_temp
+			}
+			emerging_propaganda_button = {
+				frame = emerging_propaganda_frame_temp
+			}
+			nonaligned_propaganda_button = {
+				frame = nonaligned_propaganda_frame_temp
+			}
+			nationalist_propaganda_button = {
+				frame = nationalist_propaganda_frame_temp
+			}
+			fascism_propaganda_button = {
+				frame = fascism_propaganda_frame_temp
+			}
+
+			# sorting buttons
 			sorting_button_outlook = {
 				frame = sorting_button_outlook_status
 			}
