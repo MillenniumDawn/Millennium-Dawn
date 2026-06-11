@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**NOTE**: Non-English localisation files are managed via Paratranz — never modify them.
+**NOTE**: Non-English localisation files are **not** currently mirrored against English — full translation is deferred to a later translation project. Do **not** modify them, and do **not** flag non-English `.yml` files in reviews, audits, or branch checks for missing, stale, or diverging keys relative to English. They are expected to be out of sync; any absent key degrades gracefully to the English string or an empty value. Only English keys (and the script objects that reference them) are in scope for review.
 
 Millennium Dawn is a Hearts of Iron IV mod (2000-present). Key directories: `common/` (game data), `events/`, `localisation/` (English `.yml`, UTF-8 BOM), `history/`, `interface/`, `gfx/`, `tools/` (Python dev scripts).
 

@@ -7,13 +7,13 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
+					has_tech = beachhead_raiding_parties
 					ROOT = {
 						divisions_in_state = {
-							unit = L_Marine_Bat
+							unit = L_Marine_Cdo_Bat
 							size > 0
 							state = PREV
 						}
-						has_tech = marine_commandos # Marine Commandos
 					}
 					NOT = { has_state_flag = marines_commando_effect }
 					OWNER = { NOT = { tag = ROOT } }
@@ -23,12 +23,12 @@ on_actions = {
 			if = {
 				limit = {
 					ROOT = {
+						has_tech = marine_raider_groups
 						divisions_in_state = {
 							unit = L_Marine_Cdo_Bat
 							size > 0
 							state = PREV
 						}
-						has_tech = marine_commandos # Marine Commandos
 					}
 					NOT = { has_state_flag = marines_commando_effect }
 					OWNER = { NOT = { tag = ROOT } }
@@ -48,6 +48,11 @@ on_actions = {
 							size > 0
 							state = PREV
 						}
+						divisions_in_state = {
+							unit = pathfinder_company
+							size > 0
+							state = PREV
+						}
 					}
 					NOT = { has_state_flag = para_drop_effect }
 					CONTROLLER = { NOT = { tag = FROM } }
@@ -57,25 +62,18 @@ on_actions = {
 			if = {
 				limit = {
 					FROM = {
-						has_completed_subdoctrine = airborn_forces_subdoctrine
-						divisions_in_state = {
-							unit = Mech_Air_Inf_Bat
-							size > 0
-							state = PREV
-						}
-					}
-					NOT = { has_state_flag = para_drop_effect }
-				}
-				SF_PARA_combat_effect = yes
-			}
-			if = {
-				limit = {
-					FROM = {
-						has_completed_subdoctrine = airborn_forces_subdoctrine
-						divisions_in_state = {
-							unit = Arm_Air_Inf_Bat
-							size > 0
-							state = PREV
+						has_tech = coordinated_combat_jumps
+						OR = {
+							divisions_in_state = {
+								unit = L_Air_Inf_Bat
+								size > 0
+								state = PREV
+							}
+							divisions_in_state = {
+								unit = Mot_Air_Inf_Bat
+								size > 0
+								state = PREV
+							}
 						}
 					}
 					NOT = { has_state_flag = para_drop_effect }
@@ -1766,6 +1764,34 @@ on_actions = {
 				setup_missile_configuration_effect = yes
 
 				mio_catalog_rebuild_visible_yes = yes
+
+				increment_global_reserve_currency = yes
+
+				# Needed for inflation initialization
+				set_variable = { last_quarter_gdp_total = gdp_total }
+				set_variable = { last_quarter_gdpc_total = gdp_per_capita }
+
+				if = { limit = { is_ai = no }
+					add_to_array = { global.player_nations = THIS.id }
+					graph_initial_setup = yes
+
+					set_variable = { MD_tradeview_tab_trade_state = 1 }
+					set_variable = { MD_tradeview_tab_economy_state = 2 }
+
+					set_country_flag = construction_speeds_visible_in_menu
+
+					country_event = systems.1
+
+					if = {
+						limit = {
+							has_game_rule = {
+								rule = rule_internal_faction_cost_reduction
+								option = yes
+							}
+						}
+						add_ideas = GAME_RULE_reduce_internal_factions_cost
+					}
+				}
 			}
 
 			ABK = {
@@ -1785,56 +1811,10 @@ on_actions = {
 				calculate_united_nations_base_budget = yes
 
 				every_country = {
-					# Needed for inflation initialization
-					set_variable = { last_quarter_gdp_total = gdp_total }
-					set_variable = { last_quarter_gdpc_total = gdp_per_capita }
-
 					calculate_starting_mio_size = yes
-
-					# Calculate Reserve Adoption Size
-					if = { limit = { has_idea = us_dollar }
-						add_to_variable = { global.usd_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = euro }
-						add_to_variable = { global.eur_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = chinese_yuan }
-						add_to_variable = { global.cny_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = russia_rouble }
-						add_to_variable = { global.rub_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = japanese_yen }
-						add_to_variable = { global.jpy_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = british_pound }
-						add_to_variable = { global.gbp_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = swiss_frank }
-						add_to_variable = { global.chf_reserve_adoption_count = 1 }
-					}
 
 					if = { limit = { is_ai = yes }
 						yearly_investment_targets_routine = yes
-					}
-					else = {
-						add_to_array = { global.player_nations = THIS.id }
-						graph_initial_setup = yes
-
-						set_variable = { MD_tradeview_tab_trade_state = 1 }
-						set_variable = { MD_tradeview_tab_economy_state = 2 }
-
-						country_event = systems.1
-
-						if = {
-							limit = {
-								has_game_rule = {
-									rule = rule_internal_faction_cost_reduction
-									option = yes
-								}
-							}
-							add_ideas = GAME_RULE_reduce_internal_factions_cost
-						}
 					}
 				}
 			}
