@@ -9,8 +9,8 @@ one side only. These tests fail when that happens, so the gap surfaces at PR
 time instead of as a "passed locally, failed CI" surprise.
 
 Scope is `tools/validation/validate_*.py` only. The linting scripts in
-`tools/linting/` (coding_standards, check_basic_style*, check_common_mistakes)
-are few, stable, and not matrix-driven, so they are out of scope here.
+`tools/linting/` (check_common_mistakes, fix_styling) are few, stable, and not
+matrix-driven, so they are out of scope here.
 
 Intentional exceptions live in the EXEMPT / ALLOWED sets below, each with a
 reason. The guard also checks those sets stay current: an exemption that no
@@ -31,6 +31,12 @@ CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 
 # Validators intentionally absent from the CI matrices. Each needs a reason.
 CI_EXEMPT = {
+    # Runs in the standalone styling-check job, diff-scoped to the changed
+    # .txt files (MD_STAGED_FILES from detect-changes' style_files output) so a
+    # PR is gated on the style it introduced, not the repo-wide backlog. Can't
+    # join the validate-core/validate-targeted matrices: those run full-repo
+    # with no diff-list injection, which would resurface the whole backlog.
+    "validate_style.py",
     # Needs vanilla HOI4 00_defines.lua, which isn't checked into the repo, so
     # it can only run as a contributor's pre-commit hook.
     "validate_defines.py",

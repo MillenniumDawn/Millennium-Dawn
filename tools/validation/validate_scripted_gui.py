@@ -16,8 +16,6 @@ import disk_cache
 from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
-    Colors,
-    FileOpener,
     Severity,
     run_validator_main,
     should_skip_file,

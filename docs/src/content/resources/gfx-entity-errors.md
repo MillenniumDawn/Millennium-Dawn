@@ -272,7 +272,7 @@ pid = color_to_pid.get(tuple(arr[py, px].tolist()))
 print(f'XZ ({x},{z}) is in province {pid}')
 ```
 
-If `pid` is a sea province (compare to `map/definition.csv` where the fifth column is `sea`), move the spawn to a land pixel. See [Add Landmarks](/resources/add-landmarks/) for the full workflow including heightmap-calibrated `y`.
+If `pid` is a sea province (compare to `map/definition.csv` where the fifth column is `sea`), move the spawn to a land pixel. See [Add Landmarks](/dev-resources/add-landmarks/) for the full workflow including heightmap-calibrated `y`.
 
 ---
 
@@ -286,7 +286,7 @@ No error log entry, but the landmark icon appears in the state buildings panel a
 4. Confirm the player has the DLC declared in the building's `dlc_allowed`.
 5. Confirm MD's `gfx/entities/landmarks.asset` and `landmarks.gfx` contain the entity and mesh definitions. MD's copies of those files file-override vanilla — vanilla's entries for new landmarks are not merged in and must be copied across.
 
-See [Add Landmarks](/resources/add-landmarks/) for the full file-by-file mapping.
+See [Add Landmarks](/dev-resources/add-landmarks/) for the full file-by-file mapping.
 
 ---
 

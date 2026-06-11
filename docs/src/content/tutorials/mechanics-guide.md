@@ -3,8 +3,6 @@ title: Mechanics Guide
 description: Guide to power ranking, satellite states, and other core mechanics in Millennium Dawn
 ---
 
-# Mechanics Guide
-
 This guide covers core Millennium Dawn mechanics that affect every country: power rankings, the autonomy system, and the naval power system.
 
 ---

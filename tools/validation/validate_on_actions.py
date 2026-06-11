@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -12,12 +12,10 @@ import disk_cache
 from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
-    FileOpener,
     Severity,
     case_mismatch,
     casefold_index,
     run_validator_main,
-    should_skip_file,
 )
 
 # Declared namespaces: add_namespace = foo

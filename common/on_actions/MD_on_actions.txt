@@ -17,6 +17,9 @@ on_actions = {
 			composite_update = yes
 
 			# Update money system right before adjusting weekly value
+			# Flags this as the once-weekly economic pass so calculate_seigniorage_income
+			# accrues the EU pool only here, not on every ad-hoc ingame_update_setup call.
+			set_temp_variable = { weekly_econ_tick = 1 }
 			ingame_update_setup = yes
 			calculate_energy_load_sharing = yes
 			nuclear_reactor_fuel_consumption = yes
@@ -51,12 +54,10 @@ on_actions = {
 						clr_country_flag = overlord_is_subsidizing_us_@PREV
 						clr_country_flag = overlord_subsidies
 						remove_ideas = idea_overlord_subsidies
-						ingame_update_setup = yes
 						PREV = {
 							set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
 							clr_country_flag = overlord_is_subsidizing_us_@PREV
 							remove_from_array = { subject_subsidization = PREV.id }
-							ingame_update_setup = yes
 						}
 					}
 				}
@@ -738,18 +739,19 @@ on_actions = {
 						}
 					}
 
-					if = { limit = { check_variable = { global.OAU_member^num > 0 } }
+					# Flag, not array count: stray OAU holdouts (e.g. FNC) would otherwise skip all AU members
+					if = { limit = { has_global_flag = African_Union_formed }
 						for_each_loop = {
-							array = global.OAU_member
+							array = global.AU_member
 							value = v
 							var:v = {
 								HIV_aids_monthly_mechanic = yes
 							}
 						}
 					}
-					else_if = { limit = { check_variable = { global.AU_member^num > 0 } }
+					else_if = { limit = { check_variable = { global.OAU_member^num > 0 } }
 						for_each_loop = {
-							array = global.AU_member
+							array = global.OAU_member
 							value = v
 							var:v = {
 								HIV_aids_monthly_mechanic = yes
@@ -774,8 +776,6 @@ on_actions = {
 							}
 						}
 					}
-
-					yearly_global_export_normalization = yes
 
 					meta_effect = {
 						text = {
