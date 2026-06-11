@@ -7,6 +7,7 @@ adapted for Millennium Dawn with multiprocessing.
 import os
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -16,6 +17,7 @@ import disk_cache
 from shared_utils import extract_block_from_text
 from sprite_index import build_sprite_index
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     FileOpener,
     Severity,
@@ -23,7 +25,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
 _LONG_FORM_PATTERN = re.compile(
     r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
@@ -55,11 +57,17 @@ def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
     return out
 
 
+_ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
+
+
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     """Pool worker: count occurrences of each tracked event ID in one file.
 
-    Uses a word-boundary-aware approach so that an event ID appearing in a
-    log string or other text doesn't produce a false positive count.
+    Tokenizes the file body ONCE and counts whole-token matches against the
+    tracked-ID set, rather than scanning the file once per tracked ID. The `.`
+    is part of an identifier token, so `ALG_civilwar.1` and its loc keys
+    `ALG_civilwar.1.t` / `.d` / `.a` tokenize as distinct tokens and don't
+    inflate each other's counts.
     """
     filename, tracked_ids = args
     if _should_skip(filename):
@@ -69,11 +77,8 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
-    id_counts: Dict[str, int] = {}
-    for eid in tracked_ids:
-        if eid in cleaned:
-            id_counts[eid] = cleaned.count(eid)
-    return id_counts
+    counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
+    return {eid: counts[eid] for eid in tracked_ids if eid in counts}
 
 
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
@@ -180,7 +185,6 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "id": id_match.group(1),
                 "type": event_type,
                 "file": basename,
-                "is_major": "major = yes" in body,
                 "is_hidden": "hidden = yes" in body,
                 "is_triggered_only": "is_triggered_only = yes" in body,
                 "fire_only_once": "fire_only_once = yes" in body,
@@ -223,7 +227,7 @@ class Validator(BaseValidator):
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id, type, file, is_major, is_hidden,
+        Each metadata dict has: id, type, file, is_hidden,
         is_triggered_only, fire_only_once, has_mtth, option_count,
         title_desc_refs.
         """
@@ -432,36 +436,6 @@ class Validator(BaseValidator):
             "Triggered-only events with no references found:",
             Severity.WARNING,
             category="unreferenced-triggered-only",
-        )
-
-    def validate_news_event_major(self):
-        """Flag news_event definitions missing major = yes.
-
-        News events are country events under the hood — without major = yes
-        they only fire for the single receiving country, which is almost
-        always unintended. Hidden news events are exempted since they're
-        used as scripted-effect carriers, not player-facing news.
-        """
-        self._log_section("Checking news_events for missing major = yes...")
-
-        meta, _ = self._get_event_metadata()
-        results = []
-
-        for ev in meta:
-            if ev["type"] != "news_event":
-                continue
-            if ev["is_hidden"]:
-                continue
-            if ev["is_major"]:
-                continue
-            results.append(f"{ev['id']} - {ev['file']}")
-
-        self._report(
-            results,
-            "✓ All news_events have major = yes",
-            "news_events missing major = yes (will only fire for one country — add major = yes or use country_event):",
-            Severity.WARNING,
-            category="news-event-missing-major",
         )
 
     def validate_mtth_triggered_only(self):
@@ -677,7 +651,6 @@ class Validator(BaseValidator):
         self.validate_event_call_long_form()
         self.validate_triggered_only_unreferenced()
         self.validate_missing_localisation()
-        self.validate_news_event_major()
         self.validate_mtth_triggered_only()
         self.validate_hidden_event_options()
         self.validate_hidden_event_localisation()

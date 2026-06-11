@@ -2,12 +2,7 @@ import { splitClassList } from "@/shared/lib/dom/class-list";
 import { LIGHTBOX_TRIGGER_IMAGE_CLASS } from "@/shared/ui/tailwind";
 import { isEligibleLightboxImage, pickResolvedImageUrl } from "./lightbox-eligibility";
 import { createBodyScrollLock } from "./body-scroll-lock";
-import {
-  BOUND_ATTRIBUTE,
-  CLOSE_DURATION_MS,
-  CONTENT_IMAGE_SELECTOR,
-  MAIN_CONTENT_SELECTOR,
-} from "./constants";
+import { BOUND_ATTRIBUTE, CLOSE_DURATION_MS, CONTENT_IMAGE_SELECTOR, MAIN_CONTENT_SELECTOR } from "./constants";
 import { createOverlayFocusTrap } from "./focus-trap";
 import { createMainContentInert } from "./main-inert";
 import { mountLightboxDom } from "./mount-lightbox-dom";

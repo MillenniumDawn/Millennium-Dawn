@@ -3,8 +3,6 @@ title: Add Landmarks
 description: How to add a new landmark building (3D model + spawn point + state placement) to Millennium Dawn
 ---
 
-# Add Landmarks
-
 Landmarks are special buildings that render a 3D model on the world map (Big Ben, Mt. Fuji, Statue of Liberty, etc.). Adding a new landmark requires **five files** to agree on which state, which province, and which world-space coordinates the model uses. If any one is wrong, you typically see the landmark icon appear in the state UI while the 3D model fails to render silently.
 
 ## Architecture
@@ -283,6 +281,6 @@ If history shows the line existed and was removed, restore it (the old XZ may st
 
 ## See Also
 
-- [GFX Entity & Asset Errors](/resources/gfx-entity-errors/) — for the general `pdx_entity.cpp` and `assetfactory.cpp` error patterns
-- [Art Standards](/resources/art-standards/) — DDS format specifications for the mesh textures
-- [Terrain Photo System](/resources/terrain-photo-guide/) — a similar multi-file system pattern for state-level art
+- [GFX Entity & Asset Errors](/dev-resources/gfx-entity-errors/) — for the general `pdx_entity.cpp` and `assetfactory.cpp` error patterns
+- [Art Standards](/dev-resources/art-standards/) — DDS format specifications for the mesh textures
+- [Terrain Photo System](/dev-resources/terrain-photo-guide/) — a similar multi-file system pattern for state-level art

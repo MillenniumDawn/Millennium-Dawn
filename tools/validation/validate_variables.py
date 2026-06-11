@@ -741,7 +741,7 @@ class Validator(BaseValidator):
                 staged_files=self.staged_files,
                 workers=self.workers,
                 files_to_scan=all_txt_files,
-                pool=self._pool,
+                pool=self._get_pool(),
             )
             self.validate_cleared_flags(flag_type, fp_cleared, cleared_paths, set_paths)
             self.validate_missing_flags(flag_type, fp_missing, used_paths, set_paths)
@@ -754,7 +754,7 @@ class Validator(BaseValidator):
             staged_files=self.staged_files,
             workers=self.workers,
             files_to_scan=all_txt_files,
-            pool=self._pool,
+            pool=self._get_pool(),
         )
         self.validate_cleared_event_targets(et_cleared, et_set)
         self.validate_missing_event_targets(et_used, et_set)

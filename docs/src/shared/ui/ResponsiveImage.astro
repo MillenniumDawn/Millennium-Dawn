@@ -1,8 +1,8 @@
 ---
 import type { ImageMetadata } from "astro";
-import { Picture } from "astro:assets";
+import { getImage, Picture } from "astro:assets";
 import { LIGHTBOX_FULL_SRC_ATTR } from "@/shared/config/lightbox-dom";
-import { getRootRelativeUrlForMetadata, resolveImageSource } from "@/shared/lib/media/image-assets";
+import { getInternalImageAsset, resolveImageSource } from "@/shared/lib/media/image-assets";
 import { withBase } from "@/shared/lib/routing/urls";
 
 type ImageFormat = "avif" | "webp";
@@ -43,27 +43,15 @@ const {
 
 const resolvedSrc = resolveImageSource(src);
 
-/** `src/assets/images` mirrored to `dist/assets/images` by `copy-src-images-to-dist`. Astro `Picture` omits `base` in `srcset` for these, which breaks GitHub Pages (`/Millennium-Dawn/`). */
-function docsStaticImagesPath(resolved: string | ImageMetadata): string | undefined {
-  if (typeof resolved === "string") {
-    return resolved.startsWith("/assets/images/") ? resolved : undefined;
-  }
-  const url = getRootRelativeUrlForMetadata(resolved);
-  return url?.startsWith("/assets/images/") ? url : undefined;
-}
-
-const staticDocsAssetPath = docsStaticImagesPath(resolvedSrc);
-const staticDocsImgSrc = staticDocsAssetPath ? withBase(staticDocsAssetPath) : "";
-
 /* Layout/centering for content images: `#main-content` in app.css */
 const pictureClassName = [wrapperClass?.trim()].filter(Boolean).join(" ");
 const imageClassName = className?.trim() ? className.trim() : "rounded";
-const isStringSource = typeof resolvedSrc === "string";
-const resolvedWidth = width ?? (isStringSource ? undefined : resolvedSrc.width);
-const resolvedHeight = height ?? (isStringSource ? undefined : resolvedSrc.height);
+const isMetadataSource = typeof resolvedSrc !== "string";
+const resolvedWidth = width ?? (isMetadataSource ? resolvedSrc.width : undefined);
+const resolvedHeight = height ?? (isMetadataSource ? resolvedSrc.height : undefined);
 
 if (!resolvedWidth || !resolvedHeight) {
-  throw new Error("ResponsiveImage requires width and height for string sources.");
+  throw new Error("ResponsiveImage requires width and height.");
 }
 
 const resolvedAlt = decorative ? "" : alt;
@@ -73,13 +61,45 @@ const pictureAttributes = {
   ...pictureAttrs,
   ...(lightboxFullSrc ? { [LIGHTBOX_FULL_SRC_ATTR]: lightboxFullSrc } : {}),
 };
+
+/** Astro asset URLs are root-relative; prefix with the GitHub Pages base when needed. */
+function publicationAssetUrl(path: string): string {
+  return path.startsWith("/") ? withBase(path) : path;
+}
+
+let optimizedSources: { type: string; srcset: string }[] | null = null;
+let optimizedFallbackSrc: string | null = null;
+
+if (isMetadataSource) {
+  const sourceEntries = await Promise.all(
+    formats.map(async (format) => {
+      const image = await getImage({
+        src: resolvedSrc,
+        format,
+        width: resolvedWidth,
+        height: resolvedHeight,
+      });
+      return { type: `image/${format}`, srcset: publicationAssetUrl(image.src) };
+    }),
+  );
+  const fallback = await getImage({
+    src: resolvedSrc,
+    width: resolvedWidth,
+    height: resolvedHeight,
+  });
+  optimizedSources = sourceEntries;
+  optimizedFallbackSrc = publicationAssetUrl(fallback.src);
+}
 ---
 
 {
-  staticDocsAssetPath ? (
+  isMetadataSource && optimizedSources && optimizedFallbackSrc ? (
     <picture {...pictureAttributes}>
+      {optimizedSources.map((source) => (
+        <source type={source.type} srcset={source.srcset} sizes={sizes} />
+      ))}
       <img
-        src={staticDocsImgSrc}
+        src={optimizedFallbackSrc}
         alt={resolvedAlt}
         width={resolvedWidth}
         height={resolvedHeight}
@@ -90,7 +110,7 @@ const pictureAttributes = {
         class={imageClassName}
       />
     </picture>
-  ) : isStringSource ? (
+  ) : typeof resolvedSrc === "string" && !getInternalImageAsset(resolvedSrc) ? (
     <Picture
       src={resolvedSrc}
       alt={resolvedAlt}
@@ -106,19 +126,18 @@ const pictureAttributes = {
       pictureAttributes={pictureAttributes}
     />
   ) : (
-    <Picture
-      src={resolvedSrc}
-      alt={resolvedAlt}
-      width={resolvedWidth}
-      height={resolvedHeight}
-      loading={loading}
-      decoding={decoding}
-      fetchpriority={fetchpriority}
-      sizes={sizes}
-      formats={formats}
-      layout="constrained"
-      class={imageClassName}
-      pictureAttributes={pictureAttributes}
-    />
+    <picture {...pictureAttributes}>
+      <img
+        src={publicationAssetUrl(typeof resolvedSrc === "string" ? resolvedSrc : resolvedSrc.src)}
+        alt={resolvedAlt}
+        width={resolvedWidth}
+        height={resolvedHeight}
+        loading={loading}
+        decoding={decoding}
+        fetchpriority={fetchpriority}
+        sizes={sizes}
+        class={imageClassName}
+      />
+    </picture>
   )
 }

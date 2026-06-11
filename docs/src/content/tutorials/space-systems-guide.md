@@ -3,8 +3,6 @@ title: Space Systems Guide
 description: Guide to satellite systems, space programs, and orbital mechanics in Millennium Dawn
 ---
 
-# Space Systems Guide
-
 Millennium Dawn features a comprehensive space program and satellite system. Countries can develop space programs, research satellite technologies, build and launch satellites into orbit, and gain powerful military and civilian bonuses from orbital coverage. This guide covers every aspect of the system.
 
 ---

@@ -1,0 +1,1362 @@
+scripted_gui = {
+	### AC System ###
+	investments_treasury = {
+		context_type = selected_state_context
+
+		window_name = "investments_treasury_container"
+
+		parent_window_token = selected_state_view
+
+		visible = {
+			NOT = { is_owned_by = ROOT }
+			ROOT = { NOT = { has_country_flag = investments_hide_investment_window } }
+		}
+	}
+
+	investments_int_investments = {
+		context_type = selected_state_context
+
+		window_name = "investments_int_investments_container"
+
+		parent_window_token = selected_state_view
+
+		visible = {
+			NOT = { is_owned_by = ROOT }
+			ROOT = { NOT = { has_country_flag = investments_hide_investment_window } }
+		}
+	}
+
+	topbar_economy_buttons_container = {
+		window_name = "MD_topbar_economy_buttons_container"
+		context_type = player_context
+
+		dirty = global.update_monie_ui
+
+		triggers = {
+			topbar_hide_money_bg_visible = {
+				ROOT = { NOT = { has_country_flag = hide_money } }
+			}
+			topbar_show_money_bg_visible = {
+				ROOT = { has_country_flag = hide_money }
+			}
+		}
+
+		effects = {
+			# Hides Topbar Money Container
+			topbar_hide_money_bg_click = {
+				ROOT = { set_country_flag = hide_money }
+				update_money_dirty_variable = yes
+			}
+			# Shows Topbar Money Container
+			topbar_show_money_bg_click = {
+				ROOT = { clr_country_flag = hide_money }
+				update_money_dirty_variable = yes
+			}
+		}
+	}
+
+	topbar_economy_stats_container = {
+		window_name = "MD_topbar_economy_stats_container"
+		context_type = player_context
+
+		dirty = global.update_monie_ui
+
+		visible = {
+			ROOT = { NOT = { has_country_flag = hide_money } }
+		}
+
+		effects = {
+			#Take debt
+			topbar_debt_bg_click = {
+				if = {
+					limit = {
+						check_variable = { interest_rate < 20 }
+						NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+					}
+					add_to_variable = { treasury = 1 }
+					add_to_variable = { debt = 1.01 }
+					ingame_update_setup = yes
+				}
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1070 1b debt taken (Total Debt: Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+				}
+			}
+			topbar_debt_bg_control_click = {
+				if = {
+					limit = {
+						check_variable = { interest_rate < 20 }
+						check_variable = { gdp_total > 20 }
+						NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+					}
+					add_to_variable = { treasury = 10 }
+					add_to_variable = { debt = 10.1 }
+					ingame_update_setup = yes
+				}
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1071 10b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+				}
+			}
+			topbar_debt_bg_shift_click = {
+				if = {
+					limit = {
+						check_variable = { interest_rate < 20 }
+						check_variable = { gdp_total > 150 }
+						NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+					}
+					add_to_variable = { treasury = 100 }
+					add_to_variable = { debt = 101 }
+					ingame_update_setup = yes
+				}
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1072 100b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+				}
+			}
+			topbar_debt_bg_alt_click = {
+				if = {
+					limit = {
+						check_variable = { interest_rate < 20 }
+						check_variable = { gdp_total > 1499 }
+						NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+					}
+					add_to_variable = { treasury = 1000 }
+					add_to_variable = { debt = 1010 }
+					ingame_update_setup = yes
+				}
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1073 1000b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+				}
+			}
+
+			# Repay $1b debt
+			topbar_debt_bg_right_click = {
+				# You have enough money and debt to pay $1b T/T
+				if = { limit = {
+					check_variable = { var = treasury value = 1 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 1 compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = 1 }
+					subtract_from_variable = { debt = 1 }
+				}
+				# You have enough money to pay $1b but less than $1b in debt T/F
+				else_if = { limit = {
+					check_variable = { var = treasury value = 1 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 1 compare = less_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+				}
+				# You don't have enough money to pay $1b, have enough debt to pay $1b F/T
+				else_if = { limit = {
+					check_variable = { var = treasury value = 1 compare = less_than_or_equals }
+					check_variable = { var = debt value = 1 compare = greater_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+				}
+				# You don't have enough money to pay $1b, and don't have enough debt to pay $1b F/F
+				# Money > Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+				}
+				# Money < Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = less_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1073 1b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+				}
+			}
+			topbar_debt_bg_control_right_click = {
+				# You have enough money and debt to pay $10b T/T
+				if = { limit = {
+					check_variable = { var = treasury value = 10 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 10 compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = 10 }
+					subtract_from_variable = { debt = 10 }
+				}
+				# You have enough money to pay $10b but less than $10b in debt T/F
+				else_if = { limit = {
+					check_variable = { var = treasury value = 10 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 10 compare = less_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+				}
+				# You don't have enough money to pay $10b, have enough debt to pay $10b F/T
+				else_if = { limit = {
+					check_variable = { var = treasury value = 10 compare = less_than_or_equals }
+					check_variable = { var = debt value = 10 compare = greater_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+				}
+				# You don't have enough money to pay $10b, and don't have enough debt to pay $10b F/F
+				# Money > Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+				}
+				# Money < Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = less_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1074 10b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+				}
+			}
+			topbar_debt_bg_shift_right_click = {
+				# You have enough money and debt to pay $100b T/T
+				if = { limit = {
+					check_variable = { var = treasury value = 100 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 100 compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = 100 }
+					subtract_from_variable = { debt = 100 }
+				}
+				# You have enough money to pay $100b but less than $100b in debt T/F
+				else_if = { limit = {
+					check_variable = { var = treasury value = 100 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 100 compare = less_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+				}
+				# You don't have enough money to pay $100b, have enough debt to pay $100b F/T
+				else_if = { limit = {
+					check_variable = { var = treasury value = 100 compare = less_than_or_equals }
+					check_variable = { var = debt value = 100 compare = greater_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+				}
+				# You don't have enough money to pay $100b, and don't have enough debt to pay $100b F/F
+				# Money > Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+				}
+				# Money < Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = less_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1075 100b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+				}
+			}
+			#Pay off maximum
+			topbar_debt_bg_alt_right_click = {
+				if = {
+					limit = { check_variable = { treasury > debt } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+					ingame_update_setup = yes
+				}
+				else = {
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+					ingame_update_setup = yes
+				}
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1076 Max debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+				}
+			}
+			# Automatically Pay off Debt
+			topbar_debt_bg_alt_shift_right_click = {
+				enable_automatic_debt_repayment_effect = yes
+			}
+			#Sell off investments
+			topbar_int_investments_bg_right_click = {
+				subtract_from_variable = { int_investments = 1 }
+				add_to_variable = { treasury = 0.60 }
+				ingame_update_setup = yes
+			}
+			topbar_int_investments_bg_control_right_click = {
+				subtract_from_variable = { int_investments = 10 }
+				add_to_variable = { treasury = 6.0 }
+				ingame_update_setup = yes
+			}
+			topbar_int_investments_bg_shift_right_click = {
+				subtract_from_variable = { int_investments = 100 }
+				add_to_variable = { treasury = 60 }
+				ingame_update_setup = yes
+			}
+
+			# Reinvestment Feature - cycles off -> reinvest 100% -> 50/50 split -> off
+			topbar_int_investments_bg_shift_click = {
+				if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+					set_variable = { int_reinvest_mode = 0 }
+				}
+				else_if = { limit = { check_variable = { int_reinvest_mode = 1 } }
+					set_variable = { int_reinvest_mode = 2 }
+				}
+				else = {
+					set_variable = { int_reinvest_mode = 1 }
+				}
+				ingame_update_setup = yes
+			}
+
+			topbar_int_investments_bg_control_click = {
+				if = { limit = { has_country_flag = int_auto_reject_investment_flag }
+					clr_country_flag = int_auto_reject_investment_flag
+				}
+				else = {
+					set_country_flag = int_auto_reject_investment_flag
+				}
+				ingame_update_setup = yes
+			}
+		}
+
+		triggers = {
+			####
+			topbar_debt_bg_right_click_enabled = {
+				check_variable = { treasury > 0 }
+				check_variable = { debt > 0 }
+			}
+			topbar_debt_bg_control_right_click_enabled = {
+				check_variable = { treasury > 0 }
+				check_variable = { debt > 0 }
+			}
+			topbar_debt_bg_shift_right_click_enabled = {
+				check_variable = { treasury > 0 }
+				check_variable = { debt > 0 }
+			}
+			topbar_debt_bg_alt_click_enabled = {
+				check_variable = { debt > 0 }
+			}
+			topbar_int_investments_bg_right_click_enabled = {
+				check_variable = { int_investments > 1 }
+			}
+			topbar_int_investments_bg_control_right_click_enabled = {
+				check_variable = { int_investments > 10 }
+			}
+			topbar_int_investments_bg_shift_right_click_enabled = {
+				check_variable = { int_investments > 100 }
+			}
+		}
+
+		# AI Section
+		ai_enabled = { NOT = { original_tag = ZOM } }
+		ai_test_interval = 120 # 5 Days
+		ai_check = { has_available_treasury = yes }
+		ai_max_weight_taken_per_test = 3 # Allow the AI to select up to 3 if necessary
+
+		ai_weights = {
+			# ------- #
+			# Repaying Debt AI
+			# This section primarily deals with the AI decreasing debt
+			topbar_debt_bg_right_click = { # Repay Debt -- 1 Billion
+				ai_will_do = {
+					factor = 5
+					# Interest Rate Methodology
+					modifier = {
+						set_temp_variable = { temp_interest_rate = 1.50 }
+						multiply_temp_variable = { temp_interest_rate = interest_rate }
+						has_variable = interest_rate
+						factor = temp_interest_rate
+					}
+					# GDP Debt Ratio Methodology
+					# Start being more likely to pay debt
+					modifier = {
+						set_temp_variable = { temp_debt_ratio = 2 }
+						multiply_temp_variable = { temp_debt_ratio = debt_ratio }
+						check_variable = { debt_ratio > 0.50 }
+						factor = temp_debt_ratio
+					}
+					# Killswitches
+					modifier = {
+						factor = 0
+						OR = {
+							check_variable = { treasury < 5 }
+							check_variable = { treasury_rate < 0 }
+						}
+					}
+				}
+			}
+			topbar_debt_bg_control_right_click = { #Repay debt -- 10 debt
+				ai_will_do = {
+					factor = 5
+					# Interest Rate Methodology
+					modifier = {
+						set_temp_variable = { temp_interest_rate = 1.50 }
+						multiply_temp_variable = { temp_interest_rate = interest_rate }
+						has_variable = interest_rate
+						factor = temp_interest_rate
+					}
+					# GDP Debt Ratio Methodology
+					# Start being more likely to pay debt
+					modifier = {
+						set_temp_variable = { temp_debt_ratio = 2 }
+						multiply_temp_variable = { temp_debt_ratio = debt_ratio }
+						check_variable = { debt_ratio > 0.50 }
+						factor = temp_debt_ratio
+					}
+					# Killswitches
+					modifier = {
+						factor = 0
+						OR = {
+							check_variable = { treasury < 15 }
+							check_variable = { treasury_rate < 0 }
+						}
+					}
+				}
+			}
+			topbar_debt_bg_shift_right_click = { #should force the AI to repay 100 debt if they have the funds
+				ai_will_do = {
+					factor = 5
+					# Interest Rate Methodology
+					modifier = {
+						set_temp_variable = { temp_interest_rate = 1.50 }
+						multiply_temp_variable = { temp_interest_rate = interest_rate }
+						has_variable = interest_rate
+						factor = temp_interest_rate
+					}
+					# GDP Debt Ratio Methodology
+					# Start being more likely to pay debt
+					modifier = {
+						set_temp_variable = { temp_debt_ratio = 2 }
+						multiply_temp_variable = { temp_debt_ratio = debt_ratio }
+						check_variable = { debt_ratio > 0.50 }
+						factor = temp_debt_ratio
+					}
+					# Killswitches
+					modifier = {
+						factor = 0
+						OR = {
+							check_variable = { treasury < 115 }
+							check_variable = { treasury_rate < 0 }
+						}
+					}
+				}
+			}
+			topbar_debt_bg_alt_right_click = {
+				ai_will_do = {
+					factor = 100
+					modifier = {
+						factor = 2
+						check_variable = { treasury > debt }
+					}
+					modifier = {
+						factor = 0
+						check_variable = { treasury < debt }
+					}
+				}
+			}
+		}
+	}
+
+	diplo_economy_stats_container = {
+		window_name = "MD_diplo_economy_stats_container"
+		context_type = selected_country_context
+		parent_window_token = selected_country_view_diplomacy
+
+	}
+
+	tradeview_market_prices = {
+		window_name = "MD_tradeview_market_prices"
+        context_type = player_context
+		parent_window_token = trade_tab
+	}
+
+	countryeconomyview_tab = {
+		window_name = "MD_countryeconomyview_tabs"
+        context_type = player_context
+		parent_window_token = trade_tab
+
+		effects = {
+            trade_tab_click = {
+				set_variable = { MD_tradeview_tab_trade_state = 1 }
+				set_variable = { MD_tradeview_tab_economy_state = 2 }
+            }
+
+			economy_tab_click = {
+				set_variable = { MD_tradeview_tab_trade_state = 2 }
+				set_variable = { MD_tradeview_tab_economy_state = 1 }
+				update_money_dirty_variable = yes
+            }
+		}
+
+		properties = {
+			trade_tab = {
+				frame = MD_tradeview_tab_trade_state
+			}
+
+			economy_tab = {
+				frame = MD_tradeview_tab_economy_state
+			}
+		}
+	}
+
+    countryeconomyview = {
+		window_name = "MD_countryeconomyview"
+        context_type = player_context
+		parent_window_token = trade_tab
+
+		dirty = global.update_monie_ui
+
+		visible = {
+			AND = {
+				is_ai = no
+				check_variable = { MD_tradeview_tab_economy_state = 1 }
+			}
+		}
+
+		properties = {
+			# Project Property Files
+			industrial_projects = { image = "[IndustrialProjectsEnabledTexture]" }
+			service_constructions = { image = "[OfficeProjectsEnabledTexture]" }
+			infrastructure_investiture = { image = "[InfraProjectsEnabledTexture]" }
+			arms_industry_stipends = { image = "[ArmsIndustryEnabledTexture]" }
+			retool_shipyards = { image = "[RetoolShipyardsEnabledTexture]" }
+		}
+
+		triggers = {
+			# Population taxes
+			increase_population_tax_click_enabled = {
+				check_variable = { var = population_tax_rate value = 0 compare = greater_than_or_equals }
+				check_variable = { var = population_tax_rate value = 50 compare = less_than }
+				NOT = { has_country_flag = no_personal_tax_rate_change }
+				ROOT = { has_political_power > tax_rate_change }
+			}
+			increase_population_tax_shift_click_enabled = { #56-60 NO
+				check_variable = { var = population_tax_rate value = 0 compare = greater_than_or_equals }
+				check_variable = { var = population_tax_rate value = 45 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_personal_tax_rate_change }
+				ROOT = { has_political_power > tax_rate_change_5 }
+			}
+			decrease_population_tax_click_enabled = {
+				check_variable = { var = population_tax_rate value = 0 compare = greater_than }
+				NOT = { has_country_flag = no_personal_tax_rate_change }
+				ROOT = { has_political_power > tax_rate_change }
+			}
+			decrease_population_tax_shift_click_enabled = { #0-5 NO
+				check_variable = { var = population_tax_rate value = 5 compare = greater_than_or_equals }
+				check_variable = { var = population_tax_rate value = 50 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_personal_tax_rate_change }
+				ROOT = { has_political_power > tax_rate_change_5 }
+			}
+			# Corporate Taxes
+			increase_corporate_tax_click_enabled = {
+				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than_or_equals }
+				check_variable = { var = corporate_tax_rate value = 50 compare = less_than }
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
+				ROOT = { has_political_power > tax_rate_change }
+			}
+			increase_corporate_tax_shift_click_enabled = {
+				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than_or_equals }
+				check_variable = { var = corporate_tax_rate value = 45 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
+				ROOT = { has_political_power > tax_rate_change_5 }
+			}
+			decrease_corporate_tax_click_enabled = {
+				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than }
+				check_variable = { var = corporate_tax_rate value = 50 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
+				ROOT = { has_political_power > tax_rate_change }
+			}
+			decrease_corporate_tax_shift_click_enabled = {
+				check_variable = { var = corporate_tax_rate value = 5 compare = greater_than_or_equals }
+				check_variable = { var = corporate_tax_rate value = 50 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
+				ROOT = { has_political_power > tax_rate_change_5 }
+			}
+			# CB Policy Rate Buttons
+			increase_cb_rate_click_enabled = {
+				check_variable = { var = cb_policy_rate value = 0 compare = greater_than_or_equals }
+				check_variable = { var = cb_policy_rate value = 20 compare = less_than }
+				NOT = { has_country_flag = temp_cb_rate_changed }
+				ROOT = { has_political_power > 25 }
+			}
+			decrease_cb_rate_click_enabled = {
+				check_variable = { var = cb_policy_rate value = 0 compare = greater_than }
+				NOT = { has_country_flag = temp_cb_rate_changed }
+				ROOT = { has_political_power > 25 }
+			}
+			# Extra Features
+			print_money_button_click_enabled = {
+				if = { limit = { has_country_flag = printed_money_recently }
+					custom_trigger_tooltip = {
+						tooltip = printed_money_recently_one_tt
+						NOT = { has_country_flag = printed_money_recently }
+					}
+				}
+				else = {
+					custom_trigger_tooltip = {
+						tooltip = printed_money_recently_two_tt
+						NOT = { has_country_flag = printed_money_recently }
+					}
+				}
+				has_political_power > 49
+			}
+
+			# - Monetary Policy Buttons
+			expand_money_supply_button_click_enabled = {
+				NOT = { has_country_flag = monetary_expand_cooldown }
+				NOT = { has_country_flag = monetary_austerity_active }
+				NOT = { has_idea = no_foreign_reserve }
+				NOT = { has_idea = gold_standard_back }
+				is_full_state = yes
+			}
+			austerity_button_click_enabled = {
+				NOT = { has_country_flag = monetary_austerity_cooldown }
+				NOT = { has_country_flag = monetary_expand_active }
+				is_full_state = yes
+			}
+
+			# - Lease Factories
+
+			# - Lease Civilian Industry
+			increase_leased_civilian_factories_click_enabled = {
+				#check_variable = { leased_civilian_factories < 20 } #use this as an hard cap on amount of leasable
+			}
+			decrease_leased_civilian_factories_click_enabled = {
+				check_variable = { leased_civilian_factories > 0 }
+			}
+
+			# - Lease Military Industry
+			increase_leased_military_factories_click_enabled = {
+				#check_variable = { leased_military_factories < 20 } #use this as an hard cap on amount of leasable
+			}
+			decrease_leased_military_factories_click_enabled = {
+				check_variable = { leased_military_factories > 0 }
+			}
+
+			# - Lease Dockyard Industry
+			increase_leased_dockyards_click_enabled = {
+				#check_variable = { leased_dockyards < 20 } #use this as an hard cap on amount of leasable
+			}
+			decrease_leased_dockyards_click_enabled = {
+				check_variable = { leased_dockyards > 0 }
+			}
+
+			# - Lease Agricultrue Industry WIP
+			# increase_leased_agriculture_districts_click_enabled = {
+			# 	#check_variable = { leased_agriculture < 20 } #use this as an hard cap on amount of leasable
+			# }
+			# decrease_leased_agriculture_districts_click_enabled = {
+			# 	check_variable = { leased_agriculture > 0 }
+			# }
+
+
+			# - Industrial Projects
+			# This action triggers a hidden idea to increase industrial complex construction speed
+			industrial_projects_click_enabled = {
+				NOT = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = service_constructions_flag
+					has_country_flag = arms_industry_stipends_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			# - Service Constructions
+			# This action triggers a hidden idea to increase office construction speed
+			service_constructions_click_enabled = {
+				NOT = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = arms_industry_stipends_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			# - Infrastructure Investiture
+			# This action triggers a hidden idea to increase infrastructure construction speed
+			infrastructure_investiture_click_enabled = {
+				NOT = {
+					has_country_flag = service_constructions_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = arms_industry_stipends_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			# - Arms Industry Stipends
+			# This action triggers a hidden idea to increase arms military construction speed
+			arms_industry_stipends_click_enabled = {
+				NOT = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = service_constructions_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			# - Retool Shipyards
+			# This action triggers a hidden idea to increase naval dockyard construction speed
+			retool_shipyards_click_enabled = {
+				NOT = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = service_constructions_flag
+					has_country_flag = arms_industry_stipends_flag
+				}
+			}
+
+			# - Civilian Factories Employment
+			increase_employment_civilian_factories_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { civilian_factory_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_civilian_factories_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { civilian_factory_employment_var > 0 }
+				}
+			}
+
+			# - Military Factories Employment
+			increase_employment_military_factories_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { military_factory_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_military_factories_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { military_factory_employment_var > 0 }
+				}
+			}
+
+			# - Offices Employment
+			increase_employment_offices_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { office_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_offices_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { office_employment_var > 0 }
+				}
+			}
+
+			# - Naval Factories Employment
+			increase_employment_dockyards_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { naval_factory_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_dockyards_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { naval_factory_employment_var > 0 }
+				}
+			}
+
+			# - Commercialized Agriculture District
+			increase_employment_agriculture_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { agriculture_district_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_agriculture_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { agriculture_district_employment_var > 0 }
+				}
+			}
+
+			# - Synthetic Refineries
+			increase_employment_rafineries_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { synthetic_refinery_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_rafineries_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { synthetic_refinery_employment_var > 0 }
+				}
+			}
+
+			# - Microchip Plant
+			increase_employment_microchips_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { microchip_plant_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_microchips_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { microchip_plant_employment_var > 0 }
+				}
+			}
+
+			# - Composite Plant
+			increase_employment_composites_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { composite_plant_employment_var < 1.0 }
+				}
+			}
+			decrease_employment_composites_click_enabled = {
+				AND = {
+					has_political_power > 20
+					check_variable = { composite_plant_employment_var > 0 }
+				}
+			}
+
+			# Stats
+			stats_balance_background_click_enabled = {
+				# check_variable = { treasury > 1 }
+			}
+
+			stats_debt_background_right_click_enabled = {
+				check_variable = { treasury > 1 }
+				check_variable = { debt > 1 }
+			}
+			stats_debt_background_control_right_click_enabled = {
+				check_variable = { treasury > 10 }
+				check_variable = { debt > 10 }
+			}
+			stats_debt_background_shift_right_click_enabled = {
+				check_variable = { treasury > 100 }
+				check_variable = { debt > 100 }
+			}
+		}
+
+		effects = {
+			# Population Tax Increase/Decrease
+			increase_population_tax_click = {
+				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
+				multiply_temp_variable = { tax_rate_change_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_temp }
+				set_temp_variable = { previous_tax_rate = population_tax_rate }
+				add_to_variable = { population_tax_rate = 1 }
+				clamp_variable = {
+					var = population_tax_rate
+					min = 0
+					max = 50
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1050 Pop Tax Rate Increases: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
+				}
+			}
+			increase_population_tax_shift_click = {
+				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
+				multiply_temp_variable = { tax_rate_change_5_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_5_temp }
+				set_temp_variable = { previous_tax_rate = population_tax_rate }
+				add_to_variable = { population_tax_rate = 5 }
+				clamp_variable = {
+					var = population_tax_rate
+					min = 0
+					max = 50
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1051 Pop Tax Rate +5 Increase: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
+				}
+				set_country_flag = { flag = temp_increase_major_hike_in_pop_taxes value = 1 days = 60 }
+			}
+			decrease_population_tax_click = {
+				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
+				multiply_temp_variable = { tax_rate_change_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_temp }
+				set_temp_variable = { previous_tax_rate = population_tax_rate }
+				subtract_from_variable = { population_tax_rate = 1 }
+				clamp_variable = {
+					var = population_tax_rate
+					min = 0
+					max = 50
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1052 Pop Tax Rate Decrease: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
+				}
+			}
+			decrease_population_tax_shift_click = {
+				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
+				multiply_temp_variable = { tax_rate_change_5_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_5_temp }
+				set_temp_variable = { previous_tax_rate = population_tax_rate }
+				subtract_from_variable = { population_tax_rate = 5 }
+				clamp_variable = {
+					var = population_tax_rate
+					min = 0
+					max = 50
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1053 Pop Tax Rate -5 Decrease: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
+				}
+				set_country_flag = { flag = temp_decrease_major_hike_in_pop_taxes value = 1 days = 60 }
+			}
+			# Corporate Tax Rate Actions
+			# +-1 && +-5
+			increase_corporate_tax_click = {
+				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
+				multiply_temp_variable = { tax_rate_change_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_temp }
+				set_temp_variable = { previous_tax_rate = corporate_tax_rate }
+				add_to_variable = { corporate_tax_rate = 1 }
+				clamp_variable = {
+					var = corporate_tax_rate
+					min = 0
+					max = 50
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1054 Corp Tax Rate Increase: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
+				}
+			}
+			increase_corporate_tax_shift_click = {
+				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
+				multiply_temp_variable = { tax_rate_change_5_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_5_temp }
+				set_temp_variable = { previous_tax_rate = corporate_tax_rate }
+				add_to_variable = { corporate_tax_rate = 5 }
+				clamp_variable = {
+					var = corporate_tax_rate
+					min = 0
+					max = 50
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1055 Corp Tax Rate +5 Increase: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
+				}
+				set_country_flag = { flag = temp_increase_major_hike_in_corp_taxes value = 1 days = 60 }
+			}
+			decrease_corporate_tax_click = {
+				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
+				multiply_temp_variable = { tax_rate_change_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_temp }
+				set_temp_variable = { previous_tax_rate = corporate_tax_rate }
+				subtract_from_variable = { corporate_tax_rate = 1 }
+				clamp_variable = {
+					var = corporate_tax_rate
+					min = 0
+					max = 50
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1056 Corp Tax Rate Decrease: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
+				}
+			}
+			decrease_corporate_tax_shift_click = {
+				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
+				multiply_temp_variable = { tax_rate_change_5_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_5_temp }
+				set_temp_variable = { previous_tax_rate = corporate_tax_rate }
+				subtract_from_variable = { corporate_tax_rate = 5 }
+				clamp_variable = {
+					var = corporate_tax_rate
+					min = 0
+					max = 50
+				}
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1057 Corp Tax Rate -5 Decrease: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
+				}
+				set_country_flag = { flag = temp_decrease_major_hike_in_corp_taxes value = 1 days = 60 }
+			}
+			# CB Policy Rate Increase/Decrease
+			increase_cb_rate_click = {
+				ROOT = { add_political_power = -25 }
+				set_temp_variable = { previous_cb_rate = cb_policy_rate }
+				add_to_variable = { cb_policy_rate = 1 }
+				clamp_variable = { var = cb_policy_rate min = 0 max = 20 }
+				ingame_update_setup = yes
+				set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: CB Rate Increase: [?previous_cb_rate]% -> [?cb_policy_rate]%"
+				}
+			}
+			decrease_cb_rate_click = {
+				ROOT = { add_political_power = -25 }
+				set_temp_variable = { previous_cb_rate = cb_policy_rate }
+				subtract_from_variable = { cb_policy_rate = 1 }
+				clamp_variable = { var = cb_policy_rate min = 0 max = 20 }
+				ingame_update_setup = yes
+				set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: CB Rate Decrease: [?previous_cb_rate]% -> [?cb_policy_rate]%"
+				}
+			}
+			# Refresh Economy View Button
+			economy_refresh_button_click = {
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: 1048 Triggered Economy Refresh"
+				}
+				ingame_update_setup = yes
+			}
+			# - Printing Money action
+			# This action "prints" money and adds 2 weeks of your total gross income to your treasury immediatly while reducing productivity, increasing the penalty with each click (the penalty going back down once per year however).
+			print_money_button_click = {
+				set_temp_variable = { var = printing value = display_income }
+				multiply_temp_variable = { var = printing value = 2 }
+				set_temp_variable = { treasury_change = printing }
+				modify_treasury_effect = yes
+				add_political_power = -50
+
+				add_to_variable = { printing_money_var = 1 }
+
+				set_country_flag = { flag = printed_money_recently value = 1 days = 30 }
+				ingame_update_setup = yes
+
+				multiply_temp_variable = { printing = 0.001 }
+				add_to_variable = { print_money_base_add = printing }
+
+				if = {
+					limit = { NOT = { is_in_array = { global.printing_money_nations = THIS.id } } }
+					add_to_array = { global.printing_money_nations = THIS.id }
+				}
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: Print Money. Weekly Balance:[?treasury_rate], # of Times Printed:[?printing_money_var], Int Rate:[?interest_rate]."
+			}
+
+			# - Monetary Policy Buttons
+			expand_money_supply_button_click = {
+				add_timed_idea = { idea = monetary_expand_active_idea days = 180 }
+				add_to_variable = { currency_strength = -0.05 }
+				clamp_currency_strength = yes
+				set_country_flag = { flag = monetary_expand_active value = 1 days = 180 }
+				set_country_flag = { flag = monetary_expand_cooldown value = 1 days = 545 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [ROOT.GetName]: GUI: Expand Money Supply activated"
+			}
+			austerity_button_click = {
+				add_to_variable = { currency_strength = 0.04 }
+				clamp_currency_strength = yes
+				set_country_flag = { flag = monetary_austerity_active value = 1 days = 120 }
+				set_country_flag = { flag = monetary_austerity_cooldown value = 1 days = 300 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [ROOT.GetName]: GUI: Austerity Measures activated"
+			}
+
+			# Lease Factories WIP
+
+			# - Lease Military Factories
+			# This action increases the amount of leased military factories by 1
+			increase_leased_military_factories_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
+					if = { limit = { NOT = { has_country_flag = lease_military_factories_flag } }
+						set_country_flag = lease_military_factories_flag
+					}
+					add_offsite_building = { level = 1 type = arms_factory }
+					add_to_variable = { leased_military_factories = 1 }
+					add_to_variable = { leased_factories = 1 }
+					add_to_variable = { lease_factories_cumulative_cost = leased_factories }
+					ingame_update_setup = yes
+				}
+			}
+			# This action decreases the amount of leased military factories by 1
+			decrease_leased_military_factories_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
+					if = { limit = { check_variable = { leased_military_factories = 1 } }
+						clr_country_flag = lease_military_factories_flag
+					}
+					add_offsite_building = { level = -1 type = arms_factory }
+					subtract_from_variable = { lease_factories_cumulative_cost = leased_factories }
+					add_to_variable = { leased_military_factories = -1 }
+					add_to_variable = { leased_factories = -1 }
+					ingame_update_setup = yes
+				}
+			}
+			# - Lease Civilian Industry
+			# This action increases the amount of leased civilian factories by 1
+			increase_leased_civilian_factories_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
+					if = { limit = { NOT = { has_country_flag = lease_civilian_factories_flag } }
+						set_country_flag = lease_civilian_factories_flag
+					}
+					add_offsite_building = { level = 1 type = industrial_complex }
+					add_to_variable = { leased_civilian_factories = 1 }
+					add_to_variable = { leased_factories = 1 }
+					add_to_variable = { lease_factories_cumulative_cost = leased_factories }
+					ingame_update_setup = yes
+				}
+			}
+			# This action decreases the amount of leased civilian factories by 1
+			decrease_leased_civilian_factories_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
+					if = { limit = { check_variable = { leased_civilian_factories = 1 } }
+						clr_country_flag = lease_civilian_factories_flag
+					}
+					add_offsite_building = { level = -1 type = industrial_complex }
+					subtract_from_variable = { lease_factories_cumulative_cost = leased_factories }
+					add_to_variable = { leased_civilian_factories = -1 }
+					add_to_variable = { leased_factories = -1 }
+					ingame_update_setup = yes
+				}
+			}
+			# - Lease Naval Dockyards
+			# This action increases the amount of leased dockyards by 1
+			increase_leased_dockyards_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
+					if = { limit = { NOT = { has_country_flag = lease_naval_dockyards_flag } }
+						set_country_flag = lease_naval_dockyards_flag
+					}
+					add_offsite_building = { level = 1 type = dockyard }
+					add_to_variable = { leased_dockyards = 1 }
+					add_to_variable = { leased_factories = 1 }
+					add_to_variable = { lease_factories_cumulative_cost = leased_factories }
+					ingame_update_setup = yes
+				}
+			}
+			# This action decreases the amount of leased dockyards by 1
+			decrease_leased_dockyards_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
+					if = { limit = { check_variable = { leased_dockyards = 1 } }
+						clr_country_flag = lease_naval_dockyards_flag
+					}
+					add_offsite_building = { level = -1 type = dockyard }
+					subtract_from_variable = { lease_factories_cumulative_cost = leased_factories }
+					add_to_variable = { leased_dockyards = -1 }
+					add_to_variable = { leased_factories = -1 }
+					ingame_update_setup = yes
+				}
+			}
+
+			# - Industrial Projects
+			# This action triggers a hidden idea to increase industrial complex construction speed
+			industrial_projects_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = industrial_projects_flag } }
+					set_country_flag = industrial_projects_flag
+					add_ideas = industrial_projects_idea
+				}
+				else = {
+					clr_country_flag = industrial_projects_flag
+					remove_ideas = industrial_projects_idea
+				}
+				ingame_update_setup = yes
+			}
+			# - Service Constructions
+			# This action triggers a hidden idea to increase office construction speed
+			service_constructions_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = service_constructions_flag } }
+					set_country_flag = service_constructions_flag
+					add_ideas = service_constructions_idea
+				}
+				else = {
+					clr_country_flag = service_constructions_flag
+					remove_ideas = service_constructions_idea
+				}
+				ingame_update_setup = yes
+			}
+			# - Infrastructure Investiture
+			# This action triggers a hidden idea to increase infrastructure construction speed
+			infrastructure_investiture_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = infrastructure_investiture_flag } }
+					set_country_flag = infrastructure_investiture_flag
+					add_ideas = infrastructure_investiture_idea
+				}
+				else = {
+					clr_country_flag = infrastructure_investiture_flag
+					remove_ideas = infrastructure_investiture_idea
+				}
+				ingame_update_setup = yes
+			}
+			# - Arms Industry Stipends
+			# This action triggers a hidden idea to increase arms military construction speed
+			arms_industry_stipends_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = arms_industry_stipends_flag } }
+					set_country_flag = arms_industry_stipends_flag
+					add_ideas = arms_industry_stipends_idea
+				}
+				else = {
+					clr_country_flag = arms_industry_stipends_flag
+					remove_ideas = arms_industry_stipends_idea
+				}
+				ingame_update_setup = yes
+			}
+			# - Retool Shipyards
+			# This action triggers a hidden idea to increase naval dockyard construction speed
+			retool_shipyards_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = retool_shipyards_flag } }
+					set_country_flag = retool_shipyards_flag
+					add_ideas = retool_shipyards_idea
+				}
+				else = {
+					clr_country_flag = retool_shipyards_flag
+					remove_ideas = retool_shipyards_idea
+				}
+				ingame_update_setup = yes
+			}
+
+			# Employment
+			# - Military Factories Employment
+			# This action decreases employment in this building type
+			decrease_employment_military_factories_click = {
+				if = {
+					limit = { NOT = { check_variable = { military_factory_employment_var = 0 } } }
+					subtract_from_variable = { military_factory_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = military_factory_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			increase_employment_military_factories_click = {
+				if = {
+					limit = { NOT = { check_variable = { military_factory_employment_var = 1 } } }
+					add_to_variable = { military_factory_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = military_factory_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# - Civilian Factories Employment
+			# This action decreases employment in this building type
+			decrease_employment_civilian_factories_click = {
+				if = {
+					limit = { NOT = { check_variable = { civilian_factory_employment_var = 0 } } }
+					subtract_from_variable = { civilian_factory_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = civilian_factory_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			increase_employment_civilian_factories_click = {
+				if = {
+					limit = { NOT = { check_variable = { civilian_factory_employment_var = 1 } } }
+					add_to_variable = { civilian_factory_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = civilian_factory_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# - Naval Factories Employment
+			# This action decreases employment in this building type
+			decrease_employment_dockyards_click = {
+				if = {
+					limit = { NOT = { check_variable = { naval_factory_employment_var = 0 } } }
+					subtract_from_variable = { naval_factory_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = naval_factory_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			increase_employment_dockyards_click = {
+				if = {
+					limit = { NOT = { check_variable = { naval_factory_employment_var = 1 } } }
+					add_to_variable = { naval_factory_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = naval_factory_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# - Offices Employment
+			# This action decreases employment in this building type
+			decrease_employment_offices_click = {
+				if = {
+					limit = { NOT = { check_variable = { office_employment_var = 0 } } }
+					subtract_from_variable = { office_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = office_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			increase_employment_offices_click = {
+				if = {
+					limit = { NOT = { check_variable = { office_employment_var = 1 } } }
+					add_to_variable = { office_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = office_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# - Commercialized Agriculture District
+			# This action decreases employment in this building type
+			decrease_employment_agriculture_click = {
+				if = {
+					limit = { NOT = { check_variable = { agriculture_district_employment_var = 0 } } }
+					subtract_from_variable = { agriculture_district_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = agriculture_district_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			increase_employment_agriculture_click = {
+				if = {
+					limit = { NOT = { check_variable = { agriculture_district_employment_var = 1 } } }
+					add_to_variable = { agriculture_district_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = agriculture_district_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# - Microchip Plant
+			# This action decreases employment in this building type
+			decrease_employment_microchips_click = {
+				if = {
+					limit = { NOT = { check_variable = { microchip_plant_employment_var = 0 } } }
+					subtract_from_variable = { microchip_plant_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = microchip_plant_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			increase_employment_microchips_click = {
+				if = {
+					limit = { NOT = { check_variable = { microchip_plant_employment_var = 1 } } }
+					add_to_variable = { microchip_plant_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = microchip_plant_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# - Composite Plant
+			# This action decreases employment in this building type
+			decrease_employment_composites_click = {
+				if = {
+					limit = { NOT = { check_variable = { composite_plant_employment_var = 0 } } }
+					subtract_from_variable = { composite_plant_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = composite_plant_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			increase_employment_composites_click = {
+				if = {
+					limit = { NOT = { check_variable = { composite_plant_employment_var = 1 } } }
+					add_to_variable = { composite_plant_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = composite_plant_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# - Synthetic Refineries
+			# This action decreases employment in this building type
+			decrease_employment_rafineries_click = {
+				if = {
+					limit = { NOT = { check_variable = { synthetic_refinery_employment_var = 0 } } }
+					subtract_from_variable = { synthetic_refinery_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = synthetic_refinery_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			increase_employment_rafineries_click = {
+				if = {
+					limit = { NOT = { check_variable = { synthetic_refinery_employment_var = 1 } } }
+					add_to_variable = { synthetic_refinery_employment_var = 0.05 }
+					add_political_power = -20
+				}
+				clamp_variable = { var = synthetic_refinery_employment_var min = 0 max = 1 }
+				ingame_update_setup = yes
+			}
+		}
+	}
+}

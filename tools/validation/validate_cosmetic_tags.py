@@ -11,6 +11,7 @@ from typing import Dict, List, Set, Tuple
 
 import disk_cache
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
     DataCleaner,
@@ -20,7 +21,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
 # Millennium Dawn ideology suffixes for flag .tga matching
 MD_IDEOLOGY_SUFFIXES = [

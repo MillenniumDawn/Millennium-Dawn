@@ -298,7 +298,7 @@ class Validator(BaseValidator):
             return_paths=True,
             staged_files=self.staged_files,
             workers=self.workers,
-            pool=self._pool,
+            pool=self._get_pool(),
         )
 
         unique_vars = {}

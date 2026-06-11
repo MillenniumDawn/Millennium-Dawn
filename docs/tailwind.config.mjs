@@ -165,9 +165,6 @@ export default {
         wide: "1100px",
         narrow: { max: "1099px" },
       },
-      mdDocs: {
-        "back-to-top-threshold": "var(--back-to-top-threshold)",
-      },
     },
   },
 };

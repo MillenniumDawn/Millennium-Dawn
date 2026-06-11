@@ -176,6 +176,23 @@ def test_both_empty_not_flagged():
     assert _random("random_list = { 50 = {} 50 = {} }\n") == []
 
 
+def test_bucket_with_modifier_not_flagged():
+    # random = { chance = N } has no modifier support; the conversion is invalid.
+    text = (
+        "random_list = {\n"
+        "\t40 = {\n"
+        "\t\tmodifier = {\n"
+        "\t\t\tfactor = 0.80\n"
+        "\t\t\thas_idea = recession\n"
+        "\t\t}\n"
+        "\t\tdecrease_economic_growth = yes\n"
+        "\t}\n"
+        "\t60 = { }\n"
+        "}\n"
+    )
+    assert _random(text) == []
+
+
 # --- identical adjacent create_unit -> count -------------------------------
 
 
