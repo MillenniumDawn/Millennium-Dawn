@@ -2460,7 +2460,13 @@ focus_tree = {
 			add_stability = 0.1
 			add_war_support = -0.15
 			increase_military_spending = yes
-			set_grand_doctrine = defence_in_depth
+			if = {
+				limit = { NOT = { has_any_grand_doctrine = land } }
+				set_grand_doctrine = defence_in_depth
+			}
+			else = {
+				add_mastery = { amount = 50 folder = land }
+			}
 			if = {
 				limit = { has_dlc = "Arms Against Tyranny" }
 				mio:NKO_tank_manufacturer_facility = { add_mio_funds = 2000 }
@@ -2523,10 +2529,7 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus NKO_People_Air_force executed"
 			air_experience = 100
 			if = {
-				limit = { has_any_grand_doctrine = air }
-				army_experience = 100
-			}
-			else = {
+				limit = { NOT = { has_any_grand_doctrine = air } }
 				set_grand_doctrine = local_airspace_defense
 			}
 		}
@@ -2925,18 +2928,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus NKO_Rebuild_sso"
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
 			add_ideas = NKO_army_sso
-			set_grand_doctrine = special_forces_ranger_focus
-			set_sub_doctrine = { sub_doctrine = forest_ranger_doctrine folder = special_forces track = 0 }
-			set_sub_doctrine = { sub_doctrine = ranger_strike_doctrine folder = special_forces track = 1 }
-			set_sub_doctrine = { sub_doctrine = airborne_interdiction_abn_mar folder = special_forces track = 2 }
-			set_sub_doctrine = { sub_doctrine = sabotage_subversion_doctrine folder = special_forces track = 3 }
+			if = {
+				limit = { has_any_grand_doctrine = special_forces }
+				add_mastery = {
+					amount = 50
+					folder = special_forces
+				}
+				army_experience = 50
 
-			add_mastery = {
-				amount = 200
-				folder = special_forces
+			}
+			else = {
+				set_grand_doctrine = special_forces_ranger_focus
+				army_experience = 100
+
 			}
 			custom_effect_tooltip = NKO_specialise_commando_tt
 			every_army_leader = {
