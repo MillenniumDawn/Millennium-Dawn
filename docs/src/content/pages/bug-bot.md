@@ -31,4 +31,4 @@ The bot replies in your thread with a link to the GitHub issue once it is filed.
 
 ## Privacy
 
-The bot reads your report text and republishes it to a public GitHub issue. Your Discord username is not published. For the full details on what is collected, how it is shared, how long it is kept, and how to have it deleted, see the [Bug Bot Privacy Policy](/bug-bot-privacy/).
+The bot reads your report text and republishes it to a public GitHub issue. Your Discord username is not published. For the full details on what is collected, how it is shared, how long it is kept, and how to have it deleted, see the **[Bug Bot Privacy Policy](/bug-bot-privacy/)**.

@@ -31,7 +31,7 @@ The bot does not sell your data, share it with advertisers or data brokers, or u
 ## How long it is kept
 
 - **GitHub issues** stay on GitHub indefinitely. They are the record of the bug.
-- **Operational and audit logs** (webhook deliveries, AI output, duplicate-check audits) are automatically deleted after 30 days.
+- **Operational and audit logs** (webhook deliveries, AI output, duplicate-check audits) are automatically deleted after 30 days via automated systems.
 - **Thread-to-issue mappings** are kept while the issue is active.
 
 ## Your choices
