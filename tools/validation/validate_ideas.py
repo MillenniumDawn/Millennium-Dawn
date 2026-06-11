@@ -463,7 +463,7 @@ class Validator(BaseValidator):
     def __init__(self, *args, **kwargs):
         self.missing_loc = kwargs.pop("missing_loc", False)
         self.missing_icons = kwargs.pop("missing_icons", False)
-        self.unused_ideas = kwargs.pop("unused_ideas", False)
+        self.unused_ideas = kwargs.pop("unused_ideas", True)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
 
@@ -1057,7 +1057,7 @@ class Validator(BaseValidator):
             self.validate_unused_ideas(defined_ideas)
         else:
             self._log_section(
-                "Skipping unused idea check (pass --unused-ideas to enable)"
+                "Skipping unused idea check (pass --no-unused-ideas to disable)"
             )
 
 
@@ -1077,8 +1077,15 @@ def _add_extra_args(parser):
     parser.add_argument(
         "--unused-ideas",
         action="store_true",
+        default=True,
         dest="unused_ideas",
         help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced",
+    )
+    parser.add_argument(
+        "--no-unused-ideas",
+        action="store_false",
+        dest="unused_ideas",
+        help="Disable the unused idea check (enabled by default)",
     )
     parser.add_argument(
         "--suggest-consolidation",

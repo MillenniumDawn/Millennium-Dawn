@@ -477,9 +477,14 @@ class BaseValidator:
 
     def log(self, message: str, level: str = "info"):
         # Respect MD_LOG_LEVEL — skip messages below the configured threshold.
-        if level == "info" and _LOG_LEVEL != "INFO":
+        # level="always" bypasses the filter (used for section headers and
+        # the positive "all clear" messages that must be visible regardless
+        # of verbosity).
+        if level == "always":
+            pass
+        elif level == "info" and _LOG_LEVEL != "INFO":
             return
-        if level == "warning" and _LOG_LEVEL == "ERROR":
+        elif level == "warning" and _LOG_LEVEL == "ERROR":
             return
 
         display_msg = (
@@ -505,11 +510,12 @@ class BaseValidator:
             self._section_timings.append((self._section_title, elapsed))
         self._section_title = title
         self._section_start = time.perf_counter()
-        self.log(f"\n{'='*80}")
+        self.log(f"\n{'='*80}", "always")
         self.log(
-            f"{Colors.CYAN if self.use_colors else ''}{title}{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.CYAN if self.use_colors else ''}{title}{Colors.ENDC if self.use_colors else ''}",
+            "always",
         )
-        self.log(f"{'='*80}")
+        self.log(f"{'='*80}", "always")
 
     def _finish_sections(self):
         """Close the last section timer and print a timing summary."""
@@ -684,7 +690,8 @@ class BaseValidator:
             )
         else:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
 
     def get_issues_json(self) -> str:
@@ -862,19 +869,21 @@ class BaseValidator:
         raise NotImplementedError("Subclasses must implement run_validations()")
 
     def run_all_validations(self):
-        self.log(f"\n{'#'*80}")
+        self.log(f"\n{'#'*80}", "always")
         self.log(
-            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}",
+            "always",
         )
-        self.log(f"{'#'*80}")
-        self.log(f"Mod path: {self.mod_path}")
-        self.log(f"Worker processes: {self.workers}")
+        self.log(f"{'#'*80}", "always")
+        self.log(f"Mod path: {self.mod_path}", "always")
+        self.log(f"Worker processes: {self.workers}", "always")
         if self.staged_only:
             self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
         if self.output_file:
-            self.log(f"Output file: {self.output_file}")
+            self.log(f"Output file: {self.output_file}", "always")
 
         try:
             self.run_validations()
@@ -885,10 +894,11 @@ class BaseValidator:
                 self._pool.join()
                 self._pool = None
 
-        self.log(f"\n{'#'*80}")
+        self.log(f"\n{'#'*80}", "always")
         if self.errors_found == 0 and self.warnings_found == 0:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
         else:
             error_msg = "✗ VALIDATION COMPLETE"
@@ -898,9 +908,9 @@ class BaseValidator:
                 error_msg += f" - {self.warnings_found} WARNING(S)"
             self.log(
                 f"{Colors.RED if self.use_colors else ''}{error_msg}{Colors.ENDC if self.use_colors else ''}",
-                "error",
+                "always",
             )
-        self.log(f"{'#'*80}\n")
+        self.log(f"{'#'*80}\n", "always")
 
         self.save_output()
         return self.errors_found
