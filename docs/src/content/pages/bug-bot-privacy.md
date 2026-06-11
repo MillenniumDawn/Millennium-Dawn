@@ -37,7 +37,6 @@ The bot does not sell your data, share it with advertisers or data brokers, or u
 ## Your choices
 
 - Run **`/forget`** in Discord to delete the data the bot holds about you. This removes your `/register` entry and de-identifies your Discord id from stored reports and logs. Published GitHub issues already carry no username; the report text stays as the tracked bug. If you need an issue itself removed, ask a maintainer.
-- You can request a copy, correction, or deletion of your data, including under the GDPR, UK GDPR, and CCPA/CPRA where they apply. Contact a maintainer in the Discord server or open a request on the GitHub repository.
 
 ## Security
 
