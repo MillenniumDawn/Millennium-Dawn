@@ -107,6 +107,7 @@ HKG_contract_migrate_v2 = {
 	set_variable = { HKG_contract_standing_loss = 15 }
 	clr_country_flag = HKG_contract_in_progress
 	clr_country_flag = HKG_contract_offer_pending
+	HKG_contract_update_resource_access = yes
 	if = {
 		limit = { NOT = { has_dynamic_modifier = { modifier = HKG_contract_shipbuilding_legacy } } }
 		set_variable = { HKG_contract_dockyard_output = 0 }
@@ -330,6 +331,10 @@ HKG_contract_accept_offer = {
 		subtract_from_temp_variable = { final_pay = HKG_contract_offer_advance }
 		set_variable = { HKG_contract_final_array^free_slot = final_pay }
 		add_to_variable = { HKG_contract_count = 1 }
+		if = {
+			limit = { NOT = { has_idea = HKG_contract_resource_access } }
+			add_ideas = HKG_contract_resource_access
+		}
 		set_temp_variable = { treasury_change = HKG_contract_offer_advance }
 		modify_treasury_effect = yes
 		add_to_variable = { HKG_contract_funds = HKG_contract_offer_advance }
@@ -454,6 +459,7 @@ HKG_contract_fulfill_slot = {
 	}
 	HKG_contract_clear_slot = yes
 	subtract_from_variable = { HKG_contract_count = 1 }
+	HKG_contract_update_resource_access = yes
 	country_event = { id = HKG_contract.2 days = 1 }
 }
 
@@ -464,7 +470,18 @@ HKG_contract_miss_slot = {
 	set_temp_variable = { done_slot = gone_slot }
 	HKG_contract_clear_slot = yes
 	subtract_from_variable = { HKG_contract_count = 1 }
+	HKG_contract_update_resource_access = yes
 	country_event = { id = HKG_contract.3 days = 1 }
+}
+
+HKG_contract_update_resource_access = {
+	if = {
+		limit = {
+			check_variable = { HKG_contract_count = 0 }
+			has_idea = HKG_contract_resource_access
+		}
+		remove_ideas = HKG_contract_resource_access
+	}
 }
 
 HKG_contract_clear_slot = {
