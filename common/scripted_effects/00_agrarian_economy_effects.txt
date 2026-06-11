@@ -61,12 +61,11 @@ AGRI_difficulty_settings = {
 AGRI_civil_war = {
 	if = {
 		limit = { FROM = { is_agrarian_economy = yes } }
-		AGRI_plant_the_seeds = yes
 		set_variable = { ROOT.agri_crop_allocation^0 = FROM.agri_crop_allocation^0 }
 		set_variable = { ROOT.agri_crop_allocation^1 = FROM.agri_crop_allocation^1 }
 		set_variable = { ROOT.agri_crop_price^0 = FROM.agri_crop_price^0 }
 		set_variable = { ROOT.agri_crop_price^1 = FROM.agri_crop_price^1 }
-		AGRI_difficulty_settings = yes
+		AGRI_plant_the_seeds = yes
 	}
 }
 
@@ -90,29 +89,62 @@ AGRI_price_change_effect = {
 	custom_effect_tooltip = agri_price_change
 }
 
+# Apply the same price_change (temp) to both crop types. Caller sets price_change.
+AGRI_price_change_all_crops = {
+	set_temp_variable = { crop_type = 0 }
+	AGRI_price_change_effect = yes
+	set_temp_variable = { crop_type = 1 }
+	AGRI_price_change_effect = yes
+}
+
+# Shift land between crops: allocation_change (temp) goes to basic, its inverse to cash.
+AGRI_shift_crop_allocation = {
+	set_temp_variable = { crop_type = 0 }
+	AGRI_allocation_change_effect = yes
+	multiply_temp_variable = { allocation_change = -1 }
+	set_temp_variable = { crop_type = 1 }
+	AGRI_allocation_change_effect = yes
+}
+
 AGRI_protection_update = {
 	add_to_variable = { AGRI_protection = AGRI_protections_change }
 	custom_effect_tooltip = AGRI_protections_effect
 }
 
+# Alert agrarian neighbours (skipping our patron) and our patron about a drought,
+# one effect per severity tier. Called from the AGRI.2 drought-response options.
+AGRI_spread_drought_minor = {
+	every_neighbor_country = {
+		limit = { NOT = { check_variable = { PREV.influence_array^0 = THIS.id } } }
+		country_event = { id = AGRI_neighbour.1 days = 2 }
+	}
+	var:influence_array^0 = { country_event = { id = AGRI_influencer.1 days = 2 } }
+}
+
+AGRI_spread_drought_major = {
+	every_neighbor_country = {
+		limit = { NOT = { check_variable = { PREV.influence_array^0 = THIS.id } } }
+		country_event = { id = AGRI_neighbour.2 days = 2 }
+	}
+	var:influence_array^0 = { country_event = { id = AGRI_influencer.2 days = 2 } }
+}
+
+AGRI_spread_drought_extreme = {
+	every_neighbor_country = {
+		limit = { NOT = { check_variable = { PREV.influence_array^0 = THIS.id } } }
+		country_event = { id = AGRI_neighbour.3 days = 2 }
+	}
+	var:influence_array^0 = { country_event = { id = AGRI_influencer.3 days = 2 } }
+}
+
 AGRI_banked_changes_update_basic = {
-	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_banked_changes_update_basic"
-	set_variable = { AGRI_PP_calculate_basic = AGRI_banked_changes_cash }
-	multiply_variable = { AGRI_PP_calculate_basic = 1000 }
-	set_variable = { AGRI_pp_cost = AGRI_PP_calculate_basic }
-	set_variable = { AGRI_pp_check = AGRI_pp_cost }
-	multiply_variable = { AGRI_pp_check = -1 }
-	log = "[GetDateText]: [ROOT.GetName]: Effect Completed: AGRI_banked_changes_update_basic"
+	set_variable = { AGRI_pp_cost = { value = AGRI_banked_changes_cash  multiply = 1000 } }
+	set_variable = { AGRI_pp_check = { value = AGRI_pp_cost  multiply = -1 } }
 }
 
 AGRI_banked_changes_update_cash = {
-	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_banked_changes_update_cash"
-	set_variable = { AGRI_PP_calculate_cash = AGRI_banked_changes_basic }
-	multiply_variable = { AGRI_PP_calculate_cash = 1000 }
-	set_variable = { AGRI_pp_cost = AGRI_PP_calculate_cash }
-	set_variable = { AGRI_pp_check = AGRI_pp_cost }
-	multiply_variable = { AGRI_pp_check = -1 }
-	log = "[GetDateText]: [ROOT.GetName]: Effect Completed: AGRI_banked_changes_update_cash"
+	set_variable = { AGRI_pp_cost = { value = AGRI_banked_changes_basic  multiply = 1000 } }
+	set_variable = { AGRI_pp_check = { value = AGRI_pp_cost  multiply = -1 } }
 }
 
 AGRI_clear_banked_variables = {
@@ -121,40 +153,58 @@ AGRI_clear_banked_variables = {
 	clear_variable = AGRI_pp_cost
 }
 
+# Bank an allocation shift toward basic crops (cash gets the inverse). Expects temp
+# var AGRI_bank_delta (the signed basic-side change). A positive shift that collides
+# with already-banked cash changes clears the bank first; the GUI buttons set the delta.
+AGRI_bank_basic_change = {
+	if = {
+		limit = {
+			check_variable = { AGRI_bank_delta > 0 }
+			check_variable = { AGRI_banked_changes_cash > 0 }
+		}
+		AGRI_clear_banked_variables = yes
+	}
+	add_to_variable = { AGRI_banked_changes_basic = AGRI_bank_delta }
+	set_temp_variable = { AGRI_bank_delta_inv = { value = AGRI_bank_delta  multiply = -1 } }
+	add_to_variable = { AGRI_banked_changes_cash = AGRI_bank_delta_inv }
+	AGRI_banked_changes_update_basic = yes
+}
+
+# Mirror of AGRI_bank_basic_change for cash crops. AGRI_bank_delta is the cash-side change.
+AGRI_bank_cash_change = {
+	if = {
+		limit = {
+			check_variable = { AGRI_bank_delta > 0 }
+			check_variable = { AGRI_banked_changes_basic > 0 }
+		}
+		AGRI_clear_banked_variables = yes
+	}
+	add_to_variable = { AGRI_banked_changes_cash = AGRI_bank_delta }
+	set_temp_variable = { AGRI_bank_delta_inv = { value = AGRI_bank_delta  multiply = -1 } }
+	add_to_variable = { AGRI_banked_changes_basic = AGRI_bank_delta_inv }
+	AGRI_banked_changes_update_cash = yes
+}
+
 AGRI_monthly_changes_math = {
-	set_variable = { AGRI_monthly_changes_basic = AGRI_banked_changes_basic }
-	multiply_variable = { AGRI_monthly_changes_basic = 0.5 }
-	set_variable = { AGRI_monthly_changes_cash = AGRI_banked_changes_cash }
-	multiply_variable = { AGRI_monthly_changes_cash = 0.5 }
+	set_variable = { AGRI_monthly_changes_basic = { value = AGRI_banked_changes_basic  multiply = 0.5 } }
+	set_variable = { AGRI_monthly_changes_cash = { value = AGRI_banked_changes_cash  multiply = 0.5 } }
 }
 
 AGRI_update_math_variables = {
-	# CROP OUTPUT
-	set_variable = { basic_crop_output = agriculture_workers }
-	multiply_variable = { basic_crop_output = agri_crop_allocation^0 }
-	set_variable = { cash_crop_output = agriculture_workers }
-	multiply_variable = { cash_crop_output = agri_crop_allocation^1 }
-	# CROP TOTAL VALUE
-	set_variable = { basic_crop_total_value = basic_crop_output }
-	multiply_variable = { basic_crop_total_value = agri_crop_price^0 }
-	set_variable = { cash_crop_total_value = cash_crop_output }
-	multiply_variable = { cash_crop_total_value = agri_crop_price^1 }
-	# TOTAL CROP INCOME (multiplied by 1.85 constant)
-	set_variable = { combined_crop_value = basic_crop_total_value }
-	add_to_variable = { combined_crop_value = cash_crop_total_value }
-	multiply_variable = { combined_crop_value = 1.85 }
-	# YEARLY HARVEST (combined_crop_value / literacy_rate)
-	set_variable = { yearly_harvest_value = combined_crop_value }
-	divide_variable = { yearly_harvest_value = literacy_rate }
-	# WEEKLY HARVEST BILLION (yearly / 52 / 100 = yearly * 0.00019)
-	set_variable = { weekly_harvest_billion = yearly_harvest_value }
-	multiply_variable = { weekly_harvest_billion = 0.00019 }
-	# ANNUAL HARVEST DISPLAY (yearly * 0.1)
-	set_variable = { annual_harvest_display = yearly_harvest_value }
-	multiply_variable = { annual_harvest_display = 0.1 }
-	# WEEKLY HARVEST DISPLAY (yearly / 52 * 100 = yearly * 1.92308)
-	set_variable = { weekly_harvest_display = yearly_harvest_value }
-	multiply_variable = { weekly_harvest_display = 1.92308 }
+	# Output = farm workers weighted by each crop's allocation share
+	set_variable = { basic_crop_output = { value = agriculture_workers  multiply = agri_crop_allocation^0 } }
+	set_variable = { cash_crop_output = { value = agriculture_workers  multiply = agri_crop_allocation^1 } }
+	# Value = output times that crop's price
+	set_variable = { basic_crop_total_value = { value = basic_crop_output  multiply = agri_crop_price^0 } }
+	set_variable = { cash_crop_total_value = { value = cash_crop_output  multiply = agri_crop_price^1 } }
+	# Combined income, scaled by the 1.85 productivity constant
+	set_variable = { combined_crop_value = { value = basic_crop_total_value  add = cash_crop_total_value  multiply = 1.85 } }
+	# Yearly harvest divides by literacy_rate (clamped >= 0.01 in the education system)
+	set_variable = { yearly_harvest_value = { value = combined_crop_value  divide = literacy_rate } }
+	# weekly income (yearly / 52 / 100), and the annual/weekly display figures
+	set_variable = { weekly_harvest_billion = { value = yearly_harvest_value  multiply = 0.00019 } }
+	set_variable = { annual_harvest_display = { value = yearly_harvest_value  multiply = 0.1 } }
+	set_variable = { weekly_harvest_display = { value = yearly_harvest_value  multiply = 1.92308 } }
 }
 
 AGRI_plow_the_fields = {
