@@ -193,7 +193,8 @@ def test_report_mixed_input_shapes():
 
 
 def test_report_persists_issues_without_category():
-    """Every finding is stored, category or not.
+    """Every finding is stored, and a missing category falls back to the
+    (cleaned) fail_msg so the grouped end-of-run report has a sensible label.
 
     Issues must reach the JSON sidecar (and the CI report built from it) even
     when the caller omits a category — otherwise a _report call would fail the
@@ -208,4 +209,5 @@ def test_report_persists_issues_without_category():
     )
     assert v.errors_found == 1
     assert len(v._issues) == 1
-    assert v._issues[0].category == ""
+    # No explicit category → grouped under the cleaned fail_msg label.
+    assert v._issues[0].category == "Found issues"
