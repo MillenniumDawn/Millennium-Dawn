@@ -239,6 +239,36 @@ Also applies inside namelist files:
 
 `allowed` in decisions is evaluated **once at game start** and locked. Dynamic conditions (factory counts, opinion, date) must go in `available` or `visible`. **Caught by `check_common_mistakes.py`** for clearly-dynamic triggers.
 
+## Guard gates on optional / elected office holders
+
+When a decision, focus, or trigger gates on "the holder of office X" — `is_leader_of_EU_foreign_policy`, `has_idea = EU_commission_president`, a faction leader, a dynamically-elected role — ask **"can that office be empty?"** Offices granted by `add_timed_idea`, elections, or events are **not** permanent: before the first election, or after a timed idea lapses with no re-election, the holder does not exist. A gate that assumes the holder exists then evaluates false for everyone and becomes **unsatisfiable**, soft-locking whatever it gates (the player sees a requirement pointing at an office nobody holds, with no way to progress).
+
+Always provide a defined branch for the vacant case:
+
+```
+# Wrong — un-completable while every office holder is vacant
+available = {
+	any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes }
+	# ...influence requirement on the holder...
+}
+
+# Correct — fall back to a satisfiable bar when no holder exists
+available = {
+	OR = {
+		AND = {
+			any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes }
+			# ...influence requirement on the holder...
+		}
+		AND = {
+			NOT = { any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes } }
+			# ...broad fallback so the path is never hard-locked...
+		}
+	}
+}
+```
+
+Mirror the vacant case in the tooltip so the player knows what to do (e.g. "if no office is filled, this requires X instead"). The same applies to `var:`-stored country references: guard `check_variable = { var:holder > 0 }` before scoping in, since an uninitialized holder reads 0.
+
 ## if/else over if/if
 
 When two consecutive `if` blocks cover complementary conditions, always use `if/else`:
