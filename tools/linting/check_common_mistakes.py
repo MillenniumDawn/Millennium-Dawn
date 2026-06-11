@@ -96,6 +96,7 @@ _RE_CLAMP_GUARD = re.compile(
 )
 _RE_CHECK_VAR_GT = re.compile(r"check_variable\s*=\s*\{\s*(\S+)\s*>\s*[\d.]+\s*\}")
 _RE_CHECK_VAR_LE = re.compile(r"check_variable\s*=\s*\{\s*(\S+)\s*[<=]\s*[\d.]+\s*\}")
+_RE_SET_VAR_NONZERO = re.compile(r"set_variable\s*=\s*\{\s*(\S+)\s*=\s*(-?[\d.]+)\s*\}")
 _RE_LIMIT_OPEN = re.compile(r"\blimit\s*=\s*\{")
 _RE_IF_ELSE_OPEN = re.compile(r"\b(if|else_if|else)\s*=\s*\{")
 _RE_HAS_IDEA = re.compile(r"has_idea\s*=\s*(\w+)")
@@ -755,6 +756,7 @@ def _check_divide_variable_zero_guard(lines):
     Recognized guards (suppress the warning):
       - check_variable { divisor > 0 } in enclosing scope
       - clamp_variable / clamp_temp_variable { var = divisor min = N } where N > 0
+      - set_variable { divisor = N } where N != 0 (variable is initialized)
       - Division inside an else block whose sibling if checks divisor = 0 or < threshold
     """
     issues = []
@@ -797,6 +799,15 @@ def _check_divide_variable_zero_guard(lines):
         check_guard_m = _RE_CHECK_VAR_GT.search(code)
         if check_guard_m:
             guarded_vars.add(check_guard_m.group(1))
+
+        # Detect set_variable with a non-zero literal (variable is initialized)
+        set_var_m = _RE_SET_VAR_NONZERO.search(code)
+        if set_var_m:
+            try:
+                if float(set_var_m.group(2)) != 0:
+                    guarded_vars.add(set_var_m.group(1))
+            except ValueError:
+                pass
 
         # Check divide_variable
         m = _RE_DIVIDE_VAR.search(code)
