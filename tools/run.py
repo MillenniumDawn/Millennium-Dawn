@@ -37,7 +37,6 @@ SEARCH_DIRS = [
 
 # Internal/library scripts that should not appear in --list.
 HIDDEN = {
-    "path_utils",
     "shared_utils",
     "loc",
     "logging_tool",

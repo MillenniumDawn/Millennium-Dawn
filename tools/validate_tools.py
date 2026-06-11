@@ -19,7 +19,6 @@ _SKIP_SCRIPTS = frozenset({"validate_tools.py"})
 # Shebang, executability, and main-guard checks are not meaningful for these.
 _LIBRARY_MODULES = frozenset(
     {
-        "path_utils.py",
         "shared_utils.py",
         "loc.py",
         "logging_tool.py",

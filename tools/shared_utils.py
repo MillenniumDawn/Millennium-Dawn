@@ -14,29 +14,47 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-COLORS = {
-    "SUCCESS": "\033[92m",  # Green
-    "INFO": "\033[94m",  # Blue
-    "DEBUG": "\033[90m",  # Gray
-    "WARNING": "\033[93m",  # Yellow
-    "ERROR": "\033[91m",  # Red
+
+class Colors:
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    GRAY = "\033[90m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+
+_LEVEL_COLORS = {
+    "SUCCESS": Colors.GREEN,
+    "INFO": Colors.BLUE,
+    "DEBUG": Colors.GRAY,
+    "WARNING": Colors.YELLOW,
+    "ERROR": Colors.RED,
 }
-RESET_COLOR = "\033[0m"
+
+
+# Default skip patterns shared across validators. Individual validators can
+# extend this list with their own patterns.
+DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
 
 
 def log_message(
     level: str, message: str, verbose: bool = False, use_colors: bool = True
 ):
-    """Log a message with timestamp and optional color coding"""
+    """Log a message with timestamp and optional color coding."""
     if level == "DEBUG" and not verbose:
         return
 
     timestamp = datetime.now().strftime("%H:%M:%S")
 
-    color = COLORS.get(level, "") if use_colors else ""
-    reset_color = RESET_COLOR if use_colors else ""
+    color = _LEVEL_COLORS.get(level, "") if use_colors else ""
+    reset = Colors.ENDC if use_colors else ""
 
-    formatted_message = f"{color}[{timestamp}] {level}: {message}{reset_color}"
+    formatted_message = f"{color}[{timestamp}] {level}: {message}{reset}"
     print(formatted_message, file=sys.stderr)
 
 
@@ -85,6 +103,9 @@ def create_validation_parser(description: str) -> argparse.ArgumentParser:
         "--staged", action="store_true", help="Only validate git staged files"
     )
     parser.add_argument(
+        "--no-cache", action="store_true", help="Bypass disk cache for this run"
+    )
+    parser.add_argument(
         "--workers",
         type=int,
         default=None,
@@ -93,8 +114,31 @@ def create_validation_parser(description: str) -> argparse.ArgumentParser:
     return parser
 
 
+def strip_inline_comment(line: str) -> str:
+    """Return *line* with any trailing ``#`` comment removed.
+
+    A ``#`` inside a double-quoted string is not a comment. Use this anywhere a
+    line's braces/tokens are counted so unbalanced braces inside comments don't
+    corrupt the count. Returns the code portion (trailing newline/space preserved
+    up to the cut), not stripped of surrounding whitespace.
+    """
+    if "#" not in line:
+        return line
+    in_str = False
+    for i, c in enumerate(line):
+        if c == '"' and (i == 0 or line[i - 1] != "\\"):
+            in_str = not in_str
+        elif c == "#" and not in_str:
+            return line[:i]
+    return line
+
+
 def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
-    """Extract a multi-line block by counting braces"""
+    """Extract a multi-line block by counting braces.
+
+    Inline comments are stripped before counting so a ``#`` comment containing an
+    unbalanced brace does not corrupt the depth.
+    """
     if start_index >= len(lines):
         return [], start_index
 
@@ -106,9 +150,10 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
         line = lines[i]
         block_lines.append(line)
 
-        brace_count += line.count("{") - line.count("}")
+        code = strip_inline_comment(line)
+        brace_count += code.count("{") - code.count("}")
 
-        if brace_count == 0 and "{" in lines[start_index]:
+        if brace_count == 0 and "{" in strip_inline_comment(lines[start_index]):
             i += 1
             break
         elif brace_count < 0:
@@ -197,6 +242,14 @@ def should_skip_file(
             if pattern in filename:
                 return True
     return False
+
+
+def clean_filepath(filepath: str) -> str:
+    """Trim a filepath to start from the first known mod directory."""
+    for prefix in ("common", "events", "history", "interface"):
+        if prefix in filepath:
+            return prefix + filepath.split(prefix, 1)[1]
+    return filepath
 
 
 # Common Hearts of Iron IV install locations, checked when a validator needs
@@ -612,13 +665,20 @@ def get_root_dir() -> str:
     )
 
 
-def run_with_pool(func, items: list, workers: int, chunksize: int = None):
+def run_with_pool(
+    func,
+    items: list,
+    workers: int,
+    chunksize: int = None,
+    initializer=None,
+    initargs=(),
+):
     """Run func over items using Pool when beneficial, sequential otherwise."""
     if len(items) < 10 or workers == 1:
         return [func(item) for item in items]
     from multiprocessing import Pool
 
-    with Pool(processes=workers) as pool:
+    with Pool(processes=workers, initializer=initializer, initargs=initargs) as pool:
         if chunksize:
             return pool.map(func, items, chunksize=chunksize)
         return pool.map(func, items)
@@ -776,19 +836,46 @@ def get_staged_files(
         return None
 
 
-def run_tool_main(tool_class, description: str = "Run tool", extra_args_fn=None):
-    """Main entry point for running tools with standard argument parsing"""
-    parser = create_standard_parser(description)
+def run_tool_main(
+    tool_class,
+    description: str = "Run tool",
+    extra_args_fn=None,
+    method_name: str = "process_file",
+    argv=None,
+    parser=None,
+):
+    """Main entry point for single-file tools and standardizers.
+
+    Args:
+        tool_class: Class to instantiate (DataCleaner subclass or BaseStandardizer).
+        description: CLI description string.
+        extra_args_fn: Optional callback to add custom argparse arguments.
+        method_name: Method to call on the instance (default: "process_file").
+        argv: Argument list (default: sys.argv[1:]).
+        parser: Custom ArgumentParser (default: create_standard_parser).
+    """
+    if parser is None:
+        parser = create_standard_parser(description)
     if extra_args_fn:
         extra_args_fn(parser)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if not os.path.exists(args.input_file):
         log_message("ERROR", f"File '{args.input_file}' does not exist")
         sys.exit(1)
 
     output_file = args.output if args.output else args.input_file
-    tool = tool_class(verbose=args.verbose, use_colors=not args.no_color)
+
+    import inspect
+
+    sig = inspect.signature(tool_class.__init__)
+    valid_params = set(sig.parameters.keys()) - {"self"}
+    ctor_kwargs = {}
+    if "verbose" in valid_params:
+        ctor_kwargs["verbose"] = args.verbose
+    if "use_colors" in valid_params:
+        ctor_kwargs["use_colors"] = not getattr(args, "no_color", False)
+    tool = tool_class(**ctor_kwargs)
 
     if args.backup:
         backup_file = create_backup(args.input_file)
@@ -797,7 +884,8 @@ def run_tool_main(tool_class, description: str = "Run tool", extra_args_fn=None)
 
     log_message("INFO", f"Starting processing of {args.input_file}", args.verbose)
 
-    if tool.process_file(args.input_file, output_file):
+    method = getattr(tool, method_name)
+    if method(args.input_file, output_file):
         log_message("SUCCESS", f"Processing completed: {output_file}")
     else:
         log_message("ERROR", "Processing failed")
@@ -821,15 +909,27 @@ def run_validator_main(
         log_message("ERROR", f"Path is not a directory: {mod_path}")
         sys.exit(1)
 
+    if getattr(args, "no_cache", False):
+        os.environ["MD_NO_CACHE"] = "1"
+
     kwargs = dict(
         output_file=args.output,
         use_colors=not args.no_color,
         staged_only=args.staged,
         workers=args.workers,
+        no_cache=getattr(args, "no_cache", False),
     )
     if extra_args_fn:
         for key in vars(args):
-            if key not in ("path", "strict", "output", "no_color", "staged", "workers"):
+            if key not in (
+                "path",
+                "strict",
+                "output",
+                "no_color",
+                "staged",
+                "workers",
+                "no_cache",
+            ):
                 kwargs[key] = getattr(args, key)
 
     validator = validator_class(str(mod_path), **kwargs)

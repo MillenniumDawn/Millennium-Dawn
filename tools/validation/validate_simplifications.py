@@ -125,17 +125,21 @@ def _find_scope_expansion(text: str):
 # Three+ buckets, or two non-empty buckets, must stay (see AGENTS.md).
 _RANDOM_LIST_RE = re.compile(r"\brandom_list\s*=\s*\{")
 _WEIGHT_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
+_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
 
 
 def _find_two_bucket_random(text: str):
     """Return (line, chance) for each two-bucket random_list with one empty
-    bucket, where chance is the probability the non-empty bucket fires."""
+    bucket, where chance is the probability the non-empty bucket fires.
+
+    Buckets containing ``modifier = { }`` blocks are skipped — ``random = {}
+    chance = N`` has no modifier support, so the conversion is not valid."""
     results = []
     for m in _RANDOM_LIST_RE.finditer(text):
         body, end = extract_block_from_text(text, m.end() - 1)
         if end == -1:
             continue
-        buckets = []  # (weight, is_empty) for each direct-child bucket
+        buckets = []  # (weight, is_empty, has_modifier) for each direct-child bucket
         pos = 0
         malformed = False
         while pos < len(body):
@@ -149,18 +153,26 @@ def _find_two_bucket_random(text: str):
             if not _WEIGHT_RE.match(bm.group(1)):
                 malformed = True  # non-weight child: not a plain bucket list
                 break
-            buckets.append((float(bm.group(1)), _effectively_empty(bbody)))
+            buckets.append(
+                (
+                    float(bm.group(1)),
+                    _effectively_empty(bbody),
+                    bool(_MODIFIER_RE.search(bbody)),
+                )
+            )
             pos = bend
         if malformed or len(buckets) != 2:
             continue
-        empties = [w for w, e in buckets if e]
-        non_empty = [w for w, e in buckets if not e]
+        empties = [w for w, e, _ in buckets if e]
+        non_empty = [(w, has_mod) for w, e, has_mod in buckets if not e]
         if len(empties) != 1 or len(non_empty) != 1:
             continue
-        total = empties[0] + non_empty[0]
+        if non_empty[0][1]:
+            continue  # bucket has modifiers; random doesn't support them
+        total = empties[0] + non_empty[0][0]
         if total <= 0:
             continue
-        chance = round(100 * non_empty[0] / total)
+        chance = round(100 * non_empty[0][0] / total)
         line = text.count("\n", 0, m.start()) + 1
         results.append((line, chance))
     return results
@@ -339,6 +351,7 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def run_validations(self):
+        self._log_section("Scanning for simplification opportunities...")
         # parse_files_cached reads case-preserving + comment-stripped and
         # content-caches each file's findings, so a warm run only re-scans
         # changed files.
@@ -347,6 +360,7 @@ class Validator(BaseValidator):
         )
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
 
+        self._log_section("Collecting and reporting results...")
         results = []
         for path, findings in parsed.items():
             rel = os.path.relpath(path, self.mod_path)

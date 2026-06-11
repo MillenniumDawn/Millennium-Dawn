@@ -431,7 +431,7 @@ class Validator(BaseValidator):
                 return_paths=True,
                 staged_files=self.staged_files,
                 workers=self.workers,
-                pool=self._pool,
+                pool=self._get_pool(),
             )
         )
         # Usage scan ALWAYS goes full-repo — even in staged mode. Restricting
@@ -446,7 +446,7 @@ class Validator(BaseValidator):
             return_paths=True,
             staged_files=None,
             workers=self.workers,
-            pool=self._pool,
+            pool=self._get_pool(),
         )
 
         self.validate_missing_scripted_localisations(
