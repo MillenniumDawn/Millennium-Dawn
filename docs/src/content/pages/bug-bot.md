@@ -25,6 +25,7 @@ The bot replies in your thread with a link to the GitHub issue once it is filed.
 
 ## Useful commands
 
+- `/register` — link your GitHub username to your Discord account.
 - `/forget` — delete the data the bot holds about you.
 - `/privacy` — a short summary of what is collected and how it is used.
 - `/whoami` — show your linked GitHub username.
