@@ -3,8 +3,6 @@ title: Formable Nations
 description: "Complete list of formable nations in Millennium Dawn, including requirements and member countries."
 ---
 
-# Formable Nations
-
 Millennium Dawn features a robust formable nations system that allows players to unite countries into larger political entities. Formable nations are created through the in-game decision system, where you integrate member states one by one.
 
 Formable nations can be toggled on or off via the **Game Rules** menu at game start. A rule also controls whether multiple players can form the same nation simultaneously.

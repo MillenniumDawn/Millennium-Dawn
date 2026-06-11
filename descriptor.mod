@@ -10,7 +10,7 @@ tags={
 	"Balance"
 	"Fixes"
 }
-supported_version="1.18.*"
+supported_version="1.19.*"
 remote_file_id="2777392649"
 
 replace_path = "events"
@@ -47,6 +47,7 @@ replace_path = "common/units"
 replace_path = "common/units/equipment"
 replace_path = "common/units/equipment/upgrades"
 replace_path = "common/units/names_divisions"
+replace_path = "common/units/names_ships"
 replace_path = "common/units/codenames_operatives"
 replace_path = "common/wargoals"
 replace_path = "common/raids"

@@ -59,9 +59,15 @@ export default defineConfig(
       ],
       // Allow empty arrow functions (NOOP pattern)
       "@typescript-eslint/no-empty-function": "off",
-      // Overly strict for a docs site
-      "@typescript-eslint/no-floating-promises": "off",
-      "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": [
+        "error",
+        {
+          checksVoidReturn: {
+            attributes: false,
+          },
+        },
+      ],
     },
   },
 

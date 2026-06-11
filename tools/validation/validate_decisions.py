@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
     FileOpener,
@@ -19,7 +20,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
 # Decisions activated dynamically (e.g. via variable-constructed IDs) that
 # cannot be detected by static analysis and should be excluded from the
@@ -218,7 +219,7 @@ class DecisionFactory:
         self.desc_override = _top_level_field_value(dec, "desc")
 
 
-# Decisions parsing cache - enabled by default, disabled via --no-cache for CI
+# Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
 _DECISION_CACHE = {"enabled": True, "data": {}}
 
 
@@ -452,10 +453,10 @@ class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, fix: bool = False, no_cache: bool = False, **kwargs):
+    def __init__(self, *args, fix: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fix = fix
-        if no_cache:
+        if self.no_cache:
             _set_cache_enabled(False)
 
     def _apply_ai_factor_fixes(self, fixes: list):
@@ -1730,11 +1731,6 @@ def _add_extra_args(parser):
         "--fix",
         action="store_true",
         help="Auto-fix decisions: insert 'ai_will_do = { base = 0 }' for missing AI factors, and move identical available blocks into visible",
-    )
-    parser.add_argument(
-        "--no-cache",
-        action="store_true",
-        help="Disable decision parsing cache (useful for CI runs where cache overhead exceeds benefit)",
     )
 
 

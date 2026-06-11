@@ -7,6 +7,10 @@ merged result when any contributing file's stat changes.
 
 Cache lives under `.validation_cache/v<N>/` (gitignored). Pool workers call
 these directly; atomic writes via `os.replace` keep concurrent writers safe.
+
+Bypass: set ``MD_NO_CACHE=1`` in the environment or pass ``--no-cache`` to
+any validator (which sets the env var automatically). Both skip every lookup
+and every write.
 """
 
 from __future__ import annotations

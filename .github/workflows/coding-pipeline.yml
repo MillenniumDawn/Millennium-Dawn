@@ -50,6 +50,8 @@ jobs:
       national-focus: ${{ steps.filter.outputs.national-focus }}
       on-actions:    ${{ steps.filter.outputs.on-actions }}
       scripted-effects: ${{ steps.filter.outputs.scripted-effects }}
+      style:         ${{ steps.filter.outputs.style }}
+      style-files:   ${{ steps.filter.outputs.style_files }}
     steps:
     # No checkout — on pull_request events dorny/paths-filter fetches the
     # changed-file list straight from the GitHub API, so cloning the repo
@@ -58,6 +60,11 @@ jobs:
       uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
       id: filter
       with:
+        # `style_files` (from list-files: json) carries the changed .txt paths
+        # so the style job validates only the diff, not the whole repo. JSON,
+        # not shell, so paths with spaces/apostrophes ("Cote D'Ivoire.txt")
+        # survive jq parsing instead of being word-split into garbage.
+        list-files: json
         filters: |
           common:
             - 'common/**'
@@ -96,53 +103,25 @@ jobs:
             - 'common/on_actions/**'
           scripted-effects:
             - 'common/scripted_effects/**'
+          style:
+            - 'common/**/*.txt'
+            - 'events/**/*.txt'
+            - 'history/**/*.txt'
 
   # ───────────────────────────────────────────────────────────────
-  # Linters — run when any game content files change
+  # Style & common-mistakes — diff-scoped to the changed .txt files only,
+  # so a PR is flagged for the style it introduced, not the repo-wide
+  # backlog. The changed-file list comes from detect-changes (style_files).
   # ───────────────────────────────────────────────────────────────
-  coding-standards:
-    name: Coding Standards
-    needs: [detect-changes]
-    if: >-
-      needs.detect-changes.outputs.common == 'true' ||
-      needs.detect-changes.outputs.events == 'true'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          common
-          events
-          history
-          localisation
-          interface
-          gfx/flags
-          tools
-          .claude
-          CLAUDE.md
-
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-
-    - name: Run coding standards check
-      run: python tools/linting/coding_standards.py
-
   styling-check:
     name: Style Check
     needs: [detect-changes]
-    if: >-
-      needs.detect-changes.outputs.common == 'true' ||
-      needs.detect-changes.outputs.events == 'true' ||
-      needs.detect-changes.outputs.history == 'true'
+    if: needs.detect-changes.outputs.style == 'true'
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       with:
         fetch-depth: 1
         sparse-checkout: |
@@ -162,14 +141,30 @@ jobs:
         python-version: '3.x'
 
     - name: Run style check
+      env:
+        # JSON array of changed .txt files under common/events/history.
+        STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
       run: |
-        python tools/linting/check_basic_style.py --mode diff
-        python tools/linting/check_common_mistakes.py --mode diff
+        # Newline-delimit the JSON array (newlines can't appear in these paths)
+        # and drop the files the pre-commit md-validate-style hook also excludes.
+        printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
+          | grep -vE '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
+          > style_files.txt || true
+        if [ ! -s style_files.txt ]; then
+          echo "No style-relevant files changed"
+          exit 0
+        fi
+        # validate_style.py is a BaseValidator: --staged reads the diff list from
+        # MD_STAGED_FILES (newline-separated), so spaces/apostrophes are safe.
+        MD_STAGED_FILES="$(cat style_files.txt)" python3 tools/validation/validate_style.py --staged --strict --no-color
+        # check_common_mistakes.py takes the files as positional args; feed them
+        # NUL-delimited via xargs so spaces/apostrophes don't word-split.
+        tr '\n' '\0' < style_files.txt | xargs -0 -r python3 tools/linting/check_common_mistakes.py
 
   # ───────────────────────────────────────────────────────────────
   # Structural lint — file-integrity checks that otherwise only run as
   # local pre-commit hooks. Catches regressions from commits made via the
-  # GitHub web UI or with hooks disabled (braces, loc BOM, .mod encoding).
+  # GitHub web UI or with hooks disabled (loc BOM, .mod encoding).
   # ───────────────────────────────────────────────────────────────
   structural-lint:
     name: Structural Lint
@@ -182,7 +177,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       with:
         fetch-depth: 1
         sparse-checkout: |
@@ -196,16 +191,6 @@ jobs:
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: '3.x'
-
-    # NUL-delimited so filenames with spaces / apostrophes (e.g.
-    # "Cote d'Ivoire.txt") survive the pipe. xargs runs the checker in
-    # batches; its exit status is non-zero if any batch fails.
-    - name: Check braces
-      run: |
-        git ls-files -z -- common events history \
-          | grep -zE '\.txt$' \
-          | grep -zvE '(^|/)(Changelog|AUTHORS)\.txt$|(^|/)descriptions.*\.txt$' \
-          | xargs -0 -r python3 tools/linting/check_braces.py
 
     - name: Check localisation UTF-8 BOM
       run: python3 tools/linting/validate_localization_encoding.py
@@ -337,7 +322,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       with:
         fetch-depth: 1
         sparse-checkout: ${{ matrix.validator.sparse }}
@@ -531,7 +516,7 @@ jobs:
     # as "success with no work done" instead of bulk-skipping the whole job.
     - name: Checkout code
       if: matrix.validator.should_run == 'true'
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       with:
         fetch-depth: 1
         sparse-checkout: ${{ matrix.validator.sparse }}
@@ -588,7 +573,7 @@ jobs:
     # Checkout the report generator + the report_lib package it imports.
     # Stays much smaller than a full checkout — we skip everything else.
     - name: Checkout report tooling
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       with:
         fetch-depth: 1
         sparse-checkout: |

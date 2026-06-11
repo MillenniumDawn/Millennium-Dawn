@@ -3,7 +3,6 @@ add_namespace = usa
 add_namespace = usa_news
 add_namespace = usa_economic_events
 add_namespace = USA_FOCUS
-add_namespace = USA
 add_namespace = usa_economic_events_news
 add_namespace = donald_trump
 add_namespace = donald_trump_news
@@ -2261,13 +2260,6 @@ country_event = {
 
 }
 
-news_event = {
-	id = USA_FOCUS.7
-
-	is_triggered_only = yes
-	major = yes
-	hidden = yes
-}
 ##Condem Iran missile Launch
 country_event = {
 	id = USA_FOCUS.8
@@ -12786,8 +12778,8 @@ country_event = {
 	option = {
 		name = USA_collapse_event.7.o2
 		log = "[GetDateText]: [This.GetName]: USA_collapse_event.7.o2 executed"
-		CAS = { change_tag_from = USA }
 		CAS = {
+			change_tag_from = USA
 			country_event = {
 				id = USA_collapse_event.30
 				days = 2
@@ -13022,8 +13014,8 @@ country_event = {
 	option = {
 		name = USA_collapse_event.9.o2
 		log = "[GetDateText]: [This.GetName]: USA_collapse_event.9.o2 executed"
-		CSA = { change_tag_from = USA }
 		CSA = {
+			change_tag_from = USA
 			country_event = {
 				id = USA_collapse_event.23
 				days = 10
@@ -16924,8 +16916,8 @@ country_event = {
 	option = { # Violence
 		name = USA_crisis_event.1110.o2
 		log = "[GetDateText]: [This.GetName]: USA_crisis_event.1110.o2 executed"
-		TEX = { change_tag_from = USA }
 		TEX = {
+			change_tag_from = USA
 			country_event = {
 				id = USA_crisis_event.1120
 				days = 4
@@ -17060,8 +17052,8 @@ country_event = {
 				days = 7
 			}
 		}
-		CSA = { change_tag_from = TEX }
 		CSA = {
+			change_tag_from = TEX
 			country_event = {
 				id = USA_crisis_event.1121
 				days = 3
@@ -17407,8 +17399,8 @@ country_event = {
 	option = { # War Escalation
 		name = USA_crisis_event.1117.o1
 		log = "[GetDateText]: [This.GetName]: USA_crisis_event.1117.o1 executed"
-		NEN = { change_tag_from = TEX }
 		NEN = {
+			change_tag_from = TEX
 			country_event = {
 				id = USA_crisis_event.1123
 				days = 2
@@ -23892,7 +23884,193 @@ country_event = {
 			base = 10
 		}
 	}
+}
 
+# F-22A Enters Low Rate Production
+country_event = {
+	id = usa.200
+	title = usa.200.t
+	desc = usa.200.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+	trigger = {
+		original_tag = USA
+	}
+
+	immediate = {
+		random_list = {
+			33 = { set_variable = { USA_f22_woes_severity = 1 } }
+			34 = { set_variable = { USA_f22_woes_severity = 2 } }
+			33 = { set_variable = { USA_f22_woes_severity = 3 } }
+		}
+		# Severity-scaled length of the upcoming Structural Issues period
+		set_variable = { USA_f22_stage_base = 365 }
+		if = {
+			limit = { check_variable = { USA_f22_woes_severity = 1 } }
+			multiply_variable = { USA_f22_stage_base = 0.7 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_f22_woes_severity = 3 } }
+			multiply_variable = { USA_f22_stage_base = 1.4 }
+		}
+	}
+
+	# Ramp production now, accept the teething troubles
+	option = {
+		name = usa.200.a
+		log = "[GetDateText]: [This.GetName]: usa.200.a executed"
+		add_political_power = -25
+		set_variable = { USA_f22_next_days = USA_f22_stage_base }
+		multiply_variable = { USA_f22_next_days = 0.6 }
+		round_variable = USA_f22_next_days
+		add_timed_idea = { idea = USA_fifth_generation_fighter_woes_2 days = var:USA_f22_next_days }
+		add_timed_idea = { idea = USA_f22_rushed_production days = var:USA_f22_next_days }
+		ai_chance = { base = 30 }
+	}
+
+	# Hold to a deliberate, low-rate build
+	option = {
+		name = usa.200.b
+		log = "[GetDateText]: [This.GetName]: usa.200.b executed"
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -0.5 }
+		modify_treasury_effect = yes
+		set_variable = { USA_f22_next_days = USA_f22_stage_base }
+		multiply_variable = { USA_f22_next_days = 1.2 }
+		round_variable = USA_f22_next_days
+		add_timed_idea = { idea = USA_fifth_generation_fighter_woes_2 days = var:USA_f22_next_days }
+		ai_chance = { base = 70 }
+	}
+}
+
+# F-22 Structural Issues
+country_event = {
+	id = usa.201
+	title = usa.201.t
+	desc = usa.201.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+	trigger = {
+		original_tag = USA
+	}
+
+	immediate = {
+		# Severity-scaled length of the upcoming Avionics Software period
+		set_variable = { USA_f22_stage_base = 365 }
+		if = {
+			limit = { check_variable = { USA_f22_woes_severity = 1 } }
+			multiply_variable = { USA_f22_stage_base = 0.7 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_f22_woes_severity = 3 } }
+			multiply_variable = { USA_f22_stage_base = 1.4 }
+		}
+	}
+
+	# Bolt on the fixes and keep flying
+	option = {
+		name = usa.201.a
+		log = "[GetDateText]: [This.GetName]: usa.201.a executed"
+		add_political_power = -25
+		set_variable = { USA_f22_next_days = USA_f22_stage_base }
+		multiply_variable = { USA_f22_next_days = 0.6 }
+		round_variable = USA_f22_next_days
+		add_timed_idea = { idea = USA_fifth_generation_fighter_woes_3 days = var:USA_f22_next_days }
+		add_timed_idea = { idea = USA_f22_rushed_production days = var:USA_f22_next_days }
+		ai_chance = { base = 30 }
+	}
+
+	# Ground the fleet for a proper structural redesign
+	option = {
+		name = usa.201.b
+		log = "[GetDateText]: [This.GetName]: usa.201.b executed"
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -0.75 }
+		modify_treasury_effect = yes
+		set_variable = { USA_f22_next_days = USA_f22_stage_base }
+		multiply_variable = { USA_f22_next_days = 1.2 }
+		round_variable = USA_f22_next_days
+		add_timed_idea = { idea = USA_fifth_generation_fighter_woes_3 days = var:USA_f22_next_days }
+		ai_chance = { base = 70 }
+	}
+}
+
+# F-22 Avionics Software Issues
+country_event = {
+	id = usa.202
+	title = usa.202.t
+	desc = usa.202.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+	trigger = {
+		original_tag = USA
+	}
+
+	immediate = {
+		# Severity-scaled wait until the Raptor is cleared for rollout
+		set_variable = { USA_f22_stage_base = 540 }
+		if = {
+			limit = { check_variable = { USA_f22_woes_severity = 1 } }
+			multiply_variable = { USA_f22_stage_base = 0.7 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_f22_woes_severity = 3 } }
+			multiply_variable = { USA_f22_stage_base = 1.4 }
+		}
+	}
+
+	# Field with Block 3.1.2 as-is, fix the reboots in service
+	option = {
+		name = usa.202.a
+		log = "[GetDateText]: [This.GetName]: usa.202.a executed"
+		add_political_power = -25
+		set_variable = { USA_f22_next_days = USA_f22_stage_base }
+		multiply_variable = { USA_f22_next_days = 0.6 }
+		round_variable = USA_f22_next_days
+		add_timed_idea = { idea = USA_f22_rushed_production days = var:USA_f22_next_days }
+		country_event = { id = usa.203 days = var:USA_f22_next_days }
+		ai_chance = { base = 30 }
+	}
+
+	# Crash-priority software effort before IOT&E
+	option = {
+		name = usa.202.b
+		log = "[GetDateText]: [This.GetName]: usa.202.b executed"
+		add_political_power = -75
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		set_variable = { USA_f22_next_days = USA_f22_stage_base }
+		round_variable = USA_f22_next_days
+		country_event = { id = usa.203 days = var:USA_f22_next_days }
+		ai_chance = { base = 70 }
+	}
+}
+
+# F-22 - Finalized + Rolled Out
+country_event = {
+	id = usa.203
+	title = usa.203.t
+	desc = usa.203.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+	trigger = {
+		original_tag = USA
+	}
+
+	immediate = {
+		remove_ideas = USA_f22_rushed_production
+		clear_variable = USA_f22_woes_severity
+		clear_variable = USA_f22_stage_base
+		clear_variable = USA_f22_next_days
+	}
+
+	# The Raptor is operational
+	option = {
+		name = usa.203.a
+		log = "[GetDateText]: [This.GetName]: usa.203.a executed"
+		add_timed_idea = { idea = USA_f22_raptor_operational days = 180 }
+		air_experience = 50
+	}
 }
 
 # This is for the AI game rule

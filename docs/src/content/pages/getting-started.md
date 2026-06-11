@@ -4,8 +4,6 @@ permalink: /getting-started/
 description: Step-by-step installation and setup guide for playing Millennium Dawn.
 ---
 
-# Getting Started with Millennium Dawn
-
 Welcome to Millennium Dawn! This guide will help you get up and running with the mod.
 
 ## Installation
