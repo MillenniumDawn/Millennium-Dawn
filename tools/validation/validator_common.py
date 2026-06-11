@@ -490,7 +490,11 @@ class BaseValidator:
         display_msg = (
             message if self.use_colors else re.sub(r"\033\[[0-9;]+m", "", message)
         )
-        if level == "info":
+        if level == "always":
+            # Bypass the logging threshold entirely; the root logger defaults to
+            # WARNING, so logging.info would drop these. Same stream as logging.
+            print(display_msg, file=sys.stderr)
+        elif level == "info":
             logging.info(display_msg)
         elif level == "warning":
             logging.warning(display_msg)
