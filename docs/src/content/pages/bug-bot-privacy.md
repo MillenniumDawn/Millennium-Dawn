@@ -5,7 +5,7 @@ permalink: /bug-bot-privacy/
 last_updated: 2026-06-11
 ---
 
-This policy covers the [Millennium Dawn Bug Bot](/bug-bot/), the Discord bot used in the Millennium Dawn community. The bot turns bug reports posted in our Discord forum into issues on our public GitHub tracker. This explains what it collects, how that data is used and shared, how long it is kept, and how to have it deleted.
+This policy covers the [Millennium Dawn Bug Bot](/bug-bot/), the Discord bot used in the Millennium Dawn community. The bot turns bug reports or suggestions posted in our Discord forum into issues on our public GitHub tracker. This explains what it collects, how that data is used and shared, how long it is kept, and how to have it deleted.
 
 The bot is operated by the Millennium Dawn team, a volunteer, non-profit mod project. In this policy, "we" means that team.
 
@@ -18,7 +18,7 @@ When you post in a tracked forum channel, the bot reads and processes:
 - Your mod version and checksum, when you provide them for a report.
 - Your GitHub username, only if you choose to link it with `/register`.
 
-The bot needs the Discord Message Content intent to read report text. It does not read messages outside the tracked forum channels, and it does not collect presence, your member list, or anything unrelated to filing bug reports.
+The bot needs the Discord Message Content intent to read report text. It does not read messages outside the tracked forum channels, and it does not collect presence, your member list, or anything unrelated to filing bug reports or providing suggestions for the mod.
 
 ## How it is used and shared
 
@@ -31,7 +31,7 @@ The bot does not sell your data, share it with advertisers or data brokers, or u
 
 ## How long it is kept
 
-- **GitHub issues** stay on GitHub indefinitely. They are the record of the bug.
+- **GitHub issues** stay on GitHub indefinitely. They are the record of the bug or the suggestion the user reported.
 - **Operational and audit logs** (webhook deliveries, AI output, duplicate-check audits) are automatically deleted after 30 days via automated systems.
 - **Thread-to-issue mappings** are kept while the issue is active.
 - **`/register` links** are kept until you run `/forget`.
