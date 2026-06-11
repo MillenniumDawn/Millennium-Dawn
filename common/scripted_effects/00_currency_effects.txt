@@ -119,6 +119,13 @@ update_currency_issuers = {
 	} }
 }
 
+# Single source of the currency_strength band. Call after any ad-hoc mutation of
+# currency_strength (decisions, GUI buttons) so a near-zero value cannot blow up
+# the 1/currency_strength income multiplier in apply_currency_multipliers.
+clamp_currency_strength = {
+	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+}
+
 # ── Monthly recalculation ─────────────────────────────────────────────────────
 
 # Called monthly for every country (on_monthly hook in MD_on_actions.txt).
@@ -195,7 +202,7 @@ calculate_currency_strength = {
 		}
 	}
 
-	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+	clamp_currency_strength = yes
 
 	# Recompute inflation feed: weak currency = positive inflation pressure.
 	# Feeds into inflation_cost_combined_var, read by inflation_dynamic_modifier.
@@ -270,8 +277,10 @@ apply_currency_multipliers = {
 # Fraction of tax_gain used as the income base for non-issuers using QE.
 @seigniorage_nonissuer_fraction = 0.009
 
-# Called from ingame_update_setup after calculate_additional_income_rate and
-# before apply_currency_multipliers.
+# Called from ingame_update_setup before calculate_additional_income_rate, which
+# books seigniorage_base into additional_income_rate. This effect only stages the
+# temp seigniorage_base; it must not write additional_income_rate itself (that var
+# is zeroed at the start of calculate_additional_income_rate).
 #
 # Option A — Reserve issuers earn passive income proportional to how many other
 # nations hold their currency (tracked via the global adoption counters set in
@@ -303,11 +312,15 @@ calculate_seigniorage_income = {
 		has_country_flag = is_eur_issuer
 		NOT = { country_exists = EUU }
 	}
-		set_temp_variable = { pool_base = global.eur_reserve_adoption_count }
-		multiply_temp_variable = { pool_base = @seigniorage_per_adopter }
-		add_to_temp_variable = { seigniorage_mod = 1.0 }
-		multiply_temp_variable = { pool_base = seigniorage_mod }
-		add_to_variable = { global.EU_seigniorage_pool = pool_base }
+		# Only accrue once per weekly economic pass — ingame_update_setup runs from
+		# ~200 ad-hoc call sites, so guard the pool against per-call inflation.
+		if = { limit = { check_variable = { weekly_econ_tick = 1 } }
+			set_temp_variable = { pool_base = global.eur_reserve_adoption_count }
+			multiply_temp_variable = { pool_base = @seigniorage_per_adopter }
+			add_to_temp_variable = { seigniorage_mod = 1.0 }
+			multiply_temp_variable = { pool_base = seigniorage_mod }
+			add_to_variable = { global.EU_seigniorage_pool = pool_base }
+		}
 		# seigniorage_base stays 0 — income goes to pool, not the issuer's treasury
 	}
 	# RUB — whoever currently owns Moscow (state 652)
@@ -340,10 +353,10 @@ calculate_seigniorage_income = {
 		set_temp_variable = { seigniorage_base = tax_gain }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_nonissuer_fraction }
 		multiply_temp_variable = { seigniorage_base = seigniorage_mod }
-		add_to_variable = { additional_income_rate = seigniorage_base }
-		set_variable = { seigniorage_income_display = seigniorage_base }
-		# Reset so the issuer multiplier block below does not double-count
-		set_temp_variable = { seigniorage_base = 0 }
+		# Fold the modifier in here, then zero it so the consumer's (1 + mod)
+		# factor resolves to 1.0 and does not double-apply. Booking and display
+		# happen in calculate_additional_income_rate, same as issuers.
+		set_temp_variable = { seigniorage_mod = 0 }
 	}
 }
 

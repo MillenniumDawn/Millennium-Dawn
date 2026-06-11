@@ -3,8 +3,6 @@ title: International Systems Guide
 description: Guide to international organizations and systems in Millennium Dawn including the UN, NATO, cyberwarfare, PMCs, and more
 ---
 
-# International Systems Guide
-
 Millennium Dawn features a range of international organizations, alliances, and systems that shape diplomacy, security, and economics on the world stage. This guide covers how each system works and how you can interact with it as a player.
 
 ## Table of Contents
