@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Shared validation infrastructure: common classes, helpers, and the base validator."""
+
 import glob
 import json
 import logging
@@ -290,9 +291,6 @@ class Issue:
             "line": self.line,
         }
 
-    def to_key(self) -> tuple:
-        return (self.file, self.line, self.severity, self.category)
-
 
 HOI4_BUILTIN_BLOCKS = frozenset(
     {
@@ -542,6 +540,11 @@ class BaseValidator:
             print_timing_summary(self._section_timings)
             self._timing_printed = True
 
+    # Console cap per category — keeps one runaway check (e.g. a 1k+ backlog
+    # audit) from drowning the rest of the output. The JSON sidecar always
+    # carries the full list.
+    MAX_RENDERED_PER_CATEGORY = 50
+
     def _render_issues(self):
         """Render every collected issue once, grouped by category (errors first,
         then warnings), each category sorted by file then line. Findings reach the
@@ -567,7 +570,8 @@ class BaseValidator:
                 c0 = sev_color if self.use_colors else ""
                 c1 = Colors.ENDC if self.use_colors else ""
                 self.log(f"\n{c0}{head}{c1}", "always")
-                for issue in items:
+                shown = items[: self.MAX_RENDERED_PER_CATEGORY]
+                for issue in shown:
                     # "  file:line - message" matches report_lib's text-fallback
                     # parser (loader._LOG_ISSUE_RE) so non-JSON runs still parse.
                     if issue.file and issue.line > 0:
@@ -578,6 +582,11 @@ class BaseValidator:
                         self.log(f"  {issue.file} - {issue.message}", "always")
                     else:
                         self.log(f"  {issue.message}", "always")
+                if n > len(shown):
+                    self.log(
+                        f"  ... and {n - len(shown)} more (full list in the JSON sidecar)",
+                        "always",
+                    )
 
     def save_output(self):
         if self.output_file and self.output_lines:
@@ -680,7 +689,14 @@ class BaseValidator:
         deferred: every finding is rendered once, grouped, by ``_render_issues``
         at the end of the run. When a result carries no category, the (cleaned)
         ``fail_msg`` becomes its group label so these issues still group sensibly.
+        ``ok_msg`` only shows at MD_LOG_LEVEL=INFO — per-check all-clear lines
+        are progress noise at the default verbosity.
         """
+        if not results:
+            self.log(
+                f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
+            )
+            return
         group_label = category or _label_from_failmsg(fail_msg)
         for r in results:
             if isinstance(r, Issue):
