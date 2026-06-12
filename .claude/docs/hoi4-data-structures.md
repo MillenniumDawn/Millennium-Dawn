@@ -66,6 +66,55 @@ All use `{ var = X value = Y }` syntax. All have `_temp_` equivalents (e.g. `add
 
 Short forms: `add_to_array = { my_array = 42 }`, `remove_from_array = { my_array = 42 }`, `is_in_array = { my_array = 42 }`
 
+## Math Expressions
+
+**Preferred over scratch temp variables for pure arithmetic.** An inline calculator that reads constants, scoped variables, and dynamic game variables, then applies a sequence of operations. Supported as the value argument of every variable/temp-variable effect **except** `modulo_variable` and `clamp_variable`.
+
+**Default to a math expression instead of a chain of `set_temp_variable` + `add_to_variable` + `multiply_variable` whenever the goal is a calculated value.** One expression replaces several temp-var writes, and the engine evaluates it in a single pass — it is the more performance-friendly form, not just the shorter one. The win compounds with frequency: the hotter the path (per-tick GUI, daily on_action, AI evaluation), the more a math expression saves over scratch temp variables. Reach for temp variables only when you need to reuse an intermediate result across several later effects, or when an operation the expression syntax doesn't support (`modulo_variable`, `clamp_variable`) is involved.
+
+### Syntax
+
+A base `value = ...` followed by sequential statements that mutate an accumulator. Each statement is one of:
+
+- **No-argument** — applies an operation to the accumulator: `round = yes`.
+- **Simple** — takes one or more sub-expressions: `add = 5`, `clamp = { min = 0 max = 100 }`.
+- **Control flow** — takes a block: `if = { limit = { ... } add = 100 } else = { subtract = 1 }`.
+- **Collection iterator** — scopes to each element of a named collection and applies statements: `every_collection = { ... }`.
+
+```
+set_variable = {
+    var = combined_units
+    value = num_cavalry
+    add = num_motorized
+    add = num_mechanized
+    greater_than = { value = num_units  multiply = 0.4 }
+}
+```
+
+### Semantics
+
+- **Fixed-point arithmetic** throughout (same as HOI4 variables).
+- **Booleans:** `0.0` is false, any other value is true. Comparison/boolean operators return `1.0` (true) or `0.0` (false).
+- **Parse failure → `0.0`.** A malformed expression silently evaluates to zero at runtime, not an error. Watch for this when a calculation mysteriously reads 0.
+
+### Operators
+
+| Statement                                                                                            | Effect                                                |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `add`, `subtract`, `multiply`, `divide`                                                              | Arithmetic on the accumulator                         |
+| `min`, `max`                                                                                         | Accumulator becomes min/max of itself and value       |
+| `clamp = { min = X max = Y }`                                                                        | Bound the accumulator (argument order matters)        |
+| `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `equals`, `not_equals` | Return `1.0`/`0.0`                                    |
+| `round = yes`                                                                                        | Round to nearest integer                              |
+| `if = { limit = { ... } ... } else = { ... }`                                                        | `limit` is itself an expression; true if non-zero     |
+| `every_collection = { named_collection = X  ... }`                                                   | Iterate a collection, applying statements per element |
+
+Each operator's argument is itself a full expression, so they nest:
+
+```
+greater_than = { value = num_units  multiply = 0.4 }   # accumulator > (num_units * 0.4)
+```
+
 ## Loop Effects
 
 ### `for_each_loop` — iterate over values
