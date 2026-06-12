@@ -84,11 +84,20 @@ FUS_T, FUS_K = 2053, 0.24    # nuclear fusion (steep, plateaus ~2065)
 SPEED_RATIO = {"fos": 0.5, "ren": 0.4, "nuc": 0.3}   # speed amplitude / power amplitude
 PF = 0.30                    # fossil power amplitude (fixed; mature, small total gain)
 
-# --- tech chains: year-ordered tech ids + the (power, speed) modifier names ---
+# --- infrastructure-maintenance relief (issue #1508) ------------------------
+# Each chain also lowers its OWN plant type's weekly upkeep via a per-source
+# infra-cost modifier (nuclear/fossil/renewable_infra_cost_multiplier_modifier),
+# consumed in update_infra_rate (common/scripted_effects/00_money_system.txt).
+# The relief follows that source's POWER S-curve (so it tracks tech progress) and
+# is scaled so the fully-teched chain reaches INFRA_CAP. Values are NEGATIVE.
+INFRA_CAP = -0.40            # total per-source upkeep reduction at the end of each chain
+
+# --- tech chains: year-ordered tech ids + the (power, speed, infra) modifier names ---
 CHAINS = {
     "ren": {
         "power": "renewable_energy_gain_multiplier",
         "speed": "production_speed_renewable_energy_infra_factor",
+        "infra": "renewable_infra_cost_multiplier_modifier",
         "years": [1990, 1995, 2000, 2005, 2010, 2015, 2020, 2030, 2040, 2050, 2060, 2070, 2080],
         "techs": ["early_renewables", "renewables", "improved_renewables", "advanced_renewables",
                   "modern_renewables", "improved_modern_renewables", "advanced_modern_renewables",
@@ -98,6 +107,7 @@ CHAINS = {
     "nuc": {
         "power": "nuclear_energy_generation_modifier",
         "speed": "production_speed_nuclear_reactor_factor",
+        "infra": "nuclear_infra_cost_multiplier_modifier",
         "years": [1990, 2000, 2005, 2015, 2020, 2030, 2040, 2045, 2055, 2060, 2070, 2080],
         "techs": ["reactor1", "reactor2", "reactor3", "reactor4", "reactor5", "reactor6",
                   "reactor7", "reactor8", "reactor9", "reactor10", "reactor11", "reactor12"],
@@ -105,6 +115,7 @@ CHAINS = {
     "fos": {
         "power": "fossil_pp_energy_generation_modifier",
         "speed": "production_speed_fossil_powerplant_factor",   # NEW: fossil techs gain this
+        "infra": "fossil_infra_cost_multiplier_modifier",
         "years": [1990, 2000, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080],
         "techs": ["fuel_efficiency", "fuel_efficiency2", "fuel_efficiency3", "fuel_efficiency4",
                   "fuel_efficiency5", "fuel_efficiency6", "fuel_efficiency_7", "fuel_efficiency_8",
@@ -133,6 +144,14 @@ def cum_power(key, t, pf, pr, pfis, pfus):
 def cum_speed(key, t, *a):
     return SPEED_RATIO[key] * cum_power(key, t, *a)
 
+# cumulative infra-cost relief: that source's power S-curve normalised to its 2080
+# asymptote and scaled to INFRA_CAP, so the fully-teched chain reaches INFRA_CAP.
+def cum_infra(key, t, *a):
+    full = cum_power(key, 2080, *a)
+    if full <= 0:
+        return 0.0
+    return INFRA_CAP * cum_power(key, t, *a) / full
+
 def metric(key, t, *a):
     return BASE[key] * (1 + cum_power(key, t, *a)) * (1 + cum_speed(key, t, *a))
 
@@ -146,15 +165,19 @@ def solve_amplitudes():
 
 
 def increments(amps):
-    """tech_id -> (power_increment, speed_increment), rounded to 3 dp."""
+    """tech_id -> (key, power_inc, speed_inc, infra_inc), rounded to 3 dp.
+
+    power/speed increments are floored at +0.001 (no dead tech). infra increments
+    are NEGATIVE upkeep relief and are floored toward 0 at -0.001 instead, so a
+    plateaued tail tech still grants a token reduction rather than nothing."""
     out = {}
     for key, c in CHAINS.items():
-        pp = sp = 0.0
+        pp = sp = ip = 0.0
         for yr, tech in zip(c["years"], c["techs"]):
-            cp, cs = cum_power(key, yr, *amps), cum_speed(key, yr, *amps)
-            # floor at a token 0.001 so no tech on a plateaued S-curve tail grants literally nothing
-            out[tech] = (key, max(round(cp - pp, 3), 0.001), max(round(cs - sp, 3), 0.001))
-            pp, sp = cp, cs
+            cp, cs, ci = cum_power(key, yr, *amps), cum_speed(key, yr, *amps), cum_infra(key, yr, *amps)
+            out[tech] = (key, max(round(cp - pp, 3), 0.001), max(round(cs - sp, 3), 0.001),
+                         min(round(ci - ip, 3), -0.001))
+            pp, sp, ip = cp, cs, ci
     return out
 
 
@@ -173,8 +196,8 @@ def apply_to_industry(amps, edits, apply):
             continue
         tech = m.group(1)
         seen.add(tech)
-        key, pval, sval = edits[tech]
-        pmod, smod = CHAINS[key]["power"], CHAINS[key]["speed"]
+        key, pval, sval, ival = edits[tech]
+        pmod, smod, imod = CHAINS[key]["power"], CHAINS[key]["speed"], CHAINS[key]["infra"]
         depth = lines[i].count("{") - lines[i].count("}")
         j = i + 1
         while j < n and depth > 0:
@@ -198,7 +221,21 @@ def apply_to_industry(amps, edits, apply):
         if sidx is None and pidx is not None:
             ind = re.match(r"^(\t+)", block[pidx]).group(1)
             block.insert(pidx + 1, f"{ind}{smod} = {sval}")
-        report.append((tech, key, pval, sval, "speed+" if sidx is None else "speed="))
+        iidx = None
+        for k, bl in enumerate(block):
+            if re.match(rf"^\t+{re.escape(imod)}\s*=", bl):
+                ind = re.match(r"^(\t+)", bl).group(1)
+                block[k] = f"{ind}{imod} = {ival}"
+                iidx = k
+                break
+        if iidx is None:
+            anchor = next((k for k, bl in enumerate(block)
+                           if re.match(rf"^\t+{re.escape(smod)}\s*=", bl)), pidx)
+            if anchor is not None:
+                ind = re.match(r"^(\t+)", block[anchor]).group(1)
+                block.insert(anchor + 1, f"{ind}{imod} = {ival}")
+        report.append((tech, key, pval, sval, ival, "speed+" if sidx is None else "speed=",
+                       "infra+" if iidx is None else "infra="))
         lines[i:j] = block
         n = len(lines)
         i += len(block)
@@ -231,16 +268,19 @@ def main():
     print(f"avg metric 1990/2030/2060/2080: " + " ".join(f"{a:.2e}" for a in avg))
 
     edits = increments(amps)
-    print(f"\nper-tech increments ({len(edits)} techs):")
+    print(f"\nper-tech increments, power/speed/infra ({len(edits)} techs):")
     for key in ("ren", "nuc", "fos"):
-        print(f"  {key}: " + ", ".join(f"{t}={p}/{s}" for t, (kk, p, s) in edits.items() if kk == key))
+        print(f"  {key}: " + ", ".join(f"{t}={p}/{s}/{iv}" for t, (kk, p, s, iv) in edits.items() if kk == key))
+        full = sum(iv for kk, p, s, iv in edits.values() if kk == key)
+        print(f"       total infra relief @2080: {full:+.3f}")
 
     report, missing = apply_to_industry(amps, edits, args.apply)
     if missing:
         print(f"\nERROR: techs not found in industry.txt (aborted write): {sorted(missing)}")
         return 1
     print(f"\n{'APPLIED' if args.apply else 'DRY RUN'}: {len(report)} techs edited "
-          f"({sum(1 for r in report if r[4] == 'speed+')} gained a new speed modifier line)")
+          f"({sum(1 for r in report if r[5] == 'speed+')} gained a new speed line, "
+          f"{sum(1 for r in report if r[6] == 'infra+')} gained a new infra line)")
     if not args.apply:
         print("re-run with --apply to write")
     return 0

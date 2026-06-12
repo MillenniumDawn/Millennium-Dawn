@@ -1,45 +1,5 @@
 # Hong Kong scripted effects
-# Triad mechanic, LegCo motion seat calculations, Railway/XRL motion outcomes
-
-#####################
-# Triad System
-#####################
-
-# set_temp_variable = { HKG_modify_triad_strength = +- }
-HKG_modify_triad_strength = {
-	add_to_variable = { HKG_triad_strength = HKG_modify_triad_strength }
-	clamp_variable = {
-		var = HKG_triad_strength
-		min = 0
-		max = 100
-	}
-	custom_effect_tooltip = HKG_modify_triad_strength_tt
-}
-
-# set_temp_variable = { HKG_modify_triad_evidence = +- }
-HKG_modify_triad_evidence = {
-	add_to_variable = { HKG_triad_evidence = HKG_modify_triad_evidence }
-	clamp_variable = {
-		var = HKG_triad_evidence
-		min = 0
-		max = 10
-	}
-	custom_effect_tooltip = HKG_modify_triad_evidence_tt
-}
-
-# set_temp_variable = { HKG_triads_delta = X } before calling
-triads_update_political_power_factor = {
-	add_to_variable = { HKG_triads_pp_cost = HKG_triads_delta }
-	clamp_variable = {
-		var = HKG_triads_pp_cost
-		min = 0
-		max = 5
-	}
-	if = {
-		limit = { NOT = { has_dynamic_modifier = { modifier = HKG_triads_dynamic_modifier } } }
-		add_dynamic_modifier = { modifier = HKG_triads_dynamic_modifier }
-	}
-}
+# LegCo motion seat calculations, Railway/XRL motion outcomes
 
 #####################
 # LegCo Seat System
@@ -76,8 +36,6 @@ calculate_sepcially_required_legco_seats = {
 	round_variable = HKG_legco_specially_required_seats
 }
 
-
-
 # Contract class enum: 1 = destroyer, 2 = frigate, 3 = attack submarine,
 # 4 = cruiser, 5 = aircraft carrier.
 
@@ -96,11 +54,13 @@ HKG_contract_initialize = {
 	set_variable = { HKG_contract_band_mid = 50 }
 	set_variable = { HKG_contract_band_high = 75 }
 	set_variable = { HKG_contract_standing_max = 100 }
-	set_variable = { HKG_contract_standing_gain = 10 }
+	set_variable = { HKG_contract_standing_gain = 2 }
 	set_variable = { HKG_contract_standing_loss = 15 }
 	set_variable = { HKG_contract_max_slots = 3 }
 	set_variable = { HKG_contract_grace = 90 }
 	set_variable = { HKG_contract_version = 2 }
+	set_variable = { HKG_contract_dockyard_output = 0 }
+	add_dynamic_modifier = { modifier = HKG_contract_shipbuilding_legacy }
 	HKG_contract_build_slots = yes
 	HKG_contract_refresh_gui = yes
 }
@@ -143,10 +103,15 @@ HKG_contract_migrate_v2 = {
 	set_variable = { HKG_contract_band_mid = 50 }
 	set_variable = { HKG_contract_band_high = 75 }
 	set_variable = { HKG_contract_standing_max = 100 }
-	set_variable = { HKG_contract_standing_gain = 10 }
+	set_variable = { HKG_contract_standing_gain = 2 }
 	set_variable = { HKG_contract_standing_loss = 15 }
-	clr_country_flag = HKG_contract_in_progress
 	clr_country_flag = HKG_contract_offer_pending
+	HKG_contract_update_resource_access = yes
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = HKG_contract_shipbuilding_legacy } } }
+		set_variable = { HKG_contract_dockyard_output = 0 }
+		add_dynamic_modifier = { modifier = HKG_contract_shipbuilding_legacy }
+	}
 	HKG_contract_build_slots = yes
 	HKG_contract_refresh_gui = yes
 }
@@ -170,8 +135,30 @@ HKG_contract_refresh_gui = {
 	add_to_variable = { HKG_contract_gui_dirty = 1 }
 }
 
+CHI_contract_make_offer = {
+	set_temp_variable = { CHI_make_offer_class = CHI_contract_pick_class }
+	set_temp_variable = { CHI_make_offer_license = CHI_contract_pick_license }
+	set_temp_variable = { CHI_make_offer_tier = CHI_contract_pick_tier }
+	HKG = {
+		if = {
+			limit = {
+				HKG_contract_can_solicit = yes
+				NOT = { has_country_flag = HKG_contract_offer_pending }
+			}
+			set_variable = { HKG_contract_offer_class = CHI_make_offer_class }
+			set_variable = { HKG_contract_offer_license = CHI_make_offer_license }
+			set_variable = { HKG_contract_offer_tier = CHI_make_offer_tier }
+			HKG_contract_set_offer_terms = yes
+			set_country_flag = HKG_contract_offer_pending
+			add_to_variable = { HKG_contract_gui_dirty = 1 }
+			country_event = { id = HKG_contract.1 days = 2 }
+		}
+	}
+}
+
 HKG_contract_generate_offer = {
 	set_variable = { HKG_contract_offer_license = 0 }
+	set_variable = { HKG_contract_offer_tier = 1 }
 	random = {
 		chance = 30
 		set_variable = { HKG_contract_offer_license = 1 }
@@ -227,7 +214,7 @@ HKG_contract_set_offer_terms = {
 	if = {
 		limit = { check_variable = { HKG_contract_offer_class = 1 } }
 		set_variable = { HKG_contract_offer_quota = 2 }
-		set_variable = { HKG_contract_offer_deadline = 365 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 10 }
 		set_variable = { HKG_contract_offer_pp = 25 }
 		set_variable = { HKG_contract_offer_productivity = 10 }
@@ -236,7 +223,7 @@ HKG_contract_set_offer_terms = {
 	else_if = {
 		limit = { check_variable = { HKG_contract_offer_class = 2 } }
 		set_variable = { HKG_contract_offer_quota = 2 }
-		set_variable = { HKG_contract_offer_deadline = 400 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 14 }
 		set_variable = { HKG_contract_offer_pp = 25 }
 		set_variable = { HKG_contract_offer_productivity = 12 }
@@ -245,7 +232,7 @@ HKG_contract_set_offer_terms = {
 	else_if = {
 		limit = { check_variable = { HKG_contract_offer_class = 3 } }
 		set_variable = { HKG_contract_offer_quota = 1 }
-		set_variable = { HKG_contract_offer_deadline = 480 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 22 }
 		set_variable = { HKG_contract_offer_pp = 40 }
 		set_variable = { HKG_contract_offer_productivity = 20 }
@@ -254,7 +241,7 @@ HKG_contract_set_offer_terms = {
 	else_if = {
 		limit = { check_variable = { HKG_contract_offer_class = 4 } }
 		set_variable = { HKG_contract_offer_quota = 1 }
-		set_variable = { HKG_contract_offer_deadline = 540 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 30 }
 		set_variable = { HKG_contract_offer_pp = 45 }
 		set_variable = { HKG_contract_offer_productivity = 24 }
@@ -262,7 +249,7 @@ HKG_contract_set_offer_terms = {
 	}
 	else = {
 		set_variable = { HKG_contract_offer_quota = 1 }
-		set_variable = { HKG_contract_offer_deadline = 730 }
+		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 50 }
 		set_variable = { HKG_contract_offer_pp = 80 }
 		set_variable = { HKG_contract_offer_productivity = 45 }
@@ -298,6 +285,18 @@ HKG_contract_set_offer_terms = {
 		round_variable = HKG_contract_offer_productivity
 		round_variable = HKG_contract_offer_deadline
 	}
+	if = {
+		limit = { check_variable = { HKG_contract_offer_tier = 2 } }
+		multiply_variable = { HKG_contract_offer_productivity = 1.2 }
+		multiply_variable = { HKG_contract_offer_funds = 1.15 }
+		round_variable = HKG_contract_offer_productivity
+		round_variable = HKG_contract_offer_funds
+	}
+	else_if = {
+		limit = { check_variable = { HKG_contract_offer_tier = 0 } }
+		multiply_variable = { HKG_contract_offer_funds = 0.8 }
+		round_variable = HKG_contract_offer_funds
+	}
 	set_variable = { HKG_contract_offer_advance = HKG_contract_offer_funds }
 	multiply_variable = { HKG_contract_offer_advance = 0.5 }
 	round_variable = HKG_contract_offer_advance
@@ -331,6 +330,10 @@ HKG_contract_accept_offer = {
 		subtract_from_temp_variable = { final_pay = HKG_contract_offer_advance }
 		set_variable = { HKG_contract_final_array^free_slot = final_pay }
 		add_to_variable = { HKG_contract_count = 1 }
+		if = {
+			limit = { NOT = { has_idea = HKG_contract_resource_access } }
+			add_ideas = HKG_contract_resource_access
+		}
 		set_temp_variable = { treasury_change = HKG_contract_offer_advance }
 		modify_treasury_effect = yes
 		add_to_variable = { HKG_contract_funds = HKG_contract_offer_advance }
@@ -426,6 +429,7 @@ HKG_contract_credit_delivery = {
 	if = {
 		limit = { check_variable = { target_slot > -1 } }
 		subtract_from_variable = { HKG_contract_quota_array^target_slot = 1 }
+		add_to_variable = { HKG_contract_dockyard_output = 0.01 }
 		if = {
 			limit = { check_variable = { HKG_contract_quota_array^target_slot < 1 } }
 			set_temp_variable = { done_slot = target_slot }
@@ -454,6 +458,7 @@ HKG_contract_fulfill_slot = {
 	}
 	HKG_contract_clear_slot = yes
 	subtract_from_variable = { HKG_contract_count = 1 }
+	HKG_contract_update_resource_access = yes
 	country_event = { id = HKG_contract.2 days = 1 }
 }
 
@@ -464,7 +469,18 @@ HKG_contract_miss_slot = {
 	set_temp_variable = { done_slot = gone_slot }
 	HKG_contract_clear_slot = yes
 	subtract_from_variable = { HKG_contract_count = 1 }
+	HKG_contract_update_resource_access = yes
 	country_event = { id = HKG_contract.3 days = 1 }
+}
+
+HKG_contract_update_resource_access = {
+	if = {
+		limit = {
+			check_variable = { HKG_contract_count = 0 }
+			has_idea = HKG_contract_resource_access
+		}
+		remove_ideas = HKG_contract_resource_access
+	}
 }
 
 HKG_contract_clear_slot = {
