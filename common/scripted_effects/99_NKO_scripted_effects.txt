@@ -253,128 +253,6 @@ NKO_spa_open_session = {
 }
 
 # -----------------------------------------------------------------------------
-# Close a session — clears the session-active flag. Called from the cycle
-# event after force-picks resolve (if any).
-# -----------------------------------------------------------------------------
-NKO_spa_close_session = {
-	hidden_effect = {
-	}
-}
-
-# -----------------------------------------------------------------------------
-# Force-pick fallback — auto-picks up to 2 cheapest affordable mandates on
-# the player's behalf if the cycle event finds picks_made < 2. Cheapest-by-PP
-# order: Foreign (40), Industrial / Equipment / Ideology (50), Agriculture /
-# Construction (60), Songun / Juche (75).
-# -----------------------------------------------------------------------------
-NKO_spa_force_pick_fallback = {
-	# Outer guard: if the player already made both picks, skip the entire chain
-	# instead of walking 8 inner blocks to short-circuit on each picks_made check.
-	hidden_effect = {
-		if = {
-			limit = { check_variable = { NKO_spa_picks_made < 2 } }
-			if = {
-				limit = {
-					NOT = { has_idea = NKO_spa_bonus_foreign }
-					check_variable = { political_power > 39.9 }
-					check_variable = { treasury > 0.699 }
-				}
-				add_political_power = -40
-				set_temp_variable = { treasury_change = -0.7 }
-				modify_treasury_effect = yes
-				NKO_spa_pass_foreign = yes
-			}
-			if = {
-				limit = {
-					check_variable = { NKO_spa_picks_made < 2 }
-					NOT = { has_idea = NKO_spa_bonus_industry }
-					check_variable = { political_power > 49.9 }
-					check_variable = { treasury > 0.499 }
-				}
-				add_political_power = -50
-				set_temp_variable = { treasury_change = -0.5 }
-				modify_treasury_effect = yes
-				NKO_spa_pass_industry = yes
-			}
-			if = {
-				limit = {
-					check_variable = { NKO_spa_picks_made < 2 }
-					NOT = { has_idea = NKO_spa_bonus_production }
-					check_variable = { political_power > 49.9 }
-					check_variable = { treasury > 0.699 }
-				}
-				add_political_power = -50
-				set_temp_variable = { treasury_change = -0.7 }
-				modify_treasury_effect = yes
-				NKO_spa_pass_production = yes
-			}
-			if = {
-				limit = {
-					check_variable = { NKO_spa_picks_made < 2 }
-					NOT = { has_idea = NKO_spa_bonus_research }
-					NOT = { has_idea = NKO_spa_bonus_research_half }
-					NOT = { has_idea = NKO_spa_bonus_research_quarter }
-					check_variable = { political_power > 74.9 }
-					check_variable = { treasury > 1.499 }
-				}
-				add_political_power = -75
-				set_temp_variable = { treasury_change = -1.5 }
-				modify_treasury_effect = yes
-				NKO_spa_pass_research = yes
-			}
-			if = {
-				limit = {
-					check_variable = { NKO_spa_picks_made < 2 }
-					NOT = { has_idea = NKO_spa_bonus_agriculture }
-					check_variable = { political_power > 59.9 }
-					check_variable = { treasury > 0.499 }
-				}
-				add_political_power = -60
-				set_temp_variable = { treasury_change = -0.5 }
-				modify_treasury_effect = yes
-				NKO_spa_pass_agriculture = yes
-			}
-			if = {
-				limit = {
-					check_variable = { NKO_spa_picks_made < 2 }
-					NOT = { has_idea = NKO_spa_bonus_construction }
-					check_variable = { political_power > 59.9 }
-					check_variable = { treasury > 0.749 }
-				}
-				add_political_power = -60
-				set_temp_variable = { treasury_change = -0.75 }
-				modify_treasury_effect = yes
-				NKO_spa_pass_construction = yes
-			}
-			if = {
-				limit = {
-					check_variable = { NKO_spa_picks_made < 2 }
-					NOT = { has_idea = NKO_spa_bonus_military }
-					check_variable = { political_power > 74.9 }
-					check_variable = { treasury > 0.399 }
-				}
-				add_political_power = -75
-				set_temp_variable = { treasury_change = -0.4 }
-				modify_treasury_effect = yes
-				NKO_spa_pass_military = yes
-			}
-			if = {
-				limit = {
-					check_variable = { NKO_spa_picks_made < 2 }
-					NOT = { has_idea = NKO_spa_bonus_economy }
-					check_variable = { political_power > 74.9 }
-					check_variable = { treasury > 0.299 }
-				}
-				add_political_power = -75
-				set_temp_variable = { treasury_change = -0.3 }
-				modify_treasury_effect = yes
-				NKO_spa_pass_economy = yes
-			}
-		}
-	}
-}
-
-# -----------------------------------------------------------------------------
 # Per-domain pass effects — called from each mandate's complete_effect.
 # Removes the standing debuff, applies the 365-day bonus idea, sets the
 # 366-day lock flag, increments the session picks counter.
@@ -671,4 +549,31 @@ NKO_naval_grant_latest_destroyer = {
 	else_if = { limit = { has_tech = destroyer_hull_3 } add_equipment_to_stockpile = { type = destroyer_hull_3 amount = NKO_naval_eq_amount producer = NKO } }
 	else_if = { limit = { has_tech = destroyer_hull_2 } add_equipment_to_stockpile = { type = destroyer_hull_2 amount = NKO_naval_eq_amount producer = NKO } }
 	else = { add_equipment_to_stockpile = { type = destroyer_hull_1 amount = NKO_naval_eq_amount producer = NKO } }
+}
+
+NKO_naval_buildup_grant_mastery_naval = {
+	if = {
+		limit = { check_variable = { NKO_naval_buildup_mastery_naval < 200 } }
+		add_mastery = { amount = 25 folder = naval }
+		add_to_variable = { NKO_naval_buildup_mastery_naval = 25 }
+		clamp_variable = { var = NKO_naval_buildup_mastery_naval min = 0 max = 200 }
+	}
+}
+
+NKO_naval_buildup_grant_mastery_land = {
+	if = {
+		limit = { check_variable = { NKO_naval_buildup_mastery_land < 150 } }
+		add_mastery = { amount = 25 folder = land }
+		add_to_variable = { NKO_naval_buildup_mastery_land = 25 }
+		clamp_variable = { var = NKO_naval_buildup_mastery_land min = 0 max = 150 }
+	}
+}
+
+NKO_naval_buildup_grant_mastery_sf = {
+	if = {
+		limit = { check_variable = { NKO_naval_buildup_mastery_sf < 200 } }
+		add_mastery = { amount = 25 folder = special_forces }
+		add_to_variable = { NKO_naval_buildup_mastery_sf = 25 }
+		clamp_variable = { var = NKO_naval_buildup_mastery_sf min = 0 max = 200 }
+	}
 }
