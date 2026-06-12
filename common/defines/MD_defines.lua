@@ -806,6 +806,7 @@
 	NDefines.NAI.JOIN_ALLY_FASCIST_DESIRE = 25				-- -10
 	NDefines.NAI.JOIN_ALLY_COMMUNIST_DESIRE = 25				-- 75
 	NDefines.NAI.LENDLEASE_FRACTION_OF_PRODUCTION = 0.6		-- 0.5
+	NDefines.NAI.MINIMUM_MONTHLY_LEND_LEASE_EQUIPMENT = 25	-- 10 AI will not offer lend-lease if the monthly amount would be less than this
 	NDefines.NAI.PLAN_ATTACK_MIN_ORG_FACTOR_LOW = 0.85		-- 0.85
 	NDefines.NAI.PLAN_FRONTUNIT_DISTANCE_FACTOR = 20			-- 10
 	NDefines.NAI.PLAN_ATTACK_DEPTH_FACTOR = 1.2				-- 0.5
