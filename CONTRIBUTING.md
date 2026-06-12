@@ -1,6 +1,6 @@
 # Contributing to Millennium Dawn
 
-Thank you for your interest in contributing to Millennium Dawn!
+Thank you for your interest in contributing to Millennium Dawn! This document covers everything you need to know, whether you are a first-time contributor or a returning team member.
 
 ## Quick Links
 
@@ -10,6 +10,80 @@ Thank you for your interest in contributing to Millennium Dawn!
 - [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/code-stylization-guide/) — Formatting and code structure
 - [Content Review Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/content-review-guide/) — Quality checklist and developer expectations
 - [Focus Tree Design Principles](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/focus-tree-design-principles/) — Branch structure, pacing, choices
+- [Contributing Guide (website)](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/contributing/) — Web-friendly version of this file
+
+## Types of Contributions
+
+We welcome contributions in the following areas:
+
+| Area                         | Examples                                                        |
+| ---------------------------- | --------------------------------------------------------------- |
+| **Focus Trees**              | New national focus trees, branch reworks, prerequisite fixes    |
+| **Events & Decisions**       | New event chains, decision categories, triggered events         |
+| **Ideas & National Spirits** | New ideas, modifier tuning, icon assignments                    |
+| **AI & Balance**             | AI strategy plans, equipment variants, role ratios, stat tweaks |
+| **Localisation**             | English string fixes, new loc keys, tooltip accuracy            |
+| **Graphics**                 | Portraits, focus icons, event pictures, 3D models, map textures |
+| **Map & History**            | State boundaries, province data, country history, OOBs          |
+| **Documentation**            | Docs site content, guides, tutorials, dev diaries               |
+| **Tooling**                  | Python scripts in `tools/`, CI improvements, pre-commit hooks   |
+| **Bug Fixes**                | Crash fixes, trigger errors, scoping bugs, typos                |
+
+If your contribution does not fit neatly into one of these categories, ask on Discord or open an issue first.
+
+## Fork-Based Workflow
+
+Outside contributors work from forks. Team members with write access may use branches directly on the main repo.
+
+### For Outside Contributors
+
+1. **Fork** the repository on GitHub.
+2. **Clone** your fork locally:
+   ```bash
+   git clone https://github.com/<your-username>/Millennium-Dawn.git
+   cd Millennium-Dawn
+   ```
+3. **Add the upstream remote** so you can stay current:
+   ```bash
+   git remote add upstream https://github.com/MillenniumDawn/Millennium-Dawn.git
+   ```
+4. **Create a feature branch** from `main`:
+   ```bash
+   git checkout -b my-feature main
+   ```
+5. **Make your changes**, following the style guidelines in this document.
+6. **Commit** — pre-commit hooks run automatically and will flag issues.
+7. **Push** your branch to your fork:
+   ```bash
+   git push origin my-feature
+   ```
+8. **Open a pull request** against `main` on the upstream repo.
+
+### Staying Up to Date
+
+Before starting new work, sync your fork with upstream:
+
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+### PR Expectations
+
+- Keep PRs focused on a single feature or fix when possible.
+- Update [Changelog.txt](./Changelog.txt) under the current top-most version heading (see [Changelog Guidelines](#changelog-guidelines)).
+- Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md) if this is your first contribution.
+- CI validation must pass and a team leader must approve before merge.
+  - The CI validation may be bypassed by a team leader depending on their preferences and given the issues.
+
+### What We Will Not Accept
+
+- PRs that only reformat or restructure existing code without a functional reason.
+- Machine-translated localisation (non-English languages are managed via Paratranz).
+- Content that violates Paradox Interactive's Terms of Service.
+- Large, unfocused PRs that touch many unrelated files. Break them up.
 
 ## Development Setup
 
@@ -115,18 +189,6 @@ See the [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Daw
 - Do not hardcode `"/Millennium-Dawn/..."` — base path is applied during build
 - Image links follow the same pattern: `![Alt](/assets/images/example.png)`
 
-## Pull Request Process
-
-1. Create a feature branch from `main`
-2. Run `python3 tools/setup.py --check` to verify your environment
-3. Make your changes following the style guidelines above
-4. Commit — pre-commit hooks run automatically and will flag issues
-5. Update [Changelog.txt](./Changelog.txt) with your changes (see format below)
-6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md) if this is your first contribution
-7. Push your branch and open a pull request on GitHub
-8. CI validation must pass and a team leader must approve before merge
-   1. The CI validation may be bypass by a team leader depending on their preferences and given the issues.
-
 ## Changelog Guidelines
 
 All PRs must update [Changelog.txt](./Changelog.txt) under the current top-most version heading.
@@ -179,34 +241,83 @@ Use only these categories (skip any that have no entries):
 
 ## AI Policy
 
-The Millennium Dawn team takes AI contributions or usage very seriously. We understand that AI can be helpful and improve the productivity of modding, but it is your responsibility to use it appropriately.
-We do not under any permissions allow any ML/AI generated assets for graphics if AI is the sole contributor.
+The Millennium Dawn team takes AI contributions seriously. AI tooling can improve productivity, but every contributor is responsible for the quality and integrity of what they submit. This section defines what is allowed, what is restricted, and what is prohibited.
 
-### AI-Assisted Code
+### Guiding Principles
 
-AI-assisted code is permitted assuming you are using it responsibly. Several team members already integrate open source models, closed source models and otherwise into their workflow.
+1. **Human ownership.** Every PR is the submitter's work product regardless of how it was produced. You own the quality, accuracy, and style compliance of everything you submit.
+2. **Review before submission.** AI output is a draft, not a deliverable. All AI-assisted code, text, or localisation must be reviewed, tested, and brought into compliance with project standards before it enters a PR.
+3. **Transparency.** If a substantial portion of a PR was generated or heavily shaped by AI, say so in the PR description. This is not a penalty — it helps reviewers know where to look harder.
 
-_Rules_
+### AI-Assisted Code (Scripts, Focus Trees, Events, Decisions, Ideas)
 
-- All code must be personally reviewed before submitted to team review
-- All AI code must adhere to team standards and be properly vetted
-- Use pre-commit to ensure the contributions match the expected style
+**Allowed** with conditions:
 
-### AI-Assisted Localization
+- You may use AI coding assistants (GitHub Copilot, Claude, ChatGPT, local models, etc.) to draft, refactor, or debug HOI4 script code.
+- Several team members already integrate open-source and closed-source models into their workflow.
 
-- AI-generated localization is allowed with human review but must maintain accuracy, styling and must still be originally created by a human
+**Requirements:**
 
-### AI-Generated Art
+- All code must be personally reviewed line-by-line before submission to team review.
+- All AI-generated code must adhere to team standards: correct indentation (tabs), naming conventions (`TAG_focus_name`), logging in effects, `ai_will_do` in focuses/decisions, `is_triggered_only = yes` in events.
+- Run pre-commit to ensure contributions match the expected style. Do not submit raw AI output.
+- Verify that AI-generated triggers, effects, and modifiers actually exist in the codebase or vanilla HOI4. AI models frequently hallucinate non-existent game objects.
+- Test in-game when possible. AI cannot run the HOI4 engine; you can.
 
-- Pure AI Generated Art is **not allowed** under any circumstances
-- AI-Generated side profiles of military vehicles can be acceptable if there is no side profile available for graphics
-  - All graphics using this method MUST follow standardization and be hand done by a human collaborator
+**Common AI mistakes to watch for:**
+
+- Invented modifier names, scripted effects, or trigger keywords that do not exist
+- Incorrect scoping (e.g., using `tag` where `original_tag` is required)
+- Redundant `AND = { }` wrappers around implicit-AND trigger blocks
+- `check_variable` with `>=` or `<=` (not valid inline syntax)
+- Missing `province = XXXXX` on `add_building_construction` for `naval_base`
+- `NOR = { ... }` used as a logical NOR (it scopes to Norway)
+
+### AI-Assisted Localisation
+
+**Allowed** with conditions:
+
+- AI may be used to draft, proofread, or refine English localisation strings.
+- The mod's non-English localisation is managed exclusively through Paratranz. Do not use AI to generate translations for other languages.
+
+**Requirements:**
+
+- All localisation must be reviewed by a human for accuracy, tone, and adherence to the [localisation rules](.claude/rules/localisation-rules.md).
+- AI-generated localisation must not contain padding filler, em dashes, or excessive hedging.
+- Every `[variable]` substitution in generated loc must correspond to a real scope getter or set variable.
+- Grammar and subject-verb agreement must be correct. AI models commonly produce subtle agreement errors in complex sentences.
+
+### AI-Generated Art and Graphics
+
+**Prohibited** in most cases:
+
+- Pure AI-generated art (illustrations, portraits, event pictures, loading screens) is **not allowed** under any circumstances.
+- AI-generated side profiles of military vehicles are acceptable **only** when no existing side profile is available for that vehicle.
+  - All graphics using this method must follow the mod's art standardization and be manually finalized by a human collaborator.
+  - The final asset must be reviewed and approved by a GFX team member before submission.
+- AI-upscaled images of existing assets are not considered "AI-generated" but still require human review for visual quality.
+
+### AI-Generated Documentation and PR Descriptions
+
+**Allowed** with conditions:
+
+- You may use AI to draft documentation, README updates, or PR descriptions.
+- Review the output for accuracy. AI-generated docs frequently reference files, tools, or workflows that do not exist in this repo.
+- Do not add "Generated with" attributions, footers, or co-author trailers to PR descriptions or commit messages. The project does not use these.
+
+### Enforcement
+
+- PRs that contain unreviewed AI output (hallucinated game objects, broken syntax, style violations) will be returned for revision.
+- Repeated submissions of raw AI output without review may result in loss of contributor trust and additional review requirements.
+- Pure AI-generated art submissions will be rejected outright.
 
 ## Resources
 
-- [Dev Resources](./docs/src/content/resources/) - Tools and guides
-- [Focus Tree Lifecycle](./docs/src/content/resources/focus-tree-lifecycle-checklist.md)
-- [Game Rules Reference](./docs/src/content/tutorials/game-rules.md)
+- [Dev Resources](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/) — Tools and guides on the docs site
+- [Focus Tree Lifecycle](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/focus-tree-lifecycle-checklist/) — End-to-end checklist
+- [Game Rules Reference](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/game-rules/) — Available game rules
+- [AI-Assisted Modding Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/ai-modding-guide/) — Setting up local AI models for development
+- [tools/README.md](./tools/README.md) — Dev tools directory layout
 
 ---
 
