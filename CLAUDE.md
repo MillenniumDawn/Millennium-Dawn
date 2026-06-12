@@ -23,3 +23,4 @@ The following slash commands are available in this project (`.claude/skills/`):
 | `/search-filter-check [file]` | Validate `search_filters` on every focus against the approved filter list and two-layer convention                    |
 | `/update-claude`              | Summarize the current conversation and propose improvements to CLAUDE.md, rules, and skills                           |
 | `/open-pr [issues…] ["title"]` | Create a draft PR with AngriestBird-style summary, link issues, and update Changelog.txt for unlisted changes        |
+| `/dev-diary-mdx [file]`       | Convert a Word/Google-Docs `.docx` dev diary into a publish-ready `.mdx` with extracted, in-order images              |
