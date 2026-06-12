@@ -369,6 +369,28 @@ assert_finds(
     "else-block after if { var = 0 } suppresses flag",
 )
 
+# 3h. Guarded by set_variable with non-zero literal → no flag
+assert_finds(
+    _check_divide_variable_zero_guard,
+    [
+        "\tset_variable = { SPR_regulare_cap_ratio = 2000 }\n",
+        "\tdivide_variable = { SPR_regulare_cap = SPR_regulare_cap_ratio }\n",
+    ],
+    0,
+    "set_variable with non-zero literal suppresses flag",
+)
+
+# 3i. set_variable with zero → still flag
+assert_finds(
+    _check_divide_variable_zero_guard,
+    [
+        "\tset_variable = { my_divisor = 0 }\n",
+        "\tdivide_variable = { result = my_divisor }\n",
+    ],
+    1,
+    "set_variable with zero still flagged",
+)
+
 
 # 4. Duplicate consecutive add_to_variable
 
