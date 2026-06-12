@@ -1,7 +1,9 @@
 ---
+import { getImage } from "astro:assets";
 import { getCollection, getEntry, render } from "astro:content";
 import { BaseLayout } from "@/app/layouts";
-import { cssUrl, withBase } from "@/shared/lib/routing/urls";
+import { getInternalImageAsset } from "@/shared/lib/media/image-assets";
+import { cssUrl, stripBase, withBase } from "@/shared/lib/routing/urls";
 import { getCountryPath, getEntryBodyClass, getEntryPageId } from "@/shared/lib/routing/content-routes";
 import {
   BODY_TEXT_CLASS,
@@ -33,6 +35,35 @@ const countryCardLinkClass = [
   "before:inset-0",
   "before:z-10",
 ].join(" ");
+
+const CARD_FLAG_WIDTH = 440;
+const CARD_FLAG_HEIGHT = 220;
+
+const countryCards = await Promise.all(
+  focusCountries.map(async (country) => {
+    let flagBackgroundCss: string | undefined;
+    const flagImage = country.data.flag_image;
+
+    if (flagImage) {
+      const assetPath = stripBase(flagImage);
+      const flagMeta = getInternalImageAsset(assetPath);
+      if (flagMeta) {
+        const optimized = await getImage({
+          src: flagMeta,
+          format: "webp",
+          quality: 75,
+          width: CARD_FLAG_WIDTH,
+          height: CARD_FLAG_HEIGHT,
+        });
+        flagBackgroundCss = cssUrl(optimized.src);
+      } else if (assetPath.startsWith("/assets/images/")) {
+        flagBackgroundCss = cssUrl(assetPath);
+      }
+    }
+
+    return { country, flagBackgroundCss };
+  }),
+);
 ---
 
 <BaseLayout
@@ -55,13 +86,13 @@ const countryCardLinkClass = [
     aria-label="Countries with unique focus trees"
   >
     {
-      focusCountries.map((country) => (
+      countryCards.map(({ country, flagBackgroundCss }) => (
         <article
           class={COUNTRY_CARD_ARTICLE_CLASS}
           role="listitem"
-          style={country.data.flag_image ? `--country-flag-image: ${cssUrl(country.data.flag_image)};` : undefined}
+          style={flagBackgroundCss ? `--country-flag-image: ${flagBackgroundCss};` : undefined}
         >
-          {country.data.flag_image && <span class={COUNTRY_FLAG_OVERLAY_CLASS} aria-hidden="true" />}
+          {flagBackgroundCss && <span class={COUNTRY_FLAG_OVERLAY_CLASS} aria-hidden="true" />}
           <p class="m-0 text-[1.05rem] font-semibold leading-[1.35] text-text">
             <a class={countryCardLinkClass} href={withBase(getCountryPath(country))}>
               {country.data.title}

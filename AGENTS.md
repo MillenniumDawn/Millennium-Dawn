@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**NOTE**: Non-English localisation files are managed via Paratranz — never modify them.
+**NOTE**: Non-English localisation files are **not** currently mirrored against English — full translation is deferred to a later translation project. Do **not** modify them, and do **not** flag non-English `.yml` files in reviews, audits, or branch checks for missing, stale, or diverging keys relative to English. They are expected to be out of sync; any absent key degrades gracefully to the English string or an empty value. Only English keys (and the script objects that reference them) are in scope for review.
 
 Millennium Dawn is a Hearts of Iron IV mod (2000-present). Key directories: `common/` (game data), `events/`, `localisation/` (English `.yml`, UTF-8 BOM), `history/`, `interface/`, `gfx/`, `tools/` (Python dev scripts).
 
@@ -32,7 +32,7 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 
 - Tabs for indentation; `{` on same line, `}` on own line at outer indent; 1 blank line between elements
 - Simple checks on one line: `available = { has_country_flag = some_flag }`
-- Comments are small, targeted, and load-bearing: add one only when the _why_ is non-obvious and removing it would lose real information. Cut anything that restates the code, narrates a change, or points at callers (see `.claude/rules/general-rules.md`; Python tooling: `tools/COMMENT_STYLE.md`)
+- Comments are small, targeted, and load-bearing: add one only when the _why_ is non-obvious and removing it would lose real information, and keep it to a single line. Cut anything that restates the code, narrates a change, points at callers, or justifies a mechanic in flavour prose (see `.claude/rules/general-rules.md`; Python tooling: `tools/COMMENT_STYLE.md`)
 - Remove unused/commented-out code
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`)

@@ -8,10 +8,8 @@ scripted_diplomatic_actions = {
 				is_ai = yes
 				NOT = { has_country_flag = aiattachecooldown }
 			}
-			NOT = {
-				has_capitulated = yes
-				has_attache_from = ROOT
-			}
+			NOT = { has_capitulated = yes }
+			NOT = { has_attache_from = ROOT }
 			has_war = yes
 		}
 
@@ -32,11 +30,14 @@ scripted_diplomatic_actions = {
 
 		receive_description = AISEND_ATTACHE_RECIEVER_LOC
 
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect aisend_attache"
+			ROOT = { set_variable = { pending_ai_attache_country = PREV.id } }
+		}
 		complete_effect = {
-			if = { limit = { is_debug = yes }
-				log = "[GetDateText]: [THIS.GetName]: diplomatic action complete_effect aisend_attache"
-			}
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect aisend_attache"
 			ROOT = {
+				clear_variable = pending_ai_attache_country
 				diplomatic_relation = {
 					country = PREV
 					relation = send_attache
@@ -53,6 +54,13 @@ scripted_diplomatic_actions = {
 				else = {
 					set_country_flag = { flag = aiattachecooldown days = 160 value = 1 }
 				}
+			}
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect aisend_attache"
+			ROOT = {
+				clear_variable = pending_ai_attache_country
+				set_country_flag = { flag = rejected_ai_attache_@PREV days = 180 value = 1 }
 			}
 		}
 
@@ -79,7 +87,7 @@ scripted_diplomatic_actions = {
 				is_major = yes
 			}
 			modifier = {
-				add = 3
+				add = 4
 				ROOT = {
 					is_major = yes
 				}
@@ -94,12 +102,6 @@ scripted_diplomatic_actions = {
 				add = 1
 				ROOT = {
 					has_army_experience < 50
-				}
-			}
-			modifier = {
-				add = 1
-				ROOT = {
-					is_major = yes
 				}
 			}
 			modifier = {
@@ -125,11 +127,50 @@ scripted_diplomatic_actions = {
 					has_war = yes
 				}
 			}
+			modifier = {
+				factor = 0
+				ROOT = {
+					OR = {
+						check_variable = { ROOT.interest_rate > 12 }
+						has_political_power < 100
+						has_active_mission = bankruptcy_incoming_collapse
+						NOT = { check_variable = { pending_ai_attache_country = 0 } }
+						has_country_flag = rejected_ai_attache_@PREV
+					}
+				}
+			}
 		}
 
 		ai_acceptance = {
-			condition = {
-				base = 100
+			base_attache_condition = {
+				base = -10
+				modifier = {
+					add = 30
+					has_opinion = { target = ROOT value > 25 }
+				}
+				modifier = {
+					add = 20
+					has_opinion = { target = ROOT value > 75 }
+				}
+				modifier = {
+					add = -100
+					has_opinion = { target = ROOT value < 0 }
+				}
+			}
+			condition_relations = {
+				base = 0
+				modifier = {
+					add = 40
+					is_in_faction_with = ROOT
+				}
+				modifier = {
+					add = 25
+					is_same_government = yes
+				}
+				modifier = {
+					add = 50
+					is_subject_of = ROOT
+				}
 			}
 		}
 	}
@@ -162,9 +203,7 @@ scripted_diplomatic_actions = {
 		accept_description = AIRECALL_ATTACHE_ACCEPTED_DESC
 
 		complete_effect = {
-			if = { limit = { is_debug = yes }
-				log = "[GetDateText]: [THIS.GetName]: diplomatic action complete_effect airecall_attache"
-			}
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect airecall_attache"
 			ROOT = {
 				recall_attache = PREV
 				set_country_flag = { flag = recalled_attache_cooldown days = 90 value = 1 }
