@@ -85,6 +85,65 @@ scripted_gui = {
 		}
 
 		triggers = {
+			# elections threshold
+			increase_election_threshold_visible = {
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+			}
+			increase_election_threshold_click_enabled = {
+				has_elections = yes
+				has_political_power > 49
+				custom_trigger_tooltip = {
+					tooltip = election_threshold_max
+					check_variable = { election_threshold < 0.10 }
+				}
+			}
+			decrease_election_threshold_visible = {
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+			}
+			decrease_election_threshold_click_enabled = {
+				has_elections = yes
+				has_political_power > 49
+				custom_trigger_tooltip = {
+					tooltip = election_threshold_min
+					check_variable = { election_threshold > 0 }
+				}
+			}
+
+			# ban/allow all parties button
+			allow_all_parties_button_visible = {
+				has_country_flag = partyall_banned
+			}
+
+			allow_all_parties_button_click_enabled = {
+				has_political_power > 230
+			}
+
+			ban_all_parties_button_visible = {
+				NOT = { has_country_flag = partyall_banned }
+			}
+
+			ban_all_parties_button_click_enabled = {
+				calculate_pp_cost_banned_amount = yes
+				has_political_power > pp_cost
+				50_percent_government_popularity = yes
+			}
+
 			# propaganda
 			prowestern_propaganda_button_click_enabled = {
 				if = {
@@ -105,6 +164,25 @@ scripted_gui = {
 						has_country_flag = nationalist_propaganda
 						has_country_flag = fascism_propaganda
 					}	
+				}
+
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
 				}
 			}
 			emerging_propaganda_button_click_enabled = {
@@ -148,6 +226,25 @@ scripted_gui = {
 						has_country_flag = fascism_propaganda
 					}	
 				}
+
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
 			}
 			nationalist_propaganda_button_click_enabled = {
 				if = {
@@ -169,6 +266,25 @@ scripted_gui = {
 						has_country_flag = fascism_propaganda
 					}	
 				}
+
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
 			}
 			fascism_propaganda_button_click_enabled = {
 				if = {
@@ -188,7 +304,80 @@ scripted_gui = {
 						has_country_flag = nonaligned_propaganda
 						has_country_flag = nationalist_propaganda
 						has_country_flag = prowestern_propaganda
-					}	
+					}
+				}
+
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
+				
+				hidden_trigger = {
+					OR = {
+						is_middle_eastern_nation = yes
+						#european
+						original_tag = ALB
+						original_tag = BOS
+						original_tag = KOS
+						original_tag = CHE
+						#asian
+						is_Central_Asia = yes
+						original_tag = AZE
+						original_tag = RAJ
+						original_tag = PAK
+						original_tag = SRI
+						original_tag = MLD
+						original_tag = PHI
+						original_tag = MAY
+						original_tag = IND
+						original_tag = BRU
+						#america
+						original_tag = SUR
+						#subsaharan africa
+						is_horn_of_africa_nation = yes
+						original_tag = COM
+						original_tag = TNZ
+						original_tag = KEN
+						original_tag = DAR
+						original_tag = SUD
+						original_tag = MAU
+						original_tag = SEN
+						original_tag = MAL
+						original_tag = NGR
+						original_tag = CAM
+						original_tag = BFA
+						original_tag = CHA
+						original_tag = CDI
+						original_tag = GAM
+						original_tag = GUB
+						original_tag = NIG
+						original_tag = LIB
+						original_tag = GUI
+						original_tag = LUR
+						original_tag = TOG
+						original_tag = BEN
+						original_tag = SEL
+						original_tag = MRT
+						original_tag = LOG
+						original_tag = CAR
+					}
+					NOT = {
+						original_tag = ISR
+					}
 				}
 			}
 
@@ -381,59 +570,134 @@ scripted_gui = {
 		}
 
 		effects = {
+			# election threshold
+			increase_election_threshold_click = {
+				set_temp_variable = { threshold_change = 0.01 }
+				modify_election_threshold = yes
+				add_political_power = -50
+			}
+			decrease_election_threshold_click = {
+				set_temp_variable = { threshold_change = -0.01 }
+				modify_election_threshold = yes
+				add_political_power = -50
+			}
+
+			# ban/allow all parties button
+			allow_all_parties_button_click = {
+				set_partyall_allowed = yes
+			}
+			ban_all_parties_button_click = {
+				set_partyall_banned = yes
+			}
+
 			# propaganda buttons
 			prowestern_propaganda_button_click = {
+				calculate_prowestern_propaganda_cost = yes
+				custom_effect_tooltip = prowestern_propaganda_tt
+
 				if = {
 					limit = { has_country_flag = prowestern_propaganda }
 
 					clr_country_flag = prowestern_propaganda
+
+					hidden_effect = {
+						remove_ideas = MD_propaganda_prowestern
+					}
 				}
 				else = {
 					set_country_flag = prowestern_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_prowestern
+					}
 				}
 			}
 
 			emerging_propaganda_button_click = {
+				calculate_emerging_propaganda_cost = yes
+				custom_effect_tooltip = emerging_propaganda_tt
+
 				if = {
 					limit = { has_country_flag = emerging_propaganda }
 
 					clr_country_flag = emerging_propaganda
+
+					hidden_effect = { 
+						remove_ideas = MD_propaganda_emerging
+					}
 				}
 				else = {
 					set_country_flag = emerging_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_emerging
+					}
 				}
 			}
 
 			nonaligned_propaganda_button_click = {
+				calculate_nonaligned_propaganda_cost = yes
+				custom_effect_tooltip = nonaligned_propaganda_tt
+
 				if = {
 					limit = { has_country_flag = nonaligned_propaganda }
 
 					clr_country_flag = nonaligned_propaganda
+
+					hidden_effect = { 
+						remove_ideas = MD_propaganda_nonaligned
+					}
 				}
 				else = {
 					set_country_flag = nonaligned_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_nonaligned
+					}
 				}
 			}
 
 			nationalist_propaganda_button_click = {
+				calculate_nationalist_propaganda_cost = yes
+				custom_effect_tooltip = nationalist_propaganda_tt
+
 				if = {
 					limit = { has_country_flag = nationalist_propaganda }
 
 					clr_country_flag = nationalist_propaganda
+
+					hidden_effect = { 
+						remove_ideas = MD_propaganda_nationalist
+					}
 				}
 				else = {
 					set_country_flag = nationalist_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_nationalist
+					}
 				}
 			}
 
 			fascism_propaganda_button_click = {
+				calculate_salafist_propaganda_cost = yes
+				custom_effect_tooltip = fascism_propaganda_tt
+
 				if = {
 					limit = { has_country_flag = fascism_propaganda }
 
 					clr_country_flag = fascism_propaganda
+					
+					hidden_effect = { 
+						remove_ideas = MD_propaganda_fascism
+					}
 				}
 				else = {
 					set_country_flag = fascism_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_fascism
+					}
 				}
 			}
 
