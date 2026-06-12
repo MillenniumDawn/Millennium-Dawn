@@ -52,6 +52,29 @@ _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
 _SET_TARGET_PREFIX_RE = re.compile(r"set_variable\s*=\s*\{?\s*(?:[a-z_][a-z0-9_]*\.)*$")
 
 
+def _resolve_mod_root(path: str) -> str:
+    """Walk up from `path` to the directory that looks like the mod root.
+
+    Reference counting must cover the whole mod, but `--path` may point at a
+    subdirectory (e.g. common/scripted_effects/). Walk up until a directory
+    holding `descriptor.mod` (or both `common/` and `localisation/`) is found
+    and scan references from there; otherwise fall back to `path` unchanged.
+    Walking up from the *given* path (not the tool's own location) keeps
+    sibling-checkout runs correct.
+    """
+    cur = os.path.abspath(path)
+    while True:
+        if os.path.exists(os.path.join(cur, "descriptor.mod")) or (
+            os.path.isdir(os.path.join(cur, "common"))
+            and os.path.isdir(os.path.join(cur, "localisation"))
+        ):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            return os.path.abspath(path)
+        cur = parent
+
+
 def _strip_scope_prefix(name: str) -> str:
     """Reduce a scope-qualified set_variable target to its bare variable name.
 
@@ -316,29 +339,28 @@ class Validator(BaseValidator):
         # Scan every file once with a single tokenizer pass — no per-file regex
         # build. .yml is restricted to English; other languages are Paratranz
         # mirrors that only echo the same [?var] references, adding no signal.
-        if self.staged_files:
-            files_to_scan = [
-                f
-                for f in self.staged_files
-                if f.endswith(".txt")
-                or (
-                    f.endswith(".yml")
-                    and "localisation/english/" in f.replace("\\", "/")
-                )
-            ]
-        else:
-            txt_files = list(
-                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+        #
+        # Reference counting is ALWAYS global, even under --staged or a narrowed
+        # --path: a variable defined in a changed file can be referenced
+        # anywhere in the mod (dynamic modifiers, scripted localisation, loc,
+        # other scripted effects). Restricting this scan to the staged subset
+        # was hiding cross-file references and reporting live variables as
+        # `refs: 0`. Only pass 1 above is narrowed to staged files (which
+        # definitions to report on); the scan below is whole-mod. Per-file
+        # content-hashed caching keeps repeat runs cheap. `_resolve_mod_root`
+        # also rescues a `--path` pointed at a subdirectory by scanning from the
+        # true mod root rather than the subfolder.
+        scan_root = _resolve_mod_root(self.mod_path)
+        txt_files = list(
+            glob.iglob(os.path.join(scan_root, "**", "*.txt"), recursive=True)
+        )
+        yml_files = list(
+            glob.iglob(
+                os.path.join(scan_root, "localisation", "english", "**", "*.yml"),
+                recursive=True,
             )
-            yml_files = list(
-                glob.iglob(
-                    os.path.join(
-                        self.mod_path, "localisation", "english", "**", "*.yml"
-                    ),
-                    recursive=True,
-                )
-            )
-            files_to_scan = txt_files + yml_files
+        )
+        files_to_scan = txt_files + yml_files
 
         # Partition into bare names and global.-dotted names (lowercased -> orig
         # case). A scoped read like THIS.foo stores/reads bare `foo`; a global.X

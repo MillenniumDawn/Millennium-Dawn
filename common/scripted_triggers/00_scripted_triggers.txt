@@ -410,25 +410,20 @@ country_can_be_reasonable_target_of_wargoal = {
 
 calculate_ai_interest = {
 	# Even if the country has treasury, we want to add the input cost to the debt to ensure we are getting the right end interest rate
-	set_temp_variable = { debt_temp = debt }
-	add_to_temp_variable = { debt_temp = input_cost }
-
-	set_temp_variable = { interest_rate_temp = debt_temp }
-	divide_temp_variable = { interest_rate_temp = gdp_total }
-	multiply_temp_variable = { interest_rate_temp = 10 }
-
-	set_temp_variable = { interest_rate_temp_multiplier = modifier@interest_rate_multiplier_modifier }
-	add_to_temp_variable = { interest_rate_temp = interest_rate_temp_multiplier }
-	check_variable = { interest_rate_temp > interest_rate_check }
-}
-Is_Muslim_Country = {
-	ROOT = {
-		OR = {
-			has_idea = sunni
-			has_idea = shia
-			has_idea = ibadi
-			has_idea = sufi_islam
+	set_temp_variable = {
+		debt_temp = {
+			value = debt
+			add = input_cost
 		}
+	}
+
+	check_expr = {
+		value = 0
+		add = debt_temp
+		divide = gdp_total
+		multiply = 10
+		add = modifier@interest_rate_multiplier_modifier
+		greater_than = { value = interest_rate_check }
 	}
 }
 
@@ -502,12 +497,14 @@ we_are_being_justified_against_or_wargoal_against_us = {
 # Uses total_uar_gdp and total_arabic_gdp variables
 # Clamps denominator to prevent division by zero
 uar_has_required_gdp_share = {
-	set_temp_variable = { gdp_share = total_uar_gdp }
-	clamp_temp_variable = { var = total_arabic_gdp min = 0.001 }
-	divide_temp_variable = { gdp_share = total_arabic_gdp }
 	custom_trigger_tooltip = {
 		tooltip = UAR_unite_uar_tt
-		check_variable = { gdp_share > 0.40 }
+		check_expr = {
+			value = total_uar_gdp
+			clamp = { min = 0 max = 100000000 }
+			divide = total_arabic_gdp
+			greater_than = { value = 0.40 }
+		}
 	}
 }
 

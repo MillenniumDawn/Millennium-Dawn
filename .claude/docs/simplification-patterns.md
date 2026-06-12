@@ -189,6 +189,81 @@ meta_effect = {
 
 **Caveat:** `meta_effect` runs at parse time, not runtime. It cannot reference runtime variables in its parameter substitution, only static text or `[]`-formatted variables.
 
+## Migrate Per-Index Flags + `meta_trigger`/`meta_effect` to Runtime Arrays
+
+This is the inverse of the section above, and the more common cleanup. `meta_effect`/`meta_trigger` is the right tool when fanning out over **static identifiers** (decision IDs, focus IDs — things the engine requires to exist at parse time). It is the **wrong** tool when used to fan out over **runtime per-index state** — a set of flags like `POTEF_nominee_0..23`, `focus_[EUXXX]_EP_agenda`, or `[PG_X]_influence`. That anti-pattern creates N country flags plus N parse-time meta blocks where a single runtime array or variable would do, and the per-nation expansion balloons scripted localisation (the EU subsystem shed ~16,000 generated lines this way).
+
+The EU subsystem (`common/scripted_effects/99_eu_scripted_effects.txt`, `99_EU_voting_scripted_effects.txt`, `common/decisions/EU_*`, `common/scripted_triggers/99_EU_*`) is the reference implementation.
+
+### Before (one country flag per index + a meta block to set/scan them)
+
+```
+# Set the per-index flag via parse-time substitution
+meta_effect = {
+    text = { set_country_flag = POTEF_nominee_[subideology] }
+    subideology = "[?var_gov_index|0]"
+}
+
+# Scan all 24 flags to ask "has anyone nominated?"
+NOT = {
+    OR = {
+        has_country_flag = POTEF_nominee_0
+        has_country_flag = POTEF_nominee_1
+        # ... 22 more ...
+    }
+}
+```
+
+### After (one global array indexed by the runtime value)
+
+```
+# Store the nominating country's id at the subideology slot. 0 = unset.
+set_variable = { global.POTEF_nominee_country^var_gov_index = THIS.id }
+
+# A single flat check replaces the 24-flag scan.
+NOT = { check_variable = { global.POTEF_nominee_country^var_gov_index value = 0 compare = greater_than } }
+```
+
+**Why:** Removes N flags and the meta block entirely; the index is now a real runtime variable so loops (`for_each_loop`), lookups, and display loc all read one source of truth. Adding a slot is no code change at all.
+
+### Sentinel-value gating with country IDs
+
+Storing a **country id** in an array slot doubles as a set/unset sentinel: runtime country ids are always `> 0` (id 0 is reserved for rebels and never held by a live EU member), so `check_variable = { slot > 0 }` means "this slot is filled" and resetting the slot to `0` clears it. An uninitialized slot reads `0` and fails the gate safely — no `has_country_flag` needed. Use `compare = greater_than` (or `not_equals 0`); never inline `>=`/`<=` (invalid — see general-rules).
+
+### Set ↔ clear symmetry is mandatory
+
+Every flag or array slot that gates a **cycle** (an election, a vote, an agenda) must have a clear site that is actually reached when the cycle ends. Trace the full lifecycle before merging:
+
+1. **Init** — set/reset at EU startup (`on_startup`-driven effect) so a fresh game and a reloaded save both have a defined value.
+2. **Write** — set when the triggering event happens (nomination, vote pass).
+3. **Clear** — reset to `0` / `clr_country_flag` at cycle end so the next cycle can run.
+
+A flag that is set but never cleared (or a slot never reset) silently locks the next cycle out. Grep every set site against every clear site — asymmetry is the bug. Reference: `clear_potef_electoral_values` resets every `global.POTEF_nominee_country^v` and clears `POTEF_has_nominated` for all members at election end.
+
+### Permanent ledger vs cycle-state — decide which you are building
+
+- **Cycle-state** (`global.current_active_agenda_disp`, the nominee slots): reset every cycle. Visibility gates read it (`> 0` = a cycle is live).
+- **Permanent ledger** (`global.EU_passed_votes`): an append-only record of what has ever passed, read-only via `is_in_array`, intentionally **never** cleared. Replacing a per-country `any_of_scopes { has_country_flag = focus_EU202_yes }` scan with `is_in_array = { array = global.EU_passed_votes value = 202 }` is correct **only** if something appends 202 to that array when the vote passes (`cleanup_european_union_voting_yes` does). A ledger that is read but never written is permanently false.
+
+Document which kind each array is in a one-line comment at its first write site — they look identical but reviewers must know whether a missing clear is a bug or intentional.
+
+### Loop type follows the array contents
+
+Numeric-index arrays (vote ids, subideology indices, token arrays) use `for_each_loop`. Scope-object arrays (countries, states — e.g. `global.EU_member`) use `for_each_scope_loop`. Mismatching them silently no-ops or misbehaves. (Also in general-rules; the migration is where it bites most.)
+
+### Scripted-loc fallthrough
+
+When the display moves from a per-flag scriptloc to one variable-driven `defined_text`, every reachable input value still needs a matching `text` entry or a final catch-all `text` with no `trigger`. A `defined_text` that falls through with no match renders **blank** (or a literal `[token]`). Check the idle state (`current_active_agenda_disp = 0`) and the empty/all-one-party cases.
+
+### Clean up what the migration orphans
+
+Removing the flags/triggers leaves dead artifacts — sweep them in the same change:
+
+- **`!_cwtools_dummy_effects.txt`** stubs for the removed flags/effects.
+- **Orphaned English loc keys** for removed triggers/tooltips (e.g. `tooltip_influence_on_leader_of_EU_trade_policy_25_percent`). Grep the key across `common/ events/ interface/` first — and watch for keys assembled dynamically (`tooltip_[token]`), which a literal grep misses. English source keys are safe to delete; never touch other-language files (Paratranz-managed).
+
+---
+
 ## Consolidate `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop`
 
 When a focus, decision, or event shows a tooltip for effects applied to every member of an array, the old pattern duplicated the same logic twice: once in `effect_tooltip` (for display) and once in `for_each_scope_loop` (for execution). The `for_each_scope_loop` block accepts a `tooltip` parameter, which combines both.
