@@ -92,7 +92,7 @@ equipment_bonus = {
 
 ### Any scripted effects:
 ```
-effect = { 
+effect = {
     add_tech_bonus = {
         bonus = 0.5
         uses = 1
