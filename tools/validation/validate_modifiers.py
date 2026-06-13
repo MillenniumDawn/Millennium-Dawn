@@ -596,9 +596,14 @@ class Validator(BaseValidator):
 
         # Authoritative vanilla reference — concrete modifiers plus parametric
         # families expanded against their documented Modified types.
-        documented = _load_documented_modifiers(
-            os.path.join(self.mod_path, _DOC_REL_PATH)
-        )
+        doc_path = os.path.join(self.mod_path, _DOC_REL_PATH)
+        documented = _load_documented_modifiers(doc_path)
+        if not documented:
+            self.log(
+                f"  WARNING: {_DOC_REL_PATH} missing or empty — known-good set is "
+                "missing ~4000 vanilla modifiers, expect false positives. Ensure "
+                "resources/documentation is checked out (CI sparse-checkout)."
+            )
         known_good |= documented
 
         # Engine-generated <slot>_cost_factor modifiers from every idea slot.
