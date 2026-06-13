@@ -33,6 +33,9 @@ FALSE_POSITIVE_PATTERNS = [
         r"^DIPLOMACY_.*_ENABLE_TRIGGER"
     ),  # Game rule triggers, engine-referenced
     re.compile(
+        r"^is_diplomatic_action_valid_"
+    ),  # Diplo-action validity gates, engine-referenced by action token
+    re.compile(
         r"^_unlock_btn_enabled$"
     ),  # MIO catalog meta-dispatch empty-token-key fallback
 ]
