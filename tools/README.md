@@ -40,7 +40,8 @@ tools/
 ├── shared_utils.py    Shared utilities (Colors, FileOpener, path helpers, arg parsers)
 ├── loc.py             Localisation utilities
 ├── logging_tool.py    Logging utility
-├── validate_staged.py Pre-commit hook: routes staged files to validators
+├── precommit_validate.py Pre-commit hook: runs the commit-stage validators in parallel
+├── validate_staged.py Legacy staged-file router (no longer wired into pre-commit)
 ├── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ├── generate_validation_report.py CI: generates PR validation reports
 ├── validate_tools.py  CI: validates Python scripts in tools/
@@ -61,10 +62,8 @@ tools/
 2. Subclass `BaseValidator` from `validator_common`. Implement `run_validations(self, files: List[str]) -> None`.
 3. Use `self.add_error(category, message, file, line)` for structured issues. The PR report renderer picks these up for inline annotations.
 4. Use `DEFAULT_EXTRA_SKIP_PATTERNS` from `validator_common` for `EXTRA_SKIP_PATTERNS` (extend with domain-specific patterns if needed).
-5. Wire into CI:
-   - Add an entry to `.github/workflows/coding-pipeline.yml` in the `validate-core` or `validate-targeted` matrix.
-   - Add a `stages: [manual]` entry in `.pre-commit-config.yaml` (validators are manual-only in pre-commit; CI runs them unconditionally).
-6. Wire into `validate_staged.py` if the validator should run on staged files during pre-commit.
+5. Wire into CI: add an entry to `.github/workflows/coding-pipeline.yml` in the `validate-core` or `validate-targeted` matrix. This is the gate for most validators — they run CI-only.
+6. Decide if it should also run on `git commit`. Heavy cross-reference validators stay CI-only. A fast validator can join the commit-stage set: add it to the `_REGISTRY` in `tools/precommit_validate.py` (with its path rules and `--strict` flag) and pin its selection in `tools/tests/precommit_validate_test.py`. The `config_drift_test` enforces that every validator runs on pre-commit or CI.
 7. Add tests in `tools/validation/tests/`.
 
 ```python
@@ -229,7 +228,8 @@ Hook entry points, CI tools, and shared libraries that stay at the `tools/` root
 
 | Script                            | Description                                                                                                                                                                                                                                                                                                                                        |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **validate_staged.py**            | Pre-commit hook: routes staged files to the correct validator                                                                                                                                                                                                                                                                                      |
+| **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                |
+| **validate_staged.py**            | Legacy staged-file router; no longer wired into pre-commit (superseded by `precommit_validate.py`)                                                                                                                                                                                                                                                 |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                   |
 | **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                    |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                |

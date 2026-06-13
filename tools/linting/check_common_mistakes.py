@@ -76,6 +76,7 @@ _RE_DECISION_MARKER = re.compile(
 )
 _RE_FOCUS_ID_IN_BLOCK = re.compile(r"\bid\s*=\s*(\w+)")
 _RE_COMPLETE_FOCUS = re.compile(r"\bcomplete_national_focus\s*=\s*(\w+)")
+_RE_UNLOCK_FOCUS = re.compile(r"\bunlock_national_focus\s*=\s*(\w+)")
 _RE_ACTIVATE_DECISION = re.compile(r"\bactivate_decision\s*=\s*(\w+)")
 _RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
 _RE_NOT_BLOCK_OPEN = re.compile(r"^\s*NOT\s*=\s*\{")
@@ -192,8 +193,9 @@ def _scan_global_refs(root_dir):
     """Return (focus_ids, decision_ids, nation_flags) gathered across the codebase.
 
     Scans all .txt files for:
-      - complete_national_focus = ID / activate_decision = ID, so the checkers can
-        skip flagging intentionally script-completed items.
+      - complete_national_focus = ID / unlock_national_focus = ID / activate_decision
+        = ID, so the checkers can skip flagging items reached by script. A focus gated
+        behind available = { always = no } is reachable once a parent focus unlocks it.
       - set_country_flag = X_nation_flag, so the is_X_nation check only suggests a
         flag that the codebase actually sets (e.g. cartel has no nation flag).
     """
@@ -213,6 +215,8 @@ def _scan_global_refs(root_dir):
                     with open(fp, "r", encoding="utf-8", errors="replace") as f:
                         content = f.read()
                     for m in _RE_COMPLETE_FOCUS.finditer(content):
+                        focuses.add(m.group(1))
+                    for m in _RE_UNLOCK_FOCUS.finditer(content):
                         focuses.add(m.group(1))
                     for m in _RE_ACTIVATE_DECISION.finditer(content):
                         decisions.add(m.group(1))
@@ -244,8 +248,10 @@ def _check_focus_available_always_no(lines):
     Valid completion mechanisms (all skip the flag):
       - bypass block present (focus auto-bypasses when conditions fire)
       - complete_national_focus = FOCUS_ID found elsewhere in the codebase
+      - unlock_national_focus = FOCUS_ID found elsewhere (a parent focus unlocks it,
+        which overrides the always = no gate)
 
-    Only flags when available=always-no AND neither mechanism is present,
+    Only flags when available=always-no AND no mechanism is present,
     meaning the focus is permanently unreachable.
     """
     issues = []
@@ -267,9 +273,9 @@ def _check_focus_available_always_no(lines):
                             issues.append(
                                 (
                                     start + k + 1,
-                                    "available = { always = no } with no bypass or complete_national_focus"
-                                    " -- focus is permanently unreachable;"
-                                    " add a bypass block or trigger it via complete_national_focus",
+                                    "available = { always = no } with no bypass, complete_national_focus,"
+                                    " or unlock_national_focus -- focus is permanently unreachable;"
+                                    " add a bypass block or reach it via complete/unlock_national_focus",
                                 )
                             )
                             break
@@ -914,15 +920,20 @@ def _check_empty_log_only_blocks(lines):
     return issues
 
 
-def _check_is_x_nation_runtime(lines):
+def _check_is_x_nation_runtime(lines, filepath=""):
     """Flag is_X_nation triggers in runtime contexts (available, visible, effect).
 
     The is_X_nation scripted triggers iterate over tag lists and are relatively
     expensive. In runtime contexts (available, visible, effect blocks, limit clauses),
     use the pre-computed has_country_flag = X_flag instead for O(1) lookup.
 
-    Safe to use in allowed = { } which is evaluated once at game start.
+    Safe to use in allowed = { } which is evaluated once at game start, and in
+    common/scripted_triggers/ where these triggers are defined and compose each
+    other (e.g. is_horn_of_africa_nation references is_somali_nation) -- the cost
+    is realized at the call site, not the definition.
     """
+    if "common/scripted_triggers" in filepath.replace("\\", "/"):
+        return []
     issues = []
     in_allowed = False
     allowed_depth = 0
@@ -1349,7 +1360,7 @@ def check_file(filepath):
     issues.extend(_check_duplicate_add_to_variable(lines))
     issues.extend(_check_every_country_member_array(lines))
     issues.extend(_check_empty_log_only_blocks(lines))
-    issues.extend(_check_is_x_nation_runtime(lines))
+    issues.extend(_check_is_x_nation_runtime(lines, filepath))
     issues.extend(_check_influence_setter_scope(lines))
     issues.extend(_check_check_var_ge_le(lines))
     issues.extend(_check_tautological_or(lines))

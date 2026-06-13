@@ -16,13 +16,13 @@ Validation runs on GitHub CI at PR time — don't run proactively. Standardizati
 
 Pre-commit and CI do not run the same hook set. Things that pass locally can still fail CI, and vice versa:
 
-- `coding_standards.py`, `check_basic_style.py`, `check_common_mistakes.py` are `stages: [manual]` in pre-commit but **unconditional** in `.github/workflows/coding-pipeline.yml`. They will not run on `git commit`; they will run on PRs. To preview locally: `pre-commit run --hook-stage manual --files <paths>`.
+- Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `check_common_mistakes.py` and `validate_defines.py`. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `check_braces.py`, `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land broken braces or BOM regressions.
 - `validate_defines.py` runs on pre-commit but is **skipped on CI** (needs the vanilla `00_defines.lua` not present in the runner). Dead-renamed defines slip through CI unless caught locally.
 - `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`strict: false`, informational) until the ~30 pre-existing undefined-idea references on main are triaged. Once cleared, flip the CI entry to strict.
 - `validate_unused_textures.py` is wired into pre-commit as `stages: [manual]` and into CI as informational (`strict: false`). The repo currently carries ~22k unreferenced textures — informational mode keeps the audit visible without blocking PRs.
-- `validate_set_variables.py` is intentionally **not wired** anywhere. False-positive volume at repo scale (across the full common/events/history scope) makes it noisy as a gate. Run it manually against a specific variable when needed.
+- `validate_set_variables.py` runs **CI-only** (informational). Its false-positive volume at repo scale makes it too noisy for a commit gate, so it has no pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) against a specific variable when needed.
 
 ### Tooling deprecation watch
 
