@@ -65,8 +65,28 @@ def _discover_disk_validators():
     return {p.name for p in VALIDATION_DIR.glob("validate_*.py")}
 
 
+def _dispatcher_routed():
+    """validate_*.py folded into the parallel commit-stage dispatcher
+    (tools/precommit_validate.py) instead of a standalone md-validate-* hook.
+
+    The dispatcher runs them on commit, so they count as default-stage hooks
+    with the --strict flag recorded in its registry."""
+    import sys
+
+    sys.path.insert(0, str(REPO_ROOT / "tools"))
+    from precommit_validate import _REGISTRY
+
+    return {
+        f"{spec.script}.py": {"strict": spec.strict, "stage": "default"}
+        for spec in _REGISTRY
+    }
+
+
 def _parse_precommit():
-    """Map validate_*.py -> {'strict': bool, 'stage': 'default'|'manual'}."""
+    """Map validate_*.py -> {'strict': bool, 'stage': 'default'|'manual'}.
+
+    Includes both standalone `md-validate-*` hooks and the validators folded
+    into the parallel commit-stage dispatcher."""
     cfg = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
     result = {}
     for repo in cfg.get("repos", []):
@@ -80,6 +100,9 @@ def _parse_precommit():
                 "strict": "--strict" in entry,
                 "stage": "manual" if "manual" in stages else "default",
             }
+    # A standalone hook (e.g. the manual full-run) wins over the dispatcher entry.
+    for script, meta in _dispatcher_routed().items():
+        result.setdefault(script, meta)
     return result
 
 
@@ -146,12 +169,27 @@ def test_every_disk_validator_runs_on_ci(disk, ci):
     )
 
 
-def test_every_disk_validator_is_a_precommit_hook(disk, precommit):
-    missing = sorted(disk - set(precommit) - PRECOMMIT_EXEMPT)
-    assert not missing, (
-        "Validators exist on disk but have no md-validate-* hook "
-        f"(.pre-commit-config.yaml): {missing}. Add a hook, or add it to "
+def test_every_disk_validator_runs_somewhere(disk, precommit, ci):
+    # A validator must run on pre-commit OR in CI, or it is dead code. The
+    # expensive cross-reference validators run CI-only (their unused manual
+    # pre-commit hooks were removed); the CI-exempt ones (style, defines,
+    # unused_textures) run pre-commit-only. Neither side is required alone, but
+    # a validator in NEITHER place runs nowhere.
+    orphaned = sorted(disk - set(precommit) - set(ci) - PRECOMMIT_EXEMPT)
+    assert not orphaned, (
+        f"Validators run neither on pre-commit nor in CI: {orphaned}. Wire each "
+        "into .pre-commit-config.yaml or the CI matrix, or add to "
         "PRECOMMIT_EXEMPT with a reason."
+    )
+
+
+def test_ci_exempt_validators_run_on_precommit(disk, precommit, ci):
+    # A validator that CI cannot run (CI_EXEMPT) has pre-commit as its only home,
+    # so it must be wired there or it runs nowhere.
+    homeless = sorted((CI_EXEMPT & disk) - set(precommit) - set(ci))
+    assert not homeless, (
+        f"CI-exempt validators with no pre-commit hook: {homeless}. They run "
+        "nowhere — add a hook in .pre-commit-config.yaml."
     )
 
 
