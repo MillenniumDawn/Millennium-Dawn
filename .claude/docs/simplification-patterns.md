@@ -131,6 +131,21 @@ else = { set_variable = { page = 1 } }
 
 **Why:** Two-state toggles are cleaner with `if/else`. The `else` branch is guaranteed to execute when the `if` doesn't, removing the need for a second trigger check.
 
+## Collapse Government-Match Ideology Enumerations
+
+An `OR` of `AND`s comparing the current scope's government to one other country, one ideology at a time, is just the engine-native country comparison: a country has only one government, so only its own ideology's clause can match.
+
+```
+OR = {
+	AND = { has_government = democratic  FROM = { has_government = democratic } }
+	# ... one AND per ideology group ...
+}
+# same gov      -> has_government = FROM
+# different gov -> NOT = { has_government = FROM }
+```
+
+Collapse **only when all five groups are enumerated** — a partial set changes meaning for the omitted groups (a latent bug, not a mechanical simplification). Keep the comparison scope exact: the bare `has_government = X` is `THIS`, the named scope is the target. Five-branch `if`/`else_if` chains keyed on `has_government`, and the removed `is_same_government` / `has_same_ideology` triggers, reduce the same way. `tools/validation/validate_simplifications.py` flags the safe (exhaustive) cases.
+
 ## Consolidate Identical-Body `else_if` Chains into `OR`
 
 When N consecutive `else_if` branches all execute the same effects, collapse them into one branch with an `OR` limit.
