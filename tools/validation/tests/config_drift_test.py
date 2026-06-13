@@ -65,8 +65,28 @@ def _discover_disk_validators():
     return {p.name for p in VALIDATION_DIR.glob("validate_*.py")}
 
 
+def _dispatcher_routed():
+    """validate_*.py folded into the parallel commit-stage dispatcher
+    (tools/precommit_validate.py) instead of a standalone md-validate-* hook.
+
+    The dispatcher runs them on commit, so they count as default-stage hooks
+    with the --strict flag recorded in its registry."""
+    import sys
+
+    sys.path.insert(0, str(REPO_ROOT / "tools"))
+    from precommit_validate import _REGISTRY
+
+    return {
+        f"{spec.script}.py": {"strict": spec.strict, "stage": "default"}
+        for spec in _REGISTRY
+    }
+
+
 def _parse_precommit():
-    """Map validate_*.py -> {'strict': bool, 'stage': 'default'|'manual'}."""
+    """Map validate_*.py -> {'strict': bool, 'stage': 'default'|'manual'}.
+
+    Includes both standalone `md-validate-*` hooks and the validators folded
+    into the parallel commit-stage dispatcher."""
     cfg = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
     result = {}
     for repo in cfg.get("repos", []):
@@ -80,6 +100,9 @@ def _parse_precommit():
                 "strict": "--strict" in entry,
                 "stage": "manual" if "manual" in stages else "default",
             }
+    # A standalone hook (e.g. the manual full-run) wins over the dispatcher entry.
+    for script, meta in _dispatcher_routed().items():
+        result.setdefault(script, meta)
     return result
 
 
