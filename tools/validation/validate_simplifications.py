@@ -273,46 +273,74 @@ _GOV_IDEOS = frozenset(
 )
 _OR_BLOCK_RE = re.compile(r"\bOR\s*=\s*\{")
 _HAS_GOV_RE = re.compile(r"\bhas_government\s*=\s*(\w+)")
-_NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
-# Block headers inside an AND clause that are not the comparison target scope.
-_CLAUSE_NON_SCOPE = frozenset({"AND", "OR", "has_opinion", "limit", "if", "has_government"})
+_GOV_ONLY_RE = re.compile(r"has_government\s*=\s*(\w+)\s*$")
+_NOT_GOV_RE = re.compile(r"NOT\s*=\s*\{(.*)\}\s*$", re.DOTALL)
+
+
+def _gov_scope_sense(inner: str, ideology: str):
+    """For a scope-block body that must contain only a government check, return
+    True when it is `NOT = { has_government = <ideology> }`, False when it is a
+    bare `has_government = <ideology>`, or None for anything else (an extra
+    condition, a different ideology, an unrelated NOT)."""
+    stripped = inner.strip()
+    negated = _NOT_GOV_RE.match(stripped)
+    if negated:
+        match = _GOV_ONLY_RE.fullmatch(negated.group(1).strip())
+        return True if match and match.group(1) == ideology else None
+    match = _GOV_ONLY_RE.fullmatch(stripped)
+    return False if match and match.group(1) == ideology else None
 
 
 def _parse_gov_clause(body: str):
-    """Classify one `AND = { ... }` clause body. Returns (target, sense, ideology)
-    where sense is "SAME" or "DIFF", or None when the clause is not a clean
-    one-bare-plus-one-scoped government comparison."""
+    """Classify one `AND = { ... }` clause. Returns (target, sense, ideology)
+    with sense "SAME"/"DIFF", or None unless the clause is EXACTLY one bare
+    `has_government = X` plus one scope block checking the same ideology, with
+    nothing else. Any extra condition (a stray trigger, a second scope, an
+    unrelated NOT) makes the clause non-collapsible, so it is rejected."""
     bare = [
-        m.group(1)
+        (m.start(), m.end(), m.group(1))
         for m in _HAS_GOV_RE.finditer(body)
         if body.count("{", 0, m.start()) == body.count("}", 0, m.start())
     ]
-    scoped = None
-    for m in _OPEN_RE.finditer(body):
-        name = m.group(1)
-        if name in _CLAUSE_NON_SCOPE:
-            continue
-        inner, end = extract_block_from_text(body, m.end() - 1)
+    if len(bare) != 1:
+        return None
+    blocks = []
+    pos = 0
+    while True:
+        bm = _OPEN_RE.search(body, pos)
+        if not bm:
+            break
+        inner, end = extract_block_from_text(body, bm.end() - 1)
         if end == -1:
-            continue
-        hm = _HAS_GOV_RE.search(inner)
-        if not hm:
-            continue
-        if name == "NOT":
-            im = _OPEN_RE.search(inner)  # NOT = { SCOPE = { has_government = X } }
-            scoped = (im.group(1) if im else None, True, hm.group(1))
-        else:
-            scoped = (name, bool(_NOT_OPEN_RE.search(inner)), hm.group(1))
-        break
-    if (
-        len(bare) == 1
-        and scoped
-        and scoped[0]
-        and bare[0] == scoped[2]
-        and bare[0] in _GOV_IDEOS
-    ):
-        return (scoped[0], "DIFF" if scoped[1] else "SAME", bare[0])
-    return None
+            return None
+        blocks.append((bm.start(), end, bm.group(1), inner))
+        pos = end
+    if len(blocks) != 1:  # exactly one scope block beside the bare check
+        return None
+    b_start, b_end, ideology = bare[0]
+    s_start, s_end, name, inner = blocks[0]
+    # Nothing may sit in the AND body but the bare check and the scope block.
+    leftover = body
+    for start, end in sorted([(b_start, b_end), (s_start, s_end)], reverse=True):
+        leftover = leftover[:start] + leftover[end:]
+    if leftover.strip() or ideology not in _GOV_IDEOS:
+        return None
+    if name == "NOT":  # outer NOT = { TARGET = { [NOT = {] has_government = X [}] } }
+        inner_block = _OPEN_RE.search(inner)
+        if not inner_block:
+            return None
+        t_inner, t_end = extract_block_from_text(inner, inner_block.end() - 1)
+        if t_end == -1 or inner[: inner_block.start()].strip() or inner[t_end:].strip():
+            return None
+        sense = _gov_scope_sense(t_inner, ideology)
+        if sense is None:
+            return None
+        # The outer NOT flips the inner sense: NOT(same) is "different".
+        return (inner_block.group(1), "SAME" if sense else "DIFF", ideology)
+    sense = _gov_scope_sense(inner, ideology)
+    if sense is None:
+        return None
+    return (name, "DIFF" if sense else "SAME", ideology)
 
 
 def _find_government_match(text: str):
