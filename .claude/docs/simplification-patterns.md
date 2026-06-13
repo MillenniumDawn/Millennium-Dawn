@@ -131,36 +131,6 @@ else = { set_variable = { page = 1 } }
 
 **Why:** Two-state toggles are cleaner with `if/else`. The `else` branch is guaranteed to execute when the `if` doesn't, removing the need for a second trigger check.
 
-## Collapse Government-Match Ideology Enumerations
-
-When an `OR` of `AND` clauses compares the current scope's government to one other country group-by-group across every ideology, the whole block is just the engine-native country comparison. A country has exactly one government, so only the clause matching its actual ideology can be true.
-
-### Before (one `AND` per ideology group)
-
-```
-OR = {
-	AND = { has_government = democratic   FROM = { has_government = democratic } }
-	AND = { has_government = communism    FROM = { has_government = communism } }
-	AND = { has_government = fascism      FROM = { has_government = fascism } }
-	AND = { has_government = neutrality   FROM = { has_government = neutrality } }
-	AND = { has_government = nationalist  FROM = { has_government = nationalist } }
-}
-```
-
-### After
-
-```
-has_government = FROM
-```
-
-The negated clause shape (`FROM = { NOT = { has_government = X } }`, or an outer `NOT = { FROM = { has_government = X } }`) is "different government" and collapses to `NOT = { has_government = FROM }`. The same applies to a five-branch `if`/`else_if` chain keyed on `has_government`, and to the deleted `is_same_government` / `has_same_ideology` scripted triggers.
-
-**Why:** `has_government = <country>` compares ideology groups directly. Twenty-plus lines become one, and the check stays exactly equivalent **only when all five groups are enumerated**. A partial enumeration (missing `neutrality`/`nationalist`) does NOT collapse cleanly: the omitted groups flip meaning, so treat that as a latent bug to fix deliberately, not a mechanical simplification. Leave clauses carrying extra gates (an `original_tag` restriction, a mixed `OR` with `has_war = yes`, etc.) alone.
-
-**Scope:** the bare `has_government = X` side is the current scope (`THIS`); the named country/scope is the comparison target. Preserve it exactly. `is_same_government`/`has_same_ideology` compared `THIS` to `ROOT`, so a bare occurrence is always `has_government = ROOT`; `PREV` is only correct one scope deep inside a `TAG = { }` wrapper where `PREV == ROOT`.
-
-Flagged automatically (exhaustive, single-target, single-sense blocks only) by `tools/validation/validate_simplifications.py`.
-
 ## Consolidate Identical-Body `else_if` Chains into `OR`
 
 When N consecutive `else_if` branches all execute the same effects, collapse them into one branch with an `OR` limit.
