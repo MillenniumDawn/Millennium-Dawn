@@ -248,6 +248,127 @@ def _find_empty_trigger_blocks(text: str):
     return results
 
 
+# Government-match enumeration: an `OR` of `AND` clauses that compares the
+# current scope's government to one other country group-by-group across every
+# ideology. Because a country has exactly one government, the whole block
+# collapses to the engine-native country comparison:
+#
+#   OR = {
+#       AND = { has_government = democratic  FROM = { has_government = democratic } }
+#       ... one AND per ideology group ...
+#   }
+#   # -> has_government = FROM          (same government)
+#
+# The negated clause shape (`FROM = { NOT = { has_government = X } }` or
+# `NOT = { FROM = { has_government = X } }`) collapses to `NOT = { has_government = FROM }`.
+#
+# Only flagged when the OR enumerates ALL FIVE ideology groups with one
+# consistent target and one consistent sense, and contains nothing but those
+# AND clauses. A non-exhaustive enumeration (missing neutrality/nationalist)
+# does NOT collapse cleanly (the omitted groups change meaning), and a mixed OR
+# (extra `has_war = yes`, an `original_tag` gate, etc.) is left alone, so neither
+# is suggested here.
+_GOV_IDEOS = frozenset(
+    {"democratic", "communism", "fascism", "neutrality", "nationalist"}
+)
+_OR_BLOCK_RE = re.compile(r"\bOR\s*=\s*\{")
+_HAS_GOV_RE = re.compile(r"\bhas_government\s*=\s*(\w+)")
+_NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
+# Block headers inside an AND clause that are not the comparison target scope.
+_CLAUSE_NON_SCOPE = frozenset({"AND", "OR", "has_opinion", "limit", "if", "has_government"})
+
+
+def _parse_gov_clause(body: str):
+    """Classify one `AND = { ... }` clause body. Returns (target, sense, ideology)
+    where sense is "SAME" or "DIFF", or None when the clause is not a clean
+    one-bare-plus-one-scoped government comparison."""
+    bare = [
+        m.group(1)
+        for m in _HAS_GOV_RE.finditer(body)
+        if body.count("{", 0, m.start()) == body.count("}", 0, m.start())
+    ]
+    scoped = None
+    for m in _OPEN_RE.finditer(body):
+        name = m.group(1)
+        if name in _CLAUSE_NON_SCOPE:
+            continue
+        inner, end = extract_block_from_text(body, m.end() - 1)
+        if end == -1:
+            continue
+        hm = _HAS_GOV_RE.search(inner)
+        if not hm:
+            continue
+        if name == "NOT":
+            im = _OPEN_RE.search(inner)  # NOT = { SCOPE = { has_government = X } }
+            scoped = (im.group(1) if im else None, True, hm.group(1))
+        else:
+            scoped = (name, bool(_NOT_OPEN_RE.search(inner)), hm.group(1))
+        break
+    if (
+        len(bare) == 1
+        and scoped
+        and scoped[0]
+        and bare[0] == scoped[2]
+        and bare[0] in _GOV_IDEOS
+    ):
+        return (scoped[0], "DIFF" if scoped[1] else "SAME", bare[0])
+    return None
+
+
+def _find_government_match(text: str):
+    """Return (line, replacement) for each exhaustive government-match `OR`
+    block that collapses to a single `has_government` comparison."""
+    results = []
+    for m in _OR_BLOCK_RE.finditer(text):
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            continue
+        clauses = []
+        spans = []
+        pos = 0
+        clean = True
+        while True:
+            cm = _OPEN_RE.search(body, pos)
+            if not cm:
+                break
+            if cm.group(1) != "AND":
+                clean = False  # a non-AND child means this is not a pure enumeration
+                break
+            cbody, cend = extract_block_from_text(body, cm.end() - 1)
+            if cend == -1:
+                clean = False
+                break
+            parsed = _parse_gov_clause(cbody)
+            if parsed is None:
+                clean = False
+                break
+            clauses.append(parsed)
+            spans.append((cm.start(), cend))
+            pos = cend
+        if not clean or len(clauses) < 2:
+            continue
+        # Reject mixed ORs: any bare condition outside the AND blocks (e.g.
+        # `has_war = yes`) leaves non-whitespace once the AND spans are removed.
+        leftover = body
+        for s, e in reversed(spans):
+            leftover = leftover[:s] + leftover[e:]
+        if leftover.strip():
+            continue
+        targets = {c[0] for c in clauses}
+        senses = {c[1] for c in clauses}
+        ideologies = {c[2] for c in clauses}
+        if ideologies != _GOV_IDEOS or len(targets) != 1 or len(senses) != 1:
+            continue
+        target = next(iter(targets))
+        replacement = (
+            f"has_government = {target}"
+            if next(iter(senses)) == "SAME"
+            else f"NOT = {{ has_government = {target} }}"
+        )
+        results.append((text.count("\n", 0, m.start()) + 1, replacement))
+    return results
+
+
 def _is_magic_chain(header: str) -> bool:
     return all(part in _MAGIC for part in header.split("."))
 
@@ -342,6 +463,14 @@ def _scan_file(text: str, path: str):
     for line, keyword in _find_empty_trigger_blocks(text):
         findings.append(
             (f"empty `{keyword} = {{ }}` block is redundant; remove it", line)
+        )
+    for line, replacement in _find_government_match(text):
+        findings.append(
+            (
+                f"ideology enumeration over all five governments; use "
+                f"`{replacement}`",
+                line,
+            )
         )
     return findings
 
