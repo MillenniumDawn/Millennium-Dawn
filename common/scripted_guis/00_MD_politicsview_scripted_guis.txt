@@ -46,6 +46,7 @@ scripted_gui = {
 					generete_politics_pie_chart = yes
 
 					clear_array = parties_list_sorted
+					clear_array = opposition_array
 
 					resize_array = {
 						array = parties_list_sorted
@@ -65,6 +66,24 @@ scripted_gui = {
 							index = v
 							value = v
 						}
+
+						if = {
+							limit = { 
+								is_party_in_government = no 
+								check_variable = { party_pop_array^v > 0.009 }
+							}
+
+							add_to_array = {
+								array = opposition_array
+								value = v
+							}
+
+						}
+					}
+
+					remove_from_array = {
+						array = opposition_array
+						index = 0
 					}
 				}
 				else = {
@@ -318,9 +337,10 @@ scripted_gui = {
 				}
 			}
 
-			permanently_suspend_elections_click_enabled = {
+			permanently_suspend_elections_button_click_enabled = {
 				if = {
 					limit = { has_elections = yes }
+					
 					has_political_power > 124
 					set_temp_variable = { has_elections_frame = 2 }
 
@@ -794,17 +814,7 @@ scripted_gui = {
 					is_party_banned_trigger = yes
 				}
 
-				# party
-				if = {
-					limit = { check_variable = { v = 1 } }
-					
-					has_country_leader_with_trait = western_technocrat
-				}
-
-				# countries
-				# if = { limit = { tag = ITA }
-				# 	has_country_flag = ITA_undemocratic_coup
-				# }
+				boost_party_triggers = yes
 			}
 			attack_button_click_enabled = {
 				# can't attack yourself or allies
@@ -822,6 +832,9 @@ scripted_gui = {
 					tooltip = party_greater_than_election_threshold_by_index_tt
 					check_variable = { party_pop_array^party_index > election_threshold }
 				}
+
+				# Party-specific restrictions
+				attack_party_triggers = yes
 
 				if = {
 					limit = {
@@ -859,25 +872,8 @@ scripted_gui = {
 					}
 				}
 
-				if = { 
-					limit = {
-						OR = {
-							check_variable = { v = 1 }
-							check_variable = { v = 2 }
-							check_variable = { v = 3 }
-							check_variable = { v = 5 }
-							check_variable = { v = 12 }
-							check_variable = { v = 14 }
-							check_variable = { v = 15 }
-							check_variable = { v = 16 }
-							check_variable = { v = 17 }
-							check_variable = { v = 18 }
-							check_variable = { v = 20 }
-						}
-					}
-
-					has_elections = no
-				}
+				# Party-specific restrictions
+				ban_party_triggers = yes
 			}
 			allow_button_visible = {
 				# must have party banned
@@ -1003,7 +999,7 @@ scripted_gui = {
 				}
 			}
 
-			permanent_suspend_button_click = {
+			permanently_suspend_elections_button_click = {
 				if = {
 					limit = { has_elections = yes }
 					
@@ -1083,7 +1079,6 @@ scripted_gui = {
 					clr_country_flag = do_not_retire
 				}
 				else = {
-
 					# unban elections
 					log = "[GetDateText]: [Root.GetName]: Decision return_democracy"
 					add_political_power = -85
@@ -1392,12 +1387,16 @@ scripted_gui = {
 				array = gov_coalition_array
                 entry_container = "coalition_grid_item"
 			}
+			oposition_grid = {
+				array = opposition_array
+                entry_container = "coalition_grid_item"
+			}
         }
 
 		properties = {
-			permanent_suspend_button = {
-				frame = has_elections_frame
-			}
+			# permanently_suspend_elections_button = {
+			# 	frame = has_elections_frame
+			# }
 
 			# propaganda buttons
 			prowestern_propaganda_button = {
