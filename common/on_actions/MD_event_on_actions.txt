@@ -1578,8 +1578,11 @@ on_actions = {
 					add_to_variable = { PREV.SPR_regulare_cap = state_population_k }
 				}
 
-				divide_variable = { SPR_regulare_cap = SPR_regulare_cap_ratio }
-				round_variable = SPR_regulare_cap
+				if = {
+					limit = { check_variable = { SPR_regulare_cap_ratio > 0 } }
+					divide_variable = { SPR_regulare_cap = SPR_regulare_cap_ratio }
+					round_variable = SPR_regulare_cap
+				}
 			}
 
 			if = { limit = { has_completed_focus = SPR_the_foreign_legion }
@@ -1587,8 +1590,11 @@ on_actions = {
 				set_variable = { SPR_legion_cap = max_available_manpower_k }
 				set_variable = { SPR_legion_cap_ratio = 40 }
 
-				divide_variable = { SPR_legion_cap = SPR_legion_cap_ratio }
-				round_variable = SPR_legion_cap
+				if = {
+					limit = { check_variable = { SPR_legion_cap_ratio > 0 } }
+					divide_variable = { SPR_legion_cap = SPR_legion_cap_ratio }
+					round_variable = SPR_legion_cap
+				}
 			}
 
 			if = { limit = { has_completed_focus = SPR_sector_servicios_espanol }
@@ -1621,10 +1627,8 @@ on_actions = {
 					if = { limit = { NOT = { has_country_flag = SPR_prestige_oil_spill } }
 						random = {
 							chance = 50
-
-								#spill will happen this pulse
-								country_event = { id = spain.85 random_days = 210 random_hours = 10 }
-
+							#spill will happen this pulse
+							country_event = { id = spain.85 random_days = 210 random_hours = 10 }
 						}
 
 					}
@@ -1637,36 +1641,39 @@ on_actions = {
 								has_country_flag = SPR_metropol_parsol_project_complete
 							}
 						}
-						random = {
-							chance = 40
-							modifier = {
-								factor = 1.25
-								has_country_flag = { flag = SPR_metropol_parasol_project_money value < 2 }
+						random_list= {
+							40 = {
+								modifier = {
+									factor = 1.25
+									has_country_flag = { flag = SPR_metropol_parasol_project_money value < 2 }
+								}
+								modifier = {
+									factor = 1.25
+									has_country_flag = { flag = SPR_metropol_parasol_project_money value > 1 }
+								}
+								modifier = {
+									factor = 1.05
+									has_country_flag = SPR_metropol_parasol_project_political
+								}
+								country_event = { id = spain.247 random_days = 180 random_hours = 24 }
 							}
-							modifier = {
-								factor = 1.25
-								has_country_flag = { flag = SPR_metropol_parasol_project_money value > 1 }
-							}
-							modifier = {
-								factor = 1.05
-								has_country_flag = SPR_metropol_parasol_project_political
-							}
-							country_event = { id = spain.247 random_days = 180 random_hours = 24 }
+							60 = { }
 						}
 
 					}
 				}
 				if = { limit = { check_variable = { global.year > 2016 } }
 					if = { limit = { NOT = { has_country_flag = SPR_sagrada_familia_complete_flag } }
-						random = {
-							chance = 30
-							modifier = {
-								factor = 1.5
-								has_country_flag = SPR_sagra_familia_additional_funding_flag
+						random_list = {
+							30 = {
+								modifier = {
+									factor = 1.5
+									has_country_flag = SPR_sagra_familia_additional_funding_flag
+								}
+								country_event = { id = spain.254 random_days = 180 }
 							}
-							country_event = { id = spain.254 random_days = 180 }
+							70 = { }
 						}
-
 					}
 				}
 			}
@@ -1679,21 +1686,17 @@ on_actions = {
 					}
 				}
 				#Migrant Crisis
-				if = { limit = { date > 2005.1.1 }
-					if = {
-						limit = {
-							NOT = { has_country_flag = SPR_mirgrant_crisis_start }
-							NOT = {
-								has_idea = SPR_idea_open_borders_1
-								has_idea = SPR_idea_open_borders_2
-							}
-						}
+				if = {
+					limit = {
+						date > 2005.1.1
+						NOT = { has_idea = SPR_idea_open_borders_1 }
+						NOT = { has_idea = SPR_idea_open_borders_2 }
+					}
+					if = { limit = { NOT = { has_country_flag = SPR_mirgrant_crisis_start } }
 						random = {
 							chance = 50
-
-								#crisis will happen this pulse
-								country_event = { id = spain.201 random_days = 60 }
-
+							#crisis will happen this pulse
+							country_event = { id = spain.201 random_days = 60 }
 						}
 
 					}
@@ -1702,10 +1705,6 @@ on_actions = {
 							has_country_flag = SPR_mirgrant_crisis_start
 							NOT = { has_country_flag = SPR_increased_immigration }
 							has_country_flag = SPR_refused_immigrants
-							NOT = {
-								has_idea = SPR_idea_open_borders_1
-								has_idea = SPR_idea_open_borders_2
-							}
 							NOT = { has_country_flag = SPR_border_massacre }
 							OR = {
 								NOT = { has_country_flag = SPR_ceuta_assault }
@@ -1737,10 +1736,6 @@ on_actions = {
 						limit = {
 							has_country_flag = SPR_mirgrant_crisis_start
 							has_country_flag = SPR_increased_immigration
-							NOT = {
-								has_idea = SPR_idea_open_borders_1
-								has_idea = SPR_idea_open_borders_2
-							}
 							NOT = { has_country_flag = SPR_border_massacre }
 						}
 						random_list = {

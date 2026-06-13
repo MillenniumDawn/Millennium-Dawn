@@ -32,6 +32,12 @@ FALSE_POSITIVE_PATTERNS = [
     re.compile(
         r"^DIPLOMACY_.*_ENABLE_TRIGGER"
     ),  # Game rule triggers, engine-referenced
+    re.compile(
+        r"^is_diplomatic_action_valid_"
+    ),  # Diplo-action validity gates, engine-referenced by action token
+    re.compile(
+        r"^_unlock_btn_enabled$"
+    ),  # MIO catalog meta-dispatch empty-token-key fallback
 ]
 
 # Files whose definitions are entirely engine-referenced (all contents are false positives)
@@ -56,6 +62,13 @@ _TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
     r")"
 )
+
+# Regex: quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# Here the `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives
+# in the quoted assignment, so a leading placeholder with only a trailing constant
+# must still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
 
 
 def scan_for_meta_constructed_names(
@@ -85,8 +98,10 @@ def scan_for_meta_constructed_names(
 
         content_clean = strip_comments(content)
 
-        for m in _TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
+        templates = [m.group(1) for m in _TEMPLATE_RE.finditer(content_clean)]
+        templates += [m.group(1) for m in _QUOTED_TEMPLATE_RE.finditer(content_clean)]
+
+        for template in templates:
             # Split on every [VAR] segment — constant parts become prefix/suffix
             parts = re.split(r"\[[^\]]+\]", template)
             prefix = parts[0].lower()

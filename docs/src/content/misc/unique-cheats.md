@@ -13,8 +13,7 @@ This page is a list of all of the documented cheats from Millennium Dawn. We do 
 
 ## How to Enable Cheat Decisions
 
-There is two ways to enable cheat decisions. The first is via the game rule. The second is via running this command in this console:
-`set_global_flag game_rule_allow_cheat_decisions`
+You have to enable it via the in game "Game Rules" section.
 
 ## Political Cheats
 

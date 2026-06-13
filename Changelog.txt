@@ -221,21 +221,21 @@ v2.0.0
   - Reduced the amount of convoys required for Infantry Weapons
   - Non State Actors or Islamic Caliphate party slots (ISIS or similar analogues) can no longer demand reparations
   - Missile stat differentiation: later ICBM and IRBM tiers now have meaningful progression (Issue #115)
-    - ICBM (nuclear_missile): air_agility now scales 10→25 and air_bombing 500→730 across tiers 1–8
-    - IRBM (nuclear_ballistic): air_agility now scales 10→22 and air_bombing 450→540 across tiers 1–7
-    - Guided missiles: naval_strike_attack now scales cleanly 12→26 across tiers 1–8 (was flat 15 or erratic)
+    - ICBM (nuclear_missile): air_agility now scales 10→25 and air_bombing 500→730 across tiers 1-8
+    - IRBM (nuclear_ballistic): air_agility now scales 10→22 and air_bombing 450→540 across tiers 1-7
+    - Guided missiles: naval_strike_attack now scales cleanly 12→26 across tiers 1-8 (was flat 15 or erratic)
   - SAM missile rebalance: significantly improved cost-effectiveness relative to static AA (Issue #113)
     - Reduced build_cost_ic by ~25% across all 8 tiers (31→23 IC through 60→45 IC)
     - Improved air_attack scaling across all 8 tiers (0.75→0.80 through 0.968→0.990)
   - Missile range rebalance: ranges now follow a consistent hierarchy across all missile classes
-    - IRBM (ballistic_missile): ranges now 50% of ICBM year-for-year (1500–5000 → 4500–6750)
-    - Nuclear IRBM (nuclear_ballistic): ranges match regular IRBM year-for-year (2500–5500 → 5000–6750)
-    - GLCM (guided_missile): ranges now 60% of IRBM year-for-year (1000–2800 → 2700–4050)
-    - SAM (sam_missile): ranges now 50% of GLCM year-for-year (550–750 → 1350–2025)
+    - IRBM (ballistic_missile): ranges now 50% of ICBM year-for-year (1500-5000 → 4500-6750)
+    - Nuclear IRBM (nuclear_ballistic): ranges match regular IRBM year-for-year (2500-5500 → 5000-6750)
+    - GLCM (guided_missile): ranges now 60% of IRBM year-for-year (1000-2800 → 2700-4050)
+    - SAM (sam_missile): ranges now 50% of GLCM year-for-year (550-750 → 1350-2025)
   - Hypersonic missile rebalance: hypersonic missiles now properly outclass their GLCM counterparts
-    - air_range increased to 130% of matching GLCM tier (1900–2000 → 5070–5265)
-    - maximum_speed increased to 135% of matching GLCM tier (8051–8634 → 9924–10419)
-    - air_agility increased to 135% of matching GLCM tier (200–350 → 236–270)
+    - air_range increased to 130% of matching GLCM tier (1900-2000 → 5070-5265)
+    - maximum_speed increased to 135% of matching GLCM tier (8051-8634 → 9924-10419)
+    - air_agility increased to 135% of matching GLCM tier (200-350 → 236-270)
   - Increased GDP requirements for certain generic economic focuses (95 → 150 and 200 billion)
   - Added special project completion requirements to multiple generic naval research focuses
   - Raised num_of_naval_factories thresholds for destroyer production (3 → 4) and carrier-class production (5 → 10) generic focuses
@@ -265,6 +265,11 @@ v2.0.0
   - Reduced political power cost for Korwin's balance of power decisions from 55 to 35, after he wins with Wałęsa
 
  Bugfix:
+  - [AFG] Fixed Pashtunistan border-war reports naming Afghanistan as its own enemy; the advance decisions now save the target state's owner as the defender instead of FROM (which resolved to Afghanistan), and fixed the Taliban/Afghan border-raid decisions soft-locking the whole subsystem after one raid because the AFG_doing_border_raid mutex was never cleared. Also removed a leftover debug decision and added the missing border-raid decision names (Issue #1629)
+  - [BOT] Fixed two Botswana flags being checked but never set: the death of Gomolemo Motswaledi now sets BOT_Motswaledi_dead so the BMD leader rotation advances to Kedikilwe, and the UDC formation/split events now set and clear BCP_joined_UDC so the BCP popularity boost resolves correctly (Issue #1632)
+  - [TUR] Fixed a cluster of Turkey flags checked but never set: the Kurdish reconciliation mission now stays visible (driven off TUR_PKK_reconciliation instead of a dead flag), the PKK insurgency ideas now cancel on TUR_PKK_gone, PKK attacks on Van and Diyarbakir now deal building damage gated on Turkish ownership, and the HEPAR party (Osman Pamukoğlu) is now founded via a dated event so its leader and party name resolve. Also dropped a redundant available block on "Establish Shia Dominance" and moved the dead remove_effect ideas on the Gülenist recall, no-prime-minister, religious directorate, and assimilation decisions into complete_effect so they actually apply (Issue #1628)
+  - [KOR] Fixed "Finish the KF-21" focus tech bonus tooltip displaying wrong bonus name; removed duplicate small plane tech bonus
+  - [SWE] Fixed "Navy Reforms" focus tech bonus tooltip displaying wrong bonus name
   - Fixed nations released after game start (US collapse breakaways, freed puppets) never getting a Power Status or Naval Power of the Continent idea; they now register into the power ranking and counter-terror systems on creation (Issue #1573)
   - [FRA] Fixed "Strength in the EU" applying the European Commitment opinion modifier to France itself; the loop now skips ROOT (Issue #1553)
   - Removed the empty political_advisor slots in the government idea category that left the engine "You can select a: Political Advisor" alert nagging forever with no UI to fill them (Issue #786); intel advisor characters remain defined pending a follow-up assignment system
@@ -600,6 +605,7 @@ v2.0.0
   - [CZE] Slightly optimized Petr Pavel's GUI
   - Fixed influence events (military aid, target influencer, military supply) incorrectly resolving their target through FROM scope; replaced with explicit event_target references to ensure events fire on the correct country
   - Removed two redundant influence pass-through events (influence.22 and influence.55) that existed only to re-fire events under correct scope
+  - [HKG] Two regular HKG checks that used to run for all countries optimised to run only for HKG
   - Fixed Somalia election events not clearing the generic_election_killswitch flag for all Somali faction countries (SNA, SWS, PUN)
   - [BRA] Fixed administrative reform focus granting the French administrative reforms idea instead of the intended effect
   - Fixed higher-tier helicopter sensor and avionics modules being inaccessible without the By Blood Alone DLC by hooking the module enables onto the non-BBA MR_Fighter tech chain (Issue #1419)
@@ -750,7 +756,7 @@ v2.0.0
   - [BOS] Added BOS_aggressive_nation national spirit for use in Bosnian civil war scenarios
   - Boosting party popularity through political power now has the added flight risk of increasing corruption
   - If another coalition member is the larger party they become the ruling party and the others shift to the coalition to show popularity shifts (Issue #692)
-  - [SMA] Added 30 new equipment purchase events (SMA_equipment.1–30) for buying weapons, vehicles, artillery, and support equipment from Italy and Spain
+  - [SMA] Added 30 new equipment purchase events (SMA_equipment.1-30) for buying weapons, vehicles, artillery, and support equipment from Italy and Spain
   - [SMA] Added SMA_equipment namespace and localisation for all equipment purchase events
   - Added 3 new drone raid types: Drone Airfield Strike, Drone Power Grid Strike, and Drone Rocket Site Strike
   - Added reparation demand and payment cooldown flags (once per year each) to prevent reparation spam
@@ -768,7 +774,6 @@ v2.0.0
   - [BUL] Changes some effects in the Expansion Branch to reflect the situation better (Credit to Natha4796BG)
   - [TAT] IT branch in economic focus tree
   - Reworked Muslim Brotherhood content: new sponsor/suppressor decisions (including a rescind-designation decision to reverse terrorist branding), covert operations, transnational opinion modifiers, and idempotent mutual-relations on government change
-  #TODO: [!] There were 2 content tabs, I unified them into 1. Below this line is what was a the top, revert this change if it was intentional to have the 2, else delete this comment to confirm it was not - DROID 
   - Reworked the UN voting and international recognition systems to eliminate event spam: removed redundant news events and replaced world-wide broadcasts with targeted notifications
   - Added milestone news events marking key international recognition thresholds
   - Pre-seeded real-world recognition state at game start (21 UN members recognising the Republic of China, Taliban recognition by Pakistan, Saudi Arabia, and the UAE, and the Abkhazia/South Ossetia situation)
@@ -794,13 +799,14 @@ v2.0.0
   - Added two biofuel Special Projects under the Energy tag: early E10 Ethanol Blending (gated on fuel_refining) and advanced FlexFuel and Butanol Synthesis (gated on fuel_efficiency4, requires E10 as parent), with SP_UNLOCK_PROJECT tooltips on both prerequisite techs (Issue #568)
   - Added 2000s Ecuadorian coup d'état
   - Reworked province map of Angola to be more accurate to the IRL borders
-  - Added Makamba to Southern Burundi as it's controlled by the [CNDD–FDD] as of 2000
+  - Added Makamba to Southern Burundi as it's controlled by the [CNDD-FDD] as of 2000
   - Tamel Tigers now exists as a tag on game start at war with Sri Lanka
   - [ENG] United Kingdom now as a focus to perform the Wonga Coup
   - [PER] Added 'NOHED' brigade to Iran's OOB
 
  Database:
-  - [FRA] Added Tripartite and P400 class ships to start date, given to their operating countries FRA, BEL, HOL with historical vessel names.
+  - [FRA] Added Tripartite, Flamant, Lapérouse and P400 class ships to start date, given to their operating countries FRA, BEL, HOL with historical vessel names.
+  - [TUR] Generic Naval OOB replaced with Custom Fleets
   - Land drone technologies now properly give the Ranger Light Recce company recon bonuses like all other recon units
   - Updated the Ukraine OOB to be more historically accurate including the additions of GLCMs, variants that were produced in Ukraine etc
   - China now starts with the "Microprocessor" tech
@@ -928,7 +934,7 @@ v2.0.0
   - [HOL] Added missing localisation for BEL_referendum_mission and HOL_military.114-115 events
   - [HOL] Added localisation stubs for HOL_voc_india_*_rebellion2-5 repeated decisions
   - [HOL] Rewrote HOL_oranje_nassau-mines_desc with factual content replacing generic filler text
-  - [SMA] Added localisation for 30 equipment purchase events (SMA_equipment.1–30)
+  - [SMA] Added localisation for 30 equipment purchase events (SMA_equipment.1-30)
   - [SMA] Fixed title casing for combat experience national spirit names (SMA_no_wars_i/ii/iii)
   - Added localisation for new drone raid types (airfield, power grid, rocket site)
   - [GER] Added 15 missing generic dynamic modifier tooltip keys for army, navy, and air modifiers (Issue #790)

@@ -46,12 +46,28 @@ Crossover amplitudes are solved so the three transitions land exactly on 2015 / 
 The average metric across sources stays broadly stable and **flattens late-game** — renewable
 peaks ~6.3e-4 vs the old exponential design's ~1.87e-3 (deliberately "much less efficient late").
 
+## Infrastructure-maintenance relief (issue #1508)
+
+Each energy tech also lowers the **weekly upkeep** of its own plant type. Upkeep is
+computed in `update_infra_rate` (`common/scripted_effects/00_money_system.txt`): per-source
+expense = plant count × per-plant rate × that source's cost multiplier. Each source's
+multiplier is `infra_cost_multiplier` (shared base) **plus** a per-source modifier:
+`nuclear_infra_cost_multiplier_modifier`, `fossil_infra_cost_multiplier_modifier`,
+`renewable_infra_cost_multiplier_modifier` (defined in `money_modifier_definitions.txt`,
+clamped `min = 0` so upkeep never goes negative). Internet-station upkeep is unaffected.
+
+The relief follows each source's **power S-curve** and is scaled so a fully-teched chain
+reaches `INFRA_CAP` (−0.40). It is tool-owned — see `set_energy_tech_scurves.py` below —
+so it survives the next `--apply`. Fossil front-loads (mature curve at game start); nuclear
+and renewable ramp with their breakthrough techs.
+
 ## Tools
 
 - **`tools/balance/set_energy_tech_scurves.py`** — the source of truth. Encodes the S-curve
-  design, solves the amplitudes, derives per-tech increments, and writes them into
-  `common/technologies/industry.txt` (13 renewable + 12 reactor + 10 fuel_efficiency techs).
-  Re-tune by editing the `SHAPE` / `SPEED_RATIO` / `PF` constants and re-running `--apply`.
+  design, solves the amplitudes, derives per-tech increments (power, construction-speed, and
+  infra-cost relief), and writes them into `common/technologies/industry.txt` (13 renewable +
+  12 reactor + 10 fuel_efficiency techs). Re-tune by editing the `SHAPE` / `SPEED_RATIO` / `PF`
+  / `INFRA_CAP` constants and re-running `--apply`.
 - **`tools/analysis/renewable_power_per_cost.py`** — charts power/build-cost over time for the
   four state factors vs nuclear vs fossil, parsing the live values from `industry.txt`. Use it
   to verify the crossovers after any change.
