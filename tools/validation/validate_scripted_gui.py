@@ -7,7 +7,6 @@ error but does nothing at runtime.
 import os
 import re
 import sys
-from collections import defaultdict
 from typing import Dict, FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -35,14 +34,6 @@ _GUI_TYPE_OPENER = re.compile(
 
 # Inside a GUI element, match `name = "..."` or `name = ...`
 _GUI_NAME = re.compile(r"\bname\s*=\s*\"?([A-Za-z0-9_]+)\"?")
-
-# Inside a GUI element, match `pdx_tooltip = "..."` and `pdx_tooltip_delayed = "..."`
-_GUI_TOOLTIP = re.compile(r"\b(pdx_tooltip(?:_delayed)?)\s*=\s*\"?([A-Za-z0-9_]+)\"?")
-
-# Inside a GUI element, match `spriteType = "X"` / `quadTextureSprite = "X"` / `textureFile = "X"`
-_GUI_SPRITE = re.compile(
-    r"\b(spriteType|quadTextureSprite)\s*=\s*\"?(GFX_[A-Za-z0-9_]+)\"?"
-)
 
 # scripted_gui block opener:   <name> = {
 # Match identifier directly followed by = { in the scripted_guis context.
@@ -72,8 +63,26 @@ _SGUI_PARENT_TOKEN = re.compile(r"\bparent_window_token\s*=\s*([A-Za-z_][A-Za-z0
 # dynamic_lists block — entry_container reference
 _SGUI_ENTRY_CONTAINER = re.compile(r"\bentry_container\s*=\s*\"?([A-Za-z0-9_]+)\"?")
 
-# dirty = ... — must reference a global variable
+# dirty = ... — the variable the GUI refreshes on (may be scope-qualified, e.g. global.X)
 _SGUI_DIRTY = re.compile(r"\bdirty\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)")
+
+# Variable write operations across the mod — capture the assignment target (LHS),
+# optionally scope-qualified. Used to tell whether a dirty var is ever written and
+# in which namespace it lives.
+_VAR_WRITE = re.compile(
+    r"\b(?:set_global_variable|set_variable|add_to_variable|subtract_from_variable|"
+    r"multiply_variable|divide_variable|clamp_variable|round_variable)\s*=\s*\{\s*"
+    r"(?:var\s*=\s*)?"
+    r"((?:global\.|ROOT\.|PREV\.|THIS\.|FROM\.|OWNER\.|CONTROLLER\.|[A-Z]{2,4}\.)?"
+    r"[A-Za-z_][A-Za-z0-9_]*)"
+)
+
+# global.X reference anywhere (read or write) — marks X as a global-namespace variable.
+_GLOBAL_REF = re.compile(r"\bglobal\.([A-Za-z_][A-Za-z0-9_]*)")
+
+# A `dirty = global.X` declaration — stripped before counting global refs so a
+# global var that appears ONLY as a dirty line still reads as undefined.
+_SGUI_DIRTY_GLOBAL = re.compile(r"\bdirty\s*=\s*global\.[A-Za-z_][A-Za-z0-9_]*")
 
 # ai_test_scopes — value (can appear multiple times in one scripted_gui block)
 _SGUI_AI_TEST_SCOPES = re.compile(r"\bai_test_scopes\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
@@ -84,12 +93,6 @@ _LOC_BANG_REF = re.compile(r"\[!([A-Za-z_][A-Za-z0-9_]*)\]")
 # Loc key extraction (matching validator_common's pattern):
 #   key: "value"
 _LOC_KEY = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_.@]+)\s*:[0-9]?\s*\"", re.MULTILINE)
-
-# GFX spriteType definition opener — `spriteType = { ... name = "GFX_X" ... }`
-_GFX_SPRITE_NAME = re.compile(
-    r"spriteType\s*=\s*\{[^}]*?\bname\s*=\s*\"(GFX_[A-Za-z0-9_]+)\"",
-    re.DOTALL,
-)
 
 # --- Valid enum values ---
 
@@ -192,8 +195,6 @@ def _parse_gui_text(text: str, rel: str) -> Dict:
     elements: Dict[str, Tuple[str, str, int]] = {}
     element_files: Dict[str, str] = {}
     containers: List[str] = []
-    tooltip_refs: List[Tuple[str, str, str, str, int]] = []
-    sprite_refs: List[Tuple[str, str, int]] = []
 
     for m in _GUI_TYPE_OPENER.finditer(text):
         type_name = m.group(1)
@@ -210,22 +211,11 @@ def _parse_gui_text(text: str, rel: str) -> Dict:
         element_files[name] = rel
         if type_name.lower() == "containerwindowtype":
             containers.append(name)
-        for tm in _GUI_TOOLTIP.finditer(block):
-            attr = tm.group(1)
-            loc_key = tm.group(2)
-            tm_line = line_no + block[: tm.start()].count("\n")
-            tooltip_refs.append((name, attr, loc_key, rel, tm_line))
-        for sm in _GUI_SPRITE.finditer(block):
-            sprite_name = sm.group(2)
-            sm_line = line_no + block[: sm.start()].count("\n")
-            sprite_refs.append((sprite_name, rel, sm_line))
 
     return {
         "elements": elements,
         "element_files": element_files,
         "containers": containers,
-        "tooltip_refs": tooltip_refs,
-        "sprite_refs": sprite_refs,
     }
 
 
@@ -305,14 +295,23 @@ def _parse_scripted_gui_text(text: str, rel: str) -> Tuple[List[Dict], Set[str]]
     return blocks, trigger_names
 
 
-def _parse_gfx_text(text: str) -> Set[str]:
-    """Parse one .gfx file's text. Returns the set of sprite names it defines."""
-    return {m.group(1) for m in _GFX_SPRITE_NAME.finditer(text)}
+def _parse_var_writes_text(text: str) -> Tuple[Set[str], Set[str]]:
+    """Parse one .txt file's text for variable writes. Returns
+    (written_var_names, global_ref_names) with scope prefixes stripped to the
+    bare variable name. Mutates nothing."""
+    written: Set[str] = set()
+    global_refs: Set[str] = set()
+    for m in _VAR_WRITE.finditer(text):
+        written.add(m.group(1).rsplit(".", 1)[-1])
+    scan = _SGUI_DIRTY_GLOBAL.sub("", text)
+    for m in _GLOBAL_REF.finditer(scan):
+        global_refs.add(m.group(1))
+    return written, global_refs
 
 
 class ScriptedGuiValidator(BaseValidator):
     TITLE = "SCRIPTED GUI VALIDATION"
-    STAGED_EXTENSIONS = [".txt", ".gui", ".yml", ".gfx"]
+    STAGED_EXTENSIONS = [".txt", ".gui", ".yml"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -322,24 +321,20 @@ class ScriptedGuiValidator(BaseValidator):
         self._gui_elements: Dict[str, Tuple[str, str, int]] = {}
         # name -> (type, file, line)
         self._gui_containers: Set[str] = set()
-        self._gui_tooltip_refs: List[Tuple[str, str, str, int]] = []
-        # (element_name, tooltip_attr, loc_key, file, line)
-        self._gui_sprite_refs: List[Tuple[str, str, int]] = []
-        # (sprite_name, file, line)
         self._gui_element_files: Dict[str, str] = {}
         # element_name -> .gui file path
-        self._gui_scripted_window_elements: Dict[str, Set[str]] = defaultdict(set)
-        # window_name -> set of child element names (one level deep); currently unused
 
         self._sgui_blocks: List[Dict] = []
         # Each: { name, window_name, parent_window_name, parent_window_token,
         #         context_type, dirty, ai_test_scopes (list), handlers (set of (elem, kind)),
-        #         entry_containers (set), file, line, body }
+        #         entry_containers (set), file, line }
         self._sgui_trigger_names: Set[str] = set()
         # All <element>_click_enabled / _visible style trigger names (for [!] resolution)
 
-        self._gfx_sprites: Set[str] = set()
         self._loc_keys: FrozenSet[str] = frozenset()
+        # Variable-write index (built lazily, only when a dirty var needs checking)
+        self._written_names: Set[str] = set()
+        self._global_ref_names: Set[str] = set()
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
@@ -385,7 +380,7 @@ class ScriptedGuiValidator(BaseValidator):
         rel = os.path.relpath(filepath, self.mod_path)
         data = disk_cache.per_file_cached_by_content(
             self.mod_path,
-            "sgui.gui",
+            "sgui.gui2",
             filepath,
             text,
             lambda: _parse_gui_text(text, rel),
@@ -393,8 +388,6 @@ class ScriptedGuiValidator(BaseValidator):
         self._gui_elements.update(data["elements"])
         self._gui_element_files.update(data["element_files"])
         self._gui_containers.update(data["containers"])
-        self._gui_tooltip_refs.extend(data["tooltip_refs"])
-        self._gui_sprite_refs.extend(data["sprite_refs"])
 
     def _parse_scripted_gui_files(self) -> None:
         self._log_section("Parsing common/scripted_guis/*.txt files")
@@ -425,7 +418,7 @@ class ScriptedGuiValidator(BaseValidator):
         rel = os.path.relpath(filepath, self.mod_path)
         blocks, trigger_names = disk_cache.per_file_cached_by_content(
             self.mod_path,
-            "sgui.scripted",
+            "sgui.scripted3",
             filepath,
             text,
             lambda: _parse_scripted_gui_text(text, rel),
@@ -433,31 +426,45 @@ class ScriptedGuiValidator(BaseValidator):
         self._sgui_blocks.extend(blocks)
         self._sgui_trigger_names.update(trigger_names)
 
-    def _parse_gfx_files(self) -> None:
-        self._log_section("Parsing interface/*.gfx files for sprite names")
-        gfx_dir = os.path.join(self.mod_path, "interface")
-        if not os.path.isdir(gfx_dir):
+    def _index_variable_writes(self) -> None:
+        """Walk common/ and events/ once, collecting every variable-write target
+        and every global.X reference. Used by the dirty check to tell whether a
+        dirty var is ever written and which namespace it lives in. Skipped when
+        no scripted_gui declares a dirty var."""
+        if not any(b["dirty"] for b in self._sgui_blocks):
             return
-        files = []
-        for root, _, names in os.walk(gfx_dir):
-            for n in names:
-                if n.endswith(".gfx"):
-                    files.append(os.path.join(root, n))
+        self._log_section("Indexing variable writes (for dirty checks)")
+        roots = [
+            os.path.join(self.mod_path, "common"),
+            os.path.join(self.mod_path, "events"),
+        ]
+        files: List[str] = []
+        for base in roots:
+            if not os.path.isdir(base):
+                continue
+            for root, _, names in os.walk(base):
+                for n in names:
+                    if n.endswith(".txt"):
+                        files.append(os.path.join(root, n))
         for filepath in sorted(files):
             try:
                 with open(filepath, "r", encoding="utf-8-sig") as fh:
                     text = fh.read()
             except Exception:
                 continue
-            names = disk_cache.per_file_cached_by_content(
+            written, global_refs = disk_cache.per_file_cached_by_content(
                 self.mod_path,
-                "sgui.gfx",
+                "sgui.varwrites2",
                 filepath,
                 text,
-                lambda text=text: _parse_gfx_text(text),
+                lambda text=text: _parse_var_writes_text(text),
             )
-            self._gfx_sprites.update(names)
-        self.log(f"  Indexed {len(self._gfx_sprites)} GFX sprite names")
+            self._written_names.update(written)
+            self._global_ref_names.update(global_refs)
+        self.log(
+            f"  Indexed {len(self._written_names)} written vars, "
+            f"{len(self._global_ref_names)} global refs"
+        )
 
     def _load_loc_keys_and_cache(self) -> FrozenSet[str]:
         """Walk English loc once; cache (filepath, text) for downstream checks
@@ -517,29 +524,6 @@ class ScriptedGuiValidator(BaseValidator):
                     file=block["file"],
                     line=block["line"],
                 )
-
-    def _check_pdx_tooltip_loc_keys(self) -> None:
-        """Tier 1.2 — pdx_tooltip / pdx_tooltip_delayed loc reference.
-        Reported as WARNING because most missing refs are vanilla loc keys we
-        don't track. Real misses still surface, just at warning level."""
-        self._log_section("Checking pdx_tooltip loc-key references in .gui files")
-        for elem_name, attr, loc_key, file, line in self._gui_tooltip_refs:
-            if loc_key in self._loc_keys:
-                continue
-            # Skip placeholder/template patterns
-            if loc_key.startswith("$") or loc_key.endswith("$"):
-                continue
-            if _looks_like_template(loc_key):
-                continue
-            self.add_issue(
-                Severity.WARNING,
-                "MISSING_TOOLTIP_LOC",
-                f"GUI element '{elem_name}' has {attr} = \"{loc_key}\" but that "
-                f"loc key is not defined in any English .yml — tooltip will render "
-                f"as literal text (vanilla refs are expected; MD-specific refs are bugs)",
-                file=file,
-                line=line,
-            )
 
     def _check_bang_trigger_refs(self) -> None:
         """Tier 1.3 — every [!trigger_name] in loc strings must match a
@@ -646,47 +630,56 @@ class ScriptedGuiValidator(BaseValidator):
                     line=block["line"],
                 )
 
-    def _check_sprite_refs(self) -> None:
-        """Tier 1.7 — every spriteType / quadTextureSprite reference matches a
-        GFX_X defined in some interface/*.gfx file. Warning-level only — most
-        misses are vanilla sprites we don't redefine locally."""
-        self._log_section("Checking GFX sprite references in .gui files")
-        seen: Set[Tuple[str, str, int]] = set()
-        for sprite, file, line in self._gui_sprite_refs:
-            if sprite in self._gfx_sprites:
-                continue
-            key = (sprite, file, line)
-            if key in seen:
-                continue
-            seen.add(key)
-            self.add_issue(
-                Severity.WARNING,
-                "MISSING_GFX_SPRITE",
-                f"Sprite reference '{sprite}' but no spriteType with that name "
-                f"is defined in MD .gfx files (vanilla refs are expected; "
-                f"MD-specific names that should resolve here are bugs)",
-                file=file,
-                line=line,
-            )
-
     def _check_dirty_var(self) -> None:
-        """Tier 2.1 — dirty = ... should be a global variable (global.X)."""
-        self._log_section("Checking dirty variable references")
+        """Tier 2.1 — a dirty var must actually be written somewhere (or the GUI
+        never refreshes), and its scope must match the mechanic. A country-scope
+        dirty var for a variable that lives in the global namespace can't track a
+        shared mechanic's updates. A scripted_gui without a dirty var is fine —
+        only declared dirty vars are checked."""
+        self._log_section("Checking dirty variable scope / definition")
         for block in self._sgui_blocks:
             d = block["dirty"]
-            if not d:
+            if not d or d in ("yes", "no"):
                 continue
+            if "[" in d or "]" in d:  # runtime-substituted name, can't resolve
+                continue
+            base = d.rsplit(".", 1)[-1]
             if d.startswith("global."):
-                continue
-            self.add_issue(
-                Severity.WARNING,
-                "DIRTY_NOT_GLOBAL",
-                f"Scripted GUI '{block['name']}' has dirty = {d}; should be a "
-                f"global variable (e.g., global.{d}) so all open instances refresh "
-                f"consistently",
-                file=block["file"],
-                line=block["line"],
-            )
+                # A global dirty var is live if anything writes it or reads it as
+                # global.X (engine-provided globals like global.year are only read).
+                if (
+                    base not in self._written_names
+                    and base not in self._global_ref_names
+                ):
+                    self.add_issue(
+                        Severity.WARNING,
+                        "DIRTY_VAR_UNDEFINED",
+                        f"Scripted GUI '{block['name']}' has dirty = {d} but no "
+                        f"effect ever writes or reads that variable — the GUI "
+                        f"never refreshes",
+                        file=block["file"],
+                        line=block["line"],
+                    )
+            elif base in self._global_ref_names:
+                self.add_issue(
+                    Severity.WARNING,
+                    "DIRTY_SCOPE_MISMATCH",
+                    f"Scripted GUI '{block['name']}' has dirty = {d} (country "
+                    f"scope) but '{base}' is a global variable (global.{base}); a "
+                    f"shared mechanic should use dirty = global.{base} so every "
+                    f"open instance refreshes",
+                    file=block["file"],
+                    line=block["line"],
+                )
+            elif base not in self._written_names:
+                self.add_issue(
+                    Severity.WARNING,
+                    "DIRTY_VAR_UNDEFINED",
+                    f"Scripted GUI '{block['name']}' has dirty = {d} but no effect "
+                    f"ever writes that variable — the GUI never refreshes",
+                    file=block["file"],
+                    line=block["line"],
+                )
 
     def _check_ai_test_scopes(self) -> None:
         """Tier 2.2 — ai_test_scopes values must match context_type."""
@@ -722,40 +715,6 @@ class ScriptedGuiValidator(BaseValidator):
                         line=block["line"],
                     )
 
-    def _check_unused_button_definitions(self) -> None:
-        """Tier 2.3 — buttons that have no handlers in any scripted_gui block.
-        Warning-only because the GUI file can be overriding vanilla UI where
-        the button's click is wired by the engine, not via scripted_gui."""
-        self._log_section("Checking for unused button definitions")
-        used: Set[str] = set()
-        for block in self._sgui_blocks:
-            for elem, _ in block["handlers"]:
-                used.add(elem)
-        for name, (type_name, file, line) in self._gui_elements.items():
-            if type_name.lower() != "buttontype":
-                continue
-            if name in used:
-                continue
-            # Only flag *_button suffix — decorative/close buttons are common
-            # without scripted logic.
-            if not name.endswith("_button"):
-                continue
-            # Skip intentionally-hidden dummies (e.g., CPD_send_dummy_button)
-            if "dummy" in name.lower():
-                continue
-            # Skip if the button name is clearly vanilla-pattern (lowercase only,
-            # no MD-style prefix). Most vanilla overrides use snake_case without
-            # tag prefixes; MD-defined buttons usually have a tag or system prefix.
-            self.add_issue(
-                Severity.WARNING,
-                "UNUSED_BUTTON_DEFINITION",
-                f"buttonType '{name}' is defined in {file} but no scripted_gui "
-                f"block references it — likely dead UI, vanilla override wired "
-                f"by engine, or pending implementation",
-                file=file,
-                line=line,
-            )
-
     # ------------------------------------------------------------------
     # Entry point
     # ------------------------------------------------------------------
@@ -764,28 +723,23 @@ class ScriptedGuiValidator(BaseValidator):
         # Phase 1: parse all sources
         self._parse_gui_files()
         self._parse_scripted_gui_files()
-        self._parse_gfx_files()
+        self._index_variable_writes()
         self._loc_keys = self._load_loc_keys_and_cache()
 
         # Phase 2: cross-reference checks
         self._check_handler_element_refs()
-        self._check_pdx_tooltip_loc_keys()
         self._check_bang_trigger_refs()
         self._check_window_refs()
         self._check_entry_containers()
         self._check_context_type_enum()
-        self._check_sprite_refs()
         self._check_dirty_var()
         self._check_ai_test_scopes()
-        self._check_unused_button_definitions()
-
-        self._finish_sections()
 
 
 def main() -> int:
     return run_validator_main(
         ScriptedGuiValidator,
-        description="Validate scripted GUI cross-references against .gui, .gfx, and loc files.",
+        description="Validate scripted GUI cross-references against .gui and loc files.",
     )
 
 

@@ -13,11 +13,8 @@ SIN_calculate_singaporean_trade_agreements = {
 	set_variable = { SIN_bureaucracy_cost_multiplier_modifier_strength = signed_trade_agreements }
 	# Tariff Income Generates in the Money System
 
-	multiply_variable = { SIN_foreign_influence_strength = 10 }
-	multiply_variable = { SIN_bureaucracy_cost_multiplier_modifier_strength = 10 }
-
-	multiply_variable = { SIN_foreign_influence_strength = 0.002 }
-	multiply_variable = { SIN_bureaucracy_cost_multiplier_modifier_strength = 0.002 }
+	multiply_variable = { SIN_foreign_influence_strength = 0.02 }
+	multiply_variable = { SIN_bureaucracy_cost_multiplier_modifier_strength = 0.02 }
 
 	clamp_variable = { var = SIN_foreign_influence_strength min = 0 max = 0.30 }
 	clamp_variable = { var = SIN_bureaucracy_cost_multiplier_modifier_strength min = 0 max = 0.30 }
@@ -65,6 +62,27 @@ SIN_censorship_law_decrease = {
 	}
 }
 
+## Clique pressure roll — caller sets party_index before invoking
+SIN_apply_clique_pressure = {
+	random_list = {
+		80 = {
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+		}
+		5 = {
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		15 = {
+			set_temp_variable = { party_popularity_increase = -0.03 }
+			set_temp_variable = { temp_outlook_increase = -0.03 }
+			add_relative_party_popularity = yes
+		}
+	}
+}
+
 ##Build Offmap Renewable Energy Infrastructure
 SIN_offmap_renewable_energy_infrastructure = {
 	add_offsite_building = {
@@ -73,4 +91,13 @@ SIN_offmap_renewable_energy_infrastructure = {
 	}
 	set_temp_variable = { treasury_change = -8.5 }
 	modify_treasury_effect = yes
+}
+
+## Singaporean alignment GUI dirty counter — bumps only when a gating condition flips
+SIN_update_alignment_gui_dirty = {
+	set_temp_variable = { SIN_temp_alignment_gui_state = 0 }
+	if = { limit = { has_political_power > 75 } add_to_temp_variable = { SIN_temp_alignment_gui_state = 1 } }
+	if = { limit = { has_country_flag = SIN_applied_support_clique } add_to_temp_variable = { SIN_temp_alignment_gui_state = 2 } }
+	if = { limit = { has_country_flag = SIN_funded_a_clique_flag } add_to_temp_variable = { SIN_temp_alignment_gui_state = 4 } }
+	set_variable = { SIN_alignment_gui_dirty = SIN_temp_alignment_gui_state }
 }

@@ -1,5 +1,7 @@
 # Contributing to Millennium Dawn Docs (Astro)
 
+> **Looking to contribute to the mod itself?** See the root [CONTRIBUTING.md](../CONTRIBUTING.md) for focus trees, events, AI policy, fork workflow, and everything else. This file covers only the documentation site (under `docs/`).
+
 ## Prerequisites
 
 - Node.js 24 LTS or newer ([nodejs.org](https://nodejs.org/))
