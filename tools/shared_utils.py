@@ -573,9 +573,11 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     """Print a table of step timings. Suppressed when MD_TIMING=0."""
     if not timings or not timing_enabled():
         return
+    # ANSI only on a live terminal — piped/CI output must stay escape-free.
+    dim, reset = ("\033[90m", "\033[0m") if sys.stderr.isatty() else ("", "")
     total = sum(t for _, t in timings)
     max_label = max(len(label) for label, _ in timings)
-    print(f"\n\033[90m{'─' * (max_label + 18)}", file=sys.stderr)
+    print(f"\n{dim}{'─' * (max_label + 18)}", file=sys.stderr)
     print("  Timing summary:", file=sys.stderr)
     for label, elapsed in timings:
         bar_len = int(elapsed / total * 20) if total > 0 else 0
@@ -585,7 +587,7 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
             file=sys.stderr,
         )
     print(f"  {'total':<{max_label}}  {total:6.3f}s", file=sys.stderr)
-    print(f"{'─' * (max_label + 18)}\033[0m", file=sys.stderr)
+    print(f"{'─' * (max_label + 18)}{reset}", file=sys.stderr)
 
 
 def create_linting_parser(

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Validate idea definitions and usage in Millennium Dawn."""
+
+import argparse
 import os
 import re
 import sys
@@ -13,7 +15,6 @@ import disk_cache
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
-    Colors,
     FileOpener,
     Issue,
     Severity,
@@ -463,7 +464,7 @@ class Validator(BaseValidator):
     def __init__(self, *args, **kwargs):
         self.missing_loc = kwargs.pop("missing_loc", False)
         self.missing_icons = kwargs.pop("missing_icons", False)
-        self.unused_ideas = kwargs.pop("unused_ideas", False)
+        self.unused_ideas = kwargs.pop("unused_ideas", True)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
 
@@ -568,62 +569,25 @@ class Validator(BaseValidator):
         fail_msg: str,
         severity: str = Severity.WARNING,
         category: str = "",
-        max_detail_per_file: int = 5,
     ):
-        """Report issues grouped by file with capped detail lines."""
-        total = sum(len(v) for v in issues_by_file.values())
-        if total == 0:
-            c = Colors.GREEN if self.use_colors else ""
-            e = Colors.ENDC if self.use_colors else ""
-            self.log(f"{c}{ok_msg}{e}")
-            return
+        """Record issues grouped under an arbitrary key (basename, category).
 
-        c_err = Colors.RED if severity == Severity.ERROR else Colors.YELLOW
-        c = c_err if self.use_colors else ""
-        e = Colors.ENDC if self.use_colors else ""
-
-        self.log(
-            f"{c}{fail_msg}{e}", "error" if severity == Severity.ERROR else "warning"
-        )
-        level = "error" if severity == Severity.ERROR else "warning"
-        for filepath in sorted(issues_by_file):
-            items = issues_by_file[filepath]
-            basename = os.path.basename(filepath)
-            # Record every item to the JSON sidecar (uncapped) so the combined
-            # /validate and CI reports reflect the full count; the per-file
-            # display cap below only trims console noise.
-            for item in items:
-                self._issues.append(
-                    Issue(
-                        severity=severity,
-                        category=category or "",
-                        message=f"{basename}: {item}",
-                        file="",
-                        line=0,
-                    )
-                )
-            shown = (
-                items
-                if len(items) <= max_detail_per_file
-                else items[:max_detail_per_file]
+        Thin wrapper over ``_report`` — display is deferred to the grouped
+        end-of-run render like everything else; the group key is kept in the
+        message since it isn't a resolvable file path.
+        """
+        findings = [
+            Issue(
+                severity=severity,
+                category=category or "",
+                message=f"{key}: {item}",
+                file="",
+                line=0,
             )
-            for item in shown:
-                self.log(f"{c}  {basename}: {item}{e}", level)
-            if len(items) > max_detail_per_file:
-                self.log(
-                    f"{c}  {basename}: ... and {len(items) - max_detail_per_file} more{e}",
-                    level,
-                )
-
-        self.log(
-            f"{c}{total} issue(s) found across {len(issues_by_file)} file(s){e}",
-            level,
-        )
-
-        if severity == Severity.ERROR:
-            self.errors_found += total
-        else:
-            self.warnings_found += total
+            for key in sorted(issues_by_file)
+            for item in issues_by_file[key]
+        ]
+        self._report(findings, ok_msg, fail_msg, severity=severity, category=category)
 
     def validate_idea_quality(self, issues_by_file: Dict[str, List[IdeaIssue]]):
         """Validate redundant patterns and misuse found during parsing."""
@@ -632,7 +596,18 @@ class Validator(BaseValidator):
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
         acw_pattern = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
 
-        grouped: Dict[str, List[str]] = defaultdict(list)
+        findings: List[Issue] = []
+
+        def _add(filepath: str, line: int, message: str):
+            findings.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="idea-quality",
+                    message=message,
+                    file=os.path.relpath(filepath, self.mod_path),
+                    line=line,
+                )
+            )
 
         for filepath in idea_files:
             text = FileOpener.open_text_file(
@@ -640,37 +615,45 @@ class Validator(BaseValidator):
             )
             if not text:
                 continue
-            basename = os.path.basename(filepath)
             for m in acw_pattern.finditer(text):
                 lineno = text[: m.start()].count("\n") + 1
-                grouped[basename].append(
-                    f"line {lineno}: redundant allowed_civil_war = {{ always = no }}"
+                _add(
+                    filepath,
+                    lineno,
+                    "redundant allowed_civil_war = { always = no }",
                 )
 
         for filepath, file_issues in issues_by_file.items():
-            basename = os.path.basename(filepath)
             for issue in file_issues:
                 if issue.issue_type == "allowed-always-no":
-                    grouped[basename].append(
-                        f"line {issue.line}: '{issue.idea_name}' has allowed = {{ always = no }} in {issue.category}"
-                        " (redundant; removing trades slightly more memory for faster load times)"
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has allowed = {{ always = no }} in {issue.category}"
+                        " (redundant; removing trades slightly more memory for faster load times)",
                     )
                 elif issue.issue_type == "cancel-always-no":
-                    grouped[basename].append(
-                        f"line {issue.line}: '{issue.idea_name}' has cancel = {{ always = no }} (checked hourly, always false)"
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has cancel = {{ always = no }} (checked hourly, always false)",
                     )
                 elif issue.issue_type == "tag-not-original-tag":
-                    grouped[basename].append(
-                        f"line {issue.line}: '{issue.idea_name}' uses tag = {issue.detail} in allowed (use original_tag for civil war safety)"
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' uses tag = {issue.detail} in allowed (use original_tag for civil war safety)",
                     )
                 elif issue.issue_type == "on-add-log-only":
-                    grouped[basename].append(
-                        f"line {issue.line}: '{issue.idea_name}' has on_add = {{ log = ... }} with no real effects"
-                        " (drop the on_add block — tracing-only logs are dead weight)"
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has on_add = {{ log = ... }} with no real effects"
+                        " (drop the on_add block — tracing-only logs are dead weight)",
                     )
 
-        self._report_grouped(
-            grouped,
+        self._report(
+            findings,
             "✓ No idea definition quality issues",
             "Idea definition issues:",
             severity=Severity.WARNING,
@@ -749,7 +732,6 @@ class Validator(BaseValidator):
             "Loc-consolidation suggestions (advisory — siblings with identical loc strings):",
             severity=Severity.WARNING,
             category="loc-consolidation",
-            max_detail_per_file=3,
         )
 
     def validate_missing_localisation(
@@ -790,7 +772,6 @@ class Validator(BaseValidator):
             "Ideas missing localisation (grouped by category):",
             severity=Severity.WARNING,
             category="missing-idea-localisation",
-            max_detail_per_file=3,
         )
 
     def _build_idea_sprite_set(self) -> frozenset:
@@ -882,7 +863,6 @@ class Validator(BaseValidator):
             "Ideas with missing icons (picture sprite not defined in interface/*.gfx):",
             severity=Severity.WARNING,
             category="missing-idea-icon",
-            max_detail_per_file=5,
         )
 
     def validate_category_icon_frames(self):
@@ -941,7 +921,9 @@ class Validator(BaseValidator):
         )
 
     def validate_unused_ideas(
-        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
+        self,
+        defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
+        ideas_by_file: Dict[str, List[str]],
     ):
         """Flag script-added ideas that are defined but never referenced.
 
@@ -952,11 +934,20 @@ class Validator(BaseValidator):
         (manufacturers, designers, budget sliders) are excluded — the player
         picks those in the UI, so they are never `add_ideas`'d by design.
 
+        In staged mode only ideas *defined in a staged file* are reported —
+        the repo-wide backlog is a full-run audit, not pre-commit feedback.
+        The reference scan is always repo-wide either way.
+
         Reference matching is deliberately generous (it also accepts a bare
         `idea = X`), so a few ideas built from a runtime-constructed name can
         still slip through; this is a WARNING, never an error.
         """
         self._log_section("Checking for unused ideas (defined but never referenced)...")
+
+        defining_file: Dict[str, str] = {}
+        for filepath, names in ideas_by_file.items():
+            for name in names:
+                defining_file.setdefault(name, filepath)
 
         non_selectable = _get_non_selectable_idea_categories(self.mod_path)
         candidates = {
@@ -964,6 +955,13 @@ class Validator(BaseValidator):
             for name, (cat, _ovr, _pic) in defined_ideas.items()
             if cat in non_selectable and cat != "character"
         }
+        if self.staged_only:
+            staged_set = set(self.staged_files or [])
+            candidates = {
+                name: cat
+                for name, cat in candidates.items()
+                if any(defining_file.get(name, "").endswith(sf) for sf in staged_set)
+            }
         if not candidates:
             self.log("  No non-selectable ideas to check.")
             return
@@ -973,7 +971,8 @@ class Validator(BaseValidator):
                 "common/**/*.txt",
                 "events/**/*.txt",
                 "history/**/*.txt",
-            ]
+            ],
+            ignore_staged=True,
         )
         self.log(
             f"  Scanning {len(scan_files)} files for references to "
@@ -986,19 +985,28 @@ class Validator(BaseValidator):
         for sub in ref_lists:
             referenced.update(sub)
 
-        grouped: Dict[str, List[str]] = defaultdict(list)
+        findings: List[Issue] = []
         for name in sorted(candidates):
-            if name not in referenced:
-                grouped[candidates[name]].append(name)
+            if name in referenced:
+                continue
+            src = defining_file.get(name, "")
+            findings.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="unused-idea",
+                    message=f"'{name}' ({candidates[name]}) is defined but never referenced",
+                    file=os.path.relpath(src, self.mod_path) if src else "",
+                    line=0,
+                )
+            )
 
-        self._report_grouped(
-            grouped,
+        self._report(
+            findings,
             "✓ All non-selectable ideas are referenced",
             "Unused ideas (defined in a script-added category but never "
             "add_ideas'd / swap_ideas'd / referenced anywhere):",
             severity=Severity.WARNING,
             category="unused-idea",
-            max_detail_per_file=10,
         )
 
     def run_validations(self):
@@ -1054,10 +1062,10 @@ class Validator(BaseValidator):
             )
 
         if self.unused_ideas:
-            self.validate_unused_ideas(defined_ideas)
+            self.validate_unused_ideas(defined_ideas, ideas_by_file)
         else:
             self._log_section(
-                "Skipping unused idea check (pass --unused-ideas to enable)"
+                "Skipping unused idea check (pass --no-unused-ideas to disable)"
             )
 
 
@@ -1076,9 +1084,10 @@ def _add_extra_args(parser):
     )
     parser.add_argument(
         "--unused-ideas",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=True,
         dest="unused_ideas",
-        help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced",
+        help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced (enabled by default; use --no-unused-ideas to disable)",
     )
     parser.add_argument(
         "--suggest-consolidation",
