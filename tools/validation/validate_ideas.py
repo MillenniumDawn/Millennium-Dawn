@@ -371,13 +371,38 @@ def _scan_idea_refs(text: str) -> List[str]:
 # Generous reference scan for the unused-idea check: any keyword that can name
 # an idea, plus block forms. Over-matching is safe here — it only marks more
 # ideas as "used", which makes the unused report conservative (fewer false
-# positives). `idea =` catches add_timed_idea/modify_timed_idea blocks.
+# positives). `idea =` catches add_timed_idea/modify_timed_idea blocks;
+# `show_ideas_tooltip =` catches display-only "fake" idea references. IGNORECASE
+# so case-variant grants like `add_Ideas = X` (valid in-game) are still counted.
 _IDEA_REF_GENEROUS = re.compile(
-    r"\b(?:has_idea|add_ideas|remove_ideas|add_idea|remove_idea|swap_idea|idea)"
-    r"\s*=\s*([A-Za-z0-9_.\-]+)"
+    r"\b(?:has_idea|add_ideas|remove_ideas|add_idea|remove_idea|swap_idea"
+    r"|show_ideas_tooltip|idea)"
+    r"\s*=\s*([A-Za-z0-9_.\-]+)",
+    re.IGNORECASE,
 )
-_IDEA_REF_BLOCK = re.compile(r"\b(?:add_ideas|remove_ideas)\s*=\s*\{([^{}]*)\}")
+_IDEA_REF_BLOCK = re.compile(
+    r"\b(?:add_ideas|remove_ideas)\s*=\s*\{([^{}]*)\}", re.IGNORECASE
+)
 _WORD_TOKEN = re.compile(r"[A-Za-z0-9_.\-]+")
+
+# Dynamic-token ideas are applied at runtime via `add_ideas = var:<token>`, where
+# the literal name lives only in this registry and never next to an add_ideas
+# keyword. Treat any name registered here as referenced.
+_DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
+_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
+
+
+def _load_dynamic_token_names(mod_path: str) -> Set[str]:
+    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
+    path = os.path.join(mod_path, _DYNAMIC_TOKEN_FILE)
+    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
+    if not text:
+        return set()
+    return {
+        line.strip()
+        for line in text.splitlines()
+        if _DYNAMIC_TOKEN_LINE.match(line.strip())
+    }
 
 
 def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
@@ -984,6 +1009,7 @@ class Validator(BaseValidator):
         referenced: Set[str] = set()
         for sub in ref_lists:
             referenced.update(sub)
+        referenced.update(_load_dynamic_token_names(self.mod_path))
 
         findings: List[Issue] = []
         for name in sorted(candidates):
