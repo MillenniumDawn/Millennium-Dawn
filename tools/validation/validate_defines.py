@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import find_hoi4_install
-from validator_common import BaseValidator, Colors, run_validator_main
+from validator_common import BaseValidator, run_validator_main
 
 # Pattern: NDefines.NAMESPACE.NAME = value
 MD_DEFINE_RE = re.compile(r"NDefines\.(\w+)\.(\w+)\s*=", re.IGNORECASE)
@@ -159,12 +159,13 @@ class Validator(BaseValidator):
         # Find vanilla defines
         vanilla_path = self.vanilla_path or find_vanilla_defines()
         if not vanilla_path:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Cannot find vanilla 00_defines.lua. "
-                f"Set --vanilla-path or ensure HOI4 is installed via Steam.{Colors.ENDC if self.use_colors else ''}",
-                "error",
+            # add_error (not a bare counter bump) so the JSON sidecar agrees
+            # with the exit code — run_all_validators counts from the JSON.
+            self.add_error(
+                "defines-setup",
+                "Cannot find vanilla 00_defines.lua. "
+                "Set --vanilla-path or ensure HOI4 is installed via Steam.",
             )
-            self.errors_found += 1
             return
 
         self.log(f"  Vanilla defines: {vanilla_path}")
@@ -172,11 +173,7 @@ class Validator(BaseValidator):
         # Find MD defines file
         md_path = os.path.join(self.mod_path, "common", "defines", "MD_defines.lua")
         if not os.path.isfile(md_path):
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}MD_defines.lua not found at {md_path}{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += 1
+            self.add_error("defines-setup", f"MD_defines.lua not found at {md_path}")
             return
 
         # In staged mode, only run if the defines file was actually changed
