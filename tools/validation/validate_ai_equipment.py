@@ -6,10 +6,9 @@
 import glob
 import os
 import re
-import sys
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+from validator_common import BaseValidator, run_validator_main
 
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
 BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)

@@ -6,12 +6,11 @@ import glob
 import os
 import re
 from multiprocessing import Pool
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import disk_cache
 from validator_common import (
     BaseValidator,
-    Colors,
     DataCleaner,
     FileOpener,
     Severity,
@@ -108,7 +107,7 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     try:
         from pathlib import Path as _Path
 
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return ([], [])
 
@@ -599,7 +598,12 @@ class Validator(BaseValidator):
         for filename in yml_files_to_scan:
             if should_skip_file(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
+            # Lowercased on purpose: case-insensitive scan for
+            # [target.GetName]/[event_target:target.GetAdjective] loc usage so a
+            # target isn't falsely reported unused over a case difference.
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=True, strip_comments_flag=True
+            )
 
             if ".get" in text_file:
                 not_encountered_targets = [
@@ -737,7 +741,7 @@ class Validator(BaseValidator):
                 staged_files=self.staged_files,
                 workers=self.workers,
                 files_to_scan=all_txt_files,
-                pool=self._pool,
+                pool=self._get_pool(),
             )
             self.validate_cleared_flags(flag_type, fp_cleared, cleared_paths, set_paths)
             self.validate_missing_flags(flag_type, fp_missing, used_paths, set_paths)
@@ -750,7 +754,7 @@ class Validator(BaseValidator):
             staged_files=self.staged_files,
             workers=self.workers,
             files_to_scan=all_txt_files,
-            pool=self._pool,
+            pool=self._get_pool(),
         )
         self.validate_cleared_event_targets(et_cleared, et_set)
         self.validate_missing_event_targets(et_used, et_set)

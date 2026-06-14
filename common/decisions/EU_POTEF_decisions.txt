@@ -308,8 +308,8 @@ EU_office_category = {
 						has_idea = EU_president
 					}
 				}
-				has_global_flag = ongoing_potef_election
 			}
+			NOT = { has_global_flag = ongoing_potef_election }
 		}
 
 		visible = { has_global_flag = european_federation }
@@ -327,9 +327,7 @@ EU_office_category = {
 		available = { tag = EUU }
 		activation = { always = no }
 
-		visible = { has_global_flag = european_federation }
-
-		days_mission_timeout = 90 # 90 # for testing 14
+		days_mission_timeout = 90
 
 		selectable_mission = yes
 
@@ -348,11 +346,6 @@ EU_office_category = {
 		allowed = { always = no }
 		available = { tag = EUU }
 		activation = { always = no }
-
-		visible = {
-			has_global_flag = european_federation
-			has_idea = EU_president
-		}
 
 		days_mission_timeout = POTEF_time_to_camp
 
@@ -419,16 +412,14 @@ EU_office_category = {
 						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					### AI cheat
-					AND = {
-						all_of_scopes = {
-							array = global.EU_member
-							if = {
-								limit = {
-									is_in_array = { ruling_party = temp_idx }
-								}
-								is_ai = yes
-								check_variable = { THIS.EU_pop_ratio < 0.05 }
+					all_of_scopes = {
+						array = global.EU_member
+						if = {
+							limit = {
+								is_in_array = { ruling_party = temp_idx }
 							}
+							is_ai = yes
+							check_variable = { THIS.EU_pop_ratio < 0.05 }
 						}
 					}
 				}
@@ -438,12 +429,7 @@ EU_office_category = {
 				all_of_scopes = {
 					array = global.EU_member
 					is_in_array = { ruling_party = temp_idx }
-					meta_trigger = {
-						text = {
-							NOT = { has_country_flag = POTEF_nominee_[subideology] }
-						}
-						subideology = "[?temp_idx|0]"
-					}
+					NOT = { check_variable = { var = global.POTEF_nominee_country^temp_idx value = 0 compare = greater_than } }
 				}
 			}
 		}
@@ -456,32 +442,7 @@ EU_office_category = {
 				has_active_mission = EU_POTEF_election_campaign
 			}
 			NOT = {
-				OR = {
-					has_country_flag = POTEF_nominee_0
-					has_country_flag = POTEF_nominee_1
-					has_country_flag = POTEF_nominee_2
-					has_country_flag = POTEF_nominee_3
-					has_country_flag = POTEF_nominee_4
-					has_country_flag = POTEF_nominee_5
-					has_country_flag = POTEF_nominee_6
-					has_country_flag = POTEF_nominee_7
-					has_country_flag = POTEF_nominee_8
-					has_country_flag = POTEF_nominee_9
-					has_country_flag = POTEF_nominee_10
-					has_country_flag = POTEF_nominee_11
-					has_country_flag = POTEF_nominee_12
-					has_country_flag = POTEF_nominee_13
-					has_country_flag = POTEF_nominee_14
-					has_country_flag = POTEF_nominee_15
-					has_country_flag = POTEF_nominee_16
-					has_country_flag = POTEF_nominee_17
-					has_country_flag = POTEF_nominee_18
-					has_country_flag = POTEF_nominee_19
-					has_country_flag = POTEF_nominee_20
-					has_country_flag = POTEF_nominee_21
-					has_country_flag = POTEF_nominee_22
-					has_country_flag = POTEF_nominee_23
-				}
+				has_country_flag = POTEF_has_nominated
 			}
 		}
 
@@ -498,13 +459,9 @@ EU_office_category = {
 					set_variable = { var_gov_index = v }
 				}
 			}
-			meta_effect = {
-				text = {
-					set_country_flag = POTEF_nominee_[subideology]
-					set_variable = { global.var_POTEF_nominee_[subideology] = THIS }
-				}
-				subideology = "[?var_gov_index|0]"
-			}
+			set_country_flag = POTEF_has_nominated
+			# Index = subideology, value = nominee country id (read by EU_POTEF_party_N_nominee gate + display loc)
+			set_variable = { global.POTEF_nominee_country^var_gov_index = THIS.id }
 			for_each_scope_loop = {
 				array = global.EU_member
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
@@ -518,11 +475,6 @@ EU_office_category = {
 	}
 
 	EU_POTEF_show_election_polls = {
-
-		available = {
-
-		}
-
 		visible = {
 			has_global_flag = european_federation
 			NOT = { has_country_flag = POTEF_polls }
@@ -536,11 +488,6 @@ EU_office_category = {
 	}
 
 	EU_POTEF_hide_election_polls = {
-
-		available = {
-
-		}
-
 		visible = {
 			has_global_flag = european_federation
 			has_country_flag = POTEF_polls
@@ -555,36 +502,11 @@ EU_office_category = {
 
 	EU_POTEF_campaign_in_member_state = {
 		allowed = {
-			is_EU_potential = yes
+			EU_is_potential = yes
 		}
 		target_root_trigger = {
 			has_idea = EU_member
-			OR = {
-				has_country_flag = POTEF_nominee_0
-				has_country_flag = POTEF_nominee_1
-				has_country_flag = POTEF_nominee_2
-				has_country_flag = POTEF_nominee_3
-				has_country_flag = POTEF_nominee_4
-				has_country_flag = POTEF_nominee_5
-				has_country_flag = POTEF_nominee_6
-				has_country_flag = POTEF_nominee_7
-				has_country_flag = POTEF_nominee_8
-				has_country_flag = POTEF_nominee_9
-				has_country_flag = POTEF_nominee_10
-				has_country_flag = POTEF_nominee_11
-				has_country_flag = POTEF_nominee_12
-				has_country_flag = POTEF_nominee_13
-				has_country_flag = POTEF_nominee_14
-				has_country_flag = POTEF_nominee_15
-				has_country_flag = POTEF_nominee_16
-				has_country_flag = POTEF_nominee_17
-				has_country_flag = POTEF_nominee_18
-				has_country_flag = POTEF_nominee_19
-				has_country_flag = POTEF_nominee_20
-				has_country_flag = POTEF_nominee_21
-				has_country_flag = POTEF_nominee_22
-				has_country_flag = POTEF_nominee_23
-			}
+			has_country_flag = POTEF_has_nominated
 		}
 		target_trigger = {
 			FROM = {
@@ -719,32 +641,7 @@ EU_office_category = {
 						modifier = {
 							add = 5
 							FROM = {
-								OR = {
-									has_country_flag = POTEF_nominee_0
-									has_country_flag = POTEF_nominee_1
-									has_country_flag = POTEF_nominee_2
-									has_country_flag = POTEF_nominee_3
-									has_country_flag = POTEF_nominee_4
-									has_country_flag = POTEF_nominee_5
-									has_country_flag = POTEF_nominee_6
-									has_country_flag = POTEF_nominee_7
-									has_country_flag = POTEF_nominee_8
-									has_country_flag = POTEF_nominee_9
-									has_country_flag = POTEF_nominee_10
-									has_country_flag = POTEF_nominee_11
-									has_country_flag = POTEF_nominee_12
-									has_country_flag = POTEF_nominee_13
-									has_country_flag = POTEF_nominee_14
-									has_country_flag = POTEF_nominee_15
-									has_country_flag = POTEF_nominee_16
-									has_country_flag = POTEF_nominee_17
-									has_country_flag = POTEF_nominee_18
-									has_country_flag = POTEF_nominee_19
-									has_country_flag = POTEF_nominee_20
-									has_country_flag = POTEF_nominee_21
-									has_country_flag = POTEF_nominee_22
-									has_country_flag = POTEF_nominee_23
-								}
+								has_country_flag = POTEF_has_nominated
 							}
 						}
 						for_each_scope_loop = {
@@ -790,14 +687,14 @@ EU_defense_category = {
 					has_idea = EDU_major_non_EU_ally
 				}
 				ROOT = { add_to_faction = PREV }
-				add_ai_strategy = { type = alliance id = FROM value = 200 }
+				add_ai_strategy = { type = alliance id = ROOT value = 200 }
 			}
 		}
 		ai_will_do = { base = 0 }
 	}
 
 	EU_POTEF_call_major_non_EU_ally = {
-		allowed = { is_EU_potential = yes }
+		allowed = { EU_is_potential = yes }
 		target_root_trigger = {
 			has_idea = EU_member
 			has_global_flag = EDU
