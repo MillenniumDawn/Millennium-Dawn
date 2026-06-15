@@ -35,15 +35,19 @@ Non-English localisation is managed through [Paratranz](https://paratranz.cn/pro
 
 1. **Fork** the repo on GitHub.
 2. **Clone** your fork and add the upstream remote:
+
    ```bash
    git clone https://github.com/<your-username>/Millennium-Dawn.git
    cd Millennium-Dawn
    git remote add upstream https://github.com/MillenniumDawn/Millennium-Dawn.git
    ```
+
 3. **Branch** from `main`:
+
    ```bash
    git checkout -b my-feature main
    ```
+
 4. **Make changes**, following code standards.
 5. **Commit** — pre-commit hooks run automatically.
 6. **Push** and **open a PR** against `main` on the upstream repo.

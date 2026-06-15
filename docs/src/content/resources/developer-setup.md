@@ -41,11 +41,14 @@ cd Millennium-Dawn
 
 1. Fork the repository on GitHub.
 2. Clone your fork:
+
    ```bash
    git clone https://github.com/<your-username>/Millennium-Dawn.git
    cd Millennium-Dawn
    ```
+
 3. Add the upstream remote:
+
    ```bash
    git remote add upstream https://github.com/MillenniumDawn/Millennium-Dawn.git
    ```
