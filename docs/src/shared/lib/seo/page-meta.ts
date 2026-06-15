@@ -58,6 +58,4 @@ export const CONTENT_PAGE_ROUTES = {
   "getting-started": "/getting-started/",
   faq: "/faq/",
   countries: "/countries/",
-  "bug-bot": "/bug-bot/",
-  "bug-bot-privacy": "/bug-bot-privacy/",
 } as const;
