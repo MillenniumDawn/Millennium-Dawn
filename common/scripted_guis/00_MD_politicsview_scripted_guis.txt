@@ -12,7 +12,6 @@ scripted_gui = {
 					limit = { NOT = { has_country_flag = MD_politicsview_expanded_open } }
 					
 					set_country_flag = MD_politicsview_expanded_open
-					update_dirty_politicsview_expanded = yes
 
 					set_variable = { sorting_button_outlook_status = 1 }
 					set_variable = { sorting_button_popularity_status = 2 }
@@ -58,6 +57,8 @@ scripted_gui = {
 						array = opposition_array
 						index = 0
 					}
+
+					update_dirty_politicsview_expanded = yes
 				}
 				else = {
 					clr_country_flag = MD_politicsview_expanded_open
@@ -86,6 +87,37 @@ scripted_gui = {
 		}
 
 		triggers = {
+			# settings
+			corruption_offerts_checkbox_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = auto_decline_corruption
+					}
+
+					set_temp_variable = { corruption_offerts_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { corruption_offerts_frame = 2 }
+				}
+
+				always = yes
+			}
+
+			foreign_election_notifications_checkbox_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = block_foreign_election_notification
+					}
+
+					set_temp_variable = { foreign_election_notifications_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { foreign_election_notifications_frame = 2 }
+				}
+
+				always = yes
+			}
+
 			# elections threshold
 			increase_election_threshold_visible = {
 				if = {
@@ -785,6 +817,55 @@ scripted_gui = {
 				check_variable = { sorting_button_outlook_status = 1 }
 			}
 
+			# parties action buttons
+			revolt_button_visible = {
+				if = {
+					limit = {
+						OR = {
+							check_variable = { v = 4 }
+							check_variable = { v = 9 }
+							check_variable = { v = 19 }
+							check_variable = { v = 21 }
+							check_variable = { v = 22 }
+							check_variable = { v = 23 }
+						}
+					}
+					NOT = { tag = WAG }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							check_variable = { v = 11 }
+						}
+					}
+
+					NOT = { tag = BHR }
+					NOT = { tag = KUW }
+					NOT = { tag = OMA }
+					NOT = { tag = QAT }
+					NOT = { tag = SAU }
+					NOT = { tag = UAE }
+					NOT = { tag = WAG }
+				}
+				else = {
+					always = no
+				}
+
+				check_variable = { party_pop_array^v > 0.10 } #significant
+				is_party_in_government = no
+			}
+
+			revolt_button_click_enabled = {
+				has_political_power > 149
+				has_civil_war = no
+
+				set_temp_variable = { pop = 0.2 }
+				custom_trigger_tooltip = {
+					tooltip = party_popularity_check_TT
+					check_variable = { party_pop_array^v > pop }
+				}
+			}
+
 			boost_button_click_enabled = {
 				set_temp_variable = { party_index = v }
 				outlook_larger_than_0_by_index = yes
@@ -885,6 +966,40 @@ scripted_gui = {
 		}
 
 		effects = {
+			corruption_offerts_checkbox_click = {
+				if = {
+					limit = {
+						has_country_flag = auto_decline_corruption
+					}
+
+					clr_country_flag = auto_decline_corruption
+					log = "[GetDateText]: [Root.GetName]: Decision lift_auto_decline_corruption_events"
+				}
+				else = {
+					set_country_flag = auto_decline_corruption
+					log = "[GetDateText]: [Root.GetName]: Decision auto_decline_corruption_offers"
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
+			foreign_election_notifications_checkbox_click = {
+				if = {
+					limit = {
+						has_country_flag = block_foreign_election_notification
+					}
+
+					clr_country_flag = block_foreign_election_notification
+					log = "[GetDateText]: [Root.GetName]: Decision lift_block_foreign_election_notification"
+				}
+				else = {
+					set_country_flag = block_foreign_election_notification
+					log = "[GetDateText]: [Root.GetName]: Decision block_foreign_election_notification"
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
 			# election threshold
 			increase_election_threshold_click = {
 				set_temp_variable = { threshold_change = 0.01 }
@@ -915,6 +1030,7 @@ scripted_gui = {
 					days = 365
 					value = 1
 				}
+				update_dirty_politicsview_expanded = yes
 			}
 
 			retire_leader_button_click = {
@@ -1109,6 +1225,8 @@ scripted_gui = {
 						}
 					}
 				}
+				
+				update_dirty_politicsview_expanded = yes
 			}
 
 			# propaganda buttons
@@ -1313,6 +1431,82 @@ scripted_gui = {
 			}
 
 			# action buttons
+			revolt_button_click = {
+				add_political_power = -150
+				custom_effect_tooltip = revolt_effect_TT
+
+				hidden_effect = {
+					#Release copy of existing
+					start_civil_war_with_no_leader_change = yes
+
+					#replicating current politics
+					random_other_country = {
+						limit = {
+							original_tag = PREV
+							NOT = { TAG = PREV }
+						}
+						
+						civil_war_replication_effect = yes
+					}
+
+					if = {
+						limit = {
+							OR = {
+								check_variable = { v = 21 }
+								check_variable = { v = 22 }
+								check_variable = { v = 23 }
+							}
+						}
+
+						set_politics = {
+							ruling_party = nationalist
+							elections_allowed = no
+						}
+						add_popularity = {
+							ideology = nationalist
+							popularity = 0.5
+						}
+					}
+					else_if = {
+						limit = {
+							check_variable = { v = 11 }
+						}
+
+						set_politics = {
+							ruling_party = fascism
+							elections_allowed = no
+						}
+						add_popularity = {
+							ideology = fascism
+							popularity = 0.5
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								check_variable = { v = 4 }
+								check_variable = { v = 9 }
+							}
+						}
+
+						set_politics = {
+							ruling_party = communism
+							elections_allowed = no
+						}
+						add_popularity = {
+							ideology = communism
+							popularity = 0.5
+						}
+					}
+
+					#For player:
+					start_politics_input = yes
+					add_to_array = { ruling_party = v }
+					set_variable = { party_pop_array^v = 0.7 }
+					startup_politics = yes
+				}
+			}
+
 			boost_button_click = {
 				add_political_power = -100
 
@@ -1393,6 +1587,14 @@ scripted_gui = {
         }
 
 		properties = {
+			corruption_offerts_checkbox = {
+				frame = corruption_offerts_frame
+			}
+
+			foreign_election_notifications_checkbox = {
+				frame = foreign_election_notifications_frame
+			}
+
 			# permanently_suspend_elections_button = {
 			# 	frame = has_elections_frame
 			# }
@@ -1458,26 +1660,26 @@ scripted_gui = {
 		}
 	}
 	
-	# TODO: 
-	countrypoliticsview_election_window = {
-		context_type = player_context
-		#window_name = "MD_countrypoliticsview_election_window"
-
-		dynamic_lists = {
-            election_result_grid = {
-                array = parties_list_sorted
-                entry_container = "election_result_grid_item"
-            }
-
-			potential_partners_grid = {
-                array = parties_list_sorted
-                entry_container = "potential_partners_grid_item"
-			}
-
-			coalition_partners_grid = {
-                array = parties_list_sorted
-                entry_container = "coalition_partners_grid_item"
-			}
-        }
-	}
+	# TODO: to maybe implement in future?
+	# countrypoliticsview_election_window = {
+	# 	context_type = player_context
+	#	window_name = "MD_countrypoliticsview_election_window"
+	#
+	#	dynamic_lists = {
+    #        election_result_grid = {
+    #            array = parties_list_sorted
+    #            entry_container = "election_result_grid_item"
+    #        }
+	#
+	#		potential_partners_grid = {
+    #            array = parties_list_sorted
+    #            entry_container = "potential_partners_grid_item"
+	#		}
+	#
+	#		coalition_partners_grid = {
+    #            array = parties_list_sorted
+    #            entry_container = "coalition_partners_grid_item"
+	#		}
+    #    }
+	#}
 }
