@@ -1,7 +1,7 @@
 ---
 title: v1.12.x Hotfixes (Every Tank an Upgrade)
 page_id: changelog-v1-12-0-every-tank-an-upgrade-hotfixes
-order: 13
+order: 14
 hidden: true
 ---
 

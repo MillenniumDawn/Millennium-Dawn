@@ -388,4 +388,3 @@ This provides a support company that can be attached to divisions for orbital pr
 
 - [Economy Guide](/player-tutorials/economy-guide) - For electricity and building systems
 - [Mechanics Guide](/player-tutorials/mechanics-guide) - For power ranking bonuses
-- [Military Tutorial](/player-tutorials/military-tutorial) - For how satellite bonuses affect combat

@@ -387,7 +387,7 @@ four_random_industrial_complex = yes
 
 ### Building Costs (State-Level)
 
-The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot.
+The cost implies the INCLUSION of a building slot.
 
 | Building                            | Cost   |
 | ----------------------------------- | ------ |

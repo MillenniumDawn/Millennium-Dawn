@@ -464,7 +464,7 @@ Currency strength has a separate, additive effect on inflation costs. When your 
 Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.05
 ```
 
-This is added on top of the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds roughly 5% additional inflation pressure. A currency at 1.0 or above adds nothing.
+This is added to the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds roughly 5% additional inflation pressure. A currency at 1.0 or above adds nothing.
 
 This means inflation has two independent sources: the quarterly macroeconomic calculation and the currency channel. You can have low base inflation but still suffer high effective inflation if your currency has collapsed.
 
@@ -927,7 +927,7 @@ Microchip and composite plants require input resources to operate. If you run sh
 - Rubber shortages are weighted 1.5x heavier than Precious Metals shortages
 - All three inputs must be available for full production
 
-**Energy shortages** also reduce microchip and composite production. If your country has an electricity deficit, plant output is further penalized on top of any input resource shortages. Production line technology research reduces the energy demand of both plant types.
+**Energy shortages** also reduce microchip and composite production. If your country has an electricity deficit, plant output is further penalized in addition to any input resource shortages. Production line technology research reduces the energy demand of both plant types.
 
 Securing a stable supply of input resources -- through domestic mining, trade agreements, or synthetic refineries (for Rubber) -- is essential before investing heavily in advanced plants.
 

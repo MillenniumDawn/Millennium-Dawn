@@ -154,7 +154,7 @@ URA_world_opr = {
     }
 
     ai_will_do = {
-        factor = 10
+        base = 10
     }
 }
 ```

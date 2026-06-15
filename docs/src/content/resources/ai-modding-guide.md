@@ -316,5 +316,3 @@ Run `/validate` or `pre-commit run --files <path>` to catch these automatically.
 - [Claude Code Skills](/dev-resources/claude-code-skills/) — Full skill reference
 - [Code Stylization Guide](/dev-resources/code-stylization-guide/) — Formatting and code structure
 - [Content Review Guide](/dev-resources/content-review-guide/) — Quality checklist
-- [Ollama Documentation](https://github.com/ollama/ollama)
-- [HOI4 Modding Wiki](https://hoi4.paradoxwikis.com/Modding)
