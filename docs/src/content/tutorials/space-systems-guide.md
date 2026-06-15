@@ -180,7 +180,7 @@ Reusable technology is critical for making late-game space programs economically
 
 ## Satellite Constellations and Coverage
 
-Satellites are not useful individually. They must be deployed in **constellations** — groups of satellites working together to provide coverage. Each satellite type (GNSS, COMSAT, SPYSAT) operates as both a **military** and **civilian** system, each tracked separately.
+Satellites are not useful individually. They must be deployed in **constellations**: groups of satellites working together to provide coverage. Each satellite type (GNSS, COMSAT, SPYSAT) operates as both a **military** and **civilian** system, each tracked separately.
 
 ### How Coverage Works
 

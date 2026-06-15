@@ -631,11 +631,11 @@ modify_cartel_variables_effect = yes
 
 Adding a new party requires edits to four files. Follow the steps below in order.
 
-### Step 1 — Choose a Slot
+### Step 1: Choose a Slot
 
 Consult the [Subideology Slots table](#subideology-slots) below to pick the subideology key and its index for the ideology group your party belongs to. Note both — you will need the key for localisation and the index for the history file.
 
-### Step 2 — Add Localisation
+### Step 2: Add Localisation
 
 In `localisation/english/MD_subideology_parties_l_english.yml`, add three entries for the party using the format below:
 
@@ -653,7 +653,7 @@ TAG.subideology_icon_alt: "£TAG_icon_name_alt"
 TAG.subideology_desc_alt: "(Dominant Ideology) - Alternate Party Name (Native name, ABBRV)\n\nDescription"
 ```
 
-### Step 3 — Register the Icon
+### Step 3: Register the Icon
 
 **a) Add the GFX entry** to `interface/MD_parties_icons.gfx`, keeping entries sorted alphabetically by tag:
 
@@ -669,7 +669,7 @@ The `name` value must match the icon referenced in localisation (without the `£
 
 **b) Place the DDS file** at `gfx/texticons/parties_icons/{country_name_lowercase}/TAG_icon_name.dds`. Party icon DDS files are typically 20×20 px text icons.
 
-### Step 4 — Set Starting Popularity
+### Step 4: Set Starting Popularity
 
 In `history/countries/TAG - Country.txt`, set the party's starting popularity using its slot index. A comment with the party abbreviation is required:
 
@@ -692,7 +692,7 @@ For countries with elections, set the most recent election results separately:
 set_variable = { party_pop_elect_array^N = 0.15 } # Party Abbreviation - election result
 ```
 
-### Step 5 — Add Leaders (Optional)
+### Step 5: Add Leaders (Optional)
 
 If the country has scripted leader rotation, add the leader's `create_country_leader` block inside the appropriate `if = { limit = { has_country_flag = set_subideology } }` block in `common/scripted_effects/TAG_political_leaders.txt`. Create the file if it doesn't yet exist for this tag.
 

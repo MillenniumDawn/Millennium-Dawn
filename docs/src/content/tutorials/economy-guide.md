@@ -116,7 +116,7 @@ To view a country's economic information, click the graph icon in the bottom rig
 
 | Effect                         | How It Scales                                                                      |
 | ------------------------------ | ---------------------------------------------------------------------------------- |
-| Construction Speed             | Penalty increases with wealth — rich nations build slower                          |
+| Construction Speed             | Penalty increases with wealth, rich nations build slower                           |
 | Population Growth              | Bonus for poor nations, penalty for wealthy nations (break-even around $60k GDP/C) |
 | Research Speed                 | Bonus increases with wealth (kicks in above ~$51k GDP/C)                           |
 | Stability                      | Small bonus that increases with wealth (kicks in above ~$100k GDP/C)               |
@@ -837,7 +837,7 @@ Agriculture districts also interact with the Farmers internal faction — their 
 
 ### Energy Infrastructure
 
-Energy Infrastructure is a **keystone building** — each state can have at most one, and it competes with Industrial Infrastructure for the same keystone slot. It boosts energy-related construction and provides additional building slots.
+Energy Infrastructure is a **keystone building**: each state can have at most one, and it competes with Industrial Infrastructure for the same keystone slot. It boosts energy-related construction and provides additional building slots.
 
 | Property               | Value                                                                                                                    |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |

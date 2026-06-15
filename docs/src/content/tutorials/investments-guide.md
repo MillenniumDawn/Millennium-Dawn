@@ -239,7 +239,7 @@ Once a target country is selected, the AI evaluates every building type against 
 | Air Base             | Military ideas                               |
 | Renewable Energy     | Fuel silo technology                         |
 | Nuclear Reactor      | Nuclear reactor technology                   |
-| Agriculture District | **Never scored — AI does not build these**   |
+| Agriculture District | **Never scored, AI does not build these**    |
 
 **Building scoring summary:**
 
@@ -307,17 +307,17 @@ The scoring tables above show what drives AI country selection. In practice, the
 
 - **Faction membership and trade agreements** are the easiest consistent boosts — the major investing nations favour their bloc members and trading partners
 - **A Mutual Investment Treaty** is one of the highest-value diplomatic deals for investment attraction — it improves your country-selection score and reduces both cost and duration on incoming projects
-- **Keep corruption low and corporate tax below 30%** — both drag your score down; corruption is especially punishing at higher levels
-- **Use Encourage Investments on states you want developed** — it raises the per-state building score and speeds up incoming projects by 15%
-- **Keep interest rates below 10%** — above this, the target hard-blocks acceptance regardless of how attractive your country otherwise appears
+- **Keep corruption low and corporate tax below 30%**: both drag your score down; corruption is especially punishing at higher levels
+- **Use Encourage Investments on states you want developed**: it raises the per-state building score and speeds up incoming projects by 15%
+- **Keep interest rates below 10%**: above this, the target hard-blocks acceptance regardless of how attractive your country otherwise appears
 
 ### Deterring Unwanted Investment
 
 If a rival is accumulating influence through investments:
 
-- **Decline their offers** — each rejection locks them out temporarily and repeated declines make them deprioritize your country over time
-- **Use national decisions or focuses that auto-reject all incoming offers** — some countries have access to a blanket block
-- **Raise corporate tax above 30%** — reduces your score in AI country selection, though at the cost of your own productivity
+- **Decline their offers**: each rejection locks them out temporarily and repeated declines make them deprioritize your country over time
+- **Use national decisions or focuses that auto-reject all incoming offers**: some countries have access to a blanket block
+- **Raise corporate tax above 30%**: reduces your score in AI country selection, though at the cost of your own productivity
 
 ---
 
@@ -337,6 +337,6 @@ If a rival is accumulating influence through investments:
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide) — Full breakdown of income, expenses, debt, and the currency system
-- [Influence Guide](/player-tutorials/influence-guide) — How influence interacts with investments and diplomatic leverage
-- [International Systems Guide](/player-tutorials/international-systems) — PMCs, sanctions, and other cross-border mechanics
+- [Economy Guide](/player-tutorials/economy-guide), Full breakdown of income, expenses, debt, and the currency system
+- [Influence Guide](/player-tutorials/influence-guide), How influence interacts with investments and diplomatic leverage
+- [International Systems Guide](/player-tutorials/international-systems), PMCs, sanctions, and other cross-border mechanics

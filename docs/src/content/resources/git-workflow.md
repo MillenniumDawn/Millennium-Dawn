@@ -15,7 +15,7 @@ This guide covers the Git workflow used by the Millennium Dawn team. It replaces
 | --------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Repository (repo)** | The project's codebase on GitHub, including full history of every change                                     |
 | **Branch**            | An independent workspace for your changes. Each branch is a snapshot you can modify without affecting others |
-| **Commit**            | A saved snapshot of your changes. Think of it as a checkpoint — you can always roll back to any commit       |
+| **Commit**            | A saved snapshot of your changes. Think of it as a checkpoint, you can always roll back to any commit        |
 | **Push**              | Upload your local commits to GitHub so others can see them                                                   |
 | **Pull**              | Download commits from GitHub that you don't have locally                                                     |
 | **Merge**             | Combine changes from two branches. Git handles this automatically unless two people edited the same lines    |
@@ -195,7 +195,7 @@ changes from the branch being merged in (e.g., main)
 4. Save the file.
 5. In your Git GUI, mark the conflict as resolved and commit.
 
-> **Check carefully** — a file can have multiple conflicts. Search for `<<<<<<<` to find them all.
+> **Check carefully**: a file can have multiple conflicts. Search for `<<<<<<<` to find them all.
 
 ---
 
@@ -225,8 +225,8 @@ When your work is ready for review, open a pull request (PR) to merge your branc
 
 1. **CI validation** runs automatically — checks for style issues, encoding problems, common mistakes.
    - If CI fails, check the logs, fix the issues, commit, and push. CI re-runs automatically.
-2. **Team leader review** — a team leader reviews your code and either approves or requests changes.
-3. **Merge** — once approved and CI passes, your branch is merged into `main`.
+2. **Team leader review**: a team leader reviews your code and either approves or requests changes.
+3. **Merge**: once approved and CI passes, your branch is merged into `main`.
 
 ## PR Best Practices
 
@@ -277,7 +277,7 @@ Both work. GitHub Desktop is simpler and free. GitKraken has more features (comm
 
 # Related Resources
 
-- [Developer Setup](/dev-resources/developer-setup/) — Environment setup, tools, pre-commit hooks
-- [Contributing Guide](/dev-resources/contributing/) — What we accept, fork workflow, AI policy
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/) — Formatting and code structure
+- [Developer Setup](/dev-resources/developer-setup/), Environment setup, tools, pre-commit hooks
+- [Contributing Guide](/dev-resources/contributing/), What we accept, fork workflow, AI policy
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/), Formatting and code structure
 - [GitHub Repository](https://github.com/MillenniumDawn/Millennium-Dawn)

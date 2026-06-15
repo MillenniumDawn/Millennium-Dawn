@@ -280,7 +280,7 @@ If `pid` is a sea province (compare to `map/definition.csv` where the fifth colu
 
 No error log entry, but the landmark icon appears in the state buildings panel and no 3D model is drawn on the map. Walk through this checklist:
 
-1. `grep "^<state_id>;landmark_spawn" map/buildings.txt` — does a spawn line exist for the state at all? Map reworks have silently deleted spawn lines (commits `89ccbf62cc` and `4da960e3c8`); restore the deleted entry. Use `git log -S "<state_id>;landmark_spawn" -- map/buildings.txt` to confirm.
+1. `grep "^<state_id>;landmark_spawn" map/buildings.txt`: does a spawn line exist for the state at all? Map reworks have silently deleted spawn lines (commits `89ccbf62cc` and `4da960e3c8`); restore the deleted entry. Use `git log -S "<state_id>;landmark_spawn" -- map/buildings.txt` to confirm.
 2. Confirm the spawn's `(x, z)` falls in the same province the state file places the landmark in (see the bitmap snippet above).
 3. Check whether the placement province block in the state file shares with another building, particularly `naval_base = N`. Co-occupancy with naval_base blocks landmark rendering — split into separate province blocks.
 4. Confirm the player has the DLC declared in the building's `dlc_allowed`.

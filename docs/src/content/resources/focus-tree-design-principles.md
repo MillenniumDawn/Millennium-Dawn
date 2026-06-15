@@ -5,10 +5,10 @@ description: Design philosophy and guidelines for creating engaging, balanced fo
 
 This guide covers the design philosophy behind Millennium Dawn focus trees — how to think about structure, pacing, and player choice. For related resources, see:
 
-- [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/) — step-by-step development process
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/) — formatting and code structure
-- [Content Review Guide](/dev-resources/content-review-guide/) — review criteria and quality checklist
-- [Code Resource](/dev-resources/code-resource/) — effect costs and custom modifiers
+- [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/), step-by-step development process
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/), formatting and code structure
+- [Content Review Guide](/dev-resources/content-review-guide/), review criteria and quality checklist
+- [Code Resource](/dev-resources/code-resource/), effect costs and custom modifiers
 
 ---
 
@@ -54,7 +54,7 @@ This guide covers the design philosophy behind Millennium Dawn focus trees — h
 
 ## Cross-Nation Effects
 
-Effects that target another nation should come through an event that gives the target player a choice. Do not force outcomes on other nations without their input. See the [Content Review Guide — Political Guidelines](/dev-resources/content-review-guide/#political-guidelines) for details.
+Effects that target another nation should come through an event that gives the target player a choice. Do not force outcomes on other nations without their input. See the [Content Review Guide, Political Guidelines](/dev-resources/content-review-guide/#political-guidelines) for details.
 
 ---
 

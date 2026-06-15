@@ -77,8 +77,8 @@ The **European Federation** can be formed by EU member states through the Event 
 
 The **United Arab Republic** can be proclaimed by any sufficiently powerful Arab nation with an autocratic or nationalist government. It comes in two variants:
 
-- **Neo-Baathist UAR** — requires an emerging autocracy ideology
-- **Baathist UAR** — requires a nationalist ideology
+- **Neo-Baathist UAR**: requires an emerging autocracy ideology
+- **Baathist UAR**: requires a nationalist ideology
 
 The forming nation must hold at least regional power status. Other Arab nations can then be invited to join or may leave the union over time. If too many members leave, the UAR collapses.
 

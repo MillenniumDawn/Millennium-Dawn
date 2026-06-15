@@ -605,7 +605,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Iranian Quds Force
 
-**Available for**: Iranian proxies — Iraq, Hamas, Hezbollah, Syria, Houthis, Yemen, Kurdistan, Lebanon, Afghanistan, Taliban, Tajikistan, and Gulf states
+**Available for**: Iranian proxies, Iraq, Hamas, Hezbollah, Syria, Houthis, Yemen, Kurdistan, Lebanon, Afghanistan, Taliban, Tajikistan, and Gulf states
 
 **Availability**: Requires Communism, Neutrality, or Nationalist government
 
@@ -727,16 +727,16 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 | ------------------------------ | ---------------- | ------------------------------------ | -------------------------------------- |
 | Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax  | Not WAG, KOR, NKO                      |
 | International Bankers          | Economic         | -1 interest rate, +20% trade op.     | Not USA                                |
-| Fossil Fuel Industry           | Economic         | +25% fuel gain                       | —                                      |
+| Fossil Fuel Industry           | Economic         | +25% fuel gain                       | ,                                      |
 | Industrial Conglomerates       | Economic         | +15% infra construction              | Not oligarch/post-Soviet states        |
 | Oligarchs                      | Economic         | +20% local resources                 | Oligarch/post-Soviet states only       |
 | Maritime Industry              | Militaristic     | +20% dockyard speed and capacity     | Requires coastal state                 |
-| Defense Industry               | Militaristic     | +15% mil factory productivity        | —                                      |
+| Defense Industry               | Militaristic     | +15% mil factory productivity        | ,                                      |
 | The Military                   | Militaristic     | +10% army morale, -25% pers. cost    | Requires military idea                 |
 | Intelligence Community         | Militaristic     | +15% intel factors, +20% crypto      | Not Pakistan                           |
 | Labour Unions                  | Special Interest | +25% political power                 | Not Nationalist or Fascist governments |
-| Landowners                     | Special Interest | +15% local resources                 | —                                      |
-| Farmers                        | Special Interest | +20% population growth               | —                                      |
+| Landowners                     | Special Interest | +15% local resources                 | ,                                      |
+| Farmers                        | Special Interest | +20% population growth               | ,                                      |
 | Communist Cadres               | Special Interest | +25% mobilization speed              | Communist governments only             |
 | The Priesthood                 | Religious        | +30% political power, +25% pop.      | Buddhism, Hinduism, Shinto, Cheondoism |
 | The Ulema                      | Religious        | +30% political power, +25% pop.      | Sunni, Ibadi, Sufi, Shia Islam         |

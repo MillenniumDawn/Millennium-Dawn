@@ -255,7 +255,7 @@ The XZ falls on a sea-province pixel. Floating harbor coordinates are not valid 
 The most common silent failure. Walk through this checklist:
 
 1. Does `map/buildings.txt` have a `landmark_spawn` line for the right state ID? If not, that's the bug.
-2. Run `prov_at(x, z)` — does it return the province ID where the state file places the landmark? If not, the spawn is in the wrong province.
+2. Run `prov_at(x, z)`: does it return the province ID where the state file places the landmark? If not, the spawn is in the wrong province.
 3. Does the province block in the state file contain only the landmark? If it also has `naval_base = N`, the naval base will block landmark rendering.
 4. Does the player have the DLC named in `dlc_allowed`? Check `~/.local/share/Steam/steamapps/common/Hearts of Iron IV/dlc/`.
 5. Do the entity and mesh definitions exist in MD's `landmarks.asset` / `landmarks.gfx`? MD's files file-override vanilla — vanilla entity/mesh definitions for new landmarks must be copied into MD.
@@ -281,6 +281,6 @@ If history shows the line existed and was removed, restore it (the old XZ may st
 
 ## See Also
 
-- [GFX Entity & Asset Errors](/dev-resources/gfx-entity-errors/) — for the general `pdx_entity.cpp` and `assetfactory.cpp` error patterns
-- [Art Standards](/dev-resources/art-standards/) — DDS format specifications for the mesh textures
-- [Terrain Photo System](/dev-resources/terrain-photo-guide/) — a similar multi-file system pattern for state-level art
+- [GFX Entity & Asset Errors](/dev-resources/gfx-entity-errors/), for the general `pdx_entity.cpp` and `assetfactory.cpp` error patterns
+- [Art Standards](/dev-resources/art-standards/), DDS format specifications for the mesh textures
+- [Terrain Photo System](/dev-resources/terrain-photo-guide/), a similar multi-file system pattern for state-level art
