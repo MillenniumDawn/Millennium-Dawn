@@ -1,5 +1,7 @@
 # Contributing to Millennium Dawn Docs (Astro)
 
+> **Looking to contribute to the mod itself?** See the root [CONTRIBUTING.md](../CONTRIBUTING.md) for focus trees, events, AI policy, fork workflow, and everything else. This file covers only the documentation site (under `docs/`).
+
 ## Prerequisites
 
 - Node.js 24 LTS or newer ([nodejs.org](https://nodejs.org/))
@@ -57,7 +59,7 @@ Each published page must have **exactly one** `<h1>`. The layout supplies it for
 
 ## Important Rules
 
-- If you change any Markdown under `src/content/**/*.md`, run **`bun run lint:md`** (and preferably **`bun run lint:remark`**) **before you commit**. The same checks run in CI; fixing MD/style issues locally avoids broken builds and noisy follow-up commits.
+- If you change any Markdown under `src/content/**/*.md`, run **`bun run lint:md`** **before you commit**. The same checks run in CI; fixing MD/style issues locally avoids broken builds and noisy follow-up commits.
 - Use only Markdown + frontmatter.
 - Do not use Liquid (`{% ... %}` / `{{ ... }}`).
 - Use root-relative paths for internal links. Folder names are **not** always the URL:
@@ -183,7 +185,6 @@ Use `.mdx` under `src/content/devDiaries/` when the page has images. MDX routes 
 
 ```bash
 bun run lint:md
-bun run lint:remark
 bun run check:content-html
 bun run check:flags
 bun run check

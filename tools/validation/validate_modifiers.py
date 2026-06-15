@@ -376,6 +376,79 @@ def _is_parametric_modifier(name: str) -> bool:
     return any(pattern.match(name) for pattern in _PARAMETRIC_MODIFIER_PATTERNS)
 
 
+# Vanilla modifier reference doc. Each `## name` section is a concrete modifier;
+# each `## <span id="...">` section is a parametric family whose concrete
+# members are listed on a `**Modified types**:` line. The span anchor encodes
+# the placeholder position as `-word-`, so the template is recoverable.
+_DOC_REL_PATH = os.path.join("resources", "documentation", "modifiers_documentation.md")
+_DOC_CONCRETE_RE = re.compile(r"^## ([a-z][a-z0-9_]*)\s*$", re.MULTILINE)
+_DOC_MODIFIED_TYPES_RE = re.compile(r"\*\*Modified types\*\*:\s*(.+)")
+
+
+def _load_documented_modifiers(doc_path: str) -> Set[str]:
+    """Build a known-good set from the vanilla modifier documentation.
+
+    Adds every concrete `## name` header, then expands each parametric family
+    (`## <span id="-building-_max_level_terrain_limit">…`) against its
+    documented **Modified types** list. Expansion is exact — only entities the
+    doc actually lists pass — so it never whitelists a typo the way a broad
+    `<anything>_factor` regex would. Returns an empty set if the doc is missing.
+    """
+    try:
+        with open(doc_path, encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError:
+        return set()
+
+    names: Set[str] = set(_DOC_CONCRETE_RE.findall(text))
+
+    for section in re.split(r"^## ", text, flags=re.MULTILINE):
+        m = re.match(r'<span id="([^"]+)">', section)
+        if not m:
+            continue
+        template = re.sub(r"-[a-z0-9]+-", "{}", m.group(1))
+        if "{}" not in template:
+            continue
+        types_line = _DOC_MODIFIED_TYPES_RE.search(section)
+        if not types_line:
+            continue
+        for entity in types_line.group(1).split(","):
+            entity = entity.strip()
+            if not _MODIFIER_NAME_RE.match(entity):
+                continue
+            try:
+                concrete = template.format(entity)
+            except (IndexError, KeyError):
+                continue
+            if _MODIFIER_NAME_RE.match(concrete):
+                names.add(concrete)
+    return names
+
+
+_IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
+
+
+def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
+    """Every idea slot auto-generates a `<slot>_cost_factor` modifier.
+
+    These are valid but live only in idea/decision files and rarely clear the
+    frequency threshold, so harvest the slot names from common/idea_tags and
+    register the generated modifier directly. Case is preserved to match usage.
+    """
+    names: Set[str] = set()
+    for filepath in idea_tags_files:
+        try:
+            with open(filepath, encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except OSError:
+            continue
+        for line in content.splitlines():
+            m = _IDEA_SLOT_RE.match(line)
+            if m:
+                names.add(f"{m.group(1)}_cost_factor")
+    return names
+
+
 def _check_file_for_unknown_modifiers(
     args: Tuple[str, FrozenSet[str], str],
 ) -> List[Tuple[str, str, int]]:
@@ -521,9 +594,29 @@ class Validator(BaseValidator):
                 if key not in _NON_MODIFIER_KEYS and _MODIFIER_NAME_RE.match(key):
                     known_good.add(key)
 
+        # Authoritative vanilla reference — concrete modifiers plus parametric
+        # families expanded against their documented Modified types.
+        doc_path = os.path.join(self.mod_path, _DOC_REL_PATH)
+        documented = _load_documented_modifiers(doc_path)
+        if not documented:
+            self.log(
+                f"  WARNING: {_DOC_REL_PATH} missing or empty — known-good set is "
+                "missing ~4000 vanilla modifiers, expect false positives. Ensure "
+                "resources/documentation is checked out (CI sparse-checkout)."
+            )
+        known_good |= documented
+
+        # Engine-generated <slot>_cost_factor modifiers from every idea slot.
+        idea_tag_files = self._collect_files(
+            ["common/idea_tags/**/*.txt"], ignore_staged=True
+        )
+        slot_factors = _harvest_idea_slot_cost_factors(idea_tag_files)
+        known_good |= slot_factors
+
         self.log(
             f"  Known-good modifier set: {len(known_good)} names "
-            f"(from {len(freq)} total harvested, threshold={_FREQUENCY_THRESHOLD})"
+            f"(from {len(freq)} harvested, {len(documented)} documented, "
+            f"{len(slot_factors)} slot cost factors, threshold={_FREQUENCY_THRESHOLD})"
         )
         return frozenset(known_good)
 

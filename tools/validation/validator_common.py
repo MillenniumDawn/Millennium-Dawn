@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Shared validation infrastructure: common classes, helpers, and the base validator."""
+
 import glob
 import json
 import logging
@@ -38,6 +39,15 @@ from shared_utils import (
 _META_TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
 )
+
+_ANSI_RE = re.compile(r"\033\[[0-9;]+m")
+
+
+def _label_from_failmsg(fail_msg: str) -> str:
+    """Derive an issue group label from a _report fail message. Strips color
+    codes and a trailing colon so 'Undefined idea references:' groups cleanly."""
+    label = _ANSI_RE.sub("", fail_msg or "").strip().rstrip(":").strip()
+    return label or "OTHER"
 
 
 # Loc keys that live in vanilla HOI4 (not the mod's localisation/ tree) and are
@@ -281,9 +291,6 @@ class Issue:
             "line": self.line,
         }
 
-    def to_key(self) -> tuple:
-        return (self.file, self.line, self.severity, self.category)
-
 
 HOI4_BUILTIN_BLOCKS = frozenset(
     {
@@ -415,6 +422,7 @@ class BaseValidator:
         self._section_start: Optional[float] = None
         self._section_title: str = ""
         self._show_timing = timing_enabled()
+        self._timing_printed = False
 
         if staged_only:
             self.staged_files = (
@@ -477,15 +485,24 @@ class BaseValidator:
 
     def log(self, message: str, level: str = "info"):
         # Respect MD_LOG_LEVEL — skip messages below the configured threshold.
-        if level == "info" and _LOG_LEVEL != "INFO":
+        # level="always" bypasses the filter (used for section headers and
+        # the positive "all clear" messages that must be visible regardless
+        # of verbosity).
+        if level == "always":
+            pass
+        elif level == "info" and _LOG_LEVEL != "INFO":
             return
-        if level == "warning" and _LOG_LEVEL == "ERROR":
+        elif level == "warning" and _LOG_LEVEL == "ERROR":
             return
 
         display_msg = (
             message if self.use_colors else re.sub(r"\033\[[0-9;]+m", "", message)
         )
-        if level == "info":
+        if level == "always":
+            # Bypass the logging threshold entirely; the root logger defaults to
+            # WARNING, so logging.info would drop these. Same stream as logging.
+            print(display_msg, file=sys.stderr)
+        elif level == "info":
             logging.info(display_msg)
         elif level == "warning":
             logging.warning(display_msg)
@@ -505,20 +522,71 @@ class BaseValidator:
             self._section_timings.append((self._section_title, elapsed))
         self._section_title = title
         self._section_start = time.perf_counter()
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}{title}{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        # The 3-line banner per section drowned out the actual findings. Section
+        # progress is only useful when profiling, so show a one-line marker then.
+        if self._show_timing:
+            self.log(
+                f"{Colors.CYAN if self.use_colors else ''}── {title}{Colors.ENDC if self.use_colors else ''}",
+                "always",
+            )
 
     def _finish_sections(self):
-        """Close the last section timer and print a timing summary."""
+        """Close the last section timer and print a timing summary (once)."""
         if self._section_start is not None:
             elapsed = time.perf_counter() - self._section_start
             self._section_timings.append((self._section_title, elapsed))
             self._section_start = None
-        if self._show_timing and self._section_timings:
+        if self._show_timing and self._section_timings and not self._timing_printed:
             print_timing_summary(self._section_timings)
+            self._timing_printed = True
+
+    # Console cap per category — keeps one runaway check (e.g. a 1k+ backlog
+    # audit) from drowning the rest of the output. The JSON sidecar always
+    # carries the full list.
+    MAX_RENDERED_PER_CATEGORY = 50
+
+    def _render_issues(self):
+        """Render every collected issue once, grouped by category (errors first,
+        then warnings), each category sorted by file then line. Findings reach the
+        console and the -o output file through self.log."""
+        if not self._issues:
+            return
+        for severity, sev_color, noun in (
+            (Severity.ERROR, Colors.RED, "error"),
+            (Severity.WARNING, Colors.YELLOW, "warning"),
+        ):
+            by_cat: Dict[str, List[Issue]] = {}
+            for issue in self._issues:
+                if issue.severity != severity:
+                    continue
+                by_cat.setdefault(issue.category or "OTHER", []).append(issue)
+            if not by_cat:
+                continue
+            # Largest categories first, ties broken alphabetically.
+            for cat in sorted(by_cat, key=lambda c: (-len(by_cat[c]), c)):
+                items = sorted(by_cat[cat], key=lambda i: (i.file or "", i.line))
+                n = len(items)
+                head = f"{cat}  ({n} {noun}{'s' if n != 1 else ''})"
+                c0 = sev_color if self.use_colors else ""
+                c1 = Colors.ENDC if self.use_colors else ""
+                self.log(f"\n{c0}{head}{c1}", "always")
+                shown = items[: self.MAX_RENDERED_PER_CATEGORY]
+                for issue in shown:
+                    # "  file:line - message" matches report_lib's text-fallback
+                    # parser (loader._LOG_ISSUE_RE) so non-JSON runs still parse.
+                    if issue.file and issue.line > 0:
+                        self.log(
+                            f"  {issue.file}:{issue.line} - {issue.message}", "always"
+                        )
+                    elif issue.file:
+                        self.log(f"  {issue.file} - {issue.message}", "always")
+                    else:
+                        self.log(f"  {issue.message}", "always")
+                if n > len(shown):
+                    self.log(
+                        f"  ... and {n - len(shown)} more (full list in the JSON sidecar)",
+                        "always",
+                    )
 
     def save_output(self):
         if self.output_file and self.output_lines:
@@ -572,16 +640,17 @@ class BaseValidator:
     #   - "file.ext, line 42, something"              (localisation comma form)
     #   - "id - path/to/file.ext - description"       (two-segment dash form,
     #                                                  captures file only)
+    # File-name groups allow spaces (e.g. "common/decisions/Hong Kong.txt") and
+    # rely on the surrounding anchor (":line", " - line", ", line", " - ") to
+    # bound the path rather than a no-whitespace class.
     _LOC_PATTERNS = (
+        re.compile(r"^(?P<file>[^:\n]+?\.\w+):(?P<line>\d+)\s*[-:]\s*(?P<msg>.+)$"),
         re.compile(
-            r"^(?P<file>[^\s:][^:\s]*?\.\w+):(?P<line>\d+)\s*[-:]\s*(?P<msg>.+)$"
+            r"^(?P<file>[^\n]+?\.\w+)\s*-\s*line\s*(?P<line>\d+)\s*-\s*(?P<msg>.+)$"
         ),
+        re.compile(r"^(?P<file>[^,\n]+?\.\w+),\s*line\s*(?P<line>\d+),\s*(?P<msg>.+)$"),
         re.compile(
-            r"^(?P<file>[^\s,]+?\.\w+)\s*-\s*line\s*(?P<line>\d+)\s*-\s*(?P<msg>.+)$"
-        ),
-        re.compile(r"^(?P<file>[^\s,]+?\.\w+),\s*line\s*(?P<line>\d+),\s*(?P<msg>.+)$"),
-        re.compile(
-            r"^(?P<prefix>[^\s].*?)\s*-\s*(?P<file>[^\s]+?\.\w+)\s*-\s*(?P<msg>.+)$"
+            r"^(?P<prefix>[^\s].*?)\s*-\s*(?P<file>[^\n]+?\.\w+)\s*-\s*(?P<msg>.+)$"
         ),
     )
 
@@ -613,79 +682,62 @@ class BaseValidator:
         severity: str = Severity.ERROR,
         category: str = "",
     ):
-        """Report results from str / (message, file, line) / Issue entries.
+        """Record results from str / (message, file, line) / Issue entries.
 
         Single source of truth for counting and recording issues — do NOT call
-        add_error/add_warning separately for results passed here.
+        add_error/add_warning separately for results passed here. Display is
+        deferred: every finding is rendered once, grouped, by ``_render_issues``
+        at the end of the run. When a result carries no category, the (cleaned)
+        ``fail_msg`` becomes its group label so these issues still group sensibly.
+        ``ok_msg`` only shows at MD_LOG_LEVEL=INFO — per-check all-clear lines
+        are progress noise at the default verbosity.
         """
-        color = Colors.RED if severity == Severity.ERROR else Colors.YELLOW
-
-        if len(results) > 0:
-            self.log(
-                f"{color if self.use_colors else ''}{fail_msg}{Colors.ENDC if self.use_colors else ''}",
-                "error" if severity == Severity.ERROR else "warning",
-            )
-            for r in results:
-                # Normalize into (display_text, Issue) so logging and storage
-                # stay in sync regardless of which input shape was passed.
-                if isinstance(r, Issue):
-                    issue = r
-                    if issue.file and issue.line > 0:
-                        display_text = f"{issue.file}:{issue.line} - {issue.message}"
-                    else:
-                        display_text = issue.message
-                elif isinstance(r, tuple):
-                    # (message, file, line)
-                    msg_t = str(r[0]) if len(r) > 0 else ""
-                    file_t = str(r[1]) if len(r) > 1 else ""
-                    line_t = int(r[2]) if len(r) > 2 and r[2] else 0
-                    issue = Issue(
-                        severity=severity,
-                        category=category or "",
-                        message=msg_t,
-                        file=file_t,
-                        line=line_t,
-                    )
-                    display_text = (
-                        f"{file_t}:{line_t} - {msg_t}" if file_t and line_t else msg_t
-                    )
-                else:
-                    text = str(r)
-                    msg_p, file_p, line_p = self._parse_result_location(text)
-                    issue = Issue(
-                        severity=severity,
-                        category=category or "",
-                        message=msg_p,
-                        file=file_p,
-                        line=line_p,
-                    )
-                    display_text = text  # preserve original formatting in the log
-
-                # Count by the issue's own severity so a pre-built WARNING Issue
-                # passed via a severity=ERROR call doesn't corrupt the counters.
-                actual_severity = issue.severity if isinstance(r, Issue) else severity
-                self.log(
-                    f"  {color if self.use_colors else ''}{display_text}{Colors.ENDC if self.use_colors else ''}",
-                    "error" if actual_severity == Severity.ERROR else "warning",
-                )
-                # Always record the issue so the JSON sidecar (and the CI
-                # report built from it) reflects every finding. Previously this
-                # was gated on `category`, so any _report call without a
-                # category bumped errors_found (failing the build) while
-                # contributing nothing to the report — findings vanished.
-                self._issues.append(issue)
-                if actual_severity == Severity.ERROR:
-                    self.errors_found += 1
-                else:
-                    self.warnings_found += 1
-            self.log(
-                f"{color if self.use_colors else ''}{len(results)} issue(s) found{Colors.ENDC if self.use_colors else ''}",
-                "error" if severity == Severity.ERROR else "warning",
-            )
-        else:
+        if not results:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
             )
+            return
+        group_label = category or _label_from_failmsg(fail_msg)
+        for r in results:
+            if isinstance(r, Issue):
+                issue = r
+                if not issue.category:
+                    issue.category = group_label
+                actual_severity = issue.severity
+            elif isinstance(r, tuple):
+                # (message, file, line)
+                msg_t = str(r[0]) if len(r) > 0 else ""
+                file_t = str(r[1]) if len(r) > 1 else ""
+                line_t = int(r[2]) if len(r) > 2 and r[2] else 0
+                issue = Issue(
+                    severity=severity,
+                    category=group_label,
+                    message=msg_t,
+                    file=file_t,
+                    line=line_t,
+                )
+                actual_severity = severity
+            else:
+                text = str(r)
+                msg_p, file_p, line_p = self._parse_result_location(text)
+                issue = Issue(
+                    severity=severity,
+                    category=group_label,
+                    message=msg_p,
+                    file=file_p,
+                    line=line_p,
+                )
+                actual_severity = severity
+
+            # Always record the issue so the JSON sidecar (and the CI report
+            # built from it) reflects every finding. Count by the issue's own
+            # severity so a pre-built WARNING Issue passed via a severity=ERROR
+            # call doesn't corrupt the counters.
+            self._issues.append(issue)
+            if actual_severity == Severity.ERROR:
+                self.errors_found += 1
+            else:
+                self.warnings_found += 1
 
     def get_issues_json(self) -> str:
         """Get issues as JSON string."""
@@ -862,19 +914,21 @@ class BaseValidator:
         raise NotImplementedError("Subclasses must implement run_validations()")
 
     def run_all_validations(self):
-        self.log(f"\n{'#'*80}")
+        self.log(f"\n{'#'*80}", "always")
         self.log(
-            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}",
+            "always",
         )
-        self.log(f"{'#'*80}")
-        self.log(f"Mod path: {self.mod_path}")
-        self.log(f"Worker processes: {self.workers}")
+        self.log(f"{'#'*80}", "always")
+        self.log(f"Mod path: {self.mod_path}", "always")
+        self.log(f"Worker processes: {self.workers}", "always")
         if self.staged_only:
             self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
         if self.output_file:
-            self.log(f"Output file: {self.output_file}")
+            self.log(f"Output file: {self.output_file}", "always")
 
         try:
             self.run_validations()
@@ -885,22 +939,30 @@ class BaseValidator:
                 self._pool.join()
                 self._pool = None
 
-        self.log(f"\n{'#'*80}")
+        self._render_issues()
+
+        self.log(f"\n{'#'*80}", "always")
         if self.errors_found == 0 and self.warnings_found == 0:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
         else:
+            # Keep the "VALIDATION COMPLETE - N ERROR(S) - M WARNING(S)" tokens
+            # verbatim — tools/report_lib/loader.py parses them for the CI report.
             error_msg = "✗ VALIDATION COMPLETE"
             if self.errors_found > 0:
                 error_msg += f" - {self.errors_found} ERROR(S)"
             if self.warnings_found > 0:
                 error_msg += f" - {self.warnings_found} WARNING(S)"
+            n_files = len({i.file for i in self._issues if i.file})
+            if n_files:
+                error_msg += f" in {n_files} file{'s' if n_files != 1 else ''}"
             self.log(
                 f"{Colors.RED if self.use_colors else ''}{error_msg}{Colors.ENDC if self.use_colors else ''}",
-                "error",
+                "always",
             )
-        self.log(f"{'#'*80}\n")
+        self.log(f"{'#'*80}\n", "always")
 
         self.save_output()
         return self.errors_found
