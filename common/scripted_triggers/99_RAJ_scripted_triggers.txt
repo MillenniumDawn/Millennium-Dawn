@@ -1,33 +1,219 @@
-mao_pol_above_50 = {
-	custom_trigger_tooltip = {
-		tooltip = RAJ_focus_mao_pol_above_fifty_TT
-		check_variable = {
-			from.maoist_political_influence > 49
-		}
+RAJ_is_vajpayee_leader = {
+	has_country_leader = { name = "Atal Bihari Vajpayee" }
+}
+
+RAJ_is_top_influencer = {
+	influence_higher_35 = yes
+}
+
+RAJ_state_has_any_naxalite = {
+	OR = {
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
 	}
 }
-mao_str_above_50 = {
+
+# Country-scope: cheap check via the 10 state-id naxalite vars.
+# Runs in O(10) variable lookups instead of any_controlled_state × 5 modifier checks.
+RAJ_country_has_any_naxalite_states = {
+	OR = {
+		456 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		459 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		991 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		989 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		451 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		452 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		447 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		458 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		988 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+		470 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+	}
+}
+
+# Severe = display tier 1 (severe) or 2 (high), i.e. RAJ_naxalite_presence in {1,2}.
+RAJ_has_severe_naxalite_states_trigger = {
+	OR = {
+		456 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		459 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		991 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		989 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		451 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		452 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		447 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		458 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		988 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+		470 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+	}
+}
+
+BRICS_valid_invite_target = {
+	exists = yes
+	NOT = { tag = ROOT }
+	NOT = { is_in_faction_with = ROOT }
+	NOT = { has_country_flag = BRICS_full_member_status }
+	NOT = { has_country_flag = BRICS_associate_status }
+	NOT = { has_country_flag = BRICS_observer_status }
+}
+
+# Evaluate in target country scope; ROOT = BRICS leader
+BRICS_can_full_member = {
 	custom_trigger_tooltip = {
-		tooltip = RAJ_focus_mao_str_above_fifty_TT
-		check_variable = {
-			from.strength_of_maoists > 49
+		tooltip = BRICS_full_member_requirements_tt
+		influence_higher_50 = yes
+		has_opinion = { target = ROOT value > 100 }
+		OR = {
+			num_of_factories > 25
+			has_idea = economic_boom
+		}
+		NOT = { has_government = fascism }
+	}
+}
+
+# Evaluate in target country scope; ROOT = BRICS leader
+BRICS_can_associate_member = {
+	custom_trigger_tooltip = {
+		tooltip = BRICS_associate_member_requirements_tt
+		influence_higher_40 = yes
+		has_opinion = { target = ROOT value > 50 }
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+			has_government = communism
 		}
 	}
 }
 
-mao_pol_below_10 = {
+# Evaluate in target country scope; ROOT = BRICS leader
+BRICS_can_observer = {
 	custom_trigger_tooltip = {
-		tooltip = RAJ_focus_mao_pol_below_ten_TT
-		check_variable = {
-			from.maoist_political_influence < 10
+		tooltip = BRICS_observer_requirements_tt
+		influence_higher_25 = yes
+		has_opinion = { target = ROOT value > 0 }
+	}
+}
+
+RAJ_rebel_opinion_collapsed = {
+	if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 993 } }
+		check_variable = { RAJ_muslim_opinion < 5 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { RAJ_rebel_target_state = 980 }
+				check_variable = { RAJ_rebel_target_state = 477 }
+			}
+		}
+		check_variable = { RAJ_christians_opinion < 5 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 982 } }
+		check_variable = { RAJ_buddhist_opinion < 5 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 429 } }
+		check_variable = { RAJ_sikh_opinion < 5 }
+	}
+}
+
+RAJ_side_a_opinion_lower_than_b = {
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 1 } }
+		if = {
+			limit = { check_variable = { RAJ_conflict_side_b = 2 } }
+			check_variable = { RAJ_hindus_opinion < RAJ_muslim_opinion }
+		}
+		else_if = {
+			limit = { check_variable = { RAJ_conflict_side_b = 3 } }
+			check_variable = { RAJ_hindus_opinion < RAJ_christians_opinion }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 2 } }
+		if = {
+			limit = { check_variable = { RAJ_conflict_side_b = 1 } }
+			check_variable = { RAJ_muslim_opinion < RAJ_hindus_opinion }
+		}
+		else_if = {
+			limit = { check_variable = { RAJ_conflict_side_b = 3 } }
+			check_variable = { RAJ_muslim_opinion < RAJ_christians_opinion }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 3 } }
+		if = {
+			limit = { check_variable = { RAJ_conflict_side_b = 1 } }
+			check_variable = { RAJ_christians_opinion < RAJ_hindus_opinion }
+		}
+		else_if = {
+			limit = { check_variable = { RAJ_conflict_side_b = 2 } }
+			check_variable = { RAJ_christians_opinion < RAJ_muslim_opinion }
 		}
 	}
 }
-mao_str_below_10 = {
-	custom_trigger_tooltip = {
-		tooltip = RAJ_focus_mao_str_below_ten_TT
-		check_variable = {
-			from.strength_of_maoists < 10
+
+RAJ_side_b_opinion_lower_than_a = {
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 1 } }
+		if = {
+			limit = { check_variable = { RAJ_conflict_side_a = 2 } }
+			check_variable = { RAJ_hindus_opinion < RAJ_muslim_opinion }
 		}
+		else_if = {
+			limit = { check_variable = { RAJ_conflict_side_a = 3 } }
+			check_variable = { RAJ_hindus_opinion < RAJ_christians_opinion }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 2 } }
+		if = {
+			limit = { check_variable = { RAJ_conflict_side_a = 1 } }
+			check_variable = { RAJ_muslim_opinion < RAJ_hindus_opinion }
+		}
+		else_if = {
+			limit = { check_variable = { RAJ_conflict_side_a = 3 } }
+			check_variable = { RAJ_muslim_opinion < RAJ_christians_opinion }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 3 } }
+		if = {
+			limit = { check_variable = { RAJ_conflict_side_a = 1 } }
+			check_variable = { RAJ_christians_opinion < RAJ_hindus_opinion }
+		}
+		else_if = {
+			limit = { check_variable = { RAJ_conflict_side_a = 2 } }
+			check_variable = { RAJ_christians_opinion < RAJ_muslim_opinion }
+		}
+	}
+}
+
+RAJ_both_conflict_sides_below_30 = {
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 1 } }
+		check_variable = { RAJ_hindus_opinion < 30 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 2 } }
+		check_variable = { RAJ_muslim_opinion < 30 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 3 } }
+		check_variable = { RAJ_christians_opinion < 30 }
+	}
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 1 } }
+		check_variable = { RAJ_hindus_opinion < 30 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 2 } }
+		check_variable = { RAJ_muslim_opinion < 30 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 3 } }
+		check_variable = { RAJ_christians_opinion < 30 }
 	}
 }
