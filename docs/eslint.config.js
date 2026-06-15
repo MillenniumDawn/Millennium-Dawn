@@ -89,6 +89,6 @@ export default defineConfig(
 
   // ── Ignores ────────────────────────────────────────────────────
   {
-    ignores: ["dist/", "_site/", ".astro/", "node_modules/", "scripts/"],
+    ignores: ["dist/", ".astro/", "node_modules/", "scripts/"],
   },
 );
