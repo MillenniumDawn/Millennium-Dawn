@@ -141,3 +141,26 @@ Specific banned-word hits (per the user's voice rules in `AGENTS.md`):
 - `docs/src/content/countries/countries.md:51` table ↔ per-country `unique_focus_tree` frontmatter — two sources of truth for "who has a unique tree". The grid renders from per-country frontmatter; the table is a static list.
 - `docs/src/content/pages/countries.md:5` table ↔ `docs/src/pages/countries/index.astro:11-` grid cards — same point, different render path.
 - `docs/src/content/changelogSections/v1-12-0-every-tank-an-upgrade.md` ↔ `v1-12-0-every-tank-an-upgrade-hotfixes.md` — both `order: 13`, both contain overlapping v1.12.0 entries. The hotfixes page is `hidden: true` (not in the index), so the overlap is only visible via cross-links.
+
+## Completed
+
+- **F1**: changelog-guide "Event Reference" link label fixed. Commit `a5ea72179b`.
+- **F3**: Dev diary #52 moved to `docs/templates/dev-diary-template.mdx`, removed from archive. Commit `7e7a428b79`.
+- **F5**: WIP badge rendered on country grid card for 34 stubs. Commit `51f656ff63`.
+- **F6**: Em-dash lint rule added (MD9999, warning-only), 121 mechanical violations fixed. Commit `20cedb32fa`.
+- **Bug Bot ToS**: new page, footer nav, cross-links. Commit `cbdacee2d7`.
+- **`.claude/docs/`**: aligned with PRs #1876/#1878. Commit `06f19454cb`.
+- **Parked fixes**: 13 mechanical fixes (duplicate H1, factor/base, building cost, error filenames, typos, emoji shortcodes, external links, sort order, banned word, "on top of", advisor line, military stub). Commit `897ad3cf64`.
+- **Contributor docs unification**: `developer-setup.md` = main SoT, `contributing.md` = docs/bun guide, `CONTRIBUTING.md` = slim pointer. Commit `20cedb32fa`.
+- **Trailing-slash sweep**: 28 files, all internal links standardised. Commit `2b317d1ba3`.
+- **ai-modding-guide JSON collapse**: two near-identical VS Code config examples merged. Commit `2b317d1ba3`.
+- **Changelog renames**: `v1-10-0-...` → `v1-10-...`, `v1-11-0-...` → `v1-11-...`, `v1-12-0-...` → `v1-12-...`. Redirect pages for old URLs. Commit `8dae0ef95f`.
+- **Page splits**: international-systems (485 → ~300 lines, Cyberwarfare and PMCs extracted); code-resource (837 → ~344 lines, scripted-effects reference extracted). Commit `8dae0ef95f`.
+- **Unified check script**: `docs/scripts/check_docs.py` replaces sequential `ci` with parallel runner. Commit `e587a23fab`.
+
+## Remaining
+
+- **F2**: `united-states.md` — 10 wrong spirit names, needs US content maintainer.
+- **F4**: AI guard `factor = 0` vs `NOT = { ... }` convention divergence. Needs project policy call.
+- **F6 follow-up**: 90 remaining em-dash violations in tutorials/resources (running prose, needs editorial review). Warning-only, does not break build.
+- **Country em-dashes**: countries and dev-diaries are exempt from MD9999. Track separately.
