@@ -3791,36 +3791,35 @@ antarctica_recalculate_country_laboratory_effects = {
 }
 
 antarctica_update_small_treaty_status_effects = {
-	# Remove old state first, then apply treaty-count state.
 	if = {
-		limit = { has_idea = antarctica_small_treaty_admin_cost_1 }
-		remove_ideas = antarctica_small_treaty_admin_cost_1
-	}
-	if = {
-		limit = { has_idea = antarctica_small_treaty_admin_cost_2 }
-		remove_ideas = antarctica_small_treaty_admin_cost_2
-	}
-
-	if = {
-		limit = { has_idea = at_member }
-		set_temp_variable = { antarctica_signed_small_treaties = 0 }
-
+		limit = { check_variable = { antarctica_small_treaty_leave_temp < 1 } }
 		if = {
-			limit = { has_country_flag = antarctica_ccas_member }
-			add_to_temp_variable = { antarctica_signed_small_treaties = 1 }
+			limit = { has_idea = antarctica_small_treaty_admin_cost_1 }
+			swap_ideas = {
+				remove_idea = antarctica_small_treaty_admin_cost_1
+				add_idea = antarctica_small_treaty_admin_cost_2
+			}
 		}
 		if = {
-			limit = { has_country_flag = antarctica_ccamlr_member }
-			add_to_temp_variable = { antarctica_signed_small_treaties = 1 }
-		}
-
-		if = {
-			limit = { check_variable = { antarctica_signed_small_treaties > 1 } }
-			add_ideas = antarctica_small_treaty_admin_cost_2
-		}
-		else_if = {
-			limit = { check_variable = { antarctica_signed_small_treaties > 0 } }
+			limit = {
+				NOT = { has_idea = antarctica_small_treaty_admin_cost_1 }
+				NOT = { has_idea = antarctica_small_treaty_admin_cost_2 }
+			}
 			add_ideas = antarctica_small_treaty_admin_cost_1
+		}
+	}
+
+	if = {
+		limit = { check_variable = { antarctica_small_treaty_leave_temp > 0 } }
+		if = {
+			limit = { has_idea = antarctica_small_treaty_admin_cost_2 }
+			swap_ideas = {
+				remove_idea = antarctica_small_treaty_admin_cost_2
+				add_idea = antarctica_small_treaty_admin_cost_1
+			}
+		}
+		else = {
+			remove_ideas = antarctica_small_treaty_admin_cost_1
 		}
 	}
 }
