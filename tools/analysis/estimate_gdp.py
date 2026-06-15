@@ -483,9 +483,6 @@ def calculate_gdp(states, modifier_stack=None):
     # --- Healthcare GDP (lines 5029-5043) ---
     # Health level is resolved later from the health_idea parameter in
     # finalize_gdp, not here.
-    health_mult = 0
-    for hkey, hmult in HEALTH_GDP_MULT.items():
-        pass
 
     # --- Total pre-healthcare GDP ---
     productivity_mult = overall_productivity * 0.001
@@ -689,13 +686,13 @@ def main():
             h = r["gdp_from_healthcare"]
             a = r["gdp_from_agriculture_scaled"]
             res = r["gdp_from_resources_scaled"]
-            print(f"  GDP Breakdown:")
+            print("  GDP Breakdown:")
             print(f"    Buildings:         {b:.2f} ({b/gdp*100:.1f}%)")
             print(f"    Healthcare:        {h:.2f} ({h/gdp*100:.1f}%)")
             print(f"    Agriculture:       {a:.2f} ({a/gdp*100:.1f}%)")
             print(f"    Resources:         {res:.2f} ({res/gdp*100:.1f}%)\n")
             if r["buildings"]:
-                print(f"  Buildings:")
+                print("  Buildings:")
                 for bname, bcount in sorted(
                     r["buildings"].items(), key=lambda x: -x[1]
                 ):

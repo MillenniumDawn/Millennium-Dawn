@@ -71,7 +71,7 @@ add_namespace = AGRI_famine
 							add = -6
 							check_variable = { agri_crop_allocation^1 = 1 }
 						}
-						set_country_flag = AGRI_no_drought
+						set_variable = { AGRI_drought_severity = 0 }
 					}
 					24 = { # MINOR DROUGHT | 24-42%
 						modifier = { # 27
@@ -98,7 +98,7 @@ add_namespace = AGRI_famine
 							add = 3
 							check_variable = { agri_crop_allocation^1 = 1 }
 						}
-						set_country_flag = AGRI_minor_drought
+						set_variable = { AGRI_drought_severity = 1 }
 					}
 					10 = { # MAJOR DROUGHT | 10-22%
 						modifier = { # 12
@@ -125,7 +125,7 @@ add_namespace = AGRI_famine
 							add = 2
 							check_variable = { agri_crop_allocation^1 = 1 }
 						}
-						set_country_flag = AGRI_major_drought
+						set_variable = { AGRI_drought_severity = 2 }
 					}
 					1 = { # EXTREME DROUGHT | 1-7%
 						modifier = { # 2
@@ -152,7 +152,7 @@ add_namespace = AGRI_famine
 							add = 1
 							check_variable = { agri_crop_allocation^1 = 1 }
 						}
-						set_country_flag = AGRI_extreme_drought
+						set_variable = { AGRI_drought_severity = 3 }
 					}
 				}
 				country_event = {
@@ -166,79 +166,77 @@ add_namespace = AGRI_famine
 		id = AGRI.2
 		title = { # NO DROUGHT
 			text = AGRI.2.t0
-			trigger = { has_country_flag = AGRI_no_drought }
+			trigger = { check_variable = { AGRI_drought_severity = 0 } }
 		}
 		title = { # MINOR DROUGHT
 			text = AGRI.2.t1
-			trigger = { has_country_flag = AGRI_minor_drought }
+			trigger = { check_variable = { AGRI_drought_severity = 1 } }
 		}
 		title = { # MAJOR DROUGHT
 			text = AGRI.2.t2
-			trigger = { has_country_flag = AGRI_major_drought }
+			trigger = { check_variable = { AGRI_drought_severity = 2 } }
 		}
 		title = { # EXTREME DROUGHT
 			text = AGRI.2.t3
-			trigger = { has_country_flag = AGRI_extreme_drought }
+			trigger = { check_variable = { AGRI_drought_severity = 3 } }
 		}
 		desc = { # NO DROUGHT
 			text = AGRI.2.d0
-			trigger = { has_country_flag = AGRI_no_drought }
+			trigger = { check_variable = { AGRI_drought_severity = 0 } }
 		}
 		desc = { # MINOR DROUGHT
 			text = AGRI.2.d1
-			trigger = { has_country_flag = AGRI_minor_drought }
+			trigger = { check_variable = { AGRI_drought_severity = 1 } }
 		}
 		desc = { # MAJOR DROUGHT
 			text = AGRI.2.d2
-			trigger = { has_country_flag = AGRI_major_drought }
+			trigger = { check_variable = { AGRI_drought_severity = 2 } }
 		}
 		desc = { # EXTREME DROUGHT
 			text = AGRI.2.d3
-			trigger = { has_country_flag = AGRI_extreme_drought }
+			trigger = { check_variable = { AGRI_drought_severity = 3 } }
 		}
 		is_triggered_only = yes
 		# NO DROUGHT
 			option = { # PREPARE FOR A BAD HARVEST # A
 				name = AGRI.2.A
-				trigger = { has_country_flag = AGRI_no_drought }
+				trigger = { check_variable = { AGRI_drought_severity = 0 } }
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.A executed"
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.015 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.015 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = 1 }
 				AGRI_protection_update = yes
 				set_temp_variable = { temp_opinion = 2 }
 				change_farmers_opinion = yes
-				clr_country_flag = AGRI_no_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
 			}
 			option = { # PREPARE FOR A TERRIBLE HARVEST # B
 				name = AGRI.2.B
-				trigger = { has_country_flag = AGRI_no_drought }
+				trigger = { check_variable = { AGRI_drought_severity = 0 } }
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.B executed"
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.03 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.03 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = 2 }
 				AGRI_protection_update = yes
 				set_temp_variable = { temp_opinion = 5 }
 				change_farmers_opinion = yes
-				clr_country_flag = AGRI_no_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
 			}
 			option = { # THERE'S NO NON RAINY DAYS! # C
 				name = AGRI.2.C
-				trigger = { has_country_flag = AGRI_no_drought }
+				trigger = { check_variable = { AGRI_drought_severity = 0 } }
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.C executed"
 				set_temp_variable = { temp_opinion = -1 }
 				change_farmers_opinion = yes
-				clr_country_flag = AGRI_no_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
 			}
 		# MINOR DROUGHT
 			option = { # LET IT RUN ITS COURSE | # D
 				name = AGRI.2.D
-				trigger = { has_country_flag = AGRI_minor_drought }
+				trigger = { check_variable = { AGRI_drought_severity = 1 } }
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.D executed"
 				add_timed_idea = {
 					idea = AGRI_standard_drought_ongoing
@@ -246,30 +244,14 @@ add_namespace = AGRI_famine
 				}
 				set_temp_variable = { temp_opinion = -5 }
 				change_farmers_opinion = yes
-				clr_country_flag = AGRI_minor_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.1
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.1
-						days = 2
-					}
-				}
+				AGRI_spread_drought_minor = yes
 			}
 			option = { # WE CAN SPARE SOME MONEY TO HELP OUT! | # E
 				name = AGRI.2.E
 				trigger = {
-					has_country_flag = AGRI_minor_drought
+					check_variable = { AGRI_drought_severity = 1 }
 					check_variable = { AGRI_protection = 1 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.E executed"
@@ -282,35 +264,18 @@ add_namespace = AGRI_famine
 					days = 270
 					value = 1
 				}
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.03 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.03 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -1 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_minor_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.1
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.1
-						days = 2
-					}
-				}
+				AGRI_spread_drought_minor = yes
 			}
 			option = { # THIS NEEDS IMMEDIATE ACTION! | # F
 				name = AGRI.2.F
 				trigger = {
-					has_country_flag = AGRI_minor_drought
+					check_variable = { AGRI_drought_severity = 1 }
 					check_variable = { AGRI_protection = 2 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.F executed"
@@ -323,35 +288,18 @@ add_namespace = AGRI_famine
 					days = 90
 					value = 1
 				}
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.05 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.05 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -2 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_minor_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.1
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.1
-						days = 2
-					}
-				}
+				AGRI_spread_drought_minor = yes
 			}
 			option = { # MAYBE THIS IS OVERKILL... BUT WE HAVE TO BE SAFE | # G
 				name = AGRI.2.G
 				trigger = {
-					has_country_flag = AGRI_minor_drought
+					check_variable = { AGRI_drought_severity = 1 }
 					check_variable = { AGRI_protection > 2 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.G executed"
@@ -362,35 +310,18 @@ add_namespace = AGRI_famine
 				}
 				set_temp_variable = { temp_opinion = 5 }
 				change_farmers_opinion = yes
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.075 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.075 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -3 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_minor_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.1
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.1
-						days = 2
-					}
-				}
+				AGRI_spread_drought_minor = yes
 			}
 		# MAJOR DROUGHT
 			option = { # LET IT RUN ITS COURSE | MAKE INFLUENCER SPREAD # H
 				name = AGRI.2.H
-				trigger = { has_country_flag = AGRI_major_drought }
+				trigger = { check_variable = { AGRI_drought_severity = 2 } }
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.H executed"
 				add_timed_idea = {
 					idea = AGRI_harsh_drought_ongoing
@@ -398,25 +329,9 @@ add_namespace = AGRI_famine
 				}
 				set_temp_variable = { temp_opinion = -8 }
 				change_farmers_opinion = yes
-				clr_country_flag = AGRI_major_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.2
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.2
-						days = 2
-					}
-				}
+				AGRI_spread_drought_major = yes
 				hidden_effect = {
 					random_neighbor_country = {
 						limit = {
@@ -443,7 +358,7 @@ add_namespace = AGRI_famine
 			option = { # THIS WON'T SOLVE EVERYTHING, BUT IT'S BETTER THAN NOTHING | MAKE INFLUENCER SPREAD # I
 				name = AGRI.2.I
 				trigger = {
-					has_country_flag = AGRI_major_drought
+					check_variable = { AGRI_drought_severity = 2 }
 					check_variable = { AGRI_protection = 1 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.I executed"
@@ -458,30 +373,13 @@ add_namespace = AGRI_famine
 					days = 360
 					value = 1
 				}
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.05 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.05 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -1 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_major_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.2
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.2
-						days = 2
-					}
-				}
+				AGRI_spread_drought_major = yes
 				hidden_effect = {
 					random_neighbor_country = {
 						limit = {
@@ -508,7 +406,7 @@ add_namespace = AGRI_famine
 			option = { # HOPEFULLY THIS WILL TIDE US OVER UNTIL THE NEXT RAINS | MAKE INFLUENCER SPREAD # J
 				name = AGRI.2.J
 				trigger = {
-					has_country_flag = AGRI_major_drought
+					check_variable = { AGRI_drought_severity = 2 }
 					check_variable = { AGRI_protection = 2 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.J executed"
@@ -523,30 +421,13 @@ add_namespace = AGRI_famine
 					days = 180
 					value = 1
 				}
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.075 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.075 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -2 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_major_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.2
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.2
-						days = 2
-					}
-				}
+				AGRI_spread_drought_major = yes
 				hidden_effect = {
 					random_neighbor_country = {
 						limit = {
@@ -562,7 +443,7 @@ add_namespace = AGRI_famine
 			option = { # THANK THE HEAVENS WE HAVE THIS STOCKPILE, WE SHOULD USE IT ALL | MAKE INFLUENCER SPREAD # K
 				name = AGRI.2.K
 				trigger = {
-					has_country_flag = AGRI_major_drought
+					check_variable = { AGRI_drought_severity = 2 }
 					check_variable = { AGRI_protection > 2 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.K executed"
@@ -573,35 +454,18 @@ add_namespace = AGRI_famine
 					days = 120
 					value = 1
 				}
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.1 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.1 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -3 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_major_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.2
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.2
-						days = 2
-					}
-				}
+				AGRI_spread_drought_major = yes
 			}
 		# EXTREME DROUGHT
 			option = { # WE HAVE NO CHOICE BUT TO LET IT RUN ITS COURSE, GOD FORGIVE US | MAKE INFLUENCER SPREAD # L
 				name = AGRI.2.L
-				trigger = { has_country_flag = AGRI_extreme_drought }
+				trigger = { check_variable = { AGRI_drought_severity = 3 } }
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.L executed"
 				add_timed_idea = {
 					idea = AGRI_extreme_drought_ongoing
@@ -609,25 +473,9 @@ add_namespace = AGRI_famine
 				}
 				set_temp_variable = { temp_opinion = -10 }
 				change_farmers_opinion = yes
-				clr_country_flag = AGRI_extreme_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.3
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.3
-						days = 2
-					}
-				}
+				AGRI_spread_drought_extreme = yes
 				hidden_effect = {
 					random_neighbor_country = {
 						limit = {
@@ -659,7 +507,7 @@ add_namespace = AGRI_famine
 			option = { # IF ONLY WE HAD MORE TO STOP THIS DISASTER... | MAKE INFLUENCER SPREAD # M
 				name = AGRI.2.M
 				trigger = {
-					has_country_flag = AGRI_extreme_drought
+					check_variable = { AGRI_drought_severity = 3 }
 					check_variable = { AGRI_protection = 1 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.M executed"
@@ -674,30 +522,13 @@ add_namespace = AGRI_famine
 					days = 450
 					value = 1
 				}
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.075 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.075 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -1 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_extreme_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.3
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.3
-						days = 2
-					}
-				}
+				AGRI_spread_drought_extreme = yes
 				hidden_effect = {
 					random_neighbor_country = {
 						limit = {
@@ -729,7 +560,7 @@ add_namespace = AGRI_famine
 			option = { # THIS ISN'T ENOUGH, BUT IT SHOULD STOP THE WORST OF THE DROUGHT | MAKE INFLUENCER SPREAD # N
 				name = AGRI.2.N
 				trigger = {
-					has_country_flag = AGRI_extreme_drought
+					check_variable = { AGRI_drought_severity = 3 }
 					check_variable = { AGRI_protection = 2 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.N executed"
@@ -744,30 +575,13 @@ add_namespace = AGRI_famine
 					days = 360
 					value = 1
 				}
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.1 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.1 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -2 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_extreme_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.3
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.3
-						days = 2
-					}
-				}
+				AGRI_spread_drought_extreme = yes
 				hidden_effect = {
 					random_neighbor_country = {
 						limit = {
@@ -793,7 +607,7 @@ add_namespace = AGRI_famine
 			option = { # OUR STOCKPILE IS SUFFICENT THANKFULLY, THOUGH THE COST WILL BE IMMENSE | MAKE INFLUENCER SPREAD # O
 				name = AGRI.2.O
 				trigger = {
-					has_country_flag = AGRI_extreme_drought
+					check_variable = { AGRI_drought_severity = 3 }
 					check_variable = { AGRI_protection > 2 }
 				}
 				log = "[GetDateText]: [THIS.GetName]: AGRI.2.O executed"
@@ -808,30 +622,13 @@ add_namespace = AGRI_famine
 					days = 240
 					value = 1
 				}
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.15 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.15 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = -3 }
 				AGRI_protection_update = yes
-				clr_country_flag = AGRI_extreme_drought
+				clear_variable = AGRI_drought_severity
 				clr_country_flag = AGRI_event_chain_in_progress
-				every_neighbor_country = {
-					limit = {
-						NOT = {
-							check_variable = { PREV.influence_array^0 = THIS.id }
-						}
-					}
-					country_event = {
-						id = AGRI_neighbour.3
-						days = 2
-					}
-				}
-				var:influence_array^0 = {
-					country_event = {
-						id = AGRI_influencer.3
-						days = 2
-					}
-				}
+				AGRI_spread_drought_extreme = yes
 				hidden_effect = {
 					random_neighbor_country = {
 						limit = {
@@ -844,15 +641,12 @@ add_namespace = AGRI_famine
 					}
 				}
 			}
-		# FALLBACK - no drought flag set (e.g. event spread to neighbor without going through AGRI.1)
+		# FALLBACK - no drought variable set (e.g. event spread to neighbor without going through AGRI.1)
 			option = {
 				name = AGRI.2.C
 		log = "[GetDateText]: [This.GetName]: AGRI.2.C"
 				trigger = {
-					NOT = { has_country_flag = AGRI_no_drought }
-					NOT = { has_country_flag = AGRI_minor_drought }
-					NOT = { has_country_flag = AGRI_major_drought }
-					NOT = { has_country_flag = AGRI_extreme_drought }
+					NOT = { has_variable = AGRI_drought_severity }
 				}
 				clr_country_flag = AGRI_event_chain_in_progress
 			}
@@ -877,11 +671,9 @@ add_namespace = AGRI_famine
 							days = 2
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.02 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.02 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -901,16 +693,14 @@ add_namespace = AGRI_famine
 							AGRI_price_change_effect = yes
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = 0.02 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = 0.02 } }
 					modify_treasury_effect = yes
 				}
 				option = { # STOCKPILE TIME
 					name = AGRI_neighbour.1.C
 					trigger = { is_agrarian_economy = yes }
 					log = "[GetDateText]: [THIS.GetName]: AGRI_neighbour.1.C executed"
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.03 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.03 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { AGRI_protections_change = 1 }
 					AGRI_protection_update = yes
@@ -977,11 +767,9 @@ add_namespace = AGRI_famine
 							days = 2
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.06 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.06 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { percent_change = 2 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -1001,16 +789,14 @@ add_namespace = AGRI_famine
 							AGRI_price_change_effect = yes
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = 0.06 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = 0.06 } }
 					modify_treasury_effect = yes
 				}
 				option = { # STOCKPILE TIME
 					name = AGRI_neighbour.2.C
 					trigger = { is_agrarian_economy = yes }
 					log = "[GetDateText]: [THIS.GetName]: AGRI_neighbour.2.C executed"
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.09 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.09 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { AGRI_protections_change = 2 }
 					AGRI_protection_update = yes
@@ -1077,11 +863,9 @@ add_namespace = AGRI_famine
 							days = 2
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.09 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.09 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { percent_change = 3 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -1101,16 +885,14 @@ add_namespace = AGRI_famine
 							AGRI_price_change_effect = yes
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = 0.09 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = 0.09 } }
 					modify_treasury_effect = yes
 				}
 				option = { # STOCKPILE TIME
 					name = AGRI_neighbour.3.C
 					trigger = { is_agrarian_economy = yes }
 					log = "[GetDateText]: [THIS.GetName]: AGRI_neighbour.3.C executed"
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.15 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.15 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { AGRI_protections_change = 3 }
 					AGRI_protection_update = yes
@@ -1178,11 +960,9 @@ add_namespace = AGRI_famine
 							days = 7
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.01 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.01 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { percent_change = 0.5 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -1196,7 +976,6 @@ add_namespace = AGRI_famine
 						}
 					}
 					set_temp_variable = { percent_change = -1 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -1252,11 +1031,9 @@ add_namespace = AGRI_famine
 							days = 7
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.03 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.03 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { percent_change = 1.5 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -1270,7 +1047,6 @@ add_namespace = AGRI_famine
 						}
 					}
 					set_temp_variable = { percent_change = -2 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -1326,11 +1102,9 @@ add_namespace = AGRI_famine
 							days = 7
 						}
 					}
-					set_temp_variable = { treasury_change = gdp_total }
-					multiply_temp_variable = { treasury_change = -0.07 }
+					set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.07 } }
 					modify_treasury_effect = yes
 					set_temp_variable = { percent_change = 3 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -1344,7 +1118,6 @@ add_namespace = AGRI_famine
 						}
 					}
 					set_temp_variable = { percent_change = -4 }
-					set_temp_variable = { tag_index = THIS }
 					set_temp_variable = { influence_target = FROM }
 					change_influence_percentage = yes
 				}
@@ -1404,8 +1177,7 @@ add_namespace = AGRI_famine
 			option = { # SOURCE EQUIPMENT FROM THE BLACK MARKET # 1.A
 				name = AGRI_random.1.A
 				log = "[GetDateText]: [This.GetName]: AGRI_random.1.A executed"
-				set_temp_variable = { gdp_percent = gdp_total }
-				multiply_temp_variable = { gdp_percent = -0.025 }
+				set_temp_variable = { gdp_percent = { value = gdp_total  multiply = -0.025 } }
 				set_temp_variable = { treasury_change = gdp_percent }
 				modify_treasury_effect = yes
 				hidden_effect = {
@@ -1430,8 +1202,7 @@ add_namespace = AGRI_famine
 			option = { # TRY HARDER TO FIND EQUIPMENT # 1.B
 				name = AGRI_random.1.B
 				log = "[GetDateText]: [This.GetName]: AGRI_random.1.B executed"
-				set_temp_variable = { gdp_percent = gdp_total }
-				multiply_temp_variable = { gdp_percent = -0.05 }
+				set_temp_variable = { gdp_percent = { value = gdp_total  multiply = -0.05 } }
 				set_temp_variable = { treasury_change = gdp_percent }
 				modify_treasury_effect = yes
 				hidden_effect = {
@@ -1688,8 +1459,7 @@ add_namespace = AGRI_famine
 			option = { # SPEND WHAT IS NEEDED! # 2.A
 				name = AGRI_random.2.A
 				log = "[GetDateText]: [This.GetName]: AGRI_random.2.A executed"
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.03 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.03 } }
 				modify_treasury_effect = yes
 				hidden_effect = {
 					random_list = {
@@ -1712,8 +1482,7 @@ add_namespace = AGRI_famine
 			option = { # OUR NEIGHBOUR WON'T MISS IT # 2.B
 				name = AGRI_random.2.B
 				log = "[GetDateText]: [This.GetName]: AGRI_random.2.B executed"
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.015 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.015 } }
 				modify_treasury_effect = yes
 				hidden_effect = {
 					random_list = {
@@ -1734,13 +1503,13 @@ add_namespace = AGRI_famine
 							random_neighbor_country = {
 								random_list = {
 									90 = {
-										set_country_flag = AGRI_minor_drought
+										set_variable = { AGRI_drought_severity = 1 }
 									}
 									7 = {
-										set_country_flag = AGRI_major_drought
+										set_variable = { AGRI_drought_severity = 2 }
 									}
 									3 = {
-										set_country_flag = AGRI_extreme_drought
+										set_variable = { AGRI_drought_severity = 3 }
 									}
 								}
 								country_event = {
@@ -1758,13 +1527,13 @@ add_namespace = AGRI_famine
 							random_neighbor_country = {
 								random_list = {
 									40 = {
-										set_country_flag = AGRI_minor_drought
+										set_variable = { AGRI_drought_severity = 1 }
 									}
 									45 = {
-										set_country_flag = AGRI_major_drought
+										set_variable = { AGRI_drought_severity = 2 }
 									}
 									15 = {
-										set_country_flag = AGRI_extreme_drought
+										set_variable = { AGRI_drought_severity = 3 }
 									}
 								}
 								country_event = {
@@ -1782,13 +1551,13 @@ add_namespace = AGRI_famine
 							random_neighbor_country = {
 								random_list = {
 									25 = {
-										set_country_flag = AGRI_minor_drought
+										set_variable = { AGRI_drought_severity = 1 }
 									}
 									35 = {
-										set_country_flag = AGRI_major_drought
+										set_variable = { AGRI_drought_severity = 2 }
 									}
 									40 = {
-										set_country_flag = AGRI_extreme_drought
+										set_variable = { AGRI_drought_severity = 3 }
 									}
 								}
 								country_event = {
@@ -1850,12 +1619,8 @@ add_namespace = AGRI_famine
 				trigger = { has_country_flag = AGRI_mini_drought_success }
 				random_list = {
 					20 = {
-						set_temp_variable = { crop_type = 0 }
 						set_temp_variable = { price_change = 2 }
-						AGRI_price_change_effect = yes
-						set_temp_variable = { crop_type = 1 }
-						set_temp_variable = { price_change = 2 }
-						AGRI_price_change_effect = yes
+						AGRI_price_change_all_crops = yes
 					}
 					10 = {
 						set_temp_variable = { AGRI_protections_change = 1 }
@@ -2006,8 +1771,7 @@ add_namespace = AGRI_famine
 						}
 					}
 				}
-				set_temp_variable = { treasury_change = FROM.gdp_total }
-				multiply_temp_variable = { treasury_change = -0.005 }
+				set_temp_variable = { treasury_change = { value = FROM.gdp_total  multiply = -0.005 } }
 				modify_treasury_effect = yes
 				clr_country_flag = AGRI_mini_drought_neighbour_failure
 				clr_country_flag = AGRI_event_chain_in_progress
@@ -2023,8 +1787,7 @@ add_namespace = AGRI_famine
 				name = AGRI_random.200.E
 				log = "[GetDateText]: [This.GetName]: AGRI_random.200.E executed"
 				trigger = { has_country_flag = AGRI_mini_drought_neighbour_cat_failure_1 }
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.03 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.03 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = 1 }
 				AGRI_protection_update = yes
@@ -2042,8 +1805,7 @@ add_namespace = AGRI_famine
 				name = AGRI_random.200.G
 				log = "[GetDateText]: [This.GetName]: AGRI_random.200.G executed"
 				trigger = { has_country_flag = AGRI_mini_drought_neighbour_cat_failure_2 }
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.075 }
+				set_temp_variable = { treasury_change = { value = gdp_total  multiply = -0.075 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = 2 }
 				AGRI_protection_update = yes
@@ -2294,7 +2056,7 @@ add_namespace = AGRI_famine
 			option = { # THE STOCKPILE CAN KEEP THIS SECTOR HEALTHY! | # 5.B
 				name = AGRI_random.5.B
 				log = "[GetDateText]: [This.GetName]: AGRI_random.5.B executed"
-				trigger = { check_variable = { AGRI_protections_change > 0 } }
+				trigger = { check_variable = { AGRI_protection > 0 } }
 				set_temp_variable = { AGRI_protections_change = -1 }
 				AGRI_protection_update = yes
 				AGRI_update_math_variables = yes
@@ -2390,7 +2152,7 @@ add_namespace = AGRI_famine
 				set_temp_variable = { price_change = -7 }
 				AGRI_price_change_effect = yes
 				if = {
-					limit = { check_variable = { AGRI_protections_change > 0 } }
+					limit = { check_variable = { AGRI_protection > 0 } }
 					set_temp_variable = { AGRI_protections_change = -1 }
 					AGRI_protection_update = yes
 				}
@@ -2425,7 +2187,7 @@ add_namespace = AGRI_famine
 				set_temp_variable = { price_change = -7 }
 				AGRI_price_change_effect = yes
 				if = {
-					limit = { check_variable = { AGRI_protections_change > 0 } }
+					limit = { check_variable = { AGRI_protection > 0 } }
 					set_temp_variable = { AGRI_protections_change = -1 }
 					AGRI_protection_update = yes
 				}
@@ -2512,7 +2274,7 @@ add_namespace = AGRI_famine
 				set_temp_variable = { price_change = -3 }
 				AGRI_price_change_effect = yes
 				if = {
-					limit = { check_variable = { AGRI_protections_change > 0 } }
+					limit = { check_variable = { AGRI_protection > 0 } }
 					set_temp_variable = { AGRI_protections_change = -1 }
 					AGRI_protection_update = yes
 				}
@@ -2528,7 +2290,7 @@ add_namespace = AGRI_famine
 				set_temp_variable = { price_change = -3 }
 				AGRI_price_change_effect = yes
 				if = {
-					limit = { check_variable = { AGRI_protections_change > 0 } }
+					limit = { check_variable = { AGRI_protection > 0 } }
 					set_temp_variable = { AGRI_protections_change = -1 }
 					AGRI_protection_update = yes
 				}
@@ -2599,7 +2361,7 @@ add_namespace = AGRI_famine
 				set_temp_variable = { price_change = -3 }
 				AGRI_price_change_effect = yes
 				if = {
-					limit = { check_variable = { AGRI_protections_change > 0 } }
+					limit = { check_variable = { AGRI_protection > 0 } }
 					set_temp_variable = { AGRI_protections_change = -1 }
 					AGRI_protection_update = yes
 				}
@@ -2615,7 +2377,7 @@ add_namespace = AGRI_famine
 				set_temp_variable = { price_change = -3 }
 				AGRI_price_change_effect = yes
 				if = {
-					limit = { check_variable = { AGRI_protections_change > 0 } }
+					limit = { check_variable = { AGRI_protection > 0 } }
 					set_temp_variable = { AGRI_protections_change = -1 }
 					AGRI_protection_update = yes
 				}
@@ -2701,11 +2463,7 @@ add_namespace = AGRI_famine
 				set_temp_variable = { price_change = -3 }
 				AGRI_price_change_effect = yes
 				set_temp_variable = { allocation_change = 0.1 }
-				set_temp_variable = { crop_type = 0 }
-				AGRI_allocation_change_effect = yes
-				set_temp_variable = { allocation_change = -0.1 }
-				set_temp_variable = { crop_type = 1 }
-				AGRI_allocation_change_effect = yes
+				AGRI_shift_crop_allocation = yes
 				AGRI_update_math_variables = yes
 				clr_country_flag = AGRI_fields_affected_BASIC
 				clr_country_flag = AGRI_event_chain_in_progress
@@ -2723,11 +2481,7 @@ add_namespace = AGRI_famine
 				set_temp_variable = { price_change = -3 }
 				AGRI_price_change_effect = yes
 				set_temp_variable = { allocation_change = -0.1 }
-				set_temp_variable = { crop_type = 0 }
-				AGRI_allocation_change_effect = yes
-				set_temp_variable = { allocation_change = 0.1 }
-				set_temp_variable = { crop_type = 1 }
-				AGRI_allocation_change_effect = yes
+				AGRI_shift_crop_allocation = yes
 				AGRI_update_math_variables = yes
 				clr_country_flag = AGRI_fields_affected_CASH
 				clr_country_flag = AGRI_event_chain_in_progress
@@ -2736,12 +2490,8 @@ add_namespace = AGRI_famine
 				name = AGRI_random.90.C
 				log = "[GetDateText]: [This.GetName]: AGRI_random.90.C executed"
 				trigger = { has_country_flag = AGRI_NO_fields_affected }
-				set_temp_variable = { crop_type = 0 }
 				set_temp_variable = { price_change = 2 }
-				AGRI_price_change_effect = yes
-				set_temp_variable = { crop_type = 1 }
-				set_temp_variable = { price_change = 2 }
-				AGRI_price_change_effect = yes
+				AGRI_price_change_all_crops = yes
 				AGRI_update_math_variables = yes
 				clr_country_flag = AGRI_NO_fields_affected
 				clr_country_flag = AGRI_event_chain_in_progress

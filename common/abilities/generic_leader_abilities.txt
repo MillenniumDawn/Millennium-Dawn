@@ -21,10 +21,8 @@ ability = {
 					command_power > 1.5
 				}
 				check_variable = { num_units_offensive_combats > 6 }
-
-				set_temp_variable = { temp = avg_offensive_combat_status }
-				check_variable = { temp > 0.45 }
-				check_variable = { ai_random > temp }
+				check_variable = { avg_offensive_combat_status > 0.45 }
+				check_variable = { ai_random > avg_offensive_combat_status }
 
 				add = 2
 			}
@@ -34,18 +32,13 @@ ability = {
 		duration = 168
 		cooldown = 72
 
-		one_time_effect = {
-			add_temporary_buff_to_units = {
-				combat_offense = 0.2
-				combat_breakthrough = 0.25
-				org_damage_multiplier = -0.5
-				str_damage_multiplier = 0.3
-				war_support_reduction_on_damage = 0.2
-				cannot_retreat_while_attacking = 1.0
-
-				days = 7
-				tooltip = ABILITY_FORCE_ATTACK_TOOLTIP
-			}
+		unit_modifiers = {
+			offence = 0.2
+			breakthrough_factor = 0.25
+			org_damage_multiplier = -0.5
+			str_damage_multiplier = 0.3
+			war_support_reduction_on_damage = 0.2
+			cannot_retreat_while_attacking = 1.0
 		}
 	}
 
@@ -67,32 +60,22 @@ ability = {
 		duration = 168
 		cooldown = 72
 
-		one_time_effect = {
-			add_temporary_buff_to_units = {
-				combat_defense = 0.2
-				combat_entrenchment = 0.25
-				org_damage_multiplier = -0.5
-				str_damage_multiplier = 0.3
-				war_support_reduction_on_damage = 0.2
-				cannot_retreat_while_defending = 1.0
-
-				days = 7
-				tooltip = ABILITY_LAST_STAND_TOOLTIP
-			}
+		unit_modifiers = {
+			defence = 0.2
+			combat_entrenchment = 0.25
+			org_damage_multiplier = -0.5
+			str_damage_multiplier = 0.3
+			war_support_reduction_on_damage = 0.2
+			cannot_retreat_while_defending = 1.0
 		}
 
 		ai_will_do = {
 			factor = -1
 			modifier = {
-				FROM = {
-					has_war_support > 0.4
-				}
-
+				FROM = { has_war_support > 0.4 }
 				check_variable = { num_units_defensive_combats > 6 }
-
-				set_temp_variable = { temp = avg_defensive_combat_status }
-				check_variable = { temp < 0.40 }
-				check_variable = { ai_random > temp }
+				check_variable = { avg_defensive_combat_status < 0.40 }
+				check_variable = { ai_random > avg_defensive_combat_status }
 
 				add = 2
 			}
@@ -163,14 +146,13 @@ ability = {
 		ai_will_do = {
 			factor = -1
 			modifier = {
-				FROM = { command_power > 1.5 }
-				set_temp_variable = { temp = num_units_offensive_combats }
-				check_variable = { temp > 6 }
-				set_temp_variable = { temp2 = num_units_offensive_combats_against@fort }
-				multiply_temp_variable = { temp2 = 2 }
-				check_variable = { temp2 > temp }
-
 				add = 2
+				FROM = { command_power > 1.5 }
+				check_expr = {
+					value = num_units_offensive_combats_against@fort
+					multiply = 2
+					greater_than = { value = num_units_offensive_combats }
+				}
 			}
 		}
 	}
@@ -188,7 +170,7 @@ ability = {
 		}
 
 		unit_modifiers = {
-			paratrooper_weight_factor = 1.0
+			paratrooper_weight_factor = -0.10
 			paradrop_organization_factor = 2.0
 			paratrooper_aa_defense = 0.5
 		}
@@ -200,7 +182,6 @@ ability = {
 	faster_naval_invasion_planning = { #ABILITY_FASTER_NAVAL_PLANNING
 		name = ABILITY_FASTER_NAVAL_PLANNING
 		desc = ABILITY_FASTER_NAVAL_PLANNING_DESC
-		icon = GFX_ability_faster_naval_invasion_planning
 
 		type = army_leader
 
@@ -236,14 +217,13 @@ ability = {
 		}
 
 		cancelable = yes
-		cost = 0.15
+		cost = 0.1
 		duration = -1
 	}
 
 	makeshift_bridges = { #ABILITY_MAKESHIFT_BRIDGES
 		name = ABILITY_MAKESHIFT_BRIDGES
 		desc = ABILITY_MAKESHIFT_BRIDGES_DESC
-		icon = GFX_ability_makeshift_bridges
 
 		type = army_leader
 
@@ -324,9 +304,11 @@ ability = {
 			modifier = {
 				FROM = { command_power > 2.0 }
 				check_variable = { num_units_on_climate@cold_climate > 8 }
-				set_temp_variable = { temp = avg_units_acclimation@cold_climate }
-				multiply_temp_variable = { temp = 2 }
-				check_variable = { temp < num_units }
+				check_expr = {
+					value = avg_units_acclimation@cold_climate
+					multiply = 2
+					less_than = { value = num_units }
+				}
 
 				add = 2
 			}
@@ -355,11 +337,8 @@ ability = {
 					command_power > 1.5
 				}
 				check_variable = { num_units_offensive_combats > 6 }
-
-				set_temp_variable = { temp = avg_offensive_combat_status }
-				check_variable = { temp > 0.45 }
-				check_variable = { ai_random > temp }
-
+				check_variable = { avg_offensive_combat_status > 0.45 }
+				check_variable = { ai_random > avg_offensive_combat_status }
 				add = 2
 			}
 		}
@@ -368,23 +347,19 @@ ability = {
 		duration = 168
 		cooldown = 72
 
-		one_time_effect = {
-			add_temporary_buff_to_units = {
-				combat_offense = 0.10
-				combat_breakthrough = 0.40
-				org_damage_multiplier = -0.3
-				str_damage_multiplier = 0.2
-				war_support_reduction_on_damage = 0.2
-				cannot_retreat_while_attacking = 1.0
-
-				days = 7
-			}
+		unit_modifiers = {
+			offence = 0.10
+			breakthrough_factor = 0.40
+			org_damage_multiplier = -0.3
+			str_damage_multiplier = 0.2
+			war_support_reduction_on_damage = 0.2
+			cannot_retreat_while_attacking = 1.0
 		}
 	}
 
-	flexibile_deffense = { #ABILITY_LAST_STAND
-		name = ABILITY_FLEXIBILE_DEFFENSE
-		desc = ABILITY_FLEXIBILE_DEFFENSE_DESC
+	flexible_defense = { #ABILITY_LAST_STAND
+		name = ABILITY_FLEXIBLE_DEFENSE
+		desc = ABILITY_FLEXIBLE_DEFENSE_DESC
 		icon = GFX_ability_jap_last_stand
 
 		sound_effect = command_power_ability_offensive
@@ -402,31 +377,21 @@ ability = {
 		duration = 168
 		cooldown = 72
 
-		one_time_effect = {
-			add_temporary_buff_to_units = {
-				combat_defense = 0.35
-				org_damage_multiplier = -0.3
-				str_damage_multiplier = 0.2
-				war_support_reduction_on_damage = 0.2
-				cannot_retreat_while_defending = 1.0
-
-				days = 10
-				tooltip = ABILITY_LAST_STAND_TOOLTIP
-			}
+		unit_modifiers = {
+			defence = 0.35
+			org_damage_multiplier = -0.3
+			str_damage_multiplier = 0.2
+			war_support_reduction_on_damage = 0.2
+			cannot_retreat_while_defending = 1.0
 		}
 
 		ai_will_do = {
 			factor = -1
 			modifier = {
-				FROM = {
-					has_war_support > 0.4
-				}
-
+				FROM = { has_war_support > 0.4 }
 				check_variable = { num_units_defensive_combats > 6 }
-
-				set_temp_variable = { temp = avg_defensive_combat_status }
-				check_variable = { temp < 0.40 }
-				check_variable = { ai_random > temp }
+				check_variable = { avg_defensive_combat_status < 0.40 }
+				check_variable = { ai_random > avg_defensive_combat_status }
 
 				add = 2
 			}
@@ -434,8 +399,8 @@ ability = {
 	}
 
 	well_planned_attack = { #ABILITY_STAFF_OFFICE_PLAN
-		name = ABILITY_WELL_PNANNED_ATTACK
-		desc = ABILITY_WELL_PNANNED_ATTACK_DESC
+		name = ABILITY_WELL_PLANNED_ATTACK
+		desc = ABILITY_WELL_PLANNED_ATTACK_DESC
 		icon = GFX_ability_staff_office_plan
 
 		sound_effect = command_power_ability_defensive
@@ -495,10 +460,8 @@ ability = {
 					command_power > 1.5
 				}
 				check_variable = { num_units_offensive_combats > 6 }
-
-				set_temp_variable = { temp = avg_offensive_combat_status }
-				check_variable = { temp > 0.45 }
-				check_variable = { ai_random > temp }
+				check_variable = { avg_offensive_combat_status > 0.45 }
+				check_variable = { ai_random > avg_offensive_combat_status }
 
 				add = 2
 			}
@@ -508,24 +471,20 @@ ability = {
 		duration = 168
 		cooldown = 72
 
-		one_time_effect = {
-			add_temporary_buff_to_units = {
-				combat_offense = 0.2
-				combat_breakthrough = 0.25
-				org_damage_multiplier = 0.3
-				str_damage_multiplier = 0.2
-				war_support_reduction_on_damage = 0.2
-				cannot_retreat_while_attacking = 1.0
-
-				days = 7
-			}
+		unit_modifiers = {
+			offence = 0.2
+			breakthrough_factor = 0.25
+			org_damage_multiplier = 0.3
+			str_damage_multiplier = 0.2
+			war_support_reduction_on_damage = 0.2
+			cannot_retreat_while_attacking = 1.0
 		}
 	}
 
 
-	infiltration_assult = { #ABILITY_LAST_STAND
-		name = ABILITY_INFILTRATION_ASSULT
-		desc = ABILITY_INFILTRATION_ASSULT_DESC
+	infiltration_assault = { #ABILITY_LAST_STAND
+		name = ABILITY_INFILTRATION_ASSAULT
+		desc = ABILITY_INFILTRATION_ASSAULT_DESC
 		icon = GFX_ability_chi_force_attack
 
 		sound_effect = command_power_ability_offensive
@@ -543,18 +502,11 @@ ability = {
 
 		unit_modifiers = {
 			no_supply_grace = 168
-		}
-		one_time_effect = {
-			add_temporary_buff_to_units = {
-				combat_defense = 0.2
-				org_damage_multiplier = -0.3
-				str_damage_multiplier = 0.2
-				war_support_reduction_on_damage = 0.10
-				cannot_retreat_while_defending = 1.0
-
-				days = 7
-				tooltip = ABILITY_LAST_STAND_TOOLTIP
-			}
+			defence = 0.2
+			org_damage_multiplier = -0.3
+			str_damage_multiplier = 0.2
+			war_support_reduction_on_damage = 0.10
+			cannot_retreat_while_defending = 1.0
 		}
 
 		ai_will_do = {
@@ -562,9 +514,114 @@ ability = {
 			modifier = {
 				FROM = { has_war_support > 0.4 }
 				check_variable = { num_units_defensive_combats > 6 }
-				set_temp_variable = { temp = avg_defensive_combat_status }
-				check_variable = { temp < 0.40 }
-				check_variable = { ai_random > temp }
+				check_variable = { avg_defensive_combat_status < 0.40 }
+				check_variable = { ai_random > avg_defensive_combat_status }
+
+				add = 2
+			}
+		}
+	}
+
+	extra_medics = { #ABILITY_EXTRA_MEDICS
+		name = ABILITY_EXTRA_MEDICS
+		desc = ABILITY_EXTRA_MEDICS_DESC
+		icon = GFX_ability_extra_medics
+
+		sound_effect = ability_local_reserves
+
+		type = army_leader
+
+		allowed = {
+			is_leading_army_group = no
+			is_border_war = no
+		}
+
+		cost = 0.25
+		duration = 336
+		cooldown = 72
+
+		unit_modifiers = {
+			casualty_trickleback = 0.04
+		}
+
+		ai_will_do = {
+			factor = -1
+			modifier = {
+				FROM = {
+					has_war_support < 0.2
+					command_power > 2
+				}
+				check_variable = { num_units_offensive_combats > 6 }
+				check_variable = { avg_offensive_combat_status > 0.2 }
+				check_variable = { ai_random > avg_offensive_combat_status }
+
+				add = 2
+			}
+		}
+	}
+
+	deeper_dig_in = { #ABILITY_DEEPER_DIG_IN
+		name = ABILITY_DEEPER_DIG_IN
+		desc = ABILITY_DEEPER_DIG_IN_DESC
+		icon = GFX_ability_deeper_dig_in
+
+		sound_effect = ability_deeper_dig_in
+
+		type = army_leader
+
+		allowed = {
+			is_border_war = no
+		}
+
+		cost = 0.152
+		duration = 168
+		cooldown = 72
+
+		unit_modifiers = {
+			dig_in_speed = 6.0
+		}
+
+		ai_will_do = {
+			factor = -1
+			modifier = {
+				FROM = { command_power > 2.0 }
+				check_variable = { num_units > 6 }
+				check_variable = { unit_ratio_ready_for_plan > 0.6 }
+				check_variable = { avg_unit_entrenchment_ratio < 0.4 }
+
+				add = 2
+			}
+		}
+	}
+
+	rotating_reserves = { #ABILITY_ROTATING_RESERVES
+		name = ABILITY_ROTATING_RESERVES
+		desc = ABILITY_ROTATING_RESERVES_DESC
+		icon = GFX_ability_rotating_reserves
+
+		sound_effect = ability_local_command
+
+		type = army_leader
+
+		allowed = {
+			is_border_war = no
+		}
+
+		cost = 0.152
+		duration = 168
+		cooldown = 72
+
+		unit_modifiers = {
+			land_reinforce_rate = 0.06
+		}
+
+		ai_will_do = {
+			factor = -1
+			modifier = {
+				FROM = { command_power > 6.0 }
+				check_variable = { num_units > 6 }
+				check_variable = { num_units_in_combat > 4 }
+				check_variable = { avg_combat_status > 0.7 }
 
 				add = 2
 			}

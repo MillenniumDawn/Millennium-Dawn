@@ -1,17 +1,11 @@
 #!/usr/bin/env python3
-##########################
-# Scripted Localisation Validation Script (Multiprocessing Optimized)
-# Validates scripted localisation definitions and usage
-# Checks for: used but not defined, defined but not used, GFX_ icons not defined in .gfx files
-# Based on Millennium Dawn validation framework
-# Optimized with multiprocessing for significantly faster execution
-##########################
+"""Validate scripted localisation definitions and usage in Millennium Dawn."""
 import glob
 import os
 import re
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import disk_cache
 from validator_common import (
@@ -27,7 +21,6 @@ from validator_common import (
 )
 
 
-# Multiprocessing helper functions
 def _scan_defined_locs(text: str, basename: str) -> Tuple[List[str], Dict[str, str]]:
     localisations: List[str] = []
     paths: Dict[str, str] = {}
@@ -438,7 +431,7 @@ class Validator(BaseValidator):
                 return_paths=True,
                 staged_files=self.staged_files,
                 workers=self.workers,
-                pool=self._pool,
+                pool=self._get_pool(),
             )
         )
         # Usage scan ALWAYS goes full-repo — even in staged mode. Restricting
@@ -453,7 +446,7 @@ class Validator(BaseValidator):
             return_paths=True,
             staged_files=None,
             workers=self.workers,
-            pool=self._pool,
+            pool=self._get_pool(),
         )
 
         self.validate_missing_scripted_localisations(

@@ -13,28 +13,7 @@ import time
 from datetime import datetime
 
 from common_utils import compact_icon, compact_search_filters
-
-
-def log_message(level: str, message: str, verbose: bool = False):
-    """Log a message with timestamp"""
-    if level == "DEBUG" and not verbose:
-        return
-
-    timestamp = datetime.now().strftime("%H:%M:%S")
-
-    colors = {
-        "SUCCESS": "\033[92m",  # Green
-        "INFO": "\033[94m",  # Blue
-        "DEBUG": "\033[90m",  # Gray
-        "WARNING": "\033[93m",  # Yellow
-        "ERROR": "\033[91m",  # Red
-    }
-    reset_color = "\033[0m"
-
-    color = colors.get(level, "")
-
-    formatted_message = f"{color}[{timestamp}] {level}: {message}{reset_color}"
-    print(formatted_message, file=sys.stderr)
+from shared_utils import compact_block, extract_block, log_message
 
 
 def is_empty_block(block_lines):
@@ -182,37 +161,6 @@ def extract_focus_properties(focus_lines):
     return props
 
 
-def extract_block(lines, start_index):
-    """Extract a multi-line block by counting braces"""
-    if start_index >= len(lines):
-        return [], start_index
-
-    block_lines = []
-    brace_count = 0
-    i = start_index
-
-    while i < len(lines):
-        line = lines[i]
-        block_lines.append(line)
-
-        line_no_comment = line.split("#")[
-            0
-        ]  # Strip inline comments before counting braces
-        brace_count += line_no_comment.count("{") - line_no_comment.count("}")
-
-        if brace_count == 0 and "{" in lines[start_index]:
-            # We've closed all braces, block is complete
-            i += 1
-            break
-        elif brace_count < 0:
-            # More closing than opening braces - malformed
-            break
-
-        i += 1
-
-    return block_lines, i  # Return the position AFTER the block (not i-1)
-
-
 def clean_block_lines(block_lines):
     """Remove trailing blank lines from a block and return cleaned lines"""
     if not block_lines:
@@ -222,20 +170,6 @@ def clean_block_lines(block_lines):
         block_lines.pop()
 
     return block_lines
-
-
-def compact_block(block_lines):
-    """Completely compact a block by removing all internal blank lines"""
-    if not block_lines:
-        return block_lines
-
-    compacted = []
-    for line in block_lines:
-        stripped = line.strip()
-        if stripped:
-            compacted.append(line.rstrip())
-
-    return compacted
 
 
 def _fix_log_id(line: str, focus_id: str) -> str:

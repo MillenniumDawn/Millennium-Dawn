@@ -3,8 +3,6 @@ title: Influence Guide
 description: Guide to the influence system in Millennium Dawn
 ---
 
-# Influence Guide
-
 Influence is one of the core diplomatic mechanics in Millennium Dawn. It represents the political, economic, and cultural leverage that countries hold over one another. By building influence in a target nation, you can shape its politics, extract economic benefits, and ultimately turn it into a subject state.
 
 ---

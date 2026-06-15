@@ -6,16 +6,22 @@ scripted_gui = {
 
 		dirty = global.update_monie_ui
 
+		ai_enabled = { always = no }
+
 		effects = {
 			open_protests_main_screen_button_click = {
 				if = {
 					limit = { NOT = { has_country_flag = open_protests_screen } }
 					set_country_flag = open_protests_screen
+					MD_protests_count_resisting_cores = yes
+					MD_protests_recompute_display = yes
 				}
 				else = {
 					clr_country_flag = open_protests_screen
+					MD_protests_clear_display_vars = yes
 				}
 				update_money_dirty_variable = yes
+				add_to_variable = { global.protest_ui_dirty = 1 }
 			}
 		}
 	}
@@ -24,11 +30,13 @@ scripted_gui = {
 		context_type = player_context
 		window_name = "protest_mechanic_decision_ui_window"
 
-		dirty = global.update_monie_ui
+		dirty = global.protest_ui_dirty
 
 		visible = {
 			ROOT = { has_country_flag = open_protests_screen }
 		}
+
+		ai_enabled = { always = no }
 
 		properties = {
 			welfare_spending_1_icon = {
@@ -153,6 +161,61 @@ scripted_gui = {
 			close_protest_screen_click = {
 				clr_country_flag = open_protests_screen
 				update_money_dirty_variable = yes
+				add_to_variable = { global.protest_ui_dirty = 1 }
+			}
+		}
+
+		triggers = {
+			MD_protests_state_calm_visible = {
+				NOT = { has_country_flag = MD_protest_mission_active }
+				NOT = { has_country_flag = MD_protest_cooldown }
+			}
+			MD_protests_state_warning_visible = {
+				has_active_mission = MD_incoming_protest_movement
+			}
+			MD_protests_state_revolt_visible = {
+				has_active_mission = MD_incoming_revolt
+			}
+			MD_protests_state_cooldown_visible = {
+				has_country_flag = MD_protest_cooldown
+				NOT = { has_country_flag = MD_protest_mission_active }
+			}
+
+			# Drift source rows — render when contributing (spending shows both signs)
+			MD_drift_spending_row_visible = {
+				OR = {
+					check_variable = { drift_spending_last > 0.01 }
+					check_variable = { drift_spending_last < -0.01 }
+				}
+			}
+			MD_drift_stability_row_visible = {
+				check_variable = { drift_stability_last > 0.01 }
+			}
+			MD_drift_interest_row_visible = {
+				check_variable = { drift_interest_last > 0.01 }
+			}
+			MD_drift_recession_row_visible = {
+				check_variable = { drift_recession_last > 0.01 }
+			}
+			MD_drift_depression_row_visible = {
+				check_variable = { drift_depression_last > 0.01 }
+			}
+			MD_drift_war_row_visible = {
+				check_variable = { drift_war_last > 0.01 }
+			}
+			MD_drift_corruption_row_visible = {
+				check_variable = { drift_corruption_last > 0.01 }
+			}
+			MD_drift_ct_row_visible = {
+				check_variable = { drift_ct_last > 0.01 }
+			}
+			MD_drift_passive_row_visible = {
+				check_variable = { drift_passive_last < 0 }
+			}
+
+			# Revolt-state tracker only during revolt
+			MD_protests_revolt_states_visible = {
+				has_active_mission = MD_incoming_revolt
 			}
 		}
 	}

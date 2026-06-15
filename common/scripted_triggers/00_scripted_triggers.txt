@@ -138,14 +138,6 @@ has_more_than_num_trade_agreement = {
 	}
 }
 
-# Check Treasury Amount
-has_more_than_temp_treasury = {
-	custom_trigger_tooltip = {
-		tooltip = has_more_than_temp_treasury_tt
-		check_variable = { treasury > temp_treasury }
-	}
-}
-
 # Power Ranking
 has_at_least_regional_power_status = {
 	custom_trigger_tooltip = {
@@ -257,30 +249,6 @@ controls_or_subject_of = {
 			OR = {
 				tag = ROOT
 				is_subject_of = ROOT
-			}
-		}
-	}
-}
-
-has_same_ideology = {
-	custom_trigger_tooltip = {
-		tooltip = has_same_ideology_tt
-		OR = {
-			AND = {
-				has_government = democratic
-				ROOT = { has_government = democratic }
-			}
-			AND = {
-				has_government = fascism
-				ROOT = { has_government = fascism }
-			}
-			AND = {
-				has_government = communism
-				ROOT = { has_government = communism }
-			}
-			AND = {
-				has_government = neutrality
-				ROOT = { has_government = neutrality }
 			}
 		}
 	}
@@ -410,25 +378,20 @@ country_can_be_reasonable_target_of_wargoal = {
 
 calculate_ai_interest = {
 	# Even if the country has treasury, we want to add the input cost to the debt to ensure we are getting the right end interest rate
-	set_temp_variable = { debt_temp = debt }
-	add_to_temp_variable = { debt_temp = input_cost }
-
-	set_temp_variable = { interest_rate_temp = debt_temp }
-	divide_temp_variable = { interest_rate_temp = gdp_total }
-	multiply_temp_variable = { interest_rate_temp = 10 }
-
-	set_temp_variable = { interest_rate_temp_multiplier = modifier@interest_rate_multiplier_modifier }
-	add_to_temp_variable = { interest_rate_temp = interest_rate_temp_multiplier }
-	check_variable = { interest_rate_temp > interest_rate_check }
-}
-Is_Muslim_Country = {
-	ROOT = {
-		OR = {
-			has_idea = sunni
-			has_idea = shia
-			has_idea = ibadi
-			has_idea = sufi_islam
+	set_temp_variable = {
+		debt_temp = {
+			value = debt
+			add = input_cost
 		}
+	}
+
+	check_expr = {
+		value = 0
+		add = debt_temp
+		divide = gdp_total
+		multiply = 10
+		add = modifier@interest_rate_multiplier_modifier
+		greater_than = { value = interest_rate_check }
 	}
 }
 
@@ -502,11 +465,198 @@ we_are_being_justified_against_or_wargoal_against_us = {
 # Uses total_uar_gdp and total_arabic_gdp variables
 # Clamps denominator to prevent division by zero
 uar_has_required_gdp_share = {
-	set_temp_variable = { gdp_share = total_uar_gdp }
-	clamp_temp_variable = { var = total_arabic_gdp min = 0.001 }
-	divide_temp_variable = { gdp_share = total_arabic_gdp }
 	custom_trigger_tooltip = {
 		tooltip = UAR_unite_uar_tt
-		check_variable = { gdp_share > 0.40 }
+		check_expr = {
+			value = total_uar_gdp
+			clamp = { min = 0 max = 100000000 }
+			divide = total_arabic_gdp
+			greater_than = { value = 0.40 }
+		}
+	}
+}
+
+# Random construction location triggers
+# Shared by the one_/two_/three_/four_ random building helpers in 00_scripted_effects.txt.
+# Each gates a state as a valid drop spot for a random instant-build: owned by the builder,
+# has a free slot, and is in the home area (or no home-area state has a free slot, so any owned state qualifies).
+
+# All shared-slot buildings (arms factory, civilian factory, offices, refineries, plants, agriculture, etc.)
+# draw from the same pooled state building slots, so one slot check covers them all.
+free_shared_building_slots = {
+	is_owned_by = PREV
+	free_building_slots = { building = industrial_complex size > 0 include_locked = yes }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = industrial_complex size > 0 include_locked = yes }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+dockyard_random_build_loc = {
+	is_owned_by = PREV
+	is_coastal = yes
+	free_building_slots = { building = dockyard size > 0 include_locked = yes }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = dockyard size > 0 include_locked = yes }
+					is_coastal = yes
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+infrastructure_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = infrastructure size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = infrastructure size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+nuclear_reactor_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = nuclear_reactor size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = nuclear_reactor size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+renewable_energy_infra_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = renewable_energy_infra size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = renewable_energy_infra size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+air_base_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = air_base size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = air_base size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+radar_station_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = radar_station size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = radar_station size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+anti_air_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = anti_air_building size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = anti_air_building size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+network_infrastructure_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = internet_station size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = internet_station size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+fuel_reserve_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = fuel_silo size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = fuel_silo size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+fossil_powerplant_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = fossil_powerplant size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = fossil_powerplant size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
 	}
 }

@@ -23,6 +23,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from shared_utils import strip_inline_comment
+
 # ---------------------------------------------------------------------------
 # Core OR-block parsing helpers (also imported by check_common_mistakes.py)
 # ---------------------------------------------------------------------------
@@ -35,7 +38,7 @@ def _tokenize_inner(text):
     """
     tokens = []
     for line in text.splitlines():
-        code = line.split("#")[0]
+        code = strip_inline_comment(line)
         for tok in re.findall(r"[{}=]|[^\s{}=#]+", code):
             tokens.append(tok)
     return tokens
@@ -140,13 +143,13 @@ def _collect_or_block(lines, start):
     line = lines[start]
     block_lines = [line]
     depth = 1
-    after_brace = re.sub(r"^.*OR\s*=\s*\{", "", line, count=1).split("#")[0]
+    after_brace = re.sub(r"^.*OR\s*=\s*\{", "", strip_inline_comment(line), count=1)
     depth += after_brace.count("{") - after_brace.count("}")
     j = start + 1
     while depth > 0 and j < len(lines):
         l = lines[j]
         block_lines.append(l)
-        code = l.split("#")[0]
+        code = strip_inline_comment(l)
         depth += code.count("{") - code.count("}")
         j += 1
     return block_lines, j
@@ -161,14 +164,14 @@ def _collect_block(lines, start):
 
     Returns (block_lines, next_index).
     """
-    code = lines[start].split("#")[0]
+    code = strip_inline_comment(lines[start])
     depth = code.count("{") - code.count("}")
     block_lines = [lines[start]]
     j = start + 1
     while depth > 0 and j < len(lines):
         l = lines[j]
         block_lines.append(l)
-        code = l.split("#")[0]
+        code = strip_inline_comment(l)
         depth += code.count("{") - code.count("}")
         j += 1
     return block_lines, j
@@ -263,7 +266,7 @@ def _simplify_and_single_pass(lines):
 
     while i < n:
         line = lines[i]
-        code = line.split("#")[0]
+        code = strip_inline_comment(line)
 
         if _RE_AND_OPEN.match(line):
             in_or = block_is_or[-1]
@@ -336,7 +339,7 @@ def find_single_condition_or_blocks(lines):
                 )
             i = j
         else:
-            code = line.split("#")[0]
+            code = strip_inline_comment(line)
             for m in _RE_INLINE_OR.finditer(code):
                 tokens = _tokenize_inner(m.group(1))
                 if _count_top_level_conditions(tokens) == 1:
@@ -366,7 +369,7 @@ def find_redundant_and_blocks(lines):
 
     while i < n:
         line = lines[i]
-        code = line.split("#")[0]
+        code = strip_inline_comment(line)
 
         if _RE_AND_OPEN.match(line):
             in_or = block_is_or[-1]

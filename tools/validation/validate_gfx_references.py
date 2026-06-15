@@ -1,31 +1,11 @@
 #!/usr/bin/env python3
-##########################
-# GFX Sprite Reference Validation Script
-#
-# Validates that sprite names referenced in .gui files, scripted GUIs, and
-# scripted localisation are defined in interface/*.gfx files.
-#
-# Checks:
-#   1. Build GFX definition set from all interface/*.gfx files
-#   2. Validate spriteType / quadTextureSprite / background references in .gui files
-#   3. Validate image = "GFX_xxx" references in common/scripted_guis/*.txt
-#   4. Validate localization_key = "GFX_xxx" in common/scripted_localisation/*.txt
-#   5. Unused GFX definitions (warning; skipped in staged mode; capped at 50)
-#
-# Note: validate_scripted_gui.py already checks spriteType/quadTextureSprite in
-# .gui files at WARNING level. This validator promotes those to ERROR, adds
-# background= and scripted-GUI image= coverage, and adds unused-sprite reporting.
-#
-# Usage:
-#   python3 tools/validation/validate_gfx_references.py [OPTIONS]
-#
-# Options:
-#   --path PATH         Path to mod root (default: auto-detected)
-#   --strict            Exit 1 if any errors found
-#   --no-color          Disable colour output
-#   --staged            Only validate staged .gui/.gfx/.txt files
-#   --workers N         Worker processes (default: CPU count / 2)
-##########################
+"""Validate GFX sprite references in interface/*.gui, scripted_guis, and scripted_localisation.
+
+Checks sprites referenced in .gui files (spriteType/quadTextureSprite/background),
+scripted_gui image= properties, and scripted_localisation localization_key= against
+the set defined in interface/*.gfx. Promotes .gui errors from WARNING to ERROR for
+MD-authored files; vanilla-override files stay at WARNING.
+"""
 import glob
 import os
 import re
@@ -34,12 +14,22 @@ from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import compute_line_offsets, line_for_offset
-from validator_common import BaseValidator, Colors, Severity, run_validator_main
+import disk_cache
+from shared_utils import (
+    compute_line_offsets,
+    extract_block_from_text,
+    find_hoi4_install,
+    line_for_offset,
+)
+from validator_common import (
+    BaseValidator,
+    Colors,
+    Severity,
+    case_mismatch,
+    casefold_index,
+    run_validator_main,
+)
 
-# ---------------------------------------------------------------------------
-# MD-authored file detection
-# ---------------------------------------------------------------------------
 # .gui files in MD fall into two categories:
 #   1. MD-authored: files the mod team wrote from scratch (scripted GUIs,
 #      country-specific GUIs, feature GUIs). Missing sprites here are real bugs.
@@ -47,51 +37,37 @@ from validator_common import BaseValidator, Colors, Severity, run_validator_main
 #      reference thousands of vanilla sprites the mod doesn't redefine. Missing
 #      sprites here are almost always vanilla refs — flag as WARNING only.
 #
-# Heuristic: a .gui file is MD-authored if its basename (without extension) starts
-# with a known MD or country prefix. Everything else is treated as a vanilla override.
+# A file is a vanilla override iff its basename matches a vanilla interface/*.gui
+# filename, listed in vanilla_gui_files.txt. Everything else is MD-authored. This
+# means new MD content of any naming convention is classified correctly with no
+# edits here; the manifest only needs regenerating on a HOI4 version bump (see
+# gen_vanilla_gui_manifest.py).
 
-_MD_GUI_PREFIXES = (
-    "MD_",
-    "EH_",
-    "ENG_",
-    "GER_",
-    "LBA_",
-    "Iran_",
-    "Iraq_",
-    "bos_",
-    "cze_",
-    "Counter_",
-    "agriculture_",
-    "SIN_",
-    "HKG_",
-    "HOL_",
-    "NKO_",
-    "GRE_",
-    "CYP_",
-    "SCO_",
-    "RAJ_",
-    "SUB_",
-    "PER_",
-    "ALG_",
-    "artsakh_",
-    "israel_",
-    "singapore_",
-    "divisions_summary",
-    "!MD_",
-)
+_VANILLA_GUI_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_gui_files.txt")
+
+
+def _load_vanilla_gui_basenames() -> frozenset:
+    try:
+        with open(_VANILLA_GUI_MANIFEST, encoding="utf-8") as fh:
+            return frozenset(
+                line.strip() for line in fh if line.strip() and not line.startswith("#")
+            )
+    except OSError:
+        # No manifest: treat every .gui as MD-authored (fail loud as ERRORs
+        # rather than silently downgrading real missing-sprite bugs).
+        return frozenset()
+
+
+_VANILLA_GUI_BASENAMES = _load_vanilla_gui_basenames()
 
 
 def _is_md_gui_file(filepath: str) -> bool:
     """Return True if this .gui file is MD-authored (not a vanilla override)."""
-    basename = os.path.basename(filepath)
-    return any(basename.startswith(p) for p in _MD_GUI_PREFIXES)
+    return os.path.basename(filepath) not in _VANILLA_GUI_BASENAMES
 
 
-# ---------------------------------------------------------------------------
-# Helpers — HOI4/Clausewitz comment stripping for .gfx and .gui files
-# These use C-style // and /* */ comments, NOT the # used by .txt scripts.
+# .gfx and .gui files use C-style // and /* */ comments, NOT the # used by .txt scripts.
 # strip_comments() from shared_utils strips # comments; do NOT use it here.
-# ---------------------------------------------------------------------------
 
 _BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 _LINE_COMMENT_RE = re.compile(r"//.*")
@@ -111,10 +87,6 @@ def _strip_comments(text: str) -> str:
     text = _HASH_COMMENT_RE.sub("", text)
     return text
 
-
-# ---------------------------------------------------------------------------
-# Regex constants
-# ---------------------------------------------------------------------------
 
 # All sprite type block openers in .gfx files; all use `name = "GFX_xxx"`.
 # We collect any `name = "GFX_xxx"` inside any of these blocks.
@@ -137,6 +109,15 @@ _SGUI_IMAGE_REF = re.compile(r'\bimage\s*=\s*"(GFX_[^"\[]+)"')
 
 # Scripted localisation: localization_key = "GFX_xxx"
 _SLOC_KEY_REF = re.compile(r'\blocalization_key\s*=\s*"(GFX_[^"\[]+)"')
+
+# Any literal GFX_ sprite token in game script (event `picture = GFX_x`, focus
+# `icon = GFX_x`, decision icons, MIO/agency logos, portraits, etc.). Names can
+# carry `.` frame suffixes and `-`. Used only to mark sprites as referenced for
+# the unused-sprite check, so over-matching (e.g. a token in a string) is safe.
+_GFX_TOKEN_REF = re.compile(r"GFX_[A-Za-z0-9_.\-]+")
+_HASH_COMMENT = re.compile(r"#[^\n]*")
+# Idea `picture = X` resolves to the sprite `GFX_idea_X` (X is not GFX_-prefixed).
+_IDEA_PICTURE_REF = re.compile(r"^\s*picture\s*=\s*([A-Za-z0-9_.\-]+)", re.MULTILINE)
 
 # Auto-generated flag sprites — never defined in .gfx, built by the engine.
 # Matches GFX_flag_TAG, GFX_TAG_flag, GFX_shield_TAG etc.
@@ -167,34 +148,17 @@ _VANILLA_PREFIXES = (
     "GFX_politics_",
 )
 
-# Common Steam install locations for vanilla HOI4 — used to detect vanilla
-# interface/*.gfx for sprite resolution. Mirrors validate_defines.py.
-_VANILLA_HOI4_PATHS = [
-    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
-    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
-    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
-    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
-    os.path.expanduser(
-        "~/Library/Application Support/Steam/steamapps/common/Hearts of Iron IV"
-    ),
-]
-
 
 def _find_vanilla_interface_dir() -> Optional[str]:
     """Return the vanilla HOI4 interface/ directory if discoverable."""
-    env_path = os.environ.get("HOI4_PATH")
-    if env_path:
-        interface = os.path.join(env_path, "interface")
-        if os.path.isdir(interface):
-            return interface
-    for base in _VANILLA_HOI4_PATHS:
+    base = find_hoi4_install()
+    if base:
         interface = os.path.join(base, "interface")
         if os.path.isdir(interface):
             return interface
     return None
 
 
-# Max unused sprites to list before summarising remainder
 _UNUSED_SPRITE_LIMIT = 50
 
 
@@ -213,136 +177,146 @@ def _is_likely_vanilla(name: str) -> bool:
     return any(name.startswith(p) for p in _VANILLA_PREFIXES)
 
 
-def _balance_braces(text: str, start: int) -> Optional[int]:
-    """Return position of the closing '}' matching the '{' at text[start-1].
-
-    ``start`` is the index *after* the opening brace. Returns None if the
-    text is unbalanced.
-    """
-    depth = 1
-    i = start
-    n = len(text)
-    in_str = False
-    while i < n:
-        c = text[i]
-        if c == '"' and (i == 0 or text[i - 1] != "\\"):
-            in_str = not in_str
-        elif not in_str:
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    return i
-        i += 1
-    return None
+# Per-file parsers take (filepath, mod_path) and disk-cache their result keyed
+# on file content, so a warm run only re-parses changed files. .gfx/.gui scans
+# cover all of interface/, so the cache is the bulk of the speedup.
 
 
-# ---------------------------------------------------------------------------
-# Per-file worker functions (top-level so they're picklable)
-# ---------------------------------------------------------------------------
-
-
-def _parse_gfx_file(filepath: str) -> Set[str]:
-    """Return the set of GFX sprite names defined in a .gfx file."""
+def _read_raw(filepath: str) -> Optional[str]:
     try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            return fh.read()
     except Exception:
+        return None
+
+
+def _parse_gfx_file(args: Tuple[str, str]) -> Set[str]:
+    """Return the set of GFX sprite names defined in a .gfx file."""
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
         return set()
 
-    text = _strip_comments(raw)
-    names: Set[str] = set()
+    def _compute():
+        text = _strip_comments(raw)
+        names: Set[str] = set()
+        for m in _GFX_SPRITE_TYPES.finditer(text):
+            block_start = m.end()
+            snippet, end = extract_block_from_text(text, block_start - 1)
+            if end == -1:
+                # Unbalanced braces: fall back to scanning the rest of the line.
+                line_end = text.find("\n", m.start())
+                snippet = text[
+                    block_start : line_end if line_end != -1 else block_start + 200
+                ]
+            nm = _GFX_NAME.search(snippet)
+            if nm:
+                names.add(nm.group(1))
+        return names
 
-    for m in _GFX_SPRITE_TYPES.finditer(text):
-        block_start = m.end()
-        block_end = _balance_braces(text, block_start)
-        if block_end is None:
-            # Unbalanced braces: fall back to scanning the rest of the line.
-            line_end = text.find("\n", m.start())
-            snippet = text[
-                block_start : line_end if line_end != -1 else block_start + 200
-            ]
-        else:
-            snippet = text[block_start:block_end]
-        nm = _GFX_NAME.search(snippet)
-        if nm:
-            names.add(nm.group(1))
-
-    return names
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.gfx", filepath, raw, _compute
+    )
 
 
-def _parse_gui_file(
-    filepath: str,
-) -> List[Tuple[str, str, int]]:
+def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a .gui file."""
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
-    except Exception:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
         return []
 
-    text = _strip_comments(raw)
-    offsets = compute_line_offsets(raw)
-    results = []
-    for m in _GUI_REF.finditer(text):
-        sprite = m.group(2)
-        if _is_dynamic(sprite):
-            continue
-        line = line_for_offset(offsets, m.start())
-        results.append((sprite, filepath, line))
-    return results
+    def _compute():
+        text = _strip_comments(raw)
+        offsets = compute_line_offsets(raw)
+        results = []
+        for m in _GUI_REF.finditer(text):
+            sprite = m.group(2)
+            if _is_dynamic(sprite):
+                continue
+            line = line_for_offset(offsets, m.start())
+            results.append((sprite, filepath, line))
+        return results
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.gui", filepath, raw, _compute
+    )
 
 
-def _parse_sgui_file(
-    filepath: str,
-) -> List[Tuple[str, str, int]]:
+def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_gui .txt file."""
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
-    except Exception:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
         return []
 
-    # scripted_gui .txt files use # comments (Clausewitz script style)
-    # but the image = "GFX_xxx" attribute pattern is the same.
-    # We don't strip # comments here to avoid stripping scripted loc keys
-    # that start with # — just use raw text.
-    offsets = compute_line_offsets(raw)
-    results = []
-    for m in _SGUI_IMAGE_REF.finditer(raw):
-        sprite = m.group(1)
-        if _is_dynamic(sprite):
-            continue
-        line = line_for_offset(offsets, m.start())
-        results.append((sprite, filepath, line))
-    return results
+    def _compute():
+        # scripted_gui .txt files use # comments (Clausewitz script style) but the
+        # image = "GFX_xxx" attribute pattern is the same. We don't strip # comments
+        # here to avoid stripping scripted loc keys that start with # — use raw text.
+        offsets = compute_line_offsets(raw)
+        results = []
+        for m in _SGUI_IMAGE_REF.finditer(raw):
+            sprite = m.group(1)
+            if _is_dynamic(sprite):
+                continue
+            line = line_for_offset(offsets, m.start())
+            results.append((sprite, filepath, line))
+        return results
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.sgui", filepath, raw, _compute
+    )
 
 
-def _parse_sloc_file(
-    filepath: str,
-) -> List[Tuple[str, str, int]]:
+def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
+    """Return every GFX sprite a game-script .txt file references.
+
+    Picks up literal `GFX_xxx` tokens (event pictures, focus/decision icons,
+    MIO and agency logos, portraits, etc.) plus idea `picture = X` entries,
+    which resolve to `GFX_idea_X`. Comment lines are stripped first so a
+    commented-out reference does not mask a genuinely unused sprite. Content-
+    cached, so a warm run only re-scans changed files.
+    """
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    def _compute() -> List[str]:
+        text = _HASH_COMMENT.sub("", raw)
+        refs = set(_GFX_TOKEN_REF.findall(text))
+        if os.sep + "ideas" + os.sep in filepath:
+            for m in _IDEA_PICTURE_REF.finditer(text):
+                refs.add("GFX_idea_" + m.group(1))
+        return sorted(refs)
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.script", filepath, raw, _compute
+    )
+
+
+def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_localisation .txt file."""
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
-    except Exception:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
         return []
 
-    offsets = compute_line_offsets(raw)
-    results = []
-    for m in _SLOC_KEY_REF.finditer(raw):
-        sprite = m.group(1)
-        if _is_dynamic(sprite):
-            continue
-        line = line_for_offset(offsets, m.start())
-        results.append((sprite, filepath, line))
-    return results
+    def _compute():
+        offsets = compute_line_offsets(raw)
+        results = []
+        for m in _SLOC_KEY_REF.finditer(raw):
+            sprite = m.group(1)
+            if _is_dynamic(sprite):
+                continue
+            line = line_for_offset(offsets, m.start())
+            results.append((sprite, filepath, line))
+        return results
 
-
-# ---------------------------------------------------------------------------
-# Validator
-# ---------------------------------------------------------------------------
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.sloc", filepath, raw, _compute
+    )
 
 
 class GfxReferenceValidator(BaseValidator):
@@ -351,10 +325,6 @@ class GfxReferenceValidator(BaseValidator):
 
     def __init__(self, mod_path: str, **kwargs):
         super().__init__(mod_path, **kwargs)
-
-    # ------------------------------------------------------------------
-    # Build phases
-    # ------------------------------------------------------------------
 
     def _build_gfx_definitions(self) -> Tuple[Set[str], Set[str]]:
         """Scan all interface/*.gfx files and return (all_defined, mod_defined).
@@ -370,7 +340,9 @@ class GfxReferenceValidator(BaseValidator):
         self._log_section("Building GFX sprite definition set")
         # Always scan the full repo — definitions must come from anywhere.
         gfx_files = self._collect_files(["interface/*.gfx"], ignore_staged=True)
-        results = self._pool_map(_parse_gfx_file, gfx_files)
+        results = self._pool_map(
+            _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
+        )
         mod_defined: Set[str] = set()
         for s in results:
             mod_defined.update(s)
@@ -382,7 +354,9 @@ class GfxReferenceValidator(BaseValidator):
         vanilla_dir = _find_vanilla_interface_dir()
         if vanilla_dir:
             vanilla_gfx = glob.glob(os.path.join(vanilla_dir, "*.gfx"))
-            vanilla_results = self._pool_map(_parse_gfx_file, vanilla_gfx)
+            vanilla_results = self._pool_map(
+                _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
+            )
             vanilla_defined: Set[str] = set()
             for s in vanilla_results:
                 vanilla_defined.update(s)
@@ -404,19 +378,47 @@ class GfxReferenceValidator(BaseValidator):
         self._log_section("Collecting GFX references from interface/*.gui files")
         gui_files = self._collect_files(["interface/*.gui"])
         all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(_parse_gui_file, gui_files):
+        for batch in self._pool_map(
+            _parse_gui_file, [(f, self.mod_path) for f in gui_files]
+        ):
             all_refs.extend(batch)
         self.log(
             f"  Scanned {len(gui_files)} .gui files; found {len(all_refs)} GFX references"
         )
         return all_refs
 
+    def _collect_script_refs(self) -> Set[str]:
+        """Return every GFX sprite referenced from game script (events, common, history).
+
+        Feeds the unused-sprite check so sprites used as event pictures, focus or
+        decision icons, MIO/agency logos, portraits, etc. are not mis-reported as
+        unused just because they are not referenced from interface/.
+        """
+        self._log_section(
+            "Collecting GFX references from game script (events/common/history)"
+        )
+        files = self._collect_files(
+            ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"],
+            ignore_staged=True,
+        )
+        refs: Set[str] = set()
+        for batch in self._pool_map(
+            _parse_script_refs, [(f, self.mod_path) for f in files]
+        ):
+            refs.update(batch)
+        self.log(
+            f"  Scanned {len(files)} script files; found {len(refs)} distinct GFX references"
+        )
+        return refs
+
     def _collect_sgui_refs(self, defined: Set[str]) -> List[Tuple[str, str, int]]:
         """Return undefined image= references from common/scripted_guis/*.txt."""
         self._log_section("Collecting GFX image= references from scripted_guis/*.txt")
         sgui_files = self._collect_files(["common/scripted_guis/*.txt"])
         all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(_parse_sgui_file, sgui_files):
+        for batch in self._pool_map(
+            _parse_sgui_file, [(f, self.mod_path) for f in sgui_files]
+        ):
             all_refs.extend(batch)
         self.log(
             f"  Scanned {len(sgui_files)} scripted_gui files; found {len(all_refs)} GFX image= references"
@@ -430,16 +432,14 @@ class GfxReferenceValidator(BaseValidator):
         )
         sloc_files = self._collect_files(["common/scripted_localisation/*.txt"])
         all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(_parse_sloc_file, sloc_files):
+        for batch in self._pool_map(
+            _parse_sloc_file, [(f, self.mod_path) for f in sloc_files]
+        ):
             all_refs.extend(batch)
         self.log(
             f"  Scanned {len(sloc_files)} scripted_localisation files; found {len(all_refs)} GFX references"
         )
         return all_refs
-
-    # ------------------------------------------------------------------
-    # Check phases
-    # ------------------------------------------------------------------
 
     def _check_undefined_refs(
         self,
@@ -448,6 +448,7 @@ class GfxReferenceValidator(BaseValidator):
         source_label: str,
         category: str,
         gui_mode: bool = False,
+        mod_defined_ci: Optional[dict] = None,
     ) -> None:
         """Report any sprite names in refs that are not in defined.
 
@@ -456,10 +457,15 @@ class GfxReferenceValidator(BaseValidator):
         those files legitimately reference vanilla sprites the mod doesn't
         redefine. MD-authored .gui files and all scripted_gui/.txt files
         get ERROR severity.
+
+        *mod_defined_ci* is the casefold index of mod-only sprites (not
+        vanilla). When a ref misses case-sensitively but hits here, the
+        message is upgraded to a Linux case-mismatch diagnostic.
         """
         errors: List[Tuple[str, str, int]] = []
         warnings: List[Tuple[str, str, int]] = []
         seen: Set[Tuple[str, str, int]] = set()
+        ci = mod_defined_ci or {}
 
         for sprite, filepath, line in refs:
             if sprite in defined:
@@ -473,7 +479,15 @@ class GfxReferenceValidator(BaseValidator):
             if key in seen:
                 continue
             seen.add(key)
-            entry = (f"Undefined sprite '{sprite}'", rel, line)
+            canonical = case_mismatch(sprite, ci)
+            if canonical:
+                msg = (
+                    f"Undefined sprite '{sprite}': case-mismatch reference '{sprite}'"
+                    f" — defined as '{canonical}' (works on Windows, fails on Linux)"
+                )
+            else:
+                msg = f"Undefined sprite '{sprite}'"
+            entry = (msg, rel, line)
             if gui_mode and not _is_md_gui_file(filepath):
                 warnings.append(entry)
             else:
@@ -552,15 +566,12 @@ class GfxReferenceValidator(BaseValidator):
             category="unused-sprite",
         )
 
-    # ------------------------------------------------------------------
-    # Entry point
-    # ------------------------------------------------------------------
-
     def run_validations(self) -> None:
-        # Phase 1: build the complete definition set (always full-repo scan)
         defined, mod_defined = self._build_gfx_definitions()
+        # Case-insensitive index of mod-only sprites — never suggest a
+        # vanilla-only sprite as the canonical name for a case-mismatch.
+        mod_defined_ci = casefold_index(mod_defined)
 
-        # Phase 2: collect all references from the (possibly staged) files
         gui_refs = self._collect_gui_refs(defined)
         sgui_refs = self._collect_sgui_refs(defined)
         sloc_refs = self._collect_sloc_refs(defined)
@@ -572,6 +583,7 @@ class GfxReferenceValidator(BaseValidator):
             source_label=".gui files",
             category="undefined-sprite",
             gui_mode=True,
+            mod_defined_ci=mod_defined_ci,
         )
 
         self._log_section("Checking undefined GFX sprite references in scripted_guis")
@@ -580,6 +592,7 @@ class GfxReferenceValidator(BaseValidator):
             defined,
             source_label="scripted_guis",
             category="undefined-sprite",
+            mod_defined_ci=mod_defined_ci,
         )
 
         self._log_section(
@@ -590,11 +603,14 @@ class GfxReferenceValidator(BaseValidator):
             defined,
             source_label="scripted_localisation",
             category="undefined-sprite",
+            mod_defined_ci=mod_defined_ci,
         )
 
-        # Phase 4: unused sprites — only against mod-defined; vanilla sprites the
-        # mod doesn't redefine aren't ours to flag as unused.
+        # Unused-sprite check is mod-only; vanilla sprites the mod doesn't redefine aren't ours to flag.
+        # A sprite is "used" if referenced anywhere — interface/ or game script.
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
+        if not self.staged_only:
+            all_referenced |= self._collect_script_refs()
         self._check_unused_sprites(mod_defined, all_referenced)
 
 

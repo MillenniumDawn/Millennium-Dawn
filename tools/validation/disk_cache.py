@@ -7,6 +7,10 @@ merged result when any contributing file's stat changes.
 
 Cache lives under `.validation_cache/v<N>/` (gitignored). Pool workers call
 these directly; atomic writes via `os.replace` keep concurrent writers safe.
+
+Bypass: set ``MD_NO_CACHE=1`` in the environment or pass ``--no-cache`` to
+any validator (which sets the env var automatically). Both skip every lookup
+and every write.
 """
 
 from __future__ import annotations
@@ -19,7 +23,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, List, Optional, Tuple
 
 # Bump to invalidate every entry after a schema change.
-CACHE_VERSION = 3
+CACHE_VERSION = 4
 
 _CACHE_DIR_NAME = ".validation_cache"
 _PICKLE_ERRORS = (FileNotFoundError, EOFError, pickle.UnpicklingError, OSError)

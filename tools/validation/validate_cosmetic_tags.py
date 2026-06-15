@@ -11,6 +11,7 @@ from typing import Dict, List, Set, Tuple
 
 import disk_cache
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
     DataCleaner,
@@ -20,7 +21,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
 # Millennium Dawn ideology suffixes for flag .tga matching
 MD_IDEOLOGY_SUFFIXES = [
@@ -99,7 +100,7 @@ def process_file_for_has_cosmetic_tag_lookup(args: Tuple[str, frozenset]) -> Set
     if _should_skip(filename):
         return set()
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return set()
     cleaned = re.sub(r"#[^\n]*", "", text)
@@ -115,7 +116,7 @@ def process_file_for_cosmetic_tag_in_loc(args: Tuple[str, frozenset]) -> Dict[st
     if _should_skip(filename):
         return {}
     try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)

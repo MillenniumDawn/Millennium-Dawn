@@ -3,7 +3,6 @@
 # the GUI buttons that set the legco_<topic>_motion country flags.
 
 legco_not_has_a_active_motion = {
-	NOT = { has_country_flag = HKG_electoral_reform_done }
 	NOT = { has_country_flag = HKG_electoral_reform_mainland_a }
 	NOT = { has_country_flag = HKG_electoral_reform_mainland_b }
 	NOT = { has_country_flag = HKG_electoral_reform_mainland_c }
@@ -11,20 +10,11 @@ legco_not_has_a_active_motion = {
 
 legco_has_a_special_active_motion = {
 	OR = {
-		has_country_flag = HKG_electoral_reform_done
 		has_country_flag = HKG_electoral_reform_mainland_a
 		has_country_flag = HKG_electoral_reform_mainland_b
 		has_country_flag = HKG_electoral_reform_mainland_c
 	}
 }
-
-HKG_no_triad_decisions_active = {
-	NOT = { has_decision = HKG_send_undercover_police }
-	NOT = { has_decision = HKG_search_suspected_triad_gatherings }
-	NOT = { has_decision = HKG_pay_off_informant }
-	NOT = { has_decision = HKG_arrest_peripheral_members_of_triad }
-}
-
 
 HKG_contract_can_build_ships = {
 	has_tech = tech_diesel_power_systems_1
@@ -42,8 +32,7 @@ HKG_contract_can_build_any = {
 	}
 }
 
-# Proxy for an expanding PLA Navy: HOI4 script cannot read AI strategy, so this
-# keys off observable signals instead.
+
 HKG_contract_china_naval_drive = {
 	CHI = {
 		OR = {
@@ -53,10 +42,33 @@ HKG_contract_china_naval_drive = {
 	}
 }
 
+HKG_contract_has_active_contract = {
+	has_country_flag = HKG_contract_active
+	check_variable = { HKG_contract_count > 0 }
+}
+
 HKG_contract_can_solicit = {
 	has_country_flag = HKG_contract_active
 	NOT = { has_country_flag = HKG_contract_offer_pending }
 	check_variable = { HKG_contract_count < HKG_contract_max_slots }
+}
+
+# AI-only confidence gate: only solicit a new contract when Hong Kong can
+# realistically build and deliver the ships before the deadline, so the AI
+# never eats the Beijing displeasure penalty for a missed slot.
+HKG_contract_can_finish_in_time = {
+	# Must be able to lay down an escort hull at all.
+	HKG_contract_can_build_any = yes
+	# Dockyard capacity to actually produce within the 365-730 day deadlines.
+	num_of_naval_factories > 3
+	# Wartime diverts/blockades the yards; deliveries slip and the slot is missed.
+	has_war = no
+	# Don't stack contracts beyond what the yards can run in parallel:
+	# require one free yard's worth of slack per active contract.
+	custom_trigger_tooltip = {
+		tooltip = HKG_contract_yard_slack_tt
+		check_variable = { HKG_contract_count < num_of_naval_factories }
+	}
 }
 
 HKG_contract_destroyer_active = {
