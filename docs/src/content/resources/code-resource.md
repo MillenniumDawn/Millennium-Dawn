@@ -539,13 +539,14 @@ change_current_influencer_index_percentage = yes
 ### Party Popularity
 
 ```hoiscript
-# Set party index (0-23) and change popularity
-set_temp_variable = { party_index = 2 }
+# Add relative popularity to the ruling party (default)
 set_temp_variable = { party_popularity_increase = 0.10 }  # 10% = 0.10
 add_relative_party_popularity = yes
 
-# Or set to ruling party automatically
-set_party_index_to_ruling_party = yes
+# Or target a specific party by index (0-23)
+set_temp_variable = { party_index = 2 }
+set_temp_variable = { party_popularity_increase = 0.10 }
+add_relative_party_popularity = yes
 ```
 
 ### Ruling Party Changes
