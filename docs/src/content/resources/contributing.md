@@ -3,7 +3,7 @@ title: Contributing to the Docs Site
 description: How to contribute to the Millennium Dawn documentation site — bun setup, content conventions, link rules, and the docs CI pipeline.
 ---
 
-This guide covers contributing to the **documentation site** (the `docs/` directory and the pages it builds). For contributing to the mod itself (focus trees, events, ideas, AI, graphics, map work), see the [Developer Setup Guide](/dev-resources/developer-setup/).
+This guide covers contributing to the **documentation site** (the `docs/` directory and the pages it builds). For contributing to the mod itself (focus trees, events, ideas, AI, graphics, map work), see the [Developer Setup Guide](/dev-resources/developer-setup//.
 
 > **Repo-root context**: [`CONTRIBUTING.md`](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) is a slim pointer to the right docs.
 
@@ -85,7 +85,7 @@ Country pages have additional required fields: `unique_focus_tree` (boolean), `g
 
 ### Links
 
-Internal links must be **root-relative**: `[Guide](/dev-resources/guide-name/)`. Do not hardcode `"/Millennium-Dawn/..."` or use `../` relative paths. The base path is applied during build.
+Internal links must be **root-relative**: `[Guide](/dev-resources/guide-name//`. Do not hardcode `"/Millennium-Dawn/..."` or use `../` relative paths. The base path is applied during build.
 
 Always include a trailing slash on internal links. Both forms resolve, but trailing-slash is the standard and avoids inconsistencies.
 
@@ -200,11 +200,11 @@ Non-English localisation is managed through [Paratranz](https://paratranz.cn/pro
 
 ## Related Resources
 
-- [Developer Setup Guide](/dev-resources/developer-setup/): main developer guide for the mod.
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/): formatting and code structure.
-- [Content Review Guide](/dev-resources/content-review-guide/): quality checklist.
-- [Git Workflow](/dev-resources/git-workflow/): branch/commit/PR process.
-- [AI Modding Guide](/dev-resources/ai-modding-guide/): AI tools for development.
+- [Developer Setup Guide](/dev-resources/developer-setup//: main developer guide for the mod.
+- [Code Stylization Guide](/dev-resources/code-stylization-guide//: formatting and code structure.
+- [Content Review Guide](/dev-resources/content-review-guide//: quality checklist.
+- [Git Workflow](/dev-resources/git-workflow//: branch/commit/PR process.
+- [AI Modding Guide](/dev-resources/ai-modding-guide//: AI tools for development.
 - [`CONTRIBUTING.md`](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md): repo-root pointer.
 
 ---

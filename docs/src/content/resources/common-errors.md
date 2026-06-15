@@ -120,7 +120,7 @@ trigger = {
 - **nvtt_export / texconv:** Use the `-m 1` flag to generate only a single mip level
 - **tools/assets/batchdds-2.py:** The repo's built-in converter already exports without mipmaps by default
 
-Focus icons should be saved as **DXT5 (BC3)** format, **without mipmaps**, at **70x70** pixels. See the [Art Standards](/dev-resources/art-standards/) for the full list of formats by asset type.
+Focus icons should be saved as **DXT5 (BC3)** format, **without mipmaps**, at **70x70** pixels. See the [Art Standards](/dev-resources/art-standards// for the full list of formats by asset type.
 
 ---
 

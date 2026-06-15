@@ -74,7 +74,7 @@ To update a skill's behavior, edit the relevant `.SKILL.md` file. To add a new s
 
 ## Related Resources
 
-- [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist)
-- [Content Review Guide](/dev-resources/content-review-guide)
-- [New General Guidelines](/dev-resources/new-general-guidelines)
-- [Code Stylization Guide](/dev-resources/code-stylization-guide)
+- [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/
+- [Content Review Guide](/dev-resources/content-review-guide/
+- [New General Guidelines](/dev-resources/new-general-guidelines/
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/

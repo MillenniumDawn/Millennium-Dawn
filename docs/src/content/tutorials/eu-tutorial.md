@@ -155,7 +155,7 @@ EU laws follow a two-stage process:
 
 If either vote fails, the law does not pass, and the parliamentary agenda resets after a delay.
 
-For the complete flowchart of EU law progression, see the [EU Law Flowchart](/player-tutorials/eu-law-flowchart/).
+For the complete flowchart of EU law progression, see the [EU Law Flowchart](/player-tutorials/eu-law-flowchart//.
 
 ### 6.2 Focus Categories
 

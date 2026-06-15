@@ -67,7 +67,7 @@ claude
 > /validate
 ```
 
-See [Claude Code Skills](/dev-resources/claude-code-skills/) for the full skill reference.
+See [Claude Code Skills](/dev-resources/claude-code-skills// for the full skill reference.
 
 ## GitHub Copilot
 
@@ -80,7 +80,7 @@ See [Claude Code Skills](/dev-resources/claude-code-skills/) for the full skill 
 
 **Best for:** Autocompleting repetitive script patterns, generating boilerplate event/decision/focus blocks.
 
-**Limitations:** Copilot does not know MD-specific conventions (tab indentation, logging requirements, `ai_will_do` patterns). Always review its output against the [Code Stylization Guide](/dev-resources/code-stylization-guide/).
+**Limitations:** Copilot does not know MD-specific conventions (tab indentation, logging requirements, `ai_will_do` patterns). Always review its output against the [Code Stylization Guide](/dev-resources/code-stylization-guide//.
 
 ## Local Models with Ollama
 
@@ -142,24 +142,7 @@ ollama run codellama
 }
 ```
 
-**Cline extension**: lightweight, direct Ollama integration:
-
-1. Install [Cline](https://marketplace.visualstudio.com/items?itemName=cline.cline).
-2. Configure in VS Code settings (Ctrl/Cmd + , → Extensions → Cline):
-
-```json
-{
-  "cline.models": [
-    {
-      "name": "codellama",
-      "provider": "ollama",
-      "baseUrl": "http://localhost:11434",
-      "model": "codellama"
-    }
-  ],
-  "cline.defaultModel": "codellama"
-}
-```
+**Cline extension**: lightweight, direct Ollama integration. Install [Cline](https://marketplace.visualstudio.com/items?itemName=cline.cline), then configure in VS Code settings (Ctrl/Cmd + , → Extensions → Cline) with the same model config as above. The `baseUrl` is `http://localhost:11434` by default.
 
 ### Custom MD Expert Model
 
@@ -312,7 +295,7 @@ Run `/validate` or `pre-commit run --files <path>` to catch these automatically.
 
 # Related Resources
 
-- [Contributing Guide](/dev-resources/contributing/), Contribution types, fork workflow, AI policy
-- [Claude Code Skills](/dev-resources/claude-code-skills/), Full skill reference
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/), Formatting and code structure
-- [Content Review Guide](/dev-resources/content-review-guide/), Quality checklist
+- [Contributing Guide](/dev-resources/contributing//, Contribution types, fork workflow, AI policy
+- [Claude Code Skills](/dev-resources/claude-code-skills//, Full skill reference
+- [Code Stylization Guide](/dev-resources/code-stylization-guide//, Formatting and code structure
+- [Content Review Guide](/dev-resources/content-review-guide//, Quality checklist

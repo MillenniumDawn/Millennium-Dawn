@@ -423,7 +423,7 @@ African nations that have completed the relevant AU focus can access the African
 
 ## Monetary Policy
 
-For full details on monetary policy (Expand Money Supply, Austerity Measures, central bank policy rate, currency backing, and reserve currencies), see the [Economy Guide](/player-tutorials/economy-guide#currency-and-monetary-policy).
+For full details on monetary policy (Expand Money Supply, Austerity Measures, central bank policy rate, currency backing, and reserve currencies), see the [Economy Guide](/player-tutorials/economy-guide/#currency-and-monetary-policy).
 
 ---
 
@@ -480,6 +480,6 @@ Sanctions can be increased or decreased through diplomatic events, focus trees, 
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide) - For details on economic mechanics including treasury and debt
-- [European Union Tutorial](/player-tutorials/eu-tutorial) - For EU-specific systems
-- [Game Rules](/player-tutorials/game-rules)
+- [Economy Guide](/player-tutorials/economy-guide/ - For details on economic mechanics including treasury and debt
+- [European Union Tutorial](/player-tutorials/eu-tutorial/ - For EU-specific systems
+- [Game Rules](/player-tutorials/game-rules/

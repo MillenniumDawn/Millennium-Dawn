@@ -281,6 +281,6 @@ If history shows the line existed and was removed, restore it (the old XZ may st
 
 ## See Also
 
-- [GFX Entity & Asset Errors](/dev-resources/gfx-entity-errors/), for the general `pdx_entity.cpp` and `assetfactory.cpp` error patterns
-- [Art Standards](/dev-resources/art-standards/), DDS format specifications for the mesh textures
-- [Terrain Photo System](/dev-resources/terrain-photo-guide/), a similar multi-file system pattern for state-level art
+- [GFX Entity & Asset Errors](/dev-resources/gfx-entity-errors//, for the general `pdx_entity.cpp` and `assetfactory.cpp` error patterns
+- [Art Standards](/dev-resources/art-standards//, DDS format specifications for the mesh textures
+- [Terrain Photo System](/dev-resources/terrain-photo-guide//, a similar multi-file system pattern for state-level art

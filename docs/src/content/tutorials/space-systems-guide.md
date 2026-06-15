@@ -386,5 +386,5 @@ This provides a support company that can be attached to divisions for orbital pr
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide) - For electricity and building systems
-- [Mechanics Guide](/player-tutorials/mechanics-guide) - For power ranking bonuses
+- [Economy Guide](/player-tutorials/economy-guide/ - For electricity and building systems
+- [Mechanics Guide](/player-tutorials/mechanics-guide/ - For power ranking bonuses

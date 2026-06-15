@@ -5,7 +5,7 @@ description: The main developer guide for Millennium Dawn. Get your environment 
 
 This is the main developer guide for contributing to Millennium Dawn. It covers everything you need to start: prerequisites, cloning, tooling, pre-commit hooks, the day-to-day workflow, and where to find the rest of the team docs.
 
-> **For docs site work specifically**, see the [Contributing Guide](/dev-resources/contributing/) which covers `bun run dev`, content conventions, and the docs CI pipeline.
+> **For docs site work specifically**, see the [Contributing Guide](/dev-resources/contributing// which covers `bun run dev`, content conventions, and the docs CI pipeline.
 
 > **For repo-root context**, see [`CONTRIBUTING.md`](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md), a slim pointer to the right docs.
 
@@ -24,9 +24,9 @@ Optional but useful:
 
 | Tool                                | Purpose                                                                                 |
 | ----------------------------------- | --------------------------------------------------------------------------------------- |
-| **Node.js 24 LTS** + **Bun**        | Docs site development only (see the [Contributing Guide](/dev-resources/contributing/)) |
+| **Node.js 24 LTS** + **Bun**        | Docs site development only (see the [Contributing Guide](/dev-resources/contributing//) |
 | **GitKraken** or **GitHub Desktop** | Git GUI (pick one)                                                                      |
-| **Claude Code**                     | AI-assisted development (see [AI Modding Guide](/dev-resources/ai-modding-guide/))      |
+| **Claude Code**                     | AI-assisted development (see [AI Modding Guide](/dev-resources/ai-modding-guide//)      |
 
 ---
 
@@ -61,7 +61,7 @@ cd Millennium-Dawn
    git checkout -b my-feature main
    ```
 
-See [Git Workflow](/dev-resources/git-workflow/) for the full fork-based workflow.
+See [Git Workflow](/dev-resources/git-workflow// for the full fork-based workflow.
 
 ## Staying Up to Date
 
@@ -112,7 +112,7 @@ To verify your environment at any time:
 python3 tools/setup.py --check
 ```
 
-For docs site work, also install the Node and Bun dependencies (see the [Contributing Guide](/dev-resources/contributing/)):
+For docs site work, also install the Node and Bun dependencies (see the [Contributing Guide](/dev-resources/contributing//):
 
 ```bash
 python3 tools/setup.py --docs
@@ -223,7 +223,7 @@ The repo includes a pre-configured workspace with Paradox syntax highlighting, t
 
 # Code Standards
 
-A summary. The full reference is the [Code Stylization Guide](/dev-resources/code-stylization-guide/), but the rules below are the most common ones to get right.
+A summary. The full reference is the [Code Stylization Guide](/dev-resources/code-stylization-guide//, but the rules below are the most common ones to get right.
 
 ### Localisation (.yml)
 
@@ -242,7 +242,7 @@ A summary. The full reference is the [Code Stylization Guide](/dev-resources/cod
 
 ### Docs Content (`docs/`)
 
-If you are editing the docs site, see the [Contributing Guide](/dev-resources/contributing/) for the docs-specific rules. The high-level point: frontmatter is required, internal links must be root-relative, and do not hardcode `"/Millennium-Dawn/..."` (the base path is applied during build).
+If you are editing the docs site, see the [Contributing Guide](/dev-resources/contributing// for the docs-specific rules. The high-level point: frontmatter is required, internal links must be root-relative, and do not hardcode `"/Millennium-Dawn/..."` (the base path is applied during build).
 
 ---
 
@@ -270,9 +270,9 @@ Use descriptive branch names:
 
 # Related Resources
 
-- [Contributing Guide](/dev-resources/contributing/): docs site workflow, `bun run dev`, content conventions.
-- [Git Workflow](/dev-resources/git-workflow/): detailed branch/commit/PR process.
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/): formatting and code structure.
-- [AI Modding Guide](/dev-resources/ai-modding-guide/): AI tools for development.
-- [Content Review Guide](/dev-resources/content-review-guide/): quality checklist.
+- [Contributing Guide](/dev-resources/contributing//: docs site workflow, `bun run dev`, content conventions.
+- [Git Workflow](/dev-resources/git-workflow//: detailed branch/commit/PR process.
+- [Code Stylization Guide](/dev-resources/code-stylization-guide//: formatting and code structure.
+- [AI Modding Guide](/dev-resources/ai-modding-guide//: AI tools for development.
+- [Content Review Guide](/dev-resources/content-review-guide//: quality checklist.
 - [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md): dev tools directory layout.

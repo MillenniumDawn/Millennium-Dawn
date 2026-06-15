@@ -277,7 +277,7 @@ Both work. GitHub Desktop is simpler and free. GitKraken has more features (comm
 
 # Related Resources
 
-- [Developer Setup](/dev-resources/developer-setup/), Environment setup, tools, pre-commit hooks
-- [Contributing Guide](/dev-resources/contributing/), What we accept, fork workflow, AI policy
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/), Formatting and code structure
+- [Developer Setup](/dev-resources/developer-setup//, Environment setup, tools, pre-commit hooks
+- [Contributing Guide](/dev-resources/contributing//, What we accept, fork workflow, AI policy
+- [Code Stylization Guide](/dev-resources/code-stylization-guide//, Formatting and code structure
 - [GitHub Repository](https://github.com/MillenniumDawn/Millennium-Dawn)

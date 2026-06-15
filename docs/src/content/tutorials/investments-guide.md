@@ -337,6 +337,6 @@ If a rival is accumulating influence through investments:
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide), Full breakdown of income, expenses, debt, and the currency system
-- [Influence Guide](/player-tutorials/influence-guide), How influence interacts with investments and diplomatic leverage
-- [International Systems Guide](/player-tutorials/international-systems), PMCs, sanctions, and other cross-border mechanics
+- [Economy Guide](/player-tutorials/economy-guide/, Full breakdown of income, expenses, debt, and the currency system
+- [Influence Guide](/player-tutorials/influence-guide/, How influence interacts with investments and diplomatic leverage
+- [International Systems Guide](/player-tutorials/international-systems/, PMCs, sanctions, and other cross-border mechanics
