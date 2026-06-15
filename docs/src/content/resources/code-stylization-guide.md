@@ -183,7 +183,6 @@ country_event = {
     option = {
         name = france_md.504.a
         log = "[GetDateText]: [This.GetName]: france_md.504.a executed"
-        set_party_index_to_ruling_party = yes
         set_temp_variable = { party_popularity_increase = -0.01 }
         add_relative_party_popularity = yes
 
