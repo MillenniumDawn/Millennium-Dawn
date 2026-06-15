@@ -5,12 +5,17 @@ from __future__ import annotations
 
 import re
 import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-COUNTRIES_DIR = ROOT / "src" / "content" / "countries"
-ASSETS_ROOT = ROOT / "src" / "assets" / "images"
-FLAG_IMAGE_RE = re.compile(r"^flag_image:\s*[\"']?(/assets/images/[^\s\"']+)[\"']?\s*$", re.MULTILINE)
+try:
+    from common import DOCS_ROOT
+except ImportError:  # when imported as a package module
+    from .common import DOCS_ROOT
+
+COUNTRIES_DIR = DOCS_ROOT / "src" / "content" / "countries"
+ASSETS_ROOT = DOCS_ROOT / "src" / "assets" / "images"
+FLAG_IMAGE_RE = re.compile(
+    r"^flag_image:\s*[\"']?(/assets/images/[^\s\"']+)[\"']?\s*$", re.MULTILINE
+)
 
 
 def main() -> int:

@@ -9,7 +9,6 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
-
 REQUIRED_OG_META = (
     "og:image",
     "og:image:width",
@@ -44,8 +43,12 @@ class MetaCollector(HTMLParser):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--site-dir", required=True, help="Path to built site directory")
-    parser.add_argument("--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)")
+    parser.add_argument(
+        "--site-dir", required=True, help="Path to built site directory"
+    )
+    parser.add_argument(
+        "--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)"
+    )
     return parser.parse_args()
 
 
@@ -111,14 +114,18 @@ def check_html_file(site_dir: Path, html_path: Path, baseurl: str) -> list[str]:
         if normalized is None:
             issues.append(f"og:image is not a site-local URL: {og_image}")
         elif not asset_exists(site_dir, normalized):
-            issues.append(f"og:image target does not exist in site output: {normalized}")
+            issues.append(
+                f"og:image target does not exist in site output: {normalized}"
+            )
 
     if tw_image:
         normalized = normalize_meta_image_to_path(tw_image, baseurl=baseurl)
         if normalized is None:
             issues.append(f"twitter:image is not a site-local URL: {tw_image}")
         elif not asset_exists(site_dir, normalized):
-            issues.append(f"twitter:image target does not exist in site output: {normalized}")
+            issues.append(
+                f"twitter:image target does not exist in site output: {normalized}"
+            )
 
     return issues
 
@@ -134,7 +141,9 @@ def main() -> int:
 
     failures: list[str] = []
     for html_file in iter_html_files(site_dir):
-        issues = check_html_file(site_dir=site_dir, html_path=html_file, baseurl=baseurl)
+        issues = check_html_file(
+            site_dir=site_dir, html_path=html_file, baseurl=baseurl
+        )
         if not issues:
             continue
         for issue in issues:

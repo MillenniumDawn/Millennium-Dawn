@@ -67,7 +67,7 @@ claude
 > /validate
 ```
 
-See [Claude Code Skills](/dev-resources/claude-code-skills// for the full skill reference.
+See [Claude Code Skills](/dev-resources/claude-code-skills/) for the full skill reference.
 
 ## GitHub Copilot
 
@@ -80,7 +80,7 @@ See [Claude Code Skills](/dev-resources/claude-code-skills// for the full skill 
 
 **Best for:** Autocompleting repetitive script patterns, generating boilerplate event/decision/focus blocks.
 
-**Limitations:** Copilot does not know MD-specific conventions (tab indentation, logging requirements, `ai_will_do` patterns). Always review its output against the [Code Stylization Guide](/dev-resources/code-stylization-guide//.
+**Limitations:** Copilot does not know MD-specific conventions (tab indentation, logging requirements, `ai_will_do` patterns). Always review its output against the [Code Stylization Guide](/dev-resources/code-stylization-guide/).
 
 ## Local Models with Ollama
 
@@ -295,7 +295,7 @@ Run `/validate` or `pre-commit run --files <path>` to catch these automatically.
 
 # Related Resources
 
-- [Contributing Guide](/dev-resources/contributing//, Contribution types, fork workflow, AI policy
-- [Claude Code Skills](/dev-resources/claude-code-skills//, Full skill reference
-- [Code Stylization Guide](/dev-resources/code-stylization-guide//, Formatting and code structure
-- [Content Review Guide](/dev-resources/content-review-guide//, Quality checklist
+- [Contributing Guide](/dev-resources/contributing/), Contribution types, fork workflow, AI policy
+- [Claude Code Skills](/dev-resources/claude-code-skills/), Full skill reference
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/), Formatting and code structure
+- [Content Review Guide](/dev-resources/content-review-guide/), Quality checklist

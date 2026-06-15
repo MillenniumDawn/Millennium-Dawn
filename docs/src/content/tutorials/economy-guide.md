@@ -1073,7 +1073,7 @@ Immigration control costs money. Stricter restrictions cost more to enforce. The
 
 International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income, approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
 
-For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide/.
+For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide/).
 
 ### International Market
 
@@ -1085,7 +1085,7 @@ The International Market is a vanilla HOI4 mechanic that Millennium Dawn include
 
 Internal investments apply temporary modifiers to your own states, things like productivity growth bonuses, construction speed buffs, extra building slots, and resource output boosts. Each option costs **75 Political Power** plus a treasury payment scaled to your GDP and lasts 120–180 days. The number of concurrent investments you can run scales with your power rank (2 slots for minor powers, up to 6 for superpowers).
 
-For the full list of options, costs, effects, and tips, see the [Investments Guide](/player-tutorials/investments-guide/.
+For the full list of options, costs, effects, and tips, see the [Investments Guide](/player-tutorials/investments-guide/).
 
 ---
 
@@ -1196,9 +1196,9 @@ If interest exceeds 25% and the country is not at war, the AI will default on it
 
 ## Related Documentation
 
-- [Investments Guide](/player-tutorials/investments-guide/ - Full detail on international and internal investment systems
-- [International Systems Guide](/player-tutorials/international-systems/ - For PMCs, sanctions, and other international economic systems
-- [European Union Tutorial](/player-tutorials/eu-tutorial/ - For EU-specific economic mechanics (Eurozone, ECB, single market)
-- [Game Rules](/player-tutorials/game-rules/
-- [Influence Guide](/player-tutorials/influence-guide/
-- [Mechanics Guide](/player-tutorials/mechanics-guide/
+- [Investments Guide](/player-tutorials/investments-guide/) - Full detail on international and internal investment systems
+- [International Systems Guide](/player-tutorials/international-systems/) - For PMCs, sanctions, and other international economic systems
+- [European Union Tutorial](/player-tutorials/eu-tutorial/) - For EU-specific economic mechanics (Eurozone, ECB, single market)
+- [Game Rules](/player-tutorials/game-rules/)
+- [Influence Guide](/player-tutorials/influence-guide/)
+- [Mechanics Guide](/player-tutorials/mechanics-guide/)

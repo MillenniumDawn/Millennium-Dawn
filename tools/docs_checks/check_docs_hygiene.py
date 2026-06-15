@@ -8,8 +8,18 @@ import re
 import subprocess
 from pathlib import Path
 
-
-TEXT_EXTENSIONS = {".md", ".mdx", ".html", ".yml", ".yaml", ".scss", ".css", ".js", ".ts", ".astro"}
+TEXT_EXTENSIONS = {
+    ".md",
+    ".mdx",
+    ".html",
+    ".yml",
+    ".yaml",
+    ".scss",
+    ".css",
+    ".js",
+    ".ts",
+    ".astro",
+}
 TEMP_NAME_RE = re.compile(r"-temp", re.IGNORECASE)
 
 # Keep this list short and explicit when an unreferenced asset is intentional.
@@ -92,9 +102,11 @@ def find_unused_assets(
         if not is_text_file(path):
             continue
         # Do not treat binary asset directories as reference sources.
-        if rel.startswith(f"{docs_prefix}public/assets/images/") or rel.startswith(
-            f"{docs_prefix}public/assets/downloads/"
-        ) or rel.startswith(f"{docs_prefix}src/assets/images/"):
+        if (
+            rel.startswith(f"{docs_prefix}public/assets/images/")
+            or rel.startswith(f"{docs_prefix}public/assets/downloads/")
+            or rel.startswith(f"{docs_prefix}src/assets/images/")
+        ):
             continue
         source_files.append(repo_root / rel)
 
@@ -135,9 +147,9 @@ def main() -> int:
         file_name = Path(rel).name
         if rel.startswith(f"{docs_prefix}.bundle/"):
             issues.append(f"Bundler local config must not be tracked: {rel}")
-        tracked_under_assets = rel.startswith(f"{docs_prefix}public/assets/") or rel.startswith(
-            f"{docs_prefix}src/assets/images/"
-        )
+        tracked_under_assets = rel.startswith(
+            f"{docs_prefix}public/assets/"
+        ) or rel.startswith(f"{docs_prefix}src/assets/images/")
         if tracked_under_assets and TEMP_NAME_RE.search(file_name):
             issues.append(f"Temp-named docs asset is tracked: {rel}")
 

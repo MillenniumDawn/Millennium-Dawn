@@ -228,4 +228,4 @@ random_events = {
 - Cross-nation permanent effects should come from events (give target player agency)
 - Use `is_triggered_only = yes` for all triggered events — never open-fire MTTH events
 
-For the full scripted effects library, see `docs/src/content/resources/code-resource.md`.
+For the full scripted effects library, see `docs/src/content/resources/scripted-effects-reference.md`.

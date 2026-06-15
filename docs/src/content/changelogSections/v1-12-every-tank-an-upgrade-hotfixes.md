@@ -5,7 +5,7 @@ order: 14
 hidden: true
 ---
 
-> Looking for the base release notes? See [v1.12.0 'Every Tank an Upgrade'](/changelogs/v1-12-every-tank-an-upgrade//.
+> Looking for the base release notes? See [v1.12.0 'Every Tank an Upgrade'](/changelogs/v1-12-every-tank-an-upgrade/).
 
 ## v1.12.3b
 

@@ -8,7 +8,11 @@ import re
 import sys
 from pathlib import Path
 
-CONTENT_ROOT = Path(__file__).resolve().parents[1] / "src" / "content"
+try:
+    from common import CONTENT_ROOT
+except ImportError:  # when imported as a package module
+    from .common import CONTENT_ROOT
+
 MARKDOWN_GLOB = ("**/*.md", "**/*.mdx")
 
 HERO_TITLE_COLLECTIONS = frozenset(
@@ -108,7 +112,9 @@ def check_file(path: Path) -> list[str]:
     for pattern, label in BLOCKED_PATTERNS:
         for match in pattern.finditer(body):
             line = body.count("\n", 0, match.start()) + 1
-            issues.append(f"{path.relative_to(CONTENT_ROOT.parent)}:{line}: blocked {label}")
+            issues.append(
+                f"{path.relative_to(CONTENT_ROOT.parent)}:{line}: blocked {label}"
+            )
 
     issues.extend(check_duplicate_hero_title(path, text))
     return issues

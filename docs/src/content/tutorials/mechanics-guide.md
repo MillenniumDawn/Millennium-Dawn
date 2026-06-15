@@ -137,6 +137,6 @@ Several nation-specific systems use custom autonomy hierarchies. Russia has a fe
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide/
-- [Influence Guide](/player-tutorials/influence-guide/
-- [Game Rules](/player-tutorials/game-rules/
+- [Economy Guide](/player-tutorials/economy-guide/)
+- [Influence Guide](/player-tutorials/influence-guide/)
+- [Game Rules](/player-tutorials/game-rules/)

@@ -91,5 +91,5 @@ Dynamic modifiers update every tick. Keep the following in mind:
 
 ## Related Resources
 
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/
-- [Code Resource](/dev-resources/code-resource/
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/)
+- [Code Resource](/dev-resources/code-resource/)

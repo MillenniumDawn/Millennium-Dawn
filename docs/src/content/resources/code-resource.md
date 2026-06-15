@@ -3,7 +3,7 @@ title: Code Resources
 description: Millennium Dawn unique modifiers, effects and tutorials for modders
 ---
 
-This document provides reference documentation for Millennium Dawn's unique systems, including custom modifiers, scripted effects, and how-to guides for common modding tasks.
+This is the hub for Millennium Dawn's unique systems. The custom modifier reference lives here; scripted effects, how-to guides, and the deeper subsystems each have their own page, linked below.
 
 > **Note**: This is not fully up-to-date. For the latest systems, check the codebase directly.
 
@@ -12,6 +12,8 @@ This document provides reference documentation for Millennium Dawn's unique syst
 # Quick Reference
 
 ## Custom Modifier Categories
+
+The full modifier tables are on this page:
 
 - [Economic Modifiers](#economic-modifiers) - Money, taxes, productivity, trade
 - [Law Modifiers](#law-modifiers) - Government spending, law costs
@@ -23,22 +25,31 @@ This document provides reference documentation for Millennium Dawn's unique syst
 - [Missile & Space Modifiers](#missile--space-modifiers) - Missile/satellite production
 - [Nation-Specific Modifiers](#nation-specific-modifiers) - Country unique modifiers
 
-## Scripted Effects Categories
+## Scripted Effects
 
-- [Building Effects](#md-building-effects) - Add buildings with costs
-- [Economic Effects](#md-economic-effects) - Treasury, debt, productivity
-- [Internal Faction Effects](#md-internal-faction-effects) - Faction opinions
-- [Influence Effects](#md-influence-effects) - Influence actions
-- [Political Effects](#md-political-effects) - Party management
-- [Special System Effects](#special-system-effects) - EU, Energy, Counter-Terror, Cartels
+Effect snippets (treasury, debt, buildings, factions, influence, party management) live in the [Scripted Effects Reference](/dev-resources/scripted-effects-reference/):
+
+- [Building Effects](/dev-resources/scripted-effects-reference/#building-effects) - Add buildings with costs
+- [Economic Effects](/dev-resources/scripted-effects-reference/#economic-effects) - Treasury, debt, productivity
+- [Internal Faction Effects](/dev-resources/scripted-effects-reference/#internal-faction-effects) - Faction opinions
+- [Influence Effects](/dev-resources/scripted-effects-reference/#influence-effects) - Influence actions
+- [Political Effects](/dev-resources/scripted-effects-reference/#political-effects) - Party management
+- [Special System Effects](/dev-resources/scripted-effects-reference/#special-system-effects) - EU, Energy, Counter-Terror, Cartels
 
 ## How-To Guides
 
-- [Add Subideology Parties](#md-how-to-add-subideology-parties)
-- [Historical Events](#historical-eventsexact-date-trigger-etd-events)
-- [Variables](#variable-guideexplanation)
-- [Energy Configuration](#hydroelectricgeothermalrenewableproductivity-configuration-guide)
-- [Unique Terrain Photos](#unique-terrain-photos)
+- [Add Subideology Parties](/dev-resources/scripted-effects-reference/#adding-subideology-parties)
+- [Historical Events](/dev-resources/scripted-effects-reference/#historical-events-etd-system)
+- [Variables](/dev-resources/scripted-effects-reference/#variable-basics)
+- [Energy Configuration](/dev-resources/scripted-effects-reference/#energy-configuration)
+- [Unique Terrain Photos](/dev-resources/scripted-effects-reference/#unique-terrain-photos)
+
+## Related References
+
+- [Scripted Effects Reference](/dev-resources/scripted-effects-reference/) - the full effects library and how-to guides
+- [Dynamic Modifiers](/dev-resources/dynamic-modifiers/) - applying modifiers through tooltips and dynamic systems
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/) - formatting and code structure
+- [Search Filters](/dev-resources/search-filters/) - focus `search_filters` reference
 
 ---
 

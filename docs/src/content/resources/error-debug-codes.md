@@ -83,5 +83,5 @@ Debug codes are defined in these common files:
 
 # Related Resources
 
-- [Code Resources](/dev-resources/code-resource// - Modifiers and effects
-- [Code Stylization](/dev-resources/code-stylization-guide// - Best practices
+- [Code Resources](/dev-resources/code-resource/) - Modifiers and effects
+- [Code Stylization](/dev-resources/code-stylization-guide/) - Best practices

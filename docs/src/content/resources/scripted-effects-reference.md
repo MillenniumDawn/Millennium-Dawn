@@ -277,7 +277,7 @@ To add a new subideology party to a country:
 2. Add the party to the country's history file.
 3. Register the party in `common/scripted_localisation/00_subideology_scripted_localisation.txt`.
 
-Consult the [Subideology Slots table](/dev-resources/code-resource/#subideology-slots) below to pick the subideology key and its index for the ideology group your party belongs to. Note both -- you will need the key for localisation and the index for the history file.
+Consult the [Subideology Slots table](#subideology-slots) below to pick the subideology key and its index for the ideology group your party belongs to. Note both -- you will need the key for localisation and the index for the history file.
 
 ### Subideology Slots
 

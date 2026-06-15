@@ -5,6 +5,7 @@ on:
     branches: [main, master]
     paths:
       - "docs/**"
+      - "tools/docs_checks/**"
       - ".github/workflows/docs-quality.yml"
   workflow_dispatch:
 
@@ -20,7 +21,9 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 1
-          sparse-checkout: docs
+          sparse-checkout: |
+            docs
+            tools/docs_checks
           sparse-checkout-cone-mode: true
 
       - name: Setup Node.js
@@ -43,6 +46,19 @@ jobs:
         working-directory: docs
         run: bun install
 
+      # Source checks run before the build so malformed content fails fast.
+      - name: Link-syntax checker self-test
+        run: python3 tools/docs_checks/check_link_syntax.py --self-test
+
+      - name: Markdown link syntax
+        run: python3 tools/docs_checks/check_link_syntax.py
+
+      - name: Raw HTML and duplicate titles
+        run: python3 tools/docs_checks/check_content_html.py
+
+      - name: Country flag images
+        run: python3 tools/docs_checks/check_flag_images.py
+
       - name: Astro checks
         working-directory: docs
         run: |
@@ -51,19 +67,19 @@ jobs:
           bun run build
 
       - name: Validate Open Graph metadata images
-        run: python3 docs/scripts/check_og_images.py --site-dir docs/dist --baseurl /Millennium-Dawn
+        run: python3 tools/docs_checks/check_og_images.py --site-dir docs/dist --baseurl /Millennium-Dawn
 
       - name: Docs hygiene checks
-        run: python3 docs/scripts/check_docs_hygiene.py --repo-root . --docs-dir docs
+        run: python3 tools/docs_checks/check_docs_hygiene.py --repo-root . --docs-dir docs
 
       - name: Validate internal links and local assets
-        run: python3 docs/scripts/check_site_links.py --site-dir docs/dist --baseurl /Millennium-Dawn
+        run: python3 tools/docs_checks/check_site_links.py --site-dir docs/dist --baseurl /Millennium-Dawn
 
       - name: Accessibility checker self-test
-        run: python3 docs/scripts/check_accessibility_basics.py --self-test
+        run: python3 tools/docs_checks/check_accessibility_basics.py --self-test
 
       - name: Accessibility baseline checks
-        run: python3 docs/scripts/check_accessibility_basics.py --site-dir docs/dist
+        run: python3 tools/docs_checks/check_accessibility_basics.py --site-dir docs/dist
 
       - name: Performance budget checks
-        run: python3 docs/scripts/check_perf_budgets.py --site-dir docs/dist
+        run: python3 tools/docs_checks/check_perf_budgets.py --site-dir docs/dist

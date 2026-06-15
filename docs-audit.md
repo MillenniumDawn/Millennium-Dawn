@@ -156,7 +156,8 @@ Specific banned-word hits (per the user's voice rules in `AGENTS.md`):
 - **ai-modding-guide JSON collapse**: two near-identical VS Code config examples merged. Commit `2b317d1ba3`.
 - **Changelog renames**: `v1-10-0-...` → `v1-10-...`, `v1-11-0-...` → `v1-11-...`, `v1-12-0-...` → `v1-12-...`. Redirect pages for old URLs. Commit `8dae0ef95f`.
 - **Page splits**: international-systems (485 → ~300 lines, Cyberwarfare and PMCs extracted); code-resource (837 → ~344 lines, scripted-effects reference extracted). Commit `8dae0ef95f`.
-- **Unified check script**: `docs/scripts/check_docs.py` replaces sequential `ci` with parallel runner. Commit `e587a23fab`.
+- **Unified check script**: consolidated into `tools/docs_checks/` (shared `common.py`, single `check_docs.py` entry); all docs checks now share one package. package.json, `docs-quality.yml`, and pre-commit point there.
+- **Link-corruption fix**: the trailing-slash sweep (`2b317d1ba3`) replaced the closing `)` of 95 internal links with `/`, breaking them. All 95 repaired. New `check_link_syntax.py` (CI + pre-commit) guards against it recurring.
 
 ## Remaining
 

@@ -104,5 +104,5 @@ Before adding an entry, verify:
 
 ## Related Documentation
 
-- [Code Stylization Guide](/dev-resources/code-stylization-guide//, coding standards
-- [New General Guidelines](/dev-resources/new-general-guidelines//, event conventions
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/), coding standards
+- [New General Guidelines](/dev-resources/new-general-guidelines/), event conventions

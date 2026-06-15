@@ -7,8 +7,9 @@
  * rule for changelog entries. This rule extends the same check to all
  * Markdown content.
  *
- * Exempt: country content under docs/src/content/countries/. Long-form
- * country descriptions use em dashes for literary effect and the team
+ * Exempt: country content under docs/src/content/countries/ (long-form
+ * descriptions use em dashes for literary effect) and dev diaries under
+ * docs/src/content/devDiaries/ (human-authored, original voice). The team
  * has not agreed to scrub those. Tracked as a follow-up.
  *
  * Disable per-line with `<!-- markdownlint-disable MD9999 -->`.

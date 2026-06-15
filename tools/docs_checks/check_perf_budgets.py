@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-
 BUDGETS_BYTES = {
     ".html": 320_000,
     ".css": 120_000,
@@ -20,7 +19,9 @@ INDEX_HTML_BUDGET = 60_000
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--site-dir", required=True, help="Path to generated site directory")
+    parser.add_argument(
+        "--site-dir", required=True, help="Path to generated site directory"
+    )
     return parser.parse_args()
 
 

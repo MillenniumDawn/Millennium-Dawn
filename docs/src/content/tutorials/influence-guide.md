@@ -147,6 +147,6 @@ For full power ranking details, see the [Mechanics Guide](/player-tutorials/mech
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide/
-- [Mechanics Guide](/player-tutorials/mechanics-guide/
-- [Game Rules](/player-tutorials/game-rules/
+- [Economy Guide](/player-tutorials/economy-guide/)
+- [Mechanics Guide](/player-tutorials/mechanics-guide/)
+- [Game Rules](/player-tutorials/game-rules/)

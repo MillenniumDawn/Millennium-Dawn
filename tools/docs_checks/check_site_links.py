@@ -4,13 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import os
 import posixpath
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Iterable, List, Tuple
-
 
 SKIP_PREFIXES = (
     "http://",
@@ -54,7 +52,9 @@ def strip_query_and_hash(url: str) -> str:
     return clean.strip()
 
 
-def normalize_target(raw_url: str, current_html: Path, site_dir: Path, baseurl: str) -> str | None:
+def normalize_target(
+    raw_url: str, current_html: Path, site_dir: Path, baseurl: str
+) -> str | None:
     url = strip_query_and_hash(raw_url)
     if not url or url == "#":
         return None
@@ -125,8 +125,12 @@ def collect_broken_links(site_dir: Path, baseurl: str) -> List[Tuple[Path, str, 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--site-dir", required=True, help="Path to generated site directory")
-    parser.add_argument("--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)")
+    parser.add_argument(
+        "--site-dir", required=True, help="Path to generated site directory"
+    )
+    parser.add_argument(
+        "--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)"
+    )
     return parser.parse_args()
 
 

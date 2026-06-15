@@ -7,12 +7,12 @@ This guide outlines the quality expectations for Millennium Dawn content. It cov
 
 > **Supporting Resources:**
 >
-> - [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist//
-> - [Code Stylization Guide](/dev-resources/code-stylization-guide//
-> - [Code Resource](/dev-resources/code-resource//
-> - [New General Guidelines](/dev-resources/new-general-guidelines//
-> - [Dynamic Modifiers](/dev-resources/dynamic-modifiers//
-> - [Claude Code Skills](/dev-resources/claude-code-skills//
+> - [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/)
+> - [Code Stylization Guide](/dev-resources/code-stylization-guide/)
+> - [Code Resource](/dev-resources/code-resource/)
+> - [New General Guidelines](/dev-resources/new-general-guidelines/)
+> - [Dynamic Modifiers](/dev-resources/dynamic-modifiers/)
+> - [Claude Code Skills](/dev-resources/claude-code-skills/)
 
 ---
 
@@ -33,11 +33,11 @@ These are baseline expectations for all developers on the team:
 - **Communicate in English.** All Discord and internal communication must be in English, even between native speakers of the same language. Your work may outlast you, and others need to understand it.
 - **Always commit and push your work.** There is no acceptable reason for leaving code only on your local machine. Push regularly so the team has access to your progress.
 - **Complete your assigned project first.** New developers are assigned an initial project. Complete it before proposing new content. Tag a lead if you need a project assignment.
-- **Get your draft approved before coding.** Focus trees require a presentable draft (use [Diagram.net / draw.io](https://app.diagrams.net/) or similar) approved by a mentor or lead developer before you begin coding. See the [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist// for the full process.
+- **Get your draft approved before coding.** Focus trees require a presentable draft (use [Diagram.net / draw.io](https://app.diagrams.net/) or similar) approved by a mentor or lead developer before you begin coding. See the [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/) for the full process.
 - **Localize everything before starting new work.** All projects must be fully localized before you move on. Half-localized content looks unfinished and will not be accepted.
 - **Ask when in doubt.** If you are unsure about a content decision, ask a lead developer or Council Member before proceeding.
-- **Review your own content first.** Complete this checklist and the standards in the [Code Resource](/dev-resources/code-resource// before requesting a lead review.
-- **Read the [Focus Tree Design Principles](/dev-resources/focus-tree-design-principles//.** Familiarize yourself with the design philosophy for branch structure, pacing, and player choice.
+- **Review your own content first.** Complete this checklist and the standards in the [Code Resource](/dev-resources/code-resource/) before requesting a lead review.
+- **Read the [Focus Tree Design Principles](/dev-resources/focus-tree-design-principles/).** Familiarize yourself with the design philosophy for branch structure, pacing, and player choice.
 - **Set up your environment.** Run `python3 tools/setup.py` after cloning to install pre-commit hooks and tool dependencies. See the [Git Setup & Usage Guide](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) for full instructions.
 
 ---
@@ -50,7 +50,7 @@ These are baseline expectations for all developers on the team:
   All shared buildings (industrial complexes, arms factories, office sectors) should include a supporting building slot, as the cost reflects this. This also helps foster growth for the nation. In some cases you may intentionally omit the slot, adjust the building cost accordingly.
 
 - **Do all buildings/factories have a monetary cost?**
-  All buildings should have their monetary cost as specified in the [Code Resource](/dev-resources/code-resource//. This ensures a balanced game.
+  All buildings should have their monetary cost as specified in the [Code Resource](/dev-resources/code-resource/). This ensures a balanced game.
 
 - **Do all trade opinion effects have a supplementary effect?**
   Trade opinion on its own is a shallow effect. Always pair it with something meaningful.
@@ -134,7 +134,7 @@ These are baseline expectations for all developers on the team:
   Name lists add immersion. Reference the Libyan or Japanese name lists for examples.
 
 - **Have I added new generals?**
-  Follow the [New General Guidelines](/dev-resources/new-general-guidelines//. This is a standard process. If you have questions about the number of generals for your country, consult the team.
+  Follow the [New General Guidelines](/dev-resources/new-general-guidelines/). This is a standard process. If you have questions about the number of generals for your country, consult the team.
 
 ### AI Guidelines
 
@@ -199,7 +199,7 @@ These are baseline expectations for all developers on the team:
 ## Code Guidelines
 
 - **Is my code neatly tabbed?**
-  Ensure consistent tab indentation throughout. See the [Code Stylization Guide](/dev-resources/code-stylization-guide// for the formatting standard.
+  Ensure consistent tab indentation throughout. See the [Code Stylization Guide](/dev-resources/code-stylization-guide/) for the formatting standard.
 
 - **Do all effects have a log?**
   All content should be logged to make debugging easier. This helps find crashes, bugs, and other issues.
@@ -217,7 +217,7 @@ These are baseline expectations for all developers on the team:
   All tags should be capitalised, including at the start of script IDs (e.g., `SPR_focus_name_here`).
 
 - **Do high-cost focuses have a bankruptcy guard in `ai_will_do`?**
-  Focuses with `cost ≥ 8`, or `cost ≥ 5` tagged with military, economy, or research `search_filters`, must include a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`. This is an AI-only measure, placing the guard in `available` would incorrectly block the player as well. See [Search Filters](/dev-resources/search-filters/ for which filters apply.
+  Focuses with `cost ≥ 8`, or `cost ≥ 5` tagged with military, economy, or research `search_filters`, must include a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`. This is an AI-only measure, placing the guard in `available` would incorrectly block the player as well. See [Search Filters](/dev-resources/search-filters/) for which filters apply.
 
 - **Are `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop` duplicated?**
-  When a tooltip describes effects applied to every member of an array, use `tooltip = TT_ALL_*` inside the `for_each_scope_loop` instead. Duplicating the same logic in `effect_tooltip` and the loop causes double-evaluation and is a known performance anti-pattern. See the [Code Stylization Guide](/dev-resources/code-stylization-guide// for the performance tip.
+  When a tooltip describes effects applied to every member of an array, use `tooltip = TT_ALL_*` inside the `for_each_scope_loop` instead. Duplicating the same logic in `effect_tooltip` and the loop causes double-evaluation and is a known performance anti-pattern. See the [Code Stylization Guide](/dev-resources/code-stylization-guide/) for the performance tip.

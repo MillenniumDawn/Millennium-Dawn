@@ -240,4 +240,4 @@ set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```
 
-For the full scripted effects library, see `docs/src/content/resources/code-resource.md`.
+For the full scripted effects library, see `docs/src/content/resources/scripted-effects-reference.md`.

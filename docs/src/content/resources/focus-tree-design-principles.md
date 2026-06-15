@@ -5,10 +5,10 @@ description: Design philosophy and guidelines for creating engaging, balanced fo
 
 This guide covers the design philosophy behind Millennium Dawn focus trees, how to think about structure, pacing, and player choice. For related resources, see:
 
-- [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist//, step-by-step development process
-- [Code Stylization Guide](/dev-resources/code-stylization-guide//, formatting and code structure
-- [Content Review Guide](/dev-resources/content-review-guide//, review criteria and quality checklist
-- [Code Resource](/dev-resources/code-resource//, effect costs and custom modifiers
+- [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/), step-by-step development process
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/), formatting and code structure
+- [Content Review Guide](/dev-resources/content-review-guide/), review criteria and quality checklist
+- [Code Resource](/dev-resources/code-resource/), effect costs and custom modifiers
 
 ---
 
@@ -38,7 +38,7 @@ This guide covers the design philosophy behind Millennium Dawn focus trees, how 
 
 **Focus duration should match the reward.** A 140-day focus that gives a minor bonus feels punishing. Keep wait times proportional to what the player receives. Short focuses for small benefits; longer focuses for transformative effects.
 
-**Nothing is free.** All buildings, factories, and economic bonuses must have their monetary cost as specified in the [Code Resource](/dev-resources/code-resource//. Weight every reward against its cost to maintain balance across the mod.
+**Nothing is free.** All buildings, factories, and economic bonuses must have their monetary cost as specified in the [Code Resource](/dev-resources/code-resource/). Weight every reward against its cost to maintain balance across the mod.
 
 **Avoid basic-only effects.** A string of focuses that only give Political Power, Stability, War Support, or factory counts is boring gameplay. Make effects specific to the nation, unique national spirits, decisions, mechanics, or event chains that make the country feel distinct.
 

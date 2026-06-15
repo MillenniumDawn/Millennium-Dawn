@@ -49,7 +49,10 @@ class A11yParser(HTMLParser):
 
     def handle_endtag(self, tag: str) -> None:
         if tag == "a" and self._in_anchor:
-            if "(opens in new tab)" in self._anchor_text and self._anchor_target != "_blank":
+            if (
+                "(opens in new tab)" in self._anchor_text
+                and self._anchor_target != "_blank"
+            ):
                 self.misleading_new_tab_links.append(self._anchor_line)
             self._in_anchor = False
             self._anchor_text = ""
@@ -73,7 +76,7 @@ def check_file(path: Path) -> list[str]:
 
     issues: list[str] = []
     if not parser.html_lang_seen:
-        issues.append("missing <html lang=\"...\">")
+        issues.append('missing <html lang="...">')
     if parser.main_count != 1:
         issues.append(f"expected exactly one <main>, found {parser.main_count}")
     if parser.heading_count == 0:
@@ -84,7 +87,7 @@ def check_file(path: Path) -> list[str]:
     if parser.misleading_new_tab_links:
         lines = ", ".join(str(line) for line in parser.misleading_new_tab_links[:10])
         issues.append(
-            f"<a> labeled \"(opens in new tab)\" without target=\"_blank\" at line(s): {lines}"
+            f'<a> labeled "(opens in new tab)" without target="_blank" at line(s): {lines}'
         )
 
     return issues
@@ -94,7 +97,10 @@ def check_file(path: Path) -> list[str]:
 # Keeps the check honest if the markdown pipeline (rehype-external-links) ever
 # stops emitting target="_blank" alongside the "(opens in new tab)" label.
 SELF_TEST_FIXTURES: list[tuple[str, int]] = [
-    ('<a href="https://example.com" target="_blank">Docs <span>(opens in new tab)</span></a>', 0),
+    (
+        '<a href="https://example.com" target="_blank">Docs <span>(opens in new tab)</span></a>',
+        0,
+    ),
     ('<a href="https://example.com">Docs <span>(opens in new tab)</span></a>', 1),
     ('<a href="/local/">Internal link</a>', 0),
 ]
@@ -107,7 +113,9 @@ def run_self_test() -> int:
         parser.feed(html)
         found = len(parser.misleading_new_tab_links)
         if found != expected:
-            failures.append(f"expected {expected} misleading link(s), found {found} for: {html}")
+            failures.append(
+                f"expected {expected} misleading link(s), found {found} for: {html}"
+            )
 
     if failures:
         print("Accessibility self-test failed:")
@@ -121,7 +129,11 @@ def run_self_test() -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--site-dir", help="Path to generated site directory")
-    parser.add_argument("--self-test", action="store_true", help="Validate the checker against built-in fixtures")
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="Validate the checker against built-in fixtures",
+    )
     return parser.parse_args()
 
 
