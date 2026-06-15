@@ -1,6 +1,6 @@
 ---
 title: v1.11.0 'Missiles, Holidays, and Snatch-and-Grabs'
-page_id: changelog-v1-11-0-missiles-holidays-and-snatch-and-grabs
+page_id: changelog-v1-11-missiles-holidays-and-snatch-and-grabs
 order: 12
 ---
 
