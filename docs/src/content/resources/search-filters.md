@@ -24,7 +24,7 @@ Most country trees use a **two-layer** approach:
 
 Countries using only custom filters are invisible to generic searches. Always include both layers.
 
-**Exception:** Smaller/simpler trees may use only generic filters with no custom ones — this is fine.
+**Exception:** Smaller/simpler trees may use only generic filters with no custom ones, this is fine.
 
 ## Generic Filters: Full Reference
 
@@ -136,7 +136,7 @@ When a focus has `FOCUS_FILTER_ISRMILITARY`, choose the generic based on its con
 
 ## Other Country Custom Filters (Quick Reference)
 
-These custom filters exist for other country trees — do not add them to Israel or unrelated trees:
+These custom filters exist for other country trees, do not add them to Israel or unrelated trees:
 
 | Country       | Custom Filters                                                                                                                                               |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -168,6 +168,6 @@ These custom filters exist for other country trees — do not add them to Israel
 ## Checklist When Adding a New Focus
 
 1. Choose the **country-specific custom filter** matching the focus's branch.
-2. Choose the **generic filter** from the tables above (one or two — don't over-tag).
+2. Choose the **generic filter** from the tables above (one or two, don't over-tag).
 3. For high-cost focuses, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`: AI-only, not in `available`. Thresholds: `cost >= 8` for any focus, or `cost >= 5` if tagged military / economy / research. **Why:** at/above these costs the focus commits enough treasury that an AI already in collapse digs deeper; the lower econ/mil/research threshold reflects that those focuses typically chain larger monetary effects alongside the focus cost.
 4. Write `search_filters` as a single line: `search_filters = { CUSTOM_FILTER GENERIC_FILTER }`.

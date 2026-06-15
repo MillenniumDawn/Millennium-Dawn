@@ -10,6 +10,7 @@ Usage:
     python3 scripts/check_docs.py --only content-html,flags  # run specific checks
     python3 scripts/check_docs.py --list       # list available checks
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,6 +30,7 @@ DIST_DIR = DOCS_ROOT / "dist"
 # ---------------------------------------------------------------------------
 # Check definitions
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CheckResult:
@@ -50,7 +52,9 @@ def _run(name: str, cmd: list[str], cwd: Path = DOCS_ROOT) -> CheckResult:
     proc = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
     duration = time.monotonic() - start
     output = (proc.stdout + proc.stderr).strip()
-    return CheckResult(name=name, passed=proc.returncode == 0, output=output, duration=duration)
+    return CheckResult(
+        name=name, passed=proc.returncode == 0, output=output, duration=duration
+    )
 
 
 def check_content_html() -> CheckResult:
@@ -62,7 +66,15 @@ def check_flags() -> CheckResult:
 
 
 def check_hygiene() -> CheckResult:
-    return _run("hygiene", [sys.executable, "scripts/check_docs_hygiene.py", "--repo-root", str(REPO_ROOT)])
+    return _run(
+        "hygiene",
+        [
+            sys.executable,
+            "scripts/check_docs_hygiene.py",
+            "--repo-root",
+            str(REPO_ROOT),
+        ],
+    )
 
 
 def check_lint_md() -> CheckResult:
@@ -79,46 +91,84 @@ def check_build() -> CheckResult:
 
 def check_links() -> CheckResult:
     if not DIST_DIR.exists():
-        return CheckResult(name="links", passed=False, output="dist/ not found. Run build first.", duration=0)
-    return _run("links", [sys.executable, "scripts/check_site_links.py", "--site-dir", str(DIST_DIR)])
+        return CheckResult(
+            name="links",
+            passed=False,
+            output="dist/ not found. Run build first.",
+            duration=0,
+        )
+    return _run(
+        "links",
+        [sys.executable, "scripts/check_site_links.py", "--site-dir", str(DIST_DIR)],
+    )
 
 
 def check_og() -> CheckResult:
     if not DIST_DIR.exists():
-        return CheckResult(name="og", passed=False, output="dist/ not found. Run build first.", duration=0)
-    return _run("og", [sys.executable, "scripts/check_og_images.py", "--site-dir", str(DIST_DIR)])
+        return CheckResult(
+            name="og",
+            passed=False,
+            output="dist/ not found. Run build first.",
+            duration=0,
+        )
+    return _run(
+        "og",
+        [sys.executable, "scripts/check_og_images.py", "--site-dir", str(DIST_DIR)],
+    )
 
 
 def check_a11y() -> CheckResult:
     if not DIST_DIR.exists():
-        return CheckResult(name="a11y", passed=False, output="dist/ not found. Run build first.", duration=0)
-    return _run("a11y", [sys.executable, "scripts/check_accessibility_basics.py", "--site-dir", str(DIST_DIR)])
+        return CheckResult(
+            name="a11y",
+            passed=False,
+            output="dist/ not found. Run build first.",
+            duration=0,
+        )
+    return _run(
+        "a11y",
+        [
+            sys.executable,
+            "scripts/check_accessibility_basics.py",
+            "--site-dir",
+            str(DIST_DIR),
+        ],
+    )
 
 
 def check_perf() -> CheckResult:
     if not DIST_DIR.exists():
-        return CheckResult(name="perf", passed=False, output="dist/ not found. Run build first.", duration=0)
-    return _run("perf", [sys.executable, "scripts/check_perf_budgets.py", "--site-dir", str(DIST_DIR)])
+        return CheckResult(
+            name="perf",
+            passed=False,
+            output="dist/ not found. Run build first.",
+            duration=0,
+        )
+    return _run(
+        "perf",
+        [sys.executable, "scripts/check_perf_budgets.py", "--site-dir", str(DIST_DIR)],
+    )
 
 
 # The canonical order: sources (parallel), build (sequential), dist (parallel)
 ALL_CHECKS: list[Check] = [
     Check(name="content-html", phase="sources", fn=check_content_html),
-    Check(name="flags",       phase="sources", fn=check_flags),
-    Check(name="hygiene",     phase="sources", fn=check_hygiene),
-    Check(name="lint:md",     phase="sources", fn=check_lint_md),
-    Check(name="astro check", phase="build",   fn=check_astro),
-    Check(name="build",       phase="build",   fn=check_build),
-    Check(name="links",       phase="dist",    fn=check_links),
-    Check(name="og",          phase="dist",    fn=check_og),
-    Check(name="a11y",        phase="dist",    fn=check_a11y),
-    Check(name="perf",        phase="dist",    fn=check_perf),
+    Check(name="flags", phase="sources", fn=check_flags),
+    Check(name="hygiene", phase="sources", fn=check_hygiene),
+    Check(name="lint:md", phase="sources", fn=check_lint_md),
+    Check(name="astro check", phase="build", fn=check_astro),
+    Check(name="build", phase="build", fn=check_build),
+    Check(name="links", phase="dist", fn=check_links),
+    Check(name="og", phase="dist", fn=check_og),
+    Check(name="a11y", phase="dist", fn=check_a11y),
+    Check(name="perf", phase="dist", fn=check_perf),
 ]
 
 
 # ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
+
 
 def run_checks(
     checks: list[Check],
@@ -149,8 +199,10 @@ def run_checks(
                         result = future.result()
                     except Exception as exc:
                         result = CheckResult(
-                            name=check.name, passed=False,
-                            output=f"Exception: {exc}", duration=0
+                            name=check.name,
+                            passed=False,
+                            output=f"Exception: {exc}",
+                            duration=0,
                         )
                     results.append(result)
 
@@ -189,13 +241,24 @@ def print_report(results: list[CheckResult]) -> None:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--no-build", action="store_true", help="Skip the build step.")
-    parser.add_argument("--only", type=str, default=None,
-                        help="Comma-separated list of check names to run.")
-    parser.add_argument("--list", action="store_true", help="List available checks and exit.")
-    parser.add_argument("--max-workers", type=int, default=4, help="Max parallel workers.")
+    parser.add_argument(
+        "--only",
+        type=str,
+        default=None,
+        help="Comma-separated list of check names to run.",
+    )
+    parser.add_argument(
+        "--list", action="store_true", help="List available checks and exit."
+    )
+    parser.add_argument(
+        "--max-workers", type=int, default=4, help="Max parallel workers."
+    )
     args = parser.parse_args()
 
     if args.list:

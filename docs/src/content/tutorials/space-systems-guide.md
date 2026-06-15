@@ -188,7 +188,7 @@ Coverage is calculated as a ratio:
 
 **Coverage = Active Satellites / Maximum Capacity**
 
-Coverage ranges from 0% (no satellites) to 100% (constellation fully populated). Bonuses scale linearly with coverage — 50% coverage gives 50% of the maximum bonus.
+Coverage ranges from 0% (no satellites) to 100% (constellation fully populated). Bonuses scale linearly with coverage. 50% coverage gives 50% of the maximum bonus.
 
 ### Constellation Tiers
 

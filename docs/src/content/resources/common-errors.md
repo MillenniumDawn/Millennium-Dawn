@@ -13,7 +13,7 @@ This guide is intended for developers to find and fix common errors and crashes 
 
 **Cause:** Setting `ai_will_do = { base = 0 }` on a special project causes a crash. Unlike focuses and decisions where `base = 0` is valid, the special projects system does not handle a zero base value correctly.
 
-**Note:** Using `factor = 0` inside a `modifier` block within `ai_will_do` is fine — the crash only occurs when the root-level `base` itself is 0.
+**Note:** Using `factor = 0` inside a `modifier` block within `ai_will_do` is fine, the crash only occurs when the root-level `base` itself is 0.
 
 **Fix:** Use a very small positive value instead:
 

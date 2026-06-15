@@ -67,7 +67,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Small & Medium Business Owners
 
-**Available for**: Most nations (not available to WAG, KOR, NKO — those use unique variants)
+**Available for**: Most nations (not available to WAG, KOR, NKO. Those use unique variants)
 
 **Dynamic Bonuses** (scale with opinion):
 
@@ -155,7 +155,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Industrial Conglomerates
 
-**Available for**: Most nations — not available to former Soviet/oligarch states (SOV, UKR, KAZ, BLR, ARM, GEO, UZB, TRK, KYR, MLV, PMR, NOV, SOO, ABK, SYR, EGY), which use Oligarchs instead
+**Available for**: Most nations, not available to former Soviet/oligarch states (SOV, UKR, KAZ, BLR, ARM, GEO, UZB, TRK, KYR, MLV, PMR, NOV, SOO, ABK, SYR, EGY), which use Oligarchs instead
 
 **Static Bonuses**:
 
@@ -699,7 +699,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 5. **Keep 75–150 PP available**: Faction-related decisions are time-sensitive and appear as events you need to act on.
 
-6. **Conflicting factions**: Labour Unions and business owner factions (SMBO, Industrial Conglomerates) often have opposing interests — choose based on your economic strategy.
+6. **Conflicting factions**: Labour Unions and business owner factions (SMBO, Industrial Conglomerates) often have opposing interests, choose based on your economic strategy.
 
 7. **Religious factions are strong for stability**: The political power and population growth bonuses are among the best in the game for civilian buildup.
 

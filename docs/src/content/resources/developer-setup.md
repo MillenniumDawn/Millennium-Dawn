@@ -5,8 +5,8 @@ description: The main developer guide for Millennium Dawn. Get your environment 
 
 This is the main developer guide for contributing to Millennium Dawn. It covers everything you need to start: prerequisites, cloning, tooling, pre-commit hooks, the day-to-day workflow, and where to find the rest of the team docs.
 
-> **For docs site work specifically**, see the [Contributing Guide](/dev-resources/contributing// which covers `bun run dev`, content conventions, and the docs CI pipeline.
-
+> **For docs site work specifically**, see the [Contributing Guide](/dev-resources/contributing/) which covers `bun run dev`, content conventions, and the docs CI pipeline.
+>
 > **For repo-root context**, see [`CONTRIBUTING.md`](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md), a slim pointer to the right docs.
 
 ---

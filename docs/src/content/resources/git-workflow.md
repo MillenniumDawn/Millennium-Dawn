@@ -5,7 +5,7 @@ description: Branching, commits, pull requests, and merge conflicts for Millenni
 
 This guide covers the Git workflow used by the Millennium Dawn team. It replaces the older Google Docs-based Git instructions and reflects the current GitHub-based process.
 
-> **New to Git?** Git is a version control system that tracks every change to the codebase. Branches act as separate workspaces — you make changes on your branch, then merge them into `main` via a pull request.
+> **New to Git?** Git is a version control system that tracks every change to the codebase. Branches act as separate workspaces, you make changes on your branch, then merge them into `main` via a pull request.
 
 ---
 
@@ -57,7 +57,7 @@ git branch -a
 
 # Making Changes
 
-1. Edit files on your computer — use whatever text editor you prefer.
+1. Edit files on your computer, use whatever text editor you prefer.
 2. Test your changes in-game when possible.
 3. When you're ready to save a checkpoint, create a commit.
 
@@ -65,7 +65,7 @@ git branch -a
 
 ### GitHub Desktop
 
-1. Open GitHub Desktop — your changed files appear in the left panel.
+1. Open GitHub Desktop, your changed files appear in the left panel.
 2. Select the files you want to include in this commit.
 3. Write a short, descriptive summary (e.g., "Add Serbian election focus tree").
 4. Click **Commit to my-feature**.
@@ -99,7 +99,7 @@ git commit -m "Add Serbian election focus tree"
 - Write a short summary (5-10 words) describing what changed.
 - Use past tense: "Added", "Fixed", "Reworked".
 - Be specific: "Fixed Serbian election focus prerequisite", not "Fixed stuff".
-- Pre-commit hooks run automatically — fix any issues they flag before pushing.
+- Pre-commit hooks run automatically, fix any issues they flag before pushing.
 
 ---
 
@@ -155,7 +155,7 @@ git checkout my-feature
 git rebase main
 ```
 
-> **Rebase vs Merge**: Rebase replays your commits on top of `main`, giving a linear history. Merge creates a merge commit. Both work — use whichever your team prefers. If unsure, use merge.
+> **Rebase vs Merge**: Rebase replays your commits on top of `main`, giving a linear history. Merge creates a merge commit. Both work, use whichever your team prefers. If unsure, use merge.
 
 In GitKraken: right-click your branch → **Rebase on main** (or **Merge main into my-feature**).
 
@@ -223,7 +223,7 @@ When your work is ready for review, open a pull request (PR) to merge your branc
 
 ## What Happens Next
 
-1. **CI validation** runs automatically — checks for style issues, encoding problems, common mistakes.
+1. **CI validation** runs automatically, checks for style issues, encoding problems, common mistakes.
    - If CI fails, check the logs, fix the issues, commit, and push. CI re-runs automatically.
 2. **Team leader review**: a team leader reviews your code and either approves or requests changes.
 3. **Merge**: once approved and CI passes, your branch is merged into `main`.
@@ -262,10 +262,10 @@ This avoids the overhead of switching branches and re-compiling assets.
 Copy the `Millennium_Dawn.mod` file from the repo into `Hearts of Iron IV/mod/`. Enable it in the launcher.
 
 **How do I revert a commit?**
-Ask a team leader — they can revert changes down to a single file. It's not the end of the world, but saves time if caught early.
+Ask a team leader, they can revert changes down to a single file. It's not the end of the world, but saves time if caught early.
 
 **Can I work on someone else's branch?**
-Yes. Switch to their branch, sync, and make changes. Be careful not to break their work — coordinate on Discord first.
+Yes. Switch to their branch, sync, and make changes. Be careful not to break their work, coordinate on Discord first.
 
 **What if my download speed is very slow?**
 The repo is large. If cloning fails, try a shallow clone: `git clone --depth 1 https://github.com/MillenniumDawn/Millennium-Dawn.git`

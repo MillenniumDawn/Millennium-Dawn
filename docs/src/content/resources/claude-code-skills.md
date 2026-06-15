@@ -3,7 +3,7 @@ title: Claude Code Skills
 description: AI-assisted development tools built into the Millennium Dawn repository
 ---
 
-The Millennium Dawn repository includes a set of Claude Code skills — slash commands that automate common development tasks. They are available to anyone using [Claude Code](https://claude.ai/code) with the repository open.
+The Millennium Dawn repository includes a set of Claude Code skills, slash commands that automate common development tasks. They are available to anyone using [Claude Code](https://claude.ai/code) with the repository open.
 
 > **Setup**: Claude Code reads `.claude/` automatically when you open the repo. No additional configuration is needed.
 
@@ -37,7 +37,7 @@ There are three review skills with different scopes:
 
 **`/audit`**: deep, multi-agent. Spawns three parallel agents (simplification, performance, content review) and merges their findings. Can also apply fixes. Best for a pre-merge cleanup sprint or a thorough file-level analysis.
 
-These are additive tiers, not alternatives — running all three gives the most complete picture.
+These are additive tiers, not alternatives, running all three gives the most complete picture.
 
 ---
 

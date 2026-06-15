@@ -1,6 +1,6 @@
 ---
 title: AI-Assisted Modding Guide
-description: Use AI tools to accelerate Millennium Dawn development — local models, Claude Code, Copilot, and best practices
+description: Use AI tools to accelerate Millennium Dawn development, local models, Claude Code, Copilot, and best practices
 ---
 
 AI coding assistants can speed up repetitive tasks, generate boilerplate, and help debug scripts. This guide covers the tools available in the Millennium Dawn repo, how to set them up, and how to use them responsibly.

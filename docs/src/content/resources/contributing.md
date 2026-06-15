@@ -1,6 +1,6 @@
 ---
 title: Contributing to the Docs Site
-description: How to contribute to the Millennium Dawn documentation site — bun setup, content conventions, link rules, and the docs CI pipeline.
+description: How to contribute to the Millennium Dawn documentation site, bun setup, content conventions, link rules, and the docs CI pipeline.
 ---
 
 This guide covers contributing to the **documentation site** (the `docs/` directory and the pages it builds). For contributing to the mod itself (focus trees, events, ideas, AI, graphics, map work), see the [Developer Setup Guide](/dev-resources/developer-setup//.
@@ -98,7 +98,7 @@ Image paths follow the same root-relative pattern: `![Alt](/assets/images/exampl
 ### Prose
 
 - Terse and direct. Short lines, plain words, vary sentence length.
-- No em-dashes (—). Use periods, commas, or parentheses instead. Enforced by the `MD9999` custom markdownlint rule.
+- No em-dashes (en-dash or em-dash). Use periods, commas, or parentheses instead. Enforced by the `MD9999` custom markdownlint rule.
 - American spelling (color, not colour). Exception: in-game proper nouns keep their spelling.
 - Avoid AI-marketing words (authoritative, canonical, seamless, robust, sweet spot, load-bearing, stays in sync, on top).
 - Match the voice of the existing page you are editing. When in doubt, check `docs/src/content/resources/code-stylization-guide.md` or a recent dev diary for the tone.
@@ -108,12 +108,12 @@ Image paths follow the same root-relative pattern: `![Alt](/assets/images/exampl
 
 Use `hoiscript` as the language identifier for HOI4 script blocks:
 
-    ```hoiscript
-    country_event = {
-        id = tag_ns.N
-        ...
-    }
-    ```
+```hoiscript
+country_event = {
+    id = tag_ns.N
+    ...
+}
+```
 
 For other languages use `bash`, `python`, `json`, `yaml`, or `text` as appropriate.
 

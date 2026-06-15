@@ -1,6 +1,6 @@
 ---
 title: Military Tutorial
-description: How the military system works in Millennium Dawn — divisions, doctrines, command, and combat.
+description: How the military system works in Millennium Dawn, divisions, doctrines, command, and combat.
 permalink: /player-tutorials/military-tutorial/
 toc: off
 ---

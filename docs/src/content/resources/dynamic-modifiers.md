@@ -3,7 +3,7 @@ title: Dynamic Modifiers
 description: How to use dynamic modifiers and their tooltips correctly in Millennium Dawn
 ---
 
-Dynamic modifiers are variable-driven national modifiers defined in `common/dynamic_modifiers/`. Unlike static ideas, their values change at runtime based on scripted variables — so a single modifier can produce different in-game effects depending on what a country has researched, built, or chosen.
+Dynamic modifiers are variable-driven national modifiers defined in `common/dynamic_modifiers/`. Unlike static ideas, their values change at runtime based on scripted variables, so a single modifier can produce different in-game effects depending on what a country has researched, built, or chosen.
 
 ---
 

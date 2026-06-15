@@ -129,7 +129,7 @@ Your power ranking directly affects your influence capabilities. Higher-ranked n
 - **Influence Defense**: Ranges from +50% (Superpower) to -25% (Non-Power)
 - **Auto-Influence Slots**: Superpowers get 7 slots; Minor Powers get only 3
 
-Influence also feeds back into power ranking — countries with low domestic independence (heavily influenced by others) receive a penalty to their power ranking calculation, even if their GDP is high. This creates a cycle where losing influence makes it harder to recover.
+Influence also feeds back into power ranking, countries with low domestic independence (heavily influenced by others) receive a penalty to their power ranking calculation, even if their GDP is high. This creates a cycle where losing influence makes it harder to recover.
 
 For full power ranking details, see the [Mechanics Guide](/player-tutorials/mechanics-guide/#power-ranking).
 
