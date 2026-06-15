@@ -17,7 +17,6 @@ country_event = {
 	option = {
 		name = tag_ns.N.a
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.01 }
 		add_relative_party_popularity = yes
 
