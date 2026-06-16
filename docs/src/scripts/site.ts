@@ -29,6 +29,7 @@ async function bootstrapPageAsync(): Promise<void> {
 
   cleanups.push(headerNavModule.initHeaderHeightSync());
   cleanups.push(headerNavModule.initMobileNavigation());
+  cleanups.push(headerNavModule.initNavDropdowns());
   cleanups.push(uiHelpersModule.initBackToTop());
   cleanups.push(imageLightboxModule.initImageLightbox());
 }
