@@ -15,6 +15,7 @@ Rule (deterministic):
 Only `icon = x` placeholders are touched. Source of truth for sprite existence:
   interface/military_industrial_organization/industrial_organization_policies_and_traits_icons.gfx
 """
+import os
 import re
 import sys
 from pathlib import Path
@@ -98,7 +99,10 @@ PRE = "GFX_generic_mio_trait_icon_"
 
 
 def load_sprites():
-    text = GFX.read_text(encoding="utf-8", errors="ignore")
+    try:
+        text = GFX.read_text(encoding="utf-8")
+    except OSError as e:
+        sys.exit(f"error: cannot read sprite file {GFX}: {e}")
     return set(re.findall(r"GFX_generic_mio_trait_icon_[a-z0-9_]+", text))
 
 
@@ -155,7 +159,10 @@ def main():
         path = target if target.is_absolute() else ROOT / target
     else:
         path = ROOT / "common/military_industrial_organization/organizations/MD_HOL_organizations.txt"
-    text = path.read_text(encoding="utf-8")
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as e:
+        sys.exit(f"error: cannot read {path}: {e}")
     lines = text.split("\n")
 
     out = []
@@ -172,8 +179,9 @@ def main():
             started = False
             while j < n:
                 buf.append(lines[j])
-                depth += lines[j].count("{") - lines[j].count("}")
-                if "{" in lines[j]:
+                code = lines[j].split("#", 1)[0]
+                depth += code.count("{") - code.count("}")
+                if "{" in code:
                     started = True
                 if started and depth <= 0:
                     break
@@ -199,7 +207,10 @@ def main():
 
     new_text = "\n".join(out)
     if "--write" in sys.argv:
-        path.write_text(new_text, encoding="utf-8", newline="")
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        with open(tmp, "w", encoding="utf-8", newline="") as f:
+            f.write(new_text)
+        os.replace(tmp, path)
     for tok, mod, prefix, icon in report:
         print(f"{icon.replace(PRE,''):28} <- {str(mod):45} [{prefix}]  {tok}")
     print(f"\nTotal placeholders resolved: {len(report)}")
