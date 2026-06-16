@@ -150,7 +150,7 @@ See `docs/src/content/countries/italy.md` for the reference implementation.
 Changelog sections live in `docs/src/content/changelogSections/`. Each file has:
 
 - `title`: the version heading (e.g., `v1.10.0 'The Lion of Brussels and Babylon'`).
-- `page_id`: a stable identifier used in the URL (`changelog-v1-10-0-the-lion-of-brussels-and-babylon`).
+- `page_id`: a stable identifier used in the URL (`changelog-v1-10-the-lion-of-brussels-and-babylon`).
 - `order`: an integer controlling the sort order on the changelogs index page.
 - `hidden` (optional): if true, the page is not in the index.
 

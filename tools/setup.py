@@ -299,6 +299,8 @@ def _pip_install_group(group: str, label: str) -> bool:
     if not in_virtualenv() and is_externally_managed():
         venv_py = create_venv()
         reexec_with(venv_py)
+    # --group (PEP 735) needs pip >= 25.1; Ubuntu 22.04 ships ~23.x.
+    run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=False)
     spec = f"{PYPROJECT}:{group}"
     result = run([sys.executable, "-m", "pip", "install", "--group", spec], check=False)
     if result.returncode != 0:

@@ -34,7 +34,7 @@ Effect snippets (treasury, debt, buildings, factions, influence, party managemen
 - [Internal Faction Effects](/dev-resources/scripted-effects-reference/#internal-faction-effects) - Faction opinions
 - [Influence Effects](/dev-resources/scripted-effects-reference/#influence-effects) - Influence actions
 - [Political Effects](/dev-resources/scripted-effects-reference/#political-effects) - Party management
-- [Special System Effects](/dev-resources/scripted-effects-reference/#special-system-effects) - EU, Energy, Counter-Terror, Cartels
+- [Special System Effects](/dev-resources/scripted-effects-reference/#special-system-effects) - EU, Energy, Cartels
 
 ## How-To Guides
 

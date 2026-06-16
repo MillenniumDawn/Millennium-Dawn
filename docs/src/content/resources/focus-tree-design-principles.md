@@ -54,13 +54,13 @@ This guide covers the design philosophy behind Millennium Dawn focus trees, how 
 
 ## Cross-Nation Effects
 
-Effects that target another nation should come through an event that gives the target player a choice. Do not force outcomes on other nations without their input. See the [Content Review Guide, Political Guidelines](/dev-resources/content-review-guide//#political-guidelines) for details.
+Effects that target another nation should come through an event that gives the target player a choice. Do not force outcomes on other nations without their input. See the [Content Review Guide, Political Guidelines](/dev-resources/content-review-guide/#political-guidelines) for details.
 
 ---
 
 ## Events & Flavor
 
-Events with rewards must offer multiple meaningful choices. A single-option event is railroading, it gives the player no agency and adds no gameplay value. Aim for at least 10-15 flavour events per nation to keep the gameplay dynamic between focus completions. See the [Content Review Guide](/dev-resources/content-review-guide//#political-guidelines) for full expectations.
+Events with rewards must offer multiple meaningful choices. A single-option event is railroading, it gives the player no agency and adds no gameplay value. Aim for at least 10-15 flavour events per nation to keep the gameplay dynamic between focus completions. See the [Content Review Guide](/dev-resources/content-review-guide/#political-guidelines) for full expectations.
 
 ---
 

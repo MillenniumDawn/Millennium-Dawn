@@ -22,11 +22,11 @@ This is the main developer guide for contributing to Millennium Dawn. It covers 
 
 Optional but useful:
 
-| Tool                                | Purpose                                                                                 |
-| ----------------------------------- | --------------------------------------------------------------------------------------- |
-| **Node.js 24 LTS** + **Bun**        | Docs site development only (see the [Contributing Guide](/dev-resources/contributing//) |
-| **GitKraken** or **GitHub Desktop** | Git GUI (pick one)                                                                      |
-| **Claude Code**                     | AI-assisted development (see [AI Modding Guide](/dev-resources/ai-modding-guide//)      |
+| Tool                                | Purpose                                                                                |
+| ----------------------------------- | -------------------------------------------------------------------------------------- |
+| **Node.js 24 LTS** + **Bun**        | Docs site development only (see the [Contributing Guide](/dev-resources/contributing/) |
+| **GitKraken** or **GitHub Desktop** | Git GUI (pick one)                                                                     |
+| **Claude Code**                     | AI-assisted development (see [AI Modding Guide](/dev-resources/ai-modding-guide/)      |
 
 ---
 
@@ -112,7 +112,7 @@ To verify your environment at any time:
 python3 tools/setup.py --check
 ```
 
-For docs site work, also install the Node and Bun dependencies (see the [Contributing Guide](/dev-resources/contributing//):
+For docs site work, also install the Node and Bun dependencies (see the [Contributing Guide](/dev-resources/contributing/):
 
 ```bash
 python3 tools/setup.py --docs
