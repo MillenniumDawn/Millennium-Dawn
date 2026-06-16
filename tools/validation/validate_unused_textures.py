@@ -394,7 +394,7 @@ class Validator(BaseValidator):
                 self.log(
                     f"  {Colors.YELLOW if self.use_colors else ''}Note: Missing textures check is incomplete. Use --hoi4-path to check vanilla .gfx files.{Colors.ENDC if self.use_colors else ''}"
                 )
-        self.log(f"{'='*80}")
+        self.log(f"{'=' * 80}")
 
 
 def add_extra_args(parser):

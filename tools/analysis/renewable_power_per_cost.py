@@ -180,7 +180,7 @@ def main():
         for yr, p, s, name in chain:
             val = metric(key, chain, yr, factor)
             ax.annotate(
-                f"+{p*100:g}% / +{s*100:g}%",
+                f"+{p * 100:g}% / +{s * 100:g}%",
                 xy=(yr, val),
                 xytext=(0, dy),
                 textcoords="offset points",

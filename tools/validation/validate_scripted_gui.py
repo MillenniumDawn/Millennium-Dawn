@@ -563,7 +563,7 @@ class ScriptedGuiValidator(BaseValidator):
                         Severity.ERROR,
                         "MISSING_WINDOW",
                         f"Scripted GUI '{block['name']}' references "
-                        f"window_name = \"{block['window_name']}\" but no "
+                        f'window_name = "{block["window_name"]}" but no '
                         f"containerWindowType with that name exists",
                         file=block["file"],
                         line=block["line"],

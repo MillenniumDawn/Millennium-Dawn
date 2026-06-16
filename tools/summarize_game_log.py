@@ -345,7 +345,7 @@ def human(n):
         return str(n)
     for unit, div in (("B", 1e9), ("M", 1e6), ("k", 1e3)):
         if abs(n) >= div:
-            return f"{n/div:.2f}{unit}"
+            return f"{n / div:.2f}{unit}"
     return f"{n:.0f}"
 
 
@@ -416,7 +416,7 @@ def report(data, countries=None, top=15, detail=False):
             secs += 24 * 3600
         p(
             f"Real session : {wf[0]:02d}:{wf[1]:02d}:{wf[2]:02d} -> "
-            f"{wl[0]:02d}:{wl[1]:02d}:{wl[2]:02d}  ({secs//3600}h{(secs%3600)//60:02d}m)"
+            f"{wl[0]:02d}:{wl[1]:02d}:{wl[2]:02d}  ({secs // 3600}h{(secs % 3600) // 60:02d}m)"
         )
     p(f"Log lines    : {s['lines']:,}   parsed scripted entries: {s['parsed']:,}")
 
