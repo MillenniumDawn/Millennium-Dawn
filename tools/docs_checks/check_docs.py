@@ -190,8 +190,8 @@ def run_checks(
                 print(f"  Running {check.name}...")
                 result = check.fn()
                 results.append(result)
-                if check.name == "build":
-                    build_ok = result.passed
+                if not result.passed:
+                    build_ok = False
         elif phase == "dist" and build_ran and not build_ok:
             # No point checking a site that failed to build.
             for check in phase_checks:

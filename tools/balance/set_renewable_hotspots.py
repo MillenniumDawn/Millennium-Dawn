@@ -273,6 +273,8 @@ def main():
             noprov += 1
             continue
         states.append((path, raw, text, cf_of(*sg)))
+    if not states:
+        sys.exit("no states matched; nothing to update")
     mean_cf = sum(cf for *_, cf in states) / len(states)
 
     # Pass 2: factor = cf / mean, so the factor averages exactly 1.0 (no clamp).

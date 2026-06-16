@@ -13,9 +13,11 @@ For what the bot collects, how that data is used, and how to have it deleted, se
 
 ## What the bot does
 
-The bot reads posts and replies in tracked forum channels on our Discord server, processes the text, and publishes it as an issue on our public [GitHub repository](https://github.com/MillenniumDawn/Millennium-Dawn/issues). A self-hosted AI model on our infrastructure may be used to suggest a title, severity, and likely cause for the report before the issue is filed. The bot also accepts commands to link and unlink your GitHub account, run duplicate checks, and show what data is held about you.
+The bot reads posts and replies in tracked forum channels on our Discord server, processes the text, and publishes it as an issue on our public [GitHub repository](https://github.com/MillenniumDawn/Millennium-Dawn/issues). A self-hosted AI model on our infrastructure may be used to suggest a title, severity, and likely cause for the report before the issue is filed. The bot also accepts a small set of commands: `/register` to link your GitHub username, `/whoami` to show that link, `/privacy` for a short data summary, and `/forget` to delete the data the bot holds about you.
 
-The full description of the bot's behaviour is in the [Bug Bot overview](/bug-bot/). If the bot and these terms ever disagree, the privacy policy and these terms control.
+Beyond the report you post, the only personal identifier the bot keeps is your public Discord user ID (the numeric account ID, not your username), kept solely so the team can ping you on the issue thread for follow-ups. Linking a GitHub username with `/register` is opt-in, added by the team for ease of tracking reports, not to profile you. The bot does not collect your email, presence, member list, or anything else unrelated to filing a report. For the full list of what is collected and how long it is kept, see the [privacy policy](/bug-bot-privacy/).
+
+The full description of the bot's behavior is in the [Bug Bot overview](/bug-bot/). The overview and the [privacy policy](/bug-bot-privacy/) describe what the bot actually does; if anything on this page conflicts with them, those pages control.
 
 ## Acceptable use
 
@@ -37,8 +39,8 @@ We will:
 
 - Process only the data described in the privacy policy.
 - Not sell or share your data with advertisers or data brokers.
-- Honour `/forget` and equivalent email requests to delete the data the bot holds about you, subject to the limits below.
-- Notify affected users of any unauthorised access to bot-stored data, as required by law.
+- Honor `/forget` and equivalent email requests to delete the data the bot holds about you, subject to the limits below.
+- Notify affected users of any unauthorized access to bot-stored data, as required by law.
 
 ## What we do not promise
 
@@ -52,9 +54,9 @@ Nothing in these terms excludes or limits liability that cannot be excluded or l
 
 ## Your content and our rights
 
-You retain all rights to the text and attachments you post. By posting in a tracked channel you grant us a non-exclusive, worldwide, royalty-free licence to publish that content as a GitHub issue, mirror your follow-up replies back to the issue, and use the content for the operation of the bot. This licence ends when the content is deleted from both Discord and GitHub, except that GitHub issues already published may be retained for the historical record of the bug or suggestion.
+You retain all rights to the text and attachments you post. By posting in a tracked channel you grant us a non-exclusive, worldwide, royalty-free license to publish that content as a GitHub issue, mirror your follow-up replies back to the issue, and use the content for the operation of the bot. This license ends when the content is deleted from both Discord and GitHub, except that GitHub issues already published may be retained for the historical record of the bug or suggestion.
 
-You confirm that you have the rights needed to grant this licence. If you do not, do not post in tracked channels.
+You confirm that you have the rights needed to grant this license. If you do not, do not post in tracked channels.
 
 ## Deleting your data and closing the loop
 

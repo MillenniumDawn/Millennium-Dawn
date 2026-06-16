@@ -192,8 +192,8 @@ def main():
             )
 
     annotate(
-        chains["ren"], "ren", 2.0, "#08306b", 9
-    )  # on the top (x2.0) renewable line
+        chains["ren"], "ren", 1.5, "#08306b", 9
+    )  # on the top (x1.5) renewable line
     annotate(chains["nuc"], "nuc", 1.0, "#a63603", -9)
     annotate(chains["fos"], "fos", 1.0, "#252525", 9)
 

@@ -34,13 +34,14 @@ BLOCKED_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"<\s*[^>]*\son[a-z]+\s*=", re.IGNORECASE), "inline event handler"),
 )
 
-FRONTMATTER_RE = re.compile(r"^---\r?\n([\s\S]*?)\r?\n---\r?\n", re.MULTILINE)
+FRONTMATTER_RE = re.compile(r"^---\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?", re.MULTILINE)
 TITLE_RE = re.compile(r"^title:\s*[\"']?(.+?)[\"']?\s*$", re.MULTILINE)
 LEADING_H1_RE = re.compile(r"^#\s+(.+?)\s*$")
 
 
 def strip_fenced_code_blocks(text: str) -> str:
-    return re.sub(r"```[\s\S]*?```", "", text)
+    text = re.sub(r"```[\s\S]*?```", "", text)
+    return re.sub(r"~~~[\s\S]*?~~~", "", text)
 
 
 def iter_markdown_files(root: Path) -> list[Path]:

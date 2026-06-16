@@ -26,8 +26,6 @@ try:
 except ImportError:  # when imported as a package module
     from .common import CONTENT_ROOT, iter_markdown
 
-# `](` followed by anything that is not `)` until end of line: no closing paren.
-UNCLOSED_RE = re.compile(r"\]\([^)\n]*$")
 EMPTY_TARGET_RE = re.compile(r"\]\(\s*\)")
 # A fence opens with 3+ of ` or ~; the close must use the same char and be at
 # least as long (CommonMark), so a shorter run inside the block doesn't close it.
@@ -38,6 +36,33 @@ INLINE_CODE_RE = re.compile(r"`+[^`\n]*`+")
 def mask_inline_code(line: str) -> str:
     """Blank out inline code spans, keeping length so columns stay accurate."""
     return INLINE_CODE_RE.sub(lambda m: " " * len(m.group(0)), line)
+
+
+def find_unclosed_link(line: str) -> int | None:
+    """Return the 1-based column of a `](` whose `)` is missing, else None.
+
+    Tracks paren depth so a destination with balanced inner parens
+    (`[x](/a_(b)/c)`) is not falsely flagged, while a target that runs to the
+    end of the line with an unbalanced `(` is.
+    """
+    idx = 0
+    while True:
+        open_at = line.find("](", idx)
+        if open_at == -1:
+            return None
+        depth = 1
+        j = open_at + 2
+        while j < len(line):
+            if line[j] == "(":
+                depth += 1
+            elif line[j] == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        if depth > 0:
+            return open_at + 1
+        idx = j + 1
 
 
 def scan_text(text: str, name: str) -> list[str]:
@@ -59,10 +84,10 @@ def scan_text(text: str, name: str) -> list[str]:
         line = mask_inline_code(raw_line)
         if EMPTY_TARGET_RE.search(line):
             errors.append(f"{name}:{i}: empty link target `]()` -- {raw_line.strip()}")
-        m = UNCLOSED_RE.search(line)
-        if m:
+        col = find_unclosed_link(line)
+        if col is not None:
             errors.append(
-                f"{name}:{i}:{m.start() + 1}: link missing closing `)` -- {raw_line.strip()}"
+                f"{name}:{i}:{col}: link missing closing `)` -- {raw_line.strip()}"
             )
     return errors
 
@@ -75,6 +100,8 @@ SELF_TEST_CASES: tuple[tuple[str, bool], ...] = (
     ("Broken [Guide](/dev-resources/guide// before text.", True),
     ("Broken [Guide](/dev-resources/guide/.", True),
     ("Empty [link]() here.", True),
+    ("Valid [x](/a_(b)/c/) link.", False),  # balanced inner parens, not broken
+    ("Broken [x](/a_(b)/c/ no close.", True),  # nested parens but still unclosed
     ("Inline code `[x](y` is not a link.", False),  # inline code is masked
     ("```\n[Guide](/broken/\n```", False),  # fenced code is skipped
     # A shorter run inside a longer fence does not close it.

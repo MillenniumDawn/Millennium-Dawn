@@ -46,6 +46,7 @@ def git_ls_files(repo_root: Path) -> list[str]:
         ["git", "-C", str(repo_root), "ls-files"],
         text=True,
         encoding="utf-8",
+        timeout=60,
     )
     return [line.strip() for line in out.splitlines() if line.strip()]
 

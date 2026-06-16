@@ -38,10 +38,27 @@ class CheckResult:
     duration: float
 
 
-def run_cmd(name: str, cmd: list[str], cwd: Path = DOCS_ROOT) -> CheckResult:
-    """Run a subprocess and capture it as a CheckResult."""
+def run_cmd(
+    name: str, cmd: list[str], cwd: Path = DOCS_ROOT, timeout: float = 600.0
+) -> CheckResult:
+    """Run a subprocess and capture it as a CheckResult.
+
+    A missing executable or a timeout is reported as a failed check rather than
+    raised, so one broken tool can't crash the whole run.
+    """
     start = time.monotonic()
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=cwd, timeout=timeout
+        )
+    except FileNotFoundError:
+        return CheckResult(
+            name, False, f"command not found: {cmd[0]}", time.monotonic() - start
+        )
+    except subprocess.TimeoutExpired:
+        return CheckResult(
+            name, False, f"timed out after {timeout:.0f}s", time.monotonic() - start
+        )
     duration = time.monotonic() - start
     output = (proc.stdout + proc.stderr).strip()
     return CheckResult(
