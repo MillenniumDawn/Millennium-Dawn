@@ -46,40 +46,13 @@ jobs:
         working-directory: docs
         run: bun install
 
-      # Source checks run before the build so malformed content fails fast.
-      - name: Link-syntax checker self-test
-        run: python3 tools/docs_checks/check_link_syntax.py --self-test
-
-      - name: Markdown link syntax
-        run: python3 tools/docs_checks/check_link_syntax.py
-
-      - name: Raw HTML and duplicate titles
-        run: python3 tools/docs_checks/check_content_html.py
-
-      - name: Country flag images
-        run: python3 tools/docs_checks/check_flag_images.py
-
-      - name: Astro checks
-        working-directory: docs
+      # The checkers' own self-tests (validate the checker logic, not content).
+      - name: Checker self-tests
         run: |
-          bun run lint:md
-          bun run check
-          bun run build
+          python3 tools/docs_checks/check_link_syntax.py --self-test
+          python3 tools/docs_checks/check_accessibility_basics.py --self-test
 
-      - name: Validate Open Graph metadata images
-        run: python3 tools/docs_checks/check_og_images.py --site-dir docs/dist --baseurl /Millennium-Dawn
-
-      - name: Docs hygiene checks
-        run: python3 tools/docs_checks/check_docs_hygiene.py --repo-root . --docs-dir docs
-
-      - name: Validate internal links and local assets
-        run: python3 tools/docs_checks/check_site_links.py --site-dir docs/dist --baseurl /Millennium-Dawn
-
-      - name: Accessibility checker self-test
-        run: python3 tools/docs_checks/check_accessibility_basics.py --self-test
-
-      - name: Accessibility baseline checks
-        run: python3 tools/docs_checks/check_accessibility_basics.py --site-dir docs/dist
-
-      - name: Performance budget checks
-        run: python3 tools/docs_checks/check_perf_budgets.py --site-dir docs/dist
+      # Single orchestrator: source checks, then the build, then dist checks.
+      # The check list lives only in tools/docs_checks/check_docs.py.
+      - name: Docs checks (lint, build, links, a11y, perf, ...)
+        run: python3 tools/docs_checks/check_docs.py

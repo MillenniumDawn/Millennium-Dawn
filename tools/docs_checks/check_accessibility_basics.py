@@ -137,6 +137,23 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def run(site_dir: Path) -> tuple[bool, str]:
+    """Run accessibility baseline checks; return (passed, report)."""
+    site_dir = site_dir.resolve()
+    if not site_dir.exists():
+        return False, f"ERROR: site directory does not exist: {site_dir}"
+
+    failures: list[str] = []
+    for html_file in iter_html_files(site_dir):
+        for issue in check_file(html_file):
+            failures.append(f"- {html_file}: {issue}")
+
+    if failures:
+        return False, "Accessibility baseline checks failed:\n" + "\n".join(failures)
+
+    return True, f"Accessibility baseline checks passed for {site_dir}"
+
+
 def main() -> int:
     args = parse_args()
     if args.self_test:
@@ -144,25 +161,9 @@ def main() -> int:
     if not args.site_dir:
         print("ERROR: --site-dir is required unless --self-test is set")
         return 2
-    site_dir = Path(args.site_dir).resolve()
-    if not site_dir.exists():
-        print(f"ERROR: site directory does not exist: {site_dir}")
-        return 2
-
-    failures: list[str] = []
-    for html_file in iter_html_files(site_dir):
-        issues = check_file(html_file)
-        if issues:
-            for issue in issues:
-                failures.append(f"- {html_file}: {issue}")
-
-    if failures:
-        print("Accessibility baseline checks failed:")
-        print("\n".join(failures))
-        return 1
-
-    print(f"Accessibility baseline checks passed for {site_dir}")
-    return 0
+    passed, report = run(Path(args.site_dir))
+    print(report)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

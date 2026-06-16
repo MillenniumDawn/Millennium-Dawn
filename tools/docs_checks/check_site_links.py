@@ -134,25 +134,30 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
-    site_dir = Path(args.site_dir).resolve()
-    baseurl = args.baseurl.rstrip("/")
-
+def run(site_dir: Path, baseurl: str = "") -> tuple[bool, str]:
+    """Validate internal links/assets in the built site; return (passed, report)."""
+    site_dir = site_dir.resolve()
+    baseurl = baseurl.rstrip("/")
     if not site_dir.exists():
-        print_safe(f"ERROR: site directory does not exist: {site_dir}")
-        return 2
+        return False, f"ERROR: site directory does not exist: {site_dir}"
 
     errors = collect_broken_links(site_dir, baseurl)
-
     if errors:
-        print_safe("Broken internal links/assets found:")
-        for html_file, raw_link, normalized in errors:
-            print_safe(f"- {html_file}: {raw_link} -> {normalized}")
-        return 1
+        lines = ["Broken internal links/assets found:"]
+        lines += [
+            f"- {html_file}: {raw_link} -> {normalized}"
+            for html_file, raw_link, normalized in errors
+        ]
+        return False, "\n".join(lines)
 
-    print_safe(f"Link check passed for {site_dir}")
-    return 0
+    return True, f"Link check passed for {site_dir}"
+
+
+def main() -> int:
+    args = parse_args()
+    passed, report = run(Path(args.site_dir), args.baseurl)
+    print_safe(report)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

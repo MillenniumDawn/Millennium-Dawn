@@ -141,32 +141,30 @@ def check_html_file(site_dir: Path, html_path: Path, baseurl: str) -> list[str]:
     return issues
 
 
-def main() -> int:
-    args = parse_args()
-    site_dir = Path(args.site_dir).resolve()
-    baseurl = args.baseurl
-
+def run(site_dir: Path, baseurl: str = "") -> tuple[bool, str]:
+    """Validate OG/Twitter image metadata; return (passed, report)."""
+    site_dir = site_dir.resolve()
     if not site_dir.exists():
-        print(f"ERROR: site directory does not exist: {site_dir}")
-        return 2
+        return False, f"ERROR: site directory does not exist: {site_dir}"
 
     failures: list[str] = []
     for html_file in iter_html_files(site_dir):
-        issues = check_html_file(
+        for issue in check_html_file(
             site_dir=site_dir, html_path=html_file, baseurl=baseurl
-        )
-        if not issues:
-            continue
-        for issue in issues:
+        ):
             failures.append(f"- {html_file}: {issue}")
 
     if failures:
-        print("OG metadata checks failed:")
-        print("\n".join(failures))
-        return 1
+        return False, "OG metadata checks failed:\n" + "\n".join(failures)
 
-    print(f"OG metadata checks passed for {site_dir}")
-    return 0
+    return True, f"OG metadata checks passed for {site_dir}"
+
+
+def main() -> int:
+    args = parse_args()
+    passed, report = run(Path(args.site_dir), args.baseurl)
+    print(report)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

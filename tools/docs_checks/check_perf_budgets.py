@@ -25,12 +25,11 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
-    site_dir = Path(args.site_dir).resolve()
+def run(site_dir: Path) -> tuple[bool, str]:
+    """Check built assets against perf budgets; return (passed, report)."""
+    site_dir = site_dir.resolve()
     if not site_dir.exists():
-        print(f"ERROR: site directory does not exist: {site_dir}")
-        return 2
+        return False, f"ERROR: site directory does not exist: {site_dir}"
 
     failures: list[str] = []
     index_html = site_dir / "index.html"
@@ -65,12 +64,16 @@ def main() -> int:
             )
 
     if failures:
-        print("Performance budget checks failed:")
-        print("\n".join(failures))
-        return 1
+        return False, "Performance budget checks failed:\n" + "\n".join(failures)
 
-    print(f"Performance budget checks passed for {site_dir}")
-    return 0
+    return True, f"Performance budget checks passed for {site_dir}"
+
+
+def main() -> int:
+    args = parse_args()
+    passed, report = run(Path(args.site_dir))
+    print(report)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

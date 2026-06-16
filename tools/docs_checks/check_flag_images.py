@@ -18,7 +18,8 @@ FLAG_IMAGE_RE = re.compile(
 )
 
 
-def main() -> int:
+def run() -> tuple[bool, str]:
+    """Validate country flag_image references; return (passed, report)."""
     errors: list[str] = []
 
     for country_file in sorted(COUNTRIES_DIR.glob("*.md")):
@@ -33,11 +34,15 @@ def main() -> int:
                 )
 
     if errors:
-        print("Flag image validation failed:", file=sys.stderr)
-        print("\n".join(errors), file=sys.stderr)
-        return 1
+        return False, "Flag image validation failed:\n" + "\n".join(errors)
 
-    return 0
+    return True, "Flag image references OK."
+
+
+def main() -> int:
+    passed, report = run()
+    print(report, file=sys.stdout if passed else sys.stderr)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

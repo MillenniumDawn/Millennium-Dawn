@@ -99,6 +99,27 @@ def self_test() -> int:
     return 0
 
 
+def scan_paths(paths: list[Path]) -> list[str]:
+    errors: list[str] = []
+    for path in paths:
+        try:
+            name = str(path.relative_to(CONTENT_ROOT))
+        except ValueError:
+            name = str(path)
+        errors.extend(
+            scan_text(path.read_text(encoding="utf-8", errors="replace"), name)
+        )
+    return errors
+
+
+def run() -> tuple[bool, str]:
+    """Scan all docs content for malformed links; return (passed, report)."""
+    errors = scan_paths(list(iter_markdown()))
+    if errors:
+        return False, "Malformed Markdown links found:\n" + "\n".join(errors)
+    return True, "No malformed Markdown links found."
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("files", nargs="*", help="Specific files to scan.")
@@ -111,23 +132,18 @@ def main() -> int:
         return self_test()
 
     if args.files:
-        paths = [Path(f) for f in args.files if f.endswith((".md", ".mdx"))]
-    else:
-        paths = list(iter_markdown())
-
-    errors: list[str] = []
-    for path in paths:
-        try:
-            name = str(path.relative_to(CONTENT_ROOT))
-        except ValueError:
-            name = str(path)
-        errors.extend(
-            scan_text(path.read_text(encoding="utf-8", errors="replace"), name)
+        errors = scan_paths(
+            [Path(f) for f in args.files if f.endswith((".md", ".mdx"))]
         )
+        if errors:
+            print("Malformed Markdown links found:", file=sys.stderr)
+            print("\n".join(errors), file=sys.stderr)
+            return 1
+        return 0
 
-    if errors:
-        print("Malformed Markdown links found:", file=sys.stderr)
-        print("\n".join(errors), file=sys.stderr)
+    passed, report = run()
+    if not passed:
+        print(report, file=sys.stderr)
         return 1
     return 0
 

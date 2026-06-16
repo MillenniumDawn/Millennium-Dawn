@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,20 +30,37 @@ except ImportError:  # when imported as a package module
 
 HERE = Path(__file__).resolve().parent
 
-# Maps a check name to the script that implements it (those that are scripts).
-SCRIPT_FILES = {
-    "link-syntax": "check_link_syntax.py",
-    "content-html": "check_content_html.py",
-    "flags": "check_flag_images.py",
-    "links": "check_site_links.py",
-    "og": "check_og_images.py",
-    "a11y": "check_accessibility_basics.py",
-    "perf": "check_perf_budgets.py",
+# The individual checks are sibling modules. Each exposes `run(...) -> (bool, str)`
+# so the runner can call them in-process (one orchestrator, no subprocess fan-out).
+# The check list below is the single source of truth for what runs and when.
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+import check_accessibility_basics as _a11y  # noqa: E402
+import check_content_html as _content_html  # noqa: E402
+import check_docs_hygiene as _hygiene  # noqa: E402
+import check_flag_images as _flags  # noqa: E402
+import check_link_syntax as _link_syntax  # noqa: E402
+import check_og_images as _og  # noqa: E402
+import check_perf_budgets as _perf  # noqa: E402
+import check_site_links as _links  # noqa: E402
+
+# Bun/Node checks stay as subprocesses: they drive external tools, not Python.
+_BUN_CHECKS = {
+    "lint:md": ["bun", "run", "lint:md"],
+    "astro check": ["bun", "run", "check"],
+    "build": ["bun", "run", "build"],
 }
 
 
-def _script(name: str, *args: str) -> CheckResult:
-    return run_cmd(name, [sys.executable, str(HERE / SCRIPT_FILES[name]), *args])
+def _timed(name: str, fn: Callable[[], tuple[bool, str]]) -> CheckResult:
+    """Run an in-process check function and capture it as a CheckResult."""
+    start = time.monotonic()
+    try:
+        passed, output = fn()
+    except Exception as exc:  # noqa: BLE001 - surface as a failed check
+        passed, output = False, f"Exception: {exc}"
+    return CheckResult(name, passed, output.strip(), time.monotonic() - start)
 
 
 # ---------------------------------------------------------------------------
@@ -51,31 +69,23 @@ def _script(name: str, *args: str) -> CheckResult:
 
 
 def check_link_syntax() -> CheckResult:
-    return _script("link-syntax")
+    return _timed("link-syntax", _link_syntax.run)
 
 
 def check_content_html() -> CheckResult:
-    return _script("content-html")
+    return _timed("content-html", _content_html.run)
 
 
 def check_flags() -> CheckResult:
-    return _script("flags")
+    return _timed("flags", _flags.run)
 
 
 def check_hygiene() -> CheckResult:
-    return run_cmd(
-        "hygiene",
-        [
-            sys.executable,
-            str(HERE / "check_docs_hygiene.py"),
-            "--repo-root",
-            str(REPO_ROOT),
-        ],
-    )
+    return _timed("hygiene", lambda: _hygiene.run(REPO_ROOT))
 
 
 def check_lint_md() -> CheckResult:
-    return run_cmd("lint:md", ["bun", "run", "lint:md"])
+    return run_cmd("lint:md", _BUN_CHECKS["lint:md"])
 
 
 # ---------------------------------------------------------------------------
@@ -84,11 +94,11 @@ def check_lint_md() -> CheckResult:
 
 
 def check_astro() -> CheckResult:
-    return run_cmd("astro check", ["bun", "run", "check"])
+    return run_cmd("astro check", _BUN_CHECKS["astro check"])
 
 
 def check_build() -> CheckResult:
-    return run_cmd("build", ["bun", "run", "build"])
+    return run_cmd("build", _BUN_CHECKS["build"])
 
 
 # ---------------------------------------------------------------------------
@@ -96,26 +106,26 @@ def check_build() -> CheckResult:
 # ---------------------------------------------------------------------------
 
 
-def _dist_check(name: str, *extra: str) -> CheckResult:
+def _dist_check(name: str, fn: Callable[[], tuple[bool, str]]) -> CheckResult:
     if not DIST_DIR.exists():
         return CheckResult(name, False, "dist/ not found. Run build first.", 0.0)
-    return _script(name, "--site-dir", str(DIST_DIR), *extra)
+    return _timed(name, fn)
 
 
 def check_links() -> CheckResult:
-    return _dist_check("links", "--baseurl", SITE_BASEURL)
+    return _dist_check("links", lambda: _links.run(DIST_DIR, SITE_BASEURL))
 
 
 def check_og() -> CheckResult:
-    return _dist_check("og", "--baseurl", SITE_BASEURL)
+    return _dist_check("og", lambda: _og.run(DIST_DIR, SITE_BASEURL))
 
 
 def check_a11y() -> CheckResult:
-    return _dist_check("a11y")
+    return _dist_check("a11y", lambda: _a11y.run(DIST_DIR))
 
 
 def check_perf() -> CheckResult:
-    return _dist_check("perf")
+    return _dist_check("perf", lambda: _perf.run(DIST_DIR))
 
 
 @dataclass

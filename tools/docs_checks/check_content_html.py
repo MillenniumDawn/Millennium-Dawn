@@ -120,22 +120,28 @@ def check_file(path: Path) -> list[str]:
     return issues
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
-
+def run() -> tuple[bool, str]:
+    """Scan docs content for blocked HTML / duplicate titles; return (passed, report)."""
     issues: list[str] = []
     for file_path in iter_markdown_files(CONTENT_ROOT):
         issues.extend(check_file(file_path))
 
     if issues:
-        print("Content HTML / heading checks failed:", file=sys.stderr)
-        for issue in issues:
-            print(f"  {issue}", file=sys.stderr)
-        return 1
+        return False, "Content HTML / heading checks failed:\n" + "\n".join(
+            f"  {issue}" for issue in issues
+        )
 
-    print("No blocked raw HTML patterns or duplicate hero titles found in content.")
-    return 0
+    return (
+        True,
+        "No blocked raw HTML patterns or duplicate hero titles found in content.",
+    )
+
+
+def main() -> int:
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    passed, report = run()
+    print(report, file=sys.stdout if passed else sys.stderr)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":
