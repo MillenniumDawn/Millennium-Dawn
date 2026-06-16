@@ -2,6 +2,7 @@
 """Find textures in gfx/ that no .gfx file references, plus references that
 point at missing files. Vanilla HoI4 installs are auto-detected so vanilla
 sprite refs don't get flagged; pass --hoi4-path to override."""
+
 import glob
 import os
 import re

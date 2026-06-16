@@ -26,6 +26,7 @@ Three more collapses are flagged on top of the same-scope merge:
 
 Output is WARNING-only.
 """
+
 import os
 import re
 import sys

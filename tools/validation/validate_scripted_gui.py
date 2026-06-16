@@ -4,6 +4,7 @@
 Surfaces silent failures where a name typo or missing reference loads without
 error but does nothing at runtime.
 """
+
 import os
 import re
 import sys
