@@ -2,7 +2,7 @@
 title: Bug Bot Terms of Service
 description: The terms under which the Millennium Dawn Bug Bot is provided to the community. Covers acceptable use, what the team promises, and the limits of liability.
 permalink: /bug-bot-terms/
-last_updated: 2026-06-15
+last_updated: 2026-06-16
 ---
 
 These terms cover the [Millennium Dawn Bug Bot](/bug-bot/), the Discord bot used in the Millennium Dawn community to turn bug reports and suggestions posted in our Discord forum into issues on our public GitHub tracker. The bot is operated by the Millennium Dawn team, a volunteer, non-profit mod project. In these terms, "we" means that team and "you" means anyone who uses the bot or posts in a tracked forum channel.
@@ -51,6 +51,10 @@ The mod and the bot are community efforts, not commercial products. To the maxim
 - Our total liability to you for any claim relating to the bot is limited to the amount you have paid us in the twelve months before the claim. Because the bot is free, that amount is zero.
 
 Nothing in these terms excludes or limits liability that cannot be excluded or limited under applicable law (for example, liability for death or personal injury caused by negligence, or for fraud).
+
+## The bot and its code
+
+The Bug Bot is a single instance we host and run on our own infrastructure. It is a service we operate for our community, not software we distribute. We own its source code; it is not released, licensed, sold, or shipped to anyone, and using the bot grants you no rights to that code. You cannot add the bot to another server or run your own copy. These terms cover your use of the one instance we run, nothing more.
 
 ## Your content and our rights
 
