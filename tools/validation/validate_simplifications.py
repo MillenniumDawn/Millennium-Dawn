@@ -26,6 +26,7 @@ Three more collapses are flagged on top of the same-scope merge:
 
 Output is WARNING-only.
 """
+
 import os
 import re
 import sys
@@ -495,8 +496,7 @@ def _scan_file(text: str, path: str):
     for line, replacement in _find_government_match(text):
         findings.append(
             (
-                f"ideology enumeration over all five governments; use "
-                f"`{replacement}`",
+                f"ideology enumeration over all five governments; use `{replacement}`",
                 line,
             )
         )

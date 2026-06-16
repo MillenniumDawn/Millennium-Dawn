@@ -8,8 +8,18 @@ import re
 import subprocess
 from pathlib import Path
 
-
-TEXT_EXTENSIONS = {".md", ".mdx", ".html", ".yml", ".yaml", ".scss", ".css", ".js", ".ts", ".astro"}
+TEXT_EXTENSIONS = {
+    ".md",
+    ".mdx",
+    ".html",
+    ".yml",
+    ".yaml",
+    ".scss",
+    ".css",
+    ".js",
+    ".ts",
+    ".astro",
+}
 TEMP_NAME_RE = re.compile(r"-temp", re.IGNORECASE)
 
 # Keep this list short and explicit when an unreferenced asset is intentional.
@@ -36,6 +46,7 @@ def git_ls_files(repo_root: Path) -> list[str]:
         ["git", "-C", str(repo_root), "ls-files"],
         text=True,
         encoding="utf-8",
+        timeout=60,
     )
     return [line.strip() for line in out.splitlines() if line.strip()]
 
@@ -92,9 +103,11 @@ def find_unused_assets(
         if not is_text_file(path):
             continue
         # Do not treat binary asset directories as reference sources.
-        if rel.startswith(f"{docs_prefix}public/assets/images/") or rel.startswith(
-            f"{docs_prefix}public/assets/downloads/"
-        ) or rel.startswith(f"{docs_prefix}src/assets/images/"):
+        if (
+            rel.startswith(f"{docs_prefix}public/assets/images/")
+            or rel.startswith(f"{docs_prefix}public/assets/downloads/")
+            or rel.startswith(f"{docs_prefix}src/assets/images/")
+        ):
             continue
         source_files.append(repo_root / rel)
 
@@ -116,10 +129,19 @@ def find_unused_assets(
     return issues
 
 
-def main() -> int:
-    args = parse_args()
-    repo_root = Path(args.repo_root).resolve()
-    docs_dir = Path(args.docs_dir)
+def run(repo_root: Path, docs_dir: Path = Path("docs")) -> tuple[bool, str]:
+    """Run docs hygiene checks; return (passed, report)."""
+    repo_root = repo_root.resolve()
+    if docs_dir.is_absolute():
+        # git ls-files yields repo-relative paths, so docs_dir must be relative
+        # too or nothing matches and the check silently passes. Normalize it.
+        try:
+            docs_dir = docs_dir.resolve().relative_to(repo_root)
+        except ValueError:
+            return (
+                False,
+                f"ERROR: docs-dir {docs_dir} is not inside repo-root {repo_root}",
+            )
     docs_prefix = docs_dir.as_posix().rstrip("/") + "/"
 
     tracked_files = git_ls_files(repo_root)
@@ -135,22 +157,27 @@ def main() -> int:
         file_name = Path(rel).name
         if rel.startswith(f"{docs_prefix}.bundle/"):
             issues.append(f"Bundler local config must not be tracked: {rel}")
-        tracked_under_assets = rel.startswith(f"{docs_prefix}public/assets/") or rel.startswith(
-            f"{docs_prefix}src/assets/images/"
-        )
+        tracked_under_assets = rel.startswith(
+            f"{docs_prefix}public/assets/"
+        ) or rel.startswith(f"{docs_prefix}src/assets/images/")
         if tracked_under_assets and TEMP_NAME_RE.search(file_name):
             issues.append(f"Temp-named docs asset is tracked: {rel}")
 
     issues.extend(find_unused_assets(repo_root, docs_dir, tracked_files))
 
     if issues:
-        print("Docs hygiene checks failed:")
-        for issue in issues:
-            print(f"- {issue}")
-        return 1
+        return False, "Docs hygiene checks failed:\n" + "\n".join(
+            f"- {issue}" for issue in issues
+        )
 
-    print("Docs hygiene checks passed")
-    return 0
+    return True, "Docs hygiene checks passed"
+
+
+def main() -> int:
+    args = parse_args()
+    passed, report = run(Path(args.repo_root), Path(args.docs_dir))
+    print(report)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

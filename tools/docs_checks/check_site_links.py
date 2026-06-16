@@ -4,13 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import os
 import posixpath
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Iterable, List, Tuple
-
 
 SKIP_PREFIXES = (
     "http://",
@@ -54,7 +52,9 @@ def strip_query_and_hash(url: str) -> str:
     return clean.strip()
 
 
-def normalize_target(raw_url: str, current_html: Path, site_dir: Path, baseurl: str) -> str | None:
+def normalize_target(
+    raw_url: str, current_html: Path, site_dir: Path, baseurl: str
+) -> str | None:
     url = strip_query_and_hash(raw_url)
     if not url or url == "#":
         return None
@@ -125,30 +125,39 @@ def collect_broken_links(site_dir: Path, baseurl: str) -> List[Tuple[Path, str, 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--site-dir", required=True, help="Path to generated site directory")
-    parser.add_argument("--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)")
+    parser.add_argument(
+        "--site-dir", required=True, help="Path to generated site directory"
+    )
+    parser.add_argument(
+        "--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)"
+    )
     return parser.parse_args()
+
+
+def run(site_dir: Path, baseurl: str = "") -> tuple[bool, str]:
+    """Validate internal links/assets in the built site; return (passed, report)."""
+    site_dir = site_dir.resolve()
+    baseurl = baseurl.rstrip("/")
+    if not site_dir.exists():
+        return False, f"ERROR: site directory does not exist: {site_dir}"
+
+    errors = collect_broken_links(site_dir, baseurl)
+    if errors:
+        lines = ["Broken internal links/assets found:"]
+        lines += [
+            f"- {html_file}: {raw_link} -> {normalized}"
+            for html_file, raw_link, normalized in errors
+        ]
+        return False, "\n".join(lines)
+
+    return True, f"Link check passed for {site_dir}"
 
 
 def main() -> int:
     args = parse_args()
-    site_dir = Path(args.site_dir).resolve()
-    baseurl = args.baseurl.rstrip("/")
-
-    if not site_dir.exists():
-        print_safe(f"ERROR: site directory does not exist: {site_dir}")
-        return 2
-
-    errors = collect_broken_links(site_dir, baseurl)
-
-    if errors:
-        print_safe("Broken internal links/assets found:")
-        for html_file, raw_link, normalized in errors:
-            print_safe(f"- {html_file}: {raw_link} -> {normalized}")
-        return 1
-
-    print_safe(f"Link check passed for {site_dir}")
-    return 0
+    passed, report = run(Path(args.site_dir), args.baseurl)
+    print_safe(report)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

@@ -51,7 +51,13 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 - Omit defaults: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
 - No empty `mutually_exclusive`/`available` blocks; limit permanent effects to 5
 - Never `available = { always = no }` with a `bypass` — use matching condition
-- High-cost focuses (cost >= 8, or >= 5 for mil/econ/research): add `NOT = { has_active_mission = bankruptcy_incoming_collapse }` in `available`
+- High-cost focuses (cost >= 8, or >= 5 for mil/econ/research): add a bankruptcy guard inside `ai_will_do`:
+  ```
+  modifier = {
+      factor = 0
+      has_active_mission = bankruptcy_incoming_collapse
+  }
+  ```
 - Ref: `.claude/docs/focus-tree-reference.md`
 
 ## Decisions

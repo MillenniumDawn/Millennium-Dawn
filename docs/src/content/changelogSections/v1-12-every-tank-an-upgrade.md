@@ -1,10 +1,10 @@
 ---
 title: v1.12.0 'Every Tank an Upgrade'
-page_id: changelog-v1-12-0-every-tank-an-upgrade
+page_id: changelog-v1-12-every-tank-an-upgrade
 order: 13
 ---
 
-> Looking for v1.12.1+ hotfixes? See [v1.12.x Hotfixes](/changelogs/v1-12-0-every-tank-an-upgrade-hotfixes/).
+> Looking for v1.12.1+ hotfixes? See [v1.12.x Hotfixes](/changelogs/v1-12-every-tank-an-upgrade-hotfixes/).
 
 ## v1.12.0d - 7/02/25 Hotfix
 

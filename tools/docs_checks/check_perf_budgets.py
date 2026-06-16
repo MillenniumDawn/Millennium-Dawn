@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-
 BUDGETS_BYTES = {
     ".html": 320_000,
     ".css": 120_000,
@@ -20,21 +19,28 @@ INDEX_HTML_BUDGET = 60_000
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--site-dir", required=True, help="Path to generated site directory")
+    parser.add_argument(
+        "--site-dir", required=True, help="Path to generated site directory"
+    )
     return parser.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
-    site_dir = Path(args.site_dir).resolve()
+def run(site_dir: Path) -> tuple[bool, str]:
+    """Check built assets against perf budgets; return (passed, report)."""
+    site_dir = site_dir.resolve()
     if not site_dir.exists():
-        print(f"ERROR: site directory does not exist: {site_dir}")
-        return 2
+        return False, f"ERROR: site directory does not exist: {site_dir}"
 
     failures: list[str] = []
+    index_html = site_dir / "index.html"
 
     for file_path in site_dir.rglob("*"):
         if not file_path.is_file():
+            continue
+
+        # The root index.html has its own tighter budget below; don't also
+        # report it against the looser generic .html budget.
+        if file_path == index_html:
             continue
 
         ext = file_path.suffix.lower()
@@ -50,7 +56,6 @@ def main() -> int:
                 f"- {file_path}: {size} bytes exceeds image budget of {MAX_IMAGE_BYTES} bytes"
             )
 
-    index_html = site_dir / "index.html"
     if index_html.exists():
         index_size = index_html.stat().st_size
         if index_size > INDEX_HTML_BUDGET:
@@ -59,12 +64,16 @@ def main() -> int:
             )
 
     if failures:
-        print("Performance budget checks failed:")
-        print("\n".join(failures))
-        return 1
+        return False, "Performance budget checks failed:\n" + "\n".join(failures)
 
-    print(f"Performance budget checks passed for {site_dir}")
-    return 0
+    return True, f"Performance budget checks passed for {site_dir}"
+
+
+def main() -> int:
+    args = parse_args()
+    passed, report = run(Path(args.site_dir))
+    print(report)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

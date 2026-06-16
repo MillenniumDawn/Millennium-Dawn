@@ -17,6 +17,7 @@ WARNING-level checks (reported, do not fail):
   - Missing search_filters in focus blocks
   - Event option has effects but no log =
 """
+
 import os
 import re
 import sys

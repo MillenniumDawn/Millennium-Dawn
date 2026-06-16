@@ -8,7 +8,11 @@ import re
 import sys
 from pathlib import Path
 
-CONTENT_ROOT = Path(__file__).resolve().parents[1] / "src" / "content"
+try:
+    from common import CONTENT_ROOT
+except ImportError:  # when imported as a package module
+    from .common import CONTENT_ROOT
+
 MARKDOWN_GLOB = ("**/*.md", "**/*.mdx")
 
 HERO_TITLE_COLLECTIONS = frozenset(
@@ -30,13 +34,14 @@ BLOCKED_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"<\s*[^>]*\son[a-z]+\s*=", re.IGNORECASE), "inline event handler"),
 )
 
-FRONTMATTER_RE = re.compile(r"^---\r?\n([\s\S]*?)\r?\n---\r?\n", re.MULTILINE)
+FRONTMATTER_RE = re.compile(r"^---\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?", re.MULTILINE)
 TITLE_RE = re.compile(r"^title:\s*[\"']?(.+?)[\"']?\s*$", re.MULTILINE)
-LEADING_H1_RE = re.compile(r"^#\s+(.+?)\s*$", re.MULTILINE)
+LEADING_H1_RE = re.compile(r"^#\s+(.+?)\s*$")
 
 
 def strip_fenced_code_blocks(text: str) -> str:
-    return re.sub(r"```[\s\S]*?```", "", text)
+    text = re.sub(r"```[\s\S]*?```", "", text)
+    return re.sub(r"~~~[\s\S]*?~~~", "", text)
 
 
 def iter_markdown_files(root: Path) -> list[Path]:
@@ -101,35 +106,43 @@ def check_duplicate_hero_title(path: Path, text: str) -> list[str]:
 
 
 def check_file(path: Path) -> list[str]:
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8", errors="replace")
     body = strip_fenced_code_blocks(text)
     issues: list[str] = []
 
     for pattern, label in BLOCKED_PATTERNS:
         for match in pattern.finditer(body):
             line = body.count("\n", 0, match.start()) + 1
-            issues.append(f"{path.relative_to(CONTENT_ROOT.parent)}:{line}: blocked {label}")
+            issues.append(
+                f"{path.relative_to(CONTENT_ROOT.parent)}:{line}: blocked {label}"
+            )
 
     issues.extend(check_duplicate_hero_title(path, text))
     return issues
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
-
+def run() -> tuple[bool, str]:
+    """Scan docs content for blocked HTML / duplicate titles; return (passed, report)."""
     issues: list[str] = []
     for file_path in iter_markdown_files(CONTENT_ROOT):
         issues.extend(check_file(file_path))
 
     if issues:
-        print("Content HTML / heading checks failed:", file=sys.stderr)
-        for issue in issues:
-            print(f"  {issue}", file=sys.stderr)
-        return 1
+        return False, "Content HTML / heading checks failed:\n" + "\n".join(
+            f"  {issue}" for issue in issues
+        )
 
-    print("No blocked raw HTML patterns or duplicate hero titles found in content.")
-    return 0
+    return (
+        True,
+        "No blocked raw HTML patterns or duplicate hero titles found in content.",
+    )
+
+
+def main() -> int:
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    passed, report = run()
+    print(report, file=sys.stdout if passed else sys.stderr)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

@@ -318,8 +318,8 @@ Bugfix:
 - [ISR] Fixed liberal leader selection logic preventing Yair Lapid from ever appearing - NOT block incorrectly checked all five party flags as a group instead of individually, causing Yitzhak Mordechai to always trigger first
 - [SOV] Fixed Uzbekistan missing from CIS democratic foreign policy focuses - added UZB to SOV_russia_inivte_to_cis_former_member, SOV_russia_create_unite_cis_forces, and SOV_russia_create_unite_cis_state scripted effects, plus the autonomy_state_cis allowed block (Issue #1147)
 - Fixed cyber warfare operations not clearing the target attack flag on mission failure, permanently blocking future operations against that country
-- [GAH] Fixed leader succession for conservatism, socialism, Communist-State, Neutral_green, Neutral_Communism, and Monarchist ideologies — successor leaders were in unreachable else_if blocks and could never appear
-- [ZAM] Fixed leader succession for liberalism, socialism, and Neutral_green ideologies — successor leaders were in unreachable else_if blocks and could never appear
+- [GAH] Fixed leader succession for conservatism, socialism, Communist-State, Neutral_green, Neutral_Communism, and Monarchist ideologies, successor leaders were in unreachable else_if blocks and could never appear
+- [ZAM] Fixed leader succession for liberalism, socialism, and Neutral_green ideologies, successor leaders were in unreachable else_if blocks and could never appear
 - [ARM] Fixed unreachable duplicate else_if with self-swapping idea in ARM_shadow_economy_bad_script
 - Fixed healthcare budget effects performing no-op swap_ideas (health_06 to health_06) when already at max tier
 - Fixed UN vote influence (both GA and SC) showing effects applying to the player instead of the target country, caused by incorrect scope resolution of THIS.id in scripted GUI dynamic list effects
@@ -330,7 +330,7 @@ Bugfix:
 - Fixed Blackwater units not being disbanded when Constellis forms - the formation event now iterates all hiring countries and removes their Blackwater units and correctly adjusts deployment counts
 - Fixed PMC self-hire exploit where hiring a domestic PMC refunded the cost back to the player via the payment event (Issue #490)
 - Fixed VTB PMC mission clearing the wrong flag (sberbank_yes instead of vtb_yes), preventing VTB from being rehired
-- [SOM] Fixed somalia.3 event causing SNA to annex itself during unification — scoped change_tag_from and annex_country into SOM to fix ROOT scope mismatch (Issue #812)
+- [SOM] Fixed somalia.3 event causing SNA to annex itself during unification, scoped change_tag_from and annex_country into SOM to fix ROOT scope mismatch (Issue #812)
 - [RCD] Fixed Rally for Congolese Democracy capital set to state 311 (Tshopo, owned by DRC) instead of state 310 (Maniema)
 - Replaced PMC OOB files with inline unit spawning for improved reliability and removed No Step Back DLC branching
 - Removed unused modify_pmc_expenses and modify_pmc_profits scripted effects, inlining their logic directly
@@ -518,7 +518,7 @@ Bugfix:
 - [UKR] Added a support ships for ukranian navy
 - [ISR] Added submarine production for Israel (INS Tkuma)
 - [CZE] Fixed Petr Pavel's political branch not being available after Pavel retires from the army
-- [SOV] Renamed misspelled SUB_subject_rebeliion_flag to SUB_subject_rebellion_flag across all call sites; save-incompatible — pre-existing saves with the old flag will lose their rebellion-blocking state, allowing affected subjects to rebel again
+- [SOV] Renamed misspelled SUB_subject_rebeliion_flag to SUB_subject_rebellion_flag across all call sites; save-incompatible, pre-existing saves with the old flag will lose their rebellion-blocking state, allowing affected subjects to rebel again
 - [SOV] Fixed 37 completion_reward log-id mismatches in the Russian focus tree where logged focus IDs did not match the focus they were inside (copy-paste bugs)
 - [SOV] Initialized SUB_ekb_level alongside SUB_moscow_level in SOV history so subject city level checks return correct values from game start
 - [DEN] Fixed gulf exploitation income missing the \*0.0003 multiplier, which made the income contribution effectively zero

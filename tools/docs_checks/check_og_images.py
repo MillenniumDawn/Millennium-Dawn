@@ -9,6 +9,12 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
+try:
+    from common import SITE_ORIGIN
+except ImportError:  # when imported as a package module
+    from .common import SITE_ORIGIN
+
+SITE_HOST = urlsplit(SITE_ORIGIN).hostname
 
 REQUIRED_OG_META = (
     "og:image",
@@ -44,8 +50,12 @@ class MetaCollector(HTMLParser):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--site-dir", required=True, help="Path to built site directory")
-    parser.add_argument("--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)")
+    parser.add_argument(
+        "--site-dir", required=True, help="Path to built site directory"
+    )
+    parser.add_argument(
+        "--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)"
+    )
     return parser.parse_args()
 
 
@@ -62,6 +72,10 @@ def normalize_meta_image_to_path(raw_url: str, baseurl: str) -> str | None:
         return None
 
     parsed = urlsplit(raw_url)
+    # An absolute URL pointing at another host (e.g. a CDN) is not served from
+    # the local build, so it isn't ours to validate.
+    if parsed.hostname and parsed.hostname != SITE_HOST:
+        return None
     path = parsed.path or raw_url
     if not path.startswith("/"):
         return None
@@ -111,42 +125,46 @@ def check_html_file(site_dir: Path, html_path: Path, baseurl: str) -> list[str]:
         if normalized is None:
             issues.append(f"og:image is not a site-local URL: {og_image}")
         elif not asset_exists(site_dir, normalized):
-            issues.append(f"og:image target does not exist in site output: {normalized}")
+            issues.append(
+                f"og:image target does not exist in site output: {normalized}"
+            )
 
     if tw_image:
         normalized = normalize_meta_image_to_path(tw_image, baseurl=baseurl)
         if normalized is None:
             issues.append(f"twitter:image is not a site-local URL: {tw_image}")
         elif not asset_exists(site_dir, normalized):
-            issues.append(f"twitter:image target does not exist in site output: {normalized}")
+            issues.append(
+                f"twitter:image target does not exist in site output: {normalized}"
+            )
 
     return issues
 
 
-def main() -> int:
-    args = parse_args()
-    site_dir = Path(args.site_dir).resolve()
-    baseurl = args.baseurl
-
+def run(site_dir: Path, baseurl: str = "") -> tuple[bool, str]:
+    """Validate OG/Twitter image metadata; return (passed, report)."""
+    site_dir = site_dir.resolve()
     if not site_dir.exists():
-        print(f"ERROR: site directory does not exist: {site_dir}")
-        return 2
+        return False, f"ERROR: site directory does not exist: {site_dir}"
 
     failures: list[str] = []
     for html_file in iter_html_files(site_dir):
-        issues = check_html_file(site_dir=site_dir, html_path=html_file, baseurl=baseurl)
-        if not issues:
-            continue
-        for issue in issues:
+        for issue in check_html_file(
+            site_dir=site_dir, html_path=html_file, baseurl=baseurl
+        ):
             failures.append(f"- {html_file}: {issue}")
 
     if failures:
-        print("OG metadata checks failed:")
-        print("\n".join(failures))
-        return 1
+        return False, "OG metadata checks failed:\n" + "\n".join(failures)
 
-    print(f"OG metadata checks passed for {site_dir}")
-    return 0
+    return True, f"OG metadata checks passed for {site_dir}"
+
+
+def main() -> int:
+    args = parse_args()
+    passed, report = run(Path(args.site_dir), args.baseurl)
+    print(report)
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

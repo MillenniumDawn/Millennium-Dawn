@@ -1,6 +1,6 @@
 ---
 title: v1.10.0 'The Lion of Brussels and Babylon'
-page_id: changelog-v1-10-0-the-lion-of-brussels-and-babylon
+page_id: changelog-v1-10-the-lion-of-brussels-and-babylon
 order: 11
 ---
 

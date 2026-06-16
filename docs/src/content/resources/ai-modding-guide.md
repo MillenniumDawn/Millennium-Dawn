@@ -1,6 +1,6 @@
 ---
 title: AI-Assisted Modding Guide
-description: Use AI tools to accelerate Millennium Dawn development — local models, Claude Code, Copilot, and best practices
+description: Use AI tools to accelerate Millennium Dawn development, local models, Claude Code, Copilot, and best practices
 ---
 
 AI coding assistants can speed up repetitive tasks, generate boilerplate, and help debug scripts. This guide covers the tools available in the Millennium Dawn repo, how to set them up, and how to use them responsibly.
@@ -15,11 +15,11 @@ Millennium Dawn ships with first-class support for AI-assisted development:
 
 | Resource                  | Location                 | Purpose                                                                                                                        |
 | ------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| **AGENTS.md**             | `/AGENTS.md`             | Repo-wide instructions for AI agents — coding standards, formatting rules, performance patterns, scripting pitfalls            |
+| **AGENTS.md**             | `/AGENTS.md`             | Repo-wide instructions for AI agents, coding standards, formatting rules, performance patterns, scripting pitfalls             |
 | **Claude Code rules**     | `.claude/rules/`         | Detailed rules for localisation, scripted GUIs, general scripting, and more                                                    |
 | **Claude Code skills**    | `.claude/skills/`        | Slash commands for common tasks: `/validate`, `/standardize`, `/new-focus`, `/review-branch`, `/audit`, `/fix-issue`, and more |
 | **Documentation index**   | `.claude/docs/`          | Deep references for focuses, events, decisions, ideas, MIOs, AI strategy, AI equipment, diplomatic actions, and more           |
-| **Validation tools**      | `tools/validation/`      | Python validators that catch common mistakes — run via pre-commit or manually                                                  |
+| **Validation tools**      | `tools/validation/`      | Python validators that catch common mistakes, run via pre-commit or manually                                                   |
 | **Standardization tools** | `tools/standardization/` | Auto-reformatters for focuses, events, decisions, and ideas                                                                    |
 
 These resources are designed to work together. An AI agent reading `AGENTS.md` knows the project's coding standards; the skills let it apply those standards mechanically.
@@ -36,7 +36,7 @@ These resources are designed to work together. An AI agent reading `AGENTS.md` k
 
 1. Install Claude Code from [claude.ai/code](https://claude.ai/code).
 2. Open a terminal in the Millennium Dawn repo directory.
-3. Run `claude` — it reads `AGENTS.md` and `.claude/` automatically.
+3. Run `claude`: it reads `AGENTS.md` and `.claude/` automatically.
 
 **Key skills available:**
 
@@ -126,7 +126,7 @@ ollama run codellama
 
 ### VS Code Integration
 
-**Continue extension** — full-featured, multi-model support:
+**Continue extension**: full-featured, multi-model support:
 
 1. Install [Continue](https://marketplace.visualstudio.com/items?itemName=Continue.continue).
 2. Configure in `~/.continue/config.json`:
@@ -142,24 +142,7 @@ ollama run codellama
 }
 ```
 
-**Cline extension** — lightweight, direct Ollama integration:
-
-1. Install [Cline](https://marketplace.visualstudio.com/items?itemName=cline.cline).
-2. Configure in VS Code settings (Ctrl/Cmd + , → Extensions → Cline):
-
-```json
-{
-  "cline.models": [
-    {
-      "name": "codellama",
-      "provider": "ollama",
-      "baseUrl": "http://localhost:11434",
-      "model": "codellama"
-    }
-  ],
-  "cline.defaultModel": "codellama"
-}
-```
+**Cline extension**: lightweight, direct Ollama integration. Install [Cline](https://marketplace.visualstudio.com/items?itemName=cline.cline), then configure in VS Code settings (Ctrl/Cmd + , → Extensions → Cline) with the same model config as above. The `baseUrl` is `http://localhost:11434` by default.
 
 ### Custom MD Expert Model
 
@@ -187,7 +170,7 @@ ollama run md-expert
 
 ### GPU Acceleration
 
-Ollama uses GPU automatically if available. Verify with `ollama list` — look for the GPU indicator in model info.
+Ollama uses GPU automatically if available. Verify with `ollama list`: look for the GPU indicator in model info.
 
 ### API Server Mode
 
@@ -312,9 +295,7 @@ Run `/validate` or `pre-commit run --files <path>` to catch these automatically.
 
 # Related Resources
 
-- [Contributing Guide](/dev-resources/contributing/) — Contribution types, fork workflow, AI policy
-- [Claude Code Skills](/dev-resources/claude-code-skills/) — Full skill reference
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/) — Formatting and code structure
-- [Content Review Guide](/dev-resources/content-review-guide/) — Quality checklist
-- [Ollama Documentation](https://github.com/ollama/ollama)
-- [HOI4 Modding Wiki](https://hoi4.paradoxwikis.com/Modding)
+- [Contributing Guide](/dev-resources/contributing/), Contribution types, fork workflow, AI policy
+- [Claude Code Skills](/dev-resources/claude-code-skills/), Full skill reference
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/), Formatting and code structure
+- [Content Review Guide](/dev-resources/content-review-guide/), Quality checklist
