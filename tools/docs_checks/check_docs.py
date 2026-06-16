@@ -23,9 +23,9 @@ from pathlib import Path
 from typing import Callable
 
 try:
-    from common import DIST_DIR, REPO_ROOT, CheckResult, run_cmd
+    from common import DIST_DIR, REPO_ROOT, SITE_BASEURL, CheckResult, run_cmd
 except ImportError:  # when imported as a package module
-    from .common import DIST_DIR, REPO_ROOT, CheckResult, run_cmd
+    from .common import DIST_DIR, REPO_ROOT, SITE_BASEURL, CheckResult, run_cmd
 
 HERE = Path(__file__).resolve().parent
 
@@ -96,18 +96,18 @@ def check_build() -> CheckResult:
 # ---------------------------------------------------------------------------
 
 
-def _dist_check(name: str) -> CheckResult:
+def _dist_check(name: str, *extra: str) -> CheckResult:
     if not DIST_DIR.exists():
         return CheckResult(name, False, "dist/ not found. Run build first.", 0.0)
-    return _script(name, "--site-dir", str(DIST_DIR))
+    return _script(name, "--site-dir", str(DIST_DIR), *extra)
 
 
 def check_links() -> CheckResult:
-    return _dist_check("links")
+    return _dist_check("links", "--baseurl", SITE_BASEURL)
 
 
 def check_og() -> CheckResult:
-    return _dist_check("og")
+    return _dist_check("og", "--baseurl", SITE_BASEURL)
 
 
 def check_a11y() -> CheckResult:

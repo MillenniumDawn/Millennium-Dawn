@@ -17,6 +17,11 @@ DOCS_ROOT = REPO_ROOT / "docs"
 CONTENT_ROOT = DOCS_ROOT / "src" / "content"
 DIST_DIR = DOCS_ROOT / "dist"
 
+# Must match SITE_BASE_PATH in docs/src/shared/config/site.ts. The built site
+# prefixes every internal URL with this, so the link/OG checks need it to map a
+# URL back to a file in dist/.
+SITE_BASEURL = "/Millennium-Dawn"
+
 MARKDOWN_GLOBS = ("**/*.md", "**/*.mdx")
 
 

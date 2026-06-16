@@ -30,23 +30,30 @@ except ImportError:  # when imported as a package module
 UNCLOSED_RE = re.compile(r"\]\([^)\n]*$")
 EMPTY_TARGET_RE = re.compile(r"\]\(\s*\)")
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
+INLINE_CODE_RE = re.compile(r"`+[^`\n]*`+")
+
+
+def mask_inline_code(line: str) -> str:
+    """Blank out inline code spans, keeping length so columns stay accurate."""
+    return INLINE_CODE_RE.sub(lambda m: " " * len(m.group(0)), line)
 
 
 def scan_text(text: str, name: str) -> list[str]:
     errors: list[str] = []
     in_fence = False
-    for i, line in enumerate(text.splitlines(), start=1):
-        if FENCE_RE.match(line):
+    for i, raw_line in enumerate(text.splitlines(), start=1):
+        if FENCE_RE.match(raw_line):
             in_fence = not in_fence
             continue
         if in_fence:
             continue
+        line = mask_inline_code(raw_line)
         if EMPTY_TARGET_RE.search(line):
-            errors.append(f"{name}:{i}: empty link target `]()` -- {line.strip()}")
+            errors.append(f"{name}:{i}: empty link target `]()` -- {raw_line.strip()}")
         m = UNCLOSED_RE.search(line)
         if m:
             errors.append(
-                f"{name}:{i}:{m.start() + 1}: link missing closing `)` -- {line.strip()}"
+                f"{name}:{i}:{m.start() + 1}: link missing closing `)` -- {raw_line.strip()}"
             )
     return errors
 
@@ -59,6 +66,7 @@ SELF_TEST_CASES: tuple[tuple[str, bool], ...] = (
     ("Broken [Guide](/dev-resources/guide// before text.", True),
     ("Broken [Guide](/dev-resources/guide/.", True),
     ("Empty [link]() here.", True),
+    ("Inline code `[x](y` is not a link.", False),  # inline code is masked
     ("```\n[Guide](/broken/\n```", False),  # fenced code is skipped
 )
 

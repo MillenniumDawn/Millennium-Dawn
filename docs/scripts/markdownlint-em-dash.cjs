@@ -36,7 +36,6 @@ module.exports = {
           lineNumber: i + 1,
           detail: "Em dash (—) at column " + (column + 1) + ". Replace with a period, comma, or parentheses.",
           context: line.trim(),
-          severity: "warning",
         });
         column = line.indexOf("—", column + 1);
       }
