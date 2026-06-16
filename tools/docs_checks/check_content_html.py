@@ -36,7 +36,7 @@ BLOCKED_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
 
 FRONTMATTER_RE = re.compile(r"^---\r?\n([\s\S]*?)\r?\n---\r?\n", re.MULTILINE)
 TITLE_RE = re.compile(r"^title:\s*[\"']?(.+?)[\"']?\s*$", re.MULTILINE)
-LEADING_H1_RE = re.compile(r"^#\s+(.+?)\s*$", re.MULTILINE)
+LEADING_H1_RE = re.compile(r"^#\s+(.+?)\s*$")
 
 
 def strip_fenced_code_blocks(text: str) -> str:
@@ -105,7 +105,7 @@ def check_duplicate_hero_title(path: Path, text: str) -> list[str]:
 
 
 def check_file(path: Path) -> list[str]:
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8", errors="replace")
     body = strip_fenced_code_blocks(text)
     issues: list[str] = []
 

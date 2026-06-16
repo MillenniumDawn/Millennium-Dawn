@@ -33,9 +33,15 @@ def main() -> int:
         return 2
 
     failures: list[str] = []
+    index_html = site_dir / "index.html"
 
     for file_path in site_dir.rglob("*"):
         if not file_path.is_file():
+            continue
+
+        # The root index.html has its own tighter budget below; don't also
+        # report it against the looser generic .html budget.
+        if file_path == index_html:
             continue
 
         ext = file_path.suffix.lower()
@@ -51,7 +57,6 @@ def main() -> int:
                 f"- {file_path}: {size} bytes exceeds image budget of {MAX_IMAGE_BYTES} bytes"
             )
 
-    index_html = site_dir / "index.html"
     if index_html.exists():
         index_size = index_html.stat().st_size
         if index_size > INDEX_HTML_BUDGET:

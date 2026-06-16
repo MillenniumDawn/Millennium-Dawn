@@ -22,7 +22,7 @@ def main() -> int:
     errors: list[str] = []
 
     for country_file in sorted(COUNTRIES_DIR.glob("*.md")):
-        text = country_file.read_text(encoding="utf-8")
+        text = country_file.read_text(encoding="utf-8", errors="replace")
         for match in FLAG_IMAGE_RE.finditer(text):
             asset_path = match.group(1)
             relative = asset_path.removeprefix("/assets/images/")

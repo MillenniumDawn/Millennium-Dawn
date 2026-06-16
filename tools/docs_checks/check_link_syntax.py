@@ -29,7 +29,9 @@ except ImportError:  # when imported as a package module
 # `](` followed by anything that is not `)` until end of line: no closing paren.
 UNCLOSED_RE = re.compile(r"\]\([^)\n]*$")
 EMPTY_TARGET_RE = re.compile(r"\]\(\s*\)")
-FENCE_RE = re.compile(r"^\s*(```|~~~)")
+# A fence opens with 3+ of ` or ~; the close must use the same char and be at
+# least as long (CommonMark), so a shorter run inside the block doesn't close it.
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 INLINE_CODE_RE = re.compile(r"`+[^`\n]*`+")
 
 
@@ -40,12 +42,19 @@ def mask_inline_code(line: str) -> str:
 
 def scan_text(text: str, name: str) -> list[str]:
     errors: list[str] = []
-    in_fence = False
+    fence: str | None = None  # the open fence marker, e.g. "```" or "~~~~"
     for i, raw_line in enumerate(text.splitlines(), start=1):
-        if FENCE_RE.match(raw_line):
-            in_fence = not in_fence
+        m_fence = FENCE_RE.match(raw_line)
+        if m_fence:
+            marker = m_fence.group(1)
+            if fence is None:
+                fence = marker
+                continue
+            # Close only on the same char, at least as long as the opener.
+            if marker[0] == fence[0] and len(marker) >= len(fence):
+                fence = None
             continue
-        if in_fence:
+        if fence is not None:
             continue
         line = mask_inline_code(raw_line)
         if EMPTY_TARGET_RE.search(line):
@@ -68,6 +77,8 @@ SELF_TEST_CASES: tuple[tuple[str, bool], ...] = (
     ("Empty [link]() here.", True),
     ("Inline code `[x](y` is not a link.", False),  # inline code is masked
     ("```\n[Guide](/broken/\n```", False),  # fenced code is skipped
+    # A shorter run inside a longer fence does not close it.
+    ("````\n[Guide](/broken/\n```\n[More](/broken2/\n````", False),
 )
 
 
@@ -110,7 +121,9 @@ def main() -> int:
             name = str(path.relative_to(CONTENT_ROOT))
         except ValueError:
             name = str(path)
-        errors.extend(scan_text(path.read_text(encoding="utf-8"), name))
+        errors.extend(
+            scan_text(path.read_text(encoding="utf-8", errors="replace"), name)
+        )
 
     if errors:
         print("Malformed Markdown links found:", file=sys.stderr)

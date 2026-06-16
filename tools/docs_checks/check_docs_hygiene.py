@@ -132,6 +132,16 @@ def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
     docs_dir = Path(args.docs_dir)
+    if docs_dir.is_absolute():
+        # git ls-files yields repo-relative paths, so docs_dir must be relative
+        # too or nothing matches and the check silently passes. Normalize it.
+        try:
+            docs_dir = docs_dir.resolve().relative_to(repo_root)
+        except ValueError:
+            print(
+                f"ERROR: --docs-dir {args.docs_dir} is not inside --repo-root {repo_root}"
+            )
+            return 2
     docs_prefix = docs_dir.as_posix().rstrip("/") + "/"
 
     tracked_files = git_ls_files(repo_root)

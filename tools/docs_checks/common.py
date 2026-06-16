@@ -22,6 +22,11 @@ DIST_DIR = DOCS_ROOT / "dist"
 # URL back to a file in dist/.
 SITE_BASEURL = "/Millennium-Dawn"
 
+# Must match SITE_FALLBACK_ORIGIN in docs/src/shared/config/site.ts. Used to tell
+# a same-origin absolute URL (which maps to a file in dist/) from a genuinely
+# external one (a CDN, say) that shouldn't be checked against the local build.
+SITE_ORIGIN = "https://millenniumdawn.github.io"
+
 MARKDOWN_GLOBS = ("**/*.md", "**/*.mdx")
 
 

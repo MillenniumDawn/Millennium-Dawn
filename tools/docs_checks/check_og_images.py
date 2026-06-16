@@ -9,6 +9,13 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
+try:
+    from common import SITE_ORIGIN
+except ImportError:  # when imported as a package module
+    from .common import SITE_ORIGIN
+
+SITE_HOST = urlsplit(SITE_ORIGIN).hostname
+
 REQUIRED_OG_META = (
     "og:image",
     "og:image:width",
@@ -65,6 +72,10 @@ def normalize_meta_image_to_path(raw_url: str, baseurl: str) -> str | None:
         return None
 
     parsed = urlsplit(raw_url)
+    # An absolute URL pointing at another host (e.g. a CDN) is not served from
+    # the local build, so it isn't ours to validate.
+    if parsed.hostname and parsed.hostname != SITE_HOST:
+        return None
     path = parsed.path or raw_url
     if not path.startswith("/"):
         return None
