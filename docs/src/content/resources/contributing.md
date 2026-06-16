@@ -42,11 +42,13 @@ bun run lint:md          # markdownlint
 bun run check            # astro check (type errors)
 bun run build            # full build
 bun run check:all        # every docs check (skips the build; reuses dist/)
-python3 ../tools/docs_checks/check_link_syntax.py        # malformed Markdown links
-python3 ../tools/docs_checks/check_content_html.py       # raw HTML, duplicate H1s
-python3 ../tools/docs_checks/check_docs_hygiene.py --repo-root ..  # unused assets, naming
-python3 ../tools/docs_checks/check_site_links.py --site-dir dist   # broken links (needs build first)
+bun run check:link-syntax # malformed Markdown links
+bun run check:content-html # raw HTML, duplicate H1s
+bun run check:links      # broken internal links (needs build first)
+bun run check:a11y       # accessibility baseline (needs build first)
 ```
+
+All docs checks live in `tools/docs_checks/` (a single Python package with a shared `common.py` and the `check_docs.py` runner that `bun run ci` / `check:all` call). The `bun run check:*` scripts wrap them with the right arguments (base path, repo root); prefer them over invoking the Python files directly.
 
 ---
 

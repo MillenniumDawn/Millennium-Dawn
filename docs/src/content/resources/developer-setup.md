@@ -176,6 +176,7 @@ python3 tools/run.py publish_workshop release --full  # pass args through
 tools/
 ├── analysis/          Analysis, reference finders, metrics
 ├── assets/            DDS conversion, GFX generation, texture tools
+├── docs_checks/       Docs-site checks (link syntax, a11y, perf, etc.) + check_docs.py runner
 ├── generators/        Content generators (tribute ideas, focus names)
 ├── linting/           Style checkers, formatters, encoding validators
 ├── publishing/        Steam Workshop publishing
@@ -190,6 +191,8 @@ tools/
 ├── validate_staged.py Legacy staged-file router (no longer wired into pre-commit)
 └── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ```
+
+Python dependencies live in `pyproject.toml` under `[dependency-groups]` (a `runtime` group and a `dev` group); there are no `requirements.txt` files. `tools/setup.py` installs them, and `pyproject.toml` also configures ruff (lint, import order, and formatting) and pytest.
 
 See [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md) for the full documentation.
 

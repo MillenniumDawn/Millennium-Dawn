@@ -147,7 +147,7 @@ Specific banned-word hits (per the user's voice rules in `AGENTS.md`):
 - **F1**: changelog-guide "Event Reference" link label fixed. Commit `a5ea72179b`.
 - **F3**: Dev diary #52 moved to `docs/templates/dev-diary-template.mdx`, removed from archive. Commit `7e7a428b79`.
 - **F5**: WIP badge rendered on country grid card for 34 stubs. Commit `51f656ff63`.
-- **F6**: Em-dash lint rule added (MD9999, warning-only), 121 mechanical violations fixed. Commit `20cedb32fa`.
+- **F6**: Em-dash lint rule added (MD9999), 121 mechanical violations fixed. The rule is now blocking (the no-op `severity: warning` was removed) and code-aware (skips fenced and inline code); `bun run lint:md` reports 0 violations. Commits `20cedb32fa`, `5778317b43`, `4523839ebd`.
 - **Bug Bot ToS**: new page, footer nav, cross-links. Commit `cbdacee2d7`.
 - **`.claude/docs/`**: aligned with PRs #1876/#1878. Commit `06f19454cb`.
 - **Parked fixes**: 13 mechanical fixes (duplicate H1, factor/base, building cost, error filenames, typos, emoji shortcodes, external links, sort order, banned word, "on top of", advisor line, military stub). Commit `897ad3cf64`.
@@ -163,5 +163,4 @@ Specific banned-word hits (per the user's voice rules in `AGENTS.md`):
 
 - **F2**: `united-states.md` — 10 wrong spirit names, needs US content maintainer.
 - **F4**: AI guard `factor = 0` vs `NOT = { ... }` convention divergence. Needs project policy call.
-- **F6 follow-up**: 90 remaining em-dash violations in tutorials/resources (running prose, needs editorial review). Warning-only, does not break build.
 - **Country em-dashes**: countries and dev-diaries are exempt from MD9999. Track separately.
