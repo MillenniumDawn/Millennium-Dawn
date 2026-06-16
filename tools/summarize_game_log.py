@@ -72,25 +72,68 @@ ECON_RE = re.compile(
 INFLATION_RE = re.compile(r"Inflation Update: Current Inflation Rate: (-?[\d.]+)%")
 ANNEX_RE = re.compile(r"^(.+?) annexed (.+?)(?: -|$)")
 
-MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+MONTHS = [
+    "",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
 
 # Keywords (matched against namespace + message) that mark a "significant" event
 # worth putting on the conflict / crisis timeline.
-CONFLICT_KW = ("civil_war", "civilwar", "_war", "war_", "war.", "terror", "raid",
-               "coup", "revolt", "insurg", "border", "invasion", "intervention",
-               "uprising", "rebellion", "secession")
-POLITICS_KW = ("election", "recognition", "independ", "referendum", "union",
-               "annex", "coalition")
+CONFLICT_KW = (
+    "civil_war",
+    "civilwar",
+    "_war",
+    "war_",
+    "war.",
+    "terror",
+    "raid",
+    "coup",
+    "revolt",
+    "insurg",
+    "border",
+    "invasion",
+    "intervention",
+    "uprising",
+    "rebellion",
+    "secession",
+)
+POLITICS_KW = (
+    "election",
+    "recognition",
+    "independ",
+    "referendum",
+    "union",
+    "annex",
+    "coalition",
+)
 
 # DEBUG / AI / economic chatter that should never reach the event feed.
 SPAM_PREFIXES = (
-    "DEBUG:", "AI Tax:", "AI Weapon Dump", "Highest Economic Expenditure",
-    "Weekly Economic Update", "Expected military spending",
-    "Expected education spending", "Expected police spending",
-    "Expected welfare spending", "Expected healthcare spending",
-    "Expected administrative spending", "Next Cycle Political Power Cost",
-    "Index:", "Auto influencing",
+    "DEBUG:",
+    "AI Tax:",
+    "AI Weapon Dump",
+    "Highest Economic Expenditure",
+    "Weekly Economic Update",
+    "Expected military spending",
+    "Expected education spending",
+    "Expected police spending",
+    "Expected welfare spending",
+    "Expected healthcare spending",
+    "Expected administrative spending",
+    "Next Cycle Political Power Cost",
+    "Index:",
+    "Auto influencing",
 )
 
 
@@ -106,26 +149,32 @@ def fmt_date(y, m, d):
 # Core parse
 # ---------------------------------------------------------------------------
 
+
 def parse(path, since=None, until=None):
     stats = {
-        "lines": 0, "parsed": 0, "skipped": 0,
-        "wall_first": None, "wall_last": None,
-        "game_first": None, "game_last": None,
+        "lines": 0,
+        "parsed": 0,
+        "skipped": 0,
+        "wall_first": None,
+        "wall_last": None,
+        "game_first": None,
+        "game_last": None,
     }
-    activity = Counter()                       # entries per country
-    categories = Counter()                     # message category -> count
-    focuses = defaultdict(Counter)             # country -> focus_id -> count
-    decisions = defaultdict(Counter)           # country -> decision -> count
-    events = defaultdict(lambda: {"count": 0, "countries": Counter(),
-                                  "first": None, "last": None})  # namespace -> info
-    conflicts = []                             # significant event rows (timeline)
-    annexations = []                           # (datekey, ymd, actor, target)
-    economy = {}                               # country -> latest econ snapshot
-    inflation = {}                             # country -> (datekey, ymd, rate)
-    country_events = defaultdict(list)         # country -> [(datekey, ymd, kind, detail)]
-    ideas = defaultdict(Counter)               # country -> idea -> count
-    diplomacy = defaultdict(Counter)           # country -> action -> count
-    events_by_country = defaultdict(Counter)   # country -> event namespace -> count
+    activity = Counter()  # entries per country
+    categories = Counter()  # message category -> count
+    focuses = defaultdict(Counter)  # country -> focus_id -> count
+    decisions = defaultdict(Counter)  # country -> decision -> count
+    events = defaultdict(
+        lambda: {"count": 0, "countries": Counter(), "first": None, "last": None}
+    )  # namespace -> info
+    conflicts = []  # significant event rows (timeline)
+    annexations = []  # (datekey, ymd, actor, target)
+    economy = {}  # country -> latest econ snapshot
+    inflation = {}  # country -> (datekey, ymd, rate)
+    country_events = defaultdict(list)  # country -> [(datekey, ymd, kind, detail)]
+    ideas = defaultdict(Counter)  # country -> idea -> count
+    diplomacy = defaultdict(Counter)  # country -> action -> count
+    events_by_country = defaultdict(Counter)  # country -> event namespace -> count
 
     def in_range(dk):
         if since is not None and dk < since:
@@ -186,8 +235,7 @@ def parse(path, since=None, until=None):
             message = message.strip()
             activity[country] += 1
 
-            kind, detail = classify(country, message, economy, inflation,
-                                    dk, ymd)
+            kind, detail = classify(country, message, economy, inflation, dk, ymd)
             categories[kind] += 1
 
             if kind == "focus":
@@ -221,12 +269,19 @@ def parse(path, since=None, until=None):
                     country_events[country].append((dk, ymd, "politics", ns))
 
     return {
-        "stats": stats, "activity": activity, "categories": categories,
-        "focuses": focuses, "decisions": decisions, "events": events,
-        "conflicts": conflicts, "annexations": annexations,
-        "economy": economy, "inflation": inflation,
+        "stats": stats,
+        "activity": activity,
+        "categories": categories,
+        "focuses": focuses,
+        "decisions": decisions,
+        "events": events,
+        "conflicts": conflicts,
+        "annexations": annexations,
+        "economy": economy,
+        "inflation": inflation,
         "country_events": country_events,
-        "ideas": ideas, "diplomacy": diplomacy,
+        "ideas": ideas,
+        "diplomacy": diplomacy,
         "events_by_country": events_by_country,
     }
 
@@ -251,7 +306,8 @@ def classify(country, message, economy, inflation, dk, ymd):
             prev = economy.get(country)
             if prev is None or dk >= prev["_dk"]:
                 economy[country] = {
-                    "_dk": dk, "date": ymd,
+                    "_dk": dk,
+                    "date": ymd,
                     "treasury": float(em.group("treasury")),
                     "treasury_rate": float(em.group("rate")),
                     "debt": float(em.group("debt")),
@@ -281,6 +337,7 @@ def classify(country, message, economy, inflation, dk, ymd):
 # Reporting
 # ---------------------------------------------------------------------------
 
+
 def human(n):
     try:
         n = float(n)
@@ -288,7 +345,7 @@ def human(n):
         return str(n)
     for unit, div in (("B", 1e9), ("M", 1e6), ("k", 1e3)):
         if abs(n) >= div:
-            return f"{n/div:.2f}{unit}"
+            return f"{n / div:.2f}{unit}"
     return f"{n:.0f}"
 
 
@@ -321,7 +378,7 @@ def pick_countries(data, requested, top_countries):
             seen.add(name)
             chosen.append(name)
 
-    for r in (requested or []):
+    for r in requested or []:
         add(resolve_name(data, r))
 
     # Auto-include the N most active countries (by scripted entries).
@@ -332,8 +389,9 @@ def pick_countries(data, requested, top_countries):
     # human player (most decisions). The log never records the player directly.
     if not chosen and top_countries == 0:
         if data["decisions"]:
-            add(max(data["decisions"],
-                    key=lambda c: sum(data["decisions"][c].values())))
+            add(
+                max(data["decisions"], key=lambda c: sum(data["decisions"][c].values()))
+            )
         elif data["activity"]:
             add(data["activity"].most_common(1)[0][0])
     return chosen
@@ -353,11 +411,13 @@ def report(data, countries=None, top=15, detail=False):
         p(f"In-game span : {s['game_first'][1]}  ->  {s['game_last'][1]}")
     if s["wall_first"] and s["wall_last"]:
         wf, wl = s["wall_first"], s["wall_last"]
-        secs = (wl[0]*3600+wl[1]*60+wl[2]) - (wf[0]*3600+wf[1]*60+wf[2])
+        secs = (wl[0] * 3600 + wl[1] * 60 + wl[2]) - (wf[0] * 3600 + wf[1] * 60 + wf[2])
         if secs < 0:
-            secs += 24*3600
-        p(f"Real session : {wf[0]:02d}:{wf[1]:02d}:{wf[2]:02d} -> "
-          f"{wl[0]:02d}:{wl[1]:02d}:{wl[2]:02d}  ({secs//3600}h{(secs%3600)//60:02d}m)")
+            secs += 24 * 3600
+        p(
+            f"Real session : {wf[0]:02d}:{wf[1]:02d}:{wf[2]:02d} -> "
+            f"{wl[0]:02d}:{wl[1]:02d}:{wl[2]:02d}  ({secs // 3600}h{(secs % 3600) // 60:02d}m)"
+        )
     p(f"Log lines    : {s['lines']:,}   parsed scripted entries: {s['parsed']:,}")
 
     cats = data["categories"]
@@ -368,7 +428,7 @@ def report(data, countries=None, top=15, detail=False):
     # --- most active ---
     p("")
     p("-" * 70)
-    p(f" Most active countries (scripted log entries)")
+    p(" Most active countries (scripted log entries)")
     p("-" * 70)
     for c, n in data["activity"].most_common(top):
         f = sum(data["focuses"][c].values())
@@ -384,7 +444,9 @@ def report(data, countries=None, top=15, detail=False):
     if not confl and not data["annexations"]:
         p("  (none detected)")
     # group conflict event namespaces
-    grp = defaultdict(lambda: {"n": 0, "countries": Counter(), "first": None, "last": None})
+    grp = defaultdict(
+        lambda: {"n": 0, "countries": Counter(), "first": None, "last": None}
+    )
     for dk, ymd, c, ns, _ in confl:
         g = grp[ns]
         g["n"] += 1
@@ -411,7 +473,9 @@ def report(data, countries=None, top=15, detail=False):
         p("-" * 70)
         p(" Politics (elections / recognitions / unions)")
         p("-" * 70)
-        pgrp = defaultdict(lambda: {"n": 0, "countries": Counter(), "first": None, "last": None})
+        pgrp = defaultdict(
+            lambda: {"n": 0, "countries": Counter(), "first": None, "last": None}
+        )
         for dk, ymd, c, ns, _ in pol:
             g = pgrp[ns]
             g["n"] += 1
@@ -421,7 +485,11 @@ def report(data, countries=None, top=15, detail=False):
             g["last"] = ymd
         for ns, g in sorted(pgrp.items(), key=lambda kv: -kv[1]["n"])[:20]:
             who = ", ".join(f"{c}({n})" for c, n in g["countries"].most_common(4))
-            span = g["first"] if g["first"] == g["last"] else f"{g['first']} -> {g['last']}"
+            span = (
+                g["first"]
+                if g["first"] == g["last"]
+                else f"{g['first']} -> {g['last']}"
+            )
             p(f"  {ns:<28} {g['n']:>4}x   [{span}]   {who}")
 
     # --- national finances ---
@@ -432,23 +500,30 @@ def report(data, countries=None, top=15, detail=False):
         p("-" * 70)
         p(" National finances — most indebted (latest Weekly Economic Update)")
         p("-" * 70)
-        p(f"  {'Country':<26} {'Treasury':>12} {'Debt':>12} {'Net':>12}  "
-          f"{'Tax p/c':>8}   Infl")
-        ranked = sorted(data["economy"].items(),
-                        key=lambda kv: kv[1]["debt"], reverse=True)[:top]
+        p(
+            f"  {'Country':<26} {'Treasury':>12} {'Debt':>12} {'Net':>12}  "
+            f"{'Tax p/c':>8}   Infl"
+        )
+        ranked = sorted(
+            data["economy"].items(), key=lambda kv: kv[1]["debt"], reverse=True
+        )[:top]
         for c, e in ranked:
             inf = data["inflation"].get(c)
             inf_s = f"{inf[2]:+.1f}%" if inf else "—"
             net = e["treasury"] - e["debt"]
             tax = f"{e['pop_tax']:.0f}/{e['corp_tax']:.0f}%"
-            p(f"  {c:<26} {money(e['treasury']):>12} {money(e['debt']):>12} "
-              f"{money(net):>12}  {tax:>8}   {inf_s}")
+            p(
+                f"  {c:<26} {money(e['treasury']):>12} {money(e['debt']):>12} "
+                f"{money(net):>12}  {tax:>8}   {inf_s}"
+            )
         zero = sum(1 for e in data["economy"].values() if e["debt"] == 0)
-        p(f"  ({len(data['economy'])} countries tracked; {zero} carry zero debt — "
-          "mostly oil/surplus states, omitted above)")
+        p(
+            f"  ({len(data['economy'])} countries tracked; {zero} carry zero debt — "
+            "mostly oil/surplus states, omitted above)"
+        )
 
     # --- country deep dives ---
-    for c in (countries or []):
+    for c in countries or []:
         deep_dive(out, data, c, detail=detail)
 
     p("")
@@ -473,19 +548,25 @@ def deep_dive(out, data, country, detail=False):
 
     foc_total = sum(data["focuses"].get(country, {}).values())
     dec_total = sum(data["decisions"].get(country, {}).values())
-    p(f"  Scripted entries: {data['activity'][country]:,}   "
-      f"focuses: {foc_total}   decisions: {dec_total}   "
-      f"events: {sum(data['events_by_country'].get(country, {}).values())}")
+    p(
+        f"  Scripted entries: {data['activity'][country]:,}   "
+        f"focuses: {foc_total}   decisions: {dec_total}   "
+        f"events: {sum(data['events_by_country'].get(country, {}).values())}"
+    )
 
     e = data["economy"].get(country)
     if e:
         net = e["treasury"] - e["debt"]
         p("")
         p(f"  Economy (as of {e['date']}):")
-        p(f"    Treasury   {money(e['treasury']):>12}   (rate {e['treasury_rate']:+.2f}/wk)")
+        p(
+            f"    Treasury   {money(e['treasury']):>12}   (rate {e['treasury_rate']:+.2f}/wk)"
+        )
         p(f"    Debt       {money(e['debt']):>12}   (interest {e['interest']:.2f}%)")
         p(f"    Net        {money(net):>12}")
-        p(f"    Tax        population {e['pop_tax']:.0f}%   corporate {e['corp_tax']:.0f}%")
+        p(
+            f"    Tax        population {e['pop_tax']:.0f}%   corporate {e['corp_tax']:.0f}%"
+        )
     inf = data["inflation"].get(country)
     if inf:
         p(f"    Inflation  {inf[2]:>+9.2f}%  (as of {inf[1]})")
@@ -497,7 +578,9 @@ def deep_dive(out, data, country, detail=False):
         fl = [ev for ev in data["country_events"][country] if ev[2] == "focus"]
         shown = fl[-cap_focus:]
         if len(fl) > len(shown):
-            p(f"    ... {len(fl) - len(shown)} earlier focuses omitted (use --detail) ...")
+            p(
+                f"    ... {len(fl) - len(shown)} earlier focuses omitted (use --detail) ..."
+            )
         for dk, ymd, _, det in shown:
             p(f"    {ymd:>12}   {det}")
 
@@ -519,7 +602,7 @@ def deep_dive(out, data, country, detail=False):
     evns = data["events_by_country"].get(country)
     if evns and detail:
         p("")
-        p(f"  Event chains fired (by namespace):")
+        p("  Event chains fired (by namespace):")
         for name, n in evns.most_common(20):
             p(f"    {n:>4}x  {name}")
 
@@ -531,8 +614,11 @@ def deep_dive(out, data, country, detail=False):
             p(f"    {n:>4}x  {name}")
 
     # conflict / political involvement
-    ce = [ev for ev in data["country_events"][country]
-          if ev[2] in ("conflict", "politics", "annex")]
+    ce = [
+        ev
+        for ev in data["country_events"][country]
+        if ev[2] in ("conflict", "politics", "annex")
+    ]
     if ce:
         p("")
         p(f"  Notable events involving {country}:")
@@ -553,31 +639,38 @@ def to_json(data, countries=None, top=15):
         "session": {
             "game_first": s["game_first"][1] if s["game_first"] else None,
             "game_last": s["game_last"][1] if s["game_last"] else None,
-            "wall_first": s["wall_first"], "wall_last": s["wall_last"],
-            "lines": s["lines"], "parsed": s["parsed"],
+            "wall_first": s["wall_first"],
+            "wall_last": s["wall_last"],
+            "lines": s["lines"],
+            "parsed": s["parsed"],
         },
         "categories": dict(data["categories"]),
         "most_active": data["activity"].most_common(top),
         "conflicts": [
             {"date": ymd, "country": c, "namespace": ns}
-            for dk, ymd, c, ns, t in data["conflicts"] if t == "conflict"
+            for dk, ymd, c, ns, t in data["conflicts"]
+            if t == "conflict"
         ],
         "politics": [
             {"date": ymd, "country": c, "namespace": ns}
-            for dk, ymd, c, ns, t in data["conflicts"] if t == "politics"
+            for dk, ymd, c, ns, t in data["conflicts"]
+            if t == "politics"
         ],
         "annexations": [
             {"date": ymd, "actor": a, "target": t}
-            for dk, ymd, a, t in sorted(data["annexations"]) if a != t
+            for dk, ymd, a, t in sorted(data["annexations"])
+            if a != t
         ],
         "economy": {
             c: {k: v for k, v in e.items() if not k.startswith("_")}
             for c, e in data["economy"].items()
         },
-        "inflation": {c: {"date": v[1], "rate": v[2]} for c, v in data["inflation"].items()},
+        "inflation": {
+            c: {"date": v[1], "rate": v[2]} for c, v in data["inflation"].items()
+        },
     }
     obj["focus_countries"] = {}
-    for country in (countries or []):
+    for country in countries or []:
         if country not in data["activity"]:
             continue
         obj["focus_countries"][country] = {
@@ -587,8 +680,11 @@ def to_json(data, countries=None, top=15):
             "ideas": dict(data["ideas"].get(country, {})),
             "events": dict(data["events_by_country"].get(country, {})),
             "diplomacy": dict(data["diplomacy"].get(country, {})),
-            "economy": {k: v for k, v in data["economy"].get(country, {}).items()
-                        if not k.startswith("_")},
+            "economy": {
+                k: v
+                for k, v in data["economy"].get(country, {}).items()
+                if not k.startswith("_")
+            },
             "inflation": (data["inflation"].get(country) or (None, None, None))[2],
         }
     return json.dumps(obj, indent=2, ensure_ascii=False)
@@ -605,38 +701,59 @@ def parse_date_arg(s):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Summarize a HOI4 / Millennium Dawn game.log")
+    ap = argparse.ArgumentParser(
+        description="Summarize a HOI4 / Millennium Dawn game.log"
+    )
     ap.add_argument("logfile", help="path to game.log")
-    ap.add_argument("--country", action="append", metavar="NAME",
-                    help="country to deep-dive; repeatable or comma-separated "
-                         "(e.g. --country Korea,Germany,Iran)")
-    ap.add_argument("--top-countries", type=int, default=0, metavar="N",
-                    help="also deep-dive the N most active countries")
-    ap.add_argument("--detail", action="store_true",
-                    help="fuller per-country sections (all focuses, ideas, "
-                         "event chains, diplomacy)")
-    ap.add_argument("--top", type=int, default=15, help="rows in ranked tables (default 15)")
+    ap.add_argument(
+        "--country",
+        action="append",
+        metavar="NAME",
+        help="country to deep-dive; repeatable or comma-separated "
+        "(e.g. --country Korea,Germany,Iran)",
+    )
+    ap.add_argument(
+        "--top-countries",
+        type=int,
+        default=0,
+        metavar="N",
+        help="also deep-dive the N most active countries",
+    )
+    ap.add_argument(
+        "--detail",
+        action="store_true",
+        help="fuller per-country sections (all focuses, ideas, "
+        "event chains, diplomacy)",
+    )
+    ap.add_argument(
+        "--top", type=int, default=15, help="rows in ranked tables (default 15)"
+    )
     ap.add_argument("--since", help="ignore entries before this game date (YYYY.MM.DD)")
     ap.add_argument("--until", help="ignore entries after this game date (YYYY.MM.DD)")
     ap.add_argument("--json", action="store_true", help="emit JSON instead of a report")
-    ap.add_argument("--no-deep-dive", action="store_true",
-                    help="skip the per-country sections")
+    ap.add_argument(
+        "--no-deep-dive", action="store_true", help="skip the per-country sections"
+    )
     args = ap.parse_args(argv)
 
     try:
-        data = parse(args.logfile,
-                     since=parse_date_arg(args.since),
-                     until=parse_date_arg(args.until))
+        data = parse(
+            args.logfile,
+            since=parse_date_arg(args.since),
+            until=parse_date_arg(args.until),
+        )
     except FileNotFoundError:
         sys.exit(f"error: file not found: {args.logfile}")
 
     if data["stats"]["parsed"] == 0:
-        sys.exit("error: no scripted MD log entries found — is this a Millennium "
-                 "Dawn game.log with debug logging enabled?")
+        sys.exit(
+            "error: no scripted MD log entries found — is this a Millennium "
+            "Dawn game.log with debug logging enabled?"
+        )
 
     # Flatten comma-separated --country values into a single list.
     requested = []
-    for item in (args.country or []):
+    for item in args.country or []:
         requested.extend(part.strip() for part in item.split(",") if part.strip())
 
     if args.no_deep_dive:

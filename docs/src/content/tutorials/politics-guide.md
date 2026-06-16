@@ -470,7 +470,7 @@ Civil wars split the country and its territory between the existing government a
 
 ## Related Documentation
 
-- [Internal Factions Guide](/player-tutorials/internal-factions) - For detailed faction mechanics, events, and decisions
-- [Economy Guide](/player-tutorials/economy-guide) - For economic laws and their political interactions
-- [International Systems Guide](/player-tutorials/international-systems) - For alliance membership and international political systems
-- [Game Rules](/player-tutorials/game-rules)
+- [Internal Factions Guide](/player-tutorials/internal-factions/) - For detailed faction mechanics, events, and decisions
+- [Economy Guide](/player-tutorials/economy-guide/) - For economic laws and their political interactions
+- [International Systems Guide](/player-tutorials/international-systems/) - For alliance membership and international political systems
+- [Game Rules](/player-tutorials/game-rules/)

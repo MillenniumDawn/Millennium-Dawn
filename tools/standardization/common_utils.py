@@ -156,7 +156,7 @@ class BaseStandardizer(ABC):
             line = lines[i].rstrip()
 
             if re.match(self.get_block_pattern(), line):
-                log_message("DEBUG", f"Found block at line {i+1}", self.verbose)
+                log_message("DEBUG", f"Found block at line {i + 1}", self.verbose)
 
                 block_lines, next_i = extract_block(lines, i)
 

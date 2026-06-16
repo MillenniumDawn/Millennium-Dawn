@@ -1,11 +1,11 @@
 ---
 title: v1.12.x Hotfixes (Every Tank an Upgrade)
-page_id: changelog-v1-12-0-every-tank-an-upgrade-hotfixes
-order: 13
+page_id: changelog-v1-12-every-tank-an-upgrade-hotfixes
+order: 14
 hidden: true
 ---
 
-> Looking for the base release notes? See [v1.12.0 'Every Tank an Upgrade'](/changelogs/v1-12-0-every-tank-an-upgrade/).
+> Looking for the base release notes? See [v1.12.0 'Every Tank an Upgrade'](/changelogs/v1-12-every-tank-an-upgrade/).
 
 ## v1.12.3b
 

@@ -28,7 +28,7 @@ If GitHub Desktop sign-in does not resolve the issue, you can authenticate using
 7. Set an expiration date (or select "No expiration" if you prefer, though an expiry is recommended for security).
 8. Under **Select scopes**, check the **repo** checkbox (this grants full access to repositories).
 9. Click **Generate token**.
-10. **Copy the token immediately** — you will not be able to see it again after leaving the page.
+10. **Copy the token immediately**: you will not be able to see it again after leaving the page.
 
 > **Do not share your token with anyone.** A PAT functions as a password and could compromise your account.
 

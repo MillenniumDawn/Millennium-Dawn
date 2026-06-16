@@ -180,7 +180,7 @@ Reusable technology is critical for making late-game space programs economically
 
 ## Satellite Constellations and Coverage
 
-Satellites are not useful individually. They must be deployed in **constellations** — groups of satellites working together to provide coverage. Each satellite type (GNSS, COMSAT, SPYSAT) operates as both a **military** and **civilian** system, each tracked separately.
+Satellites are not useful individually. They must be deployed in **constellations**: groups of satellites working together to provide coverage. Each satellite type (GNSS, COMSAT, SPYSAT) operates as both a **military** and **civilian** system, each tracked separately.
 
 ### How Coverage Works
 
@@ -188,7 +188,7 @@ Coverage is calculated as a ratio:
 
 **Coverage = Active Satellites / Maximum Capacity**
 
-Coverage ranges from 0% (no satellites) to 100% (constellation fully populated). Bonuses scale linearly with coverage — 50% coverage gives 50% of the maximum bonus.
+Coverage ranges from 0% (no satellites) to 100% (constellation fully populated). Bonuses scale linearly with coverage. 50% coverage gives 50% of the maximum bonus.
 
 ### Constellation Tiers
 
@@ -386,6 +386,5 @@ This provides a support company that can be attached to divisions for orbital pr
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide) - For electricity and building systems
-- [Mechanics Guide](/player-tutorials/mechanics-guide) - For power ranking bonuses
-- [Military Tutorial](/player-tutorials/military-tutorial) - For how satellite bonuses affect combat
+- [Economy Guide](/player-tutorials/economy-guide/) - For electricity and building systems
+- [Mechanics Guide](/player-tutorials/mechanics-guide/) - For power ranking bonuses

@@ -229,9 +229,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert (
-        not gone
-    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    assert not gone, (
+        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    )
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED

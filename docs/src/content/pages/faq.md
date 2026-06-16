@@ -4,7 +4,7 @@ description: "Frequently asked questions about Millennium Dawn: A Modern Day mod
 permalink: /faq/
 ---
 
-For the [Troubleshooting Guide](/player-tutorials/troubleshooting-guide).
+For the [Troubleshooting Guide](/player-tutorials/troubleshooting-guide/).
 
 ## General Questions
 

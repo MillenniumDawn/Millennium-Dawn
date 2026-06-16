@@ -304,10 +304,16 @@ def test_exhaustive_same_government_collapses():
 
 def test_scoped_first_order_collapses():
     # ARM = { has_government = X } before the bare check (france.txt shape).
-    text = "OR = {\n" + "\n".join(
-        "  AND = {{ ARM = {{ has_government = {i} }}  has_government = {i} }}".format(i=i)
-        for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-    ) + "\n}\n"
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ ARM = {{ has_government = {i} }}  has_government = {i} }}".format(
+                i=i
+            )
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
     assert _gov(text) == ["has_government = ARM"]
 
 
@@ -367,43 +373,59 @@ def test_extra_clause_gate_not_flagged():
 def test_extra_bare_condition_in_clause_not_flagged():
     # Every clause carries an extra `has_war = yes`; collapsing to
     # `has_government = FROM` would silently drop it.
-    text = "OR = {\n" + "\n".join(
-        "  AND = {{ has_government = {i}  has_war = yes  "
-        "FROM = {{ has_government = {i} }} }}".format(i=i)
-        for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-    ) + "\n}\n"
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ has_government = {i}  has_war = yes  "
+            "FROM = {{ has_government = {i} }} }}".format(i=i)
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
     assert _gov(text) == []
 
 
 def test_extra_scope_block_in_clause_not_flagged():
     # A second scope block (GER = { exists = yes }) is a real gate the collapse
     # would drop.
-    text = "OR = {\n" + "\n".join(
-        "  AND = {{ has_government = {i}  GER = {{ exists = yes }}  "
-        "FROM = {{ has_government = {i} }} }}".format(i=i)
-        for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-    ) + "\n}\n"
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ has_government = {i}  GER = {{ exists = yes }}  "
+            "FROM = {{ has_government = {i} }} }}".format(i=i)
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
     assert _gov(text) == []
 
 
 def test_unrelated_not_inside_scope_not_misclassified():
     # NOT wraps an unrelated trigger, not has_government; must not be read as a
     # "different government" clause (and the extra trigger makes it non-clean).
-    text = "OR = {\n" + "\n".join(
-        "  AND = {{ has_government = {i}  "
-        "FROM = {{ NOT = {{ has_war = yes }} has_government = {i} }} }}".format(i=i)
-        for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-    ) + "\n}\n"
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ has_government = {i}  "
+            "FROM = {{ NOT = {{ has_war = yes }} has_government = {i} }} }}".format(i=i)
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
     assert _gov(text) == []
 
 
 def test_double_negation_collapses_to_same():
     # NOT = { FROM = { NOT = { has_government = X } } } is "same government".
-    text = "OR = {\n" + "\n".join(
-        "  AND = {{ has_government = {i}  "
-        "NOT = {{ FROM = {{ NOT = {{ has_government = {i} }} }} }} }}".format(i=i)
-        for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-    ) + "\n}\n"
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ has_government = {i}  "
+            "NOT = {{ FROM = {{ NOT = {{ has_government = {i} }} }} }} }}".format(i=i)
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
     assert _gov(text) == ["has_government = FROM"]
 
 

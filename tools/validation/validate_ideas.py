@@ -82,8 +82,10 @@ _HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
 # Categories where `allowed = { always = no }` is flagged as redundant
 # Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
 # (those without slot=/character_slot= or with hidden=yes)
-from shared_utils import extract_block_from_text  # noqa: E402
-from shared_utils import get_all_idea_categories  # noqa: E402
+from shared_utils import (
+    extract_block_from_text,  # noqa: E402
+    get_all_idea_categories,  # noqa: E402
+)
 from shared_utils import (  # noqa: E402
     get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
 )

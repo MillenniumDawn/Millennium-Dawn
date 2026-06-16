@@ -4,6 +4,7 @@
 Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
+
 import glob
 import os
 import re

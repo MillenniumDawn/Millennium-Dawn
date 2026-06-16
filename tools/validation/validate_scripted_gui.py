@@ -4,6 +4,7 @@
 Surfaces silent failures where a name typo or missing reference loads without
 error but does nothing at runtime.
 """
+
 import os
 import re
 import sys
@@ -562,7 +563,7 @@ class ScriptedGuiValidator(BaseValidator):
                         Severity.ERROR,
                         "MISSING_WINDOW",
                         f"Scripted GUI '{block['name']}' references "
-                        f"window_name = \"{block['window_name']}\" but no "
+                        f'window_name = "{block["window_name"]}" but no '
                         f"containerWindowType with that name exists",
                         file=block["file"],
                         line=block["line"],
