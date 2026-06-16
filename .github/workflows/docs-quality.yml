@@ -5,6 +5,7 @@ on:
     branches: [main, master]
     paths:
       - "docs/**"
+      - "tools/docs_checks/**"
       - ".github/workflows/docs-quality.yml"
   workflow_dispatch:
 
@@ -20,7 +21,9 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 1
-          sparse-checkout: docs
+          sparse-checkout: |
+            docs
+            tools/docs_checks
           sparse-checkout-cone-mode: true
 
       - name: Setup Node.js
@@ -43,27 +46,13 @@ jobs:
         working-directory: docs
         run: bun install
 
-      - name: Astro checks
-        working-directory: docs
+      # The checkers' own self-tests (validate the checker logic, not content).
+      - name: Checker self-tests
         run: |
-          bun run lint:md
-          bun run check
-          bun run build
+          python3 tools/docs_checks/check_link_syntax.py --self-test
+          python3 tools/docs_checks/check_accessibility_basics.py --self-test
 
-      - name: Validate Open Graph metadata images
-        run: python3 docs/scripts/check_og_images.py --site-dir docs/dist --baseurl /Millennium-Dawn
-
-      - name: Docs hygiene checks
-        run: python3 docs/scripts/check_docs_hygiene.py --repo-root . --docs-dir docs
-
-      - name: Validate internal links and local assets
-        run: python3 docs/scripts/check_site_links.py --site-dir docs/dist --baseurl /Millennium-Dawn
-
-      - name: Accessibility checker self-test
-        run: python3 docs/scripts/check_accessibility_basics.py --self-test
-
-      - name: Accessibility baseline checks
-        run: python3 docs/scripts/check_accessibility_basics.py --site-dir docs/dist
-
-      - name: Performance budget checks
-        run: python3 docs/scripts/check_perf_budgets.py --site-dir docs/dist
+      # Single orchestrator: source checks, then the build, then dist checks.
+      # The check list lives only in tools/docs_checks/check_docs.py.
+      - name: Docs checks (lint, build, links, a11y, perf, ...)
+        run: python3 tools/docs_checks/check_docs.py

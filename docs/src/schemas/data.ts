@@ -1,19 +1,20 @@
 import { z } from "astro/zod";
 import { hrefSchema, internalPathSchema, loadingSchema } from "./base";
 
+const navLeafSchema = z.object({
+  title: z.string(),
+  url: internalPathSchema,
+});
+
 export const navigationSchema = z.object({
   main: z.array(
     z.object({
       title: z.string(),
-      url: internalPathSchema,
+      url: internalPathSchema.optional(),
+      children: z.array(navLeafSchema).optional(),
     }),
   ),
-  footer_docs: z.array(
-    z.object({
-      title: z.string(),
-      url: internalPathSchema,
-    }),
-  ),
+  footer_docs: z.array(navLeafSchema),
   social: z.array(
     z.object({
       name: z.string(),

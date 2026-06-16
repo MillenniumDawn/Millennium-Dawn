@@ -14,7 +14,7 @@ Hearts of Iron IV runs multi-core on most processes but AI remains it's main bot
 - Clear the User Directory via your Hearts of Iron IV Launcher
 - Use DirectX 9 instead of DirectX 11
   - Modern machines should have no noticeable difference on this but it's worth noting if you have any issues at all.
-  - DX9 for Hearts of Iron IV seems to be more stable then DX11 overall
+  - DX9 for Hearts of Iron IV seems to be more stable than DX11 overall
 - Do NOT use submods, most are poorly optimized and make the experience that much worse.
 - Close CPU intensive tasks in the background and minimize multi-tasking with heavy CPU processes
 - Try to run the mod on a SSD if possible. It runs much better and has a more smooth experience on more modern hardware
@@ -42,7 +42,7 @@ Steam doesn't seem to play very nicely with large installs so just repeat steps 
 4. Allow Steam to fully complete the download
 5. Restart your steam client and then try to boot the mod.
 
-If your game is still loading vanilla after doing the steps above. Go inside `documents\Paradox Interactive\Hearts of Iron IV\mod` to confirm if you see symbols such as :repeat: or :white_check_mark: or :x: next to the files' names, in the case that you do see symbols stated that means you're using **OneDrive** for the documents folder which can cause issues with both Steam and the HOI4 launcher when it comes to configuring or loading mods. What you need to do is move the documents folder out of **OneDrive** to ensure no systemic issues with loading the mod.
+If your game is still loading vanilla after doing the steps above. Go inside `documents\Paradox Interactive\Hearts of Iron IV\mod` to confirm if you see symbols such as 🔁, ✅, or ❌ next to the files' names, in the case that you do see symbols stated that means you're using **OneDrive** for the documents folder which can cause issues with both Steam and the HOI4 launcher when it comes to configuring or loading mods. What you need to do is move the documents folder out of **OneDrive** to ensure no systemic issues with loading the mod.
 
 **A Tutorial on how to move the documents folder out of OneDrive:** https://youtu.be/eGxtK5WxiLA?si=vu4yfZk5XcvepUcW
 

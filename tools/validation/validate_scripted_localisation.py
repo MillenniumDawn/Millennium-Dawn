@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate scripted localisation definitions and usage in Millennium Dawn."""
+
 import glob
 import os
 import re
