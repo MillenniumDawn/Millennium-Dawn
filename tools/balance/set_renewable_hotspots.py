@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Set each state's renewable-energy "hotspot" factor, a multiplier averaging 1.0
 (``state_renewable_capacity_factor_modifier_var``, read by
-``common/scripted_effects/00_money_system_utilities.txt``) from real climate data.
+``common/scripted_effects/00_economic_system_utilities.txt``) from real climate data.
 1.0 is the world average; a state at 1.5 generates 1.5x the average renewable output
 and one at 0.5 half of it, so the geography redistributes renewable power without
 changing the global total. There is no artificial cap - the spread is whatever the
