@@ -9,6 +9,8 @@ This policy covers the [Millennium Dawn Bug Bot](/bug-bot/), the Discord bot use
 
 The bot is operated by the Millennium Dawn team, a volunteer, non-profit mod project. In this policy, "we" means that team.
 
+For what you agree to when using the bot, see the [Bug Bot Terms of Service](/bug-bot-terms/). This page covers the data side only.
+
 ## What the bot collects
 
 When you post in a tracked forum channel, the bot reads and processes:

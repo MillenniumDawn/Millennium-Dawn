@@ -75,7 +75,7 @@ At high influence levels (above ~50%), you can attempt to stage a coup in the ta
 
 ### Make Puppet (Satellite State)
 
-At very high influence (above ~81%), you can force a country into becoming your **satellite state**. This turns them into a subject that sends a portion of their industrial output and trade to you. See the [Satellite States](#satellite-states) section below for a summary, or the [Mechanics Guide](/player-tutorials/mechanics-guide#subject-states) for the full autonomy level comparison.
+At very high influence (above ~81%), you can force a country into becoming your **satellite state**. This turns them into a subject that sends a portion of their industrial output and trade to you. See the [Satellite States](#satellite-states) section below for a summary, or the [Mechanics Guide](/player-tutorials/mechanics-guide/#subject-states) for the full autonomy level comparison.
 
 ### Economic Exploitation
 
@@ -111,7 +111,7 @@ When your influence over a country exceeds approximately 81%, you can make them 
 
 As overlord, you can further reduce a satellite's autonomy through the **Reduce Autonomy** decision, though this costs influence.
 
-There are also **Associated States** (higher autonomy, fewer restrictions) and **Puppet States** (lower autonomy, more restrictions) representing different levels of the subject hierarchy. For a full comparison of all autonomy levels, see the [Mechanics Guide](/player-tutorials/mechanics-guide#subject-states).
+There are also **Associated States** (higher autonomy, fewer restrictions) and **Puppet States** (lower autonomy, more restrictions) representing different levels of the subject hierarchy. For a full comparison of all autonomy levels, see the [Mechanics Guide](/player-tutorials/mechanics-guide/#subject-states).
 
 ### Reducing Autonomy
 
@@ -129,9 +129,9 @@ Your power ranking directly affects your influence capabilities. Higher-ranked n
 - **Influence Defense**: Ranges from +50% (Superpower) to -25% (Non-Power)
 - **Auto-Influence Slots**: Superpowers get 7 slots; Minor Powers get only 3
 
-Influence also feeds back into power ranking — countries with low domestic independence (heavily influenced by others) receive a penalty to their power ranking calculation, even if their GDP is high. This creates a cycle where losing influence makes it harder to recover.
+Influence also feeds back into power ranking, countries with low domestic independence (heavily influenced by others) receive a penalty to their power ranking calculation, even if their GDP is high. This creates a cycle where losing influence makes it harder to recover.
 
-For full power ranking details, see the [Mechanics Guide](/player-tutorials/mechanics-guide#power-ranking).
+For full power ranking details, see the [Mechanics Guide](/player-tutorials/mechanics-guide/#power-ranking).
 
 ---
 
@@ -147,6 +147,6 @@ For full power ranking details, see the [Mechanics Guide](/player-tutorials/mech
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide)
-- [Mechanics Guide](/player-tutorials/mechanics-guide)
-- [Game Rules](/player-tutorials/game-rules)
+- [Economy Guide](/player-tutorials/economy-guide/)
+- [Mechanics Guide](/player-tutorials/mechanics-guide/)
+- [Game Rules](/player-tutorials/game-rules/)

@@ -59,7 +59,7 @@ Each published page must have **exactly one** `<h1>`. The layout supplies it for
 
 ## Important Rules
 
-- If you change any Markdown under `src/content/**/*.md`, run **`bun run lint:md`** (and preferably **`bun run lint:remark`**) **before you commit**. The same checks run in CI; fixing MD/style issues locally avoids broken builds and noisy follow-up commits.
+- If you change any Markdown under `src/content/**/*.md`, run **`bun run lint:md`** **before you commit**. The same checks run in CI; fixing MD/style issues locally avoids broken builds and noisy follow-up commits.
 - Use only Markdown + frontmatter.
 - Do not use Liquid (`{% ... %}` / `{{ ... }}`).
 - Use root-relative paths for internal links. Folder names are **not** always the URL:
@@ -78,7 +78,7 @@ Raster images for the docs site are stored **only** under **`docs/src/assets/ima
 
 After `astro build`, the integration in `src/integrations/copy-src-images-to-dist.ts` copies `src/assets/images/**` into `dist/assets/images/**` so any HTML that still uses root-relative `/assets/images/...` (for example markdown `<img>` fallbacks) resolves in `check:links` and on static hosting. Treat **`dist/assets/images` as owned by that step**: it is wiped and repopulated each build, so nothing else should write there.
 
-CI runs `python3 docs/scripts/check_docs_hygiene.py` (from the repo root) against `docs/public/assets/images/`, `docs/public/assets/downloads/`, and `docs/src/assets/images/`. It fails if a tracked asset is never referenced from other docs sources using `/assets/images/...`, `@/assets/images/...`, or a `src/assets/images/...` path string. Remove unused files or add an explicit entry to `ALLOW_UNUSED_ASSETS` in that script only when keeping an unreferenced file is intentional.
+The docs CI runs the hygiene check (`tools/docs_checks/check_docs_hygiene.py`, via the `tools/docs_checks/check_docs.py` runner) against `docs/public/assets/images/`, `docs/public/assets/downloads/`, and `docs/src/assets/images/`. It fails if a tracked asset is never referenced from other docs sources using `/assets/images/...`, `@/assets/images/...`, or a `src/assets/images/...` path string. Remove unused files or add an explicit entry to `ALLOW_UNUSED_ASSETS` in that script only when keeping an unreferenced file is intentional.
 
 ## Frontmatter Template (Regular Page)
 
@@ -185,7 +185,6 @@ Use `.mdx` under `src/content/devDiaries/` when the page has images. MDX routes 
 
 ```bash
 bun run lint:md
-bun run lint:remark
 bun run check:content-html
 bun run check:flags
 bun run check

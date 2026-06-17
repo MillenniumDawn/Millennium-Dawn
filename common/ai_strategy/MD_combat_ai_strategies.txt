@@ -2,13 +2,7 @@
 default_army_production_strategy = {
 	allowed = {
 		ai_for_units_is_not_disabled = yes
-		NOT = { original_tag = USA }
-		NOT = { original_tag = CHI }
-		NOT = { original_tag = SOV }
-		NOT = { original_tag = ENG }
-		NOT = { original_tag = FRA }
-		NOT = { original_tag = ITA }
-		NOT = { original_tag = JAP }
+		country_uses_generic_army_production_ai = yes
 	}
 	enable = { num_of_military_factories < 11 }
 	abort_when_not_enabled = yes
@@ -29,13 +23,7 @@ default_army_production_strategy = {
 default_army_production_strategy_maj = {
 	allowed = {
 		ai_for_units_is_not_disabled = yes
-		NOT = { original_tag = USA }
-		NOT = { original_tag = CHI }
-		NOT = { original_tag = SOV }
-		NOT = { original_tag = ENG }
-		NOT = { original_tag = FRA }
-		NOT = { original_tag = ITA }
-		NOT = { original_tag = JAP }
+		country_uses_generic_army_production_ai = yes
 	}
 	enable = { num_of_military_factories > 10 }
 	abort_when_not_enabled = yes
@@ -55,13 +43,7 @@ default_army_production_strategy_maj = {
 default_army_production_strategy_global = {
 	allowed = {
 		ai_for_units_is_not_disabled = yes
-		NOT = { original_tag = USA }
-		NOT = { original_tag = CHI }
-		NOT = { original_tag = SOV }
-		NOT = { original_tag = ENG }
-		NOT = { original_tag = FRA }
-		NOT = { original_tag = ITA }
-		NOT = { original_tag = JAP }
+		country_uses_generic_army_production_ai = yes
 	}
 	enable = { num_of_military_factories > 29 }
 	abort_when_not_enabled = yes
@@ -160,14 +142,7 @@ focus_on_armor = {
 default_air_unit_production_low_mils = {
 	allowed = {
 		ai_for_units_is_not_disabled = yes
-		NOT = { original_tag = USA }
-		NOT = { original_tag = CHI }
-		NOT = { original_tag = SOV }
-		NOT = { original_tag = ENG }
-		NOT = { original_tag = FRA }
-		NOT = { original_tag = ITA }
-		NOT = { original_tag = JAP }
-		NOT = { original_tag = RAJ }
+		country_uses_generic_air_production_ai = yes
 	}
 	enable = { num_of_military_factories < 25 }
 	abort_when_not_enabled = yes
@@ -185,14 +160,7 @@ default_air_unit_production_low_mils = {
 default_air_unit_production_mod_mils = {
 	allowed = {
 		ai_for_units_is_not_disabled = yes
-		NOT = { original_tag = USA }
-		NOT = { original_tag = CHI }
-		NOT = { original_tag = SOV }
-		NOT = { original_tag = ENG }
-		NOT = { original_tag = FRA }
-		NOT = { original_tag = ITA }
-		NOT = { original_tag = JAP }
-		NOT = { original_tag = RAJ }
+		country_uses_generic_air_production_ai = yes
 	}
 	#Focus on AS fighters being mediums, MR / CAS being lights, and start making a small amount of large planes
 	enable = {
@@ -214,14 +182,7 @@ default_air_unit_production_mod_mils = {
 default_air_unit_production_high_mils = {
 	allowed = {
 		ai_for_units_is_not_disabled = yes
-		NOT = { original_tag = USA }
-		NOT = { original_tag = CHI }
-		NOT = { original_tag = SOV }
-		NOT = { original_tag = ENG }
-		NOT = { original_tag = FRA }
-		NOT = { original_tag = ITA }
-		NOT = { original_tag = JAP }
-		NOT = { original_tag = RAJ }
+		country_uses_generic_air_production_ai = yes
 	}
 	enable = { num_of_military_factories > 49 }
 	abort_when_not_enabled = yes
@@ -311,61 +272,7 @@ division_limiter = {
 		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		set_temp_variable = { upper_limit = num_of_factories } #100 - Base factory total
-		if = {
-			limit = { check_variable = { num_of_factories > 4 } }
-			add_to_temp_variable = { upper_limit = 5 }
-		}
-		if = { limit = { has_war = yes }
-			multiply_temp_variable = { upper_limit = 1.75 }
-		}
-		#If not has war 100 Divisions, if has war 175
-
-		if = {
-			limit = {
-				has_country_flag = AI_is_threatened
-			}
-			multiply_temp_variable = { upper_limit = 1.25 } #If the AI didn't have divisions it is now 125
-		}
-		if = { limit = { is_major = yes }
-			multiply_temp_variable = { upper_limit = 1.15 } #If the major is 86.25
-		}
-		if = { limit = { has_idea = NATO_member }
-			multiply_temp_variable = { upper_limit = 0.8 } #if the nation is in the EU 51.75
-		}
-		if = { limit = { has_idea = EU_member }
-			multiply_temp_variable = { upper_limit = 0.8 } #If the nation is also in NATO 31.05
-		}
-		if = { limit = { threat > 0.50 }
-			multiply_temp_variable = { upper_limit = 1.25 } #38 if true
-		}
-
-		if = { limit = { num_of_military_factories > 35 }
-			multiply_temp_variable = { upper_limit = 1.15 }
-		}
-		else_if = { limit = { num_of_military_factories > 25 }
-			multiply_temp_variable = { upper_limit = 1.1 }
-		}
-		else_if = { limit = { num_of_military_factories > 15 }
-			multiply_temp_variable = { upper_limit = 1.05 }
-		}
-
-		if = { limit = { is_in_faction = yes }
-			multiply_temp_variable = { upper_limit = 0.90 } #73.9
-		}
-		if = {
-			limit = {
-				OR = {
-					tag = SOV
-					tag = USA
-					tag = CHI
-					tag = RAJ
-				}
-			}
-			multiply_temp_variable = { upper_limit = 1.2 }
-		}
-		round_temp_variable = upper_limit #27
-		check_variable = { num_divisions > upper_limit }
+		check_variable = { num_divisions > division_limiter_limit }
 	}
 	abort_when_not_enabled = yes
 
@@ -387,55 +294,7 @@ division_limiter_potato_edition = {
 		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		set_temp_variable = { upper_limit = num_of_factories } #100
-		multiply_temp_variable = { upper_limit = 0.5 } #50
-		if = { limit = { has_war = yes }
-			multiply_temp_variable = { upper_limit = 1.87 } #93.5
-		}
-
-		if = { limit = { num_of_military_factories > 30 }
-			multiply_temp_variable = { upper_limit = 1.15 }
-		}
-		else_if = { limit = { num_of_military_factories > 20 }
-			multiply_temp_variable = { upper_limit = 1.1 }
-		}
-		else_if = { limit = { num_of_military_factories > 10 }
-			multiply_temp_variable = { upper_limit = 1.05 }
-		}
-
-		if = {
-			limit = {
-				has_country_flag = AI_is_threatened
-			}
-			multiply_temp_variable = { upper_limit = 1.25 } #101.563
-		}
-		if = { limit = { is_major = yes }
-			multiply_temp_variable = { upper_limit = 1.15 } #116.8
-		}
-		if = { limit = { has_idea = NATO_member }
-			multiply_temp_variable = { upper_limit = 0.8 } #87.59
-		}
-		if = { limit = { has_idea = EU_member }
-			multiply_temp_variable = { upper_limit = 0.8 } #65.6925
-		}
-		if = { limit = { threat > 0.50 }
-			multiply_temp_variable = { upper_limit = 1.25 } #82.115
-		}
-		else = {
-			multiply_temp_variable = { upper_limit = 0.85 } #82.115
-		}
-
-		if = { limit = { is_in_faction = yes }
-			multiply_temp_variable = { upper_limit = 0.90 } #73.9
-		}
-		if = { limit = { is_in_faction_with = CHI NOT = { tag = SOV } }
-			multiply_temp_variable = { upper_limit = 0.80 } #59.12
-		}
-		if = { limit = { is_in_faction_with = SOV NOT = { tag = CHI } }
-			multiply_temp_variable = { upper_limit = 0.80 } #59.12
-		}
-		round_temp_variable = upper_limit #59
-		check_variable = { num_divisions > upper_limit }
+		check_variable = { num_divisions > division_limiter_limit }
 	}
 	abort_when_not_enabled = yes
 
@@ -455,7 +314,8 @@ ai_default_no_build_units = {
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		has_war = no
-		NOT = { has_country_flag = AI_is_threatened }
+		is_subject = no
+		NOT = { ai_is_threatened = yes }
 	}
 	abort_when_not_enabled = yes
 
@@ -472,9 +332,8 @@ ai_default_no_build_units = {
 }
 
 ai_subject_defensive_build = {
-	# Subjects always get AI_is_threatened (set in ai_update_build_units),
-	# so ai_default_no_build_units never fires for them. The role_ratios here
-	# provide a small defensive baseline on top of the generic production strategies.
+	# ai_default_no_build_units excludes subjects, so this gives them a small
+	# defensive baseline on top of the generic production strategies.
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		is_subject = yes
@@ -498,9 +357,6 @@ hate_terrorists = {
 	}
 	enable = {
 		has_opinion_modifier = AlQaida_Are_Terrorists
-		NOT = { original_tag = AQY }
-		NOT = { original_tag = TAL }
-		NOT = { original_tag = TTP }
 	}
 	abort_when_not_enabled = yes
 
@@ -829,7 +685,9 @@ MD_major_production_strategy = {
 	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_chassis value = 80 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_destroyer_chassis value = 15 }
 	ai_strategy = { type = equipment_variant_production_factor id = artillery_equipment value = 5 }
-	ai_strategy = { type = equipment_variant_production_factor id = heavy_tank_amphibious_chassis value = 5 }
+	# Transport helicopters sit below core equipment so the AI never fills spare capacity with them;
+	# MD_build_transport_helicopter lifts this when stockpile runs low and templates actually demand them.
+	ai_strategy = { type = equipment_variant_production_factor id = heavy_tank_amphibious_chassis value = -5 }
 
 	ai_strategy = { type = equipment_production_min_factories id = infantry value = 2 }
 	ai_strategy = { type = equipment_production_min_factories id = train value = 1 }
@@ -1055,7 +913,7 @@ MD_dont_build_transport_helicopter_strong = {
 		NOT = { original_tag = USA }
 	}
 	enable = {
-		num_of_military_factories > 50
+		num_of_military_factories > 10
 		has_equipment = { heavy_tank_amphibious_chassis > 1500 }
 	}
 	abort_when_not_enabled = yes
@@ -1071,7 +929,7 @@ MD_build_transport_helicopter = {
 		NOT = { original_tag = USA }
 	}
 	enable = {
-		num_of_military_factories > 50
+		num_of_military_factories > 10
 		has_equipment = { heavy_tank_amphibious_chassis < 800 }
 	}
 	abort_when_not_enabled = yes
@@ -1096,37 +954,7 @@ plane_limiter = {
 		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		set_temp_variable = { upper_limit = num_of_military_factories } #10 - Base factory total
-		multiply_temp_variable = { upper_limit = 80 } # 200
-		# base, half of the wing
-		add_to_temp_variable = { upper_limit = 50 } # 250
-
-		if = { limit = { has_war = yes }
-			multiply_temp_variable = { upper_limit = 1.25 } #390
-		}
-
-		if = {
-			limit = {
-				has_country_flag = AI_is_threatened
-			}
-			multiply_temp_variable = { upper_limit = 1.25 } # 488
-		}
-		if = { limit = { is_major = yes }
-			multiply_temp_variable = { upper_limit = 1.15 } # 561
-		}
-		if = { limit = { has_idea = NATO_member }
-			multiply_temp_variable = { upper_limit = 1.2 } # 673
-		}
-		if = { limit = { threat > 0.50 }
-			multiply_temp_variable = { upper_limit = 1.25 } # 842
-		}
-
-		if = { limit = { is_in_faction = yes }
-			multiply_temp_variable = { upper_limit = 0.90 } # 758
-		}
-
-		round_temp_variable = upper_limit #27
-		has_deployed_air_force_size = { size > upper_limit }
+		has_deployed_air_force_size = { size > plane_limiter_limit }
 	}
 	abort_when_not_enabled = yes
 
@@ -1197,14 +1025,7 @@ major_wartime_commitment = {
 wartime_air_superiority = {
 	allowed = {
 		ai_for_units_is_not_disabled = yes
-		NOT = { original_tag = USA }
-		NOT = { original_tag = CHI }
-		NOT = { original_tag = SOV }
-		NOT = { original_tag = ENG }
-		NOT = { original_tag = FRA }
-		NOT = { original_tag = ITA }
-		NOT = { original_tag = JAP }
-		NOT = { original_tag = RAJ }
+		country_uses_generic_air_production_ai = yes
 	}
 	enable = {
 		has_war = yes
@@ -1288,37 +1109,7 @@ plane_limiter_potato = {
 		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		set_temp_variable = { upper_limit = num_of_military_factories } #10 - Base factory total
-		multiply_temp_variable = { upper_limit = 40 } # 200
-		# base, half of the wing
-		add_to_temp_variable = { upper_limit = 50 } # 250
-
-		if = { limit = { has_war = yes }
-			multiply_temp_variable = { upper_limit = 1.25 } #390
-		}
-
-		if = {
-			limit = {
-				has_country_flag = AI_is_threatened
-			}
-			multiply_temp_variable = { upper_limit = 1.25 } # 488
-		}
-		if = { limit = { is_major = yes }
-			multiply_temp_variable = { upper_limit = 1.15 } # 561
-		}
-		if = { limit = { has_idea = NATO_member }
-			multiply_temp_variable = { upper_limit = 1.2 } # 673
-		}
-		if = { limit = { threat > 0.50 }
-			multiply_temp_variable = { upper_limit = 1.25 } # 842
-		}
-
-		if = { limit = { is_in_faction = yes }
-			multiply_temp_variable = { upper_limit = 0.90 } # 758
-		}
-
-		round_temp_variable = upper_limit #27
-		has_deployed_air_force_size = { size > upper_limit }
+		has_deployed_air_force_size = { size > plane_limiter_limit }
 	}
 	abort_when_not_enabled = yes
 

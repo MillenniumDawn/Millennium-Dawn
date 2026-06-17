@@ -9,7 +9,7 @@ Steps:
    git diff origin/main...HEAD
    ```
 
-2. Review every changed file against the rules in CLAUDE.md, `.claude/rules/localisation-rules.md`, and `.claude/docs/hoi4-data-structures.md`. Reference `docs/src/content/resources/code-resource.md` for MD-specific modifiers, scripted effects (building effects, treasury, debt, influence, political, energy), and building costs. Check five categories:
+2. Review every changed file against the rules in CLAUDE.md, `.claude/rules/localisation-rules.md`, and `.claude/docs/hoi4-data-structures.md`. Reference `docs/src/content/resources/code-resource.md` for MD-specific modifiers and building costs, and `docs/src/content/resources/scripted-effects-reference.md` for scripted effects (building effects, treasury, debt, influence, political, energy). Check five categories:
 
 **Coding Standards** (apply all CLAUDE.md rules). Watch especially for these commonly missed or silently broken patterns:
 

@@ -24,7 +24,9 @@ Run this after cloning the repo. It will:
   5. Optionally set up the docs site (Node.js 24+, Bun)
 """
 
+import importlib.util
 import os
+import re
 import subprocess
 import sys
 import sysconfig
@@ -38,6 +40,10 @@ if hasattr(sys.stdout, "reconfigure"):
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TOOLS_DIR = REPO_ROOT / "tools"
 DOCS_DIR = REPO_ROOT / "docs"
+PYPROJECT = REPO_ROOT / "pyproject.toml"
+
+# Packages whose import name differs from their distribution name.
+_IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml"}
 
 MIN_PYTHON = (3, 10)
 REC_PYTHON = (3, 12)
@@ -188,27 +194,27 @@ def check_hooks_installed() -> bool:
     return ok
 
 
-def _check_requirements_file(reqs_file: Path, label: str) -> bool:
-    """Return True if every package in ``reqs_file`` can be imported."""
-    if not reqs_file.exists():
-        print(f"  {label}: {reqs_file.name} not found")
+def _group_packages(group: str) -> list[str]:
+    """Return the package specs in a pyproject [dependency-groups] entry."""
+    if not PYPROJECT.exists():
+        return []
+    match = re.search(
+        rf"(?ms)^{re.escape(group)}\s*=\s*\[(.*?)\]", PYPROJECT.read_text()
+    )
+    return re.findall(r'"([^"]+)"', match.group(1)) if match else []
+
+
+def _check_group(group: str, label: str) -> bool:
+    """Return True if every package in the dependency-group is importable."""
+    specs = _group_packages(group)
+    if not specs:
+        print(f"  {label}: group '{group}' not found in pyproject.toml")
         return False
     missing = []
-    for line in reqs_file.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        pkg = line.split("==")[0].split(">=")[0].split("<=")[0].strip()
-        try:
-            __import__(pkg.replace("-", "_"))
-        except ImportError:
-            # pillow imports as PIL
-            if pkg.lower() == "pillow":
-                try:
-                    __import__("PIL")
-                    continue
-                except ImportError:
-                    pass
+    for spec in specs:
+        pkg = re.split(r"[><=!~]+", spec)[0].strip()
+        import_name = _IMPORT_NAMES.get(pkg.lower(), pkg.replace("-", "_"))
+        if importlib.util.find_spec(import_name) is None:
             missing.append(pkg)
     if missing:
         print(f"  {label}: missing {', '.join(missing)}")
@@ -218,13 +224,11 @@ def _check_requirements_file(reqs_file: Path, label: str) -> bool:
 
 
 def check_pip_packages() -> bool:
-    return _check_requirements_file(TOOLS_DIR / "requirements.txt", "Tool dependencies")
+    return _check_group("runtime", "Tool dependencies")
 
 
 def check_dev_packages() -> bool:
-    return _check_requirements_file(
-        TOOLS_DIR / "report_lib" / "requirements-dev.txt", "Dev/test dependencies"
-    )
+    return _check_group("dev", "Dev/test dependencies")
 
 
 def check_node() -> tuple[bool, str | None]:
@@ -289,29 +293,30 @@ def install_hooks() -> bool:
     return result.returncode == 0
 
 
-def _pip_install(reqs_file: Path, label: str) -> bool:
-    """Install ``-r <reqs_file>`` with a --user fallback for PEP 668 systems."""
+def _pip_install_group(group: str, label: str) -> bool:
+    """Install a pyproject dependency-group, with a --user fallback for PEP 668."""
     print(f"Installing {label}...")
-    reqs = str(reqs_file)
     if not in_virtualenv() and is_externally_managed():
         venv_py = create_venv()
         reexec_with(venv_py)
-    result = run([sys.executable, "-m", "pip", "install", "-r", reqs], check=False)
+    # --group (PEP 735) needs pip >= 25.1; Ubuntu 22.04 ships ~23.x.
+    run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=False)
+    spec = f"{PYPROJECT}:{group}"
+    result = run([sys.executable, "-m", "pip", "install", "--group", spec], check=False)
     if result.returncode != 0:
         result = run(
-            [sys.executable, "-m", "pip", "install", "--user", "-r", reqs], check=False
+            [sys.executable, "-m", "pip", "install", "--user", "--group", spec],
+            check=False,
         )
     return result.returncode == 0
 
 
 def install_pip_packages() -> bool:
-    return _pip_install(TOOLS_DIR / "requirements.txt", "tool dependencies")
+    return _pip_install_group("runtime", "tool dependencies")
 
 
 def install_dev_packages() -> bool:
-    return _pip_install(
-        TOOLS_DIR / "report_lib" / "requirements-dev.txt", "dev/test dependencies"
-    )
+    return _pip_install_group("dev", "dev/test dependencies")
 
 
 def install_docs_deps() -> bool:

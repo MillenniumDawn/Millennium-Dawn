@@ -4,6 +4,7 @@
 Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
+
 import os
 import re
 import sys
@@ -79,6 +80,33 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     cleaned = re.sub(r"#[^\n]*", "", text)
     counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
     return {eid: counts[eid] for eid in tracked_ids if eid in counts}
+
+
+# Event IDs built at runtime by string interpolation never appear as a literal
+# `namespace.number` token, so the whole-token scan can't see them. Matches the
+# namespace before a `.[…]` / `.N[…]` interpolation following an event-firing
+# keyword, e.g. `country_event = UN.[ID]` or `country_event = MD_cyber.1[TYPE]`.
+_DYNAMIC_EVENT_NS_PATTERN = re.compile(
+    r"(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*(?:\{\s*id\s*=\s*)?([A-Za-z_]\w*)\.[A-Za-z0-9_.]*\["
+)
+
+
+def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
+    """Pool worker: namespaces fired via string-interpolated event IDs in a file.
+
+    Any triggered-only event in a returned namespace is reachable through dynamic
+    dispatch and must not be reported as unreferenced.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return set()
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
 
 
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
@@ -374,6 +402,10 @@ class Validator(BaseValidator):
 
         results = []
         for event in events:
+            # Hidden events display no window, so their title/desc/option-name
+            # loc is dead — never flag them for missing keys.
+            if "hidden = yes" in event:
+                continue
             eid_matches = pattern_id.findall(event)
             eid = eid_matches[0] if eid_matches else "unknown"
             filename = paths.get(event, "unknown")
@@ -423,12 +455,26 @@ class Validator(BaseValidator):
             for eid, count in file_counts.items():
                 total_counts[eid] = total_counts.get(eid, 0) + count
 
+        # Namespaces dispatched via runtime-interpolated IDs (e.g. UN.[ID],
+        # MD_cyber.1[TYPE]) never appear as literal tokens — exempt them.
+        dyn_ns_lists = self._pool_map(
+            scan_dynamic_event_namespaces, args_list, chunksize=30
+        )
+        dynamic_namespaces: Set[str] = set()
+        for s in dyn_ns_lists:
+            dynamic_namespaces.update(s)
+
         # The definition itself contributes 1 occurrence (id = X inside the event block).
         # Anything > 1 means it's referenced somewhere else.
         results = []
         for eid in sorted(triggered_only_ids):
-            if total_counts.get(eid, 0) <= 1:
-                results.append(f"{eid} - {triggered_only_ids[eid]}")
+            if total_counts.get(eid, 0) > 1:
+                continue
+            last_dot = eid.rfind(".")
+            ns = eid[:last_dot] if last_dot >= 0 else eid
+            if ns in dynamic_namespaces:
+                continue
+            results.append(f"{eid} - {triggered_only_ids[eid]}")
 
         self._report(
             results,
@@ -515,12 +561,19 @@ class Validator(BaseValidator):
         self._log_section("Checking hidden events for pointless localisation...")
 
         meta, _ = self._get_event_metadata()
+        loc_keys = self._load_localisation_keys()
         results = []
 
         for ev in meta:
             if not ev["is_hidden"] or not ev["title_desc_refs"]:
                 continue
-            detail = "; ".join(ev["title_desc_refs"])
+            # Only flag when the declared title/desc actually resolves to a real
+            # loc key. A hidden event declaring `title = foo.t` with no `foo.t`
+            # in any .yml has nothing to remove, so it is not a finding.
+            real = [k for k in ev["title_desc_refs"] if k in loc_keys]
+            if not real:
+                continue
+            detail = "; ".join(real)
             results.append(f"{ev['id']} - {ev['file']}: {detail}")
 
         self._report(

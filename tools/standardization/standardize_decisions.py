@@ -261,14 +261,14 @@ class DecisionStandardizer(BaseStandardizer):
 
         # 2. Icon
         if props["icon"]:
-            lines.append(f'\t\t{props["icon"]}')
+            lines.append(f"\t\t{props['icon']}")
             lines.append("")
 
         # 3. Cost and days_remove
         if props["cost"]:
-            lines.append(f'\t\t{props["cost"]}')
+            lines.append(f"\t\t{props['cost']}")
         if props["days_remove"]:
-            lines.append(f'\t\t{props["days_remove"]}')
+            lines.append(f"\t\t{props['days_remove']}")
         lines.append("")
 
         # 4. Visible block
@@ -295,7 +295,7 @@ class DecisionStandardizer(BaseStandardizer):
 
         # 7. fire_only_once (use sparingly)
         if props["fire_only_once"]:
-            lines.append(f'\t\t{props["fire_only_once"]}')
+            lines.append(f"\t\t{props['fire_only_once']}")
             lines.append("")
 
         # 8. AI will do (always last)

@@ -134,17 +134,17 @@ To bypass for a single commit (not recommended):
 git commit --no-verify
 ```
 
-### Pre-commit stages
+### Pre-commit vs CI
 
-Most MD validators are set to `stages: [manual]` in `.pre-commit-config.yaml` and do **not** run on ordinary `git commit`. This keeps commit latency low for contributors. The heavy cross-reference validators (`validate_scripted_gui`, `validate_localisation`, `validate_scripted_localisation`) and most others are in this category. They run in CI instead; see the comments in `.pre-commit-config.yaml` for per-hook rationale.
+To keep commit latency low, only a fast subset of validators runs on `git commit`. The heavy cross-reference validators (`validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`, `validate_variables`, `validate_focus_tree`, and most others) run **CI-only** — they are gated by the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml`, not by pre-commit.
 
-A handful of lighter validators (`validate_oob_units`, `validate_ai_roles`, `validate_defines`, `validate_ai_navy`, `validate_ai_equipment`, `validate_agency_upgrades`, `validate_ideas`, `validate_events`) run on every commit without a `stages` restriction.
+The commit-stage validators (`validate_style`, `validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`, `validate_ai_equipment`, `validate_agency_upgrades`, `validate_ideas`, `validate_events`) run through a single pre-commit hook, `md-validate-content`, which fans them out in parallel via `tools/precommit_validate.py`. `check_common_mistakes` and `validate_defines` keep their own commit-stage hooks; `validate_unused_textures` keeps a `stages: [manual]` hook because CI cannot run it.
 
-To run a manual hook locally:
+To run any validator locally — including a CI-only one — invoke it directly:
 
 ```bash
-pre-commit run md-validate-scripted-gui --hook-stage manual
-pre-commit run --hook-stage manual   # all manual hooks at once
+python3 tools/validation/validate_scripted_gui.py --staged --no-color  # changed files only
+python3 tools/validation/validate_scripted_gui.py --no-color           # full-repo scan
 ```
 
 ---
