@@ -1042,7 +1042,7 @@ class Validator(BaseValidator):
         for name in sorted(candidates):
             if name in referenced:
                 continue
-            if meta_prefixes and name.startswith(meta_prefixes):
+            if name.startswith(meta_prefixes):
                 continue
             src = defining_file.get(name, "")
             findings.append(
