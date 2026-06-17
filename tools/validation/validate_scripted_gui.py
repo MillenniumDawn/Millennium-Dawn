@@ -560,11 +560,12 @@ class ScriptedGuiValidator(BaseValidator):
             if block["window_name"]:
                 if block["window_name"] not in self._gui_containers:
                     self.add_issue(
-                        Severity.ERROR,
+                        Severity.WARNING,
                         "MISSING_WINDOW",
                         f"Scripted GUI '{block['name']}' references "
                         f'window_name = "{block["window_name"]}" but no '
-                        f"containerWindowType with that name exists",
+                        f"containerWindowType with that name exists in MD .gui "
+                        f"files (may be a vanilla container)",
                         file=block["file"],
                         line=block["line"],
                     )
