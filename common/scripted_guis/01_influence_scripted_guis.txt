@@ -1,10 +1,9 @@
 scripted_gui = {
-
-	scripted_influence_option_buttons = {
-		context_type = selected_country_context #ROOT is you, default is that country
+	countrydiplomacyview_influence = {
+		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
 
-		window_name = "influence_option_buttons"
+		window_name = "MD_countrydiplomacyview_influence"
 
 		dirty = global.update_influence_ui
 
@@ -117,11 +116,17 @@ scripted_gui = {
 				is_influencer = yes
 				#ROOT has_war
 				PREV = {
-					OR = {
-						has_civil_war = yes
-						has_war = yes
-						has_country_flag = AI_is_threatened
-						threat > 0.50
+					if = {
+						limit = {
+							ENG = {
+								has_idea = ENG_the_macabre_alliance
+							}
+							original_tag = COL
+						}
+						original_tag = COL
+					}
+					else = {
+						ai_is_threatened = yes
 					}
 				}
 				#ROOT has_idea = defense_industry
@@ -183,6 +188,16 @@ scripted_gui = {
 					}
 					is_top3_twenty_influencer = yes
 					ROOT = { has_political_power > 1 }
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							original_tag = ENG
+							has_idea = ENG_the_macabre_alliance
+						}
+						PREV = { original_tag = COL }
+					}
+					ROOT = { has_political_power > 74 }
 				}
 				else = {
 					is_top3_thirty_influencer = yes
@@ -503,6 +518,33 @@ scripted_gui = {
 					set_temp_variable = { influence_target = PREV.id }
 					change_influence_percentage = yes
 				}
+				else_if = {
+					limit = {
+						ROOT = {
+							original_tag = ENG
+							has_idea = ENG_the_macabre_alliance
+						}
+						PREV = { original_tag = COL }
+					}
+					add_to_temp_variable = { var_pop = -0.05 }
+					add_to_temp_variable = { manipulate_politics_pp_cost = 50 }
+					set_temp_variable = { party_index = 8 }
+					set_temp_variable = { party_popularity_increase = var_pop }
+					set_temp_variable = { temp_outlook_increase = var_pop }
+					add_relative_party_popularity = yes
+
+					add_to_temp_variable = { var_pop = -0.02 }
+					set_temp_variable = { party_index = 9 }
+					set_temp_variable = { party_popularity_increase = var_pop }
+					set_temp_variable = { temp_outlook_increase = var_pop }
+					add_relative_party_popularity = yes
+
+					# Reduce by -10%
+					set_temp_variable = { percent_change = -5 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = PREV.id }
+					change_influence_percentage = yes
+				}
 				else = {
 					set_temp_variable = { party_index = ROOT.ruling_party^0 }
 					set_temp_variable = { party_popularity_increase = var_pop }
@@ -623,57 +665,5 @@ scripted_gui = {
 				update_dirty_influence_var = yes
 			}
 		}
-	}
-
-	# Positional Scripted GUI:
-	# The position scripted GUI are the displays when looking at another nation.
-	domestic_influence_diplo = {
-		context_type = selected_country_context
-		parent_window_token = selected_country_view_diplomacy
-
-		window_name = "domestic_influence_diplo"
-	}
-	position_1_diplo = {
-		context_type = selected_country_context
-		parent_window_token = selected_country_view_diplomacy
-
-		window_name = "position_1_diplo"
-	}
-	position_2_diplo = {
-		context_type = selected_country_context
-		parent_window_token = selected_country_view_diplomacy
-
-		window_name = "position_2_diplo"
-	}
-	position_3_diplo = {
-		context_type = selected_country_context
-		parent_window_token = selected_country_view_diplomacy
-
-		window_name = "position_3_diplo"
-	}
-
-	position_4_diplo = {
-		context_type = selected_country_context
-		parent_window_token = selected_country_view_diplomacy
-
-		window_name = "position_4_diplo"
-	}
-	position_5_diplo = {
-		context_type = selected_country_context
-		parent_window_token = selected_country_view_diplomacy
-
-		window_name = "position_5_diplo"
-	}
-	position_6_diplo = {
-		context_type = selected_country_context
-		parent_window_token = selected_country_view_diplomacy
-
-		window_name = "position_6_diplo"
-	}
-	position_7_diplo = {
-		context_type = selected_country_context
-		parent_window_token = selected_country_view_diplomacy
-
-		window_name = "position_7_diplo"
 	}
 }

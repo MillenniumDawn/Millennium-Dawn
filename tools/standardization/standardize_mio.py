@@ -5,6 +5,7 @@ Millennium Dawn MIO Standardizer
 Standardizes HOI4 military industrial organization files according to
 Millennium Dawn coding standards.
 """
+
 from typing import Any, Dict, List
 
 from common_utils import BaseStandardizer, run_standardizer

@@ -6,6 +6,7 @@ scripted_gui image= properties, and scripted_localisation localization_key= agai
 the set defined in interface/*.gfx. Promotes .gui errors from WARNING to ERROR for
 MD-authored files; vanilla-override files stay at WARNING.
 """
+
 import glob
 import os
 import re

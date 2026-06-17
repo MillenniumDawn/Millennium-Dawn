@@ -1,0 +1,1674 @@
+scripted_gui = {
+	MD_countrypoliticsview = {
+		context_type = player_context
+		window_name = "MD_countrypoliticsview"
+		parent_window_token = politics_tab
+
+		visible = { is_ai = no }
+
+		effects = {
+			MD_countrypoliticsview_expanded_open_click = {
+				if = {
+					limit = { NOT = { has_country_flag = MD_politicsview_expanded_open } }
+
+					set_country_flag = MD_politicsview_expanded_open
+
+					set_variable = { sorting_button_outlook_status = 1 }
+					set_variable = { sorting_button_popularity_status = 2 }
+					set_variable = { sorting_button_banned_status = 2 }
+
+					clear_array = parties_list_sorted
+					clear_array = opposition_array
+
+					resize_array = {
+						array = parties_list_sorted
+						size = pos_array^num
+					}
+
+					for_each_loop = {
+						array = pos_array
+
+						remove_from_array = {
+							array = parties_list_sorted
+							index = v
+						}
+
+						add_to_array = {
+							array = parties_list_sorted
+							index = v
+							value = v
+						}
+
+						if = {
+							limit = {
+								is_party_in_government = no
+								check_variable = { party_pop_array^v > 0.009 }
+							}
+
+							add_to_array = {
+								array = opposition_array
+								value = v
+							}
+
+						}
+					}
+
+					remove_from_array = {
+						array = opposition_array
+						index = 0
+					}
+
+					update_dirty_politicsview_expanded = yes
+				}
+				else = {
+					clr_country_flag = MD_politicsview_expanded_open
+				}
+			}
+		}
+
+		dynamic_lists = {
+            parties_grid = {
+                array = pos_array
+                entry_container = "parties_grid_item_short"
+            }
+        }
+	}
+
+	countrypoliticsview_expanded = {
+		context_type = player_context
+		window_name = "MD_countrypoliticsview_expanded"
+		parent_window_token = politics_tab
+
+		dirty = ROOT.politicsview_expanded_dirty
+
+		visible = {
+			has_country_flag = MD_politicsview_expanded_open
+			is_ai = no
+		}
+
+		triggers = {
+			# settings
+			corruption_offers_checkbox_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = auto_decline_corruption
+					}
+
+					set_temp_variable = { corruption_offers_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { corruption_offers_frame = 2 }
+				}
+
+				always = yes
+			}
+
+			foreign_election_notifications_checkbox_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = block_foreign_election_notification
+					}
+
+					set_temp_variable = { foreign_election_notifications_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { foreign_election_notifications_frame = 2 }
+				}
+
+				always = yes
+			}
+
+			# elections threshold
+			increase_election_threshold_visible = {
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+			}
+			increase_election_threshold_click_enabled = {
+				has_elections = yes
+				has_political_power > 49
+				custom_trigger_tooltip = {
+					tooltip = election_threshold_max
+					check_variable = { election_threshold < 0.10 }
+				}
+			}
+			decrease_election_threshold_visible = {
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+			}
+			decrease_election_threshold_click_enabled = {
+				has_elections = yes
+				has_political_power > 49
+				custom_trigger_tooltip = {
+					tooltip = election_threshold_min
+					check_variable = { election_threshold > 0 }
+				}
+			}
+
+			# ban/allow all parties button
+			allow_all_parties_button_visible = {
+				has_country_flag = partyall_banned
+			}
+
+			allow_all_parties_button_click_enabled = {
+				has_political_power > 230
+			}
+
+			ban_all_parties_button_visible = {
+				NOT = { has_country_flag = partyall_banned }
+			}
+
+			ban_all_parties_button_click_enabled = {
+				calculate_pp_cost_banned_amount = yes
+				has_political_power > pp_cost
+				50_percent_government_popularity = yes
+			}
+
+			# political actions
+			hold_reelections_button_click_enabled = {
+				has_political_power > 99
+				if = {
+					limit = {
+						original_tag = TAJ
+					}
+					NOT = { has_country_flag = TAJ_dictatorship_flag }
+				}
+				if = {
+					limit = { tag = CHI }
+					has_completed_focus = CHI_Free_and_Fair_Elections
+				}
+				if = {
+					limit = { tag = BRM }
+					has_completed_focus = BRM_cede_power_to_the_nld
+				}
+				if = {
+					limit = {
+						OR = {
+							tag = BHR
+							tag = KUW
+							tag = QAT
+							tag = OMA
+							tag = SAU
+							tag = UAE
+						}
+					}
+					has_completed_focus = GCC_free_and_fair_elections
+				}
+				if = {
+					limit = { tag = USA }
+					has_country_flag = collapsed_nation
+				}
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { original_tag = LBA }
+					NOT = { has_idea = LBA_aftermath_of_the_civil_war }
+				}
+				if = {
+					limit = { tag = ARM }
+					NOT = {
+						emerging_reactionaries_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+						western_conservatism_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+					}
+				}
+				has_elections = yes
+				NOT = {
+					salafist_caliphate_are_in_power = yes
+					has_country_flag = generic_election_killswitch
+					has_country_flag = hold_reelections_flag
+				}
+
+				hidden_trigger = {
+					NOT = {
+						tag = SPR
+						tag = USA
+						tag = WAG
+						original_tag = SIN
+						original_tag = NKO
+					}
+				}
+			}
+
+			retire_leader_button_click_enabled = {
+				has_political_power > 89
+				if = {
+					limit = {
+						original_tag = TAJ
+					}
+					NOT = { has_country_flag = TAJ_dictatorship_flag }
+				}
+				if = {
+					limit = { tag = IRQ	}
+					NOT = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+					NOT = { has_country_leader = { name = "Jay Garner" ruling_only = yes } }
+				}
+				if = {
+					limit = { tag = SAU }
+					NOT = { is_in_array = { ruling_party = 10 } }
+				}
+				if = {
+					limit = { tag = NKO }
+					OR = {
+						has_government = communism
+						has_government = nationalist
+					}
+				}
+				if = {
+					limit = { tag = UAE }
+					NOT = { is_in_array = { ruling_party = 0 } }
+				}
+				if = {
+					limit = { tag = KUW }
+					NOT = { is_in_array = { ruling_party = 0 } }
+				}
+				if = {
+					limit = { tag = OMA }
+					NOT = { is_in_array = { ruling_party = 13 } }
+				}
+				if = { ##Can't Retire the PAP Prime Minister
+					limit = { tag = SIN }
+					NOT = {
+						is_in_array = { ruling_party = 1 }
+						is_in_array = { ruling_party = 7 }
+						is_in_array = { ruling_party = 13 }
+					}
+				}
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						emerging_moderate_shiite_are_in_power = yes
+						emerging_hardline_shiite_are_in_power = yes
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						emerging_moderate_shiite_are_in_power = yes
+						emerging_hardline_shiite_are_in_power = yes
+					}
+				}
+				if = {
+					limit = { tag = SOV }
+					NOT = {
+						OR = {
+							emerging_reactionaries_are_in_power = yes
+							nationalist_monarchists_are_in_power = yes
+							nationalist_right_wing_populists_are_in_power = yes
+							nationalist_fascist_are_in_power = yes
+							emerging_communist_state_are_in_power = yes
+							nationalist_military_junta_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = SER }
+					NOT = {
+						has_country_leader = {
+							name = "Slobodan Milošević"
+							ruling_only = yes
+						}
+					}
+				}
+
+				hidden_trigger = {
+					NOT = { tag = ISR }
+					NOT = { tag = ITA }
+					NOT = { tag = CHE }
+					NOT = { tag = SPR }
+					NOT = { tag = WAG }
+					NOT = { tag = NKO }
+				}
+			}
+
+			permanently_suspend_elections_button_click_enabled = {
+				if = {
+					limit = { has_elections = yes }
+
+					has_political_power > 124
+					set_temp_variable = { has_elections_frame = 2 }
+
+					# ban elections
+					hidden_trigger = {
+						NOT = {
+							tag = SPR
+							original_tag = SIN
+							tag = WAG
+						}
+					}
+
+					if = {
+						limit = {
+							original_tag = TAJ
+						}
+						NOT = {
+							has_country_flag = TAJ_young_republic_flag
+						}
+					}
+					OR = {
+						non_technocrats_western_autocrats_are_in_power = yes
+						emerging_communist_state_are_in_power = yes #Communist-State
+						emerging_autocracy_are_in_power = yes #Autocracy
+						salafist_kingdom_are_in_power = yes #Kingdom
+						salafist_caliphate_are_in_power = yes #Caliphate
+						neutrality_neutral_autocracy_are_in_power = yes #Neutral_Autocracy
+						neutrality_neutral_communism_are_in_power = yes #neutral communist
+						nationalist_fascist_are_in_power = yes #fascist
+						nationalist_military_junta_are_in_power = yes #Nat_Autocracy
+						nationalist_monarchists_are_in_power = yes #Monarchist
+
+						emerging_moderate_shiite_are_in_power = yes #Moderate Shiite
+						emerging_hardline_shiite_are_in_power = yes #Hardline Shiite
+					}
+					if = {
+						limit = { tag = PER }
+						NOT = {
+							OR = {
+								emerging_moderate_shiite_are_in_power = yes
+								emerging_hardline_shiite_are_in_power = yes
+							}
+						}
+					}
+					if = {
+						limit = { tag = HEZ }
+						NOT = {
+							OR = {
+								emerging_hardline_shiite_are_in_power = yes
+								emerging_moderate_shiite_are_in_power = yes
+							}
+						}
+					}
+					# Nationalist countries likes to disable elections. I can't allow that for Czech military junta ruling by pro-democratic Petr Pavel
+					if = {
+						limit = { tag = CZE }
+						NOT = {
+							has_country_leader = { name = "Petr Pavel" ruling_only = yes }
+						}
+					}
+
+					NOT = { has_active_mission = coalition_countdown }
+					if = {
+						limit = { original_tag = LBA }
+						NOT = { has_idea = LBA_aftermath_of_the_civil_war }
+					}
+				}
+				else = {
+					# unban elections
+					has_political_power > 84
+					set_temp_variable = { has_elections_frame = 1 }
+
+					hidden_trigger = {
+						NOT = { tag = WAG }
+						NOT = { tag = ISI }
+						NOT = { tag = TAL }
+						NOT = { tag = AQY }
+					}
+
+					if = {
+						limit = {
+							original_tag = TAJ
+						}
+						NOT = {
+							has_country_flag = TAJ_dictatorship_flag
+						}
+					}
+					if = {
+						limit = { tag = IRQ	}
+						OR = {
+							NOT = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+							NOT = { has_country_leader = { name = "Jay Garner" ruling_only = yes } }
+						}
+					}
+					has_elections = no
+					if = {
+						limit = { tag = CHI }
+						has_completed_focus = CHI_Free_and_Fair_Elections
+					}
+					if = {
+						limit = { tag = BRM }
+						has_completed_focus = BRM_cede_power_to_the_nld
+					}
+					if = {
+						limit = {
+							OR = {
+								tag = BHR
+								tag = KUW
+								tag = QAT
+								tag = OMA
+								tag = SAU
+								tag = UAE
+							}
+						}
+						has_completed_focus = GCC_free_and_fair_elections
+					}
+					NOT = {
+						salafist_caliphate_are_in_power = yes
+					}
+					if = {
+						limit = { tag = PER }
+						NOT = {
+							OR = {
+								emerging_moderate_shiite_are_in_power = yes
+								emerging_hardline_shiite_are_in_power = yes
+							}
+						}
+					}
+					if = {
+						limit = { tag = HEZ }
+						NOT = {
+							OR = {
+								emerging_hardline_shiite_are_in_power = yes
+								emerging_moderate_shiite_are_in_power = yes
+							}
+						}
+					}
+					if = {
+						limit = { tag = CUB }
+						OR = {
+							has_completed_focus = CUB_allow_elections
+							has_completed_focus = CUB_republic_alive
+						}
+					}
+
+					has_civil_war = no
+					if = {
+						limit = { original_tag = LBA }
+						OR = {
+							custom_trigger_tooltip = {
+								NOT = { is_ruled_by_a_gaddafi = yes }
+								tooltip = LBA_not_ruled_by_gaddafi_tt
+							}
+							has_completed_focus = LBA_presidential_republic
+							has_completed_focus = LBA_constitutional_monarch
+						}
+					}
+				}
+			}
+
+			# propaganda
+			prowestern_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = prowestern_propaganda
+					}
+
+					set_temp_variable = { prowestern_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { prowestern_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = emerging_propaganda
+						has_country_flag = nonaligned_propaganda
+						has_country_flag = nationalist_propaganda
+						has_country_flag = fascism_propaganda
+					}
+				}
+
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
+			}
+			emerging_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = emerging_propaganda
+					}
+
+					set_temp_variable = { emerging_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { emerging_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = prowestern_propaganda
+						has_country_flag = nonaligned_propaganda
+						has_country_flag = nationalist_propaganda
+						has_country_flag = fascism_propaganda
+					}
+				}
+			}
+			nonaligned_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = nonaligned_propaganda
+					}
+
+					set_temp_variable = { nonaligned_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { nonaligned_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = emerging_propaganda
+						has_country_flag = prowestern_propaganda
+						has_country_flag = nationalist_propaganda
+						has_country_flag = fascism_propaganda
+					}
+				}
+
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
+			}
+			nationalist_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = nationalist_propaganda
+					}
+
+					set_temp_variable = { nationalist_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { nationalist_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = emerging_propaganda
+						has_country_flag = nonaligned_propaganda
+						has_country_flag = prowestern_propaganda
+						has_country_flag = fascism_propaganda
+					}
+				}
+
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
+			}
+			fascism_propaganda_button_click_enabled = {
+				if = {
+					limit = {
+						has_country_flag = fascism_propaganda
+					}
+
+					set_temp_variable = { fascism_propaganda_frame_temp = 1 }
+				}
+				else = {
+					set_temp_variable = { fascism_propaganda_frame_temp = 2 }
+				}
+
+				NOT = {
+					OR = {
+						has_country_flag = emerging_propaganda
+						has_country_flag = nonaligned_propaganda
+						has_country_flag = nationalist_propaganda
+						has_country_flag = prowestern_propaganda
+					}
+				}
+
+				if = {
+					limit = { tag = PER }
+					NOT = {
+						OR = {
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+						}
+					}
+				}
+				if = {
+					limit = { tag = HEZ }
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
+
+				hidden_trigger = {
+					OR = {
+						is_middle_eastern_nation = yes
+						#european
+						original_tag = ALB
+						original_tag = BOS
+						original_tag = KOS
+						original_tag = CHE
+						#asian
+						is_Central_Asia = yes
+						original_tag = AZE
+						original_tag = RAJ
+						original_tag = PAK
+						original_tag = SRI
+						original_tag = MLD
+						original_tag = PHI
+						original_tag = MAY
+						original_tag = IND
+						original_tag = BRU
+						#america
+						original_tag = SUR
+						#subsaharan africa
+						is_horn_of_africa_nation = yes
+						original_tag = COM
+						original_tag = TNZ
+						original_tag = KEN
+						original_tag = DAR
+						original_tag = SUD
+						original_tag = MAU
+						original_tag = SEN
+						original_tag = MAL
+						original_tag = NGR
+						original_tag = CAM
+						original_tag = BFA
+						original_tag = CHA
+						original_tag = CDI
+						original_tag = GAM
+						original_tag = GUB
+						original_tag = NIG
+						original_tag = LIB
+						original_tag = GUI
+						original_tag = LUR
+						original_tag = TOG
+						original_tag = BEN
+						original_tag = SEL
+						original_tag = MRT
+						original_tag = LOG
+						original_tag = CAR
+					}
+					NOT = {
+						original_tag = ISR
+					}
+				}
+			}
+
+			# ideological powers
+			IP_communist_glow_visible = {
+				OR = {
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
+			}
+
+			IP_socialist_glow_visible = {
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+					neutrality_neutral_green_are_in_power = yes
+					neutrality_neutral_social_are_in_power = yes
+				}
+			}
+
+			IP_liberal_glow_visible = {
+				OR = {
+					western_conservatism_are_in_power = yes
+					emerging_reactionaries_are_in_power = yes
+					western_liberals_are_in_power = yes
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes
+					neutrality_neutral_conservatism_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+				}
+			}
+
+			IP_autocrat_glow_visible = {
+				OR = {
+					non_technocrats_western_autocrats_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
+					emerging_moderate_shiite_are_in_power = yes
+					neutrality_neutral_autocracy_are_in_power = yes
+					neutrality_neutral_oligarch_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+
+			IP_monarchist_glow_visible = {
+				OR = {
+					salafist_kingdom_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+
+			IP_fundamentalist_glow_visible = {
+				OR = {
+					emerging_hardline_shiite_are_in_power = yes
+					salafist_caliphate_are_in_power = yes
+				}
+			}
+			# parties
+			parties_sorted_by_outlook_bg_visible = {
+				check_variable = { sorting_button_outlook_status = 1 }
+			}
+
+			# parties action buttons
+			revolt_button_visible = {
+				if = {
+					limit = {
+						OR = {
+							check_variable = { v = 4 }
+							check_variable = { v = 9 }
+							check_variable = { v = 19 }
+							check_variable = { v = 21 }
+							check_variable = { v = 22 }
+							check_variable = { v = 23 }
+						}
+					}
+					NOT = { tag = WAG }
+				}
+				else_if = {
+					limit = {
+						check_variable = { v = 11 }
+					}
+
+					NOT = { tag = BHR }
+					NOT = { tag = KUW }
+					NOT = { tag = OMA }
+					NOT = { tag = QAT }
+					NOT = { tag = SAU }
+					NOT = { tag = UAE }
+					NOT = { tag = WAG }
+				}
+				else = {
+					always = no
+				}
+
+				check_variable = { party_pop_array^v > 0.10 } #significant
+				is_party_in_government = no
+			}
+
+			revolt_button_click_enabled = {
+				has_political_power > 149
+				has_civil_war = no
+
+				set_temp_variable = { pop = 0.2 }
+				custom_trigger_tooltip = {
+					tooltip = party_popularity_check_TT
+					check_variable = { party_pop_array^v > pop }
+				}
+			}
+
+			boost_button_click_enabled = {
+				set_temp_variable = { party_index = v }
+				outlook_larger_than_0_by_index = yes
+
+				has_political_power > 99
+
+				NOT = {
+					set_temp_variable = { party_index = v }
+					is_party_banned_trigger = yes
+				}
+
+				boost_party_triggers = yes
+			}
+			attack_button_click_enabled = {
+				# can't attack yourself or allies
+				NOT = {
+					custom_trigger_tooltip = {
+						tooltip = party_is_in_power_or_coalition_TT
+						OR = {
+							is_in_array = { ruling_party = v }
+							is_in_array = { gov_coalition_array = v }
+						}
+					}
+				}
+
+				custom_trigger_tooltip = {
+					tooltip = party_greater_than_election_threshold_by_index_tt
+					check_variable = { party_pop_array^party_index > election_threshold }
+				}
+
+				# Party-specific restrictions
+				attack_party_triggers = yes
+
+				if = {
+					limit = {
+						set_temp_variable = { party_index = v }
+						is_party_banned_trigger = yes
+					}
+					has_political_power > 49
+					else = {
+						has_political_power > 99
+					}
+				}
+			}
+			ban_button_visible = {
+				NOT = {
+					set_temp_variable = { party_index = v }
+					is_party_banned_trigger = yes
+				}
+			}
+			ban_button_click_enabled = {
+				# can't attack yourself or allies
+				NOT = {
+					custom_trigger_tooltip = {
+						tooltip = party_is_in_power_or_coalition_TT
+						OR = {
+							is_in_array = { ruling_party = v }
+							is_in_array = { gov_coalition_array = v }
+						}
+					}
+				}
+
+				if = { limit = { has_elections = no }
+					has_political_power > 9
+					else = {
+						has_political_power > 99
+					}
+				}
+
+				# Party-specific restrictions
+				ban_party_triggers = yes
+			}
+			allow_button_visible = {
+				# must have party banned
+				if = {
+					limit = {
+						original_tag = PER
+					}
+					NOT = {
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+				}
+				set_temp_variable = { party_index = v }
+				is_party_banned_trigger = yes
+			}
+			allow_button_click_enabled = {
+				has_political_power > 9
+				NOT = {
+					has_country_flag = partyall_banned
+				}
+
+				# set_temp_variable = { party_index = v }
+				# party_allowed_to_ban_trigger = yes
+			}
+		}
+
+		effects = {
+			corruption_offers_checkbox_click = {
+				if = {
+					limit = {
+						has_country_flag = auto_decline_corruption
+					}
+
+					clr_country_flag = auto_decline_corruption
+					log = "[GetDateText]: [Root.GetName]: Decision lift_auto_decline_corruption_events"
+				}
+				else = {
+					set_country_flag = auto_decline_corruption
+					log = "[GetDateText]: [Root.GetName]: Decision auto_decline_corruption_offers"
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
+			foreign_election_notifications_checkbox_click = {
+				if = {
+					limit = {
+						has_country_flag = block_foreign_election_notification
+					}
+
+					clr_country_flag = block_foreign_election_notification
+					log = "[GetDateText]: [Root.GetName]: Decision lift_block_foreign_election_notification"
+				}
+				else = {
+					set_country_flag = block_foreign_election_notification
+					log = "[GetDateText]: [Root.GetName]: Decision block_foreign_election_notification"
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
+			# election threshold
+			increase_election_threshold_click = {
+				set_temp_variable = { threshold_change = 0.01 }
+				modify_election_threshold = yes
+				add_political_power = -50
+			}
+			decrease_election_threshold_click = {
+				set_temp_variable = { threshold_change = -0.01 }
+				modify_election_threshold = yes
+				add_political_power = -50
+			}
+
+			# ban/allow all parties button
+			allow_all_parties_button_click = {
+				set_partyall_allowed = yes
+			}
+			ban_all_parties_button_click = {
+				set_partyall_banned = yes
+			}
+
+			# political actions
+			hold_reelections_button_click = {
+				add_political_power = -100
+				log = "[GetDateText]: [Root.GetName]: Decision hold_reelections"
+				country_event = MD4_election_campaign.0
+				set_country_flag = {
+					flag = hold_reelections_flag
+					days = 365
+					value = 1
+				}
+				update_dirty_politicsview_expanded = yes
+			}
+
+			retire_leader_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Decision retire_current_leader"
+
+				add_political_power = -90
+				custom_effect_tooltip = retire_leader_effect_tt
+
+				hidden_effect = {
+					set_ruling_leader = yes
+					set_leader = yes
+					set_variable = { current_term = 0 } #not a full term
+				}
+				if = {
+					limit = { has_country_flag = arab_spring_active }
+					set_temp_variable = { temp_strength = -40 }
+					change_arab_spring_strength = yes
+					if = {
+						limit = { check_variable = { arab_spring < 26 } }
+						random_list = {
+							80 = {
+								country_event = arab_spring.9
+							}
+							20 = {
+								country_event = arab_spring.10
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							check_variable = { arab_spring > 25 }
+							check_variable = { arab_spring < 66 }
+						}
+						random_list = {
+							75 = {
+								country_event = arab_spring.9
+							}
+							25 = {
+								country_event = arab_spring.10
+							}
+						}
+					}
+					else_if = {
+						limit = { check_variable = { arab_spring > 65 } }
+						random_list = {
+							60 = {
+								country_event = arab_spring.9
+							}
+							40 = {
+								country_event = arab_spring.10
+							}
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = LBA
+						is_ruled_by_a_gaddafi = yes
+						has_elections = no
+					}
+					custom_effect_tooltip = LBA_gaddafi_dictator_retirement_tt
+					set_temp_variable = { family_instability_change = 100 }
+					libya_gaddafi_family_modify_instability = yes
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
+			permanently_suspend_elections_button_click = {
+				if = {
+					limit = { has_elections = yes }
+
+					# ban elections
+					set_country_flag = do_not_retire
+					add_political_power = -125
+
+					if = {
+						limit = {
+							has_government = democratic
+							is_in_array = { ruling_party = 0 } #Western Autocracy
+						}
+						set_politics = {
+							ruling_party = democratic
+							elections_allowed = no
+						}
+					}
+					else_if = {
+						limit = {
+							has_government = communism
+							OR = {
+								is_in_array = { ruling_party = 7 } #Autocracy
+								is_in_array = { ruling_party = 4 } #Communist-State
+								is_in_array = { ruling_party = 8 } #Moderate Shiite
+								is_in_array = { ruling_party = 9 } #Hardline Shiite
+							}
+						}
+						set_politics = {
+							ruling_party = communism
+							elections_allowed = no
+						}
+					}
+					else_if = {
+						limit = {
+							has_government = fascism
+							OR = {
+								is_in_array = { ruling_party = 11 } #Caliphate
+								is_in_array = { ruling_party = 10 } #Kingdom
+							}
+						}
+						set_politics = {
+							ruling_party = fascism
+							elections_allowed = no
+						}
+					}
+					else_if = {
+						limit = {
+							has_government = neutrality
+							OR = {
+								is_in_array = { ruling_party = 13 } #Neutral_Autocracy
+								is_in_array = { ruling_party = 19 } #neutral communist
+							}
+						}
+						set_politics = {
+							ruling_party = neutrality
+							elections_allowed = no
+						}
+					}
+					else_if = {
+						limit = {
+							has_government = nationalist
+							OR = {
+								is_in_array = { ruling_party = 22 } #Nat_Autocracy
+								is_in_array = { ruling_party = 23 } #Monarchist
+								is_in_array = { ruling_party = 21 } #fascist
+							}
+						}
+						set_politics = {
+							ruling_party = nationalist
+							elections_allowed = no
+						}
+					}
+
+					MER_trigger_democratic_clause_reviews = yes
+
+					clr_country_flag = do_not_retire
+				}
+				else = {
+					# unban elections
+					add_political_power = -85
+					enable_elections_with_no_leader_change = yes
+					if = {
+						limit = { has_country_flag = arab_spring_active }
+						set_temp_variable = { temp_strength = -40 }
+						change_arab_spring_strength = yes
+						if = {
+							limit = { check_variable = { arab_spring < 26 } }
+							random_list = {
+								80 = {
+									country_event = arab_spring.9
+								}
+								20 = {
+									country_event = arab_spring.10
+								}
+							}
+						}
+						else_if = {
+							limit = {
+								check_variable = { arab_spring > 25 }
+								check_variable = { arab_spring < 66 }
+							}
+							random_list = {
+								75 = {
+									country_event = arab_spring.9
+								}
+								25 = {
+									country_event = arab_spring.10
+								}
+							}
+						}
+						else_if = {
+							limit = { check_variable = { arab_spring > 65 } }
+							random_list = {
+								60 = {
+									country_event = arab_spring.9
+								}
+								40 = {
+									country_event = arab_spring.10
+								}
+							}
+						}
+					}
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
+			# propaganda buttons
+			prowestern_propaganda_button_click = {
+				calculate_prowestern_propaganda_cost = yes
+				custom_effect_tooltip = prowestern_propaganda_tt
+				update_dirty_politicsview_expanded = yes
+
+				if = {
+					limit = { has_country_flag = prowestern_propaganda }
+
+					clr_country_flag = prowestern_propaganda
+
+					hidden_effect = {
+						remove_ideas = MD_propaganda_prowestern
+					}
+				}
+				else = {
+					set_country_flag = prowestern_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_prowestern
+					}
+				}
+			}
+
+			emerging_propaganda_button_click = {
+				calculate_emerging_propaganda_cost = yes
+				custom_effect_tooltip = emerging_propaganda_tt
+				update_dirty_politicsview_expanded = yes
+
+				if = {
+					limit = { has_country_flag = emerging_propaganda }
+
+					clr_country_flag = emerging_propaganda
+
+					hidden_effect = {
+						remove_ideas = MD_propaganda_emerging
+					}
+				}
+				else = {
+					set_country_flag = emerging_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_emerging
+					}
+				}
+			}
+
+			nonaligned_propaganda_button_click = {
+				calculate_nonaligned_propaganda_cost = yes
+				custom_effect_tooltip = nonaligned_propaganda_tt
+				update_dirty_politicsview_expanded = yes
+
+				if = {
+					limit = { has_country_flag = nonaligned_propaganda }
+
+					clr_country_flag = nonaligned_propaganda
+
+					hidden_effect = {
+						remove_ideas = MD_propaganda_nonaligned
+					}
+				}
+				else = {
+					set_country_flag = nonaligned_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_nonaligned
+					}
+				}
+			}
+
+			nationalist_propaganda_button_click = {
+				calculate_nationalist_propaganda_cost = yes
+				custom_effect_tooltip = nationalist_propaganda_tt
+				update_dirty_politicsview_expanded = yes
+
+				if = {
+					limit = { has_country_flag = nationalist_propaganda }
+
+					clr_country_flag = nationalist_propaganda
+
+					hidden_effect = {
+						remove_ideas = MD_propaganda_nationalist
+					}
+				}
+				else = {
+					set_country_flag = nationalist_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_nationalist
+					}
+				}
+			}
+
+			fascism_propaganda_button_click = {
+				calculate_salafist_propaganda_cost = yes
+				custom_effect_tooltip = fascism_propaganda_tt
+				update_dirty_politicsview_expanded = yes
+
+				if = {
+					limit = { has_country_flag = fascism_propaganda }
+
+					clr_country_flag = fascism_propaganda
+
+					hidden_effect = {
+						remove_ideas = MD_propaganda_fascism
+					}
+				}
+				else = {
+					set_country_flag = fascism_propaganda
+
+					hidden_effect = {
+						add_ideas = MD_propaganda_fascism
+					}
+				}
+			}
+
+			# sort buttons
+			sorting_button_outlook_click = {
+				set_variable = { sorting_button_outlook_status = 1 }
+				set_variable = { sorting_button_popularity_status = 2 }
+				set_variable = { sorting_button_banned_status = 2 }
+
+				clear_array = parties_list_sorted
+
+				resize_array = {
+					array = parties_list_sorted
+					size = pos_array^num
+				}
+
+				for_each_loop = {
+					array = pos_array
+
+					remove_from_array = {
+						array = parties_list_sorted
+						index = v
+					}
+
+					add_to_array = {
+						array = parties_list_sorted
+						index = v
+						value = v
+					}
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
+			sorting_button_popularity_click = {
+				set_variable = { sorting_button_outlook_status = 2 }
+				set_variable = { sorting_button_popularity_status = 1 }
+				set_variable = { sorting_button_banned_status = 2 }
+
+				clear_array = parties_list_sorted
+
+				for_each_loop = {
+					array = pos_array
+
+					add_to_array = {
+						array = parties_list_sorted
+						index = i
+						value = v
+					}
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
+			sorting_button_banned_click = {
+				set_variable = { sorting_button_outlook_status = 2 }
+				set_variable = { sorting_button_popularity_status = 2 }
+				set_variable = { sorting_button_banned_status = 1 }
+
+				clear_array = parties_list_sorted
+
+				for_each_loop = {
+					array = pos_array
+
+					if = {
+						limit = {
+							set_temp_variable = { party_index = v }
+							is_party_banned_trigger = yes
+						}
+
+						add_to_array = {
+							array = parties_list_sorted
+							index = 0
+							value = v
+						}
+					}
+					else = {
+						add_to_array = {
+							array = parties_list_sorted
+							index = i
+							value = v
+						}
+					}
+				}
+
+				update_dirty_politicsview_expanded = yes
+			}
+
+			# action buttons
+			revolt_button_click = {
+				add_political_power = -150
+				custom_effect_tooltip = revolt_effect_TT
+
+				hidden_effect = {
+					#Release copy of existing
+					start_civil_war_with_no_leader_change = yes
+
+					#replicating current politics
+					random_other_country = {
+						limit = {
+							original_tag = PREV
+							NOT = { TAG = PREV }
+						}
+
+						civil_war_replication_effect = yes
+					}
+
+					if = {
+						limit = {
+							OR = {
+								check_variable = { v = 21 }
+								check_variable = { v = 22 }
+								check_variable = { v = 23 }
+							}
+						}
+
+						set_politics = {
+							ruling_party = nationalist
+							elections_allowed = no
+						}
+						add_popularity = {
+							ideology = nationalist
+							popularity = 0.5
+						}
+					}
+					else_if = {
+						limit = {
+							check_variable = { v = 11 }
+						}
+
+						set_politics = {
+							ruling_party = fascism
+							elections_allowed = no
+						}
+						add_popularity = {
+							ideology = fascism
+							popularity = 0.5
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								check_variable = { v = 4 }
+								check_variable = { v = 9 }
+							}
+						}
+
+						set_politics = {
+							ruling_party = communism
+							elections_allowed = no
+						}
+						add_popularity = {
+							ideology = communism
+							popularity = 0.5
+						}
+					}
+
+					#For player:
+					start_politics_input = yes
+					add_to_array = { ruling_party = v }
+					set_variable = { party_pop_array^v = 0.7 }
+					startup_politics = yes
+				}
+			}
+
+			boost_button_click = {
+				add_political_power = -100
+
+				increase_corruption_chance = yes
+				newline = yes
+
+				set_temp_variable = { party_index = v }
+				set_temp_variable = { boost_multiplier = 1 }
+				add_to_temp_variable = { boost_multiplier = modifier@popularity_boost_modifier }
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				multiply_temp_variable = { party_popularity_increase = boost_multiplier }
+				clamp_temp_variable = { var = party_popularity_increase min = 0 max = 100 }
+				add_relative_party_popularity = yes
+			}
+
+			attack_button_click = {
+				if = {
+					limit = {
+						has_country_flag = party3_banned
+					}
+					add_political_power = -50
+					else = {
+						add_political_power = -100
+					}
+				}
+
+				set_temp_variable = { party_index = v }
+				set_temp_variable = { attack_multiplier = 1 }
+				add_to_temp_variable = { attack_multiplier = modifier@popularity_attack_modifier }
+				set_temp_variable = { party_popularity_increase = -0.02 }
+				multiply_temp_variable = { party_popularity_increase = attack_multiplier }
+				clamp_temp_variable = { var = party_popularity_increase min = -0.1 }
+				add_relative_party_popularity = yes
+			}
+
+			ban_button_click = {
+				if = { limit = { has_elections = no }
+					add_political_power = -10
+					else = {
+						add_political_power = -100
+					}
+				}
+				add_stability = -0.01
+				set_temp_variable = { party_index = v }
+				add_to_temp_variable = { party_index = 1 }
+				ban_party_scripted_call = yes
+			}
+			allow_button_click = {
+				add_political_power = -10
+				set_temp_variable = { party_index = v }
+				add_to_temp_variable = { party_index = 1 }
+				unban_party_scripted_call = yes
+			}
+
+			# close button
+			close_click = {
+				clr_country_flag = MD_politicsview_expanded_open
+			}
+
+			politics_refresh_button_click = {
+				update_dirty_politicsview_expanded = yes
+			}
+		}
+
+		dynamic_lists = {
+            parties_grid = {
+                array = parties_list_sorted
+                entry_container = "parties_grid_item"
+            }
+			coalition_grid = {
+				array = gov_coalition_array
+                entry_container = "coalition_grid_item"
+			}
+			opposition_grid = {
+				array = opposition_array
+                entry_container = "coalition_grid_item"
+			}
+        }
+
+		properties = {
+			corruption_offers_checkbox = {
+				frame = corruption_offers_frame
+			}
+
+			foreign_election_notifications_checkbox = {
+				frame = foreign_election_notifications_frame
+			}
+
+			# permanently_suspend_elections_button = {
+			# 	frame = has_elections_frame
+			# }
+
+			# propaganda buttons
+			prowestern_propaganda_button = {
+				frame = prowestern_propaganda_frame_temp
+			}
+			emerging_propaganda_button = {
+				frame = emerging_propaganda_frame_temp
+			}
+			nonaligned_propaganda_button = {
+				frame = nonaligned_propaganda_frame_temp
+			}
+			nationalist_propaganda_button = {
+				frame = nationalist_propaganda_frame_temp
+			}
+			fascism_propaganda_button = {
+				frame = fascism_propaganda_frame_temp
+			}
+
+			# sorting buttons
+			sorting_button_outlook = {
+				frame = sorting_button_outlook_status
+			}
+			sorting_button_popularity = {
+				frame = sorting_button_popularity_status
+			}
+			sorting_button_banned = {
+				frame = sorting_button_banned_status
+			}
+
+			# pie chart
+			Western_Autocracy_chart      = { frame = politics_pie_chart^0 }
+			conservatism_chart           = { frame = politics_pie_chart^1 }
+			liberalism_chart             = { frame = politics_pie_chart^2 }
+			socialism_chart              = { frame = politics_pie_chart^3 }
+
+			Communist_State_chart        = { frame = politics_pie_chart^4 }
+			anarchist_communism_chart    = { frame = politics_pie_chart^5 }
+			Conservative_chart           = { frame = politics_pie_chart^6 }
+			Autocracy_chart              = { frame = politics_pie_chart^7 }
+
+			Mod_Vilayat_e_Faqih_chart    = { frame = politics_pie_chart^8 }
+			Vilayat_e_Faqih_chart        = { frame = politics_pie_chart^9 }
+
+			Kingdom_chart                = { frame = politics_pie_chart^10 }
+			Caliphate_chart              = { frame = politics_pie_chart^11 }
+
+			Neutral_Muslim_Brotherhood_chart = { frame = politics_pie_chart^12 }
+			Neutral_Autocracy_chart          = { frame = politics_pie_chart^13 }
+			Neutral_conservatism_chart      = { frame = politics_pie_chart^14 }
+			oligarchism_chart               = { frame = politics_pie_chart^15 }
+			Neutral_Libertarian_chart       = { frame = politics_pie_chart^16 }
+			Neutral_green_chart             = { frame = politics_pie_chart^17 }
+			neutral_Social_chart            = { frame = politics_pie_chart^18 }
+			Neutral_Communism_chart        = { frame = politics_pie_chart^19 }
+
+			Nat_Populism_chart           = { frame = politics_pie_chart^20 }
+			Nat_Fascism_chart            = { frame = politics_pie_chart^21 }
+			Nat_Autocracy_chart          = { frame = politics_pie_chart^22 }
+			Monarchist_chart             = { frame = politics_pie_chart^23 }
+		}
+	}
+
+	# TODO: to maybe implement in future?
+	# countrypoliticsview_election_window = {
+	# 	context_type = player_context
+	#	window_name = "MD_countrypoliticsview_election_window"
+	#
+	#	dynamic_lists = {
+    #        election_result_grid = {
+    #            array = parties_list_sorted
+    #            entry_container = "election_result_grid_item"
+    #        }
+	#
+	#		potential_partners_grid = {
+    #            array = parties_list_sorted
+    #            entry_container = "potential_partners_grid_item"
+	#		}
+	#
+	#		coalition_partners_grid = {
+    #            array = parties_list_sorted
+    #            entry_container = "coalition_partners_grid_item"
+	#		}
+    #    }
+	#}
+}
