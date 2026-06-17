@@ -67,28 +67,18 @@ repos:
         files: '\.py$'
       - id: name-tests-test
         files: 'tools/.*test.*\.py$'
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
-    hooks:
-      - id: black
-        files: '^tools/.*\.py$'
-        args: [--line-length=88]
-  - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
-    hooks:
-      - id: isort
-        files: '^tools/.*\.py$'
-        args: [--profile=black]
-  # ruff lints only (undefined names, unused imports/vars, bare excepts). black
-  # and isort own formatting and import order — ruff-format is intentionally not
-  # used. Config (select, ignores, per-file-ignores) lives in pyproject.toml.
+  # ruff owns lint (E/F), import order (I), and formatting. Config (select,
+  # ignores, per-file-ignores, isort) lives in pyproject.toml.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.15.17
     hooks:
       - id: ruff
         name: Lint Python (ruff)
         files: '^tools/.*\.py$'
         args: [--fix]
+      - id: ruff-format
+        name: Format Python (ruff)
+        files: '^tools/.*\.py$'
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
   - repo: https://github.com/rbubley/mirrors-prettier
@@ -128,6 +118,12 @@ repos:
         entry: python3 tools/linting/validate_mod_encoding.py
         language: system
         files: '\.mod$'
+        pass_filenames: true
+      - id: docs-link-syntax
+        name: Check docs Markdown link syntax (no unclosed links)
+        entry: python3 tools/docs_checks/check_link_syntax.py
+        language: system
+        files: '^docs/src/content/.*\.(md|mdx)$'
         pass_filenames: true
       # Runs the full tools test suite before push (not on every commit).
       # Enable with: pre-commit install --hook-type pre-push

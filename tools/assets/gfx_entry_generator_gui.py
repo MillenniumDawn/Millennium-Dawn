@@ -110,7 +110,6 @@ def main(event=None):
     w = ""  # W == is the file name or texture name
 
     if True:
-
         if int(selection.get()) == 1:
             gfxbool = 0
             print(1)
