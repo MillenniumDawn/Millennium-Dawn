@@ -1,5 +1,6 @@
-# Author(s): Yard1, Simone-Traiano
+# Author(s): Yard1, Simone-Traiano, R3d Knight, Bird, Croc, Doolittle
 
+# AI Templates
 give_AI_templates = {
 	if = {
 		limit = {
@@ -1076,4 +1077,170 @@ Militia_AI_templates = {
 			Arty_Battery = { x = 0 y = 2 }
 		}
 	}
+}
+
+## AI Strategy
+division_limiter_calculation = {
+	if = {
+		limit = { has_game_rule = { rule = allow_division_limiter option = yes } }
+		daily_division_limiter_calculation = yes
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = allow_division_limiter option = potato_edition } }
+		daily_division_limiter_calculation = yes
+		multiply_variable = { division_limiter_limit = 0.5 }
+		round_variable = division_limiter_limit
+	}
+}
+
+daily_division_limiter_calculation = {
+	set_temp_variable = { upper_limit = num_of_factories }
+	if = {
+		limit = { num_of_factories > 4 }
+		add_to_temp_variable = { upper_limit = 5 }
+	}
+	if = { limit = { has_war = yes }
+		multiply_temp_variable = { upper_limit = 1.75 }
+	}
+
+	if = {
+		limit = {
+			ai_is_threatened = yes
+		}
+		multiply_temp_variable = { upper_limit = 1.25 }
+	}
+	if = { limit = { is_major = yes }
+		multiply_temp_variable = { upper_limit = 1.15 }
+	}
+	if = { limit = { has_idea = NATO_member }
+		multiply_temp_variable = { upper_limit = 0.8 }
+	}
+	if = { limit = { has_idea = EU_member }
+		multiply_temp_variable = { upper_limit = 0.8 }
+	}
+	if = { limit = { threat > 0.50 }
+		multiply_temp_variable = { upper_limit = 1.25 }
+	}
+
+	if = { limit = { num_of_military_factories > 35 }
+		multiply_temp_variable = { upper_limit = 1.15 }
+	}
+	else_if = { limit = { num_of_military_factories > 25 }
+		multiply_temp_variable = { upper_limit = 1.1 }
+	}
+	else_if = { limit = { num_of_military_factories > 15 }
+		multiply_temp_variable = { upper_limit = 1.05 }
+	}
+
+	if = { limit = { is_in_faction = yes }
+		multiply_temp_variable = { upper_limit = 0.90 }
+	}
+	if = {
+		limit = {
+			OR = {
+				original_tag = SOV
+				original_tag = USA
+				original_tag = CHI
+				original_tag = RAJ
+			}
+		}
+		multiply_temp_variable = { upper_limit = 1.2 }
+	}
+	round_temp_variable = upper_limit
+	set_variable = { division_limiter_limit = upper_limit }
+}
+
+plane_limiter_calculation = {
+	if = {
+		limit = { has_game_rule = { rule = allow_division_limiter option = yes } }
+		daily_plane_limiter_calculation = yes
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = allow_division_limiter option = potato_edition } }
+		daily_plane_limiter_calculation = yes
+		multiply_variable = { plane_limiter_limit = 0.5 }
+		round_variable = plane_limiter_limit
+	}
+}
+
+daily_plane_limiter_calculation = {
+	set_temp_variable = { upper_limit = num_of_military_factories }
+	multiply_temp_variable = { upper_limit = 80 }
+	add_to_temp_variable = { upper_limit = 50 }
+	if = { limit = { has_war = yes }
+		multiply_temp_variable = { upper_limit = 1.25 }
+	}
+	if = {
+		limit = {
+			ai_is_threatened = yes
+		}
+		multiply_temp_variable = { upper_limit = 1.25 }
+	}
+	if = { limit = { is_major = yes }
+		multiply_temp_variable = { upper_limit = 1.15 }
+	}
+	if = { limit = { has_idea = NATO_member }
+		multiply_temp_variable = { upper_limit = 1.2 }
+	}
+	if = { limit = { threat > 0.50 }
+		multiply_temp_variable = { upper_limit = 1.25 }
+	}
+	if = { limit = { is_in_faction = yes }
+		multiply_temp_variable = { upper_limit = 0.90 }
+	}
+	round_temp_variable = upper_limit
+	set_variable = { plane_limiter_limit = upper_limit }
+}
+
+ship_limiter_calculation = {
+	if = {
+		limit = { has_game_rule = { rule = allow_division_limiter option = yes } }
+		daily_ship_limiter_calculation = yes
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = allow_division_limiter option = potato_edition } }
+		daily_ship_limiter_calculation = yes
+		multiply_variable = { ship_limiter_limit = 0.5 }
+		round_variable = ship_limiter_limit
+	}
+}
+
+daily_ship_limiter_calculation = {
+	set_temp_variable = { ship_limit = num_of_naval_factories }
+	multiply_temp_variable = { ship_limit = 7 }
+	if = { limit = { has_war = yes }
+		multiply_temp_variable = { ship_limit = 1.35 }
+	}
+	else = {
+		multiply_temp_variable = { ship_limit = 0.80 }
+	}
+	if = {
+		limit = {
+			ai_is_threatened = yes
+		}
+		multiply_temp_variable = { ship_limit = 1.25 }
+	}
+	if = { limit = { is_major = yes }
+		multiply_temp_variable = { ship_limit = 1.35 }
+	}
+	if = { limit = { has_idea = NATO_member }
+		multiply_temp_variable = { ship_limit = 0.80 }
+	}
+	if = { limit = { has_idea = EU_member }
+		multiply_temp_variable = { ship_limit = 0.80 }
+	}
+	if = { limit = { threat > 0.50 }
+		multiply_temp_variable = { ship_limit = 1.25 }
+	}
+	else = {
+		multiply_temp_variable = { ship_limit = 0.85 }
+	}
+	if = { limit = { is_in_faction = yes }
+		multiply_temp_variable = { ship_limit = 0.95 }
+	}
+	if = { limit = { original_tag = USA }
+		multiply_temp_variable = { ship_limit = 1.25 }
+	}
+	round_temp_variable = ship_limit
+	set_variable = { ship_limiter_limit = ship_limit }
 }
