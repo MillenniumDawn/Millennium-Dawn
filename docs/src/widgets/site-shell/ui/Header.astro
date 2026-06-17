@@ -4,9 +4,15 @@ import mainMenuLogo from "@/assets/images/branding/main-menu.png";
 import { ensureTrailingSlash, withBase } from "@/shared/lib/routing/urls";
 import { LAYOUT_CONTAINER_CLASS, SITE_HEADER_CLASS, FOCUS_RING_CLASS } from "@/shared/ui/tailwind";
 
-interface NavItem {
+interface NavChild {
   title: string;
   url: string;
+}
+
+interface NavItem {
+  title: string;
+  url?: string;
+  children?: NavChild[];
 }
 
 interface Props {
@@ -53,6 +59,78 @@ const navLinkClass = [
   "mobile:text-left",
   "mobile:whitespace-normal",
   FOCUS_RING_CLASS,
+].join(" ");
+
+const activeNavClass =
+  "text-primary bg-primary-light/40 shadow-[inset_0_0_0_1px_var(--color-primary-light)] font-semibold";
+
+const navChildLinkClass = [
+  "flex",
+  "min-h-11",
+  "items-center",
+  "rounded",
+  "px-md",
+  "text-[0.95rem]",
+  "leading-[1.2]",
+  "text-text-secondary",
+  "font-medium",
+  "no-underline",
+  "transition-[background-color,color,box-shadow]",
+  "duration-[var(--transition-speed)]",
+  "ease-[var(--transition-fn)]",
+  "hover:text-primary",
+  "hover:bg-primary-light/50",
+  "hover:no-underline",
+  "tablet:justify-start",
+  "tablet:whitespace-nowrap",
+  "mobile:py-md",
+  FOCUS_RING_CLASS,
+].join(" ");
+
+const navPanelClass = [
+  "m-0",
+  "flex",
+  "list-none",
+  "flex-col",
+  "gap-0",
+  "p-0",
+  // Mobile: in-flow accordion under the group label, collapsed until expanded.
+  "mobile:max-h-0",
+  "mobile:overflow-hidden",
+  "mobile:pl-md",
+  "mobile:transition-[max-height]",
+  "mobile:duration-nav",
+  "mobile:ease-in-out",
+  "mobile:peer-aria-expanded:max-h-[600px]",
+  // Desktop: absolute dropdown card, hidden until the toggle is expanded.
+  "tablet:invisible",
+  "tablet:absolute",
+  "tablet:left-0",
+  "tablet:top-full",
+  "tablet:z-header",
+  "tablet:mt-xs",
+  "tablet:min-w-[13rem]",
+  "tablet:rounded",
+  "tablet:border",
+  "tablet:border-border-light",
+  "tablet:bg-surface",
+  "tablet:p-xs",
+  "tablet:opacity-0",
+  "tablet:shadow-lg",
+  "tablet:transition-[opacity,visibility]",
+  "tablet:duration-nav",
+  "tablet:ease-in-out",
+  "tablet:peer-aria-expanded:visible",
+  "tablet:peer-aria-expanded:opacity-100",
+].join(" ");
+
+const navCaretClass = [
+  "size-3",
+  "shrink-0",
+  "transition-transform",
+  "duration-nav",
+  "ease-in-out",
+  "group-aria-expanded:rotate-180",
 ].join(" ");
 
 const navToggleClass = [
@@ -123,7 +201,7 @@ const themeButtonClass = [
         </div>
 
         <nav
-          class="main-nav order-3 w-full overflow-hidden max-h-0 opacity-0 transition-[max-height,opacity,transform] duration-nav ease-in-out mobile:flex-[1_0_100%] mobile:-translate-y-1 mobile:[&.is-open]:max-h-[540px] mobile:[&.is-open]:opacity-100 mobile:[&.is-open]:translate-y-0 mobile:[&.is-closing]:pointer-events-none tablet:order-none tablet:flex-[1_1_auto] tablet:min-w-0 tablet:overflow-visible tablet:max-h-none tablet:opacity-100"
+          class="main-nav order-3 w-full overflow-hidden max-h-0 opacity-0 transition-[max-height,opacity,transform] duration-nav ease-in-out mobile:flex-[1_0_100%] mobile:-translate-y-1 mobile:[&.is-open]:max-h-[85vh] mobile:[&.is-open]:overflow-y-auto mobile:[&.is-open]:opacity-100 mobile:[&.is-open]:translate-y-0 mobile:[&.is-closing]:pointer-events-none tablet:order-none tablet:flex-[1_1_auto] tablet:min-w-0 tablet:overflow-visible tablet:max-h-none tablet:opacity-100"
           id="main-nav"
           aria-label="Main navigation"
         >
@@ -131,19 +209,65 @@ const themeButtonClass = [
             class="m-0 flex min-h-11 flex-col items-stretch justify-center gap-0 p-0 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-center tablet:gap-sm"
           >
             {
-              navItems.map((item) => {
+              navItems.map((item, index) => {
+                const children = item.children ?? [];
+                if (children.length > 0) {
+                  const panelId = `nav-group-${index}`;
+                  const childMatches = children.map((child) => {
+                    const childPath = normalize(child.url);
+                    const childActive =
+                      current === childPath || (childPath !== "/" && current.startsWith(childPath));
+                    return { child, childActive };
+                  });
+                  const isActive = childMatches.some((entry) => entry.childActive);
+                  return (
+                    <li class="nav-group relative mobile:w-full">
+                      <button
+                        type="button"
+                        class:list={[navLinkClass, "nav-group-toggle group peer gap-xs", isActive && activeNavClass]}
+                        aria-expanded="false"
+                        aria-controls={panelId}
+                      >
+                        {item.title}
+                        <svg
+                          class={navCaretClass}
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M6 9l6 6 6-6"></path>
+                        </svg>
+                      </button>
+                      <ul id={panelId} class={navPanelClass}>
+                        {childMatches.map(({ child, childActive }) => (
+                          <li>
+                            <a
+                              href={withBase(child.url)}
+                              class:list={[navChildLinkClass, childActive && activeNavClass]}
+                              aria-current={childActive ? "page" : undefined}
+                            >
+                              {child.title}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  );
+                }
+
                 const itemPath = normalize(item.url || "/");
                 const isSectionActive = itemPath !== "/" && current.startsWith(itemPath);
                 const isActive = current === itemPath || isSectionActive;
                 return (
                   <li>
                     <a
-                      href={withBase(item.url)}
-                      class:list={[
-                        navLinkClass,
-                        isActive &&
-                          "text-primary bg-primary-light/40 shadow-[inset_0_0_0_1px_var(--color-primary-light)] font-semibold",
-                      ]}
+                      href={withBase(item.url ?? "/")}
+                      class:list={[navLinkClass, isActive && activeNavClass]}
                       aria-current={isActive ? "page" : undefined}
                     >
                       {item.title}
