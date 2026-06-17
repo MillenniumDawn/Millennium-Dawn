@@ -498,7 +498,7 @@ class Validator(BaseValidator):
         patterns = [
             "history/units/*.txt",
             "common/ai_templates/*.txt",
-            "common/scripted_effects/00_AI_templates.txt",
+            "common/scripted_effects/00_AI_scripted_effects.txt",
         ]
         return self._collect_files(patterns)
 

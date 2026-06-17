@@ -97,11 +97,11 @@ New upgrades require wiring across five files: definition, on_actions registry (
 
 ## AI Strategies & Equipment
 
-Unit production has three layers: building gate (`AI_is_threatened`), role ratios, templates. See `.claude/docs/ai-strategy-reference.md`.
+Unit production has three layers: threat gate (`ai_is_threatened` live scripted trigger), role ratios, templates. See `.claude/docs/ai-strategy-reference.md`.
 
 - `role_ratio id` must match `role` in `common/ai_templates/` (validated by pre-commit hook)
 - Unit names are case-sensitive (validated by pre-commit hook)
-- Subject/puppet nations always get `AI_is_threatened`
+- Subjects are excluded from `ai_default_no_build_units` (`is_subject = no`) and get a defensive baseline via `ai_subject_defensive_build`
 - `give_AI_templates` uses `division_template` with `has_template` guards
 
 Equipment variants (`common/ai_equipment/`): see `.claude/docs/ai-equipment-reference.md`. Key rules:
