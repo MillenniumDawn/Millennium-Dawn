@@ -2,6 +2,7 @@
 """Find textures in gfx/ that no .gfx file references, plus references that
 point at missing files. Vanilla HoI4 installs are auto-detected so vanilla
 sprite refs don't get flagged; pass --hoi4-path to override."""
+
 import glob
 import os
 import re
@@ -362,17 +363,22 @@ class Validator(BaseValidator):
 
         # Add summary
         self._log_section("SUMMARY")
-        self.log(f"  Total texture files in gfx/: {len(self.texture_files)}")
+        self.log(f"  Total texture files in gfx/: {len(self.texture_files)}", "always")
         self.log(
-            f"  Texture references in mod .gfx files: {len(self.referenced_textures)}"
+            f"  Texture references in mod .gfx files: {len(self.referenced_textures)}",
+            "always",
         )
-        self.log(f"  Texture references in game files: {len(self.game_file_textures)}")
+        self.log(
+            f"  Texture references in game files: {len(self.game_file_textures)}",
+            "always",
+        )
         if self.hoi4_path:
             self.log(
-                f"  Texture references in vanilla .gfx files: {len(self.vanilla_referenced_textures)}"
+                f"  Texture references in vanilla .gfx files: {len(self.vanilla_referenced_textures)}",
+                "always",
             )
-        self.log(f"  Unused texture files: {self.unused_count}")
-        self.log(f"  Missing texture references: {self.missing_count}")
+        self.log(f"  Unused texture files: {self.unused_count}", "always")
+        self.log(f"  Missing texture references: {self.missing_count}", "always")
 
         if self.unused_count > 0:
             self.log(
@@ -388,7 +394,7 @@ class Validator(BaseValidator):
                 self.log(
                     f"  {Colors.YELLOW if self.use_colors else ''}Note: Missing textures check is incomplete. Use --hoi4-path to check vanilla .gfx files.{Colors.ENDC if self.use_colors else ''}"
                 )
-        self.log(f"{'='*80}")
+        self.log(f"{'=' * 80}")
 
 
 def add_extra_args(parser):

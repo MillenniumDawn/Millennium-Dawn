@@ -20,7 +20,12 @@
 @jpy_roi_curve = 0.03
 @gbp_roi_curve = 0.0375
 @chf_roi_curve = 0.0225
+@nlg_roi_curve = 0.0225
 @reserve_network_factor = 0.0002
+
+clamp_currency_strength = {
+	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+}
 
 currency_startup = {
 	if = { limit = { NOT = { has_variable = currency_strength } }
@@ -122,6 +127,15 @@ update_currency_issuers = {
 		set_variable = { global.chf_issuer = THIS }
 		set_country_flag = is_chf_issuer
 	} }
+
+	# NLG: Amsterdam (state 46)
+	if = { limit = { check_variable = { global.nlg_issuer > 0 } }
+		var:global.nlg_issuer = { clr_country_flag = is_nlg_issuer }
+	}
+	46 = { owner = {
+		set_variable = { global.nlg_issuer = THIS }
+		set_country_flag = is_nlg_issuer
+	} }
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
@@ -179,6 +193,9 @@ calculate_currency_strength = {
 		clamp_variable = { var = currency_delta min = -0.008 max = 0.012 }
 	}
 	else_if = { limit = { has_country_flag = is_chf_issuer }
+		clamp_variable = { var = currency_delta min = -0.004 max = 0.010 }
+	}
+	else_if = { limit = { has_country_flag = is_nlg_issuer }
 		clamp_variable = { var = currency_delta min = -0.004 max = 0.010 }
 	}
 	else_if = { limit = { has_idea = gold_standard_back }
@@ -269,6 +286,7 @@ apply_currency_multipliers = {
 				has_idea = japanese_yen
 				has_idea = british_pound
 				has_idea = swiss_frank
+				has_idea = gulden
 			}
 		}
 		multiply_variable = { debt_rate = inv_factor }
@@ -334,6 +352,11 @@ calculate_seigniorage_income = {
 			seigniorage_base = { value = global.cny_reserve_adoption_count  multiply = @seigniorage_per_adopter }
 		}
 	}
+	else_if = { limit = { has_country_flag = is_nlg_issuer }
+		set_temp_variable = {
+			seigniorage_base = { value = global.nlg_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+		}
+	}
 	else_if = { limit = { check_variable = { seigniorage_mod > 0 } }
 		set_temp_variable = {
 			seigniorage_base = {
@@ -392,6 +415,7 @@ calculate_reserve_roi_bonus = {
 				has_idea = japanese_yen
 				has_idea = british_pound
 				has_idea = swiss_frank
+				has_idea = gulden
 			}
 		}
 		if = { limit = { has_idea = us_dollar }
@@ -428,6 +452,11 @@ calculate_reserve_roi_bonus = {
 			set_temp_variable = { tmp_roi_mult = @chf_roi_curve }
 			set_temp_variable = { tmp_adopters = global.chf_reserve_adoption_count }
 			var:global.chf_issuer = { ROOT = { apply_reserve_roi_curve = yes } }
+		}
+		else_if = { limit = { has_idea = gulden }
+			set_temp_variable = { tmp_roi_mult = @nlg_roi_curve }
+			set_temp_variable = { tmp_adopters = global.nlg_reserve_adoption_count }
+			var:global.nlg_issuer = { ROOT = { apply_reserve_roi_curve = yes } }
 		}
 		clamp_variable = { var = reserve_roi_bonus min = -0.03 max = 0.03 }
 

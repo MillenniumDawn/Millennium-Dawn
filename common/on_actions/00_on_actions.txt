@@ -98,6 +98,11 @@ on_actions = {
 					add_to_variable = { global.research_screen_ui = 1 }
 				}
 			}
+			else = {
+				division_limiter_calculation = yes
+				plane_limiter_calculation = yes
+				ship_limiter_calculation = yes
+			}
 		}
 	}
 
@@ -179,13 +184,6 @@ on_actions = {
 	# country, FROM = target nation
 	on_justifying_wargoal_pulse = {
 		effect = {
-			if = {
-				limit = { FROM = { is_ai = yes } }
-				FROM = {
-					ai_update_build_units = yes
-				}
-			}
-
 			# reset every day, stays lingering for some time after justification is finished
 			set_country_flag = { flag = country_is_justified_on_flag value = 1 days = 70 }
 		}
@@ -1361,10 +1359,9 @@ on_actions = {
 		effect = {
 			if = { limit = { ROOT = { original_tag = ITA } }
 				ROOT = {
-					set_temp_variable = { ITA_stability_factor_change = 0.6 }
-					modify_stability_factor_effect = yes
-					set_temp_variable = { ITA_stability_weekly_change = 0.003 }
-					modify_stability_weekly_effect = yes
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+					add_to_variable = { ITA_stability_factor_var = 0.6 tooltip = stability_factor_tt }
+					add_to_variable = { ITA_stability_weekly_var = 0.003 tooltip = stability_weekly_tt }
 				}
 			}
 
@@ -1579,6 +1576,7 @@ on_actions = {
 			set_variable = { global.jpy_reserve_adoption_count = 0 }
 			set_variable = { global.gbp_reserve_adoption_count = 0 }
 			set_variable = { global.chf_reserve_adoption_count = 0 }
+			set_variable = { global.nlg_reserve_adoption_count = 0 }
 			set_variable = { global.general_operating_budget_contribute_percent = 0.0001 }
 
 			ABK = {
@@ -1627,6 +1625,9 @@ on_actions = {
 			}
 			LBA = {
 				update_gaddafi_family_ideas = yes
+			}
+			HOL = {
+				HOL_evaluate_coalition_focus_loops = yes
 			}
 
 			### for topbar without LaR
@@ -1717,7 +1718,8 @@ on_actions = {
 				}
 
 				# Implemented Cartel Nations
-				if = { limit = { is_cartel_nation = yes }
+				# HOL activates via the Mocro Maffia chain (~2012), not at startup
+				if = { limit = { is_cartel_nation = yes  NOT = { original_tag = HOL } }
 					set_country_flag = is_cartel_nation
 					calculate_cartel_penalty = yes
 				}
@@ -1729,7 +1731,6 @@ on_actions = {
 						MD_special_countries = no
 					}
 					give_AI_templates = yes
-					ai_update_build_units = yes
 					if = { limit = { gifted_income_list = yes }
 						set_variable = { population_tax_rate = 25 }
 						set_variable = { corporate_tax_rate = 20 }
@@ -1778,8 +1779,6 @@ on_actions = {
 					set_variable = { MD_tradeview_tab_trade_state = 1 }
 					set_variable = { MD_tradeview_tab_economy_state = 2 }
 
-					set_country_flag = construction_speeds_visible_in_menu
-
 					country_event = systems.1
 
 					if = {
@@ -1808,7 +1807,11 @@ on_actions = {
 				counter_terror_global_setup = yes
 
 				# Calculate United Nation's Base Budget'
+				# Flag suppresses the UN.30x revocation popups for recipients whose
+				# start economy already exceeds the thresholds (silent startup strip).
+				set_global_flag = un_initial_subsidy_pass
 				calculate_united_nations_base_budget = yes
+				clr_global_flag = un_initial_subsidy_pass
 
 				every_country = {
 					calculate_starting_mio_size = yes
@@ -1839,6 +1842,7 @@ on_actions = {
 			PER_asadollah_change = yes
 			PER_saneei_change = yes
 			PER_montazeri_change = yes
+			if = { limit = { original_tag = HOL } HOL_evaluate_coalition_focus_loops = yes }
 			if = {
 				limit = {
 					original_tag = PER
@@ -1984,7 +1988,6 @@ on_actions = {
 						set_law_vars = yes 	#vars for change laws secondary effects
 						update_neighbors_effects = yes # Updates Neighbor Effects
 						economic_cycle_drift_popularity = yes #drift from neighbor
-						ai_update_build_units = yes
 						calculate_expected_spending = yes
 
 						set_temp_variable = { nation_to_copy_from = PREV.id }

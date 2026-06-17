@@ -21,10 +21,16 @@ def main():
         description="Append dynamic-token OOS warnings from a HOI4 error log to a tokens file."
     )
     parser.add_argument(
-        "log", nargs="?", default=DEFAULT_LOG, help="path to error.log (default: HOI4 logs dir)"
+        "log",
+        nargs="?",
+        default=DEFAULT_LOG,
+        help="path to error.log (default: HOI4 logs dir)",
     )
     parser.add_argument(
-        "-o", "--output", default=DEFAULT_OUTPUT, help="tokens file to append to (default: MD_tokens.txt)"
+        "-o",
+        "--output",
+        default=DEFAULT_OUTPUT,
+        help="tokens file to append to (default: MD_tokens.txt)",
     )
     args = parser.parse_args()
 
@@ -44,7 +50,9 @@ def main():
 
     if not found:
         if saw_phrase:
-            print("Found 'dynamic token' lines but none matched the expected format; the log wording may have changed.")
+            print(
+                "Found 'dynamic token' lines but none matched the expected format; the log wording may have changed."
+            )
         else:
             print("No dynamic-token warnings found in the log.")
         return

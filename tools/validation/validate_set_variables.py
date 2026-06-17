@@ -5,6 +5,7 @@ Two passes: extract all `set_variable = X` targets, then scan the whole mod
 for `\\bX\\b` references and report vars whose net refs (refs minus sets) is
 zero. Both passes are multiprocessed and disk-cached via `disk_cache`.
 """
+
 import glob
 import hashlib
 import os
@@ -360,7 +361,16 @@ class Validator(BaseValidator):
                 recursive=True,
             )
         )
-        files_to_scan = txt_files + yml_files
+        # Scripted-GUI properties read variables via [?THIS.var|C0] interpolation
+        # in interface/*.gui. A variable referenced only from a GUI file (common
+        # for display-only vars backing a text/progressbar element) has zero .txt
+        # refs and was wrongly reported unused — scan .gui too.
+        gui_files = list(
+            glob.iglob(
+                os.path.join(scan_root, "interface", "**", "*.gui"), recursive=True
+            )
+        )
+        files_to_scan = txt_files + yml_files + gui_files
 
         # Partition into bare names and global.-dotted names (lowercased -> orig
         # case). A scoped read like THIS.foo stores/reads bare `foo`; a global.X
