@@ -1,97 +1,216 @@
 ---
-title: Contributing to Millennium Dawn
-description: How to contribute to the mod — accepted contribution types, setup, workflow, and AI policy
+title: Contributing to the Docs Site
+description: How to contribute to the Millennium Dawn documentation site, bun setup, content conventions, link rules, and the docs CI pipeline.
 ---
 
-This page is a quick reference for contributing to Millennium Dawn. For the complete guide, see the full [CONTRIBUTING.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) on GitHub.
+This guide covers contributing to the **documentation site** (the `docs/` directory and the pages it builds). For contributing to the mod itself (focus trees, events, ideas, AI, graphics, map work), see the [Developer Setup Guide](/dev-resources/developer-setup/).
 
-> **Supporting Resources:**
->
-> - [Code Stylization Guide](/dev-resources/code-stylization-guide/)
-> - [Content Review Guide](/dev-resources/content-review-guide/)
-> - [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/)
-> - [AI-Assisted Modding Guide](/dev-resources/ai-modding-guide/)
+> **Repo-root context**: [`CONTRIBUTING.md`](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) is a slim pointer to the right docs.
+
+---
+
+## Setup
+
+The docs site requires [Node.js 24 LTS](https://nodejs.org/) and [Bun](https://bun.sh/):
+
+```bash
+python3 tools/setup.py --docs    # installs Node.js + Bun dependencies
+```
+
+To preview locally:
+
+```bash
+cd docs
+bun run dev    # opens at http://localhost:4321/
+```
+
+---
+
+## Before Opening a Docs PR
+
+Run the full check suite against your changes:
+
+```bash
+cd docs
+bun run ci     # lint, typecheck, build, link check, a11y, perf budgets
+```
+
+To run individual checks during development:
+
+```bash
+bun run lint:md          # markdownlint
+bun run check            # astro check (type errors)
+bun run build            # full build
+bun run check:all        # every docs check (skips the build; reuses dist/)
+bun run check:link-syntax # malformed Markdown links
+bun run check:content-html # raw HTML, duplicate H1s
+bun run check:links      # broken internal links (needs build first)
+bun run check:a11y       # accessibility baseline (needs build first)
+```
+
+All docs checks live in `tools/docs_checks/` (a single Python package with a shared `common.py` and the `check_docs.py` runner that `bun run ci` / `check:all` call). The `bun run check:*` scripts wrap them with the right arguments (base path, repo root); prefer them over invoking the Python files directly.
+
+---
+
+## Content Structure
+
+| Path                                  | Content                                  |
+| ------------------------------------- | ---------------------------------------- |
+| `docs/src/content/pages/`             | Top-level pages (FAQ, Getting Started)   |
+| `docs/src/content/resources/`         | Developer resource guides                |
+| `docs/src/content/tutorials/`         | Player and developer tutorials           |
+| `docs/src/content/countries/`         | Country-specific documentation           |
+| `docs/src/content/navigation/`        | Site navigation and footer               |
+| `docs/src/content/redirects/`         | URL redirects for moved pages            |
+| `docs/src/content/changelogSections/` | Version changelogs                       |
+| `docs/src/content/devDiaries/`        | Published dev diaries                    |
+| `docs/templates/`                     | Contributor templates (not in the build) |
+
+Content uses Markdown with YAML frontmatter. Each content collection has a schema in `docs/src/schemas/base.ts`. The `pages` collection is the simplest; `countries` has the most fields.
+
+---
+
+## Frontmatter Requirements
+
+Every content file needs at least a `title`. The schema validates other fields:
+
+- `title` (string): the page title. Rendered as an H1 by the layout.
+- `description` (string, optional): used for the page meta description.
+- `permalink` (string, optional): explicit URL path. Must be root-relative (`/some/path/`).
+- `toc` (`"auto"` | `"off"`, optional): table of contents control.
+- `hidden` (boolean, optional): if true, the page is not in the index or navigation.
+- `last_updated` (date, optional): rendered in the page footer.
+
+Country pages have additional required fields: `unique_focus_tree` (boolean), `grid_order` (integer), and optional `grid_note`, `flag_image`, `infobox`.
+
+---
+
+## Writing Rules
+
+### Links
+
+Internal links must be **root-relative**: `[Guide](/dev-resources/guide-name/)`. Do not hardcode `"/Millennium-Dawn/..."` or use `../` relative paths. The base path is applied during build.
+
+Always include a trailing slash on internal links. Both forms resolve, but trailing-slash is the standard and avoids inconsistencies.
+
+External links must be full URLs: `[GitHub](https://github.com/...)`. The build adds `target="_blank"` and `rel="noopener noreferrer"` automatically.
+
+### Images
+
+Image paths follow the same root-relative pattern: `![Alt](/assets/images/example.png)`. Drop new images into `docs/src/assets/images/` first.
+
+### Prose
+
+- Terse and direct. Short lines, plain words, vary sentence length.
+- No em-dashes (en-dash or em-dash). Use periods, commas, or parentheses instead. Enforced by the `MD9999` custom markdownlint rule.
+- American spelling (color, not colour). Exception: in-game proper nouns keep their spelling.
+- Avoid AI-marketing words (authoritative, canonical, seamless, robust, sweet spot, load-bearing, stays in sync, on top).
+- Match the voice of the existing page you are editing. When in doubt, check `docs/src/content/resources/code-stylization-guide.md` or a recent dev diary for the tone.
+- Do not use GitHub-specific emoji shortcodes (`:repeat:`, `:white_check_mark:`). Use literal emoji or strip them.
+
+### Code Blocks
+
+Use `hoiscript` as the language identifier for HOI4 script blocks:
+
+```hoiscript
+country_event = {
+    id = tag_ns.N
+    ...
+}
+```
+
+For other languages use `bash`, `python`, `json`, `yaml`, or `text` as appropriate.
+
+### Tables
+
+Markdown tables are supported and preferred over raw HTML. The markdownlint `MD060` rule enforces consistent pipe alignment.
+
+---
+
+## Country Pages
+
+Country pages live in `docs/src/content/countries/`. Each page has a frontmatter block with `unique_focus_tree`, `grid_order`, and an optional `infobox` array.
+
+The `infobox` is an array of groups, each with a `section` (string) and `stats` (array of `{label, value}`). The `Status` section with `Content: WIP` is used by the grid card to render a WIP badge.
+
+When writing a country page:
+
+- Start with a prose introduction (2-4 paragraphs) covering the country's starting position, diplomacy, economy, and military.
+- Use the `## Initial National Spirits` section to list the spirits the country starts with. Match the actual `add_ideas` in `history/countries/`.
+- Use the `## Unique National Features` section to describe mechanics specific to the country.
+- Use the `## National Focus` section to describe the focus tree structure.
+- Use the `## Q&A` section for common player questions.
+
+See `docs/src/content/countries/italy.md` for the reference implementation.
+
+---
+
+## Changelog Sections
+
+Changelog sections live in `docs/src/content/changelogSections/`. Each file has:
+
+- `title`: the version heading (e.g., `v1.10.0 'The Lion of Brussels and Babylon'`).
+- `page_id`: a stable identifier used in the URL (`changelog-v1-10-the-lion-of-brussels-and-babylon`).
+- `order`: an integer controlling the sort order on the changelogs index page.
+- `hidden` (optional): if true, the page is not in the index.
+
+The `page_id` drives the URL (`/changelogs/{page_id}/`). Changing the `page_id` or the filename changes the URL; use the `redirects` collection to preserve old links.
+
+---
+
+## Dev Diaries
+
+Dev diaries live in `docs/src/content/devDiaries/`. They use MDX (not plain Markdown) so the `MarkdownContent` component can map `img` tags to `MarkdownImage`.
+
+A template is available at `docs/templates/dev-diary-template.mdx`. Copy it to `docs/src/content/devDiaries/NN-short-slug.mdx` and fill in the frontmatter and body.
+
+The dev-diary archive (`docs/src/content/devDiaryArchive/index.yml`) lists published diaries grouped by version. Add your diary to the appropriate group.
+
+---
+
+## Redirects
+
+If you move or rename a page, add a redirect in `docs/src/content/redirects/`:
+
+```markdown
+---
+title: Old Page Redirect
+permalink: /old-path/
+redirect_to: /new-path/
+seo: false
+robots: noindex, nofollow
+toc: "off"
+---
+
+This page has moved to [/new-path/](/new-path/).
+```
 
 ---
 
 ## What We Accept
 
-| Area                     | Examples                                            |
-| ------------------------ | --------------------------------------------------- |
-| Focus Trees              | New trees, branch reworks, prerequisite fixes       |
-| Events & Decisions       | Event chains, decision categories, triggered events |
-| Ideas & National Spirits | New ideas, modifier tuning, icon assignments        |
-| AI & Balance             | Strategy plans, equipment variants, stat tweaks     |
-| Localisation             | English string fixes, tooltip accuracy              |
-| Graphics                 | Portraits, focus icons, event pictures, 3D models   |
-| Map & History            | State boundaries, country history, OOBs             |
-| Documentation            | Guides, tutorials, dev diaries                      |
-| Tooling                  | Python scripts, CI improvements, pre-commit hooks   |
-| Bug Fixes                | Crash fixes, trigger errors, typos                  |
+Docs contributions are welcome in the following areas:
 
-Non-English localisation is managed through [Paratranz](https://paratranz.cn/projects/millennium-dawn) — do not submit translations directly.
+- New guides, tutorials, or reference pages.
+- Updates to existing pages to reflect current game mechanics.
+- Country page content (prose, not WIP stubs).
+- Bug fixes (broken links, typos, wrong code samples).
+- Changelog entries for new releases.
+- Dev diaries.
 
-## Fork Workflow (Outside Contributors)
-
-1. **Fork** the repo on GitHub.
-2. **Clone** your fork and add the upstream remote:
-   ```bash
-   git clone https://github.com/<your-username>/Millennium-Dawn.git
-   cd Millennium-Dawn
-   git remote add upstream https://github.com/MillenniumDawn/Millennium-Dawn.git
-   ```
-3. **Branch** from `main`:
-   ```bash
-   git checkout -b my-feature main
-   ```
-4. **Make changes**, following code standards.
-5. **Commit** — pre-commit hooks run automatically.
-6. **Push** and **open a PR** against `main` on the upstream repo.
-
-Sync before starting new work:
-
-```bash
-git fetch upstream
-git checkout main
-git merge upstream/main
-git push origin main
-```
-
-## Setup
-
-```bash
-python3 tools/setup.py          # install hooks and dependencies
-python3 tools/setup.py --check  # verify environment
-```
-
-See the full [CONTRIBUTING.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) for VSCode workspace setup, docs site instructions, and dev tools.
-
-## AI Policy Summary
-
-AI tooling is welcome under the following rules. See the full [AI Policy](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#ai-policy) for details.
-
-### Code and Scripts
-
-AI coding assistants (Copilot, Claude, ChatGPT, local models) may be used to draft, refactor, or debug HOI4 script code. Requirements:
-
-- Review all AI output line-by-line before submission.
-- Enforce project standards (tabs, naming, logging, `ai_will_do`, `is_triggered_only`).
-- Run pre-commit hooks. Do not submit raw AI output.
-- Verify triggers, effects, and modifiers exist. AI models hallucinate non-existent game objects.
-
-### Localisation
-
-AI may draft or proofread English strings. All output requires human review for accuracy, tone, and style compliance. Non-English localisation is managed through Paratranz and must not be AI-generated.
-
-### Graphics
-
-- Pure AI-generated art is **not allowed** under any circumstances.
-- AI-generated military vehicle side profiles are acceptable only when no existing profile is available, and the final asset must be manually finalized and reviewed by a GFX team member.
-
-### Documentation and PR Descriptions
-
-AI may draft documentation and PR descriptions. Review for accuracy — AI frequently references files or tools that do not exist in this repo. Do not add "Generated with" footers or co-author trailers.
+Non-English localisation is managed through [Paratranz](https://paratranz.cn/projects/millennium-dawn); do not submit translations directly.
 
 ---
 
-For questions, join the [Discord](http://discord.gg/millenniumdawn) or open an issue on GitHub.
+## Related Resources
+
+- [Developer Setup Guide](/dev-resources/developer-setup/): main developer guide for the mod.
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/): formatting and code structure.
+- [Content Review Guide](/dev-resources/content-review-guide/): quality checklist.
+- [Git Workflow](/dev-resources/git-workflow/): branch/commit/PR process.
+- [AI Modding Guide](/dev-resources/ai-modding-guide/): AI tools for development.
+- [`CONTRIBUTING.md`](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md): repo-root pointer.
+
+---
+
+For questions, join the [Discord](http://discord.gg/millenniumdawn) or open an issue.

@@ -914,12 +914,12 @@ class BaseValidator:
         raise NotImplementedError("Subclasses must implement run_validations()")
 
     def run_all_validations(self):
-        self.log(f"\n{'#'*80}", "always")
+        self.log(f"\n{'#' * 80}", "always")
         self.log(
             f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}",
             "always",
         )
-        self.log(f"{'#'*80}", "always")
+        self.log(f"{'#' * 80}", "always")
         self.log(f"Mod path: {self.mod_path}", "always")
         self.log(f"Worker processes: {self.workers}", "always")
         if self.staged_only:
@@ -941,7 +941,7 @@ class BaseValidator:
 
         self._render_issues()
 
-        self.log(f"\n{'#'*80}", "always")
+        self.log(f"\n{'#' * 80}", "always")
         if self.errors_found == 0 and self.warnings_found == 0:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
@@ -962,7 +962,7 @@ class BaseValidator:
                 f"{Colors.RED if self.use_colors else ''}{error_msg}{Colors.ENDC if self.use_colors else ''}",
                 "always",
             )
-        self.log(f"{'#'*80}\n", "always")
+        self.log(f"{'#' * 80}\n", "always")
 
         self.save_output()
         return self.errors_found

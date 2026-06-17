@@ -5,6 +5,7 @@ Two passes: extract all `set_variable = X` targets, then scan the whole mod
 for `\\bX\\b` references and report vars whose net refs (refs minus sets) is
 zero. Both passes are multiprocessed and disk-cached via `disk_cache`.
 """
+
 import glob
 import hashlib
 import os

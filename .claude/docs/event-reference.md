@@ -17,7 +17,6 @@ country_event = {
 	option = {
 		name = tag_ns.N.a
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.01 }
 		add_relative_party_popularity = yes
 
@@ -229,4 +228,4 @@ random_events = {
 - Cross-nation permanent effects should come from events (give target player agency)
 - Use `is_triggered_only = yes` for all triggered events — never open-fire MTTH events
 
-For the full scripted effects library, see `docs/src/content/resources/code-resource.md`.
+For the full scripted effects library, see `docs/src/content/resources/scripted-effects-reference.md`.
