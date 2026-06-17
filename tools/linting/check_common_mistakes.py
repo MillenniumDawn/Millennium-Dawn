@@ -40,6 +40,7 @@ _RE_STABILITY = re.compile(r"(?<!\w)has_stability\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_ALLOWED_ALWAYS_NO = re.compile(r"allowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_ALLOWED_OPEN = re.compile(r"allowed\s*=\s*\{")
 _RE_ALLOWED_OPEN_WB = re.compile(r"\ballowed\s*=\s*\{")
+_RE_POSSIBLE_OPEN_WB = re.compile(r"\bpossible\s*=\s*\{")
 _RE_ALLOWED_TAG = re.compile(r"allowed\s*=\s*\{\s*tag\s*=\s*\w+\s*\}")
 _RE_ALLOWED_CIVIL_WAR = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_CANCEL = re.compile(r"cancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
@@ -927,8 +928,9 @@ def _check_is_x_nation_runtime(lines, filepath=""):
     expensive. In runtime contexts (available, visible, effect blocks, limit clauses),
     use the pre-computed has_country_flag = X_flag instead for O(1) lookup.
 
-    Safe to use in allowed = { } which is evaluated once at game start, and in
-    common/scripted_triggers/ where these triggers are defined and compose each
+    Safe to use in allowed = { } which is evaluated once at game start, in
+    achievements' possible = { } (effectively an allowed -- evaluated once), and
+    in common/scripted_triggers/ where these triggers are defined and compose each
     other (e.g. is_horn_of_africa_nation references is_somali_nation) -- the cost
     is realized at the call site, not the definition.
     """
@@ -945,8 +947,10 @@ def _check_is_x_nation_runtime(lines, filepath=""):
         opens = code.count("{")
         closes = code.count("}")
 
-        # Check for allowed block start
-        if _RE_ALLOWED_OPEN_WB.search(code) and "allowed_civil_war" not in code:
+        # Check for allowed / possible block start (possible = game-start gate too)
+        if (
+            _RE_ALLOWED_OPEN_WB.search(code) and "allowed_civil_war" not in code
+        ) or _RE_POSSIBLE_OPEN_WB.search(code):
             in_allowed = True
             allowed_depth = brace_depth + opens - closes
 
