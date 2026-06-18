@@ -82,3 +82,18 @@ def test_no_war_no_flag(tmp_path):
         "}\n"
     )
     assert _run(tmp_path, body) == []
+
+
+def test_ai_strategy_declare_war_value_not_flagged(tmp_path):
+    """add_ai_strategy type = declare_war is an AI strategy value, not a war
+    declaration effect — it must not trigger the missing-hint warning."""
+    body = (
+        "category = {\n"
+        "\tai_strategy_decision = {\n"
+        "\t\tcomplete_effect = {\n"
+        "\t\t\tadd_ai_strategy = { type = declare_war id = MOR value = 200 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _run(tmp_path, body) == []

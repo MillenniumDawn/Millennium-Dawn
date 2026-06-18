@@ -361,7 +361,7 @@ def _war_declared_at_owner_scope(code):
             opener_pending = None
             last_ident = None
         else:
-            if tok == "create_wargoal" or tok.startswith("declare_war"):
+            if tok == "create_wargoal" or tok == "declare_war_on":
                 in_foreign = False
                 for kind in reversed(stack):
                     if kind == "foreign":

@@ -1491,7 +1491,7 @@ class Validator(BaseValidator):
         )
 
         for d in factories:
-            if not re.search(r"\b(?:create_wargoal|declare_war)\w*", d.raw):
+            if not re.search(r"\b(?:create_wargoal|declare_war_on)\b", d.raw):
                 continue
             if any(hint in d.raw for hint in hints):
                 continue

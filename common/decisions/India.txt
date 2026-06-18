@@ -380,13 +380,16 @@ RAJ_religious_groups = {
 		}
 	}
 
-	# Alternative to the Vajpayee-era RAJ_settling_down_gujarat focus, which is leader-locked.
-	# Lets any government clear the Gujarat unrest so it cannot lock the player/AI out.
 	RAJ_settle_gujarat_unrest = {
 		icon = GFX_decision_generic_political_discourse
 
 		available = {
-			has_idea = RAJ_gujarat_trouble_idea
+			custom_trigger_tooltip = {
+				tooltip = RAJ_settle_gujarat_unrest_TT
+				check_variable = { RAJ_muslim_opinion > 50 }
+				check_variable = { RAJ_hindus_opinion > 50 }
+
+			}
 		}
 		visible = {
 			has_idea = RAJ_gujarat_trouble_idea
@@ -1041,16 +1044,19 @@ RAJ_brics_alliance_decisions = {
 
 		visible = {
 			has_global_flag = BRICS_created
-			NOT = { has_idea = RAJ_BRICS }
+			NOT = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
+			NOT = { has_country_flag = BRICS_observer_status }
+			NOT = { has_country_flag = BRICS_associate_status }
+			NOT = { has_country_flag = BRICS_full_member_status }
+			BRICS_focus_requirement_met = yes
 		}
 		available = {
-			has_global_flag = BRICS_created
 			NOT = { has_country_flag = BRICS_application_pending }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRICS_apply_to_join_brics"
-			BRICS_join_via_event = yes
+			BRICS_request_observer_status_via_event = yes
 		}
 
 		ai_will_do = { base = 0 }
@@ -1062,17 +1068,19 @@ RAJ_brics_alliance_decisions = {
 		target_array = global.BRICS_potential
 
 		target_root_trigger = {
-			has_global_flag = BRICS_created
-			has_idea = BRICS_leader
+			has_dynamic_modifier = { modifier = RAJ_brics_leadership }
+		}
+
+		visible = {
+			country_exists = FROM
+			FROM = { NOT = { tag = ROOT } }
 		}
 
 		target_trigger = {
-			FROM = { BRICS_valid_invite_target = yes }
-		}
-
-		available = {
-			has_idea = BRICS_leader
-			FROM = { BRICS_can_full_member = yes }
+			FROM = {
+				BRICS_valid_invite_target = yes
+				BRICS_can_full_member = yes
+			}
 		}
 
 		days_remove = 60
@@ -1108,17 +1116,21 @@ RAJ_brics_alliance_decisions = {
 		target_array = global.BRICS_potential
 
 		target_root_trigger = {
-			has_global_flag = BRICS_created
-			has_idea = BRICS_leader
+			has_dynamic_modifier = { modifier = RAJ_brics_leadership }
+		}
+
+		visible = {
+			country_exists = FROM
+			FROM = {
+				NOT = { tag = ROOT }
+			}
 		}
 
 		target_trigger = {
-			FROM = { BRICS_valid_invite_target = yes }
-		}
-
-		available = {
-			has_idea = BRICS_leader
-			FROM = { BRICS_can_associate_member = yes }
+			FROM = {
+				BRICS_valid_invite_target = yes
+				BRICS_can_associate_member = yes
+			}
 		}
 
 		days_remove = 45
@@ -1153,17 +1165,21 @@ RAJ_brics_alliance_decisions = {
 		target_array = global.BRICS_potential
 
 		target_root_trigger = {
-			has_global_flag = BRICS_created
-			has_idea = BRICS_leader
+			has_dynamic_modifier = { modifier = RAJ_brics_leadership }
+		}
+
+		visible = {
+			country_exists = FROM
+			FROM = {
+				NOT = { tag = ROOT }
+			}
 		}
 
 		target_trigger = {
-			FROM = { BRICS_valid_invite_target = yes }
-		}
-
-		available = {
-			has_idea = BRICS_leader
-			FROM = { BRICS_can_observer = yes }
+			FROM = {
+				BRICS_valid_invite_target = yes
+				BRICS_can_observer = yes
+			}
 		}
 
 		days_remove = 30
@@ -1198,22 +1214,17 @@ RAJ_brics_alliance_decisions = {
 		target_array = global.BRICS_observers
 
 		target_root_trigger = {
-			has_global_flag = BRICS_created
-			has_idea = BRICS_leader
+			has_dynamic_modifier = { modifier = RAJ_brics_leadership }
 		}
 
 		target_trigger = {
+			country_exists = FROM
 			FROM = {
-				exists = yes
 				has_country_flag = BRICS_observer_status
 				NOT = { has_country_flag = BRICS_associate_status }
 				NOT = { has_country_flag = BRICS_full_member_status }
+				BRICS_can_associate_member = yes
 			}
-		}
-
-		available = {
-			has_idea = BRICS_leader
-			FROM = { BRICS_can_associate_member = yes }
 		}
 
 		days_remove = 45
@@ -1244,21 +1255,16 @@ RAJ_brics_alliance_decisions = {
 		target_array = global.BRICS_associates
 
 		target_root_trigger = {
-			has_global_flag = BRICS_created
-			has_idea = BRICS_leader
+			has_dynamic_modifier = { modifier = RAJ_brics_leadership }
 		}
 
 		target_trigger = {
+			country_exists = FROM
 			FROM = {
-				exists = yes
 				has_country_flag = BRICS_associate_status
 				NOT = { has_country_flag = BRICS_full_member_status }
+				BRICS_can_full_member = yes
 			}
-		}
-
-		available = {
-			has_idea = BRICS_leader
-			FROM = { BRICS_can_full_member = yes }
 		}
 
 		days_remove = 60
@@ -1765,7 +1771,6 @@ maoist_decision_category = {
 }
 
 RAJ_central_asian_salaf_revolution = {
-	#Kazakstan
 	RAJ_central_asian_revolution = {
 		icon = GFX_decision_generic_prepare_civil_war_new
 		targets = { KAZ UZB TAJ KYR }
@@ -1777,6 +1782,11 @@ RAJ_central_asian_salaf_revolution = {
 		visible = {
 			FROM = {
 				NOT = { has_government = fascism }
+			}
+		}
+
+		available = {
+			FROM = {
 				OR = {
 					communism > 0.15
 					AND = {
@@ -1787,12 +1797,6 @@ RAJ_central_asian_salaf_revolution = {
 						}
 					}
 				}
-			}
-		}
-
-		available = {
-			FROM = {
-				NOT = { has_government = fascism }
 				fascism > 0.3
 				influence_higher_35 = yes
 			}
@@ -1830,6 +1834,9 @@ RAJ_greater_hindustan_decisions_category = {
 		days_remove = 120
 		fire_only_once = yes
 
+		war_with_on_remove = AFG
+		war_with_on_remove = TAL
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision RAJ_expanding_sphere_of_influence"
 			set_temp_variable = { demand_annex_target = AFG.id }
@@ -1847,6 +1854,8 @@ RAJ_greater_hindustan_decisions_category = {
 		days_remove = 120
 		fire_only_once = yes
 
+		war_with_on_remove = SRI
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision RAJ_demand_sri_lanka"
 			set_temp_variable = { demand_annex_target = SRI.id }
@@ -1862,6 +1871,8 @@ RAJ_greater_hindustan_decisions_category = {
 		days_remove = 120
 		fire_only_once = yes
 
+		war_with_on_remove = BRM
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision RAJ_demand_myanma"
 			set_temp_variable = { demand_annex_target = BRM.id }
@@ -1876,6 +1887,12 @@ RAJ_greater_hindustan_decisions_category = {
 
 		days_remove = 120
 		fire_only_once = yes
+
+		war_with_on_remove = BRM
+		war_with_on_remove = WAA
+		war_with_on_remove = SHN
+		war_with_on_remove = NHN
+		war_with_on_remove = KAR
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision RAJ_burn_down_the_separatist_sentiments"
@@ -1901,6 +1918,8 @@ RAJ_greater_hindustan_decisions_category = {
 		days_remove = 120
 		fire_only_once = yes
 
+		war_with_on_remove = SIA
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision RAJ_land_of_freedom"
 			set_temp_variable = { demand_annex_target = SIA.id }
@@ -1915,6 +1934,8 @@ RAJ_greater_hindustan_decisions_category = {
 
 		days_remove = 120
 		fire_only_once = yes
+
+		war_with_on_remove = LAO
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision RAJ_laotian_resorts"

@@ -1034,6 +1034,23 @@ assert_finds(
 )
 
 
+# 10j. add_ai_strategy with type = declare_war (AI strategy value, not the
+# declare_war_on effect) must NOT be flagged — it is not a war declaration.
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_ai_strategy_only\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tadd_ai_strategy = { type = declare_war id = MOR value = 200 }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "add_ai_strategy type = declare_war not flagged",
+)
+
+
 # Summary
 
 
