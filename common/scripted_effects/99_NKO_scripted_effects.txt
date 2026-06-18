@@ -577,3 +577,477 @@ NKO_naval_buildup_grant_mastery_sf = {
 		clamp_variable = { var = NKO_naval_buildup_mastery_sf min = 0 max = 200 }
 	}
 }
+
+# =============================================================================
+# Second Economic Committee — arms & manpower export mechanic.
+# Unlocked by the NKO_create_komid focus (calls NKO_arms_export_initialize).
+# The player supplies any nation at war via the targeted panel decisions, or
+# fulfils Russia's munitions request (NKO_export.1). Each DISTINCT nation
+# supplied grants a permanent, uncapped +1% factory-output bonus
+# (NKO_arms_export_modifiers scaled by NKO_arms_export_output_var) and raises
+# sanctions pressure.
+#
+# Calling convention for a deal: the caller sets temp var NKO_arms_client_id to
+# the client's id, saves the client as event_target:NKO_arms_client, then calls
+# one NKO_export_do_* effect. The do_* effect handles the recipient buff, the
+# NKO payment, and the deal registration.
+# =============================================================================
+
+NKO_arms_export_initialize = {
+	set_country_flag = NKO_arms_export_active
+	if = { limit = { NOT = { has_variable = NKO_arms_export_clients } }  set_variable = { NKO_arms_export_clients = 0 } }
+	if = { limit = { NOT = { has_variable = NKO_arms_export_deals } }    set_variable = { NKO_arms_export_deals = 0 } }
+	if = { limit = { NOT = { has_variable = NKO_arms_export_heat } }     set_variable = { NKO_arms_export_heat = 0 } }
+	if = { limit = { NOT = { has_variable = NKO_arms_export_revenue } }  set_variable = { NKO_arms_export_revenue = 0 } }
+	if = { limit = { NOT = { has_variable = NKO_arms_export_output_var } } set_variable = { NKO_arms_export_output_var = 0 } }
+	if = { limit = { NOT = { has_variable = NKO_arms_export_gui_dirty } } set_variable = { NKO_arms_export_gui_dirty = 0 } }
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = NKO_arms_export_modifiers } } }
+		add_dynamic_modifier = { modifier = NKO_arms_export_modifiers }
+	}
+	NKO_arms_export_rebuild_targets = yes
+	NKO_arms_contract_initialize = yes
+}
+
+# Rebuild the targetable-clients array — every existing country at war that is
+# neither NKO nor an enemy of NKO. Driven weekly from 99_NKO_on_actions.txt and
+# once at unlock. Global array so the targeted decisions can read it.
+NKO_arms_export_rebuild_targets = {
+	clear_array = global.NKO_arms_export_targets
+	every_country = {
+		limit = {
+			NOT = { original_tag = NKO }
+			exists = yes
+			has_war = yes
+			is_subject = no
+			NOT = { has_war_with = NKO }
+		}
+		add_to_array = { global.NKO_arms_export_targets = THIS }
+	}
+}
+
+# Register one concluded deal: count it, add sanctions heat (temp var
+# NKO_arms_export_deal_heat), and — only for a NEW distinct client — credit the
+# permanent factory-output bonus. Then run the sanctions and capstone watchdogs.
+NKO_arms_export_register_deal = {
+	add_to_variable = { var = NKO_arms_export_deals  value = 1 }
+	add_to_variable = { var = NKO_arms_export_heat   value = NKO_arms_export_deal_heat }
+	if = {
+		limit = { NOT = { is_in_array = { array = NKO_arms_export_supplied_array  value = NKO_arms_client_id } } }
+		add_to_array = { NKO_arms_export_supplied_array = NKO_arms_client_id }
+		add_to_variable = { var = NKO_arms_export_clients     value = 1 }
+		add_to_variable = { var = NKO_arms_export_output_var  value = 0.01 }
+	}
+	NKO_arms_export_check_sanctions = yes
+	NKO_arms_export_check_capstone = yes
+	if = {
+		limit = { is_ai = no }
+		add_to_variable = { var = NKO_arms_export_gui_dirty  value = 1 }
+	}
+}
+
+# Every 5 points of accumulated heat tightens sanctions one level.
+NKO_arms_export_check_sanctions = {
+	if = {
+		limit = { check_variable = { NKO_arms_export_heat > 4 } }
+		subtract_from_variable = { var = NKO_arms_export_heat  value = 5 }
+		NKO_sanctions_negative = yes
+	}
+}
+
+# Capstone unlocks once ten distinct nations have been supplied.
+NKO_arms_export_check_capstone = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = NKO_arms_export_capstone_ready }
+			check_variable = { NKO_arms_export_clients > 9 }
+		}
+		set_country_flag = NKO_arms_export_capstone_ready
+	}
+}
+
+# Credit a hard-currency payment into the Office 39 treasury (temp var
+# NKO_arms_export_payment, in $ billions) and track lifetime export revenue.
+NKO_arms_export_credit_payment = {
+	set_temp_variable = { treasury_change = NKO_arms_export_payment }
+	modify_treasury_effect = yes
+	add_to_variable = { var = NKO_arms_export_revenue  value = NKO_arms_export_payment }
+}
+
+# --- Equipment transfer helpers — run in NKO scope, gated on NKO's own tech
+# tier, delivering into event_target:NKO_arms_client's stockpile. Amount via
+# temp var NKO_export_eq_amount; NKO is credited as the producer. ---
+
+NKO_export_transfer_inf_weapons = {
+	if = { limit = { has_tech = infantry_weapons_10 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_10 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_9 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_9 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_8 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_7 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_6 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_5 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_4 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_3 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_3 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_2 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else = { event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_1 amount = NKO_export_eq_amount producer = NKO } } }
+}
+
+NKO_export_transfer_arty = {
+	if = { limit = { has_tech = SP_arty_4 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_arty_3 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_3 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_arty_2 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_arty_1 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount producer = NKO } } }
+	else = { event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_0 amount = NKO_export_eq_amount producer = NKO } } }
+}
+
+NKO_export_transfer_rocket = {
+	if = { limit = { has_tech = SP_R_arty_4 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_R_arty_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_R_arty_3 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_R_arty_3 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_R_arty_2 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_R_arty_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_R_arty_1 } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_R_arty_1 amount = NKO_export_eq_amount producer = NKO } } }
+	else = { event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_R_arty_0 amount = NKO_export_eq_amount producer = NKO } } }
+}
+
+# --- Aid packages. Each delivers a recipient buff, pays NKO, and registers the
+# deal. Caller must first set NKO_arms_client_id and save event_target:NKO_arms_client. ---
+
+NKO_export_do_munitions = {
+	custom_effect_tooltip = NKO_export_munitions_effect_tt
+	set_temp_variable = { NKO_export_eq_amount = 600 }
+	NKO_export_transfer_inf_weapons = yes
+	set_temp_variable = { NKO_export_eq_amount = 120 }
+	NKO_export_transfer_arty = yes
+	event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_munitions days = 365 } }
+	set_temp_variable = { NKO_arms_export_payment = 1.5 }
+	NKO_arms_export_credit_payment = yes
+	set_temp_variable = { NKO_arms_export_deal_heat = 1 }
+	NKO_arms_export_register_deal = yes
+}
+
+NKO_export_do_missiles = {
+	custom_effect_tooltip = NKO_export_missiles_effect_tt
+	set_temp_variable = { NKO_export_eq_amount = 80 }
+	NKO_export_transfer_rocket = yes
+	event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_missiles days = 365 } }
+	set_temp_variable = { NKO_arms_export_payment = 3 }
+	NKO_arms_export_credit_payment = yes
+	add_tech_bonus = { name = MBT_4 bonus = 0.5 uses = 1 category = CAT_mbt }
+	add_tech_bonus = { name = artificial_intelligence_1 bonus = 0.5 uses = 1 category = CAT_ai }
+	set_temp_variable = { NKO_arms_export_deal_heat = 3 }
+	NKO_arms_export_register_deal = yes
+}
+
+NKO_export_do_troops = {
+	custom_effect_tooltip = NKO_export_troops_effect_tt
+	add_manpower = -10000
+	add_timed_idea = { idea = NKO_storm_corps_abroad days = 365 }
+	event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_troops days = 365 } }
+	add_political_power = 50
+	add_war_support = 0.02
+	event_target:NKO_arms_client = { add_opinion_modifier = { target = NKO modifier = trade_mission } }
+	add_opinion_modifier = { target = event_target:NKO_arms_client modifier = trade_mission }
+	set_temp_variable = { NKO_arms_export_payment = 1 }
+	NKO_arms_export_credit_payment = yes
+	set_temp_variable = { NKO_arms_export_deal_heat = 2 }
+	NKO_arms_export_register_deal = yes
+	# Volunteers build patron standing — more for China and Russia — which the
+	# foreign-arms-contract system reads to offer bigger contracts.
+	add_to_variable = { var = NKO_arms_contract_standing  value = 5 }
+	if = {
+		limit = { event_target:NKO_arms_client = { OR = { original_tag = CHI  original_tag = SOV } } }
+		add_to_variable = { var = NKO_arms_contract_standing  value = 5 }
+	}
+	clamp_variable = { var = NKO_arms_contract_standing  min = 0  max = 100 }
+}
+
+NKO_export_do_satellite = {
+	custom_effect_tooltip = NKO_export_satellite_effect_tt
+	event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_satellite days = 365 } }
+	add_tech_bonus = { name = microprocessors bonus = 0.5 uses = 1 category = CAT_computing_tech }
+	add_tech_bonus = { name = artificial_intelligence_1 bonus = 0.5 uses = 1 category = CAT_ai }
+	add_political_power = 40
+	set_temp_variable = { NKO_arms_export_payment = 0.5 }
+	NKO_arms_export_credit_payment = yes
+	set_temp_variable = { NKO_arms_export_deal_heat = 1 }
+	NKO_arms_export_register_deal = yes
+}
+
+# Civil-war / regime collapse cleanup — strip the mechanic from both sides.
+NKO_arms_export_suppress_for_collapse = {
+	hidden_effect = {
+		clr_country_flag = NKO_arms_export_active
+		clr_country_flag = NKO_arms_export_capstone_ready
+		clr_country_flag = NKO_arms_contract_offer_pending
+		if = { limit = { has_idea = NKO_arms_export_capstone_spirit } remove_ideas = NKO_arms_export_capstone_spirit }
+		if = { limit = { has_idea = NKO_storm_corps_abroad } remove_ideas = NKO_storm_corps_abroad }
+		if = { limit = { has_idea = NKO_arms_contract_revenue } remove_ideas = NKO_arms_contract_revenue }
+		if = { limit = { has_idea = NKO_arms_contract_displeasure } remove_ideas = NKO_arms_contract_displeasure }
+		if = { limit = { has_dynamic_modifier = { modifier = NKO_arms_export_modifiers } } remove_dynamic_modifier = { modifier = NKO_arms_export_modifiers } }
+	}
+}
+
+# =============================================================================
+# Foreign arms CONTRACTS (HKG-procurement style). China, Russia, and other
+# partners offer arms contracts; the player accepts into one of three slots and
+# fulfils by delivering produced equipment before the deadline. Patron standing
+# (raised by volunteer deployments) unlocks bigger contracts.
+# Classes: 1 = infantry arms, 2 = artillery, 3 = armor, 4 = ballistic missiles.
+# =============================================================================
+
+NKO_arms_contract_initialize = {
+	if = { limit = { NOT = { has_variable = NKO_arms_contract_standing } }   set_variable = { NKO_arms_contract_standing = 0 } }
+	if = { limit = { NOT = { has_variable = NKO_arms_contract_completed } }  set_variable = { NKO_arms_contract_completed = 0 } }
+	if = { limit = { NOT = { has_variable = NKO_arms_contract_gui_dirty } }  set_variable = { NKO_arms_contract_gui_dirty = 0 } }
+	set_variable = { NKO_arms_contract_count = 0 }
+	set_variable = { NKO_arms_contract_max_slots = 3 }
+	set_variable = { NKO_arms_contract_grace = 120 }
+	set_variable = { NKO_arms_contract_band_low = 25 }
+	set_variable = { NKO_arms_contract_band_mid = 50 }
+	set_variable = { NKO_arms_contract_band_high = 75 }
+	set_variable = { NKO_arms_contract_standing_gain = 4 }
+	set_variable = { NKO_arms_contract_standing_loss = 12 }
+	clr_country_flag = NKO_arms_contract_offer_pending
+	NKO_arms_contract_build_slots = yes
+	NKO_arms_contract_refresh_gui = yes
+}
+
+NKO_arms_contract_build_slots = {
+	clear_array = NKO_arms_contract_occupied_array
+	clear_array = NKO_arms_contract_class_array
+	clear_array = NKO_arms_contract_quota_array
+	clear_array = NKO_arms_contract_total_array
+	clear_array = NKO_arms_contract_deadline_array
+	clear_array = NKO_arms_contract_funds_array
+	clear_array = NKO_arms_contract_pp_array
+	clear_array = NKO_arms_contract_partner_array
+	for_loop_effect = {
+		start = 0
+		end = 3
+		add_to_array = { NKO_arms_contract_occupied_array = 0 }
+		add_to_array = { NKO_arms_contract_class_array = 0 }
+		add_to_array = { NKO_arms_contract_quota_array = 0 }
+		add_to_array = { NKO_arms_contract_total_array = 0 }
+		add_to_array = { NKO_arms_contract_deadline_array = 0 }
+		add_to_array = { NKO_arms_contract_funds_array = 0 }
+		add_to_array = { NKO_arms_contract_pp_array = 0 }
+		add_to_array = { NKO_arms_contract_partner_array = 0 }
+	}
+}
+
+NKO_arms_contract_refresh_gui = {
+	set_variable = { NKO_arms_contract_disp_class_0 = NKO_arms_contract_class_array^0 }
+	set_variable = { NKO_arms_contract_disp_quota_0 = NKO_arms_contract_quota_array^0 }
+	set_variable = { NKO_arms_contract_disp_total_0 = NKO_arms_contract_total_array^0 }
+	set_variable = { NKO_arms_contract_disp_deadline_0 = NKO_arms_contract_deadline_array^0 }
+	set_variable = { NKO_arms_contract_disp_class_1 = NKO_arms_contract_class_array^1 }
+	set_variable = { NKO_arms_contract_disp_quota_1 = NKO_arms_contract_quota_array^1 }
+	set_variable = { NKO_arms_contract_disp_total_1 = NKO_arms_contract_total_array^1 }
+	set_variable = { NKO_arms_contract_disp_deadline_1 = NKO_arms_contract_deadline_array^1 }
+	set_variable = { NKO_arms_contract_disp_class_2 = NKO_arms_contract_class_array^2 }
+	set_variable = { NKO_arms_contract_disp_quota_2 = NKO_arms_contract_quota_array^2 }
+	set_variable = { NKO_arms_contract_disp_total_2 = NKO_arms_contract_total_array^2 }
+	set_variable = { NKO_arms_contract_disp_deadline_2 = NKO_arms_contract_deadline_array^2 }
+	add_to_variable = { NKO_arms_contract_gui_dirty = 1 }
+}
+
+# Pick the contract class (gated by standing bands) and stage its terms.
+NKO_arms_contract_generate_offer = {
+	random_list = {
+		30 = { set_variable = { NKO_arms_contract_offer_class = 1 } }
+		25 = { set_variable = { NKO_arms_contract_offer_class = 2 } }
+		25 = {
+			set_variable = { NKO_arms_contract_offer_class = 3 }
+			modifier = { factor = 0  NOT = { check_variable = { NKO_arms_contract_standing > NKO_arms_contract_band_low } } }
+		}
+		20 = {
+			set_variable = { NKO_arms_contract_offer_class = 4 }
+			modifier = { factor = 0  NOT = { check_variable = { NKO_arms_contract_standing > NKO_arms_contract_band_mid } } }
+		}
+	}
+	NKO_arms_contract_set_offer_terms = yes
+	add_to_variable = { NKO_arms_contract_gui_dirty = 1 }
+}
+
+NKO_arms_contract_set_offer_terms = {
+	if = {
+		limit = { check_variable = { NKO_arms_contract_offer_class = 1 } }
+		set_variable = { NKO_arms_contract_offer_quota = 3 }
+		set_variable = { NKO_arms_contract_offer_deadline = 1095 }
+		set_variable = { NKO_arms_contract_offer_funds = 4 }
+		set_variable = { NKO_arms_contract_offer_pp = 20 }
+	}
+	else_if = {
+		limit = { check_variable = { NKO_arms_contract_offer_class = 2 } }
+		set_variable = { NKO_arms_contract_offer_quota = 2 }
+		set_variable = { NKO_arms_contract_offer_deadline = 1095 }
+		set_variable = { NKO_arms_contract_offer_funds = 6 }
+		set_variable = { NKO_arms_contract_offer_pp = 25 }
+	}
+	else_if = {
+		limit = { check_variable = { NKO_arms_contract_offer_class = 3 } }
+		set_variable = { NKO_arms_contract_offer_quota = 2 }
+		set_variable = { NKO_arms_contract_offer_deadline = 1095 }
+		set_variable = { NKO_arms_contract_offer_funds = 10 }
+		set_variable = { NKO_arms_contract_offer_pp = 35 }
+	}
+	else = {
+		set_variable = { NKO_arms_contract_offer_quota = 1 }
+		set_variable = { NKO_arms_contract_offer_deadline = 1460 }
+		set_variable = { NKO_arms_contract_offer_funds = 16 }
+		set_variable = { NKO_arms_contract_offer_pp = 50 }
+	}
+	if = {
+		limit = { check_variable = { NKO_arms_contract_standing > NKO_arms_contract_band_high } }
+		multiply_variable = { NKO_arms_contract_offer_funds = 1.25 }
+		multiply_variable = { NKO_arms_contract_offer_pp = 1.25 }
+		multiply_variable = { NKO_arms_contract_offer_deadline = 1.25 }
+		round_variable = NKO_arms_contract_offer_funds
+		round_variable = NKO_arms_contract_offer_pp
+		round_variable = NKO_arms_contract_offer_deadline
+	}
+	set_variable = { NKO_arms_contract_offer_advance = NKO_arms_contract_offer_funds }
+	multiply_variable = { NKO_arms_contract_offer_advance = 0.4 }
+	round_variable = NKO_arms_contract_offer_advance
+}
+
+NKO_arms_contract_accept_offer = {
+	set_temp_variable = { free_slot = -1 }
+	for_loop_effect = {
+		start = 0
+		end = 3
+		if = {
+			limit = {
+				check_variable = { free_slot < 0 }
+				check_variable = { NKO_arms_contract_occupied_array^v = 0 }
+			}
+			set_temp_variable = { free_slot = v }
+		}
+	}
+	if = {
+		limit = { check_variable = { free_slot > -1 } }
+		set_variable = { NKO_arms_contract_occupied_array^free_slot = 1 }
+		set_variable = { NKO_arms_contract_class_array^free_slot = NKO_arms_contract_offer_class }
+		set_variable = { NKO_arms_contract_quota_array^free_slot = NKO_arms_contract_offer_quota }
+		set_variable = { NKO_arms_contract_total_array^free_slot = NKO_arms_contract_offer_quota }
+		set_variable = { NKO_arms_contract_deadline_array^free_slot = NKO_arms_contract_offer_deadline }
+		set_variable = { NKO_arms_contract_pp_array^free_slot = NKO_arms_contract_offer_pp }
+		set_variable = { NKO_arms_contract_partner_array^free_slot = NKO_arms_contract_offer_partner }
+		set_temp_variable = { final_pay = NKO_arms_contract_offer_funds }
+		subtract_from_temp_variable = { final_pay = NKO_arms_contract_offer_advance }
+		set_variable = { NKO_arms_contract_funds_array^free_slot = final_pay }
+		add_to_variable = { NKO_arms_contract_count = 1 }
+		set_temp_variable = { treasury_change = NKO_arms_contract_offer_advance }
+		modify_treasury_effect = yes
+		add_to_variable = { NKO_arms_export_revenue = NKO_arms_contract_offer_advance }
+		if = {
+			limit = { check_variable = { NKO_arms_contract_count > 1 } }
+			for_loop_effect = {
+				start = 0
+				end = 3
+				if = {
+					limit = { check_variable = { NKO_arms_contract_occupied_array^v = 1 } }
+					add_to_variable = { NKO_arms_contract_deadline_array^v = NKO_arms_contract_grace }
+				}
+			}
+		}
+		NKO_arms_contract_refresh_gui = yes
+	}
+}
+
+NKO_arms_contract_decline_offer = {
+	clr_country_flag = NKO_arms_contract_offer_pending
+	add_to_variable = { NKO_arms_contract_gui_dirty = 1 }
+}
+
+# Credit one delivered batch against the most-urgent slot of the delivered class
+# (temp var deliver_class). Fulfils the slot when its quota reaches zero.
+NKO_arms_contract_credit_delivery = {
+	set_temp_variable = { target_slot = -1 }
+	set_temp_variable = { best_deadline = 999999 }
+	for_loop_effect = {
+		start = 0
+		end = 3
+		if = {
+			limit = {
+				check_variable = { NKO_arms_contract_occupied_array^v = 1 }
+				check_variable = { NKO_arms_contract_class_array^v = deliver_class }
+				check_variable = { NKO_arms_contract_quota_array^v > 0 }
+				check_variable = { NKO_arms_contract_deadline_array^v < best_deadline }
+			}
+			set_temp_variable = { target_slot = v }
+			set_temp_variable = { best_deadline = NKO_arms_contract_deadline_array^v }
+		}
+	}
+	if = {
+		limit = { check_variable = { target_slot > -1 } }
+		subtract_from_variable = { NKO_arms_contract_quota_array^target_slot = 1 }
+		if = {
+			limit = { check_variable = { NKO_arms_contract_quota_array^target_slot < 1 } }
+			set_temp_variable = { done_slot = target_slot }
+			NKO_arms_contract_fulfill_slot = yes
+		}
+	}
+	NKO_arms_contract_refresh_gui = yes
+}
+
+NKO_arms_contract_fulfill_slot = {
+	log = "[GetDateText]: [Root.GetName]: NKO_arms_contract_fulfill_slot - contract paid out"
+	set_temp_variable = { treasury_change = NKO_arms_contract_funds_array^done_slot }
+	modify_treasury_effect = yes
+	add_to_variable = { NKO_arms_export_revenue = NKO_arms_contract_funds_array^done_slot }
+	set_temp_variable = { pp_reward = NKO_arms_contract_pp_array^done_slot }
+	add_political_power = pp_reward
+	add_to_variable = { NKO_arms_contract_standing = NKO_arms_contract_standing_gain }
+	clamp_variable = { var = NKO_arms_contract_standing  min = 0  max = 100 }
+	add_to_variable = { NKO_arms_contract_completed = 1 }
+	add_timed_idea = { idea = NKO_arms_contract_revenue days = 365 }
+	# Count the contracting partner as a distinct client (capstone / +1% output / sanctions).
+	set_temp_variable = { NKO_arms_client_id = NKO_arms_contract_partner_array^done_slot }
+	set_temp_variable = { NKO_arms_export_deal_heat = 1 }
+	NKO_arms_export_register_deal = yes
+	NKO_arms_contract_clear_slot = yes
+	subtract_from_variable = { NKO_arms_contract_count = 1 }
+	country_event = { id = NKO_export.11 days = 1 }
+}
+
+NKO_arms_contract_miss_slot = {
+	add_timed_idea = { idea = NKO_arms_contract_displeasure days = 365 }
+	subtract_from_variable = { NKO_arms_contract_standing = NKO_arms_contract_standing_loss }
+	clamp_variable = { var = NKO_arms_contract_standing  min = 0  max = 100 }
+	set_temp_variable = { done_slot = gone_slot }
+	NKO_arms_contract_clear_slot = yes
+	subtract_from_variable = { NKO_arms_contract_count = 1 }
+	country_event = { id = NKO_export.12 days = 1 }
+}
+
+NKO_arms_contract_clear_slot = {
+	set_variable = { NKO_arms_contract_occupied_array^done_slot = 0 }
+	set_variable = { NKO_arms_contract_class_array^done_slot = 0 }
+	set_variable = { NKO_arms_contract_quota_array^done_slot = 0 }
+	set_variable = { NKO_arms_contract_total_array^done_slot = 0 }
+	set_variable = { NKO_arms_contract_deadline_array^done_slot = 0 }
+	set_variable = { NKO_arms_contract_funds_array^done_slot = 0 }
+	set_variable = { NKO_arms_contract_pp_array^done_slot = 0 }
+	set_variable = { NKO_arms_contract_partner_array^done_slot = 0 }
+}
+
+NKO_arms_contract_weekly_tick = {
+	set_temp_variable = { NKO_contract_tick_changed = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 3
+		if = {
+			limit = { check_variable = { NKO_arms_contract_occupied_array^v = 1 } }
+			subtract_from_variable = { NKO_arms_contract_deadline_array^v = 7 }
+			set_temp_variable = { NKO_contract_tick_changed = 1 }
+			if = {
+				limit = { check_variable = { NKO_arms_contract_deadline_array^v < 1 } }
+				set_temp_variable = { gone_slot = v }
+				NKO_arms_contract_miss_slot = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { NKO_contract_tick_changed = 1 } }
+		NKO_arms_contract_refresh_gui = yes
+	}
+}

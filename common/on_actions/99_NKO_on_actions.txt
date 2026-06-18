@@ -1,0 +1,76 @@
+on_actions = {
+
+	# -------------------------------------------------------------------------
+	# Second Economic Committee — arms & manpower exports.
+	# Per-tag hooks (on_weekly_NKO / on_monthly_NKO) fire ONLY for North Korea,
+	# so no global on_weekly sweep or per-country original_tag guard is needed —
+	# ROOT is always NKO here.
+	#   Weekly : save migration, rebuild the at-war client list, tick contract
+	#            deadlines.
+	#   Monthly: Russia munitions request, foreign arms contract offers.
+	#   Civil war: strip the mechanic from both survivor and breakaway.
+	# -------------------------------------------------------------------------
+
+	on_weekly_NKO = {
+		effect = {
+			# Save migration — activate for games that completed the KOMID focus
+			# before this mechanic shipped.
+			if = {
+				limit = {
+					has_completed_focus = NKO_create_komid
+					NOT = { has_country_flag = NKO_arms_export_active }
+				}
+				NKO_arms_export_initialize = yes
+			}
+			if = {
+				limit = { has_country_flag = NKO_arms_export_active }
+				NKO_arms_export_rebuild_targets = yes
+				NKO_arms_contract_weekly_tick = yes
+			}
+		}
+	}
+
+	on_monthly_NKO = {
+		effect = {
+			# Russia requests artillery shells while at war.
+			if = {
+				limit = {
+					has_country_flag = NKO_arms_export_active
+					country_exists = SOV
+					SOV = { has_war = yes }
+					NOT = { has_war_with = SOV }
+					NOT = { has_country_flag = NKO_arms_export_russia_offer_cooldown }
+				}
+				country_event = { id = NKO_export.1 days = 3 }
+				set_country_flag = { flag = NKO_arms_export_russia_offer_cooldown value = 1 days = 180 }
+			}
+
+			# Foreign arms contract offers from China / Russia (or another partner).
+			if = {
+				limit = {
+					NKO_arms_contract_can_solicit = yes
+					NOT = { has_country_flag = NKO_arms_contract_offer_cooldown }
+					OR = {
+						AND = { country_exists = SOV  NOT = { has_war_with = SOV } }
+						AND = { country_exists = CHI  NOT = { has_war_with = CHI } }
+					}
+				}
+				country_event = { id = NKO_export.10 days = 2 }
+				set_country_flag = { flag = NKO_arms_contract_offer_cooldown value = 1 days = 120 }
+			}
+		}
+	}
+
+	on_civil_war_started = {
+		effect = {
+			if = {
+				limit = { original_tag = NKO }
+				NKO_arms_export_suppress_for_collapse = yes
+			}
+			if = {
+				limit = { FROM = { original_tag = NKO } }
+				FROM = { NKO_arms_export_suppress_for_collapse = yes }
+			}
+		}
+	}
+}

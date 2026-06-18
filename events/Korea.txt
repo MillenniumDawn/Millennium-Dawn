@@ -8,6 +8,7 @@ add_namespace = nko_naval_buildup
 
 
 add_namespace = NKO_spa
+add_namespace = NKO_export
 ### China Demands Our Withdrawal from the Korean Peninsula
 country_event = {
 	id = korea.1
@@ -6513,5 +6514,141 @@ news_event = {
 		name = nko_naval_buildup.99.b
 		trigger = { NOT = { original_tag = NKO } }
 		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.99.b executed"
+	}
+}
+
+#############################################################
+# Second Economic Committee — arms & manpower export events  #
+#############################################################
+
+# Russia requests artillery shells and rockets while at war. Fired from
+# 99_NKO_on_actions.txt (on_monthly) when SOV is at war and off cooldown.
+country_event = {
+	id = NKO_export.1
+	title = NKO_export.1.t
+	desc = NKO_export.1.d
+	picture = GFX_north_korea_russia
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.1.a # Fulfil the order — shells, rockets, and a generous price
+		log = "[GetDateText]: [This.GetName]: NKO_export.1.a executed"
+		set_temp_variable = { NKO_arms_client_id = SOV.id }
+		SOV = { save_event_target_as = NKO_arms_client }
+		NKO_export_do_munitions = yes
+		set_temp_variable = { NKO_arms_export_payment = 2 }
+		NKO_arms_export_credit_payment = yes
+		add_tech_bonus = { name = MBT_4 bonus = 0.5 uses = 1 category = CAT_mbt }
+		add_tech_bonus = { name = microprocessors bonus = 0.5 uses = 1 category = CAT_computing_tech }
+		ai_chance = { factor = 80 }
+	}
+
+	option = {
+		name = NKO_export.1.b # Not at this time
+		log = "[GetDateText]: [This.GetName]: NKO_export.1.b executed"
+		ai_chance = { factor = 20 }
+	}
+}
+
+# Capstone — ten nations supplied. Fired from the NKO_arms_export_capstone decision.
+country_event = {
+	id = NKO_export.99
+	title = NKO_export.99.t
+	desc = NKO_export.99.d
+	picture = GFX_NKO_russian_treaty
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.99.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.99.a executed"
+	}
+}
+
+# Foreign arms contract offer. Fired by the solicit decision and from
+# 99_NKO_on_actions.txt (on_monthly). The immediate picks the partner and stages
+# the offer terms; the accept option only appears once an offer is pending.
+country_event = {
+	id = NKO_export.10
+	title = NKO_export.10.t
+	desc = NKO_export.10.d
+	picture = GFX_NKO_russian_treaty
+
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = { NKO_arms_contract_can_solicit = yes }
+			set_variable = { NKO_arms_contract_offer_partner = 0 }
+			if = {
+				limit = { country_exists = SOV  NOT = { has_war_with = SOV } }
+				SOV = { save_event_target_as = NKO_contract_partner }
+				set_variable = { NKO_arms_contract_offer_partner = SOV.id }
+			}
+			else_if = {
+				limit = { country_exists = CHI  NOT = { has_war_with = CHI } }
+				CHI = { save_event_target_as = NKO_contract_partner }
+				set_variable = { NKO_arms_contract_offer_partner = CHI.id }
+			}
+			else = {
+				random_country = {
+					limit = {
+						is_major = yes
+						exists = yes
+						NOT = { original_tag = NKO }
+						NOT = { has_war_with = NKO }
+					}
+					save_event_target_as = NKO_contract_partner
+					set_variable = { PREV.NKO_arms_contract_offer_partner = THIS.id }
+				}
+			}
+			NKO_arms_contract_generate_offer = yes
+			set_country_flag = NKO_arms_contract_offer_pending
+		}
+	}
+
+	option = {
+		name = NKO_export.10.a # Accept the contract
+		trigger = { has_country_flag = NKO_arms_contract_offer_pending }
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.a executed"
+		NKO_arms_contract_accept_offer = yes
+		clr_country_flag = NKO_arms_contract_offer_pending
+	}
+
+	option = {
+		name = NKO_export.10.b # Decline
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.b executed"
+		NKO_arms_contract_decline_offer = yes
+	}
+}
+
+# Contract fulfilled.
+country_event = {
+	id = NKO_export.11
+	title = NKO_export.11.t
+	desc = NKO_export.11.d
+	picture = GFX_north_korea_russia
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.11.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.11.a executed"
+	}
+}
+
+# Contract deadline missed.
+country_event = {
+	id = NKO_export.12
+	title = NKO_export.12.t
+	desc = NKO_export.12.d
+	picture = GFX_NKO_russian_treaty
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.12.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.12.a executed"
 	}
 }
