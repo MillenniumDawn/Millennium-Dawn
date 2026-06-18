@@ -976,6 +976,63 @@ assert_finds(
     "create_wargoal in effect_tooltip without hint flagged",
 )
 
+# 10g. war effect nested in a foreign country's scope (sponsored proxy war) →
+# the owner does not go to war, so no hint is required → no flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = PER_arm_the_rebels\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\thidden_effect = {\n",
+        "\t\t\t\tSAU = {\n",
+        "\t\t\t\t\tdeclare_war_on = { target = QTF type = annex_everything }\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "proxy war in a foreign scope not flagged",
+)
+
+# 10h. owner war restored via ROOT inside a foreign loop → still owner → flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_loop_then_owner\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tevery_country = {\n",
+        "\t\t\t\tROOT = {\n",
+        "\t\t\t\t\tcreate_wargoal = { target = MOR }\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "owner war reached via ROOT inside a foreign scope flagged",
+)
+
+# 10i. owner scoping into its OWN tag (PER_ focus, PER = { create_wargoal }) is
+# still the owner going to war → flag when no hint
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = PER_alawites_in_syria\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tPER = {\n",
+        "\t\t\t\tcreate_wargoal = { type = annex_everything target = SYR }\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "owner self-scope create_wargoal without hint flagged",
+)
+
 
 # Summary
 
