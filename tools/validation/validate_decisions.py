@@ -1465,6 +1465,44 @@ class Validator(BaseValidator):
             "Targeted decisions using war_with_on_* = FROM (silently fails — use war_with_target_on_* = yes):",
         )
 
+    def validate_missing_war_hint(self):
+        """Flag decisions that declare war but carry no war_with_* hint.
+
+        A decision whose complete_effect/remove_effect/timeout_effect calls
+        create_wargoal or declare_war should set one of the war_with_on_* (fixed
+        target) or war_with_target_on_* (FROM target) attributes so the AI
+        prepares for the war. create_wargoal inside an effect_tooltip still
+        represents an intended war, so its presence counts; the hint anywhere in
+        the decision body clears it.
+        """
+        self._log_section(
+            "Checking decisions declaring war for a missing war_with_* hint..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+        hints = (
+            "war_with_on_complete",
+            "war_with_on_remove",
+            "war_with_on_timeout",
+            "war_with_target_on_complete",
+            "war_with_target_on_remove",
+            "war_with_target_on_timeout",
+        )
+
+        for d in factories:
+            if not re.search(r"\b(?:create_wargoal|declare_war_on)\b", d.raw):
+                continue
+            if any(hint in d.raw for hint in hints):
+                continue
+            results.append(f"{d.token:<55}{d.source_basename}")
+
+        self._report(
+            results,
+            "✓ No decisions declaring war without a war_with_* hint",
+            "Decisions that declare war but have no war_with_on_* / war_with_target_on_* hint (AI won't prepare):",
+        )
+
     def validate_cancel_if_not_visible(self):
         """Flag decisions with cancel_if_not_visible = yes but no visible block.
 
@@ -1719,6 +1757,7 @@ class Validator(BaseValidator):
         self.validate_missing_localisation()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
+        self.validate_missing_war_hint()
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
         self.validate_state_target_with_targets()
