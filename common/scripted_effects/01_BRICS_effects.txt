@@ -22,9 +22,9 @@ BRICS_join_via_event = {
 BRICS_request_observer_status_via_event = {
 	if = {
 		limit = {
-			NOT = { has_country_flag = BRICS_observer_status }
-			NOT = { has_country_flag = BRICS_associate_status }
-			NOT = { has_country_flag = BRICS_full_member_status }
+			NOT = { has_idea = RAJ_BRICS_observer }
+			NOT = { has_idea = RAJ_BRICS_associate }
+			NOT = { has_idea = RAJ_BRICS }
 		}
 		BRICS_join_observer = yes
 	}
@@ -38,22 +38,20 @@ BRICS_join = {
 		limit = { has_idea = RAJ_BRICS_associate }
 		remove_ideas = RAJ_BRICS_associate
 		remove_from_array = { global.BRICS_associates = THIS.id }
-		clr_country_flag = BRICS_associate_status
 	}
 	if = {
 		limit = { has_idea = RAJ_BRICS_observer }
 		remove_ideas = RAJ_BRICS_observer
 		remove_from_array = { global.BRICS_observers = THIS.id }
-		clr_country_flag = BRICS_observer_status
 	}
 	clr_country_flag = BRICS_application_pending
 	add_ideas = RAJ_BRICS
-	# RAJ_BRICS on_add registers BRICS_full_member_status + the BRICS_full_members array.
+
+	# RAJ_BRICS on_add registers the BRICS_full_members array; has_idea = RAJ_BRICS is the full-member check.
 	# Leader-side work, on whoever holds RAJ_brics_leadership. THIS = leader, PREV = the joining country.
 	random_scope_in_array = {
 		array = global.BRICS_potential
 		limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
-		if = { limit = { is_ai = no } add_to_variable = { global.BRICS_gui_dirty = 1 } }
 		if = { limit = { has_idea = RAJ_BRICS_bank } PREV = { add_ideas = RAJ_BRICS_bank } }
 		if = { limit = { has_idea = RAJ_BRICS_cur } PREV = { add_ideas = RAJ_BRICS_cur } }
 		if = { limit = { is_faction_leader = yes } add_to_faction = PREV }
@@ -72,16 +70,13 @@ BRICS_join_associate = {
 		limit = { has_idea = RAJ_BRICS_observer }
 		remove_ideas = RAJ_BRICS_observer
 		remove_from_array = { global.BRICS_observers = THIS.id }
-		clr_country_flag = BRICS_observer_status
 	}
 	clr_country_flag = BRICS_application_pending
 	add_ideas = RAJ_BRICS_associate
-	set_country_flag = BRICS_associate_status
 	add_to_array = { global.BRICS_associates = THIS.id }
 	random_scope_in_array = {
 		array = global.BRICS_potential
 		limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
-		if = { limit = { is_ai = no } add_to_variable = { global.BRICS_gui_dirty = 1 } }
 		add_opinion_modifier = { target = PREV modifier = RAJ_brics_associate_opinion }
 		reverse_add_opinion_modifier = { target = PREV modifier = RAJ_brics_associate_opinion }
 		BRICS_update_brics_strength = yes
@@ -93,12 +88,10 @@ BRICS_join_associate = {
 BRICS_join_observer = {
 	clr_country_flag = BRICS_application_pending
 	add_ideas = RAJ_BRICS_observer
-	set_country_flag = BRICS_observer_status
 	add_to_array = { global.BRICS_observers = THIS.id }
 	random_scope_in_array = {
 		array = global.BRICS_potential
 		limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
-		if = { limit = { is_ai = no } add_to_variable = { global.BRICS_gui_dirty = 1 } }
 		add_opinion_modifier = { target = PREV modifier = RAJ_brics_observer_opinion }
 		reverse_add_opinion_modifier = { target = PREV modifier = RAJ_brics_observer_opinion }
 		BRICS_update_brics_strength = yes

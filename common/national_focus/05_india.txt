@@ -17745,20 +17745,26 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus RAJ_BRICS_integer"
-			news_event = RAJ_eastas.2
-			add_ideas = RAJ_BRICS
+			# Invite the historical founders. In brics_join.6: ROOT = invited founder, FROM = India (the forming leader).
 			BRA = {
-				country_event = brics_join.1
+				country_event = brics_join.6
 			}
 			SOV = {
-				country_event = brics_join.1
+				country_event = brics_join.6
 			}
 			CHI = {
-				country_event = brics_join.1
+				country_event = brics_join.6
 			}
 			SAF = {
-				country_event = brics_join.1
+				country_event = brics_join.6
 			}
+			newline = yes
+			news_event = RAJ_eastas.2
+			add_ideas = RAJ_BRICS
+			set_variable = { global.brics_strength = 0 }
+			set_variable = { global.brics_pp = 0.10 }
+			set_variable = { global.brics_trade = 0.15 }
+			add_dynamic_modifier = { modifier = RAJ_brics_leadership }
 		}
 
 		ai_will_do = {
@@ -17781,16 +17787,39 @@ focus_tree = {
 		cost = 6
 
 		prerequisite = { focus = RAJ_BRICS_integer }
-		prerequisite = { focus = RAJ_tradepar_china }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
+		available = {
+			country_exists = CHI
+			CHI = { has_idea = RAJ_BRICS }
+		}
+		bypass = {
+			NOT = { country_exists = CHI }
+			CHI = { NOT = { has_idea = RAJ_BRICS } }
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus RAJ_BRICS_tower_project"
-			CHI = {
-				country_event = indian_event.9
+			CHI = { country_event = indian_event.9 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				CHI = {
+					set_temp_variable = { skip_payment = 1 }
+					one_office_construction = yes
+					for_each_scope_loop = {
+						array = global.BRICS_full_members
+						tooltip = TT_ALL_BRICS_NATIONS_GAIN
+						if = { limit = { NOT = { tag = CHI } }
+							set_temp_variable = { skip_payment = 1 }
+							one_office_construction = yes
+							set_temp_variable = { percent_change = 3 }
+							set_temp_variable = { tag_index = CHI }
+							change_influence_percentage = yes
+						}
+					}
+				}
 			}
-			custom_effect_tooltip = RAJ_tower_tt
 		}
 
 		ai_will_do = {
@@ -17814,18 +17843,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus RAJ_new_development_bank"
-			country_event = indian_event.10
-			BRA = {
-				country_event = indian_event.10
-			}
-			SOV = {
-				country_event = indian_event.10
-			}
-			CHI = {
-				country_event = indian_event.10
-			}
-			SAF = {
-				country_event = indian_event.10
+			add_ideas = RAJ_BRICS_bank
+			for_each_scope_loop = {
+				array = global.BRICS_full_members
+				tooltip = TT_ALL_BRICS_NATIONS_GAIN
+				if = { limit = { NOT = { tag = ROOT } }
+					country_event = indian_event.10
+				}
 			}
 		}
 
@@ -17853,11 +17877,11 @@ focus_tree = {
 			for_each_scope_loop = {
 				array = global.BRICS_full_members
 				tooltip = TT_ALL_BRICS_NATIONS_GAIN
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = improve_trade
-				}
 				add_political_power = 100
+				if = { limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = ROOT modifier = improve_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
+				}
 			}
 		}
 
@@ -17920,21 +17944,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus RAJ_BRICS_pro_tempore"
 			news_event = RAJ_eastas.3
-			add_political_power = 100
-			add_stability = 0.025
-			BRA = {
-				add_political_power = 100
-				add_stability = 0.025
-			}
-			SOV = {
-				add_political_power = 100
-				add_stability = 0.025
-			}
-			CHI = {
-				add_political_power = 100
-				add_stability = 0.025
-			}
-			SAF = {
+			for_each_scope_loop = {
+				array = global.BRICS_full_members
+				tooltip = TT_ALL_BRICS_NATIONS_GAIN
 				add_political_power = 100
 				add_stability = 0.025
 			}
@@ -17963,17 +17975,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus RAJ_common_currenc_project"
 			add_ideas = RAJ_BRICS_cur
 			one_random_network_infrastructure = yes
-			BRA = {
-				country_event = indian_event.11
-			}
-			SOV = {
-				country_event = indian_event.11
-			}
-			CHI = {
-				country_event = indian_event.11
-			}
-			SAF = {
-				country_event = indian_event.11
+			for_each_scope_loop = {
+				array = global.BRICS_full_members
+				tooltip = TT_ALL_BRICS_NATIONS_GAIN
+				if = { limit = { NOT = { tag = ROOT } }
+					country_event = indian_event.11
+				}
 			}
 		}
 
@@ -17986,33 +17993,7 @@ focus_tree = {
 		id = RAJ_BRICS_expansion
 		icon = ExpandTrade
 
-		x = 5
-		y = 7
-		relative_position_id = RAJ_indian_minist_of_foreign_affairs
-
-		cost = 4.29
-
-		prerequisite = { focus = RAJ_BRICS_pro_tempore focus = RAJ_BRICS_contig_reserv_arrang }
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus RAJ_BRICS_expansion"
-			PER = {
-				country_event = indian_event.12
-			}
-		}
-
-		ai_will_do = {
-			base = 1
-		}
-	}
-
-	focus = {
-		id = RAJ_invite_observer_states
-		icon = union_representation_act
-
-		x = 9
+		x = 6
 		y = 7
 		relative_position_id = RAJ_indian_minist_of_foreign_affairs
 
@@ -18022,19 +18003,18 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
+		available = {
+			country_exists = PER
+		}
+		bypass = {
+			NOT = { country_exists = PER }
+		}
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus RAJ_invite_observer_states"
-			every_country = {
-				limit = {
-					has_government = communism
-					NOT = { tag = RAJ }
-				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = improve_trade
-				}
+			log = "[GetDateText]: [Root.GetName]: Focus RAJ_BRICS_expansion"
+			PER = {
+				country_event = indian_event.12
 			}
-			add_political_power = 100
 		}
 
 		ai_will_do = {
@@ -18053,8 +18033,6 @@ focus_tree = {
 		cost = 4.29
 
 		prerequisite = { focus = RAJ_BRICS_expansion }
-		prerequisite = { focus = RAJ_invite_observer_states }
-		prerequisite = { focus = RAJ_strat_milcoop_china }
 		mutually_exclusive = { focus = RAJ_BRICS_as_econ_alliance }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -18075,11 +18053,6 @@ focus_tree = {
 			}
 			create_faction_from_template = faction_template_brics
 			add_ideas = faction_brics_alliance
-			set_global_flag = BRICS_created
-			if = { limit = { is_ai = no } add_to_variable = { global.BRICS_gui_dirty = 1 } }
-			hidden_effect = {
-				remove_ideas = RAJ_BRICS
-			}
 			for_each_scope_loop = {
 				array = global.BRICS_full_members
 				tooltip = TT_ALL_BRICS_NATIONS_GAIN
@@ -18088,10 +18061,6 @@ focus_tree = {
 					country_event = { id = indian_event.55 days = 1 }
 				}
 			}
-			set_variable = { global.brics_strength = 0 }
-			set_variable = { global.brics_pp = 0.10 }
-			set_variable = { global.brics_trade = 0.15 }
-			add_dynamic_modifier = { modifier = RAJ_brics_leadership }
 		}
 
 		ai_will_do = {
@@ -18110,50 +18079,17 @@ focus_tree = {
 		cost = 4.29
 
 		prerequisite = { focus = RAJ_BRICS_expansion }
-		prerequisite = { focus = RAJ_invite_observer_states }
 		mutually_exclusive = { focus = RAJ_BRICS_as_polit_alliance }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus RAJ_BRICS_as_econ_alliance"
-			add_timed_idea = {
-				idea = idea_focus_generic_public_service_investment
-				days = 365
+			for_each_scope_loop = {
+				array = global.BRICS_full_members
+				tooltip = TT_ALL_BRICS_NATIONS_GAIN
+				add_timed_idea = { idea = idea_focus_generic_public_service_investment days = 365 }
 			}
-			BRA = {
-				add_timed_idea = {
-					idea = idea_focus_generic_public_service_investment
-					days = 365
-				}
-			}
-			SOV = {
-				add_timed_idea = {
-					idea = idea_focus_generic_public_service_investment
-					days = 365
-				}
-			}
-			CHI = {
-				add_timed_idea = {
-					idea = idea_focus_generic_public_service_investment
-					days = 365
-				}
-			}
-			SAF = {
-				add_timed_idea = {
-					idea = idea_focus_generic_public_service_investment
-					days = 365
-				}
-			}
-			set_global_flag = BRICS_created
-			hidden_effect = {
-				remove_ideas = RAJ_BRICS
-			}
-			if = { limit = { is_ai = no } add_to_variable = { global.BRICS_gui_dirty = 1 } }
-			set_variable = { global.brics_strength = 0 }
-			set_variable = { global.brics_pp = 0.10 }
-			set_variable = { global.brics_trade = 0.15 }
-			add_dynamic_modifier = { modifier = RAJ_brics_leadership }
 		}
 
 		ai_will_do = {
