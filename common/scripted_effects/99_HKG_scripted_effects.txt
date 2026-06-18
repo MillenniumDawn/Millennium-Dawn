@@ -1,6 +1,30 @@
 # Hong Kong scripted effects
 # LegCo motion seat calculations, Railway/XRL motion outcomes
 
+HKG_start_mainland_resource_supply = {
+	if = {
+		limit = { country_exists = CHI }
+		if = {
+			limit = { NOT = { has_idea = HKG_mainland_resource_supply } }
+			add_ideas = HKG_mainland_resource_supply
+		}
+		CHI = {
+			if = {
+				limit = { NOT = { has_idea = CHI_hong_kong_resource_drain } }
+				add_ideas = CHI_hong_kong_resource_drain
+			}
+		}
+	}
+}
+
+HKG_stop_mainland_resource_supply = {
+	remove_ideas = HKG_mainland_resource_supply
+	if = {
+		limit = { country_exists = CHI }
+		CHI = { remove_ideas = CHI_hong_kong_resource_drain }
+	}
+}
+
 #####################
 # LegCo Seat System
 #####################
@@ -334,6 +358,7 @@ HKG_contract_accept_offer = {
 			limit = { NOT = { has_idea = HKG_contract_resource_access } }
 			add_ideas = HKG_contract_resource_access
 		}
+		HKG_start_mainland_resource_supply = yes
 		set_temp_variable = { treasury_change = HKG_contract_offer_advance }
 		modify_treasury_effect = yes
 		add_to_variable = { HKG_contract_funds = HKG_contract_offer_advance }
@@ -496,6 +521,13 @@ HKG_contract_update_resource_access = {
 			has_idea = HKG_contract_resource_access
 		}
 		remove_ideas = HKG_contract_resource_access
+	}
+	if = {
+		limit = {
+			check_variable = { HKG_contract_count = 0 }
+			has_idea = HKG_mainland_resource_supply
+		}
+		HKG_stop_mainland_resource_supply = yes
 	}
 }
 
