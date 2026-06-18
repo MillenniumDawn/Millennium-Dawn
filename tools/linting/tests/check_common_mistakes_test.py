@@ -23,6 +23,7 @@ from check_common_mistakes import (
     _check_duplicate_add_to_variable,
     _check_embargo_dlc_guard,
     _check_every_country_member_array,
+    _check_focus_missing_war_hint,
     _check_has_idea_mutex_in_not_block,
     _check_influence_setter_scope,
     _check_tautological_or,
@@ -872,6 +873,107 @@ assert_finds(
     ],
     0,
     "tautological OR in comment not flagged",
+)
+
+
+# 10. Focus declares war without will_lead_to_war_with
+
+print("\n── Focus missing war hint ──")
+
+# 10a. create_wargoal without the hint → flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_invade_morocco\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcreate_wargoal = { type = annex_everything target = MOR }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "create_wargoal without will_lead_to_war_with flagged",
+)
+
+# 10b. create_wargoal with the hint → no flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_invade_morocco\n",
+        "\t\twill_lead_to_war_with = MOR\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcreate_wargoal = { type = annex_everything target = MOR }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "create_wargoal with will_lead_to_war_with not flagged",
+)
+
+# 10c. declare_war without the hint → flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_strike_first\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tdeclare_war_on = { target = MOR type = annex_everything }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "declare_war without will_lead_to_war_with flagged",
+)
+
+# 10d. focus that does not declare war → no flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_build_economy\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tadd_political_power = 50\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "focus without create_wargoal not flagged",
+)
+
+# 10e. one compliant + one non-compliant focus → exactly one flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_good\n",
+        "\t\twill_lead_to_war_with = MOR\n",
+        "\t\tcompletion_reward = { create_wargoal = { target = MOR } }\n",
+        "\t}\n",
+        "\tfocus = {\n",
+        "\t\tid = ALG_bad\n",
+        "\t\tcompletion_reward = { create_wargoal = { target = TUN } }\n",
+        "\t}\n",
+    ],
+    1,
+    "only the focus missing the hint is flagged",
+)
+
+# 10f. create_wargoal inside effect_tooltip (display-only) still counts → flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_tooltip_only\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\teffect_tooltip = {\n",
+        "\t\t\t\tcreate_wargoal = { target = MOR }\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "create_wargoal in effect_tooltip without hint flagged",
 )
 
 

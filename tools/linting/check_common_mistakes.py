@@ -83,6 +83,10 @@ _RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
 _RE_NOT_BLOCK_OPEN = re.compile(r"^\s*NOT\s*=\s*\{")
 _RE_TRIGGER_ASSIGN = re.compile(r"^(\w+)\s*=\s*([\w.]+)$")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
+# A focus/decision block that declares war via create_wargoal or declare_war
+# must carry the matching AI war hint so the AI prepares for the war.
+_RE_DECLARES_WAR = re.compile(r"\b(?:create_wargoal|declare_war)\w*")
+_RE_WILL_LEAD_TO_WAR = re.compile(r"\bwill_lead_to_war_with\b")
 _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 _RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
 _RE_TOPLEVEL_WORD = re.compile(r"^\w")
@@ -280,6 +284,39 @@ def _check_focus_available_always_no(lines):
                                 )
                             )
                             break
+        else:
+            i += 1
+    return issues
+
+
+def _check_focus_missing_war_hint(lines):
+    """Flag focus blocks that declare war but carry no will_lead_to_war_with hint.
+
+    A focus whose completion_reward calls create_wargoal/declare_war should set
+    will_lead_to_war_with = TAG so the AI prepares for the war. create_wargoal
+    inside an effect_tooltip still represents an intended war, so its presence
+    counts; the hint anywhere in the block clears the focus.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if _RE_FOCUS_BLOCK_OPEN.match(lines[i]):
+            start = i
+            block, i = _get_block(lines, start)
+            code = [strip_inline_comment(bl) for bl in block]
+            if any(_RE_DECLARES_WAR.search(c) for c in code) and not any(
+                _RE_WILL_LEAD_TO_WAR.search(c) for c in code
+            ):
+                id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
+                focus_id = id_match.group(1) if id_match else "<unknown>"
+                issues.append(
+                    (
+                        start + 1,
+                        f"Focus {focus_id} has create_wargoal but no will_lead_to_war_with"
+                        " -- add will_lead_to_war_with = TAG so the AI prepares for war",
+                    )
+                )
         else:
             i += 1
     return issues
@@ -1354,6 +1391,7 @@ def check_file(filepath):
 
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))
+        issues.extend(_check_focus_missing_war_hint(lines))
     if is_decision_file:
         issues.extend(_check_decision_available_always_no(lines))
         issues.extend(_check_decision_allowed_dynamic(lines))
