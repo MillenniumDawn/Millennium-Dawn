@@ -102,11 +102,6 @@ const home = defineCollection({
   schema: homeSchema,
 });
 
-const devDiaryArchive = defineCollection({
-  loader: glob({ pattern: "**/*.yml", base: "./src/content/devDiaryArchive" }),
-  schema: devDiaryExternalSchema,
-});
-
 const devDiaryExternal = defineCollection({
   loader: glob({ pattern: "**/*.yml", base: "./src/content/devDiaryExternal" }),
   schema: devDiaryExternalSchema,
@@ -130,7 +125,6 @@ export const collections = {
   release,
   sections,
   home,
-  devDiaryArchive,
   devDiaryExternal,
   knownSubmods,
 };
