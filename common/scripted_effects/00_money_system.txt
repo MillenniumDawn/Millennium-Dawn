@@ -123,8 +123,16 @@ expense_modifier_calculations = {
 	multiply_temp_variable = { gdp_scaling_modifier = @spending_laws_gdp_scaling }
 	add_to_temp_variable = { gdp_scaling_modifier = 1 }
 
-	set_variable = { common_money_modifier = inflation_multiplier }
-	multiply_variable = { common_money_modifier = gdp_scaling_modifier }
+	set_variable = {
+		common_money_modifier = {
+			value = inflation_multiplier
+			multiply = {
+				value = gdp_per_capita
+				multiply = @spending_laws_gdp_scaling
+				add = 1
+			}
+		}
+	}
 }
 
 # Effect: calculate_tax_rate
@@ -134,61 +142,115 @@ calculate_tax_rate = {
 		if = { limit = { NOT = { has_dynamic_modifier = { modifier = impact_of_tax_dynamic_modifier } } }
 			add_dynamic_modifier = { modifier = impact_of_tax_dynamic_modifier }
 		}
-		set_variable = { consumer_goods_from_corporate_tax = corporate_tax_rate }
-		multiply_variable = { consumer_goods_from_corporate_tax = 0.015 } # Doubles the Consumer Goods Penalty
 
-		set_variable = { receiving_investment_cost_form_corporate_tax = corporate_tax_rate }
-		multiply_variable = { receiving_investment_cost_form_corporate_tax = 0.01 }
+		set_variable = {
+			consumer_goods_from_corporate_tax = {
+				value = corporate_tax_rate
+				multiply = 0.015
+			}
+		}
+
+		set_variable = {
+			receiving_investment_cost_form_corporate_tax = {
+				value = corporate_tax_rate
+				multiply = 0.01
+			}
+		}
 
 		# Productivity
-		set_temp_variable = { base_modifier = corporate_tax_rate }
-		multiply_temp_variable = { base_modifier = -1 }
-		add_to_temp_variable = { base_modifier = 20 }
-		set_variable = { productivity_growth_modifier_from_corporate_tax = base_modifier }
-		multiply_variable = { productivity_growth_modifier_from_corporate_tax = 0.005 }
+		set_variable = {
+			productivity_growth_modifier_from_corporate_tax = {
+				value = corporate_tax_rate
+				multiply = -1
+				add = 20
+				multiply = 0.005
+			}
+		}
 
-		set_variable = { stability_factor_from_population_tax = population_tax_rate }
-		multiply_variable = { stability_factor_from_population_tax = -0.01 }
+		set_variable = {
+			stability_factor_from_population_tax = {
+				value = population_tax_rate
+				multiply = -0.01
+			}
+		}
 
 		# Average Tax Rate
-		set_variable = { tax_rate = corporate_tax_rate }
-		add_to_variable = { tax_rate = population_tax_rate }
-		multiply_variable = { tax_rate = 0.5 }
-		round_variable = tax_rate
+		set_variable = {
+			tax_rate = {
+				value = corporate_tax_rate
+				add = population_tax_rate
+				multiply = 0.5
+				round = yes
+			}
+		}
 
-		set_variable = { tax_rate_change_5 = 250 }
-		set_variable = { tax_rate_change = 50 }
-
-		set_temp_variable = { tax_rate_multiplier = 1 }
-		add_to_temp_variable = { tax_rate_multiplier = modifier@tax_rate_change_multiplier_modifier }
-
-		multiply_variable = { tax_rate_change_5 = tax_rate_multiplier }
-		multiply_variable = { tax_rate_change = tax_rate_multiplier }
-		round_variable = tax_rate_change_5
-		round_variable = tax_rate_change
+		set_variable = {
+			tax_rate_change_5 = {
+				value = 250
+				multiply = {
+					value = 1
+					add = modifier@tax_rate_change_multiplier_modifier
+				}
+				round = yes
+			}
+		}
+		set_variable = {
+			tax_rate_change = {
+				value = 50
+				multiply = {
+					value = 1
+					add = modifier@tax_rate_change_multiplier_modifier
+				}
+				round = yes
+			}
+		}
 	}
 }
 
 # Effect: calculate_tax_gain
 # Purpose: Calculates the amount of taxes earned based of ROOT's corporate taxes and population taxes
 calculate_tax_gain = {
-	set_variable = { tax_gain = 0 }
 	# Update starting tax rate
 	calculate_tax_rate = yes
 
-	# Corporate Tax Expansion
-	set_variable = { corporate_tax = 0 }
-
 	# Subsistence Agriculture Tax Gain Income
-	set_variable = { agriculture_tax_gain = gdp_from_agriculture }
 	# Build unified agriculture multiplier: 0.019 * corporate_tax_rate * 0.01 * (agricolture_productivity_modifier * agriculture_tax_modifier + 1)
-	set_temp_variable = { agriculture_tax_gain_multiplier = modifier@agricolture_productivity_modifier }
-	multiply_temp_variable = { agriculture_tax_gain_multiplier = modifier@agriculture_tax_modifier }
-	add_to_temp_variable = { agriculture_tax_gain_multiplier = 1 }
-	multiply_temp_variable = { agriculture_tax_gain_multiplier = corporate_tax_rate }
-	multiply_temp_variable = { agriculture_tax_gain_multiplier = 0.00019 } # 0.019 * 0.01 pre-computed
-	multiply_variable = { agriculture_tax_gain = agriculture_tax_gain_multiplier }
-	clamp_variable = { var = agriculture_tax_gain min = 0.001 }
+	set_variable = {
+		agriculture_tax_gain = {
+			value = gdp_from_agriculture
+			multiply = {
+				value = modifier@agricolture_productivity_modifier
+				multiply = modifier@agriculture_tax_modifier
+				add = 1
+				multiply = corporate_tax_rate
+				multiply = 0.00019
+			}
+			clamp = { min = 0.001 max = 100000000 }
+		}
+	}
+
+	set_temp_variable = {
+		unified_building_multiplier = {
+			value = @money_control_factor_scaling
+			multiply = corporate_tax_rate
+			# Tax Gain Multiplier
+			multiply = {
+				value = 1
+				add = modifier@tax_gain_multiplier_modifier
+			}
+			multiply = 0.007
+			# Corporate Tax Income
+			multiply = {
+				value = 1
+				add = modifier@corporate_tax_income_multiplier_modifier
+			}
+			# Overall productivity
+			multiply = {
+				value = overall_productivity
+				multiply = 0.001
+			}
+		}
+	}
 
 	# Set base building counts (base tax constants will be factored into building-specific unified multipliers)
 	# Civilian Factories - base constant 2.5
@@ -199,216 +261,278 @@ calculate_tax_gain = {
 	# Composites Plants - base constant 3.5
 	# Synthetic Refineries - base constant 3
 	# Agriculture Districts - base constant 2.60
-	set_variable = { civil_fac_tax = industrial_complex_total }
-	set_variable = { military_fac_tax = military_fac }
-	set_variable = { dockyard_tax = dockyard_fac }
-	set_variable = { office_tax = office_park_total }
-	set_variable = { microchip_plant_tax = microchip_plant_total }
-	set_variable = { composite_plant_tax = composite_plant_total }
-	set_variable = { synthetic_refinery_tax = synthetic_refinery_total }
-	set_variable = { agriculture_district_tax = agriculture_district_total }
-	set_variable = { nuclear_reactor_tax = nuclear_reactors }
-	set_variable = { fossil_powerplant_tax = number_of_fossil_pps }
-	set_variable = { renewable_energy_tax = renewable_energy_infra }
-	set_variable = { internet_station_tax = internet_station_total }
 
-	# Calculate unified building tax multiplier (applied once at the end)
-	# This combines: control_factor, corporate_tax_rate, tax_gain_multiplier,
-	# 7-day display (0.007), corporate_tax_gain_multiplier, and overall_productivity
-
-	# Additional additive modifiers (used for both buildings and population)
-	set_temp_variable = { tax_gain_multiplier = 1 }
-	add_to_temp_variable = { tax_gain_multiplier = modifier@tax_gain_multiplier_modifier }
-
-	##For display
-	set_variable = { tax_gain_multiplier_display = tax_gain_multiplier }
-	subtract_from_variable = { tax_gain_multiplier_display = 1 }
-
-	# Build the unified multiplier
-	set_temp_variable = { unified_building_multiplier = @money_control_factor_scaling }
-	multiply_temp_variable = { unified_building_multiplier = corporate_tax_rate }
-	multiply_temp_variable = { unified_building_multiplier = tax_gain_multiplier }
-	multiply_temp_variable = { unified_building_multiplier = 0.007 } # 7-day display
-
-	# Corporate Tax Modifier
-	set_temp_variable = { corporate_tax_gain_multiplier = 1 }
-	add_to_temp_variable = { corporate_tax_gain_multiplier = modifier@corporate_tax_income_multiplier_modifier }
-	multiply_temp_variable = { unified_building_multiplier = corporate_tax_gain_multiplier }
-
-	# Overall productivity
-	set_temp_variable = { productivity_calculations_var = overall_productivity }
-	multiply_temp_variable = { productivity_calculations_var = 0.001 }
-	multiply_temp_variable = { unified_building_multiplier = productivity_calculations_var }
-
-	# Apply building-specific modifiers, productivity, employment, then building-specific unified multiplier
-	# Each building: base_count * (1 + tax_modifier) * (1 + productivity_modifier) * employment * building_unified
 	# Civilian Factories
-	if = { limit = { check_variable = { civil_fac_tax > 0 } }
-		set_temp_variable = { civil_unified = unified_building_multiplier }
-		multiply_temp_variable = { civil_unified = 2.5 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@civilian_industry_tax_modifier }
-		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@civilian_factories_productivity }
-		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = civilian_factories_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = civil_unified }
-		multiply_variable = { civil_fac_tax = building_final_modifier }
+	if = { limit = { check_variable = { industrial_complex_total > 0 } }
+		set_variable = {
+			civil_fac_tax = {
+				value = industrial_complex_total
+				multiply = {
+					value = 1
+					add = modifier@civilian_industry_tax_modifier
+					multiply = {
+						value = 1
+						add = modifier@civilian_factories_productivity
+					}
+					multiply = civilian_factories_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 2.5
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { civil_fac_tax = 0 } }
 
 	# Military Factories
-	if = { limit = { check_variable = { military_fac_tax > 0 } }
-		set_temp_variable = { military_unified = unified_building_multiplier }
-		multiply_temp_variable = { military_unified = 0.2 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@military_industry_tax_modifier }
-		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@military_factories_productivity }
-		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = military_factories_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = military_unified }
-		multiply_variable = { military_fac_tax = building_final_modifier }
+	if = { limit = { check_variable = { military_fac > 0 } }
+		set_variable = {
+			military_fac_tax = {
+				value = military_fac
+				multiply = {
+					value = 1
+					add = modifier@military_industry_tax_modifier
+					multiply = {
+						value = 1
+						add = modifier@military_factories_productivity
+					}
+					multiply = military_factories_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 0.2
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { military_fac_tax = 0 } }
 
 	# Dockyards
-	if = { limit = { check_variable = { dockyard_tax > 0 } }
-		set_temp_variable = { dockyard_unified = unified_building_multiplier }
-		multiply_temp_variable = { dockyard_unified = 0.2 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@dockyard_income_tax_modifier }
-		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@dockyard_productivity }
-		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = naval_factories_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = dockyard_unified }
-		multiply_variable = { dockyard_tax = building_final_modifier }
+	if = { limit = { check_variable = { dockyard_fac > 0 } }
+		set_variable = {
+			dockyard_tax = {
+				value = dockyard_fac
+				multiply = {
+					value = 1
+					add = modifier@dockyard_income_tax_modifier
+					multiply = {
+						value = 1
+						add = modifier@dockyard_productivity
+					}
+					multiply = naval_factories_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 0.2
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { dockyard_tax = 0 } }
 
 	# Offices
-	if = { limit = { check_variable = { office_tax > 0 } }
-		set_temp_variable = { office_unified = unified_building_multiplier }
-		multiply_temp_variable = { office_unified = 5 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@office_park_income_tax_modifier }
-		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@offices_productivity }
-		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = offices_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = office_unified }
-		multiply_variable = { office_tax = building_final_modifier }
+	if = { limit = { check_variable = { office_park_total > 0 } }
+		set_variable = {
+			office_tax = {
+				value = office_park_total
+				multiply = {
+					value = 1
+					add = modifier@office_park_income_tax_modifier
+					multiply = {
+						value = 1
+						add = modifier@offices_productivity
+					}
+					multiply = offices_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 5
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { office_tax = 0 } }
 
 	# Agriculture Districts
-	if = { limit = { check_variable = { agriculture_district_tax > 0 } }
-		set_temp_variable = { agriculture_district_unified = unified_building_multiplier }
-		multiply_temp_variable = { agriculture_district_unified = 2.60 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@agriculture_district_income_tax_modifier }
-		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@agricolture_productivity_modifier }
-		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = agriculture_district_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = agriculture_district_unified }
-		multiply_variable = { agriculture_district_tax = building_final_modifier }
+	if = { limit = { check_variable = { agriculture_district_total > 0 } }
+		set_variable = {
+			agriculture_district_tax = {
+				value = agriculture_district_total
+				multiply = {
+					value = 1
+					add = modifier@agriculture_district_income_tax_modifier
+					multiply = {
+						value = 1
+						add = modifier@agricolture_productivity_modifier
+					}
+					multiply = agriculture_district_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 2.6
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { agriculture_district_tax = 0 } }
 
 	# Microchip Plants
-	if = { limit = { check_variable = { microchip_plant_tax > 0 } }
-		set_temp_variable = { microchip_unified = unified_building_multiplier }
-		multiply_temp_variable = { microchip_unified = 3.6 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@microchip_plant_income_tax_modifier }
-		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@microchip_plant_productivity_modifier }
-		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = microchip_plant_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = microchip_unified }
-		multiply_variable = { microchip_plant_tax = building_final_modifier }
+	if = { limit = { check_variable = { microchip_plant_total > 0 } }
+		set_variable = {
+			microchip_plant_tax = {
+				value = microchip_plant_total
+				multiply = {
+					value = 1
+					add = modifier@microchip_plant_income_tax_modifier
+					multiply = {
+						value = 1
+						add = modifier@microchip_plant_productivity_modifier
+					}
+					multiply = microchip_plant_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 3.6
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { microchip_plant_tax = 0 } }
 
 	# Composite Plants
-	if = { limit = { check_variable = { composite_plant_tax > 0 } }
-		set_temp_variable = { composite_unified = unified_building_multiplier }
-		multiply_temp_variable = { composite_unified = 3.15 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@composite_plant_income_tax_modifier }
-		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@composite_plant_productivity_modifier }
-		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = composite_plant_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = composite_unified }
-		multiply_variable = { composite_plant_tax = building_final_modifier }
+	if = { limit = { check_variable = { composite_plant_total > 0 } }
+		set_variable = {
+			composite_plant_tax = {
+				value = composite_plant_total
+				multiply = {
+					value = 1
+					add = modifier@composite_plant_income_tax_modifier
+					multiply = {
+						value = 1
+						add = modifier@composite_plant_productivity_modifier
+					}
+					multiply = composite_plant_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 3.15
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { composite_plant_tax = 0 } }
 
 	# Synthetic Refineries
-	if = { limit = { check_variable = { synthetic_refinery_tax > 0 } }
-		set_temp_variable = { synthetic_unified = unified_building_multiplier }
-		multiply_temp_variable = { synthetic_unified = 2.7 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@synthetic_refinery_income_tax_modifier }
-		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@synthetic_refinery_productivity_modifier }
-		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = synthetic_refinery_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = synthetic_unified }
-		multiply_variable = { synthetic_refinery_tax = building_final_modifier }
+	if = { limit = { check_variable = { synthetic_refinery_total > 0 } }
+		set_variable = {
+			synthetic_refinery_tax = {
+				value = synthetic_refinery_total
+				multiply = {
+					value = 1
+					add = modifier@synthetic_refinery_productivity_modifier
+					multiply = {
+						value = 1
+						add = modifier@synthetic_refinery_income_tax_modifier
+					}
+					multiply = synthetic_refinery_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 2.7
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { synthetic_refinery_tax = 0 } }
 
 	# Nuclear Reactors
-	if = { limit = { check_variable = { nuclear_reactor_tax > 0 } }
-		set_temp_variable = { nuclear_reactor_unified = unified_building_multiplier }
-		multiply_temp_variable = { nuclear_reactor_unified = 2.875 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@infrastructure_tax_gain_multiplier_modifier }
-		multiply_temp_variable = { building_final_modifier = nuclear_reactors_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = nuclear_reactor_unified }
-		multiply_variable = { nuclear_reactor_tax = building_final_modifier }
+	if = { limit = { check_variable = { nuclear_reactors > 0 } }
+		set_variable = {
+			nuclear_reactor_tax = {
+				value = nuclear_reactors
+				multiply = {
+					value = 1
+					add = modifier@infrastructure_tax_gain_multiplier_modifier
+					multiply = nuclear_reactors_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 2.875
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { nuclear_reactor_tax = 0 } }
 
 	# Fossil Power Plants
-	if = { limit = { check_variable = { fossil_powerplant_tax > 0 } }
-		set_temp_variable = { fossil_powerplant_unified = unified_building_multiplier }
-		multiply_temp_variable = { fossil_powerplant_unified = 0.31875 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@infrastructure_tax_gain_multiplier_modifier }
-		multiply_temp_variable = { building_final_modifier = fossil_powerplants_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = fossil_powerplant_unified }
-		multiply_variable = { fossil_powerplant_tax = building_final_modifier }
+	if = { limit = { check_variable = { number_of_fossil_pps > 0 } }
+		set_variable = {
+			fossil_powerplant_tax = {
+				value = number_of_fossil_pps
+				multiply = {
+					value = 1
+					add = modifier@infrastructure_tax_gain_multiplier_modifier
+					multiply = fossil_powerplants_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 0.31875
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { fossil_powerplant_tax = 0 } }
 
 	# Renewable Energy Infrastructure
-	if = { limit = { check_variable = { renewable_energy_tax > 0 } }
-		set_temp_variable = { renewable_energy_unified = unified_building_multiplier }
-		multiply_temp_variable = { renewable_energy_unified = 1.5 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@infrastructure_tax_gain_multiplier_modifier }
-		multiply_temp_variable = { building_final_modifier = renewable_energy_infra_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = renewable_energy_unified }
-		multiply_variable = { renewable_energy_tax = building_final_modifier }
+	if = { limit = { check_variable = { renewable_energy_infra > 0 } }
+		set_variable = {
+			renewable_energy_tax = {
+				value = renewable_energy_infra
+				multiply = {
+					value = 1
+					add = modifier@infrastructure_tax_gain_multiplier_modifier
+					multiply = renewable_energy_infra_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 1.5
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { renewable_energy_tax = 0 } }
 
 	# Internet Stations
-	if = { limit = { check_variable = { internet_station_tax > 0 } }
-		set_temp_variable = { internet_station_unified = unified_building_multiplier }
-		multiply_temp_variable = { internet_station_unified = 0.525 }
-
-		set_temp_variable = { building_final_modifier = 1 }
-		add_to_temp_variable = { building_final_modifier = modifier@infrastructure_tax_gain_multiplier_modifier }
-		multiply_temp_variable = { building_final_modifier = internet_stations_manpower_fulfillment }
-		multiply_temp_variable = { building_final_modifier = internet_station_unified }
-		multiply_variable = { internet_station_tax = building_final_modifier }
+	if = { limit = { check_variable = { internet_station_total > 0 } }
+		set_variable = {
+			internet_station_tax = {
+				value = internet_station_total
+				multiply = {
+					value = 1
+					add = modifier@infrastructure_tax_gain_multiplier_modifier
+					multiply = internet_stations_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 0.525
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
 	}
+	else = { set_variable = { internet_station_tax = 0 } }
 
 	# Healthcare Corporate Income Tax
 	# Represents the private healthcare market: hospitals, pharmaceutical companies, medical devices, insurance
@@ -420,80 +544,87 @@ calculate_tax_gain = {
 	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_income_rate = 0.034 } }
 	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_income_rate = 0.04 } }
 
-	set_variable = { healthcare_tax_gain = healthcare_gdp_var }
-	multiply_variable = { healthcare_tax_gain = healthcare_income_rate }
+	set_variable = {
+		healthcare_tax_gain = {
+			value = healthcare_gdp_var
+			multiply = healthcare_income_rate
+			multiply = {
+				value = 1
+				add = modifier@healthcare_income_multiplier_modifier
+				clamp = { min = 0 max = 100 }
+			}
+			# Corporate tax rate + display factor (0.007) + gain multipliers
+			# Does NOT include overall_productivity — healthcare_gdp_var already absorbed it via gdp_total
+			multiply = {
+				value = corporate_tax_rate
+				multiply = {
+					value = 1
+					add = modifier@tax_gain_multiplier_modifier
+				}
+				multiply = 0.007
+				multiply = {
+					value = 1
+					add = modifier@corporate_tax_income_multiplier_modifier
+				}
+			}
+			clamp = { min = 0 max = 100000000 }
+		}
+	}
 
-	set_temp_variable = { healthcare_income_mod = 1 }
-	add_to_temp_variable = { healthcare_income_mod = modifier@healthcare_income_multiplier_modifier }
-	clamp_temp_variable = { var = healthcare_income_mod min = 0 }
-	multiply_variable = { healthcare_tax_gain = healthcare_income_mod }
+	set_variable = {
+		corporate_tax = {
+			value = 0
+			add = healthcare_tax_gain
+			add = agriculture_tax_gain
+			add = agriculture_district_tax
+			add = civil_fac_tax
+			add = military_fac_tax
+			add = dockyard_tax
+			add = office_tax
+			add = microchip_plant_tax
+			add = composite_plant_tax
+			add = synthetic_refinery_tax
+			add = nuclear_reactor_tax
+			add = fossil_powerplant_tax
+			add = renewable_energy_tax
+			add = internet_station_tax
 
-	# Corporate tax rate + display factor (0.007) + gain multipliers
-	# Does NOT include overall_productivity — healthcare_gdp_var already absorbed it via gdp_total
-	set_temp_variable = { healthcare_corp_multiplier = corporate_tax_rate }
-	multiply_temp_variable = { healthcare_corp_multiplier = tax_gain_multiplier }
-	multiply_temp_variable = { healthcare_corp_multiplier = 0.007 }
-	multiply_temp_variable = { healthcare_corp_multiplier = corporate_tax_gain_multiplier }
-	multiply_variable = { healthcare_tax_gain = healthcare_corp_multiplier }
-	clamp_variable = { var = healthcare_tax_gain min = 0 }
+			clamp = { min = 0 max = 100000000 }
+		}
+	}
 
-	add_to_variable = { corporate_tax = healthcare_tax_gain }
 
 	##POP
-	set_variable = { var = population_tax value = population_total_m }
-	multiply_variable = { var = population_tax value = population_tax_rate }
-	multiply_variable = { population_tax = 0.45 } #Gives TOTAL potential tax assuming 100%
+	set_variable = {
+		population_tax = {
+			value = population_total_m
+			multiply = population_tax_rate
+			multiply = 0.45
+			# Build unified population tax multiplier: gdp/c_scaling * (1 + pop_tax_modifier) * tax gain modifier * 0.007
+			multiply = {
+				value = gdp_per_capita
+				multiply = 0.005
+				add = 0.75
+				multiply = {
+					value = 1
+					add = modifier@tax_gain_multiplier_modifier
+				}
+				multiply = {
+					value = 1
+					add = modifier@population_tax_income_multiplier_modifier
+				}
+				multiply = 0.007
+			}
+			clamp = { min = 0 max = 100000000 }
+		}
+	}
 
-	# Build unified population tax multiplier: gdp/c_scaling * (1 + pop_tax_modifier) * tax_gain_multiplier * 0.007
-	set_temp_variable = { pop_tax_gdp_c_multiplier = gdp_per_capita } #could use gdpc_converging_var instead
-	multiply_temp_variable = { pop_tax_gdp_c_multiplier = 0.005 } #linear scaling y = 0.005x + 0.75
-	add_to_temp_variable = { pop_tax_gdp_c_multiplier = 0.75 }
-
-	set_temp_variable = { population_tax_income_multiplier_modifier = 1 }
-	add_to_temp_variable = { population_tax_income_multiplier_modifier = modifier@population_tax_income_multiplier_modifier }
-	multiply_temp_variable = { pop_tax_gdp_c_multiplier = population_tax_income_multiplier_modifier }
-	multiply_temp_variable = { pop_tax_gdp_c_multiplier = tax_gain_multiplier }
-	multiply_temp_variable = { pop_tax_gdp_c_multiplier = 0.007 }
-
-	# Apply consolidated multiplier
-	multiply_variable = { population_tax = pop_tax_gdp_c_multiplier }
-
-	# Clamp the component values to 0 so we don't have our government gifting back tax money to the people
-	clamp_variable = { var = agriculture_district_tax min = 0 }
-	clamp_variable = { var = agriculture_tax_gain min = 0 }
-	clamp_variable = { var = civil_fac_tax min = 0 }
-	clamp_variable = { var = military_fac_tax min = 0 }
-	clamp_variable = { var = dockyard_tax min = 0 }
-	clamp_variable = { var = office_tax min = 0 }
-	clamp_variable = { var = microchip_plant_tax min = 0 }
-	clamp_variable = { var = composite_plant_tax min = 0 }
-	clamp_variable = { var = synthetic_refinery_tax min = 0 }
-	clamp_variable = { var = nuclear_reactor_tax min = 0 }
-	clamp_variable = { var = fossil_powerplant_tax min = 0 }
-	clamp_variable = { var = renewable_energy_tax min = 0 }
-	clamp_variable = { var = internet_station_tax min = 0 }
-
-	# Add Corporate Tax Rates Together
-	add_to_variable = { corporate_tax = agriculture_tax_gain }
-	add_to_variable = { corporate_tax = agriculture_district_tax }
-	add_to_variable = { corporate_tax = civil_fac_tax }
-	add_to_variable = { corporate_tax = military_fac_tax }
-	add_to_variable = { corporate_tax = dockyard_tax }
-	add_to_variable = { corporate_tax = office_tax }
-	add_to_variable = { corporate_tax = microchip_plant_tax }
-	add_to_variable = { corporate_tax = composite_plant_tax }
-	add_to_variable = { corporate_tax = synthetic_refinery_tax }
-	add_to_variable = { corporate_tax = nuclear_reactor_tax }
-	add_to_variable = { corporate_tax = fossil_powerplant_tax }
-	add_to_variable = { corporate_tax = renewable_energy_tax }
-	add_to_variable = { corporate_tax = internet_station_tax }
-
-	# Clamps Corporate and Population Tax Rates to 0 to prevent negative incomes
-	clamp_variable = { var = corporate_tax min = 0 }
-	clamp_variable = { var = population_tax min = 0 }
-
-	set_variable = { var = tax_gain value = corporate_tax }
-	add_to_variable = { var = tax_gain value = population_tax }
+	set_variable = {
+		tax_gain = {
+			value = corporate_tax
+			add = population_tax
+		}
+	}
 }
 
 calculate_additional_income_rate = {
@@ -1240,7 +1371,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_HOL_BOT }
 		}
 		if = {
-			limit = { has_idea = HOL_Weed_Center1 }
+			limit = { has_idea = HOL_weed_center1 }
 			set_variable = { additional_income_HOL_Weed_Center1 = HOL.gdp_per_capita }
 			multiply_variable = { additional_income_HOL_Weed_Center1 = 0.002 } #10% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_HOL_Weed_Center1 }
@@ -5368,7 +5499,10 @@ calculate_migration_mechanic_values = {
 					value = 1
 					add = modifier@border_control_multiplier_modifier
 				}
-				multiply = inflation_multiplier
+				multiply = {
+					value = 1
+					add = modifier@inflation_cost_multiplier_modifier
+				}
 				# GDP Per Capita Scaling
 				multiply = {
 					value = gdp_per_capita
