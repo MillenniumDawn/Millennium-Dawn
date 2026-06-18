@@ -83,6 +83,30 @@ _RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
 _RE_NOT_BLOCK_OPEN = re.compile(r"^\s*NOT\s*=\s*\{")
 _RE_TRIGGER_ASSIGN = re.compile(r"^(\w+)\s*=\s*([\w.]+)$")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
+# A focus block that declares war via create_wargoal/declare_war at the focus
+# OWNER's scope must carry the matching will_lead_to_war_with hint so the AI
+# prepares. A war effect nested inside another country's scope (SAU = {
+# declare_war_on = ... }) makes that THIRD PARTY go to war, not the owner, so it
+# obligates no hint. effect_tooltip / hidden_effect / if / OR preserve the owner
+# scope and still count; ROOT/THIS reset back to the owner.
+_RE_WILL_LEAD_TO_WAR = re.compile(r"\bwill_lead_to_war_with\b")
+_RE_SCRIPT_TOKEN = re.compile(r"[{}=]|[A-Za-z_][\w:.@]*")
+_RE_QUOTED_STRING = re.compile(r'"[^"]*"')
+_RE_TAG_SCOPE = re.compile(r"^[A-Z]{2,3}$")
+_LOGIC_SCOPE_TOKENS = {"AND", "OR", "NOT"}
+_OWNER_RESET_SCOPE_TOKENS = {"ROOT", "THIS"}
+_FOREIGN_COUNTRY_SCOPE_TOKENS = {
+    "random_country",
+    "random_other_country",
+    "every_country",
+    "every_other_country",
+    "every_neighbor_country",
+    "random_neighbor_country",
+    "every_enemy_country",
+    "random_enemy_country",
+    "every_subject_country",
+    "random_subject_country",
+}
 _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 _RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
 _RE_TOPLEVEL_WORD = re.compile(r"^\w")
@@ -280,6 +304,107 @@ def _check_focus_available_always_no(lines):
                                 )
                             )
                             break
+        else:
+            i += 1
+    return issues
+
+
+def _scope_frame_kind(opener, owner_tag=None):
+    """Classify a `<opener> = { ... }` block by how it affects country scope."""
+    if opener is None or opener in _LOGIC_SCOPE_TOKENS:
+        return "neutral"
+    if opener in _OWNER_RESET_SCOPE_TOKENS or (owner_tag and opener == owner_tag):
+        return "reset"
+    if opener in _FOREIGN_COUNTRY_SCOPE_TOKENS:
+        return "foreign"
+    if opener.startswith("var:") or opener.startswith("event_target:"):
+        return "foreign"
+    if _RE_TAG_SCOPE.match(opener):
+        return "foreign"
+    return "neutral"
+
+
+def _focus_owner_tag(code):
+    """Owner tag inferred from the focus id prefix (e.g. PER_alawites -> PER)."""
+    id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
+    if id_match:
+        prefix = id_match.group(1).split("_", 1)[0]
+        if _RE_TAG_SCOPE.match(prefix):
+            return prefix
+    return None
+
+
+def _war_declared_at_owner_scope(code):
+    """True if a create_wargoal/declare_war fires at the focus owner's scope.
+
+    Walks the block's brace structure tracking country-scope changes. A war
+    effect inside a foreign-country scope (SAU = { declare_war_on = ... }) is a
+    proxy war the owner sponsors, not the owner going to war, so it does not
+    require a will_lead_to_war_with hint. ROOT/THIS and the owner's own tag
+    (PER = { ... } inside a PER_ focus) reset back to the owner.
+    """
+    owner_tag = _focus_owner_tag(code)
+    text = _RE_QUOTED_STRING.sub('""', "\n".join(code))
+    stack = []
+    last_ident = None
+    opener_pending = None
+    for tok in _RE_SCRIPT_TOKEN.findall(text):
+        if tok == "=":
+            opener_pending = last_ident
+        elif tok == "{":
+            stack.append(_scope_frame_kind(opener_pending, owner_tag))
+            opener_pending = None
+            last_ident = None
+        elif tok == "}":
+            if stack:
+                stack.pop()
+            opener_pending = None
+            last_ident = None
+        else:
+            if tok == "create_wargoal" or tok == "declare_war_on":
+                in_foreign = False
+                for kind in reversed(stack):
+                    if kind == "foreign":
+                        in_foreign = True
+                        break
+                    if kind == "reset":
+                        break
+                if not in_foreign:
+                    return True
+            last_ident = tok
+            opener_pending = None
+    return False
+
+
+def _check_focus_missing_war_hint(lines):
+    """Flag focus blocks that declare war but carry no will_lead_to_war_with hint.
+
+    A focus whose completion_reward calls create_wargoal/declare_war at the
+    OWNER's scope should set will_lead_to_war_with = TAG so the AI prepares for
+    the war. create_wargoal inside an effect_tooltip still counts; a war effect
+    nested in another country's scope (a sponsored proxy war) does not. The hint
+    anywhere in the block clears the focus.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if _RE_FOCUS_BLOCK_OPEN.match(lines[i]):
+            start = i
+            block, i = _get_block(lines, start)
+            code = [strip_inline_comment(bl) for bl in block]
+            if _war_declared_at_owner_scope(code) and not any(
+                _RE_WILL_LEAD_TO_WAR.search(c) for c in code
+            ):
+                id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
+                focus_id = id_match.group(1) if id_match else "<unknown>"
+                issues.append(
+                    (
+                        start + 1,
+                        f"Focus {focus_id} has create_wargoal but no will_lead_to_war_with"
+                        " -- add will_lead_to_war_with = TAG so the AI prepares for war",
+                    )
+                )
         else:
             i += 1
     return issues
@@ -1354,6 +1479,7 @@ def check_file(filepath):
 
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))
+        issues.extend(_check_focus_missing_war_hint(lines))
     if is_decision_file:
         issues.extend(_check_decision_available_always_no(lines))
         issues.extend(_check_decision_allowed_dynamic(lines))
