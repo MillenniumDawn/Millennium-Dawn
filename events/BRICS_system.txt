@@ -1,0 +1,126 @@
+###########################################
+# BRICS join-via-event chain
+# Mirrors the NATO join flow (events/NATO_system.txt).
+# A nation requests membership via BRICS_join_via_event; the BRICS leader accepts or rejects.
+###########################################
+
+add_namespace = brics_join
+
+# Leader receives a membership application. ROOT = BRICS leader, FROM = applicant.
+country_event = {
+	id = brics_join.1
+	title = brics_join.1.t
+	desc = brics_join.1.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+
+	# Accept
+	option = {
+		name = brics_join.1.a
+		log = "[GetDateText]: [This.GetName]: brics_join.1.a executed"
+		FROM = { country_event = { id = brics_join.2 days = 2 } }
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			FROM = { BRICS_join = yes }
+		}
+		ai_chance = {
+			base = 80
+			modifier = { factor = 0 FROM = { has_government = fascism } }
+			modifier = { factor = 0 any_of_scopes = { array = global.BRICS_full_members has_war_with = FROM } }
+			modifier = { add = 20 has_opinion = { target = FROM value > 25 } }
+			modifier = { factor = 0.2 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+
+	# Reject
+	option = {
+		name = brics_join.1.b
+		log = "[GetDateText]: [This.GetName]: brics_join.1.b executed"
+		FROM = { country_event = { id = brics_join.3 days = 2 } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 100 FROM = { has_government = fascism } }
+			modifier = { add = 100 any_of_scopes = { array = global.BRICS_full_members has_war_with = FROM } }
+			modifier = { add = 30 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+}
+
+# Application accepted. ROOT = applicant.
+country_event = {
+	id = brics_join.2
+	title = brics_join.2.t
+	desc = brics_join.2.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+
+	option = {
+		name = brics_join.2.a
+		log = "[GetDateText]: [This.GetName]: brics_join.2.a executed"
+		BRICS_join = yes
+	}
+}
+
+# Application rejected. ROOT = applicant. Offers a delayed retry.
+country_event = {
+	id = brics_join.3
+	title = brics_join.3.t
+	desc = brics_join.3.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+
+	# Try again later
+	option = {
+		name = brics_join.3.a
+		log = "[GetDateText]: [This.GetName]: brics_join.3.a executed"
+		country_event = { id = brics_join.5 days = 180 }
+	}
+
+	# Abandon the effort
+	option = {
+		name = brics_join.3.b
+		log = "[GetDateText]: [This.GetName]: brics_join.3.b executed"
+		clr_country_flag = BRICS_application_pending
+	}
+}
+
+# A nation joins BRICS. ROOT = the new member. Broadcast to everyone.
+news_event = {
+	id = brics_join.4
+	title = brics_join.4.t
+	desc = brics_join.4.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = brics_join.4.a
+		log = "[GetDateText]: [This.GetName]: brics_join.4.a executed"
+	}
+}
+
+# Retry window has opened. ROOT = applicant. Resubmit the application.
+country_event = {
+	id = brics_join.5
+	title = brics_join.5.t
+	desc = brics_join.5.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_idea = RAJ_BRICS }
+	}
+
+	# Resubmit
+	option = {
+		name = brics_join.5.a
+		log = "[GetDateText]: [This.GetName]: brics_join.5.a executed"
+		BRICS_join_via_event = yes
+	}
+
+	# Not now
+	option = {
+		name = brics_join.5.b
+		log = "[GetDateText]: [This.GetName]: brics_join.5.b executed"
+		clr_country_flag = BRICS_application_pending
+	}
+}
