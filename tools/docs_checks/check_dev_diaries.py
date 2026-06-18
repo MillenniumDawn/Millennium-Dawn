@@ -5,11 +5,8 @@ from __future__ import annotations
 
 import argparse
 import re
-import sys
 from pathlib import Path
 from urllib.parse import urlparse
-
-import yaml
 
 try:
     from common import CONTENT_ROOT, REPO_ROOT
@@ -20,8 +17,19 @@ DEV_DIARIES_DIR = CONTENT_ROOT / "devDiaries"
 EXTERNAL_YML = CONTENT_ROOT / "devDiaryExternal" / "index.yml"
 
 FRONTMATTER_RE = re.compile(r"^---\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?", re.MULTILINE)
+VERSION_FM_RE = re.compile(r"^version:\s*[\"']?(v\d+\.\d+)[\"']?\s*$", re.MULTILINE)
+PERMALINK_FM_RE = re.compile(r"^permalink:\s*[\"']?(.+?)[\"']?\s*$", re.MULTILINE)
+TAGS_BLOCK_RE = re.compile(r"^tags:\s*\n((?:[ \t]+-\s+.+\n?)*)", re.MULTILINE)
+TAG_ITEM_RE = re.compile(r"^[ \t]+-\s+(.+?)\s*$")
 VERSION_RE = re.compile(r"^v\d+\.\d+$")
 VERSION_TAG_RE = re.compile(r"^v\d+(\.\d+)?$", re.IGNORECASE)
+
+
+def _unquote(value: str) -> str:
+    stripped = value.strip()
+    if len(stripped) >= 2 and stripped[0] == stripped[-1] and stripped[0] in "\"'":
+        return stripped[1:-1]
+    return stripped
 
 
 def normalize_compare_url(url: str) -> str:
@@ -43,8 +51,28 @@ def parse_frontmatter(text: str) -> dict | None:
     match = FRONTMATTER_RE.match(text)
     if not match:
         return None
-    data = yaml.safe_load(match.group(1))
-    return data if isinstance(data, dict) else None
+
+    fm = match.group(1)
+    data: dict[str, object] = {}
+
+    version_match = VERSION_FM_RE.search(fm)
+    if version_match:
+        data["version"] = version_match.group(1)
+
+    permalink_match = PERMALINK_FM_RE.search(fm)
+    if permalink_match:
+        data["permalink"] = _unquote(permalink_match.group(1))
+
+    tags: list[str] = []
+    tags_block = TAGS_BLOCK_RE.search(fm)
+    if tags_block:
+        for line in tags_block.group(1).splitlines():
+            item_match = TAG_ITEM_RE.match(line)
+            if item_match:
+                tags.append(_unquote(item_match.group(1)))
+    data["tags"] = tags
+
+    return data
 
 
 def collect_in_repo_permalinks() -> tuple[list[str], list[str], list[str]]:
@@ -67,8 +95,6 @@ def collect_in_repo_permalinks() -> tuple[list[str], list[str], list[str]]:
             errors.append(
                 f"{rel}: missing or invalid version (expected vMAJOR.MINOR, got {version!r})"
             )
-        else:
-            pass
 
         permalink = data.get("permalink")
         if isinstance(permalink, str) and permalink.strip():
@@ -89,21 +115,17 @@ def collect_external_urls() -> list[tuple[str, str]]:
     if not EXTERNAL_YML.exists():
         return []
 
-    data = yaml.safe_load(EXTERNAL_YML.read_text(encoding="utf-8"))
-    if not isinstance(data, list):
-        return []
-
     found: list[tuple[str, str]] = []
-    for group in data:
-        if not isinstance(group, dict):
+    current_group = "unknown group"
+    for line in EXTERNAL_YML.read_text(encoding="utf-8").splitlines():
+        group_match = re.match(r"^- title:\s*(.+)$", line)
+        if group_match:
+            current_group = _unquote(group_match.group(1))
             continue
-        group_title = str(group.get("title", "unknown group"))
-        for entry in group.get("entries") or []:
-            if not isinstance(entry, dict):
-                continue
-            url = entry.get("url")
-            if isinstance(url, str) and url.strip():
-                found.append((group_title, url))
+        if line.startswith("      url:"):
+            url = line.split(":", 1)[1].strip()
+            if url:
+                found.append((current_group, url))
     return found
 
 
@@ -125,6 +147,22 @@ def self_test() -> int:
     assert normalize_compare_url("/a/") == "/a"
     assert is_version_like_tag("v2.0")
     assert not is_version_like_tag("dev diary")
+
+    sample = (
+        "---\n"
+        'title: "Dev Diary #53"\n'
+        "version: v2.0\n"
+        "permalink: /dev-diaries/53-test/\n"
+        "tags:\n"
+        "  - dev diary\n"
+        "---\n"
+    )
+    parsed = parse_frontmatter(sample)
+    assert parsed is not None
+    assert parsed["version"] == "v2.0"
+    assert parsed["permalink"] == "/dev-diaries/53-test/"
+    assert parsed["tags"] == ["dev diary"]
+
     return 0
 
 
