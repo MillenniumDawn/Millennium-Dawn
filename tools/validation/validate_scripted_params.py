@@ -6,6 +6,7 @@ common/scripted_effects/*.txt and validates each call site sets required vars
 before calling. Warns on scope-boundary violations (temp var set inside a
 scope-changing block, but the effect call is outside).
 """
+
 import glob
 import os
 import re

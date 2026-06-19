@@ -4,13 +4,16 @@ Development tools and scripts used by the Millennium Dawn team for quality assur
 
 ## Requirements
 
-Some scripts rely on non-native packages for Python. Install them with:
+Some scripts rely on non-native packages for Python. The dependency lists live
+in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root
+(pip 25.1+):
 
 ```bash
-pip install -r requirements.txt
+pip install --group runtime   # requests, pillow (for the scripts that need them)
+pip install --group dev       # pytest, pyyaml, ruff (for tests and linting)
 ```
 
-**Packages:** requests, pillow
+`python tools/dev_setup.py` installs these for you as part of the dev setup.
 
 ## Quick Start
 

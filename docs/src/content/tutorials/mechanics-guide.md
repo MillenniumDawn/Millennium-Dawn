@@ -117,13 +117,13 @@ Countries can become subjects of other nations through the influence system, war
 | Can Decline Call to War       | Yes              | Yes             | No           | No               |
 | Overlord Controls Units       | No               | No              | No           | Yes              |
 
-**Associated States** are the most independent — they retain full war declaration rights, keep all their factory output, and only send 20% extra trade to the overlord. This is closer to a diplomatic partnership than true subjugation.
+**Associated States** are the most independent, they retain full war declaration rights, keep all their factory output, and only send 20% extra trade to the overlord. This is closer to a diplomatic partnership than true subjugation.
 
 **Satellite States** are the default autonomy level when making a new subject through the influence system. The overlord receives 25% of the subject's factory output and 40% extra trade, but the subject cannot declare its own wars.
 
 **Puppet States** give the overlord half of all factory output and require the subject to answer every call to war. This level significantly limits the subject's independence.
 
-**Autonomous States** represent near-total subjugation — 75% of all factories go to the overlord, 80% of trade is redirected, and the overlord directly controls the subject's military units.
+**Autonomous States** represent near-total subjugation. 75% of all factories go to the overlord, 80% of trade is redirected, and the overlord directly controls the subject's military units.
 
 ### Changing Autonomy
 
@@ -137,6 +137,6 @@ Several nation-specific systems use custom autonomy hierarchies. Russia has a fe
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide)
-- [Influence Guide](/player-tutorials/influence-guide)
-- [Game Rules](/player-tutorials/game-rules)
+- [Economy Guide](/player-tutorials/economy-guide/)
+- [Influence Guide](/player-tutorials/influence-guide/)
+- [Game Rules](/player-tutorials/game-rules/)
