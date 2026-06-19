@@ -2,15 +2,16 @@
 
 Layout:
   1. Hidden stable marker (for comment-update matching).
-  2. H1 + metadata strip (commit, PR, workflow run link, date).
-  3. Summary table — one row per validator.
-  4. Issues section — grouped by validator then category, each category under a
-     readable heading.  Large categories are collapsed into <details> blocks.
+  2. H1 + verdict banner + metadata strip (commit, PR, workflow run link, date).
+  3. Summary table — every validator gets a row, failures sorted first.
+  4. Validators section — one collapsible <details> per validator; failing ones
+     open with issues grouped by category, passing ones collapse to a one-liner.
   5. Collapsed raw per-validator logs at the bottom.
 """
 
 from collections import defaultdict
 from typing import Dict, List, Tuple
+from urllib.parse import quote
 
 from .comment import REPORT_MARKER
 from .models import Issue, ReportContext, Severity, ValidatorRun
@@ -55,12 +56,16 @@ def render(
     errored_or_warned = [
         i for i in issues if i.severity in (Severity.ERROR, Severity.WARNING)
     ]
-    if errored_or_warned:
+    validator_sections = _render_validator_sections(
+        runs, errored_or_warned, ctx, max_visible
+    )
+    if validator_sections:
         parts.append("---")
         parts.append("")
-        parts.append(_LEGEND)
-        parts.append("")
-        parts.append(_render_issues(errored_or_warned, ctx, max_visible))
+        if errored_or_warned:
+            parts.append(_LEGEND)
+            parts.append("")
+        parts.append(validator_sections)
         parts.append("")
 
     if include_raw_logs:
@@ -151,129 +156,135 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
 # ── Summary table ──────────────────────────────────────────────────────────────
 
 
+def _run_sort_key(r: ValidatorRun) -> Tuple[int, str]:
+    """Errors first, then warnings, then clean — alphabetical within each tier."""
+    rank = 0 if r.errors else (1 if r.warnings else 2)
+    return (rank, r.title.lower())
+
+
 def _render_summary_table(runs: List[ValidatorRun]) -> str:
     if not runs:
         return "_No validator results found._"
 
-    with_findings: List[ValidatorRun] = []
-    passed_count = 0
-    for r in runs:
-        if r.errors or r.warnings:
-            with_findings.append(r)
-        else:
-            passed_count += 1
-
-    # All clean — the verdict banner already states this; no table to show.
-    if not with_findings:
+    total_errors, total_warnings = _totals(runs)
+    # All clean — the verdict banner already states this; a zero table is noise.
+    if total_errors == 0 and total_warnings == 0:
         return ""
 
-    # Only validators with findings get a row; the rest fold into one line.
-    total_errors, total_warnings = _totals(with_findings)
+    # Every validator gets a row (passing ones included) so the table is the
+    # full at-a-glance roster; failures sort to the top.
     header = "| Validator | Errors | Warnings |\n|-----------|-------:|---------:|"
     rows = [
         f"| {_severity_icon(r.errors, r.warnings)} {r.title} | {r.errors:,} | {r.warnings:,} |"
-        for r in with_findings
+        for r in sorted(runs, key=_run_sort_key)
     ]
     rows.append(f"| **Total** | **{total_errors:,}** | **{total_warnings:,}** |")
-
-    out = "## Summary\n\n" + header + "\n" + "\n".join(rows)
-    if passed_count:
-        out += (
-            f"\n\n✅ {_plural(passed_count, 'other validator')} passed with no issues."
-        )
-    return out
+    return "## Summary\n\n" + header + "\n" + "\n".join(rows)
 
 
 # ── Issues section ─────────────────────────────────────────────────────────────
 
 
-def _render_issues(issues: List[Issue], ctx: ReportContext, max_visible: int) -> str:
-    # Build: {validator → {category → [issues]}}
+def _render_validator_sections(
+    runs: List[ValidatorRun], issues: List[Issue], ctx: ReportContext, max_visible: int
+) -> str:
+    """One collapsible <details> per validator (pass or fail).
+
+    Failing validators open by default and list their issues grouped by
+    category; passing validators collapse to a single 'no issues' line, so the
+    full roster is browsable for review and debugging.
+    """
     by_validator: Dict[str, Dict[str, List[Issue]]] = defaultdict(
         lambda: defaultdict(list)
     )
-    validator_order: List[str] = []
-    seen_validators: set = set()
-
     for issue in issues:
         v = issue.validator or "unknown"
         c = issue.category or "uncategorised"
-        if v not in seen_validators:
-            seen_validators.add(v)
-            validator_order.append(v)
         by_validator[v][c].append(issue)
 
-    total = len(issues)
+    # Every run, plus any validator that only shows up in the issues (defensive;
+    # in CI each issue has a backing run). counts: name -> (title, errors, warns)
+    counts: Dict[str, Tuple[str, int, int]] = {}
+    order: List[str] = []
+    for r in runs:
+        counts[r.name] = (r.title, r.errors, r.warnings)
+        order.append(r.name)
+    for v, cat_map in by_validator.items():
+        if v not in counts:
+            flat = [i for lst in cat_map.values() for i in lst]
+            e = sum(1 for i in flat if i.severity == Severity.ERROR)
+            w = sum(1 for i in flat if i.severity == Severity.WARNING)
+            counts[v] = (_humanize(v), e, w)
+            order.append(v)
+
+    if not order:
+        return ""
+
+    def sort_key(name: str) -> Tuple[int, str]:
+        title, e, w = counts[name]
+        rank = 0 if e else (1 if w else 2)
+        return (rank, title.lower())
+
+    sections: List[str] = ["## Validators", ""]
     rendered_count = 0
     overflow = 0
-    sections: List[str] = [f"## Issues — {total:,} total", ""]
 
-    for v in validator_order:
-        cat_map = by_validator[v]
-        v_errors = sum(
-            1 for cats in cat_map.values() for i in cats if i.severity == Severity.ERROR
-        )
-        v_warnings = sum(
-            1
-            for cats in cat_map.values()
-            for i in cats
-            if i.severity == Severity.WARNING
-        )
-        icon = _severity_icon(v_errors, v_warnings)
-        label = _count_label(v_errors, v_warnings)
+    for name in sorted(order, key=sort_key):
+        title, errors, warnings = counts[name]
+        icon = _severity_icon(errors, warnings)
+        label = _count_label(errors, warnings)
+        has_findings = bool(errors or warnings)
 
-        sections.append(f"### {icon} {_humanize(v)} — {label}")
-        sections.append("")
+        body: List[str] = []
+        cat_map = by_validator.get(name, {})
+        if cat_map:
+            for cat, cat_issues in cat_map.items():
+                remaining = max_visible - rendered_count
+                if remaining <= 0:
+                    overflow += len(cat_issues)
+                    continue
 
-        for cat, cat_issues in cat_map.items():
-            remaining = max_visible - rendered_count
-            if remaining <= 0:
-                overflow += len(cat_issues)
-                continue
-
-            cat_errors = sum(1 for i in cat_issues if i.severity == Severity.ERROR)
-            cat_warnings = sum(1 for i in cat_issues if i.severity == Severity.WARNING)
-            cat_label = _count_label(cat_errors, cat_warnings)
-            per_cat_limit = min(remaining, MAX_PER_CATEGORY)
-
-            sorted_issues = sorted(
-                cat_issues,
-                key=lambda i: (
-                    0 if i.severity == Severity.ERROR else 1,
-                    i.file,
-                    i.line,
-                    i.message,
-                ),
-            )
-            to_render = sorted_issues[:per_cat_limit]
-            cat_overflow = len(cat_issues) - len(to_render)
-            overflow += cat_overflow
-            rendered_count += len(to_render)
-
-            bullets = [_render_bullet(i, ctx) for i in to_render]
-            if cat_overflow:
-                bullets.append(f"_…and {cat_overflow:,} more in this category._")
-
-            heading = f"#### {_humanize(cat)} ({cat_label})"
-
-            # Small categories render inline; large ones collapse.
-            if len(cat_issues) > 10:
-                block = (
-                    [
-                        "<details>",
-                        f"<summary>{heading}</summary>",
-                        "",
-                    ]
-                    + bullets
-                    + ["", "</details>"]
+                cat_errors = sum(1 for i in cat_issues if i.severity == Severity.ERROR)
+                cat_warnings = sum(
+                    1 for i in cat_issues if i.severity == Severity.WARNING
                 )
-                sections.extend(block)
-            else:
-                sections.append(heading)
-                sections.append("")
-                sections.extend(bullets)
+                cat_label = _count_label(cat_errors, cat_warnings)
+                per_cat_limit = min(remaining, MAX_PER_CATEGORY)
 
-            sections.append("")
+                sorted_issues = sorted(
+                    cat_issues,
+                    key=lambda i: (
+                        0 if i.severity == Severity.ERROR else 1,
+                        i.file,
+                        i.line,
+                        i.message,
+                    ),
+                )
+                to_render = sorted_issues[:per_cat_limit]
+                cat_overflow = len(cat_issues) - len(to_render)
+                overflow += cat_overflow
+                rendered_count += len(to_render)
+
+                body.append(f"#### {_humanize(cat)} ({cat_label})")
+                body.append("")
+                body.extend(_render_bullet(i, ctx) for i in to_render)
+                if cat_overflow:
+                    body.append(f"_…and {cat_overflow:,} more in this category._")
+                body.append("")
+        elif has_findings:
+            body.append("_Findings reported in the summary line; see the raw log._")
+            body.append("")
+        else:
+            body.append("✅ No issues found.")
+            body.append("")
+
+        open_attr = " open" if has_findings else ""
+        sections.append(f"<details{open_attr}>")
+        sections.append(f"<summary>{icon} {title} — {label}</summary>")
+        sections.append("")
+        sections.extend(body)
+        sections.append("</details>")
+        sections.append("")
 
     if overflow:
         link = ""
@@ -292,7 +303,11 @@ def _file_ref(issue: Issue, ctx: ReportContext) -> str:
     label = f"{issue.file}:{issue.line}" if issue.line else issue.file
     code = f"`{label}`"
     if ctx.repo and ctx.commit_sha and issue.file:
-        url = f"https://github.com/{ctx.repo}/blob/{ctx.commit_sha}/{issue.file}"
+        # quote() percent-encodes spaces and other URL-unsafe characters in the
+        # path (keeping `/`), so paths like `gfx/My File.dds` produce a valid
+        # link instead of one markdown breaks at the first space.
+        path = quote(issue.file, safe="/")
+        url = f"https://github.com/{ctx.repo}/blob/{ctx.commit_sha}/{path}"
         if issue.line:
             url += f"#L{issue.line}"
         return f"[{code}]({url})"

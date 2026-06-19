@@ -13,7 +13,7 @@ pip install --group runtime   # requests, pillow (for the scripts that need them
 pip install --group dev       # pytest, pyyaml, ruff (for tests and linting)
 ```
 
-`python tools/setup.py` installs these for you as part of the dev setup.
+`python tools/dev_setup.py` installs these for you as part of the dev setup.
 
 ## Quick Start
 
