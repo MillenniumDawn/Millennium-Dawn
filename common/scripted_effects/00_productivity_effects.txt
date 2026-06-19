@@ -101,26 +101,32 @@ update_employment_productivity_output_dynamic_modifier = {
 		set_variable = { last_industrial_complex_total = industrial_complex_total }
 
 		#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
-		set_variable = {
-			construction_speed_output_var = {
-				value = overall_productivity
-				multiply = 0.001
-				multiply = {
-					value = industrial_complex_total
-					multiply = civilian_factories_manpower_fulfillment
-					add = {
-						value = num_of_civilian_factories
-						subtract = industrial_complex_total
+		if = {
+			limit = { num_of_civilian_factories > 0 }
+			set_variable = {
+				construction_speed_output_var = {
+					value = overall_productivity
+					multiply = 0.001
+					multiply = {
+						value = industrial_complex_total
+						multiply = civilian_factories_manpower_fulfillment
+						add = {
+							value = num_of_civilian_factories
+							subtract = industrial_complex_total
+						}
+						divide = num_of_civilian_factories
 					}
-					divide = num_of_civilian_factories
-				}
-				add = -1
-				multiply = {
-					value = modifier@production_speed_buildings_factor
-					subtract = construction_speed_output_var
-					add = 1
+					add = -1
+					multiply = {
+						value = modifier@production_speed_buildings_factor
+						subtract = construction_speed_output_var
+						add = 1
+					}
 				}
 			}
+		}
+		else = {
+			set_variable = { construction_speed_output_var = 0 }
 		}
 
 		if = {
