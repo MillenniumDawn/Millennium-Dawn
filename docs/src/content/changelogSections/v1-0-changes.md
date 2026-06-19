@@ -33,7 +33,7 @@ order: 1
 ### Database
 
 - Added two missing ideas to US
-- Added starting research slots to countries with unique focus trees (BRA,DEN, ENG, FIN, GER, JAP, NOR, SOV, SWE, SWI, USA)
+- Added starting research slots to countries with unique focus trees (BRA,DEN, ENG, FIN, GER, JAP, NRY, SOV, SWE, SWI, USA)
 - Added a namelist for NKR (Nagarno-Karabakh)
 - Removed future techs from France from the 2000 bookmark
 - Added Xian H-6 tech (strat bomber 1) to CHI

@@ -235,7 +235,7 @@ Check for:
 - Invalid triggers/effects
 - Incorrect scope usage (tag vs original_tag)
 - check_variable using >= or <= (not valid inline)
-- NOR used as logical NOR (it scopes to Norway)
+- NRY used as logical NRY (it scopes to Norway)
 ```
 
 ## Converting Ideas to Effects
@@ -260,7 +260,7 @@ AI models frequently produce these errors. Always check for them:
 | `tag` in idea `allowed` blocks     | `tag` changes for civil war countries                                   | Use `original_tag`                            |
 | Redundant `AND = { }`              | Implicit AND in triggers makes this unnecessary                         | Remove the wrapper                            |
 | `check_variable = { v >= 0 }`      | `>=` and `<=` are not valid inline                                      | Use `compare = greater_than_or_equals`        |
-| `NOR = { ... }` as logical NOR     | `NOR` is Norway's country tag, not a logic keyword                      | Use separate `NOT` blocks                     |
+| `NOR = { ... }` as logical NOR     | `NRY` is Norway's country tag, not a logic keyword                      | Use separate `NOT` blocks                     |
 | Missing `province` on `naval_base` | `add_building_construction` for naval bases requires `province = XXXXX` | Add the province ID                           |
 | `is_in_faction = TAG`              | `is_in_faction` is boolean, not a scope check                           | Use `is_in_faction_with = TAG`                |
 | `has_trade_agreement_with`         | Not a valid HOI4 trigger                                                | Use `has_country_flag = trade_agreement@TAG`  |

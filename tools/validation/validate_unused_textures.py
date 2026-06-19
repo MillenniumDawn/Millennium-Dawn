@@ -8,7 +8,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -57,13 +57,29 @@ def find_texture_files(mod_path: str) -> Set[str]:
     return texture_files
 
 
-def process_gfx_file(args: Tuple[str, str, Set[str], Dict[str, List[str]]]) -> Set[str]:
+# Worker globals for the texture index, set once per worker by _textures_init
+# instead of shipped with every task — the index is ~7.7 MB pickled.
+_W_MOD = ""
+_W_TEXTURE_FILES: Set[str] = set()
+_W_FILENAME_LOOKUP: Dict[str, List[str]] = {}
+
+
+def _textures_init(
+    mod_path: str, texture_files: Set[str], filename_lookup: Dict[str, List[str]]
+) -> None:
+    global _W_MOD, _W_TEXTURE_FILES, _W_FILENAME_LOOKUP
+    _W_MOD = mod_path
+    _W_TEXTURE_FILES = texture_files
+    _W_FILENAME_LOOKUP = filename_lookup
+
+
+def process_gfx_file(filename: str) -> Set[str]:
     """
     Process a single .gfx file and extract all texturefile references.
     Returns a set of texture paths referenced in the file.
     For entity .gfx files, also matches by filename only.
     """
-    filename, mod_path, texture_files, filename_lookup = args
+    texture_files, filename_lookup = _W_TEXTURE_FILES, _W_FILENAME_LOOKUP
     referenced_textures = set()
 
     try:
@@ -115,13 +131,12 @@ def _extract_texture_refs(content: str) -> Set[str]:
     return refs
 
 
-def process_game_file(
-    args: Tuple[str, str, Set[str], Dict[str, List[str]]],
-) -> Set[str]:
+def process_game_file(filename: str) -> Set[str]:
     # Cached path extraction is keyed on the file alone (no mod path / texture
     # set leak into the cache). Matching against the current texture index
     # runs in the worker after the cache hit.
-    filename, mod_path, texture_files, filename_lookup = args
+    mod_path = _W_MOD
+    texture_files, filename_lookup = _W_TEXTURE_FILES, _W_FILENAME_LOOKUP
     try:
         content = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
@@ -225,17 +240,17 @@ class Validator(BaseValidator):
         gfx_files = self._find_all_gfx_files(search_path)
         self.log(f"  Found {len(gfx_files)} {label} .gfx files to process")
 
-        args_list = [
+        all_results = self._pool_map_init(
+            process_gfx_file,
+            gfx_files,
+            _textures_init,
             (
-                f,
                 search_path if search_path else self.mod_path,
                 self.texture_files,
                 self.texture_filename_lookup,
-            )
-            for f in gfx_files
-        ]
-
-        all_results = self._pool_map(process_gfx_file, args_list, chunksize=10)
+            ),
+            chunksize=10,
+        )
 
         referenced_textures = set()
         for texture_set in all_results:
@@ -261,12 +276,13 @@ class Validator(BaseValidator):
 
         self.log(f"  Found {len(game_files)} game files to scan")
 
-        args_list = [
-            (f, self.mod_path, self.texture_files, self.texture_filename_lookup)
-            for f in game_files
-        ]
-
-        all_results = self._pool_map(process_game_file, args_list, chunksize=10)
+        all_results = self._pool_map_init(
+            process_game_file,
+            game_files,
+            _textures_init,
+            (self.mod_path, self.texture_files, self.texture_filename_lookup),
+            chunksize=10,
+        )
 
         matched_textures = set()
         for texture_set in all_results:
