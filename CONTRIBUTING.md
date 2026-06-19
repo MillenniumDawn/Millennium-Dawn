@@ -17,9 +17,9 @@ Thank you for your interest in contributing to Millennium Dawn! This file is a p
 ## One-Command Setup
 
 ```bash
-python3 tools/setup.py          # install hooks and Python tool dependencies
-python3 tools/setup.py --check  # verify environment
-python3 tools/setup.py --docs   # also install Node.js + Bun for docs site work
+python3 tools/dev_setup.py          # install hooks and Python tool dependencies
+python3 tools/dev_setup.py --check  # verify environment
+python3 tools/dev_setup.py --docs   # also install Node.js + Bun for docs site work
 ```
 
 See the [Developer Setup Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/developer-setup/) for the full walkthrough.

@@ -11,6 +11,8 @@ import tempfile
 from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import disk_cache
 from shared_utils import Colors
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -261,6 +263,23 @@ def main():
             "CACHE_VERSION bumps. Sets MD_NO_CACHE=1 for child validators."
         ),
     )
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help=(
+            "Delete the entire .validation_cache/ before running, then rebuild "
+            "it from scratch this run. Use to reset a stale or oversized cache."
+        ),
+    )
+    parser.add_argument(
+        "--cache-max-age-days",
+        type=float,
+        default=7.0,
+        help=(
+            "Auto-clear .validation_cache/ when it is older than this many days "
+            "(since creation/last clear), then rebuild. 0 disables. Default: 7."
+        ),
+    )
     parser.add_argument("--format", choices=["text", "json", "both"], default="text")
     parser.add_argument(
         "--output", "-o", type=str, help="Output file for combined report"
@@ -295,6 +314,24 @@ def main():
 
     VALIDATORS = discover_validators()
     mod_path = os.path.abspath(args.path)
+
+    if args.clear_cache:
+        disk_cache.clear(mod_path)
+        disk_cache.stamp_created(mod_path)
+        print("Cleared .validation_cache/ (rebuilding from scratch this run).")
+    else:
+        # Auto-reset a cache that's been accumulating orphaned rows (deleted
+        # files, stale namespace hashes) for longer than the age limit.
+        if disk_cache.clear_if_stale(mod_path, args.cache_max_age_days):
+            print(
+                f"Cache older than {args.cache_max_age_days:g} day(s) — "
+                "cleared and rebuilding from scratch."
+            )
+        # Old CACHE_VERSION dirs are orphaned on a version bump (often 100k+
+        # files); drop them so the cache doesn't grow without bound.
+        pruned = disk_cache.prune_old_versions(mod_path)
+        if pruned:
+            print(f"Pruned stale cache version(s): {', '.join(sorted(pruned))}")
 
     # TemporaryDirectory guarantees cleanup even on crashes — the previous
     # mkdtemp + per-file os.remove pattern leaked the dir on every non-clean

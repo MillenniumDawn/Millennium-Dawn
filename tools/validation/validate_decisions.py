@@ -60,6 +60,27 @@ def _scan_activations_in_file(filename: str) -> Tuple[set, set]:
 
 # --- Decision parsing helpers ---
 
+_REMOVE_DECISION_RE = re.compile(r"\bremove_decision\s*=\s*(\w+)")
+_REMOVE_TARGETED_BLOCK_RE = re.compile(
+    r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
+)
+_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\w+)")
+
+
+def _scan_external_removals(filename: str) -> set:
+    if _should_skip(filename):
+        return set()
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if "remove_decision" not in text_file:
+        return set()
+    out = set(_REMOVE_DECISION_RE.findall(text_file))
+    for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
+        out.update(_REMOVE_DECISION_NAME_RE.findall(block))
+    return out
+
+
 _TAG_TOKEN_PATTERN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
 
 
@@ -1653,26 +1674,15 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
 
-        remove_pat = re.compile(r"\bremove_decision\s*=\s*(\w+)")
-        remove_targeted_block_pat = re.compile(
-            r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
-        )
-        decision_name_pat = re.compile(r"\bdecision\s*=\s*(\w+)")
         externally_removed: set = set()
-
-        for filename in glob.iglob(
-            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        for found in self._pool_map(
+            _scan_external_removals,
+            list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+            ),
+            chunksize=30,
         ):
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if "remove_decision" not in text_file:
-                continue
-            externally_removed.update(remove_pat.findall(text_file))
-            for block in remove_targeted_block_pat.findall(text_file):
-                externally_removed.update(decision_name_pat.findall(block))
+            externally_removed |= found
 
         results = []
 

@@ -8,7 +8,7 @@ import os
 import re
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from multiprocessing import Pool, cpu_count
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
@@ -414,8 +414,6 @@ class BaseValidator:
         self.staged_files = None
         self.output_lines = []
         self._pool: Optional[Pool] = None
-        self._regex_cache: Dict[str, re.Pattern] = {}
-        self._line_offsets_cache: Dict[str, List[int]] = {}
         self._shared_cache: Dict[str, object] = {}
         self._issues: List[Issue] = []
         self._section_timings: List[Tuple[str, float]] = []
@@ -430,22 +428,6 @@ class BaseValidator:
             )
             if not self.staged_files:
                 logging.warning("No staged files found")
-
-    def get_regex(self, pattern: str, flags: int = 0) -> re.Pattern:
-        """Get a compiled regex pattern from cache or compile and cache it."""
-        key = f"{pattern}:{flags}"
-        if key not in self._regex_cache:
-            self._regex_cache[key] = re.compile(pattern, flags)
-        return self._regex_cache[key]
-
-    def line_offsets(self, path: str, text: str) -> List[int]:
-        # Pool workers must use compute_line_offsets() from shared_utils — this
-        # cache only spans the main process.
-        cached = self._line_offsets_cache.get(path)
-        if cached is None:
-            cached = compute_line_offsets(text)
-            self._line_offsets_cache[path] = cached
-        return cached
 
     def cached(self, key: str, factory_fn):
         # Pool workers don't see this cache; populate from the main process.
@@ -743,15 +725,6 @@ class BaseValidator:
         """Get issues as JSON string."""
         return json.dumps([issue.to_dict() for issue in self._issues], indent=2)
 
-    def get_summary(self) -> dict:
-        """Get validation summary as dict."""
-        return {
-            "title": self.TITLE,
-            "errors": self.errors_found,
-            "warnings": self.warnings_found,
-            "issues": [issue.to_dict() for issue in self._issues],
-        }
-
     def _basename_index(self, patterns: Tuple[str, ...]) -> Dict[str, List[str]]:
         # Without this cache, get_full_path() re-globs **/*.txt for every call —
         # validate_variables makes hundreds of those per run.
@@ -816,6 +789,27 @@ class BaseValidator:
         if self.workers == 1 or len(args_list) < 10:
             return [func(a) for a in args_list]
         return self._get_pool().map(func, args_list, chunksize=chunksize)
+
+    def _pool_map_init(
+        self,
+        func: Callable,
+        items: List,
+        initializer: Callable,
+        initargs: tuple,
+        chunksize: int = 50,
+    ) -> List:
+        # Like _pool_map, but each worker gets initargs once via initializer
+        # rather than in every task. Use when the per-file worker needs a large
+        # read-only payload (a membership set or lookup map): shipping it per
+        # task re-pickles it once per chunk, which can dominate runtime. Spins a
+        # dedicated pool since the shared one carries no initializer.
+        if self.workers == 1 or len(items) < 10:
+            initializer(*initargs)
+            return [func(it) for it in items]
+        with Pool(
+            processes=self.workers, initializer=initializer, initargs=initargs
+        ) as pool:
+            return pool.map(func, items, chunksize=chunksize)
 
     def _collect_files(
         self,
