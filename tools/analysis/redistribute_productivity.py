@@ -110,7 +110,7 @@ CONTINENT_TAGS = {
         "LAT",
         "SER",
         "BEL",
-        "NRY",
+        "NOR",
         "MLV",
         "AUS",
         "BUL",

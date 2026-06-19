@@ -913,7 +913,7 @@ The `target` supports script constants and `tooltip` supports bindable localizat
 ```
 all_country_of = {
 	tooltip = my_loc # Optional bindable localization
-	target = { SWE NRY FIN DEN ICE }
+	target = { SWE NOR FIN DEN ICE }
 	has_defensive_war = yes
 }
 
@@ -1350,7 +1350,7 @@ The `target` supports script constants and `tooltip` supports bindable localizat
 ```
 any_country_of = {
 	tooltip = my_loc # Optional bindable localization
-	target = { SWE NRY FIN DEN ICE }
+	target = { SWE NOR FIN DEN ICE }
 	has_defensive_war = yes
 }
 
@@ -1396,7 +1396,7 @@ The `target` supports script constants and `tooltip` supports bindable localizat
 ```
 any_country_with_original_tag_of = {
 	tooltip = my_loc # Optional bindable localization
-	target = { SWE NRY FIN DEN ICE }
+	target = { SWE NOR FIN DEN ICE }
 	has_defensive_war = yes
 }
 
@@ -1560,7 +1560,7 @@ The `target` supports script constants and `tooltip` supports bindable localizat
 ```
 any_other_country_of = {
 	tooltip = my_loc # Optional bindable localization
-	target = { SWE NRY FIN DEN ICE }
+	target = { SWE NOR FIN DEN ICE }
 	has_defensive_war = yes
 }
 
@@ -1584,7 +1584,7 @@ The `target` supports script constants and `tooltip` supports bindable localizat
 ```
 any_country_with_original_tag_of = {
 	tooltip = my_loc # Optional bindable localization
-	target = { SWE NRY FIN DEN ICE }
+	target = { SWE NOR FIN DEN ICE }
 	has_defensive_war = yes
 }
 

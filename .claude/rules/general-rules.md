@@ -91,9 +91,11 @@ NOT = { has_idea = bar }
 
 ## NOR is not a valid trigger
 
-`NOR` is **not** a HOI4 trigger keyword. `NOR = { ... }` opens a country scope for Norway, not a logical NOR block. Express "none of these" as separate `NOT` blocks or `NOT = { OR = { ... } }`:
+`NOR` is **not** a HOI4 trigger keyword — it is Norway's country tag. `NOR = { ... }` opens a country scope for Norway, not a logical NOR block. Express "none of these" as separate `NOT` blocks or `NOT = { OR = { ... } }`:
 
 ```
+# Wrong — this scopes into Norway, not a logical NOR
+NOR = { has_government = democratic has_idea = social_05 }
 
 # Correct — separate NOT blocks
 NOT = { has_government = democratic }
