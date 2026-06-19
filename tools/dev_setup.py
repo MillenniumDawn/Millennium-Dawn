@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-setup.py — One-command developer environment setup for Millennium Dawn.
+dev_setup.py — One-command developer environment setup for Millennium Dawn.
 
 Usage:
-    python3 tools/setup.py          Set up mod development (pre-commit + tools + test deps)
-    python3 tools/setup.py --docs   Also set up the docs site (Node.js + Bun)
-    python3 tools/setup.py --check  Check if everything is installed without changing anything
+    python3 tools/dev_setup.py          Set up mod development (pre-commit + tools + test deps)
+    python3 tools/dev_setup.py --docs   Also set up the docs site (Node.js + Bun)
+    python3 tools/dev_setup.py --check  Check if everything is installed without changing anything
 
 Prerequisites
 -------------
