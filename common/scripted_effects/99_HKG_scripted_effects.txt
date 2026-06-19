@@ -159,24 +159,6 @@ HKG_contract_refresh_gui = {
 	add_to_variable = { HKG_contract_gui_dirty = 1 }
 }
 
-CHI_contract_make_offer = {
-	HKG = {
-		if = {
-			limit = {
-				HKG_contract_can_solicit = yes
-				NOT = { has_country_flag = HKG_contract_offer_pending }
-			}
-			set_variable = { HKG_contract_offer_class = PREV.CHI_contract_pick_class }
-			set_variable = { HKG_contract_offer_license = PREV.CHI_contract_pick_license }
-			set_variable = { HKG_contract_offer_tier = PREV.CHI_contract_pick_tier }
-			HKG_contract_set_offer_terms = yes
-			set_country_flag = HKG_contract_offer_pending
-			add_to_variable = { HKG_contract_gui_dirty = 1 }
-			country_event = { id = HKG_contract.1 days = 2 }
-		}
-	}
-}
-
 HKG_contract_generate_offer = {
 	set_variable = { HKG_contract_offer_license = 0 }
 	set_variable = { HKG_contract_offer_tier = 1 }
@@ -184,19 +166,19 @@ HKG_contract_generate_offer = {
 		chance = 30
 		set_variable = { HKG_contract_offer_license = 1 }
 	}
-	# With no escort hull tech, only a license contract is possible.
+	# With no escort hull tech of its own, Hong Kong can only take a licensed
+	# contract - Beijing supplies the design to build.
 	if = {
 		limit = { HKG_contract_can_build_any = no }
 		set_variable = { HKG_contract_offer_license = 1 }
 	}
 	if = {
 		limit = { check_variable = { HKG_contract_offer_license = 1 } }
+		# Beijing only licenses the escort classes it fields a design for (DD/FF/SS).
 		random_list = {
 			10 = { set_variable = { HKG_contract_offer_class = 1 } }
-			10 = { set_variable = { HKG_contract_offer_class = 2 } }
+			15 = { set_variable = { HKG_contract_offer_class = 2 } }
 			25 = { set_variable = { HKG_contract_offer_class = 3 } }
-			30 = { set_variable = { HKG_contract_offer_class = 4 } }
-			25 = { set_variable = { HKG_contract_offer_class = 5 } }
 		}
 	}
 	else = {
@@ -382,34 +364,32 @@ HKG_contract_accept_offer = {
 		}
 		if = {
 			limit = { check_variable = { HKG_contract_offer_license = 1 } }
-			HKG_contract_grant_license_tech = yes
+			HKG_contract_grant_production_license = yes
 		}
 	}
 	clr_country_flag = HKG_contract_offer_pending
 	HKG_contract_refresh_gui = yes
 }
 
-# Each set_technology also grants the predecessor tech so the naval tree has no
-# skipped-ahead gaps.
-HKG_contract_grant_license_tech = {
+# Grants Hong Kong a production license for Beijing's design of the contracted
+# class. Only DD/FF/SS are licensable - China fields no cruiser or carrier
+# design. Versions reference CHI's history-defined variants; re-verify the named
+# ships if "CHI - China.txt" variant order changes.
+HKG_contract_grant_production_license = {
 	if = {
-		limit = { check_variable = { HKG_contract_offer_class = 1 } }
-		set_technology = { tech_naval_systems_engineering = 1 destroyer_hull_1 = 1 popup = no }
-	}
-	else_if = {
-		limit = { check_variable = { HKG_contract_offer_class = 2 } }
-		set_technology = { tech_naval_systems_engineering = 1 frigate_hull_1 = 1 popup = no }
-	}
-	else_if = {
-		limit = { check_variable = { HKG_contract_offer_class = 3 } }
-		set_technology = { tech_submarine_engineering_1 = 1 attack_submarine_hull_1 = 1 popup = no }
-	}
-	else_if = {
-		limit = { check_variable = { HKG_contract_offer_class = 4 } }
-		set_technology = { tech_naval_systems_engineering = 1 cruiser_hull_1 = 1 popup = no }
-	}
-	else = {
-		set_technology = { aircraft_carrier_engineering = 1 carrier_hull_1 = 1 popup = no }
+		limit = { country_exists = CHI }
+		if = {
+			limit = { check_variable = { HKG_contract_offer_class = 1 } }
+			CHI = { create_production_license = { target = HKG equipment = { type = destroyer_hull_2 version = 0 } cost_factor = 0 } } # Type 052
+		}
+		else_if = {
+			limit = { check_variable = { HKG_contract_offer_class = 2 } }
+			CHI = { create_production_license = { target = HKG equipment = { type = frigate_hull_3 version = 0 } cost_factor = 0 } } # Type 053H3
+		}
+		else_if = {
+			limit = { check_variable = { HKG_contract_offer_class = 3 } }
+			CHI = { create_production_license = { target = HKG equipment = { type = attack_submarine_hull_3 version = 0 } cost_factor = 0 } } # Type 039
+		}
 	}
 }
 
