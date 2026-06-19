@@ -101,7 +101,7 @@ After cloning, the mod folder must be in the correct location for HOI4 to detect
 The setup script installs pre-commit hooks and Python tool dependencies:
 
 ```bash
-python3 tools/setup.py
+python3 tools/dev_setup.py
 ```
 
 That's it. Pre-commit hooks will now run automatically on every commit.
@@ -109,13 +109,13 @@ That's it. Pre-commit hooks will now run automatically on every commit.
 To verify your environment at any time:
 
 ```bash
-python3 tools/setup.py --check
+python3 tools/dev_setup.py --check
 ```
 
 For docs site work, also install the Node and Bun dependencies (see the [Contributing Guide](/dev-resources/contributing/):
 
 ```bash
-python3 tools/setup.py --docs
+python3 tools/dev_setup.py --docs
 ```
 
 ---
@@ -192,7 +192,7 @@ tools/
 └── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ```
 
-Python dependencies live in `pyproject.toml` under `[dependency-groups]` (a `runtime` group and a `dev` group); there are no `requirements.txt` files. `tools/setup.py` installs them, and `pyproject.toml` also configures ruff (lint, import order, and formatting) and pytest.
+Python dependencies live in `pyproject.toml` under `[dependency-groups]` (a `runtime` group and a `dev` group); there are no `requirements.txt` files. `tools/dev_setup.py` installs them, and `pyproject.toml` also configures ruff (lint, import order, and formatting) and pytest.
 
 See [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md) for the full documentation.
 
