@@ -1,12 +1,14 @@
 """Render the validation report as Markdown.
 
-Layout:
-  1. Hidden stable marker (for comment-update matching).
-  2. H1 + verdict banner + metadata strip (commit, PR, workflow run link, date).
-  3. Summary table — every validator gets a row, failures sorted first.
-  4. Validators section — one collapsible <details> per validator; failing ones
-     open with issues grouped by category, passing ones collapse to a one-liner.
-  5. Collapsed raw per-validator logs at the bottom.
+Two renderings come out of the same builder:
+  - PR comment (``include_validator_sections=False``): marker, verdict banner,
+    metadata strip, and a summary table of only the validators with findings
+    (passing ones fold into a count line), plus a pointer to the step summary.
+    Kept small so the comment doesn't drown the PR conversation in inline findings.
+  - Step summary (default): the full validator roster in the summary table plus
+    the per-validator <details> sections — failing ones open with issues grouped
+    by category, passing ones collapsed to a one-liner — and optionally the raw
+    per-validator logs.
 """
 
 from collections import defaultdict
@@ -33,8 +35,15 @@ def render(
     ctx: ReportContext,
     max_visible: int = MAX_ISSUES_COMMENT,
     include_raw_logs: bool = True,
+    include_validator_sections: bool = True,
 ) -> str:
-    """Render the full report body."""
+    """Render the report body.
+
+    With ``include_validator_sections=False`` the per-validator <details>
+    sections and raw logs are dropped in favour of a one-line pointer to the
+    step summary — that's the concise PR comment. The default renders the full
+    detail for the step summary.
+    """
     parts: List[str] = []
     parts.append(REPORT_MARKER)
     parts.append("# Validation Report")
@@ -48,7 +57,9 @@ def render(
     parts.append(_render_metadata_strip(ctx))
     parts.append("")
 
-    summary = _render_summary_table(runs)
+    # Concise comment hides passing validators (count note only); the step
+    # summary lists the full roster alongside the per-validator sections.
+    summary = _render_summary_table(runs, show_passing=include_validator_sections)
     if summary:
         parts.append(summary)
         parts.append("")
@@ -56,16 +67,26 @@ def render(
     errored_or_warned = [
         i for i in issues if i.severity in (Severity.ERROR, Severity.WARNING)
     ]
-    validator_sections = _render_validator_sections(
-        runs, errored_or_warned, ctx, max_visible
-    )
-    if validator_sections:
+    if include_validator_sections:
+        validator_sections = _render_validator_sections(
+            runs, errored_or_warned, ctx, max_visible
+        )
+        if validator_sections:
+            parts.append("---")
+            parts.append("")
+            if errored_or_warned:
+                parts.append(_LEGEND)
+                parts.append("")
+            parts.append(validator_sections)
+            parts.append("")
+    elif errored_or_warned:
+        # Concise PR comment: the summary table carries the counts; the full
+        # per-validator issue list lives in the step summary.
         parts.append("---")
         parts.append("")
-        if errored_or_warned:
-            parts.append(_LEGEND)
-            parts.append("")
-        parts.append(validator_sections)
+        parts.append(_LEGEND)
+        parts.append("")
+        parts.append(_render_details_pointer(ctx))
         parts.append("")
 
     if include_raw_logs:
@@ -162,7 +183,7 @@ def _run_sort_key(r: ValidatorRun) -> Tuple[int, str]:
     return (rank, r.title.lower())
 
 
-def _render_summary_table(runs: List[ValidatorRun]) -> str:
+def _render_summary_table(runs: List[ValidatorRun], show_passing: bool = True) -> str:
     if not runs:
         return "_No validator results found._"
 
@@ -171,18 +192,42 @@ def _render_summary_table(runs: List[ValidatorRun]) -> str:
     if total_errors == 0 and total_warnings == 0:
         return ""
 
-    # Every validator gets a row (passing ones included) so the table is the
-    # full at-a-glance roster; failures sort to the top.
+    sorted_runs = sorted(runs, key=_run_sort_key)
+    passed_note = ""
+    if show_passing:
+        # Step summary: every validator gets a row (passing ones included) so the
+        # table is the full at-a-glance roster; failures sort to the top.
+        table_runs = sorted_runs
+    else:
+        # Concise comment: only validators with findings get a row; the rest are
+        # folded into a single count line so the comment stays small.
+        table_runs = [r for r in sorted_runs if r.errors or r.warnings]
+        passed = sum(1 for r in runs if not r.errors and not r.warnings)
+        if passed:
+            passed_note = (
+                f"\n\n✅ {_plural(passed, 'validator')} passed with no issues."
+            )
+
     header = "| Validator | Errors | Warnings |\n|-----------|-------:|---------:|"
     rows = [
         f"| {_severity_icon(r.errors, r.warnings)} {r.title} | {r.errors:,} | {r.warnings:,} |"
-        for r in sorted(runs, key=_run_sort_key)
+        for r in table_runs
     ]
     rows.append(f"| **Total** | **{total_errors:,}** | **{total_warnings:,}** |")
-    return "## Summary\n\n" + header + "\n" + "\n".join(rows)
+    return "## Summary\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
 # ── Issues section ─────────────────────────────────────────────────────────────
+
+
+def _render_details_pointer(ctx: ReportContext) -> str:
+    """Concise-comment line sending the reader to the step summary for detail."""
+    target = (
+        f"[step summary]({ctx.workflow_run_url})"
+        if ctx.workflow_run_url
+        else "the workflow step summary"
+    )
+    return f"See {target} for the full issue list with file and line references."
 
 
 def _render_validator_sections(
