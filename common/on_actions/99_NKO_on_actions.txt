@@ -5,9 +5,9 @@ on_actions = {
 	# Per-tag hooks (on_weekly_NKO / on_monthly_NKO) fire ONLY for North Korea,
 	# so no global on_weekly sweep or per-country original_tag guard is needed —
 	# ROOT is always NKO here.
-	#   Weekly : save migration, rebuild the at-war client list, tick contract
-	#            deadlines.
-	#   Monthly: Russia munitions request, foreign arms contract offers.
+	#   Weekly : save migration, rebuild the at-war client list, rebuild the
+	#            patron list, run the expeditionary mastery tick.
+	#   Monthly: Russia munitions request.
 	#   Civil war: strip the mechanic from both survivor and breakaway.
 	# -------------------------------------------------------------------------
 
@@ -25,7 +25,9 @@ on_actions = {
 			if = {
 				limit = { has_country_flag = NKO_arms_export_active }
 				NKO_arms_export_rebuild_targets = yes
-				NKO_arms_contract_weekly_tick = yes
+				NKO_count_satellites = yes
+				NKO_rebuild_patrons = yes
+				NKO_expeditionary_mastery_tick = yes
 			}
 		}
 	}
@@ -43,20 +45,6 @@ on_actions = {
 				}
 				country_event = { id = NKO_export.1 days = 3 }
 				set_country_flag = { flag = NKO_arms_export_russia_offer_cooldown value = 1 days = 180 }
-			}
-
-			# Foreign arms contract offers from China / Russia (or another partner).
-			if = {
-				limit = {
-					NKO_arms_contract_can_solicit = yes
-					NOT = { has_country_flag = NKO_arms_contract_offer_cooldown }
-					OR = {
-						AND = { country_exists = SOV  NOT = { has_war_with = SOV } }
-						AND = { country_exists = CHI  NOT = { has_war_with = CHI } }
-					}
-				}
-				country_event = { id = NKO_export.10 days = 2 }
-				set_country_flag = { flag = NKO_arms_contract_offer_cooldown value = 1 days = 120 }
 			}
 		}
 	}

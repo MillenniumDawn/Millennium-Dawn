@@ -3436,15 +3436,81 @@ NKO_rus_friend_category = {
 # spends patron clout to ease sanctions; NKO_arms_export_capstone fires at ten clients.
 NKO_arms_export = {
 
+	###########Conventional Arms Exports — Open###########
+	NKO_arms_export_conv_open = {
+		icon = GFX_decision_nko_armor_button
+		days_remove = 1
+		fire_only_once = no
+		visible = {
+			has_country_flag = NKO_arms_export_active
+			NOT = { has_country_flag = NKO_arms_export_conv_open }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_arms_export_conv_open"
+			set_country_flag = NKO_arms_export_conv_open
+		}
+		ai_will_do = { base = 355 }
+	}
+	###########Conventional Arms Exports — Close###########
+	NKO_arms_export_conv_close = {
+		icon = GFX_decision_nko_armor_button
+		days_remove = 1
+		fire_only_once = no
+		visible = {
+			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_conv_open
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_arms_export_conv_close"
+			clr_country_flag = NKO_arms_export_conv_open
+		}
+		ai_will_do = { base = 0 }
+	}
+	###########Strategic Arms Exports — Open###########
+	NKO_arms_export_strat_open = {
+		icon = GFX_decision_nko_rocket
+		days_remove = 1
+		fire_only_once = no
+		visible = {
+			has_country_flag = NKO_arms_export_active
+			NOT = { has_country_flag = NKO_arms_export_strat_open }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_arms_export_strat_open"
+			set_country_flag = NKO_arms_export_strat_open
+		}
+		ai_will_do = { base = 355 }
+	}
+	###########Strategic Arms Exports — Close###########
+	NKO_arms_export_strat_close = {
+		icon = GFX_decision_nko_rocket
+		days_remove = 1
+		fire_only_once = no
+		visible = {
+			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_strat_open
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_arms_export_strat_close"
+			clr_country_flag = NKO_arms_export_strat_open
+		}
+		ai_will_do = { base = 0 }
+	}
+
 	NKO_export_munitions = {
 		icon = GFX_decision_nko_armor_button
 
 		target_array = global.NKO_arms_export_targets
-		target_root_trigger = { has_country_flag = NKO_arms_export_active }
+		target_root_trigger = {
+			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_conv_open
+		}
 		target_trigger = {
 			FROM = {
 				has_war = yes
 				NOT = { has_war_with = NKO }
+				NOT = { has_government = democratic }
+				surrender_progress > 0.3
 			}
 		}
 
@@ -3468,11 +3534,16 @@ NKO_arms_export = {
 		icon = GFX_decision_nko_rocket
 
 		target_array = global.NKO_arms_export_targets
-		target_root_trigger = { has_country_flag = NKO_arms_export_active }
+		target_root_trigger = {
+			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_strat_open
+		}
 		target_trigger = {
 			FROM = {
 				has_war = yes
 				NOT = { has_war_with = NKO }
+				NOT = { has_government = democratic }
+				surrender_progress > 0.3
 			}
 		}
 
@@ -3500,12 +3571,21 @@ NKO_arms_export = {
 		icon = GFX_decision_sov_nko_soldiers
 
 		target_array = global.NKO_arms_export_targets
-		target_root_trigger = { has_country_flag = NKO_arms_export_active }
+		target_root_trigger = {
+			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_conv_open
+		}
 		target_trigger = {
 			FROM = {
 				has_war = yes
 				NOT = { has_war_with = NKO }
+				NOT = { has_government = democratic }
+				surrender_progress > 0.3
 			}
+		}
+
+		available = {
+			has_idea = intervention_global_interventionism
 		}
 
 		cost = 20
@@ -3528,16 +3608,26 @@ NKO_arms_export = {
 		icon = GFX_decision_sov_nko_button
 
 		target_array = global.NKO_arms_export_targets
-		target_root_trigger = { has_country_flag = NKO_arms_export_active }
+		target_root_trigger = {
+			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_strat_open
+		}
 		target_trigger = {
 			FROM = {
 				has_war = yes
 				NOT = { has_war_with = NKO }
+				NOT = { has_government = democratic }
+				surrender_progress > 0.3
 			}
 		}
 
 		available = {
 			has_completed_focus = NKO_technological_boost
+			custom_trigger_tooltip = {
+				tooltip = NKO_export_satellite_min_tt
+				check_variable = { var = NKO_comsat_count  value = 10  compare = greater_than_or_equals }
+				check_variable = { var = NKO_spysat_count  value = 10  compare = greater_than_or_equals }
+			}
 		}
 
 		cost = 15
@@ -3626,156 +3716,99 @@ NKO_arms_export = {
 			base = 100
 		}
 	}
-}
 
-###########SECOND ECONOMIC COMMITTEE — FOREIGN ARMS CONTRACTS#########################
-# HKG-procurement-style: solicit an offer from China/Russia (or another partner),
-# accept into a slot, then fulfil by delivering produced equipment before the
-# deadline. Higher patron standing (built by volunteer deployments) unlocks bigger
-# contracts. See common/scripted_effects/99_NKO_scripted_effects.txt.
-NKO_arms_contracts = {
+	###########Patron Volunteer Commitments###########
+	# Russia (SOV) and China (CHI) host North Korean volunteer expeditionary
+	# forces while at war. Committing a full expedition (20+ NKO volunteer
+	# divisions hosted) pays hard currency and patron standing; the weekly
+	# mastery tick rewards sustained deployment. Goodwill can be cashed in for
+	# patron jet technology. See common/scripted_effects/99_NKO_scripted_effects.txt.
+	NKO_commit_volunteers = {
+		icon = GFX_decision_sov_nko_soldiers
 
-	NKO_contract_solicit = {
-		icon = GFX_decision_sov_nko_button
-
-		visible = {
+		target_array = global.NKO_patrons_at_war
+		target_root_trigger = {
 			has_country_flag = NKO_arms_export_active
-			NOT = { has_country_flag = NKO_arms_contract_offer_pending }
 		}
-
-		available = {
-			NKO_arms_contract_can_solicit = yes
-			OR = {
-				AND = { country_exists = SOV  NOT = { has_war_with = SOV } }
-				AND = { country_exists = CHI  NOT = { has_war_with = CHI } }
+		target_trigger = {
+			FROM = {
+				has_war = yes
+				NOT = { has_war_with = NKO }
 			}
 		}
 
-		cost = 25
-		days_re_enable = 90
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_commit_volunteers_req_tt
+				FROM = { has_volunteers_amount_from = { tag = NKO count > 19 } }
+			}
+		}
+
+		cost = 0
+		days_re_enable = 180
 		fire_only_once = no
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_contract_solicit"
-			custom_effect_tooltip = NKO_contract_tt_solicit
-			country_event = { id = NKO_export.10 days = 2 }
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_commit_volunteers on [FROM.GetTag]"
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+			add_to_variable = { NKO_arms_export_revenue = 0.5 }
+			add_to_variable = { var = NKO_arms_contract_standing  value = 15 }
+			clamp_variable = { var = NKO_arms_contract_standing  min = 0  max = 100 }
+			add_to_variable = { NKO_expeditions_completed = 1 }
+			set_country_flag = NKO_expeditionary_active
+			if = {
+				limit = { is_ai = no }
+				add_to_variable = { var = NKO_arms_export_gui_dirty  value = 1 }
+			}
 		}
 
 		ai_will_do = {
-			base = 30
-			modifier = { factor = 0  has_country_flag = NKO_arms_contract_offer_pending }
+			base = 50
 		}
 	}
 
-	NKO_contract_deliver_inf = {
-		icon = GFX_decision_nko_armor_button
-
-		visible = {
-			has_country_flag = NKO_arms_export_active
-			NKO_contract_inf_active = yes
-		}
-
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = NKO_contract_need_inf_tt
-				has_equipment = { infantry_weapons_type > 250 }
-			}
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_contract_deliver_inf"
-			custom_effect_tooltip = NKO_contract_tt_deliver
-			add_equipment_to_stockpile = { type = infantry_weapons_type amount = -250 producer = NKO }
-			set_temp_variable = { deliver_class = 1 }
-			NKO_arms_contract_credit_delivery = yes
-		}
-
-		ai_will_do = { base = 100 }
-	}
-
-	NKO_contract_deliver_arty = {
-		icon = GFX_decision_nko_armor_button
-
-		visible = {
-			has_country_flag = NKO_arms_export_active
-			NKO_contract_arty_active = yes
-		}
-
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = NKO_contract_need_arty_tt
-				has_equipment = { artillery_equipment > 60 }
-			}
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_contract_deliver_arty"
-			custom_effect_tooltip = NKO_contract_tt_deliver
-			add_equipment_to_stockpile = { type = artillery_equipment amount = -60 producer = NKO }
-			set_temp_variable = { deliver_class = 2 }
-			NKO_arms_contract_credit_delivery = yes
-		}
-
-		ai_will_do = { base = 100 }
-	}
-
-	NKO_contract_deliver_armor = {
-		icon = GFX_decision_nko_armor_button
-
-		visible = {
-			has_country_flag = NKO_arms_export_active
-			NKO_contract_armor_active = yes
-		}
-
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = NKO_contract_need_armor_tt
-				has_equipment = { medium_tank_chassis > 30 }
-			}
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_contract_deliver_armor"
-			custom_effect_tooltip = NKO_contract_tt_deliver
-			add_equipment_to_stockpile = { type = medium_tank_chassis amount = -30 producer = NKO }
-			set_temp_variable = { deliver_class = 3 }
-			NKO_arms_contract_credit_delivery = yes
-		}
-
-		ai_will_do = { base = 100 }
-	}
-
-	NKO_contract_deliver_missiles = {
+	NKO_request_jets = {
 		icon = GFX_decision_nko_rocket
 
-		visible = {
+		target_array = global.NKO_patrons_at_war
+		target_root_trigger = {
 			has_country_flag = NKO_arms_export_active
-			NKO_contract_missile_active = yes
+		}
+		target_trigger = {
+			FROM = {
+				has_war = yes
+				NOT = { has_war_with = NKO }
+			}
 		}
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = NKO_contract_need_missiles_tt
-				has_equipment = { ballistic_missile_equipment > 20 }
+				tooltip = NKO_request_jets_req_tt
+				check_variable = { var = NKO_arms_contract_standing  value = 40  compare = greater_than_or_equals }
 			}
 		}
 
+		cost = 50
+		days_re_enable = 365
 		fire_only_once = no
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_contract_deliver_missiles"
-			custom_effect_tooltip = NKO_contract_tt_deliver
-			add_equipment_to_stockpile = { type = ballistic_missile_equipment amount = -20 producer = NKO }
-			set_temp_variable = { deliver_class = 4 }
-			NKO_arms_contract_credit_delivery = yes
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_request_jets on [FROM.GetTag]"
+			add_tech_bonus = { name = NKO_jet_transfer bonus = 1.0 uses = 1 category = CAT_fighter }
+			add_tech_bonus = { name = NKO_jet_transfer bonus = 1.0 uses = 1 category = CAT_as_fighter }
+			subtract_from_variable = { NKO_arms_contract_standing = 30 }
+			clamp_variable = { var = NKO_arms_contract_standing  min = 0  max = 100 }
+			add_opinion_modifier = { target = FROM modifier = trade_mission }
+			FROM = { add_opinion_modifier = { target = NKO modifier = trade_mission } }
+			if = {
+				limit = { is_ai = no }
+				add_to_variable = { var = NKO_arms_export_gui_dirty  value = 1 }
+			}
 		}
 
-		ai_will_do = { base = 100 }
+		ai_will_do = {
+			base = 20
+		}
 	}
 }
