@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate technology prerequisites and equipment module unlocks in history files."""
+
 import glob
 import os
 import re

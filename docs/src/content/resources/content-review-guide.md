@@ -18,7 +18,7 @@ This guide outlines the quality expectations for Millennium Dawn content. It cov
 
 ## What Is a Content Review?
 
-A content review evaluates proposed content against the team's quality standards. It includes playtesting notes, writing expectations, and more. This process requires careful thought — compose your feedback thoroughly and ensure the content meets our standards.
+A content review evaluates proposed content against the team's quality standards. It includes playtesting notes, writing expectations, and more. This process requires careful thought, compose your feedback thoroughly and ensure the content meets our standards.
 
 ## Why Do We Do Content Reviews?
 
@@ -38,7 +38,7 @@ These are baseline expectations for all developers on the team:
 - **Ask when in doubt.** If you are unsure about a content decision, ask a lead developer or Council Member before proceeding.
 - **Review your own content first.** Complete this checklist and the standards in the [Code Resource](/dev-resources/code-resource/) before requesting a lead review.
 - **Read the [Focus Tree Design Principles](/dev-resources/focus-tree-design-principles/).** Familiarize yourself with the design philosophy for branch structure, pacing, and player choice.
-- **Set up your environment.** Run `python3 tools/setup.py` after cloning to install pre-commit hooks and tool dependencies. See the [Git Setup & Usage Guide](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) for full instructions.
+- **Set up your environment.** Run `python3 tools/dev_setup.py` after cloning to install pre-commit hooks and tool dependencies. See the [Git Setup & Usage Guide](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) for full instructions.
 
 ---
 
@@ -47,7 +47,7 @@ These are baseline expectations for all developers on the team:
 ### Economic Guidelines
 
 - **Do all buildings that require a slot have one provided in effect?**
-  All shared buildings (industrial complexes, arms factories, office sectors) should include a supporting building slot, as the cost reflects this. This also helps foster growth for the nation. In some cases you may intentionally omit the slot — adjust the building cost accordingly.
+  All shared buildings (industrial complexes, arms factories, office sectors) should include a supporting building slot, as the cost reflects this. This also helps foster growth for the nation. In some cases you may intentionally omit the slot, adjust the building cost accordingly.
 
 - **Do all buildings/factories have a monetary cost?**
   All buildings should have their monetary cost as specified in the [Code Resource](/dev-resources/code-resource/). This ensures a balanced game.
@@ -62,7 +62,7 @@ These are baseline expectations for all developers on the team:
   The generic tree is the baseline for all economic effects. If your tree provides fewer benefits than the generic tree, it is likely too shallow. Revisit it and ensure it meets or exceeds the generic tree.
 
 - **Have I adjusted the starting economic situation for the country?**
-  You have free reign to change debt, treasury, national spirits, budget, etc. The only exception is starting factories — these are set to match IRL GDP PPP and must not be changed.
+  You have free reign to change debt, treasury, national spirits, budget, etc. The only exception is starting factories, these are set to match IRL GDP PPP and must not be changed.
 
 ### Political Guidelines
 
@@ -85,7 +85,7 @@ These are baseline expectations for all developers on the team:
   Ensure fictional or implausible content is locked behind a game rule (e.g., Scythia with Ossetia).
 
 - **Is the focus tree path linear?**
-  Avoid railroaded content. Millennium Dawn is a sandbox — ensure players have choices and dynamics within their game.
+  Avoid railroaded content. Millennium Dawn is a sandbox, ensure players have choices and dynamics within their game.
 
 - **Do effects from my country's content to another nation come from an event/choice?**
   Most permanent effects targeting another nation should come from an event. Give the target player agency to respond.
@@ -117,7 +117,7 @@ These are baseline expectations for all developers on the team:
   All English grammar rules apply. Titles should be capitalised properly with consistent spelling and punctuation. Trees with significant grammar or spelling issues will not be accepted for merge until corrected.
 
 - **Is there any localisation showing up as non-localised?**
-  Ensure there are no unlocalised strings. Focus descriptions must not be blank or re-use the focus name. All starting national spirits must have descriptions — if negative and removable, explain how. Reference Iran or Libya starting spirits for examples.
+  Ensure there are no unlocalised strings. Focus descriptions must not be blank or re-use the focus name. All starting national spirits must have descriptions, if negative and removable, explain how. Reference Iran or Libya starting spirits for examples.
 
 - **Is the use of custom focus icons moderated?**
   Do not use custom focus icons for every other focus. Reserve them for major focuses (parties, key decisions, etc.).
@@ -151,7 +151,7 @@ These are baseline expectations for all developers on the team:
   Do not use `add_ai_strategy` in effects. It is harmful to AI performance. Consult the AI team if you need assistance.
 
 - **Do all events targeting another nation have AI weighting?**
-  For example, if an event asks Russia for a trade deal, ensure Russia's acceptance is based on opinion — not random chance.
+  For example, if an event asks Russia for a trade deal, ensure Russia's acceptance is based on opinion, not random chance.
 
 - **Have I added AI to any GUIs/mechanics I have made?**
   Ensure the AI can interact with any GUIs you create. Add game rules for AI interaction where applicable.
@@ -217,7 +217,7 @@ These are baseline expectations for all developers on the team:
   All tags should be capitalised, including at the start of script IDs (e.g., `SPR_focus_name_here`).
 
 - **Do high-cost focuses have a bankruptcy guard in `ai_will_do`?**
-  Focuses with `cost ≥ 8`, or `cost ≥ 5` tagged with military, economy, or research `search_filters`, must include a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`. This is an AI-only measure — placing the guard in `available` would incorrectly block the player as well. See [Search Filters](/dev-resources/search-filters) for which filters apply.
+  Focuses with `cost ≥ 8`, or `cost ≥ 5` tagged with military, economy, or research `search_filters`, must include a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`. This is an AI-only measure, placing the guard in `available` would incorrectly block the player as well. See [Search Filters](/dev-resources/search-filters/) for which filters apply.
 
 - **Are `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop` duplicated?**
   When a tooltip describes effects applied to every member of an array, use `tooltip = TT_ALL_*` inside the `for_each_scope_loop` instead. Duplicating the same logic in `effect_tooltip` and the loop causes double-evaluation and is a known performance anti-pattern. See the [Code Stylization Guide](/dev-resources/code-stylization-guide/) for the performance tip.

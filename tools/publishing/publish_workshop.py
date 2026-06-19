@@ -87,6 +87,17 @@ ANYWHERE_EXCLUDES = {
     "*.pyd",
     "*.psd",
     "repomix-*.xml",
+    # Tool/CI caches. Gitignored but copytree ships the working tree, not the
+    # git index, so these leak into the upload. .validation_cache alone is
+    # ~267k files and blows the Workshop commit-manifest step past its timeout.
+    ".validation_cache",
+    ".md-mcp-cache",
+    ".opencode",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    ".astro",
+    "testing-docs",
 }
 
 DEFAULT_EXCLUDES = ROOT_ONLY_EXCLUDES | ANYWHERE_EXCLUDES
@@ -298,10 +309,10 @@ def prune_unchanged(mod_dir: Path, changed: set[str], verbose: bool = False) -> 
     total = sum(s for _, s in kept)
     if verbose:
         print(f"\n  {'File':<70}  {'Size':>10}")
-        print(f"  {'-'*70}  {'-'*10}")
+        print(f"  {'-' * 70}  {'-' * 10}")
         for rel, size in kept:
             print(f"  {rel:<70}  {format_size(size):>10}")
-        print(f"  {'-'*70}  {'-'*10}")
+        print(f"  {'-' * 70}  {'-' * 10}")
         print(f"  {'TOTAL':<70}  {format_size(total):>10}")
     print(
         f"\n  Removed {removed}, kept {len(kept)} files "

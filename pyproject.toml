@@ -1,7 +1,8 @@
 # Python tooling configuration for the Millennium Dawn `tools/` developer scripts.
 # This is NOT a package definition — the tools are run as scripts, not installed.
-# It centralizes pytest, ruff, black, and isort so the CLI, pre-commit hooks,
-# and CI all read the same settings.
+# It centralizes pytest, ruff (lint, import sort, and format), and the Python
+# dependency lists (see [dependency-groups]) so the CLI, pre-commit hooks, and
+# CI all read the same settings from one place.
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -9,6 +10,8 @@ testpaths = [
     "tools/report_lib/tests",
     "tools/validation/tests",
     "tools/linting/tests",
+    "tools/standardization/tests",
+    "tools/docs_checks/tests",
 ]
 python_files = ["*_test.py"]
 addopts = "-q"
@@ -20,7 +23,8 @@ target-version = "py39"
 [tool.ruff.lint]
 # E + F are pyflakes/pycodestyle defaults: undefined names, unused imports and
 # variables, bare excepts, broken format strings — real correctness signal.
-select = ["E", "F"]
+# I is isort: import ordering, applied via `ruff check --fix`.
+select = ["E", "F", "I"]
 ignore = [
     # The tools deliberately mutate sys.path before importing sibling modules
     # (validation/, report_lib/). That idiom is repo-wide, not a mistake.
@@ -28,8 +32,8 @@ ignore = [
     # `l`, `I`, `O` single-letter names appear in tight loops throughout; not
     # worth the churn of renaming.
     "E741",
-    # Line length is black's responsibility — black intentionally leaves long
-    # strings, URLs, and comments unwrapped, so E501 is pure noise here.
+    # Line length is the formatter's responsibility — ruff format intentionally
+    # leaves long strings, URLs, and comments unwrapped, so E501 is pure noise.
     "E501",
 ]
 
@@ -46,9 +50,12 @@ ignore = [
 "tools/standardization/common_utils.py" = ["F401"]
 "tools/validation/validator_common.py" = ["F401"]
 
-[tool.black]
-line-length = 88
-
-[tool.isort]
-profile = "black"
-line_length = 88
+[dependency-groups]
+# Single source for the Python packages the tools need; install with
+# `pip install --group <name>` (PEP 735, pip >= 25.1). Replaces the old
+# tools/requirements.txt and tools/report_lib/requirements-dev.txt.
+# A few tools import these at runtime; everything else is stdlib-only.
+runtime = ["requests==2.34.2", "pillow==12.2.0"]
+# Lint, format, and test tooling. ruff replaces black + isort and is pinned to
+# match the ruff-pre-commit hook rev and the CI ruff job.
+dev = ["pytest>=9.1.0", "pyyaml>=6.0.3", "ruff==0.15.17"]

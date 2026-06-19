@@ -17,6 +17,7 @@ WARNING-level checks (reported, do not fail):
   - Missing search_filters in focus blocks
   - Event option has effects but no log =
 """
+
 import os
 import re
 import sys
@@ -39,7 +40,7 @@ _RE_FOCUS_FORMAT = re.compile(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", re.M | re.U)
 _RE_NEWS_EVENT = re.compile(r"news_event\s*=\s*\{")
 _RE_OPTION = re.compile(r"\boption\s*=\s*\{")
 
-_SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION")
+_SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC")
 
 
 def _check_brace_matching(text: str, path: str):

@@ -9,7 +9,6 @@ import re
 import PIL.Image
 from PIL import Image
 
-modfolder = "Millennium_Dawn\\"
 mod = "Millennium_Dawn"
 path = os.path.abspath(os.path.join(os.path.dirname(mod), ".."))
 states_dir = os.path.abspath(os.path.join(os.path.dirname(mod), r"..\history\states"))

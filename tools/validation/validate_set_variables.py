@@ -5,6 +5,7 @@ Two passes: extract all `set_variable = X` targets, then scan the whole mod
 for `\\bX\\b` references and report vars whose net refs (refs minus sets) is
 zero. Both passes are multiprocessed and disk-cached via `disk_cache`.
 """
+
 import glob
 import hashlib
 import os
@@ -389,20 +390,13 @@ class Validator(BaseValidator):
         var_ref_counts = {var: 0 for var in cleaned_vars}
         dynamic_patterns: set = set()
         if files_to_scan and (bare_map or dotted_map):
-            if self.workers == 1:
-                _pass2_init(self.mod_path, bare_map, dotted_map, namespace)
-                all_file_counts = [
-                    count_all_variables_in_file(f) for f in files_to_scan
-                ]
-            else:
-                with Pool(
-                    processes=self.workers,
-                    initializer=_pass2_init,
-                    initargs=(self.mod_path, bare_map, dotted_map, namespace),
-                ) as p:
-                    all_file_counts = p.map(
-                        count_all_variables_in_file, files_to_scan, chunksize=20
-                    )
+            all_file_counts = self._pool_map_init(
+                count_all_variables_in_file,
+                files_to_scan,
+                _pass2_init,
+                (self.mod_path, bare_map, dotted_map, namespace),
+                chunksize=20,
+            )
             for file_counts, file_patterns in all_file_counts:
                 for var, count in file_counts.items():
                     var_ref_counts[var] = var_ref_counts.get(var, 0) + count
