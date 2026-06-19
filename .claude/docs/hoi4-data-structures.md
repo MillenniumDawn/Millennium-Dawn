@@ -91,6 +91,28 @@ set_variable = {
 }
 ```
 
+The expression is also the `value` of an **accumulate** effect (`add_to_variable`,
+`subtract_from_variable`, `multiply_variable`, `divide_variable`), not just
+`set_variable`. This is rare in the codebase (vanilla and MD historically used a
+scratch temp instead) but confirmed working in-engine. Prefer it to fold a
+single-use temp straight into the accumulate:
+
+```
+# Instead of: set_temp_variable = { tmp = { ...expr... } }  then  add_to_variable = { X = tmp }
+add_to_variable = {
+    var = global.cumulative_world_productivity
+    value = {
+        value = overall_productivity
+        multiply = 0.001
+        multiply = population_total_m
+    }
+}
+```
+
+For a self-referencing accumulate (`X = X + expr`) the equivalent
+`set_variable = { X = { value = X  add = { ...expr... } } }` also works and reads
+the pre-write value, since the full RHS evaluates before assignment.
+
 ### Semantics
 
 - **Fixed-point arithmetic** throughout (same as HOI4 variables).

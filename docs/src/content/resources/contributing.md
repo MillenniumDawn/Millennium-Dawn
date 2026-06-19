@@ -14,7 +14,7 @@ This guide covers contributing to the **documentation site** (the `docs/` direct
 The docs site requires [Node.js 24 LTS](https://nodejs.org/) and [Bun](https://bun.sh/):
 
 ```bash
-python3 tools/setup.py --docs    # installs Node.js + Bun dependencies
+python3 tools/dev_setup.py --docs    # installs Node.js + Bun dependencies
 ```
 
 To preview locally:

@@ -4427,10 +4427,14 @@ update_state_variables = {
 			multiply_temp_variable = { var = temp_pop value = 0.01 } # 100 in hundred thousands
 			add_to_variable = { PREV.population_total = temp_pop } # Population Total is in hundreds of thousands
 
-			set_temp_variable = { productivity_temp_state_var = productivity_state_var }
-			multiply_temp_variable = { productivity_temp_state_var = 0.001 }
-			multiply_temp_variable = { productivity_temp_state_var = temp_pop }
-			add_to_variable = { PREV.overall_productivity = productivity_temp_state_var }
+			add_to_variable = {
+				var = PREV.overall_productivity
+				value = {
+					value = productivity_state_var
+					multiply = 0.001
+					multiply = temp_pop
+				}
+			}
 
 			productivity_growth_controlled_display_effect = yes
 		}
@@ -4450,13 +4454,17 @@ update_state_variables = {
 	add_to_variable = { total_resource_amount = resource_produced@composites }
 
 	# Population Total
-	set_variable = { population_total_m = population_total }
-	multiply_variable = { population_total_m = 0.1 }
+	set_variable = { population_total_m = { value = population_total multiply = 0.1 } }
 	clamp_variable = { var = population_total_m min = 0.0001 }
 
-	multiply_variable = { overall_productivity = 0.1 }
-	divide_variable = { overall_productivity = population_total_m }
-	multiply_variable = { overall_productivity = 1000 }
+	set_variable = {
+		overall_productivity = {
+			value = overall_productivity
+			multiply = 0.1
+			divide = population_total_m
+			multiply = 1000
+		}
+	}
 
 	# If no controlled states (capitulated/exiled), preserve last known productivity so the economy isn't permanently destroyed on liberation
 	if = {
@@ -5257,9 +5265,13 @@ calculate_gdp = {
 	clamp_variable = { var = healthcare_gdp_percent min = 0 max = 1 }
 
 	# Overall productivity grows over time (on_monthly) and with techs and its the main source of economic growth for developed countries
-	set_temp_variable = { productivity_calculations_var = overall_productivity }
-	multiply_temp_variable = { productivity_calculations_var = 0.001 }
-	multiply_variable = { gdp_total = productivity_calculations_var }
+	multiply_variable = {
+		var = gdp_total
+		value = {
+			value = overall_productivity
+			multiply = 0.001
+		}
+	}
 
 	#sets a minimum gdp
 	clamp_variable = { var = gdp_total min = 0.1 }

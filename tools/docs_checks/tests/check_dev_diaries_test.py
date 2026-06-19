@@ -7,9 +7,18 @@ import pytest
 @pytest.mark.parametrize(
     "url, expected",
     [
-        ("/dev-diaries/53-the-military-of-japan/", "/dev-diaries/53-the-military-of-japan"),
-        ("/dev-diaries/53-the-military-of-japan", "/dev-diaries/53-the-military-of-japan"),
-        ("https://www.reddit.com/r/MillenniumDawn/comments/abc/", "https://www.reddit.com/r/millenniumdawn/comments/abc"),
+        (
+            "/dev-diaries/53-the-military-of-japan/",
+            "/dev-diaries/53-the-military-of-japan",
+        ),
+        (
+            "/dev-diaries/53-the-military-of-japan",
+            "/dev-diaries/53-the-military-of-japan",
+        ),
+        (
+            "https://www.reddit.com/r/MillenniumDawn/comments/abc/",
+            "https://www.reddit.com/r/millenniumdawn/comments/abc",
+        ),
     ],
 )
 def test_normalize_compare_url(url, expected):
