@@ -20,6 +20,16 @@ const focusCountries = (await getCollection("countries"))
   .slice()
   .sort((a, b) => (a.data.grid_order ?? 0) - (b.data.grid_order ?? 0));
 
+const isWip = (country: (typeof focusCountries)[number]): boolean => {
+  const statusSection = (country.data.infobox ?? []).find(
+    (group) => (group.section ?? "").toLowerCase() === "status",
+  );
+  if (!statusSection) return false;
+  return statusSection.stats.some(
+    (stat) => (stat.label ?? "").toLowerCase() === "content" && (stat.value ?? "").trim().toUpperCase() === "WIP",
+  );
+};
+
 const pageEntry = await getEntry("pages", "countries");
 if (!pageEntry) {
   throw new Error("Missing pages/countries content entry");
@@ -61,7 +71,7 @@ const countryCards = await Promise.all(
       }
     }
 
-    return { country, flagBackgroundCss };
+    return { country, flagBackgroundCss, isWip: isWip(country) };
   }),
 );
 ---
@@ -86,7 +96,7 @@ const countryCards = await Promise.all(
     aria-label="Countries with unique focus trees"
   >
     {
-      countryCards.map(({ country, flagBackgroundCss }) => (
+      countryCards.map(({ country, flagBackgroundCss, isWip }) => (
         <article
           class={COUNTRY_CARD_ARTICLE_CLASS}
           role="listitem"
@@ -97,6 +107,14 @@ const countryCards = await Promise.all(
             <a class={countryCardLinkClass} href={withBase(getCountryPath(country))}>
               {country.data.title}
             </a>
+            {isWip && (
+              <span
+                class="ml-2 align-middle rounded-full border border-border bg-surface-muted px-[0.55rem] py-[0.15rem] text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-text-muted"
+                aria-label="This country page is a work in progress"
+              >
+                WIP
+              </span>
+            )}
           </p>
           {country.data.grid_note && (
             <p class="m-0 text-[0.86rem] leading-[1.55] text-text-secondary">{country.data.grid_note}</p>

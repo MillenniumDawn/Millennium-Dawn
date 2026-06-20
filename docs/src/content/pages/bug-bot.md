@@ -25,11 +25,15 @@ The bot replies in your thread with a link to the GitHub issue once it is filed.
 
 ## Useful commands
 
-- `/register` — link your GitHub username to your Discord account.
-- `/forget` — delete the data the bot holds about you.
-- `/privacy` — a short summary of what is collected and how it is used.
-- `/whoami` — show your linked GitHub username.
+- `/register`: link your GitHub username to your Discord account.
+- `/forget`: delete the data the bot holds about you.
+- `/privacy`: a short summary of what is collected and how it is used.
+- `/whoami`: show your linked GitHub username.
 
 ## Privacy
 
 The bot reads your report text and republishes it to a public GitHub issue. Your Discord username is not published. For the full details on what is collected, how it is shared, how long it is kept, and how to have it deleted, see the **[Bug Bot Privacy Policy](/bug-bot-privacy/)**.
+
+## Terms of Service
+
+By using the bot or posting in a tracked channel you agree to the **[Bug Bot Terms of Service](/bug-bot-terms/)**. The terms cover acceptable use, what we promise, the limits of liability, and how to ask for content removal.

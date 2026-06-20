@@ -1,11 +1,13 @@
 ---
 title: Developer Setup & Workflow
-description: Get your environment ready for Millennium Dawn mod development
+description: The main developer guide for Millennium Dawn. Get your environment ready, learn the workflow, and ship your first PR.
 ---
 
-This guide covers everything you need to start contributing: prerequisites, cloning, tooling, pre-commit hooks, and the day-to-day development workflow.
+This is the main developer guide for contributing to Millennium Dawn. It covers everything you need to start: prerequisites, cloning, tooling, pre-commit hooks, the day-to-day workflow, and where to find the rest of the team docs.
 
-> **New contributors**: Start with the [Contributing Guide](/dev-resources/contributing/) for an overview of what we accept and how to submit changes.
+> **For docs site work specifically**, see the [Contributing Guide](/dev-resources/contributing/) which covers `bun run dev`, content conventions, and the docs CI pipeline.
+>
+> **For repo-root context**, see [`CONTRIBUTING.md`](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md), a slim pointer to the right docs.
 
 ---
 
@@ -20,11 +22,11 @@ This guide covers everything you need to start contributing: prerequisites, clon
 
 Optional but useful:
 
-| Tool                                | Purpose                                                                            |
-| ----------------------------------- | ---------------------------------------------------------------------------------- |
-| **Node.js 24 LTS** + **Bun**        | Docs site development only                                                         |
-| **GitKraken** or **GitHub Desktop** | Git GUI (pick one)                                                                 |
-| **Claude Code**                     | AI-assisted development (see [AI Modding Guide](/dev-resources/ai-modding-guide/)) |
+| Tool                                | Purpose                                                                                |
+| ----------------------------------- | -------------------------------------------------------------------------------------- |
+| **Node.js 24 LTS** + **Bun**        | Docs site development only (see the [Contributing Guide](/dev-resources/contributing/) |
+| **GitKraken** or **GitHub Desktop** | Git GUI (pick one)                                                                     |
+| **Claude Code**                     | AI-assisted development (see [AI Modding Guide](/dev-resources/ai-modding-guide/)      |
 
 ---
 
@@ -41,16 +43,42 @@ cd Millennium-Dawn
 
 1. Fork the repository on GitHub.
 2. Clone your fork:
+
    ```bash
    git clone https://github.com/<your-username>/Millennium-Dawn.git
    cd Millennium-Dawn
    ```
+
 3. Add the upstream remote:
+
    ```bash
    git remote add upstream https://github.com/MillenniumDawn/Millennium-Dawn.git
    ```
 
+4. Create a feature branch from `main`:
+
+   ```bash
+   git checkout -b my-feature main
+   ```
+
 See [Git Workflow](/dev-resources/git-workflow/) for the full fork-based workflow.
+
+## Staying Up to Date
+
+Before starting new work, sync your fork or branch with upstream:
+
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main
+```
+
+Or rebase if you prefer a cleaner history:
+
+```bash
+git checkout my-feature
+git rebase main
+```
 
 ## Setting Up the Mod for Testing
 
@@ -73,7 +101,7 @@ After cloning, the mod folder must be in the correct location for HOI4 to detect
 The setup script installs pre-commit hooks and Python tool dependencies:
 
 ```bash
-python3 tools/setup.py
+python3 tools/dev_setup.py
 ```
 
 That's it. Pre-commit hooks will now run automatically on every commit.
@@ -81,7 +109,13 @@ That's it. Pre-commit hooks will now run automatically on every commit.
 To verify your environment at any time:
 
 ```bash
-python3 tools/setup.py --check
+python3 tools/dev_setup.py --check
+```
+
+For docs site work, also install the Node and Bun dependencies (see the [Contributing Guide](/dev-resources/contributing/):
+
+```bash
+python3 tools/dev_setup.py --docs
 ```
 
 ---
@@ -90,9 +124,9 @@ python3 tools/setup.py --check
 
 Hooks run automatically on every `git commit`. They catch:
 
-- **Style issues** — trailing whitespace, mixed line endings, encoding problems
-- **Script errors** — mismatched braces, invalid localisation encoding, common HOI4 scripting mistakes
-- **Standardization** — auto-reformats focuses, events, decisions, and ideas to MD conventions
+- **Style issues**: trailing whitespace, mixed line endings, encoding problems.
+- **Script errors**: mismatched braces, invalid localisation encoding, common HOI4 scripting mistakes.
+- **Standardization**: auto-reformats focuses, events, decisions, and ideas to MD conventions.
 
 ## Running Manually
 
@@ -142,6 +176,7 @@ python3 tools/run.py publish_workshop release --full  # pass args through
 tools/
 ├── analysis/          Analysis, reference finders, metrics
 ├── assets/            DDS conversion, GFX generation, texture tools
+├── docs_checks/       Docs-site checks (link syntax, a11y, perf, etc.) + check_docs.py runner
 ├── generators/        Content generators (tribute ideas, focus names)
 ├── linting/           Style checkers, formatters, encoding validators
 ├── publishing/        Steam Workshop publishing
@@ -152,9 +187,12 @@ tools/
 ├── shared_utils.py    Shared utilities (Colors, FileOpener, path helpers)
 ├── loc.py             Localisation utilities
 ├── logging_tool.py    Logging utility
-├── validate_staged.py Pre-commit hook: routes staged files to validators
+├── precommit_validate.py Pre-commit hook: runs commit-stage validators in parallel
+├── validate_staged.py Legacy staged-file router (no longer wired into pre-commit)
 └── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ```
+
+Python dependencies live in `pyproject.toml` under `[dependency-groups]` (a `runtime` group and a `dev` group); there are no `requirements.txt` files. `tools/dev_setup.py` installs them, and `pyproject.toml` also configures ruff (lint, import order, and formatting) and pytest.
 
 See [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md) for the full documentation.
 
@@ -179,50 +217,35 @@ The repo includes a pre-configured workspace with Paradox syntax highlighting, t
 
 **What's configured:**
 
-- Two extensions for Paradox syntax (highlighting, snippets, problem scanning)
-- Trailing whitespace cleanup on save
-- Markdown support, line sorting, CODEOWNERS, editorconfig
-- Workspace folders for better hierarchy in search results
+- Two extensions for Paradox syntax (highlighting, snippets, problem scanning).
+- Trailing whitespace cleanup on save.
+- Markdown support, line sorting, CODEOWNERS, editorconfig.
+- Workspace folders for better hierarchy in search results.
 
 ---
 
-# Docs Site Setup
+# Code Standards
 
-The documentation site lives under `docs/` and is built with [Astro](https://astro.build/).
+A summary. The full reference is the [Code Stylization Guide](/dev-resources/code-stylization-guide/), but the rules below are the most common ones to get right.
 
-## Setup
+### Localisation (.yml)
 
-```bash
-python3 tools/setup.py --docs    # installs Node.js + Bun dependencies
-```
+- 1-space indentation.
+- UTF-8 with BOM encoding.
+- Remove trailing version numbers after colons (`key: "value"`, not `key:0 "value"`).
 
-Requires [Node.js 24 LTS](https://nodejs.org/) and [Bun](https://bun.sh/).
+### Script Files (.txt)
 
-## Local Preview
+- Tab indentation (not spaces).
+- Include logging in all effects.
+- Follow naming conventions: `TAG_focus_name_here`.
+- Use `is_triggered_only = yes` for events.
+- Include `ai_will_do` in all focuses and decisions.
+- Remove redundant code (`allowed = { always = no }`, empty trigger blocks).
 
-```bash
-cd docs
-bun run dev    # opens at http://localhost:4321/
-```
+### Docs Content (`docs/`)
 
-## Before Opening a Docs PR
-
-```bash
-cd docs
-bun run ci     # runs full check suite (lint, typecheck, build)
-```
-
-## Content Structure
-
-| Path                           | Content                                |
-| ------------------------------ | -------------------------------------- |
-| `docs/src/content/pages/`      | Top-level pages (FAQ, Getting Started) |
-| `docs/src/content/resources/`  | Developer resource guides              |
-| `docs/src/content/tutorials/`  | Player and developer tutorials         |
-| `docs/src/content/countries/`  | Country-specific documentation         |
-| `docs/src/content/navigation/` | Site navigation and footer             |
-
-Content uses Markdown with frontmatter. Internal links must be root-relative (`/dev-resources/guide-name/`). Do not hardcode the base path.
+If you are editing the docs site, see the [Contributing Guide](/dev-resources/contributing/) for the docs-specific rules. The high-level point: frontmatter is required, internal links must be root-relative, and do not hardcode `"/Millennium-Dawn/..."` (the base path is applied during build).
 
 ---
 
@@ -230,8 +253,8 @@ Content uses Markdown with frontmatter. Internal links must be root-relative (`/
 
 1. **Pull latest** from `main` (or your feature branch).
 2. **Create a branch** for your work: `git checkout -b my-feature`.
-3. **Make changes** — edit files, test in-game.
-4. **Commit** — pre-commit hooks run automatically and flag issues.
+3. **Make changes**: edit files, test in-game.
+4. **Commit**: pre-commit hooks run automatically and flag issues.
 5. **Push** your branch: `git push origin my-feature`.
 6. **Open a PR** against `main` on GitHub.
 7. **CI validates** your PR automatically. Fix any issues flagged.
@@ -241,36 +264,18 @@ Content uses Markdown with frontmatter. Internal links must be root-relative (`/
 
 Use descriptive branch names:
 
-- `ser-focus-tree` — new Serbian focus tree
-- `fix-election-event-bug` — bug fix
-- `ai-strategy-updates` — AI behavior changes
-- `docs-developer-guide` — documentation work
-
-## Staying Up to Date
-
-Sync your branch with `main` regularly to avoid merge conflicts:
-
-```bash
-git fetch upstream
-git checkout main
-git merge upstream/main
-git checkout my-feature
-git merge main
-```
-
-Or rebase if you prefer a cleaner history:
-
-```bash
-git checkout my-feature
-git rebase main
-```
+- `ser-focus-tree`: new Serbian focus tree.
+- `fix-election-event-bug`: bug fix.
+- `ai-strategy-updates`: AI behavior changes.
+- `docs-developer-guide`: documentation work.
 
 ---
 
 # Related Resources
 
-- [Contributing Guide](/dev-resources/contributing/) — What we accept, fork workflow, AI policy
-- [Git Workflow](/dev-resources/git-workflow/) — Detailed branch/commit/PR process
-- [Code Stylization Guide](/dev-resources/code-stylization-guide/) — Formatting and code structure
-- [AI Modding Guide](/dev-resources/ai-modding-guide/) — AI tools for development
-- [Content Review Guide](/dev-resources/content-review-guide/) — Quality checklist
+- [Contributing Guide](/dev-resources/contributing/): docs site workflow, `bun run dev`, content conventions.
+- [Git Workflow](/dev-resources/git-workflow/): detailed branch/commit/PR process.
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/): formatting and code structure.
+- [AI Modding Guide](/dev-resources/ai-modding-guide/): AI tools for development.
+- [Content Review Guide](/dev-resources/content-review-guide/): quality checklist.
+- [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md): dev tools directory layout.

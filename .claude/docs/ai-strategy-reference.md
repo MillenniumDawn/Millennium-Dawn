@@ -7,22 +7,22 @@
 ```
 LAYER 1: INITIALIZATION (on_startup, once)
   give_AI_templates ──► creates division templates
-  ai_update_build_units ──► sets AI_is_threatened flag
   yearly_investment_targets_routine ──► builds investment target list
 
 LAYER 2: CONTINUOUS STRATEGIES (ai_strategy files, always-evaluated)
-  MD_combat_ai_strategies ──► army/air/equipment ratios (reads AI_is_threatened)
+  MD_combat_ai_strategies ──► army/air/equipment ratios (reads ai_is_threatened trigger + cached *_limiter_limit vars)
   MD_econ_ai ──► building targets, PP priorities, factory ratios
   naval.txt ──► ship ratios, mission thresholds
   Country-specific files ──► diplomacy, war, production overrides
 
-LAYER 3: PERIODIC EFFECTS (on_weekly / on_monthly)
+LAYER 3: PERIODIC EFFECTS (on_daily / on_weekly / on_monthly)
+  Daily (AI only):
+    division/plane/ship_limiter_calculation ──► cache unit caps into *_limiter_limit vars
   Weekly:
     AI Investment Pulse ──► AC_event.500 ──► AI_get_*_score effects
     ai_cyber_monthly ──► cyber operations against enemies
     ct_ai_weekly ──► counter-terror actions
   Monthly:
-    ai_update_build_units ──► refresh AI_is_threatened flag
     ai_weapon_dump ──► sell excess equipment for cash
     calculate_ai_taxes_desire ──► adjust tax rates
     AI influence spreading ──► influence.500 ──► AI_select_influence_target
@@ -31,9 +31,8 @@ LAYER 3: PERIODIC EFFECTS (on_weekly / on_monthly)
     yearly_investment_targets_routine (January) ──► rebuild targets
 
 LAYER 4: EVENT-DRIVEN (on_war, on_puppet, etc.)
-  on_justifying_wargoal_pulse ──► daily ai_update_build_units on target
   on_declare_war ──► cyber targeting
-  on_puppet / on_liberate ──► give_AI_templates + ai_update_build_units
+  on_puppet / on_liberate ──► give_AI_templates
   on_join/leave_faction ──► reserve currency switch
   Template conversions ──► militia→L_Inf→mot→mech (every 300 days)
 
@@ -47,11 +46,14 @@ LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
 
 ### on_startup (`common/on_actions/00_on_actions.txt`)
 
-- **AI Template Init** (line ~1710): every AI country (zombie/joke tags excluded, see `give_AI_templates`) → `give_AI_templates` + `ai_update_build_units`. Also sets microstate tax rates and investment targets.
+- **AI Template Init** (line ~1710): every AI country (zombie/joke tags excluded, see `give_AI_templates`) → `give_AI_templates`. Also sets microstate tax rates and investment targets.
+
+### on_daily (`common/on_actions/00_on_actions.txt`)
+
+- **AI Unit-Cap Cache** (line ~101): AI only → `division_limiter_calculation` + `plane_limiter_calculation` + `ship_limiter_calculation`. Each recomputes the cached `*_limiter_limit` variable the matching limiter strategy reads in its `enable`.
 
 ### on_monthly (`common/on_actions/MD_on_actions.txt`)
 
-- **AI Build Units** (line ~938): All AI → `ai_update_build_units`
 - **AI Weapon Dump** (line ~939): All AI → `ai_weapon_dump`
 - **AI Taxes** (line ~964): All AI → `calculate_ai_taxes_desire`
 - **AI Influence** (line ~817): AI + PP > 200 + not subject + not bankrupt → `influence.500`
@@ -68,25 +70,38 @@ LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
 
 ### Other on_actions
 
-- **on_justifying_wargoal_pulse** (`00_on_actions.txt:184`): Daily, target AI nation → `ai_update_build_units` (starts preparing)
-- **on_puppet** (`01_tfv_on_actions.txt:93`): AI puppeted nations → `give_AI_templates` + `ai_update_build_units`
-- **on_subject_free** (`01_tfv_on_actions.txt:3`): AI freed nations → `ai_update_build_units`
-- **on_liberate** (`01_tfv_on_actions.txt:117`): All liberated nations → `ai_update_build_units` (unconditional)
+- **on_puppet** (`01_tfv_on_actions.txt:93`): AI puppeted nations → `give_AI_templates`
 - **on_declare_war** (`00_on_actions.txt:2049`): AI combatants with cyber capability → `ai_cyber_add_target` on each other
-- **on_civil_war** (`00_on_actions.txt:~1975`): Rebel side → `ai_update_build_units` (unconditional)
 - **on_join_faction / on_leave_faction** (`MD_on_actions.txt:1270`): AI reserve currency auto-switch (Chinese faction → yuan, Russian → rouble, else → dollar)
+
+Threat state is no longer pushed by these hooks. It is evaluated live by the `ai_is_threatened` scripted trigger (see below), so nothing has to set or refresh a flag on war/justification/liberation.
 
 ## Scripted Effects
 
-### `ai_update_build_units` (`99_AI_strategy_scripted_effects.txt`)
+### `ai_is_threatened` (`common/scripted_triggers/00_scripted_triggers.txt`)
 
-Central threat-assessment system. Sets/clears `AI_is_threatened` flag. When set:
+Live threat check, evaluated on demand (no cached flag, no daily refresh):
 
-- Investment shifts to military (MIC +15, dockyard +15, AA +25, radar +20, airbase +25)
-- Division/ship/plane limiters expand (1.25x multiplier)
-- `ai_default_no_build_units` deactivates → unit training allowed
+```
+ai_is_threatened = {
+    OR = {
+        has_war = yes
+        threat > 0.30
+        check_variable = { potential_and_current_enemies^num > 0 }
+    }
+}
+```
 
-Sets flag on: war, subject, government+threat threshold, nationalist/fascism, potential enemies. Clears on: not subject, no war, below thresholds, no enemies.
+`potential_and_current_enemies` is a built-in engine array (current enemies + allies-of-enemies + countries with wargoals), so it already covers hostile neighbours without a live neighbour loop. When `ai_is_threatened`:
+
+- The division/plane/ship limiter caps expand (1.25x multiplier inside the daily calc).
+- `ai_default_no_build_units` deactivates → unit training allowed.
+
+This replaced the old `ai_update_build_units` effect and its `AI_is_threatened` country flag (removed). Subjects are no longer auto-flagged; `ai_default_no_build_units` excludes them with `is_subject = no`.
+
+### `division_limiter_calculation` / `plane_limiter_calculation` / `ship_limiter_calculation` (`00_AI_scripted_effects.txt`)
+
+Run daily for AI countries. Each computes a cap from factory count and situational multipliers (war, `ai_is_threatened`, major, NATO/EU, threat, faction, great-power) and stores it in `division_limiter_limit` / `plane_limiter_limit` / `ship_limiter_limit`. The matching limiter strategy reads that variable in `enable` instead of recomputing the math every evaluation. Under the `potato_edition` game rule the same formula runs, then the result is halved (`x0.5`) and re-rounded.
 
 ### `ai_weapon_dump` (`99_weapon_dump_effects.txt`)
 
@@ -112,7 +127,7 @@ Monthly tax rate adjustment:
 
 - CIC (base 170), MIC (base 150), Dockyard (base 170), Infra (base 175), Offices (base 180)
 - AA (base 120), Radar (base 115), Airbase (base 130)
-- `AI_is_threatened` adds +15-25 to military buildings
+- High `threat` (tiered at 0.1 / 0.2 / 0.4) adds to military buildings
 - All add randomization (±15) to prevent same state always winning
 
 ### AI Influence System (`99_AI_influence_scripted_effects.txt`)
@@ -152,6 +167,26 @@ my_strategy = {
 `reversed = yes` swaps direction: instead of "this country does X to id", it becomes "id does X to this country". Requires `enable_reverse = { ... }` (no default scope, must scope into a country).
 
 Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather than Iran supporting them).
+
+### War & Conquer Weighting (`conquer` + `avoid_starting_wars`)
+
+`avoid_starting_wars` is **additive with the `conquer` strategy and targetless** (per vanilla `_documentation.md`) — it combines with per-target `conquer` weights rather than acting as a standalone "avoidance" dial, so its effect depends on the conquer context. Vanilla's example uses a large negative value to suppress all targets, then `conquer` to carve out one:
+
+```pdx
+ai_strategy = { type = avoid_starting_wars value = -200 }   # targetless, additive with conquer
+ai_strategy = { type = conquer id = GER value = 200 }       # GER: -200+200 = 0 (the only viable target); everyone else -200
+```
+
+Vanilla notes this is "meant for very specific situations, and should not be used widely."
+
+In MD both signs appear intentionally:
+
+- Small **positive** values as a general brake on opening new wars (e.g. RAJ's insurgency strategies use `+20` / `+50` while suppressing a rebellion). The mod author has confirmed positive = stronger avoidance in this usage.
+- **Negative** values for the targetless-suppression technique above (e.g. RAJ's `-100` while already at war with Pakistan, to avoid opening new fronts).
+
+**Do not flag an `avoid_starting_wars` value as a sign bug** in either direction without checking the surrounding `conquer` strategies and the author's intent. It is nuanced, not a simple "higher = more peaceful" scalar.
+
+Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (in the HOI4 install). Mirror gotchas here as they come up.
 
 ### `MD_combat_ai_strategies.txt` — Production & Combat
 
