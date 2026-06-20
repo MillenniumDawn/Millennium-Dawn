@@ -53,10 +53,10 @@ EU_update_AI_general_voting_modifiers = {
 	if = {
 		limit = { is_subject = yes }
 		if = { limit = { OVERLORD = { is_in_array = { global.EU_active_vote_supporters = THIS.id } } }
-			add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = 100 }
+			add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = 100 }
 		}
 		else = {
-			add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = -25 }
+			add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -25 }
 		}
 	}
 
@@ -351,10 +351,12 @@ apply_EU_QMV_result = {
 			else_if = { limit = { check_variable = { global.EUXXX_council_agenda = 659 } } focus_EU659_QMV_result = yes }
 			else_if = { limit = { check_variable = { global.EUXXX_council_agenda = 660 } } focus_EU660_QMV_result = yes }
 			else_if = { limit = { check_variable = { global.EUXXX_council_agenda = 112 } } focus_EU112_QMV_result = yes }
-			cleanup_european_union_voting_yes = yes
+			set_temp_variable = { vote_passed = 1 }
+			cleanup_european_union_voting = yes
 		}
 		else = {
-			cleanup_european_union_voting_no = yes
+			set_temp_variable = { vote_passed = 0 }
+			cleanup_european_union_voting = yes
 		}
 	}
 }
@@ -368,7 +370,6 @@ focus_EU111_QMV_result = {
 
 		for_each_scope_loop = {
 			array = global.EU_active_vote_rejecters
-
 			remove_ideas = EU_member
 		}
 
@@ -427,10 +428,12 @@ focus_EU111_QMV_result = {
 			add_ideas = multi_ethnic_state_idea
 		}
 		custom_effect_tooltip = form_USoE_tt
-		cleanup_european_union_voting_yes = yes
+		set_temp_variable = { vote_passed = 1 }
+		cleanup_european_union_voting = yes
 	}
 	else = {
-		cleanup_european_union_voting_no = yes
+		set_temp_variable = { vote_passed = 0 }
+		cleanup_european_union_voting = yes
 	}
 }
 
@@ -462,7 +465,6 @@ focus_EU103_QMV_result = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-
 		if = { limit = { has_idea = european_spirit }
 			modify_timed_idea = { idea = european_spirit days = 600 }
 		}
@@ -534,6 +536,7 @@ focus_EU203_QMV_result = {
 				check_variable = { interest_rate > 7.5 }
 				check_variable = { debt_ratio > 0.75 }
 			}
+
 			set_temp_variable = { current_debt = debt }
 			multiply_temp_variable = { current_debt = 0.075 }
 			add_to_temp_variable = { eurobonds_debt_total = current_debt }
@@ -1014,30 +1017,17 @@ EU_finalize_passed_agenda = {
 	}
 }
 
-cleanup_european_union_voting_yes = {
-	add_to_array = { array = global.EU_passed_votes value = global.current_active_vote_disp }
-	remove_from_array = { array = global.EU_council_votes value = global.current_active_vote_disp }
-	set_variable = { global.EUU_recently_failed_vote = -1 }
-	set_variable = { global.current_active_vote_disp = 0 }
-	set_variable = { global.EU_active_vote_yes = 0 }
-	set_variable = { global.EU_active_vote_no = 0 }
-	set_variable = { global.EU_pop_ratio_no = 0 }
-	set_variable = { global.EU_pop_ratio_yes = 0 }
-	clear_array = global.EU_active_vote_supporters
-	clear_array = global.EU_active_vote_rejecters
-	for_each_scope_loop = {
-		array = global.EU_member
-		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		set_the_eu_council_delay = yes
-		if = {
-			limit = { has_country_flag = current_vote_influenced }
-			clr_country_flag = current_vote_influenced
-		}
+# Caller sets vote_passed = 1 for a passing vote, 0 for a failed one.
+cleanup_european_union_voting = {
+	if = {
+		limit = { check_variable = { vote_passed = 1 } }
+		add_to_array = { array = global.EU_passed_votes value = global.current_active_vote_disp }
+		remove_from_array = { array = global.EU_council_votes value = global.current_active_vote_disp }
+		set_variable = { global.EUU_recently_failed_vote = -1 }
 	}
-}
-
-cleanup_european_union_voting_no = {
-	set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
+	else = {
+		set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
+	}
 	set_variable = { global.current_active_vote_disp = 0 }
 	set_variable = { global.EU_active_vote_yes = 0 }
 	set_variable = { global.EU_active_vote_no = 0 }
