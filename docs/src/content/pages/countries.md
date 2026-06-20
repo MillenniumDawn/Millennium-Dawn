@@ -180,7 +180,7 @@ The following countries are playable with unique focus trees:
 | Niger                                                        | NGR | Yes                               | Western Outlook (Conservatism)                   | NO                   |
 | Nigeria                                                      | NIG | Yes                               | Non-Aligned Outlook (Conservative)               | YES                  |
 | Northern Cyprus                                              | NCY | Yes                               | Western Outlook (Conservatism)                   | NO                   |
-| Norway                                                       | NOR | Yes                               | Non-Aligned Outlook (Conservative)               | YES                  |
+| Norway                                                       | NRY | Yes                               | Non-Aligned Outlook (Conservative)               | YES                  |
 | Novorossiya                                                  | NOV | No (Available in 2017)            | N/A                                              | NO                   |
 | Oman                                                         | OMA | Yes                               | Non-Aligned Outlook (Autocracy)                  | YES(Gulf tree)       |
 | Pakistan                                                     | PAK | Yes                               | Nationalist Outlook (Military Junta)             | NO                   |
