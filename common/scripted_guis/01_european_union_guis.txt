@@ -119,14 +119,20 @@ scripted_gui = {
 
 			# Secondary Display
 			euro_open_sec_dis_visible = {
-				has_country_flag = show_eu_parliament
+				OR = {
+					has_country_flag = show_eu_parliament
+					has_country_flag = show_eu_fiscal
+				}
 			}
 			EU_secondary_display_window_visible = {
 				OR = {
 					is_ai = yes
 					AND = {
 						has_country_flag = eu_sec_dis_open
-						has_country_flag = show_eu_parliament
+						OR = {
+							has_country_flag = show_eu_parliament
+							has_country_flag = show_eu_fiscal
+						}
 					}
 				}
 			}
@@ -140,6 +146,24 @@ scripted_gui = {
 			eu_parl_2nd_disp_eu_mep_header_visible = {
 				has_country_flag = eu_sec_dis_open
 				has_country_flag = show_eu_parliament
+			}
+			eu_fiscal_view_toggle_visible = {
+				has_country_flag = eu_sec_dis_open
+				has_country_flag = show_eu_fiscal
+			}
+			eu_fiscal_2nd_disp_name_header_visible = {
+				has_country_flag = eu_sec_dis_open
+				has_country_flag = show_eu_fiscal
+			}
+			eu_fiscal_2nd_disp_contrib_header_visible = {
+				has_country_flag = eu_sec_dis_open
+				has_country_flag = show_eu_fiscal
+				NOT = { has_country_flag = eu_fiscal_distrib_view }
+			}
+			eu_fiscal_2nd_disp_distrib_header_visible = {
+				has_country_flag = eu_sec_dis_open
+				has_country_flag = show_eu_fiscal
+				has_country_flag = eu_fiscal_distrib_view
 			}
 			# Offices Screen
 			eu_president_council_back_click_enabled = {
@@ -1769,6 +1793,15 @@ scripted_gui = {
 					clr_country_flag = eu_sec_dis_open
 				}
 				else = { set_country_flag = eu_sec_dis_open }
+				update_eu_dirty_variable = yes
+			}
+
+			eu_fiscal_view_toggle_click = {
+				if = {
+					limit = { has_country_flag = eu_fiscal_distrib_view }
+					clr_country_flag = eu_fiscal_distrib_view
+				}
+				else = { set_country_flag = eu_fiscal_distrib_view }
 				update_eu_dirty_variable = yes
 			}
 
@@ -5580,6 +5613,62 @@ scripted_gui = {
 			eu_party_members_list = {
 				array = global.EU_MEP_members_current
 				entry_container = "eu_party_member_detail"
+				change_scope = yes
+			}
+		}
+	}
+
+	# Fiscal — Contributions Secondary Display
+	eu_contributions_2nd_display_gui = {
+		context_type = player_context
+		parent_scripted_gui = european_union_gui
+		window_name = "eu_contributions_2nd_display_container"
+		dirty = global.EU_dirty_update_var
+
+		visible = {
+			is_ai = no
+			NOT = { has_global_flag = GAME_RULE_eu_disabled }
+			has_country_flag = eu_sec_dis_open
+			has_country_flag = show_eu_fiscal
+			has_country_flag = new_EU_open
+			NOT = { has_country_flag = eu_fiscal_distrib_view }
+		}
+
+		ai_enabled = { always = no }
+		ai_check = { always = no }
+
+		dynamic_lists = {
+			eu_contrib_list = {
+				array = global.EU_member
+				entry_container = "eu_contributions_2nd_display"
+				change_scope = yes
+			}
+		}
+	}
+
+	# Fiscal — Distributions Secondary Display
+	eu_distribution_2nd_display_gui = {
+		context_type = player_context
+		parent_scripted_gui = european_union_gui
+		window_name = "eu_distribution_2nd_display_container"
+		dirty = global.EU_dirty_update_var
+
+		visible = {
+			is_ai = no
+			NOT = { has_global_flag = GAME_RULE_eu_disabled }
+			has_country_flag = eu_sec_dis_open
+			has_country_flag = show_eu_fiscal
+			has_country_flag = new_EU_open
+			has_country_flag = eu_fiscal_distrib_view
+		}
+
+		ai_enabled = { always = no }
+		ai_check = { always = no }
+
+		dynamic_lists = {
+			eu_distrib_list = {
+				array = global.EU_member
+				entry_container = "eu_distribution_2nd_display"
 				change_scope = yes
 			}
 		}
