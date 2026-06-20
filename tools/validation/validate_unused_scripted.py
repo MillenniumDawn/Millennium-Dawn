@@ -20,6 +20,16 @@ from validator_common import (
     strip_comments,
 )
 
+# A name counts as "called" when it appears as `name = yes/no` or as a
+# custom_(effect|trigger)_tooltip target. Extracting every such token from a
+# def-file once and testing set membership is equivalent to the old per-name
+# `\bname\s*=\s*(?:yes|no)\b` search (same word boundaries, same identifier
+# capture) but avoids compiling a pattern per (name, file) — millions of calls.
+_CALL_YES_NO_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*(?:yes|no)\b")
+_CUSTOM_TT_REF_RE = re.compile(
+    r"custom_(?:effect|trigger)_tooltip\s*=\s*([A-Za-z_]\w*)\b"
+)
+
 # Patterns for known false positives — these are referenced by the game engine,
 # called dynamically, or serve as convention-based callbacks rather than being
 # explicitly invoked via `name = yes` in script files.
@@ -307,16 +317,9 @@ class Validator(BaseValidator):
                         content = strip_comments(f.read())
                 except Exception:
                     continue
-                for name in list(potentially_used - used_names):
-                    if name not in content:
-                        continue
-                    if re.search(rf"\b{re.escape(name)}\s*=\s*(?:yes|no)\b", content):
-                        used_names.add(name)
-                    elif re.search(
-                        rf"custom_(?:effect|trigger)_tooltip\s*=\s*{re.escape(name)}\b",
-                        content,
-                    ):
-                        used_names.add(name)
+                called = set(_CALL_YES_NO_RE.findall(content))
+                called.update(_CUSTOM_TT_REF_RE.findall(content))
+                used_names |= called & potentially_used
 
         # Build results for unused definitions
         unused = []
@@ -398,16 +401,9 @@ class Validator(BaseValidator):
                         content = strip_comments(f.read())
                 except Exception:
                     continue
-                for name in list(potentially_used - used_names):
-                    if name not in content:
-                        continue
-                    if re.search(rf"\b{re.escape(name)}\s*=\s*(?:yes|no)\b", content):
-                        used_names.add(name)
-                    elif re.search(
-                        rf"custom_(?:effect|trigger)_tooltip\s*=\s*{re.escape(name)}\b",
-                        content,
-                    ):
-                        used_names.add(name)
+                called = set(_CALL_YES_NO_RE.findall(content))
+                called.update(_CUSTOM_TT_REF_RE.findall(content))
+                used_names |= called & potentially_used
 
         # Third pass: detect names called via meta_effect/meta_trigger template
         # substitution (e.g. `set_leader_[IDEOLOGY] = yes`).  Only scan the
