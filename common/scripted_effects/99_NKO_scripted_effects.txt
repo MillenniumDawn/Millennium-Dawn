@@ -878,19 +878,6 @@ NKO_export_do_munitions = {
 	NKO_arms_export_register_deal = yes
 }
 
-NKO_export_do_missiles = {
-	custom_effect_tooltip = NKO_export_missiles_effect_tt
-	set_temp_variable = { NKO_export_eq_amount = 80 }
-	NKO_export_transfer_rocket = yes
-	event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_missiles days = 365 } }
-	set_temp_variable = { NKO_arms_export_payment = 3 }
-	NKO_arms_export_credit_payment = yes
-	add_tech_bonus = { name = MBT_4 bonus = 0.5 uses = 1 category = CAT_mbt }
-	add_tech_bonus = { name = artificial_intelligence_1 bonus = 0.5 uses = 1 category = CAT_ai }
-	set_temp_variable = { NKO_arms_export_deal_heat = 3 }
-	NKO_arms_export_register_deal = yes
-}
-
 NKO_export_do_troops = {
 	custom_effect_tooltip = NKO_export_troops_effect_tt
 	event_target:NKO_arms_client = { country_event = { id = NKO_export.22 days = 1 } }
@@ -899,6 +886,10 @@ NKO_export_do_troops = {
 		set_rule = { can_send_volunteers = yes }
 		add_political_power = 50
 		add_war_support = 0.02
+		if = {
+			limit = { event_target:NKO_arms_client = { OR = { original_tag = SOV  original_tag = CHI } } }
+			custom_effect_tooltip = NKO_storm_corps_permanent_income_tt
+		}
 	}
 }
 
@@ -928,6 +919,20 @@ NKO_export_finalize_troops = {
 		add_to_variable = { var = NKO_arms_contract_standing  value = 5 }
 	}
 	clamp_variable = { var = NKO_arms_contract_standing  min = 0  max = 100 }
+	# Storm Corps deployments to Pyongyang's great-power patrons open a permanent
+	# hard-currency subsidy that outlives the 365-day deployment. Flags are set once
+	# and never cleared, so the income persists; re-deploying does not stack it. The
+	# patron carries the matching permanent expense (NKO_storm_corps_subsidy on them).
+	if = {
+		limit = { event_target:NKO_arms_client = { original_tag = SOV } }
+		set_country_flag = NKO_storm_corps_income_SOV
+		event_target:NKO_arms_client = { set_country_flag = NKO_storm_corps_subsidy }
+	}
+	if = {
+		limit = { event_target:NKO_arms_client = { original_tag = CHI } }
+		set_country_flag = NKO_storm_corps_income_CHI
+		event_target:NKO_arms_client = { set_country_flag = NKO_storm_corps_subsidy }
+	}
 }
 
 NKO_export_do_satellite = {
