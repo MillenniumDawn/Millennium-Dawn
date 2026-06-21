@@ -14,7 +14,7 @@ This guide covers contributing to the **documentation site** (the `docs/` direct
 The docs site requires [Node.js 24 LTS](https://nodejs.org/) and [Bun](https://bun.sh/):
 
 ```bash
-python3 tools/setup.py --docs    # installs Node.js + Bun dependencies
+python3 tools/dev_setup.py --docs    # installs Node.js + Bun dependencies
 ```
 
 To preview locally:
@@ -164,7 +164,7 @@ Dev diaries live in `docs/src/content/devDiaries/`. They use MDX (not plain Mark
 
 A template is available at `docs/templates/dev-diary-template.mdx`. Copy it to `docs/src/content/devDiaries/NN-short-slug.mdx` and fill in the frontmatter and body.
 
-The dev-diary archive (`docs/src/content/devDiaryArchive/index.yml`) lists published diaries grouped by version. Add your diary to the appropriate group.
+Set `version` in frontmatter (e.g. `version: "v2.0"`) so the dev-diaries index groups your entry automatically. You do **not** need to edit any YAML index file for in-repo diaries. Legacy external (Reddit) links remain in `docs/src/content/devDiaryExternal/index.yml` and are maintained separately.
 
 ---
 

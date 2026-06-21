@@ -788,10 +788,6 @@ calculate_additional_income_rate = {
 		set_variable = { additional_income_panama = 0.05 }
 		add_to_variable = { additional_income_rate = additional_income_panama }
 	}
-	if = { limit = { has_idea = full_control_of_hormuz }
-		set_variable = { additional_income_hormuz = 0.8 }
-		add_to_variable = { additional_income_rate = additional_income_hormuz }
-	}
 	if = { limit = { has_idea = gateway_to_asia }
 		set_variable = { gateway_to_asia_income = 0.1 }
 		add_to_variable = { additional_income_rate = gateway_to_asia_income }
@@ -1093,21 +1089,12 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_BOT_renewable_focused_energy_rich }
 		}
 	}
-	##Brazil
-	else_if = {
-		limit = { original_tag = BRA }
-		if = {
-			limit = { has_idea = BRA_idea_plano_real }
-			set_variable = { additional_income_BRA_plano_real = 0.25 }
-			add_to_variable = { additional_income_rate = additional_income_BRA_plano_real }
-		}
-	}
 	# Bulgaria
 	else_if = {
 		limit = { original_tag = BUL }
 		if = {
-			limit = { has_idea = BUL_tourism }
-			set_variable = { additional_income_BUL_tourism = 0.15 }
+			limit = { has_idea = BUL_tourism_0 }
+			set_variable = { additional_income_BUL_tourism = 0.075 }
 			add_to_variable = { additional_income_rate = additional_income_BUL_tourism }
 		}
 		if = {
@@ -1136,15 +1123,9 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_BUL_varna_beaches }
 		}
 	}
-	# Checnya
-	# FIXME: Missing all of the tooltips in the money UI
+	# Chechnya
 	else_if = {
 		limit = { original_tag = CHE }
-		if = {
-			limit = { has_idea = CHE_tourism_idea }
-			set_variable = { additional_income_CHE_tourism_idea = 0.15 }
-			add_to_variable = { additional_income_rate = additional_income_CHE_tourism_idea }
-		}
 		if = {
 			limit = { has_idea = CHE_black_market_idea }
 			set_variable = { additional_income_CHE_black_market_idea = 0.030 }
@@ -1234,14 +1215,6 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_DEN_consume_tax }
 	}
 	##DPR
-	else_if = {
-		limit = { original_tag = DPR }
-		if = {
-			limit = { has_idea = DPR_rf_money }
-			set_variable = { additional_income_DPR_rf_money = 0.15 }
-			add_to_variable = { additional_income_rate = additional_income_DPR_rf_money }
-		}
-	}
 	# Egypt
 	else_if = {
 		limit = { original_tag = EGY }
@@ -1497,11 +1470,6 @@ calculate_additional_income_rate = {
 	else_if = {
 		limit = { original_tag = NKO }
 		if = {
-			limit = { has_idea = NKO_idea_outsource_international_animation }
-			set_variable = { additional_income_NKO_outsource_international_animation = 0.05 }
-			add_to_variable = { additional_income_rate = additional_income_NKO_outsource_international_animation }
-		}
-		if = {
 			limit = { has_idea = NKO_korean_repair_frontline_workers_sov }
 			set_variable = { additional_income_NKO_korean_repair_frontline_workers_sov = 0.100 }
 			add_to_variable = { additional_income_rate = additional_income_NKO_korean_repair_frontline_workers_sov }
@@ -1621,8 +1589,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = SMA_increased_economy_gain }
 		}
 	}
-	#South Ossetia
-	# FIXME: Missing all of the tooltips in the money UI
+	# South Ossetia
 	else_if = {
 		limit = { original_tag = SOO }
 		if = {
@@ -1695,13 +1662,11 @@ calculate_additional_income_rate = {
 			set_variable = { BLR_minotor_servise_sov_gain = -0.300 }
 			add_to_variable = { additional_income_rate = BLR_minotor_servise_sov_gain }
 		}
-		# FIXME: Needs a money tooltip
 		if = {
 			limit = { has_idea = BLR_mzkt_contract }
 			set_variable = { BLR_mzkt_contract_gain = -0.100 }
 			add_to_variable = { additional_income_rate = BLR_mzkt_contract_gain }
 		}
-		# FIXME: Needs a money tooltip
 		if = {
 			limit = { has_idea = CRM_naval }
 			set_variable = { CRM_naval_gain = -0.45 }
@@ -1711,11 +1676,6 @@ calculate_additional_income_rate = {
 			limit = { has_idea = BLR_oil_sov }
 			set_variable = { additional_income_BLR_oil_sov = 0.044 }
 			add_to_variable = { additional_income_rate = additional_income_BLR_oil_sov }
-		}
-		else_if = {
-			limit = { has_idea = BLR_oil_sov_positive }
-			set_variable = { additional_income_BLR_oil_sov_positive = 0.066 }
-			add_to_variable = { additional_income_rate = additional_income_BLR_oil_sov_positive }
 		}
 		if = {
 			limit = { has_idea = SOV_kal_with }
@@ -4178,15 +4138,16 @@ update_display = {
 }
 
 update_economic_cycle_cost = {
-	#Base on size of economy
-	set_variable = { econ_cycle_upg_cost = gdp_total }
-	multiply_variable = { econ_cycle_upg_cost = 0.05 } # 5% of GDP Total in billions
-
-	#Additional additive modifiers
-	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
-	add_to_temp_variable = { econ_cycle_upg_cost_multiplier = modifier@econ_cycle_upg_cost_multiplier_modifier }
-
-	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
+	set_variable = {
+		econ_cycle_upg_cost = {
+			value = gdp_total
+			multiply = 0.05 # 5% of GDP Total in billions
+			multiply = {
+				value = 1
+				add = modifier@econ_cycle_upg_cost_multiplier_modifier
+			}
+		}
+	}
 }
 
 update_cyber_cost = {
@@ -4341,11 +4302,15 @@ update_state_variables = {
 	set_temp_variable = { num_anti_air_building = 0 }
 
 	# Calculate Consumer Goods Factor
-	set_temp_variable = { actual_consumer_goods_percent = modifier@consumer_goods_expected_value }
-	set_temp_variable = { consumer_goods_factor_full = 1 }
-	add_to_temp_variable = { consumer_goods_factor_full = modifier@consumer_goods_factor }
-	multiply_temp_variable = { actual_consumer_goods_percent = consumer_goods_factor_full }
-	set_variable = { var = actual_consumer_goods_percent_display value = actual_consumer_goods_percent }
+	set_variable = {
+		actual_consumer_goods_percent_display = {
+			value = modifier@consumer_goods_expected_value
+			multiply = {
+				value = 1
+				add = modifier@consumer_goods_factor
+			}
+		}
+	}
 
 	hidden_effect = {
 		productivity_growth_country_display_effect = yes
@@ -4377,60 +4342,102 @@ update_state_variables = {
 			add_to_variable = { PREV.composite_plant_total = building_level@composite_plant }
 			add_to_variable = { PREV.internet_station_total = building_level@internet_station }
 			add_to_variable = { PREV.undamaged_enrichment_facilities = non_damaged_building_level@enrichment_facility }
-			set_temp_variable = { state_pop_adder = state_population_k }
-			multiply_temp_variable = { state_pop_adder = 0.01 }
-			add_to_variable = { PREV.state_healthcare_demand = state_pop_adder }
+
+			add_to_variable = {
+				var = PREV.state_healthcare_demand
+				value = {
+					value = state_population_k
+					multiply = 0.01
+				}
+			}
 
 			# Calculate Renewble Infrastructure Information
 			if = { limit = { check_variable = { building_level@renewable_energy_infra > 0 } }
-				set_temp_variable = { state_renewable_generation = building_level@renewable_energy_infra }
-				multiply_temp_variable = { state_renewable_generation = 0.5 } #base power of a renewable building
-				set_temp_variable = { min_state_renewable_generation = state_renewable_generation }
-				set_temp_variable = { max_state_renewable_generation = state_renewable_generation }
+				add_to_variable = {
+					var = PREV.state_renewable_energy_var
+					value = {
+						value = building_level@renewable_energy_infra
+						multiply = 0.5
+						multiply = renewable_energy_random_var
+						multiply = {
+							value = 1
+							add = THIS.modifier@state_renewable_energy_generation_modifier
+						}
+					}
+				}
 
-				multiply_temp_variable = { state_renewable_generation = renewable_energy_random_var } #set in on_weekly
-				multiply_temp_variable = { min_state_renewable_generation = min_renewable_energy_var }
-				multiply_temp_variable = { max_state_renewable_generation = max_renewable_energy_var }
+				add_to_variable = {
+					var = PREV.minimum_renewable_energy_var
+					value = {
+						value = building_level@renewable_energy_infra
+						multiply = 0.5
+						multiply = min_renewable_energy_var
+						multiply = {
+							value = 1
+							add = THIS.modifier@state_renewable_energy_generation_modifier
+						}
+					}
+				}
 
-				# Renewable Energy Modifier
-				set_temp_variable = { state_renewable_generation_modifier = 1 }
-				add_to_temp_variable = { state_renewable_generation_modifier = THIS.modifier@state_renewable_energy_generation_modifier }
-				multiply_temp_variable = { state_renewable_generation = state_renewable_generation_modifier }
-				multiply_temp_variable = { min_state_renewable_generation = state_renewable_generation_modifier }
-				multiply_temp_variable = { max_state_renewable_generation = state_renewable_generation_modifier }
-
-				add_to_variable = { var = PREV.minimum_renewable_energy_var value = min_state_renewable_generation }
-				add_to_variable = { var = PREV.maximum_renewable_energy_var value = max_state_renewable_generation }
-				add_to_variable = { var = PREV.state_renewable_energy_var value = state_renewable_generation }
+				add_to_variable = {
+					var = PREV.maximum_renewable_energy_var
+					value = {
+						value = building_level@renewable_energy_infra
+						multiply = 0.5
+						multiply = max_renewable_energy_var
+						multiply = {
+							value = 1
+							add = THIS.modifier@state_renewable_energy_generation_modifier
+						}
+					}
+				}
 			}
 
 			# Per-state building output only; country idea bonuses to fossil_energy_gain stay applied at the country level
 			if = { limit = { check_variable = { building_level@fossil_powerplant > 0 } }
-				set_temp_variable = { var = state_fossil_generation value = building_level@fossil_powerplant }
-				multiply_temp_variable = { var = state_fossil_generation value = 2 } #base power of a fossil powerplant
-				set_temp_variable = { var = state_fossil_generation_modifier value = 1 }
-				add_to_temp_variable = { var = state_fossil_generation_modifier value = THIS.modifier@state_fossil_fuel_energy_generation_modifier }
-				multiply_temp_variable = { var = state_fossil_generation value = state_fossil_generation_modifier }
-				add_to_variable = { var = PREV.state_fossil_energy_var value = state_fossil_generation }
+				add_to_variable = {
+					var = PREV.state_fossil_energy_var
+					value = {
+						value = building_level@fossil_powerplant
+						multiply = 2
+						multiply = {
+							value = 1
+							add = THIS.modifier@state_fossil_fuel_energy_generation_modifier
+						}
+					}
+				}
 			}
 
 			if = { limit = { check_variable = { building_level@nuclear_reactor > 0 } }
-				set_temp_variable = { var = state_nuclear_generation value = building_level@nuclear_reactor }
-				multiply_temp_variable = { var = state_nuclear_generation value = 4 } #base power of a nuclear reactor
-				set_temp_variable = { var = state_nuclear_generation_modifier value = 1 }
-				add_to_temp_variable = { var = state_nuclear_generation_modifier value = THIS.modifier@state_nuclear_energy_generation_modifier }
-				multiply_temp_variable = { var = state_nuclear_generation value = state_nuclear_generation_modifier }
-				add_to_variable = { var = PREV.state_nuclear_energy_var value = state_nuclear_generation }
+				add_to_variable = {
+					var = PREV.state_nuclear_energy_var
+					value = {
+						value = building_level@nuclear_reactor
+						multiply = 4
+						multiply = {
+							value = 1
+							add = THIS.modifier@state_nuclear_energy_generation_modifier
+						}
+					}
+				}
 			}
 
-			set_temp_variable = { var = temp_pop value = state_population_k } #in thousands
-			multiply_temp_variable = { var = temp_pop value = 0.01 } # 100 in hundred thousands
-			add_to_variable = { PREV.population_total = temp_pop } # Population Total is in hundreds of thousands
+			add_to_variable = {
+				var = PREV.population_total
+				value = {
+					value = state_population_k
+					multiply = 0.01
+				}
+			}
 
-			set_temp_variable = { productivity_temp_state_var = productivity_state_var }
-			multiply_temp_variable = { productivity_temp_state_var = 0.001 }
-			multiply_temp_variable = { productivity_temp_state_var = temp_pop }
-			add_to_variable = { PREV.overall_productivity = productivity_temp_state_var }
+			add_to_variable = {
+				var = PREV.overall_productivity
+				value = {
+					value = productivity_state_var
+					multiply = 0.001
+					multiply = temp_pop
+				}
+			}
 
 			productivity_growth_controlled_display_effect = yes
 		}
@@ -4439,32 +4446,45 @@ update_state_variables = {
 		add_to_variable = { total_spec_prod_plants = synthetic_refinery_total }
 	}
 
-	set_variable = { var = total_resource_amount value = 0 }
-	add_to_variable = { total_resource_amount = resource_produced@oil }
-	add_to_variable = { total_resource_amount = resource_produced@steel }
-	add_to_variable = { total_resource_amount = resource_produced@chromium }
-	add_to_variable = { total_resource_amount = resource_produced@rubber }
-	add_to_variable = { total_resource_amount = resource_produced@aluminium }
-	add_to_variable = { total_resource_amount = resource_produced@tungsten }
-	add_to_variable = { total_resource_amount = resource_produced@microchips }
-	add_to_variable = { total_resource_amount = resource_produced@composites }
+	set_variable = {
+		total_resource_amount = {
+			value = 0
+			add = resource_produced@oil
+			add = resource_produced@steel
+			add = resource_produced@chromium
+			add = resource_produced@rubber
+			add = resource_produced@aluminium
+			add = resource_produced@tungsten
+			add = resource_produced@microchips
+			add = resource_produced@composites
+		}
+	}
 
 	# Population Total
-	set_variable = { population_total_m = population_total }
-	multiply_variable = { population_total_m = 0.1 }
-	clamp_variable = { var = population_total_m min = 0.0001 }
+	set_variable = {
+		population_total_m = {
+			value = population_total
+			multiply = 0.1
+			clamp = { min = 0.0001 max = 100000000 }
+		}
+	}
 
-	multiply_variable = { overall_productivity = 0.1 }
-	divide_variable = { overall_productivity = population_total_m }
-	multiply_variable = { overall_productivity = 1000 }
+	set_variable = {
+		overall_productivity = {
+			value = overall_productivity
+			multiply = 0.1
+			divide = population_total_m
+			multiply = 1000
+			# INFO: This is a workaround to prevent the overflow of produtcivity to 424 million.
+			clamp = { min = 0 max = 1000000 }
+		}
+	}
 
 	# If no controlled states (capitulated/exiled), preserve last known productivity so the economy isn't permanently destroyed on liberation
 	if = {
 		limit = { check_variable = { overall_productivity < 1 } }
 		set_variable = { overall_productivity = last_overall_productivity }
 	}
-
-	clamp_variable = { var = overall_productivity min = 0 max = 1000000 } # INFO: This is a workaround to prevent the overflow of produtcivity to 424 million.
 
 	calculate_gdp = yes
 }
@@ -5257,15 +5277,23 @@ calculate_gdp = {
 	clamp_variable = { var = healthcare_gdp_percent min = 0 max = 1 }
 
 	# Overall productivity grows over time (on_monthly) and with techs and its the main source of economic growth for developed countries
-	set_temp_variable = { productivity_calculations_var = overall_productivity }
-	multiply_temp_variable = { productivity_calculations_var = 0.001 }
-	multiply_variable = { gdp_total = productivity_calculations_var }
+	multiply_variable = {
+		var = gdp_total
+		value = {
+			value = overall_productivity
+			multiply = 0.001
+		}
+	}
 
 	#sets a minimum gdp
 	clamp_variable = { var = gdp_total min = 0.1 }
-	set_variable = { gdp_per_capita = gdp_total }
-	clamp_variable = { var = population_total_m min = 0.001 }
-	divide_variable = { gdp_per_capita = population_total_m }
+	set_variable = {
+		gdp_per_capita = {
+			value = gdp_total
+			divide = population_total_m
+			clamp = { min = 0 max = 100000 }
+		}
+	}
 
 	calculate_gdp_modifiers = yes
 	calculate_energy_use = yes
@@ -5280,61 +5308,84 @@ calculate_gdp_modifiers = {
 			limit = { NOT = { has_dynamic_modifier = { modifier = gdp_per_capita_country_modifiers } } }
 			add_dynamic_modifier = { modifier = gdp_per_capita_country_modifiers }
 		}
-
 		#Construction speed factor
 		#-0.012 * GDP/C + 0.572	- GDP/C c [0,30]
 		#-0.001 * GDP/C + 0.230 - GDP/C c [30, 200]
 		#Cap at 0
-		set_variable = { production_speed_buildings_factor_gdp_modifier = gdp_per_capita }
-		if = {
-			limit = { check_variable = { production_speed_buildings_factor_gdp_modifier < 30 } }
-			multiply_variable = { production_speed_buildings_factor_gdp_modifier = -0.012 }
-			add_to_variable = { production_speed_buildings_factor_gdp_modifier = 0.572 }
+		set_variable = {
+			production_speed_buildings_factor_gdp_modifier = {
+				value = gdp_per_capita
+				if = {
+					limit = { value = gdp_per_capita less_than = 30 }
+					multiply = -0.012
+					add = 0.572
+				}
+				else = {
+					multiply = -0.001
+					add = 0.230
+				}
+				clamp = { min = 0 max = 20000 }
+			}
 		}
-		else = {
-			multiply_variable = { production_speed_buildings_factor_gdp_modifier = -0.001 }
-			add_to_variable = { production_speed_buildings_factor_gdp_modifier = 0.230 }
-		}
-		clamp_variable = { var = production_speed_buildings_factor_gdp_modifier min = 0 }
 
 		#Population growth rate
 		# (60 - GDP/c) * 0.02
 		# Break-even at GDP/c = 60, clamped to 0 above
-		set_variable = { monthly_population_gdp_modifier = 60 }
-		subtract_from_variable = { monthly_population_gdp_modifier = gdp_per_capita }
-		multiply_variable = { monthly_population_gdp_modifier = 0.02 }
-		clamp_variable = { var = monthly_population_gdp_modifier min = 0 }
+		set_variable = {
+			monthly_population_gdp_modifier = {
+				value = 60
+				subtract = gdp_per_capita
+				multiply = 0.02
+				clamp = { min = 0 max = 20000 }
+			}
+		}
 
 		#Research speed factor
 		# 0.003 * GDP/C - 0.153
 		# Break-even at GDP/c = 51, clamped to 0 above
-		set_variable = { research_speed_factor_gdp_modifier = gdp_per_capita }
-		multiply_variable = { research_speed_factor_gdp_modifier = 0.003 }
-		add_to_variable = { research_speed_factor_gdp_modifier = -0.153 }
-		clamp_variable = { var = research_speed_factor_gdp_modifier max = 0 }
+		set_variable = {
+			research_speed_factor_gdp_modifier = {
+				value = gdp_per_capita
+				multiply = 0.003
+				add = -0.153
+				clamp = { min = -1000 max = 0 }
+			}
+		}
 
 		#Stability factor
 		# 0.001 * GDP/C - 0.100
 		# Break-even at GDP/c = 100
-		set_variable = { stability_factor_gdp_modifier = gdp_per_capita }
-		multiply_variable = { stability_factor_gdp_modifier = 0.001 }
-		add_to_variable = { stability_factor_gdp_modifier = -0.1 }
+		set_variable = {
+			stability_factor_gdp_modifier = {
+				value = gdp_per_capita
+				multiply = 0.001
+				add = -0.1
+			}
+		}
 
 		# max workforce
 		# 0.100 - 0.001 * GDP/C
 		# Break-even at GDP/c = 100, min clamp (-0.30) at GDP/c = 400
-		set_variable = { total_workforce_gdp_c_modifier_var = gdp_per_capita }
-		multiply_variable = { total_workforce_gdp_c_modifier_var = -0.001 }
-		add_to_variable = { total_workforce_gdp_c_modifier_var = 0.1 }
-		clamp_variable = { var = total_workforce_gdp_c_modifier_var min = -0.30 }
+		set_variable = {
+			total_workforce_gdp_c_modifier_var = {
+				value = gdp_per_capita
+				multiply = -0.001
+				add = 0.1
+				clamp = { min = -0.30 max = 20000 }
+			}
+		}
 
 		#fossil powerplants construction speed
 		# 0.5 - 0.0125 * GDP/C
 		# Break-even at GDP/c = 40, min clamp (-0.75) at GDP/c = 100
-		set_variable = { fossil_pp_construction_gdp_c_modifier_var = gdp_per_capita }
-		multiply_variable = { fossil_pp_construction_gdp_c_modifier_var = -0.0125 }
-		add_to_variable = { fossil_pp_construction_gdp_c_modifier_var = 0.5 }
-		clamp_variable = { var = fossil_pp_construction_gdp_c_modifier_var min = -0.75 }
+		set_variable = {
+			fossil_pp_construction_gdp_c_modifier_var = {
+				value = gdp_per_capita
+				multiply = -0.0125
+				add = 0.5
+				clamp = { min = -0.75 max = 20000 }
+			}
+		}
 	}
 }
 

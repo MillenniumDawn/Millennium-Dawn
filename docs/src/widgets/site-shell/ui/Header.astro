@@ -2,7 +2,7 @@
 import { Image } from "astro:assets";
 import mainMenuLogo from "@/assets/images/branding/main-menu.png";
 import { ensureTrailingSlash, withBase } from "@/shared/lib/routing/urls";
-import { LAYOUT_CONTAINER_CLASS, SITE_HEADER_CLASS, FOCUS_RING_CLASS } from "@/shared/ui/tailwind";
+import { LAYOUT_CONTAINER_CLASS, SITE_HEADER_CLASS } from "@/shared/ui/tailwind";
 
 interface NavChild {
   title: string;
@@ -28,157 +28,6 @@ function normalize(path: string): string {
 }
 
 const current = normalize(currentPath || "/");
-
-const navLinkClass = [
-  "inline-flex",
-  "min-h-11",
-  "min-w-11",
-  "items-center",
-  "justify-center",
-  "rounded",
-  "px-md",
-  "text-[0.95rem]",
-  "leading-[1.2]",
-  "text-text-secondary",
-  "font-medium",
-  "no-underline",
-  "transition-[background-color,color,box-shadow]",
-  "duration-[var(--transition-speed)]",
-  "ease-[var(--transition-fn)]",
-  "hover:text-primary",
-  "hover:bg-primary-light/50",
-  "hover:no-underline",
-  "tabletOnly:px-sm",
-  "tabletOnly:text-[0.875rem]",
-  "mobile:h-auto",
-  "mobile:w-full",
-  "mobile:justify-start",
-  "mobile:rounded-none",
-  "mobile:px-md",
-  "mobile:py-md",
-  "mobile:text-left",
-  "mobile:whitespace-normal",
-  FOCUS_RING_CLASS,
-].join(" ");
-
-const activeNavClass =
-  "text-primary bg-primary-light/40 shadow-[inset_0_0_0_1px_var(--color-primary-light)] font-semibold";
-
-const navChildLinkClass = [
-  "flex",
-  "min-h-11",
-  "items-center",
-  "rounded",
-  "px-md",
-  "text-[0.95rem]",
-  "leading-[1.2]",
-  "text-text-secondary",
-  "font-medium",
-  "no-underline",
-  "transition-[background-color,color,box-shadow]",
-  "duration-[var(--transition-speed)]",
-  "ease-[var(--transition-fn)]",
-  "hover:text-primary",
-  "hover:bg-primary-light/50",
-  "hover:no-underline",
-  "tablet:justify-start",
-  "tablet:whitespace-nowrap",
-  "mobile:py-md",
-  FOCUS_RING_CLASS,
-].join(" ");
-
-const navPanelClass = [
-  "m-0",
-  "flex",
-  "list-none",
-  "flex-col",
-  "gap-0",
-  "p-0",
-  // Mobile: in-flow accordion under the group label, collapsed until expanded.
-  "mobile:max-h-0",
-  "mobile:overflow-hidden",
-  "mobile:pl-md",
-  "mobile:transition-[max-height]",
-  "mobile:duration-nav",
-  "mobile:ease-in-out",
-  "mobile:peer-aria-expanded:max-h-[600px]",
-  // Desktop: absolute dropdown card, hidden until the toggle is expanded.
-  "tablet:invisible",
-  "tablet:absolute",
-  "tablet:left-0",
-  "tablet:top-full",
-  "tablet:z-header",
-  "tablet:mt-xs",
-  "tablet:min-w-[13rem]",
-  "tablet:rounded",
-  "tablet:border",
-  "tablet:border-border-light",
-  "tablet:bg-surface",
-  "tablet:p-xs",
-  "tablet:opacity-0",
-  "tablet:shadow-lg",
-  "tablet:transition-[opacity,visibility]",
-  "tablet:duration-nav",
-  "tablet:ease-in-out",
-  "tablet:peer-aria-expanded:visible",
-  "tablet:peer-aria-expanded:opacity-100",
-].join(" ");
-
-const navCaretClass = [
-  "size-3",
-  "shrink-0",
-  "transition-transform",
-  "duration-nav",
-  "ease-in-out",
-  "group-aria-expanded:rotate-180",
-].join(" ");
-
-const navToggleClass = [
-  "nav-toggle",
-  "hidden",
-  "min-h-11",
-  "min-w-11", // Ensure minimum 44x44 target size for WCAG 2.2 AAA
-  "items-center",
-  "justify-center",
-  "rounded",
-  "border-2",
-  "border-border-light",
-  "bg-transparent",
-  "p-sm",
-  "text-text-secondary",
-  "transition-[border-color,color]",
-  "duration-[var(--transition-speed)]",
-  "ease-[var(--transition-fn)]",
-  "hover:border-border",
-  "hover:text-text",
-  "mobile:flex",
-  "[&[aria-expanded=true]>svg:first-of-type]:hidden",
-  "[&[aria-expanded=true]>svg:last-of-type]:block",
-  FOCUS_RING_CLASS,
-].join(" ");
-
-const themeButtonClass = [
-  "dark-mode-button",
-  "flex",
-  "size-11", // Ensure minimum 44x44 target size for WCAG 2.2 AAA (size-11 = 44px)
-  "shrink-0",
-  "items-center",
-  "justify-center",
-  "rounded-full",
-  "border-2",
-  "border-transparent",
-  "bg-transparent",
-  "text-text-secondary",
-  "transition-[background-color,color,transform]",
-  "duration-[var(--transition-speed)]",
-  "ease-[var(--transition-fn)]",
-  "hover:bg-surface-hover",
-  "hover:text-primary",
-  "hover:scale-105",
-  "active:scale-95",
-  "focus-visible:bg-surface-active",
-  FOCUS_RING_CLASS,
-].join(" ");
 ---
 
 <header class={SITE_HEADER_CLASS}>
@@ -224,13 +73,13 @@ const themeButtonClass = [
                     <li class="nav-group relative mobile:w-full">
                       <button
                         type="button"
-                        class:list={[navLinkClass, "nav-group-toggle group peer gap-xs", isActive && activeNavClass]}
+                        class:list={["site-nav-link nav-group-toggle peer gap-xs", isActive && "is-active"]}
                         aria-expanded="false"
                         aria-controls={panelId}
                       >
                         {item.title}
                         <svg
-                          class={navCaretClass}
+                          class="site-nav-caret"
                           aria-hidden="true"
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
@@ -243,12 +92,12 @@ const themeButtonClass = [
                           <path d="M6 9l6 6 6-6"></path>
                         </svg>
                       </button>
-                      <ul id={panelId} class={navPanelClass}>
+                      <ul id={panelId} class="site-nav-panel">
                         {childMatches.map(({ child, childActive }) => (
                           <li>
                             <a
                               href={withBase(child.url)}
-                              class:list={[navChildLinkClass, childActive && activeNavClass]}
+                              class:list={["site-nav-child-link", childActive && "is-active"]}
                               aria-current={childActive ? "page" : undefined}
                             >
                               {child.title}
@@ -267,7 +116,7 @@ const themeButtonClass = [
                   <li>
                     <a
                       href={withBase(item.url ?? "/")}
-                      class:list={[navLinkClass, isActive && activeNavClass]}
+                      class:list={["site-nav-link", isActive && "is-active"]}
                       aria-current={isActive ? "page" : undefined}
                     >
                       {item.title}
@@ -281,23 +130,23 @@ const themeButtonClass = [
 
         <div class="ml-auto flex shrink-0 items-center gap-sm">
           <button
-            class={navToggleClass}
+            class="nav-toggle site-nav-toggle-btn"
             aria-label="Open navigation menu"
             aria-expanded="false"
             aria-controls="main-nav"
             type="button"
           >
-            <svg class="size-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <svg class="site-nav-icon-menu size-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z" fill="currentColor"></path>
             </svg>
-            <svg class="hidden size-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <svg class="site-nav-icon-close size-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path
                 d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"
                 fill="currentColor"></path>
             </svg>
           </button>
 
-          <button class={themeButtonClass} aria-label="Toggle dark mode" aria-pressed="false" type="button">
+          <button class="dark-mode-button site-theme-btn" aria-label="Toggle dark mode" aria-pressed="false" type="button">
             <svg
               class="size-5 [html.dark-mode_&]:hidden"
               aria-hidden="true"

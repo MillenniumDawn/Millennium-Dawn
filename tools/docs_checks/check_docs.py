@@ -38,6 +38,7 @@ if str(HERE) not in sys.path:
 
 import check_accessibility_basics as _a11y  # noqa: E402
 import check_content_html as _content_html  # noqa: E402
+import check_dev_diaries as _dev_diaries  # noqa: E402
 import check_docs_hygiene as _hygiene  # noqa: E402
 import check_flag_images as _flags  # noqa: E402
 import check_link_syntax as _link_syntax  # noqa: E402
@@ -82,6 +83,10 @@ def check_flags() -> CheckResult:
 
 def check_hygiene() -> CheckResult:
     return _timed("hygiene", lambda: _hygiene.run(REPO_ROOT))
+
+
+def check_dev_diaries() -> CheckResult:
+    return _timed("dev-diaries", _dev_diaries.run)
 
 
 def check_lint_md() -> CheckResult:
@@ -140,6 +145,7 @@ ALL_CHECKS: list[Check] = [
     Check("content-html", "sources", check_content_html),
     Check("flags", "sources", check_flags),
     Check("hygiene", "sources", check_hygiene),
+    Check("dev-diaries", "sources", check_dev_diaries),
     Check("lint:md", "sources", check_lint_md),
     Check("astro check", "build", check_astro),
     Check("build", "build", check_build),

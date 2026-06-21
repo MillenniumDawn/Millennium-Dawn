@@ -35,6 +35,7 @@ productivity_growth_controlled_display_effect = {
 					add = -1
 					multiply = 0.5 # control factor for the catch up effect
 					add = 1
+					clamp = { min = 0 max = 2 } # cap catch-up so a far-behind nation grows at most 2x base
 				}
 				multiply = {
 					value = 1
@@ -68,6 +69,7 @@ productivity_growth_country_display_effect = {
 			multiply = {
 				value = 1
 				add = modifier@country_productivity_growth_modifier
+				clamp = { min = 0 max = 100 } # maluses can slow growth to zero, not invert it
 			}
 		}
 	}
@@ -98,38 +100,33 @@ update_employment_productivity_output_dynamic_modifier = {
 		set_variable = { last_productivity_check = overall_productivity }
 		set_variable = { last_industrial_complex_total = industrial_complex_total }
 
-		# Cache Information for Speed Purposes
-		set_temp_variable = { preexisting_construction_speed_output_var = construction_speed_output_var }
-		set_temp_variable = { preexisting_military_factories_output_var = military_factories_output_var }
-		set_temp_variable = { preexisting_dockyards_output_var = dockyards_output_var }
-		set_temp_variable = { preexisting_agriculture_district_output_var = agriculture_district_output_var }
-
-		set_temp_variable = { cached_construction_modifier = modifier@production_speed_buildings_factor }
-		set_temp_variable = { cached_military_modifier = modifier@industrial_capacity_factory }
-		set_temp_variable = { cached_dockyard_modifier = modifier@industrial_capacity_dockyard }
-		set_temp_variable = { cached_agriculture_modifier = modifier@production_speed_agriculture_district_factor }
-
 		#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
-		set_variable = {
-			construction_speed_output_var = {
-				value = overall_productivity
-				multiply = 0.001
-				multiply = {
-					value = industrial_complex_total
-					multiply = civilian_factories_manpower_fulfillment
-					add = {
-						value = num_of_civilian_factories
-						subtract = industrial_complex_total
+		if = {
+			limit = { num_of_civilian_factories > 0 }
+			set_variable = {
+				construction_speed_output_var = {
+					value = overall_productivity
+					multiply = 0.001
+					multiply = {
+						value = industrial_complex_total
+						multiply = civilian_factories_manpower_fulfillment
+						add = {
+							value = num_of_civilian_factories
+							subtract = industrial_complex_total
+						}
+						divide = num_of_civilian_factories
 					}
-					divide = num_of_civilian_factories
-				}
-				add = -1
-				multiply = {
-					value = cached_construction_modifier
-					subtract = preexisting_construction_speed_output_var
-					add = 1
+					add = -1
+					multiply = {
+						value = modifier@production_speed_buildings_factor
+						subtract = construction_speed_output_var
+						add = 1
+					}
 				}
 			}
+		}
+		else = {
+			set_variable = { construction_speed_output_var = 0 }
 		}
 
 		if = {
@@ -150,8 +147,8 @@ update_employment_productivity_output_dynamic_modifier = {
 					}
 					add = -1
 					multiply = {
-						value = cached_military_modifier
-						subtract = preexisting_military_factories_output_var
+						value = modifier@industrial_capacity_factory
+						subtract = military_factories_output_var
 						add = 1
 					}
 				}
@@ -179,8 +176,8 @@ update_employment_productivity_output_dynamic_modifier = {
 					}
 					add = -1
 					multiply = {
-						value = cached_dockyard_modifier
-						subtract = preexisting_dockyards_output_var
+						value = modifier@industrial_capacity_dockyard
+						subtract = dockyards_output_var
 						add = 1
 					}
 				}
@@ -197,8 +194,8 @@ update_employment_productivity_output_dynamic_modifier = {
 				multiply = 0.001
 				add = -1
 				multiply = {
-					value = cached_agriculture_modifier
-					subtract = preexisting_agriculture_district_output_var
+					value = modifier@production_speed_agriculture_district_factor
+					subtract = agriculture_district_output_var
 					add = -2
 				}
 			}
@@ -211,8 +208,13 @@ update_employment_productivity_output_dynamic_modifier = {
 			set_variable = { agriculture_district_output_var = 0 }
 			set_variable = { dockyards_output_var = 0 }
 		}
-		set_variable = { productivity_tax_effect_display = productivity_calculations_var }
-		add_to_variable = { productivity_tax_effect_display = -1 }
+		set_variable = {
+			productivity_tax_effect_display = {
+				value = overall_productivity
+				multiply = 0.001
+				add = -1
+			}
+		}
 	}
 }
 
@@ -228,13 +230,13 @@ productivity_growth_effect = {
 	update_employment_productivity_output_dynamic_modifier = yes
 
 	#updates variables for average world productivity
-	set_temp_variable = {
-		cumulative_productivity = {
+	add_to_variable = {
+		var = global.cumulative_world_productivity
+		value = {
 			value = overall_productivity
 			multiply = 0.001
 			multiply = population_total_m
 		}
 	}
-	add_to_variable = { global.cumulative_world_productivity = cumulative_productivity }
 	add_to_variable = { global.world_population = population_total_m }
 }

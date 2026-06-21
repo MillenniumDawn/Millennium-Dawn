@@ -27,7 +27,6 @@ RAJ_china_is_a_threat = {
 			984
 			987
 			982
-			993
 		}
 		ratio = 0.60
 		subtract_fronts_from_need = no
@@ -70,11 +69,22 @@ RAJ_contain_pakistan = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = conquer id = "PAK" value = 200 }
 	ai_strategy = { type = antagonize id = "PAK" value = 200 }
 	ai_strategy = { type = alliance id = "PAK" value = -200 }
 	ai_strategy = { type = support id = "PAK" value = -200 }
 	ai_strategy = { type = contain id = "PAK" value = 200 }
+}
+
+RAJ_contain_pakistan_active_threat = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		country_exists = PAK
+		PAK = { NOT = { is_subject_of = RAJ } }
+		threat > 0.15
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "PAK" value = 200 }
 }
 
 RAJ_no_garrison_ban = {
@@ -168,7 +178,7 @@ RAJ_area_priority = {
 	ai_strategy = { type = area_priority id = africa value = 25 }
 }
 
-RAJ_fuck_america_if_like_pakistan = {
+RAJ_oppose_usa_if_supporting_pakistan = {
 	allowed = { original_tag = RAJ }
 	enable = {
 		PAK = { is_guaranteed_by = USA }
@@ -182,7 +192,7 @@ RAJ_fuck_america_if_like_pakistan = {
 	ai_strategy = { type = befriend id = "CHI" value = 50 }
 }
 
-RAJ_fuck_iran_if_like_pakistan = {
+RAJ_oppose_iran_if_supporting_pakistan = {
 	allowed = { original_tag = RAJ }
 	enable = {
 		PAK = { is_guaranteed_by = PER }
@@ -191,12 +201,12 @@ RAJ_fuck_iran_if_like_pakistan = {
 
 	ai_strategy = { type = antagonize id = "PER" value = 25 }
 	ai_strategy = { type = contain id = "PER" value = 25 }
-	ai_strategy = { type = alliance id = "PER" value = 50 }
+	ai_strategy = { type = alliance id = "PER" value = -50 }
 	ai_strategy = { type = support id = "PER" value = -50 }
 	ai_strategy = { type = befriend id = "PER" value = -150 }
 }
 
-RAJ_fuck_russia_if_like_pakistan = {
+RAJ_oppose_russia_if_supporting_pakistan = {
 	allowed = { original_tag = RAJ }
 	enable = {
 		PAK = { is_guaranteed_by = SOV }
@@ -237,12 +247,10 @@ RAJ_support_botswana_militarily = {
 				has_completed_focus = BOT_found_indian_embassy
 			}
 		}
-		NOT = {
-			OR = {
-				has_war_with = BOT
-				BOT = { is_in_faction_with = CHI }
-				BOT = { is_in_faction_with = PAK }
-			}
+		NOT = { has_war_with = BOT }
+		BOT = {
+			NOT = { is_in_faction_with = CHI }
+			NOT = { is_in_faction_with = PAK }
 		}
 	}
 	abort_when_not_enabled = yes
@@ -255,7 +263,7 @@ RAJ_support_botswana_militarily = {
 ##India unique AI for combat units
 RAJ_default_naval_breakdown = {
 	allowed = { original_tag = RAJ }
-	enable = { original_tag = RAJ }
+	enable = { always = yes }
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = naval_corvettes value = 10 }
@@ -271,7 +279,7 @@ RAJ_default_naval_breakdown = {
 }
 
 generic_india_industrial_construction = {
-	allowed = { tag = RAJ }
+	allowed = { original_tag = RAJ }
 	enable = {
 		check_variable = { unfulfilled_energy_demand_var > -0.05 }
 	}
@@ -285,7 +293,7 @@ generic_india_industrial_construction = {
 }
 
 RAJ_army_focus = {
-	allowed = { tag = RAJ }
+	allowed = { original_tag = RAJ }
 	enable = {
 		has_equipment = { infantry_weapons_type > 35000 }
 		has_equipment = { medium_tank_artillery_chassis > 1000 }
@@ -307,7 +315,11 @@ RAJ_accepted_to_join_brics = {
 		RAJ = {
 			has_idea = faction_brics_alliance
 		}
-		has_idea = faction_brics_alliance
+		OR = {
+			has_idea = faction_brics_alliance
+			has_idea = RAJ_BRICS_observer
+			has_idea = RAJ_BRICS_associate
+		}
 	}
 	abort_when_not_enabled = yes
 
@@ -319,6 +331,7 @@ RAJ_new_york_help = {
 	enable = {
 		country_exists = NYK
 		has_war = no
+		has_opinion = { target = NYK value > 20 }
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = send_volunteers_desire id = "NYK" value = 1000 }
@@ -329,6 +342,7 @@ RAJ_texas_help = {
 	enable = {
 		country_exists = TEX
 		has_war = no
+		has_opinion = { target = TEX value > 20 }
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = send_volunteers_desire id = "TEX" value = 1000 }
@@ -339,6 +353,7 @@ RAJ_confederate_states_america_help = {
 	enable = {
 		country_exists = CSA
 		has_war = no
+		has_opinion = { target = CSA value > 20 }
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = send_volunteers_desire id = "CSA" value = 1000 }
@@ -349,6 +364,7 @@ RAJ_cascadia_help = {
 	enable = {
 		country_exists = CAS
 		has_war = no
+		has_opinion = { target = CAS value > 20 }
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = send_volunteers_desire id = "CAS" value = 1000 }
@@ -453,12 +469,8 @@ RAJ_pursue_friendly_relations_with_sri_lanka = {
 	allowed = { original_tag = RAJ }
 	enable = {
 		country_exists = SRI
-		NOT = {
-			OR = {
-				has_government = nationalist
-				has_government = fascism
-			}
-		}
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
 	}
 	abort_when_not_enabled = yes
 
@@ -471,12 +483,8 @@ RAJ_pursue_friendly_relations_with_nepal = {
 	allowed = { original_tag = RAJ }
 	enable = {
 		country_exists = NEP
-		NOT = {
-			OR = {
-				has_government = nationalist
-				has_government = fascism
-			}
-		}
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
 	}
 	abort_when_not_enabled = yes
 
@@ -489,12 +497,8 @@ RAJ_pursue_friendly_relations_with_bhutan = {
 	allowed = { original_tag = RAJ }
 	enable = {
 		country_exists = BHU
-		NOT = {
-			OR = {
-				has_government = nationalist
-				has_government = fascism
-			}
-		}
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
 	}
 	abort_when_not_enabled = yes
 
@@ -508,12 +512,8 @@ RAJ_threat_of_terror_mil = {
 	enable = {
 		has_completed_focus = RAJ_threat_of_terror_mil
 		NOT = { has_war_with = USA }
-		NOT = {
-			OR = {
-				has_government = nationalist
-				has_government = fascism
-			}
-		}
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
 	}
 	abort_when_not_enabled = yes
 
@@ -526,12 +526,8 @@ RAJ_USA_threat_of_terror_mil = {
 	enable = {
 		has_completed_focus = RAJ_threat_of_terror_mil
 		NOT = { has_war_with = RAJ }
-		NOT = {
-			OR = {
-				has_government = nationalist
-				has_government = fascism
-			}
-		}
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
 	}
 	abort_when_not_enabled = yes
 
@@ -565,68 +561,38 @@ RAJ_USA_strategic_assistance_to_us = {
 	ai_strategy = { type = support id = RAJ value = 25 }
 }
 
-# --------------------------------------------
-# NAXALITE-MAOIST INSURGENCY AI HANDLING
-# --------------------------------------------
-
 RAJ_handle_naxalite_insurgency = {
 	allowed = { original_tag = RAJ }
 	enable = {
-		any_controlled_state = {
-			OR = {
-				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
-				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
-				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
-				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
-				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
-			}
-		}
+		RAJ_country_has_any_naxalite_states = yes
 	}
 	abort_when_not_enabled = yes
 
-	# Prioritize suppression decisions
-	ai_strategy = { type = pp_spend_priority id = decision value = 100 }
-
-	# Avoid unnecessary wars while dealing with insurgency
-	ai_strategy = { type = avoid_starting_wars value = 20 }
+	ai_strategy = { type = pp_spend_priority id = decision value = 20 }
+	ai_strategy = { type = avoid_starting_wars value = 40 }
 }
 
 RAJ_prioritize_insurgency_severe = {
 	allowed = { original_tag = RAJ }
 	enable = {
-		count_triggers = {
-			amount = 3
-			456 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
-			459 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
-			451 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
-			458 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
-			991 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
-		}
+		RAJ_has_severe_naxalite_states_trigger = yes
 	}
 	abort_when_not_enabled = yes
 
-	# Very high priority when multiple states are at severe level
-	ai_strategy = { type = pp_spend_priority id = decision value = 200 }
-	ai_strategy = { type = pp_spend_amount id = decision value = 100 }
+	ai_strategy = { type = pp_spend_priority id = decision value = 75 }
+	ai_strategy = { type = pp_spend_amount id = decision value = 75 }
 	ai_strategy = { type = avoid_starting_wars value = 50 }
 }
 
-RAJ_operation_green_hunt_priority = {
+RAJ_garrison_red_corridor = {
 	allowed = { original_tag = RAJ }
 	enable = {
-		date > 2009.1.1
-		check_variable = { strength_of_maoists > 30 }
-		any_controlled_state = {
-			OR = {
-				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
-				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
-			}
-		}
+		RAJ_country_has_any_naxalite_states = yes
 	}
 	abort_when_not_enabled = yes
 
-	# Prioritize Operation Green Hunt after 2009
-	ai_strategy = { type = pp_spend_priority id = decision value = 150 }
+	ai_strategy = { type = garrison value = 200 }
+	ai_strategy = { type = force_build_armies value = 30 }
 }
 
 # RAJ Air Doctrine — balanced land + maritime coverage
@@ -641,6 +607,80 @@ RAJ_air_doctrine = {
 	ai_strategy = { type = unit_ratio id = tactical_bomber value = 20 }
 	ai_strategy = { type = unit_ratio id = interceptor value = 30 }
 	ai_strategy = { type = unit_ratio id = scout_plane value = 3 }
-	ai_strategy = { type = unit_ratio id = suicide value = 5 }
 	ai_strategy = { type = unit_ratio id = strategic_bomber value = 5 }
+}
+
+RAJ_handle_religious_crisis = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		OR = {
+			check_variable = { RAJ_muslim_opinion < 35 }
+			check_variable = { RAJ_sikh_opinion < 35 }
+			check_variable = { RAJ_buddhist_opinion < 35 }
+			check_variable = { RAJ_christians_opinion < 35 }
+			check_variable = { RAJ_hindus_opinion < 35 }
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = pp_spend_priority id = decision value = 75 }
+}
+
+RAJ_handle_religious_crisis_severe = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		OR = {
+			check_variable = { RAJ_muslim_opinion < 15 }
+			check_variable = { RAJ_sikh_opinion < 15 }
+			check_variable = { RAJ_buddhist_opinion < 15 }
+			check_variable = { RAJ_christians_opinion < 15 }
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = pp_spend_priority id = decision value = 150 }
+}
+
+RAJ_befriend_myanmar_buffer = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		country_exists = BRM
+		NOT = { has_war_with = BRM }
+		BRM = {
+			NOT = { is_in_faction_with = CHI }
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = befriend id = "BRM" value = 50 }
+	ai_strategy = { type = support  id = "BRM" value = 25 }
+	ai_strategy = { type = protect  id = "BRM" value = 25 }
+}
+
+RAJ_counter_chinese_influence_myanmar = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		country_exists = BRM
+		BRM = {
+			is_in_faction_with = CHI
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = antagonize id = "CHI" value = 25 }
+	ai_strategy = { type = contain id = "CHI" value = 50 }
+}
+
+RAJ_reconquer_breakaway = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		OR = {
+			country_exists = LAD
+			country_exists = MEG
+			country_exists = MAN
+			country_exists = SIK
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "LAD" value = 200 }
+	ai_strategy = { type = conquer id = "MEG" value = 200 }
+	ai_strategy = { type = conquer id = "MAN" value = 200 }
+	ai_strategy = { type = conquer id = "SIK" value = 200 }
 }

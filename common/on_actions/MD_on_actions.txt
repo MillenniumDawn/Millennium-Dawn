@@ -113,6 +113,8 @@ on_actions = {
 				}
 			}
 
+			MD_auto_agency_weekly_tick = yes
+
 			# Arab Spring
 			if = { limit = { has_country_flag = arab_spring_active }
 				if = {
@@ -697,6 +699,15 @@ on_actions = {
 					}
 				}
 
+				# BRICS System
+				if = { limit = { check_variable = { global.BRICS_full_members^num > 0 } }
+					random_scope_in_array = {
+						array = global.BRICS_full_members
+						limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
+						BRICS_update_brics_strength = yes
+					}
+				}
+
 				calculate_average_world_productivity = yes
 
 				# Power Ranking: Calculate contributions (months 1, 4, 7, 10)
@@ -812,14 +823,6 @@ on_actions = {
 					update_neighbors_effects = yes
 
 					civilian_microchip_consumption = yes
-
-					if = {
-						limit = {
-							check_variable = { fuel_k > 10 }
-							has_dynamic_modifier = { modifier = no_fuel_penalties_modifier }
-						}
-						remove_dynamic_modifier = { modifier = no_fuel_penalties_modifier }
-					}
 
 					AGRI_plow_the_fields = yes
 					monthly_tick_internal_factions_opinion = yes
@@ -954,7 +957,7 @@ on_actions = {
 					else = {
 						ai_weapon_dump = yes
 
-						if = { limit = { MD_special_countries = no }
+						if = { limit = { NOT = { MD_special_countries = yes } }
 							if = {
 								limit = {
 									check_variable = { next_slot_from_gdp < 10 }

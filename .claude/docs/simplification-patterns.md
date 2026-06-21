@@ -398,6 +398,36 @@ multiply_variable = { var = my_ratio value = 0.01 }
 
 **Why:** `multiply_variable` is a single engine operation with no zero-division risk. `0.01` is the exact reciprocal of `100`, so the result is identical. Prefer multiplication for all constant divisors.
 
+## Fold a Single-Use Temp into the Accumulate Effect
+
+A scratch temp that is built up only to be added to (or multiplied into) one target on the next line is pure overhead. A math expression is a valid `value` for the accumulate effects (`add_to_variable`, `subtract_from_variable`, `multiply_variable`, `divide_variable`), not just `set_variable` — so fold the build straight in.
+
+### Before (temp built, used once)
+
+```
+set_temp_variable = { cumulative_productivity = overall_productivity }
+multiply_temp_variable = { cumulative_productivity = 0.001 }
+multiply_temp_variable = { cumulative_productivity = population_total_m }
+add_to_variable = { global.cumulative_world_productivity = cumulative_productivity }
+```
+
+### After (no temp)
+
+```
+add_to_variable = {
+    var = global.cumulative_world_productivity
+    value = {
+        value = overall_productivity
+        multiply = 0.001
+        multiply = population_total_m
+    }
+}
+```
+
+**Why:** One single-pass expression replaces three temp writes plus the add, and drops the temp variable entirely. Only fold a temp that is read exactly once — keep it when the intermediate is reused by several later statements.
+
+**Caveat:** Accumulate-with-math-expression is rare (vanilla and MD historically used a temp), but confirmed working in-engine. A self-referencing accumulate can also be written `set_variable = { X = { value = X  add = { ...expr... } } }`, which reads the pre-write value of `X`. See `.claude/docs/hoi4-data-structures.md` (Math Expressions).
+
 ## Prefer `random` Over Two-Bucket `random_list` With an Empty Side
 
 When a `random_list` has exactly two buckets and one is empty (a "do nothing" placeholder for the "miss" case), collapse it to `random = { chance = N effect }`. Same semantics, lighter engine path, less script.

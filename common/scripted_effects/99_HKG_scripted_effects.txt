@@ -1,6 +1,30 @@
 # Hong Kong scripted effects
 # LegCo motion seat calculations, Railway/XRL motion outcomes
 
+HKG_start_mainland_resource_supply = {
+	if = {
+		limit = { country_exists = CHI }
+		if = {
+			limit = { NOT = { has_idea = HKG_mainland_resource_supply } }
+			add_ideas = HKG_mainland_resource_supply
+		}
+		CHI = {
+			if = {
+				limit = { NOT = { has_idea = CHI_hong_kong_resource_drain } }
+				add_ideas = CHI_hong_kong_resource_drain
+			}
+		}
+	}
+}
+
+HKG_stop_mainland_resource_supply = {
+	remove_ideas = HKG_mainland_resource_supply
+	if = {
+		limit = { country_exists = CHI }
+		CHI = { remove_ideas = CHI_hong_kong_resource_drain }
+	}
+}
+
 #####################
 # LegCo Seat System
 #####################
@@ -41,10 +65,6 @@ calculate_sepcially_required_legco_seats = {
 
 HKG_contract_initialize = {
 	set_country_flag = HKG_contract_active
-	if = {
-		limit = { country_exists = CHI }
-		CHI = { set_country_flag = HKG_contract_system_live }
-	}
 	set_variable = { HKG_contract_standing = 0 }
 	set_variable = { HKG_contract_funds = 0 }
 	set_variable = { HKG_contract_completed = 0 }
@@ -135,27 +155,6 @@ HKG_contract_refresh_gui = {
 	add_to_variable = { HKG_contract_gui_dirty = 1 }
 }
 
-CHI_contract_make_offer = {
-	set_temp_variable = { CHI_make_offer_class = CHI_contract_pick_class }
-	set_temp_variable = { CHI_make_offer_license = CHI_contract_pick_license }
-	set_temp_variable = { CHI_make_offer_tier = CHI_contract_pick_tier }
-	HKG = {
-		if = {
-			limit = {
-				HKG_contract_can_solicit = yes
-				NOT = { has_country_flag = HKG_contract_offer_pending }
-			}
-			set_variable = { HKG_contract_offer_class = CHI_make_offer_class }
-			set_variable = { HKG_contract_offer_license = CHI_make_offer_license }
-			set_variable = { HKG_contract_offer_tier = CHI_make_offer_tier }
-			HKG_contract_set_offer_terms = yes
-			set_country_flag = HKG_contract_offer_pending
-			add_to_variable = { HKG_contract_gui_dirty = 1 }
-			country_event = { id = HKG_contract.1 days = 2 }
-		}
-	}
-}
-
 HKG_contract_generate_offer = {
 	set_variable = { HKG_contract_offer_license = 0 }
 	set_variable = { HKG_contract_offer_tier = 1 }
@@ -163,19 +162,19 @@ HKG_contract_generate_offer = {
 		chance = 30
 		set_variable = { HKG_contract_offer_license = 1 }
 	}
-	# With no escort hull tech, only a license contract is possible.
+	# With no escort hull tech of its own, Hong Kong can only take a licensed
+	# contract - Beijing supplies the design to build.
 	if = {
 		limit = { HKG_contract_can_build_any = no }
 		set_variable = { HKG_contract_offer_license = 1 }
 	}
 	if = {
 		limit = { check_variable = { HKG_contract_offer_license = 1 } }
+		# Beijing only licenses the escort classes it fields a design for (DD/FF/SS).
 		random_list = {
 			10 = { set_variable = { HKG_contract_offer_class = 1 } }
-			10 = { set_variable = { HKG_contract_offer_class = 2 } }
+			15 = { set_variable = { HKG_contract_offer_class = 2 } }
 			25 = { set_variable = { HKG_contract_offer_class = 3 } }
-			30 = { set_variable = { HKG_contract_offer_class = 4 } }
-			25 = { set_variable = { HKG_contract_offer_class = 5 } }
 		}
 	}
 	else = {
@@ -217,7 +216,7 @@ HKG_contract_set_offer_terms = {
 		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 10 }
 		set_variable = { HKG_contract_offer_pp = 25 }
-		set_variable = { HKG_contract_offer_productivity = 10 }
+		set_variable = { HKG_contract_offer_productivity = 2 }
 		set_variable = { HKG_contract_offer_idea_days = 365 }
 	}
 	else_if = {
@@ -226,7 +225,7 @@ HKG_contract_set_offer_terms = {
 		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 14 }
 		set_variable = { HKG_contract_offer_pp = 25 }
-		set_variable = { HKG_contract_offer_productivity = 12 }
+		set_variable = { HKG_contract_offer_productivity = 3 }
 		set_variable = { HKG_contract_offer_idea_days = 365 }
 	}
 	else_if = {
@@ -235,7 +234,7 @@ HKG_contract_set_offer_terms = {
 		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 22 }
 		set_variable = { HKG_contract_offer_pp = 40 }
-		set_variable = { HKG_contract_offer_productivity = 20 }
+		set_variable = { HKG_contract_offer_productivity = 5 }
 		set_variable = { HKG_contract_offer_idea_days = 540 }
 	}
 	else_if = {
@@ -244,7 +243,7 @@ HKG_contract_set_offer_terms = {
 		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 30 }
 		set_variable = { HKG_contract_offer_pp = 45 }
-		set_variable = { HKG_contract_offer_productivity = 24 }
+		set_variable = { HKG_contract_offer_productivity = 6 }
 		set_variable = { HKG_contract_offer_idea_days = 540 }
 	}
 	else = {
@@ -252,7 +251,7 @@ HKG_contract_set_offer_terms = {
 		set_variable = { HKG_contract_offer_deadline = 1460 }
 		set_variable = { HKG_contract_offer_funds = 50 }
 		set_variable = { HKG_contract_offer_pp = 80 }
-		set_variable = { HKG_contract_offer_productivity = 45 }
+		set_variable = { HKG_contract_offer_productivity = 10 }
 		set_variable = { HKG_contract_offer_idea_days = 730 }
 	}
 	if = {
@@ -297,6 +296,7 @@ HKG_contract_set_offer_terms = {
 		multiply_variable = { HKG_contract_offer_funds = 0.8 }
 		round_variable = HKG_contract_offer_funds
 	}
+	clamp_variable = { var = HKG_contract_offer_productivity min = 0 max = 10 }
 	set_variable = { HKG_contract_offer_advance = HKG_contract_offer_funds }
 	multiply_variable = { HKG_contract_offer_advance = 0.5 }
 	round_variable = HKG_contract_offer_advance
@@ -334,6 +334,7 @@ HKG_contract_accept_offer = {
 			limit = { NOT = { has_idea = HKG_contract_resource_access } }
 			add_ideas = HKG_contract_resource_access
 		}
+		HKG_start_mainland_resource_supply = yes
 		set_temp_variable = { treasury_change = HKG_contract_offer_advance }
 		modify_treasury_effect = yes
 		add_to_variable = { HKG_contract_funds = HKG_contract_offer_advance }
@@ -359,34 +360,32 @@ HKG_contract_accept_offer = {
 		}
 		if = {
 			limit = { check_variable = { HKG_contract_offer_license = 1 } }
-			HKG_contract_grant_license_tech = yes
+			HKG_contract_grant_production_license = yes
 		}
 	}
 	clr_country_flag = HKG_contract_offer_pending
 	HKG_contract_refresh_gui = yes
 }
 
-# Each set_technology also grants the predecessor tech so the naval tree has no
-# skipped-ahead gaps.
-HKG_contract_grant_license_tech = {
+# Grants Hong Kong a production license for Beijing's design of the contracted
+# class. Only DD/FF/SS are licensable - China fields no cruiser or carrier
+# design. Versions reference CHI's history-defined variants; re-verify the named
+# ships if "CHI - China.txt" variant order changes.
+HKG_contract_grant_production_license = {
 	if = {
-		limit = { check_variable = { HKG_contract_offer_class = 1 } }
-		set_technology = { tech_naval_systems_engineering = 1 destroyer_hull_1 = 1 popup = no }
-	}
-	else_if = {
-		limit = { check_variable = { HKG_contract_offer_class = 2 } }
-		set_technology = { tech_naval_systems_engineering = 1 frigate_hull_1 = 1 popup = no }
-	}
-	else_if = {
-		limit = { check_variable = { HKG_contract_offer_class = 3 } }
-		set_technology = { tech_submarine_engineering_1 = 1 attack_submarine_hull_1 = 1 popup = no }
-	}
-	else_if = {
-		limit = { check_variable = { HKG_contract_offer_class = 4 } }
-		set_technology = { tech_naval_systems_engineering = 1 cruiser_hull_1 = 1 popup = no }
-	}
-	else = {
-		set_technology = { aircraft_carrier_engineering = 1 carrier_hull_1 = 1 popup = no }
+		limit = { country_exists = CHI }
+		if = {
+			limit = { check_variable = { HKG_contract_offer_class = 1 } }
+			CHI = { create_production_license = { target = HKG equipment = { type = destroyer_hull_2 version = 0 } cost_factor = 0 } } # Type 052
+		}
+		else_if = {
+			limit = { check_variable = { HKG_contract_offer_class = 2 } }
+			CHI = { create_production_license = { target = HKG equipment = { type = frigate_hull_3 version = 0 } cost_factor = 0 } } # Type 053H3
+		}
+		else_if = {
+			limit = { check_variable = { HKG_contract_offer_class = 3 } }
+			CHI = { create_production_license = { target = HKG equipment = { type = attack_submarine_hull_3 version = 0 } cost_factor = 0 } } # Type 039
+		}
 	}
 }
 
@@ -463,6 +462,9 @@ HKG_contract_fulfill_slot = {
 	}
 	set_temp_variable = { pp_reward = HKG_contract_pp_array^done_slot }
 	add_political_power = pp_reward
+	set_temp_variable = { prod_gain = HKG_contract_prod_array^done_slot }
+	divide_temp_variable = { prod_gain = 100 }
+	add_to_variable = { HKG_contract_dockyard_output = prod_gain }
 	set_temp_variable = { idea_len = HKG_contract_idea_array^done_slot }
 	add_timed_idea = { idea = HKG_contract_dockyard_revenue days = idea_len }
 	add_to_variable = { HKG_contract_standing = HKG_contract_standing_gain }
@@ -496,6 +498,13 @@ HKG_contract_update_resource_access = {
 			has_idea = HKG_contract_resource_access
 		}
 		remove_ideas = HKG_contract_resource_access
+	}
+	if = {
+		limit = {
+			check_variable = { HKG_contract_count = 0 }
+			has_idea = HKG_mainland_resource_supply
+		}
+		HKG_stop_mainland_resource_supply = yes
 	}
 }
 

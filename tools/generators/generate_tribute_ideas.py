@@ -6,7 +6,6 @@ import shutil
 country_tag_list = []
 inputpath = ""
 
-modfolder = "Millennium_Dawn\\"
 mod = "Millennium_Dawn"
 newline = "\n\t\t\t"
 newline2 = "\n\t\t\t\t"
