@@ -493,7 +493,6 @@ check_breach_of_EU_value = {
 	if = { limit = { is_subject = yes }
 		add_to_variable = { THIS.breach_of_EU_value = 4 }
 	}
-	update_eu_dirty_variable = yes
 }
 
 #############################
@@ -1261,14 +1260,14 @@ update_EU_average_eco_lvl = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		# Map the country's economic-cycle idea to its score. Each idea is mutually exclusive so sequential ifs are safe.
+		# Map the country's mutually exclusive economic-cycle idea to its score.
 		set_temp_variable = { eco_score = 0 }
 		if = { limit = { has_idea = economic_boom } set_temp_variable = { eco_score = 6 } }
-		if = { limit = { has_idea = fast_growth } set_temp_variable = { eco_score = 5 } }
-		if = { limit = { has_idea = stable_growth } set_temp_variable = { eco_score = 4 } }
-		if = { limit = { has_idea = stagnation } set_temp_variable = { eco_score = 3 } }
-		if = { limit = { has_idea = recession } set_temp_variable = { eco_score = 2 } }
-		if = { limit = { has_idea = depression } set_temp_variable = { eco_score = 1 } }
+		else_if = { limit = { has_idea = fast_growth } set_temp_variable = { eco_score = 5 } }
+		else_if = { limit = { has_idea = stable_growth } set_temp_variable = { eco_score = 4 } }
+		else_if = { limit = { has_idea = stagnation } set_temp_variable = { eco_score = 3 } }
+		else_if = { limit = { has_idea = recession } set_temp_variable = { eco_score = 2 } }
+		else_if = { limit = { has_idea = depression } set_temp_variable = { eco_score = 1 } }
 		add_to_variable = { global.EU_average_eco_lvl = eco_score }
 	}
 	if = {
@@ -1462,14 +1461,14 @@ distribute_EU_growth_exp = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		# Map the country's economic-cycle idea to a tier number; each idea is mutually exclusive so sequential ifs are safe. tier = 0 means "no recognized idea" — skip, matching the original else_if chain.
+		# Map the country's mutually exclusive economic-cycle idea to a tier; tier = 0 means no recognized idea (skipped below).
 		set_temp_variable = { tier = 0 }
 		if = { limit = { has_idea = economic_boom } set_temp_variable = { tier = 1 } }
-		if = { limit = { has_idea = fast_growth } set_temp_variable = { tier = 2 } }
-		if = { limit = { has_idea = stable_growth } set_temp_variable = { tier = 3 } }
-		if = { limit = { has_idea = stagnation } set_temp_variable = { tier = 4 } }
-		if = { limit = { has_idea = recession } set_temp_variable = { tier = 5 } }
-		if = { limit = { has_idea = depression } set_temp_variable = { tier = 6 } }
+		else_if = { limit = { has_idea = fast_growth } set_temp_variable = { tier = 2 } }
+		else_if = { limit = { has_idea = stable_growth } set_temp_variable = { tier = 3 } }
+		else_if = { limit = { has_idea = stagnation } set_temp_variable = { tier = 4 } }
+		else_if = { limit = { has_idea = recession } set_temp_variable = { tier = 5 } }
+		else_if = { limit = { has_idea = depression } set_temp_variable = { tier = 6 } }
 		if = { limit = { check_variable = { tier > 0 } }
 			set_variable = { EU_growth_subsidies = tier }
 			multiply_variable = { EU_growth_subsidies = EU_pop_ratio }
