@@ -96,14 +96,12 @@ EU_update_AI_general_voting_modifiers = {
 			limit = { check_variable = { EU_AI_focus_modifier_yes_vote > 0 } }
 			add_to_variable = { global.EU_active_vote_yes = 1 }
 			add_to_array = { global.EU_active_vote_supporters = THIS }
-			set_temp_variable = { add_ratio_value = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_pop_ratio_yes = add_ratio_value }
+			add_to_variable = { global.EU_pop_ratio_yes = THIS.EU_pop_ratio }
 		}
 		else = {
 			add_to_variable = { global.EU_active_vote_no = 1 }
 			add_to_array = { global.EU_active_vote_rejecters = THIS }
-			set_temp_variable = { add_ratio_value = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_pop_ratio_no = add_ratio_value }
+			add_to_variable = { global.EU_pop_ratio_no = THIS.EU_pop_ratio }
 		}
 	}
 	if = { limit = { is_debug = yes }
@@ -229,6 +227,39 @@ EU_init_focus_vote_weights = {
 	set_variable = { global.EU_vote_w1^658 = -25 } set_variable = { global.EU_vote_w2^658 = 25 } set_variable = { global.EU_vote_w3^658 = 25 } set_variable = { global.EU_vote_w4^658 = 25 } set_variable = { global.EU_vote_w5^658 = 25 } set_variable = { global.EU_vote_w6^658 = -25 } set_variable = { global.EU_vote_hist^658 = 0 }
 	set_variable = { global.EU_vote_w1^659 = -25 } set_variable = { global.EU_vote_w2^659 = 25 } set_variable = { global.EU_vote_w3^659 = 25 } set_variable = { global.EU_vote_w4^659 = 25 } set_variable = { global.EU_vote_w5^659 = 25 } set_variable = { global.EU_vote_w6^659 = -25 } set_variable = { global.EU_vote_hist^659 = 0 }
 	set_variable = { global.EU_vote_w1^660 = -25 } set_variable = { global.EU_vote_w2^660 = 25 } set_variable = { global.EU_vote_w3^660 = 25 } set_variable = { global.EU_vote_w4^660 = 25 } set_variable = { global.EU_vote_w5^660 = 25 } set_variable = { global.EU_vote_w6^660 = -25 } set_variable = { global.EU_vote_hist^660 = 0 }
+}
+
+EU_apply_expansion_focus_weights = {
+	# rule_european_union_expansion_focus = yes: bias EU AI toward enlargement agendas (605-611, 650-660).
+	clear_temp_array = EU_expansion_codes
+	add_to_temp_array = { EU_expansion_codes = 605 }
+	add_to_temp_array = { EU_expansion_codes = 606 }
+	add_to_temp_array = { EU_expansion_codes = 607 }
+	add_to_temp_array = { EU_expansion_codes = 608 }
+	add_to_temp_array = { EU_expansion_codes = 609 }
+	add_to_temp_array = { EU_expansion_codes = 610 }
+	add_to_temp_array = { EU_expansion_codes = 611 }
+	add_to_temp_array = { EU_expansion_codes = 650 }
+	add_to_temp_array = { EU_expansion_codes = 651 }
+	add_to_temp_array = { EU_expansion_codes = 652 }
+	add_to_temp_array = { EU_expansion_codes = 653 }
+	add_to_temp_array = { EU_expansion_codes = 654 }
+	add_to_temp_array = { EU_expansion_codes = 655 }
+	add_to_temp_array = { EU_expansion_codes = 656 }
+	add_to_temp_array = { EU_expansion_codes = 657 }
+	add_to_temp_array = { EU_expansion_codes = 658 }
+	add_to_temp_array = { EU_expansion_codes = 659 }
+	add_to_temp_array = { EU_expansion_codes = 660 }
+	for_each_loop = {
+		array = EU_expansion_codes
+		value = code
+		add_to_variable = { global.EU_vote_w1^code = 25 }
+		add_to_variable = { global.EU_vote_w2^code = 25 }
+		add_to_variable = { global.EU_vote_w3^code = 25 }
+		add_to_variable = { global.EU_vote_w4^code = 25 }
+		add_to_variable = { global.EU_vote_w5^code = 25 }
+		add_to_variable = { global.EU_vote_w6^code = 25 }
+	}
 }
 
 EU_update_AI_focus_voting_modifier = {
@@ -383,6 +414,7 @@ focus_EU111_QMV_result = {
 				array = global.EU_member
 				EUU = { inherit_technology = THIS }
 				set_country_flag = USoE_member
+				set_country_flag = USoE
 				every_unit_leader = {
 					set_unit_leader_flag = USoE_unit_leader
 					set_nationality = ROOT
@@ -425,6 +457,12 @@ focus_EU111_QMV_result = {
 			set_country_flag = USoE
 			set_variable = { global.united_states_of_europe = THIS.id }
 			clr_country_flag = GER_Final_settlement
+			if = {
+				limit = { original_tag = GER }
+				set_country_flag = GER_bavaria_gone
+				clr_country_flag = GER_war_on_terror_started
+				remove_ideas = GER_idea_carbon_neutral
+			}
 			add_ideas = multi_ethnic_state_idea
 		}
 		custom_effect_tooltip = form_USoE_tt
@@ -512,6 +550,7 @@ focus_EU202_QMV_result = {
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 
 		add_stability = 0.05
+		remove_ideas = european_debt_crisis
 	}
 }
 
@@ -537,8 +576,12 @@ focus_EU203_QMV_result = {
 				check_variable = { debt_ratio > 0.75 }
 			}
 
-			set_temp_variable = { current_debt = debt }
-			multiply_temp_variable = { current_debt = 0.075 }
+			set_temp_variable = {
+				current_debt = {
+					value = debt
+					multiply = 0.075
+				}
+			}
 			add_to_temp_variable = { eurobonds_debt_total = current_debt }
 
 			subtract_from_variable = { debt = current_debt }
@@ -751,16 +794,6 @@ focus_EU405_QMV_result = {
 	TUR = {
 		set_temp_variable = { treasury_change = 3 }
 		modify_treasury_effect = yes
-	}
-	for_each_scope_loop = {
-		array = global.EU_member
-		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		ROOT = {
-			set_temp_variable = { temp1 = THIS.EU_pop_ratio }
-			multiply_temp_variable = { temp1 = 3.0 }
-			subtract_from_temp_variable = { temp1 = THIS.treasury }
-			ingame_update_setup = yes
-		}
 	}
 }
 

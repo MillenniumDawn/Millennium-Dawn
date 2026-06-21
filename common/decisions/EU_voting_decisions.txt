@@ -653,7 +653,7 @@ EU_voting_category = {
 			}
 			else = {
 				if = {
-					limit = { any_country = { has_idea = ECB_president } }
+					limit = { any_of_scopes = { array = global.EU_member has_idea = ECB_president } }
 					set_country_flag = EU_active_EP_agenda_holder
 					activate_mission = EU_parliament_focus_EUXXX_approve_timer
 				}
@@ -746,7 +746,7 @@ EU_voting_category = {
 			}
 			else = {
 				if = {
-					limit = { any_country = { has_idea = ECB_president } }
+					limit = { any_of_scopes = { array = global.EU_member has_idea = ECB_president } }
 					set_country_flag = EU_active_EP_agenda_holder
 					activate_mission = EU_parliament_focus_EUXXX_approve_timer
 				}
@@ -1824,40 +1824,44 @@ EU_defense_category = {
 				add_command_power = 10
 			}
 			### diplo
-			every_country = {
-				limit = { original_tag = ROOT.var_EU_military_exercise_host_tag }
-				ROOT = {
-					add_opinion_modifier = {
-						target = PREV
-						modifier = hosted_military_exercise
-					}
-					reverse_add_opinion_modifier = {
-						target = PREV
-						modifier = executed_military_exercise
+			if = {
+				limit = { check_variable = { ROOT.var_EU_military_exercise_host_tag > 0 } }
+				var:ROOT.var_EU_military_exercise_host_tag = {
+					ROOT = {
+						add_opinion_modifier = {
+							target = PREV
+							modifier = hosted_military_exercise
+						}
+						reverse_add_opinion_modifier = {
+							target = PREV
+							modifier = executed_military_exercise
+						}
 					}
 				}
 			}
-			every_country = {
-				limit = { original_tag = ROOT.var_EU_military_exercise_target }
-				ROOT = {
-					reverse_add_opinion_modifier = {
-						target = PREV
-						modifier = military_exercise_on_border
-					}
-				}
-				random_owned_state = {
-					limit = {
-						any_neighbor_state = {
-							state = ROOT.var_EU_military_exercise_host_state
+			if = {
+				limit = { check_variable = { ROOT.var_EU_military_exercise_target > 0 } }
+				var:ROOT.var_EU_military_exercise_target = {
+					ROOT = {
+						reverse_add_opinion_modifier = {
+							target = PREV
+							modifier = military_exercise_on_border
 						}
 					}
-					set_variable = {
-						var = PREV.var_counter_military_exercise_state
-						value = THIS
+					random_owned_state = {
+						limit = {
+							any_neighbor_state = {
+								state = ROOT.var_EU_military_exercise_host_state
+							}
+						}
+						set_variable = {
+							var = PREV.var_counter_military_exercise_state
+							value = THIS
+						}
 					}
+					news_event = EU_news.50
+					activate_mission = counter_military_exercise_mission
 				}
-				news_event = EU_news.50
-				activate_mission = counter_military_exercise_mission
 			}
 		}
 		remove_effect = {
