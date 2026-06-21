@@ -31,28 +31,6 @@ scripted_gui = {
 		context_type = player_context
 
 		dirty = global.update_monie_ui
-
-		triggers = {
-			topbar_hide_money_bg_visible = {
-				ROOT = { NOT = { has_country_flag = hide_money } }
-			}
-			topbar_show_money_bg_visible = {
-				ROOT = { has_country_flag = hide_money }
-			}
-		}
-
-		effects = {
-			# Hides Topbar Money Container
-			topbar_hide_money_bg_click = {
-				ROOT = { set_country_flag = hide_money }
-				update_money_dirty_variable = yes
-			}
-			# Shows Topbar Money Container
-			topbar_show_money_bg_click = {
-				ROOT = { clr_country_flag = hide_money }
-				update_money_dirty_variable = yes
-			}
-		}
 	}
 
 	topbar_economy_stats_container = {
@@ -486,26 +464,72 @@ scripted_gui = {
 		context_type = player_context
 		parent_window_token = trade_tab
 
+		triggers = {
+			trade_tab_click_enabled = {
+				if = {
+					limit = { check_variable = { MD_tradeview_tab_selected = 0 } }
+					set_temp_variable = { trade_tab_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { trade_tab_frame = 2 }
+				}
+
+				always = yes
+			}
+
+			economy_tab_click_enabled = {
+				if = {
+					limit = { check_variable = { MD_tradeview_tab_selected = 1 } }
+					set_temp_variable = { economy_tab_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { economy_tab_frame = 2 }
+				}
+
+				always = yes
+			}
+
+			investments_tab_click_enabled = {
+				if = {
+					limit = { check_variable = { MD_tradeview_tab_selected = 2 } }
+					set_temp_variable = { investments_tab_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { investments_tab_frame = 2 }
+				}
+
+				always = yes
+			}
+		}
+
 		effects = {
 			trade_tab_click = {
-				set_variable = { MD_tradeview_tab_trade_state = 1 }
-				set_variable = { MD_tradeview_tab_economy_state = 2 }
+				set_variable = { MD_tradeview_tab_selected = 0 }
+				update_money_dirty_variable = yes
 			}
 
 			economy_tab_click = {
-				set_variable = { MD_tradeview_tab_trade_state = 2 }
-				set_variable = { MD_tradeview_tab_economy_state = 1 }
+				set_variable = { MD_tradeview_tab_selected = 1 }
+				update_money_dirty_variable = yes
+			}
+
+			investments_tab_click = {
+				set_variable = { MD_tradeview_tab_selected = 2 }
 				update_money_dirty_variable = yes
 			}
 		}
 
 		properties = {
 			trade_tab = {
-				frame = MD_tradeview_tab_trade_state
+				frame = trade_tab_frame
 			}
 
 			economy_tab = {
-				frame = MD_tradeview_tab_economy_state
+				frame = economy_tab_frame
+			}
+
+			investments_tab = {
+				frame = investments_tab_frame
 			}
 		}
 	}
@@ -519,7 +543,7 @@ scripted_gui = {
 
 		visible = {
 			is_ai = no
-			check_variable = { MD_tradeview_tab_economy_state = 1 }
+			check_variable = { MD_tradeview_tab_selected = 1 }
 		}
 
 		triggers = {
@@ -648,7 +672,6 @@ scripted_gui = {
 			# decrease_leased_agriculture_districts_click_enabled = {
 			# 	check_variable = { leased_agriculture > 0 }
 			# }
-
 
 			# - Industrial Projects
 			industrial_projects_glow_visible = {

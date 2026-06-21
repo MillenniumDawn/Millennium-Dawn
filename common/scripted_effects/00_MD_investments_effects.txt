@@ -1,3 +1,118 @@
 create_investment_project = {
-    
+    set_temp_variable = { added = 0 }
+
+    for_each_loop = {
+        array = investments_projects_state
+        index = i
+        value = v
+
+        if = {
+            limit = {
+                check_variable = { v = state }
+                check_variable = { investments_projects_building^i = building_index }
+            }
+            
+            add_to_variable = { investments_projects_building_amount^i = amount }
+
+            set_temp_variable = { added = 1 }
+        }
+    }
+
+    if = {
+        limit = {
+            check_variable = { added = 0 }
+        }
+
+        add_to_array = { investments_projects_state = state }
+
+        add_to_array = { investments_projects_building = building_index }
+        add_to_array = { investments_projects_building_amount = amount }
+        add_to_array = { investments_projects_building_time = 250 }
+    }
+}
+
+remove_investment_project = {
+    for_each_loop = {
+        array = investments_projects_state
+        index = i
+        value = v
+        break = break
+
+        if = {
+            limit = {
+                check_variable = { v = state }
+                check_variable = { investments_projects_building^i = building_index }
+            }
+            
+            subtract_from_variable = { investments_projects_building_amount^i = amount }
+            set_variable = { investments_projects_building_time^i = 250 }
+
+            if = {
+                limit = {
+                    OR = {
+                        check_variable = { amount = -1 }
+                        check_variable = { investments_projects_building_amount^i < 1 }
+                    }
+                }
+
+                remove_from_array = { 
+                    array = investments_projects_building
+                    index = i 
+                }
+                remove_from_array = { 
+                    array = investments_projects_building_amount
+                    index = i 
+                }
+                remove_from_array = { 
+                    array = investments_projects_building_time
+                    index = i 
+                }
+
+                remove_from_array = { 
+                    array = investments_projects_state
+                    index = i 
+                }
+            }
+            
+            set_temp_variable = { break = 1 }
+        }
+    }
+}
+
+add_investment = {
+    set_temp_variable = { added = 0 }
+
+    for_each_loop = {
+        array = foreign_investments_countries
+        index = i
+        value = v
+
+        if = {
+            limit = {
+                check_variable = { v = country }
+            }
+            
+            add_to_variable = { foreign_investments^i = amount }
+
+            set_temp_variable = { added = 1 }
+        }
+    }
+
+    if = {
+        limit = {
+            check_variable = { added = 0 }
+        }
+
+        add_to_array = { foreign_investments_countries = country }
+        add_to_array = { foreign_investments = amount }
+    }
+}
+
+update_dirty_investments = {
+    if = { limit = { check_variable = { THIS.investments_dirty < 100000 } }
+        add_to_variable = { THIS.investments_dirty = 1 }
+    }
+    else = {
+        set_variable = { THIS.investments_dirty = 0 }
+    }
 }

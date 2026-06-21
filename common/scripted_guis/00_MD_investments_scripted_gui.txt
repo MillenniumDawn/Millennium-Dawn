@@ -1,8 +1,211 @@
 scripted_gui = {
-	MD_countrypoliticsview = {
+    countryinvestmentsview = {
+		window_name = "MD_countryinvestmentsview"
 		context_type = player_context
-		window_name = "MD_investments_debug"
+		parent_window_token = trade_tab
 
-		visible = { is_ai = no }
+        dirty = investments_dirty
+
+        visible = {
+			is_ai = no
+			check_variable = { MD_tradeview_tab_selected = 2 }
+		}
+
+        triggers = {
+            select_civ_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 1 }
+			}
+
+			select_mil_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 2 }
+			}
+
+			select_dockyard_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 4 }
+			}
+
+			select_infrastructure_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 3 }
+			}
+
+			select_office_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 35 }
+			}
+
+			select_antyair_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 9 }
+			}
+
+			select_radar_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 11 }
+			}
+
+			select_airbase_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 5 }
+			}
+
+			select_strategic_resource_reserve_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 14 }
+			}
+
+			select_internet_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 32 }
+			}
+
+			select_renewable_power_plant_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 10 }
+			}
+			
+			select_fossil_fuel_power_plant_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 34 }
+			}
+
+			select_nuclear_power_plant_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 27 }
+			}
+
+			select_agriculture_overlay_glow_visible = {
+				check_variable = { MD_investments_selected_building = 33 }
+			}
+
+            # investment grid
+            increase_amount_click_enabled = {
+                set_temp_variable = { proggres_frame = 250 }
+                subtract_from_temp_variable = { proggres_frame = investments_projects_building_time^i }
+                divide_temp_variable = { proggres_frame = 250 }
+                multiply_temp_variable = { proggres_frame = 100 }
+                round_variable = proggres_frame
+
+                always = yes
+            }
+        }
+
+        effects = {
+            select_civ_button_click = {
+                set_variable = { MD_investments_selected_building = 1 }
+            }
+            select_mil_button_click = {
+                set_variable = { MD_investments_selected_building = 2 }
+            }
+            select_dockyard_button_click = {
+                set_variable = { MD_investments_selected_building = 4 }
+            }
+            select_infrastructure_button_click = {
+                set_variable = { MD_investments_selected_building = 3 }
+            }
+            select_office_button_click = {
+                set_variable = { MD_investments_selected_building = 35 }
+            }
+            select_antyair_button_click = {
+                set_variable = { MD_investments_selected_building = 9 }
+            }
+            select_radar_button_click = {
+                set_variable = { MD_investments_selected_building = 11 }
+            }
+            select_airbase_button_click = {
+                set_variable = { MD_investments_selected_building = 5 }
+            }
+            select_strategic_resource_reserve_button_click = {
+                set_variable = { MD_investments_selected_building = 14 }
+            }
+            select_internet_button_click = {
+                set_variable = { MD_investments_selected_building = 32 }
+            }
+            select_renewable_power_plant_button_click = {
+                set_variable = { MD_investments_selected_building = 10 }
+            }
+            select_fossil_fuel_power_plant_button_click = {
+                set_variable = { MD_investments_selected_building = 34 }
+            }
+            select_nuclear_power_plant_button_click = {
+                set_variable = { MD_investments_selected_building = 27 }
+            }
+            select_agriculture_button_click = {
+                set_variable = { MD_investments_selected_building = 33 }
+            }
+
+            # investment grid
+            remove_investment_click = {
+                set_temp_variable = { building_index = investments_projects_building^i }
+                set_temp_variable = { amount = -1 }
+                set_temp_variable = { state = investments_projects_state^i }
+                remove_investment_project = yes
+            }
+        }
+
+        dynamic_lists = {
+            investments_list_grid = {
+                array = investments_projects_state
+                entry_container = "investments_list_item"
+            }
+            
+            foreign_investments_list_grid = {
+                array = foreign_investments_countries
+                entry_container = "foreign_investments_list_item"
+            }
+        }
+
+        properties = {
+			investment_building_icon = {
+				frame = investments_projects_building^i
+			}
+
+            investment_progress {
+                frame = proggres_frame
+            }
+        }
+    }
+    investmentsmapicons = {
+		context_type = state_mapicon
+		window_name = "MD_investments_mapicons"
+
+		visible = { 
+            ROOT = {
+                is_ai = no
+                check_variable = { MD_investments_selected_building > 0 }
+                check_variable = { MD_tradeview_tab_selected = 2 }
+                
+                NOT = {
+                    OR = {
+                        owns_state = var:THIS
+                        controls_state = var:THIS
+                    }
+                }
+            }
+        }
+
+        triggers = {
+            build_button_click_enabled = {
+                
+            }
+
+            remove_button_visible = {
+
+            }
+
+            remove_button_click_enabled = {
+
+            }
+        }
+
+        effects = {
+            build_button_click = {
+                set_temp_variable = { state = THIS }
+                ROOT = {
+                    set_temp_variable = { building_index = MD_investments_selected_building }
+                    set_temp_variable = { amount = 1 }
+                    create_investment_project = yes
+                }
+            }
+
+            remove_button_click = {
+                set_temp_variable = { state = THIS }
+                ROOT = {
+                    set_temp_variable = { building_index = MD_investments_selected_building }
+                    set_temp_variable = { amount = 1 }
+                    remove_investment_project = yes
+                }
+            }
+        }
     }
 }
