@@ -117,6 +117,7 @@ v2.0.0
   - Removed propaganda_campaign_decision and its mutual exclusion blocks from all three combat influencer decisions; cleaned up its money system cost calculation, scripted localisation entry, and loc keys
   - Rebalanced combat_foreign_influence: reduced percent_change from 3.5 to 2.5 and softened AI modifier factors from 2 to 1.5
   - Overhauled AI weights for combat influencer decisions: corrected variable scope errors, switched to step-based domestic influence scaling, added same-bloc ally de-influence penalty for NATO/EU members, added financial guard, and fixed second influencer threshold
+  - UAR / Federation of Arab Republics no longer auto-forms under AI in historical-focus games, stopping the cascading faction wars that pulled in the USA-Iraq conflict (Issue #1938)
 
  Balance:
   - Increased naval_strike_attack on all anti-ship drone missile modules
@@ -267,6 +268,9 @@ v2.0.0
   - [HOL] Reworked the Dutch doctrine system to be adaptive, with penalties and rewards
 
  Bugfix:
+  - [KAZ] Fixed the "Trade with United Kingdom" focus firing a UK-domestic event ("Connections Between The Two?") for Kazakhstan; the misplaced event call was removed and the focus keeps its investment and UK-influence rewards (Issue #1752)
+  - Fixed automated intelligence-agency upgrades (ON / Queue Only) stalling permanently after a manually started upgrade completes, which also left the player unable to start any further manual upgrades; a weekly safety pulse now resumes the queue once the block clears (Issue #1945)
+  - [HOL] Fixed "The Belgium Problem" focus appearing to do nothing: the proposal event to France fired with no delay so AI France auto-resolved it instantly and invisibly. The event now fires with a one-day delay, the focus shows accept/reject outcome tooltips, and France accepting now sends the Dutch player a confirmation event (Issue #1979)
   - [HOL] Fixed the agriculture agreement with Sri Lanka decision never sending its proposal; the event was in a dead remove_effect with no timer, now fires on completion (Issue #1651)
   - [AFG] Fixed Pashtunistan border-war reports naming Afghanistan as its own enemy; the advance decisions now save the target state's owner as the defender instead of FROM (which resolved to Afghanistan), and fixed the Taliban/Afghan border-raid decisions soft-locking the whole subsystem after one raid because the AFG_doing_border_raid mutex was never cleared. Also removed a leftover debug decision and added the missing border-raid decision names (Issue #1629)
   - [BOT] Fixed two Botswana flags being checked but never set: the death of Gomolemo Motswaledi now sets BOT_Motswaledi_dead so the BMD leader rotation advances to Kedikilwe, and the UDC formation/split events now set and clear BCP_joined_UDC so the BCP popularity boost resolves correctly (Issue #1632)
@@ -444,6 +448,8 @@ v2.0.0
   - [PER] Fixed Kermanshah's Oxygen mission checking wrong province (12773 instead of city province 16155) (Issue #234)
   - Fixed the Zusana design not being correctly parsed on game start
   - Fixed a spamming error regarding the MNF when they're not quite existing yet
+  - Fixed EU Budget and MFF draft triggers breaking Parliament voting
+  - Fixed USoE and EuF not forming correctly
   - Fixed the Swedish Division Name List "Amfiberegemente" being available to all countries
   - Fixed the Swedish event "A New Mandate, A Military Path" incorrectly spawning a unit causing an error in the error log
   - Fixed the edge case with Chinese and Russian influence when trying to join the European Union
@@ -696,7 +702,12 @@ v2.0.0
   - [BUL] Added Dobruja (state 284) to The Fourth Bulgarian Kingdom integration decisions
   - The Generic focus "Military Education Reform" now gives a +1 skill level to all generals while also increasing your education law for unit leaders
   - The Generic tree will now actually give doctrinal benefits and are now updated to the newest system for doctrines
+  - Added a gamerule for the EU to prioritise enlargements
+  - European Union default cooldown changed to 120 days
   - The Vatican can join the European Union as a nation with no elections (only circumstance for this)
+  - Available EU laws now appear in a consequential manner instead of all being visible at all times
+  - Several new Enlargements have been added to the Extended Enlargement Framework laws regarding Russian and Ukrainian Breakaway states
+  - The following tags can now join the EU (via the aforementioned Enlargements): ABK, ADY, BLR, BSH, CHE, CHU, CRM, DAG, DON, DPR, DRP, HPR, ING, KAE, KBK, KCC, KLM, KOM, KUB, LPR, LRP, MEL, MOV, NEE, OPR, PRP, SOO, TAT, UDM, VRP, VTB
   - Added the ability to to "Energy Load Share" with a select nation
   - Note: If you are receiving energy load sharing you will only be able to have one nation sharing to you for now (is subject to change prior to full release)
   - [NKO] New Content for North Korea and Balances Related with the New DLC
@@ -858,6 +869,7 @@ v2.0.0
   - [HOL] Reworked most ideas into a dynamic modifier
   - [HOL] Added hiding of obsolete paths in the Dutch focus tree
   - Standardized corruption idea names to a corruption_level_01 through corruption_level_10
+  - [ENG] Fixed Royal Navy ship naming lists: removed duplicate HMS prefixes on carrier and frigate names, corrected the Royal Fleet Auxiliary prefix to RFA, fixed the Astute-class pennant numbers (Achilles is now S125), and replaced ahistorical fictional carrier and helicopter-carrier names with historical ones (Issue #1908)
 
  Factions:
   - Added a new faction goal "Establish an Airborne Corps"
@@ -940,6 +952,7 @@ v2.0.0
   - Added 90 completely missing descriptions for focuses that had no _desc entries
   - Fixed the tooltips for the Bulgarian Energy Companies focuses showing that they are giving a debuff when they're giving a bonus
   - Introduced more flavorful text for the satellite access diplomatic actions
+  - [FRA/HOL/GER] Added the historical year to MIO company merger/takeover tooltips (Arquus, KNDS, Airbus Helicopters, Naval Group, GKN/Fokker, Rheinmetall/Stork, Helsing), and corrected the Nexter merger partner to KMW (Issue #1954)
   - Removed the weird gap in additional income or additional expenses that came from the market contracts
   - Fixed a number of missing additional income and additional expenses that were missing from the tooltips so you can actually see those bonuses
   - Rewrote all Conditional Peace Deal tooltips to match the MD diplomatic-action style with detailed mechanical descriptions for each deal term
@@ -1096,3 +1109,4 @@ v2.0.0
   - Reduced precision in several menus so you do not see 5 decimal points in areas where it does not matter
   - Fixed the user interface for the politics screen when you are a subject and the faction screen overlaps the menu
   - Fixed the "View Factions" button missing when you were in a faction
+  - Fixed MIO Unlock Catalogue requirements being shifted by one entry, leaving Central Heavy Atomics & Power with no criteria and unlockable only via console (Issue #1955)

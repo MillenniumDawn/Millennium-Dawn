@@ -9,15 +9,15 @@ mod.
 
 ## Console basics
 
-| Command | Effect |
-| --- | --- |
-| `` ` `` / `~` / `²` | Open the console (key depends on keyboard layout) |
-| `debug` | Toggle the master debug overlay |
-| `tdebug` | Toggle on-map tooltips (province IDs, state IDs, variable readouts) |
-| `tag TAG` | Switch the country you control (e.g. `tag GER`) |
-| `observe` / `tag ---` | Drop into observer mode |
-| `event <id>` | Fire an event on the player (e.g. `event EUevent.3`) |
-| `effect <script>` | Run arbitrary effect script in the **player country** scope |
+| Command               | Effect                                                              |
+| --------------------- | ------------------------------------------------------------------- |
+| `` ` `` / `~` / `²`   | Open the console (key depends on keyboard layout)                   |
+| `debug`               | Toggle the master debug overlay                                     |
+| `tdebug`              | Toggle on-map tooltips (province IDs, state IDs, variable readouts) |
+| `tag TAG`             | Switch the country you control (e.g. `tag GER`)                     |
+| `observe` / `tag ---` | Drop into observer mode                                             |
+| `event <id>`          | Fire an event on the player (e.g. `event EUevent.3`)                |
+| `effect <script>`     | Run arbitrary effect script in the **player country** scope         |
 
 ### Running MD scripted effects
 
@@ -38,17 +38,17 @@ effect = { add_ideas = EU_member set_country_flag = EU_candidate }
 
 ## General cheats
 
-| Command | Effect |
-| --- | --- |
-| `research all` | Unlock every technology for the player |
-| `research_on_icon_click` | Click a tech to grant it instantly |
-| `ic` / `instantconstruction` | Buildings finish instantly |
-| `fow` | Toggle fog of war |
-| `pp <n>` / `add_political_power <n>` | Add political power |
-| `st <n>` / `add_stability <n>` | Add stability (decimal, e.g. `st 0.2`) |
-| `allowtraits` | Remove trait assignment restrictions |
-| `manpower <n>` | Add manpower |
-| `xp <n>` | Add army/navy/air XP |
+| Command                              | Effect                                 |
+| ------------------------------------ | -------------------------------------- |
+| `research all`                       | Unlock every technology for the player |
+| `research_on_icon_click`             | Click a tech to grant it instantly     |
+| `ic` / `instantconstruction`         | Buildings finish instantly             |
+| `fow`                                | Toggle fog of war                      |
+| `pp <n>` / `add_political_power <n>` | Add political power                    |
+| `st <n>` / `add_stability <n>`       | Add stability (decimal, e.g. `st 0.2`) |
+| `allowtraits`                        | Remove trait assignment restrictions   |
+| `manpower <n>`                       | Add manpower                           |
+| `xp <n>`                             | Add army/navy/air XP                   |
 
 ## Inspecting variables, flags, and arrays
 
@@ -96,7 +96,7 @@ effect remove_from_array = { global.EU_passed_votes = 203 }
 
 The QMV resolvers are `focus_EUxxx_QMV_result`. They branch on
 `EU_voting_decision_result_trigger`; the YES branch calls
-`cleanup_european_union_voting_yes` (which records the pass in `EU_passed_votes`).
+`cleanup_european_union_voting` with `vote_passed = 1` (which records the pass in `EU_passed_votes`).
 
 ```
 # Set the active vote, then resolve it as passed
@@ -145,15 +145,15 @@ effect election_EU_Parliament = yes   # recompute MEP totals / majority
 
 ## Key EU state handles
 
-| Handle | Kind | Meaning |
-| --- | --- | --- |
-| `global.EU_member` | country array | Current EU member states |
-| `global.EU_potential` | country array | Candidate / potential members |
-| `global.EU_passed_votes` | int array | Agenda IDs that have passed (source of truth) |
-| `global.EU_council_votes` | int array | Agenda IDs currently in council voting |
-| `global.current_active_agenda_disp` | int | Agenda being voted in the EP (0 = none) |
-| `global.current_active_vote_disp` | int | Agenda in the council vote (0 = none) |
-| `EU_member` | idea | Membership; `on_add`/`on_remove` maintain `global.EU_member` |
-| `USoE` | country flag | Set on the formed United States of Europe |
-| `USoE_member` | country flag | Set on each nation folded into the USoE |
-| `EUU` | tag | Tech-bank country used to pool member technologies |
+| Handle                              | Kind          | Meaning                                                      |
+| ----------------------------------- | ------------- | ------------------------------------------------------------ |
+| `global.EU_member`                  | country array | Current EU member states                                     |
+| `global.EU_potential`               | country array | Candidate / potential members                                |
+| `global.EU_passed_votes`            | int array     | Agenda IDs that have passed (source of truth)                |
+| `global.EU_council_votes`           | int array     | Agenda IDs currently in council voting                       |
+| `global.current_active_agenda_disp` | int           | Agenda being voted in the EP (0 = none)                      |
+| `global.current_active_vote_disp`   | int           | Agenda in the council vote (0 = none)                        |
+| `EU_member`                         | idea          | Membership; `on_add`/`on_remove` maintain `global.EU_member` |
+| `USoE`                              | country flag  | Set on the formed United States of Europe                    |
+| `USoE_member`                       | country flag  | Set on each nation folded into the USoE                      |
+| `EUU`                               | tag           | Tech-bank country used to pool member technologies           |
