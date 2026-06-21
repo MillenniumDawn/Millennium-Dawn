@@ -91,6 +91,7 @@ sort_influence = {
 	clear_temp_array = influence_array_temp
 
 	set_temp_variable = { new_influence_scalar = 100 }
+	clamp_temp_variable = { var = influence_total min = 0.01 }
 	divide_temp_variable = { new_influence_scalar = influence_total }
 	set_temp_variable = { foreign_sum = 0 }
 	for_each_loop = {
@@ -109,40 +110,34 @@ sort_influence = {
 # Effect: calculate_influence_percentage
 # Purpose: This is the main effect that is used to calculate the influence drift percentage
 calculate_influence_percentage = {
-	set_temp_variable = { influence_democratic = 0 }
-	set_temp_variable = { influence_neutrality = 0 }
-	set_temp_variable = { influence_communism = 0 }
-	set_temp_variable = { influence_nationalist = 0 }
-	set_temp_variable = { influence_fascism = 0 }
+	set_variable = { democratic_drift_influence_var = 0 }
+	set_variable = { neutrality_drift_influence_var = 0 }
+	set_variable = { communism_drift_influence_var = 0 }
+	set_variable = { nationalist_drift_influence_var = 0 }
+	set_variable = { fascism_drift_influence_var = 0 }
 
 	for_loop_effect = {
 		end = influence_array_val^num
 		if = { limit = { var:influence_array^v = { has_government = democratic } }
-			add_to_temp_variable = { influence_democratic = influence_array_val^v }
+			add_to_variable = { democratic_drift_influence_var = influence_array_val^v }
 		}
 		else_if = { limit = { var:influence_array^v = { has_government = neutrality } }
-			add_to_temp_variable = { influence_neutrality = influence_array_val^v }
+			add_to_variable = { neutrality_drift_influence_var = influence_array_val^v }
 		}
 		else_if = { limit = { var:influence_array^v = { has_government = communism } }
-			add_to_temp_variable = { influence_communism = influence_array_val^v }
+			add_to_variable = { communism_drift_influence_var = influence_array_val^v }
 		}
 		else_if = { limit = { var:influence_array^v = { has_government = nationalist } }
-			add_to_temp_variable = { influence_nationalist = influence_array_val^v }
+			add_to_variable = { nationalist_drift_influence_var = influence_array_val^v }
 		}
 		else_if = { limit = { var:influence_array^v = { has_government = fascism } }
-			add_to_temp_variable = { influence_fascism = influence_array_val^v }
+			add_to_variable = { fascism_drift_influence_var = influence_array_val^v }
 		}
 	}
 
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = influence_drift_modifier } } }
 		add_dynamic_modifier = { modifier = influence_drift_modifier }
 	}
-
-	set_variable = { nationalist_drift_influence_var = influence_nationalist }
-	set_variable = { fascism_drift_influence_var = influence_fascism }
-	set_variable = { neutrality_drift_influence_var = influence_neutrality }
-	set_variable = { communism_drift_influence_var = influence_communism }
-	set_variable = { democratic_drift_influence_var = influence_democratic }
 
 	multiply_variable = { nationalist_drift_influence_var = 0.001 }
 	multiply_variable = { fascism_drift_influence_var = 0.001 }
@@ -336,30 +331,35 @@ influence_coup_action = {
 }
 
 # Effect: delete_influencer_check
-# Purpose: Merges duplicate influencer entries before the sort pass.
-# Below-threshold and annexed-nation pruning are handled inside sort_influence.
-# Note: remove_from_array inside a forward-iterating loop can skip consecutive duplicates
-# (index shift); any missed entries are pruned on the next recalculate_influence call.
+# Purpose: Merges duplicate influencer entries in one O(N) sweep before sort_influence rebuilds.
+# Per-tag markers live on the target scope (slot = first index + 1, so 0 = unseen); the second
+# loop clears them so a stale marker can't read as a duplicate on the next recalculate.
 delete_influencer_check = {
 	for_each_loop = {
 		array = influence_array
+		value = v
 		index = i
-		if = { limit = { NOT = { check_variable = { influence_array^i = 0 } } }
+		if = { limit = { NOT = { check_variable = { v = 0 } } }
 			if = {
-				limit = {
-					any_of = {
-						array = influence_array
-						value = v
-						index = c
-						check_variable = { influence_array^c = influence_array^i }
-						NOT = { check_variable = { c = i } }
-					}
-				}
-				log = "[GetDateText]: [This.GetName]: Double Influencer Present. Debug Code: 1001. Influencer: [?var:influence_array^i.GetName] Index: [?i], Duplicate Influencer: [?var:influence_array^i.GetName] Index: [?c]"
-				add_to_variable = { influence_array_val^i = influence_array_val^c }
-				remove_from_array = { array = influence_array index = c }
-				remove_from_array = { array = influence_array_val index = c }
+				limit = { check_variable = { influence_dedup_slot@var:v > 0 } }
+				set_temp_variable = { keeper_index = influence_dedup_slot@var:v }
+				subtract_from_temp_variable = { keeper_index = 1 }
+				log = "[GetDateText]: [This.GetName]: Double Influencer Present. Debug Code: 1001. Influencer: [?var:v.GetName] Keeper Index: [?keeper_index], Duplicate Index: [?i]"
+				add_to_variable = { influence_array_val^keeper_index = influence_array_val^i }
+				set_variable = { influence_array^i = 0 }
+				set_variable = { influence_array_val^i = 0 }
 			}
+			else = {
+				set_variable = { influence_dedup_slot@var:v = i }
+				add_to_variable = { influence_dedup_slot@var:v = 1 }
+			}
+		}
+	}
+	for_each_loop = {
+		array = influence_array
+		value = v
+		if = { limit = { NOT = { check_variable = { v = 0 } } }
+			clear_variable = influence_dedup_slot@var:v
 		}
 	}
 }
@@ -414,7 +414,6 @@ change_current_influencer_index_percentage = {
 
 		add_to_temp_variable = { influence_outlook_amount = v }
 	}
-	clamp_variable = { var = influence_outlook_amount max = 100 min = 0 }
 	subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
 
 	add_to_variable = { influence_array_val^influencer_index = percent_change_temp }
@@ -437,6 +436,44 @@ change_current_influencer_index_percentage = {
 	set_temp_variable = { percent_change = percent_change_temp }
 
 	custom_effect_tooltip = change_index_influencer_tt
+}
+
+# Effect: redistribute_influence_pool
+# Purpose: Rescale the non-locked influence pool so every share sums to 100 after one actor is fixed.
+# Parameters (temp vars, all required):
+# - skip_index: array index of the locked actor to exclude from the pool (-1 = exclude none)
+# - held_value: the locked actor's share; the pool is scaled to fill (100 - held_value)
+# - scale_domestic: 1 to treat domestic_influence_amount as part of the pool, 0 to leave it untouched
+# - extra_outlook: extra mass added to the divisor only (e.g. a demoted top influencer's old value)
+redistribute_influence_pool = {
+	set_temp_variable = { influence_outlook_amount = extra_outlook }
+	if = { limit = { check_variable = { scale_domestic = 1 } }
+		add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+	}
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+		if = { limit = { NOT = { check_variable = { i = skip_index } } }
+			add_to_temp_variable = { influence_outlook_amount = v }
+		}
+	}
+
+	set_temp_variable = { temp_total = 100 }
+	subtract_from_temp_variable = { temp_total = held_value }
+	clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
+	divide_temp_variable = { temp_total = influence_outlook_amount }
+
+	if = { limit = { check_variable = { scale_domestic = 1 } }
+		multiply_variable = { domestic_influence_amount = temp_total }
+	}
+	for_each_loop = {
+		array = influence_array_val
+		index = i
+		if = { limit = { NOT = { check_variable = { i = skip_index } } }
+			multiply_variable = { influence_array_val^i = temp_total }
+		}
+	}
 }
 
 # Effect: change_influence_percentage
@@ -991,99 +1028,34 @@ change_influence_percentage = {
 					set_variable = { influence_array_val^6 = percent_change }
 					set_temp_variable = { influencer_index = 6 }
 
-					# Calculate the total influence to redistribute
-					# This includes domestic influence + old top influence + all other influences (except new top)
-					set_temp_variable = { influence_outlook_amount = 0 }
-					add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
-					add_to_temp_variable = { influence_outlook_amount = old_top_influence }
-
-					for_each_loop = {
-						array = influence_array_val
-						value = v
-						index = i
-
-						# Add all influences except the new top position (index 6)
-						if = { limit = { NOT = { check_variable = { i = 6 } } }
-							add_to_temp_variable = { influence_outlook_amount = v }
-						}
-					}
-
-					# Calculate redistribution multiplier
-					set_temp_variable = { temp_total = 100 }
-					subtract_from_temp_variable = { temp_total = percent_change }
-
-					clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-					divide_temp_variable = { temp_total = influence_outlook_amount }
-
-					# Apply redistribution to domestic and all other influences
-					multiply_variable = { domestic_influence_amount = temp_total }
-					for_each_loop = {
-						array = influence_array_val
-						value = v
-						index = i
-
-						if = { limit = { NOT = { check_variable = { i = 6 } } }
-							multiply_variable = { influence_array_val^i = temp_total }
-						}
-					}
+					# New top locked at index 6 (= percent_change); old occupant's mass folds back into the pool
+					set_temp_variable = { skip_index = 6 }
+					set_temp_variable = { held_value = percent_change }
+					set_temp_variable = { scale_domestic = 1 }
+					set_temp_variable = { extra_outlook = old_top_influence }
+					redistribute_influence_pool = yes
 					custom_effect_tooltip = change_influencer_tt
 				}
 				else = {
-					# Creates the summation of all array calculations
-					set_temp_variable = { influence_outlook_amount = 0 }
-					for_each_loop = {
-						array = influence_array_val
-						value = v
-						index = i
-						add_to_temp_variable = { influence_outlook_amount = v }
-					}
-
+					# New influencer did not beat the 7th slot; its share is dumped into domestic
 					add_to_variable = { domestic_influence_amount = percent_change }
-					set_temp_variable = { temp_total = 100 }
-					subtract_from_temp_variable = { temp_total = domestic_influence_amount }
-
-					clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-					divide_temp_variable = { temp_total = influence_outlook_amount }
-					for_each_loop = {
-						array = influence_array_val
-						value = v
-						index = i
-
-						multiply_variable = { influence_array_val^i = temp_total }
-					}
+					set_temp_variable = { skip_index = -1 }
+					set_temp_variable = { held_value = domestic_influence_amount }
+					set_temp_variable = { scale_domestic = 0 }
+					set_temp_variable = { extra_outlook = 0 }
+					redistribute_influence_pool = yes
 
 					custom_effect_tooltip = change_domestic_influence_percentage_tt
 				}
 			}
 			else = {
-				set_temp_variable = { influence_outlook_amount = 0 }
-				add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
-
-				for_each_loop = {
-					array = influence_array_val
-					value = v
-					index = i
-
-					add_to_temp_variable = { influence_outlook_amount = v }
-				}
-				subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
-
+				# Existing influencer (or empty 7th slot): lock its own updated value, rebalance the rest
 				add_to_variable = { influence_array_val^influencer_index = percent_change }
-				set_temp_variable = { temp_total = 100 }
-				subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
-
-				clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-				divide_temp_variable = { temp_total = influence_outlook_amount }
-				multiply_variable = { domestic_influence_amount = temp_total }
-				for_each_loop = {
-					array = influence_array_val
-					value = v
-					index = i
-
-					if = { limit = { NOT = { check_variable = { i = influencer_index } } }
-						multiply_variable = { influence_array_val^i = temp_total }
-					}
-				}
+				set_temp_variable = { skip_index = influencer_index }
+				set_temp_variable = { held_value = influence_array_val^influencer_index }
+				set_temp_variable = { scale_domestic = 1 }
+				set_temp_variable = { extra_outlook = 0 }
+				redistribute_influence_pool = yes
 				custom_effect_tooltip = change_influencer_tt
 			}
 		}
