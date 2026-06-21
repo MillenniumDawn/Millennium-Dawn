@@ -90,7 +90,6 @@ EU_update_vars = {
 					has_country_flag = EU_budget_EP_block
 					NOT = { has_active_mission = EU_budget_draft_preparations }
 					NOT = { has_active_mission = EU_budget_draft_ongoing }
-					NOT = { has_active_mission = EU_budget_draft_ongoing_president }
 					NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 				}
 				clr_country_flag = EU_budget_EP_block
@@ -100,7 +99,6 @@ EU_update_vars = {
 					has_country_flag = EU_mff_EP_block
 					NOT = { has_active_mission = EU_mff_draft_preparations }
 					NOT = { has_active_mission = EU_mff_draft_ongoing }
-					NOT = { has_active_mission = EU_mff_draft_ongoing_president }
 					NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
 				}
 				clr_country_flag = EU_mff_EP_block
@@ -1476,17 +1474,17 @@ distribute_EU_natural_exp = {
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 		# Map the country's gdp_per_capita to a tier. Each band is mutually exclusive so sequential ifs are safe; we use `less_than_or_equals` because the original ladder excludes the upper bound of every band (e.g. 200 falls to tier 2 in the original because the tier-1 check is `> 199.999`).
 		set_temp_variable = { tier = 1 }
-		if = { limit = { check_variable = { gdp_per_capita value = 199.999 compare = less_than_or_equals } } set_temp_variable = { tier = 2 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 139.999 compare = less_than_or_equals } } set_temp_variable = { tier = 3 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 89.999 compare = less_than_or_equals } } set_temp_variable = { tier = 4 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 49.999 compare = less_than_or_equals } } set_temp_variable = { tier = 5 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 29.999 compare = less_than_or_equals } } set_temp_variable = { tier = 6 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 19.999 compare = less_than_or_equals } } set_temp_variable = { tier = 7 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 14.999 compare = less_than_or_equals } } set_temp_variable = { tier = 8 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 9.999 compare = less_than_or_equals } } set_temp_variable = { tier = 9 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 6.999 compare = less_than_or_equals } } set_temp_variable = { tier = 10 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 3.999 compare = less_than_or_equals } } set_temp_variable = { tier = 11 } }
-		if = { limit = { check_variable = { gdp_per_capita value = 1.999 compare = less_than_or_equals } } set_temp_variable = { tier = 12 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 199.999 compare = less_than_or_equals } } set_temp_variable = { tier = 2 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 139.999 compare = less_than_or_equals } } set_temp_variable = { tier = 3 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 89.999 compare = less_than_or_equals } } set_temp_variable = { tier = 4 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 49.999 compare = less_than_or_equals } } set_temp_variable = { tier = 5 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 29.999 compare = less_than_or_equals } } set_temp_variable = { tier = 6 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 19.999 compare = less_than_or_equals } } set_temp_variable = { tier = 7 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 14.999 compare = less_than_or_equals } } set_temp_variable = { tier = 8 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 9.999 compare = less_than_or_equals } } set_temp_variable = { tier = 9 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 6.999 compare = less_than_or_equals } } set_temp_variable = { tier = 10 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 3.999 compare = less_than_or_equals } } set_temp_variable = { tier = 11 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 1.999 compare = less_than_or_equals } } set_temp_variable = { tier = 12 } }
 		set_variable = { EU_natural_subsidies = tier }
 		multiply_variable = { EU_natural_subsidies = EU_pop_ratio }
 		add_to_variable = { global.EU_natural_subsidies_total = EU_natural_subsidies }
@@ -1933,6 +1931,170 @@ joining_the_euro = {
 		swap_ideas = {
 			remove_idea = no_foreign_reserve
 			add_idea = euro
+		}
+	}
+}
+
+EU_adopt_passed_laws = {
+	if = {
+		limit = { NOT = { has_country_flag = adopt_eu_law } }
+		set_country_flag = adopt_eu_law
+		# focus_EU101
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 101 }
+			}
+			add_ideas = EUU_cfr_eu
+		}
+		# focus_EU201
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 201 }
+			}
+			add_ideas = ECB_zero_interest_rate_policy
+		}
+		# focus_EU202
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 202 }
+			}
+			add_stability = 0.05
+		}
+		# focus_EU203
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 203 }
+			}
+			add_ideas = euro_bonds
+			remove_ideas = european_debt_crisis
+		}
+		# focus_EU204
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 204 }
+			}
+			add_stability = 0.10
+		}
+		# focus_EU205
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 205 }
+			}
+			add_ideas = euro_rescue_package
+			remove_ideas = european_debt_crisis
+		}
+		# focus_EU206
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 206 }
+			}
+			add_ideas = fiscal_union
+		}
+		# focus_EU207
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 207 }
+			}
+			add_ideas = European_Economic_Government
+		}
+		# focus_EU301
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 301 }
+			}
+			add_to_tech_sharing_group = EU_Tech_Share
+		}
+		# focus_EU302
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 302 }
+			}
+			modify_tech_sharing_bonus = { id = EU_Tech_Share bonus = 0.01 }
+		}
+		# focus_EU303
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 303 }
+			}
+			add_ideas = European_Defence_Fund
+		}
+		# focus_EU304
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 304 }
+			}
+			add_ideas = European_Security_Council
+		}
+		# focus_EU401
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 401 }
+			}
+			add_ideas = EUU_idea_gdpr
+			remove_ideas = foreign_data_kraken
+		}
+		# focus_EU402
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 402 }
+			}
+			add_ideas = EU_copyright
+			add_to_variable = { party_pop_array^1 = -0.03 }
+			add_popularity = { ideology = democratic popularity = -0.03 }
+			add_to_variable = { party_pop_array^6 = -0.03 }
+			add_popularity = { ideology = communism popularity = -0.03 }
+			add_to_variable = { party_pop_array^14 = -0.03 }
+			add_popularity = { ideology = neutrality popularity = -0.03 }
+			recalculate_party = yes
+		}
+		# focus_EU403
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 403 }
+			}
+			remove_ideas = asylum_shopping
+			add_to_variable = { party_pop_array^20 = 0.03 }
+			add_popularity = { ideology = nationalist popularity = 0.03 }
+			recalculate_party = yes
+		}
+		# focus_EU404
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 404 }
+			}
+			if = {
+				limit = { has_global_flag = EUU_migrant_crisis_triggered }
+				remove_ideas = Migrant_Crisis_Europe
+			}
+			add_to_variable = { party_pop_array^20 = 0.05 }
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			recalculate_party = yes
+		}
+		# focus_EU405
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 405 }
+			}
+			if = {
+				limit = { has_global_flag = EUU_migrant_crisis_triggered }
+				remove_ideas = Migrant_Crisis_Europe
+			}
+		}
+		# focus_EU406
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 406 }
+			}
+			remove_ideas = relocation_asylum_seekers
+			remove_ideas = EU_Turkey_deal
+			add_ideas = European_Asylum_Agency
+		}
+		# focus_EU407
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 407 }
+			}
+			add_ideas = Frontex
 		}
 	}
 }
