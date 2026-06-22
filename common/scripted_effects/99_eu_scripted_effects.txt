@@ -64,7 +64,7 @@ EU_update_vars = {
 				}
 			}
 			# Europeanism
-			clamp_variable = { var = THIS.eurosceptic min = 0 max = 1 }
+			clamp_variable = { var = THIS.europeanism min = 0 max = 1 }
 			set_variable = {
 				var_proeuropean = {
 					value = 1
@@ -83,26 +83,23 @@ EU_update_vars = {
 		}
 
 		# Failsafe: lift a stuck budget/MFF proposal block once its whole draft cycle is idle
-		for_each_scope_loop = {
-			array = global.EU_member
-			if = {
-				limit = {
-					has_country_flag = EU_budget_EP_block
-					NOT = { has_active_mission = EU_budget_draft_preparations }
-					NOT = { has_active_mission = EU_budget_draft_ongoing }
-					NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
-				}
-				clr_country_flag = EU_budget_EP_block
+		if = {
+			limit = {
+				has_global_flag = EU_budget_EP_block
+				NOT = { has_active_mission = EU_budget_draft_preparations }
+				NOT = { has_active_mission = EU_budget_draft_ongoing }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 			}
-			if = {
-				limit = {
-					has_country_flag = EU_mff_EP_block
-					NOT = { has_active_mission = EU_mff_draft_preparations }
-					NOT = { has_active_mission = EU_mff_draft_ongoing }
-					NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
-				}
-				clr_country_flag = EU_mff_EP_block
+			clr_global_flag = EU_budget_EP_block
+		}
+		if = {
+			limit = {
+				has_global_flag = EU_mff_EP_block
+				NOT = { has_active_mission = EU_mff_draft_preparations }
+				NOT = { has_active_mission = EU_mff_draft_ongoing }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
 			}
+			clr_global_flag = EU_mff_EP_block
 		}
 
 		# QMV majority threshold
@@ -120,13 +117,13 @@ EU_update_vars = {
 ########################################
 ### Changing Euroscepticism of a tag ###
 ########################################
-# set_temp_variable = { modify_eurosceptic = +- }
-# set_temp_variable = { modify_eurosceptic_target = ROOT/THIS/PREV/FROM or country TAG }
-eurosceptic_change = {
-	custom_effect_tooltip = tooltip_eurosceptic_change
+# set_temp_variable = { modify_europeanism = +- }
+# set_temp_variable = { modify_europeanism_target = ROOT/THIS/PREV/FROM or country TAG }
+europeanism_change = {
+	custom_effect_tooltip = tooltip_europeanism_change
 	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects [?modify_eurosceptic_target] eurosceptic_change [?modify_eurosceptic]"
-		var:modify_eurosceptic_target = { add_to_variable = { eurosceptic = modify_eurosceptic } }
+		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects [?modify_europeanism_target] europeanism_change [?modify_europeanism]"
+		var:modify_europeanism_target = { add_to_variable = { eurosceptic = modify_europeanism } }
 		EU_update_vars = yes
 	}
 }
@@ -135,28 +132,28 @@ eurosceptic_change = {
 ### Changing Euroscepticism of all (current) member states ###
 ##############################################################
 
-# set_temp_variable = { modify_eurosceptic = +- }
-EU_eurosceptic_change = {
-	custom_effect_tooltip = tooltip_EU_eurosceptic_change
+# set_temp_variable = { modify_europeanism = +- }
+EU_europeanism_change = {
+	custom_effect_tooltip = tooltip_EU_europeanism_change
 	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_eurosceptic_change [?modify_eurosceptic]"
+		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_europeanism_change [?modify_europeanism]"
 		for_each_scope_loop = {
 			array = global.EU_member
-			add_to_variable = { THIS.eurosceptic = modify_eurosceptic }
+			add_to_variable = { THIS.europeanism = modify_europeanism }
 			if = {
-				limit = { check_variable = { modify_eurosceptic > 0.04 } }
+				limit = { check_variable = { modify_europeanism > 0.04 } }
 				news_event = EU_news.31
 			}
 			else_if = {
-				limit = { check_variable = { modify_eurosceptic > 0 } }
+				limit = { check_variable = { modify_europeanism > 0 } }
 				news_event = EU_news.30
 			}
 			else_if = {
-				limit = { check_variable = { modify_eurosceptic < -0.04 } }
+				limit = { check_variable = { modify_europeanism < -0.04 } }
 				news_event = EU_news.29
 			}
 			else_if = {
-				limit = { check_variable = { modify_eurosceptic < 0 } }
+				limit = { check_variable = { modify_europeanism < 0 } }
 				news_event = EU_news.28
 			}
 		}
@@ -168,14 +165,14 @@ EU_eurosceptic_change = {
 ### Changing Euroscepticism of all current AND potential member states ###
 ##########################################################################
 
-# set_temp_variable = { modify_eurosceptic = +- }
-EU_potential_eurosceptic_change = {
-	custom_effect_tooltip = tooltip_EU_potential_eurosceptic_change
+# set_temp_variable = { modify_europeanism = +- }
+EU_potential_europeanism_change = {
+	custom_effect_tooltip = tooltip_EU_potential_europeanism_change
 	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_potential_eurosceptic_change [?modify_eurosceptic]"
+		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_potential_europeanism_change [?modify_europeanism]"
 		for_each_scope_loop = {
 			array = global.EU_potential
-			add_to_variable = { THIS.eurosceptic = modify_eurosceptic }
+			add_to_variable = { THIS.europeanism = modify_europeanism }
 		}
 		EU_update_vars = yes
 	}
@@ -207,11 +204,11 @@ invest_in_EU_single_market_cic = {
 			}
 
 		}
-		set_temp_variable = { modify_eurosceptic = -0.03 }
-		set_temp_variable = { modify_eurosceptic_target = THIS }
-		eurosceptic_change = yes
-		set_temp_variable = { modify_eurosceptic_target = ROOT }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = -0.03 }
+		set_temp_variable = { modify_europeanism_target = THIS }
+		europeanism_change = yes
+		set_temp_variable = { modify_europeanism_target = ROOT }
+		europeanism_change = yes
 	}
 }
 
@@ -229,11 +226,11 @@ invest_in_EU_single_market_infra = {
 				invest_infra = yes
 			}
 		}
-		set_temp_variable = { modify_eurosceptic = -0.03 }
-		set_temp_variable = { modify_eurosceptic_target = THIS }
-		eurosceptic_change = yes
-		set_temp_variable = { modify_eurosceptic_target = ROOT }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = -0.03 }
+		set_temp_variable = { modify_europeanism_target = THIS }
+		europeanism_change = yes
+		set_temp_variable = { modify_europeanism_target = ROOT }
+		europeanism_change = yes
 		update_eu_dirty_variable = yes
 	}
 }
@@ -245,11 +242,11 @@ EU_money_for_influence = {
 		set_temp_variable = { percent_change = 1 }
 		change_influence_percentage = yes
 	}
-	set_temp_variable = { modify_eurosceptic = -0.03 }
-	set_temp_variable = { modify_eurosceptic_target = THIS }
-	eurosceptic_change = yes
-	set_temp_variable = { modify_eurosceptic_target = ROOT }
-	eurosceptic_change = yes
+	set_temp_variable = { modify_europeanism = -0.03 }
+	set_temp_variable = { modify_europeanism_target = THIS }
+	europeanism_change = yes
+	set_temp_variable = { modify_europeanism_target = ROOT }
+	europeanism_change = yes
 	update_eu_dirty_variable = yes
 }
 
@@ -858,6 +855,9 @@ on_startup_euu_action = {
 				country_event = { id = EUelection.1 days = 1625 }
 			}
 
+			set_global_flag = { flag = EU_president_commission_ai value = 1 days = 10 }
+			set_global_flag = { flag = ECB_president_ai value = 1 days = 10 }
+
 			EU_update_vars = yes
 			EU_init_focus_vote_weights = yes
 			if = {
@@ -869,9 +869,9 @@ on_startup_euu_action = {
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				activate_mission = EU_budget_draft_preparations
 				activate_mission = EU_mff_draft_preparations
-				set_country_flag = EU_budget_EP_block
 				set_variable = { THIS.EU_budget_call_rate = 1 }
 			}
+			set_global_flag = EU_budget_EP_block
 			set_variable = { global.EU_budget_min_call_rate = 1 }
 			set_EU_gdp = yes
 			EU_global_click_cost = yes
@@ -1138,8 +1138,7 @@ update_POTEF_arrays = {
 	clamp_variable = { var = global.POTEF_pop_vote_total min = 1 }
 	for_each_loop = {
 		array = POTEF_pop_vote_ratio_array
-		set_variable = { global.POTEF_pop_vote_ratio^i = global.POTEF_pop_vote^i }
-		divide_variable = { global.POTEF_pop_vote_ratio^i = global.POTEF_pop_vote_total }
+		set_variable = { var = global.POTEF_pop_vote_ratio^i value = { value = global.POTEF_pop_vote^i divide = global.POTEF_pop_vote_total } }
 		set_variable = { POTEF_pop_vote_ratio_array^i = global.POTEF_pop_vote_ratio^i }
 	}
 	update_eu_dirty_variable = yes
@@ -1203,8 +1202,7 @@ set_POTEF_elect = {
 			subtract = 90
 		}
 	}
-	set_variable = { POTEF_years = POTEF_term }
-	divide_variable = { POTEF_years = 365 }
+	set_variable = { var = POTEF_years value = { value = POTEF_term divide = 365 } }
 
 	set_temp_variable = { potef_term_temp = ROOT.POTEF_term }
 	# The popular-vote winner is independent of who nominated, so the winning subideology may have no
@@ -1336,9 +1334,30 @@ EU_rollback_mff_values = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 		set_variable = { THIS.EU_budget_call_rate = THIS.EU_call_rate_saved }
-		update_EU_budget_call_rate = yes
-		distribute_EU_budget = yes
 	}
+	update_EU_budget_call_rate = yes
+	distribute_EU_budget = yes
+}
+
+EU_military_exercise_cleanup = {
+	if = {
+		limit = { check_expr = { value = ROOT.var_EU_military_exercise_target greater_than = { value = 0 } } }
+		var:ROOT.var_EU_military_exercise_target = {
+			clr_country_flag = EU_military_exercise_at_border_from@ROOT
+			clr_country_flag = EU_host_military_exercise@ROOT
+		}
+	}
+	if = {
+		limit = { check_expr = { value = ROOT.var_EU_military_exercise_host_tag greater_than = { value = 0 } } }
+		var:ROOT.var_EU_military_exercise_host_tag = {
+			clr_country_flag = EU_military_exercise_at_border_from@ROOT
+			clr_country_flag = EU_host_military_exercise@ROOT
+		}
+	}
+	clr_country_flag = EU_military_exercise_prep
+	clear_variable = ROOT.var_EU_military_exercise_target
+	clear_variable = ROOT.var_EU_military_exercise_host_state
+	clear_variable = ROOT.var_EU_military_exercise_host_tag
 }
 
 update_EU_budget_call_rate = {
@@ -1361,6 +1380,7 @@ update_EU_budget_call_rate = {
 		add_to_variable = { global.EU_total_budget = global.EU_seigniorage_pool }
 		set_variable = { global.EU_seigniorage_pool = 0 }
 	}
+	clamp_variable = { var = global.EU_total_budget min = 0.001 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
@@ -1371,7 +1391,6 @@ update_EU_budget_call_rate = {
 				divide = 52 #Weeks in a year
 			}
 		}
-		clamp_variable = { var = global.EU_total_budget min = 0.001 }
 		set_variable = {
 			var = THIS.EU_budget_ratio
 			value = {
@@ -1381,31 +1400,24 @@ update_EU_budget_call_rate = {
 		}
 	}
 	### EU Total Budget
-	set_variable = { global.EU_mff_total = global.EU_total_budget }
-	multiply_variable = { global.EU_mff_total = 5 }
+	set_variable = { var = global.EU_mff_total value = { value = global.EU_total_budget multiply = 5 } }
 
 	update_eu_dirty_variable = yes
 }
 
 EU_global_click_cost = {
-	set_variable = { global.EU_10_per_member_cost = 10 }
-	multiply_variable = { global.EU_10_per_member_cost = global.EU_member^num }
-	set_variable = { global.EU_10_per_member_cost_minus = global.EU_10_per_member_cost }
-	multiply_variable = { global.EU_10_per_member_cost_minus = -1 }
-	set_variable = { global.EU_15_per_member_cost = 15 }
-	multiply_variable = { global.EU_15_per_member_cost = global.EU_member^num }
-	set_variable = { global.EU_15_per_member_cost_minus = global.EU_15_per_member_cost }
-	multiply_variable = { global.EU_15_per_member_cost_minus = -1 }
+	set_variable = { var = global.EU_10_per_member_cost value = { value = 10 multiply = global.EU_member^num } }
+	set_variable = { var = global.EU_10_per_member_cost_minus value = { value = global.EU_10_per_member_cost multiply = -1 } }
+	set_variable = { var = global.EU_15_per_member_cost value = { value = 15 multiply = global.EU_member^num } }
+	set_variable = { var = global.EU_15_per_member_cost_minus value = { value = global.EU_15_per_member_cost multiply = -1 } }
 }
 
 EU_country_call_rate_cost_calc = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		set_variable = { THIS.EU_mff_country_cost = 1000 }
-		multiply_variable = { THIS.EU_mff_country_cost = THIS.EU_budget_ratio }
-		set_variable = { THIS.EU_mff_country_cost_minus = THIS.EU_mff_country_cost }
-		multiply_variable = { THIS.EU_mff_country_cost_minus = -1 }
+		set_variable = { var = THIS.EU_mff_country_cost value = { value = 1000 multiply = THIS.EU_budget_ratio } }
+		set_variable = { var = THIS.EU_mff_country_cost_minus value = { value = THIS.EU_mff_country_cost multiply = -1 } }
 	}
 }
 
@@ -1472,15 +1484,14 @@ distribute_EU_growth_exp = {
 		else_if = { limit = { has_idea = recession } set_temp_variable = { tier = 5 } }
 		else_if = { limit = { has_idea = depression } set_temp_variable = { tier = 6 } }
 		if = { limit = { check_variable = { tier > 0 } }
-			set_variable = { EU_growth_subsidies = tier }
-			multiply_variable = { EU_growth_subsidies = EU_pop_ratio }
+			set_variable = { var = EU_growth_subsidies value = { value = tier multiply = EU_pop_ratio } }
 			add_to_variable = { global.EU_growth_subsidies_total = EU_growth_subsidies }
 		}
 	}
+	clamp_variable = { var = global.EU_growth_subsidies_total min = 0.001 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		clamp_variable = { var = global.EU_growth_subsidies_total min = 0.001 }
 		set_variable = {
 			var = THIS.EU_growth_subsidies
 			value = {
@@ -1511,14 +1522,13 @@ distribute_EU_natural_exp = {
 		if = { limit = { check_variable = { var = gdp_per_capita value = 6.999 compare = less_than_or_equals } } set_temp_variable = { tier = 10 } }
 		if = { limit = { check_variable = { var = gdp_per_capita value = 3.999 compare = less_than_or_equals } } set_temp_variable = { tier = 11 } }
 		if = { limit = { check_variable = { var = gdp_per_capita value = 1.999 compare = less_than_or_equals } } set_temp_variable = { tier = 12 } }
-		set_variable = { EU_natural_subsidies = tier }
-		multiply_variable = { EU_natural_subsidies = EU_pop_ratio }
+		set_variable = { var = EU_natural_subsidies value = { value = tier multiply = EU_pop_ratio } }
 		add_to_variable = { global.EU_natural_subsidies_total = EU_natural_subsidies }
 	}
+	clamp_variable = { var = global.EU_natural_subsidies_total min = 0.001 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		clamp_variable = { var = global.EU_natural_subsidies_total min = 0.001 }
 		set_variable = {
 			var = THIS.EU_natural_subsidies
 			value = {
@@ -1549,13 +1559,11 @@ distribute_EU_admin_exp = {
 			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			if = {
 				limit = { has_idea = frontex_ExDir }
-				set_variable = { THIS.EU_admin_subsidies = 0.5 }
-				multiply_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
+				set_variable = { var = THIS.EU_admin_subsidies value = { value = 0.5 multiply = global.EU_admin_exp_total } }
 			}
 			if = {
 				limit = { has_idea = EU_commission_president }
-				set_variable = { THIS.EU_admin_subsidies = 0.5 }
-				multiply_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
+				set_variable = { var = THIS.EU_admin_subsidies value = { value = 0.5 multiply = global.EU_admin_exp_total } }
 			}
 		}
 	}
@@ -1604,15 +1612,11 @@ distribute_EU_admin_exp = {
 }
 
 EU_budget_total_gain = {
+	clamp_variable = { var = global.EU_total_exp min = 0.001 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		set_variable = { THIS.EU_budget_total_gain = 0 }
-		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_growth_subsidies }
-		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_natural_subsidies }
-		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_global_exp_subsidies }
-		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_admin_subsidies }
-		clamp_variable = { var = global.EU_total_exp min = 0.001 }
+		set_variable = { var = THIS.EU_budget_total_gain value = { value = 0 add = THIS.EU_growth_subsidies add = THIS.EU_natural_subsidies add = THIS.EU_global_exp_subsidies add = THIS.EU_admin_subsidies } }
 		set_variable = {
 			var = THIS.EU_budget_ratio_gain
 			value = {
@@ -1620,8 +1624,7 @@ EU_budget_total_gain = {
 				divide = global.EU_total_exp
 			}
 		}
-		set_variable = { THIS.EU_budget_net = THIS.EU_budget_total_gain }
-		subtract_from_variable = { THIS.EU_budget_net = THIS.EU_budget_contribution }
+		set_variable = { var = THIS.EU_budget_net value = { value = THIS.EU_budget_total_gain subtract = THIS.EU_budget_contribution } }
 	}
 	update_eu_dirty_variable = yes
 }
@@ -1738,8 +1741,7 @@ election_EU_Parliament = {
 		array = global.EU_parl_party_number
 		set_variable = { p_number = global.EU_parl_party_number^i }
 
-		set_variable = { global.MEP_Ratio_PG_array^p_number = global.MEP_PG_party_array^p_number }
-		divide_variable = { global.MEP_Ratio_PG_array^p_number = global.MEP_Total }
+		set_variable = { var = global.MEP_Ratio_PG_array^p_number value = { value = global.MEP_PG_party_array^p_number divide = global.MEP_Total } }
 	}
 
 	set_variable = { global.MEP_Total = 0 } # Recalculate to account for more roundings
@@ -1750,9 +1752,7 @@ election_EU_Parliament = {
 		add_to_variable = { global.MEP_Total = global.MEP_PG_party_array^p_number2 }
 	}
 
-	set_variable = { global.MEP_Majority = global.MEP_Total }
-	multiply_variable = { global.MEP_Majority = 0.5 }
-	add_to_variable = { global.MEP_Majority = 1 }
+	set_variable = { var = global.MEP_Majority value = { value = global.MEP_Total multiply = 0.5 add = 1 } }
 
 	update_eu_dirty_variable = yes
 }
@@ -1761,8 +1761,7 @@ election_EU_Parliament_in_member_state = {
 	resize_array = { THIS.MEP_party_array = 24 }
 
 	###  MEP for this member state
-	set_temp_variable = { temp1 = global.EU_Parliament_max_MEP }
-	multiply_temp_variable = { temp1 = THIS.EU_pop_ratio }
+	set_temp_variable = { var = temp1 value = { value = global.EU_Parliament_max_MEP multiply = THIS.EU_pop_ratio } }
 	round_temp_variable = temp1
 	clamp_temp_variable = {
 		var = temp1
@@ -1777,8 +1776,7 @@ election_EU_Parliament_in_member_state = {
 		array = global.EU_parl_party_number
 		set_variable = { p_number3 = global.EU_parl_party_number^i }
 
-		set_variable = { THIS.MEP_party_array^p_number3 = party_pop_array^p_number3 }
-		multiply_variable = { THIS.MEP_party_array^p_number3 = THIS.MEP_Total }
+		set_variable = { var = THIS.MEP_party_array^p_number3 value = { value = party_pop_array^p_number3 multiply = THIS.MEP_Total } }
 		round_variable = THIS.MEP_party_array^p_number3
 	}
 
