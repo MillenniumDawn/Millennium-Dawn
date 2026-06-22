@@ -393,85 +393,75 @@ apply_EU_QMV_result = {
 
 ### EU111 - United States of Europe ###
 focus_EU111_QMV_result = {
-	if = { # QMV - yes
-		limit = {
-			always = yes
-		}
+	for_each_scope_loop = {
+		array = global.EU_active_vote_rejecters
+		remove_ideas = EU_member
+	}
+
+	hidden_effect = {
+		# Record the vote before annexations — on_annex resets current_active_vote_disp to 0
+		add_to_array = { array = global.EU_passed_votes value = 111 }
+		remove_from_array = { array = global.EU_council_votes value = 111 }
+		set_variable = { global.current_active_vote_disp = 0 }
 
 		for_each_scope_loop = {
-			array = global.EU_active_vote_rejecters
-			remove_ideas = EU_member
-		}
-
-		hidden_effect = {
-			# Record the vote before annexations — on_annex resets current_active_vote_disp to 0
-			add_to_array = { array = global.EU_passed_votes value = 111 }
-			remove_from_array = { array = global.EU_council_votes value = 111 }
-			set_variable = { global.current_active_vote_disp = 0 }
-
-			for_each_scope_loop = {
-				array = global.EU_member
-				EUU = { inherit_technology = THIS }
-				set_country_flag = USoE_member
-				set_country_flag = USoE
-				every_unit_leader = {
-					set_unit_leader_flag = USoE_unit_leader
-					set_nationality = ROOT
-					add_unit_leader_trait = military_reorganization
-				}
-				every_owned_state = {
-					limit = {
-						OR = {
-							is_on_continent = europe
-							is_core_of = GEO
-							is_core_of = ARM
-							is_core_of = AZE
-							is_core_of = TUR
-							is_core_of = POR
-							is_core_of = SPR
-						}
-						NOT = { is_core_of = ROOT }
-					}
-					add_core_of = ROOT
-				}
-				if = { limit = { NOT = { original_tag = ROOT } }
-					ROOT = {
-						add_to_variable = { treasury = PREV.treasury }
-						add_to_variable = { debt = PREV.debt }
-						add_to_variable = { int_investments = PREV.int_investments }
-						set_variable = { tag_to_grab = PREV.id }
-						update_missile_satellite_inventory = yes
-						annex_country = {
-							target = PREV
-							transfer_troops = yes
-						}
-					}
-				}
-			}
-			apply_USoE_technologies = yes
-		}
-		ROOT = {
-			set_cosmetic_tag = USoE
-			clr_country_flag = dynamic_flag
+			array = global.EU_member
+			EUU = { inherit_technology = THIS }
+			set_country_flag = USoE_member
 			set_country_flag = USoE
-			set_variable = { global.united_states_of_europe = THIS.id }
-			clr_country_flag = GER_Final_settlement
-			if = {
-				limit = { original_tag = GER }
-				set_country_flag = GER_bavaria_gone
-				clr_country_flag = GER_war_on_terror_started
-				remove_ideas = GER_idea_carbon_neutral
+			every_unit_leader = {
+				set_unit_leader_flag = USoE_unit_leader
+				set_nationality = ROOT
+				add_unit_leader_trait = military_reorganization
 			}
-			add_ideas = multi_ethnic_state_idea
+			every_owned_state = {
+				limit = {
+					OR = {
+						is_on_continent = europe
+						is_core_of = GEO
+						is_core_of = ARM
+						is_core_of = AZE
+						is_core_of = TUR
+						is_core_of = POR
+						is_core_of = SPR
+					}
+					NOT = { is_core_of = ROOT }
+				}
+				add_core_of = ROOT
+			}
+			if = { limit = { NOT = { original_tag = ROOT } }
+				ROOT = {
+					add_to_variable = { treasury = PREV.treasury }
+					add_to_variable = { debt = PREV.debt }
+					add_to_variable = { int_investments = PREV.int_investments }
+					set_variable = { tag_to_grab = PREV.id }
+					update_missile_satellite_inventory = yes
+					annex_country = {
+						target = PREV
+						transfer_troops = yes
+					}
+				}
+			}
 		}
-		custom_effect_tooltip = form_USoE_tt
-		set_temp_variable = { vote_passed = 1 }
-		cleanup_european_union_voting = yes
+		apply_USoE_technologies = yes
 	}
-	else = {
-		set_temp_variable = { vote_passed = 0 }
-		cleanup_european_union_voting = yes
+	ROOT = {
+		set_cosmetic_tag = USoE
+		clr_country_flag = dynamic_flag
+		set_country_flag = USoE
+		set_variable = { global.united_states_of_europe = THIS.id }
+		clr_country_flag = GER_Final_settlement
+		if = {
+			limit = { original_tag = GER }
+			set_country_flag = GER_bavaria_gone
+			clr_country_flag = GER_war_on_terror_started
+			remove_ideas = GER_idea_carbon_neutral
+		}
+		add_ideas = multi_ethnic_state_idea
 	}
+	custom_effect_tooltip = form_USoE_tt
+	set_temp_variable = { vote_passed = 1 }
+	cleanup_european_union_voting = yes
 }
 
 # EU101 - Charter of Fundamental Rights of the European Union
