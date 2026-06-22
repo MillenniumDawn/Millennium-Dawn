@@ -107,7 +107,7 @@ create_investment_project = {
             check_variable = { added = 0 }
         }
 
-        add_to_array = { investments_projects = investments_projects_state^num }
+        add_to_array = { investments_projects = investments_projects^num }
         add_to_array = { investments_projects_state = state }
 
         add_to_array = { investments_projects_building = building_index }
@@ -203,6 +203,68 @@ remove_investment_project = {
             set_temp_variable = { break = 1 }
         }
     }
+}
+
+remove_investment_project_by_index = {
+	subtract_from_variable = { investments_projects_building_amount^index = amount }
+
+	if = {
+		limit = { check_variable = { investments_projects_building_time^index > 0 } }
+
+		# TODO: something broken is here?
+		set_temp_variable = { remove_return_procentage = investments_projects_building_time^index }
+		divide_temp_variable = { remove_return_procentage = investments_projects_building_time_max^index }
+	
+		set_temp_variable = { treasury_change = investments_projects_building_cost^index }
+		multiply_temp_variable = { treasury_change = remove_return_procentage }
+		multiply_temp_variable = { treasury_change = amount }
+		modify_treasury_effect = yes
+	}
+
+	calculate_investment_project_cost = yes
+	set_variable = { investments_projects_building_cost^index = investment_project_cost }
+	
+	calculate_investment_project_time = yes
+	set_variable = { investments_projects_building_time^index = project_time }
+	set_variable = { investments_projects_building_time_max^index = project_time }
+
+	if = {
+		limit = {
+			check_variable = { investments_projects_building_amount^index < 1 }
+		}
+
+		remove_from_array = { 
+			array = investments_projects
+			value = index
+		}
+
+		remove_from_array = { 
+			array = investments_projects_building
+			index = index
+		}
+		remove_from_array = { 
+			array = investments_projects_building_amount
+			index = index
+		}
+		remove_from_array = { 
+			array = investments_projects_building_cost
+			index = index
+		}
+
+		remove_from_array = { 
+			array = investments_projects_building_time
+			index = index
+		}
+		remove_from_array = { 
+			array = investments_projects_building_time_max
+			index = index
+		}
+
+		remove_from_array = { 
+			array = investments_projects_state
+			index = index
+		}
+	}
 }
 
 add_investment = {
