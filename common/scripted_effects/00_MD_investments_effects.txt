@@ -125,6 +125,8 @@ create_investment_project = {
         multiply_temp_variable = { treasury_change = -1 }
         modify_treasury_effect = yes
     }
+
+	update_dirty_investments = yes
 }
 
 remove_investment_project = {
@@ -203,6 +205,8 @@ remove_investment_project = {
             set_temp_variable = { break = 1 }
         }
     }
+
+	update_dirty_investments = yes
 }
 
 remove_investment_project_by_index = {
@@ -265,6 +269,8 @@ remove_investment_project_by_index = {
 			index = index
 		}
 	}
+
+	update_dirty_investments = yes
 }
 
 add_investment = {
@@ -295,20 +301,34 @@ add_investment = {
         add_to_array = { foreign_investments = amount }
     }
 
-    var:country_from = {
-        add_to_variable = { int_investments = amount }
-    }
-
     add_to_variable = { int_foreign_investments = amount }
+
+	var:country = {
+		update_dirty_investments = yes
+	}
+
+	var:country_from = {
+        add_to_variable = { int_investments = amount }
+		update_dirty_investments = yes
+    }
 }
 
 update_dirty_investments = {
-    if = { limit = { check_variable = { THIS.investments_dirty < 100000 } }
-        add_to_variable = { THIS.investments_dirty = 1 }
-    }
-    else = {
-        set_variable = { THIS.investments_dirty = 0 }
-    }
+	if = {
+		limit = {
+			check_variable = { MD_constructionview_tab_selected = 1 }
+		}
+
+		set_variable = { THIS.MD_active_investments_projects = investments_projects^num }
+		clamp_variable = { var = THIS.MD_active_investments_projects min = 0 max = 15 }
+
+		if = { limit = { check_variable = { THIS.investments_dirty < 100000 } }
+			add_to_variable = { THIS.investments_dirty = 1 }
+		}
+		else = {
+			set_variable = { THIS.investments_dirty = 0 }
+		}
+	}
 }
 
 # Add completed building to state (called by complete_project).
