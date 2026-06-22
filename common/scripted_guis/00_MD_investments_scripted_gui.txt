@@ -1,14 +1,75 @@
 scripted_gui = {
+    building_construction_speeds_gui = {
+        context_type = player_context
+        window_name = "MD_building_construction_speeds"
+        parent_window_token = construction_tab
+
+        visible = {
+            check_variable = { MD_constructionview_tab_selected = 0 }
+        }
+    }
+    countryinvestmentsview_tabs = {
+		window_name = "MD_countryinvestmentsview_tabs"
+		context_type = player_context
+		parent_window_token = construction_tab
+
+		triggers = {
+			construction_tab_click_enabled = {
+				if = {
+					limit = { check_variable = { MD_constructionview_tab_selected = 0 } }
+					set_temp_variable = { construction_tab_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { construction_tab_frame = 2 }
+				}
+
+				always = yes
+			}
+
+			investments_tab_click_enabled = {
+				if = {
+					limit = { check_variable = { MD_constructionview_tab_selected = 1 } }
+					set_temp_variable = { investments_tab_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { investments_tab_frame = 2 }
+				}
+
+				always = yes
+			}
+		}
+
+		effects = {
+			construction_tab_click = {
+				set_variable = { MD_constructionview_tab_selected = 0 }
+			}
+
+			investments_tab_click = {
+				set_variable = { MD_constructionview_tab_selected = 1 }
+                set_variable = { MD_investments_selected_building = -1 }
+			}
+		}
+
+		properties = {
+			construction_tab = {
+				frame = construction_tab_frame
+			}
+
+			investments_tab = {
+				frame = investments_tab_frame
+			}
+		}
+	}
     countryinvestmentsview = {
 		window_name = "MD_countryinvestmentsview"
 		context_type = player_context
-		parent_window_token = trade_tab
+		parent_window_token = construction_tab
 
         #dirty = investments_dirty
 
         visible = {
 			is_ai = no
-			check_variable = { MD_tradeview_tab_selected = 2 }
+			check_variable = { MD_constructionview_tab_selected = 1 }
 		}
 
         triggers = {
@@ -205,13 +266,13 @@ scripted_gui = {
             ROOT = {
                 is_ai = no
                 check_variable = { MD_investments_selected_building > -1 }
-                check_variable = { MD_tradeview_tab_selected = 2 }
+                check_variable = { MD_constructionview_tab_selected = 1 }
             }
         }
 
         triggers = {
             build_button_visible = {
-                OR = {
+                AND = {
                     NOT = { is_owned_by = ROOT }
                     NOT = { is_controlled_by = ROOT }
                 }
