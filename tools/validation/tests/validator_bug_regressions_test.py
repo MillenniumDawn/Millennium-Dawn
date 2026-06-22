@@ -430,7 +430,7 @@ def test_scope_prefixed_target_tracked_by_bare_name(tmp_path):
     from validate_set_variables import _strip_scope_prefix
 
     assert _strip_scope_prefix("PREV.foreign_celeb_country") == "foreign_celeb_country"
-    assert _strip_scope_prefix("ALB.eurosceptic") == "eurosceptic"
+    assert _strip_scope_prefix("ALB.europeanism") == "eurosceptic"
     assert _strip_scope_prefix("global.price_per_gw_for_els") == (
         "global.price_per_gw_for_els"
     )  # global namespace kept
