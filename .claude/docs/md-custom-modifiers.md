@@ -29,7 +29,7 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 | `energy_gain_multiplier`                     | country   |
 | `renewable_energy_gain`                      | country   |
 | `renewable_energy_gain_multiplier`           | country   |
-| `resource_storage_gain`                      | country   |
+| `resource_storage_max_capacity`              | country   |
 | `energy_use`                                 | country   |
 | `energy_use_multiplier`                      | country   |
 | `pop_energy_use_multiplier`                  | country   |

@@ -1,6 +1,7 @@
 ---
 import faviconPng from "@/assets/images/favicon.png";
 import type { SeoMeta } from "@/shared/lib/seo";
+import { buildContentSecurityPolicy, serializeJsonLd } from "@/shared/lib/seo";
 import { buildThemeBootstrapScript } from "@/shared/lib/theme";
 import { toAbsolute, withBase } from "@/shared/lib/routing/urls";
 import { SITE_DESCRIPTION, SITE_LANGUAGE, SITE_ORGANIZATION_NAME, SITE_TITLE } from "@/shared/config/site";
@@ -21,7 +22,7 @@ const ogImageUrl = seo.image
     : toAbsolute(seo.image.path)
   : undefined;
 
-const websiteJsonLd = JSON.stringify({
+const websiteJsonLd = serializeJsonLd({
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: SITE_TITLE,
@@ -29,7 +30,7 @@ const websiteJsonLd = JSON.stringify({
   inLanguage: SITE_LANGUAGE,
 });
 
-const organizationJsonLd = JSON.stringify({
+const organizationJsonLd = serializeJsonLd({
   "@context": "https://schema.org",
   "@type": "Organization",
   name: SITE_ORGANIZATION_NAME,
@@ -39,9 +40,13 @@ const organizationJsonLd = JSON.stringify({
 });
 
 const themeBootstrapScript = buildThemeBootstrapScript();
+const contentSecurityPolicy = buildContentSecurityPolicy();
+const ogType = seo.ogType ?? "website";
+const extraJsonLd = seo.extraJsonLd ?? [];
 ---
 
 <meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content={contentSecurityPolicy} />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>{seo.title}</title>
 
@@ -52,10 +57,17 @@ const themeBootstrapScript = buildThemeBootstrapScript();
       <link rel="canonical" href={seo.canonical} />
 
       <meta property="og:site_name" content={SITE_TITLE} />
-      <meta property="og:type" content="website" />
+      <meta property="og:type" content={ogType} />
       <meta property="og:title" content={seo.title} />
       <meta property="og:description" content={seo.description} />
       <meta property="og:url" content={seo.canonical} />
+      {ogType === "article" && seo.article?.publishedTime && (
+        <meta property="article:published_time" content={seo.article.publishedTime} />
+      )}
+      {ogType === "article" && seo.article?.modifiedTime && (
+        <meta property="article:modified_time" content={seo.article.modifiedTime} />
+      )}
+      {ogType === "article" && seo.article?.author && <meta property="article:author" content={seo.article.author} />}
       {seo.image && (
         <>
           <meta property="og:image" content={ogImageUrl} />
@@ -73,6 +85,9 @@ const themeBootstrapScript = buildThemeBootstrapScript();
 
       <script type="application/ld+json" set:html={websiteJsonLd} is:inline />
       <script type="application/ld+json" set:html={organizationJsonLd} is:inline />
+      {extraJsonLd.map((jsonLd) => (
+        <script type="application/ld+json" set:html={serializeJsonLd(jsonLd)} is:inline />
+      ))}
     </>
   )
 }
@@ -81,4 +96,5 @@ const themeBootstrapScript = buildThemeBootstrapScript();
 
 <script is:inline set:html={themeBootstrapScript} />
 
+<link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={toAbsolute("/feed.xml")} />
 <link rel="icon" type="image/png" href={withBase(faviconPng.src)} />

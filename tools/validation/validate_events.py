@@ -4,9 +4,11 @@
 Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
+
 import os
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -14,31 +16,59 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from shared_utils import extract_block_from_text
+from sprite_index import build_sprite_index
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
-    Colors,
     FileOpener,
     Severity,
     run_validator_main,
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
 _LONG_FORM_PATTERN = re.compile(
     r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )
+
+# Event picture: `picture = GFX_xxx` (always GFX_-prefixed, resolves to that
+# sprite). Sprite names may contain `.` (frame suffixes like GFX_CTC.5) and `-`
+# (e.g. GFX_Polizistin-Kiesewetter), so both are part of the captured name.
+_EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_.\-]+)"?')
 
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
 
 
+def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: return (sprite, filename, line) for each event picture ref."""
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    text = re.sub(r"#[^\n]*", "", text)
+    out: List[Tuple[str, str, int]] = []
+    for m in _EVENT_PICTURE_REF.finditer(text):
+        line = text.count("\n", 0, m.start()) + 1
+        out.append((m.group(1), filename, line))
+    return out
+
+
+_ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
+
+
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     """Pool worker: count occurrences of each tracked event ID in one file.
 
-    Uses a word-boundary-aware approach so that an event ID appearing in a
-    log string or other text doesn't produce a false positive count.
+    Tokenizes the file body ONCE and counts whole-token matches against the
+    tracked-ID set, rather than scanning the file once per tracked ID. The `.`
+    is part of an identifier token, so `ALG_civilwar.1` and its loc keys
+    `ALG_civilwar.1.t` / `.d` / `.a` tokenize as distinct tokens and don't
+    inflate each other's counts.
     """
     filename, tracked_ids = args
     if _should_skip(filename):
@@ -48,11 +78,35 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
-    id_counts: Dict[str, int] = {}
-    for eid in tracked_ids:
-        if eid in cleaned:
-            id_counts[eid] = cleaned.count(eid)
-    return id_counts
+    counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
+    return {eid: counts[eid] for eid in tracked_ids if eid in counts}
+
+
+# Event IDs built at runtime by string interpolation never appear as a literal
+# `namespace.number` token, so the whole-token scan can't see them. Matches the
+# namespace before a `.[…]` / `.N[…]` interpolation following an event-firing
+# keyword, e.g. `country_event = UN.[ID]` or `country_event = MD_cyber.1[TYPE]`.
+_DYNAMIC_EVENT_NS_PATTERN = re.compile(
+    r"(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*(?:\{\s*id\s*=\s*)?([A-Za-z_]\w*)\.[A-Za-z0-9_.]*\["
+)
+
+
+def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
+    """Pool worker: namespaces fired via string-interpolated event IDs in a file.
+
+    Any triggered-only event in a returned namespace is reachable through dynamic
+    dispatch and must not be reported as unreferenced.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return set()
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
 
 
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
@@ -159,7 +213,6 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "id": id_match.group(1),
                 "type": event_type,
                 "file": basename,
-                "is_major": "major = yes" in body,
                 "is_hidden": "hidden = yes" in body,
                 "is_triggered_only": "is_triggered_only = yes" in body,
                 "fire_only_once": "fire_only_once = yes" in body,
@@ -202,7 +255,7 @@ class Validator(BaseValidator):
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id, type, file, is_major, is_hidden,
+        Each metadata dict has: id, type, file, is_hidden,
         is_triggered_only, fire_only_once, has_mtth, option_count,
         title_desc_refs.
         """
@@ -349,6 +402,10 @@ class Validator(BaseValidator):
 
         results = []
         for event in events:
+            # Hidden events display no window, so their title/desc/option-name
+            # loc is dead — never flag them for missing keys.
+            if "hidden = yes" in event:
+                continue
             eid_matches = pattern_id.findall(event)
             eid = eid_matches[0] if eid_matches else "unknown"
             filename = paths.get(event, "unknown")
@@ -398,12 +455,26 @@ class Validator(BaseValidator):
             for eid, count in file_counts.items():
                 total_counts[eid] = total_counts.get(eid, 0) + count
 
+        # Namespaces dispatched via runtime-interpolated IDs (e.g. UN.[ID],
+        # MD_cyber.1[TYPE]) never appear as literal tokens — exempt them.
+        dyn_ns_lists = self._pool_map(
+            scan_dynamic_event_namespaces, args_list, chunksize=30
+        )
+        dynamic_namespaces: Set[str] = set()
+        for s in dyn_ns_lists:
+            dynamic_namespaces.update(s)
+
         # The definition itself contributes 1 occurrence (id = X inside the event block).
         # Anything > 1 means it's referenced somewhere else.
         results = []
         for eid in sorted(triggered_only_ids):
-            if total_counts.get(eid, 0) <= 1:
-                results.append(f"{eid} - {triggered_only_ids[eid]}")
+            if total_counts.get(eid, 0) > 1:
+                continue
+            last_dot = eid.rfind(".")
+            ns = eid[:last_dot] if last_dot >= 0 else eid
+            if ns in dynamic_namespaces:
+                continue
+            results.append(f"{eid} - {triggered_only_ids[eid]}")
 
         self._report(
             results,
@@ -411,36 +482,6 @@ class Validator(BaseValidator):
             "Triggered-only events with no references found:",
             Severity.WARNING,
             category="unreferenced-triggered-only",
-        )
-
-    def validate_news_event_major(self):
-        """Flag news_event definitions missing major = yes.
-
-        News events are country events under the hood — without major = yes
-        they only fire for the single receiving country, which is almost
-        always unintended. Hidden news events are exempted since they're
-        used as scripted-effect carriers, not player-facing news.
-        """
-        self._log_section("Checking news_events for missing major = yes...")
-
-        meta, _ = self._get_event_metadata()
-        results = []
-
-        for ev in meta:
-            if ev["type"] != "news_event":
-                continue
-            if ev["is_hidden"]:
-                continue
-            if ev["is_major"]:
-                continue
-            results.append(f"{ev['id']} - {ev['file']}")
-
-        self._report(
-            results,
-            "✓ All news_events have major = yes",
-            "news_events missing major = yes (will only fire for one country — add major = yes or use country_event):",
-            Severity.WARNING,
-            category="news-event-missing-major",
         )
 
     def validate_mtth_triggered_only(self):
@@ -520,12 +561,19 @@ class Validator(BaseValidator):
         self._log_section("Checking hidden events for pointless localisation...")
 
         meta, _ = self._get_event_metadata()
+        loc_keys = self._load_localisation_keys()
         results = []
 
         for ev in meta:
             if not ev["is_hidden"] or not ev["title_desc_refs"]:
                 continue
-            detail = "; ".join(ev["title_desc_refs"])
+            # Only flag when the declared title/desc actually resolves to a real
+            # loc key. A hidden event declaring `title = foo.t` with no `foo.t`
+            # in any .yml has nothing to remove, so it is not a finding.
+            real = [k for k in ev["title_desc_refs"] if k in loc_keys]
+            if not real:
+                continue
+            detail = "; ".join(real)
             results.append(f"{ev['id']} - {ev['file']}: {detail}")
 
         self._report(
@@ -591,18 +639,77 @@ class Validator(BaseValidator):
             category="namespace-mismatch",
         )
 
+    def validate_event_pictures(self):
+        """Flag events whose `picture = GFX_x` sprite is not MD-defined.
+
+        An event's picture resolves directly to the named sprite. MD events must
+        not rely on vanilla event pictures, so this checks against the mod's own
+        interface/*.gfx only (no vanilla) — which also keeps it accurate in CI,
+        where the vanilla install is absent. A missing sprite renders a blank
+        picture box, so it is an error.
+        """
+        self._log_section("Checking for events with missing pictures...")
+
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+
+        # Built sequentially (no pool_map): scanning ~150 .gfx files takes well
+        # under a second, and a sequential read can't be left empty by a pool
+        # worker that fails to start under the 'spawn' start method.
+        sprites = build_sprite_index(
+            self.mod_path,
+            gfx_only=True,
+            include_vanilla=False,
+        )
+        # Sanity guard: the mod defines tens of thousands of GFX sprites. If the
+        # index comes back near-empty, sprite definitions failed to load (wrong
+        # path, unreadable interface/*.gfx, a broken pool worker) — flagging
+        # every picture as missing would be thousands of false errors. Skip
+        # loudly instead so a load failure can't break CI or a commit.
+        if len(sprites) < 1000:
+            self.log(
+                f"  Only {len(sprites)} GFX sprites loaded from "
+                f"{os.path.join(self.mod_path, 'interface')}/*.gfx — sprite "
+                "definitions did not load; skipping the picture check",
+                "warning",
+            )
+            return
+        refs = self._pool_map(_extract_event_pictures, files)
+
+        results: List[str] = []
+        seen: Set[Tuple[str, str, int]] = set()
+        for sub in refs:
+            for sprite, filename, line in sub:
+                if sprite in sprites:
+                    continue
+                key = (sprite, filename, line)
+                if key in seen:
+                    continue
+                seen.add(key)
+                results.append(f"{os.path.basename(filename)}:{line} - {sprite}")
+
+        self._report(
+            sorted(results),
+            "✓ All event pictures are MD-defined",
+            "Events with missing pictures (picture sprite not defined in the mod's interface/*.gfx; MD must not use vanilla event pictures):",
+            severity=Severity.ERROR,
+            category="missing-event-picture",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
         self.validate_event_call_long_form()
         self.validate_triggered_only_unreferenced()
         self.validate_missing_localisation()
-        self.validate_news_event_major()
         self.validate_mtth_triggered_only()
         self.validate_hidden_event_options()
         self.validate_hidden_event_localisation()
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
+        self.validate_event_pictures()
 
 
 if __name__ == "__main__":

@@ -7,6 +7,9 @@ under OR / random_list / count_triggers, and never for non-deterministic
 """
 
 from validate_simplifications import (
+    _find_count_collapsible,
+    _find_empty_trigger_blocks,
+    _find_government_match,
     _find_mergeable,
     _find_scope_expansion,
     _find_two_bucket_random,
@@ -24,6 +27,30 @@ def _expansion(text):
 
 def _random(text):
     return [chance for _, chance in _find_two_bucket_random(strip_comments(text))]
+
+
+def _count(text):
+    return [(line, n) for line, n in _find_count_collapsible(strip_comments(text))]
+
+
+def _empty(text):
+    return [kw for _, kw in _find_empty_trigger_blocks(strip_comments(text))]
+
+
+def _gov(text):
+    return [rep for _, rep in _find_government_match(strip_comments(text))]
+
+
+def _all_five(target, scoped_tmpl):
+    """Build an exhaustive 5-clause OR. *scoped_tmpl* formats one clause's
+    scoped side given the ideology, e.g. '{t} = {{ has_government = {i} }}'."""
+    clauses = "\n".join(
+        "  AND = {{ has_government = {i}  {s} }}".format(
+            i=i, s=scoped_tmpl.format(t=target, i=i)
+        )
+        for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+    )
+    return "OR = {{\n{c}\n}}\n".format(c=clauses)
 
 
 # --- scope-merge: positive cases -------------------------------------------
@@ -164,3 +191,265 @@ def test_three_buckets_not_flagged():
 
 def test_both_empty_not_flagged():
     assert _random("random_list = { 50 = {} 50 = {} }\n") == []
+
+
+def test_bucket_with_modifier_not_flagged():
+    # random = { chance = N } has no modifier support; the conversion is invalid.
+    text = (
+        "random_list = {\n"
+        "\t40 = {\n"
+        "\t\tmodifier = {\n"
+        "\t\t\tfactor = 0.80\n"
+        "\t\t\thas_idea = recession\n"
+        "\t\t}\n"
+        "\t\tdecrease_economic_growth = yes\n"
+        "\t}\n"
+        "\t60 = { }\n"
+        "}\n"
+    )
+    assert _random(text) == []
+
+
+# --- identical adjacent create_unit -> count -------------------------------
+
+
+def test_two_identical_create_units_collapse():
+    text = (
+        'create_unit = { division = "x" owner = ALG }\n'
+        'create_unit = { division = "x" owner = ALG }\n'
+    )
+    assert _count(text) == [(1, 2)]
+
+
+def test_three_identical_create_units_collapse_to_count_3():
+    body = 'create_unit = { division = "x" owner = RAJ }\n'
+    assert _count(body * 3) == [(1, 3)]
+
+
+def test_whitespace_only_difference_still_collapses():
+    text = (
+        'create_unit = {\n  division = "x"\n  owner = ALG\n}\n'
+        'create_unit = { division = "x" owner = ALG }\n'
+    )
+    assert _count(text) == [(1, 2)]
+
+
+def test_different_division_does_not_collapse():
+    text = (
+        'create_unit = { division = "x" owner = ALG }\n'
+        'create_unit = { division = "y" owner = ALG }\n'
+    )
+    assert _count(text) == []
+
+
+def test_state_wrapped_create_units_not_flagged_here():
+    # Each create_unit lives in its own state scope -> braces separate them, so
+    # the count detector skips it (the state-id merge detector covers this).
+    text = (
+        '410 = { create_unit = { division = "x" owner = AFG } }\n'
+        '410 = { create_unit = { division = "x" owner = AFG } }\n'
+    )
+    assert _count(text) == []
+
+
+def test_intervening_effect_breaks_run():
+    text = (
+        'create_unit = { division = "x" owner = ALG }\n'
+        "set_temp_variable = { t = 1 }\n"
+        'create_unit = { division = "x" owner = ALG }\n'
+    )
+    assert _count(text) == []
+
+
+def test_blocks_with_own_count_not_flagged():
+    text = (
+        'create_unit = { division = "x" owner = ALG count = 1 }\n'
+        'create_unit = { division = "x" owner = ALG count = 1 }\n'
+    )
+    assert _count(text) == []
+
+
+# --- empty visible / available / allowed -----------------------------------
+
+
+def test_empty_visible_flagged():
+    assert _empty("visible = { }\n") == ["visible"]
+
+
+def test_empty_available_multiline_flagged():
+    assert _empty("available = {\n\n}\n") == ["available"]
+
+
+def test_empty_block_with_only_comment_flagged():
+    assert _empty("visible = {\n\t# todo\n}\n") == ["visible"]
+
+
+def test_nonempty_visible_not_flagged():
+    assert _empty("visible = { has_country_flag = x }\n") == []
+
+
+def test_other_empty_blocks_not_flagged():
+    # Only visible/available/allowed are safe to delete; limit/trigger are not.
+    assert _empty("limit = { }\ntrigger = { }\n") == []
+
+
+# --- government-match enumeration: positive cases --------------------------
+
+
+def test_exhaustive_same_government_collapses():
+    assert _gov(_all_five("FROM", "{t} = {{ has_government = {i} }}")) == [
+        "has_government = FROM"
+    ]
+
+
+def test_scoped_first_order_collapses():
+    # ARM = { has_government = X } before the bare check (france.txt shape).
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ ARM = {{ has_government = {i} }}  has_government = {i} }}".format(
+                i=i
+            )
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
+    assert _gov(text) == ["has_government = ARM"]
+
+
+def test_inner_not_different_government_collapses():
+    assert _gov(_all_five("SYR", "{t} = {{ NOT = {{ has_government = {i} }} }}")) == [
+        "NOT = { has_government = SYR }"
+    ]
+
+
+def test_outer_not_different_government_collapses():
+    assert _gov(_all_five("FROM", "NOT = {{ {t} = {{ has_government = {i} }} }}")) == [
+        "NOT = { has_government = FROM }"
+    ]
+
+
+# --- government-match enumeration: must NOT flag ---------------------------
+
+
+def test_non_exhaustive_three_ideologies_not_flagged():
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  FROM = { has_government = democratic } }\n"
+        "  AND = { has_government = communism  FROM = { has_government = communism } }\n"
+        "  AND = { has_government = fascism  FROM = { has_government = fascism } }\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_mixed_or_with_extra_condition_not_flagged():
+    # raids.txt shape: a same-gov AND beside unrelated OR operands.
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  FROM = { has_government = democratic } }\n"
+        "  has_war = yes\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_extra_clause_gate_not_flagged():
+    # Syria SyriaFocus.78 shape: exhaustive (all five groups), but one clause
+    # carries an original_tag gate, so it is not a clean two-condition
+    # comparison and must not collapse (the gate would be silently dropped).
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  FROM = { has_government = democratic } }\n"
+        "  AND = { has_government = communism  FROM = { has_government = communism } }\n"
+        "  AND = { has_government = fascism  FROM = { has_government = fascism } }\n"
+        "  AND = { has_government = neutrality  FROM = { has_government = neutrality } }\n"
+        "  AND = { original_tag = PAL  has_government = nationalist  FROM = { has_government = nationalist } }\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_extra_bare_condition_in_clause_not_flagged():
+    # Every clause carries an extra `has_war = yes`; collapsing to
+    # `has_government = FROM` would silently drop it.
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ has_government = {i}  has_war = yes  "
+            "FROM = {{ has_government = {i} }} }}".format(i=i)
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_extra_scope_block_in_clause_not_flagged():
+    # A second scope block (GER = { exists = yes }) is a real gate the collapse
+    # would drop.
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ has_government = {i}  GER = {{ exists = yes }}  "
+            "FROM = {{ has_government = {i} }} }}".format(i=i)
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_unrelated_not_inside_scope_not_misclassified():
+    # NOT wraps an unrelated trigger, not has_government; must not be read as a
+    # "different government" clause (and the extra trigger makes it non-clean).
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ has_government = {i}  "
+            "FROM = {{ NOT = {{ has_war = yes }} has_government = {i} }} }}".format(i=i)
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_double_negation_collapses_to_same():
+    # NOT = { FROM = { NOT = { has_government = X } } } is "same government".
+    text = (
+        "OR = {\n"
+        + "\n".join(
+            "  AND = {{ has_government = {i}  "
+            "NOT = {{ FROM = {{ NOT = {{ has_government = {i} }} }} }} }}".format(i=i)
+            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
+        )
+        + "\n}\n"
+    )
+    assert _gov(text) == ["has_government = FROM"]
+
+
+def test_inconsistent_target_not_flagged():
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  FROM = { has_government = democratic } }\n"
+        "  AND = { has_government = communism  SYR = { has_government = communism } }\n"
+        "  AND = { has_government = fascism  FROM = { has_government = fascism } }\n"
+        "  AND = { has_government = neutrality  FROM = { has_government = neutrality } }\n"
+        "  AND = { has_government = nationalist  FROM = { has_government = nationalist } }\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_mixed_sense_not_flagged():
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  FROM = { has_government = democratic } }\n"
+        "  AND = { has_government = communism  FROM = { NOT = { has_government = communism } } }\n"
+        "  AND = { has_government = fascism  FROM = { has_government = fascism } }\n"
+        "  AND = { has_government = neutrality  FROM = { has_government = neutrality } }\n"
+        "  AND = { has_government = nationalist  FROM = { has_government = nationalist } }\n"
+        "}\n"
+    )
+    assert _gov(text) == []

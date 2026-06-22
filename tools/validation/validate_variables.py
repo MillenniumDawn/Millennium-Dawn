@@ -6,12 +6,11 @@ import glob
 import os
 import re
 from multiprocessing import Pool
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import disk_cache
 from validator_common import (
     BaseValidator,
-    Colors,
     DataCleaner,
     FileOpener,
     Severity,
@@ -207,6 +206,30 @@ def process_file_for_all_targets(
         text_file,
         lambda: _scan_targets_in_text(text_file, filename),
     )
+
+
+def _scan_targets_in_loc(args: Tuple[str, Tuple[str, ...]]) -> set:
+    """Return which of `potential_targets` appear as [target.GetName]-style loc
+    references in one yml file. Pooled; the union across files is order-
+    independent, matching the old single-process accumulator exactly."""
+    filename, potential_targets = args
+    if should_skip_file(filename):
+        return set()
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=True, strip_comments_flag=True
+    )
+    found: set = set()
+    if ".get" in text_file:
+        for target in potential_targets:
+            tl = target.lower()
+            if (
+                f"[{tl}.getname" in text_file
+                or f"[{tl}.getadjective" in text_file
+                or f"[event_target:{tl}.getname" in text_file
+                or f"[event_target:{tl}.getadjective" in text_file
+            ):
+                found.add(target)
+    return found
 
 
 def _map_with_optional_pool(func, args_list, workers, pool, chunksize=50):
@@ -588,37 +611,21 @@ class Validator(BaseValidator):
             if target not in used_paths:
                 potential_results.append(target)
 
-        targets_used_in_loc = []
         if self.staged_files:
             yml_files_to_scan = [f for f in self.staged_files if f.endswith(".yml")]
         else:
-            yml_files_to_scan = glob.iglob(
-                os.path.join(self.mod_path, "**", "*.yml"), recursive=True
+            yml_files_to_scan = list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.yml"), recursive=True)
             )
 
-        for filename in yml_files_to_scan:
-            if should_skip_file(filename):
-                continue
-            # Lowercased on purpose: case-insensitive scan for
-            # [target.GetName]/[event_target:target.GetAdjective] loc usage so a
-            # target isn't falsely reported unused over a case difference.
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=True, strip_comments_flag=True
-            )
-
-            if ".get" in text_file:
-                not_encountered_targets = [
-                    i for i in potential_results if i not in targets_used_in_loc
-                ]
-                for target in not_encountered_targets:
-                    target_lower = target.lower()
-                    if (
-                        f"[{target_lower}.getname" in text_file
-                        or f"[{target_lower}.getadjective" in text_file
-                        or f"[event_target:{target_lower}.getname" in text_file
-                        or f"[event_target:{target_lower}.getadjective" in text_file
-                    ):
-                        targets_used_in_loc.append(target)
+        targets_tuple = tuple(potential_results)
+        targets_used_in_loc: set = set()
+        for found in self._pool_map(
+            _scan_targets_in_loc,
+            [(f, targets_tuple) for f in yml_files_to_scan],
+            chunksize=30,
+        ):
+            targets_used_in_loc |= found
 
         for target in potential_results:
             if target not in targets_used_in_loc:
@@ -742,7 +749,7 @@ class Validator(BaseValidator):
                 staged_files=self.staged_files,
                 workers=self.workers,
                 files_to_scan=all_txt_files,
-                pool=self._pool,
+                pool=self._get_pool(),
             )
             self.validate_cleared_flags(flag_type, fp_cleared, cleared_paths, set_paths)
             self.validate_missing_flags(flag_type, fp_missing, used_paths, set_paths)
@@ -755,7 +762,7 @@ class Validator(BaseValidator):
             staged_files=self.staged_files,
             workers=self.workers,
             files_to_scan=all_txt_files,
-            pool=self._pool,
+            pool=self._get_pool(),
         )
         self.validate_cleared_event_targets(et_cleared, et_set)
         self.validate_missing_event_targets(et_used, et_set)

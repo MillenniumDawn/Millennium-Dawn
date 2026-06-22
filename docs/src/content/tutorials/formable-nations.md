@@ -3,9 +3,7 @@ title: Formable Nations
 description: "Complete list of formable nations in Millennium Dawn, including requirements and member countries."
 ---
 
-# Formable Nations
-
-Millennium Dawn features a robust formable nations system that allows players to unite countries into larger political entities. Formable nations are created through the in-game decision system, where you integrate member states one by one.
+Millennium Dawn has a formable nations system that allows players to unite countries into larger political entities. Formable nations are created through the in-game decision system, where you integrate member states one by one.
 
 Formable nations can be toggled on or off via the **Game Rules** menu at game start. A rule also controls whether multiple players can form the same nation simultaneously.
 
@@ -79,8 +77,8 @@ The **European Federation** can be formed by EU member states through the Event 
 
 The **United Arab Republic** can be proclaimed by any sufficiently powerful Arab nation with an autocratic or nationalist government. It comes in two variants:
 
-- **Neo-Baathist UAR** — requires an emerging autocracy ideology
-- **Baathist UAR** — requires a nationalist ideology
+- **Neo-Baathist UAR**: requires an emerging autocracy ideology
+- **Baathist UAR**: requires a nationalist ideology
 
 The forming nation must hold at least regional power status. Other Arab nations can then be invited to join or may leave the union over time. If too many members leave, the UAR collapses.
 

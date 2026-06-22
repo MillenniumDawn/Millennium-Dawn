@@ -233,4 +233,4 @@ two_random_industrial_complex = yes
 
 Cost includes a building slot ($1.00). To give a building without a slot, subtract $1.00.
 
-For the full scripted effects library (economic, political, influence, energy), see `docs/src/content/resources/code-resource.md`.
+For the full scripted effects library (economic, political, influence, energy), see `docs/src/content/resources/scripted-effects-reference.md`.

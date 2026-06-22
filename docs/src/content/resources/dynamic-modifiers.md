@@ -3,7 +3,7 @@ title: Dynamic Modifiers
 description: How to use dynamic modifiers and their tooltips correctly in Millennium Dawn
 ---
 
-Dynamic modifiers are variable-driven national modifiers defined in `common/dynamic_modifiers/`. Unlike static ideas, their values change at runtime based on scripted variables — so a single modifier can produce different in-game effects depending on what a country has researched, built, or chosen.
+Dynamic modifiers are variable-driven national modifiers defined in `common/dynamic_modifiers/`. Unlike static ideas, their values change at runtime based on scripted variables, so a single modifier can produce different in-game effects depending on what a country has researched, built, or chosen.
 
 ---
 
@@ -26,10 +26,10 @@ The modifier is then added to a country via `add_dynamic_modifier`, and its back
 
 When a focus, decision, or event interacts with a dynamic modifier, a `custom_effect_tooltip` tells the player what is happening. There are two distinct keys:
 
-| Key                            | Renders as                      | When to use                                                                                        |
-| ------------------------------ | ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `adds_dynamic_modifier_tt`     | "Adds [Modifier] which grants:" | The block **also contains** `add_dynamic_modifier` — this is the first application of the modifier |
-| `modifies_dynamic_modifier_tt` | "Modifies [Modifier] by:"       | The block only changes variables — the modifier already exists on the country                      |
+| Key                            | Renders as                      | When to use                                                                                       |
+| ------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `adds_dynamic_modifier_tt`     | "Adds [Modifier] which grants:" | The block **also contains** `add_dynamic_modifier`, this is the first application of the modifier |
+| `modifies_dynamic_modifier_tt` | "Modifies [Modifier] by:"       | The block only changes variables, the modifier already exists on the country                      |
 
 Both keys are defined in `localisation/english/MD_dm_modifiers_l_english.yml`.
 
@@ -84,12 +84,12 @@ When multiple focuses are mutually exclusive paths that each add the same modifi
 Dynamic modifiers update every tick. Keep the following in mind:
 
 - Use dynamic modifiers sparingly. A large number of dynamic modifiers on many countries is expensive.
-- **Never** use `force_update_dynamic_modifier` — it forces a recalculation every frame and causes significant lag.
+- **Never** use `force_update_dynamic_modifier`: it forces a recalculation every frame and causes significant lag.
 - Prefer a smaller number of modifiers with many variables over many separate modifiers with few variables each.
 
 ---
 
 ## Related Resources
 
-- [Code Stylization Guide](/dev-resources/code-stylization-guide)
-- [Code Resource](/dev-resources/code-resource)
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/)
+- [Code Resource](/dev-resources/code-resource/)

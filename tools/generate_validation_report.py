@@ -5,9 +5,10 @@ Generate the Millennium Dawn validation PR report.
 Pipeline:
   1. Load per-validator JSON sidecars (falls back to parsing `.log` text).
   2. Dedupe issues that multiple validators surface about the same line.
-  3. Render a Markdown body — summary table, issues by file, collapsed logs.
-  4. Truncate if over GitHub's 65 536-byte comment limit.
-  5. Optionally post the body as a PR comment and/or emit Checks API annotations.
+  3. Render two bodies: a concise PR comment (summary table + step-summary
+     pointer) and a detailed step summary (full per-validator issue list).
+  4. Truncate the comment if over GitHub's 65 536-byte limit.
+  5. Optionally post the comment as a PR comment and/or emit Checks API annotations.
 
 All heavy lifting lives in `tools/report_lib/`; this file is just a CLI.
 """
@@ -41,16 +42,25 @@ def build_report(results_dir: str, ctx: ReportContext):
     flat_issues = [i for run in runs for i in run.issues]
     deduped = dedupe(flat_issues)
 
-    # PR comment — kept under 65 KB with truncation.
-    body = render(runs, deduped, ctx)
+    # PR comment — concise: verdict, summary-table counts, and a pointer to the
+    # step summary. The full per-validator issue list is dropped here so the
+    # comment stays small instead of dumping every finding into the PR thread.
+    body = render(
+        runs,
+        deduped,
+        ctx,
+        include_raw_logs=False,
+        include_validator_sections=False,
+    )
     body, truncated = truncate_if_needed(
         body,
         artifact_url=ctx.artifact_url or "",
         workflow_run_url=ctx.workflow_run_url or "",
     )
 
-    # Step summary — more issues, but skip raw logs (they're large and redundant
-    # with the structured issue list; omitting them keeps the summary under 1 MB).
+    # Step summary — the full report: every validator's issues, more of them, but
+    # skip raw logs (large and redundant with the structured list; omitting them
+    # keeps the summary under 1 MB).
     step_body = render(
         runs, deduped, ctx, max_visible=MAX_ISSUES_STEP_SUMMARY, include_raw_logs=False
     )

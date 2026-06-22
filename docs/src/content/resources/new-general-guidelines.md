@@ -110,7 +110,7 @@ traits = the trait of the advisor (see Trait List), X in the trait name is level
 
 cost = how expensive the character is, can leave at 100 for all
 
-ai_will_do_factor = add to all entries, can just use factor = 1 in all
+ai_will_do = { base = 1 } # standard for advisor entries; replace with real value if you want AI to weight this character
 
 You can also use visible = { } for the advisors. This means that the character will only become visible in game after certain triggers. For example I made Anatoly Khrulyov as an Army Chief for Abkhazia, but he will only be visible if Abkhazia is a subject of Russia. You can also use available = { } if you want the character to be visible to the player but can't be chosen until certain conditions are met
 

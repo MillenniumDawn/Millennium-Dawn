@@ -270,7 +270,7 @@
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
 	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 25.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
-	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
+	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 24
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
@@ -283,10 +283,19 @@
 	-- Nations with huge advantages will keep them, but the narrower the gap, the less effective the buffs get
 	-- these stats may be adjusted further, but for now, the scale remains 50% - 100%
 
-	NDefines.NMilitary.MAX_DIVISION_BRIGADE_WIDTH = 4 -- 5
+	NDefines.NMilitary.MAX_DIVISION_BRIGADE_WIDTH = 5 -- 5
 	NDefines.NMilitary.MIN_DIVISION_BRIGADE_HEIGHT = 3 -- 4
+	NDefines.NMilitary.MAX_REGIMENTAL_SUPPORT_WIDTH = 5		-- Max width of regimental supports in division designer.
+	NDefines.NMilitary.MAX_REGIMENTAL_SUPPORT_HEIGHT = 3		-- Max height of regimental supports in division designer.
+	NDefines.NMilitary.MAX_HQ_BATTALION_WIDTH = 1			-- Max width of regiments in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_BATTALION_HEIGHT = 4			-- Max height of regiments in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_SUPPORT_WIDTH = 1			-- Max width of support in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_SUPPORT_HEIGHT = 4			-- Max height of support in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_REGIMENTAL_SUPPORT_WIDTH = 0		-- Max width of regimental supports in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_REGIMENTAL_SUPPORT_HEIGHT = 0		-- Max height of regimental supports in division designer (Army HQ templates).
+	NDefines.NMilitary.REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS = { 1, 3, 5 } -- For each regimental support row, how many battalions are required in the regiment to be able to place a support in that row.
 	NDefines.NMilitary.HOURLY_ORG_MOVEMENT_IMPACT = -0.1 -- -0.2
-	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
+	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.6 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
 
 	NDefines.NMilitary.SOFT_ATTACK_TARGETING_FACTOR = 1.0 -- 1.0
@@ -295,8 +304,8 @@
 	NDefines.NMilitary.PIERCING_THRESHOLD_DAMAGE_VALUES = { 1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.55, 0.50 }
 	NDefines.NMilitary.SPOTTING_QUALITY_DROP_HOURS = 6 -- 4
 	NDefines.NMilitary.BASE_CHANCE_TO_AVOID_HIT = 80 -- 90
-	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50 -- 60
-	NDefines.NMilitary.ARMOR_VS_AVERAGE = 0.3 -- 0.4 Decrease armor from individual units, to make needing to average armor out more important
+	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 30 -- 60
+	NDefines.NMilitary.ARMOR_VS_AVERAGE = 0.4 -- 0.4 Reset this back up to try and improve tanks a little bit, keeping below to make pen better
 	NDefines.NMilitary.PEN_VS_AVERAGE = 0.425 -- 0.4 Increase pen avaiable to units, so that infantry has a better chance against armor
 
 	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 18 -- Vanilla 24
@@ -329,10 +338,12 @@
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.45 -- -0.5
 	NDefines.NMilitary.BASE_FORT_PENALTY = -0.075 -- -0.15
 	NDefines.NMilitary.RECON_SKILL_IMPACT = 2.5 -- 5
-	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.5 -- -0.35
-	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.3 -- -0.3
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.65 -- -0.35
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.4 -- -0.3
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_DEFENSE = 0.8 -- 0.75
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_DEFENSE_STEEPNESS = 625 -- 625
 	NDefines.NMilitary.SLOWEST_SPEED = 4 -- 4
-	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.6 -- -0.5
+	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.8 -- -0.5
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
 	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
 	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.45 -- 1.00
@@ -343,7 +354,7 @@
 	NDefines.NMilitary.NON_CORE_SUPPLY_SPEED = -0.20 -- -0.5
 	NDefines.NMilitary.NON_CORE_SUPPLY_AIR_SPEED = -0.10 -- -0.25
 	NDefines.NMilitary.OUT_OF_SUPPLY_MORALE = -0.15 -- -0.30
-	NDefines.NMilitary.AIR_SUPPORT_BASE = 0.5 -- 0.25
+	NDefines.NMilitary.AIR_SUPPORT_BASE = 0.45 -- 0.25
 	NDefines.NMilitary.REINFORCE_CHANCE = 0.05 -- 0.02
 	NDefines.NMilitary.PARACHUTE_DISRUPTED_AA_PENALTY = 0.75 -- 1
 	NDefines.NMilitary.PARACHUTE_COMPLETE_ORG = 0.3 -- 0.1
@@ -367,7 +378,7 @@
 	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_MAX = 10.0               -- Additional speed of strategic redeployment on max-level infrastructure
 	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_BASE = 20.0               -- Base speed of strategic redeployment when on railways -- vanilla is 15
 	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_MAX = 40.0                -- Additional speed of strategic redeployment on max-level railways -- vanilla is 25
-	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.4 -- 0.1
+	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.3 -- 0.1
 	NDefines.NMilitary.LAND_EQUIPMENT_BASE_COST = 5 -- 10 --Used to determine Upgrade Cost
 	NDefines.NMilitary.LAND_EQUIPMENT_RAMP_COST = 3 -- 5
 	NDefines.NMilitary.NAVAL_EQUIPMENT_BASE_COST = 15 -- 25
@@ -375,7 +386,7 @@
 	NDefines.NMilitary.FASTER_ORG_REGAIN_MULT = 0.40 -- 1.0
 	NDefines.NMilitary.SLOWER_ORG_REGAIN_MULT = -0.6 -- -0.5
 	NDefines.NMilitary.FRONT_MIN_PATH_TO_REDEPLOY = 3 -- 8
-	NDefines.NMilitary.BASE_CAPTURE_EQUIPMENT_RATIO = 0.06 -- 0.0
+	NDefines.NMilitary.BASE_CAPTURE_EQUIPMENT_RATIO = 0.05 -- 0.0
 	NDefines.NMilitary.GARRISON_ORDER_ARMY_CAP_FACTOR = 2.0 -- 3.0
 	NDefines.NMilitary.ACCLIMATIZATION_SPEED_GAIN = 0.1 -- 0.15
 	NDefines.NMilitary.ACCLIMATIZATION_LOSS_SPEED_FACTOR = 0.5 -- 2.0
@@ -389,7 +400,7 @@
 	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.02 -- 0.07
 	NDefines.NMilitary.ANTI_AIR_ATTACK_TO_AMOUNT = 0.005 -- 0.005
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 0.0003 -- 0.0001
-	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.25 -- 1.0
+	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.5 -- 1.0
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.0035 -- 0.0015
 	NDefines.NMilitary.TRAINING_EXPERIENCE_SCALE = 92.0 -- 62.0
 	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }
@@ -468,7 +479,7 @@
 	NDefines.NAir.NAVAL_STRIKE_CARRIER_MULTIPLIER = 7.5 -- 5.0
 	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.025 -- 0.05
 	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1.15 -- 2.0
-	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.25 -- 0.5
+	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.15 -- 0.5
 	NDefines.NAir.AIR_AGILITY_TO_NAVAL_STRIKE_AGILITY = 0.04 -- 0.01
 	NDefines.NAir.AIR_DAMAGE_TO_DIVISION_LOSSES = 1.5 -- 1.0
 	NDefines.NAir.BASE_STRATEGIC_BOMBING_HIT_SHIP_CHANCE = 0.30 -- 0.01
@@ -534,7 +545,8 @@
 		0,0, -- NUCLEAR
 		0,0, -- SAM
 	}
-
+	NDefines.NNavy.NAVAL_INVASION_PLAN_CAP = 4
+	NDefines.NNavy.COMBAT_MAX_GROUPS = 1 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 2 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_SCREENS_RATIO = 0.5 -- 0.25
 	NDefines.NNavy.DECRYPTION_SPOTTING_BONUS = 0.3 -- 0.2
@@ -794,6 +806,7 @@
 	NDefines.NAI.JOIN_ALLY_FASCIST_DESIRE = 25				-- -10
 	NDefines.NAI.JOIN_ALLY_COMMUNIST_DESIRE = 25				-- 75
 	NDefines.NAI.LENDLEASE_FRACTION_OF_PRODUCTION = 0.6		-- 0.5
+	NDefines.NAI.MINIMUM_MONTHLY_LEND_LEASE_EQUIPMENT = 25	-- 10 AI will not offer lend-lease if the monthly amount would be less than this
 	NDefines.NAI.PLAN_ATTACK_MIN_ORG_FACTOR_LOW = 0.85		-- 0.85
 	NDefines.NAI.PLAN_FRONTUNIT_DISTANCE_FACTOR = 20			-- 10
 	NDefines.NAI.PLAN_ATTACK_DEPTH_FACTOR = 1.2				-- 0.5
@@ -856,7 +869,6 @@
 	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_ARMY = 1					-- 0
 	NDefines.NAI.MINES_SWEEPING_PLANES_PER_MAX_MINES = 10				-- 150
 	NDefines.NAI.MINES_PLANTING_PLANES_PER_MAX_DESIRE = 5				-- 100
-
 
 	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25				-- 20
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 30				-- 25
@@ -1087,6 +1099,8 @@
 	NDefines.NSupply.SUPPLY_BASE_MULT = 0.4 -- 0.2
 	NDefines.NSupply.RAILWAY_CONVERSION_COOLDOWN = 6 -- 10
 	NDefines.NSupply.RAILWAY_CONVERSION_COOLDOWN_CORE = 3 -- 5
+	NDefines.NSupply.SUPPLY_FLOW_DROP_REDUCTION_AT_MAX_INFRA = 0.40 -- max infrastructure level will reduce the supply flow drop off by this ratio
+	NDefines.NSupply.SUPPLY_FLOW_PENALTY_CROSSING_RIVERS = 0.15 -- crossing rivers introduces additional penalty
 
 	-- NGeography Defines
 	NDefines.NGeography.MEDITERRANEAN_SEA_REGIONS = { 29, 68, 69, 168, 169, 214 }

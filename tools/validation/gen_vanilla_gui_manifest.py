@@ -8,6 +8,7 @@ from vanilla overrides. Run this after a HOI4 version bump:
 
 Requires the game installed (auto-detected, or set $HOI4_PATH).
 """
+
 import os
 import sys
 

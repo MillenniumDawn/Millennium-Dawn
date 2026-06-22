@@ -85,24 +85,41 @@ function resolveInfoboxStatKey(label: string): z.infer<typeof infoboxStatKeySche
   }
 }
 
-export const infoboxSchema = z.array(
-  z
-    .object({
-      section: z.string(),
-      kind: infoboxGroupKindSchema.optional(),
-      stats: z.array(
-        z.object({
-          label: z.string(),
-          value: z.string(),
-        }),
-      ),
-    })
-    .transform((group) => ({
-      ...group,
-      stats: group.stats.map((stat) => ({
-        ...stat,
-        key: resolveInfoboxStatKey(stat.label),
-      })),
-      kind: resolveInfoboxGroupKind(group.section, group.kind),
+const infoboxGroupSchema = z
+  .object({
+    section: z.string(),
+    kind: infoboxGroupKindSchema.optional(),
+    stats: z.array(
+      z.object({
+        label: z.string(),
+        value: z.string(),
+      }),
+    ),
+  })
+  .transform((group) => ({
+    ...group,
+    stats: group.stats.map((stat) => ({
+      ...stat,
+      key: resolveInfoboxStatKey(stat.label),
     })),
-);
+    kind: resolveInfoboxGroupKind(group.section, group.kind),
+  }));
+
+export const infoboxSchema = z
+  .array(infoboxGroupSchema)
+  .superRefine((groups, ctx) => {
+    for (const [groupIndex, group] of groups.entries()) {
+      if (group.kind !== "military_industry" && group.kind !== "economy") continue;
+
+      for (const [statIndex, stat] of group.stats.entries()) {
+        if (stat.key) continue;
+
+        ctx.addIssue({
+          code: "custom",
+          path: [groupIndex, "stats", statIndex, "label"],
+          message: `Unknown infobox label "${stat.label}" in section "${group.section}". Use the exact labels listed in CONTRIBUTING.md.`,
+        });
+      }
+    }
+  })
+  .default([]);

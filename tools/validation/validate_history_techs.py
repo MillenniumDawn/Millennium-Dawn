@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Validate technology prerequisites and equipment module unlocks in history files."""
+
 import glob
 import os
 import re
 from collections import defaultdict
-from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 import disk_cache
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+from validator_common import BaseValidator, run_validator_main, strip_comments
 
 
 def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict]:

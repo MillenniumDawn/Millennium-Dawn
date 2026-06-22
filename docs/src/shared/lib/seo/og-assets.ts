@@ -1,17 +1,13 @@
 import fs from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
 
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 export const OG_FONT_FAMILY = "KaTeX Sans Serif";
 
-const require = createRequire(import.meta.url);
-const KATEX_FONTS_DIRECTORY = path.join(path.dirname(require.resolve("katex/package.json")), "dist", "fonts");
-
 const FONT_PATHS = {
-  regular: path.join(KATEX_FONTS_DIRECTORY, "KaTeX_SansSerif-Regular.ttf"),
-  bold: path.join(KATEX_FONTS_DIRECTORY, "KaTeX_SansSerif-Bold.ttf"),
+  regular: path.resolve("src/assets/fonts/KaTeX_SansSerif-Regular.ttf"),
+  bold: path.resolve("src/assets/fonts/KaTeX_SansSerif-Bold.ttf"),
 } as const;
 
 const IMAGE_PATHS = {

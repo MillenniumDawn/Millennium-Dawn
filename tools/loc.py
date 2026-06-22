@@ -40,15 +40,15 @@ def readfile(name):
     try:
         with open(name, "r") as f:
             lines = f.read().splitlines()
-    except:
+    except Exception:
         try:
             with open(name, "r", encoding="utf-8") as f:
                 lines = f.read().splitlines()
-        except:
+        except Exception:
             try:
                 with open(name, "r", encoding="utf-8-sig") as f:
                     lines = f.read().splitlines()
-            except:
+            except Exception:
                 print("Could not read file " + name + "!")
     tags = collections.OrderedDict()
 
@@ -182,15 +182,15 @@ lines = list()
 try:
     with open(args.output, "r") as f:
         lines = f.read().splitlines()
-except:
+except Exception:
     try:
         with open(args.output, "r", encoding="utf-8") as f:
             lines = f.read().splitlines()
-    except:
+    except Exception:
         try:
             with open(args.output, "r", encoding="utf-8-sig") as f:
                 lines = f.read().splitlines()
-        except:
+        except Exception:
             print("Could not read file " + args.output + "!")
 output_lines = list()
 if len(lines) < 1:

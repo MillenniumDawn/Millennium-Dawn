@@ -10,6 +10,11 @@ import sys
 import tempfile
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import disk_cache
+from shared_utils import Colors
+
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 
@@ -17,6 +22,15 @@ TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 _NON_VALIDATOR_SCRIPTS = frozenset(
     ("validate_tools.py", "validate_staged.py", "run_all_validators.py")
 )
+
+# Opt-in flags that only one validator understands, applied by its discovered
+# `name` (validate_ideas.py -> "ideas"). The suite is non-strict by default, so
+# these surface as warnings without gating. --missing-loc is intentionally left
+# off — its ~7.8k backlog would drown the report; run it on demand instead.
+_VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
+    "ideas": ["--missing-icons"],
+    "focus-tree": ["--missing-icons"],
+}
 
 
 def discover_validators() -> List[Tuple[str, str, str]]:
@@ -62,6 +76,11 @@ def launch_validator(
     script_path = os.path.join(SCRIPTS_DIR, script_name)
     output_path = os.path.join(output_dir, f"{name}.txt")
 
+    combined_flags: List[str] = []
+    for flag in extra_flags + _VALIDATOR_EXTRA_FLAGS.get(name, []):
+        if flag not in combined_flags:
+            combined_flags.append(flag)
+
     cmd = [
         sys.executable,
         script_path,
@@ -69,13 +88,19 @@ def launch_validator(
         mod_path,
         "--output",
         output_path,
-    ] + extra_flags
+    ] + combined_flags
 
-    return subprocess.Popen(
+    # Capture stderr per validator so a crash leaves a traceback to read;
+    # previously DEVNULL made crashes undiagnosable from the suite output.
+    stderr_path = os.path.join(output_dir, f"{name}.stderr.log")
+    stderr_fh = open(stderr_path, "w", encoding="utf-8")
+    proc = subprocess.Popen(
         cmd,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=stderr_fh,
     )
+    proc._md_stderr_fh = stderr_fh
+    return proc
 
 
 def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
@@ -91,6 +116,20 @@ def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
         except Exception:
             pass
     return 0, 0
+
+
+def _print_stderr_tail(output_dir: str, name: str, max_lines: int = 15) -> None:
+    """Print the tail of a crashed validator's captured stderr (the traceback)."""
+    stderr_path = os.path.join(output_dir, f"{name}.stderr.log")
+    try:
+        with open(stderr_path, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.read().strip().splitlines()
+    except OSError:
+        return
+    if not lines:
+        return
+    for line in lines[-max_lines:]:
+        print(f"    {line}")
 
 
 def _issue_sort_key(issue: Dict):
@@ -125,11 +164,15 @@ def collect_all_issues(
                     # surviving representative vary between runs.
                     issues.sort(key=_issue_sort_key)
                     for issue in issues:
+                        # Message is part of the key — distinct findings on the
+                        # same line (e.g. two missing loc keys) must both survive.
+                        # Matches report_lib's dedupe key.
                         key = (
                             issue.get("file", ""),
                             issue.get("line", 0),
                             issue.get("severity", ""),
                             issue.get("category", ""),
+                            issue.get("message", ""),
                         )
                         if key not in seen_keys:
                             seen_keys.add(key)
@@ -205,14 +248,6 @@ def generate_combined_report(
     return "\n".join(lines)
 
 
-class Colors:
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    YELLOW = "\033[1;33m"
-    CYAN = "\033[0;36m"
-    NC = "\033[0m"
-
-
 def main():
     parser = argparse.ArgumentParser(description="Run all MD validators in parallel")
     parser.add_argument("--staged", action="store_true")
@@ -226,6 +261,23 @@ def main():
             "iterating on validator logic — cache keys on file stat, not on "
             "validator source, so logic changes are otherwise invisible until "
             "CACHE_VERSION bumps. Sets MD_NO_CACHE=1 for child validators."
+        ),
+    )
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help=(
+            "Delete the entire .validation_cache/ before running, then rebuild "
+            "it from scratch this run. Use to reset a stale or oversized cache."
+        ),
+    )
+    parser.add_argument(
+        "--cache-max-age-days",
+        type=float,
+        default=7.0,
+        help=(
+            "Auto-clear .validation_cache/ when it is older than this many days "
+            "(since creation/last clear), then rebuild. 0 disables. Default: 7."
         ),
     )
     parser.add_argument("--format", choices=["text", "json", "both"], default="text")
@@ -245,7 +297,7 @@ def main():
         Colors.GREEN = ""
         Colors.YELLOW = ""
         Colors.CYAN = ""
-        Colors.NC = ""
+        Colors.ENDC = ""
 
     extra_flags = []
     if args.staged:
@@ -263,6 +315,24 @@ def main():
     VALIDATORS = discover_validators()
     mod_path = os.path.abspath(args.path)
 
+    if args.clear_cache:
+        disk_cache.clear(mod_path)
+        disk_cache.stamp_created(mod_path)
+        print("Cleared .validation_cache/ (rebuilding from scratch this run).")
+    else:
+        # Auto-reset a cache that's been accumulating orphaned rows (deleted
+        # files, stale namespace hashes) for longer than the age limit.
+        if disk_cache.clear_if_stale(mod_path, args.cache_max_age_days):
+            print(
+                f"Cache older than {args.cache_max_age_days:g} day(s) — "
+                "cleared and rebuilding from scratch."
+            )
+        # Old CACHE_VERSION dirs are orphaned on a version bump (often 100k+
+        # files); drop them so the cache doesn't grow without bound.
+        pruned = disk_cache.prune_old_versions(mod_path)
+        if pruned:
+            print(f"Pruned stale cache version(s): {', '.join(sorted(pruned))}")
+
     # TemporaryDirectory guarantees cleanup even on crashes — the previous
     # mkdtemp + per-file os.remove pattern leaked the dir on every non-clean
     # run (strict failures, partial crashes, KeyboardInterrupt).
@@ -274,9 +344,9 @@ def main():
 
 def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     print(
-        f"{Colors.CYAN}{'=' * 80}{Colors.NC}\n"
-        f"{Colors.CYAN}Running Millennium Dawn Validation Suite{Colors.NC}\n"
-        f"{Colors.CYAN}{'=' * 80}{Colors.NC}\n"
+        f"{Colors.CYAN}{'=' * 80}{Colors.ENDC}\n"
+        f"{Colors.CYAN}Running Millennium Dawn Validation Suite{Colors.ENDC}\n"
+        f"{Colors.CYAN}{'=' * 80}{Colors.ENDC}\n"
     )
 
     print(f"Discovered {len(VALIDATORS)} validators")
@@ -299,27 +369,34 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     crashed_validators = []
 
     for name, _script, label in VALIDATORS:
-        returncode = processes[name].wait()
+        proc = processes[name]
+        returncode = proc.wait()
+        fh = getattr(proc, "_md_stderr_fh", None)
+        if fh is not None:
+            fh.close()
         error_count, warning_count = read_validator_counts(output_dir, name)
 
         if error_count > 0 or warning_count > 0:
             print(
-                f"{Colors.RED}✗ {label}{Colors.NC} ({error_count} errors, {warning_count} warnings)"
+                f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)"
             )
             total_errors += error_count
             total_warnings += warning_count
         elif returncode != 0:
             # Non-zero exit with no JSON output means the validator itself crashed
-            print(f"{Colors.RED}✗ {label}{Colors.NC} (crashed, exit code {returncode})")
+            print(
+                f"{Colors.RED}✗ {label}{Colors.ENDC} (crashed, exit code {returncode})"
+            )
+            _print_stderr_tail(output_dir, name)
             crashed_validators.append(label)
             total_errors += 1
         else:
-            print(f"{Colors.GREEN}✓ {label}{Colors.NC}")
+            print(f"{Colors.GREEN}✓ {label}{Colors.ENDC}")
 
-    print(f"\n{Colors.CYAN}{'=' * 80}{Colors.NC}")
+    print(f"\n{Colors.CYAN}{'=' * 80}{Colors.ENDC}")
 
     if total_errors == 0 and total_warnings == 0:
-        print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.NC}")
+        print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.ENDC}")
         return 0
 
     report = generate_combined_report(
@@ -343,7 +420,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             with open(args.output, "w") as f:
                 f.write(report)
             print(
-                f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.NC}"
+                f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.ENDC}"
             )
         else:
             print(f"\n{report}")
@@ -351,15 +428,17 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     if total_errors > 0:
         print(
             f"{Colors.RED}✗ VALIDATION FAILED \u2014 {total_errors} error(s), "
-            f"{total_warnings} warning(s){Colors.NC}"
+            f"{total_warnings} warning(s){Colors.ENDC}"
         )
     else:
         print(
             f"{Colors.YELLOW}⚠ VALIDATION COMPLETED WITH WARNINGS \u2014 "
-            f"{total_warnings} warning(s){Colors.NC}"
+            f"{total_warnings} warning(s){Colors.ENDC}"
         )
 
-    return 1 if args.strict else 0
+    # Warnings are advisory everywhere else (per-validator --strict gates on
+    # errors only; the CI legend says warnings never block) — match that here.
+    return 1 if (args.strict and total_errors > 0) else 0
 
 
 if __name__ == "__main__":

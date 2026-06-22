@@ -59,7 +59,9 @@ export function viteServeSrcImages(docsPackageRoot: string): Plugin {
         }
         const ct = MIME[extname(filePath).toLowerCase()] ?? "application/octet-stream";
         res.setHeader("Content-Type", ct);
-        createReadStream(filePath).on("error", () => next()).pipe(res);
+        createReadStream(filePath)
+          .on("error", () => next())
+          .pipe(res);
       });
     },
   };

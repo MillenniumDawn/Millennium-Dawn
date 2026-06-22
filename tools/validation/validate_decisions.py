@@ -4,6 +4,7 @@
 Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
+
 import glob
 import os
 import re
@@ -11,6 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
     FileOpener,
@@ -19,7 +21,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
 # Decisions activated dynamically (e.g. via variable-constructed IDs) that
 # cannot be detected by static analysis and should be excluded from the
@@ -57,6 +59,27 @@ def _scan_activations_in_file(filename: str) -> Tuple[set, set]:
 
 
 # --- Decision parsing helpers ---
+
+_REMOVE_DECISION_RE = re.compile(r"\bremove_decision\s*=\s*(\w+)")
+_REMOVE_TARGETED_BLOCK_RE = re.compile(
+    r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
+)
+_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\w+)")
+
+
+def _scan_external_removals(filename: str) -> set:
+    if _should_skip(filename):
+        return set()
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if "remove_decision" not in text_file:
+        return set()
+    out = set(_REMOVE_DECISION_RE.findall(text_file))
+    for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
+        out.update(_REMOVE_DECISION_NAME_RE.findall(block))
+    return out
+
 
 _TAG_TOKEN_PATTERN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
 
@@ -218,7 +241,7 @@ class DecisionFactory:
         self.desc_override = _top_level_field_value(dec, "desc")
 
 
-# Decisions parsing cache - enabled by default, disabled via --no-cache for CI
+# Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
 _DECISION_CACHE = {"enabled": True, "data": {}}
 
 
@@ -452,10 +475,10 @@ class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, fix: bool = False, no_cache: bool = False, **kwargs):
+    def __init__(self, *args, fix: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fix = fix
-        if no_cache:
+        if self.no_cache:
             _set_cache_enabled(False)
 
     def _apply_ai_factor_fixes(self, fixes: list):
@@ -1463,6 +1486,44 @@ class Validator(BaseValidator):
             "Targeted decisions using war_with_on_* = FROM (silently fails — use war_with_target_on_* = yes):",
         )
 
+    def validate_missing_war_hint(self):
+        """Flag decisions that declare war but carry no war_with_* hint.
+
+        A decision whose complete_effect/remove_effect/timeout_effect calls
+        create_wargoal or declare_war should set one of the war_with_on_* (fixed
+        target) or war_with_target_on_* (FROM target) attributes so the AI
+        prepares for the war. create_wargoal inside an effect_tooltip still
+        represents an intended war, so its presence counts; the hint anywhere in
+        the decision body clears it.
+        """
+        self._log_section(
+            "Checking decisions declaring war for a missing war_with_* hint..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+        hints = (
+            "war_with_on_complete",
+            "war_with_on_remove",
+            "war_with_on_timeout",
+            "war_with_target_on_complete",
+            "war_with_target_on_remove",
+            "war_with_target_on_timeout",
+        )
+
+        for d in factories:
+            if not re.search(r"\b(?:create_wargoal|declare_war_on)\b", d.raw):
+                continue
+            if any(hint in d.raw for hint in hints):
+                continue
+            results.append(f"{d.token:<55}{d.source_basename}")
+
+        self._report(
+            results,
+            "✓ No decisions declaring war without a war_with_* hint",
+            "Decisions that declare war but have no war_with_on_* / war_with_target_on_* hint (AI won't prepare):",
+        )
+
     def validate_cancel_if_not_visible(self):
         """Flag decisions with cancel_if_not_visible = yes but no visible block.
 
@@ -1613,26 +1674,15 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
 
-        remove_pat = re.compile(r"\bremove_decision\s*=\s*(\w+)")
-        remove_targeted_block_pat = re.compile(
-            r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
-        )
-        decision_name_pat = re.compile(r"\bdecision\s*=\s*(\w+)")
         externally_removed: set = set()
-
-        for filename in glob.iglob(
-            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        for found in self._pool_map(
+            _scan_external_removals,
+            list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+            ),
+            chunksize=30,
         ):
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if "remove_decision" not in text_file:
-                continue
-            externally_removed.update(remove_pat.findall(text_file))
-            for block in remove_targeted_block_pat.findall(text_file):
-                externally_removed.update(decision_name_pat.findall(block))
+            externally_removed |= found
 
         results = []
 
@@ -1717,6 +1767,7 @@ class Validator(BaseValidator):
         self.validate_missing_localisation()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
+        self.validate_missing_war_hint()
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
         self.validate_state_target_with_targets()
@@ -1730,11 +1781,6 @@ def _add_extra_args(parser):
         "--fix",
         action="store_true",
         help="Auto-fix decisions: insert 'ai_will_do = { base = 0 }' for missing AI factors, and move identical available blocks into visible",
-    )
-    parser.add_argument(
-        "--no-cache",
-        action="store_true",
-        help="Disable decision parsing cache (useful for CI runs where cache overhead exceeds benefit)",
     )
 
 

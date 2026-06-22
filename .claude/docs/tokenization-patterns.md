@@ -53,6 +53,8 @@ mio_catalog_entry_prereqs_yes = {
 
 `TRIG` resolves to (e.g.) `GENERIC_krepost_state_defense_bureau_unlock_btn_enabled`, a real scripted trigger name. The engine evaluates that per-MIO trigger and its `custom_trigger_tooltip` lines render with green/red icons.
 
+> **Gotcha — `^v` indexing is 0-based, `v` is 1-based.** The dynamic-list/loop `v` runs 1..N, but `add_to_array` builds the array 0-based, so `array^v` returns entry `v+1` (and `array^N` is out of range → empty token → falls into the `_unlock_btn_enabled = { always = no }` fallback). A scripted trigger can't `set_temp_variable` to decrement `v`, so reserve a never-read index-0 slot at array seeding to make the array 1-based. This was the cause of issue #1955 (catalogue criteria shifted by one).
+
 Reference: `common/scripted_triggers/01_international_triggers.txt:11-24` (`has_support_of_p5` uses meta_trigger with `thname = "[?FROM.GetTag]"`).
 
 ### Why this matters for tooltips
@@ -93,8 +95,10 @@ For meta substitution to interpolate cleanly, target trigger/effect names must b
 ## End-to-end example — MIO Unlock Catalog
 
 ```
-# 1. Master array seeded at startup
-add_to_array = { global.mio_catalog_all_tokens = token:GENERIC_krepost_state_defense_bureau }
+# 1. Master array seeded at startup. add_to_array is 0-based, but `v` is 1-based — reserve a
+#    never-read index-0 slot so real entries sit at 1..23 and `^v` lines up. See gotcha below.
+add_to_array = { global.mio_catalog_all_tokens = token:GENERIC_krepost_state_defense_bureau } # index 0 — reserved
+add_to_array = { global.mio_catalog_all_tokens = token:GENERIC_krepost_state_defense_bureau } # index 1
 # ...22 more
 
 # 2. Per-entity trigger named after the token

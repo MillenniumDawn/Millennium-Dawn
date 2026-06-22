@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Validate scripted localisation definitions and usage in Millennium Dawn."""
+
 import glob
 import os
 import re
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import disk_cache
 from validator_common import (
@@ -431,7 +432,7 @@ class Validator(BaseValidator):
                 return_paths=True,
                 staged_files=self.staged_files,
                 workers=self.workers,
-                pool=self._pool,
+                pool=self._get_pool(),
             )
         )
         # Usage scan ALWAYS goes full-repo — even in staged mode. Restricting
@@ -446,7 +447,7 @@ class Validator(BaseValidator):
             return_paths=True,
             staged_files=None,
             workers=self.workers,
-            pool=self._pool,
+            pool=self._get_pool(),
         )
 
         self.validate_missing_scripted_localisations(

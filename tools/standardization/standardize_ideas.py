@@ -374,7 +374,7 @@ class IdeaStandardizer(BaseStandardizer):
                 if block_name in self.WRAPPER_BLOCKS:
                     log_message(
                         "DEBUG",
-                        f"Found wrapper block: {block_name} at line {i+1}",
+                        f"Found wrapper block: {block_name} at line {i + 1}",
                         self.verbose,
                     )
                     output_lines.append(line)
@@ -389,7 +389,9 @@ class IdeaStandardizer(BaseStandardizer):
                     i = next_i
                 else:
                     log_message(
-                        "DEBUG", f"Found idea: {block_name} at line {i+1}", self.verbose
+                        "DEBUG",
+                        f"Found idea: {block_name} at line {i + 1}",
+                        self.verbose,
                     )
                     block_lines, next_i = extract_block(lines, i)
 

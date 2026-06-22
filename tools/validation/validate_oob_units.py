@@ -19,7 +19,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache
 from validator_common import (
     BaseValidator,
-    Colors,
     Severity,
     run_validator_main,
     strip_comments,
@@ -499,7 +498,7 @@ class Validator(BaseValidator):
         patterns = [
             "history/units/*.txt",
             "common/ai_templates/*.txt",
-            "common/scripted_effects/00_AI_templates.txt",
+            "common/scripted_effects/00_AI_scripted_effects.txt",
         ]
         return self._collect_files(patterns)
 

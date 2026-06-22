@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Validate idea definitions and usage in Millennium Dawn."""
+
+import argparse
 import os
 import re
 import sys
@@ -13,8 +15,8 @@ import disk_cache
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
-    Colors,
     FileOpener,
+    Issue,
     Severity,
     case_mismatch,
     casefold_index,
@@ -80,7 +82,10 @@ _HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
 # Categories where `allowed = { always = no }` is flagged as redundant
 # Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
 # (those without slot=/character_slot= or with hidden=yes)
-from shared_utils import extract_block_from_text  # noqa: E402
+from shared_utils import (
+    extract_block_from_text,  # noqa: E402
+    get_all_idea_categories,  # noqa: E402
+)
 from shared_utils import (  # noqa: E402
     get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
 )
@@ -108,12 +113,78 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
 
 
 _NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILINE)
+_PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([A-Za-z0-9_.-]+)", re.MULTILINE)
 _ALLOWED_ALWAYS_NO = re.compile(r"\ballowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_TAG_CHECK = re.compile(r"\ballowed\s*=\s*\{[^}]*\btag\s*=\s*([A-Z]{3})[^}]*\}")
 _PICTURE_LINE = re.compile(r"^\s+picture\s*=", re.MULTILINE)
 _ON_ADD_BLOCK_START = re.compile(r"\bon_add\s*=\s*\{")
 _LOG_LINE = re.compile(r'^\s*log\s*=\s*"[^"]*"\s*$')
+_IDEA_CATEGORIES_SPRITE = re.compile(r'name\s*=\s*"GFX_idea_categories"')
+_NO_OF_FRAMES = re.compile(r"\bno[Oo]f[Ff]rames\s*=\s*(\d+)")
+
+
+def _missing_icon_message(
+    idea_name: str,
+    cat: str,
+    name_override: Optional[str],
+    picture: Optional[str],
+    defined_sprites: frozenset,
+    hidden_cats: frozenset,
+) -> Optional[str]:
+    """Return a finding message if this idea's icon sprite is undefined, else None.
+
+    Resolution: `GFX_idea_<picture>` when picture is set, otherwise the
+    auto-registered `GFX_idea_<idea_name>` (a `name = X` override sprite also
+    counts). Character tokens and hidden categories never show an icon, so they
+    return None. Dynamic `[...]` picture values resolve at runtime and are skipped.
+    """
+    if cat == "character" or cat in hidden_cats:
+        return None
+
+    if picture is not None:
+        if "[" in picture or "]" in picture:
+            return None
+        sprite = f"GFX_idea_{picture}"
+        if sprite in defined_sprites:
+            return None
+        return f"{idea_name}: picture = {picture} -> {sprite} (undefined)"
+
+    accepted = {f"GFX_idea_{idea_name}"}
+    if name_override:
+        accepted.add(f"GFX_idea_{name_override}")
+    if accepted & defined_sprites:
+        return None
+    return f"{idea_name}: no picture and no auto-icon GFX_idea_{idea_name}"
+
+
+def _idea_categories_frame_count(gfx_dirs: List[str]) -> Optional[int]:
+    """Return noOfFrames of the GFX_idea_categories sprite, or None if absent.
+
+    Scans the given interface dirs in order (mod first, then vanilla) and
+    returns the frame count from the first definition found. A bare sprite with
+    no noOfFrames line means a single frame, so it returns 1.
+    """
+    for gfx_dir in gfx_dirs:
+        if not gfx_dir or not os.path.isdir(gfx_dir):
+            continue
+        for fname in sorted(os.listdir(gfx_dir)):
+            if not fname.endswith(".gfx"):
+                continue
+            try:
+                with open(
+                    os.path.join(gfx_dir, fname), encoding="utf-8-sig", errors="replace"
+                ) as fh:
+                    text = fh.read()
+            except Exception:
+                continue
+            m = _IDEA_CATEGORIES_SPRITE.search(text)
+            if not m:
+                continue
+            block, _ = extract_block_from_text(text, text.rfind("{", 0, m.start()))
+            fm = _NO_OF_FRAMES.search(block)
+            return int(fm.group(1)) if fm else 1
+    return None
 
 
 def _on_add_is_log_only(idea_text: str) -> bool:
@@ -152,7 +223,7 @@ class IdeaIssue:
 
 def _parse_ideas_from_file(
     filepath: str, mod_path: str
-) -> Tuple[Dict[str, Tuple[str, Optional[str]]], List[IdeaIssue]]:
+) -> Tuple[Dict[str, Tuple[str, Optional[str], Optional[str]]], List[IdeaIssue]]:
     """Read one ideas file and return (defined_ideas, issues), content-cached."""
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -160,19 +231,22 @@ def _parse_ideas_from_file(
     if not text:
         return {}, []
     return disk_cache.per_file_cached_by_content(
-        mod_path, "ideas.defs", filepath, text, lambda: _parse_ideas_from_text(text)
+        mod_path, "ideas.defs.v2", filepath, text, lambda: _parse_ideas_from_text(text)
     )
 
 
 def _parse_ideas_from_text(
     text: str,
-) -> Tuple[Dict[str, Tuple[str, Optional[str]]], List[IdeaIssue]]:
+) -> Tuple[Dict[str, Tuple[str, Optional[str], Optional[str]]], List[IdeaIssue]]:
     """Parse ideas-file text and return (defined_ideas, issues).
 
-    defined_ideas maps idea_name -> (category_name, name_override_or_None).
+    defined_ideas maps idea_name -> (category_name, name_override_or_None,
+    picture_or_None). `picture` is the raw value of the idea's `picture = X`
+    field (the icon's sprite resolves to `GFX_idea_X`); None when the idea
+    omits `picture`.
     issues is a list of IdeaIssue for problems found during parsing.
     """
-    defined: Dict[str, Tuple[str, Optional[str]]] = {}
+    defined: Dict[str, Tuple[str, Optional[str], Optional[str]]] = {}
     issues: List[IdeaIssue] = []
 
     lines = text.split("\n")
@@ -215,7 +289,7 @@ def _parse_ideas_from_text(
                 current_idea_line = lineno
                 idea_open_depth = depth - opens + 1
                 idea_lines = [line]
-                defined[token] = (category_name, None)
+                defined[token] = (category_name, None, None)
                 continue
 
         if current_idea is not None:
@@ -224,8 +298,10 @@ def _parse_ideas_from_text(
                 idea_text = "\n".join(idea_lines)
                 nm = _NAME_OVERRIDE_LINE.search(idea_text)
                 name_override = nm.group(1) if nm else None
-                cat, _ = defined[current_idea]
-                defined[current_idea] = (cat, name_override)
+                pm = _PICTURE_VALUE_LINE.search(idea_text)
+                picture = pm.group(1) if pm else None
+                cat, _, _ = defined[current_idea]
+                defined[current_idea] = (cat, name_override, picture)
 
                 if category_name in _ALWAYS_NO_CATEGORIES:
                     if _ALLOWED_ALWAYS_NO.search(idea_text):
@@ -294,6 +370,86 @@ def _scan_idea_refs(text: str) -> List[str]:
     return refs
 
 
+# Generous reference scan for the unused-idea check: any keyword that can name
+# an idea, plus block forms. Over-matching is safe here — it only marks more
+# ideas as "used", which makes the unused report conservative (fewer false
+# positives). `idea =` catches add_timed_idea/modify_timed_idea blocks;
+# `show_ideas_tooltip =` catches display-only "fake" idea references. IGNORECASE
+# so case-variant grants like `add_Ideas = X` (valid in-game) are still counted.
+_IDEA_REF_GENEROUS = re.compile(
+    r"\b(?:has_idea|add_ideas|remove_ideas|add_idea|remove_idea|swap_idea"
+    r"|show_ideas_tooltip|idea)"
+    r"\s*=\s*([A-Za-z0-9_.\-]+)",
+    re.IGNORECASE,
+)
+_IDEA_REF_BLOCK = re.compile(
+    r"\b(?:add_ideas|remove_ideas)\s*=\s*\{([^{}]*)\}", re.IGNORECASE
+)
+_WORD_TOKEN = re.compile(r"[A-Za-z0-9_.\-]+")
+
+# Meta-effect references build the idea name at runtime from a scope substitution,
+# e.g. `idea = tribute_idea_[ROOTTAG]` or `remove_ideas = foo_[THIS.GetTag]`. The
+# literal name (`tribute_idea_ABK`) is never written next to a keyword, so the
+# generous scan above only captures the static prefix before `[`. Record that
+# prefix under a sentinel so the unused check can treat any idea sharing it as
+# referenced. Only a non-empty prefix immediately followed by `[` qualifies, so
+# this stays precise (a literal `idea = foo` never matches `foobar`).
+_META_PREFIX_SENTINEL = "\x00meta:"
+_IDEA_REF_META = re.compile(
+    r"\b(?:has_idea|add_ideas|remove_ideas|add_idea|remove_idea|swap_idea"
+    r"|show_ideas_tooltip|idea)"
+    r"\s*=\s*([A-Za-z0-9_.\-]+)\[",
+    re.IGNORECASE,
+)
+
+# Dynamic-token ideas are applied at runtime via `add_ideas = var:<token>`, where
+# the literal name lives only in this registry and never next to an add_ideas
+# keyword. Treat any name registered here as referenced.
+_DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
+_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
+
+
+def _load_dynamic_token_names(mod_path: str) -> Set[str]:
+    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
+    path = os.path.join(mod_path, _DYNAMIC_TOKEN_FILE)
+    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
+    if not text:
+        return set()
+    return {
+        line.strip()
+        for line in text.splitlines()
+        if _DYNAMIC_TOKEN_LINE.match(line.strip())
+    }
+
+
+def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
+    """Pool worker: every idea name a file references, for the unused check.
+
+    Captures single (`add_ideas = X`), block (`add_ideas = { X Y }`), timed
+    (`idea = X`) and swap (`add_idea`/`remove_idea`) forms. Content-cached.
+    """
+    filepath, mod_path = args
+    if should_skip_file(filepath):
+        return []
+    text = FileOpener.open_text_file(
+        filepath, lowercase=False, strip_comments_flag=True
+    )
+    if not text:
+        return []
+
+    def _compute() -> List[str]:
+        refs = set(_IDEA_REF_GENEROUS.findall(text))
+        for m in _IDEA_REF_BLOCK.finditer(text):
+            refs.update(_WORD_TOKEN.findall(m.group(1)))
+        for prefix in _IDEA_REF_META.findall(text):
+            refs.add(_META_PREFIX_SENTINEL + prefix)
+        return sorted(refs)
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "ideas.refs_for_unused", filepath, text, _compute
+    )
+
+
 def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
     """Pool worker: return undefined idea references found in one file.
 
@@ -351,13 +507,15 @@ class Validator(BaseValidator):
 
     def __init__(self, *args, **kwargs):
         self.missing_loc = kwargs.pop("missing_loc", False)
+        self.missing_icons = kwargs.pop("missing_icons", False)
+        self.unused_ideas = kwargs.pop("unused_ideas", True)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
 
     def _parse_all_ideas(
         self,
     ) -> Tuple[
-        Dict[str, Tuple[str, Optional[str]]],
+        Dict[str, Tuple[str, Optional[str], Optional[str]]],
         Dict[str, List[IdeaIssue]],
         Dict[str, List[str]],
     ]:
@@ -373,7 +531,7 @@ class Validator(BaseValidator):
         self.staged_only = saved
         self.log(f"  Parsing {len(idea_files)} idea files...")
 
-        all_defined: Dict[str, Tuple[str, Optional[str]]] = {}
+        all_defined: Dict[str, Tuple[str, Optional[str], Optional[str]]] = {}
         issues_by_file: Dict[str, List[IdeaIssue]] = {}
         ideas_by_file: Dict[str, List[str]] = {}
 
@@ -399,14 +557,14 @@ class Validator(BaseValidator):
                 continue
             for token in idea_token_re.findall(text):
                 if token not in all_defined:
-                    all_defined[token] = ("character", None)
+                    all_defined[token] = ("character", None, None)
                     char_tokens += 1
         self.log(f"  Found {char_tokens} character idea_token entries")
 
         return all_defined, issues_by_file, ideas_by_file
 
     def validate_undefined_idea_refs(
-        self, defined_ideas: Dict[str, Tuple[str, Optional[str]]]
+        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
     ):
         self._log_section("Checking for undefined idea references...")
         self.log(f"  Known defined ideas: {len(defined_ideas)}")
@@ -455,52 +613,25 @@ class Validator(BaseValidator):
         fail_msg: str,
         severity: str = Severity.WARNING,
         category: str = "",
-        max_detail_per_file: int = 5,
     ):
-        """Report issues grouped by file with capped detail lines."""
-        total = sum(len(v) for v in issues_by_file.values())
-        if total == 0:
-            c = Colors.GREEN if self.use_colors else ""
-            e = Colors.ENDC if self.use_colors else ""
-            self.log(f"{c}{ok_msg}{e}")
-            return
+        """Record issues grouped under an arbitrary key (basename, category).
 
-        c_err = Colors.RED if severity == Severity.ERROR else Colors.YELLOW
-        c = c_err if self.use_colors else ""
-        e = Colors.ENDC if self.use_colors else ""
-
-        self.log(
-            f"{c}{fail_msg}{e}", "error" if severity == Severity.ERROR else "warning"
-        )
-        for filepath in sorted(issues_by_file):
-            items = issues_by_file[filepath]
-            basename = os.path.basename(filepath)
-            if len(items) <= max_detail_per_file:
-                for item in items:
-                    self.log(
-                        f"{c}  {basename}: {item}{e}",
-                        "error" if severity == Severity.ERROR else "warning",
-                    )
-            else:
-                for item in items[:max_detail_per_file]:
-                    self.log(
-                        f"{c}  {basename}: {item}{e}",
-                        "error" if severity == Severity.ERROR else "warning",
-                    )
-                self.log(
-                    f"{c}  {basename}: ... and {len(items) - max_detail_per_file} more{e}",
-                    "error" if severity == Severity.ERROR else "warning",
-                )
-
-        self.log(
-            f"{c}{total} issue(s) found across {len(issues_by_file)} file(s){e}",
-            "error" if severity == Severity.ERROR else "warning",
-        )
-
-        if severity == Severity.ERROR:
-            self.errors_found += total
-        else:
-            self.warnings_found += total
+        Thin wrapper over ``_report`` — display is deferred to the grouped
+        end-of-run render like everything else; the group key is kept in the
+        message since it isn't a resolvable file path.
+        """
+        findings = [
+            Issue(
+                severity=severity,
+                category=category or "",
+                message=f"{key}: {item}",
+                file="",
+                line=0,
+            )
+            for key in sorted(issues_by_file)
+            for item in issues_by_file[key]
+        ]
+        self._report(findings, ok_msg, fail_msg, severity=severity, category=category)
 
     def validate_idea_quality(self, issues_by_file: Dict[str, List[IdeaIssue]]):
         """Validate redundant patterns and misuse found during parsing."""
@@ -509,7 +640,18 @@ class Validator(BaseValidator):
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
         acw_pattern = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
 
-        grouped: Dict[str, List[str]] = defaultdict(list)
+        findings: List[Issue] = []
+
+        def _add(filepath: str, line: int, message: str):
+            findings.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="idea-quality",
+                    message=message,
+                    file=os.path.relpath(filepath, self.mod_path),
+                    line=line,
+                )
+            )
 
         for filepath in idea_files:
             text = FileOpener.open_text_file(
@@ -517,37 +659,45 @@ class Validator(BaseValidator):
             )
             if not text:
                 continue
-            basename = os.path.basename(filepath)
             for m in acw_pattern.finditer(text):
                 lineno = text[: m.start()].count("\n") + 1
-                grouped[basename].append(
-                    f"line {lineno}: redundant allowed_civil_war = {{ always = no }}"
+                _add(
+                    filepath,
+                    lineno,
+                    "redundant allowed_civil_war = { always = no }",
                 )
 
         for filepath, file_issues in issues_by_file.items():
-            basename = os.path.basename(filepath)
             for issue in file_issues:
                 if issue.issue_type == "allowed-always-no":
-                    grouped[basename].append(
-                        f"line {issue.line}: '{issue.idea_name}' has allowed = {{ always = no }} in {issue.category}"
-                        " (redundant; removing trades slightly more memory for faster load times)"
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has allowed = {{ always = no }} in {issue.category}"
+                        " (redundant; removing trades slightly more memory for faster load times)",
                     )
                 elif issue.issue_type == "cancel-always-no":
-                    grouped[basename].append(
-                        f"line {issue.line}: '{issue.idea_name}' has cancel = {{ always = no }} (checked hourly, always false)"
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has cancel = {{ always = no }} (checked hourly, always false)",
                     )
                 elif issue.issue_type == "tag-not-original-tag":
-                    grouped[basename].append(
-                        f"line {issue.line}: '{issue.idea_name}' uses tag = {issue.detail} in allowed (use original_tag for civil war safety)"
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' uses tag = {issue.detail} in allowed (use original_tag for civil war safety)",
                     )
                 elif issue.issue_type == "on-add-log-only":
-                    grouped[basename].append(
-                        f"line {issue.line}: '{issue.idea_name}' has on_add = {{ log = ... }} with no real effects"
-                        " (drop the on_add block — tracing-only logs are dead weight)"
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has on_add = {{ log = ... }} with no real effects"
+                        " (drop the on_add block — tracing-only logs are dead weight)",
                     )
 
-        self._report_grouped(
-            grouped,
+        self._report(
+            findings,
             "✓ No idea definition quality issues",
             "Idea definition issues:",
             severity=Severity.WARNING,
@@ -556,7 +706,7 @@ class Validator(BaseValidator):
 
     def validate_loc_consolidation(
         self,
-        defined_ideas: Dict[str, Tuple[str, Optional[str]]],
+        defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
         ideas_by_file: Dict[str, List[str]],
     ):
         """Suggest consolidation when sibling ideas in the same file share
@@ -572,7 +722,6 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for loc-consolidation opportunities...")
 
-        sys.path.insert(0, os.path.dirname(__file__))
         from validate_localisation import get_all_loc_keys
 
         loc_values, _ = get_all_loc_keys(self.mod_path, lowercase=False)
@@ -591,7 +740,9 @@ class Validator(BaseValidator):
             by_display: Dict[str, List[str]] = defaultdict(list)
 
             for idea_id in idea_ids:
-                _cat, name_override = defined_ideas.get(idea_id, (None, None))
+                _cat, name_override, _pic = defined_ideas.get(
+                    idea_id, (None, None, None)
+                )
                 if name_override is not None:
                     continue
                 display = loc_values.get(idea_id)
@@ -625,15 +776,13 @@ class Validator(BaseValidator):
             "Loc-consolidation suggestions (advisory — siblings with identical loc strings):",
             severity=Severity.WARNING,
             category="loc-consolidation",
-            max_detail_per_file=3,
         )
 
     def validate_missing_localisation(
-        self, defined_ideas: Dict[str, Tuple[str, Optional[str]]]
+        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
     ):
         self._log_section("Checking for ideas with missing localisation keys...")
 
-        sys.path.insert(0, os.path.dirname(__file__))
         from validate_localisation import get_all_loc_keys
 
         loc_dict, _ = get_all_loc_keys(self.mod_path, lowercase=False)
@@ -643,10 +792,9 @@ class Validator(BaseValidator):
         )
 
         grouped: Dict[str, List[str]] = defaultdict(list)
-        ideas_by_file: Dict[str, List[str]] = defaultdict(list)
 
         for idea_name in sorted(defined_ideas):
-            _cat, name_override = defined_ideas[idea_name]
+            _cat, name_override, _pic = defined_ideas[idea_name]
             primary_key = name_override if name_override else idea_name
             desc_key = primary_key + "_desc"
 
@@ -668,7 +816,252 @@ class Validator(BaseValidator):
             "Ideas missing localisation (grouped by category):",
             severity=Severity.WARNING,
             category="missing-idea-localisation",
-            max_detail_per_file=3,
+        )
+
+    def _build_idea_sprite_set(self) -> frozenset:
+        """Return every GFX sprite name defined across mod + vanilla interface/*.gfx.
+
+        Reuses the .gfx parser from validate_gfx_references so the icon check
+        and the gfx-reference check agree on what counts as "defined". Vanilla
+        sprites are folded in when a HOI4 install is discoverable, so ideas that
+        point at vanilla pictures (e.g. `picture = generic_military_reform`)
+        don't false-positive.
+        """
+        import glob as _glob
+
+        from validate_gfx_references import (
+            _find_vanilla_interface_dir,
+            _parse_gfx_file,
+        )
+
+        gfx_files = self._collect_files(["interface/*.gfx"], ignore_staged=True)
+        results = self._pool_map(
+            _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
+        )
+        defined: Set[str] = set()
+        for s in results:
+            defined.update(s)
+        self.log(
+            f"  Found {len(defined)} GFX sprites across {len(gfx_files)} mod .gfx files"
+        )
+
+        vanilla_dir = _find_vanilla_interface_dir()
+        if vanilla_dir:
+            vanilla_gfx = _glob.glob(os.path.join(vanilla_dir, "*.gfx"))
+            vanilla_results = self._pool_map(
+                _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
+            )
+            for s in vanilla_results:
+                defined.update(s)
+            self.log(f"  Added vanilla sprites from {vanilla_dir}")
+        else:
+            self.log(
+                "  No vanilla HOI4 install detected — ideas using vanilla "
+                "pictures may be reported (set HOI4_PATH to suppress)"
+            )
+        return frozenset(defined)
+
+    def validate_missing_icons(
+        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
+    ):
+        """Flag ideas whose icon sprite is not defined in any interface/*.gfx.
+
+        An idea's icon resolves two ways:
+          * `picture = X` present  -> `GFX_idea_X`
+          * `picture` omitted      -> `GFX_idea_<idea_name>`, which the engine
+            auto-registers when a sprite of that name exists.
+        Either way, if the resolved sprite isn't defined (mod or vanilla) the
+        idea renders a blank/placeholder icon.
+
+        Hidden categories (`hidden = yes`, e.g. hidden_ideas) never display an
+        icon, and character idea_tokens use the character portrait, so both are
+        skipped. For the no-picture branch a `name = X` override sprite
+        (`GFX_idea_X`) also counts as defined, since the engine may follow the
+        rename for the icon too.
+        """
+        self._log_section("Checking for ideas with missing icons...")
+
+        defined_sprites = self._build_idea_sprite_set()
+        hidden_cats = frozenset(
+            c["name"] for c in get_all_idea_categories(self.mod_path) if c["hidden"]
+        )
+
+        grouped: Dict[str, List[str]] = defaultdict(list)
+        checked = 0
+
+        for idea_name in sorted(defined_ideas):
+            cat, name_override, picture = defined_ideas[idea_name]
+            if cat == "character" or cat in hidden_cats:
+                continue
+            checked += 1
+            msg = _missing_icon_message(
+                idea_name, cat, name_override, picture, defined_sprites, hidden_cats
+            )
+            if msg:
+                grouped[cat].append(msg)
+
+        self.log(f"  Checked {checked} idea icons (explicit picture + auto-registered)")
+        self._report_grouped(
+            grouped,
+            "✓ All idea picture sprites are defined",
+            "Ideas with missing icons (picture sprite not defined in interface/*.gfx):",
+            severity=Severity.WARNING,
+            category="missing-idea-icon",
+        )
+
+    def validate_category_icon_frames(self):
+        """Check GFX_idea_categories has enough frames for the politics-view rows.
+
+        Each politics-view idea category (one with idea slots, not a character/
+        designer/national-spirit category and not hidden) draws its row icon
+        from a frame of GFX_idea_categories, assigned by definition order in
+        common/idea_tags/*.txt. When the category count outruns the sprite's
+        noOfFrames, the trailing categories render a missing/placeholder icon —
+        the case the convention warns about ("update the sprite and the amount
+        of frames accordingly").
+        """
+        self._log_section("Checking GFX_idea_categories frame coverage...")
+
+        from validate_gfx_references import _find_vanilla_interface_dir
+
+        categories = get_all_idea_categories(self.mod_path)
+        # Frame-consuming rows: visible, no special UI (no type, no character_slot).
+        row_categories = [
+            c["name"]
+            for c in categories
+            if not c["hidden"] and not c["has_char_slot"] and c["type"] is None
+        ]
+
+        mod_interface = os.path.join(self.mod_path, "interface")
+        vanilla_interface = _find_vanilla_interface_dir()
+        frames = _idea_categories_frame_count([mod_interface, vanilla_interface])
+
+        if frames is None:
+            self.log(
+                "  GFX_idea_categories not found in mod or vanilla interface — skipping"
+            )
+            return
+        self.log(
+            f"  {len(row_categories)} politics-view categories vs "
+            f"{frames} GFX_idea_categories frame(s)"
+        )
+
+        issues: List[str] = []
+        if len(row_categories) > frames:
+            overflow = row_categories[frames:]
+            issues.append(
+                f"{len(row_categories)} politics-view idea categories defined but "
+                f"GFX_idea_categories has only {frames} frame(s) — these render a "
+                f"missing icon: {', '.join(overflow)}. Add frames to the sprite "
+                f"(noOfFrames) and the idea_categories.dds strip."
+            )
+
+        self._report(
+            issues,
+            "✓ GFX_idea_categories has enough frames for all categories",
+            "GFX_idea_categories frame shortage:",
+            severity=Severity.WARNING,
+            category="idea-category-icon-frames",
+        )
+
+    def validate_unused_ideas(
+        self,
+        defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
+        ideas_by_file: Dict[str, List[str]],
+    ):
+        """Flag script-added ideas that are defined but never referenced.
+
+        Scoped to non-selectable categories (country spirits, hidden_ideas):
+        those ideas only enter play through `add_ideas` / `swap_ideas` / timed
+        ideas in focuses, events, decisions, scripted effects or history. One
+        that is referenced nowhere is dead weight. Selectable categories
+        (manufacturers, designers, budget sliders) are excluded — the player
+        picks those in the UI, so they are never `add_ideas`'d by design.
+
+        In staged mode only ideas *defined in a staged file* are reported —
+        the repo-wide backlog is a full-run audit, not pre-commit feedback.
+        The reference scan is always repo-wide either way.
+
+        Reference matching is deliberately generous (it also accepts a bare
+        `idea = X`), so a few ideas built from a runtime-constructed name can
+        still slip through; this is a WARNING, never an error.
+        """
+        self._log_section("Checking for unused ideas (defined but never referenced)...")
+
+        defining_file: Dict[str, str] = {}
+        for filepath, names in ideas_by_file.items():
+            for name in names:
+                defining_file.setdefault(name, filepath)
+
+        non_selectable = _get_non_selectable_idea_categories(self.mod_path)
+        candidates = {
+            name: cat
+            for name, (cat, _ovr, _pic) in defined_ideas.items()
+            if cat in non_selectable and cat != "character"
+        }
+        if self.staged_only:
+            staged_set = set(self.staged_files or [])
+            candidates = {
+                name: cat
+                for name, cat in candidates.items()
+                if any(defining_file.get(name, "").endswith(sf) for sf in staged_set)
+            }
+        if not candidates:
+            self.log("  No non-selectable ideas to check.")
+            return
+
+        scan_files = self._collect_files(
+            [
+                "common/**/*.txt",
+                "events/**/*.txt",
+                "history/**/*.txt",
+            ],
+            ignore_staged=True,
+        )
+        self.log(
+            f"  Scanning {len(scan_files)} files for references to "
+            f"{len(candidates)} non-selectable ideas..."
+        )
+        ref_lists = self._pool_map(
+            _scan_idea_refs_for_unused, [(f, self.mod_path) for f in scan_files]
+        )
+        referenced: Set[str] = set()
+        for sub in ref_lists:
+            referenced.update(sub)
+        referenced.update(_load_dynamic_token_names(self.mod_path))
+
+        # Prefixes from meta-effect references (`idea = tribute_idea_[ROOTTAG]`).
+        # Any candidate whose name starts with one is built at runtime, not dead.
+        meta_prefixes = tuple(
+            ref[len(_META_PREFIX_SENTINEL) :]
+            for ref in referenced
+            if ref.startswith(_META_PREFIX_SENTINEL)
+        )
+
+        findings: List[Issue] = []
+        for name in sorted(candidates):
+            if name in referenced:
+                continue
+            if name.startswith(meta_prefixes):
+                continue
+            src = defining_file.get(name, "")
+            findings.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="unused-idea",
+                    message=f"'{name}' ({candidates[name]}) is defined but never referenced",
+                    file=os.path.relpath(src, self.mod_path) if src else "",
+                    line=0,
+                )
+            )
+
+        self._report(
+            findings,
+            "✓ All non-selectable ideas are referenced",
+            "Unused ideas (defined in a script-added category but never "
+            "add_ideas'd / swap_ideas'd / referenced anywhere):",
+            severity=Severity.WARNING,
+            category="unused-idea",
         )
 
     def run_validations(self):
@@ -699,6 +1092,8 @@ class Validator(BaseValidator):
             self.validate_idea_quality(issues_by_file)
             ideas_for_consolidation = ideas_by_file
 
+        self.validate_category_icon_frames()
+
         if self.suggest_consolidation:
             if ideas_for_consolidation:
                 self.validate_loc_consolidation(defined_ideas, ideas_for_consolidation)
@@ -714,6 +1109,20 @@ class Validator(BaseValidator):
                 "Skipping missing localisation check (pass --missing-loc to enable)"
             )
 
+        if self.missing_icons:
+            self.validate_missing_icons(defined_ideas)
+        else:
+            self._log_section(
+                "Skipping missing icon check (pass --missing-icons to enable)"
+            )
+
+        if self.unused_ideas:
+            self.validate_unused_ideas(defined_ideas, ideas_by_file)
+        else:
+            self._log_section(
+                "Skipping unused idea check (pass --no-unused-ideas to disable)"
+            )
+
 
 def _add_extra_args(parser):
     parser.add_argument(
@@ -721,6 +1130,19 @@ def _add_extra_args(parser):
         action="store_true",
         dest="missing_loc",
         help="Enable the missing localisation check (noisy until backlog is cleared)",
+    )
+    parser.add_argument(
+        "--missing-icons",
+        action="store_true",
+        dest="missing_icons",
+        help="Enable the missing icon check (flags ideas whose picture sprite is undefined)",
+    )
+    parser.add_argument(
+        "--unused-ideas",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        dest="unused_ideas",
+        help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced (enabled by default; use --no-unused-ideas to disable)",
     )
     parser.add_argument(
         "--suggest-consolidation",

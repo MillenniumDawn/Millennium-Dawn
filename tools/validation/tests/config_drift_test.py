@@ -9,8 +9,8 @@ one side only. These tests fail when that happens, so the gap surfaces at PR
 time instead of as a "passed locally, failed CI" surprise.
 
 Scope is `tools/validation/validate_*.py` only. The linting scripts in
-`tools/linting/` (coding_standards, check_basic_style*, check_common_mistakes)
-are few, stable, and not matrix-driven, so they are out of scope here.
+`tools/linting/` (check_common_mistakes, fix_styling) are few, stable, and not
+matrix-driven, so they are out of scope here.
 
 Intentional exceptions live in the EXEMPT / ALLOWED sets below, each with a
 reason. The guard also checks those sets stay current: an exemption that no
@@ -31,6 +31,12 @@ CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 
 # Validators intentionally absent from the CI matrices. Each needs a reason.
 CI_EXEMPT = {
+    # Runs in the standalone styling-check job, diff-scoped to the changed
+    # .txt files (MD_STAGED_FILES from detect-changes' style_files output) so a
+    # PR is gated on the style it introduced, not the repo-wide backlog. Can't
+    # join the validate-core/validate-targeted matrices: those run full-repo
+    # with no diff-list injection, which would resurface the whole backlog.
+    "validate_style.py",
     # Needs vanilla HOI4 00_defines.lua, which isn't checked into the repo, so
     # it can only run as a contributor's pre-commit hook.
     "validate_defines.py",
@@ -59,8 +65,28 @@ def _discover_disk_validators():
     return {p.name for p in VALIDATION_DIR.glob("validate_*.py")}
 
 
+def _dispatcher_routed():
+    """validate_*.py folded into the parallel commit-stage dispatcher
+    (tools/precommit_validate.py) instead of a standalone md-validate-* hook.
+
+    The dispatcher runs them on commit, so they count as default-stage hooks
+    with the --strict flag recorded in its registry."""
+    import sys
+
+    sys.path.insert(0, str(REPO_ROOT / "tools"))
+    from precommit_validate import _REGISTRY
+
+    return {
+        f"{spec.script}.py": {"strict": spec.strict, "stage": "default"}
+        for spec in _REGISTRY
+    }
+
+
 def _parse_precommit():
-    """Map validate_*.py -> {'strict': bool, 'stage': 'default'|'manual'}."""
+    """Map validate_*.py -> {'strict': bool, 'stage': 'default'|'manual'}.
+
+    Includes both standalone `md-validate-*` hooks and the validators folded
+    into the parallel commit-stage dispatcher."""
     cfg = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
     result = {}
     for repo in cfg.get("repos", []):
@@ -74,6 +100,9 @@ def _parse_precommit():
                 "strict": "--strict" in entry,
                 "stage": "manual" if "manual" in stages else "default",
             }
+    # A standalone hook (e.g. the manual full-run) wins over the dispatcher entry.
+    for script, meta in _dispatcher_routed().items():
+        result.setdefault(script, meta)
     return result
 
 
@@ -140,12 +169,27 @@ def test_every_disk_validator_runs_on_ci(disk, ci):
     )
 
 
-def test_every_disk_validator_is_a_precommit_hook(disk, precommit):
-    missing = sorted(disk - set(precommit) - PRECOMMIT_EXEMPT)
-    assert not missing, (
-        "Validators exist on disk but have no md-validate-* hook "
-        f"(.pre-commit-config.yaml): {missing}. Add a hook, or add it to "
+def test_every_disk_validator_runs_somewhere(disk, precommit, ci):
+    # A validator must run on pre-commit OR in CI, or it is dead code. The
+    # expensive cross-reference validators run CI-only (their unused manual
+    # pre-commit hooks were removed); the CI-exempt ones (style, defines,
+    # unused_textures) run pre-commit-only. Neither side is required alone, but
+    # a validator in NEITHER place runs nowhere.
+    orphaned = sorted(disk - set(precommit) - set(ci) - PRECOMMIT_EXEMPT)
+    assert not orphaned, (
+        f"Validators run neither on pre-commit nor in CI: {orphaned}. Wire each "
+        "into .pre-commit-config.yaml or the CI matrix, or add to "
         "PRECOMMIT_EXEMPT with a reason."
+    )
+
+
+def test_ci_exempt_validators_run_on_precommit(disk, precommit, ci):
+    # A validator that CI cannot run (CI_EXEMPT) has pre-commit as its only home,
+    # so it must be wired there or it runs nowhere.
+    homeless = sorted((CI_EXEMPT & disk) - set(precommit) - set(ci))
+    assert not homeless, (
+        f"CI-exempt validators with no pre-commit hook: {homeless}. They run "
+        "nowhere — add a hook in .pre-commit-config.yaml."
     )
 
 
@@ -185,9 +229,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert (
-        not gone
-    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    assert not gone, (
+        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    )
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED

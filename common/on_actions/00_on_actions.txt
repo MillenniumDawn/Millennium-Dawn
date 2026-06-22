@@ -7,13 +7,13 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
+					has_tech = beachhead_raiding_parties
 					ROOT = {
 						divisions_in_state = {
-							unit = L_Marine_Bat
+							unit = L_Marine_Cdo_Bat
 							size > 0
 							state = PREV
 						}
-						has_tech = marine_commandos # Marine Commandos
 					}
 					NOT = { has_state_flag = marines_commando_effect }
 					OWNER = { NOT = { tag = ROOT } }
@@ -23,12 +23,12 @@ on_actions = {
 			if = {
 				limit = {
 					ROOT = {
+						has_tech = marine_raider_groups
 						divisions_in_state = {
 							unit = L_Marine_Cdo_Bat
 							size > 0
 							state = PREV
 						}
-						has_tech = marine_commandos # Marine Commandos
 					}
 					NOT = { has_state_flag = marines_commando_effect }
 					OWNER = { NOT = { tag = ROOT } }
@@ -48,6 +48,11 @@ on_actions = {
 							size > 0
 							state = PREV
 						}
+						divisions_in_state = {
+							unit = pathfinder_company
+							size > 0
+							state = PREV
+						}
 					}
 					NOT = { has_state_flag = para_drop_effect }
 					CONTROLLER = { NOT = { tag = FROM } }
@@ -57,25 +62,18 @@ on_actions = {
 			if = {
 				limit = {
 					FROM = {
-						has_completed_subdoctrine = airborn_forces_subdoctrine
-						divisions_in_state = {
-							unit = Mech_Air_Inf_Bat
-							size > 0
-							state = PREV
-						}
-					}
-					NOT = { has_state_flag = para_drop_effect }
-				}
-				SF_PARA_combat_effect = yes
-			}
-			if = {
-				limit = {
-					FROM = {
-						has_completed_subdoctrine = airborn_forces_subdoctrine
-						divisions_in_state = {
-							unit = Arm_Air_Inf_Bat
-							size > 0
-							state = PREV
+						has_tech = coordinated_combat_jumps
+						OR = {
+							divisions_in_state = {
+								unit = L_Air_Inf_Bat
+								size > 0
+								state = PREV
+							}
+							divisions_in_state = {
+								unit = Mot_Air_Inf_Bat
+								size > 0
+								state = PREV
+							}
 						}
 					}
 					NOT = { has_state_flag = para_drop_effect }
@@ -99,6 +97,11 @@ on_actions = {
 					limit = { has_decision = gdp_c_gain_slot }
 					add_to_variable = { global.research_screen_ui = 1 }
 				}
+			}
+			else = {
+				division_limiter_calculation = yes
+				plane_limiter_calculation = yes
+				ship_limiter_calculation = yes
 			}
 		}
 	}
@@ -181,13 +184,6 @@ on_actions = {
 	# country, FROM = target nation
 	on_justifying_wargoal_pulse = {
 		effect = {
-			if = {
-				limit = { FROM = { is_ai = yes } }
-				FROM = {
-					ai_update_build_units = yes
-				}
-			}
-
 			# reset every day, stays lingering for some time after justification is finished
 			set_country_flag = { flag = country_is_justified_on_flag value = 1 days = 70 }
 		}
@@ -1363,10 +1359,9 @@ on_actions = {
 		effect = {
 			if = { limit = { ROOT = { original_tag = ITA } }
 				ROOT = {
-					set_temp_variable = { ITA_stability_factor_change = 0.6 }
-					modify_stability_factor_effect = yes
-					set_temp_variable = { ITA_stability_weekly_change = 0.003 }
-					modify_stability_weekly_effect = yes
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+					add_to_variable = { ITA_stability_factor_var = 0.6 tooltip = stability_factor_tt }
+					add_to_variable = { ITA_stability_weekly_var = 0.003 tooltip = stability_weekly_tt }
 				}
 			}
 
@@ -1581,6 +1576,7 @@ on_actions = {
 			set_variable = { global.jpy_reserve_adoption_count = 0 }
 			set_variable = { global.gbp_reserve_adoption_count = 0 }
 			set_variable = { global.chf_reserve_adoption_count = 0 }
+			set_variable = { global.nlg_reserve_adoption_count = 0 }
 			set_variable = { global.general_operating_budget_contribute_percent = 0.0001 }
 
 			ABK = {
@@ -1629,6 +1625,9 @@ on_actions = {
 			}
 			LBA = {
 				update_gaddafi_family_ideas = yes
+			}
+			HOL = {
+				HOL_evaluate_coalition_focus_loops = yes
 			}
 
 			### for topbar without LaR
@@ -1719,7 +1718,8 @@ on_actions = {
 				}
 
 				# Implemented Cartel Nations
-				if = { limit = { is_cartel_nation = yes }
+				# HOL activates via the Mocro Maffia chain (~2012), not at startup
+				if = { limit = { is_cartel_nation = yes  NOT = { original_tag = HOL } }
 					set_country_flag = is_cartel_nation
 					calculate_cartel_penalty = yes
 				}
@@ -1728,10 +1728,9 @@ on_actions = {
 				if = {
 					limit = {
 						is_ai = yes
-						MD_special_countries = no
+						NOT = { MD_special_countries = yes }
 					}
 					give_AI_templates = yes
-					ai_update_build_units = yes
 					if = { limit = { gifted_income_list = yes }
 						set_variable = { population_tax_rate = 25 }
 						set_variable = { corporate_tax_rate = 20 }
@@ -1766,6 +1765,32 @@ on_actions = {
 				setup_missile_configuration_effect = yes
 
 				mio_catalog_rebuild_visible_yes = yes
+
+				increment_global_reserve_currency = yes
+
+				# Needed for inflation initialization
+				set_variable = { last_quarter_gdp_total = gdp_total }
+				set_variable = { last_quarter_gdpc_total = gdp_per_capita }
+
+				if = { limit = { is_ai = no }
+					add_to_array = { global.player_nations = THIS.id }
+					graph_initial_setup = yes
+
+					set_variable = { MD_tradeview_tab_trade_state = 1 }
+					set_variable = { MD_tradeview_tab_economy_state = 2 }
+
+					country_event = systems.1
+
+					if = {
+						limit = {
+							has_game_rule = {
+								rule = rule_internal_faction_cost_reduction
+								option = yes
+							}
+						}
+						add_ideas = GAME_RULE_reduce_internal_factions_cost
+					}
+				}
 			}
 
 			ABK = {
@@ -1782,58 +1807,17 @@ on_actions = {
 				counter_terror_global_setup = yes
 
 				# Calculate United Nation's Base Budget'
+				# Flag suppresses the UN.30x revocation popups for recipients whose
+				# start economy already exceeds the thresholds (silent startup strip).
+				set_global_flag = un_initial_subsidy_pass
 				calculate_united_nations_base_budget = yes
+				clr_global_flag = un_initial_subsidy_pass
 
 				every_country = {
-					# Needed for inflation initialization
-					set_variable = { last_quarter_gdp_total = gdp_total }
-					set_variable = { last_quarter_gdpc_total = gdp_per_capita }
-
 					calculate_starting_mio_size = yes
-
-					# Calculate Reserve Adoption Size
-					if = { limit = { has_idea = us_dollar }
-						add_to_variable = { global.usd_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = euro }
-						add_to_variable = { global.eur_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = chinese_yuan }
-						add_to_variable = { global.cny_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = russia_rouble }
-						add_to_variable = { global.rub_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = japanese_yen }
-						add_to_variable = { global.jpy_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = british_pound }
-						add_to_variable = { global.gbp_reserve_adoption_count = 1 }
-					}
-					else_if = { limit = { has_idea = swiss_frank }
-						add_to_variable = { global.chf_reserve_adoption_count = 1 }
-					}
 
 					if = { limit = { is_ai = yes }
 						yearly_investment_targets_routine = yes
-					}
-					else = {
-						add_to_array = { global.player_nations = THIS.id }
-						graph_initial_setup = yes
-
-						set_country_flag = construction_speeds_visible_in_menu
-
-						country_event = systems.1
-
-						if = {
-							limit = {
-								has_game_rule = {
-									rule = rule_internal_faction_cost_reduction
-									option = yes
-								}
-							}
-							add_ideas = GAME_RULE_reduce_internal_factions_cost
-						}
 					}
 				}
 			}
@@ -1858,6 +1842,7 @@ on_actions = {
 			PER_asadollah_change = yes
 			PER_saneei_change = yes
 			PER_montazeri_change = yes
+			if = { limit = { original_tag = HOL } HOL_evaluate_coalition_focus_loops = yes }
 			if = {
 				limit = {
 					original_tag = PER
@@ -2003,7 +1988,6 @@ on_actions = {
 						set_law_vars = yes 	#vars for change laws secondary effects
 						update_neighbors_effects = yes # Updates Neighbor Effects
 						economic_cycle_drift_popularity = yes #drift from neighbor
-						ai_update_build_units = yes
 						calculate_expected_spending = yes
 
 						set_temp_variable = { nation_to_copy_from = PREV.id }
@@ -2966,8 +2950,8 @@ on_actions = {
 						if = {
 							limit = {
 								country_exists = BLR
-								BLR = { is_subject = no }
 								BLR = {
+									is_subject = no
 									NOT = {
 										is_in_faction = yes
 									}

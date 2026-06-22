@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Validate event references in on_actions files against defined event IDs."""
+
 import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -12,12 +13,10 @@ import disk_cache
 from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
-    FileOpener,
     Severity,
     case_mismatch,
     casefold_index,
     run_validator_main,
-    should_skip_file,
 )
 
 # Declared namespaces: add_namespace = foo
@@ -223,7 +222,9 @@ def _scan_on_action_block(
     return refs, duplicates
 
 
-def _parse_on_actions_text(text_clean: str, filepath: str) -> Tuple[
+def _parse_on_actions_text(
+    text_clean: str, filepath: str
+) -> Tuple[
     List[Tuple[str, str, int, str]],  # (event_id, block_name, line, relpath)
     List[Tuple[str, str, int, str]],  # duplicates
 ]:
@@ -363,7 +364,9 @@ class Validator(BaseValidator):
         self._triggered_only_cache = all_triggered
         return all_defined, all_triggered
 
-    def _get_on_actions_refs(self) -> Tuple[
+    def _get_on_actions_refs(
+        self,
+    ) -> Tuple[
         List[Tuple[str, str, int, str]],
         List[Tuple[str, str, int, str]],
     ]:

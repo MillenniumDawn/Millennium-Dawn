@@ -19,7 +19,6 @@ _SKIP_SCRIPTS = frozenset({"validate_tools.py"})
 # Shebang, executability, and main-guard checks are not meaningful for these.
 _LIBRARY_MODULES = frozenset(
     {
-        "path_utils.py",
         "shared_utils.py",
         "loc.py",
         "logging_tool.py",
@@ -83,30 +82,31 @@ class ToolsValidator(BaseValidator):
         return os.access(path, os.X_OK)
 
     def _check_dependencies(self) -> List[str]:
-        req_file = self.tools_dir / "requirements.txt"
-        if not req_file.exists():
+        # Runtime packages live in the `runtime` dependency-group in pyproject.
+        pyproject = self.tools_dir.parent / "pyproject.toml"
+        if not pyproject.exists():
+            return []
+        try:
+            text = pyproject.read_text(encoding="utf-8")
+        except Exception as e:
+            return [f"Error reading pyproject.toml: {e}"]
+        match = re.search(r"(?ms)^runtime\s*=\s*\[(.*?)\]", text)
+        if not match:
             return []
         missing = []
-        try:
-            with open(req_file, "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#"):
-                        continue
-                    package = re.split(r"[><=!~]+", line)[0].strip()
-                    import_name = "PIL" if package.lower() == "pillow" else package
-                    if importlib.util.find_spec(import_name) is None:
-                        missing.append(package)
-        except Exception as e:
-            return [f"Error reading requirements.txt: {e}"]
+        for spec in re.findall(r'"([^"]+)"', match.group(1)):
+            package = re.split(r"[><=!~]+", spec)[0].strip()
+            import_name = "PIL" if package.lower() == "pillow" else package
+            if importlib.util.find_spec(import_name) is None:
+                missing.append(package)
         return missing
 
     def run_validations(self):
-        self.log(f"\n{'='*80}")
+        self.log(f"\n{'=' * 80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking Python scripts...{Colors.ENDC if self.use_colors else ''}"
         )
-        self.log(f"{'='*80}")
+        self.log(f"{'=' * 80}")
 
         scripts = self._find_scripts()
         self.log(f"  Found {len(scripts)} Python scripts to validate")
@@ -144,11 +144,11 @@ class ToolsValidator(BaseValidator):
         for name in no_main:
             self.log(f"  Warning: no main guard or main() — {name}", "warning")
 
-        self.log(f"\n{'='*80}")
+        self.log(f"\n{'=' * 80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking dependencies...{Colors.ENDC if self.use_colors else ''}"
         )
-        self.log(f"{'='*80}")
+        self.log(f"{'=' * 80}")
 
         missing_deps = self._check_dependencies()
         self._report(
