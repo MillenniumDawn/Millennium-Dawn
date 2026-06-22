@@ -83,26 +83,23 @@ EU_update_vars = {
 		}
 
 		# Failsafe: lift a stuck budget/MFF proposal block once its whole draft cycle is idle
-		for_each_scope_loop = {
-			array = global.EU_member
-			if = {
-				limit = {
-					has_country_flag = EU_budget_EP_block
-					NOT = { has_active_mission = EU_budget_draft_preparations }
-					NOT = { has_active_mission = EU_budget_draft_ongoing }
-					NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
-				}
-				clr_country_flag = EU_budget_EP_block
+		if = {
+			limit = {
+				has_global_flag = EU_budget_EP_block
+				NOT = { has_active_mission = EU_budget_draft_preparations }
+				NOT = { has_active_mission = EU_budget_draft_ongoing }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 			}
-			if = {
-				limit = {
-					has_country_flag = EU_mff_EP_block
-					NOT = { has_active_mission = EU_mff_draft_preparations }
-					NOT = { has_active_mission = EU_mff_draft_ongoing }
-					NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
-				}
-				clr_country_flag = EU_mff_EP_block
+			clr_global_flag = EU_budget_EP_block
+		}
+		if = {
+			limit = {
+				has_global_flag = EU_mff_EP_block
+				NOT = { has_active_mission = EU_mff_draft_preparations }
+				NOT = { has_active_mission = EU_mff_draft_ongoing }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
 			}
+			clr_global_flag = EU_mff_EP_block
 		}
 
 		# QMV majority threshold
@@ -869,9 +866,9 @@ on_startup_euu_action = {
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				activate_mission = EU_budget_draft_preparations
 				activate_mission = EU_mff_draft_preparations
-				set_country_flag = EU_budget_EP_block
 				set_variable = { THIS.EU_budget_call_rate = 1 }
 			}
+			set_global_flag = EU_budget_EP_block
 			set_variable = { global.EU_budget_min_call_rate = 1 }
 			set_EU_gdp = yes
 			EU_global_click_cost = yes

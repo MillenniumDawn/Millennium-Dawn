@@ -1201,7 +1201,8 @@ scripted_gui = {
 
 				EU_parliament_in_session = yes
 				hidden_trigger = {
-					has_country_flag = EU_active_EP_agenda_holder
+					has_global_flag = EU_active_EP_agenda_holder
+					var:global.eucomission = ROOT
 					is_ai = no
 				}
 			}
@@ -2288,12 +2289,8 @@ scripted_gui = {
 				log = "[GetDateText]: [Root.GetName]: EU Pass EP Agenda Button"
 				custom_effect_tooltip = EU_parliament_approve_agenda_tt
 				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.EU_member
-						clr_country_flag = EU_active_EP_agenda_holder
-						clr_global_flag_PG_X_support = yes
-						remove_mission = EU_parliament_focus_EUXXX_approve_timer
-					}
+					clr_global_flag = EU_active_EP_agenda_holder
+					clr_global_flag_PG_X_support = yes
 					if = {
 						limit = { is_in_array = { array = global.EU_potential_votes value = global.current_active_agenda_disp } }
 						remove_from_array = {
@@ -2315,23 +2312,19 @@ scripted_gui = {
 						set_variable = { global.pass_vote_mission_ender = 1 }
 					}
 					set_variable = { global.active_MEP_Support = 0 }
-					for_each_scope_loop = {
-						array = global.EU_member
-						tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-						if = {
-							limit = {
-								has_country_flag = EU_budget_EP_block
-								check_expr = { value = global.current_active_agenda_disp equals = { value = 999 } }
-							}
-							clr_country_flag = EU_budget_EP_block
+					if = {
+						limit = {
+							has_global_flag = EU_budget_EP_block
+							check_expr = { value = global.current_active_agenda_disp equals = { value = 999 } }
 						}
-						if = {
-							limit = {
-								has_country_flag = EU_mff_EP_block
-								check_expr = { value = global.current_active_agenda_disp equals = { value = 998 } }
-							}
-							clr_country_flag = EU_mff_EP_block
+						clr_global_flag = EU_budget_EP_block
+					}
+					if = {
+						limit = {
+							has_global_flag = EU_mff_EP_block
+							check_expr = { value = global.current_active_agenda_disp equals = { value = 998 } }
 						}
+						clr_global_flag = EU_mff_EP_block
 					}
 					if = {
 						limit = {
@@ -2344,8 +2337,12 @@ scripted_gui = {
 						}
 						set_the_eu_parliament_delay = yes
 					}
-					var:global.eucomission = {
-						remove_mission = EU_parliament_focus_EUXXX_approve
+					for_each_scope_loop = {
+						array = global.EU_member
+						if = {
+							limit = { has_active_mission = EU_parliament_focus_EUXXX_approve }
+							remove_mission = EU_parliament_focus_EUXXX_approve
+						}
 					}
 					set_variable = { global.current_active_agenda_disp = 0 }
 					update_eu_dirty_variable = yes
@@ -2355,13 +2352,9 @@ scripted_gui = {
 				log = "[GetDateText]: [Root.GetName]: EU Remove EP Agenda Button"
 				custom_effect_tooltip = EU_parliament_remove_agenda_tt
 				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.EU_member
-						clr_country_flag = EU_active_EP_agenda_holder
-						clr_global_flag_PG_X_support = yes
-						remove_mission = EU_parliament_focus_EUXXX_approve_timer
-						set_variable = { global.active_MEP_Support = 0 }
-					}
+					clr_global_flag = EU_active_EP_agenda_holder
+					clr_global_flag_PG_X_support = yes
+					set_variable = { global.active_MEP_Support = 0 }
 					if = {
 						limit = { check_expr = { value = global.current_active_agenda_disp equals = { value = 999 } } }
 						EU_rollback_budget_values = yes
@@ -2370,22 +2363,19 @@ scripted_gui = {
 						limit = { check_expr = { value = global.current_active_agenda_disp equals = { value = 998 } } }
 						EU_rollback_mff_values = yes
 					}
-					for_each_scope_loop = {
-						array = global.EU_member
-						if = {
-							limit = {
-								has_country_flag = EU_budget_EP_block
-								check_expr = { value = global.current_active_agenda_disp equals = { value = 999 } }
-							}
-							clr_country_flag = EU_budget_EP_block
+					if = {
+						limit = {
+							has_global_flag = EU_budget_EP_block
+							check_expr = { value = global.current_active_agenda_disp equals = { value = 999 } }
 						}
-						if = {
-							limit = {
-								has_country_flag = EU_mff_EP_block
-								check_expr = { value = global.current_active_agenda_disp equals = { value = 998 } }
-							}
-							clr_country_flag = EU_mff_EP_block
+						clr_global_flag = EU_budget_EP_block
+					}
+					if = {
+						limit = {
+							has_global_flag = EU_mff_EP_block
+							check_expr = { value = global.current_active_agenda_disp equals = { value = 998 } }
 						}
+						clr_global_flag = EU_mff_EP_block
 					}
 					if = {
 						limit = {
@@ -2398,8 +2388,12 @@ scripted_gui = {
 						}
 						set_the_eu_parliament_delay = yes
 					}
-					var:global.eucomission = {
-						remove_mission = EU_parliament_focus_EUXXX_approve
+					for_each_scope_loop = {
+						array = global.EU_member
+						if = {
+							limit = { has_active_mission = EU_parliament_focus_EUXXX_approve }
+							remove_mission = EU_parliament_focus_EUXXX_approve
+						}
 					}
 					set_variable = { global.current_active_agenda_disp = 0 }
 					update_eu_dirty_variable = yes
@@ -4625,8 +4619,8 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = no_active_budget_mff_draft
-					NOT = { has_country_flag = EU_budget_EP_block }
-					NOT = { has_country_flag = EU_mff_EP_block }
+					NOT = { has_global_flag = EU_budget_EP_block }
+					NOT = { has_global_flag = EU_mff_EP_block }
 				}
 				custom_trigger_tooltip = {
 					tooltip = EU_no_external_chi_influence_15_tt
@@ -5012,17 +5006,10 @@ scripted_gui = {
 				hidden_effect = {
 					log = "[GetDateText]: [ROOT.GetName] Decision EU_parliament_focus_EU[?v]_EP_agenda"
 					set_ruling_party_PG_support = yes
-					var:global.eucomission = {
-						set_country_flag = EU_active_EP_agenda_holder
-						activate_mission = EU_parliament_focus_EUXXX_approve
-					}
-				}
-				hidden_effect = {
+					set_global_flag = EU_active_EP_agenda_holder
 					for_each_scope_loop = {
 						array = global.EU_member
-						if = { limit = { NOT = { has_idea = EU_commission_president } }
-							activate_mission = EU_parliament_focus_EUXXX_approve_timer
-						}
+						activate_mission = EU_parliament_focus_EUXXX_approve
 					}
 				}
 

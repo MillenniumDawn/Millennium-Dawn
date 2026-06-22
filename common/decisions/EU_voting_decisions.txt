@@ -4,6 +4,7 @@ EU_voting_category = {
 		allowed = { always = no }
 		available = { tag = EUU }
 		activation = { always = no }
+		is_good = yes
 
 		# Monthly drift refresh only — membership/sentiment changes call EU_update_vars directly,
 		# so this periodic recalc of europeanism/QMV thresholds does not need a weekly cadence.
@@ -28,6 +29,7 @@ EU_voting_category = {
 		allowed = { always = no }
 		available = { tag = EUU }
 		activation = { always = no }
+		is_good = yes
 
 		days_mission_timeout = 1825
 
@@ -47,6 +49,7 @@ EU_voting_category = {
 	#############
 
 	EU_parliament_focus_EUXXX_approve = {
+		allowed = { always = yes }
 		available = { check_expr = { value = global.pass_vote_mission_ender equals = { value = 1 } } }
 		activation = { always = no }
 		is_good = yes
@@ -58,84 +61,74 @@ EU_voting_category = {
 		fire_only_once = yes
 
 		complete_effect = {
-			log = "[GetDateText]: [ROOT.GetName]: mission complete_effect EU_parliament_focus_EUXXX_approve:"
-			EU_finalize_passed_agenda = yes
+			if = {
+				limit = { var:global.eucomission = ROOT }
+				log = "[GetDateText]: [ROOT.GetName]: mission complete_effect EU_parliament_focus_EUXXX_approve "
+				EU_finalize_passed_agenda = yes
+			}
 		}
 		timeout_effect = {
 			if = {
-				limit = {
-					OR = {
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
-						check_expr = { value = global.active_MEP_Support equals = { value = global.MEP_Majority } }
+				limit = { var:global.eucomission = ROOT }
+				if = {
+					limit = {
+						OR = {
+							check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+							check_expr = { value = global.active_MEP_Support equals = { value = global.MEP_Majority } }
+						}
 					}
+					EU_finalize_passed_agenda = yes
 				}
-				EU_finalize_passed_agenda = yes
-			}
-			else = {
-				custom_effect_tooltip = EU_parliament_remove_agenda_tt
-				hidden_effect = {
-					log = "[GetDateText]: [ROOT.GetName]: mission timeout_effect EU_parliament_focus_EU[?global.current_active_agenda_disp]_remove"
-					clr_country_flag = EU_active_EP_agenda_holder
-					clr_global_flag_PG_X_support = yes
-					reset_MEP_support_party_x = yes
-					set_variable = { global.active_MEP_Support = 0 }
-					set_variable = { global.pass_vote_mission_ender = 0 }
+				else = {
+					custom_effect_tooltip = EU_parliament_remove_agenda_tt
+					hidden_effect = {
+						log = "[GetDateText]: [ROOT.GetName]: mission timeout_effect EU_parliament_focus_EU[?global.current_active_agenda_disp]_remove"
+						clr_global_flag = EU_active_EP_agenda_holder
+						clr_global_flag_PG_X_support = yes
+						reset_MEP_support_party_x = yes
+						set_variable = { global.active_MEP_Support = 0 }
+						set_variable = { global.pass_vote_mission_ender = 0 }
 
-					if = {
-						limit = {
-							NOT = { has_global_flag = EU_ongoing_budget_draft }
-							NOT = { has_global_flag = EU_ongoing_mff_draft }
+						if = {
+							limit = {
+								NOT = { has_global_flag = EU_ongoing_budget_draft }
+								NOT = { has_global_flag = EU_ongoing_mff_draft }
+							}
+							set_the_eu_parliament_delay = yes
 						}
-						set_the_eu_parliament_delay = yes
-					}
-					if = {
-						limit = {
-							has_country_flag = EU_budget_EP_block
-							NOT = { has_active_mission = EU_budget_draft_ongoing }
-							NOT = { has_active_mission = EU_budget_draft_preparations }
-						}
-						for_each_scope_loop = {
-							array = global.EU_member
-							tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-							clr_country_flag = EU_budget_EP_block
+						if = {
+							limit = {
+								has_global_flag = EU_budget_EP_block
+								NOT = { has_active_mission = EU_budget_draft_ongoing }
+								NOT = { has_active_mission = EU_budget_draft_preparations }
+							}
+							clr_global_flag = EU_budget_EP_block
 							EU_rollback_budget_values = yes
 						}
-					}
-					if = {
-						limit = {
-							has_country_flag = EU_mff_EP_block
-							NOT = { has_active_mission = EU_mff_draft_ongoing }
-							NOT = { has_active_mission = EU_mff_draft_preparations }
-						}
-						for_each_scope_loop = {
-							array = global.EU_member
-							tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-							clr_country_flag = EU_mff_EP_block
+						if = {
+							limit = {
+								has_global_flag = EU_mff_EP_block
+								NOT = { has_active_mission = EU_mff_draft_ongoing }
+								NOT = { has_active_mission = EU_mff_draft_preparations }
+							}
+							clr_global_flag = EU_mff_EP_block
 							EU_rollback_mff_values = yes
 						}
 					}
+					set_variable = { global.current_active_agenda_disp = 0 }
 				}
-				set_variable = { global.current_active_agenda_disp = 0 }
-			}
-			for_each_scope_loop = {
-				array = global.EU_member
-				if = {
-					limit = { has_active_mission = EU_parliament_focus_EUXXX_approve_timer }
-					remove_mission = EU_parliament_focus_EUXXX_approve_timer
+				# Only the commission president drives cross-member cleanup; a non-president
+				# member timing out first would otherwise remove everyone's mission before
+				# the president's own timeout_effect runs.
+				for_each_scope_loop = {
+					array = global.EU_member
+					if = {
+						limit = { has_active_mission = EU_parliament_focus_EUXXX_approve }
+						remove_mission = EU_parliament_focus_EUXXX_approve
+					}
 				}
 			}
 		}
-	}
-
-	EU_parliament_focus_EUXXX_approve_timer = {
-		allowed = { always = yes }
-		available = { check_expr = { value = global.pass_vote_mission_ender equals = { value = 1 } } }
-		activation = { always = no }
-		is_good = yes
-
-		days_mission_timeout = 14
-		selectable_mission = no
-		fire_only_once = yes
 	}
 
 	EU_council_determine_serious_breach_of_EU_values = {
@@ -545,7 +538,7 @@ EU_voting_category = {
 		timeout_effect = {
 			remove_mission = EU_budget_yearly_timer
 			activate_mission = EU_budget_draft_preparations
-			set_country_flag = EU_budget_EP_block
+			set_global_flag = EU_budget_EP_block
 			update_eu_dirty_variable = yes
 			country_event = EUbudget.10
 		}
@@ -573,7 +566,7 @@ EU_voting_category = {
 			remove_mission = EU_budget_draft_preparations
 			activate_mission = EU_budget_draft_ongoing
 			set_global_flag = EU_ongoing_budget_draft
-			set_country_flag = EU_budget_EP_block # failgate
+			set_global_flag = EU_budget_EP_block # failgate
 			update_eu_dirty_variable = yes
 			country_event = EUbudget.11
 		}
@@ -604,18 +597,24 @@ EU_voting_category = {
 					all_MEP_support_draft = yes
 				}
 				assess_MEP_support_party_x = yes
-				set_country_flag = EU_active_EP_agenda_holder
-				activate_mission = EU_parliament_focus_EUXXX_approve
+				set_global_flag = EU_active_EP_agenda_holder
+				for_each_scope_loop = {
+					array = global.EU_member
+					activate_mission = EU_parliament_focus_EUXXX_approve
+				}
 				set_variable = { global.current_active_agenda_disp = 999 }
 			}
 			else = {
 				if = {
 					limit = { any_of_scopes = { array = global.EU_member has_idea = ECB_president } }
-					set_country_flag = EU_active_EP_agenda_holder
-					activate_mission = EU_parliament_focus_EUXXX_approve_timer
+					set_global_flag = EU_active_EP_agenda_holder
+					for_each_scope_loop = {
+						array = global.EU_member
+						activate_mission = EU_parliament_focus_EUXXX_approve
+					}
 				}
 				else = {
-					clr_country_flag = EU_budget_EP_block
+					clr_global_flag = EU_budget_EP_block
 				}
 			}
 			clr_global_flag = EU_ongoing_budget_draft
@@ -630,12 +629,13 @@ EU_voting_category = {
 		allowed = { always = yes }
 		available = { always = no }
 		activation = { always = no }
+		is_good = yes
 
 		days_mission_timeout = 1237
 		selectable_mission = yes
 
 		timeout_effect = {
-			set_country_flag = EU_mff_EP_block
+			set_global_flag = EU_mff_EP_block
 			remove_mission = EU_mff_yearly_timer
 			activate_mission = EU_mff_draft_preparations
 			update_eu_dirty_variable = yes
@@ -665,7 +665,7 @@ EU_voting_category = {
 			remove_mission = EU_mff_draft_preparations
 			activate_mission = EU_mff_draft_ongoing
 			set_global_flag = EU_ongoing_mff_draft
-			set_country_flag = EU_mff_EP_block # failgate
+			set_global_flag = EU_mff_EP_block # failgate
 			update_eu_dirty_variable = yes
 			country_event = EUbudget.21
 		}
@@ -696,18 +696,24 @@ EU_voting_category = {
 					all_MEP_support_draft = yes
 				}
 				assess_MEP_support_party_x = yes
-				set_country_flag = EU_active_EP_agenda_holder
-				activate_mission = EU_parliament_focus_EUXXX_approve
+				set_global_flag = EU_active_EP_agenda_holder
+				for_each_scope_loop = {
+					array = global.EU_member
+					activate_mission = EU_parliament_focus_EUXXX_approve
+				}
 				set_variable = { global.current_active_agenda_disp = 998 }
 			}
 			else = {
 				if = {
 					limit = { any_of_scopes = { array = global.EU_member has_idea = ECB_president } }
-					set_country_flag = EU_active_EP_agenda_holder
-					activate_mission = EU_parliament_focus_EUXXX_approve_timer
+					set_global_flag = EU_active_EP_agenda_holder
+					for_each_scope_loop = {
+						array = global.EU_member
+						activate_mission = EU_parliament_focus_EUXXX_approve
+					}
 				}
 				else = {
-					clr_country_flag = EU_mff_EP_block
+					clr_global_flag = EU_mff_EP_block
 				}
 			}
 			clr_global_flag = EU_ongoing_mff_draft
