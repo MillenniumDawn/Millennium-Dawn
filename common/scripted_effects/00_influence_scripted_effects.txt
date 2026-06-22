@@ -14,14 +14,11 @@ init_influence = {
 # Purpose: This is the main effect that is used to update the dirty influence variable
 update_dirty_influence_var = {
 	if = {
-		limit = { is_ai = no }
-		if = {
-			limit = { NOT = { has_variable = global.update_influence_ui } }
-			set_variable = { global.update_influence_ui = 1 }
-		}
-		else = {
-			add_to_variable = { global.update_influence_ui = 1 }
-		}
+		limit = { NOT = { has_variable = global.update_influence_ui } }
+		set_variable = { global.update_influence_ui = 1 }
+	}
+	else = {
+		add_to_variable = { global.update_influence_ui = 1 }
 	}
 }
 
@@ -29,7 +26,6 @@ update_dirty_influence_var = {
 # Purpose: This is the main effect that is used to recalculate the influence
 recalculate_influence = {
 	hidden_effect = {
-		delete_influencer_check = yes
 		sort_influence = yes
 		calculate_influence_percentage = yes
 		update_dirty_influence_var = yes
@@ -209,6 +205,7 @@ make_puppet_action = {
 	every_neighbor_country = {
 		add_opinion_modifier = { target = PREV modifier = puppeted_neighbor }
 	}
+	update_dirty_influence_var = yes
 }
 
 # Effect: economic_exploitation_action
@@ -409,40 +406,6 @@ mp_economic_aid_transfer = {
 
 	update_money_dirty_variable = yes
 	update_dirty_influence_var = yes
-}
-
-# Effect: delete_influencer_check
-# Purpose: Merges duplicate influencer entries before sort_influence rebuilds the arrays.
-# For each entry, scans earlier slots for the same influencer and folds the value into the
-# first (keeper) slot, then zeros the duplicate. Already-merged duplicates are zeroed, so a
-# third occurrence still folds into the original keeper. sort_influence drops the zeroed holes.
-delete_influencer_check = {
-	for_each_loop = {
-		array = influence_array
-		value = v
-		index = i
-		if = { limit = { NOT = { check_variable = { v = 0 } } }
-			set_temp_variable = { keeper_index = -1 }
-			for_each_loop = {
-				array = influence_array
-				value = w
-				index = j
-				if = { limit = {
-					check_variable = { keeper_index = -1 }
-					check_variable = { j < i }
-					check_variable = { w = v }
-				}
-					set_temp_variable = { keeper_index = j }
-				}
-			}
-			if = { limit = { check_variable = { keeper_index > -1 } }
-				log = "[GetDateText]: [This.GetName]: Double Influencer Present. Debug Code: 1001. Influencer: [?var:v.GetName] Keeper Index: [?keeper_index], Duplicate Index: [?i]"
-				add_to_variable = { influence_array_val^keeper_index = influence_array_val^i }
-				set_variable = { influence_array^i = 0 }
-				set_variable = { influence_array_val^i = 0 }
-			}
-		}
-	}
 }
 
 # Effect: change_domestic_influence_percentage
@@ -993,6 +956,13 @@ change_influence_percentage = {
 
 				add_to_temp_variable = { influence_change = 1 }
 				multiply_temp_variable = { percent_change = influence_change }
+
+				# Cap the gain at the remaining headroom to 100% so the shown value matches the realized share.
+				set_temp_variable = { influence_headroom = 100 }
+				subtract_from_temp_variable = { influence_headroom = influence_array_val^influencer_index }
+				if = { limit = { check_variable = { percent_change > influence_headroom } }
+					set_temp_variable = { percent_change = influence_headroom }
+				}
 			}
 
 			# Lock this influencer's updated value; rebalance domestic + every other share around it.
