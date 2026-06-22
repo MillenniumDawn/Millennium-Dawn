@@ -371,11 +371,11 @@ on_actions = {
 			every_country = {
 				limit = {
 					OR = {
-						NOT = { check_variable = { auto_influence_array^0 = 0 } }
+						is_in_array = { auto_influence_array = FROM.id }
 						is_in_array = { influence_array = FROM.id }
 					}
 				}
-				if = { limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
+				if = { limit = { is_in_array = { auto_influence_array = FROM.id } }
 					set_temp_variable = { removed_count = 0 }
 					for_each_loop = {
 						array = auto_influence_array
@@ -855,7 +855,7 @@ on_actions = {
 						if = { limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
 							set_temp_variable = { percent_change = global.percent_change_value }
 							set_temp_variable = { tag_index = THIS.id }
-							set_temp_variable = { nations_influenced = 0 }
+							set_variable = { nations_influenced = 0 }
 
 							for_each_loop = {
 								array = auto_influence_array
@@ -864,14 +864,26 @@ on_actions = {
 									limit = {
 										NOT = { check_variable = { v = 0 } }
 										var:v = { exists = yes }
-										NOT = { has_country_flag = spread_influence@var:v }
+										NOT = { var:v = { PREV = { has_country_flag = spread_influence@PREV } } }
 									}
 									if = { limit = { is_debug = yes }
 										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
 									}
 									set_temp_variable = { influence_target = v }
 									change_influence_percentage = yes
-									add_to_temp_variable = { nations_influenced = 1 }
+									add_to_variable = { nations_influenced = 1 }
+
+									# Cooldown lives on the influencer keyed by target (shared with the manual-influence GUI);
+									# var:v -> PREV puts the target into PREV so spread_influence@PREV resolves to its tag.
+									if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
+										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 } } }
+									}
+									else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
+										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 } } }
+									}
+									else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
+										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 } } }
+									}
 								}
 								else = {
 									if = { limit = { is_debug = yes }
@@ -881,26 +893,6 @@ on_actions = {
 							}
 
 							if = { limit = { check_variable = { nations_influenced > 0 } }
-								for_each_loop = {
-									array = auto_influence_array
-									value = v
-									if = {
-										limit = {
-											check_variable = { i < nations_influenced }
-											NOT = { check_variable = { v = 0 } }
-										}
-										if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
-											set_country_flag = { flag = spread_influence@var:v value = 1 days = 14 }
-										}
-										else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
-											set_country_flag = { flag = spread_influence@var:v value = 1 days = 30 }
-										}
-										else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
-											set_country_flag = { flag = spread_influence@var:v value = 1 days = 60 }
-										}
-									}
-								}
-
 								if = { limit = { NOT = { has_country_flag = disable_auto_influence_notification } }
 									country_event = influence.54
 								}
