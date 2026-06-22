@@ -239,20 +239,13 @@ economic_exploitation_action = {
 # Effect: manipulate_politics_action
 # Purpose: This is the main effect that is used to manipulate the politics of another nation.
 # Runs in the target country's scope (THIS = target, ROOT = influencer).
-# Parameters:
-# - var_pop (optional): base popularity to add before modifiers. Defaults to 0.05 if unset.
+# No parameters. var_pop (the base popularity shift) is derived from political_manipulation_corruption_factor, or 0.08 when no corruption idea is active.
 # Sets manipulate_politics_pp_cost (temp var) to -100, or -50 for PER+IRQ/AFG and ENG+COL special cases.
 manipulate_politics_action = {
 	# Corruption raises political-manipulation vulnerability; the modifier carries the per-level base.
 	set_temp_variable = { var_pop = modifier@political_manipulation_corruption_factor }
 	if = { limit = { check_variable = { var_pop = 0 } }
 		set_temp_variable = { var_pop = 0.08 }
-	}
-
-	# Default var_pop to 0.05 for callers that do not pre-set it (e.g. AI spread_influence).
-	if = {
-		limit = { NOT = { has_variable = var_pop } }
-		set_temp_variable = { var_pop = 0.05 }
 	}
 
 	# Base PP cost; special cases refund 50.
@@ -776,28 +769,14 @@ apply_influence_special_modifiers = {
 
 	if = {
 		limit = {
-			original_tag = BLR
-		}
-		if = {
-			limit = {
-				has_idea = ARM_zhirayr_in_blr_ukr_idea
-				check_variable = { tag_index = ARM }
+			OR = {
+				original_tag = BLR
+				original_tag = UKR
 			}
-			add_to_temp_variable = { influence_change = 0.10 }
+			has_idea = ARM_zhirayr_in_blr_ukr_idea
+			check_variable = { tag_index = ARM }
 		}
-	}
-
-	if = {
-		limit = {
-			original_tag = UKR
-		}
-		if = {
-			limit = {
-				has_idea = ARM_zhirayr_in_blr_ukr_idea
-				check_variable = { tag_index = ARM }
-			}
-			add_to_temp_variable = { influence_change = 0.10 }
-		}
+		add_to_temp_variable = { influence_change = 0.10 }
 	}
 
 
@@ -858,29 +837,14 @@ apply_influence_special_modifiers = {
 	if = {
 		limit = {
 			original_tag = PER
-		}
-		if = {
-			limit = {
-				has_idea = PER_fighting_colonialism
+			has_idea = PER_fighting_colonialism
+			OR = {
 				check_variable = { tag_index = SOV }
-			}
-			add_to_temp_variable = { influence_change = -0.25 }
-		}
-		if = {
-			limit = {
-				has_idea = PER_fighting_colonialism
 				check_variable = { tag_index = USA }
-			}
-			add_to_temp_variable = { influence_change = -0.25 }
-		}
-		if = {
-			limit = {
-				has_idea = PER_fighting_colonialism
 				check_variable = { tag_index = ENG }
 			}
-			add_to_temp_variable = { influence_change = -0.25 }
 		}
-
+		add_to_temp_variable = { influence_change = -0.25 }
 	}
 }
 
@@ -926,8 +890,10 @@ change_influence_percentage = {
 				index = i
 				if = { limit = { check_variable = { v = var:tag_index } }
 					set_temp_variable = { influencer_index = i }
+					set_temp_variable = { break = 1 }
 				}
 			}
+			set_temp_variable = { break = 0 }
 			if = { limit = { check_variable = { influencer_index = -1 } }
 				set_temp_variable = { influencer_index = influence_array^num }
 				add_to_array = { influence_array = var:tag_index }
