@@ -566,7 +566,6 @@ EU_voting_category = {
 		days_mission_timeout = 14
 		selectable_mission = yes
 		fire_only_once = yes
-		complete_effect = { }
 		timeout_effect = { remove_mission = EU_voting_mission_focus_EUXXX_QMV_result_timer }
 		ai_will_do = { base = -1000 }
 	}
@@ -580,6 +579,7 @@ EU_voting_category = {
 
 		days_mission_timeout = 344
 		selectable_mission = yes
+		is_good = yes
 
 		timeout_effect = {
 			remove_mission = EU_budget_yearly_timer
@@ -596,6 +596,7 @@ EU_voting_category = {
 		allowed = { always = yes }
 		available = { always = no }
 		activation = { always = no }
+		is_good = yes
 
 		days_mission_timeout = 7
 		selectable_mission = yes
@@ -614,14 +615,7 @@ EU_voting_category = {
 				set_country_flag = EU_budget_draft
 			}
 			remove_mission = EU_budget_draft_preparations
-			if = {
-				limit = { has_idea = ECB_president }
-				activate_mission = EU_budget_draft_ongoing_president
-			}
-			if = {
-				limit = { NOT = { has_idea = ECB_president } }
-				activate_mission = EU_budget_draft_ongoing
-			}
+			activate_mission = EU_budget_draft_ongoing
 			set_country_flag = EU_budget_EP_block # failgate
 			update_eu_dirty_variable = yes
 			country_event = EUbudget.11
@@ -637,52 +631,39 @@ EU_voting_category = {
 
 		days_mission_timeout = 14
 		selectable_mission = yes
+		is_good = yes
 
 		timeout_effect = {
 			set_EU_gdp = yes
 			update_EU_budget_call_rate = yes
 			if = {
-				limit = { any_country = { has_idea = ECB_president } }
+				limit = { has_idea = ECB_president }
+				if = {
+					limit = {
+						check_variable = { global.EU_global_exp_ratio = global.EU_global_exp_saved }
+						check_variable = { global.EU_growth_exp_ratio = global.EU_growth_exp_saved }
+						check_variable = { global.EU_natural_exp_ratio = global.EU_natural_exp_saved }
+					}
+					all_MEP_support_draft = yes
+				}
+				assess_MEP_support_party_x = yes
 				set_country_flag = EU_active_EP_agenda_holder
-				activate_mission = EU_parliament_focus_EUXXX_approve_timer
+				activate_mission = EU_parliament_focus_EUXXX_approve
+				set_variable = { global.current_active_agenda_disp = 999 }
 			}
 			else = {
-				clr_country_flag = EU_budget_EP_block
+				if = {
+					limit = { any_of_scopes = { array = global.EU_member has_idea = ECB_president } }
+					set_country_flag = EU_active_EP_agenda_holder
+					activate_mission = EU_parliament_focus_EUXXX_approve_timer
+				}
+				else = {
+					clr_country_flag = EU_budget_EP_block
+				}
 			}
 			clr_country_flag = EU_budget_draft
 			remove_mission = EU_budget_draft_ongoing
 			activate_mission = EU_budget_yearly_timer
-		}
-
-		ai_will_do = { base = 0 }
-	}
-
-	EU_budget_draft_ongoing_president = { # seperate for central bank president for calculations
-		allowed = { always = yes }
-		available = { always = no }
-		activation = { always = no }
-
-		days_mission_timeout = 14
-		selectable_mission = yes
-
-		timeout_effect = {
-			set_EU_gdp = yes
-			update_EU_budget_call_rate = yes
-			if = {
-				limit = {
-					check_variable = { global.EU_global_exp_ratio = global.EU_global_exp_saved }
-					check_variable = { global.EU_growth_exp_ratio = global.EU_growth_exp_saved }
-					check_variable = { global.EU_natural_exp_ratio = global.EU_natural_exp_saved }
-				}
-				all_MEP_support_draft = yes
-			}
-			assess_MEP_support_party_x = yes
-			set_country_flag = EU_active_EP_agenda_holder
-			clr_country_flag = EU_budget_draft
-			activate_mission = EU_parliament_focus_EUXXX_approve
-			activate_mission = EU_budget_yearly_timer
-			set_variable = { global.current_active_agenda_disp = 999 }
-			remove_mission = EU_budget_draft_ongoing_president
 		}
 
 		ai_will_do = { base = 0 }
@@ -712,6 +693,7 @@ EU_voting_category = {
 		allowed = { always = yes }
 		available = { always = no }
 		activation = { always = no }
+		is_good = yes
 
 		days_mission_timeout = 14
 		selectable_mission = yes
@@ -726,14 +708,7 @@ EU_voting_category = {
 			set_variable = { global.EU_budget_draft_invested_PP = 0 }
 			set_country_flag = EU_mff_draft
 			remove_mission = EU_mff_draft_preparations
-			if = {
-				limit = { has_idea = ECB_president }
-				activate_mission = EU_mff_draft_ongoing_president
-			}
-			if = {
-				limit = { NOT = { has_idea = ECB_president } }
-				activate_mission = EU_mff_draft_ongoing
-			}
+			activate_mission = EU_mff_draft_ongoing
 			set_country_flag = EU_mff_EP_block # failgate
 			update_eu_dirty_variable = yes
 			country_event = EUbudget.21
@@ -749,52 +724,39 @@ EU_voting_category = {
 
 		days_mission_timeout = 28
 		selectable_mission = yes
+		is_good = yes
 
 		timeout_effect = {
 			set_EU_gdp = yes
 			update_EU_budget_call_rate = yes
 			if = {
-				limit = { any_country = { has_idea = ECB_president } }
+				limit = { has_idea = ECB_president }
+				if = {
+					limit = {
+						check_variable = { global.EU_budget_min_call_rate = global.EU_min_call_rate_saved }
+						check_variable = { global.EU_budget_call_rate = global.EU_global_call_rate_saved }
+						check_variable = { THIS.EU_budget_call_rate = THIS.EU_call_rate_saved }
+					}
+					all_MEP_support_draft = yes
+				}
+				assess_MEP_support_party_x = yes
 				set_country_flag = EU_active_EP_agenda_holder
-				activate_mission = EU_parliament_focus_EUXXX_approve_timer
+				activate_mission = EU_parliament_focus_EUXXX_approve
+				set_variable = { global.current_active_agenda_disp = 998 }
 			}
 			else = {
-				clr_country_flag = EU_mff_EP_block
+				if = {
+					limit = { any_of_scopes = { array = global.EU_member has_idea = ECB_president } }
+					set_country_flag = EU_active_EP_agenda_holder
+					activate_mission = EU_parliament_focus_EUXXX_approve_timer
+				}
+				else = {
+					clr_country_flag = EU_mff_EP_block
+				}
 			}
 			clr_country_flag = EU_mff_draft
 			remove_mission = EU_mff_draft_ongoing
 			activate_mission = EU_mff_yearly_timer
-		}
-
-		ai_will_do = { base = 0 }
-	}
-
-	EU_mff_draft_ongoing_president = {
-		allowed = { always = yes }
-		available = { always = no }
-		activation = { always = no }
-
-		days_mission_timeout = 28
-		selectable_mission = yes
-
-		timeout_effect = {
-			set_EU_gdp = yes
-			update_EU_budget_call_rate = yes
-			if = {
-				limit = {
-					check_variable = { global.EU_budget_min_call_rate = global.EU_min_call_rate_saved }
-					check_variable = { global.EU_budget_call_rate = global.EU_global_call_rate_saved }
-					check_variable = { THIS.EU_budget_call_rate = THIS.EU_call_rate_saved }
-				}
-				all_MEP_support_draft = yes
-			}
-			assess_MEP_support_party_x = yes
-			set_country_flag = EU_active_EP_agenda_holder
-			clr_country_flag = EU_mff_draft
-			activate_mission = EU_mff_yearly_timer
-			activate_mission = EU_parliament_focus_EUXXX_approve
-			set_variable = { global.current_active_agenda_disp = 998 }
-			remove_mission = EU_mff_draft_ongoing_president
 		}
 
 		ai_will_do = { base = 0 }
@@ -1862,40 +1824,44 @@ EU_defense_category = {
 				add_command_power = 10
 			}
 			### diplo
-			every_country = {
-				limit = { original_tag = ROOT.var_EU_military_exercise_host_tag }
-				ROOT = {
-					add_opinion_modifier = {
-						target = PREV
-						modifier = hosted_military_exercise
-					}
-					reverse_add_opinion_modifier = {
-						target = PREV
-						modifier = executed_military_exercise
+			if = {
+				limit = { check_variable = { ROOT.var_EU_military_exercise_host_tag > 0 } }
+				var:ROOT.var_EU_military_exercise_host_tag = {
+					ROOT = {
+						add_opinion_modifier = {
+							target = PREV
+							modifier = hosted_military_exercise
+						}
+						reverse_add_opinion_modifier = {
+							target = PREV
+							modifier = executed_military_exercise
+						}
 					}
 				}
 			}
-			every_country = {
-				limit = { original_tag = ROOT.var_EU_military_exercise_target }
-				ROOT = {
-					reverse_add_opinion_modifier = {
-						target = PREV
-						modifier = military_exercise_on_border
-					}
-				}
-				random_owned_state = {
-					limit = {
-						any_neighbor_state = {
-							state = ROOT.var_EU_military_exercise_host_state
+			if = {
+				limit = { check_variable = { ROOT.var_EU_military_exercise_target > 0 } }
+				var:ROOT.var_EU_military_exercise_target = {
+					ROOT = {
+						reverse_add_opinion_modifier = {
+							target = PREV
+							modifier = military_exercise_on_border
 						}
 					}
-					set_variable = {
-						var = PREV.var_counter_military_exercise_state
-						value = THIS
+					random_owned_state = {
+						limit = {
+							any_neighbor_state = {
+								state = ROOT.var_EU_military_exercise_host_state
+							}
+						}
+						set_variable = {
+							var = PREV.var_counter_military_exercise_state
+							value = THIS
+						}
 					}
+					news_event = EU_news.50
+					activate_mission = counter_military_exercise_mission
 				}
-				news_event = EU_news.50
-				activate_mission = counter_military_exercise_mission
 			}
 		}
 		remove_effect = {
