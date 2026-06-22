@@ -30,35 +30,42 @@ on_actions = {
 	on_daily = {
         effect = {
             for_each_loop = {
-                array = investments_projects_building_time
-                index = i
+                array = investments_projects
                 value = v
+                break = break
 
-                subtract_from_variable = { investments_projects_building_time^i = 1 }
+                subtract_from_variable = { investments_projects_building_time^v = 1 }
 
                 if = {
                     limit = {
-                        check_variable = { investments_projects_building_time^i < 1 }
+                        check_variable = { investments_projects_building_time^v < 1 }
                     }
 
-                    var:investments_projects_state^i = {
-                        add_building_construction = {
-                            type = arms_factory
-                            level = 1
-                            instant_build = yes
-                        }
+                    var:investments_projects_state^v = {
+                        set_temp_variable = { building_index = investments_projects_building^v }
+                        add_finished_building = yes
 
                         owner = {
+                            set_temp_variable = { country_from = FROM }
                             set_temp_variable = { country = ROOT }
-                            set_temp_variable = { amount = 10 }
+                            set_temp_variable = { amount = investments_projects_building_cost^v }
+                            multiply_temp_variable = { amount = global.build_const_return_array^vnvestments_projects_building^v }
                             add_investment = yes
                         }
                     }
 
-                    set_temp_variable = { building_index = investments_projects_building^i }
+                    set_temp_variable = { building_index = investments_projects_building^v }
                     set_temp_variable = { amount = 1 }
-                    set_temp_variable = { state = investments_projects_state^i }
+                    set_temp_variable = { state = investments_projects_state^v }
                     remove_investment_project = yes
+                }
+
+                if = {
+                    limit = {
+                        check_variable = { i > 3 }
+                    }
+                    
+                    set_temp_variable = { break = 1 }
                 }
             }
         }
