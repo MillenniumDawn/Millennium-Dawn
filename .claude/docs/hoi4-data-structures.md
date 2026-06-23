@@ -74,22 +74,53 @@ Short forms: `add_to_array = { my_array = 42 }`, `remove_from_array = { my_array
 
 ### Syntax
 
-A base `value = ...` followed by sequential statements that mutate an accumulator. Each statement is one of:
+The math expression is the **value** of the effect. Wrap it in `{ ... }` so the parser can tell where the expression ends and the effect's own keywords begin. The expression is a base `value = ...` followed by sequential statements that mutate an accumulator. Each statement is one of:
 
 - **No-argument** — applies an operation to the accumulator: `round = yes`.
 - **Simple** — takes one or more sub-expressions: `add = 5`, `clamp = { min = 0 max = 100 }`.
 - **Control flow** — takes a block: `if = { limit = { ... } add = 100 } else = { subtract = 1 }`.
 - **Collection iterator** — scopes to each element of a named collection and applies statements: `every_collection = { ... }`.
 
+**`set_variable` / `set_temp_variable`**, two equivalent shapes:
+
 ```
+# Long form: var name as the key, math expression as its value
+set_temp_variable = {
+    foo = {
+        value = bar
+        multiply = 2
+        add = baz
+    }
+}
+```
+
+```
+# Short form: var = X plus value = { ... }
+set_temp_variable = {
+    var = foo
+    value = {
+        value = bar
+        multiply = 2
+        add = baz
+    }
+}
+```
+
+Both compile to the same result. The long form is one block shallower (no `var =` line). The short form reads more like the accumulate shape below and is the one to reach for when a tool or surrounding context expects `var =` to be explicit.
+
+**Do not write the math expression as siblings of `var = X`.** That form silently parses to 0.0 (no error, no log) and is the most common cause of "my `set_temp_variable` is mysteriously producing 0" reports:
+
+```
+# WRONG, silently evaluates to 0.0
 set_variable = {
     var = combined_units
     value = num_cavalry
     add = num_motorized
     add = num_mechanized
-    greater_than = { value = num_units  multiply = 0.4 }
 }
 ```
+
+The fix is to wrap the expression inside `value = { ... }` (short form) or use `var_name = { ... }` (long form). Every math expression in the mod follows one of these two shapes; copy from `00_money_system.txt`, `99_eu_scripted_effects.txt`, `00_productivity_effects.txt`, `!_energy_effects.txt`, `01_missiles_scripted_localisation.txt`, or `01_money_scripted_localisation.txt` if in doubt.
 
 The expression is also the `value` of an **accumulate** effect (`add_to_variable`,
 `subtract_from_variable`, `multiply_variable`, `divide_variable`), not just
