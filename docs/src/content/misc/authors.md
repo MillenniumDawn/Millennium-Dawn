@@ -207,8 +207,6 @@ The following page is a non-exhaustive list of contributors from over the years 
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2076426030)_
 - **Sinuiju chan** - MD PLA general resetting
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3138331129)_
-- **Millennium Dawn: Director's Cut (MD:DC)**
-  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3543352335)_
 - **Doomsday Series: Zombies modern day subnmod**
   \*Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1204955863)
 - **AIGFX: Visible Railroads: Supply Map Mode**

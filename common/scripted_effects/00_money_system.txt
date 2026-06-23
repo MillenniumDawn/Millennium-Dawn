@@ -98,21 +98,14 @@ ingame_update_setup = {
 # Purpose: Updates the dirty variable which in turn updates the money UI and the research screen
 update_money_dirty_variable = {
 	if = { limit = { is_ai = no }
-		if = { limit = { NOT = { has_variable = global.update_monie_ui } }
-			set_variable = { global.update_monie_ui = 0 }
-		}
-		else = {
-			add_to_variable = { global.update_monie_ui = 1 }
-		}
-
-		add_to_variable = { global.research_screen_ui = 1 }
-
 		force_update_map_mode = { mapmode = gdp_c_map_mode }
 		force_update_map_mode = { mapmode = energy_consumption_map_mode }
 		force_update_map_mode = { mapmode = productivity_map_mode }
 
 		md_check_research_slot_alert = yes
 	}
+	add_to_variable = { global.update_monie_ui = 1 }
+	add_to_variable = { global.research_screen_ui = 1 }
 }
 
 expense_modifier_calculations = {
@@ -247,7 +240,7 @@ calculate_tax_gain = {
 			# Overall productivity
 			multiply = {
 				value = overall_productivity
-				multiply = 0.001
+				divide = global.productivity_center
 			}
 		}
 	}
@@ -848,17 +841,20 @@ calculate_additional_income_rate = {
 	}
 	# EU
 	if = {
-		limit = {
-			is_in_array = { global.EU_member = THIS }
-			NOT = { has_idea = EUU_subsidies_suspended }
-		}
-		set_variable = { EU_subsidies = THIS.EU_natural_subsidies }
-		add_to_variable = { EU_subsidies = THIS.EU_growth_subsidies }
-		add_to_variable = { EU_subsidies = THIS.EU_admin_subsidies }
-		add_to_variable = { EU_subsidies = THIS.EU_global_exp_subsidies }
-		multiply_variable = { EU_subsidies = 0.019 }
+		limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+		if = {
+			limit = {
+				has_idea = EU_member
+				NOT = { has_idea = EUU_subsidies_suspended }
+			}
+			set_variable = { EU_subsidies = THIS.EU_natural_subsidies }
+			add_to_variable = { EU_subsidies = THIS.EU_growth_subsidies }
+			add_to_variable = { EU_subsidies = THIS.EU_admin_subsidies }
+			add_to_variable = { EU_subsidies = THIS.EU_global_exp_subsidies }
+			multiply_variable = { EU_subsidies = 0.019 }
 
-		add_to_variable = { additional_income_rate = EU_subsidies }
+			add_to_variable = { additional_income_rate = EU_subsidies }
+		}
 	}
 	if = {
 		limit = { has_idea = blood_diamond_trade }
@@ -4435,7 +4431,7 @@ update_state_variables = {
 				value = {
 					value = productivity_state_var
 					multiply = 0.001
-					multiply = temp_pop
+					multiply = { value = state_population_k multiply = 0.01 }
 				}
 			}
 
@@ -5281,7 +5277,7 @@ calculate_gdp = {
 		var = gdp_total
 		value = {
 			value = overall_productivity
-			multiply = 0.001
+			divide = global.productivity_center
 		}
 	}
 
