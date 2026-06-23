@@ -91,14 +91,15 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 
 ## Missiles & Space (`missile_modifier_definitions.txt`) — country scope
 
-| Modifier                            |
-| ----------------------------------- |
-| `olv_production_speed_modifier`     |
-| `gnss_production_speed_modifier`    |
-| `comsat_production_speed_modifier`  |
-| `spysat_production_speed_modifier`  |
-| `killsat_production_speed_modifier` |
-| `nuclear_reactor_fuel_production`   |
+| Modifier                                 |
+| ---------------------------------------- |
+| `olv_production_speed_modifier`          |
+| `gnss_production_speed_modifier`         |
+| `comsat_production_speed_modifier`       |
+| `spysat_production_speed_modifier`       |
+| `killsat_production_speed_modifier`      |
+| `nuclear_reactor_fuel_production_factor` |
+| `nuclear_reactor_fuel_production`        |
 
 ## Economy — General (`modifier_definitions.txt`) — country scope
 
