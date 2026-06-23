@@ -426,21 +426,24 @@ on_actions = {
 	on_daily = {
 		effect = {
 			if = {
-				limit = { is_ai = no }
+				limit = { is_ai = no has_country_flag = antarctica_has_active_station }
 				antarctica_process_player_station_setup = yes
 				antarctica_process_station_dismantle = yes
-				antarctica_process_delivery_queue = yes
 				antarctica_process_blizzard_daily = yes
 
+				antarctica_process_delivery_queue = yes
 				antarctica_process_station_fuel_consumption = yes
 				antarctica_process_station_module_installations = yes
 			}
 
 			if = {
 				limit = { NOT = { has_global_flag = antarctic_station_startup_refresh } }
-				antarctica_apply_station_maintenance_costs = yes
-				antarctica_update_small_treaty_status_effects = yes
 				set_global_flag = antarctic_station_startup_refresh
+				antarctica_apply_station_maintenance_costs = yes
+				for_each_scope_loop = {
+					array = global.at_members
+					antarctica_update_small_treaty_status_effects = yes
+				}
 			}
 		}
 	}
@@ -456,7 +459,10 @@ on_actions = {
 				antarctica_process_blizzard_repairs_daily = yes
 				for_each_scope_loop = {
 					array = global.at_members
-					antarctica_recalculate_country_laboratory_effects = yes
+					if = {
+						limit = { has_country_flag = antarctica_has_active_station }
+						antarctica_recalculate_country_laboratory_effects = yes
+					}
 				}
 				antarctica_process_station_research_progress = yes
 			}

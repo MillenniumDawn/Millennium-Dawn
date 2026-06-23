@@ -1170,8 +1170,8 @@ antarctica_start_station_dismantle = {
 			if = { limit = { check_variable = { station_slot_14 > 0 } } add_to_temp_variable = { dismantle_modules = 1 } }
 
 			set_temp_variable = { dismantle_days = dismantle_modules }
-			multiply_temp_variable = { dismantle_days = 0 }
-			add_to_temp_variable = { dismantle_days = 3 }
+			multiply_temp_variable = { dismantle_days = 20 }
+			add_to_temp_variable = { dismantle_days = 30 }
 
 			set_variable = { antarctica_station_dismantle_in_progress = 1 }
 			set_variable = { antarctica_station_dismantle_days_remaining = dismantle_days }
@@ -1326,6 +1326,27 @@ antarctica_rebuild_regular_at_member_list = {
 			limit = { NOT = { has_country_flag = is_antarctica_atcp_consultative_member } }
 			add_to_array = { global.at_regular_members = THIS }
 		}
+	}
+}
+
+antarctica_set_station_next_tier_iterations_count = {
+	if = {
+		limit = { check_variable = { selected_antarctica_station_tier < 2 } }
+		set_variable = { selected_antarctica_station_iterations_until_next_tier = 3 }
+		subtract_from_variable = { selected_antarctica_station_iterations_until_next_tier = selected_antarctica_station_iterations }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_tier < 3 } }
+		set_variable = { selected_antarctica_station_iterations_until_next_tier = 6 }
+		subtract_from_variable = { selected_antarctica_station_iterations_until_next_tier = selected_antarctica_station_iterations }
+	}
+	else = {
+		set_variable = { selected_antarctica_station_iterations_until_next_tier = 0 }
+	}
+
+	if = {
+		limit = { check_variable = { selected_antarctica_station_iterations_until_next_tier < 0 } }
+		set_variable = { selected_antarctica_station_iterations_until_next_tier = 0 }
 	}
 }
 
@@ -1643,25 +1664,7 @@ antarctica_set_selected_station_controller = {
 			set_variable = { selected_antarctica_station_tier = 1 }
 		}
 
-		if = {
-			limit = { check_variable = { selected_antarctica_station_tier < 2 } }
-			set_variable = { selected_antarctica_station_iterations_until_next_tier = 3 }
-			subtract_from_variable = { selected_antarctica_station_iterations_until_next_tier = selected_antarctica_station_iterations }
-		}
-		else_if = {
-			limit = { check_variable = { selected_antarctica_station_tier < 3 } }
-			set_variable = { selected_antarctica_station_iterations_until_next_tier = 6 }
-			subtract_from_variable = { selected_antarctica_station_iterations_until_next_tier = selected_antarctica_station_iterations }
-		}
-		else = {
-			set_variable = { selected_antarctica_station_iterations_until_next_tier = 0 }
-		}
-
-		if = {
-			limit = { check_variable = { selected_antarctica_station_iterations_until_next_tier < 0 } }
-			set_variable = { selected_antarctica_station_iterations_until_next_tier = 0 }
-		}
-
+		antarctica_set_station_next_tier_iterations_count = yes
 		antarctica_refresh_selected_station_iteration_values = yes
 
 		# Array will be properly initialized from station data
@@ -1892,24 +1895,7 @@ antarctica_refresh_selected_station_iteration_values = {
 			ID = "[?selected_antarctica_station]"
 		}
 
-		if = {
-			limit = { check_variable = { selected_antarctica_station_tier < 2 } }
-			set_variable = { selected_antarctica_station_iterations_until_next_tier = 3 }
-			subtract_from_variable = { selected_antarctica_station_iterations_until_next_tier = selected_antarctica_station_iterations }
-		}
-		else_if = {
-			limit = { check_variable = { selected_antarctica_station_tier < 3 } }
-			set_variable = { selected_antarctica_station_iterations_until_next_tier = 6 }
-			subtract_from_variable = { selected_antarctica_station_iterations_until_next_tier = selected_antarctica_station_iterations }
-		}
-		else = {
-			set_variable = { selected_antarctica_station_iterations_until_next_tier = 0 }
-		}
-
-		if = {
-			limit = { check_variable = { selected_antarctica_station_iterations_until_next_tier < 0 } }
-			set_variable = { selected_antarctica_station_iterations_until_next_tier = 0 }
-		}
+		antarctica_set_station_next_tier_iterations_count = yes
 
 		set_variable = { selected_antarctica_station_iteration_speed_multiplier = 1 }
 		if = {
@@ -2418,8 +2404,6 @@ antarctica_process_station_module_installations = {
 		limit = { check_variable = { selected_antarctica_station > 0 } }
 		antarctica_set_selected_station_controller = yes
 	}
-
-	add_to_variable = { global.missile_ui_updated = 1 }
 }
 
 
@@ -2562,8 +2546,6 @@ antarctica_process_station_fuel_consumption = {
 		limit = { check_variable = { selected_antarctica_station > 0 } }
 		antarctica_set_selected_station_controller = yes
 	}
-
-	add_to_variable = { global.missile_ui_updated = 1 }
 }
 antarctica_process_station_research_progress = {
 	for_each_loop = {
@@ -2787,8 +2769,6 @@ antarctica_process_station_research_progress = {
 		limit = { check_variable = { selected_antarctica_station > 0 } }
 		antarctica_set_selected_station_controller = yes
 	}
-
-	add_to_variable = { global.missile_ui_updated = 1 }
 }
 
 # Usage
@@ -2875,71 +2855,63 @@ antarctica_send_supplies_to_selected_station = {
 
 # Process delivery queue for selected station (decrements counter, adds fuel on completion)
 antarctica_process_delivery_queue = {
-	if = { limit = { check_variable = { selected_antarctica_station > 0 } }
-		set_temp_variable = { station_id = selected_antarctica_station }
+	for_each_loop = {
+		array = global.antarctica_station_ids
+		value = process_station_id
 
-		# Get delivery days remaining for this station
-		meta_effect = {
-			text = {
-				set_temp_variable = { delivery_days = global.research_station_[ID]_delivery_days_remaining }
+		if = {
+			limit = {
+				check_variable = { process_station_id > 0 }
+				meta_trigger = {
+					text = {
+						has_global_flag = research_station_[ID]_exists
+						check_variable = { global.research_station_[ID]_delivery_days_remaining > 0 }
+					}
+					ID = "[?process_station_id]"
+				}
 			}
-			ID = "[?station_id]"
-		}
 
-		# Only process if delivery is active
-		if = { limit = { check_variable = { delivery_days > 0 } }
-			# Decrement counter
+			set_temp_variable = { station_id = process_station_id }
+			set_temp_variable = { delivery_complete = 0 }
+
 			meta_effect = {
 				text = {
 					subtract_from_variable = { global.research_station_[ID]_delivery_days_remaining = 1 }
-				}
-				ID = "[?station_id]"
-			}
-
-			# Check if delivery just completed (now 0)
-			meta_effect = {
-				text = {
-					if = { limit = { check_variable = { global.research_station_[ID]_delivery_days_remaining = 0 } }
+					if = {
+						limit = { check_variable = { global.research_station_[ID]_delivery_days_remaining = 0 } }
 						set_temp_variable = { delivery_complete = 1 }
 					}
 				}
 				ID = "[?station_id]"
 			}
 
-			# If delivery completed, add fuel now
-			if = { limit = { check_variable = { delivery_complete = 1 } }
-				# Retrieve station values
+			if = {
+				limit = { check_variable = { delivery_complete = 1 } }
+
 				meta_effect = {
 					text = {
 						set_temp_variable = { current_storage = global.research_station_[ID]_output_storage }
 						set_temp_variable = { pending_fuel = global.research_station_[ID]_delivery_fuel_pending }
 						set_temp_variable = { max_capacity = global.research_station_[ID]_output_capacity }
-					}
-					ID = "[?station_id]"
-				}
-
-				# Add fuel and clamp to capacity
-				add_to_temp_variable = { current_storage = pending_fuel }
-				if = { limit = { check_variable = { current_storage > max_capacity } }
-					set_temp_variable = { current_storage = max_capacity }
-				}
-
-				# Recalculate fuel days
-				meta_effect = {
-					text = {
 						set_temp_variable = { fuel_usage = global.research_station_[ID]_output_fuel_usage }
 					}
 					ID = "[?station_id]"
 				}
 
+				add_to_temp_variable = { current_storage = pending_fuel }
+				if = {
+					limit = { check_variable = { current_storage > max_capacity } }
+					set_temp_variable = { current_storage = max_capacity }
+				}
+
 				set_temp_variable = { fuel_capacity_days = 0 }
-				if = { limit = { check_variable = { fuel_usage > 0 } }
+				if = {
+					limit = { check_variable = { fuel_usage > 0 } }
 					set_temp_variable = { fuel_capacity_days = current_storage }
 					divide_temp_variable = { fuel_capacity_days = fuel_usage }
 					round_variable = fuel_capacity_days
 				}
 
-				# Update storage, clear queue, and recalculate days
 				meta_effect = {
 					text = {
 						set_variable = { global.research_station_[ID]_output_storage = [STORAGE] }
@@ -2957,7 +2929,6 @@ antarctica_process_delivery_queue = {
 		}
 	}
 }
-
 
 antarctica_clear_laboratory_country_effects = {
 	clear_variable = antarctica_lab_cat_agriculture_tech
@@ -4258,4 +4229,13 @@ antarctica_process_blizzard_repairs_daily = {
 		}
 	}
 	add_to_variable = { global.missile_ui_updated = 1 }
+}
+
+setup_scripted_ai_station = {
+	if = {
+		limit = {
+			is_ai_allowed_to_build_antarctic_station = yes
+		}
+		antarctica_select_or_create_player_station = yes
+	}
 }
