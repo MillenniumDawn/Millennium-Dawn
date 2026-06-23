@@ -16,6 +16,7 @@ eu_screen_selection = {
 	clr_country_flag = show_offices_screen # Offices
 	clr_country_flag = show_euro_info # Euro-Info
 	clr_country_flag = eu_party_detail_open # close the party MEP breakdown panel on any tab switch
+	clr_country_flag = eu_fiscal_distrib_view # reset the fiscal side panel to the contributions view on any tab switch
 	update_eu_dirty_variable = yes
 }
 
@@ -30,37 +31,50 @@ EU_update_vars = {
 		# EU population vars update
 		# Sets Global EU Population and Country Population
 		set_variable = { var = global.var_EUpopTotal value = 0 }
-		set_variable = { var = global.EU_member_count value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
-			set_temp_variable = { converted_manpower = max_manpower_k }
-			multiply_temp_variable = { converted_manpower = 0.01 }
-			set_variable = { EU_member_state_population = converted_manpower }
-			multiply_variable = { EU_member_state_population = 0.1 }
-			add_to_variable = { global.var_EUpopTotal = converted_manpower }
-			add_to_variable = { global.EU_member_count = 1 }
+			add_to_variable = {
+				var = global.var_EUpopTotal
+				value = {
+					value = max_manpower_k
+					multiply = 0.01
+				}
+			}
 		}
-		set_variable = { var = global.var_EUpopTotalDisplay value = global.var_EUpopTotal }
-		multiply_variable = { global.var_EUpopTotalDisplay = 0.1 }
+
+		set_variable = {
+			global.var_EUpopTotalDisplay = {
+				value = global.var_EUpopTotal
+				multiply = 0.1
+			}
+		}
 
 		set_variable = { var = global.var_europeanism value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
 			# Pop ratio
-			set_variable = { THIS.EU_pop_ratio = 0 }
-			add_to_variable = { THIS.EU_pop_ratio = THIS.max_manpower_k }
-			multiply_variable = { THIS.EU_pop_ratio = 0.01 }
-			if = {
-				limit = { check_variable = { global.var_EUpopTotal > 0 } }
-				divide_variable = { THIS.EU_pop_ratio = global.var_EUpopTotal }
+			set_variable = {
+				EU_pop_ratio = {
+					value = 0
+					add = THIS.max_manpower_k
+					multiply = 0.01
+					if = { limit = { value = global.var_EUpopTotal greater_than = 0 }
+						divide = global.var_EUpopTotal
+					}
+				}
 			}
 			# Europeanism
-			clamp_variable = { var = THIS.eurosceptic min = 0 max = 1 }
-			set_variable = { THIS.var_proeuropean = 1 }
-			subtract_from_variable = { THIS.var_proeuropean = THIS.eurosceptic }
-			set_temp_variable = { converted_manpower = max_manpower_k }
-			multiply_temp_variable = { converted_manpower = 0.01 }
-			multiply_variable = { THIS.var_proeuropean = converted_manpower }
+			clamp_variable = { var = THIS.europeanism min = 0 max = 1 }
+			set_variable = {
+				var_proeuropean = {
+					value = 1
+					subtract = eurosceptic
+					multiply = {
+						value = max_manpower_k
+						multiply = 0.01
+					}
+				}
+			}
 			add_to_variable = { global.var_europeanism = THIS.var_proeuropean }
 		}
 		if = {
@@ -69,37 +83,33 @@ EU_update_vars = {
 		}
 
 		# Failsafe: lift a stuck budget/MFF proposal block once its whole draft cycle is idle
-		for_each_scope_loop = {
-			array = global.EU_member
-			if = {
-				limit = {
-					has_country_flag = EU_budget_EP_block
-					NOT = { has_active_mission = EU_budget_draft_preparations }
-					NOT = { has_active_mission = EU_budget_draft_ongoing }
-					NOT = { has_active_mission = EU_budget_draft_ongoing_president }
-					NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
-				}
-				clr_country_flag = EU_budget_EP_block
+		if = {
+			limit = {
+				has_global_flag = EU_budget_EP_block
+				NOT = { has_active_mission = EU_budget_draft_preparations }
+				NOT = { has_active_mission = EU_budget_draft_ongoing }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 			}
-			if = {
-				limit = {
-					has_country_flag = EU_mff_EP_block
-					NOT = { has_active_mission = EU_mff_draft_preparations }
-					NOT = { has_active_mission = EU_mff_draft_ongoing }
-					NOT = { has_active_mission = EU_mff_draft_ongoing_president }
-					NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
-				}
-				clr_country_flag = EU_mff_EP_block
+			clr_global_flag = EU_budget_EP_block
+		}
+		if = {
+			limit = {
+				has_global_flag = EU_mff_EP_block
+				NOT = { has_active_mission = EU_mff_draft_preparations }
+				NOT = { has_active_mission = EU_mff_draft_ongoing }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
 			}
+			clr_global_flag = EU_mff_EP_block
 		}
 
 		# QMV majority threshold
-		set_temp_variable = { total_member_states = global.EU_member_count }
-		set_temp_variable = { qmv_majority_states = total_member_states }
-		multiply_temp_variable = { qmv_majority_states = 0.55 }
-		round_temp_variable = qmv_majority_states
-
-		set_variable = { global.EU_majority_qmv_state = qmv_majority_states }
+		set_variable = {
+			global.EU_majority_qmv_state = {
+				value = global.EU_member^num
+				multiply = 0.55
+				round = yes
+			}
+		}
 	}
 	update_eu_dirty_variable = yes
 }
@@ -107,13 +117,13 @@ EU_update_vars = {
 ########################################
 ### Changing Euroscepticism of a tag ###
 ########################################
-# set_temp_variable = { modify_eurosceptic = +- }
-# set_temp_variable = { modify_eurosceptic_target = ROOT/THIS/PREV/FROM or country TAG }
-eurosceptic_change = {
-	custom_effect_tooltip = tooltip_eurosceptic_change
+# set_temp_variable = { modify_europeanism = +- }
+# set_temp_variable = { modify_europeanism_target = ROOT/THIS/PREV/FROM or country TAG }
+europeanism_change = {
+	custom_effect_tooltip = tooltip_europeanism_change
 	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects [?modify_eurosceptic_target] eurosceptic_change [?modify_eurosceptic]"
-		var:modify_eurosceptic_target = { add_to_variable = { eurosceptic = modify_eurosceptic } }
+		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects [?modify_europeanism_target] europeanism_change [?modify_europeanism]"
+		var:modify_europeanism_target = { add_to_variable = { eurosceptic = modify_europeanism } }
 		EU_update_vars = yes
 	}
 }
@@ -122,28 +132,28 @@ eurosceptic_change = {
 ### Changing Euroscepticism of all (current) member states ###
 ##############################################################
 
-# set_temp_variable = { modify_eurosceptic = +- }
-EU_eurosceptic_change = {
-	custom_effect_tooltip = tooltip_EU_eurosceptic_change
+# set_temp_variable = { modify_europeanism = +- }
+EU_europeanism_change = {
+	custom_effect_tooltip = tooltip_EU_europeanism_change
 	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_eurosceptic_change [?modify_eurosceptic]"
+		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_europeanism_change [?modify_europeanism]"
 		for_each_scope_loop = {
 			array = global.EU_member
-			add_to_variable = { THIS.eurosceptic = modify_eurosceptic }
+			add_to_variable = { THIS.europeanism = modify_europeanism }
 			if = {
-				limit = { check_variable = { modify_eurosceptic > 0.04 } }
+				limit = { check_variable = { modify_europeanism > 0.04 } }
 				news_event = EU_news.31
 			}
 			else_if = {
-				limit = { check_variable = { modify_eurosceptic > 0 } }
+				limit = { check_variable = { modify_europeanism > 0 } }
 				news_event = EU_news.30
 			}
 			else_if = {
-				limit = { check_variable = { modify_eurosceptic < -0.04 } }
+				limit = { check_variable = { modify_europeanism < -0.04 } }
 				news_event = EU_news.29
 			}
 			else_if = {
-				limit = { check_variable = { modify_eurosceptic < 0 } }
+				limit = { check_variable = { modify_europeanism < 0 } }
 				news_event = EU_news.28
 			}
 		}
@@ -155,14 +165,14 @@ EU_eurosceptic_change = {
 ### Changing Euroscepticism of all current AND potential member states ###
 ##########################################################################
 
-# set_temp_variable = { modify_eurosceptic = +- }
-EU_potential_eurosceptic_change = {
-	custom_effect_tooltip = tooltip_EU_potential_eurosceptic_change
+# set_temp_variable = { modify_europeanism = +- }
+EU_potential_europeanism_change = {
+	custom_effect_tooltip = tooltip_EU_potential_europeanism_change
 	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_potential_eurosceptic_change [?modify_eurosceptic]"
+		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_potential_europeanism_change [?modify_europeanism]"
 		for_each_scope_loop = {
 			array = global.EU_potential
-			add_to_variable = { THIS.eurosceptic = modify_eurosceptic }
+			add_to_variable = { THIS.europeanism = modify_europeanism }
 		}
 		EU_update_vars = yes
 	}
@@ -194,11 +204,11 @@ invest_in_EU_single_market_cic = {
 			}
 
 		}
-		set_temp_variable = { modify_eurosceptic = -0.03 }
-		set_temp_variable = { modify_eurosceptic_target = THIS }
-		eurosceptic_change = yes
-		set_temp_variable = { modify_eurosceptic_target = ROOT }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = -0.03 }
+		set_temp_variable = { modify_europeanism_target = THIS }
+		europeanism_change = yes
+		set_temp_variable = { modify_europeanism_target = ROOT }
+		europeanism_change = yes
 	}
 }
 
@@ -216,11 +226,11 @@ invest_in_EU_single_market_infra = {
 				invest_infra = yes
 			}
 		}
-		set_temp_variable = { modify_eurosceptic = -0.03 }
-		set_temp_variable = { modify_eurosceptic_target = THIS }
-		eurosceptic_change = yes
-		set_temp_variable = { modify_eurosceptic_target = ROOT }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = -0.03 }
+		set_temp_variable = { modify_europeanism_target = THIS }
+		europeanism_change = yes
+		set_temp_variable = { modify_europeanism_target = ROOT }
+		europeanism_change = yes
 		update_eu_dirty_variable = yes
 	}
 }
@@ -232,11 +242,11 @@ EU_money_for_influence = {
 		set_temp_variable = { percent_change = 1 }
 		change_influence_percentage = yes
 	}
-	set_temp_variable = { modify_eurosceptic = -0.03 }
-	set_temp_variable = { modify_eurosceptic_target = THIS }
-	eurosceptic_change = yes
-	set_temp_variable = { modify_eurosceptic_target = ROOT }
-	eurosceptic_change = yes
+	set_temp_variable = { modify_europeanism = -0.03 }
+	set_temp_variable = { modify_europeanism_target = THIS }
+	europeanism_change = yes
+	set_temp_variable = { modify_europeanism_target = ROOT }
+	europeanism_change = yes
 	update_eu_dirty_variable = yes
 }
 
@@ -249,180 +259,26 @@ execute_OMT = {
 	hidden_effect = {
 		for_each_scope_loop = {
 			array = global.EU_member
-			#log = "start OTM interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-			if = {
-				limit = {
-					has_idea = euro
-					check_variable = {
-						var = THIS.debt
-						value = 10000.0
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = {
-					var = THIS.OMT_account
-					value = 0
-				}
-				while_loop_effect = {
-						limit = {
-							check_variable = { THIS.interest_rate > 4.0 }
-							check_variable = { global.OMT_size_limit > global.OMT_total_value }
-						}
-						#log = "while_loop_effect interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						if = {
-							limit = {
-								check_variable = { THIS.interest_rate > 4.0 }
-							}
-							#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 1000.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							subtract_from_variable = { THIS.debt = 1000.0 }
-							#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 1000.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							add_to_variable = { THIS.OMT_account = 1000.0 }
-							#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 1000.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							add_to_variable = { global.OMT_total_value = 1000.0 }
-							calculate_interest_rate = yes
-						}
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = euro
-					check_variable = { THIS.debt < 10000.0 }
-					check_variable = {
-						var = THIS.debt
-						value = 1000.0
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = {
-					var = THIS.OMT_account
-					value = 0
-				}
+			# Pick a debt step (10^n) sized to the country's debt so the OMT loop converges in a reasonable number of iterations without overshooting.
+			set_temp_variable = { step = 0 }
+			if = { limit = { has_idea = euro check_variable = { debt > 9999.999 } } set_temp_variable = { step = 1000.0 } }
+			else_if = { limit = { has_idea = euro check_variable = { debt > 999.999 } } set_temp_variable = { step = 100.0 } }
+			else_if = { limit = { has_idea = euro check_variable = { debt > 99.999 } } set_temp_variable = { step = 10.0 } }
+			else_if = { limit = { has_idea = euro check_variable = { debt > 9.999 } } set_temp_variable = { step = 1.0 } }
+			else_if = { limit = { has_idea = euro check_variable = { debt > 0.999 } } set_temp_variable = { step = 0.1 } }
+			if = { limit = { check_variable = { step > 0 } }
+				set_variable = { OMT_account = 0 }
 				while_loop_effect = {
 					limit = {
-						check_variable = { THIS.interest_rate > 4.0 }
+						check_variable = { interest_rate > 4.0 }
 						check_variable = { global.OMT_size_limit > global.OMT_total_value }
+						check_variable = { debt > 0 }
 					}
-						if = {
-							limit = {
-								check_variable = { THIS.interest_rate > 4.0 }
-							}
-
-							#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 100.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							subtract_from_variable = { THIS.debt = 100.0 }
-							#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 100.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							add_to_variable = { THIS.OMT_account = 100.0 }
-							#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 100.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							add_to_variable = { global.OMT_total_value = 100.0 }
-							#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							calculate_interest_rate = yes
-
-						}
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = euro
-					check_variable = { THIS.debt < 1000.0 }
-					check_variable = {
-						var = THIS.debt
-						value = 100.0
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = {
-					var = THIS.OMT_account
-					value = 0
-				}
-				while_loop_effect = {
-						limit = {
-							check_variable = { THIS.interest_rate > 4.0 }
-							check_variable = { global.OMT_size_limit > global.OMT_total_value }
-						}
-						if = {
-							limit = {
-								check_variable = { THIS.interest_rate > 4.0 }
-							}
-
-							#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 10.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							subtract_from_variable = { THIS.debt = 10.0 }
-							#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 10.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							add_to_variable = { THIS.OMT_account = 10.0 }
-							#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 10.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							add_to_variable = { global.OMT_total_value = 10.0 }
-							#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							calculate_interest_rate = yes
-						}
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = euro
-					check_variable = { THIS.debt < 100.0 }
-					check_variable = {
-						var = THIS.debt
-						value = 10.0
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = {
-					var = THIS.OMT_account
-					value = 0
-				}
-				while_loop_effect = {
-						limit = {
-							check_variable = { THIS.interest_rate > 4.0 }
-							check_variable = { global.OMT_size_limit > global.OMT_total_value }
-						}
-						if = {
-							limit = {
-								check_variable = { THIS.interest_rate > 4.0 }
-							}
-
-							#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 1.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							subtract_from_variable = { THIS.debt = 1.0 }
-							#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 1.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							add_to_variable = { THIS.OMT_account = 1.0 }
-							#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 1.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							add_to_variable = { global.OMT_total_value = 1.0 }
-							#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-							calculate_interest_rate = yes
-						}
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = euro
-					check_variable = { THIS.debt < 10.0 }
-					check_variable = {
-						var = THIS.debt
-						value = 1.0
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = {
-					var = THIS.OMT_account
-					value = 0
-				}
-				while_loop_effect = {
-					limit = {
-						check_variable = { THIS.interest_rate > 4.0 }
-						check_variable = { global.OMT_size_limit > global.OMT_total_value }
-					}
-					if = {
-						limit = {
-							check_variable = { THIS.interest_rate > 4.0 }
-						}
-
-						#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 0.1 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						subtract_from_variable = { THIS.debt = 0.1 }
-						#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 0.1 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						add_to_variable = { THIS.OMT_account = 0.1 }
-						#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 0.1 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						add_to_variable = { global.OMT_total_value = 0.1 }
-						#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						calculate_interest_rate = yes
-
-					}
+					subtract_from_variable = { debt = step }
+					clamp_variable = { var = debt min = 0 }
+					add_to_variable = { OMT_account = step }
+					add_to_variable = { global.OMT_total_value = step }
+					calculate_interest_rate = yes
 				}
 			}
 		}
@@ -436,26 +292,13 @@ remove_OMT = {
 		for_each_scope_loop = {
 			array = global.EU_member
 			if = {
-				limit = {
-					has_idea = euro
-				}
-				log = "remove_effect interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-				add_to_variable = {
-					var = THIS.debt
-					value = THIS.OMT_account
-				}
-				clear_variable = THIS.OMT_account
-				clear_variable = global.OMT_total_value
-				log = "remove_effect end interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-			}
-		}
-		for_each_scope_loop = {
-			array = global.EU_member
-			if = {
 				limit = { has_idea = euro }
+				add_to_variable = { debt = OMT_account }
+				clear_variable = OMT_account
 				news_event = EU_news.33
 			}
 		}
+		clear_variable = global.OMT_total_value
 	}
 	update_eu_dirty_variable = yes
 }
@@ -523,8 +366,8 @@ leaving_EU = {
 	remove_ideas = euro
 	custom_effect_tooltip = tooltip_EU_remove_laws_and_offices
 	hidden_effect = {
-		every_other_country = {
-			limit = { has_idea = EU_member }
+		for_each_scope_loop = {
+			array = global.EU_member
 			PREV = { remove_opinion_modifier = { target = PREV modifier = EU_member_opinion } }
 			remove_opinion_modifier = { target = PREV modifier = EU_member_opinion }
 		}
@@ -548,6 +391,7 @@ leaving_EU = {
 		remove_ideas = EU_Turkey_deal
 		remove_ideas = European_Asylum_Agency
 		remove_ideas = Frontex
+		clr_country_flag = adopt_eu_law
 		# EU offices — vacate every leadership seat so another member can claim it
 		EU_vacate_offices = yes
 		### End of EU law and offices
@@ -648,7 +492,6 @@ check_breach_of_EU_value = {
 	if = { limit = { is_subject = yes }
 		add_to_variable = { THIS.breach_of_EU_value = 4 }
 	}
-	update_eu_dirty_variable = yes
 }
 
 #############################
@@ -866,6 +709,13 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_potential_votes = 651 } # Lisbon Treaty Amendment
 			add_to_array = { global.EU_potential_votes = 652 } # EU-Russia Partnership Treaty
 			add_to_array = { global.EU_potential_votes = 653 } # Russia
+			add_to_array = { global.EU_potential_votes = 654 } # Barents Sea Enlargement
+			add_to_array = { global.EU_potential_votes = 655 } # Volga Enlargement
+			add_to_array = { global.EU_potential_votes = 656 } # Don-Kuban Enlargement
+			add_to_array = { global.EU_potential_votes = 657 } # Northern Caucasus Enlargement
+			add_to_array = { global.EU_potential_votes = 658 } # Ruthenia Enlargement
+			add_to_array = { global.EU_potential_votes = 659 } # Donets Enlargement
+			add_to_array = { global.EU_potential_votes = 660 } # Dnieper Enlargement
 			add_to_array = { global.EU_potential_votes = 110 } # Federalisation of the European Union
 			add_to_array = { global.EU_potential_votes = 111 } # United States of Europe
 			add_to_array = { global.EU_potential_votes = 112 } # European Federation
@@ -956,6 +806,43 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_potential = NAV }
 			add_to_array = { global.EU_potential = BAY }
 			add_to_array = { global.EU_potential = GRN }
+			add_to_array = { global.EU_potential = FAO }
+			add_to_array = { global.EU_potential = RSK }
+			add_to_array = { global.EU_potential = HZG }
+			add_to_array = { global.EU_potential = IOM }
+
+			# Eastern enlargement cohorts — must mirror the focus_EU654-EU660_QMV_result handlers
+			# in 99_EU_voting_scripted_effects.txt, or a passed enlargement vote leaves a candidate
+			# that is never in EU_potential and so can never actually open the EU GUI to join.
+			add_to_array = { global.EU_potential = KAE } # EU654 Barents
+			add_to_array = { global.EU_potential = KOM }
+			add_to_array = { global.EU_potential = NEE }
+			add_to_array = { global.EU_potential = BSH } # EU655 Volga
+			add_to_array = { global.EU_potential = CHU }
+			add_to_array = { global.EU_potential = MEL }
+			add_to_array = { global.EU_potential = MOV }
+			add_to_array = { global.EU_potential = TAT }
+			add_to_array = { global.EU_potential = UDM }
+			add_to_array = { global.EU_potential = ADY } # EU656 Don-Kuban
+			add_to_array = { global.EU_potential = DON }
+			add_to_array = { global.EU_potential = KLM }
+			add_to_array = { global.EU_potential = KUB }
+			add_to_array = { global.EU_potential = ABK } # EU657 Northern Caucasus
+			add_to_array = { global.EU_potential = CHE }
+			add_to_array = { global.EU_potential = DAG }
+			add_to_array = { global.EU_potential = ING }
+			add_to_array = { global.EU_potential = KBK }
+			add_to_array = { global.EU_potential = KCC }
+			add_to_array = { global.EU_potential = SOO }
+			add_to_array = { global.EU_potential = LRP } # EU658 Ruthenia
+			add_to_array = { global.EU_potential = OPR }
+			add_to_array = { global.EU_potential = PRP }
+			add_to_array = { global.EU_potential = VRP }
+			add_to_array = { global.EU_potential = DPR } # EU659 Donets
+			add_to_array = { global.EU_potential = HPR }
+			add_to_array = { global.EU_potential = LPR }
+			add_to_array = { global.EU_potential = CRM } # EU660 Dnieper
+			add_to_array = { global.EU_potential = DRP }
 
 			random_scope_in_array = {
 				array = global.EU_potential
@@ -968,16 +855,23 @@ on_startup_euu_action = {
 				country_event = { id = EUelection.1 days = 1625 }
 			}
 
+			set_global_flag = { flag = EU_president_commission_ai value = 1 days = 10 }
+			set_global_flag = { flag = ECB_president_ai value = 1 days = 10 }
+
 			EU_update_vars = yes
 			EU_init_focus_vote_weights = yes
+			if = {
+				limit = { has_game_rule = { rule = rule_european_union_expansion_focus option = yes } }
+				EU_apply_expansion_focus_weights = yes
+			}
 			for_each_scope_loop = {
 				array = global.EU_member
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				activate_mission = EU_budget_draft_preparations
 				activate_mission = EU_mff_draft_preparations
-				set_country_flag = EU_budget_EP_block
 				set_variable = { THIS.EU_budget_call_rate = 1 }
 			}
+			set_global_flag = EU_budget_EP_block
 			set_variable = { global.EU_budget_min_call_rate = 1 }
 			set_EU_gdp = yes
 			EU_global_click_cost = yes
@@ -1103,59 +997,13 @@ set_the_eu_parliament_delay = {
 			limit = { has_global_flag = GAME_RULE_eu_two_hundred_ten_cooldown }
 			for_each_scope_loop = {
 				array = global.EU_member
-				if = {
-					limit = { has_global_flag = GAME_RULE_eu_one_cooldown }
-					set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 1 }
-				}
-				else_if = {
-					limit = { has_global_flag = GAME_RULE_eu_sixty_cooldown }
-					set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 60 }
-				}
-				else_if = {
-					limit = { has_global_flag = GAME_RULE_eu_ninety_cooldown }
-					set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 90 }
-				}
-				else_if = {
-					limit = { has_global_flag = GAME_RULE_eu_one_hundred_twenty_cooldown }
-					set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 120 }
-				}
-				else_if = {
-					limit = { has_global_flag = GAME_RULE_eu_one_hundred_eighty_cooldown }
-					set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
-				}
-				else_if = {
-					limit = { has_global_flag = GAME_RULE_eu_two_hundred_ten_cooldown }
-					set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 210 }
-				}
+				set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 210 }
 				if = {
 					limit = { is_ai = no }
-					country_event = { id = EUvote.3 days = eu_delay }
+					country_event = { id = EUvote.3 days = 210 }
 				}
 			}
-			if = {
-				limit = { has_global_flag = GAME_RULE_eu_one_cooldown }
-				set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 1 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_sixty_cooldown }
-				set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 74 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_ninety_cooldown }
-				set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 104 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_one_hundred_twenty_cooldown }
-				set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 134 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_one_hundred_eighty_cooldown }
-				set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 194 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_two_hundred_ten_cooldown }
-				set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 224 }
-			}
+			set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 224 }
 		}
 	}
 }
@@ -1214,50 +1062,12 @@ set_the_eu_council_delay = {
 		}
 		else_if = {
 			limit = { has_global_flag = GAME_RULE_eu_two_hundred_ten_cooldown }
-			set_temp_variable = { eu_delay = 210 }
-			set_temp_variable = { eu_ai_delay = 224 }
-		}
-		if = {
-			limit = { check_variable = { eu_delay > 0 } }
-			if = {
-				limit = { has_global_flag = GAME_RULE_eu_one_cooldown }
-				set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 1 }
-				set_global_flag = { flag = delay_next_council_vote value = 1 days = 1 }
-				set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 1 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_sixty_cooldown }
-				set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 60 }
-				set_global_flag = { flag = delay_next_council_vote value = 1 days = 60 }
-				set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 74 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_ninety_cooldown }
-				set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 90 }
-				set_global_flag = { flag = delay_next_council_vote value = 1 days = 90 }
-				set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 104 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_one_hundred_twenty_cooldown }
-				set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 120 }
-				set_global_flag = { flag = delay_next_council_vote value = 1 days = 120 }
-				set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 134 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_one_hundred_eighty_cooldown }
-				set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 180 }
-				set_global_flag = { flag = delay_next_council_vote value = 1 days = 180 }
-				set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 194 }
-			}
-			else_if = {
-				limit = { has_global_flag = GAME_RULE_eu_two_hundred_ten_cooldown }
-				set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 210 }
-				set_global_flag = { flag = delay_next_council_vote value = 1 days = 210 }
-				set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 224 }
-			}
+			set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 210 }
+			set_global_flag = { flag = delay_next_council_vote value = 1 days = 210 }
+			set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 224 }
 			if = {
 				limit = { is_ai = no }
-				country_event = { id = EUvote.4 days = eu_delay }
+				country_event = { id = EUvote.4 days = 210 }
 			}
 		}
 	}
@@ -1284,8 +1094,12 @@ POTEF_election = {
 election_POTEF_in_member_state = {
 	for_each_loop = {
 		array = party_pop_array
-		set_variable = { THIS.POTEF_pop_vote^i = party_pop_array^i }
-		multiply_variable = { THIS.POTEF_pop_vote^i = THIS.max_manpower_k }
+		set_variable = {
+			POTEF_pop_vote^i = {
+				value = party_pop_array^i
+				multiply = max_manpower_k
+			}
+		}
 		add_to_variable = { global.POTEF_pop_vote^i = THIS.POTEF_pop_vote^i }
 		add_to_variable = { global.POTEF_pop_vote_total = THIS.POTEF_pop_vote^i }
 	}
@@ -1315,36 +1129,22 @@ clear_POTEF_variables = {
 update_POTEF_arrays = {
 	for_each_loop = {
 		array = POTEF_winner_array
-		add_to_array = {
-			array = POTEF_winner_array
-			value = global.POTEF_winner^i
-			index = i
-		}
+		set_variable = { POTEF_winner_array^i = global.POTEF_winner^i }
 	}
 	for_each_loop = {
 		array = POTEF_pop_vote_array
-		add_to_array = {
-			array = POTEF_pop_vote_array
-			value = global.POTEF_pop_vote^i
-			index = i
-		}
+		set_variable = { POTEF_pop_vote_array^i = global.POTEF_pop_vote^i }
 	}
 	clamp_variable = { var = global.POTEF_pop_vote_total min = 1 }
 	for_each_loop = {
 		array = POTEF_pop_vote_ratio_array
-		set_variable = { global.POTEF_pop_vote_ratio^i = global.POTEF_pop_vote^i }
-		divide_variable = { global.POTEF_pop_vote_ratio^i = global.POTEF_pop_vote_total }
-		add_to_array = {
-			array = POTEF_pop_vote_ratio_array
-			value = global.POTEF_pop_vote_ratio^i
-			index = i
-		}
+		set_variable = { var = global.POTEF_pop_vote_ratio^i value = { value = global.POTEF_pop_vote^i divide = global.POTEF_pop_vote_total } }
+		set_variable = { POTEF_pop_vote_ratio_array^i = global.POTEF_pop_vote_ratio^i }
 	}
 	update_eu_dirty_variable = yes
 }
 
 set_POTEF_elect = {
-	set_temp_variable = { camp_time = 90 }
 	if = {
 		limit = {
 			absolute_majority_member_states = yes
@@ -1395,10 +1195,14 @@ set_POTEF_elect = {
 		set_variable = { POTEF_term = 365 }	#365
 	}
 
-	set_variable = { POTEF_time_to_camp = POTEF_term }
-	subtract_from_variable = { POTEF_time_to_camp = camp_time }
-	set_variable = { POTEF_years = POTEF_term }
-	divide_variable = { POTEF_years = 365 }
+	set_variable = {
+		var = POTEF_time_to_camp
+		value = {
+			value = POTEF_term
+			subtract = 90
+		}
+	}
+	set_variable = { var = POTEF_years value = { value = POTEF_term divide = 365 } }
 
 	set_temp_variable = { potef_term_temp = ROOT.POTEF_term }
 	# The popular-vote winner is independent of who nominated, so the winning subideology may have no
@@ -1456,34 +1260,19 @@ update_EU_average_eco_lvl = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		if = { limit = { has_idea = economic_boom }
-			set_variable = { EU_average_eco_lvl = 6 }
-			add_to_variable = { global.EU_average_eco_lvl = 6 }
-		}
-		else_if = { limit = { has_idea = fast_growth }
-			set_variable = { EU_average_eco_lvl = 5 }
-			add_to_variable = { global.EU_average_eco_lvl = EU_average_eco_lvl }
-		}
-		else_if = { limit = { has_idea = stable_growth }
-			set_variable = { EU_average_eco_lvl = 4 }
-			add_to_variable = { global.EU_average_eco_lvl = EU_average_eco_lvl }
-		}
-		else_if = { limit = { has_idea = stagnation }
-			set_variable = { EU_average_eco_lvl = 3 }
-			add_to_variable = { global.EU_average_eco_lvl = EU_average_eco_lvl }
-		}
-		else_if = { limit = { has_idea = recession }
-			set_variable = { EU_average_eco_lvl = 2 }
-			add_to_variable = { global.EU_average_eco_lvl = EU_average_eco_lvl }
-		}
-		else_if = { limit = { has_idea = depression }
-			set_variable = { EU_average_eco_lvl = 1 }
-			add_to_variable = { global.EU_average_eco_lvl = EU_average_eco_lvl }
-		}
+		# Map the country's mutually exclusive economic-cycle idea to its score.
+		set_temp_variable = { eco_score = 0 }
+		if = { limit = { has_idea = economic_boom } set_temp_variable = { eco_score = 6 } }
+		else_if = { limit = { has_idea = fast_growth } set_temp_variable = { eco_score = 5 } }
+		else_if = { limit = { has_idea = stable_growth } set_temp_variable = { eco_score = 4 } }
+		else_if = { limit = { has_idea = stagnation } set_temp_variable = { eco_score = 3 } }
+		else_if = { limit = { has_idea = recession } set_temp_variable = { eco_score = 2 } }
+		else_if = { limit = { has_idea = depression } set_temp_variable = { eco_score = 1 } }
+		add_to_variable = { global.EU_average_eco_lvl = eco_score }
 	}
 	if = {
-		limit = { check_variable = { global.EU_member_count > 0 } }
-		divide_variable = { global.EU_average_eco_lvl = global.EU_member_count }
+		limit = { check_variable = { global.EU_member^num > 0 } }
+		divide_variable = { global.EU_average_eco_lvl = global.EU_member^num }
 	}
 	update_eu_dirty_variable = yes
 }
@@ -1491,21 +1280,22 @@ update_EU_average_eco_lvl = {
 set_EU_gdp = {
 	# Calculate the EU Total GDP
 	set_variable = { global.EU_gdp = 0 }
-	set_temp_variable = { temp_calc = 0 }
 	for_each_scope_loop = {
 		array = global.EU_member
-		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 		add_to_variable = { global.EU_gdp = THIS.gdp_total } #This value is for display purposes
-		add_to_temp_variable = { temp_calc = gdp_total } #This is for the GDP/C
 	}
+
+	clamp_variable = { var = global.EU_gdp min = 0.001 }
 
 	# Calculate the individual ratio of GDP per nation
 	for_each_scope_loop = {
 		array = global.EU_member
-		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		set_temp_variable = { temp_ratio = THIS.gdp_total }
-		divide_temp_variable = { temp_ratio = global.EU_gdp }
-		set_variable = { EU_ratio_of_total_eu_gdp = temp_ratio }
+		set_variable = {
+			EU_ratio_of_total_eu_gdp = {
+				value = gdp_total
+				divide = global.EU_gdp
+			}
+		}
 	}
 
 	# Calculate the EU GDP/C
@@ -1544,9 +1334,30 @@ EU_rollback_mff_values = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 		set_variable = { THIS.EU_budget_call_rate = THIS.EU_call_rate_saved }
-		update_EU_budget_call_rate = yes
-		distribute_EU_budget = yes
 	}
+	update_EU_budget_call_rate = yes
+	distribute_EU_budget = yes
+}
+
+EU_military_exercise_cleanup = {
+	if = {
+		limit = { check_expr = { value = ROOT.var_EU_military_exercise_target greater_than = { value = 0 } } }
+		var:ROOT.var_EU_military_exercise_target = {
+			clr_country_flag = EU_military_exercise_at_border_from@ROOT
+			clr_country_flag = EU_host_military_exercise@ROOT
+		}
+	}
+	if = {
+		limit = { check_expr = { value = ROOT.var_EU_military_exercise_host_tag greater_than = { value = 0 } } }
+		var:ROOT.var_EU_military_exercise_host_tag = {
+			clr_country_flag = EU_military_exercise_at_border_from@ROOT
+			clr_country_flag = EU_host_military_exercise@ROOT
+		}
+	}
+	clr_country_flag = EU_military_exercise_prep
+	clear_variable = ROOT.var_EU_military_exercise_target
+	clear_variable = ROOT.var_EU_military_exercise_host_state
+	clear_variable = ROOT.var_EU_military_exercise_host_tag
 }
 
 update_EU_budget_call_rate = {
@@ -1555,9 +1366,13 @@ update_EU_budget_call_rate = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		set_variable = { THIS.EU_budget_contribution = THIS.gdp_total }
-		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
-		multiply_variable = { THIS.EU_budget_contribution = 0.01 }
+		set_variable = {
+			EU_budget_contribution = {
+				value = gdp_total
+				multiply = EU_budget_call_rate
+				multiply = 0.01
+			}
+		}
 		add_to_variable = { global.EU_total_budget = THIS.EU_budget_contribution }
 	}
 	# EUR seigniorage income accumulated while EUU was not active
@@ -1565,41 +1380,44 @@ update_EU_budget_call_rate = {
 		add_to_variable = { global.EU_total_budget = global.EU_seigniorage_pool }
 		set_variable = { global.EU_seigniorage_pool = 0 }
 	}
+	clamp_variable = { var = global.EU_total_budget min = 0.001 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
-		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
-		divide_variable = { THIS.EU_budget_contribution_weekly = 52 } #Weeks in a year
-		clamp_variable = { var = global.EU_total_budget min = 0.001 }
-		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
+		set_variable = {
+			var = THIS.EU_budget_contribution_weekly
+			value = {
+				value = THIS.EU_budget_contribution
+				divide = 52 #Weeks in a year
+			}
+		}
+		set_variable = {
+			var = THIS.EU_budget_ratio
+			value = {
+				value = THIS.EU_budget_contribution
+				divide = global.EU_total_budget
+			}
+		}
 	}
 	### EU Total Budget
-	set_variable = { global.EU_mff_total = global.EU_total_budget }
-	multiply_variable = { global.EU_mff_total = 5 }
+	set_variable = { var = global.EU_mff_total value = { value = global.EU_total_budget multiply = 5 } }
 
 	update_eu_dirty_variable = yes
 }
 
 EU_global_click_cost = {
-	set_variable = { global.EU_10_per_member_cost = 10 }
-	multiply_variable = { global.EU_10_per_member_cost = global.EU_member_count }
-	set_variable = { global.EU_10_per_member_cost_minus = global.EU_10_per_member_cost }
-	multiply_variable = { global.EU_10_per_member_cost_minus = -1 }
-	set_variable = { global.EU_15_per_member_cost = 15 }
-	multiply_variable = { global.EU_15_per_member_cost = global.EU_member_count }
-	set_variable = { global.EU_15_per_member_cost_minus = global.EU_15_per_member_cost }
-	multiply_variable = { global.EU_15_per_member_cost_minus = -1 }
+	set_variable = { var = global.EU_10_per_member_cost value = { value = 10 multiply = global.EU_member^num } }
+	set_variable = { var = global.EU_10_per_member_cost_minus value = { value = global.EU_10_per_member_cost multiply = -1 } }
+	set_variable = { var = global.EU_15_per_member_cost value = { value = 15 multiply = global.EU_member^num } }
+	set_variable = { var = global.EU_15_per_member_cost_minus value = { value = global.EU_15_per_member_cost multiply = -1 } }
 }
 
 EU_country_call_rate_cost_calc = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		set_variable = { THIS.EU_mff_country_cost = 1000 }
-		multiply_variable = { THIS.EU_mff_country_cost = THIS.EU_budget_ratio }
-		set_variable = { THIS.EU_mff_country_cost_minus = THIS.EU_mff_country_cost }
-		multiply_variable = { THIS.EU_mff_country_cost_minus = -1 }
+		set_variable = { var = THIS.EU_mff_country_cost value = { value = 1000 multiply = THIS.EU_budget_ratio } }
+		set_variable = { var = THIS.EU_mff_country_cost_minus value = { value = THIS.EU_mff_country_cost multiply = -1 } }
 	}
 }
 
@@ -1657,49 +1475,31 @@ distribute_EU_growth_exp = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		if = {
-			limit = { has_idea = economic_boom }
-			set_variable = { THIS.EU_growth_subsidies = 1 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-		}
-		else_if = {
-			limit = { has_idea = fast_growth }
-			set_variable = { THIS.EU_growth_subsidies = 2 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-		}
-		else_if = {
-			limit = { has_idea = stable_growth }
-			set_variable = { THIS.EU_growth_subsidies = 3 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-		}
-		else_if = {
-			limit = { has_idea = stagnation }
-			set_variable = { THIS.EU_growth_subsidies = 4 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-		}
-		else_if = {
-			limit = { has_idea = recession }
-			set_variable = { THIS.EU_growth_subsidies = 5 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-		}
-		else_if = {
-			limit = { has_idea = depression }
-			set_variable = { THIS.EU_growth_subsidies = 6 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
+		# Map the country's mutually exclusive economic-cycle idea to a tier; tier = 0 means no recognized idea (skipped below).
+		set_temp_variable = { tier = 0 }
+		if = { limit = { has_idea = economic_boom } set_temp_variable = { tier = 1 } }
+		else_if = { limit = { has_idea = fast_growth } set_temp_variable = { tier = 2 } }
+		else_if = { limit = { has_idea = stable_growth } set_temp_variable = { tier = 3 } }
+		else_if = { limit = { has_idea = stagnation } set_temp_variable = { tier = 4 } }
+		else_if = { limit = { has_idea = recession } set_temp_variable = { tier = 5 } }
+		else_if = { limit = { has_idea = depression } set_temp_variable = { tier = 6 } }
+		if = { limit = { check_variable = { tier > 0 } }
+			set_variable = { var = EU_growth_subsidies value = { value = tier multiply = EU_pop_ratio } }
+			add_to_variable = { global.EU_growth_subsidies_total = EU_growth_subsidies }
 		}
 	}
+	clamp_variable = { var = global.EU_growth_subsidies_total min = 0.001 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		clamp_variable = { var = global.EU_growth_subsidies_total min = 0.001 }
-		divide_variable = { THIS.EU_growth_subsidies = global.EU_growth_subsidies_total }
-		multiply_variable = { THIS.EU_growth_subsidies = global.EU_growth_exp_total }
+		set_variable = {
+			var = THIS.EU_growth_subsidies
+			value = {
+				value = THIS.EU_growth_subsidies
+				divide = global.EU_growth_subsidies_total
+				multiply = global.EU_growth_exp_total
+			}
+		}
 	}
 	update_eu_dirty_variable = yes
 }
@@ -1709,116 +1509,34 @@ distribute_EU_natural_exp = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		if = { limit = { check_variable = { gdp_per_capita > 199.999 } }
-			set_variable = { THIS.EU_natural_subsidies = 1 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 200.000 }
-				check_variable = { gdp_per_capita > 139.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 2 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 140.000 }
-				check_variable = { gdp_per_capita > 89.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 3 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 90.000 }
-				check_variable = { gdp_per_capita > 49.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 4 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 50.000 }
-				check_variable = { gdp_per_capita > 29.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 5 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 30.000 }
-				check_variable = { gdp_per_capita > 19.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 6 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 20.000 }
-				check_variable = { gdp_per_capita > 14.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 7 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 15.000 }
-				check_variable = { gdp_per_capita > 9.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 8 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 10.000 }
-				check_variable = { gdp_per_capita > 6.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 9 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 7.000 }
-				check_variable = { gdp_per_capita > 3.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 10 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 4.000 }
-				check_variable = { gdp_per_capita > 1.999 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 11 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
-		else_if = {
-			limit = {
-				check_variable = { gdp_per_capita < 2.00 }
-			}
-			set_variable = { THIS.EU_natural_subsidies = 12 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
-			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-		}
+		# Map the country's gdp_per_capita to a tier. Each band is mutually exclusive so sequential ifs are safe; we use `less_than_or_equals` because the original ladder excludes the upper bound of every band (e.g. 200 falls to tier 2 in the original because the tier-1 check is `> 199.999`).
+		set_temp_variable = { tier = 1 }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 199.999 compare = less_than_or_equals } } set_temp_variable = { tier = 2 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 139.999 compare = less_than_or_equals } } set_temp_variable = { tier = 3 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 89.999 compare = less_than_or_equals } } set_temp_variable = { tier = 4 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 49.999 compare = less_than_or_equals } } set_temp_variable = { tier = 5 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 29.999 compare = less_than_or_equals } } set_temp_variable = { tier = 6 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 19.999 compare = less_than_or_equals } } set_temp_variable = { tier = 7 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 14.999 compare = less_than_or_equals } } set_temp_variable = { tier = 8 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 9.999 compare = less_than_or_equals } } set_temp_variable = { tier = 9 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 6.999 compare = less_than_or_equals } } set_temp_variable = { tier = 10 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 3.999 compare = less_than_or_equals } } set_temp_variable = { tier = 11 } }
+		if = { limit = { check_variable = { var = gdp_per_capita value = 1.999 compare = less_than_or_equals } } set_temp_variable = { tier = 12 } }
+		set_variable = { var = EU_natural_subsidies value = { value = tier multiply = EU_pop_ratio } }
+		add_to_variable = { global.EU_natural_subsidies_total = EU_natural_subsidies }
 	}
+	clamp_variable = { var = global.EU_natural_subsidies_total min = 0.001 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		clamp_variable = { var = global.EU_natural_subsidies_total min = 0.001 }
-		divide_variable = { THIS.EU_natural_subsidies = global.EU_natural_subsidies_total }
-		multiply_variable = { THIS.EU_natural_subsidies = global.EU_natural_exp_total }
+		set_variable = {
+			var = THIS.EU_natural_subsidies
+			value = {
+				value = THIS.EU_natural_subsidies
+				divide = global.EU_natural_subsidies_total
+				multiply = global.EU_natural_exp_total
+			}
+		}
 	}
 	update_eu_dirty_variable = yes
 }
@@ -1841,13 +1559,11 @@ distribute_EU_admin_exp = {
 			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			if = {
 				limit = { has_idea = frontex_ExDir }
-				set_variable = { THIS.EU_admin_subsidies = 0.5 }
-				multiply_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
+				set_variable = { var = THIS.EU_admin_subsidies value = { value = 0.5 multiply = global.EU_admin_exp_total } }
 			}
 			if = {
 				limit = { has_idea = EU_commission_president }
-				set_variable = { THIS.EU_admin_subsidies = 0.5 }
-				multiply_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
+				set_variable = { var = THIS.EU_admin_subsidies value = { value = 0.5 multiply = global.EU_admin_exp_total } }
 			}
 		}
 	}
@@ -1896,19 +1612,19 @@ distribute_EU_admin_exp = {
 }
 
 EU_budget_total_gain = {
+	clamp_variable = { var = global.EU_total_exp min = 0.001 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		set_variable = { THIS.EU_budget_total_gain = 0 }
-		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_growth_subsidies }
-		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_natural_subsidies }
-		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_global_exp_subsidies }
-		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_admin_subsidies }
-		set_variable = { THIS.EU_budget_ratio_gain = THIS.EU_budget_total_gain }
-		clamp_variable = { var = global.EU_total_exp min = 0.001 }
-		divide_variable = { THIS.EU_budget_ratio_gain = global.EU_total_exp }
-		set_variable = { THIS.EU_budget_net = THIS.EU_budget_total_gain }
-		subtract_from_variable = { THIS.EU_budget_net = THIS.EU_budget_contribution }
+		set_variable = { var = THIS.EU_budget_total_gain value = { value = 0 add = THIS.EU_growth_subsidies add = THIS.EU_natural_subsidies add = THIS.EU_global_exp_subsidies add = THIS.EU_admin_subsidies } }
+		set_variable = {
+			var = THIS.EU_budget_ratio_gain
+			value = {
+				value = THIS.EU_budget_total_gain
+				divide = global.EU_total_exp
+			}
+		}
+		set_variable = { var = THIS.EU_budget_net value = { value = THIS.EU_budget_total_gain subtract = THIS.EU_budget_contribution } }
 	}
 	update_eu_dirty_variable = yes
 }
@@ -2025,8 +1741,7 @@ election_EU_Parliament = {
 		array = global.EU_parl_party_number
 		set_variable = { p_number = global.EU_parl_party_number^i }
 
-		set_variable = { global.MEP_Ratio_PG_array^p_number = global.MEP_PG_party_array^p_number }
-		divide_variable = { global.MEP_Ratio_PG_array^p_number = global.MEP_Total }
+		set_variable = { var = global.MEP_Ratio_PG_array^p_number value = { value = global.MEP_PG_party_array^p_number divide = global.MEP_Total } }
 	}
 
 	set_variable = { global.MEP_Total = 0 } # Recalculate to account for more roundings
@@ -2037,9 +1752,7 @@ election_EU_Parliament = {
 		add_to_variable = { global.MEP_Total = global.MEP_PG_party_array^p_number2 }
 	}
 
-	set_variable = { global.MEP_Majority = global.MEP_Total }
-	multiply_variable = { global.MEP_Majority = 0.5 }
-	add_to_variable = { global.MEP_Majority = 1 }
+	set_variable = { var = global.MEP_Majority value = { value = global.MEP_Total multiply = 0.5 add = 1 } }
 
 	update_eu_dirty_variable = yes
 }
@@ -2048,8 +1761,7 @@ election_EU_Parliament_in_member_state = {
 	resize_array = { THIS.MEP_party_array = 24 }
 
 	###  MEP for this member state
-	set_temp_variable = { temp1 = global.EU_Parliament_max_MEP }
-	multiply_temp_variable = { temp1 = THIS.EU_pop_ratio }
+	set_temp_variable = { var = temp1 value = { value = global.EU_Parliament_max_MEP multiply = THIS.EU_pop_ratio } }
 	round_temp_variable = temp1
 	clamp_temp_variable = {
 		var = temp1
@@ -2064,8 +1776,7 @@ election_EU_Parliament_in_member_state = {
 		array = global.EU_parl_party_number
 		set_variable = { p_number3 = global.EU_parl_party_number^i }
 
-		set_variable = { THIS.MEP_party_array^p_number3 = party_pop_array^p_number3 }
-		multiply_variable = { THIS.MEP_party_array^p_number3 = THIS.MEP_Total }
+		set_variable = { var = THIS.MEP_party_array^p_number3 value = { value = party_pop_array^p_number3 multiply = THIS.MEP_Total } }
 		round_variable = THIS.MEP_party_array^p_number3
 	}
 
@@ -2094,17 +1805,13 @@ election_EU_Parliament_in_member_state = {
 		limit = { NOT = { check_variable = { THIS.MEP_Total_target = THIS.MEP_Total } } }
 
 		set_temp_variable = { highest_index = THIS.highest_MEP_party_index }
-		if = {
-			limit = { check_variable = { THIS.MEP_Total > THIS.MEP_Total_target } }
-			set_temp_variable = { subtraction_value = THIS.MEP_Total }
-			subtract_from_temp_variable = { subtraction_value = THIS.MEP_Total_target }
-			subtract_from_variable = { THIS.MEP_party_array^highest_index = subtraction_value }
-		}
-		else_if = {
-			limit = { check_variable = { THIS.MEP_Total < THIS.MEP_Total_target } }
-			set_temp_variable = { addition_value = THIS.MEP_Total_target }
-			subtract_from_temp_variable = { addition_value = THIS.MEP_Total }
-			add_to_variable = { THIS.MEP_party_array^highest_index = addition_value }
+		# Over- and under-count both resolve to the same delta: highest party += (target - current)
+		add_to_variable = {
+			var = THIS.MEP_party_array^highest_index
+			value = {
+				value = THIS.MEP_Total_target
+				subtract = THIS.MEP_Total
+			}
 		}
 	}
 
@@ -2255,6 +1962,172 @@ joining_the_euro = {
 		swap_ideas = {
 			remove_idea = no_foreign_reserve
 			add_idea = euro
+		}
+	}
+}
+
+EU_adopt_passed_laws = {
+	if = {
+		limit = { NOT = { has_country_flag = adopt_eu_law } }
+		set_country_flag = adopt_eu_law
+		# focus_EU101
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 101 }
+			}
+			add_ideas = EUU_cfr_eu
+		}
+		# focus_EU201
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 201 }
+			}
+			add_ideas = ECB_zero_interest_rate_policy
+		}
+		# focus_EU202
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 202 }
+			}
+			add_stability = 0.05
+			remove_ideas = european_debt_crisis
+		}
+		# focus_EU203
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 203 }
+			}
+			add_ideas = euro_bonds
+			remove_ideas = european_debt_crisis
+		}
+		# focus_EU204
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 204 }
+			}
+			add_stability = 0.10
+		}
+		# focus_EU205
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 205 }
+			}
+			add_ideas = euro_rescue_package
+			remove_ideas = european_debt_crisis
+		}
+		# focus_EU206
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 206 }
+			}
+			add_ideas = fiscal_union
+		}
+		# focus_EU207
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 207 }
+			}
+			add_ideas = European_Economic_Government
+		}
+		# focus_EU301
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 301 }
+			}
+			add_to_tech_sharing_group = EU_Tech_Share
+		}
+		# focus_EU302
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 302 }
+			}
+			modify_tech_sharing_bonus = { id = EU_Tech_Share bonus = 0.08 }
+		}
+		# focus_EU303
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 303 }
+			}
+			add_ideas = European_Defence_Fund
+		}
+		# focus_EU304
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 304 }
+			}
+			add_ideas = European_Security_Council
+		}
+		# focus_EU401
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 401 }
+			}
+			add_ideas = EUU_idea_gdpr
+			remove_ideas = foreign_data_kraken
+		}
+		# focus_EU402
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 402 }
+			}
+			add_ideas = EU_copyright
+			add_to_variable = { party_pop_array^1 = -0.03 }
+			add_popularity = { ideology = democratic popularity = -0.03 }
+			add_to_variable = { party_pop_array^6 = -0.03 }
+			add_popularity = { ideology = communism popularity = -0.03 }
+			add_to_variable = { party_pop_array^14 = -0.03 }
+			add_popularity = { ideology = neutrality popularity = -0.03 }
+			recalculate_party = yes
+		}
+		# focus_EU403
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 403 }
+			}
+			remove_ideas = asylum_shopping
+			add_to_variable = { party_pop_array^20 = 0.03 }
+			add_popularity = { ideology = nationalist popularity = 0.03 }
+			recalculate_party = yes
+		}
+		# focus_EU404
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 404 }
+			}
+			if = {
+				limit = { has_global_flag = EUU_migrant_crisis_triggered }
+				remove_ideas = Migrant_Crisis_Europe
+			}
+			add_ideas = relocation_asylum_seekers
+			add_to_variable = { party_pop_array^20 = 0.05 }
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			recalculate_party = yes
+		}
+		# focus_EU405
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 405 }
+			}
+			if = {
+				limit = { has_global_flag = EUU_migrant_crisis_triggered }
+				remove_ideas = Migrant_Crisis_Europe
+			}
+		}
+		# focus_EU406
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 406 }
+			}
+			remove_ideas = relocation_asylum_seekers
+			remove_ideas = EU_Turkey_deal
+			add_ideas = European_Asylum_Agency
+		}
+		# focus_EU407
+		if = {
+			limit = {
+				is_in_array = { array = global.EU_passed_votes value = 407 }
+			}
+			add_ideas = Frontex
 		}
 	}
 }
