@@ -246,7 +246,7 @@ scripted_gui = {
 				NOT = {
 					salafist_caliphate_are_in_power = yes
 					has_country_flag = generic_election_killswitch
-					has_country_flag = hold_reelections
+					has_country_flag = hold_reelections_flag
 				}
 
 				hidden_trigger = {
@@ -743,7 +743,7 @@ scripted_gui = {
 						original_tag = BEN
 						original_tag = SEL
 						original_tag = MRT
-						original_tag = LOG
+						original_tag = LGN
 						original_tag = CAR
 					}
 					NOT = {
@@ -769,11 +769,17 @@ scripted_gui = {
 				}
 			}
 
+			IP_conservative_glow_visible = {
+				OR = {
+					# TBA
+				}
+			}
+
 			IP_liberal_glow_visible = {
 				OR = {
 					western_conservatism_are_in_power = yes
 					emerging_reactionaries_are_in_power = yes
-					emerging_moderate_shiite_are_in_power = yes
+					western_liberals_are_in_power = yes
 					neutrality_neutral_muslim_brotherhood_are_in_power = yes
 					neutrality_neutral_conservatism_are_in_power = yes
 					nationalist_right_wing_populists_are_in_power = yes
@@ -782,16 +788,9 @@ scripted_gui = {
 
 			IP_autocrat_glow_visible = {
 				OR = {
-					has_country_leader_with_trait = western_technocrat
-					western_liberals_are_in_power = yes
-					neutrality_neutral_libertarians_are_in_power = yes
-				}
-			}
-
-			IP_autocrat_glow_visible = {
-				OR = {
 					non_technocrats_western_autocrats_are_in_power = yes
 					emerging_autocracy_are_in_power = yes
+					emerging_moderate_shiite_are_in_power = yes
 					neutrality_neutral_autocracy_are_in_power = yes
 					neutrality_neutral_oligarch_are_in_power = yes
 					nationalist_fascist_are_in_power = yes
@@ -1024,7 +1023,7 @@ scripted_gui = {
 				log = "[GetDateText]: [Root.GetName]: Decision hold_reelections"
 				country_event = MD4_election_campaign.0
 				set_country_flag = {
-					flag = hold_reelections
+					flag = hold_reelections_flag
 					days = 365
 					value = 1
 				}
@@ -1102,7 +1101,6 @@ scripted_gui = {
 					limit = { has_elections = yes }
 
 					# ban elections
-					log = "[GetDateText]: [Root.GetName]: Decision permanently_suspend_elections"
 					set_country_flag = do_not_retire
 					add_political_power = -125
 
@@ -1178,7 +1176,6 @@ scripted_gui = {
 				}
 				else = {
 					# unban elections
-					log = "[GetDateText]: [Root.GetName]: Decision return_democracy"
 					add_political_power = -85
 					enable_elections_with_no_leader_change = yes
 					if = {
@@ -1416,13 +1413,6 @@ scripted_gui = {
 							value = v
 						}
 					}
-					else = {
-						add_to_array = {
-							array = parties_list_sorted
-							index = i
-							value = v
-						}
-					}
 				}
 
 				update_dirty_politicsview_expanded = yes
@@ -1503,6 +1493,7 @@ scripted_gui = {
 					set_variable = { party_pop_array^v = 0.7 }
 					startup_politics = yes
 				}
+				update_dirty_politicsview_expanded = yes
 			}
 
 			boost_button_click = {
@@ -1518,6 +1509,7 @@ scripted_gui = {
 				multiply_temp_variable = { party_popularity_increase = boost_multiplier }
 				clamp_temp_variable = { var = party_popularity_increase min = 0 max = 100 }
 				add_relative_party_popularity = yes
+				update_dirty_politicsview_expanded = yes
 			}
 
 			attack_button_click = {
@@ -1538,6 +1530,8 @@ scripted_gui = {
 				multiply_temp_variable = { party_popularity_increase = attack_multiplier }
 				clamp_temp_variable = { var = party_popularity_increase min = -0.1 }
 				add_relative_party_popularity = yes
+
+				update_dirty_politicsview_expanded = yes
 			}
 
 			ban_button_click = {
@@ -1551,12 +1545,14 @@ scripted_gui = {
 				set_temp_variable = { party_index = v }
 				add_to_temp_variable = { party_index = 1 }
 				ban_party_scripted_call = yes
+				update_dirty_politicsview_expanded = yes
 			}
 			allow_button_click = {
 				add_political_power = -10
 				set_temp_variable = { party_index = v }
 				add_to_temp_variable = { party_index = 1 }
 				unban_party_scripted_call = yes
+				update_dirty_politicsview_expanded = yes
 			}
 
 			# close button

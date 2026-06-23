@@ -49,7 +49,7 @@ _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
 # so a value on the RHS of an assignment (`set_variable = { x = y }` → `y`) is
 # correctly counted as a read. The `(?:scope\.)*` tail lets the scope-stripped
 # target (see _strip_scope_prefix) still be recognised inside a scoped write
-# like `set_variable = { THIS.eurosceptic = ... }`.
+# like `set_variable = { THIS.europeanism = ... }`.
 _SET_TARGET_PREFIX_RE = re.compile(r"set_variable\s*=\s*\{?\s*(?:[a-z_][a-z0-9_]*\.)*$")
 
 
@@ -390,20 +390,13 @@ class Validator(BaseValidator):
         var_ref_counts = {var: 0 for var in cleaned_vars}
         dynamic_patterns: set = set()
         if files_to_scan and (bare_map or dotted_map):
-            if self.workers == 1:
-                _pass2_init(self.mod_path, bare_map, dotted_map, namespace)
-                all_file_counts = [
-                    count_all_variables_in_file(f) for f in files_to_scan
-                ]
-            else:
-                with Pool(
-                    processes=self.workers,
-                    initializer=_pass2_init,
-                    initargs=(self.mod_path, bare_map, dotted_map, namespace),
-                ) as p:
-                    all_file_counts = p.map(
-                        count_all_variables_in_file, files_to_scan, chunksize=20
-                    )
+            all_file_counts = self._pool_map_init(
+                count_all_variables_in_file,
+                files_to_scan,
+                _pass2_init,
+                (self.mod_path, bare_map, dotted_map, namespace),
+                chunksize=20,
+            )
             for file_counts, file_patterns in all_file_counts:
                 for var, count in file_counts.items():
                     var_ref_counts[var] = var_ref_counts.get(var, 0) + count

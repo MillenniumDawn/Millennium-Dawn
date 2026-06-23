@@ -857,15 +857,13 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				factor = 0
-				set_temp_variable = {
-					debt_temp = {
+				check_expr = {
+					value = 0
+					add = {
 						value = debt
 						multiply = 0.25
 						add = ROOT.debt
 					}
-				}
-				check_expr = {
-					value = debt_temp
 					divide = ROOT.gdp_total
 					multiply = 10
 					add = ROOT.modifier@interest_rate_multiplier_modifier
@@ -1554,7 +1552,7 @@ scripted_diplomatic_actions = {
 	negotiate_operative_release = {
 		allowed = {
 			has_dlc = "La Resistance"
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 
 		visible = {
@@ -1747,7 +1745,7 @@ scripted_diplomatic_actions = {
 	enforce_peace_option = {
 		allowed = {
 			has_game_rule = { rule = allow_forcing_a_white_peace option = yes }
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 
 		visible = {
@@ -1755,7 +1753,7 @@ scripted_diplomatic_actions = {
 			ROOT = { NOT = { has_country_flag = recently_demanded_enforce_peace_@PREV } }
 			has_offensive_war = yes
 			has_civil_war = no
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 		selectable = {
 			influence_higher_40 = yes
@@ -1976,7 +1974,7 @@ scripted_diplomatic_actions = {
 	propose_energy_load_sharing = {
 		allowed = {
 			NOT = { has_global_flag = GAME_RULE_disable_energy_load_sharing }
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 
 		visible = {
@@ -2136,11 +2134,11 @@ scripted_diplomatic_actions = {
 	request_energy_load_sharing = {
 		allowed = {
 			NOT = { has_global_flag = GAME_RULE_disable_energy_load_sharing }
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 
 		visible = {
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 			NOT = { is_in_array = { ROOT.energy_load_sharing_nations = THIS.id } }
 			NOT = { is_in_array = { THIS.energy_load_sharing_nations = ROOT.id } }
 		}
@@ -2389,7 +2387,7 @@ scripted_diplomatic_actions = {
 	# Purchase Reactor-Grade Material
 	purchase_reactor_grade_material = {
 		allowed = {
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 		visible = {
 			ROOT = {
@@ -2443,6 +2441,7 @@ scripted_diplomatic_actions = {
 				modify_treasury_effect = yes
 				set_country_flag = { flag = recently_purchased_reactor_material_from_@PREV days = 90 value = 1 }
 			}
+			update_money_dirty_variable = yes
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect purchase_reactor_grade_material"
@@ -2465,11 +2464,11 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 15
-					check_variable = { nuclear_reactor_fuel_production > nuclear_fuel_consumption }
+					check_variable = { total_nuclear_reactor_fuel_production > nuclear_fuel_consumption }
 				}
 				modifier = {
 					add = -25
-					NOT = { check_variable = { nuclear_reactor_fuel_production > nuclear_fuel_consumption } }
+					NOT = { check_variable = { total_nuclear_reactor_fuel_production > nuclear_fuel_consumption } }
 				}
 			}
 			opinion_condition = {
@@ -2575,7 +2574,7 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 50
 				ROOT = {
-					check_variable = { nuclear_fuel_consumption > nuclear_reactor_fuel_production }
+					check_variable = { nuclear_fuel_consumption > total_nuclear_reactor_fuel_production }
 				}
 			}
 			# Scale urgency by how low stockpile is relative to consumption
@@ -2631,7 +2630,7 @@ scripted_diplomatic_actions = {
 			modifier = {
 				factor = 0
 				ROOT = {
-					check_variable = { nuclear_reactor_fuel_production > nuclear_fuel_consumption }
+					check_variable = { total_nuclear_reactor_fuel_production > nuclear_fuel_consumption }
 					check_expr = {
 						value = var_reactor_material_stockpile
 						divide = nuclear_fuel_consumption

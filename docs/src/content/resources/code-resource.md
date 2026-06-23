@@ -327,14 +327,15 @@ These affect the counter-terrorism system.
 
 These affect missile and satellite production.
 
-| Modifier                            | Description               |
-| ----------------------------------- | ------------------------- |
-| `olv_production_speed_modifier`     | Orbital launch vehicle    |
-| `gnss_production_speed_modifier`    | Navigation satellites     |
-| `comsat_production_speed_modifier`  | Communications satellites |
-| `spysat_production_speed_modifier`  | Spy satellites            |
-| `killsat_production_speed_modifier` | Kill satellites           |
-| `nuclear_reactor_fuel_production`   | Nuclear fuel production   |
+| Modifier                                 | Description                                            |
+| ---------------------------------------- | ------------------------------------------------------ |
+| `olv_production_speed_modifier`          | Orbital launch vehicle                                 |
+| `gnss_production_speed_modifier`         | Navigation satellites                                  |
+| `comsat_production_speed_modifier`       | Communications satellites                              |
+| `spysat_production_speed_modifier`       | Spy satellites                                         |
+| `killsat_production_speed_modifier`      | Kill satellites                                        |
+| `nuclear_reactor_fuel_production`        | Nuclear fuel production (base, kg/week)                |
+| `nuclear_reactor_fuel_production_factor` | Nuclear fuel production factor (percentage multiplier) |
 
 ## Nation-Specific Modifiers
 

@@ -12,7 +12,6 @@ If you encounter an issue, PLEASE, try to make sure you have tested without the 
 
 ## Content Expansion/Overhaul
 
-- [Millennium Dawn: Director's Cut](https://steamcommunity.com/sharedfiles/filedetails/?id=3543352335)
 - [Millennium Dawn New Companies Expanded](https://steamcommunity.com/sharedfiles/filedetails/?id=3271021304)
 - [Millennium Dawn 2025 Borders](https://steamcommunity.com/sharedfiles/filedetails/?id=3488720243&searchtext=Millennium+Dawn+2025)
 - [Millennium Dawn: European Russia](https://steamcommunity.com/sharedfiles/filedetails/?id=3263814405)

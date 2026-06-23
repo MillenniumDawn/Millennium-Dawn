@@ -412,20 +412,7 @@ types = {
 			modifier = {
 				add = -10
 				NOT = { has_war_with = FROM }
-				OR = {
-					AND = {
-						FROM = { has_government = democratic }
-						THIS = { has_government = democratic }
-					}
-					AND = {
-						FROM = { has_government = neutrality }
-						THIS = { has_government = neutrality }
-					}
-					AND = {
-						FROM = { has_government = communism }
-						THIS = { has_government = communism }
-					}
-				}
+				has_government = FROM
 			}
 			modifier = {
 				has_country_flag = conceded_to@FROM
@@ -556,6 +543,374 @@ types = {
 			}
 			modifier = {
 				# Less likely to raid if somewhat in debt
+				factor = 0.25
+				NOT = { has_war_with = FROM }
+				check_variable = { debt_ratio > 0.15 }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					FROM = { is_subject_of = ROOT }
+					is_subject_of = FROM
+				}
+			}
+		}
+	}
+	#Cruise missile raid targeting enemy naval headquarters
+	naval_headquarters_strike = {
+		allowed = { has_dlc = "No Compromise, No Surrender" }
+		days_to_prepare = 15
+		days_re_enable = 356
+
+		category = naval_raids
+
+		command_power = 20
+
+		arrow = {
+			type = air
+		}
+
+		show_target = {
+			raid_show_target_opinion_hostile = yes
+			var:target_state = {
+				naval_headquarters > 0
+			}
+		}
+
+		available = {
+			raid_target_eligible = yes
+			OR = {
+				hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+				has_war_with = FROM
+				has_political_power > 300
+			}
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { guided_missile_equipment }
+				amount = { min = 50 }
+			}
+		}
+
+		launch_sound = raid_launch_marine
+		target_icon = GFX_other_target_icon
+
+		target_type = {
+			building = {
+				type = naval_headquarters
+			}
+		}
+
+		starting_point = {
+			types = { rocket_site submarine }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.15
+				air_agility = {
+					reference = 200
+					weight = 0.5
+					start_weight = -0.5
+				}
+				reliability = {
+					reference = 1
+					weight = 0.3
+					start_weight = -0.1
+				}
+				air_defence = {
+					reference = 150
+					weight = 0.2
+					start_weight = -0.2
+				}
+				air_superiority = {
+					reference = 1
+					weight = 0.1
+					start_weight = -0.100
+				}
+				anti_air = {
+					reference = 5
+					weight = -0.25
+				}
+				radar = {
+					reference = 1
+					weight = -0.15
+				}
+				interception = {
+					reference = 100
+					weight = -0.2
+				}
+				intel = {
+					weight = 0.5
+					start_weight = -0.1
+					start_reference = 10
+					reference = 100
+				}
+			}
+			critical = {
+				base = 0.10
+			}
+			disaster = {
+				base = 0.25
+			}
+		}
+
+		success_levels = {
+			failure = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+				}
+				actor_effects = {
+					var:actor_country = {
+						if = {
+							limit = { NOT = { has_war_with = var:ROOT.victim_country } }
+							add_political_power = -300
+						}
+					}
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 50 }
+					apply_raid_building_damage_limited = yes
+					clamp_temp_variable = {
+						var = building_damage_by_missile
+						min = 0
+						max = 1
+					}
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = naval_headquarters
+									damage = [DAM]
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+					}
+				}
+				actor_effects = {
+					var:actor_country = {
+						if = {
+							limit = { NOT = { has_war_with = var:ROOT.victim_country } }
+							add_political_power = -300
+						}
+					}
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 50 }
+					apply_raid_building_damage_success = yes
+					clamp_temp_variable = {
+						var = building_damage_by_missile
+						min = 0
+						max = 1
+					}
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = naval_headquarters
+									damage = [DAM]
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+					}
+				}
+				actor_effects = {
+					var:actor_country = {
+						if = {
+							limit = { NOT = { has_war_with = var:ROOT.victim_country } }
+							add_political_power = -300
+						}
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 50 }
+					apply_raid_building_damage_critical = yes
+					clamp_temp_variable = {
+						var = building_damage_by_missile
+						min = 0
+						max = 1
+					}
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = naval_headquarters
+									damage = [DAM]
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+					}
+				}
+				actor_effects = {
+					var:actor_country = {
+						if = {
+							limit = { NOT = { has_war_with = var:ROOT.victim_country } }
+							add_political_power = -300
+						}
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -75
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				add = -10
+				has_government = FROM
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_idea = super_power
+					has_idea = large_power
+					has_idea = great_power
+				}
+			}
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio > 1.5
+				}
+				NOT = { has_war_with = FROM }
+			}
+			modifier = {
+				factor = 0
+				threat < 0.10
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				strength_ratio = {
+					tag = FROM
+					ratio < 0.75
+				}
+				NOT = { has_war_with = FROM }
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+				NOT = {
+					is_in_array = {
+						array = potential_and_current_enemies
+						value = FROM
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0.05
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+					has_elections = yes
+				}
+				FROM = { has_added_tension_amount < 5 }
+			}
+			modifier = {
+				factor = 0
+				date < 2001.1.1
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+				factor = 0
+				FROM = {
+					OR = {
+						has_idea = NATO_member
+						has_idea = CSTO_member
+						has_idea = EU_member
+						has_idea = faction_resistance_axis_member
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				has_country_flag = conceded_to@FROM
+				factor = 0
+			}
+			modifier = {
+				factor = 0
+				is_ally_with = FROM
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = { is_influencer = yes }
+			}
+			modifier = {
+				factor = 0
+				raid_skip_target_non_hostile_no_retaliation = yes
+				check_variable = { debt_ratio > 0.25 }
+			}
+			modifier = {
 				factor = 0.25
 				NOT = { has_war_with = FROM }
 				check_variable = { debt_ratio > 0.15 }

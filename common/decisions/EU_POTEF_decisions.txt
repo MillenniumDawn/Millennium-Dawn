@@ -83,7 +83,6 @@ EU_environmental_imperialism_category = {
 		target_array = global.PR_regional_or_greater_powers
 
 		visible = {
-			has_country_flag = environmental_imperialism
 			FROM = {
 				NOT = { has_country_flag = EU_POTEF_environmental_imperialism_target }
 				NOT = { has_idea = USoE_environmental_sanctions }
@@ -110,9 +109,7 @@ EU_environmental_imperialism_category = {
 			always = yes
 		}
 		available = {
-			#renewable_energy_infra > num_owned_states
-			set_temp_variable = { a = num_owned_states }
-			subtract_from_temp_variable = { a = 1 }
+			set_temp_variable = { var = a value = { value = num_owned_states subtract = 1 } }
 			renewable_energy_infra > a
 		}
 		activation = {
@@ -185,7 +182,7 @@ EU_environmental_imperialism_category = {
 				end = temp1
 				if = {
 					limit = {
-						check_variable = { party_pop_array^17 < 0.50 }
+						check_expr = { value = party_pop_array^17 less_than = { value = 0.50 } }
 					}
 					set_temp_variable = { party_index = 17 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
@@ -211,6 +208,7 @@ EU_environmental_imperialism_category = {
 				has_idea = EU_president
 			}
 		}
+		war_with_on_complete = ROOT
 
 		complete_effect = {
 			remove_ideas = USoE_environmental_sanctions
@@ -406,10 +404,10 @@ EU_office_category = {
 								limit = {
 									is_in_array = { ruling_party = temp_idx }
 								}
-								check_variable = { THIS.EU_pop_ratio > 0.05 }
+								check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
 							}
 						}
-						check_variable = { THIS.EU_pop_ratio > 0.05 }
+						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
 					}
 					### AI cheat
 					all_of_scopes = {
@@ -419,7 +417,7 @@ EU_office_category = {
 								is_in_array = { ruling_party = temp_idx }
 							}
 							is_ai = yes
-							check_variable = { THIS.EU_pop_ratio < 0.05 }
+							check_expr = { value = THIS.EU_pop_ratio less_than = { value = 0.05 } }
 						}
 					}
 				}
@@ -429,7 +427,7 @@ EU_office_category = {
 				all_of_scopes = {
 					array = global.EU_member
 					is_in_array = { ruling_party = temp_idx }
-					NOT = { check_variable = { var = global.POTEF_nominee_country^temp_idx value = 0 compare = greater_than } }
+					NOT = { check_expr = { value = global.POTEF_nominee_country^temp_idx greater_than = { value = 0 } } }
 				}
 			}
 		}
@@ -441,9 +439,7 @@ EU_office_category = {
 				array = global.EU_member
 				has_active_mission = EU_POTEF_election_campaign
 			}
-			NOT = {
-				has_country_flag = POTEF_has_nominated
-			}
+			NOT = { has_country_flag = POTEF_has_nominated }
 		}
 
 		complete_effect = {
@@ -451,13 +447,7 @@ EU_office_category = {
 			for_each_loop = {
 				array = ruling_party
 				value = v
-				index = i
-				if = {
-					limit = {
-						is_in_array = { ruling_party = v }
-					}
-					set_variable = { var_gov_index = v }
-				}
+				set_variable = { var_gov_index = v }
 			}
 			set_country_flag = POTEF_has_nominated
 			# Index = subideology, value = nominee country id (read by EU_POTEF_party_N_nominee gate + display loc)
@@ -501,17 +491,10 @@ EU_office_category = {
 	}
 
 	EU_POTEF_campaign_in_member_state = {
-		allowed = {
-			EU_is_potential = yes
-		}
+		allowed = { EU_is_potential = yes }
 		target_root_trigger = {
 			has_idea = EU_member
 			has_country_flag = POTEF_has_nominated
-		}
-		target_trigger = {
-			FROM = {
-				has_idea = EU_member
-			}
 		}
 		target_array = global.EU_member
 		cost = 200
@@ -532,13 +515,7 @@ EU_office_category = {
 				for_each_loop = {
 					array = ruling_party
 					value = v
-					index = i
-					if = {
-						limit = {
-							is_in_array = { ruling_party = v }
-						}
-						set_variable = { var_gov_index = v }
-					}
+					set_variable = { var_gov_index = v }
 				}
 				random_list = {
 					3 = {
@@ -568,11 +545,11 @@ EU_office_category = {
 						}
 						modifier = {
 							add = -1
-							check_variable = { FROM.eurosceptic > 0.10 }
+							check_expr = { value = FROM.europeanism greater_than = { value = 0.10 } }
 						}
 						modifier = {
 							add = -1
-							check_variable = { FROM.eurosceptic > 0.20 }
+							check_expr = { value = FROM.europeanism greater_than = { value = 0.20 } }
 						}
 						FROM = {
 							set_temp_variable = { party_index = PREV.var_gov_index }
@@ -592,7 +569,7 @@ EU_office_category = {
 							FROM = {
 								is_in_array = { ruling_party = var_gov_index }
 							}
-							check_variable = { FROM.eurosceptic < 0.10 }
+							check_expr = { value = FROM.europeanism less_than = { value = 0.10 } }
 							FROM = {
 								influence_higher_20 = yes
 							}
@@ -641,10 +618,8 @@ EU_defense_category = {
 		}
 
 		complete_effect = {
-			every_country = {
-				limit = {
-					has_idea = EDU_major_non_EU_ally
-				}
+			for_each_scope_loop = {
+				array = global.non_EU_EDU_ally
 				ROOT = { add_to_faction = PREV }
 				add_ai_strategy = { type = alliance id = ROOT value = 200 }
 			}
@@ -671,10 +646,6 @@ EU_defense_category = {
 			FROM = {
 				influence_higher_5 = yes
 			}
-		}
-		visible = {
-			has_idea = EU_member
-			has_global_flag = EDU
 		}
 		complete_effect = {
 			ROOT = {

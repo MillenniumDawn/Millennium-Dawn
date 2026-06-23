@@ -10,7 +10,7 @@ When a catalog has N similar entries (votes, MIO unlocks, member states), replac
 
 ### Backing array
 
-Holds integer entry IDs (1..N), not tokens. EU votes use the vote ID directly; MIO catalog uses 1..23 mapped to a parallel `global.mio_catalog_all_tokens` master array.
+Holds integer entry IDs (1..N), not tokens. EU votes use the vote ID directly; MIO catalog uses 1..23 mapped to a parallel `global.mio_catalog_all_tokens` master array. Because the IDs are 1-based but `add_to_array` is 0-based, the token array reserves a never-read index-0 slot so `array^v` lines up (otherwise every `^v` lookup is shifted by one — the cause of issue #1955).
 
 ```
 add_to_array = { mio_catalog_visible_array = 1 }
