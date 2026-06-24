@@ -6466,6 +6466,76 @@ country_event = {
 	}
 }
 
+# North Korea offers a conventional arms package. Fired by the arms-export decision
+# (NKO_export_munitions). ROOT = the client being offered; FROM = North Korea.
+# AI accepts when it is losing its war.
+country_event = {
+	id = NKO_export.10
+	title = NKO_export.10.t
+	desc = NKO_export.10.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.10.a # Accept the shipment
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.a executed from [FROM.GetTag]"
+		FROM = { country_event = { id = NKO_export.11 days = 1 } }
+		ai_chance = {
+			factor = 80
+			modifier = { factor = 3  surrender_progress > 0.5 }
+		}
+	}
+
+	option = {
+		name = NKO_export.10.b # Decline the offer
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.b executed from [FROM.GetTag]"
+		FROM = { country_event = { id = NKO_export.12 days = 1 } }
+		ai_chance = {
+			factor = 20
+			modifier = { factor = 0  surrender_progress > 0.5 }
+		}
+	}
+}
+
+# The client accepted our arms package. FROM = the accepting client. Delivers the
+# equipment from our stockpile, grants the client the munitions idea, pays us, and
+# registers the deal.
+country_event = {
+	id = NKO_export.11
+	title = NKO_export.11.t
+	desc = NKO_export.11.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	immediate = {
+		set_temp_variable = { NKO_arms_client_id = FROM.id }
+		FROM = { save_event_target_as = NKO_arms_client }
+		NKO_export_do_munitions = yes
+	}
+
+	option = {
+		name = NKO_export.11.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.11.a executed from [FROM.GetTag]"
+	}
+}
+
+# The client declined our arms package. FROM = the declining client.
+country_event = {
+	id = NKO_export.12
+	title = NKO_export.12.t
+	desc = NKO_export.12.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.12.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.12.a executed from [FROM.GetTag]"
+	}
+}
+
 # Capstone — ten nations supplied. Fired from the NKO_arms_export_capstone decision.
 country_event = {
 	id = NKO_export.99
@@ -6583,5 +6653,29 @@ country_event = {
 			factor = 30
 			modifier = { factor = 0  NOT = { has_manpower > 100000 } }
 		}
+	}
+}
+
+country_event = {
+	id = NKO_export.40
+	title = NKO_export.40.t
+	desc = NKO_export.40.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.40.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.40.a executed"
+		NKO_sanctions_set_max = yes
+		add_war_support = 0.05
+		add_stability = -0.02
+	}
+
+	option = {
+		name = NKO_export.40.b
+		log = "[GetDateText]: [This.GetName]: NKO_export.40.b executed"
+		NKO_sanctions_set_max = yes
+		add_political_power = -50
 	}
 }

@@ -2886,10 +2886,7 @@ NKO_rus_friend_category = {
 }
 
 ###########SECOND ECONOMIC COMMITTEE — ARMS & MANPOWER EXPORTS#########################
-# Unlocked by the NKO_create_komid focus. The four aid decisions target any nation
-# at war (array global.NKO_arms_export_targets, rebuilt weekly). Each delivers a
-# recipient buff and pays NKO in cash / tech / production. NKO_arms_export_lobby_relief
-# spends patron clout to ease sanctions; NKO_arms_export_capstone fires at ten clients.
+
 NKO_arms_export = {
 
 	###########Conventional Arms Exports — Open###########
@@ -2904,6 +2901,7 @@ NKO_arms_export = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_arms_export_conv_open"
 			set_country_flag = NKO_arms_export_conv_open
+			NKO_arms_export_rebuild_targets = yes
 		}
 		ai_will_do = { base = 355 }
 	}
@@ -2919,36 +2917,7 @@ NKO_arms_export = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_arms_export_conv_close"
 			clr_country_flag = NKO_arms_export_conv_open
-		}
-		ai_will_do = { base = 0 }
-	}
-	###########Strategic Arms Exports — Open###########
-	NKO_arms_export_strat_open = {
-		icon = GFX_decision_nko_rocket
-		days_remove = 1
-		fire_only_once = no
-		visible = {
-			has_country_flag = NKO_arms_export_active
-			NOT = { has_country_flag = NKO_arms_export_strat_open }
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_arms_export_strat_open"
-			set_country_flag = NKO_arms_export_strat_open
-		}
-		ai_will_do = { base = 355 }
-	}
-	###########Strategic Arms Exports — Close###########
-	NKO_arms_export_strat_close = {
-		icon = GFX_decision_nko_rocket
-		days_remove = 1
-		fire_only_once = no
-		visible = {
-			has_country_flag = NKO_arms_export_active
-			has_country_flag = NKO_arms_export_strat_open
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_arms_export_strat_close"
-			clr_country_flag = NKO_arms_export_strat_open
+			NKO_arms_export_rebuild_targets = yes
 		}
 		ai_will_do = { base = 0 }
 	}
@@ -2968,6 +2937,11 @@ NKO_arms_export = {
 				NOT = { has_government = democratic }
 				surrender_progress > 0.3
 			}
+			OR = {
+				FROM = { original_tag = SOV }
+				FROM = { original_tag = CHI }
+				FROM = { check_variable = { NKO_deals_received_count < 2 } }
+			}
 		}
 
 		cost = 10
@@ -2977,7 +2951,8 @@ NKO_arms_export = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_export_munitions on [FROM.GetTag]"
 			set_temp_variable = { NKO_arms_client_id = FROM.id }
 			FROM = { save_event_target_as = NKO_arms_client }
-			NKO_export_do_munitions = yes
+			FROM = { country_event = { id = NKO_export.10 days = 1 } }
+			custom_effect_tooltip = NKO_export_munitions_effect_tt
 		}
 
 		ai_will_do = {
@@ -3001,6 +2976,11 @@ NKO_arms_export = {
 				NOT = { has_government = democratic }
 				surrender_progress > 0.3
 			}
+			OR = {
+				FROM = { original_tag = SOV }
+				FROM = { original_tag = CHI }
+				FROM = { check_variable = { NKO_deals_received_count < 2 } }
+			}
 		}
 
 		available = {
@@ -3023,45 +3003,13 @@ NKO_arms_export = {
 		}
 	}
 
-	NKO_export_satellite = {
-		icon = GFX_decision_sov_nko_button
-
-		target_array = global.NKO_arms_export_targets
-		target_root_trigger = {
-			has_country_flag = NKO_arms_export_active
-			has_country_flag = NKO_arms_export_strat_open
-			has_completed_focus = NKO_technological_boost
-			check_variable = { var = NKO_comsat_count  value = 10  compare = greater_than_or_equals }
-			check_variable = { var = NKO_spysat_count  value = 10  compare = greater_than_or_equals }
-		}
-		target_trigger = {
-			FROM = {
-				has_war = yes
-				NOT = { has_war_with = NKO }
-				NOT = { has_government = democratic }
-				surrender_progress > 0.3
-			}
-		}
-
-		cost = 15
-		days_re_enable = 60
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_export_satellite on [FROM.GetTag]"
-			set_temp_variable = { NKO_arms_client_id = FROM.id }
-			FROM = { save_event_target_as = NKO_arms_client }
-			NKO_export_do_satellite = yes
-		}
-
-		ai_will_do = {
-			base = 2
-		}
-	}
-
 	NKO_arms_export_lobby_relief = {
 		icon = GFX_decision_nko_un_support_button
 
-		visible = { has_country_flag = NKO_arms_export_active }
+		visible = {
+			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_conv_open
+		}
 
 		available = {
 			custom_trigger_tooltip = {
@@ -3110,6 +3058,7 @@ NKO_arms_export = {
 
 		visible = {
 			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_conv_open
 			has_country_flag = NKO_arms_export_capstone_ready
 			NOT = { has_country_flag = NKO_arms_export_capstone_done }
 		}
@@ -3131,17 +3080,14 @@ NKO_arms_export = {
 	}
 
 	###########Patron Volunteer Commitments###########
-	# Russia (SOV) and China (CHI) host North Korean volunteer expeditionary
-	# forces while at war. Committing a full expedition (20+ NKO volunteer
-	# divisions hosted) pays hard currency and patron standing; the weekly
-	# mastery tick rewards sustained deployment. Goodwill can be cashed in for
-	# patron jet technology. See common/scripted_effects/99_NKO_scripted_effects.txt.
+
 	NKO_commit_volunteers = {
 		icon = GFX_decision_sov_nko_soldiers
 
 		target_array = global.NKO_patrons_at_war
 		target_root_trigger = {
 			has_country_flag = NKO_arms_export_active
+			has_country_flag = NKO_arms_export_conv_open
 		}
 		target_trigger = {
 			FROM = {
@@ -3153,7 +3099,7 @@ NKO_arms_export = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = NKO_commit_volunteers_req_tt
-				FROM = { has_volunteers_amount_from = { tag = NKO count > 19 } }
+				FROM = { has_volunteers_amount_from = { tag = NKO count > 5 } }
 			}
 		}
 
@@ -3164,10 +3110,13 @@ NKO_arms_export = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_commit_volunteers on [FROM.GetTag]"
 			set_temp_variable = { treasury_change = 0.5 }
+			if = {
+				limit = { FROM = { OR = { original_tag = SOV  original_tag = CHI } } }
+				set_temp_variable = { treasury_change = 6 }
+			}
 			modify_treasury_effect = yes
-			add_to_variable = { NKO_arms_export_revenue = 0.5 }
-			add_to_variable = { var = NKO_arms_contract_standing  value = 15 }
-			clamp_variable = { var = NKO_arms_contract_standing  min = 0  max = 100 }
+			custom_effect_tooltip = NKO_commit_volunteers_effect_tt
+			add_to_variable = { var = NKO_arms_export_revenue  value = treasury_change }
 			add_to_variable = { NKO_expeditions_completed = 1 }
 			set_country_flag = NKO_expeditionary_active
 			if = {
@@ -3178,50 +3127,6 @@ NKO_arms_export = {
 
 		ai_will_do = {
 			base = 50
-		}
-	}
-
-	NKO_request_jets = {
-		icon = GFX_decision_nko_rocket
-
-		target_array = global.NKO_patrons_at_war
-		target_root_trigger = {
-			has_country_flag = NKO_arms_export_active
-		}
-		target_trigger = {
-			FROM = {
-				has_war = yes
-				NOT = { has_war_with = NKO }
-			}
-		}
-
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = NKO_request_jets_req_tt
-				check_variable = { var = NKO_arms_contract_standing  value = 40  compare = greater_than_or_equals }
-			}
-		}
-
-		cost = 50
-		days_re_enable = 365
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_request_jets on [FROM.GetTag]"
-			add_tech_bonus = { name = NKO_jet_transfer bonus = 1.0 uses = 1 category = CAT_fighter }
-			add_tech_bonus = { name = NKO_jet_transfer bonus = 1.0 uses = 1 category = CAT_as_fighter }
-			subtract_from_variable = { NKO_arms_contract_standing = 30 }
-			clamp_variable = { var = NKO_arms_contract_standing  min = 0  max = 100 }
-			add_opinion_modifier = { target = FROM modifier = trade_mission }
-			FROM = { add_opinion_modifier = { target = NKO modifier = trade_mission } }
-			if = {
-				limit = { is_ai = no }
-				add_to_variable = { var = NKO_arms_export_gui_dirty  value = 1 }
-			}
-		}
-
-		ai_will_do = {
-			base = 20
 		}
 	}
 }
