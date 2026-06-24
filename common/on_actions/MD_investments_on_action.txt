@@ -29,44 +29,45 @@ on_actions = {
     }
 	on_daily = {
         effect = {
-            for_each_loop = {
-                array = investments_projects
-                break = break
-
-                subtract_from_variable = { investments_projects_building_time^v = 1 }
+            update_investments_max_projects = yes
+            
+            for_loop_effect = {
+                start = 1
+                end = MD_investments_max_projects
+                value = v
 
                 if = {
                     limit = {
-                        check_variable = { investments_projects_building_time^v < 1 }
+                        check_variable = { v < investments_projects^num }
                     }
 
-                    set_temp_variable = { index = v }
-                    var:investments_projects_state^v = {
-                        set_temp_variable = { building_index = investments_projects_building^v }
-                        add_finished_building = yes
+                    subtract_from_variable = { investments_projects_building_time^v = 1 }
 
-                        owner = {
-                            set_temp_variable = { country_from = FROM }
-                            set_temp_variable = { country = ROOT }
-                            set_temp_variable = { amount = investments_projects_building_cost^v }
-                            multiply_temp_variable = { amount = global.build_const_return_array^vnvestments_projects_building^v }
-                            add_investment = yes
+                    if = {
+                        limit = {
+                            check_variable = { investments_projects_building_time^v < 0 }
                         }
+
+                        set_temp_variable = { index = v }
+                        var:investments_projects_state^v = {
+                            set_temp_variable = { building_index = investments_projects_building^v }
+                            add_finished_building = yes
+
+                            owner = {
+                                set_temp_variable = { country = ROOT }
+                                set_temp_variable = { country_from = FROM }
+                                set_temp_variable = { amount = investments_projects_building_cost^v }
+                                multiply_temp_variable = { amount = global.build_const_return_array^vnvestments_projects_building^v }
+                                add_investment = yes
+                            }
+                        }
+
+                        set_temp_variable = { amount = 1 }
+                        remove_investment_project_by_index = yes
                     }
-
-                    set_temp_variable = { amount = 1 }
-                    remove_investment_project_by_index = yes
-                }
-                else = {
-                    update_dirty_investments = yes
-                }
-
-                if = {
-                    limit = {
-                        check_variable = { i > MD_investments_max_projects_base }
+                    else = {
+                        update_dirty_investments = yes
                     }
-
-                    set_temp_variable = { break = 1 }
                 }
             }
         }

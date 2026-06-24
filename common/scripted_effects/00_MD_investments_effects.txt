@@ -73,7 +73,8 @@ init_investment_system = {
 # Called in the spawning of a new nation in-game
 # Purely used to update the variables of a nation if you are trying to play as a releasable
 ingame_init_investment_system = {
-	set_variable = { MD_investments_max_projects_base = 15 }
+    update_investments_max_projects = yes
+	# set_variable = { MD_investments_max_projects_base = 15 }
 }
 
 create_investment_project = {
@@ -126,6 +127,9 @@ create_investment_project = {
         modify_treasury_effect = yes
     }
 
+	set_variable = { MD_active_investments_projects = investments_projects^num }
+	clamp_variable = { var = MD_active_investments_projects min = 0 max = MD_investments_max_projects }
+
 	update_dirty_investments = yes
 }
 
@@ -142,71 +146,11 @@ remove_investment_project = {
                 check_variable = { investments_projects_building^i = building_index }
             }
             
-            subtract_from_variable = { investments_projects_building_amount^i = amount }
-
-            if = {
-                limit = { check_variable = { investments_projects_building_time^i > 0 } }
-
-                # TODO: something broken is here?
-                set_temp_variable = { remove_return_procentage = investments_projects_building_time^i }
-                divide_temp_variable = { remove_return_procentage = investments_projects_building_time_max^i }
-            
-                set_temp_variable = { treasury_change = investments_projects_building_cost^i }
-                multiply_temp_variable = { treasury_change = remove_return_procentage }
-                multiply_temp_variable = { treasury_change = amount }
-                modify_treasury_effect = yes
-            }
-
-            calculate_investment_project_cost = yes
-            set_variable = { investments_projects_building_cost^i = investment_project_cost }
-            
-            calculate_investment_project_time = yes
-            set_variable = { investments_projects_building_time^i = project_time }
-            set_variable = { investments_projects_building_time_max^i = project_time }
-            
-            if = {
-                limit = {
-                    check_variable = { investments_projects_building_amount^i < 1 }
-                }
-
-                remove_from_array = { 
-                    array = investments_projects
-                    value = i
-                }
-
-                remove_from_array = { 
-                    array = investments_projects_building
-                    index = i
-                }
-                remove_from_array = { 
-                    array = investments_projects_building_amount
-                    index = i
-                }
-                remove_from_array = { 
-                    array = investments_projects_building_cost
-                    index = i
-                }
-
-                remove_from_array = { 
-                    array = investments_projects_building_time
-                    index = i
-                }
-                remove_from_array = { 
-                    array = investments_projects_building_time_max
-                    index = i
-                }
-
-                remove_from_array = { 
-                    array = investments_projects_state
-                    index = i
-                }
-            }
-            
+            set_temp_variable = { index = i }
+            remove_investment_project_by_index = yes
             set_temp_variable = { break = 1 }
         }
     }
-
-	update_dirty_investments = yes
 }
 
 remove_investment_project_by_index = {
@@ -215,7 +159,6 @@ remove_investment_project_by_index = {
 	if = {
 		limit = { check_variable = { investments_projects_building_time^index > 0 } }
 
-		# TODO: something broken is here?
 		set_temp_variable = { remove_return_procentage = investments_projects_building_time^index }
 		divide_temp_variable = { remove_return_procentage = investments_projects_building_time_max^index }
 	
@@ -240,6 +183,18 @@ remove_investment_project_by_index = {
 		remove_from_array = { 
 			array = investments_projects
 			value = index
+		}
+
+		for_each_loop = {
+			array = investments_projects
+			index = i
+			value = pointer
+
+			if = {
+				limit = { check_variable = { pointer > index } }
+
+				subtract_from_variable = { investments_projects^i = 1 }
+			}
 		}
 
 		remove_from_array = { 
@@ -269,6 +224,9 @@ remove_investment_project_by_index = {
 			index = index
 		}
 	}
+
+	set_variable = { MD_active_investments_projects = investments_projects^num }
+	clamp_variable = { var = MD_active_investments_projects min = 0 max = MD_investments_max_projects }
 
 	update_dirty_investments = yes
 }
@@ -318,9 +276,6 @@ update_dirty_investments = {
 		limit = {
 			check_variable = { MD_constructionview_tab_selected = 1 }
 		}
-
-		set_variable = { THIS.MD_active_investments_projects = investments_projects^num }
-		clamp_variable = { var = THIS.MD_active_investments_projects min = 0 max = 15 }
 
 		if = { limit = { check_variable = { THIS.investments_dirty < 100000 } }
 			add_to_variable = { THIS.investments_dirty = 1 }
@@ -532,4 +487,13 @@ calculate_investment_project_cost = {
 	set_variable = { displayable_monetary_cost_modifier = investments_cost_modifier }
 	multiply_temp_variable = { var = investment_project_cost value = investments_cost_modifier }
 	multiply_temp_variable = { var = investment_project_cost value = amount }
+}
+
+update_investments_max_projects = {
+	set_temp_variable = { modifier = 1 }
+	add_to_temp_variable = { modifier = modifier@max_projects_modifier }
+
+	set_variable = { MD_investments_max_projects = modifier@max_projects_base_factor }
+	multiply_variable = { MD_investments_max_projects = modifier }
+	round_variable = MD_investments_max_projects
 }
