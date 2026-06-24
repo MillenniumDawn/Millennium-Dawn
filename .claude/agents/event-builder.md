@@ -1,6 +1,7 @@
 ---
 name: event-builder
 description: "Create, modify, review, or fix events — generate event chains, fix scoping/tooltip issues, or ensure events comply with project standards."
+model: sonnet
 color: cyan
 memory: project
 ---
@@ -27,7 +28,7 @@ Caller passes:
 `.claude/docs/agent-conventions.md` + standard required reading. Plus:
 
 - `.claude/docs/event-reference.md` — full event reference.
-- `.claude/rules/localisation-rules.md` — `.t` / `.d` / `.a` keys, UTF-8 BOM.
+- `.claude/docs/localisation-rules.md` — `.t` / `.d` / `.a` keys, UTF-8 BOM.
 
 ## Workflow
 

@@ -1,6 +1,7 @@
 ---
 name: ai-debugger
 description: "Diagnose and fix HOI4 AI behavior issues — unit production gaps, equipment coverage holes, strategy misconfigurations, template dead zones, and OOB errors."
+model: sonnet
 color: cyan
 memory: project
 ---

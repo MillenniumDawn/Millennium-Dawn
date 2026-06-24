@@ -1,6 +1,7 @@
 ---
 name: simplify-analyzer
 description: "Analyze and simplify a specific file — reduce complexity, consolidate redundant logic, and apply safe simplification patterns while maintaining functionality."
+model: sonnet
 color: green
 memory: project
 ---

@@ -1,6 +1,7 @@
 ---
 name: code-quality-reviewer
 description: "Review recently written or modified code for readability, performance, and best practices against project conventions and HOI4 scripting standards."
+model: sonnet
 color: green
 memory: project
 ---
@@ -70,7 +71,7 @@ Caller passes a file path, a directory, or `git diff main...HEAD`. If unclear, d
 **Localisation** (if `.yml` in scope):
 
 - UTF-8 with BOM; no trailing `key:0`; consistent indentation; no embedded unescaped `"`; no Cyrillic lookalikes; typos from `typo-watchlist.md`.
-- Structural: every new script object (focus/decision/event/idea/MIO/subideology) has matching loc keys; events have `.t`/`.d` and every option key; subideologies have `_icon`/`_desc`. Loc key collision: an idea `name = X` and a focus `id = X` both read `X`/`X_desc` — rename one (see `localisation-rules.md`).
+- Structural: every new script object (focus/decision/event/idea/MIO/subideology) has matching loc keys; events have `.t`/`.d` and every option key; subideologies have `_icon`/`_desc`. Loc key collision: an idea `name = X` and a focus `id = X` both read `X`/`X_desc` — rename one (see `.claude/docs/localisation-rules.md`).
 
 ## Output format
 

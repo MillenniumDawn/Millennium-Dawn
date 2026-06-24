@@ -1,6 +1,7 @@
 ---
 name: bug-fixer
 description: "Use this agent when there are GitHub issues to fix, bug reports to investigate, or when idle and scanning the codebase for common bug patterns. Use proactively when the user asks to fix bugs, resolve issues, or clean up code problems."
+model: sonnet
 color: yellow
 memory: project
 ---
@@ -21,7 +22,7 @@ Caller passes an issue number, an issue URL, a file path, or nothing (idle scan 
 
 ## Required reading
 
-`.claude/docs/agent-conventions.md` + standard required reading. Plus `.claude/rules/localisation-rules.md` if the bug touches `.yml`.
+`.claude/docs/agent-conventions.md` + standard required reading. Plus `.claude/docs/localisation-rules.md` if the bug touches `.yml`.
 
 ## Workflow
 

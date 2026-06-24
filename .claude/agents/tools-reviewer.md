@@ -1,6 +1,7 @@
 ---
 name: tools-reviewer
 description: "Review Python tooling scripts (linting, validation, standardization) for performance, robustness, duplication, and correctness. Use when modifying or auditing tools/ scripts."
+model: sonnet
 color: cyan
 memory: project
 ---

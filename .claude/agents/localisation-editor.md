@@ -28,7 +28,7 @@ Caller passes one of:
 
 ## Required reading
 
-`.claude/docs/agent-conventions.md`, `.claude/rules/localisation-rules.md`, `.claude/docs/typo-watchlist.md`.
+`.claude/docs/agent-conventions.md`, `.claude/docs/localisation-rules.md`, `.claude/docs/typo-watchlist.md`.
 
 ## Workflow
 
