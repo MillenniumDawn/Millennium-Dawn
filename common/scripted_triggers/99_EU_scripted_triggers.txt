@@ -401,6 +401,61 @@ EU_any_nation_holds_council_president = {
 	}
 }
 
+# True when the commission presidency is vacant (seat cleared to EUU) and ROOT is the member
+# that should act as caretaker finalizer for a vote concluding during the vacancy. Human players
+# take priority so an AI minor never forms the United States of Europe out from under a player;
+# in an all-AI union any member qualifies. Pair with a self-clearing claim flag so only one acts.
+EU_is_commission_caretaker = {
+	check_variable = { global.eu_commission = EUU.id }
+	OR = {
+		is_ai = no
+		NOT = { any_of_scopes = { array = global.EU_member is_ai = no } }
+	}
+}
+
+# Council enforcement authority (breach determination / voting-rights / subsidies suspension):
+# either the proposer and target hold the top-3-influencer consensus among unsuspended members,
+# or the proposer is the commission president. Shared verbatim by the three enforcement decisions.
+EU_council_has_breach_authority = {
+	OR = {
+		AND = {
+			custom_trigger_tooltip = {
+				tooltip = can_determine_a_breach_of_values_ROOT
+				all_of_scopes = {
+					array = global.EU_member
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							NOT = { tag = FROM }
+							NOT = {
+								has_idea = EUU_voting_rights_suspended
+							}
+						}
+						is_top3_influencer = yes
+					}
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = can_determine_a_breach_of_values_FROM
+				all_of_scopes = {
+					array = global.EU_member
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							NOT = { tag = FROM }
+							NOT = {
+								has_idea = EUU_voting_rights_suspended
+							}
+						}
+						NOT = { FROM_is_top3_influencer = yes }
+					}
+				}
+			}
+		}
+		has_idea = EU_commission_president
+	}
+}
+
 EU_commission_or_council_president_has_25_opinion = {
 	any_of_scopes = {
 		array = global.EU_member
