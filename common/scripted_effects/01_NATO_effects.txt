@@ -165,6 +165,53 @@ NATO_leave = {
 	}
 }
 
+# Hands NATO leadership to a surviving member when the current leader can no longer
+# lead (the USA collapsing). Prefers a non-collapsed major member, falls back to any
+# eligible member, then announces the transition.
+NATO_promote_new_leader = {
+	if = {
+		limit = {
+			any_of_scopes = {
+				array = global.nato_members
+				has_idea = NATO_member
+				is_subject = no
+				is_major = yes
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { is_faction_leader = yes }
+			}
+		}
+		random_scope_in_array = {
+			array = global.nato_members
+			limit = {
+				has_idea = NATO_member
+				is_subject = no
+				is_major = yes
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { is_faction_leader = yes }
+			}
+			set_faction_leader = yes
+			save_event_target_as = new_nato_leader
+		}
+	}
+	else = {
+		random_scope_in_array = {
+			array = global.nato_members
+			limit = {
+				has_idea = NATO_member
+				is_subject = no
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { is_faction_leader = yes }
+			}
+			set_faction_leader = yes
+			save_event_target_as = new_nato_leader
+		}
+	}
+	if = {
+		limit = { exists = event_target:new_nato_leader }
+		hidden_effect = { news_event = { id = NATO.20 hours = 6 } }
+	}
+}
+
 NATO_CSTO_calculate_number_of_batallions = {
 	set_variable = { global.var_nato_inf_count = 0 }
 	set_variable = { global.var_csto_inf_count = 0 }
