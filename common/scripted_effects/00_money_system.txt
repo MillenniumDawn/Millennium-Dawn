@@ -98,21 +98,14 @@ ingame_update_setup = {
 # Purpose: Updates the dirty variable which in turn updates the money UI and the research screen
 update_money_dirty_variable = {
 	if = { limit = { is_ai = no }
-		if = { limit = { NOT = { has_variable = global.update_monie_ui } }
-			set_variable = { global.update_monie_ui = 0 }
-		}
-		else = {
-			add_to_variable = { global.update_monie_ui = 1 }
-		}
-
-		add_to_variable = { global.research_screen_ui = 1 }
-
 		force_update_map_mode = { mapmode = gdp_c_map_mode }
 		force_update_map_mode = { mapmode = energy_consumption_map_mode }
 		force_update_map_mode = { mapmode = productivity_map_mode }
 
 		md_check_research_slot_alert = yes
 	}
+	add_to_variable = { global.update_monie_ui = 1 }
+	add_to_variable = { global.research_screen_ui = 1 }
 }
 
 expense_modifier_calculations = {
@@ -247,7 +240,7 @@ calculate_tax_gain = {
 			# Overall productivity
 			multiply = {
 				value = overall_productivity
-				multiply = 0.001
+				divide = global.productivity_center
 			}
 		}
 	}
@@ -851,7 +844,7 @@ calculate_additional_income_rate = {
 		limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 		if = {
 			limit = {
-				is_in_array = { global.EU_member = THIS }
+				has_idea = EU_member
 				NOT = { has_idea = EUU_subsidies_suspended }
 			}
 			set_variable = { EU_subsidies = THIS.EU_natural_subsidies }
@@ -1931,139 +1924,251 @@ calculate_additional_income_rate = {
 	if = {
 		limit = { check_variable = { market_sold_contracts > 0 } }
 		# start the math
-		set_temp_variable = { temp_inf_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_inf_equip_cost = global.inf_cost_mult }
-		multiply_temp_variable = { temp_inf_equip_cost = amount_inf_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_inf_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.inf_cost_mult
+				multiply = amount_inf_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_cnc_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_cnc_equip_cost = global.cnc_cost_mult }
-		multiply_temp_variable = { temp_cnc_equip_cost = amount_cnc_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_cnc_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.cnc_cost_mult
+				multiply = amount_cnc_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_aa_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_aa_equip_cost = global.aa_cost_mult }
-		multiply_temp_variable = { temp_aa_equip_cost = amount_aa_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_aa_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.aa_cost_mult
+				multiply = amount_aa_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_at_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_at_equip_cost = global.at_cost_mult }
-		multiply_temp_variable = { temp_at_equip_cost = amount_at_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_at_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.at_cost_mult
+				multiply = amount_at_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_hat_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_hat_equip_cost = global.hat_cost_mult }
-		multiply_temp_variable = { temp_hat_equip_cost = amount_hat_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_hat_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.hat_cost_mult
+				multiply = amount_hat_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_art_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_art_equip_cost = global.art_cost_mult }
-		multiply_temp_variable = { temp_art_equip_cost = amount_art_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_art_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.art_cost_mult
+				multiply = amount_art_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_atk_helo_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_atk_helo_equip_cost = global.atk_helo_cost_mult }
-		multiply_temp_variable = { temp_atk_helo_equip_cost = amount_atk_helo_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_atk_helo_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.atk_helo_cost_mult
+				multiply = amount_atk_helo_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_trans_helo_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_trans_helo_equip_cost = global.trans_helo_cost_mult }
-		multiply_temp_variable = { temp_trans_helo_equip_cost = amount_trans_helo_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_trans_helo_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.trans_helo_cost_mult
+				multiply = amount_trans_helo_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_util_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_util_equip_cost = global.util_cost_mult }
-		multiply_temp_variable = { temp_util_equip_cost = amount_util_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_util_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.util_cost_mult
+				multiply = amount_util_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_mbt_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_mbt_equip_cost = global.mbt_cost_mult }
-		multiply_temp_variable = { temp_mbt_equip_cost = amount_mbt_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_mbt_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.mbt_cost_mult
+				multiply = amount_mbt_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_apc_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_apc_equip_cost = global.apc_cost_mult }
-		multiply_temp_variable = { temp_apc_equip_cost = amount_apc_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_apc_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.apc_cost_mult
+				multiply = amount_apc_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_ifv_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_ifv_equip_cost = global.ifv_cost_mult }
-		multiply_temp_variable = { temp_ifv_equip_cost = amount_ifv_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_ifv_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.ifv_cost_mult
+				multiply = amount_ifv_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_spart_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_spart_equip_cost = global.spart_cost_mult }
-		multiply_temp_variable = { temp_spart_equip_cost = amount_spart_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_spart_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.spart_cost_mult
+				multiply = amount_spart_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_light_tank_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_light_tank_equip_cost = global.light_tank_cost_mult }
-		multiply_temp_variable = { temp_light_tank_equip_cost = amount_light_tank_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_light_tank_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.light_tank_cost_mult
+				multiply = amount_light_tank_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_spaa_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_spaa_equip_cost = global.spaa_cost_mult }
-		multiply_temp_variable = { temp_spaa_equip_cost = amount_spaa_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_spaa_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.spaa_cost_mult
+				multiply = amount_spaa_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_train_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_train_equip_cost = global.train_cost_mult }
-		multiply_temp_variable = { temp_train_equip_cost = amount_train_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_train_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.train_cost_mult
+				multiply = amount_train_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_convoy_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_convoy_equip_cost = global.convoy_cost_mult }
-		multiply_temp_variable = { temp_convoy_equip_cost = amount_convoy_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_convoy_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.convoy_cost_mult
+				multiply = amount_convoy_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_sml_pln_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_sml_pln_equip_cost = global.sml_pln_cost_mult }
-		multiply_temp_variable = { temp_sml_pln_equip_cost = amount_sml_pln_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_sml_pln_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.sml_pln_cost_mult
+				multiply = amount_sml_pln_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_med_pln_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_med_pln_equip_cost = global.med_pln_cost_mult }
-		multiply_temp_variable = { temp_med_pln_equip_cost = amount_med_pln_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_med_pln_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.med_pln_cost_mult
+				multiply = amount_med_pln_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_lrg_pln_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_lrg_pln_equip_cost = global.lrg_pln_cost_mult }
-		multiply_temp_variable = { temp_lrg_pln_equip_cost = amount_lrg_pln_equip_sold }
-		add_to_temp_variable = { market_sold_cost = temp_lrg_pln_equip_cost }
+		add_to_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.lrg_pln_cost_mult
+				multiply = amount_lrg_pln_equip_sold
+			}
+		}
 
-		set_temp_variable = { temp_ballistic_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_ballistic_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_ballistic_missile_equipment_cost = amount_ballistic_missile_equipment_sold }
-		add_to_temp_variable = { market_sold_cost = temp_ballistic_missile_equipment_cost }
+		if = {
+			limit = { has_dlc = "Gotterdammerung" }
 
-		set_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = amount_nuclear_ballistic_missile_equipment_sold }
-		add_to_temp_variable = { market_sold_cost = temp_nuclear_ballistic_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_sold_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_ballistic_missile_equipment_sold
+				}
+			}
 
-		set_temp_variable = { temp_guided_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_guided_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_guided_missile_equipment_cost = amount_guided_missile_equipment_sold }
-		add_to_temp_variable = { market_sold_cost = temp_guided_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_sold_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_nuclear_ballistic_missile_equipment_sold
+				}
+			}
 
-		set_temp_variable = { temp_hypersonic_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_hypersonic_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_hypersonic_missile_equipment_cost = amount_hypersonic_missile_equipment_sold }
-		add_to_temp_variable = { market_sold_cost = temp_hypersonic_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_sold_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_guided_missile_equipment_sold
+				}
+			}
 
-		set_temp_variable = { temp_nuclear_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_nuclear_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_nuclear_missile_equipment_cost = amount_nuclear_missile_equipment_sold }
-		add_to_temp_variable = { market_sold_cost = temp_nuclear_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_sold_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_hypersonic_missile_equipment_sold
+				}
+			}
 
-		set_temp_variable = { temp_sam_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_sam_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_sam_missile_equipment_cost = amount_sam_missile_equipment_sold }
-		add_to_temp_variable = { market_sold_cost = temp_sam_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_sold_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_nuclear_missile_equipment_sold
+				}
+			}
 
-		set_temp_variable = { country_modifier_val = 1 }
-		add_to_temp_variable = { country_modifier_val = international_market_income_modifier }
-		multiply_temp_variable = { market_sold_cost = country_modifier_val }
+			add_to_temp_variable = {
+				var = market_sold_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_sam_missile_equipment_sold
+				}
+			}
+		}
+
+		multiply_temp_variable = {
+			var = market_sold_cost
+			value = {
+				value = 1
+				add = modifier@international_market_income_modifier
+			}
+		}
 
 		add_to_variable = { additional_income_rate = market_sold_cost }
 		set_variable = { market_sold_value_track = market_sold_cost }
@@ -3380,139 +3485,251 @@ calculate_additional_expense_rate = {
 	}
 	if = { limit = { check_variable = { market_purchase_factories > 0 } }
 		#start the math
-		set_temp_variable = { temp_inf_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_inf_equip_cost = global.inf_cost_mult }
-		multiply_temp_variable = { temp_inf_equip_cost = amount_inf_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_inf_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.inf_cost_mult
+				multiply = amount_inf_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_cnc_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_cnc_equip_cost = global.cnc_cost_mult }
-		multiply_temp_variable = { temp_cnc_equip_cost = amount_cnc_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_cnc_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.cnc_cost_mult
+				multiply = amount_cnc_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_aa_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_aa_equip_cost = global.aa_cost_mult }
-		multiply_temp_variable = { temp_aa_equip_cost = amount_aa_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_aa_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.aa_cost_mult
+				multiply = amount_aa_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_at_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_at_equip_cost = global.at_cost_mult }
-		multiply_temp_variable = { temp_at_equip_cost = amount_at_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_at_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.at_cost_mult
+				multiply = amount_at_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_hat_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_hat_equip_cost = global.hat_cost_mult }
-		multiply_temp_variable = { temp_hat_equip_cost = amount_hat_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_hat_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.hat_cost_mult
+				multiply = amount_hat_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_art_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_art_equip_cost = global.art_cost_mult }
-		multiply_temp_variable = { temp_art_equip_cost = amount_art_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_art_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.art_cost_mult
+				multiply = amount_art_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_atk_helo_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_atk_helo_equip_cost = global.atk_helo_cost_mult }
-		multiply_temp_variable = { temp_atk_helo_equip_cost = amount_atk_helo_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_atk_helo_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.atk_helo_cost_mult
+				multiply = amount_atk_helo_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_trans_helo_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_trans_helo_equip_cost = global.trans_helo_cost_mult }
-		multiply_temp_variable = { temp_trans_helo_equip_cost = amount_trans_helo_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_trans_helo_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.trans_helo_cost_mult
+				multiply = amount_trans_helo_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_util_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_util_equip_cost = global.util_cost_mult }
-		multiply_temp_variable = { temp_util_equip_cost = amount_util_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_util_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.util_cost_mult
+				multiply = amount_util_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_mbt_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_mbt_equip_cost = global.mbt_cost_mult }
-		multiply_temp_variable = { temp_mbt_equip_cost = amount_mbt_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_mbt_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.mbt_cost_mult
+				multiply = amount_mbt_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_apc_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_apc_equip_cost = global.apc_cost_mult }
-		multiply_temp_variable = { temp_apc_equip_cost = amount_apc_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_apc_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.apc_cost_mult
+				multiply = amount_apc_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_ifv_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_ifv_equip_cost = global.ifv_cost_mult }
-		multiply_temp_variable = { temp_ifv_equip_cost = amount_ifv_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_ifv_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.ifv_cost_mult
+				multiply = amount_ifv_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_spart_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_spart_equip_cost = global.spart_cost_mult }
-		multiply_temp_variable = { temp_spart_equip_cost = amount_spart_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_spart_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.spart_cost_mult
+				multiply = amount_spart_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_light_tank_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_light_tank_equip_cost = global.light_tank_cost_mult }
-		multiply_temp_variable = { temp_light_tank_equip_cost = amount_light_tank_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_light_tank_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.light_tank_cost_mult
+				multiply = amount_light_tank_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_spaa_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_spaa_equip_cost = global.spaa_cost_mult }
-		multiply_temp_variable = { temp_spaa_equip_cost = amount_spaa_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_spaa_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.spaa_cost_mult
+				multiply = amount_spaa_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_train_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_train_equip_cost = global.train_cost_mult }
-		multiply_temp_variable = { temp_train_equip_cost = amount_train_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_train_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.train_cost_mult
+				multiply = amount_train_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_convoy_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_convoy_equip_cost = global.convoy_cost_mult }
-		multiply_temp_variable = { temp_convoy_equip_cost = amount_convoy_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_convoy_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.convoy_cost_mult
+				multiply = amount_convoy_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_sml_pln_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_sml_pln_equip_cost = global.sml_pln_cost_mult }
-		multiply_temp_variable = { temp_sml_pln_equip_cost = amount_sml_pln_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_sml_pln_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.sml_pln_cost_mult
+				multiply = amount_sml_pln_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_med_pln_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_med_pln_equip_cost = global.med_pln_cost_mult }
-		multiply_temp_variable = { temp_med_pln_equip_cost = amount_med_pln_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_med_pln_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.med_pln_cost_mult
+				multiply = amount_med_pln_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_lrg_pln_equip_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_lrg_pln_equip_cost = global.lrg_pln_cost_mult }
-		multiply_temp_variable = { temp_lrg_pln_equip_cost = amount_lrg_pln_equip_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_lrg_pln_equip_cost }
+		add_to_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = global.base_unit_cost
+				multiply = global.lrg_pln_cost_mult
+				multiply = amount_lrg_pln_equip_purchased
+			}
+		}
 
-		set_temp_variable = { temp_ballistic_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_ballistic_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_ballistic_missile_equipment_cost = amount_ballistic_missile_equipment_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_ballistic_missile_equipment_cost }
+		if = {
+			limit = { has_dlc = "Gotterdammerung" }
 
-		set_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = amount_nuclear_ballistic_missile_equipment_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_nuclear_ballistic_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_purchase_factories_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_ballistic_missile_equipment_purchased
+				}
+			}
 
-		set_temp_variable = { temp_guided_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_guided_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_guided_missile_equipment_cost = amount_guided_missile_equipment_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_guided_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_purchase_factories_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_nuclear_ballistic_missile_equipment_purchased
+				}
+			}
 
-		set_temp_variable = { temp_hypersonic_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_hypersonic_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_hypersonic_missile_equipment_cost = amount_hypersonic_missile_equipment_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_hypersonic_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_purchase_factories_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_guided_missile_equipment_purchased
+				}
+			}
 
-		set_temp_variable = { temp_nuclear_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_nuclear_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_nuclear_missile_equipment_cost = amount_nuclear_missile_equipment_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_nuclear_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_purchase_factories_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_hypersonic_missile_equipment_purchased
+				}
+			}
 
-		set_temp_variable = { temp_sam_missile_equipment_cost = global.base_unit_cost }
-		multiply_temp_variable = { temp_sam_missile_equipment_cost = global.missile_cost_mult }
-		multiply_temp_variable = { temp_sam_missile_equipment_cost = amount_sam_missile_equipment_purchased }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_sam_missile_equipment_cost }
+			add_to_temp_variable = {
+				var = market_purchase_factories_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_nuclear_missile_equipment_purchased
+				}
+			}
 
-		set_temp_variable = { country_buy_mod_val = 1 }
-		add_to_temp_variable = { country_buy_mod_val = international_market_purchase_modifier }
-		multiply_temp_variable = { market_purchase_factories_cost = country_buy_mod_val }
+			add_to_temp_variable = {
+				var = market_purchase_factories_cost
+				value = {
+					value = global.base_unit_cost
+					multiply = global.missile_cost_mult
+					multiply = amount_sam_missile_equipment_purchased
+				}
+			}
+		}
+
+		multiply_temp_variable = {
+			var = market_purchase_factories_cost
+			value = {
+				value = 1
+				add = modifier@international_market_purchase_modifier
+			}
+		}
 
 		#assign the final cost
 		add_to_variable = { additional_expenses_rate = market_purchase_factories_cost }
@@ -3930,6 +4147,14 @@ calculate_additional_expense_rate = {
 		}
 	}
 
+	# Antarctica station maintenance costs
+	if = {
+		limit = { has_idea = at_member }
+		set_variable = { antarctica_maintenance_cost = antarctica_station_total_upkeep_multiplier }
+		clamp_variable = { var = antarctica_maintenance_cost min = 0 }
+		add_to_variable = { additional_expenses_rate = antarctica_maintenance_cost }
+	}
+
 	#Compensate for inflation on the final value
 	set_temp_variable = { additional_expenses_inflation = 1 }
 	add_to_temp_variable = { additional_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
@@ -4298,6 +4523,7 @@ update_state_variables = {
 	set_variable = { var = total_spec_prod_plants value = 0 }
 	set_variable = { var = state_healthcare_demand value = 0 }
 	set_variable = { var = undamaged_enrichment_facilities value = 0 }
+	set_variable = { var = total_enrichment_facilities value = 0 }
 
 	# Missile Launch Site
 	set_temp_variable = { num_missile_silo = 0 }
@@ -4345,6 +4571,7 @@ update_state_variables = {
 			add_to_variable = { PREV.composite_plant_total = building_level@composite_plant }
 			add_to_variable = { PREV.internet_station_total = building_level@internet_station }
 			add_to_variable = { PREV.undamaged_enrichment_facilities = non_damaged_building_level@enrichment_facility }
+			add_to_variable = { PREV.total_enrichment_facilities = building_level@enrichment_facility }
 
 			add_to_variable = {
 				var = PREV.state_healthcare_demand
@@ -4438,7 +4665,7 @@ update_state_variables = {
 				value = {
 					value = productivity_state_var
 					multiply = 0.001
-					multiply = temp_pop
+					multiply = { value = state_population_k multiply = 0.01 }
 				}
 			}
 
@@ -4651,7 +4878,7 @@ calculate_gdp = {
 	set_temp_variable = { workers_per_microchip_plant = 0.0375 }
 	set_temp_variable = { workers_per_composite_plant = 0.0375 }
 	set_temp_variable = { workers_per_synthetic_refinery = 0.184 }
-	set_temp_variable = { workers_per_nuclear_reactor = 0.148 }
+	set_temp_variable = { workers_per_nuclear_reactor = 0.115 }
 	set_temp_variable = { workers_per_fossil_powerplant = 0.0075 }
 	set_temp_variable = { workers_per_renewable_energy = 0.0225 }
 	set_temp_variable = { workers_per_internet_station = 0.012 }
@@ -5284,7 +5511,7 @@ calculate_gdp = {
 		var = gdp_total
 		value = {
 			value = overall_productivity
-			multiply = 0.001
+			divide = global.productivity_center
 		}
 	}
 

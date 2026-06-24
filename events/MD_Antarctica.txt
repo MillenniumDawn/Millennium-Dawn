@@ -1,0 +1,527 @@
+add_namespace = MD_antarctica
+add_namespace = MD_antarctica_news
+
+country_event = {
+	id = MD_antarctica.1
+	title = MD_antarctica.1.t
+	desc = MD_antarctica.1.d
+	picture = GFX_antarctic_treaty_generic_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica.1.a
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.1.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = MD_antarctica.2
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		clr_country_flag = antarctica_observer_mission_in_progress
+
+		if = {
+			limit = { check_variable = { antarctica_observer_target_station > 0 } }
+
+			meta_effect = {
+				text = {
+					clr_global_flag = research_station_[ID]_observers_incoming
+				}
+				ID = "[?antarctica_observer_target_station]"
+			}
+
+			meta_effect = {
+				text = {
+					set_temp_variable = { station_illegal_activities = global.research_station_[ID]_illegal_activities_enabled }
+					set_temp_variable = { station_open_loop_module = global.research_station_[ID]_module_slot_12 }
+					set_temp_variable = { station_lab_slot_6 = global.research_station_[ID]_module_slot_6 }
+					set_temp_variable = { station_lab_slot_7 = global.research_station_[ID]_module_slot_7 }
+					set_temp_variable = { station_lab_slot_8 = global.research_station_[ID]_module_slot_8 }
+					set_temp_variable = { station_lab_slot_9 = global.research_station_[ID]_module_slot_9 }
+				}
+				ID = "[?antarctica_observer_target_station]"
+			}
+
+			if = {
+				limit = {
+					OR = {
+						check_variable = { station_illegal_activities > 0 }
+						check_variable = { station_open_loop_module = 1 }
+					}
+				}
+				add_to_variable = { antarctica_illegal_research_reports = 1 }
+
+				# Violation precedence: nukes research > illegal research > open-loop utilities.
+				if = {
+					limit = {
+						check_variable = { station_illegal_activities > 0 }
+						OR = {
+							check_variable = { station_lab_slot_6 = 7 }
+							check_variable = { station_lab_slot_7 = 7 }
+							check_variable = { station_lab_slot_8 = 7 }
+							check_variable = { station_lab_slot_9 = 7 }
+						}
+					}
+					if = {
+						limit = { check_variable = { antarctica_observer_target_country > 0 } }
+						var:antarctica_observer_target_country = {
+							antarctica_observer_detected_nukes_research_effect = yes
+						}
+					}
+				}
+				else_if = {
+					limit = { check_variable = { station_illegal_activities > 0 } }
+					if = {
+						limit = { check_variable = { antarctica_observer_target_country > 0 } }
+						var:antarctica_observer_target_country = {
+							antarctica_observer_detected_illegal_research_effect = yes
+						}
+					}
+				}
+				else_if = {
+					limit = { check_variable = { station_open_loop_module = 1 } }
+					if = {
+						limit = { check_variable = { antarctica_observer_target_country > 0 } }
+						var:antarctica_observer_target_country = {
+							antarctica_observer_detected_open_loop_effect = yes
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = MD_antarctica.3
+	title = MD_antarctica.3.t
+	desc = MD_antarctica.3.d
+	picture = GFX_antarctic_treaty_generic_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica.3.a
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.3.a executed"
+		add_political_power = -75
+		for_each_scope_loop = {
+			array = global.at_members
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = antarctica_modifier_small_consequences
+			}
+		}
+		set_temp_variable = { antarctica_station_reports_temp = 1 }
+		increase_antarctica_station_reports = yes
+		newline = yes
+		custom_effect_tooltip = antarctica_reports_warning_tt
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = MD_antarctica.4
+	title = MD_antarctica.4.t
+	desc = MD_antarctica.4.d
+	picture = GFX_antarctic_treaty_generic_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica.4.a
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.4.a executed"
+		add_political_power = -200
+		add_stability = -0.02
+		for_each_scope_loop = {
+			array = global.at_members
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = antarctica_modifier_medium_consequences
+			}
+		}
+		set_temp_variable = { antarctica_station_reports_temp = 2 }
+		increase_antarctica_station_reports = yes
+		newline = yes
+		custom_effect_tooltip = antarctica_reports_warning_tt
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = MD_antarctica.5
+	title = MD_antarctica.5.t
+	desc = MD_antarctica.5.d
+	picture = GFX_antarctic_treaty_generic_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica.5.a
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.5.a executed"
+		add_political_power = -500
+		add_stability = -0.08
+		add_threat = 2
+		add_timed_idea = { idea = ANT_nukes_research_discovered_idea days = 140 }
+		set_temp_variable = { antarctica_station_reports_temp = 5 }
+		increase_antarctica_station_reports = yes
+		for_each_scope_loop = {
+			array = global.at_members
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = antarctica_modifier_large_consequences
+			}
+			if = {
+				limit = { ROOT = { check_variable = { antarctica_station_reports > 7 } } }
+				country_event = MD_antarctica.7
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = antarctica_reports_warning_tt
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = MD_antarctica.6
+	title = MD_antarctica.6.t
+	desc = MD_antarctica.6.d
+	picture = GFX_antarctic_treaty_generic_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica.6.a
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.6.a executed"
+		add_political_power = -250
+		add_stability = -0.04
+		add_timed_idea = { idea = ANT_kicked_from_treaty_idea days = 730 }
+		clear_variable = antarctica_station_reports
+		custom_effect_tooltip = leave_antarctica_treaty_tt
+		effect_tooltip = { remove_ideas = at_member }
+		newline = yes
+		custom_effect_tooltip = leave_antarctica_cannot_be_stopped_tt
+		newline = yes
+		custom_effect_tooltip = leave_antarctica_treaty_warning_tt
+		hidden_effect = { news_event = { id = MD_antarctica_news.4 days = 730 } }
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = MD_antarctica.7
+	title = MD_antarctica.7.t
+	desc = MD_antarctica.7.d
+	picture = GFX_antarctic_treaty_generic_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica.7.a
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.7.a executed"
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = FROM
+		}
+		add_opinion_modifier = { target = FROM modifier = embargo }
+		reverse_add_opinion_modifier = { target = FROM modifier = embargo }
+		add_opinion_modifier = { target = FROM modifier = embargo_opinion }
+		reverse_add_opinion_modifier = { target = FROM modifier = embargo_opinion }
+		ai_chance = {
+			base = 98
+			modifier = {
+				add = -15
+				FROM = { is_major = yes }
+			}
+			modifier = {
+				add = -15
+				has_opinion = { target = FROM value > 50 }
+			}
+		}
+	}
+	option = {
+		name = MD_antarctica.7.b
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.7.b executed"
+		ai_chance = {
+			base = 2
+			modifier = {
+				add = 15
+				FROM = { is_major = yes }
+			}
+			modifier = {
+				add = 15
+				has_opinion = { target = FROM value > 50 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = MD_antarctica.8
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		antarctica_trigger_blizzard_event = yes
+		hidden_effect = {
+			news_event = MD_antarctica_news.9
+			country_event = { id = MD_antarctica.8 days = 200 random_days = 100 }
+		}
+	}
+}
+
+country_event = {
+	id = MD_antarctica.9
+	title = MD_antarctica.9.t
+	desc = MD_antarctica.9.d
+	picture = GFX_antarctic_treaty_generic_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica.9.a
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.9.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = MD_antarctica.10
+	title = MD_antarctica.10.t
+	desc = MD_antarctica.10.d
+	picture = GFX_antarctic_treaty_generic_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica.10.a
+		log = "[GetDateText]: [This.GetName]: MD_antarctica.10.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+### News
+
+news_event = {
+	id = MD_antarctica_news.1
+	title = MD_antarctica_news.1.t
+	desc = MD_antarctica_news.1.d
+
+	picture = GFX_antarctic_treaty_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.1.a
+		trigger = { NOT = { original_tag = FROM } }
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = MD_antarctica_news.1.b
+		trigger = { original_tag = FROM }
+		hidden_effect = { news_event = { id = MD_antarctica_news.2 days = 30 } }
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.2
+	title = MD_antarctica_news.2.t
+	desc = MD_antarctica_news.2.d
+
+	picture = GFX_antarctic_treaty_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.2.a
+		trigger = { NOT = { original_tag = FROM } }
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = MD_antarctica_news.2.b
+		trigger = { original_tag = FROM }
+		add_ideas = at_member
+		clr_country_flag = antarctica_post_treaty_station_violation
+		clr_country_flag = antarctica_treaty_leave_pending
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.3
+	title = MD_antarctica_news.3.t
+	desc = MD_antarctica_news.3.d
+
+	picture = GFX_antarctic_treaty_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.3.a
+		trigger = { NOT = { original_tag = FROM } }
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = MD_antarctica_news.3.b
+		trigger = { original_tag = FROM }
+		set_country_flag = antarctica_treaty_leave_pending
+		hidden_effect = { news_event = { id = MD_antarctica_news.4 days = 730 } }
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.4
+	title = MD_antarctica_news.4.t
+	desc = MD_antarctica_news.4.d
+
+	picture = GFX_antarctic_treaty_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.4.a
+		trigger = { NOT = { original_tag = FROM } }
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = MD_antarctica_news.4.b
+		trigger = { original_tag = FROM }
+		clr_country_flag = antarctica_treaty_leave_pending
+		remove_from_array = { global.atcp_members = FROM }
+		remove_ideas = at_member
+		if = {
+			limit = { has_country_flag = antarctica_has_active_station }
+			set_country_flag = antarctica_post_treaty_station_violation
+			for_each_scope_loop = {
+				array = global.atcp_members
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = antarctica_modifier_medium_consequences
+				}
+			}
+		}
+		else = {
+			clr_country_flag = antarctica_post_treaty_station_violation
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.5
+	title = MD_antarctica_news.5.t
+	desc = MD_antarctica_news.5.d
+
+	picture = GFX_antarctic_treaty_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.5.a
+		trigger = { NOT = { original_tag = FROM } }
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = MD_antarctica_news.5.b
+		trigger = { original_tag = FROM }
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.6
+	title = MD_antarctica_news.6.t
+	desc = MD_antarctica_news.6.d
+
+	picture = GFX_antarctic_treaty_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.6.a
+		trigger = { NOT = { original_tag = FROM } }
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = MD_antarctica_news.6.b
+		trigger = { original_tag = FROM }
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.7
+	title = MD_antarctica_news.7.t
+	desc = MD_antarctica_news.7.d
+
+	picture = GFX_antarctic_treaty_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.7.a
+		trigger = { NOT = { original_tag = FROM } }
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = MD_antarctica_news.7.b
+		trigger = { original_tag = FROM }
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.8
+	title = MD_antarctica_news.8.t
+	desc = MD_antarctica_news.8.d
+
+	picture = GFX_antarctic_treaty_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.8.a
+		trigger = { NOT = { original_tag = FROM } }
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = MD_antarctica_news.8.b
+		trigger = { original_tag = FROM }
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.9
+	title = MD_antarctica_news.9.t
+	desc = MD_antarctica_news.9.d
+
+	picture = GFX_antarctica_blizzard_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.9.a
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = MD_antarctica_news.10
+	title = MD_antarctica_news.10.t
+	desc = MD_antarctica_news.10.d
+
+	picture = GFX_antarctica_station_construction_news
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_antarctica_news.10.a
+		ai_chance = { base = 100 }
+	}
+}
