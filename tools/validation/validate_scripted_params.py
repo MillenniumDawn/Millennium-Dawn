@@ -118,11 +118,6 @@ def _normalize_influence_value(value: str) -> str:
     identity check catch the full set of same-source pairs, not just the
     half where the author happened to use the same syntax on both sides.
 
-    Strips only one trailing ".id" so a value like "PREV.id.id" would
-    collapse to "PREV.id" — that is wrong in practice (PREV.id is a
-    numeric ID, appending .id to it isn't meaningful) but the corpus
-    doesn't use that pattern, so the over-stripping case is theoretical.
-
     The ".id" match is case-insensitive: the corpus ships "FROM.ID" as
     well as "FROM.id", and both resolve to the same numeric ID.
     """
@@ -195,9 +190,7 @@ def _is_invalid_influence_tag(value: str, valid_tags: "frozenset[str]") -> bool:
     are not one — typos such as GBR for ENG, ISL for ICE, or the mis-cased
     CHl for CHI.
     """
-    v = value.strip()
-    if v[-3:].lower() == ".id":
-        v = v[:-3]
+    v = _normalize_influence_value(value.strip())
     if not v or _NUMERIC_RE.fullmatch(v):
         return False
     # var: / event_target: / global. refs, array subscripts (name^i), getters
@@ -205,12 +198,11 @@ def _is_invalid_influence_tag(value: str, valid_tags: "frozenset[str]") -> bool:
         return False
     if v.upper() in _INFLUENCE_SCOPE_KEYWORDS:
         return False
-    if _TAG_LITERAL_RE.fullmatch(v):
-        return v not in valid_tags
-    # 3-letter mixed-case token that isn't a scope keyword: a mis-typed tag
-    # (e.g. CHl) — exact-case must match a real tag, since tags are
-    # case-sensitive at runtime.
-    if _MISCASED_TAG_RE.fullmatch(v) and v != v.lower():
+    # An all-caps tag literal, or a 3-letter mixed-case token (a mis-cased tag
+    # like CHl): must match a real tag exactly, since tags are case-sensitive.
+    if _TAG_LITERAL_RE.fullmatch(v) or (
+        _MISCASED_TAG_RE.fullmatch(v) and v != v.lower()
+    ):
         return v not in valid_tags
     return False
 
@@ -504,32 +496,19 @@ def _validate_call_sites_in_file(
                         )
                     )
 
-            # Identical-params check for change_influence_percentage.
-            # The effect's own defaults (tag_index -> ROOT, influence_target -> THIS)
-            # are deliberately retained because they're reliable in the common
-            # call sites; the actual self-influence (Code 5001) error only fires
-            # when both params resolve to the same country.  Flag any call where
-            # the user has set BOTH to an explicit non-zero value in the same
-            # block as the call and those values are identical — that is the
-            # static-only catch for the self-influence bug.
+            # Identical-params check: a change_influence_percentage call where
+            # tag_index and influence_target resolve to the same country is the
+            # self-influence (Code 5001) bug.  Flag only when BOTH are set to an
+            # explicit non-zero value; the effect's own defaults (tag_index ->
+            # ROOT, influence_target -> THIS) are reliable and left alone.
             #
-            # "Same block" is approximated by line proximity: both set_temp
-            # calls must fall within 20 lines of the call site.  This filters
-            # out false positives where the validator's scope tracking keeps a
-            # temp var from a previous focus's completion_reward in scope; those
-            # temps wouldn't actually be in scope at runtime.  20 lines is
-            # enough to catch the canonical leak-between-calls bug pattern
-            # (tag_index from call N-1 reused by call N in the same block)
-            # while keeping the false-positive rate low.
-            #
-            # Values are compared after `_normalize_influence_value` to catch
-            # syntactic variants of the same source: "USA" and "USA.id",
-            # "var:foo" and "var:foo.id", "event_target:foo" and
-            # "event_target:foo.id", "THIS" and "THIS.id" all resolve to the
-            # same country at runtime.  Without the normalization, the corpus
-            # ships many pairs that look different but compute the same
-            # influence source — most of which are the same self-influence
-            # bug class the literal-string check catches.
+            # "Same block" is approximated by line proximity (<= 20 lines): the
+            # scope tracker can keep a temp var from a previous focus's
+            # completion_reward visible when it wouldn't be in scope at runtime,
+            # so the window suppresses those false positives while still catching
+            # the leak-between-calls pattern (tag_index from call N-1 reused by
+            # call N).  Values are normalized so "USA"/"USA.id" and the other
+            # .id variants compare equal.
             if value == "change_influence_percentage":
                 tag_entry = visible.get("tag_index")
                 inf_entry = visible.get("influence_target")
