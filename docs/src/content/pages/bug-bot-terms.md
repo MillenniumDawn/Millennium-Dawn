@@ -2,7 +2,7 @@
 title: Bug Bot Terms of Service
 description: The terms under which the Millennium Dawn Bug Bot is provided to the community. Covers acceptable use, what the team promises, and the limits of liability.
 permalink: /bug-bot-terms/
-last_updated: 2026-06-16
+last_updated: 2026-06-21
 ---
 
 These terms cover the [Millennium Dawn Bug Bot](/bug-bot/), the Discord bot used in the Millennium Dawn community to turn bug reports and suggestions posted in our Discord forum into issues on our public GitHub tracker. The bot is operated by the Millennium Dawn team, a volunteer, non-profit mod project. In these terms, "we" means that team and "you" means anyone who uses the bot or posts in a tracked forum channel.
@@ -13,7 +13,7 @@ For what the bot collects, how that data is used, and how to have it deleted, se
 
 ## What the bot does
 
-The bot reads posts and replies in tracked forum channels on our Discord server, processes the text, and publishes it as an issue on our public [GitHub repository](https://github.com/MillenniumDawn/Millennium-Dawn/issues). A self-hosted AI model on our infrastructure may be used to suggest a title, severity, and likely cause for the report before the issue is filed. The bot also accepts a small set of commands: `/register` to link your GitHub username, `/whoami` to show that link, `/privacy` for a short data summary, and `/forget` to delete the data the bot holds about you.
+The bot reads posts and replies in tracked forum channels on our Discord server, processes the text, and publishes it as an issue on our public [GitHub repository](https://github.com/MillenniumDawn/Millennium-Dawn/issues). A self-hosted or to an Ollama cloud AI model on our infrastructure may be used to suggest a title, severity, and likely cause for the report before the issue is filed. The bot also accepts a small set of commands: `/register` to link your GitHub username, `/whoami` to show that link, `/privacy` for a short data summary, and `/forget` to delete the data the bot holds about you.
 
 Beyond the report you post, the only personal identifier the bot keeps is your public Discord user ID (the numeric account ID, not your username), kept solely so the team can ping you on the issue thread for follow-ups. Linking a GitHub username with `/register` is opt-in, added by the team for ease of tracking reports, not to profile you. The bot does not collect your email, presence, member list, or anything else unrelated to filing a report. For the full list of what is collected and how long it is kept, see the [privacy policy](/bug-bot-privacy/).
 

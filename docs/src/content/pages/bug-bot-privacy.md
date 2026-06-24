@@ -2,7 +2,7 @@
 title: Bug Bot Privacy Policy
 description: What the Millennium Dawn Bug Bot collects, how that data is used and shared, how long it is kept, and how to have it deleted.
 permalink: /bug-bot-privacy/
-last_updated: 2026-06-11
+last_updated: 2026-06-21
 ---
 
 This policy covers the [Millennium Dawn Bug Bot](/bug-bot/), the Discord bot used in the Millennium Dawn community. The bot turns bug reports or suggestions posted in our Discord forum into issues on our public GitHub tracker. This explains what it collects, how that data is used and shared, how long it is kept, and how to have it deleted.
@@ -25,11 +25,11 @@ The bot needs the Discord Message Content intent to read report text. It does no
 ## How it is used and shared
 
 - **Public GitHub issues.** Your report text and attachments are published as an issue on our public GitHub repository so maintainers can track and fix the bug. Issues are attributed to "discord-sync". Your Discord username is not part of the issue, but the issue links back to the Discord thread so maintainers can follow up, and your username is visible there to anyone in the server. Attachments are republished as part of the issue, so do not include personal information in screenshots or files you attach.
-- **AI triage.** Report text may be sent to a self-hosted AI model to suggest a title, severity, and likely cause. This runs on our own infrastructure. Message content is never used to train AI models.
+- **AI triage.** Report text may be sent to a self-hosted or to an Ollama cloud AI model to suggest a title, severity, and likely cause. This runs on our own infrastructure. Message content is never used to train AI models.
 - **GitHub account linking.** If you run `/register`, the bot stores the link between your Discord account and your GitHub username so commands like `/whoami` can show it. The link is kept until you run `/forget`.
 - **Internal bookkeeping.** The bot keeps a local database that maps Discord threads to GitHub issues and records operational logs.
 
-The bot does not sell your data, share it with advertisers or data brokers, or use it to build a profile of you. Data is only shared with GitHub (to host the issue) and our self-hosted AI model (to triage it), both as needed to run the tracker. Data shared with GitHub is subject to [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement); your use of Discord is covered by [Discord's privacy policy](https://discord.com/privacy).
+The bot does not sell your data, share it with advertisers or data brokers, or use it to build a profile of you. Data is only shared with GitHub (to host the issue) and our self-hosted or to an Ollama cloud AI models (to triage it), both as needed to run the tracker which both offer zero-data retention. Data shared with GitHub is subject to [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement); your use of Discord is covered by [Discord's privacy policy](https://discord.com/privacy).
 
 ## How long it is kept
 
