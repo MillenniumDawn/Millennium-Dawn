@@ -63,6 +63,7 @@
 		}
 		CPD_AI_will_accept_calculation = {
 			set_temp_variable = { var = CPD_acceptance_temp value = -100 }
+			set_temp_variable = { CPD_cost_raw_temp = ROOT.CPD_total_cost_of_built_peace_deal }
 
 			# ECONOMIC FACTORING
 				set_temp_variable = { CPD_IR_temp = var:THIS.interest_rate }
@@ -145,7 +146,7 @@
 				if = {
 					limit = {
 						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 0 }
+						check_variable = { CPD_cost_raw_temp > 0 }
 						check_variable = { ROOT.CPD_VP@PREV < 1 }
 					}
 					set_temp_variable = { CPD_SWC_temp = -100 }
@@ -153,7 +154,7 @@
 				else_if = {
 					limit = {
 						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 5 }
+						check_variable = { CPD_cost_raw_temp > 5 }
 						check_variable = { ROOT.CPD_VP@PREV < 10 }
 					}
 					set_temp_variable = { CPD_SWC_temp = -50 }
@@ -161,7 +162,7 @@
 				else_if = {
 					limit = {
 						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 10 }
+						check_variable = { CPD_cost_raw_temp > 10 }
 						check_variable = { ROOT.CPD_VP@PREV < 25 }
 					}
 					set_temp_variable = { CPD_SWC_temp = -25 }
@@ -268,7 +269,7 @@
 			set_temp_variable = {
 				var = v
 				value = {
-					value = ROOT.CPD_total_cost_of_built_peace_deal
+					value = CPD_cost_raw_temp
 					multiply = -5
 					clamp = { min = -500 max = 50 }
 				}
@@ -280,28 +281,28 @@
 						value = 0
 						if = {
 							limit = {
-								value = ROOT.CPD_total_cost_of_built_peace_deal
+								value = CPD_cost_raw_temp
 								greater_than = 20
 							}
 							subtract = 25
 						}
 						if = {
 							limit = {
-								value = ROOT.CPD_total_cost_of_built_peace_deal
+								value = CPD_cost_raw_temp
 								greater_than = 40
 							}
 							subtract = 50
 						}
 						if = {
 							limit = {
-								value = ROOT.CPD_total_cost_of_built_peace_deal
+								value = CPD_cost_raw_temp
 								greater_than = 60
 							}
 							subtract = 75
 						}
 						if = {
 							limit = {
-								value = ROOT.CPD_total_cost_of_built_peace_deal
+								value = CPD_cost_raw_temp
 								greater_than = 100
 							}
 							subtract = 100
@@ -630,85 +631,7 @@
 				always = yes
 			}
 			CPD_calculate_province_cost_loc = {
-				if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
-						set_temp_variable = {
-							var = CPD_VP_temp
-							value = {
-								value = THIS.state_strategic_value
-								round = yes
-								clamp = { min = 1 max = 100 }
-							}
-						}
-					# COST MODIFIERS
-						if = {
-							limit = {
-								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-								is_core_of = ROOT
-							}
-							multiply_temp_variable = { CPD_VP_temp = 0.5 }
-						}
-						else_if = {
-							limit = {
-								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-								is_claimed_by = ROOT
-							}
-							multiply_temp_variable = { CPD_VP_temp = 0.3333 }
-						}
-				}
-				else_if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
-					set_temp_variable = {
-						var = CPD_VP_temp
-						value = {
-							value = THIS.state_strategic_value
-							multiply = 0.5
-							round = yes
-							clamp = { min = 1 max = 100 }
-						}
-					}
-				}
-				else_if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
-						set_temp_variable = {
-							var = CPD_VP_temp
-							value = {
-								value = THIS.state_strategic_value
-								multiply = 0.25
-								round = yes
-								clamp = { min = 1 max = 100 }
-							}
-						}
-				}
-				else_if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
-						set_temp_variable = {
-							var = CPD_VP_temp
-							value = {
-								value = THIS.state_strategic_value
-								multiply = 0.3333
-								round = yes
-								clamp = { min = 1 max = 100 }
-							}
-						}
-				}
-				else_if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
-					# RESOURCE RIGHTS
-						set_temp_variable = {
-							var = CPD_VP_temp
-							value = {
-								value = THIS.state_strategic_value
-								multiply = 0.15
-								round = yes
-								clamp = { min = 1 max = 100 }
-							}
-						}
-				}
-				if = {
-					limit = { is_owned_and_controlled_by = THIS.owner }
-					multiply_temp_variable = { CPD_VP_temp = 2 }
-				}
+				CPD_calculate_province_cost = yes
 				if = {
 					limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
 					if = {
@@ -724,24 +647,6 @@
 				}
 				always = yes
 			}
-			# CPD_cost_of_state_loc = {
-			# 	if = {
-			# 		limit = {
-			# 			OR = {
-			# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
-			# 				ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } }
-			# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
-			# 				ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } }
-			# 			}
-			# 		}
-			# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
-			# 		multiply_temp_variable = { CPD_value_of_state_display = -1 }
-			# 	}
-			# 	else = {
-			# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
-			# 		multiply_temp_variable = { CPD_value_of_state_display = 1 }
-			# 	}
-			# }
 # FOR COUNTRY SPECIFIC PEACE DEALS WITH TOTAL WARS
 	# ERITREA
 		# unsure why it was commented out but will leave it as such
@@ -955,25 +860,15 @@ CPD_is_a_custom_civil_war = {
 		}
 	}
 	else_if = {
-		limit = { ROOT = { original_tag = LUR } }
-		NOT = {
-			OR = {
-				original_tag = AFR
-				original_tag = LIB
+		limit = {
+			ROOT = {
+				OR = {
+					original_tag = LUR
+					original_tag = SIE
+					original_tag = GUI
+				}
 			}
 		}
-	}
-	else_if = {
-		limit = { ROOT = { original_tag = SIE } }
-		NOT = {
-			OR = {
-				original_tag = AFR
-				original_tag = LIB
-			}
-		}
-	}
-	else_if = {
-		limit = { ROOT = { original_tag = GUI } }
 		NOT = {
 			OR = {
 				original_tag = AFR
