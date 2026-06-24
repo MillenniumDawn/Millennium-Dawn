@@ -42,6 +42,8 @@ Ask these questions systematically. If the answer is "no, it's not handled", fla
 - `fire_only_once = yes` combined with `days_remove` on the same decision: the engine handles this inconsistently; one clause usually silently overrides the other.
 - Event fired to another country (`country_event = { id = X days = N }`): what if the target no longer exists when the delay expires? What if already at war with ROOT?
 - `on_action` events referencing scoped variables from the triggering context: verify the variable is still valid in the event's scope.
+- Event option firing its own event ID: infinite loop.
+- `days_remove` without a paired `remove_effect`: the idea/modifier lapses on the timer but its effect never reverses.
 
 **Variable & Array Safety**
 
@@ -49,6 +51,8 @@ Ask these questions systematically. If the answer is "no, it's not handled", fla
 - Dynamic array subscript (`array^i`): is `i` bounded? Negative or out-of-range indices silently read garbage or the last element.
 - Variable read before write in all paths: any `var:X` consumed before `set_variable` in every execution path.
 - `for_each_scope_loop` used on an array of numeric indices: only works on arrays of scope objects (countries, states). Numeric arrays need `for_each_loop`.
+- `add_stability` / `add_war_support` given a value outside `-1.0`..`1.0`: silently clamped (a `5` means `1.0`), usually a mistake.
+- Stacked negative `*_factor` modifiers on one variable: the product can approach zero or go negative; clamp before dividing.
 
 **Silent NOPs & Dead Logic**
 
@@ -57,6 +61,8 @@ Ask these questions systematically. If the answer is "no, it's not handled", fla
 - `NOT = { A B }`: means NOT(A AND B), "not both simultaneously". Almost never intended; usually wants two separate `NOT` blocks.
 - `else_if` that repeats the exact condition of the parent `if`: unreachable; parent always wins.
 - Tautological `OR` inside `ai_will_do` modifiers: `OR = { is_historical_focus_on = yes is_historical_focus_on = no }` is always true, making the modifier unconditional dead weight.
+- `random_list` with all weights 0, or every `ai_chance` at `base = 0`: nothing is ever selected.
+- `AND` of mutually-exclusive conditions (e.g. `exists = no` AND `is_in_faction_with = X`): never simultaneously true; rethink as `OR` or fix the logic.
 
 **Cross-Country Mechanics**
 

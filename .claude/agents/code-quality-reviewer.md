@@ -39,6 +39,10 @@ Caller passes a file path, a directory, or `git diff main...HEAD`. If unclear, d
 - Tautological `OR` inside `ai_will_do` (e.g. `OR = { is_historical_focus_on = yes / no }`) — always-true blocks doing nothing.
 - Decision `allowed` containing dynamic conditions (date / factory count / opinion) — should move to `available` or `visible`.
 - Redundant scope expansions: `TAG = { exists = yes }` → `country_exists = TAG`; `TAG = { is_puppet = yes }` → `is_puppet_of = TAG`.
+- `set_cosmetic_tag = original_tag` — `original_tag` is a keyword, not a cosmetic tag; use `drop_cosmetic_tag = yes`.
+- `OR = { ... }` wrapping a single condition, or a redundant `ROOT = { }` inside `completion_reward` / `complete_effect` (already ROOT scope) — drop the wrapper.
+- `not_locked_faction` is not a real trigger — use `is_locked_faction = no`.
+- Two consecutive `if` blocks with identical conditions (the second is dead code); merge-conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) left in a file.
 
 **Performance** (from `performance-patterns.md`):
 
@@ -48,6 +52,7 @@ Caller passes a file path, a directory, or `git diff main...HEAD`. If unclear, d
 - `allowed = { always = no }` / `cancel = { always = no }` on ideas (default categories).
 - `/ 100` instead of `* 0.01`.
 - `CONTROLLER` / `num_of_factories` inside per-state loops without hoisting.
+- `every_state`/`any_state` without a narrow `limit`; complex triggers in a decision `visible` block (re-evaluated every frame).
 - GUI `dirty = global.date`.
 
 **Best practices**:
@@ -56,6 +61,7 @@ Caller passes a file path, a directory, or `git diff main...HEAD`. If unclear, d
 - Event: missing `is_triggered_only`; log ID mismatches; `major = yes` on non-news; missing `TT_IF_THEY_ACCEPT`; `naval_base` without `province`.
 - Decision: missing logging; `factor` instead of `base` at root.
 - Idea: `tag` not `original_tag`; missing `allowed_civil_war` on civil war tags; redundant `allowed` in `country`/`hidden_ideas`.
+- Any `ai_will_do` root uses `base = N`, not `factor` (deprecated at root). N parallel `foo_0..foo_N` scripted effects should collapse to a parameterized helper + array (see `simplification-patterns.md`).
 
 **Readability**:
 
@@ -65,6 +71,7 @@ Caller passes a file path, a directory, or `git diff main...HEAD`. If unclear, d
 **Localisation** (if `.yml` in scope):
 
 - UTF-8 with BOM; no trailing `key:0`; consistent indentation; no embedded unescaped `"`; no Cyrillic lookalikes; typos from `typo-watchlist.md`.
+- Structural: every new script object (focus/decision/event/idea/MIO/subideology) has matching loc keys; events have `.t`/`.d` and every option key; subideologies have `_icon`/`_desc`. Loc key collision: an idea `name = X` and a focus `id = X` both read `X`/`X_desc` — rename one (see `.claude/docs/localisation-rules.md`).
 
 ## Output format
 

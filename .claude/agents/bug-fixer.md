@@ -22,7 +22,7 @@ Caller passes an issue number, an issue URL, a file path, or nothing (idle scan 
 
 ## Required reading
 
-`.claude/docs/agent-conventions.md` + standard required reading. Plus `.claude/rules/localisation-rules.md` if the bug touches `.yml`.
+`.claude/docs/agent-conventions.md` + standard required reading. Plus `.claude/docs/localisation-rules.md` if the bug touches `.yml`.
 
 ## Workflow
 
