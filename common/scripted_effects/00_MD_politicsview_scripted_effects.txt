@@ -1160,14 +1160,32 @@ gov_pop_calculation = {
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = government_popularity_modifier } } }
 		add_dynamic_modifier = { modifier = government_popularity_modifier }
 	}
-	set_temp_variable = { add_t = government_coalition_differential }
-	multiply_temp_variable = { add_t = 100 }
-	clamp_variable = { var = add_t max = 100 min = -100 }
-	multiply_temp_variable = { add_t = 0.002 }
+	set_variable = {
+		gov_pop_stability_factor = {
+			value = government_coalition_differential
+			multiply = 100
+			clamp = { min = -100 max = 100 }
+			multiply = 0.002
+		}
+	}
 
-	set_variable = { gov_pop_stability_factor = add_t }
-	set_variable = { gov_pop_political_power_factor = add_t }
-	set_variable = { gov_pop_drift_defence_factor = add_t }
+	set_variable = {
+		gov_pop_political_power_factor = {
+			value = government_coalition_differential
+			multiply = 100
+			clamp = { min = -100 max = 100 }
+			multiply = 0.002
+		}
+	}
+
+	set_variable = {
+		gov_pop_drift_defence_factor = {
+			value = government_coalition_differential
+			multiply = 100
+			clamp = { min = -100 max = 100 }
+			multiply = 0.002
+		}
+	}
 }
 
 set_coalition_drift = {
@@ -1180,44 +1198,45 @@ set_coalition_drift = {
 	clear_coalition_count_ideas = yes
 
 	#Each coalition partner popularity gets added to their own Outlook
-	for_loop_effect = {
-		end = gov_coalition_array^num
+	for_each_loop = {
+		array = gov_coalition_array
+		index = i
 		value = v
-		set_temp_variable = { current_id = gov_coalition_array^v } #ID of current element
+
 		if = {
 			limit = {
-				check_variable = { current_id < 4 }
+				check_variable = { v < 4 }
 			}
-			add_to_variable = { coalition_democratic = party_pop_elect_array^gov_coalition_array^v }
+			add_to_variable = { coalition_democratic = party_pop_elect_array^v }
 		}
 		else_if = {
 			limit = {
-				check_variable = { current_id > 3 }
-				check_variable = { current_id < 10 }
+				check_variable = { v > 3 }
+				check_variable = { v < 10 }
 			}
-			add_to_variable = { coalition_communism = party_pop_elect_array^gov_coalition_array^v }
+			add_to_variable = { coalition_communism = party_pop_elect_array^v }
 		}
 		else_if = {
 			limit = {
 				OR = {
-					check_variable = { current_id = 10 }
-					check_variable = { current_id = 11 }
+					check_variable = { v = 10 }
+					check_variable = { v = 11 }
 				}
 			}
-			add_to_variable = { coalition_fascism = party_pop_elect_array^gov_coalition_array^v }
+			add_to_variable = { coalition_fascism = party_pop_elect_array^v }
 		}
 		else_if = {
 			limit = {
-				check_variable = { current_id > 11 }
-				check_variable = { current_id < 20 }
+				check_variable = { v > 11 }
+				check_variable = { v < 20 }
 			}
-			add_to_variable = { coalition_neutrality = party_pop_elect_array^gov_coalition_array^v }
+			add_to_variable = { coalition_neutrality = party_pop_elect_array^v }
 		}
 		else_if = {
 			limit = {
-				check_variable = { current_id > 19 }
+				check_variable = { v > 19 }
 			}
-			add_to_variable = { coalition_nationalist = party_pop_elect_array^gov_coalition_array^v }
+			add_to_variable = { coalition_nationalist = party_pop_elect_array^v }
 		}
 	}
 
@@ -1365,16 +1384,18 @@ update_coalition_leader = {
 
 refund_government_coalition = {
 	set_temp_variable = { sum_factor = 0 }
-	for_loop_effect = {
-		end = gov_coalition_array^num
+	for_each_loop = {
+		array = gov_coalition_array
 		value = v
-		set_temp_variable = { pol_dist_target_index = gov_coalition_array^v }
+		index = i
+
+		set_temp_variable = { pol_dist_target_index = v }
 		set_temp_variable = { pol_dist_source_index = ruling_party^0 }
 		get_pol_distance = yes
 		add_to_temp_variable = {
 			var = sum_factor
 			value = {
-				value = party_pop_elect_array^gov_coalition_array^v
+				value = party_pop_elect_array^v
 				multiply = pol_distance_current
 			}
 		}
@@ -3443,10 +3464,11 @@ replicate_configure_politics = {
 		set_variable = { party_pop_array^v = nation_to_copy_from.party_pop_array^v }
 	}
 	add_to_array = { ruling_party = nation_to_copy_from.ruling_party^0 }
-	for_loop_effect = {
-		end = gov_coalition_array^num
+	for_each_loop = {
+		array = gov_coalition_array
+		index = i
 		value = v
-		add_to_array = { gov_coalition_array = nation_to_copy_from.gov_coalition_array^v }
+		add_to_array = { gov_coalition_array = nation_to_copy_from.gov_coalition_array^i }
 	}
 	set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;)
 	set_variable = { party_pop_elect_array^19 = 0 } #made illegal
