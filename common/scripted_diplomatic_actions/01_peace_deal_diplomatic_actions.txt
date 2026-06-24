@@ -13,16 +13,12 @@ scripted_diplomatic_actions = {
 		visible = {
 			# Hide the Conditional Peace Deals if the target is Zombies or Chimera
 			ROOT = {
-				NOT = {
-					tag = ZOM
-					tag = ALN
-				}
+				NOT = { tag = ZOM }
+				NOT = { tag = ALN }
 			}
 			THIS = {
-				NOT = {
-					tag = ZOM
-					tag = ALN
-				}
+				NOT = { tag = ZOM }
+				NOT = { tag = ALN }
 			}
 
 			has_war_with = ROOT
@@ -207,10 +203,15 @@ scripted_diplomatic_actions = {
 				# for every 10% war support
 				# -20 points towards willingness to sign peace deal
 				modifier = {
-					set_temp_variable = { CPD_WS = var:THIS.has_war_support }
-					multiply_temp_variable = { CPD_WS = -200 }
-					round_temp_variable = CPD_WS
-					add_to_temp_variable = { CPD_WS = 101 }
+					set_temp_variable = {
+						var = CPD_WS
+						value = {
+							value = var:THIS.has_war_support
+							multiply = -200
+							round = yes
+							add = 101
+						}
+					}
 					add = var:CPD_WS
 				}
 			}
@@ -218,29 +219,40 @@ scripted_diplomatic_actions = {
 				# more likely to surrender if weaker than sender of peace offer
 				base = 0
 				modifier = {
-					set_temp_variable = { CPD_RSB = THIS.enemies_strength_ratio@ROOT }
-					multiply_temp_variable = { CPD_RSB = 100 }
-					round_temp_variable = CPD_RSB
-					subtract_from_temp_variable = { CPD_RSB = 100 }
-					clamp_temp_variable = {
+					set_temp_variable = {
 						var = CPD_RSB
-						max = 1000
+						value = {
+							value = THIS.enemies_strength_ratio@ROOT
+							multiply = 100
+							round = yes
+							subtract = 100
+							clamp = { min = -500 max = 1000 }
+						}
+					}
+					# Dampen when ROOT has no faction — engine metric includes all
+					# co-belligerents, which massively inflates the ratio for solo senders.
+					if = {
+						limit = { ROOT = { NOT = { is_in_faction = yes } } }
+						multiply_temp_variable = { CPD_RSB = 0.25 }
+						round_temp_variable = CPD_RSB
 					}
 					add = var:CPD_RSB
 				}
 			}
 			CPD_close_to_surrender = {
-				# more likely to surrender if closer to surrender limit
+				# more likely to surrender if closer to surrender limit;
+				# threshold shifted so 50 % surrender gives +50 instead of 0
 				base = 0
 				modifier = {
-					set_temp_variable = { CPD_SP = var:THIS.surrender_progress }
-					multiply_temp_variable = { CPD_SP = 200 }
-					round_temp_variable = CPD_SP
-					subtract_from_temp_variable = { CPD_SP = 100 }
-					clamp_temp_variable = {
+					set_temp_variable = {
 						var = CPD_SP
-						min = 0
-						max = 100
+						value = {
+							value = var:THIS.surrender_progress
+							multiply = 200
+							round = yes
+							subtract = 50
+							clamp = { min = 0 max = 100 }
+						}
 					}
 					add = var:CPD_SP
 				}
@@ -250,14 +262,14 @@ scripted_diplomatic_actions = {
 				# clamped to ±150 to prevent runaway numbers from long fronts.
 				base = 0
 				modifier = {
-					set_temp_variable = { CPD_RBW = ROOT.CPD_VP@PREV }
-					set_temp_variable = { CPD_TBW = THIS.CPD_VP@ROOT }
-					subtract_from_temp_variable = { CPD_RBW = CPD_TBW }
-					round_temp_variable = CPD_RBW
-					clamp_temp_variable = {
+					set_temp_variable = {
 						var = CPD_RBW
-						min = -150
-						max = 150
+						value = {
+							value = ROOT.CPD_VP@PREV
+							subtract = THIS.CPD_VP@ROOT
+							round = yes
+							clamp = { min = -150 max = 150 }
+						}
 					}
 					add = var:CPD_RBW
 				}
@@ -334,11 +346,13 @@ scripted_diplomatic_actions = {
 				# More likely to surrender if THIS has been at war for a very long time (capped at 120)
 				base = 0
 				modifier = {
-					set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
-					multiply_temp_variable = { months_at_war_tmp = 2 }
-					clamp_temp_variable = {
+					set_temp_variable = {
 						var = months_at_war_tmp
-						max = 120
+						value = {
+							value = THIS.months_at_war
+							multiply = 2
+							clamp = { min = 0 max = 120 }
+						}
 					}
 					add = var:months_at_war_tmp
 				}
@@ -364,11 +378,13 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					always = yes
-					set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
-					multiply_temp_variable = { v = -5 }
-					clamp_temp_variable = {
+					set_temp_variable = {
 						var = v
-						max = 50
+						value = {
+							value = ROOT.CPD_total_cost_of_built_peace_deal
+							multiply = -5
+							clamp = { min = -500 max = 50 }
+						}
 					}
 					add = var:v
 				}
@@ -396,19 +412,39 @@ scripted_diplomatic_actions = {
 			# AI dug-in stubbornness — in long wars the AI grows more reluctant
 			# to accept peace from the offerer, simulating sunk-cost / war fatigue
 			# working against the offerer rather than for them.
+			# Gated on surrender < 50 %: a clearly losing nation drops the
+			# stubbornness and wants out regardless of war length.
 			CPD_war_weariness_rejection = {
 				base = 0
 				modifier = {
 					add = -15
 					check_variable = { THIS.months_at_war > 12 }
+					surrender_progress < 0.5
 				}
 				modifier = {
 					add = -15
 					check_variable = { THIS.months_at_war > 24 }
+					surrender_progress < 0.5
 				}
 				modifier = {
 					add = -30
 					check_variable = { THIS.months_at_war > 48 }
+					surrender_progress < 0.5
+				}
+			}
+
+			# Desperation bonus — when surrender passes 50 % the AI becomes
+			# progressively more willing to end the war, offsetting power-rank
+			# pride, faction confidence, and sender-contribution penalties.
+			CPD_desperation_to_end_war = {
+				base = 0
+				modifier = {
+					add = 25
+					surrender_progress > 0.5
+				}
+				modifier = {
+					add = 25
+					surrender_progress > 0.75
 				}
 			}
 
