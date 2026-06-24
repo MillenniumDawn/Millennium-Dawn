@@ -1,4 +1,11 @@
-# Scripted effects for NATO
+# Author(s): AngriestBird, Alexander Markelov, Niko Holkko, WiggeW
+# NATO membership lifecycle: joining, leaving, and leadership succession when the
+# faction leader collapses. Also handles Major Non-NATO Ally status for applicants
+# outside the membership area, and the NATO-CSTO conventional force tally that drives
+# the CFE-style force-limit breach mission.
+
+# Effect: update_nato_dirty_variable
+# Purpose: Bumps the dirty flag used to signal that NATO-dependent UI/state needs a refresh, rolling over at 10000 to avoid unbounded growth.
 update_nato_dirty_variable = {
 	if = { limit = { check_variable = { global.NATO_dirty_update_var < 10000 } }
 		add_to_variable = { global.NATO_dirty_update_var = 1 }
@@ -8,6 +15,8 @@ update_nato_dirty_variable = {
 	}
 }
 
+# Effect: NATO_join
+# Purpose: Admits ROOT to NATO full membership (mutual opinion boost, military access, NATO_member idea, tech sharing, faction join) when can_join_NATO passes; otherwise routes eligible non-members to Major Non-NATO Ally status.
 NATO_join = {
 	if = {
 		limit = { can_join_NATO = yes }
@@ -73,7 +82,8 @@ NATO_join = {
 	}
 }
 
-#USE INSTEAD OF USA = { country_event = NATO.14 } TO BE SURE USA WONT APPLY MEMBERSHIP IF THEY ARE NOT NATO MEMBER MORE
+# Effect: NATO_join_via_event
+# Purpose: Fires the NATO.14 join event from the USA faction leader (or any NATO faction leader if USA is ineligible) rather than applying membership directly, so a USA that has left NATO cannot grant membership it no longer holds. Ineligible applicants fall through to Major Non-NATO Ally.
 NATO_join_via_event = {
 	if = {
 		limit = { can_join_NATO = yes }
@@ -105,6 +115,8 @@ NATO_join_via_event = {
 	}
 }
 
+# Effect: NATO_leave
+# Purpose: Strips NATO membership and tech sharing, transfers faction leadership to another member if ROOT is the leader, tears down the mutual opinion/access web, and fires the departure news event.
 NATO_leave = {
 	if = {
 		limit = { has_idea = NATO_member }
@@ -165,9 +177,8 @@ NATO_leave = {
 	}
 }
 
-# Hands NATO leadership to a surviving member when the current leader can no longer
-# lead (the USA collapsing). Prefers a non-collapsed major member, falls back to any
-# eligible member, then announces the transition.
+# Effect: NATO_promote_new_leader
+# Purpose: Hands NATO leadership to a surviving member when the current leader can no longer lead (the USA collapsing). Prefers a non-collapsed major member, falls back to any eligible member, then announces the transition via NATO.20.
 NATO_promote_new_leader = {
 	if = {
 		limit = {
@@ -212,6 +223,8 @@ NATO_promote_new_leader = {
 	}
 }
 
+# Effect: NATO_CSTO_calculate_number_of_batallions
+# Purpose: Tallies European-based infantry and tank battalions across both global.nato_members and global.CSTO_member; when either side exceeds the 1000-infantry / 400-tank limits it flags the European members as in breach and activates NATO_CSTO_breach_mission on the faction leader.
 NATO_CSTO_calculate_number_of_batallions = {
 	set_variable = { global.var_nato_inf_count = 0 }
 	set_variable = { global.var_csto_inf_count = 0 }
@@ -336,6 +349,8 @@ NATO_CSTO_calculate_number_of_batallions = {
 	}
 }
 
+# Effect: NATO_major_non_nato_ally_join
+# Purpose: Grants Major Non-NATO Ally status (idea, flag, Major_Non_NATO_Ally_Share tech group) and applies the matching opinion modifier mutually with all current NATO members.
 NATO_major_non_nato_ally_join = {
 	add_ideas = Major_Non_NATO_Ally
 	set_country_flag = Major_Non_NATO_Ally
