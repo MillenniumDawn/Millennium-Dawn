@@ -1,3 +1,15 @@
+# Conditional Peace Deal — Scripted Effects
+#
+# Core effects for the player-led peace deal system. Handles deal construction,
+# state/country action toggling, cost tracking, deal signing, and AI offer building.
+#
+# Scope conventions:
+#   ROOT  = peace deal sender (player or AI building the offer)
+#   THIS  = peace deal receiver (target of the diplomatic action)
+#   PREV  = previous scope, varies by context
+#
+# See docs/src/content/tutorials/conditional-peace-deals.md for the player-facing guide.
+
 # country actions
 	# regime change
 	# ceasefire with frozen lines
@@ -25,6 +37,10 @@
 		# resource rights
 
 # CPD_VP
+
+# Effect: CPD_reset_built_peace_deal
+# Purpose: Clear all deal state — arrays, flags, cost variable — back to a blank slate.
+# Called when the player opens the builder GUI or when an AI deal is discarded.
 CPD_reset_built_peace_deal = {
 	if = {
 		limit = { ROOT = { NOT = { has_country_flag = CPD_considering_peace_deal } } }
@@ -34,29 +50,22 @@ CPD_reset_built_peace_deal = {
 			add_to_variable = { global.CPD_dirty = 1 }
 		}
 		ROOT = {
-			# SETS UP INITIAL GUI STATE SELECTION OPTION
 			set_variable = { ROOT.CPD_state_option_selection = 1 }
-			# RESETS COST OF PEACE DEAL
 			set_variable = { ROOT.CPD_total_cost_of_built_peace_deal = 0 }
-			# RESETS DEMANDS
 			clear_array = CPD_annex_state_DEMANDS
 			clear_array = CPD_puppet_in_state_DEMANDS
 			clear_array = CPD_demilitarise_state_DEMANDS
 			clear_array = CPD_liberate_state_DEMANDS
 			clear_array = CPD_current_deal_list_DEMANDS
-			# RESETS CONCESSIONS
 			clear_array = CPD_annex_state_CONCESSIONS
 			clear_array = CPD_puppet_in_state_CONCESSIONS
 			clear_array = CPD_demilitarise_state_CONCESSIONS
 			clear_array = CPD_liberate_state_CONCESSIONS
 			clear_array = CPD_current_deal_list_CONCESSIONS
-			# CLEARS CURRENT DEAL
 			clear_array = CPD_current_deal_list
 			clear_array = CPD_value_of_state
-			# CLEARS NEW STATE ACTION ARRAYS
 			clear_array = CPD_resource_rights_DEMANDS
 			clear_array = CPD_resource_rights_CONCESSIONS
-			# CLEARS COUNTRY ACTION FLAGS
 			clr_country_flag = CPD_ceasefire_demand
 			clr_country_flag = CPD_ceasefire_concession
 			clr_country_flag = CPD_war_reparations_demand
@@ -74,6 +83,12 @@ CPD_reset_built_peace_deal = {
 	}
 }
 
+
+# Effect: CPD_demand_concede_switch
+# Purpose: Rebuild CPD_state_list from the current war context. When giving
+# concessions, only ROOT's own controlled states are offered (prevents offering
+# puppet/faction-ally territory). When making demands, collects all states
+# involved in the war — controlled by ROOT, THIS, or ROOT's allies.
 CPD_demand_concede_switch = {
 	ROOT = {
 		clear_array = CPD_state_list
@@ -93,7 +108,6 @@ CPD_demand_concede_switch = {
 		}
 	}
 	else = {
-		# calculate stuff from above goes here
 		every_country = {
 			limit = {
 				has_war_with = ROOT
@@ -127,6 +141,11 @@ CPD_demand_concede_switch = {
 	}
 }
 
+
+# Effect: CPD_change_state_actions
+# Purpose: Toggle a state in/out of the current deal. Dispatches to the
+# appropriate add/remove effect based on whether ROOT is giving concessions
+# and whether the state is already in the deal list.
 CPD_change_state_actions = {
 	if = {
 		limit = { ROOT = { is_ai = no } }
@@ -149,6 +168,11 @@ CPD_change_state_actions = {
 	}
 }
 
+
+# Effect: CPD_add_to_concessions
+# Purpose: Add a state to the concession arrays for the currently selected
+# state action (annex, puppet, demilitarise, liberate, or resource rights).
+# Calculates province cost and subtracts it from the deal total.
 CPD_add_to_concessions = {
 	if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
@@ -183,6 +207,10 @@ CPD_add_to_concessions = {
 	}
 }
 
+
+# Effect: CPD_remove_from_concessions
+# Purpose: Remove a state from the concession arrays and refund its cost
+# back to the deal total.
 CPD_remove_from_concessions = {
 	if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
@@ -217,6 +245,10 @@ CPD_remove_from_concessions = {
 	}
 }
 
+
+# Effect: CPD_add_to_demands
+# Purpose: Add a state to the demand arrays for the currently selected
+# state action. Calculates province cost and adds it to the deal total.
 CPD_add_to_demands = {
 	if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
@@ -251,6 +283,10 @@ CPD_add_to_demands = {
 	}
 }
 
+
+# Effect: CPD_remove_from_demands
+# Purpose: Remove a state from the demand arrays and subtract its cost
+# from the deal total.
 CPD_remove_from_demands = {
 	if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
@@ -285,6 +321,12 @@ CPD_remove_from_demands = {
 	}
 }
 
+
+# Effect: CPD_remove_from_deal
+# Purpose: Remove an entry from the current deal entirely. Handles both
+# country action sentinels (10001-10006) and state entries (< 10000).
+# For states, dispatches to the correct demand/concession array via an
+# if/else_if chain (a state is only in one action array at a time).
 CPD_remove_from_deal = {
 	if = {
 		limit = { ROOT = { is_ai = no } }
@@ -399,6 +441,12 @@ CPD_remove_from_deal = {
 		}
 }
 
+
+# Effect: CPD_clear_victory_points
+# Purpose: Clear the bilateral VP trackers (CPD_VP@TAG) between ROOT and THIS.
+# If either side is a non-leader in a faction, half their VP is transferred to
+# their faction leader before clearing — preventing VP leakage when a subject
+# or minor faction member signs a separate peace.
 CPD_clear_victory_points = {
 	set_temp_variable = { CPD_RBW = ROOT.CPD_VP@THIS }
 	set_temp_variable = { CPD_TBW = THIS.CPD_VP@ROOT }
@@ -414,9 +462,14 @@ CPD_clear_victory_points = {
 		ROOT = {
 			random_allied_country = {
 				limit = { is_faction_leader = yes }
-				multiply_temp_variable = { CPD_TBW = 0.5 }
-				round_temp_variable = CPD_TBW
-				subtract_from_temp_variable = { PREV.CPD_VP@THIS = CPD_TBW }
+				subtract_from_temp_variable = {
+					var = PREV.CPD_VP@THIS
+					value = {
+						value = CPD_TBW
+						multiply = 0.5
+						round = yes
+					}
+				}
 			}
 		}
 	}
@@ -428,17 +481,28 @@ CPD_clear_victory_points = {
 		PREV = {
 			random_allied_country = {
 				limit = { is_faction_leader = yes }
-				multiply_temp_variable = { CPD_RBW = 0.5 }
-				round_temp_variable = CPD_RBW
-				subtract_from_temp_variable = { ROOT.CPD_VP@THIS = CPD_RBW }
+				subtract_from_temp_variable = {
+					var = ROOT.CPD_VP@THIS
+					value = {
+						value = CPD_RBW
+						multiply = 0.5
+						round = yes
+					}
+				}
 			}
 		}
 	}
-	# CLEARANCES
 	clear_variable = ROOT.CPD_VP@THIS
 	clear_variable = THIS.CPD_VP@ROOT
 }
 
+
+# Effect: CPD_sign_peace_deal
+# Purpose: Execute all terms of the built peace deal. Iterates demand and
+# concession arrays for each action type (annex, puppet, liberate, demilitarise,
+# resource rights) and applies country-action flags (ceasefire, reparations,
+# regime change, forced neutrality, military basing, full puppet). Ends with
+# a white peace via CPD_execute_white_peace.
 CPD_sign_peace_deal = {
 	# ANNEX STATE - DEMANDED BY ROOT
 		if = {
@@ -699,9 +763,14 @@ CPD_sign_peace_deal = {
 	# Same applies to receivers who collect from multiple sources.
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_war_reparations_demand } }
-			set_temp_variable = { CPD_reparations_new = THIS.gdp_total }
-			multiply_temp_variable = { CPD_reparations_new = 0.0005 }
-			clamp_temp_variable = { var = CPD_reparations_new max = 15 }
+			set_temp_variable = {
+				var = CPD_reparations_new
+				value = {
+					value = THIS.gdp_total
+					multiply = 0.0005
+					clamp = { min = 0 max = 15 }
+				}
+			}
 			THIS = {
 				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
 				add_timed_idea = { idea = CPD_war_reparations_payer days = 365 }
@@ -713,9 +782,14 @@ CPD_sign_peace_deal = {
 		}
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_war_reparations_concession } }
-			set_temp_variable = { CPD_reparations_new = ROOT.gdp_total }
-			multiply_temp_variable = { CPD_reparations_new = 0.0005 }
-			clamp_temp_variable = { var = CPD_reparations_new max = 15 }
+			set_temp_variable = {
+				var = CPD_reparations_new
+				value = {
+					value = ROOT.gdp_total
+					multiply = 0.0005
+					clamp = { min = 0 max = 15 }
+				}
+			}
 			ROOT = {
 				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
 				add_timed_idea = { idea = CPD_war_reparations_payer days = 365 }
@@ -738,12 +812,10 @@ CPD_sign_peace_deal = {
 			}
 			# THIS = receiver, ROOT = sender
 			set_temp_variable = { CPD_ceasefire_receiver = THIS }
-			# Sender gets states it controls that receiver owns
 			every_owned_state = {
 				limit = { is_controlled_by = ROOT }
 				ROOT = { transfer_state = PREV }
 			}
-			# Receiver gets states it controls that sender owns
 			ROOT = {
 				every_owned_state = {
 					limit = { is_controlled_by = var:CPD_ceasefire_receiver }
@@ -771,12 +843,21 @@ CPD_sign_peace_deal = {
 		CPD_execute_white_peace = yes
 }
 
+
+# Effect: CPD_execute_white_peace
+# Purpose: Execute the white peace and set truce timers. Called by
+# CPD_sign_peace_deal after all territorial transfers and country actions.
+# Uses CPD_WP_initiator, CPD_WP_receiver, and CPD_is_ceasefire temp vars
+# set by the caller. Handles faction leaders (white peace entire enemy faction),
+# non-leaders (separate peace + leave faction), and subject-only wars.
 CPD_execute_white_peace = {
 	# Uses CPD_WP_initiator, CPD_WP_receiver, and CPD_is_ceasefire temp variables set by caller
 	if = {
 		limit = {
-			NOT = { var:CPD_WP_initiator = { exists = yes } }
-			NOT = { var:CPD_WP_receiver = { exists = yes } }
+			OR = {
+				NOT = { var:CPD_WP_initiator = { exists = yes } }
+				NOT = { var:CPD_WP_receiver = { exists = yes } }
+			}
 		}
 		log = "[GetDateText]: ERROR: CPD_execute_white_peace called with invalid actors"
 	}
@@ -850,7 +931,17 @@ CPD_execute_white_peace = {
 	}
 }
 
+
+# Effect: CPD_annex_state_effect
+# Purpose: Transfer a state to the taker. Used by both demand and concession
+# paths in CPD_sign_peace_deal.
 CPD_annex_state_effect = { var:CPD_taker = { transfer_state = PREV } }
+
+# Effect: CPD_make_puppet_in_state_effect
+# Purpose: Create a puppet regime in a state. If the taker already has a
+# subject of the original owner's tag, transfers the state to that existing
+# puppet. Otherwise spawns a new dynamic country with the taker's subideology
+# installed via change_ruling_party_effect.
 CPD_make_puppet_in_state_effect = {
 	set_temp_variable = { CPD_rumped_state = THIS.owner }
 	set_temp_variable = { CPD_new_state = THIS }
@@ -897,6 +988,11 @@ CPD_make_puppet_in_state_effect = {
 		}
 	}
 }
+
+# Effect: CPD_liberate_in_state_effect
+# Purpose: Liberate a state to an existing country with cores on it, a dead
+# tag with cores, or a new dynamic country as a last resort. Excludes the
+# current owner and countries at war with ROOT from receiving the state.
 CPD_liberate_in_state_effect = {
 	# THIS = state being liberated, ROOT = peace deal sender.
 	# Recipient filters exclude the current owner (no-op liberation) and any
@@ -905,7 +1001,6 @@ CPD_liberate_in_state_effect = {
 	set_temp_variable = { CPD_liberated_state = THIS }
 	set_temp_variable = { CPD_liberated_state_owner = THIS.owner }
 
-	# Check if any existing country has cores on this state
 	if = {
 		limit = {
 			any_country = {
@@ -960,10 +1055,10 @@ CPD_liberate_in_state_effect = {
 }
 
 
-
-
-
-
+# Effect: CPD_store_state_value
+# Purpose: Store the calculated province cost (CPD_VP_temp) into the
+# CPD_value_of_state array at the current loop index, so it can be
+# retrieved later when removing the state from the deal.
 CPD_store_state_value = {
 	if = {
 		limit = { CPD_calculate_province_cost = yes }
@@ -980,6 +1075,12 @@ CPD_store_state_value = {
 # if sendable, otherwise clears the deal so the next monthly tick can try a
 # different target without burning the 180-day cooldown on an unsendable deal.
 # Scope: THIS = target enemy, ROOT = AI sender. PREV inside ROOT={} = enemy.
+
+# Effect: CPD_AI_commit_peace_offer
+# Purpose: Validate an AI-built deal via CPD_deal_is_sendable and either
+# commit it (set flags so ai_desire fires on the next tick) or discard it.
+# Called inside random_enemy_country after CPD_AI_build_peace_deal.
+# Scope: THIS = target enemy, ROOT = AI sender.
 CPD_AI_commit_peace_offer = {
 	if = {
 		limit = { CPD_deal_is_sendable = yes }
@@ -987,7 +1088,7 @@ CPD_AI_commit_peace_offer = {
 			set_country_flag = CPD_AI_wants_peace
 			set_variable = { CPD_AI_wants_peace_with = var:CPD_enemy_tag }
 			set_country_flag = { flag = CPD_AI_peace_cooldown days = 180 value = 1 }
-			set_country_flag = { flag = CPD_recently_offered_peace@var:CPD_enemy_tag days = 180 value = 1 }
+			set_country_flag = { flag = CPD_recently_offered_peace@PREV days = 180 value = 1 }
 		}
 	}
 	else = {
@@ -995,6 +1096,14 @@ CPD_AI_commit_peace_offer = {
 	}
 }
 
+
+# Effect: CPD_AI_build_peace_deal
+# Purpose: Build a peace deal for the AI based on war posture. Three branches:
+# losing (cede occupied states + reparations + maybe regime change),
+# stalemated (ceasefire only), winning (annex cores/claims, demilitarise
+# other controlled states, demand reparations, escalate to regime change /
+# forced neutrality / full puppet as surrender progress rises).
+# Called inside random_enemy_country: ROOT = AI, THIS = target enemy.
 CPD_AI_build_peace_deal = {
 	# Three-posture builder. Called inside random_enemy_country: ROOT = our AI, THIS = target enemy.
 	# Branches: losing (cede + sweeteners) / stalemated (ceasefire only) / winning (states + escalation).
@@ -1133,6 +1242,12 @@ CPD_AI_build_peace_deal = {
 
 # Clears all state-level actions from the deal (used when ceasefire is toggled on)
 # Expects to be called while ROOT is the peace deal builder
+
+# Effect: CPD_clear_all_state_actions
+# Purpose: Wipe all state-level entries from the deal and reset the cost
+# to zero. Re-adds any active country-action sentinels so the deal list
+# still reflects toggled country actions. Called when ceasefire is toggled
+# on (ceasefire means no territorial changes).
 CPD_clear_all_state_actions = {
 	ROOT = {
 		set_variable = { CPD_total_cost_of_built_peace_deal = 0 }
@@ -1215,6 +1330,11 @@ CPD_clear_all_state_actions = {
 	}
 }
 
+
+# Effect: CPD_toggle_ceasefire
+# Purpose: Toggle the ceasefire country action in the deal. When toggled on,
+# clears all state actions via CPD_clear_all_state_actions (ceasefire means
+# no territorial changes).
 CPD_toggle_ceasefire = {
 	if = {
 		limit = { ROOT = { is_ai = no } }
@@ -1263,6 +1383,9 @@ CPD_toggle_ceasefire = {
 	}
 }
 
+
+# Effect: CPD_toggle_war_reparations
+# Purpose: Toggle the war reparations country action in the deal.
 CPD_toggle_war_reparations = {
 	if = {
 		limit = { ROOT = { is_ai = no } }
@@ -1299,6 +1422,9 @@ CPD_toggle_war_reparations = {
 	}
 }
 
+
+# Effect: CPD_toggle_forced_neutrality
+# Purpose: Toggle the forced neutrality country action in the deal.
 CPD_toggle_forced_neutrality = {
 	if = {
 		limit = { ROOT = { is_ai = no } }
@@ -1335,6 +1461,9 @@ CPD_toggle_forced_neutrality = {
 	}
 }
 
+
+# Effect: CPD_toggle_regime_change
+# Purpose: Toggle the regime change country action in the deal.
 CPD_toggle_regime_change = {
 	if = {
 		limit = { ROOT = { is_ai = no } }
@@ -1371,6 +1500,9 @@ CPD_toggle_regime_change = {
 	}
 }
 
+
+# Effect: CPD_toggle_military_basing
+# Purpose: Toggle the military basing rights country action in the deal.
 CPD_toggle_military_basing = {
 	if = {
 		limit = { ROOT = { is_ai = no } }
@@ -1407,6 +1539,11 @@ CPD_toggle_military_basing = {
 	}
 }
 
+
+# Effect: CPD_toggle_full_puppet
+# Purpose: Toggle the full-puppet country action in the deal. When toggled
+# on, supersedes any individual puppet-in-state entries by clearing them
+# and refunding their cost.
 CPD_toggle_full_puppet = {
 	if = {
 		limit = { ROOT = { is_ai = no } }
