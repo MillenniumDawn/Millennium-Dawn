@@ -585,20 +585,6 @@ NKO_naval_buildup_grant_mastery_sf = {
 	}
 }
 
-# =============================================================================
-# Second Economic Committee — arms & manpower export mechanic.
-# Unlocked by the NKO_create_komid focus (calls NKO_arms_export_initialize).
-# The player supplies any nation at war via the targeted panel decisions, or
-# fulfils Russia's munitions request (NKO_export.1). Each DISTINCT nation
-# supplied grants a permanent, uncapped +1% factory-output bonus
-# (NKO_arms_export_modifiers scaled by NKO_arms_export_output_var) and raises
-# sanctions pressure.
-#
-# Calling convention for a deal: the caller sets temp var NKO_arms_client_id to
-# the client's id, saves the client as event_target:NKO_arms_client, then calls
-# one NKO_export_do_* effect. The do_* effect handles the recipient buff, the
-# NKO payment, and the deal registration.
-# =============================================================================
 
 NKO_arms_export_initialize = {
 	set_country_flag = NKO_arms_export_active
@@ -617,20 +603,15 @@ NKO_arms_export_initialize = {
 	NKO_arms_contract_initialize = yes
 }
 
-# Rebuild the targetable-clients array — every existing country at war that is
-# neither NKO nor an enemy of NKO. Fills only while the Conventional menu is open.
-# Closing the menu empties the decisions' target pool, so they hide immediately
-# regardless of any target_root_trigger caching. Driven weekly from
-# 99_NKO_on_actions.txt, once at unlock, and from the toggle decisions.
 NKO_arms_export_rebuild_targets = {
 	clear_array = global.NKO_arms_export_targets
 	if = {
 		limit = { has_country_flag = NKO_arms_export_conv_open }
 		every_country = {
 			limit = {
-				NOT = { original_tag = NKO }
 				exists = yes
 				has_war = yes
+				NOT = { original_tag = NKO }
 				is_subject = no
 				NOT = { has_war_with = NKO }
 			}
@@ -639,14 +620,9 @@ NKO_arms_export_rebuild_targets = {
 	}
 }
 
-# Register one concluded deal: count it, add sanctions heat (temp var
-# NKO_arms_export_deal_heat), and — only for a NEW distinct client — credit the
-# permanent factory-output bonus. Then run the sanctions and capstone watchdogs.
+
 NKO_arms_export_register_deal = {
 	add_to_variable = { var = NKO_arms_export_deals  value = 1 }
-	# Per-client deal counter, stored on the recipient. The client-export decisions
-	# cap non-patron tags at two total deals via their target_trigger; SOV and CHI
-	# are exempt and may keep buying without limit.
 	event_target:NKO_arms_client = { add_to_variable = { var = NKO_deals_received_count  value = 1 } }
 	add_to_variable = { var = NKO_arms_export_heat   value = NKO_arms_export_deal_heat }
 	if = {
@@ -654,6 +630,7 @@ NKO_arms_export_register_deal = {
 		add_to_array = { NKO_arms_export_supplied_array = NKO_arms_client_id }
 		add_to_variable = { var = NKO_arms_export_clients     value = 1 }
 		add_to_variable = { var = NKO_arms_export_output_var  value = 0.01 }
+		clamp_variable = { var = NKO_arms_export_output_var  min = 0  max = 0.20 }
 	}
 	NKO_arms_export_check_sanctions = yes
 	NKO_arms_export_check_capstone = yes
@@ -673,11 +650,6 @@ NKO_arms_export_check_sanctions = {
 	}
 }
 
-# Great-power reaction: every three arms deals concluded while NKO is not already
-# under maximum sanctions, the United States, France, Germany, and Japan answer
-# with a coordinated package that slams sanctions to the UNSC maximum (NKO_export.40).
-# Repeatable with no cap — walk the sanctions back down via the lobby decision and
-# the matching focuses, and three more deals invite the next round.
 NKO_arms_export_check_western_sanctions = {
 	if = {
 		limit = { NOT = { has_idea = NKO_international_sanctions_idea } }
@@ -701,18 +673,11 @@ NKO_arms_export_check_capstone = {
 	}
 }
 
-# Credit a hard-currency payment into the Office 39 treasury (temp var
-# NKO_arms_export_payment, in $ billions) and track lifetime export revenue.
 NKO_arms_export_credit_payment = {
 	set_temp_variable = { treasury_change = NKO_arms_export_payment }
 	modify_treasury_effect = yes
 	add_to_variable = { var = NKO_arms_export_revenue  value = NKO_arms_export_payment }
 }
-
-# --- Equipment transfer helpers — run in NKO scope, gated on NKO's own tech
-# tier. The amount (temp var NKO_export_eq_amount) is drawn from NKO's own
-# stockpile and delivered into event_target:NKO_arms_client's stockpile, with
-# NKO credited as the producer. ---
 
 NKO_export_transfer_inf_weapons = {
 	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
@@ -834,9 +799,6 @@ NKO_export_transfer_helo = {
 	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_1 } add_equipment_to_stockpile = { type = heavy_tank_chassis_0 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_tank_chassis_0 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
-# --- Aid packages. Each delivers a recipient buff, pays NKO, and registers the
-# deal. Caller must first set NKO_arms_client_id and save event_target:NKO_arms_client. ---
-
 NKO_export_do_munitions = {
 	custom_effect_tooltip = NKO_export_munitions_effect_tt
 	# Small arms — every army fields infantry. Minimum 1995-era rifles.
@@ -922,7 +884,8 @@ NKO_export_do_troops = {
 	event_target:NKO_arms_client = { country_event = { id = NKO_export.22 days = 1 } }
 	custom_effect_tooltip = TT_IF_THEY_ACCEPT
 	effect_tooltip = {
-		FROM = { add_timed_idea = { idea = NKO_arms_client_troops days = 365 } }
+		event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_troops days = 365 } }
+		add_timed_idea = { idea = NKO_storm_corps_abroad days = 365 }
 		set_rule = { can_send_volunteers = yes }
 		add_political_power = 50
 		add_war_support = 0.02
@@ -933,14 +896,14 @@ NKO_export_do_troops = {
 	}
 }
 
-# Runs once the host accepts the intervention-forces offer (from NKO_export.23,
-# FROM = the accepting host). The host has already granted us military access in
-# its accept option; here we register the deal and begin watching its manpower.
 NKO_export_finalize_troops = {
-	event_target:NKO_arms_client = { set_country_flag = { flag = NKO_storm_corps_host value = 1 days = 365 } }
-	event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_troops days = 365 } }
-	# Record us as the patron and start watching this host's manpower. While our
-	# forces are deployed there, the host appeals to Pyongyang when it runs dry.
+	event_target:NKO_arms_client = {
+		set_country_flag = { flag = NKO_storm_corps_host value = 1 days = 365 }
+		add_timed_idea = { idea = NKO_arms_client_troops days = 365 }
+	}
+
+	add_timed_idea = { idea = NKO_storm_corps_abroad days = 365 }
+
 	save_event_target_as = NKO_storm_corps_patron
 	event_target:NKO_arms_client = { country_event = { id = NKO_export.21 days = 30 } }
 	add_political_power = 50
@@ -951,16 +914,13 @@ NKO_export_finalize_troops = {
 	NKO_arms_export_credit_payment = yes
 	set_temp_variable = { NKO_arms_export_deal_heat = 2 }
 	NKO_arms_export_register_deal = yes
-	# Storm Corps deployments to Pyongyang's great-power patrons open a permanent
-	# hard-currency subsidy that outlives the 365-day deployment. Flags are set once
-	# and never cleared, so the income persists; re-deploying does not stack it. The
-	# patron carries the matching permanent expense (NKO_storm_corps_subsidy on them).
+
 	if = {
 		limit = { event_target:NKO_arms_client = { original_tag = SOV } }
 		set_country_flag = NKO_storm_corps_income_SOV
 		event_target:NKO_arms_client = { set_country_flag = NKO_storm_corps_subsidy }
 	}
-	if = {
+	else_if = {
 		limit = { event_target:NKO_arms_client = { original_tag = CHI } }
 		set_country_flag = NKO_storm_corps_income_CHI
 		event_target:NKO_arms_client = { set_country_flag = NKO_storm_corps_subsidy }
@@ -979,19 +939,11 @@ NKO_arms_export_suppress_for_collapse = {
 	}
 }
 
-# =============================================================================
-# Patron volunteer EXPEDITIONS. Russia (SOV) and China (CHI) host North Korean
-# volunteer expeditionary forces while at war. Committing a full expedition pays
-# hard currency; sustained deployment grants land mastery.
-# =============================================================================
 
 NKO_arms_contract_initialize = {
 	if = { limit = { NOT = { has_variable = NKO_expeditions_completed } }    set_variable = { NKO_expeditions_completed = 0 } }
 }
 
-# Rebuild the at-war patron array — SOV and CHI when they exist, are not at war
-# with NKO, and are at war. Global array so the targeted decisions can read it.
-# Driven weekly from 99_NKO_on_actions.txt.
 NKO_rebuild_patrons = {
 	clear_array = global.NKO_patrons_at_war
 	if = {
@@ -1012,9 +964,6 @@ NKO_rebuild_patrons = {
 	}
 }
 
-# Weekly mastery reward for sustained deployment. Each at-war patron hosting 6+
-# NKO volunteer divisions grants land mastery to NKO. If none qualifies, clears
-# the active flag so the GUI reflects a dormant expedition.
 NKO_expeditionary_mastery_tick = {
 	set_temp_variable = { NKO_expeditionary_any_active = 0 }
 	for_each_scope_loop = {
