@@ -62,15 +62,7 @@ capital = 50
 
 	for_each_scope_loop = {
 		array = global.EU_member
-		set_variable = {
-			var_proeuropean = {
-				value = 0
-				add = THIS.europeanism
-				multiply = max_manpower_k
-			}
-		}
-		add_to_variable = { var = global.var_europeanism value = THIS.var_proeuropean }
-
+		# Population share of the Union (0-1), summing to 1 across all members
 		set_variable = {
 			EU_pop_ratio = {
 				value = 0
@@ -78,7 +70,12 @@ capital = 50
 				divide = global.var_EUpopTotal
 			}
 		}
+		# Population-weighted europeanism: EU_pop_ratio already normalizes, so no final divide
+		add_to_variable = {
+			global.var_europeanism = {
+				value = THIS.europeanism
+				multiply = THIS.EU_pop_ratio
+			}
+		}
 	}
-
-	divide_variable = { var = global.var_europeanism value = global.var_EUpopTotal }
 }

@@ -52,7 +52,7 @@ EU_update_vars = {
 		set_variable = { var = global.var_europeanism value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
-			# Pop ratio
+			# Population share of the Union (0-1), summing to 1 across all members
 			set_variable = {
 				EU_pop_ratio = {
 					value = 0
@@ -63,23 +63,14 @@ EU_update_vars = {
 					}
 				}
 			}
-			# Europeanism
+			# Population-weighted europeanism: EU_pop_ratio already normalizes, so no final divide
 			clamp_variable = { var = THIS.europeanism min = 0 max = 1 }
-			set_variable = {
-				var_proeuropean = {
-					value = 0
-					add = THIS.europeanism
-					multiply = {
-						value = max_manpower_k
-						multiply = 0.01
-					}
+			add_to_variable = {
+				global.var_europeanism = {
+					value = THIS.europeanism
+					multiply = THIS.EU_pop_ratio
 				}
 			}
-			add_to_variable = { global.var_europeanism = THIS.var_proeuropean }
-		}
-		if = {
-			limit = { check_variable = { global.var_EUpopTotal > 0 } }
-			divide_variable = { global.var_europeanism = global.var_EUpopTotal }
 		}
 
 		# Failsafe: lift a stuck budget/MFF proposal block once its whole draft cycle is idle
@@ -117,47 +108,52 @@ EU_update_vars = {
 ######################################
 ### Changing Europeanism of a tag ###
 ######################################
-# set_temp_variable = { modify_europeanism = +- }
-# set_temp_variable = { modify_europeanism_target = ROOT/THIS/PREV/FROM or country TAG }
+# set_temp_variable = { modify_europeanism = +- }   (required; 0 = no-op, skipped)
+# set_temp_variable = { modify_europeanism_target = ROOT/THIS/PREV/FROM or country TAG }   (optional, defaults to ROOT)
 europeanism_change = {
-	custom_effect_tooltip = tooltip_europeanism_change
-	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects [?modify_europeanism_target] europeanism_change [?modify_europeanism]"
-		var:modify_europeanism_target = { add_to_variable = { THIS.europeanism = modify_europeanism } }
-		EU_update_vars = yes
+	if = { limit = { check_variable = { modify_europeanism_target = 0 } }
+		set_temp_variable = { modify_europeanism_target = ROOT.id }
 	}
+	if = { limit = { check_variable = { modify_europeanism = 0 } }
+		log = "[GetDateText]: [ROOT.GetTag]: WARNING: europeanism_change called with modify_europeanism = 0 (no-op)"
+	}
+	else = {
+		custom_effect_tooltip = tooltip_europeanism_change
+		hidden_effect = {
+			log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects [?modify_europeanism_target] europeanism_change [?modify_europeanism]"
+			var:modify_europeanism_target = { add_to_variable = { THIS.europeanism = modify_europeanism } }
+			EU_update_vars = yes
+		}
+	}
+}
+
+# Apply the same europeanism delta to both THIS and ROOT. Set modify_europeanism first.
+europeanism_change_this_and_root = {
+	set_temp_variable = { modify_europeanism_target = THIS }
+	europeanism_change = yes
+	set_temp_variable = { modify_europeanism_target = ROOT }
+	europeanism_change = yes
 }
 
 ############################################################
 ### Changing Europeanism of all (current) member states ###
 ############################################################
 
-# set_temp_variable = { modify_europeanism = +- }
+# set_temp_variable = { modify_europeanism = +- }   (required; 0 = no-op, skipped)
 EU_europeanism_change = {
-	custom_effect_tooltip = tooltip_EU_europeanism_change
-	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_europeanism_change [?modify_europeanism]"
-		for_each_scope_loop = {
-			array = global.EU_member
-			add_to_variable = { THIS.europeanism = modify_europeanism }
-			if = {
-				limit = { check_variable = { modify_europeanism > 0.04 } }
-				news_event = EU_news.31
+	if = { limit = { check_variable = { modify_europeanism = 0 } }
+		log = "[GetDateText]: [ROOT.GetTag]: WARNING: EU_europeanism_change called with modify_europeanism = 0 (no-op)"
+	}
+	else = {
+		custom_effect_tooltip = tooltip_EU_europeanism_change
+		hidden_effect = {
+			log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_europeanism_change [?modify_europeanism]"
+			for_each_scope_loop = {
+				array = global.EU_member
+				add_to_variable = { THIS.europeanism = modify_europeanism }
 			}
-			else_if = {
-				limit = { check_variable = { modify_europeanism > 0 } }
-				news_event = EU_news.30
-			}
-			else_if = {
-				limit = { check_variable = { modify_europeanism < -0.04 } }
-				news_event = EU_news.29
-			}
-			else_if = {
-				limit = { check_variable = { modify_europeanism < 0 } }
-				news_event = EU_news.28
-			}
+			EU_update_vars = yes
 		}
-		EU_update_vars = yes
 	}
 }
 
@@ -165,16 +161,21 @@ EU_europeanism_change = {
 ### Changing Europeanism of all current AND potential member states ###
 ########################################################################
 
-# set_temp_variable = { modify_europeanism = +- }
+# set_temp_variable = { modify_europeanism = +- }   (required; 0 = no-op, skipped)
 EU_potential_europeanism_change = {
-	custom_effect_tooltip = tooltip_EU_potential_europeanism_change
-	hidden_effect = {
-		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_potential_europeanism_change [?modify_europeanism]"
-		for_each_scope_loop = {
-			array = global.EU_potential
-			add_to_variable = { THIS.europeanism = modify_europeanism }
+	if = { limit = { check_variable = { modify_europeanism = 0 } }
+		log = "[GetDateText]: [ROOT.GetTag]: WARNING: EU_potential_europeanism_change called with modify_europeanism = 0 (no-op)"
+	}
+	else = {
+		custom_effect_tooltip = tooltip_EU_potential_europeanism_change
+		hidden_effect = {
+			log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_potential_europeanism_change [?modify_europeanism]"
+			for_each_scope_loop = {
+				array = global.EU_potential
+				add_to_variable = { THIS.europeanism = modify_europeanism }
+			}
+			EU_update_vars = yes
 		}
-		EU_update_vars = yes
 	}
 }
 
@@ -205,10 +206,7 @@ invest_in_EU_single_market_cic = {
 
 		}
 		set_temp_variable = { modify_europeanism = 0.03 }
-		set_temp_variable = { modify_europeanism_target = THIS }
-		europeanism_change = yes
-		set_temp_variable = { modify_europeanism_target = ROOT }
-		europeanism_change = yes
+		europeanism_change_this_and_root = yes
 	}
 }
 
@@ -227,10 +225,7 @@ invest_in_EU_single_market_infra = {
 			}
 		}
 		set_temp_variable = { modify_europeanism = 0.03 }
-		set_temp_variable = { modify_europeanism_target = THIS }
-		europeanism_change = yes
-		set_temp_variable = { modify_europeanism_target = ROOT }
-		europeanism_change = yes
+		europeanism_change_this_and_root = yes
 		update_eu_dirty_variable = yes
 	}
 }
@@ -243,10 +238,7 @@ EU_money_for_influence = {
 		change_influence_percentage = yes
 	}
 	set_temp_variable = { modify_europeanism = 0.03 }
-	set_temp_variable = { modify_europeanism_target = THIS }
-	europeanism_change = yes
-	set_temp_variable = { modify_europeanism_target = ROOT }
-	europeanism_change = yes
+	europeanism_change_this_and_root = yes
 	update_eu_dirty_variable = yes
 }
 
