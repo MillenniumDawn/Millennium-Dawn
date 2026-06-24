@@ -1,0 +1,41 @@
+on_actions = {
+	on_declare_war = {
+		effect = {
+			# ROOT = aggressor, FROM = attacked country.
+			if = {
+				limit = {
+					NOT = { has_global_flag = GAME_RULE_nato_disabled }
+					NOT = { has_idea = NATO_member }
+					FROM = { NOT = { is_subject_of = ROOT } }
+					OR = {
+						# A member is attacked directly...
+						FROM = { has_idea = NATO_member }
+						# ...or a member's subject is attacked, which pulls in the NATO
+						# overlord and rallies the alliance to the defense.
+						FROM = {
+							is_subject = yes
+							overlord = { has_idea = NATO_member }
+						}
+					}
+				}
+				FROM = { save_event_target_as = nato_collective_defender }
+				for_each_scope_loop = {
+					array = global.nato_members
+					if = {
+						limit = {
+							has_idea = NATO_member
+							is_subject = no
+							NOT = { has_country_flag = collapsed_nation }
+							NOT = { has_war_with = ROOT }
+						}
+						add_to_war = {
+							targeted_alliance = event_target:nato_collective_defender
+							enemy = ROOT
+							hostility_reason = asked_to_join
+						}
+					}
+				}
+			}
+		}
+	}
+}
