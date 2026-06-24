@@ -1,7 +1,6 @@
 ---
 name: performance-analyzer
 description: "Scan HOI4 scripted code for performance anti-patterns: unbounded loops, per-frame decision visible blocks, GUI dirty-variable misuse, unhoisted invariant lookups, and missing clamp-before-division guards."
-model: sonnet
 color: red
 memory: project
 ---

@@ -1,7 +1,6 @@
 ---
 name: bug-fixer
 description: "Use this agent when there are GitHub issues to fix, bug reports to investigate, or when idle and scanning the codebase for common bug patterns. Use proactively when the user asks to fix bugs, resolve issues, or clean up code problems."
-model: sonnet
 color: yellow
 memory: project
 ---

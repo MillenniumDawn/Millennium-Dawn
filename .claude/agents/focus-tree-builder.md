@@ -1,7 +1,6 @@
 ---
 name: focus-tree-builder
 description: "Create, modify, review, or standardize focus trees — generate new trees, add branches, fix formatting, or ensure compliance with project standards."
-model: sonnet
 color: pink
 memory: project
 ---

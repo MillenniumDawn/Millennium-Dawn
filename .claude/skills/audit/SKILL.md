@@ -72,6 +72,6 @@ After applying fixes, re-run the audit on the changed files to verify no regress
 - When uncertain about a finding, flag it for human review rather than applying blindly.
 - For branch mode, focus on files in the branch diff. Do not audit unchanged files unless the user asks.
 - Skip generated or binary assets (`.dds`, `.png`, etc.).
-- For localisation files (`.yml`), run the `localisation-editor` agent with `model: "haiku"` instead of `simplify-analyzer` for the simplification pass — haiku is sufficient for typo/grammar scanning and keeps costs low. Still run `performance-analyzer` for loc performance (undefined variable substitutions, excessive nested formatters).
+- For localisation files (`.yml`), run the `localisation-editor` agent (it defaults to haiku, which is sufficient for typo/grammar scanning and keeps costs low) instead of `simplify-analyzer` for the simplification pass. Still run `performance-analyzer` for loc performance (undefined variable substitutions, excessive nested formatters).
 - The content-review agent should skip Military checks for non-character/non-OOB files and skip Economic checks for non-focus-tree files. Instruct it accordingly.
 - When reviewing script files, flag unnecessary scope expansion (e.g., `TAG = { exists = yes }` instead of `country_exists = TAG`) — both readability and performance issues.

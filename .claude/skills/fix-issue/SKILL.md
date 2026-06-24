@@ -71,7 +71,7 @@ Steps:
 
 5. **Fix the bug**
 
-   Make the minimal change. Follow CLAUDE.md:
+   Make the minimal change. Follow the project conventions (`AGENTS.md`):
    - Tabs for indentation
    - No magic numbers; use variables
    - No empty blocks, no commented-out code
@@ -128,7 +128,7 @@ Steps:
    When rewriting an existing PR body:
    - **Preserve every existing `Closes #N` line** at the top, then append a new `Closes #<this issue number>`.
    - **Preserve every existing `#### Bug Fixes` bullet**; append a new bullet, never replace prior ones. Same for `#### Other`, `#### AI`, `#### Content`, etc.
-   - **Preserve every existing test-plan bullet**; append new bullets for the new fix.
+   - **Preserve every existing test-plan section**; to extend it for the new fix, run `/test-plan` (the PR body's test plan is generated there, not inline).
    - If the existing body uses the older deep-dive format (root-cause code blocks, `file:line` citations, per-issue regression notes), normalise the whole body to AngriestBird format while keeping every fact: recompose each prior fix as a single bolded bullet in `#### Bug Fixes`, dropping regression/file-citation details (they live in the commits and linked issues).
    - Follow `/open-pr` step 5 formatting: bold `**Fixes #N: Issue Title.**` prefix + period, then 2 sentences (cause + resolution), 2-3 lines max, backticks for code identifiers, no em dashes (`—`) anywhere, no `→` separator. Use a colon, period, or comma instead.
 

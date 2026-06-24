@@ -1,7 +1,6 @@
 ---
 name: event-builder
 description: "Create, modify, review, or fix events — generate event chains, fix scoping/tooltip issues, or ensure events comply with project standards."
-model: sonnet
 color: cyan
 memory: project
 ---
