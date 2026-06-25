@@ -390,6 +390,75 @@ get_building_construction_values = {
 	clamp_temp_variable = { var = construction_speed min = 0 }
 }
 
+# Precompute state-level construction data. Must be called in STATE scope with
+# PREV = the investing country. Writes temp variables: local_state_modifier and
+# receiving_investment_duration_temp, consumed by calculate_project_duration.
+state_construction_data = {
+	# State-local construction speed bonus (infra + internet + state-flag effects)
+	set_temp_variable = { local_state_modifier = 0 }
+
+	set_temp_variable = { tmp_speed = building_level@infrastructure }
+	multiply_temp_variable = { tmp_speed = 0.15 }
+	add_to_temp_variable = { local_state_modifier = tmp_speed }
+
+	set_temp_variable = { tmp_speed = building_level@internet_station }
+	multiply_temp_variable = { tmp_speed = 0.05 }
+	add_to_temp_variable = { local_state_modifier = tmp_speed }
+
+	if = { limit = { has_state_flag = currently_encouraged_investments }
+		add_to_temp_variable = { local_state_modifier = 0.15 }
+	}
+	if = { limit = { has_state_flag = HOL_autonomy_economic_zone }
+		add_to_temp_variable = { local_state_modifier = 0.15 }
+	}
+
+	# Net duration modifier from target controller.
+	set_temp_variable = { receiving_investment_duration_temp = 0 }
+	CONTROLLER = {
+		if = {
+			limit = {
+				PREV.PREV = {
+					OR = {
+						has_idea = full_isr_boycotte
+						has_idea = econ_isr_boycotte
+					}
+				}
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = 1 }
+		}
+		if = {
+			limit = {
+				is_in_array = { global.EU_member = THIS.id }
+				PREV.PREV = { has_idea = ECB_president }
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
+		}
+		if = {
+			limit = {
+				is_in_array = { global.EU_member = THIS.id }
+				PREV.PREV = { has_idea = EU_finance_minister }
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+		}
+		if = {
+			limit = {
+				has_idea = FRA_idea_development_investment
+				PREV.PREV = { original_tag = FRA }
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+		}
+		if = {
+			limit = {
+				PREV.PREV = {
+					has_country_flag = mutual_investment_treaty_@PREV
+				}
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+		}
+		add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
+	}
+}
+
 # Calculate duration for a single investment project entry (new array-based system).
 # Expects local vars: state, building_index, amount (set by create_investment_project).
 # Reads: local_state_modifier, receiving_investment_duration_temp (precompute_state_construction_data).
@@ -398,10 +467,8 @@ calculate_investment_project_time = {
 	set_temp_variable = { project_type = building_index }
 	get_building_construction_values = yes
 
-	# local_state_modifier precomputed by precompute_state_construction_data (per state)
+	state_construction_data = yes
 	add_to_temp_variable = { construction_speed = local_state_modifier }
-
-	# receiving_investment_duration_temp precomputed by precompute_state_construction_data
 	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
 	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
 	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
@@ -491,9 +558,9 @@ calculate_investment_project_cost = {
 
 update_investments_max_projects = {
 	set_temp_variable = { modifier = 1 }
-	add_to_temp_variable = { modifier = modifier@max_projects_modifier }
+	add_to_temp_variable = { modifier = modifier@max_investment_projects_modifier }
 
-	set_variable = { MD_investments_max_projects = modifier@max_projects_base_factor }
+	set_variable = { MD_investments_max_projects = modifier@max_investment_projects_base_factor }
 	multiply_variable = { MD_investments_max_projects = modifier }
 	round_variable = MD_investments_max_projects
 }
