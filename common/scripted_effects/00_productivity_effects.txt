@@ -28,36 +28,33 @@ calculate_average_world_productivity = {
 }
 
 productivity_growth_controlled_display_effect = {
-	every_collection = {
-		named_collection = controlled_states
-		set_variable = {
-			state_productivity_growth_scaled = {
-				value = PREV.productivity_growth_scaled
-				if = {
-					limit = { value = PREV.productivity_growth_scaled greater_than = 0 }
-					# Catch-up toward world average; clamp guards uninitialized (0) productivity_state_var div-by-zero
-					multiply = {
-						value = global.average_world_productivity
-						divide = {
-							value = productivity_state_var
-							clamp = { min = 100 max = 100000 }
-						}
-						add = -1
-						multiply = 0.5 # control factor for the catch up effect
-						add = 1
-						clamp = { min = 0 max = 2 } # cap catch-up so a far-behind nation grows at most 2x base
-					}
-					multiply = {
-						value = 1
-						add = modifier@state_productivity_growth_modifier
-					}
-				}
-				else = {
-					multiply = productivity_state_var
+	set_variable = {
+		state_productivity_growth_scaled = {
+			value = PREV.productivity_growth_scaled
+			if = {
+				limit = { value = PREV.productivity_growth_scaled greater_than = 0 }
+				# Catch-up toward world average; clamp guards uninitialized (0) productivity_state_var div-by-zero
+				multiply = {
+					value = global.average_world_productivity
 					divide = {
-						value = global.average_world_productivity
-						clamp = { min = 100 max = 10000 }
+						value = productivity_state_var
+						clamp = { min = 100 max = 100000 }
 					}
+					add = -1
+					multiply = 0.5 # control factor for the catch up effect
+					add = 1
+					clamp = { min = 0 max = 2 } # cap catch-up so a far-behind nation grows at most 2x base
+				}
+				multiply = {
+					value = 1
+					add = modifier@state_productivity_growth_modifier
+				}
+			}
+			else = {
+				multiply = productivity_state_var
+				divide = {
+					value = global.average_world_productivity
+					clamp = { min = 100 max = 10000 }
 				}
 			}
 		}
@@ -232,10 +229,9 @@ update_employment_productivity_output_dynamic_modifier = {
 productivity_growth_effect = {
 	productivity_growth_country_display_effect = yes
 
-	productivity_growth_controlled_display_effect = yes
-
 	#scales productivity growth based on comparison with global average and adds it to state productivity
 	every_controlled_state = {
+		productivity_growth_controlled_display_effect = yes
 		add_to_variable = { productivity_state_var = state_productivity_growth_scaled }
 		clamp_variable = { var = productivity_state_var min = 100 max = 100000 } # max cap prevents runaway overflow into overall_productivity
 	}

@@ -217,7 +217,7 @@ The following page is a non-exhaustive list of contributors from over the years 
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2993766165)_
 - **Better Mechanics : Namelists** - Division namelist inspiration (native-language unit-type vocabulary and categorical unit type variety beyond the standard 7 groups). Used as reference only, no copy-paste; all integrations adapted to MD's `L_Inf_Bat`/`armor_Bat`/`Special_Forces` tokens. WW2-themed entries deliberately excluded.
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3413087807)_
-- **Blacke ICE** - Cooperation with modding, coding and for their customizable top bar.
+- **Black ICE** - Cooperation with modding, coding and for their customizable top bar.
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1137372539)_
 
 # Voice Lines
