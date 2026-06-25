@@ -1868,17 +1868,16 @@ recognition_grant_increment = {
 	else_if = { limit = { PREV = { has_idea = great_power } } add_political_power = 50 }
 	else_if = { limit = { PREV = { has_idea = super_power } } add_political_power = 100 }
 
+	# One-time notification when recognition first reaches the UN-ascension threshold (40% of GA)
 	if = {
-		limit = { check_variable = { Granted_Recognition = 25 } }
-		news_event = recognition.40
-	}
-	else_if = {
-		limit = { check_variable = { Granted_Recognition = 50 } }
-		news_event = recognition.41
-	}
-	else_if = {
-		limit = { check_variable = { Granted_Recognition = 100 } }
-		news_event = recognition.42
+		limit = { NOT = { has_country_flag = un_ascension_eligible_notified } }
+		set_temp_variable = { recog_threshold = global.UN_general_assembly^num }
+		multiply_temp_variable = { recog_threshold = 0.4 }
+		if = {
+			limit = { check_variable = { Granted_Recognition > recog_threshold } }
+			set_country_flag = un_ascension_eligible_notified
+			country_event = recognition.45
+		}
 	}
 	international_systems_update = yes
 }
