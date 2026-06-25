@@ -1160,14 +1160,32 @@ gov_pop_calculation = {
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = government_popularity_modifier } } }
 		add_dynamic_modifier = { modifier = government_popularity_modifier }
 	}
-	set_temp_variable = { add_t = government_coalition_differential }
-	multiply_temp_variable = { add_t = 100 }
-	clamp_variable = { var = add_t max = 100 min = -100 }
-	multiply_temp_variable = { add_t = 0.002 }
+	set_variable = {
+		gov_pop_stability_factor = {
+			value = government_coalition_differential
+			multiply = 100
+			clamp = { min = -100 max = 100 }
+			multiply = 0.002
+		}
+	}
 
-	set_variable = { gov_pop_stability_factor = add_t }
-	set_variable = { gov_pop_political_power_factor = add_t }
-	set_variable = { gov_pop_drift_defence_factor = add_t }
+	set_variable = {
+		gov_pop_political_power_factor = {
+			value = government_coalition_differential
+			multiply = 100
+			clamp = { min = -100 max = 100 }
+			multiply = 0.002
+		}
+	}
+
+	set_variable = {
+		gov_pop_drift_defence_factor = {
+			value = government_coalition_differential
+			multiply = 100
+			clamp = { min = -100 max = 100 }
+			multiply = 0.002
+		}
+	}
 }
 
 set_coalition_drift = {
@@ -1180,45 +1198,45 @@ set_coalition_drift = {
 	clear_coalition_count_ideas = yes
 
 	#Each coalition partner popularity gets added to their own Outlook
-	for_loop_effect = {
-		end = gov_coalition_array^num
+	for_each_loop = {
+		array = gov_coalition_array
+		index = i
 		value = v
-		set_temp_variable = { sum = party_pop_elect_array^gov_coalition_array^v } #pop of current element
-		set_temp_variable = { current_id = gov_coalition_array^v } #ID of current element
+
 		if = {
 			limit = {
-				check_variable = { current_id < 4 }
+				check_variable = { v < 4 }
 			}
-			add_to_variable = { coalition_democratic = sum }
+			add_to_variable = { coalition_democratic = party_pop_elect_array^v }
 		}
 		else_if = {
 			limit = {
-				check_variable = { current_id > 3 }
-				check_variable = { current_id < 10 }
+				check_variable = { v > 3 }
+				check_variable = { v < 10 }
 			}
-			add_to_variable = { coalition_communism = sum }
+			add_to_variable = { coalition_communism = party_pop_elect_array^v }
 		}
 		else_if = {
 			limit = {
 				OR = {
-					check_variable = { current_id = 10 }
-					check_variable = { current_id = 11 }
+					check_variable = { v = 10 }
+					check_variable = { v = 11 }
 				}
 			}
-			add_to_variable = { coalition_fascism = sum }
+			add_to_variable = { coalition_fascism = party_pop_elect_array^v }
 		}
 		else_if = {
 			limit = {
-				check_variable = { current_id > 11 }
-				check_variable = { current_id < 20 }
+				check_variable = { v > 11 }
+				check_variable = { v < 20 }
 			}
-			add_to_variable = { coalition_neutrality = sum }
+			add_to_variable = { coalition_neutrality = party_pop_elect_array^v }
 		}
 		else_if = {
 			limit = {
-				check_variable = { current_id > 19 }
+				check_variable = { v > 19 }
 			}
-			add_to_variable = { coalition_nationalist = sum }
+			add_to_variable = { coalition_nationalist = party_pop_elect_array^v }
 		}
 	}
 
@@ -1366,24 +1384,25 @@ update_coalition_leader = {
 
 refund_government_coalition = {
 	set_temp_variable = { sum_factor = 0 }
-	for_loop_effect = {
-		end = party_pop_array^num
+	for_each_loop = {
+		array = gov_coalition_array
 		value = v
-		set_temp_variable = { sum = party_pop_elect_array^gov_coalition_array^v } #pop of current element
-		set_temp_variable = { current_id = gov_coalition_array^v } #ID of current element
+		index = i
+
+		set_temp_variable = { pol_dist_target_index = v }
 		set_temp_variable = { pol_dist_source_index = ruling_party^0 }
-		meta_effect = {
-			text = {
-				pol_distance_[NUM] = yes
+		get_pol_distance = yes
+		add_to_temp_variable = {
+			var = sum_factor
+			value = {
+				value = party_pop_elect_array^v
+				multiply = pol_distance_current
 			}
-			NUM = "[?current_id|0]"
 		}
-		set_temp_variable = { pol_dist_temp = pol_distance_current }
-		multiply_temp_variable = { sum = pol_distance_current }
-		add_to_temp_variable = { sum_factor = sum }
 	}
-	set_variable = { pp_cost_to_invite = sum_factor }
-	multiply_variable = { pp_cost_to_invite = 1500 } #75%
+
+	set_temp_variable = { pp_cost_to_invite = sum_factor }
+	multiply_temp_variable = { pp_cost_to_invite = 1500 }
 	add_political_power = pp_cost_to_invite
 }
 
@@ -1413,149 +1432,23 @@ store_election_values = {
 }
 
 calculate_banned_parties = {
-	if = {
-		limit = {
-			has_country_flag = party1_banned
+	for_loop_effect = {
+		start = 0
+		end = 24
+		value = v
+		# Ban flags are 1-indexed (party1_banned..party24_banned); array slots are 0-indexed.
+		set_temp_variable = { v_flag = v }
+		add_to_temp_variable = { v_flag = 1 }
+		meta_effect = {
+			text = {
+				if = {
+					limit = { has_country_flag = party[FLAG]_banned }
+					set_variable = { party_pop_elect_array^[SLOT] = 0 }
+				}
+			}
+			FLAG = "[?v_flag|0]"
+			SLOT = "[?v|0]"
 		}
-		set_variable = { party_pop_elect_array^0 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party2_banned
-		}
-		set_variable = { party_pop_elect_array^1 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party3_banned
-		}
-		set_variable = { party_pop_elect_array^2 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party4_banned
-		}
-		set_variable = { party_pop_elect_array^3 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party5_banned
-		}
-		set_variable = { party_pop_elect_array^4 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party6_banned
-		}
-		set_variable = { party_pop_elect_array^5 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party7_banned
-		}
-		set_variable = { party_pop_elect_array^6 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party8_banned
-		}
-		set_variable = { party_pop_elect_array^7 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party9_banned
-		}
-		set_variable = { party_pop_elect_array^8 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party10_banned
-		}
-		set_variable = { party_pop_elect_array^9 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party11_banned
-		}
-		set_variable = { party_pop_elect_array^10 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party12_banned
-		}
-		set_variable = { party_pop_elect_array^11 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party13_banned
-		}
-		set_variable = { party_pop_elect_array^12 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party14_banned
-		}
-		set_variable = { party_pop_elect_array^13 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party15_banned
-		}
-		set_variable = { party_pop_elect_array^14 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party16_banned
-		}
-		set_variable = { party_pop_elect_array^15 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party17_banned
-		}
-		set_variable = { party_pop_elect_array^16 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party18_banned
-		}
-		set_variable = { party_pop_elect_array^17 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party19_banned
-		}
-		set_variable = { party_pop_elect_array^18 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party20_banned
-		}
-		set_variable = { party_pop_elect_array^19 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party21_banned
-		}
-		set_variable = { party_pop_elect_array^20 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party22_banned
-		}
-		set_variable = { party_pop_elect_array^21 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party23_banned
-		}
-		set_variable = { party_pop_elect_array^22 = 0 }
-	}
-	if = {
-		limit = {
-			has_country_flag = party24_banned
-		}
-		set_variable = { party_pop_elect_array^23 = 0 }
 	}
 }
 
@@ -1867,9 +1760,13 @@ reduce_affinity_array_party_1 = {
 			limit = {
 				check_variable = { party_1_affinity_array^g1 > 0 }
 			}
-			set_temp_variable = { cost1_element = party_1_affinity_array^g1 }
-			multiply_temp_variable = { cost1_element = d1 }
-			add_to_temp_variable = { cost1 = cost1_element }
+			add_to_temp_variable = {
+				var = cost1
+				value = {
+					value = party_1_affinity_array^g1
+					multiply = d1
+				}
+			}
 		}
 	}
 }
@@ -1925,9 +1822,13 @@ reduce_affinity_array_party_2 = {
 			limit = {
 				check_variable = { party_2_affinity_array^g2 > 0 }
 			}
-			set_temp_variable = { cost2_element = party_2_affinity_array^g2 }
-			multiply_temp_variable = { cost2_element = d2 }
-			add_to_temp_variable = { cost2 = cost2_element }
+			add_to_temp_variable = {
+				var = cost2
+				value = {
+					value = party_2_affinity_array^g2
+					multiply = d2
+				}
+			}
 		}
 	}
 }
@@ -2525,10 +2426,8 @@ get_pol_distance = {
 		limit = { NOT = { check_variable = { global.pol_dist_initialized = 1 } } }
 		init_pol_distance_matrix = yes
 	}
-	set_temp_variable = { pd_idx = pol_dist_target_index }
-	multiply_temp_variable = { pd_idx = 24 }
-	add_to_temp_variable = { pd_idx = pol_dist_source_index }
-	set_variable = { pol_distance_current = global.pol_dist_matrix^pd_idx }
+	set_temp_variable = { _pd_idx = { value = pol_dist_target_index multiply = 24 add = pol_dist_source_index } }
+	set_variable = { pol_distance_current = global.pol_dist_matrix^_pd_idx }
 }
 
 
@@ -3503,23 +3402,47 @@ copy_subideolgy_leader_throughput = {
 # Parameters:
 #  - nation_to_copy_from - the nation to copy the configure politics
 replicate_configure_politics = {
-	set_temp_variable = { temp_democratic = nation_to_copy_from.party_popularity@democratic }
-	multiply_temp_variable = { temp_democratic = 100 }
-	set_temp_variable = { temp_total = temp_democratic }
-	set_temp_variable = { temp_communism = nation_to_copy_from.party_popularity@communism }
-	multiply_temp_variable = { temp_communism = 100 }
-	add_to_temp_variable = { temp_total = temp_communism }
-	set_temp_variable = { temp_neutrality = nation_to_copy_from.party_popularity@neutrality }
-	multiply_temp_variable = { temp_neutrality = 100 }
-	add_to_temp_variable = { temp_total = temp_neutrality }
-	set_temp_variable = { temp_fascism = nation_to_copy_from.party_popularity@fascism }
-	multiply_temp_variable = { temp_fascism = 100 }
-	add_to_temp_variable = { temp_total = temp_fascism }
-	set_temp_variable = { temp_nationalist = nation_to_copy_from.party_popularity@nationalist }
-	multiply_temp_variable = { temp_nationalist = 100 }
-	add_to_temp_variable = { temp_total = temp_nationalist }
-	subtract_from_temp_variable = { temp_total = 100 }
-	multiply_temp_variable = { temp_total = -1 }
+	set_temp_variable = {
+		temp_democratic = {
+			value = nation_to_copy_from.party_popularity@democratic
+			multiply = 100
+		}
+	}
+	set_temp_variable = {
+		temp_communism = {
+			value = nation_to_copy_from.party_popularity@communism
+			multiply = 100
+		}
+	}
+	set_temp_variable = {
+		temp_neutrality = {
+			value = nation_to_copy_from.party_popularity@neutrality
+			multiply = 100
+		}
+	}
+	set_temp_variable = {
+		temp_fascism = {
+			value = nation_to_copy_from.party_popularity@fascism
+			multiply = 100
+		}
+	}
+	set_temp_variable = {
+		temp_nationalist = {
+			value = nation_to_copy_from.party_popularity@nationalist
+			multiply = 100
+		}
+	}
+	set_temp_variable = {
+		temp_total = {
+			value = temp_democratic
+			add = temp_communism
+			add = temp_neutrality
+			add = temp_fascism
+			add = temp_nationalist
+			subtract = 100
+			multiply = -1
+		}
+	}
 	add_to_temp_variable = { temp_nationalist = temp_total }
 
 	set_popularities = {
@@ -3541,10 +3464,11 @@ replicate_configure_politics = {
 		set_variable = { party_pop_array^v = nation_to_copy_from.party_pop_array^v }
 	}
 	add_to_array = { ruling_party = nation_to_copy_from.ruling_party^0 }
-	for_loop_effect = {
-		end = gov_coalition_array^num
+	for_each_loop = {
+		array = gov_coalition_array
+		index = i
 		value = v
-		add_to_array = { gov_coalition_array = nation_to_copy_from.gov_coalition_array^v }
+		add_to_array = { gov_coalition_array = nation_to_copy_from.gov_coalition_array^i }
 	}
 	set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;)
 	set_variable = { party_pop_elect_array^19 = 0 } #made illegal
@@ -3556,198 +3480,86 @@ replicate_configure_politics = {
 generete_politics_pie_chart = {
 	set_temp_variable = { popularity = 1000 }
 	set_variable = { politics_pie_chart^0 = 1000 }
-
-	set_temp_variable = { party_popularity = party_pop_array^0 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^1 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^1 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^2 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^2 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^3 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^3 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^4 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^4 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^5 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^5 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^6 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^6 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^7 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^7 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^8 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^8 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^9 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^9 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^10 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^10 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^11 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^11 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^12 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^12 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^13 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^13 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^14 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^14 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^15 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^15 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^16 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^16 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^17 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^17 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^18 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^18 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^19 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^19 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^20 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^20 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^21 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^21 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^22 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^22 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^23 = popularity }
-
-	set_temp_variable = { party_popularity = party_pop_array^23 }
-	multiply_temp_variable = { party_popularity = 1000 }
-	clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
-	subtract_from_temp_variable = { popularity = party_popularity }
-	set_variable = { politics_pie_chart^24 = popularity }
+	set_temp_variable = { chart_idx = 1 }
+	for_loop_effect = {
+		start = 0
+		end = 24
+		value = v
+		set_temp_variable = { party_popularity = party_pop_array^v }
+		multiply_temp_variable = { party_popularity = 1000 }
+		clamp_temp_variable = { var = party_popularity min = 0 max = 1000 }
+		subtract_from_temp_variable = { popularity = party_popularity }
+		set_variable = { politics_pie_chart^chart_idx = popularity }
+		add_to_temp_variable = { chart_idx = 1 }
+	}
 }
 
 calculate_prowestern_propaganda_cost = {
-	set_temp_variable = { promote_outlook_western_costs_temp = gdp_total }
-	multiply_temp_variable = { promote_outlook_western_costs_temp = 0.001 }
-
-	set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@western_outlook_campaign_cost_modifier }
-	multiply_variable = { promote_outlook_western_costs_temp = propaganda_campaign_cost_modifier }
+	set_variable = {
+		promote_outlook_western_costs = {
+			value = gdp_total
+			multiply = 0.001
+			multiply = {
+				value = 1
+				add = modifier@propaganda_campaign_cost_modifier
+				add = modifier@western_outlook_campaign_cost_modifier
+			}
+		}
+	}
 }
 
 calculate_emerging_propaganda_cost = {
-	set_temp_variable = { promote_outlook_emerging_costs_temp = gdp_total }
-	multiply_temp_variable = { promote_outlook_emerging_costs_temp = 0.001 }
-
-	set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@emerging_outlook_campaign_cost_modifier }
-	multiply_variable = { promote_outlook_emerging_costs_temp = propaganda_campaign_cost_modifier }
+	set_variable = {
+		promote_outlook_emerging_costs = {
+			value = gdp_total
+			multiply = 0.001
+			multiply = {
+				value = 1
+				add = modifier@propaganda_campaign_cost_modifier
+				add = modifier@emerging_outlook_campaign_cost_modifier
+			}
+		}
+	}
 }
 
 calculate_nonaligned_propaganda_cost = {
-	set_temp_variable = { promote_outlook_nonaligned_costs_temp = gdp_total }
-	multiply_temp_variable = { promote_outlook_nonaligned_costs_temp = 0.001 }
-
-	set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nonaligned_outlook_campaign_cost_modifier }
-	multiply_variable = { promote_outlook_nonaligned_costs_temp = propaganda_campaign_cost_modifier }
+	set_variable = {
+		promote_outlook_nonaligned_costs = {
+			value = gdp_total
+			multiply = 0.001
+			multiply = {
+				value = 1
+				add = modifier@propaganda_campaign_cost_modifier
+				add = modifier@nonaligned_outlook_campaign_cost_modifier
+			}
+		}
+	}
 }
 
 calculate_nationalist_propaganda_cost = {
-	set_temp_variable = { promote_outlook_nationalist_costs_temp = gdp_total }
-	multiply_temp_variable = { promote_outlook_nationalist_costs_temp = 0.001 }
-
-	set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nationalist_outlook_campaign_cost_modifier }
-	multiply_variable = { promote_outlook_nationalist_costs_temp = propaganda_campaign_cost_modifier }
+	set_variable = {
+		promote_outlook_nationalist_costs = {
+			value = gdp_total
+			multiply = 0.001
+			multiply = {
+				value = 1
+				add = modifier@propaganda_campaign_cost_modifier
+				add = modifier@nationalist_outlook_campaign_cost_modifier
+			}
+		}
+	}
 }
 
 calculate_salafist_propaganda_cost = {
-	set_temp_variable = { promote_outlook_salafist_costs_temp = gdp_total }
-	multiply_temp_variable = { promote_outlook_salafist_costs_temp = 0.001 }
-
-	set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-	add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@salafist_outlook_campaign_cost_modifier }
-	multiply_variable = { promote_outlook_salafist_costs_temp = propaganda_campaign_cost_modifier }
+	set_variable = {
+		promote_outlook_salafist_costs = {
+			value = gdp_total
+			multiply = 0.001
+			multiply = {
+				value = 1
+				add = modifier@propaganda_campaign_cost_modifier
+				add = modifier@salafist_outlook_campaign_cost_modifier
+			}
+		}
+	}
 }

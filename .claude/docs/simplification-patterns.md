@@ -137,8 +137,8 @@ An `OR` of `AND`s comparing the current scope's government to one other country,
 
 ```
 OR = {
-	AND = { has_government = democratic  FROM = { has_government = democratic } }
-	# ... one AND per ideology group ...
+ AND = { has_government = democratic  FROM = { has_government = democratic } }
+ # ... one AND per ideology group ...
 }
 # same gov      -> has_government = FROM
 # different gov -> NOT = { has_government = FROM }
@@ -258,7 +258,7 @@ A flag that is set but never cleared (or a slot never reset) silently locks the 
 ### Permanent ledger vs cycle-state — decide which you are building
 
 - **Cycle-state** (`global.current_active_agenda_disp`, the nominee slots): reset every cycle. Visibility gates read it (`> 0` = a cycle is live).
-- **Permanent ledger** (`global.EU_passed_votes`): an append-only record of what has ever passed, read-only via `is_in_array`, intentionally **never** cleared. Replacing a per-country `any_of_scopes { has_country_flag = focus_EU202_yes }` scan with `is_in_array = { array = global.EU_passed_votes value = 202 }` is correct **only** if something appends 202 to that array when the vote passes (`cleanup_european_union_voting_yes` does). A ledger that is read but never written is permanently false.
+- **Permanent ledger** (`global.EU_passed_votes`): an append-only record of what has ever passed, read-only via `is_in_array`, intentionally **never** cleared. Replacing a per-country `any_of_scopes { has_country_flag = focus_EU202_yes }` scan with `is_in_array = { array = global.EU_passed_votes value = 202 }` is correct **only** if something appends 202 to that array when the vote passes (`cleanup_european_union_voting` does, with the caller setting `vote_passed = 1`). A ledger that is read but never written is permanently false.
 
 Document which kind each array is in a one-line comment at its first write site — they look identical but reviewers must know whether a missing clear is a bug or intentional.
 
