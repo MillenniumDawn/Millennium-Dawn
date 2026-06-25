@@ -289,7 +289,7 @@ country_event = {
 		name = EUevent.6.a
 		log = "[GetDateText]: [ROOT.GetName]: event EUevent.6.a"
 		set_global_flag = eurozone_reforms
-		set_temp_variable = { modify_europeanism = -0.10 }
+		set_temp_variable = { modify_europeanism = 0.10 }
 		europeanism_change = yes
 	}
 }
@@ -429,23 +429,33 @@ country_event = {
 		name = EUevent.18.a
 		log = "[GetDateText]: [ROOT.GetName]: event EUevent.18.a"
 
-		set_country_flag = EU_host_military_exercise@FROM
-		random_owned_state = {
+		# Only host if we own a province bordering the exercise target; otherwise the mission is uncompletable.
+		if = {
 			limit = {
-				any_neighbor_state = {
-					is_owned_by = FROM.var_EU_military_exercise_target
+				any_owned_state = {
+					any_neighbor_state = {
+						is_owned_by = FROM.var_EU_military_exercise_target
+					}
 				}
 			}
-			set_variable = {
-				var = FROM.var_EU_military_exercise_host_state
-				value = THIS
+			set_country_flag = EU_host_military_exercise@FROM
+			random_owned_state = {
+				limit = {
+					any_neighbor_state = {
+						is_owned_by = FROM.var_EU_military_exercise_target
+					}
+				}
+				set_variable = {
+					var = FROM.var_EU_military_exercise_host_state
+					value = THIS
+				}
 			}
-		}
-		FROM = {
-			activate_mission = EU_military_exercise_mission
-			set_variable = {
-				var = FROM.var_EU_military_exercise_host_tag
-				value = ROOT
+			FROM = {
+				activate_mission = EU_military_exercise_mission
+				set_variable = {
+					var = FROM.var_EU_military_exercise_host_tag
+					value = ROOT
+				}
 			}
 		}
 
