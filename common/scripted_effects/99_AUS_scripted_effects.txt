@@ -1,0 +1,63 @@
+#toll system
+
+#calculate toll cost
+
+calc_toll_cost = {
+	calc_num_of_infrastructure = yes
+	
+	set_temp_variable = { temp_calc_toll_cost = 0 }
+	
+	add_to_temp_variable = { temp_calc_toll_cost = attractiveness }
+	add_to_temp_variable = { temp_calc_toll_cost = toll_cost }
+	add_to_temp_variable = { temp_calc_toll_cost = num_of_infrastructure }
+	multiply_temp_variable = { temp_calc_toll_cost = toll_factors }
+	divide_temp_variable = { temp_calc_toll_cost = num_of_infrastructure }
+	divide_temp_variable = { temp_calc_toll_cost = num_of_infrastructure }
+	divide_temp_variable = { temp_calc_toll_cost = num_of_infrastructure }
+	
+	set_variable = { total_toll_income = temp_calc_toll_cost }
+
+	log = "[this.GetName]: Attractiveness=[?attractiveness] TollCost=[?toll_cost] Infra=[?num_of_infrastructure] Factors=[?toll_factors] Result=[?total_toll_income]"
+}
+
+calc_num_of_infrastructure = {
+    set_variable = { num_of_infrastructure = 0 }
+
+    every_owned_state = {
+        ROOT = {
+            add_to_variable = { num_of_infrastructure = PREV.building_level@infrastructure }
+        }
+    }
+    
+    log = "[this.GetName] TOTAL INFRASTRUCTURE COUNTED: [?num_of_infrastructure]"
+}
+
+calc_toll_cost_startup = {
+	set_variable = { attractiveness = 5}
+   	set_variable = { toll_cost = 5 }
+   	set_variable = { toll_factors = 1 }
+    #DO NOT CHANGE			
+	calc_toll_cost = yes
+
+	clamp_variable = {
+		var = attractiveness
+		min = 0
+		max = 10
+	}
+
+	clamp_variable = {
+		var = toll_cost
+		min = 0
+		max = 10
+	}
+
+	clamp_variable = {
+		var = toll_factors 
+		min = 1
+		max = 5
+	}
+}
+	
+
+
+
