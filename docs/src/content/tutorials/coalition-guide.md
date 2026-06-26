@@ -1,17 +1,17 @@
 ---
 title: Coalition Government
-description: How coalitions work in Millennium Dawn — building, maintaining, and dissolving coalition governments after elections.
+description: How coalitions work in Millennium Dawn. Building, maintaining, and dissolving coalition governments after elections.
 ---
 
 After an election, if no party wins an outright majority, you enter coalition-building mode. The Elections & Politics screen will prompt you to invite partners via Coalition Decisions. Your goal is to get your combined parliamentary share above 50%.
 
 ## Who Can Join
 
-Any party that cleared the election threshold — default 5% — is eligible. Parties below that threshold don't enter parliament at all. You can raise or lower the threshold between elections using the political actions on the Elections & Politics screen; a higher threshold keeps parliament cleaner but locks out small parties entirely.
+Any party that cleared the election threshold (default 5%) is eligible. Parties below that threshold don't enter parliament at all. You can raise or lower the threshold between elections using the political actions on the Elections & Politics screen; a higher threshold keeps parliament cleaner but locks out small parties entirely.
 
 ## What It Costs
 
-Inviting a partner spends Political Power. The cost is proportional to two things: how large the party is (its electoral share) and how ideologically distant it is from your ruling party. A small, nearby partner might run 200 PP. A large, distant one can exceed 4000 PP. Plan accordingly — if you're cash-strapped, invite your closest neighbors first, then decide whether the remaining gap is worth the price.
+Inviting a partner spends Political Power. The cost is proportional to two things: how large the party is (its electoral share) and how ideologically distant it is from your ruling party. A small, nearby partner might run 200 PP. A large, distant one can exceed 4000 PP. Plan accordingly. If you're cash-strapped, invite your closest neighbors first, then decide whether the remaining gap is worth the price.
 
 **Approximate costs:**
 
@@ -22,7 +22,7 @@ Inviting a partner spends Political Power. The cost is proportional to two thing
 
 ## Removing a Partner
 
-You can kick a partner out mid-term via Coalition Decisions. You get back 75% of what you paid to invite them. If a partner becomes a liability — their popularity collapses mid-term and you no longer need their seats — removing them is roughly PP-neutral in the long run.
+You can kick a partner out mid-term via Coalition Decisions. You get back 75% of what you paid to invite them. If a partner becomes a liability (their popularity collapses mid-term and you no longer need their seats), removing them is roughly PP-neutral in the long run.
 
 ## When the Coalition Dissolves
 
