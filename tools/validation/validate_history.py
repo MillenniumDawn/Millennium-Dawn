@@ -11,8 +11,9 @@ import disk_cache
 from validator_common import BaseValidator, run_validator_main, strip_comments
 
 
-def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict]:
-    """Build the tech prerequisite graph and the module -> enabling-tech map.
+def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict, Dict]:
+    """Build the tech prerequisite graph, the module -> enabling-tech map, and
+    the per-tech DLC gating map.
 
     A tech B has prerequisite A if A contains `path = { leads_to_tech = B }`.
     Multiple techs can lead to the same tech; any one satisfies the prerequisite.
@@ -20,11 +21,17 @@ def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict]:
     A module M is enabled by tech A if A contains M inside an
     `enable_equipment_modules = { ... }` block. Multiple techs can enable the
     same module; any one satisfies the requirement.
+
+    A tech A is DLC-gated if it contains an `allow_branch = { ... }` block with
+    a `has_dlc` condition. `has_dlc = "X"` requires DLC X; `NOT = { has_dlc =
+    "X" }` forbids it. The gating is collected as (kind, dlc) pairs so history
+    files that grant A in a contradicting DLC branch can be flagged.
     """
     tech_dir = os.path.join(mod_path, "common", "technologies")
     prerequisites = defaultdict(set)  # tech -> set of techs that lead to it
     all_techs = set()
     module_techs = defaultdict(set)  # module -> set of techs that enable it
+    tech_dlc_reqs = defaultdict(list)  # tech -> [(kind, dlc), ...]
 
     for filepath in glob.iglob(os.path.join(tech_dir, "*.txt")):
         try:
@@ -34,9 +41,61 @@ def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict]:
             continue
 
         content = strip_comments(content)
-        _parse_tech_file(content, prerequisites, all_techs, module_techs)
+        _parse_tech_file(content, prerequisites, all_techs, module_techs, tech_dlc_reqs)
 
-    return prerequisites, all_techs, module_techs
+    return prerequisites, all_techs, module_techs, tech_dlc_reqs
+
+
+def propagate_dlc_reqs(
+    prerequisites: Dict[str, Set[str]],
+    tech_dlc_reqs: Dict[str, List[Tuple[str, str]]],
+) -> Dict[str, List[Tuple[str, str]]]:
+    """Propagate DLC gating along the prerequisite graph.
+
+    A tech inherits a (kind, dlc) constraint when every one of its prerequisite
+    techs carries it: if all paths to a tech run through techs forbidden under
+    DLC X, the tech itself cannot legitimately exist under X (and likewise for
+    `require`). This extends a base-tech gate (e.g. SP_arty_0 forbidden under No
+    Step Back) to its whole upgrade chain (SP_arty_1..4, Arty_upgrade_*), so
+    granting any tier of the legacy or NSB line in a contradicting branch is
+    caught, not just the root.
+    """
+    constraints = defaultdict(set)  # (kind, dlc) -> seed techs
+    for tech, pairs in tech_dlc_reqs.items():
+        for kind, dlc in pairs:
+            constraints[(kind, dlc)].add(tech)
+
+    propagated = defaultdict(set)  # tech -> {(kind, dlc), ...}
+    for (kind, dlc), seed in constraints.items():
+        gated = set(seed)
+        changed = True
+        while changed:
+            changed = False
+            for tech, prereqs in prerequisites.items():
+                if tech in gated or not prereqs:
+                    continue
+                if all(p in gated for p in prereqs):
+                    gated.add(tech)
+                    changed = True
+        for tech in gated:
+            propagated[tech].add((kind, dlc))
+
+    return {tech: sorted(pairs) for tech, pairs in propagated.items()}
+
+
+def _extract_dlc_conditions(text: str) -> List[Tuple[str, str]]:
+    """Extract (kind, dlc) gating pairs from an `allow_branch` block body.
+
+    `NOT = { has_dlc = "X" }` yields ("forbid", "X"); a bare `has_dlc = "X"`
+    yields ("require", "X"). Non-DLC triggers (dates, flags) are ignored.
+    """
+    reqs: List[Tuple[str, str]] = []
+    for m in re.finditer(r'NOT\s*=\s*\{[^{}]*?has_dlc\s*=\s*"([^"]+)"[^{}]*?\}', text):
+        reqs.append(("forbid", m.group(1)))
+    no_not = re.sub(r"NOT\s*=\s*\{[^{}]*?\}", "", text)
+    for m in re.finditer(r'has_dlc\s*=\s*"([^"]+)"', no_not):
+        reqs.append(("require", m.group(1)))
+    return reqs
 
 
 def _parse_tech_file(
@@ -44,9 +103,10 @@ def _parse_tech_file(
     prerequisites: Dict[str, Set[str]],
     all_techs: Set[str],
     module_techs: Optional[Dict[str, Set[str]]] = None,
+    tech_dlc_reqs: Optional[Dict[str, List[Tuple[str, str]]]] = None,
 ):
-    """Parse a single tech file to extract tech definitions, their paths, and
-    the modules each tech enables."""
+    """Parse a single tech file to extract tech definitions, their paths, the
+    modules each tech enables, and the DLC each tech is gated on."""
     lines = content.split("\n")
     i = 0
     brace_depth = 0
@@ -55,6 +115,9 @@ def _parse_tech_file(
     tech_brace_depth = 0
     in_enable = False
     enable_brace_depth = 0
+    in_allow = False
+    allow_brace_depth = 0
+    allow_buf: List[str] = []
 
     while i < len(lines):
         line = lines[i].strip()
@@ -107,9 +170,24 @@ def _parse_tech_file(
                     in_enable = True
                     enable_brace_depth = brace_depth
 
+            if tech_dlc_reqs is not None:
+                if in_allow:
+                    allow_buf.append(line)
+                    if brace_depth < allow_brace_depth:
+                        in_allow = False
+                        for kind, dlc in _extract_dlc_conditions("\n".join(allow_buf)):
+                            tech_dlc_reqs[current_tech].append((kind, dlc))
+                        allow_buf = []
+                if not in_allow and re.match(r"^allow_branch\s*=\s*\{", line):
+                    in_allow = True
+                    allow_brace_depth = brace_depth
+                    allow_buf = [line]
+
             if brace_depth < tech_brace_depth:
                 current_tech = None
                 in_enable = False
+                in_allow = False
+                allow_buf = []
 
         i += 1
 
@@ -208,8 +286,7 @@ def _parse_history_blocks(
             base_techs.update(techs)
             continue
 
-        if_match = re.match(r"^if\s*=\s*\{", line)
-        if if_match:
+        if re.match(r"^if\s*=\s*\{", line):
             condition, if_techs, else_techs, i = _parse_if_block(lines, i)
             if condition and (if_techs or else_techs):
                 branches.append((condition, if_techs, else_techs))
@@ -305,17 +382,15 @@ def _parse_if_block(
     for line in block_lines:
         stripped = line.strip()
 
-        # Track when we pass the limit block
+        # Skip lines inside the limit block: depth returns to 1 when its
+        # closing brace is reached, which flips found_limit_end to True.
         if not found_limit_end:
-            if "limit" in stripped:
-                found_limit_end = False
             for ch in stripped:
                 if ch == "{":
                     inner_brace += 1
                 elif ch == "}":
                     inner_brace -= 1
-            # After processing the limit block (depth returns to 1)
-            if inner_brace <= 1 and "}" in stripped and not found_limit_end:
+            if inner_brace <= 1 and "}" in stripped:
                 found_limit_end = True
             continue
 
@@ -459,24 +534,15 @@ def validate_country_equipment(
     filepath, module_techs, mod_path = args
     filename = os.path.basename(filepath)
 
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            content = f.read()
-    except Exception:
-        return []
-    lines = strip_comments(content).split("\n")
-
-    base_techs: Set[str] = set()
-    branches: List[Tuple[str, Set[str], Set[str]]] = []
-    _parse_history_blocks(lines, base_techs, branches)
+    # Union of techs across all DLC branches — if any branch grants a module's
+    # enabling tech, the country can use the module.
+    have: Set[str] = set()
+    for tech_set, _ in parse_history_file(filepath, mod_path):
+        have |= tech_set
 
     results = []
     seen = set()
-    for name, modules, gating in parse_equipment_variants(filepath, mod_path):
-        have = set(base_techs)
-        for condition, if_techs, else_techs in branches:
-            have |= if_techs | else_techs
-
+    for name, modules, _gating in parse_equipment_variants(filepath, mod_path):
         for module in sorted(modules):
             enabling = module_techs.get(module)
             if not enabling:
@@ -498,6 +564,174 @@ def validate_country_equipment(
             )
 
     return results
+
+
+def _context_dlcs(label: str) -> Tuple[Set[str], Set[str]]:
+    """Split a tech-set context label into (present_dlcs, absent_dlcs).
+
+    Labels are conjunctions built by `_build_tech_sets`, e.g.
+    `No Step Back + NOT By Blood Alone`. A bare term means the DLC is present in
+    that branch; a `NOT ` prefix means it is absent.
+    """
+    present: Set[str] = set()
+    absent: Set[str] = set()
+    if label and label != "unconditional":
+        for term in label.split(" + "):
+            term = term.strip()
+            if not term or term == "unconditional":
+                continue
+            if term.startswith("NOT "):
+                absent.add(term[4:])
+            else:
+                present.add(term)
+    return present, absent
+
+
+def validate_country_dlc_techs(
+    args: Tuple[str, Dict[str, List[Tuple[str, str]]], str],
+) -> List[str]:
+    """Validate that a country never gets a DLC-gated tech in a DLC branch that
+    contradicts the tech's `allow_branch`. Returns error strings.
+
+    A tech gated `NOT has_dlc = "X"` (the non-DLC fallback, e.g. SP_arty_0) must
+    not be set in any reachable DLC configuration where X is active; a tech
+    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_0) must not be
+    set where X is inactive. Granting it anyway force-enables equipment whose
+    tech branch is disabled, duplicating the active-DLC designer's equipment.
+
+    Only flagged when the history file itself branches on the conflicting DLC,
+    so its presence/absence in a given context is known.
+    """
+    filepath, tech_dlc_reqs, mod_path = args
+    filename = os.path.basename(filepath)
+
+    tech_sets = parse_history_file(filepath, mod_path)
+
+    error_contexts = defaultdict(list)  # (tech, kind, dlc) -> [context, ...]
+    for tech_set, context in tech_sets:
+        present, absent = _context_dlcs(context)
+        for tech in sorted(tech_set):
+            for kind, dlc in tech_dlc_reqs.get(tech, ()):
+                if kind == "forbid" and dlc in present:
+                    error_contexts[(tech, kind, dlc)].append(context)
+                elif kind == "require" and dlc in absent:
+                    error_contexts[(tech, kind, dlc)].append(context)
+
+    results = []
+    for (tech, kind, dlc), contexts in sorted(error_contexts.items()):
+        if kind == "forbid":
+            results.append(
+                f'{filename}: {tech} is granted while "{dlc}" is active, but its '
+                f"tech branch requires that DLC be absent [{contexts[0]}]"
+            )
+        else:
+            results.append(
+                f'{filename}: {tech} is granted while "{dlc}" is inactive, but its '
+                f"tech branch requires that DLC [{contexts[0]}]"
+            )
+
+    return results
+
+
+def _get_state_owners(mod_path: str) -> Set[str]:
+    """Parse history/states/ files to find which tags own states at game start.
+
+    Returns a set of tag strings (e.g. {'USA', 'FRA', ...}).
+    """
+    owners = set()
+    states_dir = os.path.join(mod_path, "history", "states")
+    for f in glob.iglob(os.path.join(states_dir, "*.txt")):
+        try:
+            with open(f, "r", encoding="utf-8-sig") as fh:
+                for line in fh:
+                    m = re.match(r"^\s*owner\s*=\s*(\S+)", line)
+                    if m:
+                        owners.add(m.group(1))
+        except Exception:
+            continue
+    return owners
+
+
+def _get_oob_refs(filepath: str) -> List[Tuple[str, int, str]]:
+    """Extract (oob_name, line_number, ref_type) from a history file.
+
+    Returns all non-commented OOB references: oob, set_oob, set_air_oob,
+    set_naval_oob. ref_type is the HOI4 key used (e.g. 'oob', 'set_oob').
+    """
+    refs = []
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            lines = f.readlines()
+    except Exception:
+        return refs
+
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        # Skip comments
+        if stripped.startswith("#"):
+            continue
+        # Match oob = "...", set_oob = "...", set_air_oob = "...", set_naval_oob = "..."
+        m = re.match(
+            r'(oob|set_oob|set_air_oob|set_naval_oob)\s*=\s*"([^"]+)"', stripped
+        )
+        if m:
+            refs.append((m.group(2), i, m.group(1)))
+
+    return refs
+
+
+def validate_oob_references(
+    args: Tuple[str, Set[str], Set[str]],
+) -> List[str]:
+    """Validate that a history file for a state-owning nation has a land OOB.
+
+    Nations that own states at game start MUST have at least one land OOB
+    reference (oob or set_oob) that loads on game start, otherwise they will
+    have no division templates and be unplayable until save/reload.
+
+    Returns error strings for any state-owning nation missing a land OOB or
+    referencing an OOB file that does not exist.
+    """
+    filepath, existing_oobs, state_owners = args
+    filename = os.path.basename(filepath)
+
+    # Extract the tag from the filename (e.g. "USA - USA.txt" -> "USA")
+    tag = filename.split(" - ")[0] if " - " in filename else filename[:-4]
+
+    if tag not in state_owners:
+        return []
+
+    refs = _get_oob_refs(filepath)
+    has_land_oob = any(ref_type in ("oob", "set_oob") for _, _, ref_type in refs)
+
+    if not has_land_oob:
+        return [
+            f"{filename}: {tag} owns states at game start but has no land OOB (oob/set_oob) - nation will be unplayable until save/reload"
+        ]
+
+    return [
+        f'{filename}:{line_num} - {ref_type} references "{oob_name}" '
+        f"but no history/units/{oob_name}.txt file exists"
+        for oob_name, line_num, ref_type in refs
+        if ref_type in ("oob", "set_oob") and oob_name not in existing_oobs
+    ]
+
+
+def validate_capital_defined(filepath: str) -> List[str]:
+    """Check that a history file has a capital defined.
+
+    Returns an error string if no `capital = N` line is found.
+    """
+    filename = os.path.basename(filepath)
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except Exception:
+        return [f"{filename}: could not read file"]
+
+    if not re.search(r"^capital\s*=\s*\d+", content, re.MULTILINE):
+        return [f"{filename}: no capital defined"]
+    return []
 
 
 def validate_country_file(
@@ -543,7 +777,7 @@ def validate_country_file(
 
 
 class Validator(BaseValidator):
-    TITLE = "HISTORY TECHNOLOGY DEPENDENCY VALIDATION"
+    TITLE = "HISTORY FILE VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, *args, **kwargs):
@@ -551,19 +785,30 @@ class Validator(BaseValidator):
         self.prerequisites = {}
         self.all_techs = set()
         self.module_techs = {}
+        self.tech_dlc_reqs = {}
 
     def _build_tech_graph(self):
         """Build the technology dependency graph from tech definition files."""
         self._log_section("Building technology dependency graph...")
 
-        self.prerequisites, self.all_techs, self.module_techs = parse_tech_dependencies(
-            self.mod_path
-        )
+        (
+            self.prerequisites,
+            self.all_techs,
+            self.module_techs,
+            direct_dlc_reqs,
+        ) = parse_tech_dependencies(self.mod_path)
+
+        # Extend each base-tech DLC gate to its whole upgrade chain.
+        self.tech_dlc_reqs = propagate_dlc_reqs(self.prerequisites, direct_dlc_reqs)
 
         techs_with_prereqs = len(self.prerequisites)
         self.log(f"  Found {len(self.all_techs)} technology definitions")
         self.log(f"  Found {techs_with_prereqs} technologies with prerequisites")
         self.log(f"  Found {len(self.module_techs)} modules mapped to enabling techs")
+        self.log(
+            f"  Found {len(direct_dlc_reqs)} DLC-gated technologies "
+            f"({len(self.tech_dlc_reqs)} incl. upgrade chains)"
+        )
 
     def _get_history_files(self) -> List[str]:
         """Get list of history country files to validate."""
@@ -578,60 +823,117 @@ class Validator(BaseValidator):
             ]
         return sorted(glob.iglob(os.path.join(history_dir, "*.txt")))
 
+    def _validate_history_files(
+        self,
+        title: str,
+        success_msg: str,
+        error_header: str,
+        args_list: List[Tuple],
+        func,
+        chunksize: int = 20,
+    ):
+        """Pool a per-file validator across all history files and report results."""
+        self._log_section(title)
+        self.log(f"  Found {len(args_list)} history files to check")
+        all_results = self._pool_map(func, args_list, chunksize=chunksize)
+        results = [r for file_results in all_results for r in file_results]
+        self._report(results, success_msg, error_header)
+
     def validate_tech_dependencies(self):
         """Validate that all history files have correct tech prerequisites."""
-        self._log_section("Checking technology dependencies in history files...")
-
         files = self._get_history_files()
-        self.log(f"  Found {len(files)} history files to check")
-
         args_list = [
             (f, self.prerequisites, self.all_techs, self.mod_path) for f in files
         ]
-
-        all_results = self._pool_map(validate_country_file, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
-
-        self._report(
-            results,
+        self._validate_history_files(
+            "Checking technology dependencies in history files...",
             "✓ All history files have correct technology prerequisites",
             "History files with missing technology prerequisites:",
+            args_list,
+            validate_country_file,
         )
 
     def validate_equipment_modules(self):
         """Validate that equipment variants only use unlocked modules."""
-        self._log_section("Checking equipment variant module technologies...")
+        files = self._get_history_files()
+        args_list = [(f, self.module_techs, self.mod_path) for f in files]
+        self._validate_history_files(
+            "Checking equipment variant module technologies...",
+            "✓ All equipment variants use unlocked modules",
+            "Equipment variants using modules without the enabling technology:",
+            args_list,
+            validate_country_equipment,
+        )
+
+    def validate_dlc_branch_techs(self):
+        """Validate that history files never grant a DLC-gated tech in a branch
+        that contradicts the tech's allow_branch DLC condition."""
+        files = self._get_history_files()
+        args_list = [(f, self.tech_dlc_reqs, self.mod_path) for f in files]
+        self._validate_history_files(
+            "Checking DLC-gated technologies in history files...",
+            "✓ All history files grant DLC-gated technologies in compatible branches",
+            "History files granting DLC-gated technologies in a contradicting DLC branch:",
+            args_list,
+            validate_country_dlc_techs,
+        )
+
+    def validate_oob_references(self):
+        """Validate that every state-owning nation has a land OOB on game start."""
+        self._log_section("Checking OOB references in history files...")
 
         files = self._get_history_files()
         self.log(f"  Found {len(files)} history files to check")
 
-        args_list = [(f, self.module_techs, self.mod_path) for f in files]
+        # Build the set of existing OOB files (basenames without extension)
+        units_dir = os.path.join(self.mod_path, "history", "units")
+        existing_oobs = {
+            os.path.splitext(os.path.basename(f))[0]
+            for f in glob.iglob(os.path.join(units_dir, "*.txt"))
+        }
+        self.log(f"  Found {len(existing_oobs)} OOB files in history/units/")
 
-        all_results = self._pool_map(
-            validate_country_equipment, args_list, chunksize=20
+        # Build the set of tags that own states at game start
+        state_owners = _get_state_owners(self.mod_path)
+        self.log(f"  Found {len(state_owners)} tags that own states at game start")
+
+        args_list = [(f, existing_oobs, state_owners) for f in files]
+        all_results = self._pool_map(validate_oob_references, args_list, chunksize=50)
+        results = [r for file_results in all_results for r in file_results]
+        self._report(
+            results,
+            "✓ All state-owning nations have a land OOB on game start",
+            "State-owning nations missing a land OOB (unplayable until save/reload):",
         )
 
+    def validate_capital_defined(self):
+        """Check that every history file has a capital defined."""
+        self._log_section("Checking capital definitions in history files...")
+
+        files = self._get_history_files()
+        self.log(f"  Found {len(files)} history files to check")
+
         results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        for f in files:
+            results.extend(validate_capital_defined(f))
 
         self._report(
             results,
-            "✓ All equipment variants use unlocked modules",
-            "Equipment variants using modules without the enabling technology:",
+            "✓ All history files have a capital defined",
+            "History files missing a capital definition:",
         )
 
     def run_validations(self):
         self._build_tech_graph()
         self.validate_tech_dependencies()
         self.validate_equipment_modules()
+        self.validate_dlc_branch_techs()
+        self.validate_oob_references()
+        self.validate_capital_defined()
 
 
 if __name__ == "__main__":
     run_validator_main(
         Validator,
-        "Validate technology dependencies in country history files",
+        "Validate history files: technology dependencies, OOB references, capital definitions",
     )

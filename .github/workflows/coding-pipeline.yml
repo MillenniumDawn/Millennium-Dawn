@@ -3,19 +3,19 @@ name: Code Standards & Validation
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: [ main ]
+    branches: [main]
     paths:
-    - 'common/**'
-    - 'events/**'
-    - 'history/**'
-    - 'localisation/**'
-    - 'interface/**'
-    - 'gfx/**'
-    # Tooling paths are intentionally absent: the validator jobs gate on
-    # detect-changes (content groups), so a tooling-only PR would trigger the
-    # workflow but skip every validator, posting an empty report. Changes under
-    # tools/ are smoke-tested by tools-validation.yml instead.
-    - '.github/workflows/coding-pipeline.yml'
+      - "common/**"
+      - "events/**"
+      - "history/**"
+      - "localisation/**"
+      - "interface/**"
+      - "gfx/**"
+      # Tooling paths are intentionally absent: the validator jobs gate on
+      # detect-changes (content groups), so a tooling-only PR would trigger the
+      # workflow but skip every validator, posting an empty report. Changes under
+      # tools/ are smoke-tested by tools-validation.yml instead.
+      - ".github/workflows/coding-pipeline.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -34,79 +34,79 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      common:        ${{ steps.filter.outputs.common }}
-      events:        ${{ steps.filter.outputs.events }}
-      history:       ${{ steps.filter.outputs.history }}
-      localisation:  ${{ steps.filter.outputs.localisation }}
-      ai-strategy:   ${{ steps.filter.outputs.ai-strategy }}
-      ai-navy:       ${{ steps.filter.outputs.ai-navy }}
-      ai-equipment:  ${{ steps.filter.outputs.ai-equipment }}
-      factions:      ${{ steps.filter.outputs.factions }}
-      oob:           ${{ steps.filter.outputs.oob }}
-      decisions:     ${{ steps.filter.outputs.decisions }}
-      scripted-loc:  ${{ steps.filter.outputs.scripted-loc }}
+      common: ${{ steps.filter.outputs.common }}
+      events: ${{ steps.filter.outputs.events }}
+      history: ${{ steps.filter.outputs.history }}
+      localisation: ${{ steps.filter.outputs.localisation }}
+      ai-strategy: ${{ steps.filter.outputs.ai-strategy }}
+      ai-navy: ${{ steps.filter.outputs.ai-navy }}
+      ai-equipment: ${{ steps.filter.outputs.ai-equipment }}
+      factions: ${{ steps.filter.outputs.factions }}
+      oob: ${{ steps.filter.outputs.oob }}
+      decisions: ${{ steps.filter.outputs.decisions }}
+      scripted-loc: ${{ steps.filter.outputs.scripted-loc }}
       scripted-guis: ${{ steps.filter.outputs.scripted-guis }}
-      interface:     ${{ steps.filter.outputs.interface }}
+      interface: ${{ steps.filter.outputs.interface }}
       national-focus: ${{ steps.filter.outputs.national-focus }}
-      on-actions:    ${{ steps.filter.outputs.on-actions }}
+      on-actions: ${{ steps.filter.outputs.on-actions }}
       scripted-effects: ${{ steps.filter.outputs.scripted-effects }}
-      style:         ${{ steps.filter.outputs.style }}
-      style-files:   ${{ steps.filter.outputs.style_files }}
+      style: ${{ steps.filter.outputs.style }}
+      style-files: ${{ steps.filter.outputs.style_files }}
     steps:
-    # No checkout — on pull_request events dorny/paths-filter fetches the
-    # changed-file list straight from the GitHub API, so cloning the repo
-    # just to diff locally is pure overhead.
-    - name: Detect changed file groups
-      uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-      id: filter
-      with:
-        # `style_files` (from list-files: json) carries the changed .txt paths
-        # so the style job validates only the diff, not the whole repo. JSON,
-        # not shell, so paths with spaces/apostrophes ("Cote D'Ivoire.txt")
-        # survive jq parsing instead of being word-split into garbage.
-        list-files: json
-        filters: |
-          common:
-            - 'common/**'
-          events:
-            - 'events/**'
-          history:
-            - 'history/**'
-          localisation:
-            - 'localisation/**'
-          ai-strategy:
-            - 'common/ai_strategy/**'
-            - 'common/ai_templates/**'
-          ai-navy:
-            - 'common/ai_navy/**'
-            - 'common/units/**'
-          ai-equipment:
-            - 'common/ai_equipment/**'
-          factions:
-            - 'common/factions/**'
-          oob:
-            - 'history/units/**'
-            - 'common/units/**'
-            - 'common/ai_templates/**'
-            - 'common/scripted_effects/00_AI_scripted_effects.txt'
-          decisions:
-            - 'common/decisions/**'
-          scripted-loc:
-            - 'common/scripted_localisation/**'
-          scripted-guis:
-            - 'common/scripted_guis/**'
-          interface:
-            - 'interface/**'
-          national-focus:
-            - 'common/national_focus/**'
-          on-actions:
-            - 'common/on_actions/**'
-          scripted-effects:
-            - 'common/scripted_effects/**'
-          style:
-            - 'common/**/*.txt'
-            - 'events/**/*.txt'
-            - 'history/**/*.txt'
+      # No checkout — on pull_request events dorny/paths-filter fetches the
+      # changed-file list straight from the GitHub API, so cloning the repo
+      # just to diff locally is pure overhead.
+      - name: Detect changed file groups
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          # `style_files` (from list-files: json) carries the changed .txt paths
+          # so the style job validates only the diff, not the whole repo. JSON,
+          # not shell, so paths with spaces/apostrophes ("Cote D'Ivoire.txt")
+          # survive jq parsing instead of being word-split into garbage.
+          list-files: json
+          filters: |
+            common:
+              - 'common/**'
+            events:
+              - 'events/**'
+            history:
+              - 'history/**'
+            localisation:
+              - 'localisation/**'
+            ai-strategy:
+              - 'common/ai_strategy/**'
+              - 'common/ai_templates/**'
+            ai-navy:
+              - 'common/ai_navy/**'
+              - 'common/units/**'
+            ai-equipment:
+              - 'common/ai_equipment/**'
+            factions:
+              - 'common/factions/**'
+            oob:
+              - 'history/units/**'
+              - 'common/units/**'
+              - 'common/ai_templates/**'
+              - 'common/scripted_effects/00_AI_scripted_effects.txt'
+            decisions:
+              - 'common/decisions/**'
+            scripted-loc:
+              - 'common/scripted_localisation/**'
+            scripted-guis:
+              - 'common/scripted_guis/**'
+            interface:
+              - 'interface/**'
+            national-focus:
+              - 'common/national_focus/**'
+            on-actions:
+              - 'common/on_actions/**'
+            scripted-effects:
+              - 'common/scripted_effects/**'
+            style:
+              - 'common/**/*.txt'
+              - 'events/**/*.txt'
+              - 'history/**/*.txt'
 
   # ───────────────────────────────────────────────────────────────
   # Style & common-mistakes — diff-scoped to the changed .txt files only,
@@ -120,46 +120,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          common
-          events
-          history
-          localisation
-          interface
-          gfx/flags
-          tools
-          .claude
-          CLAUDE.md
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            common
+            events
+            history
+            localisation
+            interface
+            gfx/flags
+            tools
+            .claude
+            CLAUDE.md
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
 
-    - name: Run style check
-      env:
-        # JSON array of changed .txt files under common/events/history.
-        STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
-      run: |
-        # Newline-delimit the JSON array (newlines can't appear in these paths)
-        # and drop the files the pre-commit md-validate-style hook also excludes.
-        printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
-          | grep -vE '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
-          > style_files.txt || true
-        if [ ! -s style_files.txt ]; then
-          echo "No style-relevant files changed"
-          exit 0
-        fi
-        # validate_style.py is a BaseValidator: --staged reads the diff list from
-        # MD_STAGED_FILES (newline-separated), so spaces/apostrophes are safe.
-        MD_STAGED_FILES="$(cat style_files.txt)" python3 tools/validation/validate_style.py --staged --strict --no-color
-        # check_common_mistakes.py takes the files as positional args; feed them
-        # NUL-delimited via xargs so spaces/apostrophes don't word-split.
-        tr '\n' '\0' < style_files.txt | xargs -0 -r python3 tools/linting/check_common_mistakes.py
+      - name: Run style check
+        env:
+          # JSON array of changed .txt files under common/events/history.
+          STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
+        run: |
+          # Newline-delimit the JSON array (newlines can't appear in these paths)
+          # and drop the files the pre-commit md-validate-style hook also excludes.
+          printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
+            | grep -vE '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
+            > style_files.txt || true
+          if [ ! -s style_files.txt ]; then
+            echo "No style-relevant files changed"
+            exit 0
+          fi
+          # validate_style.py is a BaseValidator: --staged reads the diff list from
+          # MD_STAGED_FILES (newline-separated), so spaces/apostrophes are safe.
+          MD_STAGED_FILES="$(cat style_files.txt)" python3 tools/validation/validate_style.py --staged --strict --no-color
+          # check_common_mistakes.py takes the files as positional args; feed them
+          # NUL-delimited via xargs so spaces/apostrophes don't word-split.
+          tr '\n' '\0' < style_files.txt | xargs -0 -r python3 tools/linting/check_common_mistakes.py
 
   # ───────────────────────────────────────────────────────────────
   # Structural lint — file-integrity checks that otherwise only run as
@@ -176,29 +176,29 @@ jobs:
       needs.detect-changes.outputs.localisation == 'true'
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          common
-          events
-          history
-          localisation
-          tools
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            common
+            events
+            history
+            localisation
+            tools
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
 
-    - name: Check localisation UTF-8 BOM
-      run: python3 tools/linting/validate_localization_encoding.py
+      - name: Check localisation UTF-8 BOM
+        run: python3 tools/linting/validate_localization_encoding.py
 
-    - name: Check .mod file encoding
-      run: |
-        git ls-files -z -- '*.mod' ':!resources' \
-          | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
+      - name: Check .mod file encoding
+        run: |
+          git ls-files -z -- '*.mod' ':!resources' \
+            | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
 
   # ───────────────────────────────────────────────────────────────
   # Core validators — broad scope, run when most game files change
@@ -264,12 +264,14 @@ jobs:
               history
               localisation
               tools
-          - script: validate_history_techs.py
-            name: history-techs
-            title: "History Technology Dependencies"
+          - script: validate_history.py
+            name: history-files
+            title: "History Files"
             sparse: |
               common/technologies
               history/countries
+              history/units
+              history/states
               tools
           - script: validate_unused_scripted.py
             name: unused-scripted
@@ -322,50 +324,50 @@ jobs:
           # `pre-commit run md-validate-unused-textures --hook-stage manual`.
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: ${{ matrix.validator.sparse }}
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: ${{ matrix.validator.sparse }}
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
 
-    # Restore .validation_cache/ from a previous run keyed on the PR base
-    # commit + validator code hash. The disk cache holds per-file scan
-    # results (mtime/size keyed) and aggregate indexes — a PR touching N
-    # files re-scans only those N. The restore-keys fallback walks back to
-    # any prior cache for this validator so cold starts on a new base SHA
-    # still get partial reuse.
-    - name: Restore validator disk cache
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: .validation_cache
-        key: validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
-        restore-keys: |
-          validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
-          validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-
+      # Restore .validation_cache/ from a previous run keyed on the PR base
+      # commit + validator code hash. The disk cache holds per-file scan
+      # results (mtime/size keyed) and aggregate indexes — a PR touching N
+      # files re-scans only those N. The restore-keys fallback walks back to
+      # any prior cache for this validator so cold starts on a new base SHA
+      # still get partial reuse.
+      - name: Restore validator disk cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .validation_cache
+          key: validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
+          restore-keys: |
+            validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
+            validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-
 
-    - name: Run validation
-      # Per-matrix opt-out: `strict: false` makes the validator informational
-      # (still produces the log + PR comment but exits 0 on findings). Default
-      # is --strict so any entry that omits the field keeps gating behavior.
-      run: |
-        STRICT_FLAG=$( [ "${{ matrix.validator.strict }}" = "false" ] && echo "" || echo "--strict" )
-        python3 tools/validation/${{ matrix.validator.script }} $STRICT_FLAG --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
+      - name: Run validation
+        # Per-matrix opt-out: `strict: false` makes the validator informational
+        # (still produces the log + PR comment but exits 0 on findings). Default
+        # is --strict so any entry that omits the field keeps gating behavior.
+        run: |
+          STRICT_FLAG=$( [ "${{ matrix.validator.strict }}" = "false" ] && echo "" || echo "--strict" )
+          python3 tools/validation/${{ matrix.validator.script }} $STRICT_FLAG --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
 
-    - name: Upload results
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      if: always()
-      with:
-        name: validation-${{ matrix.validator.name }}-results
-        path: |
-          validation-${{ matrix.validator.name }}.log
-          validation-${{ matrix.validator.name }}.json
-        if-no-files-found: ignore
-        retention-days: 7
+      - name: Upload results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: validation-${{ matrix.validator.name }}-results
+          path: |
+            validation-${{ matrix.validator.name }}.log
+            validation-${{ matrix.validator.name }}.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   # ───────────────────────────────────────────────────────────────
   # Targeted validators — one matrix entry per validator, each gated
@@ -522,48 +524,48 @@ jobs:
               events
               tools
     steps:
-    # Per-entry gate: only fetch + run when this validator's file group changed.
-    # Steps below each carry the same `if` so a skipped entry reports cleanly
-    # as "success with no work done" instead of bulk-skipping the whole job.
-    - name: Checkout code
-      if: matrix.validator.should_run == 'true'
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: ${{ matrix.validator.sparse }}
-    - name: Set up Python
-      if: matrix.validator.should_run == 'true'
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-    # Restore .validation_cache/ — see the matching step in validate-core for
-    # the key strategy. Per-file mtime/size entries mean unchanged files are
-    # not re-scanned; the basename_index aggregate cache also pays back
-    # whenever a validator calls get_full_path().
-    - name: Restore validator disk cache
-      if: matrix.validator.should_run == 'true'
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: .validation_cache
-        key: validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
-        restore-keys: |
-          validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
-          validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-
-    - name: Run validation
-      if: matrix.validator.should_run == 'true'
-      run: |
-        STRICT_FLAG=$( [ "${{ matrix.validator.strict }}" = "false" ] && echo "" || echo "--strict" )
-        python3 tools/validation/${{ matrix.validator.script }} $STRICT_FLAG --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
-    - name: Upload results
-      if: always() && matrix.validator.should_run == 'true'
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: validation-${{ matrix.validator.name }}-results
-        path: |
-          validation-${{ matrix.validator.name }}.log
-          validation-${{ matrix.validator.name }}.json
-        if-no-files-found: ignore
-        retention-days: 7
+      # Per-entry gate: only fetch + run when this validator's file group changed.
+      # Steps below each carry the same `if` so a skipped entry reports cleanly
+      # as "success with no work done" instead of bulk-skipping the whole job.
+      - name: Checkout code
+        if: matrix.validator.should_run == 'true'
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: ${{ matrix.validator.sparse }}
+      - name: Set up Python
+        if: matrix.validator.should_run == 'true'
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
+      # Restore .validation_cache/ — see the matching step in validate-core for
+      # the key strategy. Per-file mtime/size entries mean unchanged files are
+      # not re-scanned; the basename_index aggregate cache also pays back
+      # whenever a validator calls get_full_path().
+      - name: Restore validator disk cache
+        if: matrix.validator.should_run == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .validation_cache
+          key: validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
+          restore-keys: |
+            validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
+            validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-
+      - name: Run validation
+        if: matrix.validator.should_run == 'true'
+        run: |
+          STRICT_FLAG=$( [ "${{ matrix.validator.strict }}" = "false" ] && echo "" || echo "--strict" )
+          python3 tools/validation/${{ matrix.validator.script }} $STRICT_FLAG --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
+      - name: Upload results
+        if: always() && matrix.validator.should_run == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: validation-${{ matrix.validator.name }}-results
+          path: |
+            validation-${{ matrix.validator.name }}.log
+            validation-${{ matrix.validator.name }}.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   # ───────────────────────────────────────────────────────────────
   # Validation report — collects all results and posts PR comment
@@ -581,47 +583,47 @@ jobs:
     # guard is needed.)
     if: ${{ !cancelled() }}
     steps:
-    # Checkout the report generator + the report_lib package it imports.
-    # Stays much smaller than a full checkout — we skip everything else.
-    - name: Checkout report tooling
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          tools/generate_validation_report.py
-          tools/report_lib
-        sparse-checkout-cone-mode: false
+      # Checkout the report generator + the report_lib package it imports.
+      # Stays much smaller than a full checkout — we skip everything else.
+      - name: Checkout report tooling
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            tools/generate_validation_report.py
+            tools/report_lib
+          sparse-checkout-cone-mode: false
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
 
-    - name: Download all validation results
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-      with:
-        pattern: validation-*-results
-        path: validation-results
+      - name: Download all validation results
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: validation-*-results
+          path: validation-results
 
-    - name: Generate and post validation report
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      run: |
-        python3 tools/generate_validation_report.py \
-          --results-dir validation-results \
-          --output report.md \
-          --pr-number "${{ github.event.pull_request.number }}" \
-          --commit-sha "${{ github.event.pull_request.head.sha }}" \
-          --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-          --github-repository "${{ github.repository }}" \
-          --post-comment \
-          --checks-api \
-          --print
+      - name: Generate and post validation report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/generate_validation_report.py \
+            --results-dir validation-results \
+            --output report.md \
+            --pr-number "${{ github.event.pull_request.number }}" \
+            --commit-sha "${{ github.event.pull_request.head.sha }}" \
+            --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --github-repository "${{ github.repository }}" \
+            --post-comment \
+            --checks-api \
+            --print
 
-    - name: Upload combined report
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      if: always()
-      with:
-        name: validation-report
-        path: report.md
-        retention-days: 30
+      - name: Upload combined report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: validation-report
+          path: report.md
+          retention-days: 30

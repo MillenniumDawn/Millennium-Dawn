@@ -517,7 +517,7 @@
 	NDefines.NAir.CAPACITY_PENALTY = 4 -- 2
 	NDefines.NAir.DISRUPTION_FACTOR = 6.0 -- 4.0
 	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 8.0 -- 8.0
-	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
+	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 12 -- Increased to 12 to match the new air wing size.
 	NDefines.NAir.REINFORCEMENT_DISABLING_DURATION_IN_LAND_CARRIER_TRANSFER = 12 -- 48 vanilla; reduced so AI is less reluctant to move planes onto carriers
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
