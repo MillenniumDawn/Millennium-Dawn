@@ -1100,6 +1100,17 @@ def _check_is_x_nation_runtime(lines, filepath=""):
                 # O(1) replacement to recommend.
                 if flag_name not in _REAL_NATION_FLAGS:
                     continue
+                # Skip the flag-definition site: an `if = { limit = { is_X_nation = yes } ... }`
+                # whose body sets the matching X_nation_flag. That is the trigger->flag
+                # conversion this check recommends; the O(n) trigger is unavoidable there.
+                window = " ".join(lines[i - 1 : i + 2])
+                if re.search(
+                    r"set_country_flag\s*=\s*(?:\{\s*flag\s*=\s*)?"
+                    + re.escape(flag_name)
+                    + r"\b",
+                    window,
+                ):
+                    continue
                 issues.append(
                     (
                         i,
