@@ -200,6 +200,10 @@ scripted_gui = {
 
             # investment grid
             increase_priority_click_enabled = {
+                var:investments_projects_state^v = {
+                    set_temp_variable = { project_country = owner }
+                }
+
                 check_variable = { i > 0 }
             }
 
@@ -220,7 +224,12 @@ scripted_gui = {
                 multiply_temp_variable = { proggres_frame = 100 }
                 round_variable = proggres_frame
 
-                always = yes
+                set_temp_variable = { index = investments_projects_building^v }
+                set_temp_variable = { amount = investments_projects_building_amount^v }
+                add_to_temp_variable = { amount = 1 }
+                var:investments_projects_state^v = {
+                    investments_build_trigger_by_index = yes
+                }
             }
         }
 
@@ -314,6 +323,20 @@ scripted_gui = {
 	            update_dirty_investments = yes
             }
 
+            increase_priority_shift_click = {
+                remove_from_array = {
+                    array = investments_projects
+                    index = i
+                }
+                add_to_array = { 
+                    array = investments_projects
+                    index = 0
+                    value = v
+                }
+
+	            update_dirty_investments = yes
+            }
+
             decrease_priority_click = {
                 set_temp_variable = { index = i }
                 add_to_temp_variable = { index = 1 }
@@ -324,11 +347,24 @@ scripted_gui = {
 	            update_dirty_investments = yes
             }
 
+            decrease_priority_shift_click = {
+                remove_from_array = {
+                    array = investments_projects
+                    index = i
+                }
+                add_to_array = { 
+                    array = investments_projects
+                    value = v
+                }
+
+	            update_dirty_investments = yes
+            }
+
             increase_amount_click = {
                 set_temp_variable = { state = investments_projects_state^v }
-                    set_temp_variable = { building_index = investments_projects_building^v }
-                    set_temp_variable = { amount = 1 }
-                    create_investment_project = yes
+                set_temp_variable = { building_index = investments_projects_building^v }
+                set_temp_variable = { amount = 1 }
+                create_investment_project = yes
             }
 
             decrease_amount_click = {
@@ -360,8 +396,8 @@ scripted_gui = {
                 frame = proggres_frame
             }
 
-            relative_flag = {
-                image = "[?investments_projects_state^v.Owner.GetFlag]"
+            flag_icon = {
+                image = "[?project_country.GetFlag]"
             }
         }
     }
