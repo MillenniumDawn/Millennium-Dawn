@@ -1,0 +1,142 @@
+# Border War Mechanic
+# Shared scripted effects for the RAJ-PAK and RAJ-CHI border conflict systems.
+# Per-country: border_readiness, border_war_progress
+# Global: border_tension
+
+border_war_add_readiness = {
+	set_temp_variable = { readiness_gain = border_war_add_readiness_amount }
+	randomize_temp_variable = {
+		var = readiness_gain
+		min = -3
+		max = 5
+		integer = yes
+	}
+	add_to_variable = { border_readiness = readiness_gain }
+	clamp_variable = { var = border_readiness min = 0 max = 100 }
+}
+
+border_war_add_tension = {
+	set_temp_variable = { tension_gain = border_war_add_tension_amount }
+	randomize_temp_variable = {
+		var = tension_gain
+		min = -5
+		max = 8
+		integer = yes
+	}
+	add_to_variable = { global.border_tension = tension_gain }
+	clamp_variable = { var = global.border_tension min = 0 max = 100 }
+}
+
+border_war_add_progress = {
+	set_temp_variable = { progress_gain = border_war_add_progress_amount }
+	randomize_temp_variable = {
+		var = progress_gain
+		min = -2
+		max = 4
+		integer = yes
+	}
+	add_to_variable = { border_war_progress = progress_gain }
+	clamp_variable = { var = border_war_progress min = 0 max = 100 }
+}
+
+border_war_subtract_progress = {
+	set_temp_variable = { progress_loss = border_war_subtract_progress_amount }
+	randomize_temp_variable = {
+		var = progress_loss
+		min = -2
+		max = 4
+		integer = yes
+	}
+	subtract_from_variable = { border_war_progress = progress_loss }
+	clamp_variable = { var = border_war_progress min = 0 max = 100 }
+}
+
+# One RNG roll per month per country; replaces seven separate decay blocks.
+border_war_decay = {
+	if = {
+		limit = {
+			is_border_war_eligible = yes
+		}
+		randomize_temp_variable = {
+			var = border_war_decay_roll
+			min = 0
+			max = 99
+			integer = yes
+		}
+		if = {
+			limit = { check_variable = { border_war_decay_roll < 30 } }
+			subtract_from_variable = { border_readiness = 5 }
+		}
+		else_if = {
+			limit = { check_variable = { border_war_decay_roll < 60 } }
+			subtract_from_variable = { border_war_progress = 5 }
+		}
+		else = {
+			subtract_from_variable = { global.border_tension = 5 }
+		}
+		clamp_variable = { var = border_readiness min = 0 max = 100 }
+		clamp_variable = { var = border_war_progress min = 0 max = 100 }
+		clamp_variable = { var = global.border_tension min = 0 max = 100 }
+	}
+}
+
+# Set the recently-active flag so the exp-grind decisions become available.
+# Called by the win/lose/cancel events.
+border_war_mark_recent = {
+	set_country_flag = border_war_recently_active
+}
+
+# Clear the stuck attacking flag; called from the cancel branch of every attack.
+border_war_clear_attacking_flag = {
+	clr_country_flag = border_war_attacking_pak_raj
+	clr_country_flag = border_war_attacking_chi_raj
+}
+
+border_war_set_attacking_pak_raj = {
+	set_country_flag = border_war_attacking_pak_raj
+}
+
+border_war_set_attacking_chi_raj = {
+	set_country_flag = border_war_attacking_chi_raj
+}
+
+border_war_clear_attacking_pak_raj = {
+	clr_country_flag = border_war_attacking_pak_raj
+}
+
+border_war_clear_attacking_chi_raj = {
+	clr_country_flag = border_war_attacking_chi_raj
+}
+
+# Capture state + fire post-capture event. params: border_war_grab_state
+border_war_grab_state = {
+	transfer_state = border_war_grab_state
+	if = {
+		limit = {
+			original_tag = RAJ
+			border_war_grab_state = { OR = { state = 420 state = 427 state = 429 state = 563 state = 573 state = 426 state = 987 state = 984 } }
+		}
+		PAK = { country_event = border_war_post_capture.1 }
+	}
+	else_if = {
+		limit = {
+			original_tag = PAK
+			border_war_grab_state = { OR = { state = 420 state = 427 state = 429 state = 563 state = 573 state = 426 state = 987 state = 984 } }
+		}
+		RAJ = { country_event = border_war_post_capture.1 }
+	}
+	else_if = {
+		limit = {
+			original_tag = RAJ
+			border_war_grab_state = { OR = { state = 475 state = 589 state = 982 state = 591 state = 993 } }
+		}
+		CHI = { country_event = border_war_post_capture.2 }
+	}
+	else_if = {
+		limit = {
+			original_tag = CHI
+			border_war_grab_state = { OR = { state = 475 state = 589 state = 982 state = 591 state = 993 } }
+		}
+		RAJ = { country_event = border_war_post_capture.2 }
+	}
+}

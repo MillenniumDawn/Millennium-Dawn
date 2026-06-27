@@ -1,0 +1,274 @@
+add_namespace = border_war_outcome
+add_namespace = border_war_training_failure
+add_namespace = border_war_tension_failure
+add_namespace = border_war_attack_blocked
+add_namespace = border_war_post_capture
+
+# --- Training failures (army / mech) ---
+# Small stability/manpower hit; one event per training type to keep tooltips distinct.
+country_event = {
+	id = border_war_training_failure.1
+	title = border_war_training_failure.1.t
+	desc = border_war_training_failure.1.d
+	picture = GFX_terrorist_attack
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_training_failure.1.a
+		log = "[GetDateText]: [This.GetName]: border_war_training_failure.1.a executed"
+		add_war_support = -0.01
+		add_manpower = -20
+	}
+}
+
+country_event = {
+	id = border_war_training_failure.2
+	title = border_war_training_failure.2.t
+	desc = border_war_training_failure.2.d
+	picture = GFX_terrorist_attack
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_training_failure.2.a
+		log = "[GetDateText]: [This.GetName]: border_war_training_failure.2.a executed"
+		add_war_support = -0.02
+		add_manpower = -10
+	}
+}
+
+# --- Tension failure (shelling / feint) ---
+# Larger hit than training failures: -10 readiness and small WP loss.
+country_event = {
+	id = border_war_tension_failure.1
+	title = border_war_tension_failure.1.t
+	desc = border_war_tension_failure.1.d
+	picture = GFX_terrorist_attack
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_tension_failure.1.a
+		log = "[GetDateText]: [This.GetName]: border_war_tension_failure.1.a executed"
+		add_war_support = -0.03
+		subtract_from_variable = { border_readiness = 10 }
+		clamp_variable = { var = border_readiness min = 0 max = 100 }
+	}
+}
+
+# --- Attack blocked (someone else already started a border war over the contested state) ---
+country_event = {
+	id = border_war_attack_blocked.1
+	title = border_war_attack_blocked.1.t
+	desc = border_war_attack_blocked.1.d
+	picture = GFX_Military_Reform
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_attack_blocked.1.a
+		log = "[GetDateText]: [This.GetName]: border_war_attack_blocked.1.a executed"
+	}
+}
+
+# --- Border war outcomes (called from start_border_war on_win / on_lose / on_cancel) ---
+# Side-agnostic: the win/lose callback fires on the appropriate side, so the
+# event just adjusts THIS country's progress and clears the stuck attack flag.
+
+country_event = {
+	id = border_war_outcome.win
+	title = border_war_outcome.win.t
+	desc = border_war_outcome.win.d
+	picture = GFX_Military_Reform
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_outcome.win.a
+		log = "[GetDateText]: [This.GetName]: border_war_outcome.win.a executed"
+		set_temp_variable = { border_war_add_progress_amount = 10 }
+		border_war_add_progress = yes
+		border_war_clear_attacking_flag = yes
+		border_war_mark_recent = yes
+	}
+}
+
+country_event = {
+	id = border_war_outcome.lose
+	title = border_war_outcome.lose.t
+	desc = border_war_outcome.lose.d
+	picture = GFX_Military_Reform
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_outcome.lose.a
+		log = "[GetDateText]: [This.GetName]: border_war_outcome.lose.a executed"
+		set_temp_variable = { border_war_subtract_progress_amount = 5 }
+		border_war_subtract_progress = yes
+		border_war_clear_attacking_flag = yes
+		border_war_mark_recent = yes
+	}
+}
+
+country_event = {
+	id = border_war_outcome.cancel
+	title = border_war_outcome.cancel.t
+	desc = border_war_outcome.cancel.d
+	picture = GFX_Military_Reform
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_outcome.cancel.a
+		log = "[GetDateText]: [This.GetName]: border_war_outcome.cancel.a executed"
+		set_temp_variable = { border_war_subtract_progress_amount = 3 }
+		border_war_subtract_progress = yes
+		border_war_clear_attacking_flag = yes
+		border_war_mark_recent = yes
+	}
+}
+
+# --- Post-capture: PAK vs RAJ ---
+# Fires on the side that lost a state to a grab. Player picks the response:
+# accept, escalate, or negotiate return.
+country_event = {
+	id = border_war_post_capture.1
+	title = border_war_post_capture.1.t
+	desc = border_war_post_capture.1.d
+	picture = GFX_Military_Reform
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_post_capture.1.a
+		log = "[GetDateText]: [This.GetName]: border_war_post_capture.1.a executed"
+		add_war_support = 0.10
+		add_stability = -0.10
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 0
+				strength_ratio = { tag = FROM ratio < 0.8 }
+			}
+		}
+	}
+
+	option = {
+		name = border_war_post_capture.1.b
+		log = "[GetDateText]: [This.GetName]: border_war_post_capture.1.b executed"
+		set_temp_variable = { wargoal_on = FROM }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = {
+			type = annex_everything
+			target = FROM
+			expire = 120
+		}
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 0
+				strength_ratio = { tag = FROM ratio < 1.5 }
+			}
+		}
+	}
+
+	option = {
+		name = border_war_post_capture.1.c
+		log = "[GetDateText]: [This.GetName]: border_war_post_capture.1.c executed"
+		add_political_power = 75
+		add_stability = 0.03
+		FROM = { add_political_power = -50 }
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				has_stability < 0.40
+			}
+		}
+	}
+
+	option = {
+		name = border_war_post_capture.1.d
+		log = "[GetDateText]: [Root.GetName]: border_war_post_capture.1.d executed"
+		add_timed_idea = {
+			idea = border_war_fortification_idea
+			days = 365
+		}
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 0
+				has_idea = border_war_fortification_idea
+			}
+		}
+	}
+}
+
+# --- Post-capture: CHI vs RAJ ---
+country_event = {
+	id = border_war_post_capture.2
+	title = border_war_post_capture.2.t
+	desc = border_war_post_capture.2.d
+	picture = GFX_Military_Reform
+	is_triggered_only = yes
+
+	option = {
+		name = border_war_post_capture.2.a
+		log = "[GetDateText]: [This.GetName]: border_war_post_capture.2.a executed"
+		add_war_support = 0.10
+		add_stability = -0.10
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 0
+				strength_ratio = { tag = FROM ratio < 0.8 }
+			}
+		}
+	}
+
+	option = {
+		name = border_war_post_capture.2.b
+		log = "[GetDateText]: [This.GetName]: border_war_post_capture.2.b executed"
+		set_temp_variable = { wargoal_on = FROM }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = {
+			type = annex_everything
+			target = FROM
+			expire = 120
+		}
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 0
+				strength_ratio = { tag = FROM ratio < 1.5 }
+			}
+		}
+	}
+
+	option = {
+		name = border_war_post_capture.2.c
+		log = "[GetDateText]: [This.GetName]: border_war_post_capture.2.c executed"
+		add_political_power = 75
+		add_stability = 0.03
+		FROM = { add_political_power = -50 }
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				has_stability < 0.40
+			}
+		}
+	}
+
+	option = {
+		name = border_war_post_capture.2.d
+		log = "[GetDateText]: [Root.GetName]: border_war_post_capture.2.d executed"
+		add_timed_idea = {
+			idea = border_war_fortification_idea
+			days = 365
+		}
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 0
+				has_idea = border_war_fortification_idea
+			}
+		}
+	}
+}
