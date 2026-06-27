@@ -168,6 +168,26 @@ my_strategy = {
 
 Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather than Iran supporting them).
 
+### War & Conquer Weighting (`conquer` + `avoid_starting_wars`)
+
+`avoid_starting_wars` is **additive with the `conquer` strategy and targetless** (per vanilla `_documentation.md`) — it combines with per-target `conquer` weights rather than acting as a standalone "avoidance" dial, so its effect depends on the conquer context. Vanilla's example uses a large negative value to suppress all targets, then `conquer` to carve out one:
+
+```pdx
+ai_strategy = { type = avoid_starting_wars value = -200 }   # targetless, additive with conquer
+ai_strategy = { type = conquer id = GER value = 200 }       # GER: -200+200 = 0 (the only viable target); everyone else -200
+```
+
+Vanilla notes this is "meant for very specific situations, and should not be used widely."
+
+In MD both signs appear intentionally:
+
+- Small **positive** values as a general brake on opening new wars (e.g. RAJ's insurgency strategies use `+20` / `+50` while suppressing a rebellion). The mod author has confirmed positive = stronger avoidance in this usage.
+- **Negative** values for the targetless-suppression technique above (e.g. RAJ's `-100` while already at war with Pakistan, to avoid opening new fronts).
+
+**Do not flag an `avoid_starting_wars` value as a sign bug** in either direction without checking the surrounding `conquer` strategies and the author's intent. It is nuanced, not a simple "higher = more peaceful" scalar.
+
+Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (in the HOI4 install). Mirror gotchas here as they come up.
+
 ### `MD_combat_ai_strategies.txt` — Production & Combat
 
 **Army production (3 tiers by factory count):**

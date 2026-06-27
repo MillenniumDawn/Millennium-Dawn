@@ -36,6 +36,11 @@ _SINGLE_LINE_PROPS = {
     "y": "y",
     "relative_position_id": "relative_position_id",
     "cost": "cost",
+}
+
+# Single-line list props: a focus-level attribute that may repeat (one line per
+# value). Each occurrence is appended to the list in original order.
+_SINGLE_LINE_LIST_PROPS = {
     "will_lead_to_war_with": "will_lead_to_war_with",
 }
 
@@ -140,6 +145,11 @@ def extract_focus_properties(focus_lines):
 
         if prop_name in _SINGLE_LINE_PROPS:
             props[_SINGLE_LINE_PROPS[prop_name]] = line
+            i += 1
+            continue
+
+        if prop_name in _SINGLE_LINE_LIST_PROPS:
+            props[_SINGLE_LINE_LIST_PROPS[prop_name]].append(line)
             i += 1
             continue
 
@@ -354,9 +364,9 @@ def format_focus_block(props, block_type="focus"):
             lines.append(line)
         condition_group_added = True
 
-    # Add will_lead_to_war_with as single-line property
-    if props["will_lead_to_war_with"]:
-        lines.append(f"\t\t{props['will_lead_to_war_with']}")
+    # Add will_lead_to_war_with as single-line property (may repeat — one line per target)
+    for war_target in props["will_lead_to_war_with"]:
+        lines.append(f"\t\t{war_target}")
         condition_group_added = True
 
     # Only add blank line after the entire condition group (if any conditions were added)

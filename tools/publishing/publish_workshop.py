@@ -87,6 +87,17 @@ ANYWHERE_EXCLUDES = {
     "*.pyd",
     "*.psd",
     "repomix-*.xml",
+    # Tool/CI caches. Gitignored but copytree ships the working tree, not the
+    # git index, so these leak into the upload. .validation_cache alone is
+    # ~267k files and blows the Workshop commit-manifest step past its timeout.
+    ".validation_cache",
+    ".md-mcp-cache",
+    ".opencode",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    ".astro",
+    "testing-docs",
 }
 
 DEFAULT_EXCLUDES = ROOT_ONLY_EXCLUDES | ANYWHERE_EXCLUDES
