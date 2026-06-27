@@ -312,30 +312,23 @@ on_actions = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 				if = { limit = { FROM = { has_idea = EU_member } }
 					log = "[GetDateText]: [ROOT.GetName]: on_annex EU Member"
-					for_each_scope_loop = {
-						array = global.EU_member
-						clr_country_flag = EU_active_EP_agenda_holder
-						clr_global_flag_PG_X_support = yes
-						reset_MEP_support_party_x = yes
-						set_variable = { global.active_MEP_Support = 0 }
-						set_variable = { global.pass_vote_mission_ender = 0 }
-						set_variable = { global.current_active_agenda_disp = 0 }
-						set_variable = { global.current_active_vote_disp = 0 }
-						set_variable = { global.EUXXX_council_agenda = global.current_active_vote_disp }
-						set_variable = { global.EU_active_vote_yes = 0 }
-						set_variable = { global.EU_active_vote_no = 0 }
-						clear_array = global.EU_active_vote_supporters
-						clear_array = global.EU_active_vote_rejecters
-						EU_emergency_vote_clear = yes
-						set_variable = { global.EUU_recently_failed_vote = -1 }
-					}
+					clr_global_flag = EU_active_EP_agenda_holder
+					clr_global_flag_PG_X_support = yes
+					reset_MEP_support_party_x = yes
+					set_variable = { global.active_MEP_Support = 0 }
+					set_variable = { global.pass_vote_mission_ender = 0 }
+					set_variable = { global.current_active_agenda_disp = 0 }
+					set_variable = { global.current_active_vote_disp = 0 }
+					set_variable = { global.EUXXX_council_agenda = global.current_active_vote_disp }
+					set_variable = { global.EU_active_vote_yes = 0 }
+					set_variable = { global.EU_active_vote_no = 0 }
+					clear_array = global.EU_active_vote_supporters
+					clear_array = global.EU_active_vote_rejecters
+					EU_emergency_vote_clear = yes
+					set_variable = { global.EUU_recently_failed_vote = -1 }
 					FROM = { leaving_EU = yes }
 					for_each_scope_loop = {
 						array = global.EU_member
-						remove_mission = EU_parliament_focus_EUXXX_approve_timer
-						remove_mission = EU_voting_mission_focus_EUXXX_QMV_result_timer
-					}
-					var:global.eucomission = {
 						remove_mission = EU_parliament_focus_EUXXX_approve
 						remove_mission = EU_voting_mission_focus_EUXXX_QMV_result
 					}
@@ -378,11 +371,11 @@ on_actions = {
 			every_country = {
 				limit = {
 					OR = {
-						NOT = { check_variable = { auto_influence_array^0 = 0 } }
+						is_in_array = { auto_influence_array = FROM.id }
 						is_in_array = { influence_array = FROM.id }
 					}
 				}
-				if = { limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
+				if = { limit = { is_in_array = { auto_influence_array = FROM.id } }
 					set_temp_variable = { removed_count = 0 }
 					for_each_loop = {
 						array = auto_influence_array
@@ -447,6 +440,10 @@ on_actions = {
 					remove_from_array = { array = global.UN_general_assembly value = THIS }
 				}
 				if = {
+					limit = { has_idea = at_member }
+					remove_ideas = at_member
+				}
+				if = {
 					limit = { has_dynamic_modifier = { modifier = united_nations_member } }
 					remove_dynamic_modifier = { modifier = united_nations_member }
 				}
@@ -454,6 +451,12 @@ on_actions = {
 				if = {
 					limit = { check_variable = { pmc_bought > 0 } }
 					dismiss_all_pmc_units = yes
+				}
+				# Antarctica Research Station blackout
+				if = {
+					limit = { has_country_flag = antarctica_has_active_station }
+					antarctica_remove_research_station = yes
+					ROOT = { country_event = MD_antarctica.10 }
 				}
 			}
 
@@ -862,7 +865,7 @@ on_actions = {
 						if = { limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
 							set_temp_variable = { percent_change = global.percent_change_value }
 							set_temp_variable = { tag_index = THIS.id }
-							set_temp_variable = { nations_influenced = 0 }
+							set_variable = { nations_influenced = 0 }
 
 							for_each_loop = {
 								array = auto_influence_array
@@ -871,14 +874,26 @@ on_actions = {
 									limit = {
 										NOT = { check_variable = { v = 0 } }
 										var:v = { exists = yes }
-										NOT = { has_country_flag = spread_influence@var:v }
+										NOT = { var:v = { PREV = { has_country_flag = spread_influence@PREV } } }
 									}
 									if = { limit = { is_debug = yes }
 										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
 									}
 									set_temp_variable = { influence_target = v }
 									change_influence_percentage = yes
-									add_to_temp_variable = { nations_influenced = 1 }
+									add_to_variable = { nations_influenced = 1 }
+
+									# Cooldown lives on the influencer keyed by target (shared with the manual-influence GUI);
+									# var:v -> PREV puts the target into PREV so spread_influence@PREV resolves to its tag.
+									if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
+										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 } } }
+									}
+									else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
+										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 } } }
+									}
+									else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
+										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 } } }
+									}
 								}
 								else = {
 									if = { limit = { is_debug = yes }
@@ -888,26 +903,6 @@ on_actions = {
 							}
 
 							if = { limit = { check_variable = { nations_influenced > 0 } }
-								for_each_loop = {
-									array = auto_influence_array
-									value = v
-									if = {
-										limit = {
-											check_variable = { i < nations_influenced }
-											NOT = { check_variable = { v = 0 } }
-										}
-										if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
-											set_country_flag = { flag = spread_influence@var:v value = 1 days = 14 }
-										}
-										else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
-											set_country_flag = { flag = spread_influence@var:v value = 1 days = 30 }
-										}
-										else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
-											set_country_flag = { flag = spread_influence@var:v value = 1 days = 60 }
-										}
-									}
-								}
-
 								if = { limit = { NOT = { has_country_flag = disable_auto_influence_notification } }
 									country_event = influence.54
 								}

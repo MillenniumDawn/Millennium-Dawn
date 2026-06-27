@@ -517,7 +517,7 @@
 	NDefines.NAir.CAPACITY_PENALTY = 4 -- 2
 	NDefines.NAir.DISRUPTION_FACTOR = 6.0 -- 4.0
 	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 8.0 -- 8.0
-	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
+	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 12 -- Increased to 12 to match the new air wing size.
 	NDefines.NAir.REINFORCEMENT_DISABLING_DURATION_IN_LAND_CARRIER_TRANSFER = 12 -- 48 vanilla; reduced so AI is less reluctant to move planes onto carriers
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
@@ -975,7 +975,7 @@
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'fossil_powerplant', 'industrial_complex', 'internet_station', 'microchip_plant', 'renewable_energy_infra', 'nuclear_reactor', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory'
+		'fossil_powerplant', 'industrial_complex', 'internet_station', 'microchip_plant', 'renewable_energy_infra', 'nuclear_reactor', 'enrichment_facility', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of civ factories
@@ -1140,10 +1140,9 @@
 		200, -- NAVAL INVASION SUPPORT
 	}
 
-	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
-	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.1					-- 0.1
-	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.1		-- 0
-	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 800					-- 700
+	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.05					-- 0.1
+	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.05		-- 0
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 1000					-- 700
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 75 			-- 100
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_POW = 1.8			-- 1.8
 	NDefines.NIndustrialOrganisation.UNLOCKED_TRAITS_PER_SIZE_UP = 1			-- 1
