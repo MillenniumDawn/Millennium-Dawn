@@ -442,6 +442,10 @@ on_actions = {
 				antarctica_process_station_dismantle = yes
 			}
 			if = {
+				limit = { check_variable = { research_station_module_repair_days_remaining > 0 } }
+				antarctica_process_blizzard_repairs_daily = yes
+			}
+			if = {
 				limit = { NOT = { has_global_flag = antarctic_station_startup_refresh } }
 				set_global_flag = antarctic_station_startup_refresh # One time refresh
 				antarctica_apply_station_maintenance_costs = yes
@@ -456,12 +460,12 @@ on_actions = {
 	on_weekly = {
 		effect = {
 			if = {
-				limit = { is_ai = no }
+				limit = { NOT = { has_global_flag = antarctica_weekly_stations_processed } }
+				set_global_flag = { flag = antarctica_weekly_stations_processed value = 1 days = 5 }
 				# antarctica_initialize_atcp_consultative_parties is a one-time
 				# backfill (self-disables via antarctica_atcp_consultative_initialized),
 				antarctica_initialize_atcp_consultative_parties = yes
 				antarctica_process_atcp_applications = yes
-				antarctica_process_blizzard_repairs_daily = yes
 				for_each_scope_loop = {
 					array = global.at_members
 					if = {
@@ -477,7 +481,8 @@ on_actions = {
 	on_monthly = {
 		effect = {
 			if = {
-				limit = { is_ai = no }
+				limit = { NOT = { has_global_flag = antarctica_monthly_stations_processed } }
+				set_global_flag = { flag = antarctica_monthly_stations_processed value = 1 days = 25 }
 
 				# Reset maintenance costs for all AT members
 				for_each_scope_loop = {
