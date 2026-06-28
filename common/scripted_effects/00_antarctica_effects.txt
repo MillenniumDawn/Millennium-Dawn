@@ -2429,6 +2429,7 @@ antarctica_process_station_research_progress = {
 					set_temp_variable = { station_fuel_usage = global.research_station_[ID]_output_fuel_usage }
 					set_temp_variable = { station_fuel_storage = global.research_station_[ID]_output_storage }
 					set_temp_variable = { station_output_power = global.research_station_[ID]_output_power }
+					set_temp_variable = { station_speed_multiplier = global.research_station_[ID]_output_iteration_speed_multiplier }
 					set_temp_variable = { station_active_lab_slots = 0 }
 					if = {
 						limit = {
@@ -2514,25 +2515,29 @@ antarctica_process_station_research_progress = {
 
 			if = {
 				limit = { check_variable = { station_active_lab_slots > 0 } }
-				set_temp_variable = { station_base_iteration_gain = station_active_lab_slots }
+				set_temp_variable = { station_base_iteration_gain = 1 }
+				if = {
+					limit = { check_variable = { station_active_lab_slots > 2 }
+					set_temp_variable = { station_base_iteration_gain = 2 }
+				}
 				multiply_temp_variable = { station_base_iteration_gain = 0.2 }
 				# x7 to compensate for this effect running weekly instead of daily
 				multiply_temp_variable = { station_base_iteration_gain = 7 }
-				add_to_temp_variable = { station_iteration_progress = station_base_iteration_gain }
 
-				set_temp_variable = { station_iteration_speed_bonus = 0 }
+				set_temp_variable = { total_multiplier = station_speed_multiplier }
 				set_variable = { global.antarctica_temp_station_iteration_speed_bonus = 0 }
 				if = {
 					limit = { check_variable = { station_controller > 0 } }
-					set_variable = { global.antarctica_temp_station_iteration_speed_bonus = station_active_lab_slots }
+					set_variable = { global.antarctica_temp_station_iteration_speed_bonus = 1 }
 					set_variable = { temp_controller_id = station_controller }
 					var:temp_controller_id = {
 						multiply_variable = { global.antarctica_temp_station_iteration_speed_bonus = modifier@antarctica_lab_iteration_progress_modifier }
 					}
-					set_temp_variable = { station_iteration_speed_bonus = global.antarctica_temp_station_iteration_speed_bonus }
-					multiply_temp_variable = { station_iteration_speed_bonus = 7 }
-					add_to_temp_variable = { station_iteration_progress = station_iteration_speed_bonus }
+					add_to_temp_variable = { total_multiplier = global.antarctica_temp_station_iteration_speed_bonus }
 				}
+				clamp_temp_variable = { var = total_multiplier min = 0 }
+				multiply_temp_variable = { station_base_iteration_gain = total_multiplier }
+				add_to_temp_variable = { station_iteration_progress = station_base_iteration_gain }
 
 				if = {
 					limit = { check_variable = { station_iteration_progress > 99 } }
@@ -3022,7 +3027,7 @@ antarctica_apply_single_housing_station_output = {
 		add_to_temp_variable = { out_required_staff = 16 }
 		add_to_temp_variable = { out_total_staff = 16 }
 		add_to_temp_variable = { out_storage = 4500 }
-		add_to_temp_variable = { out_staff_satisfaction = 0.04 }
+		add_to_temp_variable = { out_staff_satisfaction = 0.05 }
 		add_to_temp_variable = { out_construction_time = 17 }
 	}
 	else_if = {
