@@ -307,16 +307,16 @@ on_actions = {
 				subtract_from_temp_variable = { gdp_diff = pensions_effective_gdpc }
 				multiply_temp_variable = { gdp_diff = 0.05 }
 				add_to_variable = { pensions_effective_gdpc = gdp_diff }
-				set_temp_variable = { pensions_population_temp = gdp_diff }
+				set_temp_variable = { pensions_population_temp = pensions_effective_gdpc }
 				multiply_temp_variable = { pensions_population_temp = 0.005 }
-				add_to_variable = { pensions_population_growth_modifier = pensions_population_temp }
+				set_variable = { pensions_population_growth_modifier = pensions_population_temp }
 				clamp_variable = {
 					var = pensions_population_growth_modifier
 					max = 1.5
 				}
-				set_temp_variable = { pensions_roi_temp = gdp_diff }
+				set_temp_variable = { pensions_roi_temp = pensions_effective_gdpc }
 				multiply_temp_variable = { pensions_roi_temp = 0.00015 }
-				add_to_variable = { pensions_roi_modifier = pensions_roi_temp }
+				set_variable = { pensions_roi_modifier = pensions_roi_temp }
 				clamp_variable = {
 					var = pensions_roi_modifier
 					max = 0.045
@@ -335,37 +335,37 @@ on_actions = {
 				subtract_from_temp_variable = { gdp_diff = healthcare_effective_gdpc }
 				multiply_temp_variable = { gdp_diff = 0.05 }
 				add_to_variable = { healthcare_effective_gdpc = gdp_diff }
-				set_temp_variable = { healthcare_population_temp = gdp_diff }
+				set_temp_variable = { healthcare_population_temp = healthcare_effective_gdpc }
 				multiply_temp_variable = { healthcare_population_temp = 0.0025 }
-				add_to_variable = { healthcare_population_growth_modifier = healthcare_population_temp }
+				set_variable = { healthcare_population_growth_modifier = healthcare_population_temp }
 				clamp_variable = {
 					var = healthcare_population_growth_modifier
 					max = 0.5
 				}
-				set_temp_variable = { healthcare_war_support_temp = gdp_diff }
+				set_temp_variable = { healthcare_war_support_temp = healthcare_effective_gdpc }
 				multiply_temp_variable = { healthcare_war_support_temp = 0.00025 }
-				add_to_variable = { healthcare_war_support_modifier = healthcare_war_support_temp }
+				set_variable = { healthcare_war_support_modifier = healthcare_war_support_temp }
 				clamp_variable = {
 					var = healthcare_war_support_modifier
 					max = 0.025
 				}
-				set_temp_variable = { healthcare_morale_temp = gdp_diff }
+				set_temp_variable = { healthcare_morale_temp = healthcare_effective_gdpc }
 				multiply_temp_variable = { healthcare_morale_temp = 0.00125 }
-				add_to_variable = { healthcare_morale_modifier = healthcare_morale_temp }
+				set_variable = { healthcare_morale_modifier = healthcare_morale_temp }
 				clamp_variable = {
 					var = healthcare_morale_modifier
 					max = 0.25
 				}
-				set_temp_variable = { healthcare_tax_cost_temp = gdp_diff }
+				set_temp_variable = { healthcare_tax_cost_temp = healthcare_effective_gdpc }
 				multiply_temp_variable = { healthcare_tax_cost_temp = -0.0004 }
-				add_to_variable = { healthcare_tax_cost_modifier = healthcare_tax_cost_temp }
+				set_variable = { healthcare_tax_cost_modifier = healthcare_tax_cost_temp }
 				clamp_variable = {
 					var = healthcare_tax_cost_modifier
 					min = -0.2
 				}
-				set_temp_variable = { healthcare_stability_temp = gdp_diff }
+				set_temp_variable = { healthcare_stability_temp = healthcare_effective_gdpc }
 				multiply_temp_variable = { healthcare_stability_temp = -0.001 }
-				add_to_variable = { healthcare_stability_modifier = healthcare_stability_temp }
+				set_variable = { healthcare_stability_modifier = healthcare_stability_temp }
 				clamp_variable = {
 					var = healthcare_stability_modifier
 					min = -1
@@ -383,30 +383,30 @@ on_actions = {
 				subtract_from_temp_variable = { gdp_diff = education_effective_gdpc }
 				multiply_temp_variable = { gdp_diff = 0.05 }
 				add_to_variable = { education_effective_gdpc = gdp_diff }
-				set_temp_variable = { education_research_temp = gdp_diff }
+				set_temp_variable = { education_research_temp = education_effective_gdpc }
 				multiply_temp_variable = { education_research_temp = 0.002 }
-				add_to_variable = { education_research_factor = education_research_temp }
+				set_variable = { education_research_factor = education_research_temp }
 				clamp_variable = {
 					var = education_research_factor
 					max = 2
 				}
-				set_temp_variable = { education_productivity_temp = gdp_diff }
+				set_temp_variable = { education_productivity_temp = education_effective_gdpc }
 				multiply_temp_variable = { education_productivity_temp = 0.01 }
-				add_to_variable = { education_productivity_modifier = education_productivity_temp }
+				set_variable = { education_productivity_modifier = education_productivity_temp }
 				clamp_variable = {
 					var = education_productivity_modifier
 					max = 10
 				}
-				set_temp_variable = { education_project_temp = gdp_diff }
+				set_temp_variable = { education_project_temp = education_effective_gdpc }
 				multiply_temp_variable = { education_project_temp = 0.0025 }
-				add_to_variable = { special_project_speed_factor = education_project_temp }
+				set_variable = { special_project_speed_factor = education_project_temp }
 				clamp_variable = {
 					var = special_project_speed_factor
 					max = 1
 				}
-				set_temp_variable = { education_influence_temp = gdp_diff }
+				set_temp_variable = { education_influence_temp = education_effective_gdpc }
 				multiply_temp_variable = { education_influence_temp = 0.0025 }
-				add_to_variable = { education_influence_modifier = education_influence_temp }
+				set_variable = { education_influence_modifier = education_influence_temp }
 				clamp_variable = {
 					var = education_influence_modifier
 					max = 0.5
@@ -417,7 +417,17 @@ on_actions = {
 					max = 0
 				}
 			}
-			
+			# stability overflow update
+			if = {
+				limit = { 
+					has_dynamic_modifier = POL_economy_modifier 
+				}
+				set_temp_variable = { stability_overflow_drift = economy_weekly_stability }
+				multiply_temp_variable = { stability_overflow_drift = 4 }
+				add_to_variable = { economy_stability_modifier = stability_overflow_drift }
+				multiply_temp_variable = { stability_overflow_drift = -1 }
+				add_stability = stability_overflow_drift
+			}
 		}
 	}
 }
