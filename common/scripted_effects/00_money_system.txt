@@ -5966,9 +5966,14 @@ calculate_new_education_spending_tooltip = {
 }
 
 worker_requirements_variable_gdpc_converging = {
-	set_temp_variable = { temp_difference = gdp_per_capita }
-	subtract_from_temp_variable = { temp_difference = gdpc_converging_var }
-	multiply_temp_variable = { temp_difference = 0.25 }
+	set_temp_variable = {
+		temp_difference = {
+			value = gdp_per_capita
+			subtract = gdpc_converging_var
+			multiply = 0.25
+		}
+	}
+
 	add_to_variable = { gdpc_converging_var = temp_difference }
 }
 
@@ -6012,7 +6017,6 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	multiply_variable = { array_border_control_spend^0 = 1 }
 	multiply_variable = { array_border_control_spend^1 = 1.6 }
 	multiply_variable = { array_border_control_spend^2 = 2.2 }
 	multiply_variable = { array_border_control_spend^3 = 2.8 }
@@ -6038,31 +6042,30 @@ calculate_migration_mechanic_values = {
 	set_variable = { border_control_gain = array_border_control_spend^border_control_index }
 	clamp_variable = { var = border_control_gain min = 0 }
 
-	# -------------------- #
-	# Cleanup Variables
-	set_variable = { net_immigration_rate = 0 }
-	set_variable = { max_net_immigration_rate = 0 }
-	set_variable = { personal_war_refugees_display = 0 }
-	set_variable = { neighbour_war_refugees_display = 0 }
-	set_variable = { immigration_government_factor_display = 0 }
-	set_variable = { immigration_employment_factor_display = 0 }
-
 	# Productivity Calculation
-	set_temp_variable = { immigration_productivity_calculations = overall_productivity }
-	divide_temp_variable = { immigration_productivity_calculations = global.average_world_productivity }
-	subtract_from_temp_variable = { immigration_productivity_calculations = 1 }
-	set_variable = { immigration_productivity_calculations_display = immigration_productivity_calculations }
+	set_variable = {
+		immigration_productivity_calculations_display = {
+			value = overall_productivity
+			divide = global.average_world_productivity
+			subtract = 1
+		}
+	}
 
 	# Calculate Unemployment/Worker fulfillment
-	if = { limit = { check_variable = { average_worker_fulfillment < 1 } }
-		set_temp_variable = { immigration_employment_factor = 1 }
-		subtract_from_temp_variable = { immigration_employment_factor = average_worker_fulfillment }
+	set_variable = {
+		immigration_employment_factor_display = {
+			value = 0
+			if = {
+				limit = { value = average_worker_fulfillment less_than = 1 }
+				add = 1
+				subtract = average_worker_fulfillment
+			}
+			else = {
+				add = total_unemployed_percentage_display
+				multiply = -2
+			}
+		}
 	}
-	else = {
-		set_temp_variable = { immigration_employment_factor = total_unemployed_percentage_display }
-		multiply_temp_variable = { immigration_employment_factor = -2 }
-	}
-	set_variable = { immigration_employment_factor_display = immigration_employment_factor }
 
 	# Government Section
 	set_temp_variable = { immigration_government_factor = 0 }
@@ -6074,72 +6077,87 @@ calculate_migration_mechanic_values = {
 	}
 	set_variable = { immigration_government_factor_display = immigration_government_factor }
 
-	# Calculate Net Immigration Rate
-	set_variable = { max_net_immigration_rate = 0 }
-	add_to_variable = { max_net_immigration_rate = immigration_productivity_calculations }
-	add_to_variable = { max_net_immigration_rate = immigration_employment_factor }
-	add_to_variable = { max_net_immigration_rate = immigration_war_support_factor }
-	add_to_variable = { max_net_immigration_rate = immigration_government_factor }
-	add_to_variable = { max_net_immigration_rate = modifier@maximum_migration_rate_value }
-
-	# War Refugees Section (optimized to avoid nested neighbor checks)
-	hidden_effect = {
-		set_temp_variable = { neighbouring_war_refugees = 0 }
-		every_neighbor_country = {
-			limit = { has_war = yes }
-			add_to_temp_variable = { PREV.neighbouring_war_refugees = THIS.population_total_m }
-			multiply_temp_variable = { PREV.neighbouring_war_refugees = @refugee_percentage_adjuster }
+	# Sum population of neighbors at war, scaled by the refugee adjuster
+	set_variable = {
+		neighbour_war_refugees_display = {
+			value = 0
+			every_collection = {
+				named_collection = neighbors
+				if = {
+					limit = { value = enemies^num greater_than = 0 }
+					add = population_total_m
+					multiply = @refugee_percentage_adjuster
+				}
+			}
 		}
 	}
-	set_variable = { neighbour_war_refugees_display = neighbouring_war_refugees }
-	add_to_variable = { max_net_immigration_rate = neighbouring_war_refugees }
 
-	# Check if you are at war and if you have refugees
-	set_temp_variable = { our_war_refugees = 0 }
-	if = { limit = { has_war = yes }
-		# Calculate Total Potential Refugees
-		add_to_temp_variable = { our_war_refugees = population_total_m }
-		multiply_temp_variable = { our_war_refugees = @refugee_percentage_adjuster }
-		multiply_temp_variable = { our_war_refugees = 0.20 } # Control factor to make it so the number doesn't get very big
-
-		# Reduce War Refugees Based on War Suppport
-		set_temp_variable = { total_war_support = 0.50 }
-		add_to_temp_variable = { total_war_support = modifier@war_support_factor }
-		clamp_temp_variable = { var = total_war_support min = 0 max = 1 }
-
-		set_temp_variable = { war_support_modifier = -1 }
-		add_to_temp_variable = { war_support_modifier = total_war_support }
-		multiply_temp_variable = { our_war_refugees = total_war_support }
-
-		set_variable = { personal_war_refugees_display = our_war_refugees }
-		multiply_variable = { personal_war_refugees_display = -1 }
+	# Outflow when we are at war
+	set_variable = {
+		personal_war_refugees_display = {
+			value = 0
+			if = {
+				limit = { check_variable = { enemies^num > 0 } }
+				add = population_total_m
+				multiply = @refugee_percentage_adjuster
+				multiply = 0.20
+				multiply = {
+					value = 0.50
+					add = modifier@war_support_factor
+					clamp = { min = 0 max = 1 }
+				}
+			}
+		}
 	}
-	subtract_from_variable = { max_net_immigration_rate = our_war_refugees }
+
+	# Calculate Net Immigration Rate
+	set_variable = {
+		max_net_immigration_rate = {
+			value = immigration_productivity_calculations_display
+			add = immigration_employment_factor_display
+			add = immigration_government_factor_display
+			add = modifier@maximum_migration_rate_value
+			add = neighbour_war_refugees_display
+			subtract = personal_war_refugees_display
+			clamp = { min = -2.0 max = 2.0 }
+		}
+	}
 
 	# Calculate Migration Rate
-	set_temp_variable = { migration_rate_value = modifier@base_migration_rate_value }
-
-	set_temp_variable = { migration_rate_value_multiplier = 1 }
-	add_to_temp_variable = { migration_rate_value_multiplier = modifier@migration_rate_value_factor }
-	clamp_temp_variable = { var = migration_rate_value_multiplier min = 0.01 }
-
-	if = { limit = { check_variable = { migration_rate_value > 0 } }
-		multiply_temp_variable = { migration_rate_value = migration_rate_value_multiplier }
-	}
-	else = {
-		divide_temp_variable = { migration_rate_value = migration_rate_value_multiplier }
+	set_temp_variable = {
+		migration_rate_value = {
+			value = modifier@base_migration_rate_value
+			if = {
+				limit = { value = modifier@base_migration_rate_value greater_than = 0 }
+				multiply = {
+					value = 1
+					add = modifier@migration_rate_value_factor
+					clamp = { min = 0.01 max = 100 }
+				}
+			}
+			else = {
+				divide = {
+					value = 1
+					add = modifier@migration_rate_value_factor
+					clamp = { min = 0.01 max = 100 }
+				}
+			}
+		}
 	}
 
 	# Check if there are other countries
-	if = { limit = { check_variable = { global.countries^1 = 0 } }
-		set_variable = { max_net_immigration_rate = 0 }
-		set_variable = { net_immigration_rate = 0 }
+	set_variable = {
+		net_immigration_rate = {
+			value = max_net_immigration_rate
+			multiply = migration_rate_value
+			if = { limit = { check_variable = { global.countries^num > 1 } }
+				clamp = { min = -2.0 max = max_net_immigration_rate }
+			}
+			else = {
+				clamp = { min = 0 max = 0 }
+			}
+		}
 	}
-	clamp_variable = { var = max_net_immigration_rate max = 2.0 min = -2.0 }
-
-	set_variable = { net_immigration_rate = max_net_immigration_rate }
-	multiply_variable = { net_immigration_rate = migration_rate_value }
-	clamp_variable = { var = net_immigration_rate min = -2.0 max = max_net_immigration_rate }
 }
 
 calculate_cost_pp_economic_cycles = {
