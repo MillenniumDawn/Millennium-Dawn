@@ -1649,7 +1649,7 @@ SAU_Among_Major_powers_Open_east = {
 
 	# === Palestine: Two-State Solution (focus: SAU_Palestine_4) ===
 	SAU_pal_fund_development = {
-		icon = urban_development_fund_category
+		icon = category_investment
 		priority = 90
 
 		allowed = { original_tag = SAU }
@@ -1691,43 +1691,6 @@ SAU_Among_Major_powers_Open_east = {
 		ai_will_do = { base = 1 }
 	}
 
-	SAU_pal_sponsor_peace = {
-		icon = negotiate_icon
-		priority = 90
-
-		allowed = { original_tag = SAU }
-		visible = {
-			has_completed_focus = SAU_Palestine_4
-		}
-		available = {
-			NOT = { has_country_flag = SAU_pal_peace_locked }
-		}
-
-		cost = 50
-		days_remove = 90
-		days_re_enable = 180
-		fire_only_once = no
-
-		complete_effect = {
-			set_country_flag = SAU_pal_peace_locked
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SAU_pal_sponsor_peace"
-			add_political_power = 25
-			add_war_support = 0.03
-			if = {
-				limit = { country_exists = PAL }
-				PAL = {
-					add_stability = 0.05
-					add_opinion_modifier = { target = ROOT modifier = SAU_funds_the_cause }
-				}
-			}
-			clr_country_flag = SAU_pal_peace_locked
-		}
-
-		ai_will_do = { base = 1 }
-	}
 
 	SAU_pal_invest_gaza = {
 		icon = category_investment
@@ -1759,12 +1722,10 @@ SAU_Among_Major_powers_Open_east = {
 				limit = { country_exists = PAL }
 				PAL = {
 					add_stability = 0.03
-					random_owned_state = {
-						one_random_industrial_complex = yes
-					}
-					random_owned_state = {
-						one_random_infrastructure = yes
-					}
+				set_temp_variable = { treasury_change = 20 }
+			modify_treasury_effect = yes
+					one_random_infrastructure = yes
+					one_random_network_infrastructure = yes
 				}
 			}
 			clr_country_flag = SAU_pal_gaza_locked
@@ -2232,6 +2193,7 @@ SAU_Among_Major_powers_Open_east = {
 			NOT = { YEM = { has_idea = SAU_yemen_attack_buff } }
 		}
 		available = {
+			NOT = { has_country_flag = SAU_houthi_ceasefire }
 			YEM = { has_war_with = HOU }
 		}
 		cost = 50
@@ -2252,6 +2214,7 @@ SAU_Among_Major_powers_Open_east = {
 			country_exists = YEM
 		}
 		available = {
+			NOT = { has_country_flag = SAU_houthi_ceasefire }
 			YEM = { has_war_with = HOU }
 			NOT = { has_country_flag = SAU_yem_weapons_lock }
 		}
@@ -2282,6 +2245,7 @@ SAU_Among_Major_powers_Open_east = {
 			country_exists = YEM
 		}
 		available = {
+			NOT = { has_country_flag = SAU_houthi_ceasefire }
 			YEM = { has_war_with = HOU }
 			NOT = { has_country_flag = SAU_yem_funds_lock }
 		}
@@ -2345,6 +2309,44 @@ SAU_Among_Major_powers_Open_east = {
 				}
 			}
 			custom_effect_tooltip = SAU_decisive_storm_tt
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	SAU_break_houthi_ceasefire = {
+		icon = military_buildup
+		priority = 95
+		allowed = { original_tag = SAU }
+		visible = {
+			has_country_flag = SAU_houthi_ceasefire
+			country_exists = HOU
+		}
+		cost = 50
+		days_remove = 60
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_break_houthi_ceasefire started"
+			custom_effect_tooltip = SAU_break_ceasefire_prepare_tt
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_break_houthi_ceasefire"
+			clr_country_flag = SAU_houthi_ceasefire
+			custom_effect_tooltip = SAU_break_ceasefire_tt
+			add_war_support = 0.05
+			hidden_effect = {
+				if = {
+				limit = {
+					country_exists = YEM
+					YEM = { has_war_with = HOU }
+					NOT = { YEM = { has_idea = SAU_decisive_storm_air_cover } }
+				}
+				YEM = { add_ideas = SAU_decisive_storm_air_cover }
+				SAU = {
+					clr_country_flag = SAU_houthi_ceasefire
+				}
+			}
+			}
+
 		}
 		ai_will_do = { base = 1 }
 	}
@@ -2725,38 +2727,6 @@ SAU_Among_Major_powers_Open_east = {
 				set_temp_variable = { percent_change = 3 }
 				change_influence_percentage = yes
 			}
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	SAU_pal_recognition_drive = {
-		icon = GFX_decision_generic_form_nation
-		priority = 90
-
-		targets = { USA ENG FRA GER ITA HOL JAP CAN }
-
-		target_trigger = {
-			FROM = {
-				NOT = { has_country_flag = Recognised_PAL }
-				NOT = { has_war_with = ROOT }
-			}
-		}
-
-		allowed = { original_tag = SAU }
-		visible = {
-			country_exists = PAL
-		}
-
-		cost = 25
-		days_re_enable = 90
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SAU_pal_recognition_drive"
-			FROM = { country_event = { id = SAU_events.78 days = 2 } }
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			custom_effect_tooltip = SAU_recog_grant_tt
 		}
 
 		ai_will_do = { base = 1 }
@@ -4136,3 +4106,45 @@ arab_spring_category = {
 		}
 	}
 }
+
+HOU_break_ceasefire_category = {
+	SAU_houthi_break_ceasefire = {
+		icon = military_buildup
+		priority = 95
+		allowed = { original_tag = HOU }
+		visible = {
+			country_exists = SAU
+			SAU = { has_country_flag = SAU_houthi_ceasefire }
+		}
+		available = {
+			NOT = { has_capitulated = yes }
+			custom_trigger_tooltip = {
+				tooltip = SAU_ceasefire_locked_tt
+				NOT = { SAU = { has_country_flag = SAU_ceasefire_locked } }
+			}
+		}
+		cost = 50
+		days_re_enable = 120
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_houthi_break_ceasefire"
+			SAU = { clr_country_flag = SAU_houthi_ceasefire }
+			if = {
+				limit = {
+					country_exists = SAU
+					NOT = { has_war_with = SAU }
+				}
+				declare_war_on = { target = YEM type = puppet_wargoal_focus }
+			}
+			SAU = { country_event = { id = SAU_events.114 } }
+			SAU = {
+				clr_country_flag = SAU_houthi_ceasefire
+			}
+		}
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 has_war_support > 0.6 }
+		}
+	}
+}
+
