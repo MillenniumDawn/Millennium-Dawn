@@ -101,6 +101,12 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 | `nuclear_reactor_fuel_production_factor` |
 | `nuclear_reactor_fuel_production`        |
 
+## Army (`modifier_definitions.txt`) — country scope
+
+| Modifier                        | Notes                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `general_death_chance_modifier` | Multiplier delta on general kill chance per battle. Read via `FROM.modifier@general_death_chance_modifier` in `on_army_leader_*` on_actions. Set on officer corps ideas. |
+
 ## Economy — General (`modifier_definitions.txt`) — country scope
 
 | Modifier                                 |
