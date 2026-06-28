@@ -1255,13 +1255,9 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_FRA_cfa_franc_custodian = 0 }
 			set_variable = { FRA_cfa_franc_gdp_total = 0 }
 			hidden_effect = {
-				every_other_country = {
-					limit = {
-						has_country_flag = french_africa_nation_flag
-						OR = {
-							has_idea = cfa_franc
-							has_idea = cfa_franc_2
-						}
+				every_collection_element = {
+					input = {
+						input = collection:FRA_cfa_franc_nations
 					}
 					add_to_variable = { PREV.FRA_cfa_franc_gdp_total = THIS.gdp_total }
 					add_to_variable = { PREV.additional_income_FRA_cfa_franc_custodian = THIS.gdp_total }
@@ -4953,7 +4949,7 @@ calculate_gdp = {
 				value = gdp_total
 				divide = { value = last_quarter_gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
 				add = -1
-				clamp = { min = -1 max = 100 }
+				clamp = { min = -1 max = @math_expressions_max }
 			}
 		}
 
@@ -6513,6 +6509,7 @@ calculate_migration_mechanic_values = {
 					add = modifier@war_support_factor
 					clamp = { min = 0 max = 1 }
 				}
+				multiply = -1
 			}
 		}
 	}
@@ -6525,7 +6522,7 @@ calculate_migration_mechanic_values = {
 			add = immigration_government_factor_display
 			add = modifier@maximum_migration_rate_value
 			add = neighbour_war_refugees_display
-			subtract = personal_war_refugees_display
+			add = personal_war_refugees_display
 			clamp = { min = -2.0 max = 2.0 }
 		}
 	}
@@ -6539,20 +6536,23 @@ calculate_migration_mechanic_values = {
 				multiply = {
 					value = 1
 					add = modifier@migration_rate_value_factor
-					clamp = { min = 0.01 max = 100 }
+					clamp = { min = 0.01 max = @math_expressions_max }
 				}
 			}
 			else = {
 				divide = {
 					value = 1
 					add = modifier@migration_rate_value_factor
-					clamp = { min = 0.01 max = 100 }
+					clamp = { min = 0.01 max = @math_expressions_max }
 				}
 			}
 		}
 	}
 
 	# Check if there are other countries
+	if = { limit = { check_variable = { global.countries^num < 2 } }
+		set_variable = { max_net_immigration_rate = 0 }
+	}
 	set_variable = {
 		net_immigration_rate = {
 			value = max_net_immigration_rate
