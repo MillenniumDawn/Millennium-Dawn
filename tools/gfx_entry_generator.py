@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import os
+import re
 import shutil
 
 #############################1
@@ -42,6 +43,21 @@ country_tag_list = []
 modfolder = "Millennium-Dawn\\"
 mod = "Millennium-Dawn"
 
+TITLEBAR_REL = "gfx/interface/focusview/titlebar"
+
+GFX_BEGIN = "# === BEGIN GENERATED JOINT TITLE BARS (managed by gfx_entry_generator.py) ==="
+GFX_END = "# === END GENERATED JOINT TITLE BARS ==="
+STYLE_BEGIN = "# === BEGIN GENERATED JOINT TITLE BAR STYLES (managed by gfx_entry_generator.py) ==="
+STYLE_END = "# === END GENERATED JOINT TITLE BAR STYLES ==="
+
+TITLEBAR_FILE_RE = re.compile(
+    r"^focus_(unavailable|can_start|completed)_joint_(?P<suffix>.+)_bg\.dds$"
+)
+_JOINT_NAME_RE = re.compile(
+    r"^GFX_focus_(unavailable|can_start|current|completed)_joint_(.+)$"
+)
+_COMMENT_LINE_RE = re.compile(r"^[ \t]*#.*$", re.MULTILINE)
+
 
 def main():
     # Get the mod root directory (parent of the tools directory)
@@ -51,12 +67,12 @@ def main():
     while True:
         try:
             selection_input = input(
-                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\nPlease enter the number of the option you'd like: "
+                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\n8. Retrieve and generate Focus Title Bars (This also updates the titlebar_styles.txt file)\nPlease enter the number of the option you'd like: "
             ).strip()
 
             if not selection_input:
                 print(
-                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 7.{bcolors.RESET}\n"
+                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 8.{bcolors.RESET}\n"
                 )
                 continue
 
@@ -64,7 +80,7 @@ def main():
             break
         except ValueError:
             print(
-                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 7.{bcolors.RESET}\n"
+                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 8.{bcolors.RESET}\n"
             )
             continue
 
@@ -96,9 +112,12 @@ def main():
         path = os.path.join(mod_root, "gfx", "interface", "decisions")
         print(path)
         getfiles(path)
+    elif selection == 8:
+        generate_focus_titlebars(mod_root)
+        return
     else:
         print(
-            f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 7 and run the script again.\n{bcolors.RESET}"
+            f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 8 and run the script again.\n{bcolors.RESET}"
         )
         return
 
@@ -577,6 +596,341 @@ def getfiles(path):
                 tgalist.append(filename)
         else:
             getfiles(f)
+
+
+# --- Focus title-bar generation -------------------------------------------
+
+
+def _titlebar_tex(state, suffix):
+    return f"{TITLEBAR_REL}/focus_{state}_joint_{suffix}_bg.dds"
+
+
+def _basic_sprite(state, suffix):
+    name = f"GFX_focus_{state}_joint_{suffix}"
+    return (
+        "\tspriteType = {\n"
+        f'\t\tname = "{name}"\n'
+        f'\t\ttextureFile = "{_titlebar_tex(state, suffix)}"\n'
+        "\t}\n"
+    )
+
+
+def _current_sprite(suffix):
+    # current reuses the can_start background and overlays the ongoing animation.
+    return (
+        "\tSpriteType = {\n"
+        f'\t\tname = "GFX_focus_current_joint_{suffix}"\n'
+        f'\t\ttexturefile = "{_titlebar_tex("can_start", suffix)}"\n'
+        '\t\teffectFile = "gfx/FX/buttonstate_onlydisable.lua"\n'
+        "\t\tanimation = {\n"
+        f'\t\t\tanimationmaskfile = "{TITLEBAR_REL}/focus_ongoing_mask2.dds"\n'
+        f'\t\t\tanimationtexturefile = "{TITLEBAR_REL}/focus_ongoing_texture.dds"\n'
+        "\t\t\tanimationrotation = -90.0\n"
+        "\t\t\tanimationlooping = yes\n"
+        "\t\t\tanimationtime = 20.0\n"
+        "\t\t\tanimationdelay = 0.2\n"
+        '\t\t\tanimationblendmode = "add"\n'
+        '\t\t\tanimationtype = "rotating"\n'
+        "\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n"
+        "\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n"
+        "\t\t}\n"
+        "\t\tanimation = {\n"
+        f'\t\t\tanimationmaskfile = "{TITLEBAR_REL}/focus_ongoing_mask4.dds"\n'
+        f'\t\t\tanimationtexturefile = "{TITLEBAR_REL}/focus_ongoing_texture.dds"\n'
+        "\t\t\tanimationrotation = 90.0\n"
+        "\t\t\tanimationlooping = yes\n"
+        "\t\t\tanimationtime = 15.0\n"
+        "\t\t\tanimationdelay = 0.2\n"
+        '\t\t\tanimationblendmode = "add"\n'
+        '\t\t\tanimationtype = "rotating_ccw"\n'
+        "\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n"
+        "\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n"
+        "\t\t}\n"
+        "\t\tlegacy_lazy_load = no\n"
+        "\t}\n"
+    )
+
+
+def _completed_sprite(suffix):
+    return (
+        "\tSpriteType = {\n"
+        f'\t\tname = "GFX_focus_completed_joint_{suffix}"\n'
+        f'\t\ttexturefile = "{_titlebar_tex("completed", suffix)}"\n'
+        '\t\teffectFile = "gfx/FX/buttonstate_onlydisable.lua"\n'
+        "\t\tanimation = {\n"
+        f'\t\t\tanimationmaskfile = "{TITLEBAR_REL}/focus_completed_mask.dds"\n'
+        f'\t\t\tanimationtexturefile = "{TITLEBAR_REL}/focus_completed_texture.dds"\n'
+        "\t\t\tanimationrotation = 0.0\n"
+        "\t\t\tanimationlooping = yes\n"
+        "\t\t\tanimationtime = 26.0\n"
+        "\t\t\tanimationdelay = 0.0\n"
+        '\t\t\tanimationblendmode = "add"\n'
+        '\t\t\tanimationtype = "scrolling"\n'
+        "\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n"
+        "\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n"
+        "\t\t}\n"
+        "\t\tlegacy_lazy_load = no\n"
+        "\t}\n"
+    )
+
+
+def _set_block(suffix, present):
+    parts = [f"\t### {suffix} ###\n"]
+    if "unavailable" in present:
+        parts.append(_basic_sprite("unavailable", suffix))
+    if "can_start" in present:
+        parts.append(_basic_sprite("can_start", suffix))
+        parts.append("\n")
+        parts.append(_current_sprite(suffix))
+    if "completed" in present:
+        parts.append("\n")
+        parts.append(_completed_sprite(suffix))
+    return "".join(parts)
+
+
+def _style_block(suffix):
+    return (
+        "style = {\n"
+        f"\tname = JOINT_{suffix}_focus_style\n"
+        "\n"
+        f"\tunavailable = GFX_focus_unavailable_joint_{suffix}\n"
+        f"\tcompleted = GFX_focus_completed_joint_{suffix}\n"
+        f"\tavailable = GFX_focus_can_start_joint_{suffix}\n"
+        f"\tcurrent = GFX_focus_current_joint_{suffix}\n"
+        "}\n"
+    )
+
+
+def _read_lf(path):
+    with open(path, "r", encoding="utf-8", newline="") as fh:
+        return fh.read()
+
+
+def _newline_of(text):
+    return "\r\n" if "\r\n" in text else "\n"
+
+
+def _write_with_newline(path, text, newline):
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    if newline == "\r\n":
+        text = text.replace("\n", "\r\n")
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        fh.write(text)
+
+
+def _match_brace(text, open_idx):
+    depth = 0
+    i = open_idx
+    while i < len(text):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    raise ValueError(f"Unmatched opening brace at offset {open_idx}")
+
+
+def _iter_sprite_blocks(text):
+    for m in re.finditer(r"[sS]priteType\s*=\s*\{", text):
+        open_idx = text.index("{", m.start())
+        try:
+            end = _match_brace(text, open_idx) + 1
+        except ValueError:
+            continue
+        block = text[m.start():end]
+        nm = re.search(r'name\s*=\s*"([^"]+)"', block)
+        tx = re.search(r'texture[fF]ile\s*=\s*"([^"]+)"', block)
+        yield nm.group(1) if nm else None, tx.group(1) if tx else None
+
+
+def _remove_block_by_name(text, name):
+    needle = f'name = "{name}"'
+    idx = text.find(needle)
+    if idx == -1:
+        return text, False
+    kw = max(text.rfind("spriteType", 0, idx), text.rfind("SpriteType", 0, idx))
+    if kw == -1:
+        return text, False
+    line_start = text.rfind("\n", 0, kw) + 1
+    open_idx = text.index("{", kw)
+    try:
+        end = _match_brace(text, open_idx) + 1
+    except ValueError:
+        return text, False
+    if end < len(text) and text[end] == "\n":
+        end += 1
+    return text[:line_start] + text[end:], True
+
+
+def _remove_tag_headers(text, suffixes):
+    suffix_set = set(suffixes)
+    kept = []
+    for line in text.split("\n"):
+        m = re.match(r"^#+\s*([A-Za-z0-9_]+)\s*#+$", line.strip())
+        if m and m.group(1) in suffix_set:
+            continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def _strip_region(text, begin, end):
+    s = text.find(begin)
+    if s == -1:
+        return text
+    line_start = text.rfind("\n", 0, s) + 1
+    e = text.find(end, s)
+    if e == -1:
+        # END marker absent: strip from BEGIN to EOF to prevent double-BEGIN on next run.
+        return text[:line_start]
+    e += len(end)
+    if e < len(text) and text[e] == "\n":
+        e += 1
+    return text[:line_start] + text[e:]
+
+
+def _collapse_blanks(text):
+    return re.sub(r"\n{3,}", "\n\n", text)
+
+
+def generate_focus_titlebars(mod_root):
+    titlebar_dir = os.path.join(
+        mod_root, "gfx", "interface", "focusview", "titlebar"
+    )
+    gfx_file = os.path.join(mod_root, "interface", "nationalfocusview.gfx")
+    styles_file = os.path.join(
+        mod_root, "common", "national_focus", "00_titlebar_styles.txt"
+    )
+
+    if not os.path.isdir(titlebar_dir):
+        print(f"{bcolors.FAIL}Titlebar directory not found: {titlebar_dir}{bcolors.RESET}")
+        return
+    for required in (gfx_file, styles_file):
+        if not os.path.isfile(required):
+            print(f"{bcolors.FAIL}Missing file: {required}{bcolors.RESET}")
+            return
+
+    # 1. Discover sets from the source .dds files.
+    folder = {}
+    for fn in os.listdir(titlebar_dir):
+        m = TITLEBAR_FILE_RE.match(fn)
+        if m:
+            folder.setdefault(m.group("suffix"), set()).add(m.group(1))
+
+    # 2. Parse existing joint entries in the .gfx.
+    gfx_text = _read_lf(gfx_file)
+    gfx_nl = _newline_of(gfx_text)
+    gfx_text = gfx_text.replace("\r\n", "\n").replace("\r", "\n")
+
+    existing = {}
+    for nm, tx in _iter_sprite_blocks(_COMMENT_LINE_RE.sub("", gfx_text)):
+        if not nm:
+            continue
+        mm = _JOINT_NAME_RE.match(nm)
+        if mm:
+            existing.setdefault(mm.group(2), {})[mm.group(1)] = tx
+
+    def is_regular(suffix, states):
+        for st in ("unavailable", "can_start", "completed"):
+            if st in states and states[st] != _titlebar_tex(st, suffix):
+                return False
+        if "current" in states and states["current"] != _titlebar_tex("can_start", suffix):
+            return False
+        return bool(states)
+
+    regular_existing = {s for s, st in existing.items() if is_regular(s, st)}
+    irregular_existing = sorted(set(existing) - regular_existing)
+    managed = sorted(set(folder) | regular_existing)
+
+    def present_states(suffix):
+        p = set(folder.get(suffix, set()))
+        ex = existing.get(suffix, {})
+        for st in ("unavailable", "can_start", "completed"):
+            if st in ex:
+                p.add(st)
+        if "current" in ex:
+            p.add("can_start")
+        return p
+
+    # 3. Build the managed .gfx block; skip sets without a can_start source.
+    blocks = []
+    skipped = set()
+    incomplete = []
+    for suffix in managed:
+        present = present_states(suffix)
+        if "can_start" not in present:
+            skipped.add(suffix)
+            continue
+        if present != {"unavailable", "can_start", "completed"}:
+            incomplete.append(suffix)
+        blocks.append(_set_block(suffix, present))
+    emitted = [s for s in managed if s not in skipped]
+    body = "\n\n".join(b.rstrip("\n") for b in blocks)
+    managed_gfx = f"{GFX_BEGIN}\n\n{body}\n\n{GFX_END}\n"
+
+    # 4. Read and parse styles_file before writing anything, so a read failure
+    # does not leave gfx_file already overwritten with no rollback.
+    styles_text = _read_lf(styles_file)
+    styles_nl = _newline_of(styles_text)
+    styles_text = styles_text.replace("\r\n", "\n").replace("\r", "\n")
+    styles_text_stripped = _strip_region(styles_text, STYLE_BEGIN, STYLE_END)
+    styled = set(
+        re.findall(r"available\s*=\s*GFX_focus_can_start_joint_(\S+)", styles_text_stripped)
+    )
+    need_style = [s for s in emitted if s not in styled]
+    if need_style:
+        style_body = "\n\n".join(_style_block(s).rstrip("\n") for s in need_style)
+        managed_styles = f"{STYLE_BEGIN}\n\n{style_body}\n\n{STYLE_END}\n"
+        styles_text_out = styles_text_stripped.rstrip("\n") + "\n\n" + managed_styles
+    else:
+        styles_text_out = styles_text_stripped
+    styles_text_out = _collapse_blanks(styles_text_out)
+
+    # 5. All source data is ready — now write both files.
+    gfx_text = _strip_region(gfx_text, GFX_BEGIN, GFX_END)
+    removed = 0
+    for suffix in emitted:
+        for state in ("unavailable", "can_start", "current", "completed"):
+            nm = f"GFX_focus_{state}_joint_{suffix}"
+            while True:
+                gfx_text, ok = _remove_block_by_name(gfx_text, nm)
+                if not ok:
+                    break
+                removed += 1
+    gfx_text = _remove_tag_headers(gfx_text, emitted)
+    gfx_text = _collapse_blanks(gfx_text)
+
+    insert_at = gfx_text.rfind("}")
+    head = gfx_text[:insert_at].rstrip("\n")
+    tail = gfx_text[insert_at:]
+    gfx_text = f"{head}\n\n{managed_gfx}{tail}"
+    _write_with_newline(gfx_file, gfx_text, gfx_nl)
+    _write_with_newline(styles_file, styles_text_out, styles_nl)
+
+    # 6. Report.
+    print(
+        f"{bcolors.OK}Title bars: {len(emitted)} managed set(s); "
+        f"{removed} spriteType block(s) consolidated; "
+        f"{len(need_style)} new style(s) added.{bcolors.RESET}"
+    )
+    if need_style:
+        print(f"{bcolors.OK}New styles: {', '.join(need_style)}{bcolors.RESET}")
+    if incomplete:
+        print(
+            f"{bcolors.WARNING}Incomplete sets (missing a state): "
+            f"{', '.join(incomplete)}{bcolors.RESET}"
+        )
+    if skipped:
+        print(
+            f"{bcolors.FAIL}Skipped (no can_start source): "
+            f"{', '.join(sorted(skipped))}{bcolors.RESET}"
+        )
+    if irregular_existing:
+        print(
+            f"{bcolors.INFO}Left untouched (irregular, hand-authored): "
+            f"{', '.join(irregular_existing)}{bcolors.RESET}"
+        )
 
 
 if __name__ == "__main__":
