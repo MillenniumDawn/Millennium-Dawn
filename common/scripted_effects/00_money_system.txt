@@ -1036,7 +1036,16 @@ calculate_additional_income_rate = {
 		}
 		if = {
 			limit = { has_idea = AFG_Tolls_income1 }
-			set_variable = { additional_income_AFG_Tolls_income1 = { value = AFG_Bactria_earnings_tollage add = AFG_Badakshan_earnings_tollage add = AFG_Hindu_Kush_earnings_tollage add = AFG_Sistan_earnings_tollage add = AFG_Herat_earnings_tollage add = AFG_Hazarajat_earnings_tollage } }
+			set_variable = {
+				additional_income_AFG_Tolls_income1 = {
+					value = AFG_Bactria_earnings_tollage
+					add = AFG_Badakshan_earnings_tollage
+					add = AFG_Hindu_Kush_earnings_tollage
+					add = AFG_Sistan_earnings_tollage
+					add = AFG_Herat_earnings_tollage
+					add = AFG_Hazarajat_earnings_tollage
+				}
+			}
 			add_to_variable = { additional_income_rate = additional_income_AFG_Tolls_income1 }
 		}
 	}
@@ -2228,9 +2237,7 @@ calculate_additional_income_rate = {
 	}
 	# Energy Load Sharing Income
 	if = { limit = { check_variable = { energy_load_sharing_nations^num > 0 } }
-		set_temp_variable = { income_from_gw_sold = { value = energy_load_sharing_use_var multiply = global.price_per_gw_for_els } }
-		set_variable = { energy_load_sharing_income_var = income_from_gw_sold }
-		clamp_variable = { var = energy_load_sharing_income_var min = 0 }
+		set_variable = { energy_load_sharing_income_var = { value = energy_load_sharing_use_var multiply = global.price_per_gw_for_els clamp = { min = 0 max = @math_expressions_max } } }
 		add_to_variable = { additional_income_rate = energy_load_sharing_income_var }
 	}
 	# CPD War Reparations Income — variable set in 02_peace_deal_effects.txt on sign
@@ -2494,68 +2501,158 @@ update_military_rate = {
 
 	#Land equipment
 	#num_equipment is for stockpile, num_equipment_in_armies is for deployed, num_equipment_in_armies_k is for small arms and support eq (1 = 1000 eq)
-	#Calculate equipment operative costs using single temp variable for efficiency
+	#Each item folds deployed cost + stockpile cost straight into the equipment_operative_cost accumulator
 	set_variable = { equipment_operative_cost = 0 }
 
 	# Infantry equipment (per 1000 guns, cost: 0.3M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies_k@infantry_weapons_type multiply = 0.3 add = { value = num_equipment@infantry_weapons_type multiply = 0.00006 } } } # 0.001 (to thousands) × 0.2 (stockpile) × 0.3 (cost)
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies_k@infantry_weapons_type
+			multiply = 0.3
+			add = { value = num_equipment@infantry_weapons_type multiply = 0.00006 } # 0.001 (to thousands) × 0.2 (stockpile) × 0.3 (cost)
+		}
+	}
 
 	# CNC equipment (per 1000 units, cost: 0.4M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies_k@cnc_equipment_type multiply = 0.4 add = { value = num_equipment@cnc_equipment_type multiply = 0.00008 } } } # 0.001 × 0.2 × 0.4
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies_k@cnc_equipment_type
+			multiply = 0.4
+			add = { value = num_equipment@cnc_equipment_type multiply = 0.00008 } # 0.001 × 0.2 × 0.4
+		}
+	}
 
 	# AA Equipment (cost: 0.012M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@AA_Equipment multiply = 0.012 add = { value = num_equipment@AA_Equipment multiply = 0.0024 } } } # 0.2 × 0.012
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@AA_Equipment
+			multiply = 0.012
+			add = { value = num_equipment@AA_Equipment multiply = 0.0024 } # 0.2 × 0.012
+		}
+	}
 
 	# Medium tank AA chassis (cost: 0.231M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@medium_tank_aa_chassis multiply = 0.231 add = { value = num_equipment@medium_tank_aa_chassis multiply = 0.0462 } } } # 0.2 × 0.231
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@medium_tank_aa_chassis
+			multiply = 0.231
+			add = { value = num_equipment@medium_tank_aa_chassis multiply = 0.0462 } # 0.2 × 0.231
+		}
+	}
 
 	# Light AT Equipment (cost: 0.011M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@L_AT_Equipment multiply = 0.011 add = { value = num_equipment@L_AT_Equipment multiply = 0.0022 } } } # 0.2 × 0.011
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@L_AT_Equipment
+			multiply = 0.011
+			add = { value = num_equipment@L_AT_Equipment multiply = 0.0022 } # 0.2 × 0.011
+		}
+	}
 
 	# Heavy AT Equipment (cost: 0.5M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@H_AT_Equipment multiply = 0.5 add = { value = num_equipment@H_AT_Equipment multiply = 0.1 } } } # 0.2 × 0.5
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@H_AT_Equipment
+			multiply = 0.5
+			add = { value = num_equipment@H_AT_Equipment multiply = 0.1 } # 0.2 × 0.5
+		}
+	}
 
 	# Medium tank amphibious chassis (cost: 0.16M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@medium_tank_amphibious_chassis multiply = 0.16 add = { value = num_equipment@medium_tank_amphibious_chassis multiply = 0.032 } } } # 0.2 × 0.16
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@medium_tank_amphibious_chassis
+			multiply = 0.16
+			add = { value = num_equipment@medium_tank_amphibious_chassis multiply = 0.032 } # 0.2 × 0.16
+		}
+	}
 
 	# Medium tank flame chassis (cost: 0.435M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@medium_tank_flame_chassis multiply = 0.435 add = { value = num_equipment@medium_tank_flame_chassis multiply = 0.087 } } } # 0.2 × 0.435
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@medium_tank_flame_chassis
+			multiply = 0.435
+			add = { value = num_equipment@medium_tank_flame_chassis multiply = 0.087 } # 0.2 × 0.435
+		}
+	}
 
 	# Artillery equipment (cost: 0.07M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@artillery_equipment multiply = 0.07 add = { value = num_equipment@artillery_equipment multiply = 0.014 } } } # 0.2 × 0.07
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@artillery_equipment
+			multiply = 0.07
+			add = { value = num_equipment@artillery_equipment multiply = 0.014 } # 0.2 × 0.07
+		}
+	}
 
 	# SP Artillery (cost: 0.5M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@medium_tank_artillery_chassis multiply = 0.5 add = { value = num_equipment@medium_tank_artillery_chassis multiply = 0.1 } } } # 0.2 × 0.5
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@medium_tank_artillery_chassis
+			multiply = 0.5
+			add = { value = num_equipment@medium_tank_artillery_chassis multiply = 0.1 } # 0.2 × 0.5
+		}
+	}
 
 	# Medium tank chassis (cost: 0.7M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@medium_tank_chassis multiply = 0.7 add = { value = num_equipment@medium_tank_chassis multiply = 0.14 } } } # 0.2 × 0.7
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@medium_tank_chassis
+			multiply = 0.7
+			add = { value = num_equipment@medium_tank_chassis multiply = 0.14 } # 0.2 × 0.7
+		}
+	}
 
 	# Medium tank destroyer chassis (cost: 0.35M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@medium_tank_destroyer_chassis multiply = 0.35 add = { value = num_equipment@medium_tank_destroyer_chassis multiply = 0.07 } } } # 0.2 × 0.35
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@medium_tank_destroyer_chassis
+			multiply = 0.35
+			add = { value = num_equipment@medium_tank_destroyer_chassis multiply = 0.07 } # 0.2 × 0.35
+		}
+	}
 
 	# Heavy tank amphibious chassis / Transport helicopters (cost: 0.75M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@heavy_tank_amphibious_chassis multiply = 0.75 add = { value = num_equipment@heavy_tank_amphibious_chassis multiply = 0.15 } } } # 0.2 × 0.75
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@heavy_tank_amphibious_chassis
+			multiply = 0.75
+			add = { value = num_equipment@heavy_tank_amphibious_chassis multiply = 0.15 } # 0.2 × 0.75
+		}
+	}
 
 	# Heavy tank chassis / Attack helicopters (cost: 1.0M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@heavy_tank_chassis multiply = 1 add = { value = num_equipment@heavy_tank_chassis multiply = 0.2 } } } # 0.2 × 1
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@heavy_tank_chassis
+			multiply = 1
+			add = { value = num_equipment@heavy_tank_chassis multiply = 0.2 } # 0.2 × 1
+		}
+	}
 
 	# Utility vehicles (cost: 0.022M yearly)
-	set_temp_variable = { temp_eq = { value = num_equipment_in_armies@util_vehicle_type multiply = 0.022 add = { value = num_equipment@util_vehicle_type multiply = 0.0044 } } } # 0.2 × 0.022
-	add_to_variable = { equipment_operative_cost = temp_eq }
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@util_vehicle_type
+			multiply = 0.022
+			add = { value = num_equipment@util_vehicle_type multiply = 0.0044 } # 0.2 × 0.022
+		}
+	}
 
 	set_temp_variable = { equipment_operative_cost_multiplier = 5 } #tweak this to modify the operative cost of all equipment
 	#from millions yearly to billions weekly
@@ -2808,12 +2905,10 @@ update_military_rate = {
 		index = i
 		value = v
 		#Industry cost + personnel, over 7 days, plus equipment upkeep
-		set_variable = { array_defence_spend^i = { value = array_defence_spend^i add = personnel_cost multiply = 7 add = equipment_operative_cost } }
-		clamp_variable = { var = array_defence_spend^i min = 0 }
+		set_variable = { array_defence_spend^i = { value = array_defence_spend^i add = personnel_cost multiply = 7 add = equipment_operative_cost clamp = { min = 0 max = @math_expressions_max } } }
 	}
 
-	set_variable = { defence_gain = array_defence_spend^def_index }
-	clamp_variable = { var = defence_gain min = 0 }
+	set_variable = { defence_gain = { value = array_defence_spend^def_index clamp = { min = 0 max = @math_expressions_max } } }
 
 	# Cyber Command weekly overhead cost
 	set_variable = { defence_breakdown_cyber = 0 }
@@ -2882,8 +2977,7 @@ update_bureaucracy_rate = {
 	else_if = { limit = { has_idea = bureau_05 }
 		set_temp_variable = { bureau_index = 4 }
 	}
-	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
-	clamp_variable = { var = bureaucracy_gain min = 0 }
+	set_variable = { var = bureaucracy_gain value = { value = array_bureaucracy_spend^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_police_rate
@@ -2933,8 +3027,7 @@ update_police_rate = {
 		set_temp_variable = { security_index = 4 }
 	}
 
-	set_variable = { security_gain = array_security_spend^security_index }
-	clamp_variable = { var = security_gain min = 0 }
+	set_variable = { security_gain = { value = array_security_spend^security_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_education_rate
@@ -3056,8 +3149,7 @@ update_education_rate = {
 		multiply_variable = { THIS.total_facilities_spending_display_var = 3 }
 	}
 
-	set_variable = { education_gain = array_education_spend^education_index }
-	clamp_variable = { var = education_gain min = 0 }
+	set_variable = { education_gain = { value = array_education_spend^education_index clamp = { min = 0 max = @math_expressions_max } } }
 	clamp_variable = { var = total_facilities_spending_display_var min = 0 }
 }
 
@@ -3107,8 +3199,7 @@ update_health_rate = {
 		set_temp_variable = { health_index = 5 }
 	}
 
-	set_variable = { health_gain = array_health_spend^health_index }
-	clamp_variable = { var = health_gain min = 0 }
+	set_variable = { health_gain = { value = array_health_spend^health_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_social_rate
@@ -3157,8 +3248,7 @@ update_social_rate = {
 		set_temp_variable = { social_index = 5 }
 	}
 
-	set_variable = { welfare_gain = array_social_spend^social_index }
-	clamp_variable = { var = welfare_gain min = 0 }
+	set_variable = { welfare_gain = { value = array_social_spend^social_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_infra_rate
@@ -3638,9 +3728,7 @@ calculate_additional_expense_rate = {
 	}
 	# Energy Load Sharing
 	if = { limit = { has_country_flag = energy_load_sharing_recipient }
-		set_temp_variable = { payment_from_gw_bought = { value = energy_load_sharing_gain_var multiply = global.price_per_gw_for_els } }
-		set_variable = { energy_load_sharing_payment_var = payment_from_gw_bought }
-		clamp_variable = { var = energy_load_sharing_payment_var min = 0 }
+		set_variable = { energy_load_sharing_payment_var = { value = energy_load_sharing_gain_var multiply = global.price_per_gw_for_els clamp = { min = 0 max = @math_expressions_max } } }
 		add_to_variable = { additional_expenses_rate = energy_load_sharing_payment_var }
 	}
 
@@ -4020,8 +4108,7 @@ calculate_additional_expense_rate = {
 	# Antarctica station maintenance costs
 	if = {
 		limit = { has_idea = at_member }
-		set_variable = { antarctica_maintenance_cost = antarctica_station_total_upkeep_multiplier }
-		clamp_variable = { var = antarctica_maintenance_cost min = 0 }
+		set_variable = { antarctica_maintenance_cost = { value = antarctica_station_total_upkeep_multiplier clamp = { min = 0 max = @math_expressions_max } } }
 		add_to_variable = { additional_expenses_rate = antarctica_maintenance_cost }
 	}
 
@@ -4055,9 +4142,7 @@ calculate_int_investments_rate = {
 	clamp_variable = { var = roi_rate min = 0 max = 0.20 }
 
 	#This is how much money we get back in a year, converted to weekly
-	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 } }
-
-	clamp_variable = { var = int_investments_rate min = 0 }
+	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: calculate_resource_sale_rate
@@ -4105,8 +4190,8 @@ calculate_resource_sale_rate = {
 		add = rubber_exports
 		add = microchip_exports
 		add = composite_exports
+		clamp = { min = 0 max = @math_expressions_max }
 	} }
-	clamp_variable = { var = resource_sale_rate min = 0 }
 }
 
 # Effect: update_display
@@ -6202,8 +6287,7 @@ calculate_migration_mechanic_values = {
 		set_temp_variable = { border_control_index = 4 }
 	}
 
-	set_variable = { border_control_gain = array_border_control_spend^border_control_index }
-	clamp_variable = { var = border_control_gain min = 0 }
+	set_variable = { border_control_gain = { value = array_border_control_spend^border_control_index clamp = { min = 0 max = @math_expressions_max } } }
 
 	# Productivity Calculation
 	set_variable = {
@@ -6821,8 +6905,7 @@ calcluate_program_distributions = {
 
 		var:v = {
 			set_variable = { un_esco_political_power_var = esco_political_budget }
-			set_variable = { un_esco_research_speed_var = { value = esco_research_budget multiply = 0.002 } }
-			clamp_variable = { var = un_esco_research_speed_var min = 0 max = 0.30 }
+			set_variable = { un_esco_research_speed_var = { value = esco_research_budget multiply = 0.002 clamp = { min = 0 max = 0.30 } } }
 		}
 	}
 
@@ -6846,8 +6929,7 @@ calcluate_program_distributions = {
 
 		var:v = {
 			set_variable = { un_ido_current_building_count = un_ido_building_count }
-			set_variable = { un_ido_construction_speed_var = { value = construction_speed_buffs multiply = 0.002 } }
-			clamp_variable = { var = un_ido_construction_speed_var min = 0 max = 0.30 }
+			set_variable = { un_ido_construction_speed_var = { value = construction_speed_buffs multiply = 0.002 clamp = { min = 0 max = 0.30 } } }
 			if = {
 				limit = {
 					NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
@@ -6876,8 +6958,7 @@ calcluate_program_distributions = {
 		value = v
 
 		var:v = {
-			set_variable = { un_cdf_productivity_var = { value = prod_var multiply = 0.002 } }
-			clamp_variable = { var = un_cdf_productivity_var min = 0 max = 0.30 }
+			set_variable = { un_cdf_productivity_var = { value = prod_var multiply = 0.002 clamp = { min = 0 max = 0.30 } } }
 			set_variable = { un_cdf_construction_cost_var = cost_var }
 		}
 	}
