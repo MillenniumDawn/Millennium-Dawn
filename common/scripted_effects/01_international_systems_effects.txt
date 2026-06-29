@@ -1,3 +1,35 @@
+# Auto-vote processing for UN Security Council votes
+# Called from UNSC.100 and recognition.11 when a nation has auto-vote flags set.
+# Adds the nation to the appropriate vote array based on their flag.
+process_auto_sc_vote = {
+	if = {
+		limit = { has_country_flag = auto_accept_all_sc_votes }
+		add_to_array = { global.security_council_vote_yes = THIS }
+	} else_if = {
+		limit = { has_country_flag = auto_reject_all_sc_votes }
+		add_to_array = { global.security_council_vote_no = THIS }
+	} else_if = {
+		limit = { has_country_flag = auto_abstain_all_sc_votes }
+		add_to_array = { global.security_council_vote_abstain = THIS }
+	}
+}
+
+# Auto-vote processing for UN General Assembly votes
+# Called from UN.100 and recognition.14 when a nation has auto-vote flags set.
+# Adds the nation to the appropriate vote array based on their flag.
+process_auto_ga_vote = {
+	if = {
+		limit = { has_country_flag = auto_accept_all_ga_votes }
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+	} else_if = {
+		limit = { has_country_flag = auto_reject_all_ga_votes }
+		add_to_array = { global.general_assembly_vote_no = THIS }
+	} else_if = {
+		limit = { has_country_flag = auto_abstain_all_ga_votes }
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+	}
+}
+
 on_startup_international = {
 	add_to_array = { global.PMC_Companies = 001 } #Blackwater
 	add_to_array = { global.PMC_Companies = 002 } #Aegis
@@ -926,6 +958,7 @@ un_check_for_next_queued_vote = {
 	set_variable = { global.un_2_3_number = global.UN_general_assembly^num }
 	multiply_variable = { global.un_2_3_number = 0.66 }
 	round_variable = global.un_2_3_number
+	subtract_from_variable = { global.un_2_3_number = 1 }
 
 	international_systems_update = yes
 }
@@ -1339,40 +1372,33 @@ calculate_final_un_benefits = {
 
 	add_to_temp_variable = { current_receiving_budget_tracker = current_factory_lease_money }
 	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_productivity_var }
-
-	set_temp_variable = { current_const_cost_bonus = un_cdf_construction_cost_var }
-
-	add_to_temp_variable = { current_receiving_budget_tracker = current_const_cost_bonus }
+	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_construction_cost_var }
 
 	#Divide here to see how much % of the money we are getting
 	#then flip it to negative; we need to add this back into the nations that are getting benefits
 	divide_temp_variable = { current_receiving_budget_tracker = global.full_aid_budget_calculator }
-	multiply_temp_variable = { current_receiving_budget_tracker = -1 }
-	multiply_temp_variable = { current_receiving_budget_tracker = 2 }
+	multiply_temp_variable = { current_receiving_budget_tracker = -2 }
 
 	#if you receive aid, you begin to lose some of the gains from giving aid
-	set_temp_variable = { reducer = 0 }
+	set_temp_variable = { contribution_multiplier = 1 }
 	if = {
 		limit = {
 			has_country_flag = is_getting_ido_subsidies
 		}
-		add_to_temp_variable = { reducer = 0.2 }
+		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 	if = {
 		limit = {
 			has_country_flag = is_getting_cdf_subsidies
 		}
-		add_to_temp_variable = { reducer = 0.2 }
+		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 	if = {
 		limit = {
 			has_country_flag = is_getting_esco_subsidies
 		}
-		add_to_temp_variable = { reducer = 0.2 }
+		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
-
-	set_temp_variable = { contribution_multiplier = 1 }
-	subtract_from_temp_variable = { contribution_multiplier = reducer }
 
 	set_temp_variable = { aid_program_adder = united_nations_aid_program_contribution_percent }
 	multiply_temp_variable = { aid_program_adder = contribution_multiplier }
@@ -1842,17 +1868,16 @@ recognition_grant_increment = {
 	else_if = { limit = { PREV = { has_idea = great_power } } add_political_power = 50 }
 	else_if = { limit = { PREV = { has_idea = super_power } } add_political_power = 100 }
 
+	# One-time notification when recognition first reaches the UN-ascension threshold (40% of GA)
 	if = {
-		limit = { check_variable = { Granted_Recognition = 25 } }
-		news_event = recognition.40
-	}
-	else_if = {
-		limit = { check_variable = { Granted_Recognition = 50 } }
-		news_event = recognition.41
-	}
-	else_if = {
-		limit = { check_variable = { Granted_Recognition = 100 } }
-		news_event = recognition.42
+		limit = { NOT = { has_country_flag = un_ascension_eligible_notified } }
+		set_temp_variable = { recog_threshold = global.UN_general_assembly^num }
+		multiply_temp_variable = { recog_threshold = 0.4 }
+		if = {
+			limit = { check_variable = { Granted_Recognition > recog_threshold } }
+			set_country_flag = un_ascension_eligible_notified
+			country_event = recognition.45
+		}
 	}
 	international_systems_update = yes
 }

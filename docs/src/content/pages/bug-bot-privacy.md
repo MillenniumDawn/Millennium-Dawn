@@ -2,7 +2,7 @@
 title: Bug Bot Privacy Policy
 description: What the Millennium Dawn Bug Bot collects, how that data is used and shared, how long it is kept, and how to have it deleted.
 permalink: /bug-bot-privacy/
-last_updated: 2026-06-21
+last_updated: 2026-06-29
 ---
 
 This policy covers the [Millennium Dawn Bug Bot](/bug-bot/), the Discord bot used in the Millennium Dawn community. The bot turns bug reports or suggestions posted in our Discord forum into issues on our public GitHub tracker. This explains what it collects, how that data is used and shared, how long it is kept, and how to have it deleted.
@@ -25,11 +25,18 @@ The bot needs the Discord Message Content intent to read report text. It does no
 ## How it is used and shared
 
 - **Public GitHub issues.** Your report text and attachments are published as an issue on our public GitHub repository so maintainers can track and fix the bug. Issues are attributed to "discord-sync". Your Discord username is not part of the issue, but the issue links back to the Discord thread so maintainers can follow up, and your username is visible there to anyone in the server. Attachments are republished as part of the issue, so do not include personal information in screenshots or files you attach.
-- **AI triage.** Report text may be sent to a self-hosted or to an Ollama cloud AI model to suggest a title, severity, and likely cause. This runs on our own infrastructure. Message content is never used to train AI models.
+- **AI triage.** Report text may be sent to an AI model to suggest a title, severity, and likely cause. It runs either self-hosted on our own infrastructure, or on Ollama's cloud, which processes the text transiently, does not retain it beyond fulfilling the request, and does not use it to train models.
 - **GitHub account linking.** If you run `/register`, the bot stores the link between your Discord account and your GitHub username so commands like `/whoami` can show it. The link is kept until you run `/forget`.
 - **Internal bookkeeping.** The bot keeps a local database that maps Discord threads to GitHub issues and records operational logs.
 
-The bot does not sell your data, share it with advertisers or data brokers, or use it to build a profile of you. Data is only shared with GitHub (to host the issue) and our self-hosted or to an Ollama cloud AI models (to triage it), both as needed to run the tracker which both offer zero-data retention. Data shared with GitHub is subject to [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement); your use of Discord is covered by [Discord's privacy policy](https://discord.com/privacy).
+The bot does not sell your data, share it with advertisers or data brokers, or use it to build a profile of you. The only third parties that receive your data are GitHub (to host the issue) and Ollama (when cloud triage is used), both only as needed to run the tracker. Data shared with GitHub is subject to [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement); cloud triage is subject to [Ollama's privacy policy](https://ollama.com/privacy); your use of Discord is covered by [Discord's privacy policy](https://discord.com/privacy).
+
+## Legal basis (GDPR)
+
+If you are in the EU or UK, we process your data on two bases:
+
+- **Legitimate interest** in running the bug tracker. Filing your report as a GitHub issue, keeping your Discord ID for follow-ups, and triaging the report all serve that interest, and you post in a tracked channel voluntarily.
+- **Consent** for anything optional. Linking your GitHub username with `/register` is opt-in: you consent by running the command and can withdraw it any time with `/forget`.
 
 ## How long it is kept
 
@@ -41,11 +48,15 @@ The bot does not sell your data, share it with advertisers or data brokers, or u
 ## Your choices
 
 - Run **`/forget`** in Discord to delete the data the bot holds about you. This removes your `/register` entry and de-identifies your Discord ID from stored reports and logs. Published GitHub issues already carry no username; the report text stays as the tracked bug. If you need an issue itself removed, ask a maintainer.
-- If you can no longer use Discord commands (for example, you left the server), email us at <millenniumdawnmod@gmail.com> and we will do the same on request.
+- Email us at <millenniumdawnmod@gmail.com> to ask what data the bot holds about you, to have it deleted, or to object to how it is used. Use this route if you can no longer run Discord commands (for example, you left the server); we will act on the request the same way.
+
+## Children's privacy
+
+Discord requires users to be at least 13 (older in some countries). The bot is not intended for children under 13, and we do not knowingly collect their data. If we learn that we have, we will delete it. Contact us at <millenniumdawnmod@gmail.com> if you believe a child has used the bot.
 
 ## Security
 
-Local data is stored on access-restricted private infrastructure. We use reasonable technical and organizational measures to protect it and will notify affected users of any unauthorized access as required by law.
+Local data is stored in the United States, on access-restricted private infrastructure we run for the mod. If you are in the EU or UK, this means your data is processed in the United States. We use reasonable technical and organizational measures to protect it and will notify affected users of any unauthorized access as required by law.
 
 ## Changes
 
