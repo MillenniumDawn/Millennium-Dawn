@@ -137,4 +137,5 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [AI Strategy](.claude/docs/ai-strategy-reference.md) | [AI Equipment](.claude/docs/ai-equipment-reference.md)
 - [Diplomatic Actions](.claude/docs/diplomatic-action-reference.md) | [Content Guidelines](.claude/docs/content-guidelines.md)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
+- [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`) | [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
 - [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — full list of non-vanilla modifier keys defined in `common/modifier_definitions/`

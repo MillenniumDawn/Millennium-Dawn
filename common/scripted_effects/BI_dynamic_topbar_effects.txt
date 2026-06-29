@@ -1,0 +1,278 @@
+# Effects driving the tokenized topbar counter widget.
+# Adapted from Black Ice's dynamic topbar; sidebar paths stripped, MD token set.
+# See common/scripted_guis/BI_dynamic_topbar.txt and common/ideas/zzz_topbar_tokens.txt.
+
+create_customizeable_topbar_sidebar_content = {
+	if = {
+		limit = {
+			check_variable = { global.topbar_content^num = 0 }
+		}
+
+		clear_array = global.topbar_content
+
+		add_to_array = { global.topbar_content = token:topbar_casualties }
+		add_to_array = { global.topbar_content = token:topbar_surrender_progress }
+		add_to_array = { global.topbar_content = token:topbar_strength_ratio }
+		add_to_array = { global.topbar_content = token:topbar_naval_strength_ratio }
+		add_to_array = { global.topbar_content = token:topbar_stability }
+		add_to_array = { global.topbar_content = token:topbar_war_support }
+		add_to_array = { global.topbar_content = token:topbar_political_power_daily }
+		add_to_array = { global.topbar_content = token:topbar_command_power_daily }
+		add_to_array = { global.topbar_content = token:topbar_army_strength }
+		add_to_array = { global.topbar_content = token:topbar_air_strength }
+		add_to_array = { global.topbar_content = token:topbar_navy_strength }
+		add_to_array = { global.topbar_content = token:topbar_ships }
+		add_to_array = { global.topbar_content = token:topbar_conscription }
+		add_to_array = { global.topbar_content = token:topbar_unemployment }
+		add_to_array = { global.topbar_content = token:topbar_protests }
+		add_to_array = { global.topbar_content = token:topbar_consumer_goods }
+		add_to_array = { global.topbar_content = token:topbar_investment_foreign }
+		add_to_array = { global.topbar_content = token:topbar_menu_popularity }
+		add_to_array = { global.topbar_content = token:topbar_menu_factories }
+		add_to_array = { global.topbar_content = token:topbar_menu_economy }
+		add_to_array = { global.topbar_content = token:topbar_menu_energy }
+		add_to_array = { global.topbar_content = token:topbar_menu_influence }
+		add_to_array = { global.topbar_content = token:topbar_menu_eu }
+		add_to_array = { global.topbar_content = token:topbar_menu_resource_total }
+		add_to_array = { global.topbar_content = token:topbar_menu_resource_produced }
+		add_to_array = { global.topbar_content = token:topbar_menu_resource_imported }
+		add_to_array = { global.topbar_content = token:topbar_menu_resource_exported }
+		add_to_array = { global.topbar_content = token:topbar_menu_resource_consumed }
+	}
+}
+
+update_topbar_menu = {
+	create_customizeable_topbar_sidebar_content = yes
+
+	clear_array = topbar_menu@var:topbar_i
+
+	for_each_loop = {
+		array = global.topbar_content
+
+		add_to_array = { topbar_menu@var:topbar_i = v }
+	}
+}
+
+update_topbar_menu_category = {
+	set_variable = { subcategory_selected = topbar_menu_v }
+
+	set_temp_variable = { next_index = topbar_menu_i }
+	for_each_loop = {
+		array = subcategory
+
+		add_to_temp_variable = { next_index = 3 }
+
+		if = {
+			limit = {
+				check_variable = { topbar_menu@var:topbar_i^num < next_index }
+			}
+			add_to_array = { topbar_menu@var:topbar_i = 0 }
+			add_to_array = { topbar_menu@var:topbar_i = 0 }
+			add_to_array = { topbar_menu@var:topbar_i = 0 }
+		}
+
+		add_to_array = { array = topbar_menu@var:topbar_i value = v index = next_index }
+
+		set_temp_variable = { remove_shift = next_index }
+		add_to_temp_variable = { remove_shift = 1 }
+		remove_from_array = { array = topbar_menu@var:topbar_i index = remove_shift }
+	}
+}
+
+topbar_assign_information = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { topbar_menu_v = token:topbar_menu_popularity }
+				check_variable = { topbar_menu_v = token:topbar_menu_factories }
+				check_variable = { topbar_menu_v = token:topbar_menu_economy }
+				check_variable = { topbar_menu_v = token:topbar_menu_energy }
+				check_variable = { topbar_menu_v = token:topbar_menu_influence }
+				check_variable = { topbar_menu_v = token:topbar_menu_eu }
+				check_variable = { topbar_menu_v = token:topbar_menu_resource_total }
+				check_variable = { topbar_menu_v = token:topbar_menu_resource_produced }
+				check_variable = { topbar_menu_v = token:topbar_menu_resource_imported }
+				check_variable = { topbar_menu_v = token:topbar_menu_resource_exported }
+				check_variable = { topbar_menu_v = token:topbar_menu_resource_consumed }
+			}
+		}
+
+		if = {
+			limit = {
+				check_variable = { subcategory_selected = topbar_menu_v }
+			}
+			clear_variable = subcategory_selected
+			clear_array = subcategory
+
+			update_topbar_menu = yes
+		}
+		else = {
+			update_topbar_menu = yes
+			clear_array = subcategory
+			clear_variable = subcategory_selected
+
+			clear_temp_array = subcategory_temp
+			if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_popularity }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_pop_coalition }
+				add_to_temp_array = { subcategory_temp = token:topbar_pop_democratic }
+				add_to_temp_array = { subcategory_temp = token:topbar_pop_communism }
+				add_to_temp_array = { subcategory_temp = token:topbar_pop_fascism }
+				add_to_temp_array = { subcategory_temp = token:topbar_pop_neutrality }
+				add_to_temp_array = { subcategory_temp = token:topbar_pop_nationalist }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_factories }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_civilian_factory }
+				add_to_temp_array = { subcategory_temp = token:topbar_military_factory }
+				add_to_temp_array = { subcategory_temp = token:topbar_naval_factory }
+				add_to_temp_array = { subcategory_temp = token:topbar_office }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_economy }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_economy_treasury }
+				add_to_temp_array = { subcategory_temp = token:topbar_economy_interest }
+				add_to_temp_array = { subcategory_temp = token:topbar_economy_inflation }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_energy }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_energy_balance }
+				add_to_temp_array = { subcategory_temp = token:topbar_energy_percentage }
+				add_to_temp_array = { subcategory_temp = token:topbar_energy_stored }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_influence }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_influence_cap }
+				add_to_temp_array = { subcategory_temp = token:topbar_influence_modifier }
+				add_to_temp_array = { subcategory_temp = token:topbar_influence_defense }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_eu }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_eu_country_europeanism }
+				add_to_temp_array = { subcategory_temp = token:topbar_eu_global_europeanism }
+				add_to_temp_array = { subcategory_temp = token:topbar_eu_parliament_cooldown }
+				add_to_temp_array = { subcategory_temp = token:topbar_eu_council_cooldown }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_total }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_oil_total }
+				add_to_temp_array = { subcategory_temp = token:topbar_aluminium_total }
+				add_to_temp_array = { subcategory_temp = token:topbar_rubber_total }
+				add_to_temp_array = { subcategory_temp = token:topbar_tungsten_total }
+				add_to_temp_array = { subcategory_temp = token:topbar_steel_total }
+				add_to_temp_array = { subcategory_temp = token:topbar_chromium_total }
+				add_to_temp_array = { subcategory_temp = token:topbar_microchips_total }
+				add_to_temp_array = { subcategory_temp = token:topbar_composites_total }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_produced }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_oil_produced }
+				add_to_temp_array = { subcategory_temp = token:topbar_aluminium_produced }
+				add_to_temp_array = { subcategory_temp = token:topbar_rubber_produced }
+				add_to_temp_array = { subcategory_temp = token:topbar_tungsten_produced }
+				add_to_temp_array = { subcategory_temp = token:topbar_steel_produced }
+				add_to_temp_array = { subcategory_temp = token:topbar_chromium_produced }
+				add_to_temp_array = { subcategory_temp = token:topbar_microchips_produced }
+				add_to_temp_array = { subcategory_temp = token:topbar_composites_produced }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_imported }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_oil_imported }
+				add_to_temp_array = { subcategory_temp = token:topbar_aluminium_imported }
+				add_to_temp_array = { subcategory_temp = token:topbar_rubber_imported }
+				add_to_temp_array = { subcategory_temp = token:topbar_tungsten_imported }
+				add_to_temp_array = { subcategory_temp = token:topbar_steel_imported }
+				add_to_temp_array = { subcategory_temp = token:topbar_chromium_imported }
+				add_to_temp_array = { subcategory_temp = token:topbar_microchips_imported }
+				add_to_temp_array = { subcategory_temp = token:topbar_composites_imported }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_exported }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_oil_exported }
+				add_to_temp_array = { subcategory_temp = token:topbar_aluminium_exported }
+				add_to_temp_array = { subcategory_temp = token:topbar_rubber_exported }
+				add_to_temp_array = { subcategory_temp = token:topbar_tungsten_exported }
+				add_to_temp_array = { subcategory_temp = token:topbar_steel_exported }
+				add_to_temp_array = { subcategory_temp = token:topbar_chromium_exported }
+				add_to_temp_array = { subcategory_temp = token:topbar_microchips_exported }
+				add_to_temp_array = { subcategory_temp = token:topbar_composites_exported }
+			}
+			else_if = {
+				limit = {
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_consumed }
+				}
+				add_to_temp_array = { subcategory_temp = token:topbar_oil_consumed }
+				add_to_temp_array = { subcategory_temp = token:topbar_aluminium_consumed }
+				add_to_temp_array = { subcategory_temp = token:topbar_rubber_consumed }
+				add_to_temp_array = { subcategory_temp = token:topbar_tungsten_consumed }
+				add_to_temp_array = { subcategory_temp = token:topbar_steel_consumed }
+				add_to_temp_array = { subcategory_temp = token:topbar_chromium_consumed }
+				add_to_temp_array = { subcategory_temp = token:topbar_microchips_consumed }
+				add_to_temp_array = { subcategory_temp = token:topbar_composites_consumed }
+			}
+
+			for_each_loop = {
+				array = subcategory_temp
+
+				add_to_array = { subcategory = v }
+			}
+			update_topbar_menu_category = yes
+		}
+	}
+	else = {
+		remove_from_array = { array = ROOT.topbar_array index = topbar_i }
+		add_to_array = { array = ROOT.topbar_array value = topbar_menu_v index = topbar_i }
+
+		if = {
+			limit = {
+				check_variable = { shift_click = 0 }
+			}
+			clear_variable = subcategory_selected
+			clear_array = subcategory
+
+			clear_array = topbar_menu@var:topbar_i
+			clear_variable = selected_topbar
+		}
+		else_if = {
+			limit = {
+				check_variable = { shift_click = 1 }
+			}
+
+			if = {
+				limit = {
+					set_temp_variable = { ti = topbar_array^num }
+					subtract_from_temp_variable = { ti = 1 }
+					check_variable = { topbar_i = ti }
+				}
+				add_to_array = { topbar_array = token:topbar_empty }
+			}
+			clear_variable = subcategory_selected
+			clear_array = topbar_menu@var:topbar_i
+
+			add_to_variable = { selected_topbar = 1 }
+			add_to_temp_variable = { topbar_i = 1 }
+
+			update_topbar_menu = yes
+		}
+	}
+}

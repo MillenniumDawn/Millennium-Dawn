@@ -89,6 +89,13 @@ on_actions = {
 			resource_storage_system = yes
 			# INFO: If you are a player and updating the UI for the research one for the next 90 days
 			if = { limit = { is_ai = no }
+				# Tokenized topbar counter widget: refresh values daily; one-time migration off the old index system
+				if = {
+					limit = { NOT = { has_country_flag = topbar_v2_migrated } }
+					clear_array = topbar_array
+					set_country_flag = topbar_v2_migrated
+				}
+				add_to_variable = { BI_topbar_update = 1 }
 				if = {
 					limit = { has_decision = gdp_gain_slot }
 					add_to_variable = { global.research_screen_ui = 1 }
@@ -1580,6 +1587,7 @@ on_actions = {
 			set_variable = { global.general_operating_budget_contribute_percent = 0.0001 }
 
 			ABK = {
+				set_buy_core_state_arrays = yes
 				set_all_prod_arrays = yes
 				set_all_sat_system_tech = yes
 				set_all_OLV_tech = yes
@@ -1640,6 +1648,7 @@ on_actions = {
 
 			# Initialize On Startup
 			set_variable = { global.average_world_productivity = 650 }
+			set_variable = { global.productivity_center = 1000 }
 
 			# Intelligence advisors are selected via faction intelligence tab popup - do not pre-activate
 
@@ -1700,7 +1709,6 @@ on_actions = {
 
 				# Sets Global vars for investment then resizes array
 				set_variable = { project_build_amount^-1 = 1 }
-				set_variable = { constructable_buildings = 1 }
 				set_country_flag = investments_hide_investment_window
 
 				resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
@@ -2012,8 +2020,11 @@ on_actions = {
 							end = PREV.influence_array^num
 							value = v
 
-							add_to_array = { influence_array = PREV.influence_array^v }
-							add_to_array = { influence_array_val = PREV.influence_array_val^v }
+							if = {
+								limit = { NOT = { is_in_array = { influence_array = PREV.influence_array^v } } }
+								add_to_array = { influence_array = PREV.influence_array^v }
+								add_to_array = { influence_array_val = PREV.influence_array_val^v }
+							}
 						}
 						recalculate_influence = yes
 
@@ -2220,8 +2231,11 @@ on_actions = {
 							end = FROM.influence_array^num
 							value = v
 
-							add_to_array = { influence_array = FROM.influence_array^v }
-							add_to_array = { influence_array_val = FROM.influence_array_val^v }
+							if = {
+								limit = { NOT = { is_in_array = { influence_array = FROM.influence_array^v } } }
+								add_to_array = { influence_array = FROM.influence_array^v }
+								add_to_array = { influence_array_val = FROM.influence_array_val^v }
+							}
 						}
 						recalculate_influence = yes
 

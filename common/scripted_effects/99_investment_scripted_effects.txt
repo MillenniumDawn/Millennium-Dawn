@@ -9,11 +9,11 @@
 init_investment_system = {
 	# Building cost arrays (for array lookup - index = building type 1..14)
 	set_variable = { global.build_cost_array^0 = 0 }
-	set_variable = { global.build_cost_array^1 = 12 }    # CIC
+	set_variable = { global.build_cost_array^1 = 12 } # CIC
 	set_variable = { global.build_cost_array^2 = 12.50 } # MIC
-	set_variable = { global.build_cost_array^3 = 12 }    # NIC
+	set_variable = { global.build_cost_array^3 = 12 } # NIC
 	set_variable = { global.build_cost_array^4 = 5.5 }   # INFRA
-	set_variable = { global.build_cost_array^5 = 20 }    # OFFICES
+	set_variable = { global.build_cost_array^5 = 20 } # OFFICES
 	set_variable = { global.build_cost_array^6 = 5.50 }  # AA
 	set_variable = { global.build_cost_array^7 = 4.50 }  # RADAR
 	set_variable = { global.build_cost_array^8 = 5.25 }  # AIRBASE
@@ -63,7 +63,6 @@ init_investment_system = {
 # Purely used to update the variables of a nation if you are trying to play as a releasable
 ingame_init_investment_system = {
 	set_variable = { project_build_amount^-1 = 1 }
-	set_variable = { constructable_buildings = 1 }
 	set_country_flag = investments_hide_investment_window
 
 	resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
@@ -117,18 +116,19 @@ project_monetary_cost_calculation = {
 				add_to_temp_variable = { investments_cost_modifier = 0.5 }
 			}
 			if = {
-				limit = {
-					is_in_array = { global.EU_member = THIS.id }
-					PREV.PREV = { has_idea = ECB_president }
+				limit = { has_idea = EU_member }
+				if = {
+					limit = {
+						PREV.PREV = { has_idea = ECB_president }
+					}
+					add_to_temp_variable = { investments_cost_modifier = -0.15 }
 				}
-				add_to_temp_variable = { investments_cost_modifier = -0.15 }
-			}
-			if = {
-				limit = {
-					is_in_array = { global.EU_member = THIS.id }
-					PREV.PREV = { has_idea = EU_finance_minister }
+				if = {
+					limit = {
+						PREV.PREV = { has_idea = EU_finance_minister }
+					}
+					add_to_temp_variable = { investments_cost_modifier = -0.05 }
 				}
-				add_to_temp_variable = { investments_cost_modifier = -0.05 }
 			}
 			if = {
 				limit = {
@@ -314,20 +314,22 @@ precompute_state_construction_data = {
 			}
 			add_to_temp_variable = { receiving_investment_duration_temp = 1 }
 		}
-		if = {
-			limit = {
-				is_in_array = { global.EU_member = THIS.id }
-				PREV.PREV = { has_idea = ECB_president }
+
+		if = { limit = { has_idea = EU_member }
+			if = {
+				limit = {
+					PREV.PREV = { has_idea = ECB_president }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
 			}
-			add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
-		}
-		if = {
-			limit = {
-				is_in_array = { global.EU_member = THIS.id }
-				PREV.PREV = { has_idea = EU_finance_minister }
+			if = {
+				limit = {
+					PREV.PREV = { has_idea = EU_finance_minister }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
 			}
-			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
 		}
+
 		if = {
 			limit = {
 				has_idea = FRA_idea_development_investment
