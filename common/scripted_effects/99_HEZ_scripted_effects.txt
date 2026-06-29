@@ -1,0 +1,511 @@
+# MISSION EXECUTORS
+HEZ_ai_do_recruit_militia = {
+	set_country_flag = { flag = shared_mission_in_progress value = 1 days = 60 }
+	set_country_flag = { flag = has_selected_recruit_militia value = 1 days = 60 }
+	set_temp_variable = { treasury_change = -1 }
+	modify_treasury_effect = yes
+	country_event = { id = international_hezbollah.1 days = 60 }
+	set_variable = { the_country_that_hezbollah_is_currently_doing_a_mission_in = hezbollah_selected_country_for_operation }
+}
+
+HEZ_ai_do_sell_weapons = {
+	set_country_flag = { flag = shared_mission_in_progress value = 1 days = 60 }
+	set_country_flag = { flag = has_selected_small_arms value = 1 days = 60 }
+	add_equipment_to_stockpile = {
+		type = infantry_weapons_type
+		amount = -200
+	}
+	country_event = { id = international_hezbollah.2 days = 60 }
+	set_variable = { the_country_that_hezbollah_is_currently_doing_a_mission_in = hezbollah_selected_country_for_operation }
+}
+
+HEZ_ai_do_influence = {
+	set_country_flag = { flag = shared_mission_in_progress value = 1 days = 60 }
+	set_country_flag = { flag = has_selected_influence_nation value = 1 days = 60 }
+	add_political_power = -50
+	set_variable = { HEZ_country_to_influence_with_button = hezbollah_selected_country_for_operation }
+	country_event = { id = international_hezbollah.3 days = 60 }
+	set_variable = { the_country_that_hezbollah_is_currently_doing_a_mission_in = hezbollah_selected_country_for_operation }
+}
+
+HEZ_ai_do_attack_israel = {
+	set_country_flag = { flag = shared_mission_in_progress value = 1 days = 60 }
+	set_country_flag = { flag = has_selected_attack_zionists value = 1 days = 60 }
+	set_variable = { HEZ_country_to_attack_zionists_with_button = hezbollah_selected_country_for_operation }
+	country_event = { id = international_hezbollah.4 days = 60 }
+	set_variable = { the_country_that_hezbollah_is_currently_doing_a_mission_in = hezbollah_selected_country_for_operation }
+}
+
+# MISSION DISPATCHER
+HEZ_ai_dispatch_mission = {
+
+
+	if = {
+		limit = { has_country_flag = shared_mission_in_progress }
+	}
+	if = {
+		limit = { NOT = { has_country_flag = shared_mission_in_progress } }
+	}
+
+	if = {
+		limit = {
+			var:hezbollah_selected_country_for_operation = {
+				OR = {
+					check_variable = { party_pop_array^8 > 0.049 }
+					check_variable = { party_pop_array^9 > 0.049 }
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			NOT = {
+				var:hezbollah_selected_country_for_operation = {
+					OR = {
+						check_variable = { party_pop_array^8 > 0.049 }
+						check_variable = { party_pop_array^9 > 0.049 }
+					}
+				}
+			}
+		}
+	}
+
+	if = {
+		limit = { has_equipment = { infantry_weapons_type > 199 } }
+	}
+	if = {
+		limit = { NOT = { has_equipment = { infantry_weapons_type > 199 } } }
+	}
+	if = {
+		limit = {
+			var:hezbollah_selected_country_for_operation = {
+				OR = {
+					check_variable = { party_pop_array^8 > 0.009 }
+					check_variable = { party_pop_array^9 > 0.009 }
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			NOT = {
+				var:hezbollah_selected_country_for_operation = {
+					OR = {
+						check_variable = { party_pop_array^8 > 0.009 }
+						check_variable = { party_pop_array^9 > 0.009 }
+					}
+				}
+			}
+		}
+	}
+
+	if = {
+		limit = { has_political_power > 50 }
+	}
+	if = {
+		limit = { NOT = { has_political_power > 50 } }
+	}
+	if = {
+		limit = { var:hezbollah_selected_country_for_operation = { is_influencer = yes } }
+	}
+	if = {
+		limit = { NOT = { var:hezbollah_selected_country_for_operation = { is_influencer = yes } } }
+	}
+
+	if = {
+		limit = { has_manpower > 2000 }
+	}
+	if = {
+		limit = { NOT = { has_manpower > 2000 } }
+	}
+	if = {
+		limit = { has_equipment = { infantry_weapons_type > 300 } }
+	}
+	if = {
+		limit = { NOT = { has_equipment = { infantry_weapons_type > 300 } } }
+	}
+	if = {
+		limit = { has_equipment = { cnc_equipment_type > 100 } }
+	}
+	if = {
+		limit = { NOT = { has_equipment = { cnc_equipment_type > 100 } } }
+	}
+	if = {
+		limit = { has_equipment = { AA_Equipment > 60 } }
+	}
+	if = {
+		limit = { NOT = { has_equipment = { AA_Equipment > 60 } } }
+	}
+	if = {
+		limit = { has_equipment = { L_AT_Equipment > 60 } }
+	}
+	if = {
+		limit = { NOT = { has_equipment = { L_AT_Equipment > 60 } } }
+	}
+	if = {
+		limit = { has_equipment = { util_vehicle_type > 30 } }
+	}
+	if = {
+		limit = { NOT = { has_equipment = { util_vehicle_type > 30 } } }
+	}
+	if = {
+		limit = {
+			var:hezbollah_selected_country_for_operation = {
+				influence_higher_10 = yes
+				OR = {
+					gives_military_access_to = USA
+					is_subject_of = USA
+					gives_military_access_to = ISR
+					is_subject_of = ISR
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			NOT = {
+				var:hezbollah_selected_country_for_operation = {
+					influence_higher_10 = yes
+					OR = {
+						gives_military_access_to = USA
+						is_subject_of = USA
+						gives_military_access_to = ISR
+						is_subject_of = ISR
+					}
+				}
+			}
+		}
+	}
+
+
+	random_list = {
+
+		# RECRUIT MILITIA - base weight 270, same for all countries
+		270 = {
+			modifier = {
+				factor = 0
+				has_country_flag = shared_mission_in_progress
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					var:hezbollah_selected_country_for_operation = {
+						OR = {
+							check_variable = { party_pop_array^8 > 0.049 }
+							check_variable = { party_pop_array^9 > 0.049 }
+						}
+					}
+				}
+			}
+			HEZ_ai_do_recruit_militia = yes
+		}
+
+		# SELL WEAPONS - base weight 230, same for all countries
+		230 = {
+			modifier = {
+				factor = 0
+				has_country_flag = shared_mission_in_progress
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_equipment = { infantry_weapons_type > 199 } }
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					var:hezbollah_selected_country_for_operation = {
+						OR = {
+							check_variable = { party_pop_array^8 > 0.009 }
+							check_variable = { party_pop_array^9 > 0.009 }
+						}
+					}
+				}
+			}
+			HEZ_ai_do_sell_weapons = yes
+		}
+
+		# INFLUENCING - base weight 1, differs per country
+		1 = {
+			modifier = {
+				factor = 0
+				has_country_flag = shared_mission_in_progress
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_political_power > 50 }
+			}
+			modifier = {
+				factor = 0
+				NOT = { var:hezbollah_selected_country_for_operation = { is_influencer = yes } }
+			}
+			modifier = {
+				factor = 70
+				check_variable = { hezbollah_selected_country_for_operation = SYR }
+			}
+			modifier = {
+				factor = 60
+				check_variable = { hezbollah_selected_country_for_operation = IRQ }
+			}
+			modifier = {
+				factor = 50
+				check_variable = { hezbollah_selected_country_for_operation = YEM }
+			}
+			modifier = {
+				factor = 65
+				check_variable = { hezbollah_selected_country_for_operation = SAU }
+			}
+			modifier = {
+				factor = 60
+				check_variable = { hezbollah_selected_country_for_operation = PAL }
+			}
+			modifier = {
+				factor = 60
+				check_variable = { hezbollah_selected_country_for_operation = LBA }
+			}
+			modifier = {
+				factor = 15
+				check_variable = { hezbollah_selected_country_for_operation = EGY }
+			}
+			modifier = {
+				factor = 30
+				check_variable = { hezbollah_selected_country_for_operation = NIG }
+			}
+			modifier = {
+				factor = 10
+				check_variable = { hezbollah_selected_country_for_operation = SUD }
+			}
+			modifier = {
+				factor = 11
+				check_variable = { hezbollah_selected_country_for_operation = SSU }
+			}
+			modifier = {
+				factor = 35
+				check_variable = { hezbollah_selected_country_for_operation = MEX }
+			}
+			modifier = {
+				factor = 20
+				check_variable = { hezbollah_selected_country_for_operation = ARG }
+			}
+			modifier = {
+				factor = 20
+				check_variable = { hezbollah_selected_country_for_operation = VEN }
+			}
+			modifier = {
+				factor = 10
+				check_variable = { hezbollah_selected_country_for_operation = COL }
+			}
+			modifier = {
+				factor = 10
+				check_variable = { hezbollah_selected_country_for_operation = BRA }
+			}
+			modifier = {
+				factor = 7
+				check_variable = { hezbollah_selected_country_for_operation = USA }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { hezbollah_selected_country_for_operation = CAN }
+			}
+			HEZ_ai_do_influence = yes
+		}
+
+		# ATTACK ISRAEL - base weight 1, differs per country
+		1 = {
+			modifier = {
+				factor = 0
+				has_country_flag = shared_mission_in_progress
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_manpower > 2000 }
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_equipment = { infantry_weapons_type > 300 } }
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_equipment = { cnc_equipment_type > 100 } }
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_equipment = { AA_Equipment > 60 } }
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_equipment = { L_AT_Equipment > 60 } }
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_equipment = { util_vehicle_type > 30 } }
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					var:hezbollah_selected_country_for_operation = {
+						influence_higher_10 = yes
+						OR = {
+							gives_military_access_to = USA
+							is_subject_of = USA
+							gives_military_access_to = ISR
+							is_subject_of = ISR
+						}
+					}
+				}
+			}
+			modifier = {
+				factor = 60
+				check_variable = { hezbollah_selected_country_for_operation = SYR }
+			}
+			modifier = {
+				factor = 60
+				check_variable = { hezbollah_selected_country_for_operation = IRQ }
+			}
+			modifier = {
+				factor = 60
+				check_variable = { hezbollah_selected_country_for_operation = YEM }
+			}
+			modifier = {
+				factor = 67
+				check_variable = { hezbollah_selected_country_for_operation = SAU }
+			}
+			modifier = {
+				factor = 60
+				check_variable = { hezbollah_selected_country_for_operation = PAL }
+			}
+			modifier = {
+				factor = 65
+				check_variable = { hezbollah_selected_country_for_operation = LBA }
+			}
+			modifier = {
+				factor = 15
+				check_variable = { hezbollah_selected_country_for_operation = EGY }
+			}
+			modifier = {
+				factor = 30
+				check_variable = { hezbollah_selected_country_for_operation = NIG }
+			}
+			modifier = {
+				factor = 10
+				check_variable = { hezbollah_selected_country_for_operation = SUD }
+			}
+			modifier = {
+				factor = 8
+				check_variable = { hezbollah_selected_country_for_operation = SSU }
+			}
+			modifier = {
+				factor = 50
+				check_variable = { hezbollah_selected_country_for_operation = MEX }
+			}
+			modifier = {
+				factor = 25
+				check_variable = { hezbollah_selected_country_for_operation = ARG }
+			}
+			modifier = {
+				factor = 15
+				check_variable = { hezbollah_selected_country_for_operation = VEN }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { hezbollah_selected_country_for_operation = COL }
+			}
+			modifier = {
+				factor = 7
+				check_variable = { hezbollah_selected_country_for_operation = BRA }
+			}
+			modifier = {
+				factor = 15
+				check_variable = { hezbollah_selected_country_for_operation = USA }
+			}
+			modifier = {
+				factor = 10
+				check_variable = { hezbollah_selected_country_for_operation = CAN }
+			}
+			HEZ_ai_do_attack_israel = yes
+		}
+	}
+
+}
+
+# COUNTRY PICKER
+HEZ_ai_pick_operation = {
+
+
+	random_list = {
+
+		# WEST ASIA / MIDDLE EAST
+		100 = {
+			set_variable = { hezbollah_selected_country_for_operation = SYR }
+			HEZ_ai_dispatch_mission = yes
+		}
+		80 = {
+			set_variable = { hezbollah_selected_country_for_operation = IRQ }
+			HEZ_ai_dispatch_mission = yes
+		}
+		70 = {
+			set_variable = { hezbollah_selected_country_for_operation = YEM }
+			HEZ_ai_dispatch_mission = yes
+		}
+		65 = {
+			set_variable = { hezbollah_selected_country_for_operation = SAU }
+			HEZ_ai_dispatch_mission = yes
+		}
+		60 = {
+			set_variable = { hezbollah_selected_country_for_operation = PAL }
+			HEZ_ai_dispatch_mission = yes
+		}
+		55 = {
+			set_variable = { hezbollah_selected_country_for_operation = LBA }
+			HEZ_ai_dispatch_mission = yes
+		}
+		40 = {
+			set_variable = { hezbollah_selected_country_for_operation = EGY }
+			HEZ_ai_dispatch_mission = yes
+		}
+
+		# AFRICA
+		35 = {
+			set_variable = { hezbollah_selected_country_for_operation = NIG }
+			HEZ_ai_dispatch_mission = yes
+		}
+		20 = {
+			set_variable = { hezbollah_selected_country_for_operation = SUD }
+			HEZ_ai_dispatch_mission = yes
+		}
+		15 = {
+			set_variable = { hezbollah_selected_country_for_operation = SSU }
+			HEZ_ai_dispatch_mission = yes
+		}
+
+		# AMERICAS
+		45 = {
+			set_variable = { hezbollah_selected_country_for_operation = MEX }
+			HEZ_ai_dispatch_mission = yes
+		}
+		30 = {
+			set_variable = { hezbollah_selected_country_for_operation = ARG }
+			HEZ_ai_dispatch_mission = yes
+		}
+		25 = {
+			set_variable = { hezbollah_selected_country_for_operation = VEN }
+			HEZ_ai_dispatch_mission = yes
+		}
+		20 = {
+			set_variable = { hezbollah_selected_country_for_operation = COL }
+			HEZ_ai_dispatch_mission = yes
+		}
+		20 = {
+			set_variable = { hezbollah_selected_country_for_operation = BRA }
+			HEZ_ai_dispatch_mission = yes
+		}
+		15 = {
+			set_variable = { hezbollah_selected_country_for_operation = USA }
+			HEZ_ai_dispatch_mission = yes
+		}
+		10 = {
+			set_variable = { hezbollah_selected_country_for_operation = CAN }
+			HEZ_ai_dispatch_mission = yes
+		}
+	}
+
+}
