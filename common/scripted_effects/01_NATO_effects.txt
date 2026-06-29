@@ -1,4 +1,7 @@
-# Scripted effects for NATO
+# Author(s): AngriestBird, Alexander Markelov, Niko Holkko, WiggeW
+
+# Effect: update_nato_dirty_variable
+# Purpose: Bumps the dirty flag used to signal that NATO-dependent UI/state needs a refresh, rolling over at 10000 to avoid unbounded growth.
 update_nato_dirty_variable = {
 	if = { limit = { check_variable = { global.NATO_dirty_update_var < 10000 } }
 		add_to_variable = { global.NATO_dirty_update_var = 1 }
@@ -8,82 +11,108 @@ update_nato_dirty_variable = {
 	}
 }
 
+# Effect: NATO_join
+# Purpose: Admits ROOT to NATO full membership (mutual opinion boost, military access, NATO_member idea, tech sharing, faction join) when can_join_NATO passes; otherwise routes eligible non-members to Major Non-NATO Ally status.
 NATO_join = {
-	for_each_scope_loop = {
-		array = global.nato_members
+	if = {
+		limit = { can_join_NATO = yes }
+		for_each_scope_loop = {
+			array = global.nato_members
 
-		# Mutual opinion boost.
-		add_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
-		reverse_add_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
+			# Mutual opinion boost.
+			add_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
+			reverse_add_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
 
-		# Add military access.
-		if = { limit = { NOT = { has_military_access_to = PREV } }
-			diplomatic_relation = {
-				country = PREV
-				relation = military_access
-				active = yes
-			}
-			PREV = {
+			# Add military access.
+			if = { limit = { NOT = { has_military_access_to = PREV } }
 				diplomatic_relation = {
 					country = PREV
 					relation = military_access
 					active = yes
 				}
+				PREV = {
+					diplomatic_relation = {
+						country = PREV
+						relation = military_access
+						active = yes
+					}
+				}
 			}
 		}
-	}
 
-	add_ideas = NATO_member
-	add_to_tech_sharing_group = NATO_Tech_Share
-	random_scope_in_array = {
-		array = global.nato_members
-		limit = {
-			is_faction_leader = yes
-		}
-		add_to_faction = ROOT
-	}
-
-	if = {
-		limit = { has_idea = Major_Non_NATO_Ally }
-		remove_ideas = Major_Non_NATO_Ally
-	}
-
-	custom_effect_tooltip = NATO_join_tt
-
-	hidden_effect = { news_event = { id = NATO.8 hours = 6 } }
-	if = {
-		limit = { original_tag = SOV }
-		set_global_flag = NATO_CSTO_treaty_adandoned
-
-		clear_variable = global.var_nato_inf_count
-		clear_variable = global.var_csto_inf_count
-		clear_variable = global.var_nato_tank_count
-		clear_variable = global.var_csto_tank_count
-	}
-}
-
-#USE INSTEAD OF USA = { country_event = NATO.14 } TO BE SURE USA WONT APPLY MEMBERSHIP IF THEY ARE NOT NATO MEMBER MORE
-NATO_join_via_event = {
-	if = {
-		limit = {
-			USA = {
-				has_idea = NATO_member
-				is_faction_leader = yes
-			}
-		}
-		USA = { country_event = NATO.14 }
-	}
-	else = {
+		add_ideas = NATO_member
+		add_to_tech_sharing_group = NATO_Tech_Share
 		random_scope_in_array = {
 			array = global.nato_members
 			limit = {
 				is_faction_leader = yes
 			}
-			country_event = NATO.14
+			add_to_faction = ROOT
+		}
+
+		if = {
+			limit = { has_idea = Major_Non_NATO_Ally }
+			remove_ideas = Major_Non_NATO_Ally
+		}
+
+		custom_effect_tooltip = NATO_join_tt
+
+		hidden_effect = { news_event = { id = NATO.8 hours = 6 } }
+		if = {
+			limit = { original_tag = SOV }
+			set_global_flag = NATO_CSTO_treaty_adandoned
+
+			clear_variable = global.var_nato_inf_count
+			clear_variable = global.var_csto_inf_count
+			clear_variable = global.var_nato_tank_count
+			clear_variable = global.var_csto_tank_count
+		}
+	}
+	else = {
+		# Only Europe, North America and the Caucasus (plus scripted exceptions) join NATO.
+		# Everyone else gets Major Non-NATO Ally status instead.
+		if = {
+			limit = { NOT = { has_idea = Major_Non_NATO_Ally } }
+			NATO_major_non_nato_ally_join = yes
 		}
 	}
 }
 
+# Effect: NATO_join_via_event
+# Purpose: Fires the NATO.14 join event from the USA faction leader (or any NATO faction leader if USA is ineligible) rather than applying membership directly, so a USA that has left NATO cannot grant membership it no longer holds. Ineligible applicants fall through to Major Non-NATO Ally.
+NATO_join_via_event = {
+	if = {
+		limit = { can_join_NATO = yes }
+		if = {
+			limit = {
+				USA = {
+					has_idea = NATO_member
+					is_faction_leader = yes
+				}
+			}
+			USA = { country_event = NATO.14 }
+		}
+		else = {
+			random_scope_in_array = {
+				array = global.nato_members
+				limit = {
+					is_faction_leader = yes
+				}
+				country_event = NATO.14
+			}
+		}
+	}
+	else = {
+		# Ineligible applicants are routed to Major Non-NATO Ally instead of full membership.
+		if = {
+			limit = { NOT = { has_idea = Major_Non_NATO_Ally } }
+			NATO_major_non_nato_ally_join = yes
+		}
+	}
+}
+
+# Effect: NATO_leave
+# Purpose: Strips NATO membership and tech sharing, transfers faction leadership to another member if ROOT is the leader, tears down the mutual opinion/access web, and fires the departure news event.
 NATO_leave = {
 	if = {
 		limit = { has_idea = NATO_member }
@@ -144,6 +173,51 @@ NATO_leave = {
 	}
 }
 
+# Effect: NATO_promote_new_leader
+# Purpose: Hands NATO leadership to a surviving member when the current leader can no longer lead (the USA collapsing). Prefers a non-collapsed major member, falls back to any eligible member, then announces the transition via NATO.20.
+NATO_promote_new_leader = {
+	if = {
+		limit = {
+			any_of_scopes = {
+				array = global.nato_members
+				is_subject = no
+				is_major = yes
+				NOT = { has_country_flag = collapsed_nation }
+				is_faction_leader = no
+			}
+		}
+		random_scope_in_array = {
+			array = global.nato_members
+			limit = {
+				is_subject = no
+				is_major = yes
+				NOT = { has_country_flag = collapsed_nation }
+				is_faction_leader = no
+			}
+			set_faction_leader = yes
+			save_event_target_as = new_nato_leader
+		}
+	}
+	else = {
+		random_scope_in_array = {
+			array = global.nato_members
+			limit = {
+				is_subject = no
+				NOT = { has_country_flag = collapsed_nation }
+				is_faction_leader = no
+			}
+			set_faction_leader = yes
+			save_event_target_as = new_nato_leader
+		}
+	}
+	if = {
+		limit = { country_exists = event_target:new_nato_leader }
+		hidden_effect = { news_event = { id = NATO.20 hours = 6 } }
+	}
+}
+
+# Effect: NATO_CSTO_calculate_number_of_batallions
+# Purpose: Tallies European-based infantry and tank battalions across both global.nato_members and global.CSTO_member; when either side exceeds the 1000-infantry / 400-tank limits it flags the European members as in breach and activates NATO_CSTO_breach_mission on the faction leader.
 NATO_CSTO_calculate_number_of_batallions = {
 	set_variable = { global.var_nato_inf_count = 0 }
 	set_variable = { global.var_csto_inf_count = 0 }
@@ -156,8 +230,9 @@ NATO_CSTO_calculate_number_of_batallions = {
 			if = {
 				limit = { capital_scope = { is_on_continent = europe } }
 
-				set_temp_variable = {
-					inf_bat = {
+				add_to_variable = {
+					var = global.var_nato_inf_count
+					value = {
 						value = 0
 						add = num_battalions_with_type@Mech_Air_Inf_Bat
 						add = num_battalions_with_type@Mech_Marine_Bat
@@ -168,16 +243,14 @@ NATO_CSTO_calculate_number_of_batallions = {
 					}
 				}
 
-				set_temp_variable = {
-					tank_bat = {
+				add_to_variable = {
+					var = global.var_nato_tank_count
+					value = {
 						value = 0
 						add = num_battalions_with_type@armor_Bat
 						add = num_battalions_with_type@L_arm_Bat
 					}
 				}
-
-				add_to_variable = { global.var_nato_inf_count = inf_bat }
-				add_to_variable = { global.var_nato_tank_count = tank_bat }
 			}
 		}
 	}
@@ -214,8 +287,9 @@ NATO_CSTO_calculate_number_of_batallions = {
 		array = global.CSTO_member
 		value = v
 		var:v = {
-			set_temp_variable = {
-				inf_bat = {
+			add_to_variable = {
+				var = global.var_csto_inf_count
+				value = {
 					value = 0
 					add = num_battalions_with_type@Mech_Air_Inf_Bat
 					add = num_battalions_with_type@Mech_Marine_Bat
@@ -226,16 +300,14 @@ NATO_CSTO_calculate_number_of_batallions = {
 				}
 			}
 
-			set_temp_variable = {
-				tank_bat = {
+			add_to_variable = {
+				var = global.var_csto_tank_count
+				value = {
 					value = 0
 					add = num_battalions_with_type@armor_Bat
 					add = num_battalions_with_type@L_arm_Bat
 				}
 			}
-
-			add_to_variable = { global.var_csto_inf_count = inf_bat }
-			add_to_variable = { global.var_csto_tank_count = tank_bat }
 		}
 	}
 
@@ -268,6 +340,8 @@ NATO_CSTO_calculate_number_of_batallions = {
 	}
 }
 
+# Effect: NATO_major_non_nato_ally_join
+# Purpose: Grants Major Non-NATO Ally status (idea, flag, Major_Non_NATO_Ally_Share tech group) and applies the matching opinion modifier mutually with all current NATO members.
 NATO_major_non_nato_ally_join = {
 	add_ideas = Major_Non_NATO_Ally
 	set_country_flag = Major_Non_NATO_Ally
