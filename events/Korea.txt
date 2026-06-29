@@ -8,6 +8,7 @@ add_namespace = nko_naval_buildup
 
 
 add_namespace = NKO_spa
+add_namespace = NKO_export
 ### China Demands Our Withdrawal from the Korean Peninsula
 country_event = {
 	id = korea.1
@@ -880,8 +881,8 @@ country_event = {
 		}
 
 		if = {
-			limit = { NOT = { has_idea = NATO_member } }
-			NATO_join = yes
+			limit = { NOT = { has_idea = Major_Non_NATO_Ally } }
+			NATO_major_non_nato_ally_join = yes
 		}
 
 		if = {
@@ -2431,91 +2432,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: korea_north.6.a executed"
 		name = korea_north.6.a
 		add_stability = -0.05
-	}
-}
-#Export Weapon
-country_event = {
-	id = korea_north.11
-	title = korea_north.11.t
-	desc = korea_north.11.d
-	picture = GFX_weapons_arms1
-
-	is_triggered_only = yes
-	#Done
-	option = {
-		name = korea_north.11.a
-		log = "[GetDateText]: [This.GetName]: korea_north.11.a executed"
-		add_equipment_to_stockpile = {
-			type = Anti_Air_0
-			amount = 40
-			producer = NKO
-		}
-		add_equipment_to_stockpile = {
-			type = infantry_weapons_2
-			amount = 900
-			producer = NKO
-		}
-		add_equipment_to_stockpile = {
-			type = Anti_tank_0
-			amount = 50
-			producer = NKO
-		}
-		set_temp_variable = { treasury_change = -8.65 }
-		modify_treasury_effect = yes
-		NKO = {
-			country_event = korea_north.12
-		}
-	}
-	#Not Done
-	option = {
-		name = korea_north.11.b
-		log = "[GetDateText]: [This.GetName]: korea_north.11.b executed"
-		NKO = {
-			country_event = korea_north.13
-		}
-	}
-}
-country_event = {
-	id = korea_north.12
-	title = korea_north.12.t
-	desc = korea_north.12.d
-	picture = GFX_weapons_arms1
-
-	is_triggered_only = yes
-	#Done
-	option = {
-		name = korea_north.12.a
-		log = "[GetDateText]: [This.GetName]: korea_north.12.a executed"
-		set_temp_variable = { treasury_change = 8.65 }
-		modify_treasury_effect = yes
-		add_equipment_to_stockpile = {
-			type = Anti_Air_0
-			amount = -40
-			producer = NKO
-		}
-		add_equipment_to_stockpile = {
-			type = infantry_weapons_2
-			amount = -900
-			producer = NKO
-		}
-		add_equipment_to_stockpile = {
-			type = Anti_tank_0
-			amount = -50
-			producer = NKO
-		}
-	}
-}
-country_event = {
-	id = korea_north.13
-	title = korea_north.13.t
-	desc = korea_north.13.d
-	picture = GFX_weapons_arms1
-
-	is_triggered_only = yes
-	#Done
-	option = {
-		name = korea_north.13.a
-		log = "[GetDateText]: [This.GetName]: korea_north.13.a executed"
 	}
 }
 
@@ -6513,5 +6429,255 @@ news_event = {
 		name = nko_naval_buildup.99.b
 		trigger = { NOT = { original_tag = NKO } }
 		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.99.b executed"
+	}
+}
+
+#############################################################
+# Second Economic Committee — arms & manpower export events  #
+#############################################################
+
+# Russia requests artillery shells and rockets while at war. Fired from
+# 99_NKO_on_actions.txt (on_monthly) when SOV is at war and off cooldown.
+country_event = {
+	id = NKO_export.1
+	title = NKO_export.1.t
+	desc = NKO_export.1.d
+	picture = GFX_north_korea_russia
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.1.a # Fulfil the order — shells, rockets, and a generous price
+		log = "[GetDateText]: [This.GetName]: NKO_export.1.a executed"
+		set_temp_variable = { NKO_arms_client_id = SOV.id }
+		SOV = { save_event_target_as = NKO_arms_client }
+		NKO_export_do_munitions = yes
+		set_temp_variable = { NKO_arms_export_payment = 2 }
+		NKO_arms_export_credit_payment = yes
+		add_tech_bonus = { name = MBT_4 bonus = 0.5 uses = 1 category = CAT_mbt }
+		add_tech_bonus = { name = microprocessors bonus = 0.5 uses = 1 category = CAT_computing_tech }
+		ai_chance = { factor = 80 }
+	}
+
+	option = {
+		name = NKO_export.1.b # Not at this time
+		log = "[GetDateText]: [This.GetName]: NKO_export.1.b executed"
+		ai_chance = { factor = 20 }
+	}
+}
+
+# North Korea offers a conventional arms package. Fired by the arms-export decision
+# (NKO_export_munitions). ROOT = the client being offered; FROM = North Korea.
+# AI accepts when it is losing its war.
+country_event = {
+	id = NKO_export.10
+	title = NKO_export.10.t
+	desc = NKO_export.10.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.10.a # Accept the shipment
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.a executed from [FROM.GetTag]"
+		FROM = { country_event = { id = NKO_export.11 days = 1 } }
+		ai_chance = {
+			factor = 80
+			modifier = { factor = 3  surrender_progress > 0.5 }
+		}
+	}
+
+	option = {
+		name = NKO_export.10.b # Decline the offer
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.b executed from [FROM.GetTag]"
+		FROM = { country_event = { id = NKO_export.12 days = 1 } }
+		ai_chance = {
+			factor = 20
+			modifier = { factor = 0  surrender_progress > 0.5 }
+		}
+	}
+}
+
+# The client accepted our arms package. FROM = the accepting client. Delivers the
+# equipment from our stockpile, grants the client the munitions idea, pays us, and
+# registers the deal.
+country_event = {
+	id = NKO_export.11
+	title = NKO_export.11.t
+	desc = NKO_export.11.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	immediate = {
+		set_temp_variable = { NKO_arms_client_id = FROM.id }
+		FROM = { save_event_target_as = NKO_arms_client }
+		NKO_export_do_munitions = yes
+	}
+
+	option = {
+		name = NKO_export.11.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.11.a executed from [FROM.GetTag]"
+	}
+}
+
+# The client declined our arms package. FROM = the declining client.
+country_event = {
+	id = NKO_export.12
+	title = NKO_export.12.t
+	desc = NKO_export.12.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.12.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.12.a executed from [FROM.GetTag]"
+	}
+}
+
+# Capstone — ten nations supplied. Fired from the NKO_arms_export_capstone decision.
+country_event = {
+	id = NKO_export.99
+	title = NKO_export.99.t
+	desc = NKO_export.99.d
+	picture = GFX_NKO_russian_treaty
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.99.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.99.a executed"
+	}
+}
+
+# North Korea offers to deploy intervention forces. Fired by the Storm Corps
+# decision (NKO_export_do_troops). FROM = North Korea. The host's acceptance is
+# what grants Pyongyang military access.
+country_event = {
+	id = NKO_export.22
+	title = NKO_export.22.t
+	desc = NKO_export.22.d
+	picture = GFX_decision_sov_nko_soldiers
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.22.a # Accept the intervention force
+		log = "[GetDateText]: [This.GetName]: NKO_export.22.a executed from [FROM.GetTag]"
+		add_opinion_modifier = { target = FROM modifier = trade_mission }
+		FROM = {
+			set_rule = { can_send_volunteers = yes }
+			country_event = { id = NKO_export.23 days = 1 }
+		}
+		ai_chance = {
+			factor = 80
+			modifier = { factor = 2  surrender_progress > 0.5 }
+		}
+	}
+
+	option = {
+		name = NKO_export.22.b # Decline
+		log = "[GetDateText]: [This.GetName]: NKO_export.22.b executed from [FROM.GetTag]"
+		ai_chance = { factor = 20 }
+	}
+}
+
+# Hidden finalize on the North Korean side once the host accepts. FROM = the
+# accepting host. Registers the deal and starts the manpower watch.
+country_event = {
+	id = NKO_export.23
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_temp_variable = { NKO_arms_client_id = FROM.id }
+		FROM = { save_event_target_as = NKO_arms_client }
+		NKO_export_finalize_troops = yes
+	}
+}
+
+# Hidden per-host manpower watcher. Seeded by NKO_export_finalize_troops, fires on
+# the host every 30 days while our forces are deployed. When the host runs low on
+# manpower it appeals to its patron (event_target:NKO_storm_corps_patron).
+country_event = {
+	id = NKO_export.21
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				has_war = yes
+				NOT = { has_manpower > 50000 }
+				NOT = { has_country_flag = NKO_manpower_request_cooldown }
+			}
+			set_country_flag = { flag = NKO_manpower_request_cooldown value = 1 days = 120 }
+			event_target:NKO_storm_corps_patron = { country_event = { id = NKO_export.20 days = 2 } }
+		}
+		if = {
+			limit = { has_country_flag = NKO_storm_corps_host }
+			country_event = { id = NKO_export.21 days = 30 }
+		}
+	}
+}
+
+# A host nation where the Storm Corps is deployed requests manpower
+# reinforcements. Fired from the per-host watcher (NKO_export.21) when the host is
+# low on manpower. FROM = the requesting host.
+country_event = {
+	id = NKO_export.20
+	title = NKO_export.20.t
+	desc = NKO_export.20.d
+	picture = GFX_decision_sov_nko_soldiers
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.20.a # Send a tenth of our recruitable manpower
+		log = "[GetDateText]: [This.GetName]: NKO_export.20.a executed on [FROM.GetTag]"
+		custom_effect_tooltip = NKO_export_send_manpower_tt
+		FROM = { set_temp_variable = { NKO_mp_send = manpower } }
+		multiply_temp_variable = { NKO_mp_send = 0.1 }
+		FROM = { add_manpower = NKO_mp_send }
+		multiply_temp_variable = { NKO_mp_send = -1 }
+		add_manpower = NKO_mp_send
+		add_opinion_modifier = { target = FROM modifier = trade_mission }
+		FROM = { add_opinion_modifier = { target = NKO modifier = trade_mission } }
+		ai_chance = { factor = 70 }
+	}
+
+	option = {
+		name = NKO_export.20.b # We cannot spare the men
+		log = "[GetDateText]: [This.GetName]: NKO_export.20.b executed on [FROM.GetTag]"
+		FROM = { add_opinion_modifier = { target = NKO modifier = declined_faction_request } }
+		ai_chance = {
+			factor = 30
+			modifier = { factor = 0  NOT = { has_manpower > 100000 } }
+		}
+	}
+}
+
+country_event = {
+	id = NKO_export.40
+	title = NKO_export.40.t
+	desc = NKO_export.40.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.40.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.40.a executed"
+		NKO_sanctions_set_max = yes
+		add_war_support = 0.05
+		add_stability = -0.02
+	}
+
+	option = {
+		name = NKO_export.40.b
+		log = "[GetDateText]: [This.GetName]: NKO_export.40.b executed"
+		NKO_sanctions_set_max = yes
+		add_political_power = -50
 	}
 }
