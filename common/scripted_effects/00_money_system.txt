@@ -4,7 +4,7 @@
 # Calculating things for the money system
 # Interest rates are set in GDP/C - need modifier based on debt_ratio, to avoid rich countries getting infinite rich by taking huge loans and reinvesting abroad
 # Variable explanations
-# treasury_rate - How much money your country is making daily#####
+# treasury_rate - How much money your country is making daily
 # tax_gain - money your gaining from taxes
 # int_investments_rate - money your gaining from international investments
 # resource_sale_rate - money your gaining from exports
@@ -51,10 +51,92 @@
 @resource_sale_rate_constant = 0.00298
 # Upper bound for math expression clamps — HOI4 requires both min and max on every clamp, so this serves as a sane "effectively unbounded" max
 @math_expressions_max = 1000000
+# Upper clamp on spending-law base costs before the per-level multiplier; effectively unbounded, distinct from @math_expressions_max (1e6)
+@spending_cost_clamp_max = 100000000
 
-# ingame_update_setup
-# This function is used to update the economic setup mid game
+# GDP per-building contribution coefficients: output = total * (base_factor + prod_factor * productivity) * manpower_fulfillment
+@gdp_civ_base_factor = 17.5
+@gdp_civ_prod_factor = 20
+@gdp_mil_base_factor = 1.5
+@gdp_mil_prod_factor = 1
+@gdp_dockyard_base_factor = 1.5
+@gdp_dockyard_prod_factor = 1
+@gdp_office_base_factor = 50
+@gdp_office_prod_factor = 50
+@gdp_agriculture_district_base_factor = 25
+@gdp_agriculture_district_prod_factor = 25
+@gdp_microchip_base_factor = 32
+@gdp_microchip_prod_factor = 35
+@gdp_composite_base_factor = 28
+@gdp_composite_prod_factor = 30
+@gdp_synthetic_base_factor = 10
+@gdp_synthetic_prod_factor = 10
+
+# Spending-law base cost per capita (billion $ per 10 000 000 people)
+@bureau_base_cost_per_capita = 0.0007
+@police_base_cost_per_capita = 0.00098
+@education_base_cost_per_capita = 0.00036
+@health_base_cost_per_capita = 0.0007
+@social_base_cost_per_capita = 0.00133
+# Civil servant salary per worker, added to the bureaucracy output term in calculate_gdp
+@bureau_salary_per_worker = 0.001
+
+# Effect: setup_spending_ladders
+# Purpose: Populates the global per-level spending multiplier arrays once (flag-guarded); the spending-law loops read them as global.spending_ladder_*^i
+setup_spending_ladders = {
+	if = {
+		limit = { NOT = { has_global_flag = spending_ladders_initialized } }
+		clear_array = global.spending_ladder_standard
+		add_to_array = { array = global.spending_ladder_standard value = 1 }
+		add_to_array = { array = global.spending_ladder_standard value = 1.6 }
+		add_to_array = { array = global.spending_ladder_standard value = 2.2 }
+		add_to_array = { array = global.spending_ladder_standard value = 2.8 }
+		add_to_array = { array = global.spending_ladder_standard value = 3.4 }
+
+		clear_array = global.spending_ladder_education
+		add_to_array = { array = global.spending_ladder_education value = 1 }
+		add_to_array = { array = global.spending_ladder_education value = 2.25 }
+		add_to_array = { array = global.spending_ladder_education value = 3.5 }
+		add_to_array = { array = global.spending_ladder_education value = 4.75 }
+		add_to_array = { array = global.spending_ladder_education value = 6 }
+
+		clear_array = global.spending_ladder_health
+		add_to_array = { array = global.spending_ladder_health value = 1.1 }
+		add_to_array = { array = global.spending_ladder_health value = 2.2 }
+		add_to_array = { array = global.spending_ladder_health value = 4.4 }
+		add_to_array = { array = global.spending_ladder_health value = 6.5 }
+		add_to_array = { array = global.spending_ladder_health value = 8.8 }
+		add_to_array = { array = global.spending_ladder_health value = 11 }
+
+		clear_array = global.spending_ladder_social
+		add_to_array = { array = global.spending_ladder_social value = 1 }
+		add_to_array = { array = global.spending_ladder_social value = 2.5 }
+		add_to_array = { array = global.spending_ladder_social value = 4 }
+		add_to_array = { array = global.spending_ladder_social value = 5.5 }
+		add_to_array = { array = global.spending_ladder_social value = 7.5 }
+		add_to_array = { array = global.spending_ladder_social value = 9.5 }
+
+		clear_array = global.spending_ladder_defence
+		add_to_array = { array = global.spending_ladder_defence value = 0.00046 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.005 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.01 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.015 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.023 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.03 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.04 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.05 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.063 }
+		add_to_array = { array = global.spending_ladder_defence value = 0.1 }
+
+		set_global_flag = spending_ladders_initialized
+	}
+}
+
+# Effect: ingame_update_setup
+# Purpose: Aggregates every income and expense stream, then refreshes the economy UI; the weekly economic tick
 ingame_update_setup = {
+	setup_spending_ladders = yes
+
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
 
@@ -110,6 +192,8 @@ update_money_dirty_variable = {
 	add_to_variable = { global.research_screen_ui = 1 }
 }
 
+# Effect: expense_modifier_calculations
+# Purpose: Computes the common spending modifier combining inflation and GDP-per-capita scaling
 expense_modifier_calculations = {
 	set_temp_variable = { inflation_multiplier = { value = 1 add = modifier@inflation_cost_multiplier_modifier } }
 
@@ -279,10 +363,10 @@ calculate_tax_gain = {
 	else = { set_variable = { civil_fac_tax = 0 } }
 
 	# Military Factories
-	if = { limit = { check_variable = { military_fac > 0 } }
+	if = { limit = { check_variable = { military_factory_total > 0 } }
 		set_variable = {
 			military_fac_tax = {
-				value = military_fac
+				value = military_factory_total
 				multiply = {
 					value = 1
 					add = modifier@military_industry_tax_modifier
@@ -303,10 +387,10 @@ calculate_tax_gain = {
 	else = { set_variable = { military_fac_tax = 0 } }
 
 	# Dockyards
-	if = { limit = { check_variable = { dockyard_fac > 0 } }
+	if = { limit = { check_variable = { naval_factory_total > 0 } }
 		set_variable = {
 			dockyard_tax = {
-				value = dockyard_fac
+				value = naval_factory_total
 				multiply = {
 					value = 1
 					add = modifier@dockyard_income_tax_modifier
@@ -619,6 +703,8 @@ calculate_tax_gain = {
 	}
 }
 
+# Effect: calculate_additional_income_rate
+# Purpose: Aggregates special income sources (seigniorage, ideas, canal revenue, foreign aid)
 calculate_additional_income_rate = {
 	set_variable = { additional_income_rate = 0 }
 
@@ -789,19 +875,16 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_microstate_fix_var }
 	}
 	if = { limit = { has_idea = saudi_aid }
-		set_variable = { additional_income_saudi_aid = population_total }
-		multiply_variable = { additional_income_saudi_aid = 0.00002 }	#Millions of people
+		set_variable = { additional_income_saudi_aid = { value = population_total multiply = 0.00002 } }	#Millions of people
 		add_to_variable = { additional_income_rate = additional_income_saudi_aid }
 	}
 	if = { limit = { has_idea = iranian_aid }
-		set_variable = { additional_income_iranian_aid = gdp_total }
-		multiply_variable = { additional_income_iranian_aid = 0.004 }	#20% of GDP yearly
+		set_variable = { additional_income_iranian_aid = { value = gdp_total multiply = 0.004 } }	#20% of GDP yearly
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid }
 	}
 	if = {
 		limit = { has_idea = iranian_aid_custom }
-		set_variable = { additional_income_iranian_aid_custom = gdp_total }
-		multiply_variable = { additional_income_iranian_aid_custom = 0.004 }	#20% of GDP yearly
+		set_variable = { additional_income_iranian_aid_custom = { value = gdp_total multiply = 0.004 } }	#20% of GDP yearly
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid_custom }
 	}
 	if = {
@@ -853,14 +936,12 @@ calculate_additional_income_rate = {
 	}
 	if = {
 		limit = { has_idea = USA_usaid }
-		set_variable = { additional_income_USA_usaid = population_total }
-		multiply_variable = { additional_income_USA_usaid = 0.00016 }	#Millions of people
+		set_variable = { additional_income_USA_usaid = { value = population_total multiply = 0.00016 } }	#Millions of people
 		add_to_variable = { additional_income_rate = additional_income_USA_usaid }
 	}
 	if = {
 		limit = { has_idea = HOL_dutchaid }
-		set_variable = { additional_income_HOL_dutchaid = population_total }
-		multiply_variable = { additional_income_HOL_dutchaid = 0.00004 }	#Millions of people
+		set_variable = { additional_income_HOL_dutchaid = { value = population_total multiply = 0.00004 } }	#Millions of people
 		add_to_variable = { additional_income_rate = additional_income_HOL_dutchaid }
 	}
 	# Overlord Subsidization
@@ -930,20 +1011,17 @@ calculate_additional_income_rate = {
 		limit = { original_tag = AFG }
 		if = {
 			limit = { has_idea = AFG_idea_Opium_Economy }
-			set_variable = { additional_income_AFG_idea_Opium_Economy = population_total }
-			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.00375 }	#Millions of people
+			set_variable = { additional_income_AFG_idea_Opium_Economy = { value = population_total multiply = 0.00375 } }	#Millions of people
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_Opium_Economy }
 		}
 		if = {
 			limit = { has_idea = AFG_idea_Opium_barons }
-			set_variable = { additional_income_AFG_idea_Opium_barons = population_total }
-			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.00625 }	#Millions of people
+			set_variable = { additional_income_AFG_idea_Opium_barons = { value = population_total multiply = 0.00625 } }	#Millions of people
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_Opium_barons }
 		}
 		if = {
 			limit = { has_idea = AFG_idea_state_sponsored_opium_industry }
-			set_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = population_total }
-			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.00875 } #per million of people
+			set_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = { value = population_total multiply = 0.00875 } } #per million of people
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_state_sponsored_opium_industry }
 		}
 		if = {
@@ -1304,14 +1382,12 @@ calculate_additional_income_rate = {
 		limit = { original_tag = HOL }
 		if = {
 			limit = { has_country_flag = HOL_BOT }
-			set_variable = { additional_income_HOL_BOT = HOL.gdp_per_capita }
-			multiply_variable = { additional_income_HOL_BOT = 0.0004 } #2% of yearly GDP
+			set_variable = { additional_income_HOL_BOT = { value = HOL.gdp_per_capita multiply = 0.0004 } } #2% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_HOL_BOT }
 		}
 		if = {
 			limit = { has_idea = HOL_weed_center1 }
-			set_variable = { additional_income_HOL_Weed_Center1 = HOL.gdp_per_capita }
-			multiply_variable = { additional_income_HOL_Weed_Center1 = 0.002 } #10% of yearly GDP
+			set_variable = { additional_income_HOL_Weed_Center1 = { value = HOL.gdp_per_capita multiply = 0.002 } } #10% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_HOL_Weed_Center1 }
 		}
 	}
@@ -1478,14 +1554,12 @@ calculate_additional_income_rate = {
 		limit = { original_tag = PER }
 		if = {
 			limit = { has_idea = PER_irgc_black_market_exploits }
-			set_variable = { additional_income_irgc_black_market = gdp_total }
-			multiply_variable = { additional_income_irgc_black_market = 0.002 }	#10% of GDP yearly estimated weekly
+			set_variable = { additional_income_irgc_black_market = { value = gdp_total multiply = 0.002 } }	#10% of GDP yearly estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
 		}
 		if = {
 			limit = { has_idea = PER_redirecting_money_from_proxies }
-			set_variable = { additional_income_redirection_money_from_proxies = gdp_total }
-			multiply_variable = { additional_income_redirection_money_from_proxies = 0.0004 }	#2% of GDP yearly estimated weekly
+			set_variable = { additional_income_redirection_money_from_proxies = { value = gdp_total multiply = 0.0004 } }	#2% of GDP yearly estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_redirection_money_from_proxies }
 		}
 		if = {
@@ -1687,8 +1761,7 @@ calculate_additional_income_rate = {
 		}
 		if = {
 			limit = { has_idea = SOV_otkos_army_idea }
-			set_variable = { additional_income_SOV_otkos_army_idea = population_total }
-			multiply_variable = { additional_income_SOV_otkos_army_idea = 0.00015 }	#Millions of people
+			set_variable = { additional_income_SOV_otkos_army_idea = { value = population_total multiply = 0.00015 } }	#Millions of people
 			add_to_variable = { additional_income_rate = additional_income_SOV_otkos_army_idea }
 		}
 		#Gazprom Pipelines
@@ -1736,19 +1809,16 @@ calculate_additional_income_rate = {
 	#Sweden
 	else_if = {
 		limit = { original_tag = SWE }
-		set_variable = { additional_income_SWE_Value_added_Tax = gdp_per_capita }
-		multiply_variable = { additional_income_SWE_Value_added_Tax = 0.0012 } #20% of yearly GDP
+		set_variable = { additional_income_SWE_Value_added_Tax = { value = gdp_per_capita multiply = 0.0012 } } #20% of yearly GDP
 		add_to_variable = { additional_income_rate = additional_income_SWE_Value_added_Tax }
 		if = {
 			limit = { country_exists = NRY }
-			set_variable = { additional_income_SWE_border_trade = NRY.gdp_per_capita }
-			multiply_variable = { additional_income_SWE_border_trade = 0.0002 } #2% of yearly GDP
+			set_variable = { additional_income_SWE_border_trade = { value = NRY.gdp_per_capita multiply = 0.0002 } } #2% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_border_trade }
 		}
 		if = {
 			limit = { NOT = { has_idea = social_01 } }
-			set_variable = { additional_income_SWE_Social_insurance = welfare_gain } #gdp_per_capita
-			multiply_variable = { additional_income_SWE_Social_insurance = 0.08 } #30% of yearly GDP
+			set_variable = { additional_income_SWE_Social_insurance = { value = welfare_gain multiply = 0.08 } } #gdp_per_capita #30% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_Social_insurance }
 		}
 		if = {
@@ -1756,8 +1826,7 @@ calculate_additional_income_rate = {
 				has_country_flag = SWE_idea_tourist_industry_1
 				NOT = { has_war = yes }
 			}
-			set_variable = { additional_income_SWE_tourism_1 = SWE.gdp_per_capita }
-			multiply_variable = { additional_income_SWE_tourism_1 = 0.01 } #1% of yearly GDP
+			set_variable = { additional_income_SWE_tourism_1 = { value = SWE.gdp_per_capita multiply = 0.01 } } #1% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_1 }
 		}
 		if = {
@@ -1765,8 +1834,7 @@ calculate_additional_income_rate = {
 				has_country_flag = SWE_idea_tourist_industry_2
 				NOT = { has_war = yes }
 			}
-			set_variable = { additional_income_SWE_tourism_2 = SWE.gdp_per_capita }
-			multiply_variable = { additional_income_SWE_tourism_2 = 0.02 } #2% of yearly GDP
+			set_variable = { additional_income_SWE_tourism_2 = { value = SWE.gdp_per_capita multiply = 0.02 } } #2% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_2 }
 		}
 		if = {
@@ -1774,8 +1842,7 @@ calculate_additional_income_rate = {
 				has_country_flag = SWE_idea_tourist_industry_3
 				NOT = { has_war = yes }
 			}
-			set_variable = { additional_income_SWE_tourism_3 = SWE.gdp_per_capita }
-			multiply_variable = { additional_income_SWE_tourism_3 = 0.03 } #3% of yearly GDP
+			set_variable = { additional_income_SWE_tourism_3 = { value = SWE.gdp_per_capita multiply = 0.03 } } #3% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_3 }
 		}
 		if = {
@@ -1783,8 +1850,7 @@ calculate_additional_income_rate = {
 				has_country_flag = SWE_idea_tourist_industry_4
 				NOT = { has_war = yes }
 			}
-			set_variable = { additional_income_SWE_tourism_4 = SWE.gdp_per_capita }
-			multiply_variable = { additional_income_SWE_tourism_4 = 0.04 } #3% of yearly GDP
+			set_variable = { additional_income_SWE_tourism_4 = { value = SWE.gdp_per_capita multiply = 0.04 } } #3% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_4 }
 		}
 		if = {
@@ -1849,8 +1915,7 @@ calculate_additional_income_rate = {
 		limit = { original_tag = TUR }
 		if = {
 			limit = { has_idea = TUR_taxing_bosphor }
-			set_variable = { TUR_taxing_bosphorus = gdp_total }
-			multiply_variable = { TUR_taxing_bosphorus = 0.002 }	#10% of GDP yearly
+			set_variable = { TUR_taxing_bosphorus = { value = gdp_total multiply = 0.002 } }	#10% of GDP yearly
 			add_to_variable = { additional_income_rate = TUR_taxing_bosphorus }
 		}
 		if = {
@@ -1869,8 +1934,7 @@ calculate_additional_income_rate = {
 		limit = { original_tag = VEN }
 		if = {
 			limit = { has_idea = VEN_iron_control_vdp }
-			set_variable = { additional_income_iron_control_vdp = gdp_total }
-			multiply_variable = { additional_income_iron_control_vdp = 0.002 }	#10% of GDP yearly estimated weekly
+			set_variable = { additional_income_iron_control_vdp = { value = gdp_total multiply = 0.002 } }	#10% of GDP yearly estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_iron_control_vdp }
 		}
 	}
@@ -2174,7 +2238,8 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = CPD_reparations_weekly }
 	}
 }
-#Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
+# Effect: calculate_interest_rate
+# Purpose: Computes daily interest rate on debt based on debt-to-GDP ratio, monetary policy, and world threat
 calculate_interest_rate = {
 	# Handle no debt case - skip all debt calculations
 	if = {
@@ -2201,8 +2266,7 @@ calculate_interest_rate = {
 
 		# Threat premium - current threat level raises borrowing costs; decays with world tension.
 		# as 1.825% per year. 80% (0.8) tensioon -> 4% interest rate (4.0).
-		set_variable = { threat_interest_premium = { value = global.threat multiply = 5 } }
-		clamp_variable = { var = threat_interest_premium min = 0 max = 5 }
+		set_variable = { threat_interest_premium = { value = global.threat multiply = 5 clamp = { min = 0 max = 5 } } }
 		add_to_variable = { interest_rate = threat_interest_premium }
 		multiply_variable = { threat_interest_premium = 0.01 } # For localisation display.
 
@@ -2219,11 +2283,9 @@ calculate_interest_rate = {
 			limit = { NOT = { has_variable = tension_premium } }
 			set_variable = { tension_premium = 0 }
 		}
-		# Decay by 0.5% each day, 140 days to decay 50%, 460 days to decay 90%
-		multiply_variable = { tension_premium = 0.995 }
-		add_to_variable = { tension_premium = recent_threat } # Add new tension
-		set_variable = { adjusted_tension_premium = tension_premium }
-		multiply_variable = { adjusted_tension_premium = 0.1 } # 100% tension -> 10% interest rate
+		# Decay by 0.5% each day, 140 days to decay 50%, 460 days to decay 90%, then add new tension
+		set_variable = { tension_premium = { value = tension_premium multiply = 0.995 add = recent_threat } }
+		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
 		add_to_variable = { interest_rate = adjusted_tension_premium }
 		set_variable = { tracked_threat = has_added_tension_amount }
 		multiply_variable = { adjusted_tension_premium = 0.01 } # For localisation display.
@@ -2231,10 +2293,8 @@ calculate_interest_rate = {
 
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
 
-		#Calculate debt rate based on interest
-		set_variable = { debt_rate = debt }
-		multiply_variable = { debt_rate = 0.00019 }	#Weekly interest rate, 52 weeks in a year
-		multiply_variable = { debt_rate = interest_rate }	#Yearly interest rate
+		#Calculate weekly debt rate based on interest (52 weeks in a year)
+		set_variable = { debt_rate = { value = debt multiply = 0.00019 multiply = interest_rate } }
 
 		#If interest rate is really high, add additional modifier
 		if = { limit = { check_variable = { interest_rate > 14.999 } }
@@ -2298,8 +2358,12 @@ calculate_interest_rate = {
 	}
 }
 
-#Update military spending
+# Effect: update_military_rate
+# Purpose: Computes daily military upkeep: defence-industry cost plus fielded-unit personnel cost
 update_military_rate = {
+	#Guards the standalone on_action callers; the spending ladders must exist before the loop reads global.spending_ladder_defence^i
+	setup_spending_ladders = yes
+
 	#clear the array that stores the law costgdp_total
 	clear_array = array_defence_spend
 
@@ -2339,30 +2403,7 @@ update_military_rate = {
 	}
 
 	## Calculate cost for defence industry (military factories and dockyards) ##
-	#add the naval factories and mil factories to each item index in the array
-	for_each_loop = {
-		array = array_defence_spend
-		value = v
-		index = i
-		add_to_variable = { array_defence_spend^i = num_of_naval_factories }
-		add_to_variable = { array_defence_spend^i = military_fac }
-		multiply_variable = { array_defence_spend^i = inflation_multiplier }
-	}
-
-	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier )
-	multiply_variable = { array_defence_spend^0 = 0.001 }
-	multiply_variable = { array_defence_spend^0 = 0.46 }
-	multiply_variable = { array_defence_spend^1 = 0.005 }
-	multiply_variable = { array_defence_spend^2 = 0.01 }
-	multiply_variable = { array_defence_spend^3 = 0.015 }
-	multiply_variable = { array_defence_spend^4 = 0.023 }
-	multiply_variable = { array_defence_spend^5 = 0.03 }
-	multiply_variable = { array_defence_spend^6 = 0.04 }
-	multiply_variable = { array_defence_spend^7 = 0.05 }
-	multiply_variable = { array_defence_spend^8 = 0.063 }
-	multiply_variable = { array_defence_spend^9 = 0.1 }
-
-	#Update each item in the defence spending array based on your gdp/c, having a higher GDP/c makes defence more expensive
+	#A higher GDP/c makes defence industry more expensive, computed before the spending loop so each level reads the finished modifier
 	set_temp_variable = { gdp_defence_modifier_industry = gdp_per_capita }
 	if = {		#Linear approximation -0.007 * gdp/c + 2.333
 		limit = { check_variable = { gdp_defence_modifier_industry > 50 } }
@@ -2381,12 +2422,22 @@ update_military_rate = {
 	}
 	multiply_temp_variable = { gdp_defence_modifier_industry = 1.1 } #tweak this to modify gdp/c impact on industrial cost without having to rewrite the whole system
 	clamp_temp_variable = { var = gdp_defence_modifier_industry min = 1 }
-	#Defence spending loop
+
+	#Base cost per spending level = (naval + mil factories) * inflation * level ladder / gdp/c modifier * 1.1
 	for_each_loop = {
 		array = array_defence_spend
+		value = v
 		index = i
-		divide_variable = { array_defence_spend^i = gdp_defence_modifier_industry }
-		multiply_variable = { array_defence_spend^i = 1.1 } #tweak this to modify industrial cost spending in relations to everything else
+		set_variable = {
+			array_defence_spend^i = {
+				value = num_of_naval_factories
+				add = military_factory_total
+				multiply = inflation_multiplier
+				multiply = global.spending_ladder_defence^i
+				divide = gdp_defence_modifier_industry
+				multiply = 1.1 #tweak this to modify industrial cost spending in relations to everything else
+			}
+		}
 	}
 
 	## Calculate the cost of fielded military ##
@@ -2507,9 +2558,8 @@ update_military_rate = {
 	add_to_variable = { equipment_operative_cost = temp_eq }
 
 	set_temp_variable = { equipment_operative_cost_multiplier = 5 } #tweak this to modify the operative cost of all equipment
-	multiply_variable = { equipment_operative_cost = equipment_operative_cost_multiplier }
-	multiply_variable = { equipment_operative_cost = 0.019 } #from millions yearly to millions weekly
-	multiply_variable = { equipment_operative_cost = 0.001 } #from millions weekly to bilions weekly
+	#from millions yearly to billions weekly
+	set_variable = { equipment_operative_cost = { value = equipment_operative_cost multiply = equipment_operative_cost_multiplier multiply = 0.019 multiply = 0.001 } }
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
 			multiply_variable = { equipment_operative_cost = 2.25 }
@@ -2699,8 +2749,7 @@ update_military_rate = {
 	multiply_temp_variable = { navy_count = navy_personnel_cost_multiplier }
 	multiply_temp_variable = { airforce_count = airforce_personnel_cost_multiplier }
 	#Modify equipment cost with modifier
-	multiply_variable = { equipment_operative_cost = equipment_cost_multiplier }
-	multiply_variable = { equipment_operative_cost = inflation_multiplier }
+	set_variable = { equipment_operative_cost = { value = equipment_operative_cost multiply = equipment_cost_multiplier multiply = inflation_multiplier } }
 
 	#Multiply personnel costs basde on GDP/c, higher GDP makes things more expensive (linear approximation 0.003 * gdp/c + 0.129)
 	set_temp_variable = { gdp_defence_modifier_personnel = { value = gdp_per_capita multiply = 0.004 add = 0.129 } }
@@ -2751,18 +2800,15 @@ update_military_rate = {
 	clamp_variable = { var = gdp_defence_modifier_industry min = 0.001 }
 	divide_variable = { defence_breakdown_industry_gdp_modifier = gdp_defence_modifier_industry }
 	subtract_from_variable = { defence_breakdown_industry_gdp_modifier = 1 }	#Working with percentages
-	set_variable = { defence_breakdown_personnel_gdp_modifier = gdp_defence_modifier_personnel }
-	multiply_variable = { defence_breakdown_personnel_gdp_modifier = 7.752 } #Minimum modifier
-	subtract_from_variable = { defence_breakdown_personnel_gdp_modifier = 1 }	#Working with percentages
+	set_variable = { defence_breakdown_personnel_gdp_modifier = { value = gdp_defence_modifier_personnel multiply = 7.752 subtract = 1 } }	#7.752 = minimum modifier; -1 to work with percentages
 
 	#Add military industry and personnel costs together for the total
 	for_each_loop = {
 		array = array_defence_spend
 		index = i
 		value = v
-		add_to_variable = { array_defence_spend^i = personnel_cost }
-		multiply_variable = { array_defence_spend^i = 7 } #Multiply each index by 7 days
-		add_to_variable = { array_defence_spend^i = equipment_operative_cost }
+		#Industry cost + personnel, over 7 days, plus equipment upkeep
+		set_variable = { array_defence_spend^i = { value = array_defence_spend^i add = personnel_cost multiply = 7 add = equipment_operative_cost } }
 		clamp_variable = { var = array_defence_spend^i min = 0 }
 	}
 
@@ -2794,17 +2840,16 @@ update_military_rate = {
 	}
 }
 
-#Update bureaucracy spending
+# Effect: update_bureaucracy_rate
+# Purpose: Computes daily bureaucracy/civil-service spending based on population and selected law level
 update_bureaucracy_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_bureaucracy_spend
 
-	@bureau_salary_per_worker = 0.001
-
 	# Recreate the Array
 	resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
 
-	#Calculate the base cost of bureaucracy levels
+	#Calculate the base cost of each bureaucracy level, scaled by the per-level multiplier ladder
 	for_each_loop = {
 		array = array_bureaucracy_spend
 		index = i
@@ -2814,18 +2859,12 @@ update_bureaucracy_rate = {
 				value = population_total
 				multiply = { value = 1 add = modifier@bureaucracy_cost_multiplier_modifier }
 				multiply = common_money_modifier
-				multiply = 0.0007 # base cost of bureaucracy (billion $ per 10 000 000 people)
-				clamp = { min = 0 max = 100000000 }
+				multiply = @bureau_base_cost_per_capita
+				clamp = { min = 0 max = @spending_cost_clamp_max }
+				multiply = global.spending_ladder_standard^i
 			}
 		}
 	}
-
-	#Modify based on spending level
-	multiply_variable = { var = array_bureaucracy_spend^0 value = 1 }
-	multiply_variable = { var = array_bureaucracy_spend^1 value = 1.6 }
-	multiply_variable = { var = array_bureaucracy_spend^2 value = 2.2 }
-	multiply_variable = { var = array_bureaucracy_spend^3 value = 2.8 }
-	multiply_variable = { var = array_bureaucracy_spend^4 value = 3.4 }
 
 	#Set which spending level the country is at
 	if = { limit = { has_idea = bureau_01 }
@@ -2847,7 +2886,8 @@ update_bureaucracy_rate = {
 	clamp_variable = { var = bureaucracy_gain min = 0 }
 }
 
-#Update police spending
+# Effect: update_police_rate
+# Purpose: Computes daily police/public-security spending based on population and selected law level
 update_police_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_security_spend
@@ -2855,7 +2895,7 @@ update_police_rate = {
 	# Recreate the Array
 	resize_array = { array = array_security_spend size = 5 value = 0 }
 
-	#Calculate the base cost of police levels
+	#Calculate the base cost of each police level, scaled by the per-level multiplier ladder
 	for_each_loop = {
 		array = array_security_spend
 		index = i
@@ -2869,18 +2909,12 @@ update_police_rate = {
 					add = ct_police_cost_var
 				}
 				multiply = common_money_modifier
-				multiply = 0.00098 #base cost of policing (billion $ per 10 000 000 people)
-				clamp = { min = 0 max = 100000000 }
+				multiply = @police_base_cost_per_capita
+				clamp = { min = 0 max = @spending_cost_clamp_max }
+				multiply = global.spending_ladder_standard^i
 			}
 		}
 	}
-
-	#Modify based on spending level
-	multiply_variable = { array_security_spend^0 = 1 }
-	multiply_variable = { array_security_spend^1 = 1.6 }
-	multiply_variable = { array_security_spend^2 = 2.2 }
-	multiply_variable = { array_security_spend^3 = 2.8 }
-	multiply_variable = { array_security_spend^4 = 3.4 }
 
 	#Set which spending level the country is at
 	if = { limit = { has_idea = police_01 }
@@ -2903,13 +2937,14 @@ update_police_rate = {
 	clamp_variable = { var = security_gain min = 0 }
 }
 
-#Update education spending
+# Effect: update_education_rate
+# Purpose: Computes daily education spending based on population, research slots, and selected law level
 update_education_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_education_spend
 
 	#Set the base cost of education (billion $ per 10 000 000 people)
-	set_temp_variable = { education_base_cost = 0.00036 }
+	set_temp_variable = { education_base_cost = @education_base_cost_per_capita }
 
 	#Education spending is more expensive the more research slots a country has
 	set_variable = { research_slot_modifier = { value = 0.04 multiply = amount_research_slots add = -0.2 } }
@@ -2983,24 +3018,22 @@ update_education_rate = {
 
 	set_variable = { THIS.total_facilities_spending_display_var = facilities_cost }
 
-	#Calculate the base cost of bureaucracy levels
+	#Calculate the base cost of each education level (pop * cost multiplier + facilities), scaled by the per-level multiplier ladder
+	# Update facility display var if you change the ladder!
 	for_each_loop = {
 		array = array_education_spend
 		index = i
 		value = v
-		add_to_variable = { array_education_spend^i = population_total } #Unit 100 000
-		multiply_variable = { array_education_spend^i = education_cost_multiplier }
-		add_to_variable = { array_education_spend^i = THIS.total_facilities_spending_display_var }
-		clamp_variable = { var = array_education_spend^i min = 0 }
+		set_variable = {
+			array_education_spend^i = {
+				value = population_total #Unit 100 000
+				multiply = education_cost_multiplier
+				add = total_facilities_spending_display_var
+				clamp = { min = 0 max = @spending_cost_clamp_max }
+				multiply = global.spending_ladder_education^i
+			}
+		}
 	}
-
-	#Modify based on spending level
-	# Update facility display var if you change this!
-	multiply_variable = { array_education_spend^0 = 1 }
-	multiply_variable = { array_education_spend^1 = 2.25 }
-	multiply_variable = { array_education_spend^2 = 3.5 }
-	multiply_variable = { array_education_spend^3 = 4.75 }
-	multiply_variable = { array_education_spend^4 = 6 }
 
 	#Set which spending level the country is at
 	if = { limit = { has_idea = edu_01 }
@@ -3028,7 +3061,8 @@ update_education_rate = {
 	clamp_variable = { var = total_facilities_spending_display_var min = 0 }
 }
 
-#Update health spending
+# Effect: update_health_rate
+# Purpose: Computes daily healthcare spending based on population and selected law level
 update_health_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_health_spend
@@ -3036,7 +3070,7 @@ update_health_rate = {
 	# Recreate the Array
 	resize_array = { array = array_health_spend size = 6 value = 0 }
 
-	#Calculate the base cost of health levels
+	#Calculate the base cost of each health level, scaled by the per-level multiplier ladder
 	for_each_loop = {
 		array = array_health_spend
 		index = i
@@ -3046,19 +3080,12 @@ update_health_rate = {
 				value = population_total	#Unit 100 000
 				multiply = { value = 1 add = modifier@health_cost_multiplier_modifier }
 				multiply = common_money_modifier
-				multiply = 0.0007 # base cost of health (billion $ per 10 000 000 people)
-				clamp = { min = 0 max = 100000000 }
+				multiply = @health_base_cost_per_capita
+				clamp = { min = 0 max = @spending_cost_clamp_max }
+				multiply = global.spending_ladder_health^i
 			}
 		}
 	}
-
-	#Modify based on spending level
-	multiply_variable = { array_health_spend^0 = 1.1 }
-	multiply_variable = { array_health_spend^1 = 2.2 }
-	multiply_variable = { array_health_spend^2 = 4.4 }
-	multiply_variable = { array_health_spend^3 = 6.5 }
-	multiply_variable = { array_health_spend^4 = 8.8 }
-	multiply_variable = { array_health_spend^5 = 11 }
 
 	#Set which spending level the country is at
 	if = { limit = { has_idea = health_01 }
@@ -3084,7 +3111,8 @@ update_health_rate = {
 	clamp_variable = { var = health_gain min = 0 }
 }
 
-#Update social spending
+# Effect: update_social_rate
+# Purpose: Computes daily welfare/social-benefit spending based on population and selected law level
 update_social_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_social_spend
@@ -3092,7 +3120,7 @@ update_social_rate = {
 	# Recreate the Array
 	resize_array = { array = array_social_spend size = 6 value = 0 }
 
-	#Calculate the base cost of social levels
+	#Calculate the base cost of each social level, scaled by the per-level multiplier ladder
 	for_each_loop = {
 		array = array_social_spend
 		index = i
@@ -3102,19 +3130,12 @@ update_social_rate = {
 				value = population_total	#Unit 100 000
 				multiply = { value = 1 add = modifier@social_cost_multiplier_modifier }
 				multiply = common_money_modifier
-				multiply = 0.00133 # base cost of welfare (billion $ per 10 000 000 people)
-				clamp = { min = 0 max = 100000000 }
+				multiply = @social_base_cost_per_capita
+				clamp = { min = 0 max = @spending_cost_clamp_max }
+				multiply = global.spending_ladder_social^i
 			}
 		}
 	}
-
-	#Modify based on spending level
-	multiply_variable = { array_social_spend^0 = 1 }
-	multiply_variable = { array_social_spend^1 = 2.5 }
-	multiply_variable = { array_social_spend^2 = 4 }
-	multiply_variable = { array_social_spend^3 = 5.5 }
-	multiply_variable = { array_social_spend^4 = 7.5 }
-	multiply_variable = { array_social_spend^5 = 9.5 }
 
 	#Set which spending level the country is at
 	if = { limit = { has_idea = social_01 }
@@ -3140,7 +3161,8 @@ update_social_rate = {
 	clamp_variable = { var = welfare_gain min = 0 }
 }
 
-#Update infrastructure maintenance spending
+# Effect: update_infra_rate
+# Purpose: Computes daily infrastructure maintenance costs for power plants and network
 update_infra_rate = {
 	set_variable = {
 		nuclear_infra_expense = {
@@ -3207,6 +3229,8 @@ update_infra_rate = {
 	}
 }
 
+# Effect: calculate_additional_expense_rate
+# Purpose: Aggregates special expenses (propaganda campaigns, diplomatic actions, special projects)
 calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
 	# Additional expenses, set expense amount as a variable (weekly gain)
@@ -3777,16 +3801,12 @@ calculate_additional_expense_rate = {
 		}
 		if = {
 			limit = { has_country_flag = GER_subventions_mining }
-			set_variable = { additional_expense_GER_subventions_mining = GER.gdp_per_capita }
-			multiply_variable = { additional_expense_GER_subventions_mining = 0.5 } #2% of yearly GDP
-			multiply_variable = { additional_expense_GER_subventions_mining = 0.02 } #weekly
+			set_variable = { additional_expense_GER_subventions_mining = { value = GER.gdp_per_capita multiply = 0.5 multiply = 0.02 } } #yearly GDP share, weekly
 			add_to_variable = { additional_expenses_rate = additional_expense_GER_subventions_mining }
 		}
 		if = {
 			limit = { has_country_flag = GER_subventions_agrar }
-			set_variable = { additional_expense_GER_subventions_agrar = GER.gdp_per_capita }
-			multiply_variable = { additional_expense_GER_subventions_agrar = 0.7 } #2% of yearly GDP
-			multiply_variable = { additional_expense_GER_subventions_agrar = 0.02 } #weekly
+			set_variable = { additional_expense_GER_subventions_agrar = { value = GER.gdp_per_capita multiply = 0.7 multiply = 0.02 } } #yearly GDP share, weekly
 			add_to_variable = { additional_expenses_rate = additional_expense_GER_subventions_agrar }
 		}
 		if = {
@@ -4024,8 +4044,8 @@ calculate_additional_expense_rate = {
 	}
 }
 
-#Income Related Stuff --- International Investments and Calculated Resource Sale Rate
-#Update money gained from international investments
+# Effect: calculate_int_investments_rate
+# Purpose: Computes weekly income from international investments based on total invested and ROI rate
 calculate_int_investments_rate = {
 	# Set base ROI rate
 	set_variable = { roi_rate = 0.06 }	#6%
@@ -4034,36 +4054,16 @@ calculate_int_investments_rate = {
 	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
 	clamp_variable = { var = roi_rate min = 0 max = 0.20 }
 
-	#This is how much money we get back in a year
-	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate } }
-	multiply_variable = { int_investments_rate = 0.019 }	#yearly to weekly
+	#This is how much money we get back in a year, converted to weekly
+	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 } }
 
 	clamp_variable = { var = int_investments_rate min = 0 }
 }
 
-#Calculates income from resources
+# Effect: calculate_resource_sale_rate
+# Purpose: Computes weekly revenue from resource exports at market prices
 calculate_resource_sale_rate = {
-	#resource_exported = total amount of resources put to market
-	set_variable = { oil_exports = resource_exported@oil }
-	set_variable = { steel_exports = resource_exported@steel }
-	set_variable = { aluminium_exports = resource_exported@aluminium }
-	set_variable = { tungsten_exports = resource_exported@tungsten }
-	set_variable = { chromium_exports = resource_exported@chromium }
-	set_variable = { rubber_exports = resource_exported@rubber }
-	set_variable = { microchip_exports = resource_exported@microchips }
-	set_variable = { composite_exports = resource_exported@composites }
-
-	#Multiply with cost to get money generated
-	multiply_variable = { oil_exports = global.oil_price }
-	multiply_variable = { steel_exports = global.steel_price }
-	multiply_variable = { aluminium_exports = global.aluminium_price }
-	multiply_variable = { tungsten_exports = global.tungsten_price }
-	multiply_variable = { chromium_exports = global.chromium_price }
-	multiply_variable = { rubber_exports = global.rubber_price }
-	multiply_variable = { microchip_exports = global.microchip_price }
-	multiply_variable = { composite_exports = global.composite_price }
-
-	#Additional additive modifiers
+	#Additive export multipliers (base + per-resource modifiers), computed before the export revenue so each fold reads the finished multiplier
 	set_temp_variable = { resource_export_multiplier = { value = 1 add = modifier@resource_export_multiplier_modifier } }
 
 	set_temp_variable = { oil_export_multiplier = { value = resource_export_multiplier add = modifier@oil_export_multiplier_modifier } }
@@ -4075,23 +4075,15 @@ calculate_resource_sale_rate = {
 	set_temp_variable = { microchip_export_multiplier = { value = resource_export_multiplier add = modifier@microchip_export_multiplier_modifier } }
 	set_temp_variable = { composite_export_multiplier = { value = resource_export_multiplier add = modifier@composite_export_multiplier_modifier } }
 
-	multiply_variable = { oil_exports = oil_export_multiplier }
-	multiply_variable = { steel_exports = steel_export_multiplier }
-	multiply_variable = { aluminium_exports = aluminium_export_multiplier }
-	multiply_variable = { tungsten_exports = tungsten_export_multiplier }
-	multiply_variable = { chromium_exports = chromium_export_multiplier }
-	multiply_variable = { rubber_exports = rubber_export_multiplier }
-	multiply_variable = { microchip_exports = microchip_export_multiplier }
-	multiply_variable = { composite_exports = composite_export_multiplier }
-
-	multiply_variable = { oil_exports = @resource_sale_rate_constant }
-	multiply_variable = { steel_exports = @resource_sale_rate_constant }
-	multiply_variable = { aluminium_exports = @resource_sale_rate_constant }
-	multiply_variable = { tungsten_exports = @resource_sale_rate_constant }
-	multiply_variable = { chromium_exports = @resource_sale_rate_constant }
-	multiply_variable = { rubber_exports = @resource_sale_rate_constant }
-	multiply_variable = { microchip_exports = @resource_sale_rate_constant }
-	multiply_variable = { composite_exports = @resource_sale_rate_constant }
+	#Revenue = exported amount * market price * export multiplier * yearly-to-weekly constant
+	set_variable = { oil_exports = { value = resource_exported@oil multiply = global.oil_price multiply = oil_export_multiplier multiply = @resource_sale_rate_constant } }
+	set_variable = { steel_exports = { value = resource_exported@steel multiply = global.steel_price multiply = steel_export_multiplier multiply = @resource_sale_rate_constant } }
+	set_variable = { aluminium_exports = { value = resource_exported@aluminium multiply = global.aluminium_price multiply = aluminium_export_multiplier multiply = @resource_sale_rate_constant } }
+	set_variable = { tungsten_exports = { value = resource_exported@tungsten multiply = global.tungsten_price multiply = tungsten_export_multiplier multiply = @resource_sale_rate_constant } }
+	set_variable = { chromium_exports = { value = resource_exported@chromium multiply = global.chromium_price multiply = chromium_export_multiplier multiply = @resource_sale_rate_constant } }
+	set_variable = { rubber_exports = { value = resource_exported@rubber multiply = global.rubber_price multiply = rubber_export_multiplier multiply = @resource_sale_rate_constant } }
+	set_variable = { microchip_exports = { value = resource_exported@microchips multiply = global.microchip_price multiply = microchip_export_multiplier multiply = @resource_sale_rate_constant } }
+	set_variable = { composite_exports = { value = resource_exported@composites multiply = global.composite_price multiply = composite_export_multiplier multiply = @resource_sale_rate_constant } }
 
 	# Clamp Export Values at 0 so Luigi's massive negatives don't break my shit
 	clamp_variable = { var = oil_exports min = 0 }
@@ -4117,6 +4109,8 @@ calculate_resource_sale_rate = {
 	clamp_variable = { var = resource_sale_rate min = 0 }
 }
 
+# Effect: update_display
+# Purpose: Aggregates expense streams and computes net treasury change for the UI
 update_display = {
 	set_variable = { display_expense = {
 		value = bureaucracy_gain
@@ -4208,6 +4202,8 @@ update_display = {
 	}
 }
 
+# Effect: update_economic_cycle_cost
+# Purpose: Computes the cost to unlock and upgrade economic cycles (5% of GDP)
 update_economic_cycle_cost = {
 	set_variable = {
 		econ_cycle_upg_cost = {
@@ -4221,6 +4217,8 @@ update_economic_cycle_cost = {
 	}
 }
 
+# Effect: update_cyber_cost
+# Purpose: Computes tiered costs for cybersecurity investments (small, medium, large)
 update_cyber_cost = {
 	if = {
 		limit = { check_variable = { gdp_total < 501 } }
@@ -4294,6 +4292,8 @@ update_cyber_cost = {
 	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 }
 
+# Effect: update_state_variables
+# Purpose: Calculates national aggregate variables (consumer goods, military buildings, population state)
 update_state_variables = {
 	# Calculate Consumer Goods Factor
 	set_variable = {
@@ -4376,7 +4376,7 @@ update_state_variables = {
 			}
 		}
 		set_variable = {
-			military_fac = {
+			military_factory_total = {
 				value = 0
 				every_collection = {
 					named_collection = controlled_states
@@ -4385,7 +4385,7 @@ update_state_variables = {
 			}
 		}
 		set_variable = {
-			dockyard_fac = {
+			naval_factory_total = {
 				value = 0
 				every_collection = {
 					named_collection = controlled_states
@@ -4729,7 +4729,8 @@ update_state_variables = {
 	calculate_gdp = yes
 }
 
-#Calculate GDP/C
+# Effect: calculate_gdp
+# Purpose: Sums per-building GDP contributions into gdp_total and derives gdp_per_capita
 calculate_gdp = {
 	# Calculate Last Quarter's GDP
 	if = {
@@ -5059,7 +5060,7 @@ calculate_gdp = {
 	}
 
 
-	if = { limit = { check_variable = { military_fac = 0 } }
+	if = { limit = { check_variable = { military_factory_total = 0 } }
 		set_variable = { military_factories_manpower_fulfillment = 1 }
 		set_variable = {
 			workers_per_mil_fac_display = {
@@ -5085,7 +5086,7 @@ calculate_gdp = {
 
 		set_temp_variable = {
 			max_workers_in_mil_facs = {
-				value = military_fac
+				value = military_factory_total
 				multiply = workers_per_mil_fac
 			}
 		}
@@ -5105,7 +5106,7 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_mil_facs }
 	}
 
-	if = { limit = { check_variable = { dockyard_fac = 0 } }
+	if = { limit = { check_variable = { naval_factory_total = 0 } }
 		set_variable = { naval_factories_manpower_fulfillment = 1 }
 		set_variable = {
 			workers_per_dockyard_display = {
@@ -5131,7 +5132,7 @@ calculate_gdp = {
 
 		set_temp_variable = {
 			max_workers_in_dockyards = {
-				value = dockyard_fac
+				value = naval_factory_total
 				multiply = workers_per_dockyard
 			}
 		}
@@ -5667,96 +5668,56 @@ calculate_gdp = {
 	set_temp_variable = {
 		gdp_from_civs = {
 			value = industrial_complex_total
-			multiply = 17.5
-			add = {
-				value = industrial_complex_total
-				multiply = 20
-				multiply = modifier@civilian_factories_productivity
-			}
+			multiply = { value = @gdp_civ_base_factor add = { value = @gdp_civ_prod_factor multiply = modifier@civilian_factories_productivity } }
 			multiply = civilian_factories_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_mils = {
-			value = military_fac
-			multiply = 1.5
-			add = {
-				value = military_fac
-				multiply = 1
-				multiply = modifier@military_factories_productivity
-			}
+			value = military_factory_total
+			multiply = { value = @gdp_mil_base_factor add = { value = @gdp_mil_prod_factor multiply = modifier@military_factories_productivity } }
 			multiply = military_factories_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_dockyards = {
-			value = dockyard_fac
-			multiply = 1.5
-			add = {
-				value = dockyard_fac
-				multiply = 1
-				multiply = modifier@dockyard_productivity
-			}
+			value = naval_factory_total
+			multiply = { value = @gdp_dockyard_base_factor add = { value = @gdp_dockyard_prod_factor multiply = modifier@dockyard_productivity } }
 			multiply = naval_factories_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_offices = {
 			value = office_park_total
-			multiply = 50
-			add = {
-				value = office_park_total
-				multiply = 50
-				multiply = modifier@offices_productivity
-			}
+			multiply = { value = @gdp_office_base_factor add = { value = @gdp_office_prod_factor multiply = modifier@offices_productivity } }
 			multiply = offices_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_agriculture_district = {
 			value = agriculture_district_total
-			multiply = 25
-			add = {
-				value = agriculture_district_total
-				multiply = 25
-				multiply = modifier@agricolture_productivity_modifier
-			}
+			multiply = { value = @gdp_agriculture_district_base_factor add = { value = @gdp_agriculture_district_prod_factor multiply = modifier@agricolture_productivity_modifier } }
 			multiply = agriculture_district_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_microchip_plant = {
 			value = microchip_plant_total
-			multiply = 32
-			add = {
-				value = microchip_plant_total
-				multiply = 35
-				multiply = modifier@microchip_plant_productivity_modifier
-			}
+			multiply = { value = @gdp_microchip_base_factor add = { value = @gdp_microchip_prod_factor multiply = modifier@microchip_plant_productivity_modifier } }
 			multiply = microchip_plant_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_composite_plant = {
 			value = composite_plant_total
-			multiply = 28
-			add = {
-				value = composite_plant_total
-				multiply = 30
-				multiply = modifier@composite_plant_productivity_modifier
-			}
+			multiply = { value = @gdp_composite_base_factor add = { value = @gdp_composite_prod_factor multiply = modifier@composite_plant_productivity_modifier } }
 			multiply = composite_plant_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_synthetic_refinery = {
 			value = synthetic_refinery_total
-			multiply = 10
-			add = {
-				value = synthetic_refinery_total
-				multiply = 10
-				multiply = modifier@synthetic_refinery_productivity_modifier
-			}
+			multiply = { value = @gdp_synthetic_base_factor add = { value = @gdp_synthetic_prod_factor multiply = modifier@synthetic_refinery_productivity_modifier } }
 			multiply = synthetic_refinery_manpower_fulfillment
 		}
 	}
@@ -5842,14 +5803,14 @@ calculate_gdp = {
 		}
 	}
 	set_variable = {
-		military_fac_percent = {
+		military_factory_total_percent = {
 			value = gdp_from_mils
 			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 1 }
 		}
 	}
 	set_variable = {
-		dockyard_fac_percent = {
+		naval_factory_total_percent = {
 			value = gdp_from_dockyards
 			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 1 }
@@ -5944,7 +5905,8 @@ calculate_gdp = {
 	calculate_energy_use = yes
 }
 
-#Calculate modifiers associated with GDP/C
+# Effect: calculate_gdp_modifiers
+# Purpose: Updates dynamic modifiers keyed to GDP-per-capita thresholds (development stages)
 calculate_gdp_modifiers = {
 	if = { limit = { NOT = { check_variable = { gdp_total = last_gdp_check } } }
 		set_variable = { last_gdp_check = gdp_total }
@@ -6154,6 +6116,8 @@ calculate_ai_taxes_desire = {
 	clamp_variable = { var = corporate_tax_rate min = 0 max = 50 }
 }
 
+# Effect: calculate_new_education_spending_tooltip
+# Purpose: Calculates next-level education spending cost for the education law tooltip
 calculate_new_education_spending_tooltip = {
 	set_temp_variable = {
 		research_slot_tot = {
@@ -6166,6 +6130,8 @@ calculate_new_education_spending_tooltip = {
 	custom_effect_tooltip = calculate_new_education_spending_tt
 }
 
+# Effect: worker_requirements_variable_gdpc_converging
+# Purpose: Converges worker requirements toward sector baselines as GDP per capita rises
 worker_requirements_variable_gdpc_converging = {
 	set_temp_variable = {
 		temp_difference = {
@@ -6213,15 +6179,11 @@ calculate_migration_mechanic_values = {
 				# Scaling Costs + base cost per 10 000 000 people
 				multiply = 0.07
 				multiply = 0.004
-				clamp = { min = 0 max = 100000000 }
+				clamp = { min = 0 max = @spending_cost_clamp_max }
+				multiply = global.spending_ladder_standard^i
 			}
 		}
 	}
-
-	multiply_variable = { array_border_control_spend^1 = 1.6 }
-	multiply_variable = { array_border_control_spend^2 = 2.2 }
-	multiply_variable = { array_border_control_spend^3 = 2.8 }
-	multiply_variable = { array_border_control_spend^4 = 3.4 }
 
 	#Set which spending level the country is at
 	if = { limit = { has_idea = open_borders }
@@ -6365,6 +6327,8 @@ calculate_migration_mechanic_values = {
 	}
 }
 
+# Effect: calculate_cost_pp_economic_cycles
+# Purpose: Computes political-point cost to unlock economic-cycle tiers
 calculate_cost_pp_economic_cycles = {
 	set_temp_variable = { tmp_tax_gain_multiplier_modifier = modifier@tax_gain_multiplier_modifier }
 	set_temp_variable = { tmp_production_speed_buildings_factor = modifier@production_speed_buildings_factor }
@@ -6460,6 +6424,8 @@ setup_employment_variables = {
 	set_continent_nation_flag = yes
 }
 
+# Effect: set_initial_cost_resources
+# Purpose: Initializes base market prices for all resources (oil, steel, minerals, microchips, composites)
 set_initial_cost_resources = {
 	#Set the base price for single unit of resource, this is the relative price between resources
 	set_variable = { global.oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
@@ -6481,6 +6447,8 @@ set_initial_cost_resources = {
 	set_variable = { global.starting_composites_price = 7.4 }
 }
 
+# Effect: recalculate_resources_price
+# Purpose: Adjusts resource prices based on global supply and demand shifts
 recalculate_resources_price = {
 	#Set the current global supply + demand
 	set_temp_variable = { sum_steel = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@steel } } }
@@ -6566,6 +6534,8 @@ recalculate_resources_price = {
 	}
 }
 
+# Effect: calculate_united_nations_base_budget
+# Purpose: Computes total UN operating budget and collects per-nation mandatory contributions
 calculate_united_nations_base_budget = {
 	set_variable = { global.un_operating_budget_base = 0 }
 	set_variable = { global.total_aid_expenses_sum = 0 }
@@ -6656,8 +6626,7 @@ calculate_united_nations_base_budget = {
 	multiply_temp_variable = { peak_research_speed_mod = 0.4 }
 	multiply_temp_variable = { peak_prod_mod = 0.1 }
 
-	set_variable = { global.world_productivity_target = global.average_world_productivity }
-	add_to_variable = { global.world_productivity_target = peak_prod_mod }
+	set_variable = { global.world_productivity_target = { value = global.average_world_productivity add = peak_prod_mod } }
 	add_to_variable = { global.target_const_speed_mod = peak_const_speed_mod }
 	add_to_variable = { global.target_research_speed_mod = peak_research_speed_mod }
 	add_to_variable = { global.target_civ_count = peak_civ_count }
@@ -6706,6 +6675,8 @@ calculate_united_nations_base_budget = {
 	calculate_un_program_budgets = yes
 }
 
+# Effect: calculate_base_program_contributions
+# Purpose: Computes mandatory UN program contributions (UNESCO, IAEA, ILO) for UN members
 calculate_base_program_contributions = {
 	if = {
 		limit = {
@@ -6751,6 +6722,8 @@ calculate_base_program_contributions = {
 	update_optional_contributions = yes
 }
 
+# Effect: update_optional_contributions
+# Purpose: Adds optional UN program contributions on top of mandatory amounts
 update_optional_contributions = {
 	# United Nations Contribution Expenses
 	if = { limit = { has_dynamic_modifier = { modifier = united_nations_member } }
@@ -6795,7 +6768,8 @@ update_optional_contributions = {
 	}
 }
 
-#Calculates how much money the program has after additional contributions are made
+# Effect: calculate_un_program_budgets
+# Purpose: Distributes UN operating budget among UN programs (UNESCO, UNDIO, UNCDF)
 calculate_un_program_budgets = {
 	set_variable = { global.unescoe_budget = 0 }
 	set_variable = { global.undio_budget = 0 }
@@ -6828,6 +6802,9 @@ calculate_un_program_budgets = {
 	calcluate_program_distributions = yes
 }
 
+# Effect: calcluate_program_distributions
+# Purpose: Divides UN program budgets among eligible recipient countries
+# Note: function name is misspelled (calcluate); kept as-is because external callers depend on it
 calcluate_program_distributions = {
 	set_temp_variable = { esco_political_budget = global.unescoe_budget }
 	set_temp_variable = { esco_research_budget = global.unescoe_budget }
@@ -6904,9 +6881,7 @@ calcluate_program_distributions = {
 			set_variable = { un_cdf_construction_cost_var = cost_var }
 		}
 	}
-	set_variable = { global.full_aid_budget_calculator = global.uncdf_budget }
-	add_to_variable = { global.full_aid_budget_calculator = global.undio_budget }
-	add_to_variable = { global.full_aid_budget_calculator = global.unescoe_budget }
+	set_variable = { global.full_aid_budget_calculator = { value = global.uncdf_budget add = global.undio_budget add = global.unescoe_budget } }
 
 	for_each_loop = {
 		array = global.UN_general_assembly
@@ -6921,6 +6896,8 @@ calcluate_program_distributions = {
 	international_systems_update = yes
 }
 
+# Effect: sort_un_aid_contributor_arrays
+# Purpose: Sorts UN program contributors by contribution amount (for subsidy distribution rank)
 sort_un_aid_contributor_arrays = {
 	#Sort ESCO contributors by united_nations_unescoe_funding (highest first)
 	for_each_loop = {
