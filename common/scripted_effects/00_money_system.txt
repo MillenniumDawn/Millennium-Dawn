@@ -80,9 +80,11 @@
 @social_base_cost_per_capita = 0.00133
 # Civil servant salary per worker, added to the bureaucracy output term in calculate_gdp
 @bureau_salary_per_worker = 0.001
+# tweak this to modify the operative cost of all equipment
+@equipment_operative_cost_multiplier
 
 # Effect: setup_spending_ladders
-# Purpose: Populates the global per-level spending multiplier arrays once (flag-guarded); the spending-law loops read them as global.spending_ladder_*^i
+# Purpose: Populates the global per-level spending multiplier arrays once at game start for the ladders
 setup_spending_ladders = {
 	if = {
 		limit = { NOT = { has_global_flag = spending_ladders_initialized } }
@@ -135,8 +137,6 @@ setup_spending_ladders = {
 # Effect: ingame_update_setup
 # Purpose: Aggregates every income and expense stream, then refreshes the economy UI; the weekly economic tick
 ingame_update_setup = {
-	setup_spending_ladders = yes
-
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
 
@@ -2279,17 +2279,7 @@ calculate_interest_rate = {
 
 		# World tension cause premium - Countries which cause world tension are chaotic and less
 		# stable.
-		# Get tension created today.
-		if = {
-			limit = { NOT = { has_variable = tracked_threat } }
-			set_variable = { tracked_threat = 0 }
-		}
 		set_temp_variable = { recent_threat = { value = has_added_tension_amount subtract = tracked_threat } }
-		# Get current country tension premium.
-		if = {
-			limit = { NOT = { has_variable = tension_premium } }
-			set_variable = { tension_premium = 0 }
-		}
 		# Decay by 0.5% each day, 140 days to decay 50%, 460 days to decay 90%, then add new tension
 		set_variable = { tension_premium = { value = tension_premium multiply = 0.995 add = recent_threat } }
 		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
@@ -2368,9 +2358,6 @@ calculate_interest_rate = {
 # Effect: update_military_rate
 # Purpose: Computes daily military upkeep: defence-industry cost plus fielded-unit personnel cost
 update_military_rate = {
-	#Guards the standalone on_action callers; the spending ladders must exist before the loop reads global.spending_ladder_defence^i
-	setup_spending_ladders = yes
-
 	#clear the array that stores the law costgdp_total
 	clear_array = array_defence_spend
 
@@ -2378,35 +2365,13 @@ update_military_rate = {
 	resize_array = { array = array_defence_spend size = 10 value = 0 }
 
 	#A variable that stores the current military law the player has
-	if = { limit = { has_idea = defence_00 }
-		set_temp_variable = { def_index = 0 }
-	}
-	else_if = { limit = { has_idea = defence_01 }
-		set_temp_variable = { def_index = 1 }
-	}
-	else_if = { limit = { has_idea = defence_02 }
-		set_temp_variable = { def_index = 2 }
-	}
-	else_if = { limit = { has_idea = defence_03 }
-		set_temp_variable = { def_index = 3 }
-	}
-	else_if = { limit = { has_idea = defence_04 }
-		set_temp_variable = { def_index = 4 }
-	}
-	else_if = { limit = { has_idea = defence_05 }
-		set_temp_variable = { def_index = 5 }
-	}
-	else_if = { limit = { has_idea = defence_06 }
-		set_temp_variable = { def_index = 6 }
-	}
-	else_if = { limit = { has_idea = defence_07 }
-		set_temp_variable = { def_index = 7 }
-	}
-	else_if = { limit = { has_idea = defence_08 }
-		set_temp_variable = { def_index = 8 }
-	}
-	else_if = { limit = { has_idea = defence_09 }
-		set_temp_variable = { def_index = 9 }
+	# Utilize the military_spending variable from the military_spending from the system
+	set_temp_variable = {
+		def_index = {
+			value = military_spending
+			subtract = -1
+			clamp = { min = 0 max = 9 }
+		}
 	}
 
 	## Calculate cost for defence industry (military factories and dockyards) ##
@@ -2490,14 +2455,16 @@ update_military_rate = {
 
 	# Multiply each category with a weight value, and then add up categories together (eg. one special forces battalion is worth 1 militia battalion etc).
 	# Use these if you want to control costs of different land units to each other
-	set_temp_variable = { land_count = {
-		value = special_btn
-		multiply = 5
-		add = { value = elite_btn multiply = 3 }
-		add = { value = regular_btn multiply = 2 }
-		add = irregular_btn
-		add = { value = manpower multiply = 0.0002 }
-	} }
+	set_temp_variable = {
+		land_count = {
+			value = special_btn
+			multiply = 5
+			add = { value = elite_btn multiply = 3 }
+			add = { value = regular_btn multiply = 2 }
+			add = irregular_btn
+			add = { value = manpower multiply = 0.0002 }
+		}
+	}
 
 	#Land equipment
 	#num_equipment is for stockpile, num_equipment_in_armies is for deployed, num_equipment_in_armies_k is for small arms and support eq (1 = 1000 eq)
@@ -2654,9 +2621,18 @@ update_military_rate = {
 		}
 	}
 
-	set_temp_variable = { equipment_operative_cost_multiplier = 5 } #tweak this to modify the operative cost of all equipment
+	# Heavy Utility vehicles (cost: 0.022M yearly)
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@heavy_util_vehicle_type
+			multiply = 0.022
+			add = { value = num_equipment@heavy_util_vehicle_type multiply = 0.0044 } # 0.2 × 0.022
+		}
+	}
+
 	#from millions yearly to billions weekly
-	set_variable = { equipment_operative_cost = { value = equipment_operative_cost multiply = equipment_operative_cost_multiplier multiply = 0.019 multiply = 0.001 } }
+	set_variable = {equipment_operative_cost = { value = equipment_operative_cost multiply = equipment_operative_cost_multiplier multiply = 0.019 multiply = 0.001 } }
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
 			multiply_variable = { equipment_operative_cost = 2.25 }
