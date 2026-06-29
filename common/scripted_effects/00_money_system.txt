@@ -2899,40 +2899,54 @@ update_military_rate = {
 	subtract_from_variable = { defence_breakdown_industry_gdp_modifier = 1 }	#Working with percentages
 	set_variable = { defence_breakdown_personnel_gdp_modifier = { value = gdp_defence_modifier_personnel multiply = 7.752 subtract = 1 } }	#7.752 = minimum modifier; -1 to work with percentages
 
+	set_variable = {
+		defence_breakdown_cyber = {
+			value = gdp_total
+			multiply = {
+				value = 0
+				if = {
+					limit = { value = cyber_capability greater_than = 11 }
+					add = 0.00005
+				}
+				if = {
+					limit = { value = cyber_capability greater_than = 7 }
+					add = 0.00004
+				}
+				if = {
+					limit = { value = cyber_capability greater_than = 3 }
+					add = 0.00003
+				}
+				if = {
+					limit = { value = cyber_capability greater_than = 0 }
+					add = 0.00003
+				}
+			}
+			multiply = {
+				value = 1
+				add = modifier@cyber_cost_multiplier_modifier
+			}
+			multiply = 7
+		}
+	}
+
 	#Add military industry and personnel costs together for the total
 	for_each_loop = {
 		array = array_defence_spend
 		index = i
 		value = v
 		#Industry cost + personnel, over 7 days, plus equipment upkeep
-		set_variable = { array_defence_spend^i = { value = array_defence_spend^i add = personnel_cost multiply = 7 add = equipment_operative_cost clamp = { min = 0 max = @math_expressions_max } } }
+		set_variable = {
+			array_defence_spend^i = {
+				value = array_defence_spend^i
+				add = personnel_cost
+				multiply = 7
+				add = equipment_operative_cost
+				clamp = { min = 0 max = @math_expressions_max }
+			}
+		}
 	}
 
-	set_variable = { defence_gain = { value = array_defence_spend^def_index clamp = { min = 0 max = @math_expressions_max } } }
-
-	# Cyber Command weekly overhead cost
-	set_variable = { defence_breakdown_cyber = 0 }
-	set_temp_variable = { cyber_weekly_mul = { value = 1 add = modifier@cyber_cost_multiplier_modifier } }
-	if = {
-		limit = { has_cyber_capability_4 = yes }
-		set_variable = { defence_breakdown_cyber = { value = gdp_total multiply = 0.0000015 multiply = cyber_weekly_mul multiply = 7 } }
-	}
-	else_if = {
-		limit = { has_cyber_capability_3 = yes }
-		set_variable = { defence_breakdown_cyber = { value = gdp_total multiply = 0.000001 multiply = cyber_weekly_mul multiply = 7 } }
-	}
-	else_if = {
-		limit = { has_cyber_capability_2 = yes }
-		set_variable = { defence_breakdown_cyber = { value = gdp_total multiply = 0.0000006 multiply = cyber_weekly_mul multiply = 7 } }
-	}
-	else_if = {
-		limit = { has_cyber_capability_1 = yes }
-		set_variable = { defence_breakdown_cyber = { value = gdp_total multiply = 0.0000003 multiply = cyber_weekly_mul multiply = 7 } }
-	}
-	if = {
-		limit = { check_variable = { defence_breakdown_cyber > 0 } }
-		add_to_variable = { defence_gain = defence_breakdown_cyber }
-	}
+	set_variable = { defence_gain = { value = array_defence_spend^def_index add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_bureaucracy_rate
