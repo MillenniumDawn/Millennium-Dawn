@@ -43,7 +43,6 @@ country_tag_list = []
 modfolder = "Millennium-Dawn\\"
 mod = "Millennium-Dawn"
 
-# Focus title-bar automation (menu option 8): for each tag-set <SUFFIX>, the three source bars (focus_{unavailable,can_start,completed}_joint_<SUFFIX>_bg.dds in gfx/interface/focusview/titlebar/) become four spriteTypes
 TITLEBAR_REL = "gfx/interface/focusview/titlebar"
 
 GFX_BEGIN = "# === BEGIN GENERATED JOINT TITLE BARS (managed by gfx_entry_generator.py) ==="
@@ -51,10 +50,13 @@ GFX_END = "# === END GENERATED JOINT TITLE BARS ==="
 STYLE_BEGIN = "# === BEGIN GENERATED JOINT TITLE BAR STYLES (managed by gfx_entry_generator.py) ==="
 STYLE_END = "# === END GENERATED JOINT TITLE BAR STYLES ==="
 
-# Matches a title-bar source file and captures the (non-empty) tag suffix.
 TITLEBAR_FILE_RE = re.compile(
     r"^focus_(unavailable|can_start|completed)_joint_(?P<suffix>.+)_bg\.dds$"
 )
+_JOINT_NAME_RE = re.compile(
+    r"^GFX_focus_(unavailable|can_start|current|completed)_joint_(.+)$"
+)
+_COMMENT_LINE_RE = re.compile(r"^[ \t]*#.*$", re.MULTILINE)
 
 
 def main():
@@ -620,7 +622,6 @@ def _current_sprite(suffix):
         f'\t\tname = "GFX_focus_current_joint_{suffix}"\n'
         f'\t\ttexturefile = "{_titlebar_tex("can_start", suffix)}"\n'
         '\t\teffectFile = "gfx/FX/buttonstate_onlydisable.lua"\n'
-        '#\t\teffectFile = "gfx/FX/buttonstate.lua"\n'
         "\t\tanimation = {\n"
         f'\t\t\tanimationmaskfile = "{TITLEBAR_REL}/focus_ongoing_mask2.dds"\n'
         f'\t\t\tanimationtexturefile = "{TITLEBAR_REL}/focus_ongoing_texture.dds"\n'
@@ -656,7 +657,6 @@ def _completed_sprite(suffix):
         f'\t\tname = "GFX_focus_completed_joint_{suffix}"\n'
         f'\t\ttexturefile = "{_titlebar_tex("completed", suffix)}"\n'
         '\t\teffectFile = "gfx/FX/buttonstate_onlydisable.lua"\n'
-        '#\t\teffectFile = "gfx/FX/buttonstate.lua"\n'
         "\t\tanimation = {\n"
         f'\t\t\tanimationmaskfile = "{TITLEBAR_REL}/focus_completed_mask.dds"\n'
         f'\t\t\tanimationtexturefile = "{TITLEBAR_REL}/focus_completed_texture.dds"\n'
@@ -729,13 +729,16 @@ def _match_brace(text, open_idx):
             if depth == 0:
                 return i
         i += 1
-    return len(text) - 1
+    raise ValueError(f"Unmatched opening brace at offset {open_idx}")
 
 
 def _iter_sprite_blocks(text):
     for m in re.finditer(r"[sS]priteType\s*=\s*\{", text):
         open_idx = text.index("{", m.start())
-        end = _match_brace(text, open_idx) + 1
+        try:
+            end = _match_brace(text, open_idx) + 1
+        except ValueError:
+            continue
         block = text[m.start():end]
         nm = re.search(r'name\s*=\s*"([^"]+)"', block)
         tx = re.search(r'texture[fF]ile\s*=\s*"([^"]+)"', block)
@@ -748,9 +751,14 @@ def _remove_block_by_name(text, name):
     if idx == -1:
         return text, False
     kw = max(text.rfind("spriteType", 0, idx), text.rfind("SpriteType", 0, idx))
+    if kw == -1:
+        return text, False
     line_start = text.rfind("\n", 0, kw) + 1
     open_idx = text.index("{", kw)
-    end = _match_brace(text, open_idx) + 1
+    try:
+        end = _match_brace(text, open_idx) + 1
+    except ValueError:
+        return text, False
     if end < len(text) and text[end] == "\n":
         end += 1
     return text[:line_start] + text[end:], True
@@ -771,11 +779,12 @@ def _strip_region(text, begin, end):
     s = text.find(begin)
     if s == -1:
         return text
+    line_start = text.rfind("\n", 0, s) + 1
     e = text.find(end, s)
     if e == -1:
-        return text
+        # END marker absent: strip from BEGIN to EOF to prevent double-BEGIN on next run.
+        return text[:line_start]
     e += len(end)
-    line_start = text.rfind("\n", 0, s) + 1
     if e < len(text) and text[e] == "\n":
         e += 1
     return text[:line_start] + text[e:]
@@ -814,24 +823,21 @@ def generate_focus_titlebars(mod_root):
     gfx_nl = _newline_of(gfx_text)
     gfx_text = gfx_text.replace("\r\n", "\n").replace("\r", "\n")
 
-    name_re = re.compile(
-        r"^GFX_focus_(unavailable|can_start|current|completed)_joint_(.+)$"
-    )
     existing = {}
-    for nm, tx in _iter_sprite_blocks(gfx_text):
+    for nm, tx in _iter_sprite_blocks(_COMMENT_LINE_RE.sub("", gfx_text)):
         if not nm:
             continue
-        mm = name_re.match(nm)
+        mm = _JOINT_NAME_RE.match(nm)
         if mm:
             existing.setdefault(mm.group(2), {})[mm.group(1)] = tx
 
     def is_regular(suffix, states):
         for st in ("unavailable", "can_start", "completed"):
-            if states.get(st) == _titlebar_tex(st, suffix):
-                return True
-        if states.get("current") == _titlebar_tex("can_start", suffix):
-            return True
-        return False
+            if st in states and states[st] != _titlebar_tex(st, suffix):
+                return False
+        if "current" in states and states["current"] != _titlebar_tex("can_start", suffix):
+            return False
+        return bool(states)
 
     regular_existing = {s for s, st in existing.items() if is_regular(s, st)}
     irregular_existing = sorted(set(existing) - regular_existing)
@@ -849,12 +855,12 @@ def generate_focus_titlebars(mod_root):
 
     # 3. Build the managed .gfx block; skip sets without a can_start source.
     blocks = []
-    skipped = []
+    skipped = set()
     incomplete = []
     for suffix in managed:
         present = present_states(suffix)
         if "can_start" not in present:
-            skipped.append(suffix)
+            skipped.add(suffix)
             continue
         if present != {"unavailable", "can_start", "completed"}:
             incomplete.append(suffix)
@@ -863,7 +869,25 @@ def generate_focus_titlebars(mod_root):
     body = "\n\n".join(b.rstrip("\n") for b in blocks)
     managed_gfx = f"{GFX_BEGIN}\n\n{body}\n\n{GFX_END}\n"
 
-    # 4. Remove the old managed region and any stray joint blocks, then reinsert.
+    # 4. Read and parse styles_file before writing anything, so a read failure
+    # does not leave gfx_file already overwritten with no rollback.
+    styles_text = _read_lf(styles_file)
+    styles_nl = _newline_of(styles_text)
+    styles_text = styles_text.replace("\r\n", "\n").replace("\r", "\n")
+    styles_text_stripped = _strip_region(styles_text, STYLE_BEGIN, STYLE_END)
+    styled = set(
+        re.findall(r"available\s*=\s*GFX_focus_can_start_joint_(\S+)", styles_text_stripped)
+    )
+    need_style = [s for s in emitted if s not in styled]
+    if need_style:
+        style_body = "\n\n".join(_style_block(s).rstrip("\n") for s in need_style)
+        managed_styles = f"{STYLE_BEGIN}\n\n{style_body}\n\n{STYLE_END}\n"
+        styles_text_out = styles_text_stripped.rstrip("\n") + "\n\n" + managed_styles
+    else:
+        styles_text_out = styles_text_stripped
+    styles_text_out = _collapse_blanks(styles_text_out)
+
+    # 5. All source data is ready — now write both files.
     gfx_text = _strip_region(gfx_text, GFX_BEGIN, GFX_END)
     removed = 0
     for suffix in emitted:
@@ -882,22 +906,7 @@ def generate_focus_titlebars(mod_root):
     tail = gfx_text[insert_at:]
     gfx_text = f"{head}\n\n{managed_gfx}{tail}"
     _write_with_newline(gfx_file, gfx_text, gfx_nl)
-
-    # 5. Append missing styles (never rename/remove hand-authored ones).
-    styles_text = _read_lf(styles_file)
-    styles_nl = _newline_of(styles_text)
-    styles_text = styles_text.replace("\r\n", "\n").replace("\r", "\n")
-    styles_text = _strip_region(styles_text, STYLE_BEGIN, STYLE_END)
-    styled = set(
-        re.findall(r"available\s*=\s*GFX_focus_can_start_joint_(\S+)", styles_text)
-    )
-    need_style = [s for s in emitted if s not in styled]
-    if need_style:
-        body = "\n".join(_style_block(s).rstrip("\n") for s in need_style)
-        managed_styles = f"{STYLE_BEGIN}\n\n{body}\n\n{STYLE_END}\n"
-        styles_text = styles_text.rstrip("\n") + "\n\n" + managed_styles
-    styles_text = _collapse_blanks(styles_text)
-    _write_with_newline(styles_file, styles_text, styles_nl)
+    _write_with_newline(styles_file, styles_text_out, styles_nl)
 
     # 6. Report.
     print(
@@ -915,7 +924,7 @@ def generate_focus_titlebars(mod_root):
     if skipped:
         print(
             f"{bcolors.FAIL}Skipped (no can_start source): "
-            f"{', '.join(skipped)}{bcolors.RESET}"
+            f"{', '.join(sorted(skipped))}{bcolors.RESET}"
         )
     if irregular_existing:
         print(
