@@ -174,6 +174,19 @@ def _build_reference_tokens(mod_root: Path, verbose: bool) -> Set[str]:
     return tokens
 
 
+def _referenced(key: str, references: Set[str]) -> bool:
+    """True if the key, or its base after stripping a known loc suffix, appears
+    in the mod's code. The engine auto-appends suffixes such as `_desc` to a
+    referenced base (e.g. a `pdx_tooltip = X` or dynamic modifier named X pulls in
+    `X_desc` as the tooltip body), so a referenced base keeps the companion live."""
+    if key in references:
+        return True
+    for suffix in _SUFFIXES:
+        if key.endswith(suffix):
+            return key[: -len(suffix)] in references
+    return False
+
+
 def _find_category(
     key: str, index: Dict[str, Set[str]], references: Optional[Set[str]] = None
 ) -> str:
@@ -204,7 +217,7 @@ def _find_category(
 
     # No category matched. If the key is referenced nowhere in the mod's code,
     # it is a cleanup candidate (dead loc or a dynamically-built key).
-    if references is not None and key not in references:
+    if references is not None and not _referenced(key, references):
         return "Unreferenced"
 
     return "Other"
