@@ -140,6 +140,15 @@ ingame_update_setup = {
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
 
+	# create_dynamic_country (civil-war splits, copy_tag) can inherit an unowned capital, leaving capital_scope invalid; reassign it to an owned state.
+	if = {
+		limit = {
+			any_owned_state = { always = yes }
+			NOT = { capital_scope = { always = yes } }
+		}
+		random_owned_state = { ROOT = { set_capital = { state = PREV } } }
+	}
+
 	#Income
 	calculate_int_investments_rate = yes
 	calculate_resource_sale_rate = yes
@@ -2365,13 +2374,35 @@ update_military_rate = {
 	resize_array = { array = array_defence_spend size = 10 value = 0 }
 
 	#A variable that stores the current military law the player has
-	# Utilize the military_spending variable from the military_spending from the system
-	set_temp_variable = {
-		def_index = {
-			value = military_spending
-			subtract = -1
-			clamp = { min = 0 max = 9 }
-		}
+	if = { limit = { has_idea = defence_00 }
+		set_temp_variable = { def_index = 0 }
+	}
+	else_if = { limit = { has_idea = defence_01 }
+		set_temp_variable = { def_index = 1 }
+	}
+	else_if = { limit = { has_idea = defence_02 }
+		set_temp_variable = { def_index = 2 }
+	}
+	else_if = { limit = { has_idea = defence_03 }
+		set_temp_variable = { def_index = 3 }
+	}
+	else_if = { limit = { has_idea = defence_04 }
+		set_temp_variable = { def_index = 4 }
+	}
+	else_if = { limit = { has_idea = defence_05 }
+		set_temp_variable = { def_index = 5 }
+	}
+	else_if = { limit = { has_idea = defence_06 }
+		set_temp_variable = { def_index = 6 }
+	}
+	else_if = { limit = { has_idea = defence_07 }
+		set_temp_variable = { def_index = 7 }
+	}
+	else_if = { limit = { has_idea = defence_08 }
+		set_temp_variable = { def_index = 8 }
+	}
+	else_if = { limit = { has_idea = defence_09 }
+		set_temp_variable = { def_index = 9 }
 	}
 
 	## Calculate cost for defence industry (military factories and dockyards) ##
@@ -6075,6 +6106,9 @@ calculate_gdp_modifiers = {
 # Purpose: Calculates the tax rate for the AI to change
 # Runs monthly from MD_on_actions (AI path only). Changes are ±1 per week.
 calculate_ai_taxes_desire = {
+	if = { limit = { NOT = { has_variable = population_tax_rate } } set_variable = { var = population_tax_rate value = 20 } }
+	if = { limit = { NOT = { has_variable = corporate_tax_rate } } set_variable = { var = corporate_tax_rate value = 20 } }
+
 	set_temp_variable = { pop_tax_change = 0 }
 	set_temp_variable = { corp_tax_change = 0 }
 
