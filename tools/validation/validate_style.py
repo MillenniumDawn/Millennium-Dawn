@@ -93,6 +93,7 @@ def _check_indent_and_brackets(text: str, path: str):
     count_open_square = 0
     count_close_square = 0
     indent_count = 0
+    at_line_start = True
     ignore_till_eol = False
     in_string = False
     line_num = 1
@@ -103,9 +104,15 @@ def _check_indent_and_brackets(text: str, path: str):
             ignore_till_eol = False
             in_string = False
             indent_count = 0
+            at_line_start = True
             continue
         if c != " ":
             indent_count = 0
+        # Leading whitespace ends at the first non-space, non-tab character;
+        # spaces past that point are inline alignment (e.g. `= 1    }`), not
+        # indentation, and must not be flagged as a 4-space indent.
+        if c != " " and c != "\t":
+            at_line_start = False
         if ignore_till_eol:
             continue
         if c == '"':
@@ -125,7 +132,7 @@ def _check_indent_and_brackets(text: str, path: str):
             count_close_square += 1
         elif c == " ":
             indent_count += 1
-            if indent_count == 4:
+            if indent_count == 4 and at_line_start:
                 errors.append(("4-space indent detected (use tab)", line_num))
 
     if count_open_square != count_close_square:
@@ -155,11 +162,20 @@ def _check_spacing_and_quotes(text: str, path: str):
         if line.startswith("#"):
             continue
 
+        # Empty `{}` blocks (e.g. `topbar_empty = {}`) are idiomatic and have no
+        # interior to space; strip them before the brace-spacing check so they
+        # don't false-positive. Brace depth still counts the originals.
+        spacing_line = re.sub(r"\{\s*\}", "", line)
+
         if "{" in line:
             if not re.search(r"#.*[{}]+", line):
                 brace_depth += line.count("{")
-                unstyled = line.count("{") - line.count(" {\n") - line.count(" { ")
-                if unstyled > 0 and _RE_NO_SP_OPEN.search(line):
+                unstyled = (
+                    spacing_line.count("{")
+                    - spacing_line.count(" {\n")
+                    - spacing_line.count(" { ")
+                )
+                if unstyled > 0 and _RE_NO_SP_OPEN.search(spacing_line):
                     warnings.append(
                         ("Missing space before or after open brace", line_num)
                     )
@@ -167,8 +183,12 @@ def _check_spacing_and_quotes(text: str, path: str):
         if "}" in line:
             if not re.search(r"#.*[{}]+", line):
                 brace_depth -= line.count("}")
-                unstyled = line.count("}") - line.count(" }\n") - line.count(" } ")
-                if unstyled > 0 and _RE_NO_SP_CLOSE.search(line):
+                unstyled = (
+                    spacing_line.count("}")
+                    - spacing_line.count(" }\n")
+                    - spacing_line.count(" } ")
+                )
+                if unstyled > 0 and _RE_NO_SP_CLOSE.search(spacing_line):
                     warnings.append(
                         ("Missing space before or after close brace", line_num)
                     )
@@ -282,6 +302,8 @@ def _check_event_log_standards(text: str, path: str):
     has_other_defs = False
     in_news_event = False
     event_braces = 0
+    # ai_chance / ai_will_do are AI weighting, not effects; -1 means "outside one".
+    ai_block_depth = -1
 
     for line_num, line in enumerate(lines, 1):
         if line.startswith("#") or not line.strip():
@@ -307,14 +329,27 @@ def _check_event_log_standards(text: str, path: str):
             option_name = ""
             has_log = False
             has_other_defs = False
+            ai_block_depth = -1
 
         if option_found:
+            # Detect ai_chance / ai_will_do before the effects check so the block's
+            # own opening line (an `=` line) isn't counted as an effect.
+            if (
+                ai_block_depth < 0
+                and "{" in line
+                and ("ai_chance" in line or "ai_will_do" in line)
+            ):
+                ai_block_depth = braces
             if "name" in line and "=" in line:
                 m = re.search(r"name\s?=\s([a-zA-Z0-9_.]+)", line)
                 if m:
                     option_name = m.group(1)
             elif (
-                "=" in line and braces > 0 and "name" not in line and "log" not in line
+                "=" in line
+                and braces > 0
+                and ai_block_depth < 0
+                and "name" not in line
+                and "log" not in line
             ):
                 has_other_defs = True
             if "{" in line:
@@ -323,8 +358,11 @@ def _check_event_log_standards(text: str, path: str):
                 has_log = True
                 option_found = False
                 braces = 0
+                ai_block_depth = -1
             if "}" in line:
                 braces -= line.count("}")
+            if ai_block_depth >= 0 and braces <= ai_block_depth:
+                ai_block_depth = -1
             if braces == 0 and not has_log and has_other_defs and option_name:
                 warnings.append(
                     (f"Event option {option_name} has effects but no log", option_line)

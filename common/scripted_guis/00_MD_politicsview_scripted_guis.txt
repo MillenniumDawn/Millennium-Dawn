@@ -67,11 +67,11 @@ scripted_gui = {
 		}
 
 		dynamic_lists = {
-            parties_grid = {
-                array = pos_array
-                entry_container = "parties_grid_item_short"
-            }
-        }
+			parties_grid = {
+				array = pos_array
+				entry_container = "parties_grid_item_short"
+			}
+		}
 	}
 
 	countrypoliticsview_expanded = {
@@ -251,11 +251,13 @@ scripted_gui = {
 
 				hidden_trigger = {
 					NOT = {
-						tag = SPR
-						tag = USA
-						tag = WAG
-						original_tag = SIN
-						original_tag = NKO
+						OR = {
+							tag = SPR
+							tag = USA
+							tag = WAG
+							original_tag = SIN
+							original_tag = NKO
+						}
 					}
 				}
 			}
@@ -361,9 +363,11 @@ scripted_gui = {
 					# ban elections
 					hidden_trigger = {
 						NOT = {
-							tag = SPR
-							original_tag = SIN
-							tag = WAG
+							OR = {
+								tag = SPR
+								tag = WAG
+								original_tag = SIN
+							}
 						}
 					}
 
@@ -755,60 +759,61 @@ scripted_gui = {
 			# ideological powers
 			IP_communist_glow_visible = {
 				OR = {
-					emerging_communist_state_are_in_power = yes
-					neutrality_neutral_communism_are_in_power = yes
+					is_in_array = { ruling_party = 4 }
+					is_in_array = { ruling_party = 19 }
 				}
 			}
 
 			IP_socialist_glow_visible = {
 				OR = {
-					western_social_democrats_are_in_power = yes
-					emerging_anarchist_communism_are_in_power = yes
-					neutrality_neutral_green_are_in_power = yes
-					neutrality_neutral_social_are_in_power = yes
+					is_in_array = { ruling_party = 3 }	#socialsim
+					is_in_array = { ruling_party = 5 }	#anarchist_communism
+					is_in_array = { ruling_party = 17 }	#Neutral_green
+					is_in_array = { ruling_party = 18 }	#neutral_Social
 				}
 			}
 
 			IP_conservative_glow_visible = {
 				OR = {
-					# TBA
+					is_in_array = { ruling_party = 1 }	#conservative
+					is_in_array = { ruling_party = 6 }	#Conservative
+					is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+					is_in_array = { ruling_party = 12 }	#muslim brotherhood
+					is_in_array = { ruling_party = 14 }	#neutral conservative
+					is_in_array = { ruling_party = 20 }	#national populist
 				}
 			}
 
 			IP_liberal_glow_visible = {
 				OR = {
-					western_conservatism_are_in_power = yes
-					emerging_reactionaries_are_in_power = yes
-					western_liberals_are_in_power = yes
-					neutrality_neutral_muslim_brotherhood_are_in_power = yes
-					neutrality_neutral_conservatism_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power = yes
+					has_country_leader_with_trait = western_technocrat
+					is_in_array = { ruling_party = 2 }	#liberalism
+					is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
 				}
 			}
 
 			IP_autocrat_glow_visible = {
 				OR = {
 					non_technocrats_western_autocrats_are_in_power = yes
-					emerging_autocracy_are_in_power = yes
-					emerging_moderate_shiite_are_in_power = yes
-					neutrality_neutral_autocracy_are_in_power = yes
-					neutrality_neutral_oligarch_are_in_power = yes
-					nationalist_fascist_are_in_power = yes
-					nationalist_military_junta_are_in_power = yes
+					is_in_array = { ruling_party = 7 }	#Emerging autocrats
+					is_in_array = { ruling_party = 13 }	#Neutral autocrats
+					is_in_array = { ruling_party = 15 }	#oligarchs
+					is_in_array = { ruling_party = 21 }	#fascists
+					is_in_array = { ruling_party = 22 }	#military junta
 				}
 			}
 
 			IP_monarchist_glow_visible = {
 				OR = {
-					salafist_kingdom_are_in_power = yes
-					nationalist_monarchists_are_in_power = yes
+					is_in_array = { ruling_party = 10 }	#Kingdom
+					is_in_array = { ruling_party = 23 }	#Monarchist
 				}
 			}
 
 			IP_fundamentalist_glow_visible = {
 				OR = {
-					emerging_hardline_shiite_are_in_power = yes
-					salafist_caliphate_are_in_power = yes
+					is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+					is_in_array = { ruling_party = 11 }	#Caliphate
 				}
 			}
 			# parties
@@ -890,7 +895,7 @@ scripted_gui = {
 
 				custom_trigger_tooltip = {
 					tooltip = party_greater_than_election_threshold_by_index_tt
-					check_variable = { party_pop_array^party_index > election_threshold }
+					check_variable = { party_pop_array^v > election_threshold }
 				}
 
 				# Party-specific restrictions
@@ -1503,11 +1508,16 @@ scripted_gui = {
 				newline = yes
 
 				set_temp_variable = { party_index = v }
-				set_temp_variable = { boost_multiplier = 1 }
-				add_to_temp_variable = { boost_multiplier = modifier@popularity_boost_modifier }
-				set_temp_variable = { party_popularity_increase = 0.02 }
-				multiply_temp_variable = { party_popularity_increase = boost_multiplier }
-				clamp_temp_variable = { var = party_popularity_increase min = 0 max = 100 }
+				set_temp_variable = {
+					party_popularity_increase = {
+						value = 0.02
+						multiply = {
+							value = 1
+							add = modifier@popularity_boost_modifier
+						}
+						clamp = { min = 0 max = 100 }
+					}
+				}
 				add_relative_party_popularity = yes
 				update_dirty_politicsview_expanded = yes
 			}
@@ -1529,6 +1539,7 @@ scripted_gui = {
 				set_temp_variable = { party_popularity_increase = -0.02 }
 				multiply_temp_variable = { party_popularity_increase = attack_multiplier }
 				clamp_temp_variable = { var = party_popularity_increase min = -0.1 }
+
 				add_relative_party_popularity = yes
 
 				update_dirty_politicsview_expanded = yes
@@ -1566,19 +1577,19 @@ scripted_gui = {
 		}
 
 		dynamic_lists = {
-            parties_grid = {
-                array = parties_list_sorted
-                entry_container = "parties_grid_item"
-            }
+			parties_grid = {
+				array = parties_list_sorted
+				entry_container = "parties_grid_item"
+			}
 			coalition_grid = {
 				array = gov_coalition_array
-                entry_container = "coalition_grid_item"
+				entry_container = "coalition_grid_item"
 			}
 			opposition_grid = {
 				array = opposition_array
-                entry_container = "coalition_grid_item"
+				entry_container = "coalition_grid_item"
 			}
-        }
+		}
 
 		properties = {
 			corruption_offers_checkbox = {
@@ -1622,35 +1633,35 @@ scripted_gui = {
 			}
 
 			# pie chart
-			Western_Autocracy_chart      = { frame = politics_pie_chart^0 }
-			conservatism_chart           = { frame = politics_pie_chart^1 }
-			liberalism_chart             = { frame = politics_pie_chart^2 }
-			socialism_chart              = { frame = politics_pie_chart^3 }
+			Western_Autocracy_chart	  = { frame = politics_pie_chart^0 }
+			conservatism_chart		   = { frame = politics_pie_chart^1 }
+			liberalism_chart			 = { frame = politics_pie_chart^2 }
+			socialism_chart			  = { frame = politics_pie_chart^3 }
 
-			Communist_State_chart        = { frame = politics_pie_chart^4 }
-			anarchist_communism_chart    = { frame = politics_pie_chart^5 }
-			Conservative_chart           = { frame = politics_pie_chart^6 }
-			Autocracy_chart              = { frame = politics_pie_chart^7 }
+			Communist_State_chart		= { frame = politics_pie_chart^4 }
+			anarchist_communism_chart	= { frame = politics_pie_chart^5 }
+			Conservative_chart		   = { frame = politics_pie_chart^6 }
+			Autocracy_chart			  = { frame = politics_pie_chart^7 }
 
-			Mod_Vilayat_e_Faqih_chart    = { frame = politics_pie_chart^8 }
-			Vilayat_e_Faqih_chart        = { frame = politics_pie_chart^9 }
+			Mod_Vilayat_e_Faqih_chart	= { frame = politics_pie_chart^8 }
+			Vilayat_e_Faqih_chart		= { frame = politics_pie_chart^9 }
 
-			Kingdom_chart                = { frame = politics_pie_chart^10 }
-			Caliphate_chart              = { frame = politics_pie_chart^11 }
+			Kingdom_chart				= { frame = politics_pie_chart^10 }
+			Caliphate_chart			  = { frame = politics_pie_chart^11 }
 
 			Neutral_Muslim_Brotherhood_chart = { frame = politics_pie_chart^12 }
-			Neutral_Autocracy_chart          = { frame = politics_pie_chart^13 }
-			Neutral_conservatism_chart      = { frame = politics_pie_chart^14 }
-			oligarchism_chart               = { frame = politics_pie_chart^15 }
-			Neutral_Libertarian_chart       = { frame = politics_pie_chart^16 }
-			Neutral_green_chart             = { frame = politics_pie_chart^17 }
-			neutral_Social_chart            = { frame = politics_pie_chart^18 }
-			Neutral_Communism_chart        = { frame = politics_pie_chart^19 }
+			Neutral_Autocracy_chart		  = { frame = politics_pie_chart^13 }
+			Neutral_conservatism_chart	  = { frame = politics_pie_chart^14 }
+			oligarchism_chart			   = { frame = politics_pie_chart^15 }
+			Neutral_Libertarian_chart	   = { frame = politics_pie_chart^16 }
+			Neutral_green_chart			 = { frame = politics_pie_chart^17 }
+			neutral_Social_chart			= { frame = politics_pie_chart^18 }
+			Neutral_Communism_chart		= { frame = politics_pie_chart^19 }
 
-			Nat_Populism_chart           = { frame = politics_pie_chart^20 }
-			Nat_Fascism_chart            = { frame = politics_pie_chart^21 }
-			Nat_Autocracy_chart          = { frame = politics_pie_chart^22 }
-			Monarchist_chart             = { frame = politics_pie_chart^23 }
+			Nat_Populism_chart		   = { frame = politics_pie_chart^20 }
+			Nat_Fascism_chart			= { frame = politics_pie_chart^21 }
+			Nat_Autocracy_chart		  = { frame = politics_pie_chart^22 }
+			Monarchist_chart			 = { frame = politics_pie_chart^23 }
 		}
 	}
 
@@ -1660,20 +1671,20 @@ scripted_gui = {
 	#	window_name = "MD_countrypoliticsview_election_window"
 	#
 	#	dynamic_lists = {
-    #        election_result_grid = {
-    #            array = parties_list_sorted
-    #            entry_container = "election_result_grid_item"
-    #        }
+	#		election_result_grid = {
+	#			array = parties_list_sorted
+	#			entry_container = "election_result_grid_item"
+	#		}
 	#
 	#		potential_partners_grid = {
-    #            array = parties_list_sorted
-    #            entry_container = "potential_partners_grid_item"
+	#			array = parties_list_sorted
+	#			entry_container = "potential_partners_grid_item"
 	#		}
 	#
 	#		coalition_partners_grid = {
-    #            array = parties_list_sorted
-    #            entry_container = "coalition_partners_grid_item"
+	#			array = parties_list_sorted
+	#			entry_container = "coalition_partners_grid_item"
 	#		}
-    #    }
+	#	}
 	#}
 }

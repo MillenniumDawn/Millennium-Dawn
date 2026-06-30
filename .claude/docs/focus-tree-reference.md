@@ -49,6 +49,25 @@ focus_tree = {
 11. ai_will_do                  (ALWAYS LAST)
 ```
 
+## Shared and Joint Focuses
+
+A **shared focus** lives in one tree file and appears in several countries' trees, each pulling it in via `shared_focus = X` inside their `focus_tree`. A **joint focus** (`joint_focus = { ... }`) is a shared focus that additionally **shares completion**: when one joint country completes it, it is marked complete for every country in its joint set.
+
+`joint_trigger` defines the **joint set** — it is evaluated per country and determines who shares completion and receives the rewards. It is **not** a selection gate; who can actually pick the focus is still governed by `available` / `visible` / `prerequisite` / `allow_branch`, exactly as in a normal focus.
+
+| Reward block                         | Fires on                                          |
+| ------------------------------------ | ------------------------------------------------- |
+| `completion_reward`                  | every joint country                               |
+| `completion_reward_joint_originator` | only the country that directly completed it       |
+| `completion_reward_joint_member`     | every joint country **other than** the completer  |
+
+### Conventions
+
+- **All-members focus** — omit `joint_trigger` and gate `available` with the membership trigger (e.g. `benelux_cooperation_trigger`). When omitted, the default joint set is every country that has the tree, so `joint_trigger = { is_benelux_country = yes }` is redundant. `06_Commonwealth_Shared.txt` ships 38 joint focuses this way: no `joint_trigger`, `available = { is_commonwealth_member = yes }`, rewards shared across all members.
+- **Country-specific focus** — gate `available` to that country **and** restrict the joint set with `joint_trigger = { original_tag = TAG }` (or an `OR` of tags). Do **not** rely on `available` alone here: the default joint set is structural (all tree-holders), so without a `joint_trigger` the other members can still receive shared completion and rewards when that country completes the focus. Keep the `joint_trigger` until this is verified in-game.
+
+Joint focuses pick a `text_icon` titlebar style matching the joint set (`JOINT_BEL_LUX_HOL_focus_style`, `JOINT_HOL_focus_style`, etc.), defined in `common/national_focus/00_titlebar_styles.txt`.
+
 ## Example: Basic Focus
 
 ```

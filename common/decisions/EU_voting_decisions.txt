@@ -62,14 +62,35 @@ EU_voting_category = {
 
 		complete_effect = {
 			if = {
-				limit = { var:global.eucomission = { tag = ROOT } }
-				log = "[GetDateText]: [ROOT.GetName]: mission complete_effect EU_parliament_focus_EUXXX_approve "
+				limit = { var:global.eu_commission = { tag = ROOT } }
+				log = "[GetDateText]: [ROOT.GetName]: mission complete_effect EU_parliament_focus_EUXXX_approve"
+				EU_finalize_passed_agenda = yes
+			}
+			else_if = {
+				limit = {
+					EU_is_commission_caretaker = yes
+					NOT = { has_global_flag = EU_vacant_agenda_finalized }
+				}
+				set_global_flag = { flag = EU_vacant_agenda_finalized value = 1 days = 2 }
+				log = "[GetDateText]: [ROOT.GetName]: mission complete_effect EU_parliament_focus_EUXXX_approve (caretaker)"
 				EU_finalize_passed_agenda = yes
 			}
 		}
 		timeout_effect = {
 			if = {
-				limit = { var:global.eucomission = { tag = ROOT } }
+				limit = {
+					OR = {
+						var:global.eu_commission = { tag = ROOT }
+						AND = {
+							EU_is_commission_caretaker = yes
+							NOT = { has_global_flag = EU_vacant_agenda_finalized }
+						}
+					}
+				}
+				if = {
+					limit = { check_variable = { global.eu_commission = EUU.id } }
+					set_global_flag = { flag = EU_vacant_agenda_finalized value = 1 days = 2 }
+				}
 				if = {
 					limit = {
 						OR = {
@@ -117,9 +138,9 @@ EU_voting_category = {
 					}
 					set_variable = { global.current_active_agenda_disp = 0 }
 				}
-				# Only the commission president drives cross-member cleanup; a non-president
-				# member timing out first would otherwise remove everyone's mission before
-				# the president's own timeout_effect runs.
+				# Only the single finalizer (commission president, or the caretaker during a
+				# vacancy) drives cross-member cleanup; the gate above ensures exactly one member
+				# reaches here, so it does not remove everyone's mission before the driver runs.
 				for_each_scope_loop = {
 					array = global.EU_member
 					if = {
@@ -151,43 +172,7 @@ EU_voting_category = {
 				}
 			}
 			NOT = { has_idea = EUU_voting_rights_suspended }
-			OR = {
-				AND = {
-					custom_trigger_tooltip = {
-						tooltip = can_determine_a_breach_of_values_ROOT
-						all_of_scopes = {
-							array = global.EU_member
-							if = {
-								limit = {
-									NOT = { tag = ROOT }
-									NOT = { tag = FROM }
-									NOT = {
-										has_idea = EUU_voting_rights_suspended
-									}
-								}
-								is_top3_influencer = yes
-							}
-						}
-					}
-					custom_trigger_tooltip = {
-						tooltip = can_determine_a_breach_of_values_FROM
-						all_of_scopes = {
-							array = global.EU_member
-							if = {
-								limit = {
-									NOT = { tag = ROOT }
-									NOT = { tag = FROM }
-									NOT = {
-										has_idea = EUU_voting_rights_suspended
-									}
-								}
-								NOT = { FROM_is_top3_influencer = yes }
-							}
-						}
-					}
-				}
-				has_idea = EU_commission_president
-			}
+			EU_council_has_breach_authority = yes
 		}
 		visible = {
 			NOT = { has_idea = EUU_voting_rights_suspended }
@@ -199,7 +184,7 @@ EU_voting_category = {
 		complete_effect = {
 			FROM = {
 				set_country_flag = serious_breach_of_EU_values
-				set_temp_variable = { modify_europeanism = 0.15 }
+				set_temp_variable = { modify_europeanism = -0.15 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
 			}
@@ -235,7 +220,7 @@ EU_voting_category = {
 		complete_effect = {
 			FROM = {
 				clr_country_flag = serious_breach_of_EU_values
-				set_temp_variable = { modify_europeanism = -0.15 }
+				set_temp_variable = { modify_europeanism = 0.15 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
 			}
@@ -265,43 +250,7 @@ EU_voting_category = {
 				}
 			}
 			NOT = { has_idea = EUU_voting_rights_suspended }
-			OR = {
-				AND = {
-					custom_trigger_tooltip = {
-						tooltip = can_determine_a_breach_of_values_ROOT
-						all_of_scopes = {
-							array = global.EU_member
-							if = {
-								limit = {
-									NOT = { tag = ROOT }
-									NOT = { tag = FROM }
-									NOT = {
-										has_idea = EUU_voting_rights_suspended
-									}
-								}
-								is_top3_influencer = yes
-							}
-						}
-					}
-					custom_trigger_tooltip = {
-						tooltip = can_determine_a_breach_of_values_FROM
-						all_of_scopes = {
-							array = global.EU_member
-							if = {
-								limit = {
-									NOT = { tag = ROOT }
-									NOT = { tag = FROM }
-									NOT = {
-										has_idea = EUU_voting_rights_suspended
-									}
-								}
-								NOT = { FROM_is_top3_influencer = yes }
-							}
-						}
-					}
-				}
-				has_idea = EU_commission_president
-			}
+			EU_council_has_breach_authority = yes
 		}
 		visible = {
 			NOT = { has_idea = EUU_voting_rights_suspended }
@@ -313,7 +262,7 @@ EU_voting_category = {
 		complete_effect = {
 			FROM = {
 				add_ideas = EUU_voting_rights_suspended
-				set_temp_variable = { modify_europeanism = 0.30 }
+				set_temp_variable = { modify_europeanism = -0.30 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
 			}
@@ -365,7 +314,7 @@ EU_voting_category = {
 		complete_effect = {
 			FROM = {
 				remove_ideas = EUU_voting_rights_suspended
-				set_temp_variable = { modify_europeanism = -0.30 }
+				set_temp_variable = { modify_europeanism = 0.30 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
 			}
@@ -403,43 +352,7 @@ EU_voting_category = {
 			NOT = {
 				has_idea = EUU_voting_rights_suspended
 			}
-			OR = {
-				AND = {
-					custom_trigger_tooltip = {
-						tooltip = can_determine_a_breach_of_values_ROOT
-						all_of_scopes = {
-							array = global.EU_member
-							if = {
-								limit = {
-									NOT = { tag = ROOT }
-									NOT = { tag = FROM }
-									NOT = {
-										has_idea = EUU_voting_rights_suspended
-									}
-								}
-								is_top3_influencer = yes
-							}
-						}
-					}
-					custom_trigger_tooltip = {
-						tooltip = can_determine_a_breach_of_values_FROM
-						all_of_scopes = {
-							array = global.EU_member
-							if = {
-								limit = {
-									NOT = { tag = ROOT }
-									NOT = { tag = FROM }
-									NOT = {
-										has_idea = EUU_voting_rights_suspended
-									}
-								}
-								NOT = { FROM_is_top3_influencer = yes }
-							}
-						}
-					}
-				}
-				has_idea = EU_commission_president
-			}
+			EU_council_has_breach_authority = yes
 		}
 		visible = {
 			NOT = { has_idea = EUU_voting_rights_suspended }
@@ -451,7 +364,7 @@ EU_voting_category = {
 		complete_effect = {
 			FROM = {
 				add_ideas = EUU_subsidies_suspended
-				set_temp_variable = { modify_europeanism = 0.20 }
+				set_temp_variable = { modify_europeanism = -0.20 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
 			}
@@ -488,7 +401,7 @@ EU_voting_category = {
 		complete_effect = {
 			FROM = {
 				remove_ideas = EUU_subsidies_suspended
-				set_temp_variable = { modify_europeanism = -0.20 }
+				set_temp_variable = { modify_europeanism = 0.20 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
 			}
@@ -518,6 +431,14 @@ EU_voting_category = {
 		timeout_effect = {
 			if = {
 				limit = { has_idea = EU_commission_president }
+				apply_EU_QMV_result = yes
+			}
+			else_if = {
+				limit = {
+					EU_is_commission_caretaker = yes
+					NOT = { has_global_flag = EU_vacant_QMV_finalized }
+				}
+				set_global_flag = { flag = EU_vacant_QMV_finalized value = 1 days = 2 }
 				apply_EU_QMV_result = yes
 			}
 		}
@@ -614,7 +535,14 @@ EU_voting_category = {
 					}
 				}
 				else = {
+					# No member holds the ECB presidency: the draft cannot reach an EP vote.
+					# Restore the saved baseline so a half-edited proposal does not persist as live.
 					clr_global_flag = EU_budget_EP_block
+					if = {
+						limit = { NOT = { has_global_flag = EU_vacant_budget_rolled_back } }
+						set_global_flag = { flag = EU_vacant_budget_rolled_back value = 1 days = 2 }
+						EU_rollback_budget_values = yes
+					}
 				}
 			}
 			clr_global_flag = EU_ongoing_budget_draft
@@ -713,7 +641,14 @@ EU_voting_category = {
 					}
 				}
 				else = {
+					# No member holds the ECB presidency: the draft cannot reach an EP vote.
+					# Restore the saved baseline so a half-edited proposal does not persist as live.
 					clr_global_flag = EU_mff_EP_block
+					if = {
+						limit = { NOT = { has_global_flag = EU_vacant_mff_rolled_back } }
+						set_global_flag = { flag = EU_vacant_mff_rolled_back value = 1 days = 2 }
+						EU_rollback_mff_values = yes
+					}
 				}
 			}
 			clr_global_flag = EU_ongoing_mff_draft
@@ -985,7 +920,7 @@ EU_exit_category = {
 				OR = {
 					AND = {
 						has_elections = no
-						check_expr = { value = THIS.europeanism less_than = { value = 0.50 } }
+						check_expr = { value = THIS.europeanism greater_than = { value = 0.50 } }
 					}
 					EU_external_sov_chi_influence_50 = yes
 				}
@@ -1425,12 +1360,7 @@ EU_defense_category = {
 				array = global.EU_member
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				if = {
-					limit = {
-						any_of_scopes = {
-							array = global.EU_member
-							NOT = { has_template = "European Border Guard Team" }
-						}
-					}
+					limit = { has_template = "European Border Guard Team" }
 					add_manpower = -500
 					subtract_from_variable = { treasury = 0.05 }
 				}
@@ -1497,12 +1427,7 @@ EU_defense_category = {
 				array = global.EU_member
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				if = {
-					limit = {
-						any_of_scopes = {
-							array = global.EU_member
-							NOT = { has_template = "EuroArmy Brigade" }
-						}
-					}
+					limit = { has_template = "EuroArmy Brigade" }
 					add_manpower = -1000
 					subtract_from_variable = { treasury = 0.1 }
 				}
@@ -1631,13 +1556,13 @@ EU_defense_category = {
 		complete_effect = {
 			add_command_power = -40
 			FROM = {
-				set_country_flag = EU_military_exercise_at_border_from@ROOT
+				set_country_flag = { flag = EU_military_exercise_at_border_from@ROOT value = 1 days = 450 }
 			}
 			set_variable = {
 				var = ROOT.var_EU_military_exercise_target
 				value = FROM
 			}
-			set_country_flag = EU_military_exercise_prep
+			set_country_flag = { flag = EU_military_exercise_prep value = 1 days = 450 }
 		}
 		ai_will_do = { base = 0 }
 
@@ -1728,7 +1653,7 @@ EU_defense_category = {
 			EU_military_exercise_cleanup = yes
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect EU_military_exercise_mission"
 			### mission reward
 			if = {
 				limit = {
@@ -1803,6 +1728,7 @@ EU_defense_category = {
 						}
 					}
 					news_event = EU_news.50
+					set_variable = { var = var_counter_military_exercise_originator value = ROOT }
 					activate_mission = counter_military_exercise_mission
 				}
 			}
@@ -1850,12 +1776,12 @@ generic_coalition_politics_decisions = { ### temp category
 			add_command_power = -40
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect counter_military_exercise_mission"
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect counter_military_exercise_mission"
 			if = {
 				limit = {
 					divisions_in_state = {
 						size > 10
-						state = ROOT.var_EU_military_exercise_host_state
+						state = ROOT.var_counter_military_exercise_state
 					}
 				}
 				add_named_threat = {
@@ -1869,7 +1795,7 @@ generic_coalition_politics_decisions = { ### temp category
 				limit = {
 					divisions_in_state = {
 						size > 5
-						state = ROOT.var_EU_military_exercise_host_state
+						state = ROOT.var_counter_military_exercise_state
 					}
 				}
 				add_named_threat = {
@@ -1888,26 +1814,13 @@ generic_coalition_politics_decisions = { ### temp category
 				add_command_power = 10
 			}
 
-			### diplo
+			### diplo: the countered nation sours the originator of the border exercise on it
 			if = {
-				limit = {
-					has_country_flag = EU_military_exercise_prep
-				}
-				ROOT = {
-					reverse_add_opinion_modifier = {
-						target = PREV
+				limit = { check_expr = { value = ROOT.var_counter_military_exercise_originator greater_than = { value = 0 } } }
+				var:ROOT.var_counter_military_exercise_originator = {
+					add_opinion_modifier = {
+						target = ROOT
 						modifier = countered_military_exercise
-					}
-				}
-				if = {
-					limit = { check_expr = { value = ROOT.var_EU_military_exercise_host_tag greater_than = { value = 0 } } }
-					var:ROOT.var_EU_military_exercise_host_tag = {
-						ROOT = {
-							reverse_add_opinion_modifier = {
-								target = PREV
-								modifier = military_exercise_on_border
-							}
-						}
 					}
 				}
 				news_event = EU_news.51
@@ -1915,6 +1828,7 @@ generic_coalition_politics_decisions = { ### temp category
 		}
 		remove_effect = {
 			clear_variable = ROOT.var_counter_military_exercise_state
+			clear_variable = ROOT.var_counter_military_exercise_originator
 		}
 	}
 
@@ -1953,7 +1867,7 @@ EU_apply_for_membership_category = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = less_than_15_eurosceptic
-				check_expr = { value = THIS.europeanism less_than = { value = 0.15 } }
+				check_expr = { value = THIS.europeanism greater_than = { value = 0.85 } }
 			}
 		}
 
