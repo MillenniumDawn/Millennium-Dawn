@@ -140,6 +140,15 @@ ingame_update_setup = {
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
 
+	# create_dynamic_country (civil-war splits, copy_tag) can inherit an unowned capital, leaving capital_scope invalid; reassign it to an owned state.
+	if = {
+		limit = {
+			any_owned_state = { always = yes }
+			NOT = { capital_scope = { always = yes } }
+		}
+		random_owned_state = { ROOT = { set_capital = { state = PREV } } }
+	}
+
 	#Income
 	calculate_int_investments_rate = yes
 	calculate_resource_sale_rate = yes
@@ -6097,6 +6106,9 @@ calculate_gdp_modifiers = {
 # Purpose: Calculates the tax rate for the AI to change
 # Runs monthly from MD_on_actions (AI path only). Changes are ±1 per week.
 calculate_ai_taxes_desire = {
+	if = { limit = { NOT = { has_variable = population_tax_rate } } set_variable = { var = population_tax_rate value = 20 } }
+	if = { limit = { NOT = { has_variable = corporate_tax_rate } } set_variable = { var = corporate_tax_rate value = 20 } }
+
 	set_temp_variable = { pop_tax_change = 0 }
 	set_temp_variable = { corp_tax_change = 0 }
 
