@@ -69,11 +69,17 @@ Steps:
 
    Read the files involved. Understand the data flow before touching anything.
 
-4. **Diagnose or plan**
+4. **Diagnose or plan** (planning model)
 
-   For a bug, trace the logic to find exactly where the wrong value is produced or the wrong branch is taken; confirm the cause in code before writing a fix, do not guess. For a task, plan the change against existing patterns: find a sibling implementation to mirror (a comparable focus, event, decision, idea, or MIO) and reuse its structure and conventions.
+   Do this yourself, on the strongest available model. For a bug, trace the logic to find exactly where the wrong value is produced or the wrong branch is taken; confirm the cause in code before writing a fix, do not guess. For a task, plan the change against existing patterns: find a sibling implementation to mirror (a comparable focus, event, decision, idea, or MIO) and reuse its structure and conventions.
 
-5. **Implement the change**
+   Produce a concrete **edit list**: the exact files, the exact lines or blocks to change, and the precise new text for each. Resolve every ambiguity here (values, variable names, loc keys, ordering) so the implementation step has no decisions left to make. Also note any related-but-out-of-scope issues you spot, and what to leave untouched.
+
+5. **Implement the change** (implementation model)
+
+   Once the edit list is fully resolved, hand the mechanical implementation to a **Sonnet subagent** (the `Agent` tool with `model: sonnet`; use `head-mod-developer` or another fitting agent type). Planning stays on the strong model; only the typing-out is delegated. Give the subagent the full edit list verbatim, the convention reminders below, an explicit instruction to stay strictly within the listed files, and concrete verification commands (greps that must return a specific count, etc.) to run and report back.
+
+   If the edit is trivial enough that delegation adds no value (a single one-line change), just make it directly.
 
    Make the smallest change that resolves the issue, whether a bug fix or new/edited content. For content, follow the matching system conventions in `AGENTS.md` and the relevant `.claude/docs/` reference (focus trees, events, decisions, ideas, MIOs, localisation), and add every required loc key. Follow the project conventions (`AGENTS.md`):
    - Tabs for indentation
@@ -81,7 +87,7 @@ Steps:
    - No empty blocks, no commented-out code
    - Only add a comment if the change is non-obvious
 
-   Do not refactor surrounding code or fix unrelated issues in the same commit.
+   Do not refactor surrounding code or fix unrelated issues in the same commit. After the subagent returns, verify its diff scope yourself (`git diff --stat`) before committing, since subagents can edit outside their brief.
 
 6. **Commit**
 
