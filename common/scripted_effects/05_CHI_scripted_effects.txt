@@ -653,6 +653,76 @@ CHI_BRI_monthly_tick = {
 	}
 }
 
+# Maps CHI_demographic_aging to a dividend tier (0/1/2)
+CHI_apply_demographic_tier = {
+	if = {
+		limit = { check_variable = { CHI_demographic_aging < 25 } }
+		set_temp_variable = { CHI_demographic_target_tier = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { CHI_demographic_aging < 50 } }
+		set_temp_variable = { CHI_demographic_target_tier = 1 }
+	}
+	else = {
+		set_temp_variable = { CHI_demographic_target_tier = 2 }
+	}
+
+	if = {
+		limit = { NOT = { check_variable = { CHI_demographic_tier_applied = CHI_demographic_target_tier } } }
+
+		# Subtract the previously-applied tier's contribution.
+		if = {
+			limit = { check_variable = { CHI_demographic_tier_applied = 0 } }
+			add_to_variable = { CHI_economy_consumer_goods_factor = 0.07 }
+			subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.03 }
+			subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.05 }
+			add_to_variable = { CHI_economy_monthly_population = 0.30 }
+		}
+		else_if = {
+			limit = { check_variable = { CHI_demographic_tier_applied = 1 } }
+			add_to_variable = { CHI_economy_consumer_goods_factor = 0.04 }
+			subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.02 }
+			subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.03 }
+			add_to_variable = { CHI_economy_monthly_population = 0.30 }
+		}
+		else_if = {
+			limit = { check_variable = { CHI_demographic_tier_applied = 2 } }
+			add_to_variable = { CHI_economy_consumer_goods_factor = 0.02 }
+			subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.01 }
+			subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.01 }
+			add_to_variable = { CHI_economy_monthly_population = 0.25 }
+		}
+
+		# Add the new tier's contribution. Sentinel 9 (crash) adds nothing.
+		if = {
+			limit = { check_variable = { CHI_demographic_target_tier = 0 } }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
+			subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.07 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { CHI_economy_productivity_growth_modifier = 0.03 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { CHI_economy_total_workforce_modifier = 0.05 tooltip = total_workforce_modifier_tt }
+			subtract_from_variable = { CHI_economy_monthly_population = 0.30 tooltip = monthly_population_tt }
+		}
+		else_if = {
+			limit = { check_variable = { CHI_demographic_target_tier = 1 } }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
+			subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.04 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { CHI_economy_productivity_growth_modifier = 0.02 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { CHI_economy_total_workforce_modifier = 0.03 tooltip = total_workforce_modifier_tt }
+			subtract_from_variable = { CHI_economy_monthly_population = 0.30 tooltip = monthly_population_tt }
+		}
+		else_if = {
+			limit = { check_variable = { CHI_demographic_target_tier = 2 } }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
+			subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { CHI_economy_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { CHI_economy_total_workforce_modifier = 0.01 tooltip = total_workforce_modifier_tt }
+			subtract_from_variable = { CHI_economy_monthly_population = 0.25 tooltip = monthly_population_tt }
+		}
+
+		set_variable = { CHI_demographic_tier_applied = CHI_demographic_target_tier }
+	}
+}
+
 ### Russian arms dependency: re-evaluate tier from CHI_military_self_sufficiency. Idempotent, downgrade-only. ###
 CHI_evaluate_arms_dependency = {
 	clamp_variable = { var = CHI_military_self_sufficiency min = 0 max = 100 }

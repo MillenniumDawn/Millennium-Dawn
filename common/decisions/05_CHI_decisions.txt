@@ -3287,6 +3287,271 @@ CHI_national_commitee_decisions_category = {
 			base = 1
 		}
 	}
+
+	CHI_grey_society_crisis = {
+		icon = GFX_idea_one_child_policy
+
+		fire_only_once = yes
+		is_good = no
+		selectable_mission = no
+
+		days_mission_timeout = 3650
+
+		available = { hidden_trigger = { always = no } }
+
+		modifier = {
+			total_workforce_modifier = -0.15
+			productivity_growth_modifier = -0.03
+			social_cost_multiplier_modifier = 0.20
+			health_cost_multiplier_modifier = 0.20
+			research_speed_factor = -0.10
+			monthly_population = -0.50
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission CHI_grey_society_crisis timed out"
+			country_event = { id = CHI_political_events.52 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	CHI_adopt_two_child_policy = {
+		icon = GFX_idea_one_child_policy
+
+		fire_only_once = yes
+		cost = 100
+		days_remove = 365
+
+		available = {
+			check_variable = { CHI_demographic_policy_stage = 1 }
+		}
+
+		modifier = {
+			education_cost_multiplier_modifier = 0.05
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_adopt_two_child_policy"
+			set_variable = { CHI_demographic_policy_stage = 2 }
+			CHI_apply_demographic_tier = yes
+			unlock_decision_tooltip = CHI_adopt_three_child_policy
+			newline = yes
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_adopt_three_child_policy = {
+		icon = GFX_idea_one_child_policy
+
+		fire_only_once = yes
+		cost = 100
+		days_remove = 730
+
+		available = {
+			check_variable = { CHI_demographic_policy_stage = 2 }
+		}
+
+		modifier = {
+			social_cost_multiplier_modifier = 0.08
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_adopt_three_child_policy"
+			set_variable = { CHI_demographic_policy_stage = 3 }
+			CHI_apply_demographic_tier = yes
+			unlock_decision_tooltip = CHI_abolish_birth_limits
+			newline = yes
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_abolish_birth_limits = {
+		icon = GFX_idea_one_child_policy
+
+		fire_only_once = yes
+		cost = 150
+		days_remove = 730
+
+		available = {
+			check_variable = { CHI_demographic_policy_stage = 3 }
+			date > 2023.1.1
+		}
+
+		modifier = {
+			health_cost_multiplier_modifier = 0.08
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_abolish_birth_limits"
+			set_variable = { CHI_demographic_policy_stage = 4 }
+			CHI_apply_demographic_tier = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_pro_natalist_subsidies = {
+		icon = GFX_idea_one_child_policy
+
+		fire_only_once = yes
+		cost = 150
+		days_remove = 730
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = CHI_pro_natalist_requires_relaxation_tt
+				check_variable = { CHI_demographic_policy_stage > 1 }
+			}
+		}
+
+		visible = {
+			has_active_mission = CHI_grey_society_crisis
+		}
+
+		modifier = {
+			social_cost_multiplier_modifier = 0.12
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_pro_natalist_subsidies"
+			add_days_mission_timeout = {
+				mission = CHI_grey_society_crisis
+				days = -730
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_raise_retirement_age = {
+		icon = GFX_idea_one_child_policy
+
+		fire_only_once = yes
+		cost = 150
+		days_remove = 550
+
+		available = {
+			has_stability > 0.5
+		}
+
+		visible = {
+			has_active_mission = CHI_grey_society_crisis
+		}
+
+		modifier = {
+			communism_drift = 0.05
+			country_productivity_growth_modifier = -0.02
+			health_cost_multiplier_modifier = 0.08
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_raise_retirement_age"
+			add_days_mission_timeout = {
+				mission = CHI_grey_society_crisis
+				days = -550
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_skilled_immigration_drive = {
+		icon = GFX_idea_one_child_policy
+
+		fire_only_once = yes
+		cost = 150
+		days_remove = 365
+
+		available = {
+			NOT = { has_idea = heavily_regulated_immigration }
+			NOT = { has_idea = closed_borders }
+		}
+
+		visible = {
+			has_active_mission = CHI_grey_society_crisis
+		}
+
+		modifier = {
+			bureaucracy_cost_multiplier_modifier = 0.08
+			nationalist_drift = 0.05
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_skilled_immigration_drive"
+			add_days_mission_timeout = {
+				mission = CHI_grey_society_crisis
+				days = -365
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_automation_robotics_push = {
+		icon = GFX_idea_one_child_policy
+
+		fire_only_once = yes
+		cost = 150
+		days_remove = 365
+
+		available = {
+			has_tech = robotics_3
+		}
+
+		visible = {
+			has_active_mission = CHI_grey_society_crisis
+		}
+
+		modifier = {
+			internal_investments_money_cost_modifier = 0.10
+			energy_use_modifier_civs = 0.05
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_automation_robotics_push"
+			add_days_mission_timeout = {
+				mission = CHI_grey_society_crisis
+				days = -365
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
 }
 
 CHI_SAR_decisions_category = {
