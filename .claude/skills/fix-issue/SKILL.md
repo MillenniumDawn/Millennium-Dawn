@@ -65,11 +65,17 @@ Steps:
 
    Read the files involved. Understand the data flow before touching anything.
 
-4. **Diagnose the root cause**
+4. **Diagnose or plan** (planning model)
 
-   Trace the logic to find exactly where the wrong value is produced or the wrong branch is taken. Do not guess; confirm the cause in code before writing a fix.
+   Do this yourself, on the strongest available model. Trace the logic to find exactly where the wrong value is produced or the wrong branch is taken. Do not guess; confirm the cause in code before writing a fix.
 
-5. **Fix the bug**
+   Produce a concrete **edit list**: the exact files, the exact lines or blocks to change, and the precise new text for each. Resolve every ambiguity here (values, variable names, loc keys, ordering) so the implementation step has no decisions left to make. Also note any related-but-out-of-scope issues you spot, and what to leave untouched.
+
+5. **Implement the change** (implementation model)
+
+   Once the edit list is fully resolved, hand the mechanical implementation to a **Sonnet subagent** (the `Agent` tool with `model: sonnet`; use `head-mod-developer` or another fitting agent type). Planning stays on the strong model; only the typing-out is delegated. Give the subagent the full edit list verbatim, the convention reminders below, an explicit instruction to stay strictly within the listed files, and concrete verification commands (greps that must return a specific count, etc.) to run and report back.
+
+   If the edit is trivial enough that delegation adds no value (a single one-line change), just make it directly.
 
    Make the minimal change. Follow CLAUDE.md:
    - Tabs for indentation
@@ -77,7 +83,7 @@ Steps:
    - No empty blocks, no commented-out code
    - Only add a comment if the fix is non-obvious
 
-   Do not refactor surrounding code or fix unrelated issues in the same commit.
+   Do not refactor surrounding code or fix unrelated issues in the same commit. After the subagent returns, verify its diff scope yourself (`git diff --stat`) before committing, since subagents can edit outside their brief.
 
 6. **Commit**
 
