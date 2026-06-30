@@ -1,0 +1,50 @@
+# Check recruit_militia availability for a given tag
+# set hezbollah_selected_country_for_operation first,
+# then call this. It checks all conditions from the
+# recruit_militia_icon_click_enabled trigger.
+
+HEZ_ai_can_recruit_militia = {  # used in random_list limits
+	NOT = { has_country_flag = shared_mission_in_progress }
+	var:hezbollah_selected_country_for_operation = {
+		OR = {
+			check_variable = { party_pop_array^8 > 0.049 }
+			check_variable = { party_pop_array^9 > 0.049 }
+		}
+	}
+}
+
+HEZ_ai_can_sell_weapons = {
+	NOT = { has_country_flag = shared_mission_in_progress }
+	var:hezbollah_selected_country_for_operation = {
+		OR = {
+			check_variable = { party_pop_array^8 > 0.009 }
+			check_variable = { party_pop_array^9 > 0.009 }
+		}
+	}
+	has_equipment = { infantry_weapons_type > 199 }
+}
+
+HEZ_ai_can_influence = {
+	NOT = { has_country_flag = shared_mission_in_progress }
+	var:hezbollah_selected_country_for_operation = { is_influencer = yes }
+	has_political_power > 50
+}
+
+HEZ_ai_can_attack_israel = {
+	NOT = { has_country_flag = shared_mission_in_progress }
+	has_manpower > 2000
+	has_equipment = { infantry_weapons_type > 300 }
+	has_equipment = { cnc_equipment_type > 100 }
+	has_equipment = { AA_Equipment > 60 }
+	has_equipment = { L_AT_Equipment > 60 }
+	has_equipment = { util_vehicle_type > 30 }
+	var:hezbollah_selected_country_for_operation = {
+		influence_higher_10 = yes
+		OR = {
+			gives_military_access_to = USA
+			is_subject_of = USA
+			gives_military_access_to = ISR
+			is_subject_of = ISR
+		}
+	}
+}

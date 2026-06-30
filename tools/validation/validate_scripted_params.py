@@ -99,10 +99,112 @@ SCOPE_CHANGING_KEYWORDS: Set[str] = _SCOPE_ITERATORS | {
 }
 
 _SET_TEMP_RE = re.compile(
-    r"\bset_temp_variable\s*=\s*\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=",
+    r"\bset_temp_variable\s*=\s*\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([^}]+?)\s*\}",
 )
 _CALL_RE = re.compile(r"\b([a-z][a-z0-9_]*)\s*=\s*yes\b")
 _KW_OPEN_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{")
+
+
+def _normalize_influence_value(value: str) -> str:
+    """Normalize a tag_index / influence_target value for identity comparison.
+
+    The corpus mixes two equivalent syntaxes for the same source:
+        USA       (country scope)         vs  USA.id      (country ID)
+        var:foo   (variable scope)        vs  var:foo.id  (variable ID)
+        THIS      (scope keyword)         vs  THIS.id     (scope keyword ID)
+        event_target:foo                  vs  event_target:foo.id
+    All six forms resolve to the same numeric tag at runtime.  Stripping
+    the trailing ".id" so both forms collapse to a canonical form lets the
+    identity check catch the full set of same-source pairs, not just the
+    half where the author happened to use the same syntax on both sides.
+
+    The ".id" match is case-insensitive: the corpus ships "FROM.ID" as
+    well as "FROM.id", and both resolve to the same numeric ID.
+    """
+    if value.lower().endswith(".id"):
+        return value[:-3]
+    return value
+
+
+# Scope keywords that resolve to a country at runtime and are NOT tags.  A value
+# matching one of these (case-insensitively, so "Root" passes) is a valid
+# tag_index / influence_target reference, never a typo.
+_INFLUENCE_SCOPE_KEYWORDS: Set[str] = {
+    "ROOT",
+    "THIS",
+    "PREV",
+    "FROM",
+    "OWNER",
+    "CONTROLLER",
+    "OVERLORD",
+    "CAPITAL",
+    "FROMFROM",
+    "PREVPREV",
+}
+_TAG_LITERAL_RE = re.compile(r"[A-Z][A-Z0-9_]{2}")
+_MISCASED_TAG_RE = re.compile(r"[A-Za-z]{3}")
+_NUMERIC_RE = re.compile(r"-?\d+(\.\d+)?")
+
+
+def _load_valid_country_tags(mod_path: str) -> "frozenset[str]":
+    """Load valid country tags and tag aliases as one accept-set.
+
+    Tags come from common/country_tags/*.txt (`TAG = "path"`); aliases from
+    common/country_tag_aliases/*.txt (`ALIAS = { ... }`).  Aliases are real
+    references at runtime — e.g. STC / NTR are aliases, not typos — so the
+    tag-validity check accepts both.
+    """
+    valid: Set[str] = set()
+    tag_re = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
+    for fp in glob.glob(os.path.join(mod_path, "common", "country_tags", "*.txt")):
+        try:
+            with open(fp, "r", encoding="utf-8-sig") as fh:
+                for line in fh:
+                    m = tag_re.match(line)
+                    if m:
+                        valid.add(m.group(1))
+        except Exception:
+            continue
+    alias_re = re.compile(r"^\s*([A-Za-z0-9_]{3})\s*=\s*\{")
+    for fp in glob.glob(
+        os.path.join(mod_path, "common", "country_tag_aliases", "*.txt")
+    ):
+        try:
+            with open(fp, "r", encoding="utf-8-sig") as fh:
+                for line in fh:
+                    m = alias_re.match(line)
+                    if m:
+                        valid.add(m.group(1))
+        except Exception:
+            continue
+    return frozenset(valid)
+
+
+def _is_invalid_influence_tag(value: str, valid_tags: "frozenset[str]") -> bool:
+    """Return True if `value` is a tag_index / influence_target that no tag matches.
+
+    `value` is the RHS of `set_temp_variable = { tag_index/influence_target = ... }`.
+    Accepts real tags, tag aliases, scope keywords, var: / event_target: /
+    global. references, array subscripts, getters, numerics, and bare
+    temp-variable names.  Flags only literals that look like a country tag but
+    are not one — typos such as GBR for ENG, ISL for ICE, or the mis-cased
+    CHl for CHI.
+    """
+    v = _normalize_influence_value(value.strip())
+    if not v or _NUMERIC_RE.fullmatch(v):
+        return False
+    # var: / event_target: / global. refs, array subscripts (name^i), getters
+    if any(c in v for c in ":^.@"):
+        return False
+    if v.upper() in _INFLUENCE_SCOPE_KEYWORDS:
+        return False
+    # An all-caps tag literal, or a 3-letter mixed-case token (a mis-cased tag
+    # like CHl): must match a real tag exactly, since tags are case-sensitive.
+    if _TAG_LITERAL_RE.fullmatch(v) or (
+        _MISCASED_TAG_RE.fullmatch(v) and v != v.lower()
+    ):
+        return v not in valid_tags
+    return False
 
 
 def _parse_effect_contracts_from_file(
@@ -224,21 +326,24 @@ def _normalize_multiline_set_temp(text: str) -> str:
     return result
 
 
-def _tokenize(text: str) -> List[Tuple[str, int, str]]:
+def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
     """Tokenize comment-stripped script text into a flat token list.
 
-    Each token is (kind, line_number, value):
-      "set_temp"   — set_temp_variable = { NAME = ... }
-      "call"       — NAME = yes
-      "scope_open" — NAME = {  where NAME is a scope-changing keyword
-      "plain_open" — { (non-scope-changing open, including if/hidden_effect/etc.)
-      "close"      — }
+    Each token is (kind, line_number, value, rhs):
+      "set_temp"   — set_temp_variable = { NAME = RHS }  (value=NAME, rhs=RHS)
+      "call"       — NAME = yes                           (value=NAME, rhs="")
+      "scope_open" — NAME = { (scope-changing)            (value=NAME, rhs="")
+      "plain_open" — NAME = { (non-scope-changing)        (value=NAME, rhs="")
+      "close"      — }                                    (value="",    rhs="")
+    The rhs on a set_temp is the literal RHS string (whitespace stripped).
+    It powers the identical-params check for change_influence_percentage; any
+    other call site only needs the name.
     """
     # Collapse multi-line set_temp_variable = { ... } blocks so the regex can
     # match them on a single line.
     text = _normalize_multiline_set_temp(text)
 
-    tokens: List[Tuple[str, int, str]] = []
+    tokens: List[Tuple[str, int, str, str]] = []
     lines = text.splitlines()
 
     for lineno, raw in enumerate(lines, start=1):
@@ -247,9 +352,9 @@ def _tokenize(text: str) -> List[Tuple[str, int, str]]:
         if ci >= 0:
             raw = raw[:ci]
 
-        # set_temp_variable = { NAME = ... }
+        # set_temp_variable = { NAME = RHS }
         for m in _SET_TEMP_RE.finditer(raw):
-            tokens.append(("set_temp", lineno, m.group(1)))
+            tokens.append(("set_temp", lineno, m.group(1), m.group(2).strip()))
 
         # Keyword = { openers — detect before closing braces so order is right
         for m in _KW_OPEN_RE.finditer(raw):
@@ -259,28 +364,29 @@ def _tokenize(text: str) -> List[Tuple[str, int, str]]:
                     "scope_open" if kw in SCOPE_CHANGING_KEYWORDS else "plain_open",
                     lineno,
                     kw,
+                    "",
                 )
             )
 
         # Closing braces
         for _ in re.finditer(r"\}", raw):
-            tokens.append(("close", lineno, ""))
+            tokens.append(("close", lineno, "", ""))
 
         # Effect calls: NAME = yes
         for m in _CALL_RE.finditer(raw):
-            tokens.append(("call", lineno, m.group(1)))
+            tokens.append(("call", lineno, m.group(1), ""))
 
     return tokens
 
 
 def _validate_call_sites_in_file(
-    args: Tuple[str, Dict[str, Dict[str, List[str]]], str],
+    args: Tuple[str, Dict[str, Dict[str, List[str]]], str, "frozenset[str]"],
 ) -> List[Tuple[str, str, int]]:
     """Validate one file for missing required params and orphaned sets.
 
     Returns a list of (category, message, line_number) tuples.
     """
-    filepath, contracts, mod_path = args
+    filepath, contracts, mod_path, valid_tags = args
 
     try:
         with open(filepath, "r", encoding="utf-8-sig") as fh:
@@ -321,7 +427,7 @@ def _validate_call_sites_in_file(
 
     stack: List[Dict] = [{"scope_changing": False, "temps": {}, "depth": 0}]
 
-    for kind, lineno, value in tokens:
+    for kind, lineno, value, rhs in tokens:
         if kind == "scope_open":
             # Push a new scope frame
             stack.append({"scope_changing": True, "temps": {}, "depth": 0})
@@ -338,8 +444,26 @@ def _validate_call_sites_in_file(
             # else: extra close at root, ignore
 
         elif kind == "set_temp":
-            # Record in the current frame
-            stack[-1]["temps"][value] = lineno
+            # Record in the current frame. Track both the line and the RHS
+            # value: the line is used for the existing missing-param check,
+            # and the RHS powers the identical-params check for
+            # change_influence_percentage.
+            stack[-1]["temps"][value] = {"line": lineno, "value": rhs}
+
+            # Tag-validity check: an influencer/influencee written as a literal
+            # that is neither a real tag nor an alias is a silent typo (resolves
+            # to nothing at runtime, so the influence call no-ops or misfires).
+            if value in ("tag_index", "influence_target") and _is_invalid_influence_tag(
+                rhs, valid_tags
+            ):
+                results.append(
+                    (
+                        "invalid-influence-tag",
+                        f"{rel}:{lineno} - '{value}' set to {rhs!r} which is not a "
+                        f"valid country tag or tag alias",
+                        lineno,
+                    )
+                )
 
         elif kind == "call":
             if value not in contracts:
@@ -357,9 +481,9 @@ def _validate_call_sites_in_file(
             # are NOT visible outside.  Since we track frames, any temp var in
             # any frame on the stack at this point was set in the current or an
             # ancestor scope, so it is visible.
-            visible: Set[str] = set()
+            visible: Dict[str, Dict] = {}
             for frame in stack:
-                visible.update(frame["temps"].keys())
+                visible.update(frame["temps"])
 
             for param in required:
                 if param not in visible:
@@ -371,6 +495,48 @@ def _validate_call_sites_in_file(
                             lineno,
                         )
                     )
+
+            # Identical-params check: a change_influence_percentage call where
+            # tag_index and influence_target resolve to the same country is the
+            # self-influence (Code 5001) bug.  Flag only when BOTH are set to an
+            # explicit non-zero value; the effect's own defaults (tag_index ->
+            # ROOT, influence_target -> THIS) are reliable and left alone.
+            #
+            # "Same block" is approximated by line proximity (<= 20 lines): the
+            # scope tracker can keep a temp var from a previous focus's
+            # completion_reward visible when it wouldn't be in scope at runtime,
+            # so the window suppresses those false positives while still catching
+            # the leak-between-calls pattern (tag_index from call N-1 reused by
+            # call N).  Values are normalized so "USA"/"USA.id" and the other
+            # .id variants compare equal.
+            if value == "change_influence_percentage":
+                tag_entry = visible.get("tag_index")
+                inf_entry = visible.get("influence_target")
+                if tag_entry and inf_entry:
+                    tag_val = tag_entry["value"]
+                    inf_val = inf_entry["value"]
+                    tag_line = tag_entry["line"]
+                    inf_line = inf_entry["line"]
+                    if (
+                        tag_val
+                        and inf_val
+                        and tag_val != "0"
+                        and inf_val != "0"
+                        and _normalize_influence_value(tag_val)
+                        == _normalize_influence_value(inf_val)
+                        and abs(lineno - tag_line) <= 20
+                        and abs(lineno - inf_line) <= 20
+                    ):
+                        results.append(
+                            (
+                                "identical-influence-params",
+                                f"{rel}:{lineno} - 'change_influence_percentage' called with "
+                                f"tag_index = {tag_val!r} and influence_target = {inf_val!r}; "
+                                f"both resolve to the same country and this is a self-influence "
+                                f"(Code 5001) error",
+                                lineno,
+                            )
+                        )
 
             # Scope-boundary violations (temp set inside a popped scope-changing
             # frame, call outside) are already caught by the missing-param check:
@@ -387,6 +553,12 @@ class Validator(BaseValidator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
+        self._valid_tags: "frozenset[str]" = frozenset()
+
+    def _build_tag_set(self):
+        """Load valid country tags + aliases for the tag-validity check."""
+        self._valid_tags = _load_valid_country_tags(self.mod_path)
+        self.log(f"  Valid country tags + aliases:     {len(self._valid_tags)}")
 
     def _build_contracts(self):
         """Build the parameter contract registry from hardcoded + auto-discovered data."""
@@ -433,13 +605,17 @@ class Validator(BaseValidator):
         files = self._collect_files(scan_patterns)
         self.log(f"  Scanning {len(files)} files for effect calls")
 
-        args_list = [(f, self._contracts, self.mod_path) for f in files]
+        args_list = [
+            (f, self._contracts, self.mod_path, self._valid_tags) for f in files
+        ]
         all_results = self._pool_map(
             _validate_call_sites_in_file, args_list, chunksize=20
         )
 
         missing_param_results = []
         scope_violation_results = []
+        identical_param_results = []
+        invalid_tag_results = []
 
         for file_results in all_results:
             for category, message, _line in file_results:
@@ -447,6 +623,10 @@ class Validator(BaseValidator):
                     missing_param_results.append(message)
                 elif category == "scope-boundary-violation":
                     scope_violation_results.append(message)
+                elif category == "identical-influence-params":
+                    identical_param_results.append(message)
+                elif category == "invalid-influence-tag":
+                    invalid_tag_results.append(message)
 
         self._report(
             missing_param_results,
@@ -464,8 +644,25 @@ class Validator(BaseValidator):
             category="scope-boundary-violation",
         )
 
+        self._report(
+            identical_param_results,
+            "No change_influence_percentage calls have identical tag_index and influence_target",
+            "change_influence_percentage calls with tag_index == influence_target (self-influence):",
+            severity=Severity.ERROR,
+            category="identical-influence-params",
+        )
+
+        self._report(
+            invalid_tag_results,
+            "All tag_index / influence_target values are valid country tags or aliases",
+            "tag_index / influence_target set to an unknown country tag (typo or removed tag):",
+            severity=Severity.ERROR,
+            category="invalid-influence-tag",
+        )
+
     def run_validations(self):
         self._build_contracts()
+        self._build_tag_set()
         self._validate_callers()
 
 
