@@ -57,25 +57,25 @@ def main():
     while True:
         try:
             selection_input = input(
-                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_parties_icons.gfx.\n5. Retrieve and generate intelligence agency icons\n6. Retrieve and generate MD_decisions.gfx\n7. Retrieve and generate Focus Title Bars (This also updates the titlebar_styles.txt file)\nPlease enter the number of the option you'd like: "
+                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_parties_icons.gfx.\n5. Retrieve and generate intelligence agency icons\n6. Retrieve and generate MD_decisions.gfx\n7. Retrieve and generate Focus Title Bars (This also updates the titlebar_styles.txt file)\n8. Retrieve and generate MD_scripted_gui.gfx (scans scripted_gui/countries/<TAG>/)\n9. Retrieve and generate MD_decisions_desc.gfx (text icons from decisions/**/decision_text/)\nPlease enter the number of the option you'd like: "
             ).strip()
 
             if not selection_input:
                 print(
-                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 7.{bcolors.RESET}\n"
+                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 9.{bcolors.RESET}\n"
                 )
                 continue
 
             selection = int(selection_input)
-            if selection < 1 or selection > 7:
+            if selection < 1 or selection > 9:
                 print(
-                    f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 7.\n{bcolors.RESET}"
+                    f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 9.\n{bcolors.RESET}"
                 )
                 continue
             break
         except ValueError:
             print(
-                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 7.{bcolors.RESET}\n"
+                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 9.{bcolors.RESET}\n"
             )
             continue
 
@@ -93,6 +93,10 @@ def main():
         generate_decisions(mod_root)
     elif selection == 7:
         generate_focus_titlebars(mod_root)
+    elif selection == 8:
+        generate_scripted_gui(mod_root)
+    elif selection == 9:
+        generate_decisions_desc(mod_root)
 
 
 # --- Filesystem scanning ----------------------------------------------------
@@ -176,15 +180,31 @@ def _format_names(names, cap=30):
     return f"{', '.join(names[:cap])}, +{len(names) - cap} more"
 
 
-def _print_merge_report(filename, new, changed, orphaned, written):
+def _print_merge_report(
+    filename, new, changed, orphaned, deduped, written, conflicts=()
+):
     print(
         f"{bcolors.OK}{filename}: {len(new)} new, {len(changed)} updated, "
-        f"{len(orphaned)} orphaned.{bcolors.RESET}"
+        f"{len(deduped)} de-duplicated, {len(orphaned)} orphaned.{bcolors.RESET}"
     )
     if new:
         print(f"{bcolors.OK}  New: {_format_names(new)}{bcolors.RESET}")
     if changed:
         print(f"{bcolors.WARNING}  Updated: {_format_names(changed)}{bcolors.RESET}")
+    if deduped:
+        print(
+            f"{bcolors.WARNING}  De-duplicated (removed extra name blocks): "
+            f"{_format_names(deduped)}{bcolors.RESET}"
+        )
+    if conflicts:
+        print(
+            f"{bcolors.FAIL}  De-duplicated with TEXTURE MISMATCH (kept first block, "
+            f"verify the survivor is the intended icon):{bcolors.RESET}"
+        )
+        for name, kept, dropped in conflicts:
+            print(
+                f"{bcolors.FAIL}    {name}: kept {kept} — dropped {dropped}{bcolors.RESET}"
+            )
     if orphaned:
         print(
             f"{bcolors.INFO}  Orphaned (referenced in {filename}, missing on disk, left untouched): "
@@ -203,7 +223,14 @@ def merge_gfx_entries(path, entries, render, header="", protected=frozenset()):
     place. Entries whose texturefile changed are replaced in place. Names not yet
     present are appended, sorted, before the final closing brace. Names present on
     disk but no longer produced by the scan are reported as orphaned and never removed.
-    Returns (new_names, changed_names, orphaned_names, written).
+    A name defined by more than one spriteType block is consolidated to its first
+    block (the extra blocks are removed); the survivor is still reconciled to the
+    scanned texturefile, so the kept block ends up pointing at the current source.
+    Duplicates whose dropped block pointed at a *different* texturefile than the
+    survivor are collected separately so the report can flag the silent swap.
+    Returns (new_names, changed_names, orphaned_names, deduped_names, written,
+    deduped_conflicts) where deduped_conflicts is a list of
+    (name, kept_texfile, dropped_texfile).
     """
     if path.exists():
         original = _read_lf(path)
@@ -214,33 +241,50 @@ def merge_gfx_entries(path, entries, render, header="", protected=frozenset()):
         newline = "\n"
 
     existing = {}
+    dup_spans = []
+    deduped_names = []
+    deduped_conflicts = []
     for name, texfile, start, end in _parse_named_blocks(original):
-        if name and name not in existing:
+        if not name:
+            continue
+        if name not in existing:
             existing[name] = (texfile, start, end)
+        else:
+            kept_texfile = existing[name][0]
+            if texfile and kept_texfile and texfile != kept_texfile:
+                deduped_conflicts.append((name, kept_texfile, texfile))
+            line_start = original.rfind("\n", 0, start) + 1
+            # Consume the whole physical line so a trailing inline comment after
+            # the block's closing brace is removed with the block, not orphaned.
+            line_end = original.find("\n", end)
+            span_end = line_end + 1 if line_end != -1 else len(original)
+            dup_spans.append((line_start, span_end))
+            deduped_names.append(name)
 
     new_names = []
     changed_names = []
-    edits = []
+    splices = [(ls, se, "") for ls, se in dup_spans]
     for name in sorted(entries, key=lambda n: entries[n].lower()):
         texture_path = entries[name]
         if name in existing:
             old_texfile, start, end = existing[name]
             if old_texfile != texture_path:
-                edits.append((start, end, render(name, texture_path)))
+                block = render(name, texture_path)
+                core = block[1:] if block.startswith("\t") else block
+                splices.append((start, end, core.rstrip("\n")))
                 changed_names.append(name)
         else:
             new_names.append(name)
 
     orphaned = sorted(set(existing) - set(entries) - set(protected))
 
-    if edits:
-        edits.sort(key=lambda e: e[0])
+    if splices:
+        splices.sort(key=lambda s: s[0])
         pieces = []
         cursor = 0
-        for start, end, full_block in edits:
-            core = full_block[1:] if full_block.startswith("\t") else full_block
+        for start, end, replacement in splices:
             pieces.append(original[cursor:start])
-            pieces.append(core.rstrip("\n"))
+            pieces.append(replacement)
             cursor = end
         pieces.append(original[cursor:])
         text = "".join(pieces)
@@ -256,7 +300,14 @@ def merge_gfx_entries(path, entries, render, header="", protected=frozenset()):
     if written:
         _write_with_newline(path, text, newline)
 
-    return new_names, changed_names, orphaned, written
+    return (
+        new_names,
+        changed_names,
+        orphaned,
+        sorted(set(deduped_names)),
+        written,
+        deduped_conflicts,
+    )
 
 
 # --- Content generators -------------------------------------------------
@@ -600,6 +651,10 @@ def generate_decisions(mod_root):
     seen = set()
     entries = {}
     for f in files:
+        # decision_text/ art is text-icon material handled by MD_decisions_desc.gfx
+        # (option 9); scanning it here would emit dead GFX_decision_* duplicates.
+        if "decision_text" in f.relative_to(scan_dir).parts:
+            continue
         texture_path = rel_texture_path(f, mod_root)
         stem = f.stem
         if any(prefix in stem for prefix in DECISION_SELF_PREFIXED):
@@ -626,6 +681,150 @@ def generate_decisions(mod_root):
     )
     _print_merge_report("MD_decisions.gfx", *result)
     print(f"\nMD_decisions.gfx has been processed for {len(files)} decision pictures.")
+
+
+# Text icons hand-placed directly in a country folder (not under decision_text/);
+# left untouched by the scan so the merge does not report them as orphans.
+DECISIONS_DESC_LOOSE = frozenset(
+    {"GFX_AFG_menu1", "GFX_MAIN_arab_kabyle", "GFX_ISR_desctext_blockade"}
+)
+
+
+def generate_decisions_desc(mod_root):
+    scan_dir = mod_root / "gfx" / "interface" / "decisions"
+    print(scan_dir)
+    if not scan_dir.is_dir():
+        print(f"{bcolors.FAIL}Directory does not exist: {scan_dir}{bcolors.RESET}")
+        return
+    files = [
+        f
+        for f in scan_images(scan_dir)
+        if "decision_text" in f.relative_to(scan_dir).parts
+    ]
+    _describe_scan(files)
+
+    print(f"{bcolors.OK}Generating MD_decisions_desc.gfx...{bcolors.RESET}")
+    seen = set()
+    entries = {}
+    for f in files:
+        texture_path = rel_texture_path(f, mod_root)
+        # Bare GFX_<stem>: these are text icons drawn via £<stem> in loc, which
+        # strips only the GFX_ prefix. Never add a decision_ prefix here.
+        name = f"GFX_{f.stem}"
+        if check_duplicate(name, seen, texture_path):
+            continue
+        entries[name] = texture_path
+
+    def render(name, texture_path):
+        return (
+            "\tspriteType = {\n"
+            f'\t\tname = "{name}"\n'
+            f'\t\ttexturefile = "{texture_path}"\n'
+            "\t\tlegacy_lazy_load = no\n"
+            "\t}\n"
+        )
+
+    result = merge_gfx_entries(
+        interface_path(mod_root, "MD_decisions_desc.gfx"),
+        entries,
+        render,
+        header="spriteTypes = {\n",
+        protected=DECISIONS_DESC_LOOSE,
+    )
+    _print_merge_report("MD_decisions_desc.gfx", *result)
+    print(f"\nMD_decisions_desc.gfx has been processed for {len(files)} text icons.")
+
+
+# --- Scripted-GUI sprite generation ---------------------------------------
+
+SG_MANUAL_BEGIN = (
+    "# === BEGIN MANUAL (hand-maintained: progressbars, effects, non-stem sprites) ==="
+)
+SG_MANUAL_END = "# === END MANUAL ==="
+SG_GEN_BEGIN = (
+    "# === BEGIN GENERATED (managed by gfx_entry_generator.py, do not edit) ==="
+)
+SG_GEN_END = "# === END GENERATED ==="
+
+
+def _extract_manual_body(text):
+    """Return the verbatim body between the MANUAL markers, or '' if absent."""
+    s = text.find(SG_MANUAL_BEGIN)
+    if s == -1:
+        return ""
+    s = text.find("\n", s)
+    e = text.find(SG_MANUAL_END, s if s != -1 else 0)
+    if s == -1 or e == -1:
+        return ""
+    line_start = text.rfind("\n", 0, e) + 1
+    return text[s + 1 : line_start].strip("\n")
+
+
+def _build_scripted_gui_text(per_tag, manual_body):
+    parts = ["spriteTypes = {\n\n", f"\t{SG_MANUAL_BEGIN}\n"]
+    if manual_body.strip():
+        parts.append(f"{manual_body}\n")
+    parts.append(f"\t{SG_MANUAL_END}\n\n\t{SG_GEN_BEGIN}\n")
+    for tag in sorted(per_tag):
+        parts.append(f"\n\t# {tag}\n")
+        for name, tex in per_tag[tag]:
+            parts.append(
+                f'\tspriteType = {{\n\t\tname = "{name}"\n\t\ttexturefile = "{tex}"\n\t}}\n'
+            )
+    parts.append(f"\n\t{SG_GEN_END}\n}}\n")
+    return "".join(parts)
+
+
+def generate_scripted_gui(mod_root):
+    """Generate interface/MD_scripted_gui.gfx from gfx/interface/scripted_gui/countries/<TAG>/.
+
+    Each TAG folder's images become GFX_<stem> sprites under a `# TAG` section in the
+    GENERATED region. A hand-maintained MANUAL region (progressbars, effect sprites,
+    anything a bare texturefile scan can't express) is preserved verbatim across runs.
+    """
+    scan_dir = mod_root / "gfx" / "interface" / "scripted_gui" / "countries"
+    if not scan_dir.is_dir():
+        print(f"{bcolors.FAIL}Directory does not exist: {scan_dir}{bcolors.RESET}")
+        return
+
+    seen = set()
+    per_tag = {}
+    total = 0
+    for tag_dir in sorted(
+        (p for p in scan_dir.iterdir() if p.is_dir()), key=lambda p: p.name
+    ):
+        rows = []
+        for f in scan_images(tag_dir):
+            # `_`-prefixed folders (e.g. _manual/) hold textures wired by hand in the
+            # MANUAL region (progressbars, effect sprites); the scan skips them.
+            if any(part.startswith("_") for part in f.relative_to(tag_dir).parts):
+                continue
+            name = f"GFX_{f.stem}"
+            texture_path = rel_texture_path(f, mod_root)
+            if check_duplicate(name, seen, texture_path):
+                continue
+            rows.append((name, texture_path))
+            total += 1
+        if rows:
+            rows.sort(key=lambda r: r[0].lower())
+            per_tag[tag_dir.name] = rows
+
+    out = interface_path(mod_root, "MD_scripted_gui.gfx")
+    original = _read_lf(out) if out.exists() else ""
+    newline = _newline_of(original) if original else "\n"
+    original = original.replace("\r\n", "\n").replace("\r", "\n")
+    text = _build_scripted_gui_text(per_tag, _extract_manual_body(original))
+
+    if text != original:
+        _write_with_newline(out, text, newline)
+        print(
+            f"{bcolors.OK}MD_scripted_gui.gfx: {total} sprites across "
+            f"{len(per_tag)} tags ({', '.join(sorted(per_tag))}).{bcolors.RESET}"
+        )
+    else:
+        print(
+            f"{bcolors.OK}MD_scripted_gui.gfx already up to date; no write performed.{bcolors.RESET}"
+        )
 
 
 # --- Focus title-bar generation -------------------------------------------

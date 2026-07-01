@@ -472,7 +472,7 @@ complete_project = {
 		set_variable = { project_type = project_building_type^project }
 
 		random_state = {
-			limit = { state = ROOT.project_array^ROOT.project }
+			limit = { state = PREV.project_array^PREV.project }
 			if = { limit = { investment_building_slot_available = yes }
 				add_finished_buildings = yes
 				CONTROLLER = { add_opinion_modifier = { target = ROOT modifier = investments_construction_opinion } }
@@ -507,10 +507,10 @@ end_project = {
 		log = "[GetDateText]: [THIS.GetName]: DEBUG: end_project - project=[?project], refund=[?project_monetary_cost^project]"
 	}
 
-	# INFO: project_array^project is a state. This is always positive.
+	# INFO: project_array^project holds the target state id, stored negative (HOI4 encodes state scopes as negative). Empty slots are 0.
 	if = { limit = { check_variable = { project_array^project < 0 } }
 		random_state = {
-			limit = { state = ROOT.project_array^ROOT.project }
+			limit = { state = PREV.project_array^PREV.project }
 			clear_variable = project_target_state_@PREV
 			for_each_loop = {
 				value = v
@@ -536,7 +536,9 @@ end_project = {
 			set_temp_variable = { return_to_sender = project_monetary_cost^project }
 			multiply_temp_variable = { return_to_sender = 0.10 }
 			var:project_array^project = {
-				CONTROLLER = { add_to_variable = { var = treasury value = return_to_sender } }
+				if = { limit = { NOT = { is_controlled_by = PREV } }
+					CONTROLLER = { add_to_variable = { var = treasury value = return_to_sender } }
+				}
 			}
 		}
 

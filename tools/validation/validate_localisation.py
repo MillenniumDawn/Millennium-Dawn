@@ -57,6 +57,11 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
 _NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
+# A § followed by whitespace and a digit is a prose section sign (e.g. a legal
+# citation like "15 U.S.C. § 1"), never a color code; game markup never puts a
+# space after §. Requiring the digit keeps a dangling/broken code (§ before a
+# word, quote, or line end) flagged instead of silently exempted.
+_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
 
 
 def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
@@ -69,29 +74,32 @@ def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
     for line_idx, line in enumerate(lines):
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
-        if "\u00a7" in line and "desc_end" not in line and "U.S.C." not in line:
+        if "\u00a7" in line:
             # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution: those
             # keys intentionally split their \u00a7 codes across multiple values (one ends
             # with \u00a7Y, another supplies \u00a7!) so only the merged result is balanced.
             key_match = _LINE_KEY_RE.match(line)
             if key_match and key_match.group(1) in subst_keys:
                 continue
-            count = line.count("\u00a7")
+            color_line = _PROSE_SECTION_SIGN_RE.sub("", line)
+            if "\u00a7" not in color_line:
+                continue
+            count = color_line.count("\u00a7")
             if count % 2 != 0:
                 results.append(
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - odd number of \u00a7 symbols ({count})"
                 )
-            elif count != line.count("\u00a7!") * 2:
+            elif count != color_line.count("\u00a7!") * 2:
                 expected = count // 2
-                actual = line.count("\u00a7!")
+                actual = color_line.count("\u00a7!")
                 results.append(
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - expected {expected} \u00a7! but got {actual}"
                 )
             else:
                 try:
-                    for idx, ch in enumerate(line):
-                        if ch == "\u00a7" and idx + 1 < len(line):
-                            next_ch = line[idx + 1]
+                    for idx, ch in enumerate(color_line):
+                        if ch == "\u00a7" and idx + 1 < len(color_line):
+                            next_ch = color_line[idx + 1]
                             if next_ch not in valid_colors and next_ch not in [
                                 "!",
                                 "[",

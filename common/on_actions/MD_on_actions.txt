@@ -362,8 +362,6 @@ on_actions = {
 
 			EDU_learn_to_annex_your_neighbours = yes
 
-			add_to_variable = { ROOT.enrichment_facilities = FROM.enrichment_facilities }
-
 			every_country = {
 				limit = {
 					OR = {
@@ -416,6 +414,31 @@ on_actions = {
 						}
 					}
 				}
+				# cancel ROOT's own investments into the annexed country (its states are now ours, so they would build free buildings)
+				ROOT = {
+					if = { limit = { check_variable = { active_projects > 0 } }
+
+						for_each_loop = {
+							array = project_array
+
+							if = { limit = { check_variable = { v < 0 } }
+
+								set_variable = { project = i }
+								var:project_array^i = {
+									if = {
+										limit = {
+											OR = {
+												is_owned_by = ROOT
+												is_owned_by = FROM
+											}
+										}
+										ROOT = { end_project = yes }
+									}
+								}
+							}
+						}
+					}
+				}
 				if = { limit = { has_idea = p5_member }
 					remove_ideas = p5_member
 				}
@@ -458,42 +481,57 @@ on_actions = {
 
 
 			# Weighted GDP + Inflation Correction
-			set_temp_variable = { estimated_new_gdp = ROOT.gdp_total }
-			add_to_temp_variable = { estimated_new_gdp = FROM.gdp_total }
-			clamp_temp_variable = { var = estimated_new_gdp min = 0.001 }
-
-			set_temp_variable = { estimated_new_pop = ROOT.population_total_m }
-			add_to_temp_variable = { estimated_new_pop = FROM.population_total_m }
-			clamp_temp_variable = { var = estimated_new_pop min = 0.001 }
-
-			set_temp_variable = { estimated_new_gdpc = estimated_new_gdp }
-			divide_temp_variable = { estimated_new_gdpc = estimated_new_pop }
 			ROOT = {
-				set_variable = { last_quarter_gdpc_total = estimated_new_gdpc }
-				set_variable = { last_quarter_gdp_total = estimated_new_gdp }
-			}
-			set_temp_variable = { root_weighted_inflation = ROOT.inflation_rate_var }
-			multiply_temp_variable = { root_weighted_inflation = ROOT.gdp_total }
+				set_variable = {
+					last_quarter_gdpc_total = {
+						value = ROOT.gdp_total
+						add = FROM.gdp_total
+						clamp = { min = 0.001 max = 100000000 }
+						divide = {
+							value = ROOT.population_total_m
+							add = FROM.population_total_m
+							clamp = { min = 0.001 max = 100000000 }
+						}
+					}
+				}
 
-			set_temp_variable = { from_weighted_inflation = FROM.inflation_rate_var }
-			multiply_temp_variable = { from_weighted_inflation = FROM.gdp_total }
+				set_variable = {
+					last_quarter_gdp_total = {
+						value = ROOT.gdp_total
+						add = FROM.gdp_total
+						clamp = { min = 0.001 max = 100000000 }
+					}
+				}
 
-			set_temp_variable = { blended_inflation = root_weighted_inflation }
-			add_to_temp_variable = { blended_inflation = from_weighted_inflation }
-			divide_temp_variable = { blended_inflation = estimated_new_gdp }
-			ROOT = {
-				set_variable = { inflation_rate_var = blended_inflation }
+				set_variable = {
+					inflation_rate_var = {
+						value = 0
+						add = {
+							value = ROOT.inflation_rate_var
+							multiply = ROOT.gdp_total
+						}
+						add = {
+							value = FROM.inflation_rate_var
+							multiply = FROM.gdp_total
+						}
+						divide = {
+							value = ROOT.gdp_total
+							add = FROM.gdp_total
+							clamp = { min = 0.001 max = 100000000 }
+						}
+					}
+				}
 
 				clear_array = year_quarter_inflation_tracker
-				add_to_array = { year_quarter_inflation_tracker = blended_inflation }
-				add_to_array = { year_quarter_inflation_tracker = blended_inflation }
-				add_to_array = { year_quarter_inflation_tracker = blended_inflation }
-				add_to_array = { year_quarter_inflation_tracker = blended_inflation }
+				add_to_array = { year_quarter_inflation_tracker = inflation_rate_var }
+				add_to_array = { year_quarter_inflation_tracker = inflation_rate_var }
+				add_to_array = { year_quarter_inflation_tracker = inflation_rate_var }
+				add_to_array = { year_quarter_inflation_tracker = inflation_rate_var }
 
 				calculate_inflation_effects = yes
 			}
 
-			log = "[GetDateText]: [ROOT.GetName] annexed [FROM.GetName] - Inflation blended to [?blended_inflation|%], GDP/C tracker reset to [?estimated_new_gdpc]"
+			log = "[GetDateText]: [ROOT.GetName] annexed [FROM.GetName] - Inflation blended to [?ROOT.inflation_rate_var|%], GDP/C tracker reset to [?ROOT.last_quarter_gdpc_total]"
 		}
 	}
 
