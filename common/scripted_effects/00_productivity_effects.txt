@@ -15,6 +15,14 @@ calculate_average_world_productivity = {
 		}
 	}
 
+	# Bonus center: holds at 1000 until the world grows past it, then tracks the world average
+	set_variable = {
+		global.productivity_center = {
+			value = global.average_world_productivity
+			clamp = { min = 1000 max = 100000000 }
+		}
+	}
+
 	set_variable = { global.cumulative_world_productivity = 0 }
 	set_variable = { global.world_population = 0 }
 }
@@ -106,7 +114,7 @@ update_employment_productivity_output_dynamic_modifier = {
 			set_variable = {
 				construction_speed_output_var = {
 					value = overall_productivity
-					multiply = 0.001
+					divide = global.productivity_center
 					multiply = {
 						value = industrial_complex_total
 						multiply = civilian_factories_manpower_fulfillment
@@ -135,13 +143,13 @@ update_employment_productivity_output_dynamic_modifier = {
 			set_variable = {
 				military_factories_output_var = {
 					value = overall_productivity
-					multiply = 0.001
+					divide = global.productivity_center
 					multiply = {
-						value = military_fac
+						value = military_factory_total
 						multiply = military_factories_manpower_fulfillment
 						add = {
 							value = num_of_military_factories
-							subtract = military_fac
+							subtract = military_factory_total
 						}
 						divide = num_of_military_factories
 					}
@@ -164,13 +172,13 @@ update_employment_productivity_output_dynamic_modifier = {
 			set_variable = {
 				dockyards_output_var = {
 					value = overall_productivity
-					multiply = 0.001
+					divide = global.productivity_center
 					multiply = {
-						value = dockyard_fac
+						value = naval_factory_total
 						multiply = naval_factories_manpower_fulfillment
 						add = {
 							value = num_of_naval_factories
-							subtract = dockyard_fac
+							subtract = naval_factory_total
 						}
 						divide = num_of_naval_factories
 					}
@@ -191,7 +199,7 @@ update_employment_productivity_output_dynamic_modifier = {
 		set_variable = {
 			agriculture_district_output_var = {
 				value = overall_productivity
-				multiply = 0.001
+				divide = global.productivity_center
 				add = -1
 				multiply = {
 					value = modifier@production_speed_agriculture_district_factor
@@ -211,7 +219,7 @@ update_employment_productivity_output_dynamic_modifier = {
 		set_variable = {
 			productivity_tax_effect_display = {
 				value = overall_productivity
-				multiply = 0.001
+				divide = global.productivity_center
 				add = -1
 			}
 		}

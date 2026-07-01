@@ -49,7 +49,7 @@ _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
 # so a value on the RHS of an assignment (`set_variable = { x = y }` → `y`) is
 # correctly counted as a read. The `(?:scope\.)*` tail lets the scope-stripped
 # target (see _strip_scope_prefix) still be recognised inside a scoped write
-# like `set_variable = { THIS.eurosceptic = ... }`.
+# like `set_variable = { THIS.europeanism = ... }`.
 _SET_TARGET_PREFIX_RE = re.compile(r"set_variable\s*=\s*\{?\s*(?:[a-z_][a-z0-9_]*\.)*$")
 
 
