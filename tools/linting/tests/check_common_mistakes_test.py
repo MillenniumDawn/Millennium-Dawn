@@ -393,6 +393,16 @@ assert_finds(
     "set_variable with zero still flagged",
 )
 
+# 3j. Allowlisted divisor (invariant non-zero) → no flag
+assert_finds(
+    _check_divide_variable_zero_guard,
+    [
+        "\tdivide_variable = { global.target_civ_count = global.UN_general_assembly^num }\n",
+    ],
+    0,
+    "allowlisted divisor suppresses flag",
+)
+
 
 # 4. Duplicate consecutive add_to_variable
 

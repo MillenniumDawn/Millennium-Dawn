@@ -569,6 +569,10 @@ _RE_ADD_TO_VAR = re.compile(
     r"^\s*(add_to_variable|add_to_temp_variable)\s*=\s*\{.*\}\s*$"
 )
 _RE_DIVIDE_VAR = re.compile(r"\bdivide_variable\s*=\s*\{\s*(\S+)\s*=\s*(\S+)\s*\}")
+# Divisors guaranteed non-zero by game invariants -- a zero guard would be dead code.
+_DIVIDE_ZERO_GUARD_ALLOWLIST = {
+    "global.UN_general_assembly^num",  # UN General Assembly always has >= 1 member
+}
 _RE_EVERY_COUNTRY_OPEN = re.compile(r"^\s*every_country\s*=\s*\{")
 # Maps each bloc-membership idea to the global array that should track it.
 # MD-specific; hand-maintained. When a new bloc with a membership idea + backing
@@ -889,6 +893,7 @@ def _check_divide_variable_zero_guard(lines):
       - clamp_variable / clamp_temp_variable { var = divisor min = N } where N > 0
       - set_variable { divisor = N } where N != 0 (variable is initialized)
       - Division inside an else block whose sibling if checks divisor = 0 or < threshold
+      - Divisor in _DIVIDE_ZERO_GUARD_ALLOWLIST (guaranteed non-zero by game invariants)
     """
     issues = []
     guarded_vars = set()
@@ -947,7 +952,10 @@ def _check_divide_variable_zero_guard(lines):
             try:
                 float(divisor)
             except ValueError:
-                if divisor not in guarded_vars:
+                if (
+                    divisor not in guarded_vars
+                    and divisor not in _DIVIDE_ZERO_GUARD_ALLOWLIST
+                ):
                     issues.append(
                         (
                             i + 1,
