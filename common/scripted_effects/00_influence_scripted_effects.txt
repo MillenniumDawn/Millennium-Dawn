@@ -14,14 +14,11 @@ init_influence = {
 # Purpose: This is the main effect that is used to update the dirty influence variable
 update_dirty_influence_var = {
 	if = {
-		limit = { is_ai = no }
-		if = {
-			limit = { NOT = { has_variable = global.update_influence_ui } }
-			set_variable = { global.update_influence_ui = 1 }
-		}
-		else = {
-			add_to_variable = { global.update_influence_ui = 1 }
-		}
+		limit = { NOT = { has_variable = global.update_influence_ui } }
+		set_variable = { global.update_influence_ui = 1 }
+	}
+	else = {
+		add_to_variable = { global.update_influence_ui = 1 }
 	}
 }
 
@@ -29,7 +26,6 @@ update_dirty_influence_var = {
 # Purpose: This is the main effect that is used to recalculate the influence
 recalculate_influence = {
 	hidden_effect = {
-		delete_influencer_check = yes
 		sort_influence = yes
 		calculate_influence_percentage = yes
 		update_dirty_influence_var = yes
@@ -74,24 +70,20 @@ sort_influence = {
 	for_each_loop = {
 		array = influence_array_val_temp
 		value = v
+		index = i
 		if = { limit = { NOT = { check_variable = { v = 0 } } }
 			add_to_array = { influence_array_val = v }
+			add_to_array = { influence_array = influence_array_temp^i }
 			add_to_temp_variable = { influence_total = v }
 		}
 	}
 	add_to_temp_variable = { influence_total = domestic_influence_amount }
-	for_each_loop = {
-		array = influence_array_temp
-		value = v
-		if = { limit = { NOT = { check_variable = { v = 0 } } }
-			add_to_array = { influence_array = v }
-		}
-	}
 	clear_temp_array = influence_array_val_temp
 	clear_temp_array = influence_array_temp
 
-	set_temp_variable = { new_influence_scalar = 100 }
-	divide_temp_variable = { new_influence_scalar = influence_total }
+	clamp_temp_variable = { var = influence_total min = 0.01 }
+	set_temp_variable = { new_influence_scalar = { value = 100 divide = influence_total } }
+
 	set_temp_variable = { foreign_sum = 0 }
 	for_each_loop = {
 		array = influence_array_val
@@ -109,40 +101,34 @@ sort_influence = {
 # Effect: calculate_influence_percentage
 # Purpose: This is the main effect that is used to calculate the influence drift percentage
 calculate_influence_percentage = {
-	set_temp_variable = { influence_democratic = 0 }
-	set_temp_variable = { influence_neutrality = 0 }
-	set_temp_variable = { influence_communism = 0 }
-	set_temp_variable = { influence_nationalist = 0 }
-	set_temp_variable = { influence_fascism = 0 }
+	set_variable = { democratic_drift_influence_var = 0 }
+	set_variable = { neutrality_drift_influence_var = 0 }
+	set_variable = { communism_drift_influence_var = 0 }
+	set_variable = { nationalist_drift_influence_var = 0 }
+	set_variable = { fascism_drift_influence_var = 0 }
 
 	for_loop_effect = {
 		end = influence_array_val^num
 		if = { limit = { var:influence_array^v = { has_government = democratic } }
-			add_to_temp_variable = { influence_democratic = influence_array_val^v }
+			add_to_variable = { democratic_drift_influence_var = influence_array_val^v }
 		}
 		else_if = { limit = { var:influence_array^v = { has_government = neutrality } }
-			add_to_temp_variable = { influence_neutrality = influence_array_val^v }
+			add_to_variable = { neutrality_drift_influence_var = influence_array_val^v }
 		}
 		else_if = { limit = { var:influence_array^v = { has_government = communism } }
-			add_to_temp_variable = { influence_communism = influence_array_val^v }
+			add_to_variable = { communism_drift_influence_var = influence_array_val^v }
 		}
 		else_if = { limit = { var:influence_array^v = { has_government = nationalist } }
-			add_to_temp_variable = { influence_nationalist = influence_array_val^v }
+			add_to_variable = { nationalist_drift_influence_var = influence_array_val^v }
 		}
 		else_if = { limit = { var:influence_array^v = { has_government = fascism } }
-			add_to_temp_variable = { influence_fascism = influence_array_val^v }
+			add_to_variable = { fascism_drift_influence_var = influence_array_val^v }
 		}
 	}
 
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = influence_drift_modifier } } }
 		add_dynamic_modifier = { modifier = influence_drift_modifier }
 	}
-
-	set_variable = { nationalist_drift_influence_var = influence_nationalist }
-	set_variable = { fascism_drift_influence_var = influence_fascism }
-	set_variable = { neutrality_drift_influence_var = influence_neutrality }
-	set_variable = { communism_drift_influence_var = influence_communism }
-	set_variable = { democratic_drift_influence_var = influence_democratic }
 
 	multiply_variable = { nationalist_drift_influence_var = 0.001 }
 	multiply_variable = { fascism_drift_influence_var = 0.001 }
@@ -160,20 +146,20 @@ spread_influence = {
 
 	set_temp_variable = { percent_change = global.percent_change_value }
 	set_temp_variable = { tag_index = PREV.id }
-	set_temp_variable = { influence_target = THIS.id }
 	change_influence_percentage = yes
 
 	if = { limit = { economic_aid_available = yes }
-		economic_aid_action = yes
-	}
-	if = { limit = { target_other_influence_available = yes }
-		target_other_influencer_action = yes
+		PREV.PREV = {
+			country_event = influence.0
+		}
 	}
 	if = { limit = { manipulate_politics_action_available = yes }
 		manipulate_politics_action = yes
 	}
 	if = { limit = { coup_is_available = yes }
-		influence_coup_action = yes
+		PREV.PREV = {
+			country_event = influence.44
+		}
 	}
 	if = { limit = { make_puppet_action_available = yes }
 		make_puppet_action = yes
@@ -219,6 +205,7 @@ make_puppet_action = {
 	every_neighbor_country = {
 		add_opinion_modifier = { target = PREV modifier = puppeted_neighbor }
 	}
+	update_dirty_influence_var = yes
 }
 
 # Effect: economic_exploitation_action
@@ -237,7 +224,6 @@ economic_exploitation_action = {
 	# Remove 10% Influence
 	set_temp_variable = { percent_change = -10 }
 	set_temp_variable = { tag_index = PREV.id }
-	set_temp_variable = { influence_target = THIS.id }
 	change_influence_percentage = yes
 
 	#Opinion Modifiers
@@ -251,47 +237,139 @@ economic_exploitation_action = {
 }
 
 # Effect: manipulate_politics_action
-# Purpose: This is the main effect that is used to manipulate the politics of another nation
+# Purpose: This is the main effect that is used to manipulate the politics of another nation.
+# Runs in the target country's scope (THIS = target, ROOT = influencer).
+# No parameters. var_pop (the base popularity shift) is derived from political_manipulation_corruption_factor, or 0.08 when no corruption idea is active.
+# Sets manipulate_politics_pp_cost (temp var) to -100, or -50 for PER+IRQ/AFG and ENG+COL special cases.
 manipulate_politics_action = {
-	# Add +5 to Our Outlook
-	if = { limit = { PREV = { has_government = fascism } }
-		add_popularity = { ideology = fascism popularity = 0.05 }
-	}
-	else_if = { limit = { PREV = { has_government = neutrality } }
-		add_popularity = { ideology = neutrality popularity = 0.05 }
-	}
-	else_if = { limit = { PREV = { has_government = communism } }
-		add_popularity = { ideology = communism popularity = 0.05 }
-	}
-	else_if = { limit = { PREV = { has_government = nationalist } }
-		add_popularity = { ideology = nationalist popularity = 0.05 }
-	}
-	else_if = { limit = { PREV = { has_government = democratic } }
-		add_popularity = { ideology = democratic popularity = 0.05 }
+	# Corruption raises political-manipulation vulnerability; the modifier carries the per-level base.
+	set_temp_variable = { var_pop = modifier@political_manipulation_corruption_factor }
+	if = { limit = { check_variable = { var_pop = 0 } }
+		set_temp_variable = { var_pop = 0.08 }
 	}
 
-	#add +5 to our party
-	for_each_loop = {
-		array = PREV.ruling_party
-		value = v
-		add_to_variable = { party_pop_array^v = 0.05 }
+	# Base PP cost; special cases refund 50.
+	set_temp_variable = { manipulate_politics_pp_cost = -100 }
+
+	# Scale var_pop by the influencer's foreign influence mod minus the target's defense.
+	set_temp_variable = {
+		influence_defense_change = {
+			value = modifier@foreign_influence_defense_modifier
+			subtract = {
+				value = 1
+				add = ROOT.modifier@foreign_influence_modifier
+			}
+		}
 	}
 
-	# Remove 10% Influence
-	set_temp_variable = { percent_change = -5 }
-	set_temp_variable = { tag_index = PREV.id }
-	set_temp_variable = { influence_target = THIS.id }
-	change_influence_percentage = yes
-
-	#reduce relations if different gov
-	if = { limit = { NOT = { is_same_government_PREV = yes } }
-		add_opinion_modifier = { target = PREV modifier = supported_opposition }
+	multiply_temp_variable = {
+		var = var_pop
+		value = {
+			value = 1
+			add = ROOT.modifier@foreign_influence_modifier
+			clamp = { min = 0.01 max = 0.15 }
+		}
 	}
-}
 
-economic_aid_action = {
-	PREV.PREV = {
-		country_event = influence.0
+	# PER shia-influence focus: stronger manipulation of allied sectarian parties in IRQ/AFG.
+	if = {
+		limit = {
+			ROOT = {
+				original_tag = PER
+				has_completed_focus = PER_puppeteer_iraqi_politcs
+				OR = {
+					emerging_hardline_shiite_are_in_power = yes
+					emerging_moderate_shiite_are_in_power = yes
+				}
+			}
+		}
+		if = {
+			limit = { original_tag = IRQ  }
+			add_to_temp_variable = { manipulate_politics_pp_cost = 50 }
+			add_to_temp_variable = { var_pop = -0.05 }
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = var_pop }
+			set_temp_variable = { temp_outlook_increase = var_pop }
+			add_relative_party_popularity = yes
+
+			add_to_temp_variable = { var_pop = -0.02 }
+			set_temp_variable = { party_index = 8 }
+			set_temp_variable = { party_popularity_increase = var_pop }
+			set_temp_variable = { temp_outlook_increase = var_pop }
+			add_relative_party_popularity = yes
+
+			# Reduce by -5%
+			set_temp_variable = { percent_change = -5 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+		else_if = {
+			limit = { THIS = { original_tag = AFG } }
+			add_to_temp_variable = { manipulate_politics_pp_cost = 50 }
+			add_to_temp_variable = { var_pop = -0.05 }
+			set_temp_variable = { party_index = 8 }
+			set_temp_variable = { party_popularity_increase = var_pop }
+			set_temp_variable = { temp_outlook_increase = var_pop }
+			add_relative_party_popularity = yes
+
+			add_to_temp_variable = { var_pop = -0.02 }
+			set_temp_variable = { party_index = 9 }
+			set_temp_variable = { party_popularity_increase = var_pop }
+			set_temp_variable = { temp_outlook_increase = var_pop }
+			add_relative_party_popularity = yes
+
+			# Reduce by -5%
+			set_temp_variable = { percent_change = -5 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+	}
+	# ENG + "macabre alliance" focus: same shia-style two-party push against COL.
+	else_if = {
+		limit = {
+			ROOT = {
+				original_tag = ENG
+				has_idea = ENG_the_macabre_alliance
+			}
+			original_tag = COL
+		}
+		add_to_temp_variable = { manipulate_politics_pp_cost = 50 }
+		add_to_temp_variable = { var_pop = -0.05 }
+		set_temp_variable = { party_index = 8 }
+		set_temp_variable = { party_popularity_increase = var_pop }
+		set_temp_variable = { temp_outlook_increase = var_pop }
+		add_relative_party_popularity = yes
+
+		add_to_temp_variable = { var_pop = -0.02 }
+		set_temp_variable = { party_index = 9 }
+		set_temp_variable = { party_popularity_increase = var_pop }
+		set_temp_variable = { temp_outlook_increase = var_pop }
+		add_relative_party_popularity = yes
+
+		# Reduce by -5%
+		set_temp_variable = { percent_change = -5 }
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
+	}
+	else = {
+		set_temp_variable = { party_index = ROOT.ruling_party^0 }
+		set_temp_variable = { party_popularity_increase = var_pop }
+		set_temp_variable = { temp_outlook_increase = var_pop }
+		add_relative_party_popularity = yes
+
+		# Reduce by -10%
+		set_temp_variable = { percent_change = -10 }
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
+	}
+
+	# Reduce Relations if different gov
+	if = { limit = { NOT = { has_government = ROOT } }
+		add_opinion_modifier = { target = ROOT modifier = supported_opposition }
 	}
 }
 
@@ -323,74 +401,17 @@ mp_economic_aid_transfer = {
 	update_dirty_influence_var = yes
 }
 
-target_other_influencer_action = {
-	PREV.PREV = {
-		country_event = influence.22
-	}
-}
-
-influence_coup_action = {
-	PREV.PREV = {
-		country_event = influence.44
-	}
-}
-
-# Effect: delete_influencer_check
-# Purpose: Merges duplicate influencer entries before the sort pass.
-# Below-threshold and annexed-nation pruning are handled inside sort_influence.
-# Note: remove_from_array inside a forward-iterating loop can skip consecutive duplicates
-# (index shift); any missed entries are pruned on the next recalculate_influence call.
-delete_influencer_check = {
-	for_each_loop = {
-		array = influence_array
-		index = i
-		if = { limit = { NOT = { check_variable = { influence_array^i = 0 } } }
-			if = {
-				limit = {
-					any_of = {
-						array = influence_array
-						value = v
-						index = c
-						check_variable = { influence_array^c = influence_array^i }
-						NOT = { check_variable = { c = i } }
-					}
-				}
-				log = "[GetDateText]: [This.GetName]: Double Influencer Present. Debug Code: 1001. Influencer: [?var:influence_array^i.GetName] Index: [?i], Duplicate Influencer: [?var:influence_array^i.GetName] Index: [?c]"
-				add_to_variable = { influence_array_val^i = influence_array_val^c }
-				remove_from_array = { array = influence_array index = c }
-				remove_from_array = { array = influence_array_val index = c }
-			}
-		}
-	}
-}
-
 # Effect: change_domestic_influence_percentage
 # Purpose: This is the main effect that is used to change the domestic influence percentage
 # Parameters:
-# - percent_change: The percentage change to the influence
-# - influencer_index: The index of the influencer nation, supports all native country scopes
+# - percent_change: The percentage change to the domestic share
 change_domestic_influence_percentage = {
-	set_temp_variable = { influence_outlook_amount = 0 }
-	for_each_loop = {
-		array = influence_array_val
-		value = v
-		index = i
-		add_to_temp_variable = { influence_outlook_amount = v }
-	}
-
 	add_to_variable = { domestic_influence_amount = percent_change }
-	set_temp_variable = { temp_total = 100 }
-	subtract_from_temp_variable = { temp_total = domestic_influence_amount }
-
-	clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-	divide_temp_variable = { temp_total = influence_outlook_amount }
-	for_each_loop = {
-		array = influence_array_val
-		value = v
-		index = i
-
-		multiply_variable = { influence_array_val^i = temp_total }
-	}
+	set_temp_variable = { skip_index = -1 }
+	set_temp_variable = { held_value = domestic_influence_amount }
+	set_temp_variable = { scale_domestic = 0 }
+	set_temp_variable = { extra_outlook = 0 }
+	redistribute_influence_pool = yes
 	recalculate_influence = yes
 
 	custom_effect_tooltip = change_domestic_influence_percentage_tt
@@ -402,41 +423,429 @@ change_domestic_influence_percentage = {
 # - percent_change: The percentage change to the influence
 # - influencer_index: The index of the influencer nation, supports all native country scopes
 change_current_influencer_index_percentage = {
-
 	set_temp_variable = { percent_change_temp = percent_change }
-	set_temp_variable = { influence_outlook_amount = 0 }
-	add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+	add_to_variable = { influence_array_val^influencer_index = percent_change_temp }
+	set_temp_variable = { skip_index = influencer_index }
+	set_temp_variable = { held_value = influence_array_val^influencer_index }
+	set_temp_variable = { scale_domestic = 1 }
+	set_temp_variable = { extra_outlook = 0 }
+	redistribute_influence_pool = yes
+	recalculate_influence = yes
 
+	set_temp_variable = { percent_change = percent_change_temp }
+	custom_effect_tooltip = change_index_influencer_tt
+}
+
+# Effect: redistribute_influence_pool
+# Purpose: Rescale the non-locked influence pool so every share sums to 100 after one actor is fixed.
+# Parameters (temp vars, all required):
+# - skip_index: array index of the locked actor to exclude from the pool (-1 = exclude none)
+# - held_value: the locked actor's share; the pool is scaled to fill (100 - held_value)
+# - scale_domestic: 1 to treat domestic_influence_amount as part of the pool, 0 to leave it untouched
+# - extra_outlook: extra mass added to the divisor only (e.g. a demoted top influencer's old value)
+redistribute_influence_pool = {
+	set_temp_variable = { influence_outlook_amount = extra_outlook }
+	if = { limit = { check_variable = { scale_domestic = 1 } }
+		add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+	}
 	for_each_loop = {
 		array = influence_array_val
 		value = v
 		index = i
-
-		add_to_temp_variable = { influence_outlook_amount = v }
+		if = { limit = { NOT = { check_variable = { i = skip_index } } }
+			add_to_temp_variable = { influence_outlook_amount = v }
+		}
 	}
-	clamp_variable = { var = influence_outlook_amount max = 100 min = 0 }
-	subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
-
-	add_to_variable = { influence_array_val^influencer_index = percent_change_temp }
-	set_temp_variable = { temp_total = 100 }
-	subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
 
 	clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-	divide_temp_variable = { temp_total = influence_outlook_amount }
-	multiply_variable = { domestic_influence_amount = temp_total }
+	set_temp_variable = { temp_total = { value = 100 subtract = held_value divide = influence_outlook_amount } }
+
+	if = { limit = { check_variable = { scale_domestic = 1 } }
+		if = { limit = { check_variable = { domestic_influence_amount < 0.01 } }
+			set_variable = { domestic_influence_amount = 0.01 }
+		}
+		multiply_variable = { domestic_influence_amount = temp_total }
+	}
 	for_each_loop = {
 		array = influence_array_val
-		value = v
 		index = i
-
-		if = { limit = { NOT = { check_variable = { i = influencer_index } } }
+		if = { limit = { NOT = { check_variable = { i = skip_index } } }
 			multiply_variable = { influence_array_val^i = temp_total }
 		}
 	}
-	recalculate_influence = yes
-	set_temp_variable = { percent_change = percent_change_temp }
+}
 
-	custom_effect_tooltip = change_index_influencer_tt
+# Effect: apply_influence_special_modifiers
+# Purpose: Per-country influence-effectiveness modifiers folded into influence_change before the
+# final +1 multiplier in change_influence_percentage. Runs in the influence-target scope with
+# the influencer is held in tag_index; only the matching tag_index / original_tag branch runs.
+apply_influence_special_modifiers = {
+	# How-to: gate on the influencer (tag_index) or the target (original_tag, = current scope),
+	# then check the target's idea. Add the delta to influence_change. Only the matching branch runs.
+
+	# -- Influencer-specific (only the matching tag_index branch evaluates) --
+	if = { limit = { check_variable = { tag_index = ISR } }
+		if = { limit = { has_idea = full_isr_boycotte } add_to_temp_variable = { influence_change = -0.10 } }
+		if = { limit = { has_idea = pol_isr_boycotte } add_to_temp_variable = { influence_change = -0.05 } }
+	}
+	else_if = { limit = { check_variable = { tag_index = USA } }
+		if = { limit = { has_idea = USA_usaid } add_to_temp_variable = { influence_change = 0.05 } }
+	}
+	else_if = { limit = { check_variable = { tag_index = FRA.id } }
+		if = { limit = { OR = { has_idea = cfa_franc has_idea = cfa_franc_2 } } add_to_temp_variable = { influence_change = 0.10 } }
+		if = { limit = { has_idea = the_eco } add_to_temp_variable = { influence_change = 0.12 } }
+		if = { limit = { has_dynamic_modifier = { modifier = AFRICA_idea_nepad_modifier } } add_to_temp_variable = { influence_change = 0.10 } }
+	}
+	else_if = { limit = { check_variable = { tag_index = PER } }
+		if = { limit = { has_idea = IRQ_expulsion_of_iranian_idea } add_to_temp_variable = { influence_change = -0.15 } }
+	}
+	else_if = { limit = { check_variable = { tag_index = CHI } }
+		if = { limit = { has_idea = NKO_china_economic_assistant } add_to_temp_variable = { influence_change = 0.5 } }
+		if = { limit = { OR = { has_idea = SOV_foreign_chinacars_idea has_idea = SOV_foreign_chinacars_idea1 has_idea = SOV_foreign_chinacars_idea2 } } add_to_temp_variable = { influence_change = 0.03 } }
+	}
+	else_if = { limit = { check_variable = { tag_index = SOV } }
+		if = {
+			limit = {
+				OR = {
+					has_idea = PMR_gazprom_gaz
+					has_idea = PMR_ruble_efffect_idea
+					has_idea = PMR_russian_legacy
+					has_idea = SOV_IRQ_base
+					has_idea = SOV_nord_stream_idea
+					has_idea = SOV_nord_stream2_idea
+					has_idea = SOV_blue_stream_idea
+					has_idea = SOV_turkey_stream_idea
+					has_idea = PMR_14_army
+					has_idea = PMR_sov_idea
+					has_idea = USR_parlament_idea
+					has_idea = USR_gos_sovet_idea
+					has_idea = USR_council_ministers_idea
+					has_idea = USR_money_palata_idea
+					has_idea = USR_eternal_commitie_idea
+					has_idea = USR_valute_idea
+					has_idea = USR_civils_idea
+					has_idea = USR_economic_space_idea
+					has_idea = BUL_lukoil_russian_idea
+					has_idea = BUL_lukoil_russian_idea1
+				}
+			}
+			add_to_temp_variable = { influence_change = 0.15 }
+		}
+	}
+
+	# -- Multi-influencer / influencer-property (independent, always checked) --
+	if = {
+		limit = {
+			has_idea = IRQ_expulsion_of_foreigners_idea
+			OR = { check_variable = { tag_index = PER } check_variable = { tag_index = USA } }
+		}
+		add_to_temp_variable = { influence_change = -0.25 }
+	}
+	if = {
+		limit = {
+			has_idea = PER_strength_of_our_lobby
+			OR = { check_variable = { tag_index = ISR } check_variable = { tag_index = USA } }
+		}
+		add_to_temp_variable = { influence_change = -0.25 }
+	}
+	if = {
+		limit = {
+			has_idea = sunni
+			var:tag_index = { has_idea = muslim_brotherhood_faction_member }
+		}
+		add_to_temp_variable = { influence_change = 0.10 }
+	}
+	# Intel on Target
+	if = { limit = { has_dlc = "La Resistance" }
+		if = { limit = { var:tag_index = { check_variable = { civilian_intel@PREV > 75 } } }
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+	}
+
+	# -- Target-specific (only the matching original_tag block evaluates) --
+	if = {
+		limit = {
+			original_tag = ARM
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = ARM_economy_grand_tobacco_idea
+					has_idea = ARM_economy_masis_tobacco_idea
+				}
+				check_variable = { tag_index = CAN }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = ARM_economy_hsbc_idea
+					has_idea = ARM_education_brit_idea
+				}
+				check_variable = { tag_index = ENG }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = ARM_economy_ycrdi_idea
+					has_idea = ARM_Eraz_idea
+					has_idea = ARM_education_mgu_idea
+				}
+				check_variable = { tag_index = SOV }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				has_idea = CHE_republic_rf
+				check_variable = { tag_index = SOV }
+			}
+			add_to_temp_variable = { influence_change = 0.99 }
+		}
+		if = {
+			limit = {
+				has_idea = ARM_economy_shoghakn_idea1
+				check_variable = { tag_index = ISR }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				has_idea = ARM_economy_veon_idea
+				check_variable = { tag_index = HOL }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				has_idea = ARM_armbel_trade_center
+				check_variable = { tag_index = BLR }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = ARM_it_sector_idea1
+					has_idea = ARM_it_sector_idea2
+					has_idea = ARM_it_sector_idea3
+					has_idea = ARM_it_sector_idea4
+					has_idea = ARM_it_sector_idea5
+					has_idea = ARM_it_sector_idea6
+					has_idea = ARM_it_sector_idea7
+					has_idea = ARM_it_sector_idea8
+					has_idea = ARM_it_sector_idea9
+					has_idea = ARM_education_aua_idea
+					has_idea = ARM_usa_embaracy_idea
+				}
+				check_variable = { tag_index = USA }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				has_idea = ARM_usa_ngo_leave_idea
+				check_variable = { tag_index = USA }
+			}
+			add_to_temp_variable = { influence_change = -0.15 }
+		}
+		if = {
+			limit = {
+				has_idea = ARM_zhirayr_no_russian_idea
+				check_variable = { tag_index = SOV }
+			}
+			add_to_temp_variable = { influence_change = -0.15 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = ARM_education_erasmus_idea
+					has_idea = ARM_armenian_foreign_legion_idea
+					has_idea = ARM_education_france_idea
+				}
+				check_variable = { tag_index = FRA }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				has_idea = ARM_education_erasmus_idea
+				check_variable = { tag_index = GER }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+
+	}
+
+	if = {
+		limit = {
+			original_tag = PMR
+		}
+		if = {
+			limit = {
+				has_idea = PMR_ger_idea
+				check_variable = { tag_index = GER }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+
+		if = {
+			limit = {
+				has_idea = PMR_ita_idea
+				check_variable = { tag_index = ITA }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+
+		if = {
+			limit = {
+				has_idea = PMR_rom_idea
+				check_variable = { tag_index = ROM }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+
+		if = {
+			limit = {
+				has_idea = PMR_aus_idea
+				check_variable = { tag_index = AUS }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				has_idea = PMR_hun_idea
+				check_variable = { tag_index = HUN }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+
+		if = {
+			limit = {
+				has_idea = PMR_ukr_idea
+				check_variable = { tag_index = UKR }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				has_idea = PMR_chinese_economic
+				check_variable = { tag_index = CHI }
+			}
+			add_to_temp_variable = { influence_change = 0.15 }
+		}
+		if = {
+			limit = {
+				has_idea = PMR_inter_rao
+				check_variable = { tag_index = SOV }
+			}
+			add_to_temp_variable = { influence_change = 0.10 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = PMR_reform_debuff1
+					has_idea = PMR_annex_efffect_idea1
+					has_idea = PMR_army_efffect_idea1
+				}
+				check_variable = { tag_index = MLV }
+			}
+			add_to_temp_variable = { influence_change = 0.15 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = PMR_ukr_army
+					has_idea = PMR_grivna_efffect_idea
+				}
+				check_variable = { tag_index = UKR }
+			}
+			add_to_temp_variable = { influence_change = 0.15 }
+		}
+	}
+
+	if = {
+		limit = {
+			OR = {
+				original_tag = BLR
+				original_tag = UKR
+			}
+			has_idea = ARM_zhirayr_in_blr_ukr_idea
+			check_variable = { tag_index = ARM }
+		}
+		add_to_temp_variable = { influence_change = 0.10 }
+	}
+
+
+	if = {
+		limit = {
+			original_tag = TAJ
+		}
+		if = {
+			limit = {
+				has_idea = TAJ_tajik_barrier2
+				check_variable = { tag_index = SOV }
+			}
+			add_to_temp_variable = { influence_change = -0.25 }
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_idea = TAJ_201st_base
+					has_idea = TAJ_201st_base_upgrade
+				}
+				check_variable = { tag_index = SOV }
+			}
+			add_to_temp_variable = { influence_change = 0.30 }
+		}
+
+		if = {
+			limit = {
+				has_idea = TAJ_201st_base_usa
+				check_variable = { tag_index = USA }
+			}
+			add_to_temp_variable = { influence_change = 0.15 }
+		}
+		if = {
+			limit = {
+				has_idea = TAJ_201st_base_raj
+				check_variable = { tag_index = RAJ }
+			}
+			add_to_temp_variable = { influence_change = 0.15 }
+		}
+		if = {
+			limit = {
+				has_idea = TAJ_201st_base_chi
+				check_variable = { tag_index = CHI }
+			}
+			add_to_temp_variable = { influence_change = 0.15 }
+		}
+
+		if = {
+			limit = {
+				has_idea = TAJ_gulfs_bankroll_idea
+				check_variable = { tag_index = SAU }
+			}
+			add_to_temp_variable = { influence_change = 0.15 }
+		}
+	}
+
+	if = {
+		limit = {
+			original_tag = PER
+			has_idea = PER_fighting_colonialism
+			OR = {
+				check_variable = { tag_index = SOV }
+				check_variable = { tag_index = USA }
+				check_variable = { tag_index = ENG }
+			}
+		}
+		add_to_temp_variable = { influence_change = -0.25 }
+	}
 }
 
 # Effect: change_influence_percentage
@@ -458,7 +867,7 @@ change_influence_percentage = {
 
 	# Debugging/Logging Handling  in the first section
 	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [ROOT.GetName]: DEBUG: Influence Change, Influencer: [?var:tg.GetName.GetName], Influencee: [?var:it.GetName], Influence Domestic Independence: [?itd]"
+		log = "[GetDateText]: [ROOT.GetName]: DEBUG: Influence Change, Influencer: [?var:tg.GetName], Influencee: [?var:it.GetName], Influence Domestic Independence: [?itd]"
 	}
 	if = { limit = { check_variable = { tg = it } }
 		custom_effect_tooltip = change_influencer_tt_error
@@ -473,7 +882,6 @@ change_influence_percentage = {
 		}
 		else = {
 			set_temp_variable = { itd = THIS.domestic_influence_amount }
-			set_temp_variable = { size_of_influence_array = -1 }
 			set_temp_variable = { influencer_index = -1 }
 
 			for_each_loop = {
@@ -482,17 +890,14 @@ change_influence_percentage = {
 				index = i
 				if = { limit = { check_variable = { v = var:tag_index } }
 					set_temp_variable = { influencer_index = i }
-				}
-				if = { limit = { NOT = { check_variable = { v = 0 } } }
-					add_to_temp_variable = { PREV.size_of_influence_array = 1 }
+					set_temp_variable = { break = 1 }
 				}
 			}
+			set_temp_variable = { break = 0 }
 			if = { limit = { check_variable = { influencer_index = -1 } }
+				set_temp_variable = { influencer_index = influence_array^num }
 				add_to_array = { influence_array = var:tag_index }
 				add_to_array = { influence_array_val = 0 }
-
-				set_temp_variable = { influencer_index = size_of_influence_array }
-				add_to_temp_variable = { influencer_index = 1 }
 			}
 
 			# Apply multiplier in positive interaction
@@ -501,11 +906,11 @@ change_influence_percentage = {
 
 				var:tag_index = {
 					set_temp_variable = { influence_change = modifier@foreign_influence_modifier }
-					if = { limit = { NOT = { is_on_same_continent_as = PREV } }
-						add_to_temp_variable = { influence_change = modifier@foreign_influence_continent_modifier }
-					}
 					if = { limit = { is_on_same_continent_as = PREV }
 						add_to_temp_variable = { influence_change = modifier@foreign_influence_home_continent_modifier }
+					}
+					else = {
+						add_to_temp_variable = { influence_change = modifier@foreign_influence_continent_modifier }
 					}
 				}
 
@@ -513,579 +918,27 @@ change_influence_percentage = {
 				subtract_from_temp_variable = { influence_change = influence_defense_change }
 
 
-				# Custom Influence Amount
-				# HOW TO: You will want to check if the tag_index is the original tag
-				# the has idea will check if the target country has an idea. It can be used to
-				# make a countries influence more effective or worse.
-				if = {
-					limit = {
-						check_variable = { tag_index = ISR }
-						has_idea = full_isr_boycotte
-					}
-					add_to_temp_variable = { influence_change = -0.10 }
-				}
-				if = {
-					limit = {
-						check_variable = { tag_index = ISR }
-						has_idea = pol_isr_boycotte
-					}
-					add_to_temp_variable = { influence_change = -0.05 }
-				}
-				if = {
-					limit = {
-						check_variable = { tag_index = USA }
-						has_idea = USA_usaid
-					}
-					add_to_temp_variable = { influence_change = 0.05 }
-				}
-				if = {
-					limit = {
-						OR = {
-							has_idea = cfa_franc
-							has_idea = cfa_franc_2
-						}
-						check_variable = { tag_index = FRA.id }
-					}
-					add_to_temp_variable = { influence_change = 0.10 }
-				}
-				if = {
-					limit = {
-						has_idea = the_eco
-						check_variable = { tag_index = FRA.id }
-					}
-					add_to_temp_variable = { influence_change = 0.12 }
-				}
-				if = {
-					limit = {
-						has_dynamic_modifier = {
-							modifier = AFRICA_idea_nepad_modifier
-						}
-						check_variable = { tag_index = FRA.id }
-					}
-					add_to_temp_variable = { influence_change = 0.10 }
-				}
-
-				if = {
-					limit = {
-						has_idea = IRQ_expulsion_of_iranian_idea
-						check_variable = { tag_index = PER }
-					}
-					add_to_temp_variable = { influence_change = -0.15 }
-				}
-
-				if = {
-					limit = {
-						has_idea = NKO_china_economic_assistant
-						check_variable = { tag_index = CHI }
-					}
-					add_to_temp_variable = { influence_change = 0.5 }
-				}
-
-				if = {
-					limit = {
-						has_idea = IRQ_expulsion_of_foreigners_idea
-						OR = {
-							check_variable = { tag_index = PER }
-							check_variable = { tag_index = USA }
-						}
-					}
-					add_to_temp_variable = { influence_change = -0.25 }
-				}
-
-				if = {
-					limit = {
-						OR = {
-							has_idea = PMR_gazprom_gaz
-							has_idea = PMR_ruble_efffect_idea
-							has_idea = PMR_russian_legacy
-							has_idea = SOV_IRQ_base
-							has_idea = SOV_nord_stream_idea
-							has_idea = SOV_nord_stream2_idea
-							has_idea = SOV_blue_stream_idea
-							has_idea = SOV_turkey_stream_idea
-							has_idea = PMR_14_army
-							has_idea = PMR_sov_idea
-							has_idea = USR_parlament_idea
-							has_idea = USR_gos_sovet_idea
-							has_idea = USR_council_ministers_idea
-							has_idea = USR_money_palata_idea
-							has_idea = USR_eternal_commitie_idea
-							has_idea = USR_valute_idea
-							has_idea = USR_civils_idea
-							has_idea = USR_economic_space_idea
-							has_idea = BUL_lukoil_russian_idea
-							has_idea = BUL_lukoil_russian_idea1
-						}
-						check_variable = { tag_index = SOV }
-					}
-					add_to_temp_variable = { influence_change = 0.15 }
-				}
-				if = {
-					limit = {
-						OR = {
-							has_idea = SOV_foreign_chinacars_idea
-							has_idea = SOV_foreign_chinacars_idea1
-							has_idea = SOV_foreign_chinacars_idea2
-						}
-						check_variable = { tag_index = CHI }
-					}
-					add_to_temp_variable = { influence_change = 0.03 }
-				}
-
-				if = {
-					limit = {
-						original_tag = ARM
-					}
-					if = {
-						limit = {
-							OR = {
-								has_idea = ARM_economy_grand_tobacco_idea
-								has_idea = ARM_economy_masis_tobacco_idea
-							}
-							check_variable = { tag_index = CAN }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							OR = {
-								has_idea = ARM_economy_hsbc_idea
-								has_idea = ARM_education_brit_idea
-							}
-							check_variable = { tag_index = ENG }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							OR = {
-								has_idea = ARM_economy_ycrdi_idea
-								has_idea = ARM_Eraz_idea
-								has_idea = ARM_education_mgu_idea
-							}
-							check_variable = { tag_index = SOV }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							has_idea = CHE_republic_rf
-							check_variable = { tag_index = SOV }
-						}
-						add_to_temp_variable = { influence_change = 0.99 }
-					}
-					if = {
-						limit = {
-							has_idea = ARM_economy_shoghakn_idea1
-							check_variable = { tag_index = ISR }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							has_idea = ARM_economy_veon_idea
-							check_variable = { tag_index = HOL }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							has_idea = ARM_armbel_trade_center
-							check_variable = { tag_index = BLR }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							OR = {
-								has_idea = ARM_it_sector_idea1
-								has_idea = ARM_it_sector_idea2
-								has_idea = ARM_it_sector_idea3
-								has_idea = ARM_it_sector_idea4
-								has_idea = ARM_it_sector_idea5
-								has_idea = ARM_it_sector_idea6
-								has_idea = ARM_it_sector_idea7
-								has_idea = ARM_it_sector_idea8
-								has_idea = ARM_it_sector_idea9
-								has_idea = ARM_education_aua_idea
-								has_idea = ARM_usa_embaracy_idea
-							}
-							check_variable = { tag_index = USA }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							has_idea = ARM_usa_ngo_leave_idea
-							check_variable = { tag_index = USA }
-						}
-						add_to_temp_variable = { influence_change = -0.15 }
-					}
-					if = {
-						limit = {
-							has_idea = ARM_zhirayr_no_russian_idea
-							check_variable = { tag_index = SOV }
-						}
-						add_to_temp_variable = { influence_change = -0.15 }
-					}
-					if = {
-						limit = {
-							OR = {
-								has_idea = ARM_education_erasmus_idea
-								has_idea = ARM_armenian_foreign_legion_idea
-								has_idea = ARM_education_france_idea
-							}
-							check_variable = { tag_index = FRA }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							has_idea = ARM_education_erasmus_idea
-							check_variable = { tag_index = GER }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-
-				}
-
-				if = {
-					limit = {
-						original_tag = PMR
-					}
-					if = {
-						limit = {
-							has_idea = PMR_ger_idea
-							check_variable = { tag_index = GER }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-
-					if = {
-						limit = {
-							has_idea = PMR_ita_idea
-							check_variable = { tag_index = ITA }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-
-					if = {
-						limit = {
-							has_idea = PMR_rom_idea
-							check_variable = { tag_index = ROM }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-
-					if = {
-						limit = {
-							has_idea = PMR_aus_idea
-							check_variable = { tag_index = AUS }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							has_idea = PMR_hun_idea
-							check_variable = { tag_index = HUN }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-
-					if = {
-						limit = {
-							has_idea = PMR_ukr_idea
-							check_variable = { tag_index = UKR }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							has_idea = PMR_chinese_economic
-							check_variable = { tag_index = CHI }
-						}
-						add_to_temp_variable = { influence_change = 0.15 }
-					}
-					if = {
-						limit = {
-							has_idea = PMR_inter_rao
-							check_variable = { tag_index = SOV }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-					if = {
-						limit = {
-							OR = {
-								has_idea = PMR_reform_debuff1
-								has_idea = PMR_annex_efffect_idea1
-								has_idea = PMR_army_efffect_idea1
-							}
-							check_variable = { tag_index = MLV }
-						}
-						add_to_temp_variable = { influence_change = 0.15 }
-					}
-					if = {
-						limit = {
-							OR = {
-								has_idea = PMR_ukr_army
-								has_idea = PMR_grivna_efffect_idea
-							}
-							check_variable = { tag_index = UKR }
-						}
-						add_to_temp_variable = { influence_change = 0.15 }
-					}
-				}
-
-				if = {
-					limit = {
-						original_tag = BLR
-					}
-					if = {
-						limit = {
-							has_idea = ARM_zhirayr_in_blr_ukr_idea
-							check_variable = { tag_index = ARM }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-				}
-
-				if = {
-					limit = {
-						original_tag = UKR
-					}
-					if = {
-						limit = {
-							has_idea = ARM_zhirayr_in_blr_ukr_idea
-							check_variable = { tag_index = ARM }
-						}
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-				}
-
-
-				if = {
-					limit = {
-						original_tag = TAJ
-					}
-					if = {
-						limit = {
-							has_idea = TAJ_tajik_barrier2
-							check_variable = { tag_index = SOV }
-						}
-						add_to_temp_variable = { influence_change = -0.25 }
-					}
-
-					if = {
-						limit = {
-							OR = {
-								has_idea = TAJ_201st_base
-								has_idea = TAJ_201st_base_upgrade
-							}
-							check_variable = { tag_index = SOV }
-						}
-						add_to_temp_variable = { influence_change = 0.30 }
-					}
-
-					if = {
-						limit = {
-							has_idea = TAJ_201st_base_usa
-							check_variable = { tag_index = USA }
-						}
-						add_to_temp_variable = { influence_change = 0.15 }
-					}
-					if = {
-						limit = {
-							has_idea = TAJ_201st_base_raj
-							check_variable = { tag_index = RAJ }
-						}
-						add_to_temp_variable = { influence_change = 0.15 }
-					}
-					if = {
-						limit = {
-							has_idea = TAJ_201st_base_chi
-							check_variable = { tag_index = CHI }
-						}
-						add_to_temp_variable = { influence_change = 0.15 }
-					}
-
-					if = {
-						limit = {
-							has_idea = TAJ_gulfs_bankroll_idea
-							check_variable = { tag_index = SAU }
-						}
-						add_to_temp_variable = { influence_change = 0.15 }
-					}
-				}
-
-				if = {
-					limit = {
-						original_tag = PER
-					}
-					if = {
-						limit = {
-							has_idea = PER_fighting_colonialism
-							check_variable = { tag_index = SOV }
-						}
-						add_to_temp_variable = { influence_change = -0.25 }
-					}
-					if = {
-						limit = {
-							has_idea = PER_fighting_colonialism
-							check_variable = { tag_index = USA }
-						}
-						add_to_temp_variable = { influence_change = -0.25 }
-					}
-					if = {
-						limit = {
-							has_idea = PER_fighting_colonialism
-							check_variable = { tag_index = ENG }
-						}
-						add_to_temp_variable = { influence_change = -0.25 }
-					}
-
-				}
-
-				if = {
-					limit = {
-						has_idea = PER_strength_of_our_lobby
-						OR = {
-							check_variable = { tag_index = ISR }
-							check_variable = { tag_index = USA }
-						}
-					}
-					add_to_temp_variable = { influence_change = -0.25 }
-				}
-
-				if = {
-					limit = {
-						has_idea = sunni
-						var:tag_index = { has_idea = muslim_brotherhood_faction_member }
-					}
-					add_to_temp_variable = { influence_change = 0.10 }
-				}
-
-				# Intel on Target
-				if = { limit = { has_dlc = "La Resistance" }
-					if = { limit = { var:tag_index = { check_variable = { civilian_intel@PREV > 75 } } }
-						add_to_temp_variable = { influence_change = 0.10 }
-					}
-				}
+				apply_influence_special_modifiers = yes
 
 				add_to_temp_variable = { influence_change = 1 }
 				multiply_temp_variable = { percent_change = influence_change }
-			}
 
-			if = {
-				limit = {
-					check_variable = { influence_array_val^6 > 0 }
-					all_of_scopes = {
-						array = influence_array
-						NOT = { original_tag = var:tag_index }
-					}
-				}
-
-				if = { limit = { check_variable = { percent_change > influence_array_val^6 } }
-					set_temp_variable = { old_top_influence = influence_array_val^6 }
-
-					set_variable = { influence_array^6 = var:tag_index }
-					set_variable = { influence_array_val^6 = percent_change }
-					set_temp_variable = { influencer_index = 6 }
-
-					# Calculate the total influence to redistribute
-					# This includes domestic influence + old top influence + all other influences (except new top)
-					set_temp_variable = { influence_outlook_amount = 0 }
-					add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
-					add_to_temp_variable = { influence_outlook_amount = old_top_influence }
-
-					for_each_loop = {
-						array = influence_array_val
-						value = v
-						index = i
-
-						# Add all influences except the new top position (index 6)
-						if = { limit = { NOT = { check_variable = { i = 6 } } }
-							add_to_temp_variable = { influence_outlook_amount = v }
-						}
-					}
-
-					# Calculate redistribution multiplier
-					set_temp_variable = { temp_total = 100 }
-					subtract_from_temp_variable = { temp_total = percent_change }
-
-					clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-					divide_temp_variable = { temp_total = influence_outlook_amount }
-
-					# Apply redistribution to domestic and all other influences
-					multiply_variable = { domestic_influence_amount = temp_total }
-					for_each_loop = {
-						array = influence_array_val
-						value = v
-						index = i
-
-						if = { limit = { NOT = { check_variable = { i = 6 } } }
-							multiply_variable = { influence_array_val^i = temp_total }
-						}
-					}
-					custom_effect_tooltip = change_influencer_tt
-				}
-				else = {
-					# Creates the summation of all array calculations
-					set_temp_variable = { influence_outlook_amount = 0 }
-					for_each_loop = {
-						array = influence_array_val
-						value = v
-						index = i
-						add_to_temp_variable = { influence_outlook_amount = v }
-					}
-
-					add_to_variable = { domestic_influence_amount = percent_change }
-					set_temp_variable = { temp_total = 100 }
-					subtract_from_temp_variable = { temp_total = domestic_influence_amount }
-
-					clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-					divide_temp_variable = { temp_total = influence_outlook_amount }
-					for_each_loop = {
-						array = influence_array_val
-						value = v
-						index = i
-
-						multiply_variable = { influence_array_val^i = temp_total }
-					}
-
-					custom_effect_tooltip = change_domestic_influence_percentage_tt
+				# Cap the gain at the remaining headroom to 100% so the shown value matches the realized share.
+				set_temp_variable = { influence_headroom = 100 }
+				subtract_from_temp_variable = { influence_headroom = influence_array_val^influencer_index }
+				if = { limit = { check_variable = { percent_change > influence_headroom } }
+					set_temp_variable = { percent_change = influence_headroom }
 				}
 			}
-			else = {
-				set_temp_variable = { influence_outlook_amount = 0 }
-				add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
 
-				for_each_loop = {
-					array = influence_array_val
-					value = v
-					index = i
-
-					add_to_temp_variable = { influence_outlook_amount = v }
-				}
-				subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
-
-				add_to_variable = { influence_array_val^influencer_index = percent_change }
-				set_temp_variable = { temp_total = 100 }
-				subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
-
-				clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-				divide_temp_variable = { temp_total = influence_outlook_amount }
-				multiply_variable = { domestic_influence_amount = temp_total }
-				for_each_loop = {
-					array = influence_array_val
-					value = v
-					index = i
-
-					if = { limit = { NOT = { check_variable = { i = influencer_index } } }
-						multiply_variable = { influence_array_val^i = temp_total }
-					}
-				}
-				custom_effect_tooltip = change_influencer_tt
-			}
+			# Lock this influencer's updated value; rebalance domestic + every other share around it.
+			add_to_variable = { influence_array_val^influencer_index = percent_change }
+			set_temp_variable = { skip_index = influencer_index }
+			set_temp_variable = { held_value = influence_array_val^influencer_index }
+			set_temp_variable = { scale_domestic = 1 }
+			set_temp_variable = { extra_outlook = 0 }
+			redistribute_influence_pool = yes
+			custom_effect_tooltip = change_influencer_tt
 		}
 
 		recalculate_influence = yes
@@ -1096,10 +949,14 @@ change_influence_percentage = {
 # Effect: init_auto_influence_array
 # Purpose: This is the main effect that is used to initialize the auto-influence array
 init_auto_influence_array = {
-	set_variable = { auto_influence_cap = 3 }
+	set_variable = {
+		auto_influence_cap = {
+			value = 3
+			add = modifier@foreign_influence_auto_influence_cap_modifier
+		}
+	}
 	set_variable = { auto_influence_users = 0 }
 
-	add_to_variable = { auto_influence_cap = modifier@foreign_influence_auto_influence_cap_modifier }
 	resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
 }
 
@@ -1109,11 +966,11 @@ update_auto_influence_array = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: update_auto_influence_array running"
 	}
-	set_variable = { auto_influence_cap = 3 }
-	add_to_variable = { auto_influence_cap = THIS.modifier@foreign_influence_auto_influence_cap_modifier }
-
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: auto_influence_cap [?auto_influence_cap]"
+	set_variable = {
+		auto_influence_cap = {
+			value = 3
+			add = modifier@foreign_influence_auto_influence_cap_modifier
+		}
 	}
 	set_variable = { auto_influence_cost = 0 }
 

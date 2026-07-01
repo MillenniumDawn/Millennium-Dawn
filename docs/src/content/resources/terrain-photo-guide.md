@@ -81,10 +81,10 @@ Place it alongside any existing `add_province_modifier` blocks.
 
 ## Naming Convention
 
-- **Modifier name**: `terrain_{city_name}` — lowercase, underscores for spaces, no country TAG prefix
-- **GFX sprite name**: `GFX_terrain_{city_name}` — matches modifier name with `GFX_` prefix
-- **GUI icon name**: `terrain_{city_name}_icon` — modifier name with `_icon` suffix
-- **DDS filename**: `{TAG}_{city_name}.dds` — country TAG prefix (uppercase), lowercase city name
+- **Modifier name**: `terrain_{city_name}`: lowercase, underscores for spaces, no country TAG prefix
+- **GFX sprite name**: `GFX_terrain_{city_name}`: matches modifier name with `GFX_` prefix
+- **GUI icon name**: `terrain_{city_name}_icon`: modifier name with `_icon` suffix
+- **DDS filename**: `{TAG}_{city_name}.dds`: country TAG prefix (uppercase), lowercase city name
 
 ### When to use TAG prefixes
 

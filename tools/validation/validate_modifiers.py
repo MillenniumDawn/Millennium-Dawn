@@ -5,6 +5,7 @@ Builds a known-good set from codebase frequency (3+ uses = valid). Custom MD
 modifiers in common/modifiers/ and common/dynamic_modifiers/ are always valid.
 Targeted modifiers (XXX_opinion, XXX_autonomy_gain) are skipped.
 """
+
 import os
 import re
 import sys

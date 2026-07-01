@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate focus tree structural integrity in Millennium Dawn."""
+
 import os
 import re
 import sys

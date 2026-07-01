@@ -36,6 +36,11 @@ _SINGLE_LINE_PROPS = {
     "y": "y",
     "relative_position_id": "relative_position_id",
     "cost": "cost",
+}
+
+# Single-line list props: a focus-level attribute that may repeat (one line per
+# value). Each occurrence is appended to the list in original order.
+_SINGLE_LINE_LIST_PROPS = {
     "will_lead_to_war_with": "will_lead_to_war_with",
 }
 
@@ -140,6 +145,11 @@ def extract_focus_properties(focus_lines):
 
         if prop_name in _SINGLE_LINE_PROPS:
             props[_SINGLE_LINE_PROPS[prop_name]] = line
+            i += 1
+            continue
+
+        if prop_name in _SINGLE_LINE_LIST_PROPS:
+            props[_SINGLE_LINE_LIST_PROPS[prop_name]].append(line)
             i += 1
             continue
 
@@ -290,7 +300,7 @@ def format_focus_block(props, block_type="focus"):
 
     # 1. ID and icon (no blank line between them)
     if props["id"]:
-        lines.append(f'\t\t{props["id"]}')
+        lines.append(f"\t\t{props['id']}")
     if props["icon"]:
         # `icon` is always list[list[str]] — emit each entry in order.
         for icon_block in props["icon"]:
@@ -307,11 +317,11 @@ def format_focus_block(props, block_type="focus"):
 
     # 3. Position group (x, y, relative_position_id - no blank lines between them)
     if props["x"]:
-        lines.append(f'\t\t{props["x"]}')
+        lines.append(f"\t\t{props['x']}")
     if props["y"]:
-        lines.append(f'\t\t{props["y"]}')
+        lines.append(f"\t\t{props['y']}")
     if props["relative_position_id"]:
-        lines.append(f'\t\t{props["relative_position_id"]}')
+        lines.append(f"\t\t{props['relative_position_id']}")
     for offset_block in props["offset"]:
         formatted_offset = format_focus_offset_block(offset_block[:])
         for line in formatted_offset:
@@ -322,11 +332,11 @@ def format_focus_block(props, block_type="focus"):
 
     # 5. Cost
     if props["cost"]:
-        lines.append(f'\t\t{props["cost"]}')
+        lines.append(f"\t\t{props['cost']}")
     if props["text_icon"]:
-        lines.append(f'\t\t{props["text_icon"]}')
+        lines.append(f"\t\t{props['text_icon']}")
     if props["overlay"]:
-        lines.append(f'\t\t{props["overlay"]}')
+        lines.append(f"\t\t{props['overlay']}")
 
     # 6. Blank line before prerequisites/conditions
     lines.append("")
@@ -354,9 +364,9 @@ def format_focus_block(props, block_type="focus"):
             lines.append(line)
         condition_group_added = True
 
-    # Add will_lead_to_war_with as single-line property
-    if props["will_lead_to_war_with"]:
-        lines.append(f'\t\t{props["will_lead_to_war_with"]}')
+    # Add will_lead_to_war_with as single-line property (may repeat — one line per target)
+    for war_target in props["will_lead_to_war_with"]:
+        lines.append(f"\t\t{war_target}")
         condition_group_added = True
 
     # Only add blank line after the entire condition group (if any conditions were added)

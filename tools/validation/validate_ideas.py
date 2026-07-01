@@ -82,8 +82,10 @@ _HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
 # Categories where `allowed = { always = no }` is flagged as redundant
 # Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
 # (those without slot=/character_slot= or with hidden=yes)
-from shared_utils import extract_block_from_text  # noqa: E402
-from shared_utils import get_all_idea_categories  # noqa: E402
+from shared_utils import (
+    extract_block_from_text,  # noqa: E402
+    get_all_idea_categories,  # noqa: E402
+)
 from shared_utils import (  # noqa: E402
     get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
 )
@@ -371,13 +373,53 @@ def _scan_idea_refs(text: str) -> List[str]:
 # Generous reference scan for the unused-idea check: any keyword that can name
 # an idea, plus block forms. Over-matching is safe here — it only marks more
 # ideas as "used", which makes the unused report conservative (fewer false
-# positives). `idea =` catches add_timed_idea/modify_timed_idea blocks.
+# positives). `idea =` catches add_timed_idea/modify_timed_idea blocks;
+# `show_ideas_tooltip =` catches display-only "fake" idea references. IGNORECASE
+# so case-variant grants like `add_Ideas = X` (valid in-game) are still counted.
 _IDEA_REF_GENEROUS = re.compile(
-    r"\b(?:has_idea|add_ideas|remove_ideas|add_idea|remove_idea|swap_idea|idea)"
-    r"\s*=\s*([A-Za-z0-9_.\-]+)"
+    r"\b(?:has_idea|add_ideas|remove_ideas|add_idea|remove_idea|swap_idea"
+    r"|show_ideas_tooltip|idea)"
+    r"\s*=\s*([A-Za-z0-9_.\-]+)",
+    re.IGNORECASE,
 )
-_IDEA_REF_BLOCK = re.compile(r"\b(?:add_ideas|remove_ideas)\s*=\s*\{([^{}]*)\}")
+_IDEA_REF_BLOCK = re.compile(
+    r"\b(?:add_ideas|remove_ideas)\s*=\s*\{([^{}]*)\}", re.IGNORECASE
+)
 _WORD_TOKEN = re.compile(r"[A-Za-z0-9_.\-]+")
+
+# Meta-effect references build the idea name at runtime from a scope substitution,
+# e.g. `idea = tribute_idea_[ROOTTAG]` or `remove_ideas = foo_[THIS.GetTag]`. The
+# literal name (`tribute_idea_ABK`) is never written next to a keyword, so the
+# generous scan above only captures the static prefix before `[`. Record that
+# prefix under a sentinel so the unused check can treat any idea sharing it as
+# referenced. Only a non-empty prefix immediately followed by `[` qualifies, so
+# this stays precise (a literal `idea = foo` never matches `foobar`).
+_META_PREFIX_SENTINEL = "\x00meta:"
+_IDEA_REF_META = re.compile(
+    r"\b(?:has_idea|add_ideas|remove_ideas|add_idea|remove_idea|swap_idea"
+    r"|show_ideas_tooltip|idea)"
+    r"\s*=\s*([A-Za-z0-9_.\-]+)\[",
+    re.IGNORECASE,
+)
+
+# Dynamic-token ideas are applied at runtime via `add_ideas = var:<token>`, where
+# the literal name lives only in this registry and never next to an add_ideas
+# keyword. Treat any name registered here as referenced.
+_DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
+_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
+
+
+def _load_dynamic_token_names(mod_path: str) -> Set[str]:
+    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
+    path = os.path.join(mod_path, _DYNAMIC_TOKEN_FILE)
+    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
+    if not text:
+        return set()
+    return {
+        line.strip()
+        for line in text.splitlines()
+        if _DYNAMIC_TOKEN_LINE.match(line.strip())
+    }
 
 
 def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
@@ -399,6 +441,8 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
         refs = set(_IDEA_REF_GENEROUS.findall(text))
         for m in _IDEA_REF_BLOCK.finditer(text):
             refs.update(_WORD_TOKEN.findall(m.group(1)))
+        for prefix in _IDEA_REF_META.findall(text):
+            refs.add(_META_PREFIX_SENTINEL + prefix)
         return sorted(refs)
 
     return disk_cache.per_file_cached_by_content(
@@ -984,10 +1028,21 @@ class Validator(BaseValidator):
         referenced: Set[str] = set()
         for sub in ref_lists:
             referenced.update(sub)
+        referenced.update(_load_dynamic_token_names(self.mod_path))
+
+        # Prefixes from meta-effect references (`idea = tribute_idea_[ROOTTAG]`).
+        # Any candidate whose name starts with one is built at runtime, not dead.
+        meta_prefixes = tuple(
+            ref[len(_META_PREFIX_SENTINEL) :]
+            for ref in referenced
+            if ref.startswith(_META_PREFIX_SENTINEL)
+        )
 
         findings: List[Issue] = []
         for name in sorted(candidates):
             if name in referenced:
+                continue
+            if name.startswith(meta_prefixes):
                 continue
             src = defining_file.get(name, "")
             findings.append(

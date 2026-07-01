@@ -4,6 +4,7 @@
 Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
+
 import glob
 import logging
 import os
@@ -188,13 +189,28 @@ def get_all_colors(mod_path: str) -> List[str]:
         return list("WGRBYCMwgrbycm!")
 
 
-def process_txt_for_loc_key_refs(
-    args: Tuple,
-) -> List[str]:
-    """Pool worker: check localization_key = VALUE references in one .txt file."""
-    filename, valid_keys, scripted_keys = args
+# The valid/scripted loc key sets are ~200k entries; shipping them with every
+# pool task pickled ~23 MB per chunk and dominated this validator's runtime.
+# _txt_refs_init plants them as worker globals once per worker instead.
+_W_VALID_KEYS: frozenset = frozenset()
+_W_SCRIPTED_KEYS: frozenset = frozenset()
+
+
+def _txt_refs_init(valid_keys: frozenset, scripted_keys: frozenset) -> None:
+    global _W_VALID_KEYS, _W_SCRIPTED_KEYS
+    _W_VALID_KEYS = valid_keys
+    _W_SCRIPTED_KEYS = scripted_keys
+
+
+def process_txt_for_loc_key_refs(filename: str) -> List[str]:
+    """Pool worker: check localization_key = VALUE references in one .txt file.
+
+    Reads the valid/scripted key sets from worker globals (set by
+    _txt_refs_init), so the large set is shipped once per worker, not per task.
+    """
     if _should_skip(filename):
         return []
+    valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -221,13 +237,14 @@ def process_txt_for_loc_key_refs(
     return results
 
 
-def process_txt_for_custom_tt_refs(
-    args: Tuple,
-) -> List[str]:
-    """Pool worker: check custom_effect_tooltip / custom_trigger_tooltip keys in one .txt file."""
-    filename, valid_keys, scripted_keys = args
+def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
+    """Pool worker: check custom_effect_tooltip / custom_trigger_tooltip keys in one .txt file.
+
+    Valid/scripted key sets come from worker globals set by _txt_refs_init.
+    """
     if _should_skip(filename):
         return []
+    valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -441,15 +458,26 @@ class Validator(BaseValidator):
             "Missing l_english: line in localisation files:",
         )
 
+    def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
+        """Scan txt files with a worker that needs the valid/scripted key sets,
+        shipped once per worker (loc_keys is ~200k entries; per-task shipping
+        pickled it ~23 MB per chunk)."""
+        return self._pool_map_init(
+            worker,
+            txt_files,
+            _txt_refs_init,
+            (frozenset(loc_keys), frozenset(scripted_loc_keys)),
+            chunksize=30,
+        )
+
     def validate_localization_key_references(
         self, loc_keys: Dict, scripted_loc_keys: set
     ):
         self._log_section("Checking localization_key references...")
 
         txt_files = self._collect_files(["**/*.txt"])
-        args_list = [(f, loc_keys, scripted_loc_keys) for f in txt_files]
-        all_results = self._pool_map(
-            process_txt_for_loc_key_refs, args_list, chunksize=30
+        all_results = self._scan_txt_refs(
+            process_txt_for_loc_key_refs, txt_files, loc_keys, scripted_loc_keys
         )
 
         results = sorted({k for file_res in all_results for k in file_res})
@@ -465,9 +493,8 @@ class Validator(BaseValidator):
         self._log_section("Checking custom tooltip references...")
 
         txt_files = self._collect_files(["**/*.txt"])
-        args_list = [(f, loc_keys, scripted_loc_keys) for f in txt_files]
-        all_results = self._pool_map(
-            process_txt_for_custom_tt_refs, args_list, chunksize=30
+        all_results = self._scan_txt_refs(
+            process_txt_for_custom_tt_refs, txt_files, loc_keys, scripted_loc_keys
         )
 
         results = sorted({r for file_res in all_results for r in file_res})

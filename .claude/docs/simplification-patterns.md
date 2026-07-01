@@ -131,6 +131,21 @@ else = { set_variable = { page = 1 } }
 
 **Why:** Two-state toggles are cleaner with `if/else`. The `else` branch is guaranteed to execute when the `if` doesn't, removing the need for a second trigger check.
 
+## Collapse Government-Match Ideology Enumerations
+
+An `OR` of `AND`s comparing the current scope's government to one other country, one ideology at a time, is just the engine-native country comparison: a country has only one government, so only its own ideology's clause can match.
+
+```
+OR = {
+ AND = { has_government = democratic  FROM = { has_government = democratic } }
+ # ... one AND per ideology group ...
+}
+# same gov      -> has_government = FROM
+# different gov -> NOT = { has_government = FROM }
+```
+
+Collapse **only when all five groups are enumerated** — a partial set changes meaning for the omitted groups (a latent bug, not a mechanical simplification). Keep the comparison scope exact: the bare `has_government = X` is `THIS`, the named scope is the target. Five-branch `if`/`else_if` chains keyed on `has_government`, and the removed `is_same_government` / `has_same_ideology` triggers, reduce the same way. `tools/validation/validate_simplifications.py` flags the safe (exhaustive) cases.
+
 ## Consolidate Identical-Body `else_if` Chains into `OR`
 
 When N consecutive `else_if` branches all execute the same effects, collapse them into one branch with an `OR` limit.
@@ -243,7 +258,7 @@ A flag that is set but never cleared (or a slot never reset) silently locks the 
 ### Permanent ledger vs cycle-state — decide which you are building
 
 - **Cycle-state** (`global.current_active_agenda_disp`, the nominee slots): reset every cycle. Visibility gates read it (`> 0` = a cycle is live).
-- **Permanent ledger** (`global.EU_passed_votes`): an append-only record of what has ever passed, read-only via `is_in_array`, intentionally **never** cleared. Replacing a per-country `any_of_scopes { has_country_flag = focus_EU202_yes }` scan with `is_in_array = { array = global.EU_passed_votes value = 202 }` is correct **only** if something appends 202 to that array when the vote passes (`cleanup_european_union_voting_yes` does). A ledger that is read but never written is permanently false.
+- **Permanent ledger** (`global.EU_passed_votes`): an append-only record of what has ever passed, read-only via `is_in_array`, intentionally **never** cleared. Replacing a per-country `any_of_scopes { has_country_flag = focus_EU202_yes }` scan with `is_in_array = { array = global.EU_passed_votes value = 202 }` is correct **only** if something appends 202 to that array when the vote passes (`cleanup_european_union_voting` does, with the caller setting `vote_passed = 1`). A ledger that is read but never written is permanently false.
 
 Document which kind each array is in a one-line comment at its first write site — they look identical but reviewers must know whether a missing clear is a bug or intentional.
 
@@ -382,6 +397,36 @@ multiply_variable = { var = my_ratio value = 0.01 }
 ```
 
 **Why:** `multiply_variable` is a single engine operation with no zero-division risk. `0.01` is the exact reciprocal of `100`, so the result is identical. Prefer multiplication for all constant divisors.
+
+## Fold a Single-Use Temp into the Accumulate Effect
+
+A scratch temp that is built up only to be added to (or multiplied into) one target on the next line is pure overhead. A math expression is a valid `value` for the accumulate effects (`add_to_variable`, `subtract_from_variable`, `multiply_variable`, `divide_variable`), not just `set_variable` — so fold the build straight in.
+
+### Before (temp built, used once)
+
+```
+set_temp_variable = { cumulative_productivity = overall_productivity }
+multiply_temp_variable = { cumulative_productivity = 0.001 }
+multiply_temp_variable = { cumulative_productivity = population_total_m }
+add_to_variable = { global.cumulative_world_productivity = cumulative_productivity }
+```
+
+### After (no temp)
+
+```
+add_to_variable = {
+    var = global.cumulative_world_productivity
+    value = {
+        value = overall_productivity
+        multiply = 0.001
+        multiply = population_total_m
+    }
+}
+```
+
+**Why:** One single-pass expression replaces three temp writes plus the add, and drops the temp variable entirely. Only fold a temp that is read exactly once — keep it when the intermediate is reused by several later statements.
+
+**Caveat:** Accumulate-with-math-expression is rare (vanilla and MD historically used a temp), but confirmed working in-engine. A self-referencing accumulate can also be written `set_variable = { X = { value = X  add = { ...expr... } } }`, which reads the pre-write value of `X`. See `.claude/docs/hoi4-data-structures.md` (Math Expressions).
 
 ## Prefer `random` Over Two-Bucket `random_list` With an Empty Side
 

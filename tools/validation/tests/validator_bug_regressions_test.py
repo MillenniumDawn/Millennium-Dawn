@@ -55,9 +55,9 @@ def test_count_event_ids_in_file_returns_only_present_ids(tmp_path):
     tracked = frozenset(["test.1", "test.999"])
     result = count_event_ids_in_file((str(fpath), tracked))
     assert "test.1" in result, "Event ID present in file must be in result"
-    assert (
-        "test.999" not in result
-    ), "Absent ID must NOT be in result — caller pre-initializes zeros"
+    assert "test.999" not in result, (
+        "Absent ID must NOT be in result — caller pre-initializes zeros"
+    )
 
 
 def test_count_event_ids_in_file_dotted_id_not_inflated_by_loc_keys(tmp_path):
@@ -96,7 +96,7 @@ def test_count_event_ids_in_file_handles_referenced_event(tmp_path):
     events_dir.mkdir()
     fpath = events_dir / "test.txt"
     fpath.write_text(
-        "country_event = test.1\n" "country_event = test.1\n" "country_event = test.1\n"
+        "country_event = test.1\ncountry_event = test.1\ncountry_event = test.1\n"
     )
     tracked = frozenset(["test.1"])
     result = count_event_ids_in_file((str(fpath), tracked))
@@ -418,7 +418,7 @@ def test_genuinely_unused_var_still_has_zero_refs(tmp_path):
     validator still catches real dead variables — no false negative."""
     f = tmp_path / "x.txt"
     f.write_text(
-        "set_variable = { ALG_drs_type = 6 }\n" "set_variable = { ALG_drs_type = 5 }\n"
+        "set_variable = { ALG_drs_type = 6 }\nset_variable = { ALG_drs_type = 5 }\n"
     )
     counts = _count_refs(str(f), frozenset(["ALG_drs_type"]))
     assert counts.get("ALG_drs_type", 0) == 0
@@ -430,7 +430,7 @@ def test_scope_prefixed_target_tracked_by_bare_name(tmp_path):
     from validate_set_variables import _strip_scope_prefix
 
     assert _strip_scope_prefix("PREV.foreign_celeb_country") == "foreign_celeb_country"
-    assert _strip_scope_prefix("ALB.eurosceptic") == "eurosceptic"
+    assert _strip_scope_prefix("ALB.europeanism") == "europeanism"
     assert _strip_scope_prefix("global.price_per_gw_for_els") == (
         "global.price_per_gw_for_els"
     )  # global namespace kept

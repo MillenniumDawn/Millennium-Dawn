@@ -3,8 +3,6 @@ title: Add an EU Nation
 description: How to make a country eligible for the European Union system in Millennium Dawn
 ---
 
-# Add an EU Nation
-
 After the EU rework the system is data-driven through global arrays, so making a new country part of the EU system is just two list edits. You no longer need per-nation scripted localisation, per-party MEP blocks, or per-focus vote flags. Adding a tag to the potential list is enough.
 
 "Potential" means the country can interact with the EU: it shows up for EU AI evaluation, its government and euroscepticism feed the EU's internal numbers, and once it gains candidacy it can apply for membership. It does **not** make the country a member on its own.

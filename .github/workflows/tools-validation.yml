@@ -23,6 +23,7 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             tools
+            pyproject.toml
             common
             events
             history
@@ -36,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r tools/requirements.txt
+          pip install --group runtime
       - name: Run tools validation
         run: |
           python tools/validate_tools.py --strict --no-color --output tools_validation.log
@@ -72,7 +73,7 @@ jobs:
       - name: Install test deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r tools/report_lib/requirements-dev.txt
+          pip install --group dev
       - name: Run pytest
         # testpaths in pyproject.toml covers all four test dirs (tools/tests,
         # report_lib/tests, validation/tests, linting/tests).
@@ -96,6 +97,10 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install ruff
-        run: pip install ruff==0.8.6
+        run: |
+          python -m pip install --upgrade pip
+          pip install --group dev
       - name: Run ruff
         run: ruff check tools --output-format=github
+      - name: Check formatting (ruff format)
+        run: ruff format --check tools

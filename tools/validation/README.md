@@ -39,7 +39,7 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 | **validate_factions.py**              | Faction template/goal/rule/icon references exist; no duplicate IDs; valid rule types                                                                                                                                                                                                                                                                                                                                              |
 | **validate_focus_tree.py**            | Duplicate focus IDs; orphan focuses; missing prerequisite targets; missing loc keys; dependency cycles. Opt-in: `--missing-icons` (focuses whose `icon` sprite is undefined)                                                                                                                                                                                                                                                      |
 | **validate_gfx_references.py**        | Sprite names in `.gui` and scripted-GUI files are defined in `interface/*.gfx`; unused sprite definitions                                                                                                                                                                                                                                                                                                                         |
-| **validate_history_techs.py**         | History files grant all prerequisite technologies, and equipment variant designs only use modules the country has researched (DLC-aware)                                                                                                                                                                                                                                                                                          |
+| **validate_history.py**               | History files: technology dependencies, equipment variant modules, DLC-gated techs, OOB references, capital definitions                                                                                                                                                                                                                                                                                                           |
 | **validate_ideas.py**                 | Idea `allowed`/`visible` blocks reference defined ideas; no duplicate idea IDs; `GFX_idea_categories` has enough frames for the politics-view categories. Unused-ideas check is enabled by default (pass `--no-unused-ideas` to disable). Opt-in: `--missing-loc` (ideas without name/desc loc keys), `--missing-icons` (ideas whose `picture` sprite is undefined), `--suggest-consolidation` (advisory loc consolidation hints) |
 | **validate_localisation.py**          | Duplicate keys; unpaired brackets; color code mismatches; orphaned `_tt` tooltip keys                                                                                                                                                                                                                                                                                                                                             |
 | **validate_modifiers.py**             | Modifier references in focuses/decisions/ideas exist in the defines or vanilla; no duplicate modifier definitions                                                                                                                                                                                                                                                                                                                 |
@@ -134,17 +134,17 @@ To bypass for a single commit (not recommended):
 git commit --no-verify
 ```
 
-### Pre-commit stages
+### Pre-commit vs CI
 
-Most MD validators are set to `stages: [manual]` in `.pre-commit-config.yaml` and do **not** run on ordinary `git commit`. This keeps commit latency low for contributors. The heavy cross-reference validators (`validate_scripted_gui`, `validate_localisation`, `validate_scripted_localisation`) and most others are in this category. They run in CI instead; see the comments in `.pre-commit-config.yaml` for per-hook rationale.
+To keep commit latency low, only a fast subset of validators runs on `git commit`. The heavy cross-reference validators (`validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`, `validate_variables`, `validate_focus_tree`, and most others) run **CI-only** — they are gated by the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml`, not by pre-commit.
 
-A handful of lighter validators (`validate_oob_units`, `validate_ai_roles`, `validate_defines`, `validate_ai_navy`, `validate_ai_equipment`, `validate_agency_upgrades`, `validate_ideas`, `validate_events`) run on every commit without a `stages` restriction.
+The commit-stage validators (`validate_style`, `validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`, `validate_ai_equipment`, `validate_agency_upgrades`, `validate_ideas`, `validate_events`) run through a single pre-commit hook, `md-validate-content`, which fans them out in parallel via `tools/precommit_validate.py`. `check_common_mistakes` and `validate_defines` keep their own commit-stage hooks; `validate_unused_textures` keeps a `stages: [manual]` hook because CI cannot run it.
 
-To run a manual hook locally:
+To run any validator locally — including a CI-only one — invoke it directly:
 
 ```bash
-pre-commit run md-validate-scripted-gui --hook-stage manual
-pre-commit run --hook-stage manual   # all manual hooks at once
+python3 tools/validation/validate_scripted_gui.py --staged --no-color  # changed files only
+python3 tools/validation/validate_scripted_gui.py --no-color           # full-repo scan
 ```
 
 ---

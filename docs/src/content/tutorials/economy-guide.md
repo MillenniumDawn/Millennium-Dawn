@@ -116,7 +116,7 @@ To view a country's economic information, click the graph icon in the bottom rig
 
 | Effect                         | How It Scales                                                                      |
 | ------------------------------ | ---------------------------------------------------------------------------------- |
-| Construction Speed             | Penalty increases with wealth — rich nations build slower                          |
+| Construction Speed             | Penalty increases with wealth, rich nations build slower                           |
 | Population Growth              | Bonus for poor nations, penalty for wealthy nations (break-even around $60k GDP/C) |
 | Research Speed                 | Bonus increases with wealth (kicks in above ~$51k GDP/C)                           |
 | Stability                      | Small bonus that increases with wealth (kicks in above ~$100k GDP/C)               |
@@ -181,7 +181,7 @@ Export income is affected by your trade law (which controls the minimum export p
 
 ### Dynamic Resource Pricing
 
-Resource export prices are not fixed — they fluctuate globally based on worldwide supply and demand. Prices are recalculated periodically using the following formula:
+Resource export prices are not fixed, they fluctuate globally based on worldwide supply and demand. Prices are recalculated periodically using the following formula:
 
 ```
 Price = (Global Demand / Global Supply) × 2 × Starting Price
@@ -204,7 +204,7 @@ When global demand exceeds half of global supply (demand/supply ratio > 0.5), pr
 
 - Countries that control large shares of a scarce resource (e.g., Technology Metals, Precious Metals, Microchips) can indirectly benefit from high prices if global supply is tight.
 - Building Microchip Plants and Composite Plants across many nations increases global supply of those resources, driving their prices down over the course of a game.
-- Microchips and Advanced Composites have the highest price ceilings by far — a global shortage of either resource can make them extremely valuable exports.
+- Microchips and Advanced Composites have the highest price ceilings by far, a global shortage of either resource can make them extremely valuable exports.
 - Fossil Fuel prices are the most volatile in practice, as fuel demand is high and supply is concentrated in relatively few states.
 
 ### Seigniorage Income
@@ -245,7 +245,7 @@ Military spending is the most complex expense category:
 - Level 0: Minimal funding (~0.46× multiplier)
 - Level 9: Maximum funding (~10× multiplier)
 
-GDP per capita affects military costs — wealthier nations pay more to maintain their armed forces.
+GDP per capita affects military costs, wealthier nations pay more to maintain their armed forces.
 
 ### Bureaucracy
 
@@ -293,7 +293,7 @@ Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.5) + modifie
 - **Maximum interest rate**: 50%
 - Modified by national spirits and modifiers
 
-The central bank policy rate contributes half its value to the interest rate. This means raising the policy rate to fight inflation also increases the cost of servicing debt — a tradeoff between controlling inflation and managing debt.
+The central bank policy rate contributes half its value to the interest rate. This means raising the policy rate to fight inflation also increases the cost of servicing debt, a tradeoff between controlling inflation and managing debt.
 
 If your weekly balance is negative, or if a national focus or event causes you to spend more than your current funds, debt is automatically issued. The game borrows 1% of GDP plus the deficit, with a 1% fee applied to automatically borrowed funds.
 
@@ -464,7 +464,7 @@ Currency strength has a separate, additive effect on inflation costs. When your 
 Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.05
 ```
 
-This is added on top of the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds roughly 5% additional inflation pressure. A currency at 1.0 or above adds nothing.
+This is added to the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds roughly 5% additional inflation pressure. A currency at 1.0 or above adds nothing.
 
 This means inflation has two independent sources: the quarterly macroeconomic calculation and the currency channel. You can have low base inflation but still suffer high effective inflation if your currency has collapsed.
 
@@ -539,11 +539,11 @@ You can prioritize which building types receive workers first from the Economy w
 | Asia & Oceania                             | 650                   |
 | Africa, Middle East, North & South America | 550                   |
 
-There is no maximum cap on productivity — it can grow indefinitely. The minimum floor is 100; it cannot fall below this.
+There is no maximum cap on productivity, it can grow indefinitely. The minimum floor is 100; it cannot fall below this.
 
 **Catch-Up Mechanic:**
 
-Productivity growth uses a catch-up mechanism: states with productivity below the global average grow faster than those above it. This means poorer regions naturally converge toward wealthier ones over time, though wealthy states still grow — just more slowly relative to their starting advantage.
+Productivity growth uses a catch-up mechanism: states with productivity below the global average grow faster than those above it. This means poorer regions naturally converge toward wealthier ones over time, though wealthy states still grow, just more slowly relative to their starting advantage.
 
 **Factors That Increase Productivity Growth:**
 
@@ -762,7 +762,7 @@ Electricity consumption is calculated from active buildings and population. Each
 | Synthetic Refineries  | 0.20                              |
 | Agriculture Districts | 0.10                              |
 
-Population energy consumption also scales with total population and GDP per capita — wealthier, larger nations consume significantly more electricity.
+Population energy consumption also scales with total population and GDP per capita, wealthier, larger nations consume significantly more electricity.
 
 Insufficient power generation triggers a dynamic modifier that scales with the size of the shortfall:
 
@@ -781,7 +781,7 @@ Additionally, fossil fuel powerplants consume fuel to operate. If your country r
 - Reduced tax income
 - Stability penalty
 
-This is independent of the electricity shortfall penalty — you can have enough generating capacity but still suffer if you lack the fuel to run your plants.
+This is independent of the electricity shortfall penalty, you can have enough generating capacity but still suffer if you lack the fuel to run your plants.
 
 View your country's electricity situation by clicking the electricity icon in the construction window to open the Electricity Panel. Energy output can be further improved through the **Critical Infrastructure** law.
 
@@ -804,7 +804,7 @@ Offices are the backbone of a modern service economy. They employ the most worke
 | Energy Consumption     | 0.25 GW per level       |
 | Base Workers           | 0.473 million per level |
 
-Offices also drive civilian microchip consumption — each staffed office consumes microchips proportional to its worker fulfillment, so nations with many offices need corresponding microchip production.
+Offices also drive civilian microchip consumption, each staffed office consumes microchips proportional to its worker fulfillment, so nations with many offices need corresponding microchip production.
 
 ### Internet Stations
 
@@ -833,11 +833,11 @@ Agriculture districts represent organized commercial farming. They produce **fue
 | Fuel Output            | 8 per hour per level                 |
 | Local Supply           | +0.015 per level                     |
 
-Agriculture districts also interact with the Farmers internal faction — their construction speed and tax income can be boosted by maintaining high faction opinion.
+Agriculture districts also interact with the Farmers internal faction, their construction speed and tax income can be boosted by maintaining high faction opinion.
 
 ### Energy Infrastructure
 
-Energy Infrastructure is a **keystone building** — each state can have at most one, and it competes with Industrial Infrastructure for the same keystone slot. It boosts energy-related construction and provides additional building slots.
+Energy Infrastructure is a **keystone building**: each state can have at most one, and it competes with Industrial Infrastructure for the same keystone slot. It boosts energy-related construction and provides additional building slots.
 
 | Property               | Value                                                                                                                    |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -927,7 +927,7 @@ Microchip and composite plants require input resources to operate. If you run sh
 - Rubber shortages are weighted 1.5x heavier than Precious Metals shortages
 - All three inputs must be available for full production
 
-**Energy shortages** also reduce microchip and composite production. If your country has an electricity deficit, plant output is further penalized on top of any input resource shortages. Production line technology research reduces the energy demand of both plant types.
+**Energy shortages** also reduce microchip and composite production. If your country has an electricity deficit, plant output is further penalized in addition to any input resource shortages. Production line technology research reduces the energy demand of both plant types.
 
 Securing a stable supply of input resources -- through domestic mining, trade agreements, or synthetic refineries (for Rubber) -- is essential before investing heavily in advanced plants.
 
@@ -1006,7 +1006,7 @@ Millennium Dawn adds several building types beyond the base game. These building
 
 ### Offices
 
-Offices are a purely economic building that generates corporate tax income. They have a high tax factor of 5.0 per level — the highest of any building — making them the most efficient source of corporate tax revenue. Build offices early to boost your income.
+Offices are a purely economic building that generates corporate tax income. They have a high tax factor of 5.0 per level, the highest of any building, making them the most efficient source of corporate tax revenue. Build offices early to boost your income.
 
 - **Building Slots**: Shares building slots with other production buildings
 - **Max Level**: 50 per state
@@ -1071,21 +1071,21 @@ Immigration control costs money. Stricter restrictions cost more to enforce. The
 
 ## International Investments
 
-International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income — approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
+International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income, approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
 
-For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide).
+For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide/).
 
 ### International Market
 
-The International Market is a vanilla HOI4 mechanic that Millennium Dawn includes with modifications. It allows you to buy and sell **military equipment** (weapons, vehicles, aircraft, etc.) using civilian factories. In MD, it is limited to **1 civilian factory** allocated to the market. When you purchase equipment, the income is sent to the selling nation, which receives a proportional amount based on their corporate tax rate. Raw resources like oil, steel, and aluminium cannot be traded on the International Market — those are handled through the standard civilian factory trade system.
+The International Market is a vanilla HOI4 mechanic that Millennium Dawn includes with modifications. It allows you to buy and sell **military equipment** (weapons, vehicles, aircraft, etc.) using civilian factories. In MD, it is limited to **1 civilian factory** allocated to the market. When you purchase equipment, the income is sent to the selling nation, which receives a proportional amount based on their corporate tax rate. Raw resources like oil, steel, and aluminium cannot be traded on the International Market, those are handled through the standard civilian factory trade system.
 
 ---
 
 ## Internal Investment
 
-Internal investments apply temporary modifiers to your own states — things like productivity growth bonuses, construction speed buffs, extra building slots, and resource output boosts. Each option costs **75 Political Power** plus a treasury payment scaled to your GDP and lasts 120–180 days. The number of concurrent investments you can run scales with your power rank (2 slots for minor powers, up to 6 for superpowers).
+Internal investments apply temporary modifiers to your own states, things like productivity growth bonuses, construction speed buffs, extra building slots, and resource output boosts. Each option costs **75 Political Power** plus a treasury payment scaled to your GDP and lasts 120–180 days. The number of concurrent investments you can run scales with your power rank (2 slots for minor powers, up to 6 for superpowers).
 
-For the full list of options, costs, effects, and tips, see the [Investments Guide](/player-tutorials/investments-guide).
+For the full list of options, costs, effects, and tips, see the [Investments Guide](/player-tutorials/investments-guide/).
 
 ---
 
@@ -1108,7 +1108,7 @@ Changes are **banked** and applied together when you click "Make Changes", rathe
 
 ### Agricultural Workers
 
-The number of workers available for agriculture is determined by **literacy rate**. A lower literacy rate means more workers are available for the fields, producing more agricultural output — but at the cost of reduced research speed. Higher literacy shifts workers toward other sectors.
+The number of workers available for agriculture is determined by **literacy rate**. A lower literacy rate means more workers are available for the fields, producing more agricultural output, but at the cost of reduced research speed. Higher literacy shifts workers toward other sectors.
 
 ### Drought Events
 
@@ -1189,16 +1189,16 @@ If interest exceeds 25% and the country is not at war, the AI will default on it
 - **Ignoring currency strength**: A weak currency spirals into inflation, higher debt costs, and economic instability
 - **Neglecting bailout options**: Request IMF or influencer bailouts before interest rates exceed 15%
 - **Ignoring electricity**: An energy deficit silently drags down construction, factory output, research, and tax income
-- **Fighting inflation with only one tool**: Inflation responds to policy rate, taxes, budget balance, and currency together — relying on a single lever is less effective
+- **Fighting inflation with only one tool**: Inflation responds to policy rate, taxes, budget balance, and currency together, relying on a single lever is less effective
 - **Raising the policy rate without considering debt**: The policy rate contributes to your interest rate, so hiking it while heavily indebted can worsen a debt spiral even as it controls inflation
 
 ---
 
 ## Related Documentation
 
-- [Investments Guide](/player-tutorials/investments-guide) - Full detail on international and internal investment systems
-- [International Systems Guide](/player-tutorials/international-systems) - For PMCs, sanctions, and other international economic systems
-- [European Union Tutorial](/player-tutorials/eu-tutorial) - For EU-specific economic mechanics (Eurozone, ECB, single market)
-- [Game Rules](/player-tutorials/game-rules)
-- [Influence Guide](/player-tutorials/influence-guide)
-- [Mechanics Guide](/player-tutorials/mechanics-guide)
+- [Investments Guide](/player-tutorials/investments-guide/) - Full detail on international and internal investment systems
+- [International Systems Guide](/player-tutorials/international-systems/) - For PMCs, sanctions, and other international economic systems
+- [European Union Tutorial](/player-tutorials/eu-tutorial/) - For EU-specific economic mechanics (Eurozone, ECB, single market)
+- [Game Rules](/player-tutorials/game-rules/)
+- [Influence Guide](/player-tutorials/influence-guide/)
+- [Mechanics Guide](/player-tutorials/mechanics-guide/)
