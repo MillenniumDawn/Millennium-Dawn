@@ -1771,7 +1771,7 @@ country_event = {
 		name = greece_debt.2.b
 		log = "[GetDateText]: [This.GetName]: greece_debt.2.b executed"
 		FROM = {
-			set_variable = { debt_swap_holder_nation = PREV.id }
+			set_variable = { GRE_debt_swap_holder_nation = PREV.id }
 			set_variable = { GRE_creditor_target = PREV.id }
 			set_temp_variable = { GRE_creditor_debt_change = 150 }
 			GRE_add_creditor = yes
@@ -1882,6 +1882,7 @@ country_event = {
 	option = {
 		name = greece_debt.12.a
 		log = "[GetDateText]: [This.GetName]: greece_debt.12.a executed"
+		set_variable = { GRE_creditor_target = FROM.id }
 		set_temp_variable = { GRE_creditor_debt_change = GRE_proposed_debt_amount }
 		GRE_add_creditor = yes
 	}
@@ -1976,15 +1977,19 @@ country_event = {
 			check_variable = { treasury > FROM.GRE_called_amount }
 		}
 
-		# Find creditor index and repay
+		# Find creditor index, then repay after the loop to avoid mutating the array mid-iteration
+		set_temp_variable = { GRE_repay_index = -1 }
 		for_each_loop = {
 			array = GRE_creditors
 			if = {
 				limit = { check_variable = { v = FROM.id } }
 				set_temp_variable = { GRE_repay_index = i }
-				set_temp_variable = { GRE_repay_amount = FROM.GRE_called_amount }
-				GRE_repay_creditor_debt = yes
 			}
+		}
+		if = {
+			limit = { check_variable = { GRE_repay_index > -1 } }
+			set_temp_variable = { GRE_repay_amount = FROM.GRE_called_amount }
+			GRE_repay_creditor_debt = yes
 		}
 
 		ai_chance = {
@@ -2164,7 +2169,13 @@ country_event = {
 		change_influence_percentage = yes
 		FROM = { country_event = { id = greece.32 days = 1 } }
 
-		ai_chance = { base = 90 }
+		ai_chance = {
+			base = 90
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
 	}
 
 	option = {
@@ -2172,7 +2183,13 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: greece.31.b executed"
 		FROM = { country_event = { id = greece.33 days = 1 } }
 
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
 	}
 }
 
@@ -2259,7 +2276,13 @@ country_event = {
 		change_influence_percentage = yes
 		FROM = { country_event = { id = greece.35 days = 1 } }
 
-		ai_chance = { base = 85 }
+		ai_chance = {
+			base = 85
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
 	}
 
 	option = {
@@ -2267,7 +2290,13 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: greece.34.b executed"
 		FROM = { country_event = { id = greece.36 days = 1 } }
 
-		ai_chance = { base = 15 }
+		ai_chance = {
+			base = 15
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
 	}
 }
 
@@ -2332,7 +2361,13 @@ country_event = {
 		change_influence_percentage = yes
 		FROM = { country_event = { id = greece.38 days = 1 } }
 
-		ai_chance = { base = 75 }
+		ai_chance = {
+			base = 75
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
 	}
 
 	option = {
@@ -2340,7 +2375,13 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: greece.37.b executed"
 		FROM = { country_event = { id = greece.39 days = 1 } }
 
-		ai_chance = { base = 25 }
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
 	}
 }
 
@@ -2406,7 +2447,13 @@ country_event = {
 		change_influence_percentage = yes
 		FROM = { country_event = { id = greece.41 days = 1 } }
 
-		ai_chance = { base = 70 }
+		ai_chance = {
+			base = 70
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
 	}
 
 	option = {
@@ -2414,7 +2461,13 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: greece.40.b executed"
 		FROM = { country_event = { id = greece.42 days = 1 } }
 
-		ai_chance = { base = 30 }
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
 	}
 }
 
@@ -2824,7 +2877,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: greece.537.a executed"
 		add_opinion_modifier = { target = CHI modifier = declaration_of_friendship }
 		set_temp_variable = { percent_change = 5 }
-		set_temp_variable = { influence_target = CHI.id }
+		set_temp_variable = { tag_index = CHI.id }
+		set_temp_variable = { influence_target = GRE.id }
 		change_influence_percentage = yes
 		add_to_variable = { GRE_eastern_alignment_score = 1 }
 		GRE_check_eastern_alignment_swap = yes
@@ -3260,7 +3314,6 @@ news_event = {
 
 	option = {
 		name = greece.555.b
-		log = "[GetDateText]: [This.GetName]: greece.555.b executed"
 		trigger = {
 			has_idea = NATO_member
 			NOT = { tag = GRE }
@@ -3269,7 +3322,6 @@ news_event = {
 
 	option = {
 		name = greece.555.c
-		log = "[GetDateText]: [This.GetName]: greece.555.c executed"
 		trigger = {
 			NOT = { tag = GRE }
 			NOT = { has_idea = NATO_member }
@@ -3303,7 +3355,6 @@ news_event = {
 
 	option = {
 		name = greece.556.b
-		log = "[GetDateText]: [This.GetName]: greece.556.b executed"
 		trigger = {
 			has_idea = NATO_member
 			NOT = { tag = GRE }
@@ -3312,7 +3363,6 @@ news_event = {
 
 	option = {
 		name = greece.556.c
-		log = "[GetDateText]: [This.GetName]: greece.556.c executed"
 		trigger = {
 			NOT = { tag = GRE }
 			NOT = { has_idea = NATO_member }
@@ -3690,7 +3740,6 @@ news_event = {
 
 	option = {
 		name = greece.572.b
-		log = "[GetDateText]: [This.GetName]: greece.572.b executed"
 		trigger = {
 			has_idea = NATO_member
 			NOT = { tag = GRE }
@@ -3699,7 +3748,6 @@ news_event = {
 
 	option = {
 		name = greece.572.c
-		log = "[GetDateText]: [This.GetName]: greece.572.c executed"
 		trigger = {
 			NOT = { tag = GRE }
 			NOT = { has_idea = NATO_member }
@@ -3718,13 +3766,11 @@ news_event = {
 
 	option = {
 		name = greece.575.a
-		log = "[GetDateText]: [This.GetName]: greece.575.a executed"
 		trigger = { tag = GRE }
 	}
 
 	option = {
 		name = greece.575.b
-		log = "[GetDateText]: [This.GetName]: greece.575.b executed"
 		trigger = { NOT = { tag = GRE } }
 	}
 }
@@ -3740,13 +3786,11 @@ news_event = {
 
 	option = {
 		name = greece.577.a
-		log = "[GetDateText]: [This.GetName]: greece.577.a executed"
 		trigger = { tag = GRE }
 	}
 
 	option = {
 		name = greece.577.b
-		log = "[GetDateText]: [This.GetName]: greece.577.b executed"
 		trigger = { NOT = { tag = GRE } }
 	}
 }
@@ -4395,7 +4439,12 @@ country_event = {
 		GRE_change_aegean_tension = yes
 		hidden_effect = {
 			if = {
-				limit = { has_country_flag = GRE_assertive_patrols country_exists = TUR }
+				limit = {
+					has_country_flag = GRE_assertive_patrols
+					country_exists = TUR
+					NOT = { has_war_with = TUR }
+					NOT = { is_in_faction_with = TUR }
+				}
 				country_event = { id = greece.702 days = 90 }
 			}
 		}
@@ -4410,7 +4459,12 @@ country_event = {
 		random = { chance = 25 country_event = { id = greece.705 days = 5 } }
 		hidden_effect = {
 			if = {
-				limit = { has_country_flag = GRE_assertive_patrols country_exists = TUR }
+				limit = {
+					has_country_flag = GRE_assertive_patrols
+					country_exists = TUR
+					NOT = { has_war_with = TUR }
+					NOT = { is_in_faction_with = TUR }
+				}
 				country_event = { id = greece.702 days = 90 }
 			}
 		}
@@ -4628,10 +4682,10 @@ country_event = {
 			limit = { country_exists = NCY  country_exists = CYP }
 			NCY = { declare_war_on = { target = CYP type = annex_everything } }
 			CYP = { create_wargoal = { type = annex_everything target = NCY } }
+			set_country_flag = GRE_cyprus_war_active
+			news_event = { id = greece.721 days = 1 }
+			country_event = { id = greece.722 days = 2 }
 		}
-		set_country_flag = GRE_cyprus_war_active
-		news_event = { id = greece.721 days = 1 }
-		country_event = { id = greece.722 days = 2 }
 	}
 }
 

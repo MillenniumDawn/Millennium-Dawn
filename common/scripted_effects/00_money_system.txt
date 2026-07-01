@@ -2023,12 +2023,6 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_IRQ_party_coffers_2 = 0.300 }
 			add_to_variable = { additional_income_rate = additional_income_IRQ_party_coffers_2 }
 		}
-		if = {
-			limit = { has_idea = PER_irgc_black_market_exploits }
-			set_variable = { additional_income_irgc_black_market = gdp_total }
-			multiply_variable = { additional_income_irgc_black_market = 0.002 }	#10% of GDP yearly estimated weekly
-			add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
-		}
 	}
 	# Norway
 	if = {
@@ -2830,15 +2824,13 @@ calculate_additional_income_rate = {
 			multiply_variable = { GRE_golden_visa_income = 0.003 }
 			add_to_variable = { additional_income_rate = GRE_golden_visa_income }
 		}
-		# Creditor interest income (for nations holding Greek debt - runs on GRE scope to show expense)
-		if = {
-			limit = { check_variable = { GRE_creditor_payment_total > 0 } }
-			set_variable = { GRE_creditor_expense_display = GRE_creditor_payment_total }
-		}
 	}
 	# Creditor income from holding Greek debt (runs on creditor nation scope)
 	if = {
-		limit = { check_variable = { GRE_interest_income_from_greece > 0 } }
+		limit = {
+			country_exists = GRE
+			check_variable = { GRE_interest_income_from_greece > 0 }
+		}
 		set_variable = { additional_income_GRE_creditor = GRE_interest_income_from_greece }
 		add_to_variable = { additional_income_rate = additional_income_GRE_creditor }
 	}
@@ -2941,7 +2933,10 @@ calculate_interest_rate = {
 		# The Debt to GDP Ratio helps dictate the ability of the nation to repay the debts
 		# debt / total gdp = debt_ratio
 		set_variable = { debt_ratio = debt }
-		divide_variable = { debt_ratio = gdp_total }
+		if = {
+			limit = { check_variable = { gdp_total > 0 } }
+			divide_variable = { debt_ratio = gdp_total }
+		}
 	}
 
 	# Remove high interest modifier if interest rate dropped below 15%
@@ -4361,7 +4356,7 @@ calculate_additional_expense_rate = {
 	}
 	# Canada
 	if = {
-		limit = { tag = CAN }
+		limit = { original_tag = CAN }
 		add_to_variable = { additional_expenses_rate = CAN_subsidy_total }
 	}
 	# Syrian Stuff
@@ -4798,6 +4793,7 @@ calculate_int_investments_rate = {
 
 	# Modifier for ROI
 	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
+	clamp_variable = { var = roi_rate min = 0 max = 0.20 }
 
 	#This is how much money we get back in a year, converted to weekly
 	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }
@@ -4905,7 +4901,9 @@ update_display = {
 
 	set_variable = { display_income = { value = tax_gain add = resource_sale_rate } }
 	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
-	divide_variable = { resource_to_tax_income = tax_gain }
+	set_temp_variable = { tmp_tax_gain_divisor = tax_gain }
+	clamp_temp_variable = { var = tmp_tax_gain_divisor min = 0.001 }
+	divide_variable = { resource_to_tax_income = tmp_tax_gain_divisor }
 	if = { limit = { check_variable = { int_reinvest_mode = 2 } }
 		set_temp_variable = { _split_display_rate = { value = int_investments_rate multiply = 0.5 } }
 		add_to_variable = { display_income = _split_display_rate }
@@ -6246,12 +6244,12 @@ calculate_gdp = {
 	}
 
 	# Healthcare Sector — Workforce
-	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.50 } }
-	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 1.00 } }
-	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_workforce_level_scalar = 1.50 } }
-	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_workforce_level_scalar = 2.00 } }
-	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_workforce_level_scalar = 2.50 } }
-	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_workforce_level_scalar = 3.00 } }
+	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.15 } }
+	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 0.30 } }
+	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_workforce_level_scalar = 0.50 } }
+	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_workforce_level_scalar = 0.70 } }
+	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_workforce_level_scalar = 0.90 } }
+	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_workforce_level_scalar = 1.10 } }
 
 	set_temp_variable = {
 		max_workers_in_healthcare = {
@@ -7111,6 +7109,7 @@ calculate_cost_pp_economic_cycles = {
 	multiply_variable = { pp_cost_economic = tmp_tax_gain_multiplier_modifier }
 	multiply_variable = { pp_cost_economic = tmp_production_speed_buildings_factor }
 	multiply_variable = { pp_cost_economic = tmp_stability_factor }
+	clamp_temp_variable = { var = tmp_political_power_gain min = 0.001 }
 	divide_variable = { pp_cost_economic = tmp_political_power_gain }
 
 	if = { limit = { is_debug = yes }
@@ -7357,10 +7356,13 @@ calculate_united_nations_base_budget = {
 		}
 	}
 
-	divide_variable = { global.target_const_speed_mod = global.UN_general_assembly^num }
-	divide_variable = { global.target_research_speed_mod = global.UN_general_assembly^num }
-	divide_variable = { global.target_civ_count = global.UN_general_assembly^num }
-	divide_variable = { global.average_gdp_capita = global.UN_general_assembly^num }
+	if = {
+		limit = { check_variable = { global.UN_general_assembly^num > 0 } }
+		divide_variable = { global.target_const_speed_mod = global.UN_general_assembly^num }
+		divide_variable = { global.target_research_speed_mod = global.UN_general_assembly^num }
+		divide_variable = { global.target_civ_count = global.UN_general_assembly^num }
+		divide_variable = { global.average_gdp_capita = global.UN_general_assembly^num }
+	}
 
 	multiply_temp_variable = { peak_const_speed_mod = 0.6 }
 	multiply_temp_variable = { peak_civ_count = 0.05 }
@@ -7378,7 +7380,10 @@ calculate_united_nations_base_budget = {
 
 		var:v = {
 			set_variable = { united_nations_contribution_percent = united_nations_base_expenses }
-			divide_variable = { united_nations_contribution_percent = global.un_operating_budget_base }
+			if = {
+				limit = { check_variable = { global.un_operating_budget_base > 0 } }
+				divide_variable = { united_nations_contribution_percent = global.un_operating_budget_base }
+			}
 			add_to_temp_array = { temp_array_mover = united_nations_base_expenses }
 			add_to_temp_array = { nation_tracker = THIS }
 		}
@@ -7533,7 +7538,10 @@ calculate_un_program_budgets = {
 			add_to_variable = { global.undio_budget = united_nations_unido_funding }
 			add_to_variable = { global.uncdf_budget = united_nations_uncdf_funding }
 			set_variable = { united_nations_aid_program_contribution_percent = united_nations_aid_expenses }
-			divide_variable = { united_nations_aid_program_contribution_percent = total_un_programs }
+			if = {
+				limit = { check_variable = { total_un_programs > 0 } }
+				divide_variable = { united_nations_aid_program_contribution_percent = total_un_programs }
+			}
 			check_for_subsidy_expiration = yes
 		}
 	}

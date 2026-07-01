@@ -877,11 +877,11 @@ assert_finds(
 )
 
 
-# 10. Dynamic triggers in decision allowed blocks
+# 11. Dynamic triggers in decision allowed blocks
 
 print("\n── Dynamic trigger in decision allowed block ──")
 
-# 10a. has_opinion directly inside allowed → flag
+# 11a. has_opinion directly inside allowed → flag
 assert_finds(
     _check_decision_allowed_dynamic,
     [
@@ -898,7 +898,7 @@ assert_finds(
     "has_opinion inside multi-line allowed flagged",
 )
 
-# 10b. Single-line allowed = { original_tag } followed by available with
+# 11b. Single-line allowed = { original_tag } followed by available with
 #      has_opinion → no flag (the bug: in_allowed bled into available)
 assert_finds(
     _check_decision_allowed_dynamic,
@@ -918,7 +918,7 @@ assert_finds(
     "has_opinion in available after single-line allowed not flagged",
 )
 
-# 10c. Single-line allowed = { has_opinion } → still flag
+# 11c. Single-line allowed = { has_opinion } → still flag
 assert_finds(
     _check_decision_allowed_dynamic,
     [
@@ -931,6 +931,8 @@ assert_finds(
     ],
     1,
     "has_opinion in single-line allowed still flagged",
+)
+
 # 10. Focus declares war without will_lead_to_war_with
 
 print("\n── Focus missing war hint ──")
