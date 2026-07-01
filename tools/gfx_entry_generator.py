@@ -176,15 +176,20 @@ def _format_names(names, cap=30):
     return f"{', '.join(names[:cap])}, +{len(names) - cap} more"
 
 
-def _print_merge_report(filename, new, changed, orphaned, written):
+def _print_merge_report(filename, new, changed, orphaned, deduped, written):
     print(
         f"{bcolors.OK}{filename}: {len(new)} new, {len(changed)} updated, "
-        f"{len(orphaned)} orphaned.{bcolors.RESET}"
+        f"{len(deduped)} de-duplicated, {len(orphaned)} orphaned.{bcolors.RESET}"
     )
     if new:
         print(f"{bcolors.OK}  New: {_format_names(new)}{bcolors.RESET}")
     if changed:
         print(f"{bcolors.WARNING}  Updated: {_format_names(changed)}{bcolors.RESET}")
+    if deduped:
+        print(
+            f"{bcolors.WARNING}  De-duplicated (removed extra name blocks): "
+            f"{_format_names(deduped)}{bcolors.RESET}"
+        )
     if orphaned:
         print(
             f"{bcolors.INFO}  Orphaned (referenced in {filename}, missing on disk, left untouched): "
@@ -203,7 +208,10 @@ def merge_gfx_entries(path, entries, render, header="", protected=frozenset()):
     place. Entries whose texturefile changed are replaced in place. Names not yet
     present are appended, sorted, before the final closing brace. Names present on
     disk but no longer produced by the scan are reported as orphaned and never removed.
-    Returns (new_names, changed_names, orphaned_names, written).
+    A name defined by more than one spriteType block is consolidated to its first
+    block (the extra blocks are removed); the survivor is still reconciled to the
+    scanned texturefile, so the kept block ends up pointing at the current source.
+    Returns (new_names, changed_names, orphaned_names, deduped_names, written).
     """
     if path.exists():
         original = _read_lf(path)
@@ -214,33 +222,43 @@ def merge_gfx_entries(path, entries, render, header="", protected=frozenset()):
         newline = "\n"
 
     existing = {}
+    dup_spans = []
+    deduped_names = []
     for name, texfile, start, end in _parse_named_blocks(original):
-        if name and name not in existing:
+        if not name:
+            continue
+        if name not in existing:
             existing[name] = (texfile, start, end)
+        else:
+            line_start = original.rfind("\n", 0, start) + 1
+            span_end = end + 1 if end < len(original) and original[end] == "\n" else end
+            dup_spans.append((line_start, span_end))
+            deduped_names.append(name)
 
     new_names = []
     changed_names = []
-    edits = []
+    splices = [(ls, se, "") for ls, se in dup_spans]
     for name in sorted(entries, key=lambda n: entries[n].lower()):
         texture_path = entries[name]
         if name in existing:
             old_texfile, start, end = existing[name]
             if old_texfile != texture_path:
-                edits.append((start, end, render(name, texture_path)))
+                block = render(name, texture_path)
+                core = block[1:] if block.startswith("\t") else block
+                splices.append((start, end, core.rstrip("\n")))
                 changed_names.append(name)
         else:
             new_names.append(name)
 
     orphaned = sorted(set(existing) - set(entries) - set(protected))
 
-    if edits:
-        edits.sort(key=lambda e: e[0])
+    if splices:
+        splices.sort(key=lambda s: s[0])
         pieces = []
         cursor = 0
-        for start, end, full_block in edits:
-            core = full_block[1:] if full_block.startswith("\t") else full_block
+        for start, end, replacement in splices:
             pieces.append(original[cursor:start])
-            pieces.append(core.rstrip("\n"))
+            pieces.append(replacement)
             cursor = end
         pieces.append(original[cursor:])
         text = "".join(pieces)
@@ -256,7 +274,7 @@ def merge_gfx_entries(path, entries, render, header="", protected=frozenset()):
     if written:
         _write_with_newline(path, text, newline)
 
-    return new_names, changed_names, orphaned, written
+    return new_names, changed_names, orphaned, sorted(set(deduped_names)), written
 
 
 # --- Content generators -------------------------------------------------
