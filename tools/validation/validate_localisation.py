@@ -57,9 +57,11 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
 _NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
-# A § followed by whitespace or line end is a prose section sign (e.g. a legal
-# citation), never a color code; game markup never puts a space after §.
-_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s|$)")
+# A § followed by whitespace and a digit is a prose section sign (e.g. a legal
+# citation like "15 U.S.C. § 1"), never a color code; game markup never puts a
+# space after §. Requiring the digit keeps a dangling/broken code (§ before a
+# word, quote, or line end) flagged instead of silently exempted.
+_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
 
 
 def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
