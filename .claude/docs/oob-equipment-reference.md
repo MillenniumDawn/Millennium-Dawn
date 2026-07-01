@@ -96,13 +96,4 @@ grep 'name = "VARIANT_NAME"' history/countries/TAG\ -\ Name.txt
 
 ## Complete Reference
 
-For detailed information on:
-
-- Chassis types and their in-game roles
-- Module configuration
-- Aircraft airframes
-- Naval hulls
-- Complete equipment type mapping tables
-- Variant verification workflows
-
-See `.claude/skills/oob-variants/SKILL.md`
+For chassis types and roles, module configuration, aircraft airframes, naval hulls, complete equipment type mapping tables, and variant verification workflows, see `.claude/skills/oob-variants/SKILL.md`.

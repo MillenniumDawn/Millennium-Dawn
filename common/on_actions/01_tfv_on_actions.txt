@@ -11,10 +11,10 @@ on_actions = {
 				update_neighbors_effects = yes # Updates Neighbor Effects
 				economic_cycle_drift_popularity = yes # Actually impacts the economic cycle drifts
 				if = { limit = { is_ai = yes }
-					ai_update_build_units = yes
 				}
 
-				country_event = brotherhood.0 #Sets muslim_brotherhood relations
+				mb_refresh_relations_effect = yes
+
 				if = {
 					limit = {
 						NOT = { has_variable = domestic_influence_amount }
@@ -100,7 +100,6 @@ on_actions = {
 				if = {
 					limit = { is_ai = yes }
 					give_AI_templates = yes
-					ai_update_build_units = yes
 				}
 				set_temp_variable = { percent_change = 30 }
 				set_temp_variable = { tag_index = FROM.id }
@@ -159,7 +158,6 @@ on_actions = {
 						set_law_vars = yes 	#vars for change laws secondary effects
 						update_neighbors_effects = yes # Updates Neighbor Effects
 						economic_cycle_drift_popularity = yes #drift from neighbor
-						ai_update_build_units = yes
 						calculate_expected_spending = yes
 
 						set_temp_variable = { nation_to_copy_from = FROM.id }
@@ -184,8 +182,11 @@ on_actions = {
 							end = FROM.influence_array^num
 							value = v
 
-							add_to_array = { influence_array = FROM.influence_array^v }
-							add_to_array = { influence_array_val = FROM.influence_array_val^v }
+							if = {
+								limit = { NOT = { is_in_array = { influence_array = FROM.influence_array^v } } }
+								add_to_array = { influence_array = FROM.influence_array^v }
+								add_to_array = { influence_array_val = FROM.influence_array_val^v }
+							}
 						}
 						recalculate_influence = yes
 
@@ -215,8 +216,6 @@ on_actions = {
 						set_temp_variable = { nation_to_copy_from = PREV.id }
 						configure_religious_setup = yes
 
-						country_event = brotherhood.0 #Sets muslim_brotherhood relations
-
 						inherit_technology = FROM
 
 						add_ideas = {
@@ -244,7 +243,6 @@ on_actions = {
 						set_law_vars = yes 	#vars for change laws secondary effects
 						update_neighbors_effects = yes # Updates Neighbor Effects
 						economic_cycle_drift_popularity = yes #drift from neighbor
-						ai_update_build_units = yes
 						calculate_expected_spending = yes
 
 						set_temp_variable = { nation_to_copy_from = PREV.id }

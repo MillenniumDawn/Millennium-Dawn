@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
-##########################
-# Defines Validation Script
-# Cross-references MD_defines.lua against vanilla 00_defines.lua to catch
-# dead/fabricated defines, wrong namespaces, and duplicates.
-#
-# Checks:
-#   1. Every define in MD exists in vanilla with the correct namespace
-#   2. No duplicate defines within MD (last-write-wins is a silent bug)
-#   3. Suggests closest match for likely typos
-#
+# Cross-reference MD_defines.lua against vanilla 00_defines.lua to catch
+# dead/fabricated defines, wrong namespaces, and duplicates (where last-write
+# silently wins), suggesting the closest match for likely typos.
 # Requires vanilla HOI4 installed; auto-detects common Steam paths.
-##########################
 import difflib
 import os
 import re
 import sys
 from typing import Dict, List, Optional, Set, Tuple
 
-from validator_common import BaseValidator, Colors, run_validator_main
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import find_hoi4_install
+from validator_common import BaseValidator, run_validator_main
 
 # Pattern: NDefines.NAMESPACE.NAME = value
 MD_DEFINE_RE = re.compile(r"NDefines\.(\w+)\.(\w+)\s*=", re.IGNORECASE)
@@ -28,21 +23,11 @@ VANILLA_DEFINE_RE = re.compile(r"^\s+(\w+)\s*=")
 # Pattern for namespace blocks in vanilla: NAMESPACE = {
 VANILLA_NAMESPACE_RE = re.compile(r"^(\w+)\s*=\s*\{")
 
-# Common Steam install locations
-STEAM_PATHS = [
-    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
-    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
-    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
-    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
-    os.path.expanduser(
-        "~/Library/Application Support/Steam/steamapps/common/Hearts of Iron IV"
-    ),
-]
-
 
 def find_vanilla_defines() -> Optional[str]:
     """Auto-detect the vanilla 00_defines.lua path."""
-    for base in STEAM_PATHS:
+    base = find_hoi4_install()
+    if base:
         path = os.path.join(base, "common", "defines", "00_defines.lua")
         if os.path.isfile(path):
             return path
@@ -174,12 +159,13 @@ class Validator(BaseValidator):
         # Find vanilla defines
         vanilla_path = self.vanilla_path or find_vanilla_defines()
         if not vanilla_path:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Cannot find vanilla 00_defines.lua. "
-                f"Set --vanilla-path or ensure HOI4 is installed via Steam.{Colors.ENDC if self.use_colors else ''}",
-                "error",
+            # add_error (not a bare counter bump) so the JSON sidecar agrees
+            # with the exit code — run_all_validators counts from the JSON.
+            self.add_error(
+                "defines-setup",
+                "Cannot find vanilla 00_defines.lua. "
+                "Set --vanilla-path or ensure HOI4 is installed via Steam.",
             )
-            self.errors_found += 1
             return
 
         self.log(f"  Vanilla defines: {vanilla_path}")
@@ -187,11 +173,7 @@ class Validator(BaseValidator):
         # Find MD defines file
         md_path = os.path.join(self.mod_path, "common", "defines", "MD_defines.lua")
         if not os.path.isfile(md_path):
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}MD_defines.lua not found at {md_path}{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += 1
+            self.add_error("defines-setup", f"MD_defines.lua not found at {md_path}")
             return
 
         # In staged mode, only run if the defines file was actually changed

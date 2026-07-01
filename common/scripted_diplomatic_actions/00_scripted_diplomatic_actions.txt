@@ -2,8 +2,13 @@
 scripted_diplomatic_actions = {
 	##Yard1's Recall Volunteers mod integrated :D
 	recall_volunteers = {
-		allowed = { ROOT = { is_ai = no } }
-		visible = { has_global_flag = allowed_recall_volunteers }
+		allowed = {
+			has_game_rule = { rule = allow_recall_intervention_forces option = yes }
+			ROOT = { is_ai = no }
+		}
+		visible = {
+			has_volunteers_amount_from = { tag = ROOT count > 0 }
+		}
 
 		selectable = {
 			# doing this for nicer tooltips
@@ -79,7 +84,7 @@ scripted_diplomatic_actions = {
 		cost = 75
 		requires_acceptance = yes
 		show_acceptance_on_action_button = yes
-		icon = 17
+		icon = 20
 		send_description = PROPOSE_TRADE_AGREEMENT_DESC
 
 		on_sent_effect = {
@@ -163,7 +168,7 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 5
-					is_same_government = yes
+					has_government = ROOT
 				}
 				modifier = {
 					add = -50
@@ -173,9 +178,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 				modifier = {
@@ -218,10 +221,12 @@ scripted_diplomatic_actions = {
 			}
 			condition_eight = {
 				base = 0
-				modifier = {
-					add = 10
-					is_influencer = yes
-				}
+				modifier = { add = 5 influence_higher_10 = yes }
+				modifier = { add = 5 influence_higher_20 = yes }
+				modifier = { add = 5 influence_higher_30 = yes }
+				modifier = { add = 5 influence_higher_40 = yes }
+				modifier = { add = 5 influence_higher_50 = yes }
+				modifier = { add = 5 influence_higher_60 = yes }
 			}
 		}
 
@@ -318,32 +323,21 @@ scripted_diplomatic_actions = {
 				check_variable = { ROOT.interest_rate > 8 }
 			}
 			modifier = {
-				factor = 0
-				check_variable = { ROOT.interest_rate > 12 }
-			}
-			modifier = {
 				factor = 0.5
 				ROOT = { has_political_power < 250 }
 			}
 			modifier = {
 				factor = 0
-				ROOT = { has_political_power < 100 }
-			}
-			modifier = {
-				factor = 0
-				ROOT = { has_active_mission = bankruptcy_incoming_collapse }
-			}
-			modifier = {
-				factor = 0
-				ROOT = { NOT = { check_variable = { pending_trade_offer_country = 0 } } }
-			}
-			modifier = {
-				factor = 0
-				ROOT = { has_country_flag = rejected_trade_agreement_@PREV }
-			}
-			modifier = {
-				factor = 0
-				ROOT = { has_country_flag = has_recently_canceled_trade_agreement_@PREV }
+				ROOT = {
+					OR = {
+						check_variable = { ROOT.interest_rate > 12 }
+						has_political_power < 100
+						has_active_mission = bankruptcy_incoming_collapse
+						NOT = { check_variable = { pending_trade_offer_country = 0 } }
+						has_country_flag = rejected_trade_agreement_@PREV
+						has_country_flag = has_recently_canceled_trade_agreement_@PREV
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -507,9 +501,11 @@ scripted_diplomatic_actions = {
 			if = { limit = { NOT = { is_subject_of = ROOT } }
 				#selected country has lower GDP/C than us
 				custom_trigger_tooltip = {
-					set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
-					multiply_temp_variable = { gdp_total_temp = 2 }
-					check_variable = { gdp_total_temp > THIS.gdp_total }
+					check_expr = {
+						value = ROOT.gdp_total
+						multiply = 2
+						greater_than = { value = THIS.gdp_total }
+					}
 					tooltip = gdp_total_cannot_be_double_ours
 				}
 				gdp_debt_ratio_higher_25 = yes
@@ -526,8 +522,12 @@ scripted_diplomatic_actions = {
 				}
 			}
 			custom_trigger_tooltip = {
-				set_temp_variable = { tmp = debt }
-				multiply_temp_variable = { tmp = 0.25 }
+				set_temp_variable = {
+					tmp = {
+						value = debt
+						multiply = 0.25
+					}
+				}
 				tooltip = treasury_more_than_25_debt_tt
 			}
 			embassy_with_root_closed = no
@@ -591,7 +591,7 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 5
-					is_same_government = yes
+					has_government = ROOT
 				}
 				modifier = {
 					add = -50
@@ -601,9 +601,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 			}
@@ -642,16 +640,22 @@ scripted_diplomatic_actions = {
 			}
 			condition_eight = {
 				base = 0
-				modifier = {
-					add = 5
-					is_influencer = yes
-				}
+				modifier = { add = 5 influence_higher_10 = yes }
+				modifier = { add = 5 influence_higher_20 = yes }
+				modifier = { add = 5 influence_higher_30 = yes }
+				modifier = { add = 5 influence_higher_40 = yes }
+				modifier = { add = 5 influence_higher_50 = yes }
+				modifier = { add = 5 influence_higher_60 = yes }
 			}
 			condition_nine = {
 				base = 0
 				modifier = {
-					set_temp_variable = { temp_interest_rate = interest_rate }
-					multiply_temp_variable = { temp_interest_rate = 2 }
+					set_temp_variable = {
+						temp_interest_rate = {
+							value = interest_rate
+							multiply = 2
+						}
+					}
 					check_variable = { temp_interest_rate > 0.8 }
 					add = temp_interest_rate
 				}
@@ -853,20 +857,18 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				factor = 0
-				set_temp_variable = { tmp = debt }
-				multiply_temp_variable = { tmp = 0.25 }
-				ROOT = {
-					set_temp_variable = { debt_temp = debt }
-					add_to_temp_variable = { debt_temp = PREV.tmp }
-
-					set_temp_variable = { interest_rate_temp = debt_temp }
-					divide_temp_variable = { interest_rate_temp = gdp_total }
-					multiply_temp_variable = { interest_rate_temp = 10 }
-
-					set_temp_variable = { interest_rate_temp_multiplier = modifier@interest_rate_multiplier_modifier }
-					add_to_temp_variable = { interest_rate_temp = interest_rate_temp_multiplier }
+				check_expr = {
+					value = 0
+					add = {
+						value = debt
+						multiply = 0.25
+						add = ROOT.debt
+					}
+					divide = ROOT.gdp_total
+					multiply = 10
+					add = ROOT.modifier@interest_rate_multiplier_modifier
+					greater_than = { value = 7.99 }
 				}
-				check_variable = { ROOT.interest_rate_temp > 7.99 }
 			}
 			# Graduated economic gates
 			modifier = {
@@ -1008,7 +1010,7 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 5
-					is_same_government = yes
+					has_government = ROOT
 				}
 				modifier = {
 					add = -50
@@ -1018,9 +1020,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 				modifier = {
@@ -1063,10 +1063,12 @@ scripted_diplomatic_actions = {
 			}
 			condition_eight = {
 				base = 0
-				modifier = {
-					add = 10
-					is_influencer = yes
-				}
+				modifier = { add = 5 influence_higher_10 = yes }
+				modifier = { add = 5 influence_higher_20 = yes }
+				modifier = { add = 5 influence_higher_30 = yes }
+				modifier = { add = 5 influence_higher_40 = yes }
+				modifier = { add = 5 influence_higher_50 = yes }
+				modifier = { add = 5 influence_higher_60 = yes }
 			}
 		}
 
@@ -1413,9 +1415,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 			}
@@ -1552,7 +1552,7 @@ scripted_diplomatic_actions = {
 	negotiate_operative_release = {
 		allowed = {
 			has_dlc = "La Resistance"
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 
 		visible = {
@@ -1612,7 +1612,7 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 5
-					is_same_government = yes
+					has_government = ROOT
 				}
 				modifier = {
 					add = -50
@@ -1622,9 +1622,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 			}
@@ -1747,7 +1745,7 @@ scripted_diplomatic_actions = {
 	enforce_peace_option = {
 		allowed = {
 			has_game_rule = { rule = allow_forcing_a_white_peace option = yes }
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 
 		visible = {
@@ -1755,7 +1753,7 @@ scripted_diplomatic_actions = {
 			ROOT = { NOT = { has_country_flag = recently_demanded_enforce_peace_@PREV } }
 			has_offensive_war = yes
 			has_civil_war = no
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 		selectable = {
 			influence_higher_40 = yes
@@ -1823,7 +1821,7 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 5
-					is_same_government = yes
+					has_government = ROOT
 				}
 				modifier = {
 					add = -50
@@ -1833,9 +1831,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 			}
@@ -1906,28 +1902,44 @@ scripted_diplomatic_actions = {
 				modifier = {
 					add = -50
 					check_variable = { THIS.months_at_war < 12 }
+					surrender_progress < 0.5
 				}
 				modifier = {
 					add = -25
 					check_variable = { THIS.months_at_war < 18 }
+					surrender_progress < 0.5
 				}
 				modifier = {
 					add = -15
 					check_variable = { THIS.months_at_war < 24 }
+					surrender_progress < 0.5
 				}
 			}
 			surrender_progress_reluctance = {
 				base = 0
 				modifier = {
-					set_temp_variable = { ep_sp = THIS.surrender_progress }
-					multiply_temp_variable = { ep_sp = 100 }
-					subtract_from_temp_variable = { ep_sp = 50 }
-					clamp_temp_variable = {
-						var = ep_sp
-						min = -50
-						max = 0
+					set_temp_variable = {
+						ep_sp = {
+							value = THIS.surrender_progress
+							multiply = 100
+							subtract = 50
+							clamp = { min = -50 max = 50 }
+						}
 					}
 					add = ep_sp
+				}
+			}
+			# Desperation to end the war: a clearly losing belligerent grows
+			# willing to accept the enforced peace, mirroring the conditional peace deal AI.
+			desperation_to_end_war = {
+				base = 0
+				modifier = {
+					add = 25
+					surrender_progress > 0.5
+				}
+				modifier = {
+					add = 25
+					surrender_progress > 0.75
 				}
 			}
 		}
@@ -1978,7 +1990,7 @@ scripted_diplomatic_actions = {
 	propose_energy_load_sharing = {
 		allowed = {
 			NOT = { has_global_flag = GAME_RULE_disable_energy_load_sharing }
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 
 		visible = {
@@ -1990,7 +2002,6 @@ scripted_diplomatic_actions = {
 			NOT = { has_country_flag = energy_load_sharing_recipient }
 			has_war_with_or_allies_have_war_with_ROOT = no
 			has_an_energy_deficit = yes
-			NOT = { has_country_flag = energy_load_sharing_recipient }
 			embassy_with_root_closed = no
 			ERI_is_not_transitional_government = yes
 		}
@@ -2044,7 +2055,7 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 5
-					is_same_government = yes
+					has_government = ROOT
 				}
 				modifier = {
 					add = -50
@@ -2054,9 +2065,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 			}
@@ -2101,7 +2110,7 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				add = 5
-				is_same_government = yes
+				has_government = ROOT
 			}
 			modifier = {
 				add = 5
@@ -2127,6 +2136,10 @@ scripted_diplomatic_actions = {
 				}
 			}
 			modifier = {
+				factor = 0
+				ROOT = { NOT = { check_variable = { energy_balance > 10 } } }
+			}
+			modifier = {
 				add = -100
 				ROOT = { has_country_flag = recently_rejected_propose_energy_load_sharing_@PREV }
 			}
@@ -2136,11 +2149,11 @@ scripted_diplomatic_actions = {
 	request_energy_load_sharing = {
 		allowed = {
 			NOT = { has_global_flag = GAME_RULE_disable_energy_load_sharing }
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 
 		visible = {
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 			NOT = { is_in_array = { ROOT.energy_load_sharing_nations = THIS.id } }
 			NOT = { is_in_array = { THIS.energy_load_sharing_nations = ROOT.id } }
 		}
@@ -2201,7 +2214,7 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 5
-					is_same_government = yes
+					has_government = ROOT
 				}
 				modifier = {
 					add = -50
@@ -2211,9 +2224,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 			}
@@ -2254,7 +2265,7 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				add = 5
-				is_same_government = yes
+				has_government = ROOT
 			}
 			modifier = {
 				add = 5
@@ -2381,13 +2392,17 @@ scripted_diplomatic_actions = {
 				add = -100
 				check_variable = { ROOT.energy_load_sharing_gain_var > 0.01 }
 			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_accepted_energy_load_sharing_@PREV }
+			}
 		}
 	}
 
 	# Purchase Reactor-Grade Material
 	purchase_reactor_grade_material = {
 		allowed = {
-			MD_special_countries = no
+			NOT = { MD_special_countries = yes }
 		}
 		visible = {
 			ROOT = {
@@ -2441,6 +2456,7 @@ scripted_diplomatic_actions = {
 				modify_treasury_effect = yes
 				set_country_flag = { flag = recently_purchased_reactor_material_from_@PREV days = 90 value = 1 }
 			}
+			update_money_dirty_variable = yes
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect purchase_reactor_grade_material"
@@ -2463,18 +2479,17 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 15
-					check_variable = { nuclear_reactor_fuel_production > nuclear_fuel_consumption }
+					check_variable = { total_nuclear_reactor_fuel_production > nuclear_fuel_consumption }
 				}
 				modifier = {
 					add = -25
-					NOT = { check_variable = { nuclear_reactor_fuel_production > nuclear_fuel_consumption } }
+					NOT = { check_variable = { total_nuclear_reactor_fuel_production > nuclear_fuel_consumption } }
 				}
 			}
 			opinion_condition = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.1 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 			}
@@ -2574,7 +2589,7 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 50
 				ROOT = {
-					check_variable = { nuclear_fuel_consumption > nuclear_reactor_fuel_production }
+					check_variable = { nuclear_fuel_consumption > total_nuclear_reactor_fuel_production }
 				}
 			}
 			# Scale urgency by how low stockpile is relative to consumption
@@ -2583,9 +2598,11 @@ scripted_diplomatic_actions = {
 				add = 50
 				ROOT = {
 					check_variable = { nuclear_fuel_consumption > 0 }
-					set_temp_variable = { fuel_weeks_remaining = var_reactor_material_stockpile }
-					divide_temp_variable = { fuel_weeks_remaining = nuclear_fuel_consumption }
-					check_variable = { fuel_weeks_remaining < 4 }
+					check_expr = {
+						value = var_reactor_material_stockpile
+						divide = nuclear_fuel_consumption
+						less_than = { value < 4 }
+					}
 				}
 			}
 			# Urgent: stockpile covers less than 8 weeks
@@ -2593,9 +2610,11 @@ scripted_diplomatic_actions = {
 				add = 25
 				ROOT = {
 					check_variable = { nuclear_fuel_consumption > 0 }
-					set_temp_variable = { fuel_weeks_remaining = var_reactor_material_stockpile }
-					divide_temp_variable = { fuel_weeks_remaining = nuclear_fuel_consumption }
-					check_variable = { fuel_weeks_remaining < 8 }
+					check_expr = {
+						value = var_reactor_material_stockpile
+						divide = nuclear_fuel_consumption
+						less_than = { value < 8 }
+					}
 				}
 			}
 			# Low priority: stockpile covers less than 16 weeks
@@ -2603,9 +2622,11 @@ scripted_diplomatic_actions = {
 				add = 10
 				ROOT = {
 					check_variable = { nuclear_fuel_consumption > 0 }
-					set_temp_variable = { fuel_weeks_remaining = var_reactor_material_stockpile }
-					divide_temp_variable = { fuel_weeks_remaining = nuclear_fuel_consumption }
-					check_variable = { fuel_weeks_remaining < 16 }
+					check_expr = {
+						value = var_reactor_material_stockpile
+						divide = nuclear_fuel_consumption
+						less_than = { value < 16 }
+					}
 				}
 			}
 			# No need: stockpile covers more than 26 weeks (half a year)
@@ -2613,19 +2634,23 @@ scripted_diplomatic_actions = {
 				factor = 0
 				ROOT = {
 					check_variable = { nuclear_fuel_consumption > 0 }
-					set_temp_variable = { fuel_weeks_remaining = var_reactor_material_stockpile }
-					divide_temp_variable = { fuel_weeks_remaining = nuclear_fuel_consumption }
-					check_variable = { fuel_weeks_remaining > 26 }
+					check_expr = {
+						value = var_reactor_material_stockpile
+						divide = nuclear_fuel_consumption
+						less_than = { value < 26 }
+					}
 				}
 			}
 			# No need if own production exceeds consumption and stockpile is healthy
 			modifier = {
 				factor = 0
 				ROOT = {
-					check_variable = { nuclear_reactor_fuel_production > nuclear_fuel_consumption }
-					set_temp_variable = { fuel_weeks_remaining = var_reactor_material_stockpile }
-					divide_temp_variable = { fuel_weeks_remaining = nuclear_fuel_consumption }
-					check_variable = { fuel_weeks_remaining > 8 }
+					check_variable = { total_nuclear_reactor_fuel_production > nuclear_fuel_consumption }
+					check_expr = {
+						value = var_reactor_material_stockpile
+						divide = nuclear_fuel_consumption
+						greater_than = { value > 8 }
+					}
 				}
 			}
 			modifier = {
@@ -2817,7 +2842,7 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					add = 5
-					is_same_government = yes
+					has_government = ROOT
 				}
 				modifier = {
 					add = -50
@@ -2827,9 +2852,7 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
+					check_opinion_calculation = yes
 					add = opinion_calculator
 				}
 			}

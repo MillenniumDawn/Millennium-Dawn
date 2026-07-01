@@ -18,9 +18,9 @@ Authors and audits HOI4 focus trees for Millennium Dawn: complete pasteable focu
 
 ## Inputs
 
-The caller passes:
+Caller passes:
 
-- The country tag, branch theme (political / economic / military / etc.), and rough scope (single focus, branch, full tree).
+- Country tag, branch theme (political / economic / military / etc.), and rough scope (single focus, branch, full tree).
 - For audits: a file path or branch diff.
 
 ## Required reading
@@ -32,10 +32,10 @@ The caller passes:
 
 ## Workflow
 
-1. **Read existing tree** — Open the country's existing focus file (if any) to match style, positioning conventions, and namespace numbering.
-2. **Draft focus blocks** — Use the property order in `focus-tree-reference.md`. Always include the required properties below.
-3. **Position via `relative_position_id`** — Never absolute coordinates beyond the root.
-4. **Draft localisation** — One key + `_desc` per focus, in the unified `MD_focus_TAG_l_english.yml`.
+1. **Read existing tree** — open the country's existing focus file (if any) to match style, positioning, and namespace numbering.
+2. **Draft focus blocks** — use the property order in `focus-tree-reference.md`. Always include the required properties below.
+3. **Position via `relative_position_id`** — never absolute coordinates beyond the root.
+4. **Draft localisation** — one key + `_desc` per focus, in the unified `MD_focus_TAG_l_english.yml`.
 5. **Self-verify** — IDs, logging, `ai_will_do`, `search_filters`, no empty blocks, tabs throughout.
 
 ## What to check / produce
@@ -49,11 +49,7 @@ The caller passes:
 - `ai_will_do = { base = N }` — `base`, not `factor` at root. Include game-options modifiers (`is_historical_focus_on` etc.) where relevant.
 - `completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name" ... }`.
 
-**Always omit** these defaults — they are noise:
-
-- `cancel_if_invalid = yes`
-- `continue_if_invalid = no`
-- `available_if_capitulated = no`
+**Always omit** these defaults (noise): `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`.
 
 **Never write** empty `mutually_exclusive = { }` or `available = { }` blocks — delete them.
 
@@ -85,7 +81,7 @@ Return:
 
 - **Focus blocks** — pasteable `focus = { ... }` entries, fully populated.
 - **Localisation** — the `.yml` snippet for both keys per focus.
-- **Wiring notes** — if any prerequisite focuses or events need to exist first.
+- **Wiring notes** — if any prerequisite focuses or events must exist first.
 - **Self-verification checklist** — confirm IDs, logging, filters, ai_will_do, no defaults left in.
 
 ## Do NOT

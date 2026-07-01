@@ -14,9 +14,6 @@ python3 tools/validation/run_all_validators.py --strict
 # Only check staged files (pre-commit mode)
 python3 tools/validation/run_all_validators.py --staged --strict
 
-# Include slow validators (set-variables, unused-scripted, variables, unused-textures)
-python3 tools/validation/run_all_validators.py --include-slow
-
 # Save combined report to a file
 python3 tools/validation/run_all_validators.py --output report.txt
 ```
@@ -29,24 +26,34 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 
 ### Standard (run by default)
 
-| Validator                             | Checks                                                                                                                                   |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **validate_ai_equipment.py**          | Nations blocked from generic AI equipment roles without custom coverage; duplicate role names                                            |
-| **validate_ai_navy.py**               | Naval taskforce ship types, fleet template references, mission types, composition sizes                                                  |
-| **validate_ai_roles.py**              | `role_ratio`/`build_army` references match defined roles in `common/ai_templates/`                                                       |
-| **validate_cosmetic_tags.py**         | Missing cosmetic tags (used but never set); unused cosmetic tag colors                                                                   |
-| **validate_decisions.py**             | Duplicate decisions; unused categories; missing AI weight; custom cost tooltip presence                                                  |
-| **validate_defines.py**               | MD defines exist in vanilla with correct namespace; duplicate defines within MD                                                          |
-| **validate_events.py**                | Events missing `is_triggered_only = yes`; unsupported title/desc combinations; redundant long-form event calls                           |
-| **validate_factions.py**              | Faction template/goal/rule/icon references exist; no duplicate IDs; valid rule types                                                     |
-| **validate_history_techs.py**         | History files grant all prerequisite technologies, and equipment variant designs only use modules the country has researched (DLC-aware) |
-| **validate_localisation.py**          | Duplicate keys; unpaired brackets; color code mismatches; orphaned `_tt` tooltip keys                                                    |
-| **validate_oob_units.py**             | Unit names in OOB files and AI templates match canonical names in `common/units/`                                                        |
-| **validate_scripted_localisation.py** | Scripted loc keys used but not defined; defined but never referenced; missing GFX icons                                                  |
+| Validator                             | Checks                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **validate_agency_upgrades.py**       | Intelligence agency upgrade prerequisites and capability references are defined; no duplicate upgrade IDs                                                                                                                                                                                                                                                                                                                         |
+| **validate_ai_equipment.py**          | Nations blocked from generic AI equipment roles without custom coverage; duplicate role names                                                                                                                                                                                                                                                                                                                                     |
+| **validate_ai_navy.py**               | Naval taskforce ship types, fleet template references, mission types, composition sizes                                                                                                                                                                                                                                                                                                                                           |
+| **validate_ai_roles.py**              | `role_ratio`/`build_army` references match defined roles in `common/ai_templates/`                                                                                                                                                                                                                                                                                                                                                |
+| **validate_cosmetic_tags.py**         | Missing cosmetic tags (used but never set); unused cosmetic tag colors                                                                                                                                                                                                                                                                                                                                                            |
+| **validate_decisions.py**             | Duplicate decisions; unused categories; missing AI weight; custom cost tooltip presence                                                                                                                                                                                                                                                                                                                                           |
+| **validate_defines.py**               | MD defines exist in vanilla with correct namespace; duplicate defines within MD                                                                                                                                                                                                                                                                                                                                                   |
+| **validate_events.py**                | Events missing `is_triggered_only = yes`; unsupported title/desc combinations; redundant long-form event calls; every `picture` resolves to an MD-defined sprite (vanilla event pictures are not allowed, so this gates in CI without the game installed)                                                                                                                                                                         |
+| **validate_factions.py**              | Faction template/goal/rule/icon references exist; no duplicate IDs; valid rule types                                                                                                                                                                                                                                                                                                                                              |
+| **validate_focus_tree.py**            | Duplicate focus IDs; orphan focuses; missing prerequisite targets; missing loc keys; dependency cycles. Opt-in: `--missing-icons` (focuses whose `icon` sprite is undefined)                                                                                                                                                                                                                                                      |
+| **validate_gfx_references.py**        | Sprite names in `.gui` and scripted-GUI files are defined in `interface/*.gfx`; unused sprite definitions                                                                                                                                                                                                                                                                                                                         |
+| **validate_history.py**               | History files: technology dependencies, equipment variant modules, DLC-gated techs, OOB references, capital definitions                                                                                                                                                                                                                                                                                                           |
+| **validate_ideas.py**                 | Idea `allowed`/`visible` blocks reference defined ideas; no duplicate idea IDs; `GFX_idea_categories` has enough frames for the politics-view categories. Unused-ideas check is enabled by default (pass `--no-unused-ideas` to disable). Opt-in: `--missing-loc` (ideas without name/desc loc keys), `--missing-icons` (ideas whose `picture` sprite is undefined), `--suggest-consolidation` (advisory loc consolidation hints) |
+| **validate_localisation.py**          | Duplicate keys; unpaired brackets; color code mismatches; orphaned `_tt` tooltip keys                                                                                                                                                                                                                                                                                                                                             |
+| **validate_modifiers.py**             | Modifier references in focuses/decisions/ideas exist in the defines or vanilla; no duplicate modifier definitions                                                                                                                                                                                                                                                                                                                 |
+| **validate_oob_units.py**             | Unit names in OOB files and AI templates match canonical names in `common/units/`                                                                                                                                                                                                                                                                                                                                                 |
+| **validate_on_actions.py**            | Events referenced in `on_actions` are defined; `is_triggered_only` enforced; no duplicate refs in the same trigger block                                                                                                                                                                                                                                                                                                          |
+| **validate_scripted_gui.py**          | Scripted GUI window/property names are defined; referenced effects/triggers exist                                                                                                                                                                                                                                                                                                                                                 |
+| **validate_scripted_localisation.py** | Scripted loc keys used but not defined; defined but never referenced; missing GFX icons                                                                                                                                                                                                                                                                                                                                           |
+| **validate_scripted_params.py**       | Scripted params declared in `common/scripted_params/` are referenced with compatible types                                                                                                                                                                                                                                                                                                                                        |
+| **validate_style.py**                 | Brace matching, indent/bracket balance, spacing/quotes, focus ID format, event log standards                                                                                                                                                                                                                                                                                                                                      |
+| **validate_simplifications.py**       | Suggests merging consecutive same-scope blocks (`TAG = { } TAG = { }`, state ids, `PREV`, `var:`); WARNING-only, skips OR/random_list contexts                                                                                                                                                                                                                                                                                    |
 
-### Slow (opt-in with `--include-slow`)
+### Heavy validators
 
-These validators scan a much larger portion of the codebase and take significantly longer to run. They are excluded from the default run and from CI to keep feedback fast.
+These cross-reference the entire codebase. A disk cache under `.validation_cache/` keeps re-runs fast — see [DISK_CACHE.md](DISK_CACHE.md).
 
 | Validator                       | Checks                                                                             |
 | ------------------------------- | ---------------------------------------------------------------------------------- |
@@ -127,6 +134,19 @@ To bypass for a single commit (not recommended):
 git commit --no-verify
 ```
 
+### Pre-commit vs CI
+
+To keep commit latency low, only a fast subset of validators runs on `git commit`. The heavy cross-reference validators (`validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`, `validate_variables`, `validate_focus_tree`, and most others) run **CI-only** — they are gated by the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml`, not by pre-commit.
+
+The commit-stage validators (`validate_style`, `validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`, `validate_ai_equipment`, `validate_agency_upgrades`, `validate_ideas`, `validate_events`) run through a single pre-commit hook, `md-validate-content`, which fans them out in parallel via `tools/precommit_validate.py`. `check_common_mistakes` and `validate_defines` keep their own commit-stage hooks; `validate_unused_textures` keeps a `stages: [manual]` hook because CI cannot run it.
+
+To run any validator locally — including a CI-only one — invoke it directly:
+
+```bash
+python3 tools/validation/validate_scripted_gui.py --staged --no-color  # changed files only
+python3 tools/validation/validate_scripted_gui.py --no-color           # full-repo scan
+```
+
 ---
 
 ## Architecture
@@ -136,10 +156,26 @@ All validators extend `BaseValidator` from `validator_common.py`. To add a new v
 1. Create `validate_<name>.py` in this directory
 2. Subclass `BaseValidator`, set `TITLE = "..."`, implement `run_validations()`
 3. Use `self.add_error(category, message, file, line)` / `self.add_warning(...)` to record issues
-4. Call `run_validator_main(YourValidator, "Description")` at the bottom
-5. `run_all_validators.py` auto-discovers it on the next run — no registration needed
+4. To parse many files, call `self.parse_files_cached(patterns, namespace, parse_fn)` — it's staged-aware, case-preserving, and disk-caches each parse keyed on file content. Use a unique `namespace` string per call to avoid cache collisions.
+5. Call `run_validator_main(YourValidator, "Description")` at the bottom
+6. `run_all_validators.py` auto-discovers it on the next run — no registration needed
 
-`validator_common.py` also provides `strip_comments()`, `FileOpener`, `DataCleaner`, and `HOI4_BUILTIN_BLOCKS` for use in validators.
+`validator_common.py` also provides `strip_comments()`, `FileOpener`, `DataCleaner`, `HOI4_BUILTIN_BLOCKS`, and `scan_meta_constructed_names()` for use in validators.
+
+Module-level constants and pool-worker functions (those passed to `_pool_map`) must be defined at the **top level** — not inside the validator class — so `multiprocessing.Pool` can pickle them. Classmethods on a validator subclass are not directly picklable; use standalone functions for pool dispatch.
+
+### `validator_common.py` public API
+
+| Symbol                                                                                                                               | Type      | Description                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BaseValidator`                                                                                                                      | class     | Base for all validators. Provides `_pool_map`, `_collect_files`, `_report`, `_log_section`, timing, and JSON output                                                                                                                                        |
+| `BaseValidator.parse_files_cached(patterns, namespace, parse_fn, *, lowercase=False, strip_comments_flag=True, ignore_staged=False)` | method    | Collect files matching glob patterns (staged-aware), read each case-preserving, strip comments, and per-file disk-cache the result keyed on content; returns `{path: parse_fn(text, path)}`. Use this as the standard way to parse many files of one kind. |
+| `scan_meta_constructed_names(files, defined_names)`                                                                                  | function  | Scan files for `meta_effect`/`meta_trigger` template patterns and match against defined names                                                                                                                                                              |
+| `HOI4_BUILTIN_BLOCKS`                                                                                                                | frozenset | All known HOI4 built-in effect/trigger block names                                                                                                                                                                                                         |
+| `Colors`                                                                                                                             | class     | ANSI escape codes for colored output (`HEADER`, `BLUE`, `CYAN`, `GREEN`, `YELLOW`, `RED`, `ENDC`, `BOLD`, `UNDERLINE`)                                                                                                                                     |
+| `Severity`                                                                                                                           | class     | String constants: `Severity.ERROR = "error"`, `Severity.WARNING = "warning"`                                                                                                                                                                               |
+| `Issue`                                                                                                                              | dataclass | Structured issue with `severity`, `category`, `message`, `file`, `line` fields and `to_dict()` / `to_key()` methods                                                                                                                                        |
+| `MD_LOG_LEVEL`                                                                                                                       | env var   | Set to `ERROR` / `WARNING` (default) / `INFO` to control per-validator verbosity                                                                                                                                                                           |
 
 ---
 

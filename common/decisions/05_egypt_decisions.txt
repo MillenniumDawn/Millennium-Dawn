@@ -573,18 +573,17 @@ EGY_coptic_decision = {
 		icon = GFX_decision_copts_govern_button
 		cost = 60
 		days_remove = 75
+
+		visible = {
+			NOT = { neutrality_neutral_autocracy_are_in_power = yes }
+		}
+
 		available = {
 			NOT = { has_decision = EGY_appease_coptic_people }
 			NOT = { has_decision = EGY_raids_on_coptic_people }
 			NOT = { has_decision = EGY_governmental_pressure }
 			NOT = { has_decision = EGY_copt_coalition }
 			NOT = { has_decision = EGY_promote_coptic_politicians }
-		}
-		visible = {
-			NOT = { neutrality_neutral_autocracy_are_in_power = yes }
-		}
-
-		available = {
 			NOT = { neutrality_neutral_autocracy_are_in_coalition = yes }
 			custom_trigger_tooltip = {
 				check_variable = { EGY_coptic_people_opinion > 80 }
@@ -598,9 +597,12 @@ EGY_coptic_decision = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_copt_coalition"
 			custom_effect_tooltip = EGY_copt_coalition_create
 			hidden_effect = {
-				add_to_array = { gov_coalition_array = 13 }
-				subtract_from_variable = { party_pop_array^13 = current_cons_popularity }
-				recalculate_party = yes
+				set_temp_variable = { add_col_one = 13 }
+				add_coalition_members_effect = yes
+				set_temp_variable = { party_index = 13 }
+				set_temp_variable = { party_popularity_increase = current_cons_popularity }
+				multiply_temp_variable = { party_popularity_increase = -1 }
+				add_relative_party_popularity = yes
 				update_government_coalition_strength = yes
 				set_coalition_drift = yes
 			}
@@ -609,7 +611,6 @@ EGY_coptic_decision = {
 			modify_coptic_opinion_effect = yes
 			set_temp_variable = { coptic_pol_influence_change = 5 }
 			modify_coptic_pol_influence_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
@@ -635,12 +636,7 @@ EGY_slums_decision = {
 		visible = {
 			owns_state = 216
 			216 = {
-				OR = {
-					has_dynamic_modifier = { modifier = EGY_slums_4_level }
-					has_dynamic_modifier = { modifier = EGY_slums_3_level }
-					has_dynamic_modifier = { modifier = EGY_slums_2_level }
-					has_dynamic_modifier = { modifier = EGY_slums_1_level }
-				}
+				EGY_has_slums_in_state = yes
 			}
 		}
 		available = { NOT = { has_country_flag = EGY_already_remove_slums } }
@@ -666,24 +662,8 @@ EGY_slums_decision = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_remove_slums_in_alexandria"
 			clr_country_flag = EGY_already_remove_slums
-			if = {
-				limit = { 216 = { has_dynamic_modifier = { modifier = EGY_slums_4_level } } }
-				216 = { remove_dynamic_modifier = { modifier = EGY_slums_4_level } }
-				216 = { add_dynamic_modifier = { modifier = EGY_slums_3_level } }
-			}
-			else_if = {
-				limit = { 216 = { has_dynamic_modifier = { modifier = EGY_slums_3_level } } }
-				216 = { remove_dynamic_modifier = { modifier = EGY_slums_3_level } }
-				216 = { add_dynamic_modifier = { modifier = EGY_slums_2_level } }
-			}
-			else_if = {
-				limit = { 216 = { has_dynamic_modifier = { modifier = EGY_slums_2_level } } }
-				216 = { remove_dynamic_modifier = { modifier = EGY_slums_2_level } }
-				216 = { add_dynamic_modifier = { modifier = EGY_slums_1_level } }
-			}
-			else_if = {
-				limit = { 216 = { has_dynamic_modifier = { modifier = EGY_slums_1_level } } }
-				216 = { remove_dynamic_modifier = { modifier = EGY_slums_1_level } }
+			216 = {
+				EGY_lower_slums_level = yes
 			}
 			subtract_from_variable = { EGY_slums_left = 1 }
 			check_broken_economy_conditions_for_reducing = yes
@@ -716,13 +696,7 @@ EGY_slums_decision = {
 		visible = {
 			owns_state = 215
 			215 = {
-				OR = {
-					has_dynamic_modifier = { modifier = EGY_slums_5_level }
-					has_dynamic_modifier = { modifier = EGY_slums_4_level }
-					has_dynamic_modifier = { modifier = EGY_slums_3_level }
-					has_dynamic_modifier = { modifier = EGY_slums_2_level }
-					has_dynamic_modifier = { modifier = EGY_slums_1_level }
-				}
+				EGY_has_slums_in_state = yes
 			}
 		}
 		available = { NOT = { has_country_flag = EGY_already_remove_slums } }
@@ -748,29 +722,8 @@ EGY_slums_decision = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_remove_slums_in_cairo"
 			clr_country_flag = EGY_already_remove_slums
-			if = {
-				limit = { 215 = { has_dynamic_modifier = { modifier = EGY_slums_5_level } } }
-				215 = { remove_dynamic_modifier = { modifier = EGY_slums_5_level } }
-				215 = { add_dynamic_modifier = { modifier = EGY_slums_4_level } }
-			}
-			else_if = {
-				limit = { 215 = { has_dynamic_modifier = { modifier = EGY_slums_4_level } } }
-				215 = { remove_dynamic_modifier = { modifier = EGY_slums_4_level } }
-				215 = { add_dynamic_modifier = { modifier = EGY_slums_3_level } }
-			}
-			else_if = {
-				limit = { 215 = { has_dynamic_modifier = { modifier = EGY_slums_3_level } } }
-				215 = { remove_dynamic_modifier = { modifier = EGY_slums_3_level } }
-				215 = { add_dynamic_modifier = { modifier = EGY_slums_2_level } }
-			}
-			else_if = {
-				limit = { 215 = { has_dynamic_modifier = { modifier = EGY_slums_2_level } } }
-				215 = { remove_dynamic_modifier = { modifier = EGY_slums_2_level } }
-				215 = { add_dynamic_modifier = { modifier = EGY_slums_1_level } }
-			}
-			else_if = {
-				limit = { 215 = { has_dynamic_modifier = { modifier = EGY_slums_1_level } } }
-				215 = { remove_dynamic_modifier = { modifier = EGY_slums_1_level } }
+			215 = {
+				EGY_lower_slums_level = yes
 			}
 			subtract_from_variable = { EGY_slums_left = 1 }
 			check_broken_economy_conditions_for_reducing = yes
@@ -805,12 +758,7 @@ EGY_slums_decision = {
 		visible = {
 			owns_state = 214
 			214 = {
-				OR = {
-					has_dynamic_modifier = { modifier = EGY_slums_4_level }
-					has_dynamic_modifier = { modifier = EGY_slums_3_level }
-					has_dynamic_modifier = { modifier = EGY_slums_2_level }
-					has_dynamic_modifier = { modifier = EGY_slums_1_level }
-				}
+				EGY_has_slums_in_state = yes
 			}
 		}
 		available = { NOT = { has_country_flag = EGY_already_remove_slums } }
@@ -836,24 +784,8 @@ EGY_slums_decision = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_remove_slums_in_suez"
 			clr_country_flag = EGY_already_remove_slums
-			if = {
-				limit = { 214 = { has_dynamic_modifier = { modifier = EGY_slums_4_level } } }
-				214 = { remove_dynamic_modifier = { modifier = EGY_slums_4_level } }
-				214 = { add_dynamic_modifier = { modifier = EGY_slums_3_level } }
-			}
-			else_if = {
-				limit = { 214 = { has_dynamic_modifier = { modifier = EGY_slums_3_level } } }
-				214 = { remove_dynamic_modifier = { modifier = EGY_slums_3_level } }
-				214 = { add_dynamic_modifier = { modifier = EGY_slums_2_level } }
-			}
-			else_if = {
-				limit = { 214 = { has_dynamic_modifier = { modifier = EGY_slums_2_level } } }
-				214 = { remove_dynamic_modifier = { modifier = EGY_slums_2_level } }
-				214 = { add_dynamic_modifier = { modifier = EGY_slums_1_level } }
-			}
-			else_if = {
-				limit = { 214 = { has_dynamic_modifier = { modifier = EGY_slums_1_level } } }
-				214 = { remove_dynamic_modifier = { modifier = EGY_slums_1_level } }
+			214 = {
+				EGY_lower_slums_level = yes
 			}
 			subtract_from_variable = { EGY_slums_left = 1 }
 			check_broken_economy_conditions_for_reducing = yes
@@ -915,19 +847,8 @@ EGY_slums_decision = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_remove_slums_in_nile_valley"
 			clr_country_flag = EGY_already_remove_slums
-			if = {
-				limit = { 217 = { has_dynamic_modifier = { modifier = EGY_slums_3_level } } }
-				217 = { remove_dynamic_modifier = { modifier = EGY_slums_3_level } }
-				217 = { add_dynamic_modifier = { modifier = EGY_slums_2_level } }
-			}
-			else_if = {
-				limit = { 217 = { has_dynamic_modifier = { modifier = EGY_slums_2_level } } }
-				217 = { remove_dynamic_modifier = { modifier = EGY_slums_2_level } }
-				217 = { add_dynamic_modifier = { modifier = EGY_slums_1_level } }
-			}
-			else_if = {
-				limit = { 217 = { has_dynamic_modifier = { modifier = EGY_slums_1_level } } }
-				217 = { remove_dynamic_modifier = { modifier = EGY_slums_1_level } }
+			217 = {
+				EGY_lower_slums_level = yes
 			}
 			subtract_from_variable = { EGY_slums_left = 1 }
 			check_broken_economy_conditions_for_reducing = yes
@@ -983,7 +904,6 @@ EGY_aswan_tribal_clashes_category = {
 		complete_effect = {
 			effect_tooltip = {
 				add_stability = 0.03
-				set_party_index_to_ruling_party = yes
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
 				add_relative_party_popularity = yes

@@ -1,21 +1,5 @@
 #!/usr/bin/env python3
-"""
-HOI4 Localisation YAML Fixer
-
-Auto-fixes common YAML issues in HOI4 localisation files that cause
-check-yaml to fail. Runs as a pre-commit hook with --fix to auto-correct,
-or without --fix to report errors and exit non-zero.
-
-Fixes applied:
-  1. Unescaped double quotes inside quoted values
-  2. Missing space after colon (key:"val" -> key: "val")
-  3. Version-number keys (key:0 "val" -> key: "val")
-  4. Tab characters replaced with spaces (YAML disallows tabs)
-  5. Curly/smart quotes replaced with escaped straight quotes
-
-Usage:
-    python fix_loc_yaml.py [--fix] [files...]
-"""
+"""Auto-fix common YAML issues in HOI4 localisation files that cause check-yaml to fail."""
 
 import argparse
 import codecs

@@ -184,24 +184,21 @@ class IdeaStandardizer(BaseStandardizer):
 
         for i, line in enumerate(block_lines):
             stripped = line.strip()
-            # Skip blank lines
             if not stripped:
                 continue
-            # Skip commented-out code (but keep inline comments)
+            # Skip commented-out code, but keep a leading comment (i == 0).
             if stripped.startswith("#") and i > 0:
                 continue
 
-            # Calculate indentation based on brace depth
             line_indent = base_indent + ("\t" * depth)
 
-            # If this is a closing brace, decrease depth first
+            # A closing brace dedents before it is emitted.
             if stripped == "}":
                 depth = max(0, depth - 1)
                 line_indent = base_indent + ("\t" * depth)
 
             compacted.append(line_indent + stripped)
 
-            # Update depth based on braces in this line
             if i == 0 and "{" in stripped:
                 depth += 1
             elif i > 0 and stripped.endswith("{"):
@@ -377,7 +374,7 @@ class IdeaStandardizer(BaseStandardizer):
                 if block_name in self.WRAPPER_BLOCKS:
                     log_message(
                         "DEBUG",
-                        f"Found wrapper block: {block_name} at line {i+1}",
+                        f"Found wrapper block: {block_name} at line {i + 1}",
                         self.verbose,
                     )
                     output_lines.append(line)
@@ -392,7 +389,9 @@ class IdeaStandardizer(BaseStandardizer):
                     i = next_i
                 else:
                     log_message(
-                        "DEBUG", f"Found idea: {block_name} at line {i+1}", self.verbose
+                        "DEBUG",
+                        f"Found idea: {block_name} at line {i + 1}",
+                        self.verbose,
                     )
                     block_lines, next_i = extract_block(lines, i)
 

@@ -2,11 +2,11 @@
 
 ## Overview
 
-AI equipment files (`common/ai_equipment/*.txt`) define equipment variants that the AI should aim for when assigning modules to tank, ship, or plane variants. These control what the AI designs and produces — without proper coverage, AI nations will not produce equipment they need for their division templates.
+AI equipment files (`common/ai_equipment/*.txt`) define equipment variants the AI aims for when assigning modules to tank, ship, or plane variants. They control what the AI designs and produces. Without proper coverage, AI nations will not produce equipment they need for their division templates.
 
 ## Role Template Structure
 
-A role template is a top-level block in any file in the folder. The block name is the role template's unique ID — **duplicates silently overwrite**.
+A role template is a top-level block in any file in the folder. The block name is its unique ID — **duplicates silently overwrite**.
 
 ```pdx
 my_role_template = {
@@ -126,28 +126,19 @@ my_design_name = {
 ### Module Slot Assignment Formats
 
 ```pdx
-# Direct module:
-slot_name = module_name
+slot_name = module_name              # Direct module
+slot_name = > module_name            # Direct with version comparison (> = newest, < = oldest)
+slot_name = empty                    # Empty slot
+slot_name = > empty                  # Ensure not empty
 
-# Direct with version comparison (> = newest, < = oldest):
-slot_name = > module_name
-
-# Empty slot:
-slot_name = empty
-
-# Ensure not empty:
-slot_name = > empty
-
-# any_of block:
-slot_name = {
+slot_name = {                        # any_of block
     any_of = {
         module_a
         module_b
     }
 }
 
-# With upgrade requirement:
-slot_name = {
+slot_name = {                        # With upgrade requirement
     module = module_name
     upgrade = current      # Keep same when upgrading
 }
@@ -155,7 +146,7 @@ slot_name = {
 
 ## Coverage Model
 
-The generic files (`generic_tank.txt`, `generic_plane.txt`, `generic_naval.txt`) provide fallback designs for any nation that does not have a custom file. They use `blocked_for = { ... }` to exclude the nations that already have their own coverage. Whenever you add a custom equipment file for a tag, add that tag to `blocked_for` in the matching generic file — otherwise the AI may pick a generic design over the custom one.
+The generic files (`generic_tank.txt`, `generic_plane.txt`, `generic_naval.txt`) provide fallback designs for any nation without a custom file. They use `blocked_for = { ... }` to exclude nations that already have coverage. Whenever you add a custom equipment file for a tag, add that tag to `blocked_for` in the matching generic file — otherwise the AI may pick a generic design over the custom one.
 
 **Every nation blocked from generic MUST have coverage in a custom or shared file for each role it needs.** Missing coverage = AI cannot produce that equipment type.
 
@@ -222,7 +213,7 @@ Valid CV `ai_type` values:
 | `cv_naval_bomber` | `cv_naval_bomber` | Naval bombers, maritime patrol                           |
 | `cv_suicide`      | `cv_suicide`      | Drones, transports (no dedicated cv_transport exists)    |
 
-When creating CV plane sub-archetypes, always set `ai_type` explicitly — do not rely on inheriting from the parent archetype, as the parent may use a generic type.
+When creating CV plane sub-archetypes, always set `ai_type` explicitly — do not rely on inheriting from the parent archetype, which may use a generic type.
 
 ## Equipment Role Chain
 
@@ -287,7 +278,7 @@ Nations with many ships (100+) need sufficient fleet/taskforce slots to absorb t
 
 ### NOT Block AND Trap in Priority Blocks
 
-`NOT = { tag = A tag = B }` means NOT(A AND B) — always true since a country can only be one tag. This is a common copy-paste error in priority blocks:
+`NOT = { tag = A tag = B }` means NOT(A AND B) — always true since a country can only be one tag. Common copy-paste error in priority blocks:
 
 ```pdx
 # WRONG — always evaluates true, modifier never applies

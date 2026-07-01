@@ -18,9 +18,7 @@ Reports performance-relevant findings in a file or branch diff, ranked by severi
 
 ## Inputs
 
-The caller passes:
-
-- A file path, a directory, or `git diff main...HEAD`. Optionally a specific subsystem name.
+Caller passes a file path, a directory, or `git diff main...HEAD`. Optionally a specific subsystem name.
 
 ## Required reading
 

@@ -1,89 +1,89 @@
-Run a comprehensive code-quality, performance, and content audit on a single file or the entire branch diff.
+Run a comprehensive review of a single file or the entire branch diff (correctness, edge cases, simplification, performance, and content design) by dispatching the canonical reviewers in parallel and merging their findings. This is the single Millennium Dawn pre-merge review command; it absorbs the former `/review-branch`.
 
 **Syntax:** `/audit [file_path]`
 
-- With `file_path`: audit that specific file for simplification opportunities, performance issues, and content design problems.
-- Without argument: audit all changed files on the current branch against `main`.
+- With `file_path`: review that file.
+- Without argument: review all changed files on the current branch against `main`.
 
 ## Execution
 
-### 1. Gather context
+### 1. Gather context once
 
-**File mode** (user provided a path):
+Gather the diff and file contents **a single time in this (the main) agent**, then hand them to the reviewers inline. The reviewers must not re-run `git`, re-read the diff, or re-read shared reference docs — duplicated context-gathering across agents is the main token sink this skill avoids.
 
-- Read the file to understand its subsystem and hot-path exposure (daily on_action, per-frame GUI, player event, AI event, etc.).
+**File mode** (path provided):
+
+- Read the file. Note its subsystem and hot-path exposure (daily on_action, per-frame GUI, player event, AI event, etc.).
 - Identify related files it calls or is called by (scripted effects, triggers, events, GUI, loc).
 
 **Branch mode** (no argument):
 
-- Get the full diff: `git diff origin/main...HEAD`
-- Get the commit log: `git log origin/main..HEAD --oneline`
-- Identify the list of changed files.
+- `git diff origin/main...HEAD` and `git log origin/main..HEAD --oneline` — run these **once**, here.
+- `git diff --name-only origin/main...HEAD` to get the file list and their types.
 
-### 2. Launch all three analyzers in parallel
+### 2. Decide the lane set
 
-Use the Agent tool to launch **all three agents in a single message** so they run concurrently.
+Don't fan out every reviewer on every change. Scale to the size and type of what changed:
 
-**Agent 1: `simplify-analyzer`**
+- **Trivial change** (a single small file, roughly < 80 changed lines, with no hot-path or cross-country logic): skip the fan-out. Review it inline in this agent. Dispatch at most one focused agent if a specialised pass is clearly warranted.
+- **Pure localisation** (`.yml` only): run **`localisation-editor`** (defaults to haiku — fine for typo/grammar) and **`performance-analyzer`** (undefined variable substitutions, excessive nested formatters). Skip the other lanes.
+- **Normal change**: run the lanes in step 3, but **drop any lane with nothing in scope** — e.g. skip the content lane on a tools-only or pure-code diff, skip the simplification lane on a file with no branching, skip the tools lane unless `tools/**` changed.
 
-- Pass the file path or the branch diff.
-- Instruct it to apply the `/simplify` skill and report what it found.
+### 3. Launch the applicable reviewers in parallel
 
-**Agent 2: `performance-analyzer`**
+Launch all applicable lanes **in a single message** so they run concurrently. Pass each agent the file path (file mode) or the already-gathered diff (branch mode) inline. Each lane is a **focused agent**, not a `general-purpose` agent running a whole sub-skill, and each is told explicitly: do not re-run `git`, do not re-gather context, report findings only.
 
-- Pass the file path or the branch diff.
-- Instruct it to scan for the 8 performance anti-patterns from `.claude/docs/performance-patterns.md`.
+- **`code-quality-reviewer`** — rules, standards, correctness, readability, and localisation against project conventions.
+- **Adversarial edge cases** — dispatch **`head-mod-developer`** (or `game-mod-developer`). Tell it to apply the checklist in `.claude/skills/adversarial-review/SKILL.md` (existence/scope guards, timing/state transitions, variable/array safety, silent NOPs) and hunt for edge cases, silent failures, and logic gaps rule-based review misses. It must **not** re-run git and must **not** dispatch `tools-reviewer` — the main agent handles tools (below).
+- **`performance-analyzer`** — the anti-patterns from `.claude/docs/performance-patterns.md`.
+- **`simplify-analyzer`** — simplification opportunities (collapse `if/else_if` chains, array lookups, dead code). For `.yml` loc, this lane is replaced by `localisation-editor` per step 2.
+- **Content design** — dispatch **`head-mod-developer`** (or `game-mod-developer`). Tell it to read `docs/src/content/resources/content-review-guide.md`, `docs/src/content/resources/new-general-guidelines.md`, and `.claude/docs/content-guidelines.md` (once), then check the changed files against the full checklist (Economic, Political, Visual, Military, AI, Code, Miscellaneous). Skip categories that don't apply to the file type (no Military checks on a decisions file, no Economic checks on a character file). It must **not** re-run git.
+- **`tools-reviewer`** — **only if** `tools/**` changed. Dispatch it directly here, in the same parallel batch, with the list of changed tooling files. Do not nest it under another lane.
 
-**Agent 3: `general-purpose` (content review)**
+### 4. Wait for all reviewers to complete
 
-- Pass the file path or the branch diff.
-- Instruct it to apply the `/content-review` skill: read `docs/src/content/resources/content-review-guide.md`, `docs/src/content/resources/new-general-guidelines.md`, and `.claude/docs/content-guidelines.md`, then check every changed file against the full checklist (Economic, Political, Visual, Military, AI, Code, Miscellaneous categories).
-- For file mode, skip categories that don't apply to the file type (e.g., skip Military checks on a decisions file).
+All dispatched lanes must report back before the merge step.
 
-### 3. Wait for all three agents to complete
+### 5. Merge and deduplicate findings
 
-All three agents must report back before proceeding to the merge step.
-
-### 4. Merge and deduplicate findings
-
-Combine all three reports into a single structured output.
+Combine all reports into a single structured output.
 
 **Deduplication rules:**
 
-- If multiple agents flag the same line for different reasons, list both reasons under one entry.
-- If multiple agents flag the same line for the same underlying issue, keep the more detailed explanation.
+- Multiple agents flag the same line for different reasons: list both reasons under one entry.
+- Multiple agents flag the same line for the same underlying issue: keep the more detailed explanation (the adversarial lane usually names the breaking scenario, which is more actionable).
 - Never drop a finding just because it appears in multiple reports.
 
-**Output structure:**
-
-For each file reviewed, report:
+**Output structure** — for each file reviewed, report:
 
 1. **File summary** — one sentence on purpose and hot-path exposure.
-2. **Simplification findings** — numbered list of issues found by `simplify-analyzer`.
-3. **Performance findings** — numbered list of issues found by `performance-analyzer`, with severity (Critical / High / Medium / Low).
-4. **Content findings** — numbered list of issues found by the content-review agent, with category labels (`[Economic]`, `[Political]`, etc.) and `[blocker]` tags where applicable.
-5. **Cross-cutting concerns** — issues that touch multiple categories (e.g., "Replace 15 `if/else_if` branches with array lookup" improves both simplification and performance).
-6. **Action items** — prioritized list of what to fix first, with file and line numbers. Blockers first.
+2. **Correctness & standards** — from `code-quality-reviewer`.
+3. **Edge cases** — from the adversarial lane; mark save-corruption, soft-lock, or crash risks `[critical]`.
+4. **Performance** — from `performance-analyzer`, with severity (Critical / High / Medium / Low).
+5. **Simplification** — from `simplify-analyzer`.
+6. **Content** — from the content lane, with category labels (`[Economic]`, `[Political]`, etc.) and `[blocker]` tags where applicable.
+7. **Cross-cutting concerns** — issues touching multiple categories (e.g., "replace 15 `if/else_if` branches with an array lookup" improves both simplification and performance).
+8. **Action items** — prioritized fix list with file and line numbers. Blockers and criticals first.
 
-### 5. Apply fixes (if user confirms)
+Drop empty sections rather than writing "none".
+
+### 6. Apply fixes (if user confirms)
 
 If the user asks to fix the issues, apply them directly:
 
-- **Simplification fixes** — edit files in place (use Edit/Write tools).
-- **Performance fixes** — edit files in place.
+- **Correctness / simplification / performance fixes** — edit files in place (Edit/Write).
 - **Critical issues** — fix first, even if they require structural changes.
 - **Non-critical** — fix in order of impact.
 
-After applying fixes, re-run the audit on the changed files to verify no regressions.
+After applying fixes, verify the edited regions by **re-reading the changed lines** — do not re-dispatch the reviewer lanes unless the user explicitly asks for a fresh full pass.
 
 ## Important Notes
 
-- **Do not** run the agents sequentially — always launch all three in parallel.
-- **Do not** modify files outside the scope of the audit.
+- Gather the diff and shared docs **once** (step 1); hand them to reviewers inline. Never let a lane re-run `git` or re-read reference docs.
+- **Do not** run the lanes sequentially — launch all applicable ones in parallel in a single message.
+- **Do not** nest reviewers inside other reviewers. `tools-reviewer` is dispatched by the main agent, only when `tools/**` changed.
+- **Do not** modify files outside the scope of the review.
 - **Do not** run validators after fixing unless explicitly asked.
 - When uncertain about a finding, flag it for human review rather than applying blindly.
-- For branch mode, focus on files that are part of the branch diff. Do not audit unchanged files unless the user explicitly asks.
-- If a file is a generated or binary asset (`.dds`, `.png`, etc.), skip it.
-- If a file is a localisation file (`.yml`), run the `localisation-editor` agent with `model: "haiku"` instead of `simplify-analyzer` for the simplification pass — haiku is sufficient for typo and grammar scanning and keeps costs low. Still run `performance-analyzer` for loc performance (e.g., undefined variable substitutions, excessive nested formatters).
-- The content-review agent should skip Military checks for non-character/non-OOB files and skip Economic checks for non-focus-tree files. Instruct it accordingly in the prompt you pass.
-- When reviewing script files, flag unnecessary scope expansion (e.g., `TAG = { exists = yes }` instead of `country_exists = TAG`) — these are both readability and performance issues.
+- For branch mode, focus on files in the branch diff. Do not review unchanged files unless the user asks.
+- Skip generated or binary assets (`.dds`, `.png`, etc.).

@@ -11,7 +11,7 @@ so nuclear comes online on the first tick instead of after a manual refresh.
 
 Re-run this tool after any change that shifts the per-country energy balance:
     - energy formula constants in common/scripted_effects/!_energy_effects.txt
-    - per-country `startup_composite_fac_needed` seeds in history/countries/
+    - per-country composite seeds in tools/analysis/composite_factory_seeds.csv
     - state ownership, population, productivity, or building counts in history/states/
     - state-level nuclear_reactor placement (changes the baked stockpile)
     - ideas that touch `energy_use_*`, `energy_gain_*`, or `fossil_*` modifiers
@@ -44,14 +44,12 @@ from estimate_gdp import (
     RESOURCE_FACTOR_KEYS,
     STATES_DIR,
     build_modifier_stack,
-)
-from estimate_gdp import calculate_gdp as _calculate_gdp  # noqa: E402
-from estimate_gdp import finalize_gdp as _finalize_gdp
-from estimate_gdp import (
     parse_all_ideas,
     parse_country_history,
     parse_state_file_from_content,
 )
+from estimate_gdp import calculate_gdp as _calculate_gdp  # noqa: E402
+from estimate_gdp import finalize_gdp as _finalize_gdp
 
 REPO_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
 
@@ -70,7 +68,6 @@ NUCLEAR_FUEL_PER_REACTOR = (
 RENEWABLE_BASE_GW = 0.5  # per renewable_energy_infra level
 STATE_FOSSIL_CAP = 21  # match runtime limit { building_level@fossil_powerplant < 21 }
 
-# Building per-type energy use coefficients
 BUILDING_ENERGY_COEFF = {
     "industrial_complex": 0.5,
     "offices": 0.25,
@@ -106,17 +103,45 @@ def collect_state_renewable_vars(content, state):
                 pass
 
 
+COMPOSITE_SEED_CSV = os.path.join(THIS_DIR, "composite_factory_seeds.csv")
+
+
+def load_composite_seed_values():
+    """Return {tag: seed} from composite_factory_seeds.csv.
+
+    These were formerly `startup_composite_fac_needed` set_variable seeds in
+    history/countries/. The runtime effect that read them (composite_building_add_multi)
+    was removed once its output got baked into state history, so the seeds now live
+    here as pure tool input. Missing file or row → seed defaults to 0.
+    """
+    seeds = {}
+    if not os.path.exists(COMPOSITE_SEED_CSV):
+        return seeds
+    with open(COMPOSITE_SEED_CSV, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or line.lower().startswith("tag,"):
+                continue
+            parts = line.split(",")
+            if len(parts) < 2:
+                continue
+            try:
+                seeds[parts[0].strip()] = int(parts[1].strip())
+            except ValueError:
+                continue
+    return seeds
+
+
 def parse_composite_seeds():
     """Return {tag: count} for each country that had the composite special project
     completed at startup. Mirrors the old runtime: 1 plant from composite_building_add
-    plus N from composite_building_add_multi (where N = startup_composite_fac_needed seed).
+    plus N from composite_building_add_multi (where N = the per-country seed in
+    composite_factory_seeds.csv).
     """
+    seed_values = load_composite_seed_values()
     seeds = {}
     project_pat = re.compile(
         r"complete_special_project\s*=\s*sp:sp_composite_production\b"
-    )
-    var_pat = re.compile(
-        r"set_variable\s*=\s*\{\s*startup_composite_fac_needed\s*=\s*(\d+)\s*\}"
     )
     for fname in os.listdir(COUNTRIES_DIR):
         if not fname.endswith(".txt"):
@@ -128,9 +153,7 @@ def parse_composite_seeds():
             content = f.read()
         if not project_pat.search(content):
             continue
-        m = var_pat.search(content)
-        seed = int(m.group(1)) if m else 0
-        seeds[tag] = seed + 1
+        seeds[tag] = seed_values.get(tag, 0) + 1
     return seeds
 
 
@@ -159,17 +182,16 @@ def energy_consumption(states, modifier_stack, gdpc):
         population_total * 0.001 * pop_use_mult * gdpc * 0.025 * POP_ENERGY_BALANCE
     )
 
-    # Building energy
     buildings = defaultdict(int)
     for s in states:
         for b, c in s["buildings"].items():
             buildings[b] += c
 
-    # Engine groups arms_factory + dockyard under the "mils" energy modifier and
-    # industrial_complex under "civs"; the rest use a per-type modifier key.
+    # Engine groups industrial_complex under "civs"; arms_factory and dockyard each have a dedicated modifier;
+    # the rest use a per-type modifier key.
     BUILDING_MODIFIER_KEY = {
         "arms_factory": "energy_use_modifier_mils",
-        "dockyard": "energy_use_modifier_mils",
+        "dockyard": "energy_use_modifier_dockyards",
         "industrial_complex": "energy_use_modifier_civs",
     }
     bldg_energy = 0
@@ -195,8 +217,10 @@ def energy_supply_non_fossil(states, modifier_stack, has_nuclear):
     for s in states:
         infra = s["buildings"].get("renewable_energy_infra", 0)
         if infra > 0:
-            min_factor = s.get("state_renewable_capacity_factor_modifier_var", 0.5)
-            avg_factor = (min_factor + 1) / 2
+            factor = s.get("state_renewable_capacity_factor_modifier_var", 1.0)
+            avg_factor = (
+                factor / 2
+            )  # monthly output = rand(0..1) * factor, so expected value is factor/2
             renewables += infra * RENEWABLE_BASE_GW * avg_factor
     ren_mult = 1 + modifier_stack.get("renewable_energy_gain_multiplier", 0)
     renewables *= ren_mult * energy_gain_mult
@@ -335,7 +359,6 @@ def inject_building(filepath, building_name, count):
     with open(filepath, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
 
-    # Find history = { ... buildings = { ... } ... }
     hist_m = re.search(r"\bhistory\s*=\s*\{", content)
     if not hist_m:
         return False, "no history block"
@@ -343,7 +366,6 @@ def inject_building(filepath, building_name, count):
     bldg_m = re.search(r"\bbuildings\s*=\s*\{", content[hist_m.end() :])
     if bldg_m:
         bldg_open = hist_m.end() + bldg_m.end()
-        # Find matching close brace
         depth = 1
         i = bldg_open
         while i < len(content) and depth > 0:
@@ -408,11 +430,9 @@ def _replace_or_append_top_level(block, key, value):
             i += 1
             continue
         if depth == 0:
-            # Try to match `(whitespace)keyword (whitespace)=` at this position
             m = _TOP_LEVEL_KEY_RE.match(block, i)
             if m and m.group(2) == key:
                 eq_end = m.end()
-                # Skip whitespace after =
                 j = eq_end
                 while j < len(block) and block[j] in " \t":
                     j += 1
@@ -420,7 +440,6 @@ def _replace_or_append_top_level(block, key, value):
                     # Nested block (e.g. province-scoped) - not a simple key=N, skip.
                     i = m.end()
                     continue
-                # Match value as a contiguous non-whitespace token
                 k = j
                 while k < len(block) and block[k] not in " \t\r\n":
                     k += 1

@@ -1,10 +1,8 @@
 # Namelist Reference
 
-Quick reference for creating division, ship hull, and ship class design name files.
+Quick reference for division, ship hull, and ship class design name files.
 
 Full authoring guide: `docs/src/content/resources/unit-name-lists.md`
-
----
 
 ## Division Names (`common/units/names_divisions/TAG_names_divisions.txt`)
 
@@ -40,8 +38,6 @@ TAG_INF_DIV = {
 - Landlocked nations: use riverine/lake names for `TAG_MAR` (e.g. `"Bataillon du Lac Tanganyika"`, `"River Force Battalion"`)
 - Encoding: UTF-8 no BOM. Latin diacritics (é à š č ž) work. No Arabic/Greek/Cyrillic/CJK.
 
----
-
 ## Ship Hull Names (`common/units/names_ships/TAG_ship_names.txt`)
 
 Individual ship names drawn when hulls are built.
@@ -64,13 +60,13 @@ TAG_FRIGATE_HISTORICAL = {
 
 Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate` `stealth_frigate` `corvette` `stealth_corvette` `cruiser` `battle_cruiser` `battleship` `attack_submarine` `missile_submarine`
 
-**Dead vanilla tokens that silently never match** (these were removed when MD restructured naval units — never use them):
+**Dead vanilla tokens that silently never match** (removed when MD restructured naval units — never use them):
 
 `submarine` `light_cruiser` `heavy_cruiser` `ship_hull_carrier` `ship_hull_cruiser` `ship_hull_heavy` `ship_hull_light` `ship_hull_submarine` `battleship_hull_0` `LHA`
 
 **`LHA` is the sprite of `helicopter_operator`, not a sub_unit.** Class-designer blocks (`names/00_TAG_names.txt`) and `ship_types` lists (`names_ships/`) must use `helicopter_operator` — an `LHA = { ... }` block compiles silently and never fires.
 
-There are still legacy `names_ships/TAG_ship_names.txt` files and `names/00_TAG_names.txt` files in the repo that reference these dead tokens — their `unique` lists never get used. When you touch a tag's namelists, check for these and migrate the strings into the modern equivalents (`submarine` → `attack_submarine`/`missile_submarine`; `light_cruiser`/`heavy_cruiser` → `cruiser`; `LHA` → `helicopter_operator`).
+Legacy `names_ships/TAG_ship_names.txt` and `names/00_TAG_names.txt` files still reference these dead tokens — their `unique` lists never get used. When you touch a tag's namelists, migrate the strings into the modern equivalents: `submarine` → `attack_submarine`/`missile_submarine`; `light_cruiser`/`heavy_cruiser` → `cruiser`; `LHA` → `helicopter_operator`.
 
 ### Verified naval prefixes
 
@@ -86,8 +82,6 @@ There are still legacy `names_ships/TAG_ship_names.txt` files and `names/00_TAG_
 | SEN | `""`   |     | ERI | `""`    |
 
 If no documented official prefix exists, use `prefix = ""`.
-
----
 
 ## Ship Class & Land Unit Design Names (`common/units/names/00_TAG_names.txt`)
 
@@ -109,19 +103,17 @@ TAG = {
 }
 ```
 
-- Keys inside `TAG = { }` must be **real sub_unit names** — for ships, from `common/units/MD_naval_units.txt`; for land, from `common/units/MD_land_units.txt`. A key that does not correspond to a real MD sub_unit compiles silently and never fires. Use `helicopter_operator`, not `LHA` (LHA is the sprite name only).
+- Keys inside `TAG = { }` must be **real sub_unit names** — ships from `common/units/MD_naval_units.txt`, land from `common/units/MD_land_units.txt`. A key not corresponding to a real MD sub_unit compiles silently and never fires. Use `helicopter_operator`, not `LHA` (LHA is the sprite name only).
 - **Do not use `infantry`.** That was vanilla's sub_unit name; MD renamed it. The canonical MD land sub_units are `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, etc. (see `MD_land_units.txt`).
 - **Minimum land fallback is `L_Inf_Bat = { ... }`** — the light infantry battalion. Include it (even with empty `unique = { }`) so the country gets a flavoured generic label instead of the unbranded numbered fallback. Localize the `generic` label to the country's language (e.g. `"Infanterie-Division"` for GER, `"Strelkovaya Diviziya"` for SOV).
 - Class names follow national naming traditions (dynasty names for China subs, island names for Turkey corvettes, weapon names for India corvettes, etc.)
 - Encoding: UTF-8 no BOM; same script constraints as division files
 
----
-
 ## Air Wing Names (inside `common/units/names/00_TAG_names.txt`)
 
 Air wing labels come from two layers:
 
-1. **`air_wing_names_template = AIR_WING_NAME_TAG_FALLBACK`** — set once at the top of the `TAG = { }` block. This is the master fallback that the engine uses when generating numbered wing names ("3rd Squadron", "Geschwader 14", etc.).
+1. **`air_wing_names_template = AIR_WING_NAME_TAG_FALLBACK`** — set once at the top of the `TAG = { }` block. Master fallback the engine uses when generating numbered wing names ("3rd Squadron", "Geschwader 14", etc.).
 2. **Per-archetype `*_airframe` blocks** — one per aircraft sub-unit type, each pointing at a `generic_pattern` loc key for that country.
 
 **Both layers depend on matching loc keys.** Define them in `localisation/english/replace/replaced_from_unit_names_l_english.yml`:
@@ -157,9 +149,7 @@ small_plane_airframe = {
 }
 ```
 
-Leaving `unique = { }` empty is acceptable on every archetype. The block must still exist so the country gets the flavoured generic pattern instead of the vanilla numbered fallback.
-
----
+Empty `unique = { }` is acceptable on every archetype. The block must still exist so the country gets the flavoured generic pattern instead of the vanilla numbered fallback.
 
 ## Checklist for a New Tag
 

@@ -98,7 +98,6 @@ class EventStandardizer(BaseStandardizer):
             "comments_after_options": [],
         }
 
-        # Determine event type from first line
         first_line = block_lines[0].strip()
         for event_type in _EVENT_TYPES:
             if event_type in first_line:
@@ -135,7 +134,7 @@ class EventStandardizer(BaseStandardizer):
                 current_section = section
                 continue
             else:
-                # This is a comment or unrecognized line - add to current section
+                # Comment or unrecognized line: bucket it under the current section.
                 props[f"comments_after_{current_section}"].append(block_lines[i])
 
             i += 1
@@ -149,7 +148,7 @@ class EventStandardizer(BaseStandardizer):
 
         # 1. ID (first line after opening brace)
         if props["id"]:
-            lines.append(f'\t{props["id"]}')
+            lines.append(f"\t{props['id']}")
 
         # 2. Title and description (may repeat as conditional blocks)
         for title_entry in props["title"]:
@@ -165,25 +164,25 @@ class EventStandardizer(BaseStandardizer):
 
         # 3. Picture
         if props["picture"]:
-            lines.append(f'\t{props["picture"]}')
+            lines.append(f"\t{props['picture']}")
 
         # 4. is_triggered_only (required for triggered events)
         if props["is_triggered_only"]:
-            lines.append(f'\t{props["is_triggered_only"]}')
+            lines.append(f"\t{props['is_triggered_only']}")
         elif not props["mean_time_to_happen"]:
             lines.append("\tis_triggered_only = yes")
 
         # 5. major flag (use sparingly)
         if props["major"]:
-            lines.append(f'\t{props["major"]}')
+            lines.append(f"\t{props['major']}")
 
         # 6. hidden parameter
         if props["hidden"]:
-            lines.append(f'\t{props["hidden"]}')
+            lines.append(f"\t{props['hidden']}")
 
         # 7. fire_only_once (use sparingly)
         if props["fire_only_once"]:
-            lines.append(f'\t{props["fire_only_once"]}')
+            lines.append(f"\t{props['fire_only_once']}")
 
         lines.append("")
 

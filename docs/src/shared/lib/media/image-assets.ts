@@ -1,6 +1,6 @@
 import type { ImageMetadata } from "astro";
 
-const imageAssets = import.meta.glob<ImageMetadata>("../../assets/images/**/*.{png,jpg,jpeg,webp,avif,gif,svg}", {
+const imageAssets = import.meta.glob<ImageMetadata>("/src/assets/images/**/*.{png,jpg,jpeg,webp,avif,gif,svg}", {
   eager: true,
   import: "default",
 });
@@ -13,7 +13,7 @@ function modulePathToAssetUrl(modulePath: string): string | null {
   if (i !== -1) {
     return `/assets/images/${posixPath.slice(i + fromSrc.length)}`;
   }
-  const rel = posixPath.replace(/^\.\.\/\.\.\/assets\/images\/?/, "/assets/images/");
+  const rel = posixPath.replace(/^(\.\.\/){2,3}assets\/images\/?/, "/assets/images/");
   return rel.startsWith("/assets/images/") ? rel : null;
 }
 

@@ -2,7 +2,7 @@
 
 ## Local Documentation (`resources/documentation/`)
 
-Authoritative offline references for HOI4 scripting. Read these when you need to look up valid effects, triggers, modifiers, or other engine features.
+Authoritative offline references for HOI4 scripting. Read these to look up valid effects, triggers, modifiers, or other engine features.
 
 | File                                 | Contents                                                                          |
 | ------------------------------------ | --------------------------------------------------------------------------------- |
@@ -37,14 +37,19 @@ Use for broader modding context not covered in local docs:
 
 ## Millennium Dawn Conventions
 
-| File                                      | Contents                                                                                                                                                                                    |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.claude/docs/search-filters.md`          | Complete `search_filters` reference: every `FOCUS_FILTER_*` in the mod, Israel-specific filter mapping, subcategory logic for ISRMILITARY/ISRECON, common mistakes checklist                |
-| `.claude/docs/simplification-patterns.md` | Patterns for replacing N-branch lookups with arrays, parameterized scripted loc, shared helpers, meta_effect consolidation                                                                  |
-| `.claude/docs/performance-patterns.md`    | Hoisting invariants, temp-variable booleans, GUI dirty counters, engine arrays, clamp-before-division, early-out guards                                                                     |
-| `.claude/docs/refactor-checklist.md`      | Systematic breaking-change checks for prefix renames, array migrations, event namespace, GUI/GFX cross-references, scope safety                                                             |
-| `.claude/docs/oob-equipment-reference.md` | OOB equipment type mapping (NSB vs non-NSB), stockpile syntax, chassis/variant validation, common errors                                                                                    |
-| `.claude/docs/pr-conventions.md`          | How to write PR descriptions: concise structure (Summary / Why / Risk / Test plan), length budget, what NOT to include (marketing language, AI attribution footers, exhaustive change logs) |
+| File                                      | Contents                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.claude/docs/entity-system.md`           | Mesh → entity → animation chain, three-level lookup, `gfx/entities/` organisation, pdxmesh naming, division designer performance note. Also landmark buildings: state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated y, rendering gotchas |
+| `.claude/docs/music-system.md`            | Music: `.asset` definitions, `.txt` playlists, all MD stations (Main, Regional, UKR-RUS war, Synthwave), chance weight logic, adding tracks, radio station GUI wiring                                                                                                                         |
+| `.claude/docs/sound-system.md`            | Sound: `sound`/`soundeffect` definitions, combat sounds, country voicelines (23 countries), categories/compressors, adding voicelines, audio file requirements                                                                                                                                |
+| `.claude/docs/search-filters.md`          | Complete `search_filters` reference: every `FOCUS_FILTER_*`, Israel-specific filter mapping, subcategory logic for ISRMILITARY/ISRECON, common mistakes checklist                                                                                                                             |
+| `.claude/docs/simplification-patterns.md` | Replacing N-branch lookups with arrays, parameterized scripted loc, shared helpers, meta_effect consolidation                                                                                                                                                                                 |
+| `.claude/docs/performance-patterns.md`    | Hoisting invariants, temp-variable booleans, GUI dirty counters, engine arrays, clamp-before-division, early-out guards                                                                                                                                                                       |
+| `.claude/docs/tokenization-patterns.md`   | `token:` references, `[?array^i.GetTokenKey]` runtime substitution, `meta_effect` / `meta_trigger` for collapsing N-branch dispatch into one parameterized call, keeping `[!]` tooltips alive                                                                                                 |
+| `.claude/docs/scripted-gui-patterns.md`   | Data-driven catalogs via `dynamic_lists` + scripted-loc dispatchers, MD dirty-variable standard (`update_<system>_dirty_variable`), filter checkbox image-swap, per-entry tooltips with ✓/✗                                                                                                   |
+| `.claude/docs/refactor-checklist.md`      | Breaking-change checks for prefix renames, array migrations, event namespace, GUI/GFX cross-references, scope safety                                                                                                                                                                          |
+| `.claude/docs/oob-equipment-reference.md` | OOB equipment type mapping (NSB vs non-NSB), stockpile syntax, chassis/variant validation, common errors                                                                                                                                                                                      |
+| `.claude/docs/pr-conventions.md`          | PR descriptions: concise structure (Summary / Why / Risk / Test plan), length budget, what NOT to include (marketing language, AI attribution footers, exhaustive change logs)                                                                                                                |
 
 ## AI Agent Definitions
 

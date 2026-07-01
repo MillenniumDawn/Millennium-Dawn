@@ -1,44 +1,60 @@
 #!/usr/bin/env python3
 
-"""
-Shared utilities for Millennium Dawn tools
-Common functionality shared between standardization and validation tools
-"""
+"""Shared utilities for Millennium Dawn tools (standardization and validation)."""
 
 import argparse
+import bisect
 import logging
 import os
 import re
 import sys
 import time
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-# Color coding for different log levels
-COLORS = {
-    "SUCCESS": "\033[92m",  # Green
-    "INFO": "\033[94m",  # Blue
-    "DEBUG": "\033[90m",  # Gray
-    "WARNING": "\033[93m",  # Yellow
-    "ERROR": "\033[91m",  # Red
+
+class Colors:
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    GRAY = "\033[90m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+
+_LEVEL_COLORS = {
+    "SUCCESS": Colors.GREEN,
+    "INFO": Colors.BLUE,
+    "DEBUG": Colors.GRAY,
+    "WARNING": Colors.YELLOW,
+    "ERROR": Colors.RED,
 }
-RESET_COLOR = "\033[0m"
+
+
+# Default skip patterns shared across validators. Individual validators can
+# extend this list with their own patterns.
+DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
 
 
 def log_message(
     level: str, message: str, verbose: bool = False, use_colors: bool = True
 ):
-    """Log a message with timestamp and optional color coding"""
+    """Log a message with timestamp and optional color coding."""
     if level == "DEBUG" and not verbose:
         return
 
     timestamp = datetime.now().strftime("%H:%M:%S")
 
-    color = COLORS.get(level, "") if use_colors else ""
-    reset_color = RESET_COLOR if use_colors else ""
+    color = _LEVEL_COLORS.get(level, "") if use_colors else ""
+    reset = Colors.ENDC if use_colors else ""
 
-    formatted_message = f"{color}[{timestamp}] {level}: {message}{reset_color}"
+    formatted_message = f"{color}[{timestamp}] {level}: {message}{reset}"
     print(formatted_message, file=sys.stderr)
 
 
@@ -87,16 +103,42 @@ def create_validation_parser(description: str) -> argparse.ArgumentParser:
         "--staged", action="store_true", help="Only validate git staged files"
     )
     parser.add_argument(
+        "--no-cache", action="store_true", help="Bypass disk cache for this run"
+    )
+    parser.add_argument(
         "--workers",
         type=int,
         default=None,
-        help=f"Number of worker processes (default: auto-detect)",
+        help="Number of worker processes (default: auto-detect)",
     )
     return parser
 
 
+def strip_inline_comment(line: str) -> str:
+    """Return *line* with any trailing ``#`` comment removed.
+
+    A ``#`` inside a double-quoted string is not a comment. Use this anywhere a
+    line's braces/tokens are counted so unbalanced braces inside comments don't
+    corrupt the count. Returns the code portion (trailing newline/space preserved
+    up to the cut), not stripped of surrounding whitespace.
+    """
+    if "#" not in line:
+        return line
+    in_str = False
+    for i, c in enumerate(line):
+        if c == '"' and (i == 0 or line[i - 1] != "\\"):
+            in_str = not in_str
+        elif c == "#" and not in_str:
+            return line[:i]
+    return line
+
+
 def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
-    """Extract a multi-line block by counting braces"""
+    """Extract a multi-line block by counting braces.
+
+    Inline comments are stripped before counting so a ``#`` comment containing an
+    unbalanced brace does not corrupt the depth.
+    """
     if start_index >= len(lines):
         return [], start_index
 
@@ -108,20 +150,50 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
         line = lines[i]
         block_lines.append(line)
 
-        # Count braces
-        brace_count += line.count("{") - line.count("}")
+        code = strip_inline_comment(line)
+        brace_count += code.count("{") - code.count("}")
 
-        if brace_count == 0 and "{" in lines[start_index]:
-            # We've closed all braces, block is complete
+        if brace_count == 0 and "{" in strip_inline_comment(lines[start_index]):
             i += 1
             break
         elif brace_count < 0:
-            # More closing than opening braces - malformed
+            # Malformed: more closing than opening braces.
             break
 
         i += 1
 
-    return block_lines, i  # Return the position AFTER the block (not i-1)
+    return block_lines, i  # position AFTER the block, not i-1
+
+
+def extract_block_from_text(text: str, start: int) -> Tuple[str, int]:
+    """Char-accurate brace-block extractor for raw text.
+
+    Returns ``(body, end_pos)`` where *body* is the text between the matching
+    braces and *end_pos* is the index just past the closing ``}``. Braces
+    inside double-quoted strings are ignored. Returns ``("", -1)`` when no
+    opening brace is found or the block never balances.
+    """
+    open_pos = text.find("{", start)
+    if open_pos == -1:
+        return "", -1
+    n = len(text)
+    body_start = open_pos + 1
+    depth = 1
+    i = body_start
+    in_str = False
+    while i < n:
+        c = text[i]
+        if c == '"' and text[i - 1] != "\\":
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[body_start:i], i + 1
+        i += 1
+    return "", -1
 
 
 def compact_block(block_lines: List[str]) -> List[str]:
@@ -131,9 +203,7 @@ def compact_block(block_lines: List[str]) -> List[str]:
 
     compacted = []
     for line in block_lines:
-        stripped = line.strip()
-        if stripped:  # Only keep non-empty lines
-            # Preserve the original indentation structure
+        if line.strip():
             compacted.append(line.rstrip())
 
     return compacted
@@ -174,6 +244,132 @@ def should_skip_file(
     return False
 
 
+def clean_filepath(filepath: str) -> str:
+    """Trim a filepath to start from the first known mod directory."""
+    for prefix in ("common", "events", "history", "interface"):
+        if prefix in filepath:
+            return prefix + filepath.split(prefix, 1)[1]
+    return filepath
+
+
+# Common Hearts of Iron IV install locations, checked when a validator needs
+# vanilla game files (defines, interface, gfx) that the mod doesn't ship.
+HOI4_INSTALL_PATHS = [
+    # Linux (Steam)
+    os.path.expanduser(
+        "~/.steam/debian-installation/steamapps/common/Hearts of Iron IV"
+    ),
+    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
+    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
+    # Windows (Steam)
+    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
+    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
+    # macOS (Steam)
+    os.path.expanduser(
+        "~/Library/Application Support/Steam/steamapps/common/Hearts of Iron IV"
+    ),
+    # Windows (GOG)
+    "C:/GOG Games/Hearts of Iron IV",
+    "C:/Program Files (x86)/GOG Galaxy/Games/Hearts of Iron IV",
+]
+
+
+def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
+    """Return the first existing HOI4 install root, checking explicit_path, $HOI4_PATH, then HOI4_INSTALL_PATHS."""
+    candidates: List[str] = []
+    if explicit_path:
+        candidates.append(explicit_path)
+    env_path = os.environ.get("HOI4_PATH")
+    if env_path:
+        candidates.append(env_path)
+    candidates.extend(HOI4_INSTALL_PATHS)
+    for base in candidates:
+        if base and os.path.isdir(base):
+            return base
+    return None
+
+
+def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
+    """Parse common/idea_tags/*.txt and return every idea category in order.
+
+    Returns a list of dicts (definition order preserved) with keys:
+    `name`, `hidden` (bool), `has_slot` (bool), `has_char_slot` (bool),
+    `type` (str or None — e.g. national_spirit, army_spirit).
+
+    Definition order matters: the engine assigns each politics-view category
+    icon a frame of GFX_idea_categories by the order it appears here.
+
+    Args:
+        mod_root: Path to the mod root (auto-detected if None).
+    """
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+
+    tags_dir = os.path.join(mod_root, "common", "idea_tags")
+    if not os.path.isdir(tags_dir):
+        return []
+
+    out: List[Dict] = []
+
+    for fname in sorted(os.listdir(tags_dir)):
+        if not fname.endswith(".txt"):
+            continue
+        fpath = os.path.join(tags_dir, fname)
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                text = re.sub(r"#.*", "", f.read())
+        except Exception:
+            continue
+
+        m = re.search(r"idea_categories\s*=\s*\{", text)
+        if not m:
+            continue
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            i += 1
+        cat_block = text[start : i - 1] if depth == 0 else text[start:]
+
+        pos = 0
+        while True:
+            cat_m = re.search(r"(\w+)\s*=\s*\{", cat_block[pos:])
+            if not cat_m:
+                break
+            cat_name = cat_m.group(1)
+            cat_start = pos + cat_m.end()
+            cat_depth = 1
+            cat_i = cat_start
+            while cat_i < len(cat_block) and cat_depth > 0:
+                if cat_block[cat_i] == "{":
+                    cat_depth += 1
+                elif cat_block[cat_i] == "}":
+                    cat_depth -= 1
+                cat_i += 1
+            cat_body = (
+                cat_block[cat_start : cat_i - 1]
+                if cat_depth == 0
+                else cat_block[cat_start:]
+            )
+            type_m = re.search(r"\btype\s*=\s*(\w+)", cat_body)
+            out.append(
+                {
+                    "name": cat_name,
+                    "hidden": bool(re.search(r"\bhidden\s*=\s*yes\b", cat_body)),
+                    "has_slot": bool(re.search(r"\bslot\s*=", cat_body)),
+                    "has_char_slot": bool(re.search(r"\bcharacter_slot\s*=", cat_body)),
+                    "type": type_m.group(1) if type_m else None,
+                }
+            )
+            pos = cat_i
+
+    return out
+
+
 def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
     """Parse common/idea_tags/*.txt and return non-selectable idea category names.
 
@@ -188,104 +384,41 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
     Returns:
         frozenset of non-selectable category names (e.g. {'country', 'hidden_ideas'}).
     """
-    if mod_root is None:
-        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
-
-    tags_dir = os.path.join(mod_root, "common", "idea_tags")
-    if not os.path.isdir(tags_dir):
-        # If no idea_tags dir found, return safe defaults
-        return frozenset({"country", "hidden_ideas"})
-
-    categories: Set[str] = set()
-
-    for fname in os.listdir(tags_dir):
-        if not fname.endswith(".txt"):
-            continue
-        fpath = os.path.join(tags_dir, fname)
-        try:
-            with open(fpath, "r", encoding="utf-8") as f:
-                text = f.read()
-                text = re.sub(r"#.*", "", text)  # strip comments
-        except Exception:
-            continue
-
-        # Find idea_categories = { ... } block
-        m = re.search(r"idea_categories\s*=\s*\{", text)
-        if not m:
-            continue
-        start = m.end()
-        # Count braces to find the closing brace
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-                i += 1
-            elif text[i] == "}":
-                depth -= 1
-                i += 1
-            else:
-                i += 1
-        cat_block = text[start : i - 1] if depth == 0 else text[start:]
-
-        # Extract each category block: key = { ... }
-        for cat_m in re.finditer(r"(\w+)\s*=\s*\{", cat_block):
-            cat_name = cat_m.group(1)
-            cat_start = cat_m.end()
-            cat_depth = 1
-            cat_i = cat_start
-            while cat_i < len(cat_block) and cat_depth > 0:
-                if cat_block[cat_i] == "{":
-                    cat_depth += 1
-                    cat_i += 1
-                elif cat_block[cat_i] == "}":
-                    cat_depth -= 1
-                    cat_i += 1
-                else:
-                    cat_i += 1
-            cat_body = (
-                cat_block[cat_start : cat_i - 1]
-                if cat_depth == 0
-                else cat_block[cat_start:]
-            )
-
-            has_hidden = bool(re.search(r"\bhidden\s*=\s*yes\b", cat_body))
-            has_slot = bool(re.search(r"\bslot\s*=", cat_body))
-            has_char_slot = bool(re.search(r"\bcharacter_slot\s*=", cat_body))
-
-            if has_hidden or (not has_slot and not has_char_slot):
-                categories.add(cat_name)
-
+    categories = {
+        c["name"]
+        for c in get_all_idea_categories(mod_root)
+        if c["hidden"] or (not c["has_slot"] and not c["has_char_slot"])
+    }
     return (
         frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
     )
 
 
 def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:
-    """Find the line number where a pattern occurs in a file"""
+    # Reads via FileOpener so iterating many lookups against the same file
+    # only hits disk once.
     try:
-        with open(filename, "r", encoding="utf-8-sig") as f:
-            for line_num, line in enumerate(f, 1):
-                search_line = line.lower() if lowercase else line
-                search_pattern = pattern.lower() if lowercase else pattern
-                if search_pattern in search_line:
-                    return line_num
+        content = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=False
+        )
+        needle = pattern.lower() if lowercase else pattern
+        idx = content.find(needle)
+        if idx >= 0:
+            return content.count("\n", 0, idx) + 1
     except Exception:
         pass
     return 0
 
 
 def strip_comments(text: str) -> str:
-    """Remove comment-only lines and inline comments from text"""
+    """Remove comment-only lines and inline comments from text."""
     lines = text.split("\n")
     result = []
     for line in lines:
-        # Check if line is entirely a comment
         stripped = line.lstrip()
         if stripped.startswith("#"):
             result.append("")
             continue
-        # Strip inline comments (# not inside quotes)
         in_quote = False
         for i, ch in enumerate(line):
             if ch == '"':
@@ -298,21 +431,23 @@ def strip_comments(text: str) -> str:
 
 
 class FileOpener:
-    """Helper class for opening and reading files with various options"""
-
-    _cache: Dict[Tuple, str] = {}
-    _MAX_CACHE_SIZE = 500
+    # LRU bound sized for common/ (~3600 files) plus localisation, so a broad
+    # scan stays cached without evicting on every overflow.
+    _cache: "OrderedDict[Tuple, str]" = OrderedDict()
+    _MAX_CACHE_SIZE = 8192
 
     @classmethod
     def open_text_file(
-        cls, filename: str, lowercase: bool = True, strip_comments_flag: bool = False
+        cls, filename: str, lowercase: bool = False, strip_comments_flag: bool = False
     ) -> str:
-        """Open a text file with optional processing. Results are cached per process."""
+        # Linux-first default: HOI4 is case-sensitive on Linux, so validators
+        # must match and report the exact case as written. Pass lowercase=True
+        # only for deliberately case-insensitive lookups.
         cache_key = (filename, lowercase, strip_comments_flag)
-        if cache_key in cls._cache:
-            return cls._cache[cache_key]
-        if len(cls._cache) >= cls._MAX_CACHE_SIZE:
-            cls._cache.clear()
+        cached = cls._cache.get(cache_key)
+        if cached is not None:
+            cls._cache.move_to_end(cache_key)
+            return cached
         try:
             with open(filename, "r", encoding="utf-8-sig") as text_file:
                 content = text_file.read()
@@ -321,9 +456,11 @@ class FileOpener:
                 if lowercase:
                     content = content.lower()
         except Exception as ex:
-            log_message("WARNING", f"Skipping the file {filename}, {ex}")
+            log_message("WARNING", f"Skipping file {filename}: {ex}")
             return ""
         cls._cache[cache_key] = content
+        if len(cls._cache) > cls._MAX_CACHE_SIZE:
+            cls._cache.popitem(last=False)
         return content
 
 
@@ -373,25 +510,13 @@ class DataCleaner:
             return input_iter
 
 
-# ---------------------------------------------------------------------------
-# Timing utilities
-# ---------------------------------------------------------------------------
-
-
 def timing_enabled() -> bool:
     """Return True unless MD_TIMING=0 is explicitly set."""
     return os.environ.get("MD_TIMING", "1") != "0"
 
 
 class Timer:
-    """Lightweight timer that prints elapsed time to stderr.
-
-    Enabled by default. Suppress with MD_TIMING=0.
-
-    Usage:
-        with Timer("file collection"):
-            files = collect(...)
-    """
+    """Lightweight timer that prints elapsed time to stderr. Suppress with MD_TIMING=0."""
 
     def __init__(self, label: str, enabled: Optional[bool] = None):
         self.label = label
@@ -423,14 +548,37 @@ class Timer:
         return False
 
 
+def compute_line_offsets(text: str) -> List[int]:
+    # Pair with line_for_offset() to turn per-match line lookups from O(N)
+    # (text.count) into O(log N) (bisect). Worth the upfront pass when one
+    # file is scanned many times.
+    offsets: List[int] = []
+    start = 0
+    while True:
+        p = text.find("\n", start)
+        if p == -1:
+            break
+        offsets.append(p)
+        start = p + 1
+    return offsets
+
+
+def line_for_offset(offsets: List[int], pos: int) -> int:
+    # bisect_left (not bisect_right) so a pos landing on a newline reports
+    # the line the newline ends, matching text.count("\n", 0, pos) + 1.
+    return bisect.bisect_left(offsets, pos) + 1
+
+
 def print_timing_summary(timings: List[Tuple[str, float]]):
     """Print a table of step timings. Suppressed when MD_TIMING=0."""
     if not timings or not timing_enabled():
         return
+    # ANSI only on a live terminal — piped/CI output must stay escape-free.
+    dim, reset = ("\033[90m", "\033[0m") if sys.stderr.isatty() else ("", "")
     total = sum(t for _, t in timings)
     max_label = max(len(label) for label, _ in timings)
-    print(f"\n\033[90m{'─' * (max_label + 18)}", file=sys.stderr)
-    print(f"  Timing summary:", file=sys.stderr)
+    print(f"\n{dim}{'─' * (max_label + 18)}", file=sys.stderr)
+    print("  Timing summary:", file=sys.stderr)
     for label, elapsed in timings:
         bar_len = int(elapsed / total * 20) if total > 0 else 0
         bar = "█" * bar_len + "░" * (20 - bar_len)
@@ -439,12 +587,7 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
             file=sys.stderr,
         )
     print(f"  {'total':<{max_label}}  {total:6.3f}s", file=sys.stderr)
-    print(f"{'─' * (max_label + 18)}\033[0m", file=sys.stderr)
-
-
-# ---------------------------------------------------------------------------
-# Linting script helpers (shared argparse, file collection, pool dispatch)
-# ---------------------------------------------------------------------------
+    print(f"{'─' * (max_label + 18)}{reset}", file=sys.stderr)
 
 
 def create_linting_parser(
@@ -452,11 +595,7 @@ def create_linting_parser(
     include_diff: bool = True,
     extra_args_fn=None,
 ) -> argparse.ArgumentParser:
-    """Standard argument parser for linting scripts.
-
-    Provides --mode, --base-branch, --files, --workers, and positional
-    filenames. Scripts can add custom arguments via extra_args_fn(parser).
-    """
+    """Standard argument parser for linting scripts. Custom args via extra_args_fn(parser)."""
     parser = argparse.ArgumentParser(description=description)
     modes = ["all", "staged"]
     if include_diff:
@@ -465,7 +604,7 @@ def create_linting_parser(
         "--mode",
         choices=modes,
         default="all",
-        help=f"Check mode (default: all)",
+        help="Check mode (default: all)",
     )
     if include_diff:
         parser.add_argument(
@@ -497,11 +636,7 @@ def collect_files_by_mode(
     root_dir: str,
     include_interface: bool = False,
 ) -> List[str]:
-    """Collect files based on parsed --mode / --files / positional args.
-
-    Returns a list of existing file paths, or an empty list if nothing
-    matched. Prints diagnostics for missing files.
-    """
+    """Collect files based on parsed --mode / --files / positional args."""
     if getattr(args, "filenames", None):
         files_list = args.filenames
     elif getattr(args, "files", None):
@@ -532,13 +667,20 @@ def get_root_dir() -> str:
     )
 
 
-def run_with_pool(func, items: list, workers: int, chunksize: int = None):
+def run_with_pool(
+    func,
+    items: list,
+    workers: int,
+    chunksize: int = None,
+    initializer=None,
+    initargs=(),
+):
     """Run func over items using Pool when beneficial, sequential otherwise."""
     if len(items) < 10 or workers == 1:
         return [func(item) for item in items]
     from multiprocessing import Pool
 
-    with Pool(processes=workers) as pool:
+    with Pool(processes=workers, initializer=initializer, initargs=initargs) as pool:
         if chunksize:
             return pool.map(func, items, chunksize=chunksize)
         return pool.map(func, items)
@@ -601,7 +743,9 @@ def get_git_diff_files(
                         "--diff-filter=ACMRT",
                         f"{base_branch}...HEAD",
                     ]
-                result = _sp.run(cmd, capture_output=True, text=True, check=True)
+                result = _sp.run(
+                    cmd, capture_output=True, text=True, check=True, timeout=15
+                )
                 all_files = [f for f in result.stdout.strip().split("\n") if f]
             except Exception:
                 return []
@@ -672,6 +816,7 @@ def get_staged_files(
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=15,
             )
             return result.stdout.strip().split("\n")
 
@@ -693,19 +838,46 @@ def get_staged_files(
         return None
 
 
-def run_tool_main(tool_class, description: str = "Run tool", extra_args_fn=None):
-    """Main entry point for running tools with standard argument parsing"""
-    parser = create_standard_parser(description)
+def run_tool_main(
+    tool_class,
+    description: str = "Run tool",
+    extra_args_fn=None,
+    method_name: str = "process_file",
+    argv=None,
+    parser=None,
+):
+    """Main entry point for single-file tools and standardizers.
+
+    Args:
+        tool_class: Class to instantiate (DataCleaner subclass or BaseStandardizer).
+        description: CLI description string.
+        extra_args_fn: Optional callback to add custom argparse arguments.
+        method_name: Method to call on the instance (default: "process_file").
+        argv: Argument list (default: sys.argv[1:]).
+        parser: Custom ArgumentParser (default: create_standard_parser).
+    """
+    if parser is None:
+        parser = create_standard_parser(description)
     if extra_args_fn:
         extra_args_fn(parser)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if not os.path.exists(args.input_file):
         log_message("ERROR", f"File '{args.input_file}' does not exist")
         sys.exit(1)
 
     output_file = args.output if args.output else args.input_file
-    tool = tool_class(verbose=args.verbose, use_colors=not args.no_color)
+
+    import inspect
+
+    sig = inspect.signature(tool_class.__init__)
+    valid_params = set(sig.parameters.keys()) - {"self"}
+    ctor_kwargs = {}
+    if "verbose" in valid_params:
+        ctor_kwargs["verbose"] = args.verbose
+    if "use_colors" in valid_params:
+        ctor_kwargs["use_colors"] = not getattr(args, "no_color", False)
+    tool = tool_class(**ctor_kwargs)
 
     if args.backup:
         backup_file = create_backup(args.input_file)
@@ -714,7 +886,8 @@ def run_tool_main(tool_class, description: str = "Run tool", extra_args_fn=None)
 
     log_message("INFO", f"Starting processing of {args.input_file}", args.verbose)
 
-    if tool.process_file(args.input_file, output_file):
+    method = getattr(tool, method_name)
+    if method(args.input_file, output_file):
         log_message("SUCCESS", f"Processing completed: {output_file}")
     else:
         log_message("ERROR", "Processing failed")
@@ -738,16 +911,27 @@ def run_validator_main(
         log_message("ERROR", f"Path is not a directory: {mod_path}")
         sys.exit(1)
 
+    if getattr(args, "no_cache", False):
+        os.environ["MD_NO_CACHE"] = "1"
+
     kwargs = dict(
         output_file=args.output,
         use_colors=not args.no_color,
         staged_only=args.staged,
         workers=args.workers,
+        no_cache=getattr(args, "no_cache", False),
     )
-    # Pass any extra args as kwargs
     if extra_args_fn:
         for key in vars(args):
-            if key not in ("path", "strict", "output", "no_color", "staged", "workers"):
+            if key not in (
+                "path",
+                "strict",
+                "output",
+                "no_color",
+                "staged",
+                "workers",
+                "no_cache",
+            ):
                 kwargs[key] = getattr(args, key)
 
     validator = validator_class(str(mod_path), **kwargs)

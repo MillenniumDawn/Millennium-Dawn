@@ -12,7 +12,7 @@ Steps:
 
 2. **Infer the fix summary** (skip if a description was provided)
 
-   Fetch the issue title for context, then look at the current branch diff:
+   Fetch the issue title for context, then check the current branch diff:
 
    ```
    gh issue view <number> --json title,body
@@ -20,11 +20,7 @@ Steps:
    git diff origin/main...HEAD --stat
    ```
 
-   Write a 1-3 sentence comment covering:
-   - What the root cause was
-   - What was changed to fix it
-
-   Keep it concise and factual. Do not repeat the issue title back.
+   Write a 1-3 sentence comment covering the root cause and what was changed to fix it. Keep it concise and factual. Do not repeat the issue title back.
 
 3. **Post the comment and close the issue**
 
