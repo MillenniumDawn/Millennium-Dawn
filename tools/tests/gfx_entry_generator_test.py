@@ -8,6 +8,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from gfx_entry_generator import (
     _build_scripted_gui_text,
     _extract_manual_body,
+    generate_decisions,
+    generate_decisions_desc,
     generate_scripted_gui,
     merge_gfx_entries,
 )
@@ -148,6 +150,48 @@ def test_generate_scripted_gui_scans_and_preserves_manual(tmp_path):
     out2 = (root / "interface" / "MD_scripted_gui.gfx").read_text(encoding="utf-8")
     assert 'name = "GFX_keepme"' in out2
     assert 'name = "GFX_ahmadinejad_portrait"' in out2
+
+
+# --- decisions vs decisions_desc split -------------------------------------
+
+
+def _decisions_tree(root):
+    dec = root / "gfx" / "interface" / "decisions"
+    (dec / "russia" / "decision_text").mkdir(parents=True)
+    (dec / "netherlands" / "decision_text").mkdir(parents=True)
+    (dec / "politics").mkdir(parents=True)
+    (root / "interface").mkdir()
+    # text icons under decision_text/
+    (dec / "russia" / "decision_text" / "SOV_desctext_wagner.dds").write_bytes(b"x")
+    (
+        dec / "netherlands" / "decision_text" / "hol_voc_category_picture.dds"
+    ).write_bytes(b"x")
+    # a regular decision picture NOT under decision_text/
+    (dec / "politics" / "propaganda.dds").write_bytes(b"x")
+    return dec
+
+
+def test_decisions_desc_uses_bare_gfx_and_only_scans_decision_text(tmp_path):
+    _decisions_tree(tmp_path)
+    generate_decisions_desc(tmp_path)
+    out = (tmp_path / "interface" / "MD_decisions_desc.gfx").read_text(encoding="utf-8")
+    # bare GFX_<stem>, never a decision_ prefix (£<stem> loc convention)
+    assert 'name = "GFX_SOV_desctext_wagner"' in out
+    assert 'name = "GFX_hol_voc_category_picture"' in out
+    assert "GFX_decision_hol_voc_category_picture" not in out
+    # non-decision_text art is not pulled into the desc file
+    assert "propaganda" not in out
+
+
+def test_decisions_skips_decision_text(tmp_path):
+    _decisions_tree(tmp_path)
+    generate_decisions(tmp_path)
+    out = (tmp_path / "interface" / "MD_decisions.gfx").read_text(encoding="utf-8")
+    # the regular picture is emitted with the decision_ prefix
+    assert 'name = "GFX_decision_propaganda"' in out
+    # decision_text/ art is excluded from MD_decisions.gfx entirely
+    assert "desctext_wagner" not in out
+    assert "hol_voc_category_picture" not in out
 
 
 def test_generate_scripted_gui_skips_underscore_dirs(tmp_path):

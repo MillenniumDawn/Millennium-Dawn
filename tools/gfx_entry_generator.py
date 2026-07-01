@@ -57,25 +57,25 @@ def main():
     while True:
         try:
             selection_input = input(
-                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_parties_icons.gfx.\n5. Retrieve and generate intelligence agency icons\n6. Retrieve and generate MD_decisions.gfx\n7. Retrieve and generate Focus Title Bars (This also updates the titlebar_styles.txt file)\n8. Retrieve and generate MD_scripted_gui.gfx (scans scripted_gui/countries/<TAG>/)\nPlease enter the number of the option you'd like: "
+                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_parties_icons.gfx.\n5. Retrieve and generate intelligence agency icons\n6. Retrieve and generate MD_decisions.gfx\n7. Retrieve and generate Focus Title Bars (This also updates the titlebar_styles.txt file)\n8. Retrieve and generate MD_scripted_gui.gfx (scans scripted_gui/countries/<TAG>/)\n9. Retrieve and generate MD_decisions_desc.gfx (text icons from decisions/**/decision_text/)\nPlease enter the number of the option you'd like: "
             ).strip()
 
             if not selection_input:
                 print(
-                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 8.{bcolors.RESET}\n"
+                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 9.{bcolors.RESET}\n"
                 )
                 continue
 
             selection = int(selection_input)
-            if selection < 1 or selection > 8:
+            if selection < 1 or selection > 9:
                 print(
-                    f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 8.\n{bcolors.RESET}"
+                    f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 9.\n{bcolors.RESET}"
                 )
                 continue
             break
         except ValueError:
             print(
-                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 8.{bcolors.RESET}\n"
+                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 9.{bcolors.RESET}\n"
             )
             continue
 
@@ -95,6 +95,8 @@ def main():
         generate_focus_titlebars(mod_root)
     elif selection == 8:
         generate_scripted_gui(mod_root)
+    elif selection == 9:
+        generate_decisions_desc(mod_root)
 
 
 # --- Filesystem scanning ----------------------------------------------------
@@ -649,6 +651,10 @@ def generate_decisions(mod_root):
     seen = set()
     entries = {}
     for f in files:
+        # decision_text/ art is text-icon material handled by MD_decisions_desc.gfx
+        # (option 9); scanning it here would emit dead GFX_decision_* duplicates.
+        if "decision_text" in f.relative_to(scan_dir).parts:
+            continue
         texture_path = rel_texture_path(f, mod_root)
         stem = f.stem
         if any(prefix in stem for prefix in DECISION_SELF_PREFIXED):
@@ -675,6 +681,58 @@ def generate_decisions(mod_root):
     )
     _print_merge_report("MD_decisions.gfx", *result)
     print(f"\nMD_decisions.gfx has been processed for {len(files)} decision pictures.")
+
+
+# Text icons hand-placed directly in a country folder (not under decision_text/);
+# left untouched by the scan so the merge does not report them as orphans.
+DECISIONS_DESC_LOOSE = frozenset(
+    {"GFX_AFG_menu1", "GFX_MAIN_arab_kabyle", "GFX_ISR_desctext_blockade"}
+)
+
+
+def generate_decisions_desc(mod_root):
+    scan_dir = mod_root / "gfx" / "interface" / "decisions"
+    print(scan_dir)
+    if not scan_dir.is_dir():
+        print(f"{bcolors.FAIL}Directory does not exist: {scan_dir}{bcolors.RESET}")
+        return
+    files = [
+        f
+        for f in scan_images(scan_dir)
+        if "decision_text" in f.relative_to(scan_dir).parts
+    ]
+    _describe_scan(files)
+
+    print(f"{bcolors.OK}Generating MD_decisions_desc.gfx...{bcolors.RESET}")
+    seen = set()
+    entries = {}
+    for f in files:
+        texture_path = rel_texture_path(f, mod_root)
+        # Bare GFX_<stem>: these are text icons drawn via £<stem> in loc, which
+        # strips only the GFX_ prefix. Never add a decision_ prefix here.
+        name = f"GFX_{f.stem}"
+        if check_duplicate(name, seen, texture_path):
+            continue
+        entries[name] = texture_path
+
+    def render(name, texture_path):
+        return (
+            "\tspriteType = {\n"
+            f'\t\tname = "{name}"\n'
+            f'\t\ttexturefile = "{texture_path}"\n'
+            "\t\tlegacy_lazy_load = no\n"
+            "\t}\n"
+        )
+
+    result = merge_gfx_entries(
+        interface_path(mod_root, "MD_decisions_desc.gfx"),
+        entries,
+        render,
+        header="spriteTypes = {\n",
+        protected=DECISIONS_DESC_LOOSE,
+    )
+    _print_merge_report("MD_decisions_desc.gfx", *result)
+    print(f"\nMD_decisions_desc.gfx has been processed for {len(files)} text icons.")
 
 
 # --- Scripted-GUI sprite generation ---------------------------------------
