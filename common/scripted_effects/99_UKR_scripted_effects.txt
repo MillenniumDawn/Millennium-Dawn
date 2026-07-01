@@ -4228,233 +4228,112 @@ UKR_integrate_slavic_land = {
 	}
 }
 
+UKR_apply_verkhovna_election_result = {
+	resize_temp_array = { array = UKR_election_amt value = 0 size = 10 }
+	if = {
+		limit = { check_variable = { UKR_election_side_won = 1 } }
+		set_temp_variable = { UKR_election_amt^0 = 320 }
+		set_temp_variable = { UKR_election_amt^1 = 290 }
+		set_temp_variable = { UKR_election_amt^2 = 230 }
+		set_temp_variable = { UKR_election_amt^3 = 200 }
+		set_temp_variable = { UKR_election_amt^4 = 170 }
+		set_temp_variable = { UKR_election_amt^5 = 100 }
+		set_temp_variable = { UKR_election_amt^6 = 60 }
+		set_temp_variable = { UKR_election_amt^7 = 40 }
+		set_temp_variable = { UKR_election_amt^8 = 30 }
+		set_temp_variable = { UKR_election_amt^9 = 15 }
+	}
+	else = {
+		set_temp_variable = { UKR_election_amt^0 = -30 }
+		set_temp_variable = { UKR_election_amt^1 = -50 }
+		set_temp_variable = { UKR_election_amt^2 = -90 }
+		set_temp_variable = { UKR_election_amt^3 = -110 }
+		set_temp_variable = { UKR_election_amt^4 = -130 }
+		set_temp_variable = { UKR_election_amt^5 = -180 }
+		set_temp_variable = { UKR_election_amt^6 = -240 }
+		set_temp_variable = { UKR_election_amt^7 = -270 }
+		set_temp_variable = { UKR_election_amt^8 = -320 }
+		set_temp_variable = { UKR_election_amt^9 = -380 }
+	}
+	set_temp_variable = { UKR_election_bracket = 0 }
+	set_temp_variable = { UKR_election_bracket_found = 0 }
+	if = {
+		limit = { check_variable = { UKR_verkhovna_support < 50 } }
+		set_temp_variable = { UKR_election_bracket = 0 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support < 100 } }
+		set_temp_variable = { UKR_election_bracket = 1 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support < 150 } }
+		set_temp_variable = { UKR_election_bracket = 2 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support < 200 } }
+		set_temp_variable = { UKR_election_bracket = 3 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support < 250 } }
+		set_temp_variable = { UKR_election_bracket = 4 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support < 300 } }
+		set_temp_variable = { UKR_election_bracket = 5 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support < 350 } }
+		set_temp_variable = { UKR_election_bracket = 6 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support < 400 } }
+		set_temp_variable = { UKR_election_bracket = 7 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support < 410 } }
+		set_temp_variable = { UKR_election_bracket = 8 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { UKR_verkhovna_support > 410 } }
+		set_temp_variable = { UKR_election_bracket = 9 }
+		set_temp_variable = { UKR_election_bracket_found = 1 }
+	}
+	if = {
+		limit = { check_variable = { UKR_election_bracket_found = 1 } }
+		if = {
+			limit = { check_variable = { UKR_election_side_won = 1 } }
+			custom_effect_tooltip = UKR_win_elections_TT
+		}
+		else = {
+			custom_effect_tooltip = UKR_lose_elections_TT
+		}
+		add_to_variable = { UKR_verkhovna_support = UKR_election_amt^UKR_election_bracket }
+		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
+	}
+}
+
 UKR_verkhovna_rada_election_east_victory = { # Victory of the Pro-Russian Bloc in Parliament
-	# Defeat if not Pro-Russian
 	clr_country_flag = UKR_nationalist_verkhovna
 	clr_country_flag = UKR_western_verkhovna
 	clr_country_flag = UKR_dissolved_verkhovna
 	set_country_flag = UKR_eastern_verkhovna
 	if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 50
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -30 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
+		limit = { UKR_is_pro_east = yes }
+		set_temp_variable = { UKR_election_side_won = 1 }
 	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 100
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -50 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
+	else = {
+		set_temp_variable = { UKR_election_side_won = 0 }
 	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 150
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -90 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 200
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -110 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 250
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -130 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 300
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -180 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 350
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -240 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 400
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -270 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support < 410
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -320 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = no
-			check_variable = {
-				UKR_verkhovna_support > 410
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -380 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	# Victory if Pro-Russian
-	if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 50
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 320 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 100
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 290 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-		UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 150
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 230 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 200
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 200 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 250
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 170 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 300
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 100 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 350
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 60 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 400
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 40 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support < 410
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 30 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_east = yes
-			check_variable = {
-				UKR_verkhovna_support > 410
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 15 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
+	UKR_apply_verkhovna_election_result = yes
 }
 
 UKR_verkhovna_rada_election_west_victory = { # Victory of the Pro-Western Bloc in Parliament
@@ -4462,228 +4341,14 @@ UKR_verkhovna_rada_election_west_victory = { # Victory of the Pro-Western Bloc i
 	set_country_flag = UKR_western_verkhovna
 	clr_country_flag = UKR_dissolved_verkhovna
 	clr_country_flag = UKR_eastern_verkhovna
-	# Defeat if not Pro-West
 	if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 50
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -30 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
+		limit = { UKR_is_pro_west = yes }
+		set_temp_variable = { UKR_election_side_won = 1 }
 	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 100
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -50 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
+	else = {
+		set_temp_variable = { UKR_election_side_won = 0 }
 	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 150
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -90 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 200
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -110 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 250
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -130 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 300
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -180 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 350
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -240 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 400
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -270 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support < 410
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -320 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = no
-			check_variable = {
-				UKR_verkhovna_support > 410
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -380 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	# Victory if Pro-West
-	if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 50
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 320 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 100
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 290 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 150
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 230 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 200
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 200 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 250
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 170 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 300
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 100 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 350
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 60 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 400
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 40 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support < 410
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 30 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_pro_west = yes
-			check_variable = {
-				UKR_verkhovna_support > 410
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 15 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
+	UKR_apply_verkhovna_election_result = yes
 }
 
 UKR_verkhovna_rada_election_ukrainian_victory = { # Victory of the Pro-Ukrainian Bloc in Parliament
@@ -4691,269 +4356,14 @@ UKR_verkhovna_rada_election_ukrainian_victory = { # Victory of the Pro-Ukrainian
 	clr_country_flag = UKR_western_verkhovna
 	clr_country_flag = UKR_dissolved_verkhovna
 	clr_country_flag = UKR_eastern_verkhovna
-	# Defeat if not Pro-Ukrainian
 	if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 50
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -30 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
+		limit = { UKR_is_neutral = yes }
+		set_temp_variable = { UKR_election_side_won = 1 }
 	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 100
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -50 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
+	else = {
+		set_temp_variable = { UKR_election_side_won = 0 }
 	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 150
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -90 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 200
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -110 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 250
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -130 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 300
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -180 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 350
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -240 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 400
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -270 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support < 410
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -320 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = no
-			check_variable = {
-				UKR_verkhovna_support > 410
-			}
-		}
-		custom_effect_tooltip = UKR_lose_elections_TT
-		add_to_variable = { UKR_verkhovna_support = -380 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	# Victory if Pro-Ukrainian
-	if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 50
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 320 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 100
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 290 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 150
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 230 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 200
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 200 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 250
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 170 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 300
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 100 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 350
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 60 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 400
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 40 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support < 410
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 30 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-	else_if = {
-		limit = {
-			UKR_is_neutral = yes
-			check_variable = {
-				UKR_verkhovna_support > 410
-			}
-		}
-		custom_effect_tooltip = UKR_win_elections_TT
-		add_to_variable = { UKR_verkhovna_support = 15 }
-		clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	}
-}
-
-UKR_free_verkohvna = { # If you want to puppet the parliament (Reset to original state) this is more for flavor if needed
-	set_country_flag = UKR_freed_verkhovna
-	set_country_flag = UKR_parliament_block
-	clr_country_flag = UKR_influence_verkhovna
-	clr_country_flag = UKR_controlled_verkhovna
-	add_to_variable = { UKR_verkhovna_support = 90 }
-	clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	custom_effect_tooltip = UKR_free_parliament_TT
-}
-
-UKR_puppet_verkohvna = { # If you want to puppet the parliament (Remove the need to use the decisions) this is more for flavor if needed
-	clr_country_flag = UKR_freed_verkhovna
-	clr_country_flag = UKR_influence_verkhovna
-	clr_country_flag = UKR_parliament_block
-	set_country_flag = UKR_controlled_verkhovna
-	add_to_variable = { UKR_verkhovna_support = 450 }
-	clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	custom_effect_tooltip = UKR_puppet_parliament_TT
-}
-
-UKR_influence_verkohvna = { # If you want to influence the parliament (Make it easier to pass laws through decisions) this is more for flavor if needed
-	clr_country_flag = UKR_freed_verkhovna
-	set_country_flag = UKR_influence_verkhovna
-	set_country_flag = UKR_parliament_block
-	clr_country_flag = UKR_controlled_verkhovna
-	add_to_variable = { UKR_verkhovna_support = 75 }
-	clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	custom_effect_tooltip = UKR_influence_parliament_TT
-}
-
-UKR_dissolve_verkohvna = { # If you want to dissolve the parliament (purge all members) this is more for flavor if needed
-	clr_country_flag = UKR_nationalist_verkhovna
-	clr_country_flag = UKR_western_verkhovna
-	set_country_flag = UKR_dissolved_verkhovna
-	clr_country_flag = UKR_eastern_verkhovna
-	add_to_variable = { UKR_verkhovna_support = -450 }
-	clamp_variable = { var = UKR_verkhovna_support min = 0 max = 450 }
-	custom_effect_tooltip = UKR_dissolve_parliament_TT
-	add_ideas = UKR_dissolved_parliament
+	UKR_apply_verkhovna_election_result = yes
 }
 
 UKR_do_math_boi = { # Calculates influence of others on you to determine election winner
@@ -5222,6 +4632,20 @@ UKR_random_events_ukraine_parliament = {
 	}
 }
 
+UKR_shift_to_party = {
+	if = {
+		limit = { NOT = { is_in_array = { ruling_party = UKR_target_party } } }
+		set_temp_variable = { rul_party_temp = UKR_target_party }
+		set_temp_variable = { disable_elections = 0 }
+		change_ruling_party_effect = yes
+	}
+
+	set_temp_variable = { party_index = UKR_target_party }
+	set_temp_variable = { party_popularity_increase = 0.10 }
+	set_temp_variable = { temp_outlook_increase = 0.10 }
+	add_relative_party_popularity = yes
+}
+
 UKR_change_ukraine_nati = {
 	if = {
 		limit = {
@@ -5229,92 +4653,16 @@ UKR_change_ukraine_nati = {
 		}
 		random_list = {
 			30 = {
-				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 7 } } }
-					set_temp_variable = { rul_party_temp = 7 }
-					set_temp_variable = { disable_elections = 0 }
-					change_ruling_party_effect = yes
-				}
-
-				set_temp_variable = { party_index = 7 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.10 }
-				add_relative_party_popularity = yes
+				set_temp_variable = { UKR_target_party = 7 }
+				UKR_shift_to_party = yes
 			}
 			30 = {
-				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 4 } } }
-					set_temp_variable = { rul_party_temp = 4 }
-					set_temp_variable = { disable_elections = 0 }
-					change_ruling_party_effect = yes
-				}
-
-				set_temp_variable = { party_index = 4 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.10 }
-				add_relative_party_popularity = yes
+				set_temp_variable = { UKR_target_party = 4 }
+				UKR_shift_to_party = yes
 			}
 			30 = {
-				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 2 } } }
-					set_temp_variable = { rul_party_temp = 2 }
-					set_temp_variable = { disable_elections = 0 }
-					change_ruling_party_effect = yes
-				}
-
-				set_temp_variable = { party_index = 2 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.10 }
-				add_relative_party_popularity = yes
-			}
-		}
-	}
-}
-###########CHANGE GOVERNMENT IF DEMOCRATIC###########
-UKR_change_ukraine_demo = {
-	if = {
-		limit = {
-			has_government = democratic
-		}
-		random_list = {
-			30 = {
-				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 7 } } }
-					set_temp_variable = { rul_party_temp = 7 }
-					set_temp_variable = { disable_elections = 0 }
-					change_ruling_party_effect = yes
-				}
-
-				set_temp_variable = { party_index = 7 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.10 }
-				add_relative_party_popularity = yes
-			}
-			30 = {
-				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 4 } } }
-					set_temp_variable = { rul_party_temp = 4 }
-					set_temp_variable = { disable_elections = 0 }
-					change_ruling_party_effect = yes
-				}
-
-				set_temp_variable = { party_index = 4 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.10 }
-				add_relative_party_popularity = yes
-			}
-			30 = {
-				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 21 } } }
-					set_temp_variable = { rul_party_temp = 21 }
-					set_temp_variable = { disable_elections = 0 }
-					change_ruling_party_effect = yes
-				}
-
-				set_temp_variable = { party_index = 21 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.10 }
-				add_relative_party_popularity = yes
+				set_temp_variable = { UKR_target_party = 2 }
+				UKR_shift_to_party = yes
 			}
 		}
 	}
