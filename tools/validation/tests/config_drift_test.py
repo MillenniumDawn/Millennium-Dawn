@@ -37,9 +37,6 @@ CI_EXEMPT = {
     # join the validate-core/validate-targeted matrices: those run full-repo
     # with no diff-list injection, which would resurface the whole backlog.
     "validate_style.py",
-    # Needs vanilla HOI4 00_defines.lua, which isn't checked into the repo, so
-    # it can only run as a contributor's pre-commit hook.
-    "validate_defines.py",
     # ~22k pre-existing unreferenced textures plus a slow full-repo scan make
     # this a periodic mod-size audit, not a per-PR gate. Manual hook only.
     "validate_unused_textures.py",
