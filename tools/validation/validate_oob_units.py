@@ -185,6 +185,20 @@ def _extract_namelist_block_keys(content: str) -> Set[str]:
     return refs
 
 
+_AIR_WING_TEMPLATE_RE = re.compile(r"air_wing_names_template\s*=\s*(\S+)")
+
+
+def _extract_air_wing_template_refs(content: str) -> List[Tuple[str, int]]:
+    """Return (loc_key, 1-based line number) for every `air_wing_names_template
+    = KEY` assignment. A missing KEY renders as the literal token in-game."""
+    refs = []
+    for ln, line in enumerate(content.split("\n"), 1):
+        match = _AIR_WING_TEMPLATE_RE.search(line)
+        if match:
+            refs.append((match.group(1).strip('"'), ln))
+    return refs
+
+
 def _extract_ship_types_tokens(content: str) -> Set[str]:
     """Extract tokens from `ship_types = { ... }` arrays in *_ship_names.txt."""
     refs = set()
@@ -586,11 +600,55 @@ class Validator(BaseValidator):
             "OOB files with unknown division_names_group references:",
         )
 
+    def validate_air_wing_names_template_loc(self):
+        """Check that every `air_wing_names_template = KEY` resolves to a loc key.
+
+        A missing KEY renders as the literal token in-game rather than the
+        localized fallback air-wing name.
+        """
+        self._log_section("Checking air_wing_names_template loc references...")
+
+        loc_keys = self._load_localisation_keys()
+        files = self._collect_files(["common/units/names/*.txt", "history/units/*.txt"])
+        self.log(f"  Found {len(files)} files to check")
+
+        results = []
+        for filepath in files:
+            try:
+                with open(filepath, "r", encoding="utf-8-sig") as f:
+                    raw = f.read()
+            except OSError:
+                continue
+            content = strip_comments(raw)
+            refs = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "oob_units.air_wing_template_refs",
+                filepath,
+                content,
+                lambda content=content: _extract_air_wing_template_refs(content),
+            )
+            filename = os.path.basename(filepath)
+            for key, line_no in refs:
+                if key not in loc_keys:
+                    results.append(
+                        f"{filename}:{line_no}: air_wing_names_template references "
+                        f"undefined loc key '{key}'"
+                    )
+
+        self._report(
+            results,
+            "✓ All air_wing_names_template references resolve to a loc key",
+            "Files with unknown air_wing_names_template loc references:",
+            severity=Severity.WARNING,
+            category="air-wing-template-loc",
+        )
+
     def run_validations(self):
         self._build_canonical_units()
         self.validate_unit_references()
         self.validate_namelist_references()
         self.validate_division_names_group_references()
+        self.validate_air_wing_names_template_loc()
 
 
 if __name__ == "__main__":
