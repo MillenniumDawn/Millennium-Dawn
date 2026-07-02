@@ -258,3 +258,114 @@ def test_bankruptcy_warnings_aggregate_per_file(tmp_path):
     _write_focus_file(tmp_path, content)
     v = _run_check(tmp_path)
     assert v.warnings_found == 1
+
+
+def test_worker_resolves_at_constant_cost(tmp_path):
+    content = "@tier_high = 20\n" + FOCUS_TEMPLATE.format(
+        cost="@tier_high",
+        extra="",
+        reward="add_political_power = 50",
+        modifiers="",
+    )
+    fpath = _write_focus_file(tmp_path, content)
+    out = _extract_ai_guard_data((str(fpath), str(tmp_path), STAFFABLE_MAP))
+    assert out[0]["cost"] == 20.0
+
+
+def test_worker_unresolvable_constant_cost_is_none(tmp_path):
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(
+            cost="@undefined_tier",
+            extra="",
+            reward="add_political_power = 50",
+            modifiers="",
+        ),
+    )
+    out = _extract_ai_guard_data((str(fpath), str(tmp_path), STAFFABLE_MAP))
+    assert out[0]["cost"] is None
+
+
+def test_worker_ignores_nested_cost_keys(tmp_path):
+    content = """focus_tree = {
+	id = test_tree
+	focus = {
+		id = TAG_focus_a
+		x = 0
+		y = 0
+		completion_reward = {
+			add_advisor_slot = { cost = 100 }
+		}
+		ai_will_do = { base = 1 }
+	}
+}
+"""
+    fpath = _write_focus_file(tmp_path, content)
+    out = _extract_ai_guard_data((str(fpath), str(tmp_path), STAFFABLE_MAP))
+    assert out[0]["cost"] is None
+
+
+def test_worker_credits_not_yes_guard_form(tmp_path):
+    modifiers = """modifier = {
+				factor = 0
+				NOT = { can_staff_an_industrial_complex = yes }
+			}"""
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(
+            cost=2,
+            extra="",
+            reward="one_random_industrial_complex = yes",
+            modifiers=modifiers,
+        ),
+    )
+    out = _extract_ai_guard_data((str(fpath), str(tmp_path), STAFFABLE_MAP))
+    assert "can_staff_an_industrial_complex" in out[0]["guards"]
+
+
+def test_at_constant_cost_triggers_bankruptcy_check(tmp_path):
+    _write_effects_file(tmp_path)
+    content = "@tier_high = 20\n" + FOCUS_TEMPLATE.format(
+        cost="@tier_high",
+        extra="",
+        reward="add_political_power = 50",
+        modifiers="",
+    )
+    _write_focus_file(tmp_path, content)
+    v = _run_check(tmp_path)
+    assert v.warnings_found == 1
+
+
+def test_chained_builder_effect_detected(tmp_path):
+    fx_dir = tmp_path / "common" / "scripted_effects"
+    fx_dir.mkdir(parents=True, exist_ok=True)
+    (fx_dir / "00_scripted_effects.txt").write_text(
+        """one_random_industrial_complex = {
+	random_owned_controlled_state = {
+		add_building_construction = {
+			type = industrial_complex
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+factory_with_energy_check = {
+	if = {
+		limit = { check_variable = { energy_deficit < 1 } }
+		one_random_industrial_complex = yes
+	}
+}
+""",
+        encoding="utf-8",
+    )
+    _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(
+            cost=2,
+            extra="",
+            reward="factory_with_energy_check = yes",
+            modifiers="",
+        ),
+    )
+    v = _run_check(tmp_path)
+    assert v.warnings_found == 1

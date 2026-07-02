@@ -169,9 +169,9 @@ def test_every_disk_validator_runs_on_ci(disk, ci):
 def test_every_disk_validator_runs_somewhere(disk, precommit, ci):
     # A validator must run on pre-commit OR in CI, or it is dead code. The
     # expensive cross-reference validators run CI-only (their unused manual
-    # pre-commit hooks were removed); the CI-exempt ones (style, defines,
-    # unused_textures) run pre-commit-only. Neither side is required alone, but
-    # a validator in NEITHER place runs nowhere.
+    # pre-commit hooks were removed); the CI-exempt ones (style,
+    # unused_textures) run pre-commit-only. Neither side is required alone,
+    # but a validator in NEITHER place runs nowhere.
     orphaned = sorted(disk - set(precommit) - set(ci) - PRECOMMIT_EXEMPT)
     assert not orphaned, (
         f"Validators run neither on pre-commit nor in CI: {orphaned}. Wire each "

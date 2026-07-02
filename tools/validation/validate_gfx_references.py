@@ -139,12 +139,14 @@ _VANILLA_SPRITES_MANIFEST = os.path.join(
 
 
 def _load_vanilla_sprite_manifest() -> FrozenSet[str]:
+    # UnicodeDecodeError too: decoding happens lazily during iteration, and a
+    # corrupt manifest should degrade to the heuristic, not crash the run.
     try:
         with open(_VANILLA_SPRITES_MANIFEST, encoding="utf-8") as fh:
             return frozenset(
                 line.strip() for line in fh if line.strip() and not line.startswith("#")
             )
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         return frozenset()
 
 

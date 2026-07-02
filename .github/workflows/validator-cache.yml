@@ -34,7 +34,7 @@ concurrency:
 
 permissions:
   contents: read
-  # actions: read lets the post-save step verify a restorable entry exists.
+  # actions: read lets the post-save step verify this run's entry exists.
   actions: read
 
 jobs:
@@ -60,15 +60,24 @@ jobs:
             resources/documentation
             .claude
 
+      # Snapshot the hash before the validator run litters tools/ with
+      # __pycache__/ — hashFiles evaluated at save time would include the
+      # .pyc files and produce a key no clean-checkout restore can match.
+      - name: Compute validator code hash
+        id: toolshash
+        run: echo "hash=${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
       # Warm start from the previous entry: incremental rebuild instead of a
-      # cold full scan.
+      # cold full scan. The primary key never exact-matches (saved keys carry
+      # a run_id suffix); the restore-keys prefixes do the real matching,
+      # newest entry first.
       - name: Restore previous validator disk cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .validation_cache
-          key: md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-${{ github.sha }}
+          key: md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}
           restore-keys: |
-            md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-
+            md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
             md-valcache-v1-${{ runner.os }}-
 
       - name: Set up Python
@@ -76,31 +85,33 @@ jobs:
         with:
           python-version: "3.x"
 
-      # Populates every validator's cache namespace. Non-gating: findings on
-      # main are a triage signal (visible as a step warning), not a reason to
-      # leave every PR cold — cached scan results are correct either way.
+      # Populates every validator's cache namespace. Non-strict, so findings
+      # on main exit 0 (cached scan results are correct either way) while a
+      # harness crash exits non-zero, fails the job, and skips the save —
+      # leaving the previous night's entry in place for PRs.
       - name: Run all validators (cache warm-up)
-        continue-on-error: true
         run: python3 tools/validation/run_all_validators.py --no-color
 
-      # run_id suffix: keys are immutable and the weekly scheduled run fires
+      # run_id suffix: keys are immutable and the nightly scheduled run fires
       # on an unchanged sha — without it the rebuild could never save. PR
       # restores prefix-match the newest entry via restore-keys.
       - name: Save validator disk cache
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .validation_cache
-          key: md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-${{ github.sha }}-${{ github.run_id }}
+          key: md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}-${{ github.run_id }}
 
-      # cache/save only warns on failure; this makes a missing entry a red
-      # nightly run instead of PRs silently going cold.
-      - name: Verify a restorable cache entry exists
+      # cache/save only warns on failure; checking for THIS run's exact key
+      # (not any md-valcache-v1-* survivor from a previous night) makes a
+      # failed save a red run instead of PRs silently going cold.
+      - name: Verify this run's cache entry exists
         env:
           GH_TOKEN: ${{ github.token }}
+          EXPECTED_KEY: md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}-${{ github.run_id }}
         run: |
-          count=$(gh api "repos/${{ github.repository }}/actions/caches?key=md-valcache-v1-&per_page=1" --jq '.total_count')
+          count=$(gh api "repos/${{ github.repository }}/actions/caches?key=${EXPECTED_KEY}&per_page=1" --jq '.total_count')
           if [ "$count" -eq 0 ]; then
-            echo "::error::No md-valcache-v1-* cache entry exists after the save step"
+            echo "::error::Cache entry ${EXPECTED_KEY} was not saved"
             exit 1
           fi
-          echo "$count md-valcache-v1-* cache entr(y/ies) present"
+          echo "Cache entry ${EXPECTED_KEY} confirmed"

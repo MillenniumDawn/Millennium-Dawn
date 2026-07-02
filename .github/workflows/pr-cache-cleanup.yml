@@ -24,9 +24,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           ref="refs/pull/${{ github.event.pull_request.number }}/merge"
-          gh api "repos/${{ github.repository }}/actions/caches?ref=${ref}&per_page=100" \
+          # --paginate: a long-lived PR can hold >100 entries. The || arm
+          # tolerates a delete/eviction race (404) without failing the job.
+          gh api --paginate "repos/${{ github.repository }}/actions/caches?ref=${ref}&per_page=100" \
             --jq '.actions_caches[].id' \
             | while read -r id; do
                 gh api -X DELETE "repos/${{ github.repository }}/actions/caches/${id}" \
-                  && echo "deleted cache ${id}"
+                  && echo "deleted cache ${id}" \
+                  || echo "cache ${id} already gone"
               done

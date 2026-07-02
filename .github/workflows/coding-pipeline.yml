@@ -32,8 +32,12 @@ permissions:
 # resources/documentation carries modifiers_documentation.md, the vanilla
 # modifier list validate_modifiers.py needs (~4000 names it would otherwise
 # false-positive on).
+# github.sha (the merge commit) is part of the key because the bundle holds
+# merge-ref content: reopening a PR after main advanced produces a new merge
+# commit for the same head sha, and without it consumers would restore the
+# stale pre-advance bundle.
 env:
-  WORKSPACE_KEY: md-workspace-v1-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+  WORKSPACE_KEY: md-workspace-v1-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}-${{ github.sha }}
   WORKSPACE_PATHS: |
     common
     events
@@ -75,6 +79,7 @@ jobs:
       scripted-effects: ${{ steps.filter.outputs.scripted-effects }}
       style: ${{ steps.filter.outputs.style }}
       style-files: ${{ steps.filter.outputs.style_files }}
+      content: ${{ steps.filter.outputs.content }}
     steps:
       # No checkout — on pull_request events dorny/paths-filter fetches the
       # changed-file list straight from the GitHub API, so cloning the repo
@@ -130,6 +135,15 @@ jobs:
               - 'common/**/*.txt'
               - 'events/**/*.txt'
               - 'history/**/*.txt'
+            # Union of everything any validator job consumes — gates
+            # prepare-workspace so a gfx-only or workflow-only PR doesn't
+            # build a ~200MB bundle no job will restore.
+            content:
+              - 'common/**'
+              - 'events/**'
+              - 'history/**'
+              - 'localisation/**'
+              - 'interface/**'
 
   # ───────────────────────────────────────────────────────────────
   # Prepare workspace — the run's single checkout. Bundles the validated
@@ -139,7 +153,13 @@ jobs:
   # ───────────────────────────────────────────────────────────────
   prepare-workspace:
     name: Prepare Workspace
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.content == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # actions: read lets the post-save step verify the bundle exists.
+      actions: read
     steps:
       # Checkout precedes the cache steps: hashFiles() below needs tools/ on
       # disk. Cone mode also materialises root files (CLAUDE.md, *.mod).
@@ -160,7 +180,9 @@ jobs:
 
       # Shared validator disk cache, built on main by validator-cache.yml.
       # Content-hash validity tags make a stale cache safe: changed files
-      # miss and re-parse; unchanged files skip the expensive scan.
+      # miss and re-parse; unchanged files skip the expensive scan. The
+      # primary key never exact-matches (saved keys carry a run_id suffix);
+      # the restore-keys prefixes do the real matching, newest entry first.
       - name: Restore shared validator disk cache
         id: valcache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -192,6 +214,21 @@ jobs:
         with:
           path: ${{ env.WORKSPACE_PATHS }}
           key: ${{ env.WORKSPACE_KEY }}
+
+      # cache/save only warns on failure. Without this check a failed save
+      # leaves this job green while every consumer dies on
+      # fail-on-cache-miss, and "Re-run failed jobs" can never recover
+      # because the green prepare-workspace won't re-run.
+      - name: Verify the bundle exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh api "repos/${{ github.repository }}/actions/caches?key=${WORKSPACE_KEY}&per_page=1" --jq '.total_count')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Workspace bundle ${WORKSPACE_KEY} was not saved"
+            exit 1
+          fi
+          echo "Workspace bundle ${WORKSPACE_KEY} confirmed"
 
   # ───────────────────────────────────────────────────────────────
   # Style & common-mistakes — diff-scoped to the changed .txt files only,
@@ -433,6 +470,8 @@ jobs:
           - script: validate_focus_tree.py
             name: focus-tree
             title: "Validate Focus Tree Structure"
+            # the ai_will_do guard checks (#2233) are WARNING-severity: the
+            # ~1900-focus backlog surfaces in reports without gating PRs.
             should_run: ${{ needs.detect-changes.outputs.national-focus }}
           - script: validate_on_actions.py
             name: on-actions

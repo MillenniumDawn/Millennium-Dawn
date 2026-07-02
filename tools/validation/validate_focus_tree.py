@@ -90,15 +90,47 @@ _AI_WILL_DO_START = re.compile(r"\bai_will_do\s*=\s*\{")
 _MODIFIER_START = re.compile(r"\bmodifier\s*=\s*\{")
 _FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
 _CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
+_CAN_STAFF_NOT_YES_RE = re.compile(
+    r"\bNOT\s*=\s*\{\s*(can_staff_an_\w+)\s*=\s*yes\s*\}"
+)
 _BANKRUPTCY_GUARD_RE = re.compile(
     r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
 )
 _ADD_BUILDING_START = re.compile(r"\badd_building_construction\s*=\s*\{")
 _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
-_COST_LINE_RE = re.compile(r"\bcost\s*=\s*(\d+(?:\.\d+)?)(?![\d.])")
-_SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^}]*)\}")
+# Value may be numeric or a file-local @constant reference.
+_COST_LINE_RE = re.compile(r"\bcost\s*=\s*(@?[\w.]+)")
+_CONSTANT_DEF_RE = re.compile(r"^@([\w.]+)\s*=\s*(-?\d+(?:\.\d+)?)", re.M)
+_SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^{}]*)\}")
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
+
+
+def _top_level_text(body: str) -> str:
+    """Return only the depth-0 characters of a block body, so focus-level
+    fields (cost) aren't shadowed by same-named keys inside nested blocks
+    (advisor cost, reduce_focus_completion_cost, ...)."""
+    out = []
+    depth = 0
+    for ch in body:
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth = max(0, depth - 1)
+        elif depth == 0:
+            out.append(ch)
+    return "".join(out)
+
+
+def _resolve_cost(token: Optional[str], constants: Dict[str, float]) -> Optional[float]:
+    if token is None:
+        return None
+    if token.startswith("@"):
+        return constants.get(token[1:])
+    try:
+        return float(token)
+    except ValueError:
+        return None
 
 
 def _line_of(text: str, pos: int) -> int:
@@ -268,11 +300,14 @@ def _extract_ai_guard_data(
 ) -> List[Dict]:
     """Pool worker: per-focus facts for the ai_will_do guard checks.
 
-    Returns one dict per focus: id, line, numeric cost, search filters, the
-    staffable building types its rewards construct (directly or via a
-    scripted effect from *staffable_map*), and the guard triggers present in
-    factor = 0 ai_will_do modifiers. The staffable map is folded into the
-    cache tag so entries invalidate when scripted-effect definitions change.
+    Returns one dict per focus: id, line, cost (numeric or resolved from a
+    file-local @constant), search filters, the staffable building types its
+    rewards construct (directly or via a scripted effect from
+    *staffable_map*), and the guard triggers present in factor = 0 ai_will_do
+    modifiers (both the `X = no` and `NOT = { X = yes }` forms; guards hidden
+    behind wrapper scripted triggers are not recognized). The staffable map
+    is folded into the cache tag so entries invalidate when scripted-effect
+    definitions change.
     """
     filepath, mod_path, staffable_map = args
     try:
@@ -281,6 +316,7 @@ def _extract_ai_guard_data(
     except Exception:
         return []
     text = strip_comments(raw)
+    constants = {m.group(1): float(m.group(2)) for m in _CONSTANT_DEF_RE.finditer(text)}
     fingerprint = ";".join(
         f"{name}:{','.join(sorted(types))}"
         for name, types in sorted(staffable_map.items())
@@ -302,7 +338,7 @@ def _extract_ai_guard_data(
                 pos = fend
                 continue
 
-            cm = _COST_LINE_RE.search(fbody)
+            cm = _COST_LINE_RE.search(_top_level_text(fbody))
             sf = _SEARCH_FILTERS_RE.search(fbody)
 
             buildings: Set[str] = set()
@@ -350,6 +386,7 @@ def _extract_ai_guard_data(
                             continue
                         if _FACTOR_ZERO_RE.search(mbody):
                             guards.update(_CAN_STAFF_NO_RE.findall(mbody))
+                            guards.update(_CAN_STAFF_NOT_YES_RE.findall(mbody))
                             if _BANKRUPTCY_GUARD_RE.search(mbody):
                                 guards.add("bankruptcy_incoming_collapse")
                         mpos = mend
@@ -359,7 +396,7 @@ def _extract_ai_guard_data(
                     "id": idm.group(1),
                     "file": filepath,
                     "line": _line_of(text, fm.start()),
-                    "cost": float(cm.group(1)) if cm else None,
+                    "cost": _resolve_cost(cm.group(1) if cm else None, constants),
                     "filters": set(sf.group(1).split()) if sf else set(),
                     "buildings": buildings,
                     "guards": guards,
@@ -370,7 +407,7 @@ def _extract_ai_guard_data(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.ai_guards",
+        "focus_tree.ai_guards.v2",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
@@ -874,6 +911,44 @@ class Validator(BaseValidator):
                     self.mod_path, "focus_tree.staffable_fx", fp, text, _compute
                 )
             )
+
+        # One level of chaining: an effect that calls a direct builder (e.g.
+        # one_random_factory_energy_check -> one_random_industrial_complex)
+        # inherits its building types. Deeper chains are not followed.
+        direct = dict(mapping)
+        fingerprint = ";".join(
+            f"{name}:{','.join(sorted(types))}"
+            for name, types in sorted(direct.items())
+        )
+        for fp in fx_files:
+            try:
+                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                    text = strip_comments(fh.read())
+            except Exception:
+                continue
+
+            def _compute_chain(text=text) -> Dict[str, FrozenSet[str]]:
+                found: Dict[str, FrozenSet[str]] = {}
+                for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                    body, _ = _extract_block(text, m.start())
+                    if not body:
+                        continue
+                    types: Set[str] = set()
+                    for key in set(_REWARD_KEY_RE.findall(body)) & direct.keys():
+                        types.update(direct[key])
+                    if types:
+                        found[m.group(1)] = frozenset(types)
+                return found
+
+            chained = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "focus_tree.staffable_fx_chain",
+                fp,
+                text + "\x00" + fingerprint,
+                _compute_chain,
+            )
+            for name, types in chained.items():
+                mapping[name] = frozenset(mapping.get(name, frozenset()) | types)
         return mapping
 
     def validate_ai_will_do_guards(self):
@@ -885,12 +960,18 @@ class Validator(BaseValidator):
         Bankruptcy: high-cost focuses need a
         has_active_mission = bankruptcy_incoming_collapse modifier; reported
         as a per-file aggregate so the pre-existing backlog stays readable.
-        Only direct effect calls are resolved — an effect that calls another
-        builder effect is not followed.
+        Builder effects are resolved one call level deep; guards written via
+        wrapper scripted triggers are not recognized.
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 
         staffable = self._staffable_effect_map()
+        if not staffable:
+            self.log(
+                "  No builder effects found under common/scripted_effects/ — "
+                "can_staff detection limited to direct add_building_construction",
+                "warning",
+            )
         files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
         data_lists = self._pool_map(
             _extract_ai_guard_data,

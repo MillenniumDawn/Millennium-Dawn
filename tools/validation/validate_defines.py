@@ -43,6 +43,8 @@ def load_defines_manifest() -> Dict[str, Set[str]]:
     """Parse vanilla_defines.txt into the {namespace: {names}} shape
     parse_vanilla_defines returns. Empty dict when the manifest is absent."""
     namespaces: Dict[str, Set[str]] = {}
+    # UnicodeDecodeError too: decoding happens lazily during iteration, and a
+    # corrupt manifest should read as absent (loud setup error), not crash.
     try:
         with open(_DEFINES_MANIFEST, encoding="utf-8") as fh:
             for line in fh:
@@ -52,7 +54,7 @@ def load_defines_manifest() -> Dict[str, Set[str]]:
                 ns, _, name = line.partition(".")
                 if name:
                     namespaces.setdefault(ns, set()).add(name)
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         return {}
     return namespaces
 
@@ -179,6 +181,15 @@ class Validator(BaseValidator):
         self._validate_defines()
 
     def _validate_defines(self):
+        # An explicit but wrong path would parse to {} and flag every MD
+        # define as dead — fail the setup instead.
+        if self.vanilla_path and not os.path.isfile(self.vanilla_path):
+            self.add_error(
+                "defines-setup",
+                f"--vanilla-path {self.vanilla_path} does not exist",
+            )
+            return
+
         # Find vanilla defines: live install first, committed manifest second
         vanilla_path = self.vanilla_path or find_vanilla_defines()
         manifest: Dict[str, Set[str]] = {}
