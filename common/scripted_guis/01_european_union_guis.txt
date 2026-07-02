@@ -1237,24 +1237,23 @@ scripted_gui = {
 			}
 			proeuro_country_button_click_enabled = {
 				NOT = { has_country_flag = proeuro_country_button_click_cooldown }
-				has_idea = EU_member
-				has_political_power > 100
-				#make this cost political power for internal
+				OR = {
+					has_idea = EU_member
+					has_country_flag = EU_candidate
+				}
+				has_political_power > 50
+				#candidates may run this in their own country; members keep access
 			}
 			proeuro_euwide_button_visible = {
 				EU_european_union_euro_info_trigger = yes
 			}
 			proeuro_euwide_button_click_enabled = {
 				NOT = { has_country_flag = proeuro_euwide_button_click_cooldown }
-				set_temp_variable = { the_cost = 200 }
-				if = {
-					limit = {
-						NOT = { has_idea = EU_member }
-					}
-					add_to_temp_variable = { the_cost = 100 }
-				}
+				has_idea = EU_member
+				set_temp_variable = { the_cost = global.EU_15_per_member_cost }
+				multiply_temp_variable = { the_cost = 0.5 }
 				has_political_power > the_cost
-				#foreign nations can ONLY do this one
+				#pan-EU campaign is members-only
 			}
 			approve_IPA_button_visible = {
 				EU_european_union_euro_info_trigger = yes
@@ -2529,9 +2528,9 @@ scripted_gui = {
 			}
 			proeuro_country_button_click = {
 				log = "[GetDateText]: [ROOT.GetName]: EU GUI root_pro_european_campaign"
-				set_temp_variable = { var = treasury_change value = { value = gdp_total multiply = -0.003 } }
+				set_temp_variable = { var = treasury_change value = { value = gdp_total multiply = -0.002 } }
 				modify_treasury_effect = yes
-				add_political_power = -100
+				add_political_power = -50
 				random_list = {
 					70 = {
 						modifier = {
@@ -2567,20 +2566,10 @@ scripted_gui = {
 			proeuro_euwide_button_click = {
 				log = "[GetDateText]: [ROOT.GetName]: EU GUI pro_european_campaign"
 				set_temp_variable = { treasury_change = global.EU_gdp }
-				if = { limit = { NOT = { has_idea = EU_member } }
-					set_temp_variable = { var = treasury_change value = { value = treasury_change add = ROOT.gdp_total multiply = -0.004 } }
-				}
-				else = {
-					multiply_temp_variable = { treasury_change = -0.001 }
-				}
+				multiply_temp_variable = { treasury_change = -0.0005 }
 				modify_treasury_effect = yes
 				set_temp_variable = { the_cost = global.EU_15_per_member_cost }
-				if = {
-					limit = {
-						NOT = { has_idea = EU_member }
-					}
-					multiply_temp_variable = { the_cost = 1.5 }
-				}
+				multiply_temp_variable = { the_cost = 0.5 }
 				multiply_temp_variable = { the_cost = -1 }
 				add_political_power = the_cost
 				random_list = {
@@ -2690,6 +2679,7 @@ scripted_gui = {
 				add_to_variable = { global.EU_budget_min_call_rate = 0.05 }
 				for_each_scope_loop = {
 					array = global.EU_member
+					if = { limit = { NOT = { has_variable = EU_budget_call_rate } } set_variable = { EU_budget_call_rate = 1 } }
 					clamp_variable = { var = THIS.EU_budget_call_rate min = global.EU_budget_min_call_rate max = 100 }
 				}
 				update_EU_budget_call_rate = yes
@@ -3739,7 +3729,7 @@ scripted_gui = {
 			}
 			proeuro_country_button_click = {
 				ai_will_do = {
-					base = 1
+					base = 5
 					modifier = {
 						add = 1
 						NOT = { gov_is_eurosceptical = yes }
@@ -3748,6 +3738,11 @@ scripted_gui = {
 						add = 1
 						NOT = { gov_is_eurosceptical = yes }
 						slowdown_european_integration = yes
+					}
+					modifier = {
+						add = 20
+						has_country_flag = EU_candidate
+						NOT = { has_idea = EU_member }
 					}
 					modifier = {
 						add = -40
@@ -3765,7 +3760,20 @@ scripted_gui = {
 								NOT = { gov_is_eurosceptical = yes }
 								check_expr = { value = THIS.europeanism greater_than = { value = 0.95 } }
 							}
-							has_political_power < 300
+							has_political_power < 50
+							check_expr = { value = interest_rate greater_than = { value = 8.0 } }
+						}
+					}
+					modifier = {
+						factor = 0
+						has_country_flag = EU_candidate
+						NOT = { has_idea = EU_member }
+						OR = {
+							AND = {
+								NOT = { gov_is_eurosceptical = yes }
+								check_expr = { value = THIS.europeanism greater_than = { value = 0.95 } }
+							}
+							has_political_power < 50
 							check_expr = { value = interest_rate greater_than = { value = 8.0 } }
 						}
 					}
@@ -3773,7 +3781,7 @@ scripted_gui = {
 			}
 			proeuro_euwide_button_click = {
 				ai_will_do = {
-					base = 1
+					base = 5
 					modifier = {
 						add = 1
 						NOT = { gov_is_eurosceptical = yes }
@@ -3792,12 +3800,6 @@ scripted_gui = {
 						stop_pro_european_campaign = yes
 					}
 					modifier = {
-						add = 15
-						original_tag = USA
-						date > 2004.1.1
-						has_political_power > 650
-					}
-					modifier = {
 						factor = 0
 						has_idea = EU_member
 						OR = {
@@ -3805,7 +3807,7 @@ scripted_gui = {
 								NOT = { gov_is_eurosceptical = yes }
 								check_expr = { value = global.var_europeanism greater_than = { value = 0.95 } }
 							}
-							has_political_power < 300
+							has_political_power < 200
 							check_expr = { value = interest_rate greater_than = { value = 8.0 } }
 						}
 					}
