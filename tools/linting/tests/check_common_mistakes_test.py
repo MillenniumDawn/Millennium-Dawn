@@ -10,6 +10,11 @@ Unit tests for the checks added to check_common_mistakes.py:
   7. change_influence_percentage setter with no matching call
   8. check_variable with inline >= / <=
   9. tautological OR = { X = yes X = no }
+  10. check_expr operand chained with a raw comparator symbol
+  11. every_owned_controlled_state (nonexistent effect)
+  12. random_select_amount set to a non-integer-literal
+  13. any_country/any_other_country with has_idea = X_member when array exists
+  14. on_add adds to a global array the sibling on_remove never removes from
 """
 
 import os
@@ -17,15 +22,20 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from check_common_mistakes import (
+    _check_any_country_member_array,
+    _check_check_expr_bad_operand,
     _check_check_var_ge_le,
     _check_consecutive_scope_blocks,
     _check_divide_variable_zero_guard,
     _check_duplicate_add_to_variable,
     _check_embargo_dlc_guard,
     _check_every_country_member_array,
+    _check_every_owned_controlled_state,
     _check_focus_missing_war_hint,
     _check_has_idea_mutex_in_not_block,
     _check_influence_setter_scope,
+    _check_on_add_array_symmetry,
+    _check_random_select_amount_literal,
     _check_tautological_or,
 )
 
@@ -521,7 +531,7 @@ assert_finds(
         "\t\tlimit = {\n",
         "\t\t\tOR = {\n",
         "\t\t\t\thas_idea = EU_member\n",
-        "\t\t\t\thas_idea = LoAS_member\n",
+        "\t\t\t\thas_idea = the_military\n",
         "\t\t\t}\n",
         "\t\t}\n",
         "\t\tadd_stability = 0.05\n",
@@ -575,6 +585,275 @@ assert_finds(
     ],
     0,
     "has_idea in body if-block (not limit) not flagged",
+)
+
+
+# 5i. every_other_country with member idea → flag, message mentions ROOT guard
+assert_finds(
+    _check_every_country_member_array,
+    [
+        "\tevery_other_country = {\n",
+        "\t\tlimit = { has_idea = NATO_member }\n",
+        "\t\tadd_opinion_modifier = { target = ROOT modifier = test }\n",
+        "\t}\n",
+    ],
+    1,
+    "every_other_country with NATO_member flagged",
+)
+
+# 5j. for_each_scope_loop itself → no flag (already converted)
+assert_finds(
+    _check_every_country_member_array,
+    [
+        "\tfor_each_scope_loop = {\n",
+        "\t\tarray = global.nato_members\n",
+        "\t\tadd_stability = 0.05\n",
+        "\t}\n",
+    ],
+    0,
+    "for_each_scope_loop not flagged",
+)
+
+
+# any_country/any_other_country with member idea (trigger context)
+
+print("\n── any_country member array ──")
+
+# Simple any_country testing EU_member → flag
+assert_finds(
+    _check_any_country_member_array,
+    [
+        "\tany_country = {\n",
+        "\t\thas_idea = EU_member\n",
+        "\t\thas_war_with = ROOT\n",
+        "\t}\n",
+    ],
+    1,
+    "any_country with EU_member flagged",
+)
+
+# any_other_country → flag
+assert_finds(
+    _check_any_country_member_array,
+    [
+        "\tany_other_country = {\n",
+        "\t\thas_idea = NATO_member\n",
+        "\t}\n",
+    ],
+    1,
+    "any_other_country with NATO_member flagged",
+)
+
+# NOT-wrapped member idea → no flag (testing non-membership)
+assert_finds(
+    _check_any_country_member_array,
+    [
+        "\tany_country = {\n",
+        "\t\tNOT = { has_idea = NATO_member }\n",
+        "\t\thas_war_with = ROOT\n",
+        "\t}\n",
+    ],
+    0,
+    "any_country with NOT-wrapped idea not flagged",
+)
+
+# OR mixing array-backed and non-array ideas → no flag
+assert_finds(
+    _check_any_country_member_array,
+    [
+        "\tany_country = {\n",
+        "\t\tOR = {\n",
+        "\t\t\thas_idea = EU_member\n",
+        "\t\t\thas_idea = the_military\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "any_country OR with non-array idea not flagged",
+)
+
+# LoAS mapping: arab league array is idea-synced now
+assert_finds(
+    _check_every_country_member_array,
+    [
+        "\tevery_country = {\n",
+        "\t\tlimit = { has_idea = LoAS_member }\n",
+        "\t\tadd_stability = 0.05\n",
+        "\t}\n",
+    ],
+    1,
+    "every_country with LoAS_member flagged",
+)
+
+# OR of both LoAS variants → same array → single-loop advice, one finding
+assert_finds(
+    _check_every_country_member_array,
+    [
+        "\tevery_country = {\n",
+        "\t\tlimit = {\n",
+        "\t\t\tOR = {\n",
+        "\t\t\t\thas_idea = LoAS_member\n",
+        "\t\t\t\thas_idea = LoAS_member_upd\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t\tadd_stability = 0.05\n",
+        "\t}\n",
+    ],
+    1,
+    "OR of LoAS variants flagged once (same array)",
+)
+
+# OR spanning two DIFFERENT arrays → still one finding, split-loop advice
+assert_finds(
+    _check_every_country_member_array,
+    [
+        "\tevery_country = {\n",
+        "\t\tlimit = {\n",
+        "\t\t\tOR = {\n",
+        "\t\t\t\thas_idea = EU_member\n",
+        "\t\t\t\thas_idea = NATO_member\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t\tadd_stability = 0.05\n",
+        "\t}\n",
+    ],
+    1,
+    "OR spanning two arrays flagged once with split advice",
+)
+
+# Non-member idea → no flag
+assert_finds(
+    _check_any_country_member_array,
+    [
+        "\tany_country = {\n",
+        "\t\thas_idea = some_other_idea\n",
+        "\t}\n",
+    ],
+    0,
+    "any_country with non-member idea not flagged",
+)
+
+# any_of_scopes itself → no flag (already converted)
+assert_finds(
+    _check_any_country_member_array,
+    [
+        "\tany_of_scopes = {\n",
+        "\t\tarray = global.EU_member\n",
+        "\t\thas_war_with = ROOT\n",
+        "\t}\n",
+    ],
+    0,
+    "any_of_scopes not flagged",
+)
+
+
+# on_add/on_remove global-array symmetry (Arab League stale-entry bug class)
+
+print("\n── on_add array symmetry ──")
+
+# on_add adds to array, on_remove doesn't remove → flag
+assert_finds(
+    _check_on_add_array_symmetry,
+    [
+        "ideas = {\n",
+        "\tcountry = {\n",
+        "\t\tbloc_member = {\n",
+        "\t\t\ton_add = {\n",
+        "\t\t\t\tadd_to_array = { global.bloc_members = THIS }\n",
+        "\t\t\t}\n",
+        "\t\t\ton_remove = {\n",
+        '\t\t\t\tlog = "x"\n',
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "on_add without matching on_remove removal flagged",
+)
+
+# Symmetric hooks → no flag (guarded forms included)
+assert_finds(
+    _check_on_add_array_symmetry,
+    [
+        "ideas = {\n",
+        "\tcountry = {\n",
+        "\t\tbloc_member = {\n",
+        "\t\t\ton_add = {\n",
+        "\t\t\t\tif = {\n",
+        "\t\t\t\t\tlimit = { NOT = { is_in_array = { global.bloc_members = THIS } } }\n",
+        "\t\t\t\t\tadd_to_array = { global.bloc_members = THIS }\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+        "\t\t\ton_remove = {\n",
+        "\t\t\t\tif = {\n",
+        "\t\t\t\t\tlimit = { NOT = { has_idea = bloc_member_upd } }\n",
+        "\t\t\t\t\tremove_from_array = { global.bloc_members = THIS }\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "symmetric guarded hooks not flagged",
+)
+
+# on_add with no on_remove block at all → flag
+assert_finds(
+    _check_on_add_array_symmetry,
+    [
+        "ideas = {\n",
+        "\tcountry = {\n",
+        "\t\tbloc_member = {\n",
+        "\t\t\ton_add = {\n",
+        "\t\t\t\tadd_to_array = { global.bloc_members = THIS }\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "on_add with no on_remove at all flagged",
+)
+
+# on_remove-only (adds happen in join effects) → no flag
+assert_finds(
+    _check_on_add_array_symmetry,
+    [
+        "ideas = {\n",
+        "\tcountry = {\n",
+        "\t\tbloc_member = {\n",
+        "\t\t\ton_remove = {\n",
+        "\t\t\t\tremove_from_array = { global.bloc_members = THIS }\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "remove-only hooks not flagged",
+)
+
+# Two sibling ideas each symmetric → no cross-contamination between groups
+assert_finds(
+    _check_on_add_array_symmetry,
+    [
+        "ideas = {\n",
+        "\tcountry = {\n",
+        "\t\tbloc_a = {\n",
+        "\t\t\ton_add = { add_to_array = { global.a_members = THIS } }\n",
+        "\t\t\ton_remove = { remove_from_array = { global.a_members = THIS } }\n",
+        "\t\t}\n",
+        "\t\tbloc_b = {\n",
+        "\t\t\ton_add = { add_to_array = { global.b_members = THIS } }\n",
+        "\t\t\ton_remove = { remove_from_array = { global.a_members = THIS } }\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "sibling idea removing the WRONG array flagged once",
 )
 
 
@@ -1049,6 +1328,224 @@ assert_finds(
     0,
     "add_ai_strategy type = declare_war not flagged",
 )
+
+
+# 11. check_expr bad operand (inline operator/scalar instead of block form)
+
+print("\n── check_expr bad operand ──")
+
+# 11a. inline double-operator (greater_than > 6) → flag
+assert_finds(
+    _check_check_expr_bad_operand,
+    [
+        "check_expr = {\n",
+        "\tvalue = my_var\n",
+        "\tgreater_than > 6\n",
+        "}\n",
+    ],
+    1,
+    "check_expr greater_than > 6 flagged",
+)
+
+# 11b. bare scalar (greater_than = 6) → valid syntax, not flagged
+assert_finds(
+    _check_check_expr_bad_operand,
+    [
+        "check_expr = {\n",
+        "\tvalue = my_var\n",
+        "\tgreater_than = 6\n",
+        "}\n",
+    ],
+    0,
+    "check_expr greater_than = 6 (bare scalar) not flagged",
+)
+
+# 11c. less_than double-operator → flag
+assert_finds(
+    _check_check_expr_bad_operand,
+    [
+        "check_expr = {\n",
+        "\tvalue = my_var\n",
+        "\tless_than > 0.40\n",
+        "}\n",
+    ],
+    1,
+    "check_expr less_than > 0.40 flagged",
+)
+
+# 11d. correct block form, multi-line → no flag
+assert_finds(
+    _check_check_expr_bad_operand,
+    [
+        "check_expr = {\n",
+        "\tvalue = my_var\n",
+        "\tgreater_than = { value = 6 }\n",
+        "}\n",
+    ],
+    0,
+    "check_expr correct block form (multi-line) not flagged",
+)
+
+# 11e. correct block form, single line (real repo pattern) → no flag
+assert_finds(
+    _check_check_expr_bad_operand,
+    [
+        "check_expr = { value = global.EU_pop_ratio_yes greater_than = { value = 0.65 } }\n",
+    ],
+    0,
+    "check_expr correct block form (single line) not flagged",
+)
+
+# 11e2. real repo bare-scalar pattern (resource storage) → no flag
+assert_finds(
+    _check_check_expr_bad_operand,
+    [
+        "\t\tlimit = { check_expr = { value = steel_in_storage equals = 0 } }\n",
+    ],
+    0,
+    "check_expr bare-scalar 'equals = 0' (real repo pattern) not flagged",
+)
+
+# 11f. same bare-scalar shape outside any check_expr block → not flagged (scoping)
+assert_finds(
+    _check_check_expr_bad_operand,
+    [
+        "limit = {\n",
+        "\tvalue = CPD_cost_raw_temp\n",
+        "\tgreater_than = 20\n",
+        "}\n",
+    ],
+    0,
+    "bare-operand shape outside check_expr not flagged",
+)
+
+
+# 12. every_owned_controlled_state (nonexistent effect)
+
+print("\n── every_owned_controlled_state ──")
+
+# 12a. nonexistent effect → flag
+assert_finds(
+    _check_every_owned_controlled_state,
+    [
+        "\tevery_owned_controlled_state = {\n",
+        "\t\tadd_stability = 0.01\n",
+        "\t}\n",
+    ],
+    1,
+    "every_owned_controlled_state flagged",
+)
+
+# 12b. correct effect → no flag
+assert_finds(
+    _check_every_owned_controlled_state,
+    [
+        "\tevery_controlled_state = {\n",
+        "\t\tadd_stability = 0.01\n",
+        "\t}\n",
+    ],
+    0,
+    "every_controlled_state not flagged",
+)
+
+# 12c. inside a comment → no flag
+assert_finds(
+    _check_every_owned_controlled_state,
+    [
+        "\t# every_owned_controlled_state = { }\n",
+    ],
+    0,
+    "every_owned_controlled_state in comment not flagged",
+)
+
+
+# 13. random_select_amount with a variable
+
+print("\n── random_select_amount literal ──")
+
+# 13a. global variable → flag
+assert_finds(
+    _check_random_select_amount_literal,
+    [
+        "\trandom_select_amount = global.my_count\n",
+    ],
+    1,
+    "random_select_amount with global variable flagged",
+)
+
+# 13b. var: reference → flag
+assert_finds(
+    _check_random_select_amount_literal,
+    [
+        "\trandom_select_amount = var:foo\n",
+    ],
+    1,
+    "random_select_amount with var: reference flagged",
+)
+
+# 13c. decimal → flag
+assert_finds(
+    _check_random_select_amount_literal,
+    [
+        "\trandom_select_amount = 2.5\n",
+    ],
+    1,
+    "random_select_amount with decimal flagged",
+)
+
+# 13d. integer literal → no flag
+assert_finds(
+    _check_random_select_amount_literal,
+    [
+        "\trandom_select_amount = 3\n",
+    ],
+    0,
+    "random_select_amount with integer literal not flagged",
+)
+
+
+# Guardrails: confirm the three new checks stay silent on known-valid patterns
+
+print("\n── Guardrails: no new-check false positives ──")
+
+_GUARDRAIL_SNIPPETS = [
+    ("num_of_factories > 5 (valid trigger)", ["\tnum_of_factories > 5\n"]),
+    (
+        "nested else inside if body",
+        [
+            "\tif = {\n",
+            "\t\tlimit = { always = yes }\n",
+            "\t\tif = {\n",
+            "\t\t\tlimit = { always = yes }\n",
+            "\t\t\tadd_stability = 0.01\n",
+            "\t\t}\n",
+            "\t\telse = {\n",
+            "\t\t\tadd_stability = -0.01\n",
+            "\t\t}\n",
+            "\t}\n",
+        ],
+    ),
+    (
+        "mean_time_to_happen block",
+        [
+            "\tmean_time_to_happen = {\n",
+            "\t\tdays = 10\n",
+            "\t\tmodifier = {\n",
+            "\t\t\tfactor = 2\n",
+            "\t\t\tis_debug = yes\n",
+            "\t\t}\n",
+            "\t}\n",
+        ],
+    ),
+]
+
+for _label, _snippet in _GUARDRAIL_SNIPPETS:
+    for _check_fn in (
+        _check_check_expr_bad_operand,
+        _check_every_owned_controlled_state,
+        _check_random_select_amount_literal,
+    ):
+        assert_finds(_check_fn, _snippet, 0, f"{_check_fn.__name__} on {_label}")
 
 
 # Summary

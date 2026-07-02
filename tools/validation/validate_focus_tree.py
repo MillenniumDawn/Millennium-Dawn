@@ -47,6 +47,13 @@ _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 # shared_focus reference inside a focus_tree block (not a definition)
 _SHARED_REF_RE = re.compile(r"\bshared_focus\s*=\s*(\w+)")
 
+# add_tech_bonus inside completion_reward (incl. joint-focus reward variants)
+_REWARD_BLOCK_RE = re.compile(
+    r"\bcompletion_reward(?:_joint_originator|_joint_member)?\s*=\s*\{"
+)
+_TECH_BONUS_START = re.compile(r"\badd_tech_bonus\s*=\s*\{")
+_NAME_LINE_RE = re.compile(r"\bname\s*=\s*(\S+)")
+
 
 def _line_of(text: str, pos: int) -> int:
     """Return the 1-based line number of *pos* in *text*."""
@@ -146,6 +153,67 @@ def _extract_focus_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int
 
     return disk_cache.per_file_cached_by_content(
         mod_path, "focus_tree.icons", filepath, text, _compute
+    )
+
+
+def _extract_tech_bonuses(
+    args: Tuple[str, str],
+) -> List[Tuple[str, Optional[str], str, int]]:
+    """Pool worker: return (focus_id, bonus_name, filepath, line) for every
+    add_tech_bonus inside a completion_reward* block. bonus_name is None when
+    the block has no `name =` parameter.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[Tuple[str, Optional[str], str, int]]:
+        out: List[Tuple[str, Optional[str], str, int]] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            focus_id = idm.group(1) if idm else "?"
+            # Search within the focus block's absolute span so reported line
+            # numbers stay accurate.
+            rpos = fm.start()
+            while True:
+                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
+                if not rm:
+                    break
+                rbody, rend = _extract_block(text, rm.start())
+                if not rbody or rend > fend:
+                    rpos = rm.end()
+                    continue
+                bpos = rm.start()
+                while True:
+                    bm = _TECH_BONUS_START.search(text, bpos, rend)
+                    if not bm:
+                        break
+                    bbody, bend = _extract_block(text, bm.start())
+                    if not bbody:
+                        bpos = bm.end()
+                        continue
+                    nm = _NAME_LINE_RE.search(bbody)
+                    name = nm.group(1).strip('"') if nm else None
+                    out.append((focus_id, name, filepath, _line_of(text, bm.start())))
+                    bpos = bend
+                rpos = rend
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.tech_bonus", filepath, text, _compute
     )
 
 
@@ -542,7 +610,59 @@ class Validator(BaseValidator):
         )
 
     # -----------------------------------------------------------------------
-    # Check 5: Dependency cycles
+    # Check 5: add_tech_bonus name parameters
+    # -----------------------------------------------------------------------
+
+    def validate_tech_bonus_names(self):
+        """Flag add_tech_bonus blocks in completion rewards without a
+        localised `name =`.
+
+        Without a name the research-bonus row shows no source; the convention
+        is `name = <focus_id>`, which reuses the focus title loc key.
+        """
+        self._log_section("Checking add_tech_bonus name parameters in focus rewards...")
+
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        bonus_lists = self._pool_map(
+            _extract_tech_bonuses, [(f, self.mod_path) for f in files]
+        )
+        loc_keys = self._load_localisation_keys()
+
+        results = []
+        for sub in bonus_lists:
+            for focus_id, name, fp, line in sub:
+                if not self._is_reportable(fp):
+                    continue
+                rel = os.path.relpath(fp, self.mod_path)
+                if name is None:
+                    results.append(
+                        (
+                            f"add_tech_bonus in '{focus_id}' has no name = parameter"
+                            f" — players see no source for the bonus (use name = {focus_id})",
+                            rel,
+                            line,
+                        )
+                    )
+                elif "[" not in name and name not in loc_keys:
+                    results.append(
+                        (
+                            f"add_tech_bonus name '{name}' in '{focus_id}' has no"
+                            " localisation key (typo? convention is the focus id)",
+                            rel,
+                            line,
+                        )
+                    )
+
+        self._report(
+            results,
+            "All add_tech_bonus blocks in focus rewards carry a localised name",
+            "add_tech_bonus blocks missing a name or using an unlocalised name:",
+            Severity.WARNING,
+            category="tech-bonus-name",
+        )
+
+    # -----------------------------------------------------------------------
+    # Check 6: Dependency cycles
     # -----------------------------------------------------------------------
 
     def validate_dependency_cycles(self):
@@ -673,6 +793,7 @@ class Validator(BaseValidator):
         self.validate_orphan_focuses()
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
+        self.validate_tech_bonus_names()
 
         if self.missing_icons:
             self.validate_focus_icons()
