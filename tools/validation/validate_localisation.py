@@ -73,7 +73,7 @@ _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
 _MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
     filename, valid_colors, subst_keys = args
     results = []
     text_file = FileOpener.open_text_file(
