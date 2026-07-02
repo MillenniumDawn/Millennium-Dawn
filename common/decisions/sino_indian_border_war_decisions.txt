@@ -4,8 +4,22 @@ RAJ_CHI_border_conflict_category = {
 
 	prepare_army_training_china = {
 		desc = prepare_army_training_china_desc
+		visible = {
+			OR = {
+				original_tag = CHI
+				AND = {
+					original_tag = RAJ
+					OR = {
+						NOT = { country_exists = PAK }
+						PAK = { is_subject = yes }
+						is_in_faction_with = PAK
+					}
+				}
+			}
+		}
 		available = {
-			has_war = no
+			NOT = { has_war_with = RAJ }
+			NOT = { has_war_with = CHI }
 			has_equipment = { infantry_weapons_type > 30 }
 			has_equipment = { cnc_equipment_type > 7 }
 		}
@@ -40,8 +54,22 @@ RAJ_CHI_border_conflict_category = {
 
 	prepare_mech_army_training_china = {
 		desc = prepare_mech_army_training_china_desc
+		visible = {
+			OR = {
+				original_tag = CHI
+				AND = {
+					original_tag = RAJ
+					OR = {
+						NOT = { country_exists = PAK }
+						PAK = { is_subject = yes }
+						is_in_faction_with = PAK
+					}
+				}
+			}
+		}
 		available = {
-			has_war = no
+			NOT = { has_war_with = RAJ }
+			NOT = { has_war_with = CHI }
 			has_equipment = { medium_tank_amphibious_chassis > 5 }
 			has_equipment = { medium_tank_chassis > 3 }
 		}
@@ -76,8 +104,22 @@ RAJ_CHI_border_conflict_category = {
 
 	prepare_arty_army_training_china = {
 		desc = prepare_arty_army_training_china_desc
+		visible = {
+			OR = {
+				original_tag = CHI
+				AND = {
+					original_tag = RAJ
+					OR = {
+						NOT = { country_exists = PAK }
+						PAK = { is_subject = yes }
+						is_in_faction_with = PAK
+					}
+				}
+			}
+		}
 		available = {
-			has_war = no
+			NOT = { has_war_with = RAJ }
+			NOT = { has_war_with = CHI }
 			has_equipment = { artillery_equipment > 5 }
 		}
 		days_remove = 15
@@ -108,9 +150,24 @@ RAJ_CHI_border_conflict_category = {
 
 	prepare_attack_china = {
 		desc = prepare_attack_china_desc
+		visible = {
+			OR = {
+				original_tag = CHI
+				AND = {
+					original_tag = RAJ
+					OR = {
+						NOT = { country_exists = PAK }
+						PAK = { is_subject = yes }
+						is_in_faction_with = PAK
+					}
+				}
+			}
+		}
 		available = {
-			has_war = no
+			NOT = { has_war_with = RAJ }
+			NOT = { has_war_with = CHI }
 			NOT = { has_decision = prepare_shelling_china }
+			NOT = { has_decision = prepare_shelling }
 		}
 		days_remove = 15
 		days_re_enable = 20
@@ -141,9 +198,24 @@ RAJ_CHI_border_conflict_category = {
 
 	prepare_shelling_china = {
 		desc = prepare_shelling_china_desc
+		visible = {
+			OR = {
+				original_tag = CHI
+				AND = {
+					original_tag = RAJ
+					OR = {
+						NOT = { country_exists = PAK }
+						PAK = { is_subject = yes }
+						is_in_faction_with = PAK
+					}
+				}
+			}
+		}
 		available = {
-			has_war = no
+			NOT = { has_war_with = RAJ }
+			NOT = { has_war_with = CHI }
 			NOT = { has_decision = prepare_attack_china }
+			NOT = { has_decision = prepare_attack }
 		}
 		days_remove = 15
 		days_re_enable = 20
@@ -225,6 +297,7 @@ RAJ_CHI_border_conflict_category = {
 		visible = {
 			controls_state = 589
 			NOT = { controls_state = 475 }
+			475 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
 		}
 
 		complete_effect = {
@@ -238,8 +311,10 @@ RAJ_CHI_border_conflict_category = {
 			log = "[GetDateText]: [Root.GetName]: Remove attack_475_from_589"
 			if = {
 				limit = {
-					589 = { has_border_war = yes }
-					475 = { has_border_war = yes }
+					OR = {
+						589 = { has_border_war = yes }
+						475 = { has_border_war = yes }
+					}
 				}
 				country_event = border_war_attack_blocked.1
 				border_war_clear_attacking_chi_raj = yes
@@ -254,16 +329,16 @@ RAJ_CHI_border_conflict_category = {
 					attacker = {
 						state = 589
 						num_provinces = 2
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 					defender = {
 						state = 475
 						num_provinces = 3
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 				}
 			}
@@ -273,68 +348,8 @@ RAJ_CHI_border_conflict_category = {
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
-		}
-	}
-
-	attack_589_from_475 = {
-		desc = attack_589_from_475_desc
-		days_remove = 10
-		days_re_enable = 100
-		fire_only_once = no
-
-		highlight_states = { highlight_states_trigger = { state = 589 } }
-
-		visible = {
-			controls_state = 475
-			NOT = { controls_state = 589 }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision attack_589_from_475"
-			border_war_set_attacking_chi_raj = yes
-		}
-
-		available = { border_war_attack_available = yes }
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove attack_589_from_475"
-			if = {
-				limit = {
-					475 = { has_border_war = yes }
-					589 = { has_border_war = yes }
-				}
-				country_event = border_war_attack_blocked.1
-				border_war_clear_attacking_chi_raj = yes
-			}
-			else_if = {
-				limit = {
-					controls_state = 475
-					NOT = { controls_state = 589 }
-				}
-				start_border_war = {
-					change_state_after_war = no
-					attacker = {
-						state = 475
-						num_provinces = 3
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
-					}
-					defender = {
-						state = 589
-						num_provinces = 2
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
-					}
-				}
-			}
-			else = { border_war_clear_attacking_chi_raj = yes }
-		}
-
-		ai_will_do = {
-			base = 5
-			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -349,6 +364,7 @@ RAJ_CHI_border_conflict_category = {
 		visible = {
 			controls_state = 589
 			NOT = { controls_state = 982 }
+			982 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
 		}
 
 		complete_effect = {
@@ -362,8 +378,10 @@ RAJ_CHI_border_conflict_category = {
 			log = "[GetDateText]: [Root.GetName]: Remove attack_982_from_589"
 			if = {
 				limit = {
-					589 = { has_border_war = yes }
-					982 = { has_border_war = yes }
+					OR = {
+						589 = { has_border_war = yes }
+						982 = { has_border_war = yes }
+					}
 				}
 				country_event = border_war_attack_blocked.1
 				border_war_clear_attacking_chi_raj = yes
@@ -378,16 +396,16 @@ RAJ_CHI_border_conflict_category = {
 					attacker = {
 						state = 589
 						num_provinces = 2
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 					defender = {
 						state = 982
 						num_provinces = 1
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 				}
 			}
@@ -397,68 +415,8 @@ RAJ_CHI_border_conflict_category = {
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
-		}
-	}
-
-	attack_589_from_982 = {
-		desc = attack_589_from_982_desc
-		days_remove = 10
-		days_re_enable = 100
-		fire_only_once = no
-
-		highlight_states = { highlight_states_trigger = { state = 589 } }
-
-		visible = {
-			controls_state = 982
-			NOT = { controls_state = 589 }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision attack_589_from_982"
-			border_war_set_attacking_chi_raj = yes
-		}
-
-		available = { border_war_attack_available = yes }
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove attack_589_from_982"
-			if = {
-				limit = {
-					982 = { has_border_war = yes }
-					589 = { has_border_war = yes }
-				}
-				country_event = border_war_attack_blocked.1
-				border_war_clear_attacking_chi_raj = yes
-			}
-			else_if = {
-				limit = {
-					controls_state = 982
-					NOT = { controls_state = 589 }
-				}
-				start_border_war = {
-					change_state_after_war = no
-					attacker = {
-						state = 982
-						num_provinces = 1
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
-					}
-					defender = {
-						state = 589
-						num_provinces = 2
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
-					}
-				}
-			}
-			else = { border_war_clear_attacking_chi_raj = yes }
-		}
-
-		ai_will_do = {
-			base = 5
-			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -473,6 +431,7 @@ RAJ_CHI_border_conflict_category = {
 		visible = {
 			controls_state = 993
 			NOT = { controls_state = 591 }
+			591 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
 		}
 
 		complete_effect = {
@@ -486,8 +445,10 @@ RAJ_CHI_border_conflict_category = {
 			log = "[GetDateText]: [Root.GetName]: Remove attack_591_from_993"
 			if = {
 				limit = {
-					993 = { has_border_war = yes }
-					591 = { has_border_war = yes }
+					OR = {
+						993 = { has_border_war = yes }
+						591 = { has_border_war = yes }
+					}
 				}
 				country_event = border_war_attack_blocked.1
 				border_war_clear_attacking_chi_raj = yes
@@ -502,16 +463,16 @@ RAJ_CHI_border_conflict_category = {
 					attacker = {
 						state = 993
 						num_provinces = 2
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 					defender = {
 						state = 591
 						num_provinces = 3
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 				}
 			}
@@ -521,6 +482,8 @@ RAJ_CHI_border_conflict_category = {
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -535,6 +498,7 @@ RAJ_CHI_border_conflict_category = {
 		visible = {
 			controls_state = 591
 			NOT = { controls_state = 993 }
+			993 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
 		}
 
 		complete_effect = {
@@ -548,8 +512,10 @@ RAJ_CHI_border_conflict_category = {
 			log = "[GetDateText]: [Root.GetName]: Remove attack_993_from_591"
 			if = {
 				limit = {
-					591 = { has_border_war = yes }
-					993 = { has_border_war = yes }
+					OR = {
+						591 = { has_border_war = yes }
+						993 = { has_border_war = yes }
+					}
 				}
 				country_event = border_war_attack_blocked.1
 				border_war_clear_attacking_chi_raj = yes
@@ -564,16 +530,16 @@ RAJ_CHI_border_conflict_category = {
 					attacker = {
 						state = 591
 						num_provinces = 3
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 					defender = {
 						state = 993
 						num_provinces = 2
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 				}
 			}
@@ -583,68 +549,8 @@ RAJ_CHI_border_conflict_category = {
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
-		}
-	}
-
-	attack_589_from_993 = {
-		desc = attack_589_from_993_desc
-		days_remove = 10
-		days_re_enable = 100
-		fire_only_once = no
-
-		highlight_states = { highlight_states_trigger = { state = 589 } }
-
-		visible = {
-			controls_state = 993
-			NOT = { controls_state = 589 }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision attack_589_from_993"
-			border_war_set_attacking_chi_raj = yes
-		}
-
-		available = { border_war_attack_available = yes }
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove attack_589_from_993"
-			if = {
-				limit = {
-					993 = { has_border_war = yes }
-					589 = { has_border_war = yes }
-				}
-				country_event = border_war_attack_blocked.1
-				border_war_clear_attacking_chi_raj = yes
-			}
-			else_if = {
-				limit = {
-					controls_state = 993
-					NOT = { controls_state = 589 }
-				}
-				start_border_war = {
-					change_state_after_war = no
-					attacker = {
-						state = 993
-						num_provinces = 2
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
-					}
-					defender = {
-						state = 589
-						num_provinces = 1
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
-					}
-				}
-			}
-			else = { border_war_clear_attacking_chi_raj = yes }
-		}
-
-		ai_will_do = {
-			base = 5
-			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -659,6 +565,7 @@ RAJ_CHI_border_conflict_category = {
 		visible = {
 			controls_state = 589
 			NOT = { controls_state = 993 }
+			993 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
 		}
 
 		complete_effect = {
@@ -672,8 +579,10 @@ RAJ_CHI_border_conflict_category = {
 			log = "[GetDateText]: [Root.GetName]: Remove attack_993_from_589"
 			if = {
 				limit = {
-					589 = { has_border_war = yes }
-					993 = { has_border_war = yes }
+					OR = {
+						589 = { has_border_war = yes }
+						993 = { has_border_war = yes }
+					}
 				}
 				country_event = border_war_attack_blocked.1
 				border_war_clear_attacking_chi_raj = yes
@@ -688,16 +597,16 @@ RAJ_CHI_border_conflict_category = {
 					attacker = {
 						state = 589
 						num_provinces = 1
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 					defender = {
 						state = 993
 						num_provinces = 2
-						on_win = border_war_outcome.win
-						on_lose = border_war_outcome.lose
-						on_cancel = border_war_outcome.cancel
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
 					}
 				}
 			}
@@ -707,6 +616,75 @@ RAJ_CHI_border_conflict_category = {
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
+		}
+	}
+
+	attack_591_from_589 = {
+		desc = attack_591_from_589_desc
+		days_remove = 10
+		days_re_enable = 100
+		fire_only_once = no
+
+		highlight_states = { highlight_states_trigger = { state = 591 } }
+
+		visible = {
+			controls_state = 589
+			NOT = { controls_state = 591 }
+			591 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision attack_591_from_589"
+			border_war_set_attacking_chi_raj = yes
+		}
+
+		available = { border_war_attack_available = yes }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove attack_591_from_589"
+			if = {
+				limit = {
+					OR = {
+						589 = { has_border_war = yes }
+						591 = { has_border_war = yes }
+					}
+				}
+				country_event = border_war_attack_blocked.1
+				border_war_clear_attacking_chi_raj = yes
+			}
+			else_if = {
+				limit = {
+					controls_state = 589
+					NOT = { controls_state = 591 }
+				}
+				start_border_war = {
+					change_state_after_war = no
+					attacker = {
+						state = 589
+						num_provinces = 1
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
+					}
+					defender = {
+						state = 591
+						num_provinces = 3
+						on_win = border_war_outcome.1
+						on_lose = border_war_outcome.2
+						on_cancel = border_war_outcome.3
+					}
+				}
+			}
+			else = { border_war_clear_attacking_chi_raj = yes }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -720,7 +698,10 @@ RAJ_CHI_border_conflict_category = {
 
 		highlight_states = { highlight_states_trigger = { state = 475 } }
 
-		visible = { NOT = { controls_state = 475 } }
+		visible = {
+			NOT = { controls_state = 475 }
+			475 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
+		}
 
 		available = { border_war_grab_available = yes }
 
@@ -732,43 +713,15 @@ RAJ_CHI_border_conflict_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Remove grab_475"
-			set_temp_variable = { border_war_grab_state = 475 }
+			set_temp_variable = { border_war_grab_state_id = 475 }
 			border_war_grab_state = yes
 		}
 
 		ai_will_do = {
 			base = 10
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
-		}
-	}
-
-	grab_589 = {
-		desc = grab_589_desc
-		days_remove = 30
-		days_re_enable = 100
-		fire_only_once = no
-
-		highlight_states = { highlight_states_trigger = { state = 589 } }
-
-		visible = { NOT = { controls_state = 589 } }
-
-		available = { border_war_grab_available = yes }
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision grab_589"
-			set_temp_variable = { border_war_subtract_progress_amount = 80 }
-			border_war_subtract_progress = yes
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove grab_589"
-			set_temp_variable = { border_war_grab_state = 589 }
-			border_war_grab_state = yes
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -780,7 +733,10 @@ RAJ_CHI_border_conflict_category = {
 
 		highlight_states = { highlight_states_trigger = { state = 982 } }
 
-		visible = { NOT = { controls_state = 982 } }
+		visible = {
+			NOT = { controls_state = 982 }
+			982 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
+		}
 
 		available = { border_war_grab_available = yes }
 
@@ -792,13 +748,15 @@ RAJ_CHI_border_conflict_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Remove grab_982"
-			set_temp_variable = { border_war_grab_state = 982 }
+			set_temp_variable = { border_war_grab_state_id = 982 }
 			border_war_grab_state = yes
 		}
 
 		ai_will_do = {
 			base = 10
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -810,7 +768,10 @@ RAJ_CHI_border_conflict_category = {
 
 		highlight_states = { highlight_states_trigger = { state = 591 } }
 
-		visible = { NOT = { controls_state = 591 } }
+		visible = {
+			NOT = { controls_state = 591 }
+			591 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
+		}
 
 		available = { border_war_grab_available = yes }
 
@@ -822,13 +783,15 @@ RAJ_CHI_border_conflict_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Remove grab_591"
-			set_temp_variable = { border_war_grab_state = 591 }
+			set_temp_variable = { border_war_grab_state_id = 591 }
 			border_war_grab_state = yes
 		}
 
 		ai_will_do = {
 			base = 10
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -840,7 +803,10 @@ RAJ_CHI_border_conflict_category = {
 
 		highlight_states = { highlight_states_trigger = { state = 993 } }
 
-		visible = { NOT = { controls_state = 993 } }
+		visible = {
+			NOT = { controls_state = 993 }
+			993 = { OR = { is_controlled_by = RAJ is_controlled_by = CHI } }
+		}
 
 		available = { border_war_grab_available = yes }
 
@@ -852,13 +818,15 @@ RAJ_CHI_border_conflict_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Remove grab_993"
-			set_temp_variable = { border_war_grab_state = 993 }
+			set_temp_variable = { border_war_grab_state_id = 993 }
 			border_war_grab_state = yes
 		}
 
 		ai_will_do = {
 			base = 10
 			modifier = { factor = 0 NOT = { border_war_ai_should_attack = yes } }
+			modifier = { factor = 0.3 is_historical_focus_on = yes NOT = { has_global_flag = border_war_ai_aggressive } }
+			modifier = { factor = 2 has_global_flag = border_war_ai_aggressive }
 		}
 	}
 
@@ -866,6 +834,19 @@ RAJ_CHI_border_conflict_category = {
 
 	extort_xp_china = {
 		desc = extort_xp_china_desc
+		visible = {
+			OR = {
+				original_tag = CHI
+				AND = {
+					original_tag = RAJ
+					OR = {
+						NOT = { country_exists = PAK }
+						PAK = { is_subject = yes }
+						is_in_faction_with = PAK
+					}
+				}
+			}
+		}
 		days_remove = 30
 		days_re_enable = 100
 		fire_only_once = no

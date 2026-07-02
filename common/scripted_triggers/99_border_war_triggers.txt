@@ -10,12 +10,16 @@ is_border_war_eligible = {
 		AND = {
 			original_tag = RAJ
 			OR = {
-				country_exists = PAK
-				country_exists = CHI
-			}
-			OR = {
-				PAK = { is_subject = no }
-				CHI = { is_subject = no }
+				AND = {
+					country_exists = PAK
+					PAK = { is_subject = no }
+					NOT = { is_in_faction_with = PAK }
+				}
+				AND = {
+					country_exists = CHI
+					CHI = { is_subject = no }
+					NOT = { is_in_faction_with = CHI }
+				}
 			}
 		}
 		AND = {
@@ -34,12 +38,17 @@ is_border_war_eligible = {
 }
 
 # AI gate for the prepare_/training decisions. Suppresses spam from
-# nations that lack motive (no threat, not aligned with the target's
-# ideology, or at peace with a third party that would object).
+# nations that lack motive (not aligned with the target's ideology, or at
+# peace with a third party that would object) and respects the game rule.
 border_war_ai_should_prepare = {
-	threat > 0.30
 	has_war = no
 	has_capitulated = no
+	NOT = { has_global_flag = border_war_ai_off }
+	OR = {
+		has_global_flag = border_war_ai_aggressive
+		is_historical_focus_on = no
+		date > 2001.6.1
+	}
 	OR = {
 		AND = {
 			original_tag = RAJ
@@ -63,14 +72,22 @@ border_war_ai_should_prepare = {
 # target country must exist, hold the contested state, not be in a
 # defensive pact, and ROOT must actually have troops in the source state.
 border_war_ai_should_attack = {
-	threat > 0.50
 	has_war = no
 	has_capitulated = no
+	NOT = { has_global_flag = border_war_ai_off }
 	NOT = { has_country_flag = border_war_attacking_pak_raj }
 	NOT = { has_country_flag = border_war_attacking_chi_raj }
 	check_variable = { border_readiness > 60 }
-	check_variable = { global.border_tension > 80 }
-	has_country_flag = border_war_recently_active
+	check_variable = { global.border_tension > 79 }
+	OR = {
+		has_global_flag = border_war_ai_aggressive
+		is_historical_focus_on = no
+		AND = {
+			date > 2003.1.1
+			check_variable = { border_readiness > 75 }
+			check_variable = { global.border_tension > 89 }
+		}
+	}
 }
 
 # Reusable gates for the attack decisions: shared trigger so every

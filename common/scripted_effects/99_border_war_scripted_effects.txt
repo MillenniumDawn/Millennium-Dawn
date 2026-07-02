@@ -5,7 +5,7 @@
 
 border_war_add_readiness = {
 	set_temp_variable = { readiness_gain = border_war_add_readiness_amount }
-	randomize_temp_variable = {
+	set_temp_variable_to_random = {
 		var = readiness_gain_roll
 		min = -3
 		max = 5
@@ -18,7 +18,7 @@ border_war_add_readiness = {
 
 border_war_add_tension = {
 	set_temp_variable = { tension_gain = border_war_add_tension_amount }
-	randomize_temp_variable = {
+	set_temp_variable_to_random = {
 		var = tension_gain_roll
 		min = -5
 		max = 8
@@ -31,7 +31,7 @@ border_war_add_tension = {
 
 border_war_add_progress = {
 	set_temp_variable = { progress_gain = border_war_add_progress_amount }
-	randomize_temp_variable = {
+	set_temp_variable_to_random = {
 		var = progress_gain_roll
 		min = -2
 		max = 4
@@ -44,7 +44,7 @@ border_war_add_progress = {
 
 border_war_subtract_progress = {
 	set_temp_variable = { progress_loss = border_war_subtract_progress_amount }
-	randomize_temp_variable = {
+	set_temp_variable_to_random = {
 		var = progress_loss_roll
 		min = -2
 		max = 4
@@ -61,7 +61,7 @@ border_war_decay = {
 		limit = {
 			is_border_war_eligible = yes
 		}
-		randomize_temp_variable = {
+		set_temp_variable_to_random = {
 			var = border_war_decay_roll
 			min = 0
 			max = 99
@@ -85,12 +85,10 @@ border_war_decay = {
 }
 
 # Set the recently-active flag so the exp-grind decisions become available.
-# Called by the win/lose/cancel events.
 border_war_mark_recent = {
-	set_country_flag = border_war_recently_active
+	set_country_flag = { flag = border_war_recently_active value = 1 days = 365 }
 }
 
-# Clear the stuck attacking flag; called from the cancel branch of every attack.
 border_war_clear_attacking_flag = {
 	clr_country_flag = border_war_attacking_pak_raj
 	clr_country_flag = border_war_attacking_chi_raj
@@ -112,35 +110,166 @@ border_war_clear_attacking_chi_raj = {
 	clr_country_flag = border_war_attacking_chi_raj
 }
 
-# Capture state + fire post-capture event. params: border_war_grab_state
+# Capture state + fire post-capture event. params: border_war_grab_state_id
 border_war_grab_state = {
-	transfer_state = var:border_war_grab_state
+	transfer_state = var:border_war_grab_state_id
 	if = {
 		limit = {
 			original_tag = RAJ
-			var:border_war_grab_state = { OR = { state = 420 state = 427 state = 429 state = 563 state = 573 state = 426 state = 987 state = 984 } }
+			var:border_war_grab_state_id = { OR = { state = 420 state = 427 state = 429 state = 563 state = 573 state = 426 state = 987 state = 984 } }
 		}
-		PAK = { country_event = border_war_post_capture.1 }
+		PAK = {
+			set_variable = { border_war_lost_state = border_war_grab_state_id }
+			set_country_flag = { flag = border_war_lost_state_recent value = 1 days = 365 }
+			country_event = border_war_post_capture.1
+		}
 	}
 	else_if = {
 		limit = {
 			original_tag = PAK
-			var:border_war_grab_state = { OR = { state = 420 state = 427 state = 429 state = 563 state = 573 state = 426 state = 987 state = 984 } }
+			var:border_war_grab_state_id = { OR = { state = 420 state = 427 state = 429 state = 563 state = 573 state = 426 state = 987 state = 984 } }
 		}
-		RAJ = { country_event = border_war_post_capture.1 }
+		RAJ = {
+			set_variable = { border_war_lost_state = border_war_grab_state_id }
+			set_country_flag = { flag = border_war_lost_state_recent value = 1 days = 365 }
+			country_event = border_war_post_capture.1
+		}
 	}
 	else_if = {
 		limit = {
 			original_tag = RAJ
-			var:border_war_grab_state = { OR = { state = 475 state = 589 state = 982 state = 591 state = 993 } }
+			var:border_war_grab_state_id = { OR = { state = 475 state = 982 state = 591 state = 993 } }
 		}
-		CHI = { country_event = border_war_post_capture.2 }
+		CHI = {
+			set_temp_variable = { modify_chinese_aggression = 5 }
+			CHI_modify_chinese_aggression = yes
+			country_event = border_war_post_capture.2
+		}
 	}
 	else_if = {
 		limit = {
 			original_tag = CHI
-			var:border_war_grab_state = { OR = { state = 475 state = 589 state = 982 state = 591 state = 993 } }
+			var:border_war_grab_state_id = { OR = { state = 475 state = 982 state = 591 state = 993 } }
 		}
+		set_temp_variable = { modify_chinese_aggression = 5 }
+		CHI_modify_chinese_aggression = yes
 		RAJ = { country_event = border_war_post_capture.2 }
+	}
+}
+
+# Clear crisis bookkeeping after a peaceful off-ramp, and apply a 540-day cooldown.
+border_war_crisis_resolve_pak_raj = {
+	clr_global_flag = border_war_crisis_PAK_RAJ
+	clr_global_flag = border_war_nuclear_standoff
+	clr_global_flag = border_war_mediation_offered
+	set_global_flag = { flag = border_war_crisis_cooldown value = 1 days = 540 }
+	RAJ = {
+		clr_country_flag = border_war_crisis_escalator
+		clr_country_flag = border_war_ultimatum_pending
+		if = {
+			limit = { has_idea = border_war_mobilization_idea }
+			remove_ideas = border_war_mobilization_idea
+		}
+	}
+	PAK = {
+		clr_country_flag = border_war_crisis_escalator
+		clr_country_flag = border_war_ultimatum_pending
+		if = {
+			limit = { has_idea = border_war_mobilization_idea }
+			remove_ideas = border_war_mobilization_idea
+		}
+	}
+}
+
+# Monthly PAK-RAJ crisis driver: entry, nuclear posturing, USA mediation, auto-fizzle.
+# Called from both RAJ and PAK on_monthly; the shared-condition branches are
+# guarded to original_tag = RAJ so they fire once, not twice, per month.
+border_war_crisis_monthly = {
+	if = {
+		limit = {
+			has_capitulated = no
+			country_exists = RAJ
+			country_exists = PAK
+			RAJ = { is_subject = no }
+			PAK = { is_subject = no }
+			NOT = { RAJ = { is_in_faction_with = PAK } }
+			NOT = { RAJ = { has_war_with = PAK } }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = border_war_crisis_PAK_RAJ }
+				NOT = { has_global_flag = border_war_crisis_cooldown }
+				has_country_flag = border_war_lost_state_recent
+			}
+			set_global_flag = border_war_crisis_PAK_RAJ
+			set_country_flag = border_war_crisis_escalator
+			country_event = { id = border_war_crisis.1 days = 1 }
+		}
+		else_if = {
+			limit = {
+				original_tag = RAJ
+				NOT = { has_global_flag = border_war_crisis_PAK_RAJ }
+				NOT = { has_global_flag = border_war_crisis_cooldown }
+				check_variable = { global.border_tension > 89 }
+				check_variable = { border_war_progress > 39 }
+				check_variable = { border_war_progress > PAK.border_war_progress }
+			}
+			set_global_flag = border_war_crisis_PAK_RAJ
+			set_country_flag = border_war_crisis_escalator
+			country_event = { id = border_war_crisis.1 days = 1 }
+		}
+		else_if = {
+			limit = {
+				original_tag = PAK
+				NOT = { has_global_flag = border_war_crisis_PAK_RAJ }
+				NOT = { has_global_flag = border_war_crisis_cooldown }
+				check_variable = { global.border_tension > 89 }
+				check_variable = { border_war_progress > 39 }
+				check_variable = { border_war_progress > RAJ.border_war_progress }
+			}
+			set_global_flag = border_war_crisis_PAK_RAJ
+			set_country_flag = border_war_crisis_escalator
+			country_event = { id = border_war_crisis.1 days = 1 }
+		}
+
+		if = {
+			limit = {
+				original_tag = RAJ
+				has_global_flag = border_war_crisis_PAK_RAJ
+				NOT = { has_global_flag = border_war_nuclear_standoff }
+				has_idea = nuclear_power_off
+				PAK = { has_idea = nuclear_power_off }
+			}
+			set_global_flag = border_war_nuclear_standoff
+			country_event = { id = border_war_crisis.5 days = 1 }
+		}
+
+		if = {
+			limit = {
+				original_tag = RAJ
+				has_global_flag = border_war_crisis_PAK_RAJ
+				NOT = { has_global_flag = border_war_mediation_offered }
+				country_exists = USA
+				USA = { is_subject = no }
+				OR = {
+					has_global_flag = { flag = border_war_crisis_PAK_RAJ days > 60 }
+					has_global_flag = border_war_nuclear_standoff
+				}
+			}
+			set_global_flag = border_war_mediation_offered
+			USA = { country_event = { id = border_war_crisis.7 days = 1 } }
+		}
+
+		if = {
+			limit = {
+				original_tag = RAJ
+				has_global_flag = border_war_crisis_PAK_RAJ
+				check_variable = { global.border_tension < 40 }
+			}
+			border_war_crisis_resolve_pak_raj = yes
+			set_global_flag = border_war_crisis_resolved_peacefully
+			RAJ = { country_event = { id = border_war_crisis.9 days = 1 } }
+			PAK = { country_event = { id = border_war_crisis.9 days = 1 } }
+		}
 	}
 }
