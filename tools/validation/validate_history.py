@@ -10,6 +10,40 @@ from typing import Dict, List, Optional, Set, Tuple
 import disk_cache
 from validator_common import BaseValidator, run_validator_main, strip_comments
 
+# --- Module-level compiled patterns ---
+# Hoisted from per-line/per-file loops in the tech-graph and history-file
+# parsers below, so repeated parsing of large history/tech directories
+# doesn't recompile the same regex on every line.
+
+_TECHNOLOGIES_BLOCK_RE = re.compile(r"^technologies\s*=\s*\{")
+_TECH_DEF_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{")
+_LEADS_TO_TECH_RE = re.compile(r"leads_to_tech\s*=\s*(\S+)")
+_MODULE_NAME_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*$")
+_ENABLE_MODULES_RE = re.compile(r"^enable_equipment_modules\s*=\s*\{")
+_ALLOW_BRANCH_RE = re.compile(r"^allow_branch\s*=\s*\{")
+# Reused with .match() on already-left-stripped lines, so the leading ^
+# behaves identically whether or not it's spelled out in the source pattern.
+_SET_TECHNOLOGY_BLOCK_RE = re.compile(r"^set_technology\s*=\s*\{")
+_IF_BLOCK_LINE_RE = re.compile(r"^if\s*=\s*\{")
+_SET_TECH_1_RE = re.compile(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*1\s*$")
+_ELSE_BLOCK_RE = re.compile(r"else\s*=\s*\{")
+_HAS_DLC_RE = re.compile(r'has_dlc\s*=\s*"([^"]+)"')
+_NOT_HAS_DLC_BLOCK_RE = re.compile(
+    r'NOT\s*=\s*\{[^{}]*?has_dlc\s*=\s*"([^"]+)"[^{}]*?\}'
+)
+_STRIP_NOT_BLOCK_RE = re.compile(r"NOT\s*=\s*\{[^{}]*?\}")
+_NOT_HAS_DLC_PREFIX_RE = re.compile(r'NOT\s*=\s*\{[^}]*has_dlc\s*=\s*"([^"]+)"')
+_LIMIT_BLOCK_RE = re.compile(r"limit\s*=\s*\{(.*?)\}", re.DOTALL)
+_LIMIT_BLOCK_WORDBOUND_RE = re.compile(r"\blimit\s*=\s*\{(.*?)\}", re.DOTALL)
+_IF_BLOCK_START_RE = re.compile(r"\bif\s*=\s*\{")
+_CREATE_VARIANT_RE = re.compile(r"\bcreate_equipment_variant\s*=\s*\{")
+_VARIANT_NAME_RE = re.compile(r'name\s*=\s*"([^"]*)"')
+_MODULES_BLOCK_RE = re.compile(r"\bmodules\s*=\s*\{")
+_MODULE_ENTRY_RE = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)")
+_STATE_OWNER_RE = re.compile(r"^\s*owner\s*=\s*(\S+)")
+_OOB_REF_RE = re.compile(r'(oob|set_oob|set_air_oob|set_naval_oob)\s*=\s*"([^"]+)"')
+_CAPITAL_RE = re.compile(r"^capital\s*=\s*\d+", re.MULTILINE)
+
 
 def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict, Dict]:
     """Build the tech prerequisite graph, the module -> enabling-tech map, and
@@ -90,10 +124,10 @@ def _extract_dlc_conditions(text: str) -> List[Tuple[str, str]]:
     yields ("require", "X"). Non-DLC triggers (dates, flags) are ignored.
     """
     reqs: List[Tuple[str, str]] = []
-    for m in re.finditer(r'NOT\s*=\s*\{[^{}]*?has_dlc\s*=\s*"([^"]+)"[^{}]*?\}', text):
+    for m in _NOT_HAS_DLC_BLOCK_RE.finditer(text):
         reqs.append(("forbid", m.group(1)))
-    no_not = re.sub(r"NOT\s*=\s*\{[^{}]*?\}", "", text)
-    for m in re.finditer(r'has_dlc\s*=\s*"([^"]+)"', no_not):
+    no_not = _STRIP_NOT_BLOCK_RE.sub("", text)
+    for m in _HAS_DLC_RE.finditer(no_not):
         reqs.append(("require", m.group(1)))
     return reqs
 
@@ -123,7 +157,7 @@ def _parse_tech_file(
         line = lines[i].strip()
 
         if not in_technologies_block:
-            if re.match(r"^technologies\s*=\s*\{", line):
+            if _TECHNOLOGIES_BLOCK_RE.match(line):
                 in_technologies_block = True
                 brace_depth = 1
                 i += 1
@@ -143,13 +177,13 @@ def _parse_tech_file(
         # At depth 1: tech definitions. Variable assignments like @1965 = 0
         # are filtered out by requiring a `= {` block opener at depth >= 2.
         if current_tech is None:
-            match = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", line)
+            match = _TECH_DEF_RE.match(line)
             if match and brace_depth >= 2:
                 current_tech = match.group(1)
                 tech_brace_depth = brace_depth
                 all_techs.add(current_tech)
         else:
-            leads_match = re.match(r"leads_to_tech\s*=\s*(\S+)", line)
+            leads_match = _LEADS_TO_TECH_RE.match(line)
             if leads_match:
                 target = leads_match.group(1)
                 prerequisites[target].add(current_tech)
@@ -157,16 +191,12 @@ def _parse_tech_file(
             if module_techs is not None:
                 if in_enable:
                     if brace_depth >= enable_brace_depth:
-                        mod_match = re.match(
-                            r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*$", line.strip()
-                        )
+                        mod_match = _MODULE_NAME_RE.match(line.strip())
                         if mod_match:
                             module_techs[mod_match.group(1)].add(current_tech)
                     if brace_depth < enable_brace_depth:
                         in_enable = False
-                if not in_enable and re.match(
-                    r"^enable_equipment_modules\s*=\s*\{", line
-                ):
+                if not in_enable and _ENABLE_MODULES_RE.match(line):
                     in_enable = True
                     enable_brace_depth = brace_depth
 
@@ -178,7 +208,7 @@ def _parse_tech_file(
                         for kind, dlc in _extract_dlc_conditions("\n".join(allow_buf)):
                             tech_dlc_reqs[current_tech].append((kind, dlc))
                         allow_buf = []
-                if not in_allow and re.match(r"^allow_branch\s*=\s*\{", line):
+                if not in_allow and _ALLOW_BRANCH_RE.match(line):
                     in_allow = True
                     allow_brace_depth = brace_depth
                     allow_buf = [line]
@@ -281,12 +311,12 @@ def _parse_history_blocks(
     while i < len(lines):
         line = lines[i].strip()
 
-        if re.match(r"^set_technology\s*=\s*\{", line):
+        if _SET_TECHNOLOGY_BLOCK_RE.match(line):
             techs, i = _extract_tech_block(lines, i)
             base_techs.update(techs)
             continue
 
-        if re.match(r"^if\s*=\s*\{", line):
+        if _IF_BLOCK_LINE_RE.match(line):
             condition, if_techs, else_techs, i = _parse_if_block(lines, i)
             if condition and (if_techs or else_techs):
                 branches.append((condition, if_techs, else_techs))
@@ -311,7 +341,7 @@ def _extract_tech_block(lines: List[str], start: int) -> Tuple[Set[str], int]:
             elif ch == "}":
                 brace_depth -= 1
 
-        tech_match = re.match(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*1\s*$", line)
+        tech_match = _SET_TECH_1_RE.match(line)
         if tech_match and brace_depth >= 1:
             techs.add(tech_match.group(1))
 
@@ -353,11 +383,11 @@ def _parse_if_block(
     block_text = "\n".join(block_lines)
 
     condition = None
-    dlc_match = re.search(r'has_dlc\s*=\s*"([^"]+)"', block_text)
+    dlc_match = _HAS_DLC_RE.search(block_text)
     if dlc_match:
         condition = dlc_match.group(1)
 
-    not_dlc_match = re.search(r'NOT\s*=\s*\{[^}]*has_dlc\s*=\s*"([^"]+)"', block_text)
+    not_dlc_match = _NOT_HAS_DLC_PREFIX_RE.search(block_text)
     if not_dlc_match and not dlc_match:
         condition = not_dlc_match.group(1)
 
@@ -365,7 +395,7 @@ def _parse_if_block(
         # Non-DLC conditional (e.g. a tag check): treat its techs as base techs.
         all_techs = set()
         for line in block_lines:
-            tech_match = re.match(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*1\s*$", line)
+            tech_match = _SET_TECH_1_RE.match(line)
             if tech_match:
                 name = tech_match.group(1)
                 if name not in ("limit", "factor", "base", "always"):
@@ -394,14 +424,14 @@ def _parse_if_block(
                 found_limit_end = True
             continue
 
-        if re.match(r"else\s*=\s*\{", stripped):
+        if _ELSE_BLOCK_RE.match(stripped):
             in_if_body = False
             continue
 
-        if re.match(r"set_technology\s*=\s*\{", stripped):
+        if _SET_TECHNOLOGY_BLOCK_RE.match(stripped):
             continue
 
-        tech_match = re.match(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*1\s*$", line)
+        tech_match = _SET_TECH_1_RE.match(line)
         if tech_match:
             name = tech_match.group(1)
             if name not in ("limit", "factor", "base", "always"):
@@ -412,7 +442,7 @@ def _parse_if_block(
 
     # NOT { has_dlc } gates run the if-body when the DLC is absent, so swap the
     # branches to keep if_techs aligned with "DLC present".
-    limit_match = re.search(r"limit\s*=\s*\{(.*?)\}", block_text, re.DOTALL)
+    limit_match = _LIMIT_BLOCK_RE.search(block_text)
     if limit_match:
         limit_content = limit_match.group(1)
         if "NOT" in limit_content and "has_dlc" in limit_content:
@@ -444,16 +474,16 @@ def _find_dlc_if_blocks(content: str) -> List[Tuple[int, int, str]]:
     and negated (`NOT = { has_dlc }`) gates are skipped.
     """
     blocks = []
-    for m in re.finditer(r"\bif\s*=\s*\{", content):
+    for m in _IF_BLOCK_START_RE.finditer(content):
         end = _match_brace_end(content, m.end())
         inner = content[m.end() : end - 1]
-        limit = re.search(r"\blimit\s*=\s*\{(.*?)\}", inner, re.DOTALL)
+        limit = _LIMIT_BLOCK_WORDBOUND_RE.search(inner)
         if not limit:
             continue
         region = limit.group(1)
         if "NOT" in region:
             continue
-        dlc = re.search(r'has_dlc\s*=\s*"([^"]+)"', region)
+        dlc = _HAS_DLC_RE.search(region)
         if dlc:
             blocks.append((m.start(), end, dlc.group(1)))
     return blocks
@@ -464,22 +494,20 @@ def _parse_variants_text(content: str) -> List[Tuple[str, Set[str], frozenset]]:
     dlc_blocks = _find_dlc_if_blocks(content)
 
     variants = []
-    for m in re.finditer(r"\bcreate_equipment_variant\s*=\s*\{", content):
+    for m in _CREATE_VARIANT_RE.finditer(content):
         start = m.start()
         end = _match_brace_end(content, m.end())
         block = content[m.end() : end - 1]
 
-        name_match = re.search(r'name\s*=\s*"([^"]*)"', block)
+        name_match = _VARIANT_NAME_RE.search(block)
         name = name_match.group(1) if name_match else "?"
 
         modules = set()
-        mod_block = re.search(r"\bmodules\s*=\s*\{", block)
+        mod_block = _MODULES_BLOCK_RE.search(block)
         if mod_block:
             mod_end = _match_brace_end(block, mod_block.end())
             mod_inner = block[mod_block.end() : mod_end - 1]
-            for entry in re.finditer(
-                r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)", mod_inner
-            ):
+            for entry in _MODULE_ENTRY_RE.finditer(mod_inner):
                 if entry.group(1) != "empty":
                     modules.add(entry.group(1))
 
@@ -644,7 +672,7 @@ def _get_state_owners(mod_path: str) -> Set[str]:
         try:
             with open(f, "r", encoding="utf-8-sig") as fh:
                 for line in fh:
-                    m = re.match(r"^\s*owner\s*=\s*(\S+)", line)
+                    m = _STATE_OWNER_RE.match(line)
                     if m:
                         owners.add(m.group(1))
         except Exception:
@@ -671,9 +699,7 @@ def _get_oob_refs(filepath: str) -> List[Tuple[str, int, str]]:
         if stripped.startswith("#"):
             continue
         # Match oob = "...", set_oob = "...", set_air_oob = "...", set_naval_oob = "..."
-        m = re.match(
-            r'(oob|set_oob|set_air_oob|set_naval_oob)\s*=\s*"([^"]+)"', stripped
-        )
+        m = _OOB_REF_RE.match(stripped)
         if m:
             refs.append((m.group(2), i, m.group(1)))
 
@@ -729,7 +755,7 @@ def validate_capital_defined(filepath: str) -> List[str]:
     except Exception:
         return [f"{filename}: could not read file"]
 
-    if not re.search(r"^capital\s*=\s*\d+", content, re.MULTILINE):
+    if not _CAPITAL_RE.search(content):
         return [f"{filename}: no capital defined"]
     return []
 
