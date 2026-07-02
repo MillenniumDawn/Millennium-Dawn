@@ -123,6 +123,13 @@ _LOG_LINE = re.compile(r'^\s*log\s*=\s*"[^"]*"\s*$')
 _IDEA_CATEGORIES_SPRITE = re.compile(r'name\s*=\s*"GFX_idea_categories"')
 _NO_OF_FRAMES = re.compile(r"\bno[Oo]f[Ff]rames\s*=\s*(\d+)")
 
+# character idea_token entries (Validator._parse_all_ideas).
+_IDEA_TOKEN_RE = re.compile(r"\bidea_token\s*=\s*([A-Za-z0-9_]+)")
+# redundant allowed_civil_war = { always = no } (Validator.validate_idea_quality).
+_ALLOWED_CIVIL_WAR_ALWAYS_NO = re.compile(
+    r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}"
+)
+
 
 def _missing_icon_message(
     idea_name: str,
@@ -547,7 +554,6 @@ class Validator(BaseValidator):
         self.staged_only = False
         char_files = self._collect_files(["common/characters/**/*.txt"])
         self.staged_only = saved2
-        idea_token_re = re.compile(r"\bidea_token\s*=\s*([A-Za-z0-9_]+)")
         char_tokens = 0
         for filepath in char_files:
             text = FileOpener.open_text_file(
@@ -555,7 +561,7 @@ class Validator(BaseValidator):
             )
             if not text or "idea_token" not in text:
                 continue
-            for token in idea_token_re.findall(text):
+            for token in _IDEA_TOKEN_RE.findall(text):
                 if token not in all_defined:
                     all_defined[token] = ("character", None, None)
                     char_tokens += 1
@@ -638,7 +644,6 @@ class Validator(BaseValidator):
         self._log_section("Checking idea definition quality...")
 
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
-        acw_pattern = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
 
         findings: List[Issue] = []
 
@@ -659,7 +664,7 @@ class Validator(BaseValidator):
             )
             if not text:
                 continue
-            for m in acw_pattern.finditer(text):
+            for m in _ALLOWED_CIVIL_WAR_ALWAYS_NO.finditer(text):
                 lineno = text[: m.start()].count("\n") + 1
                 _add(
                     filepath,

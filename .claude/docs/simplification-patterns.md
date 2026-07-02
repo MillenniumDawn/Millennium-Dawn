@@ -488,8 +488,10 @@ every_country = {
 ```
 for_each_scope_loop = {
     array = global.group_A_members
-    limit = { NOT = { has_idea = group_B } }
-    country_event = { id = my_event.1 days = 2 }
+    if = {
+        limit = { NOT = { has_idea = group_B } }
+        country_event = { id = my_event.1 days = 2 }
+    }
 }
 every_country = {
     limit = { has_idea = group_B }
@@ -497,6 +499,112 @@ every_country = {
 }
 ```
 
+Note the inner `if`: `for_each_scope_loop` has no top-level `limit` parameter (see the conversion section below).
+
 **Why:** The original single loop guaranteed each country received the effect exactly once. Splitting without guards causes countries in both groups to fire or receive the effect multiple times. This silently introduces double-firing events, stacked opinion modifiers, or duplicated resource transfers.
 
 Apply the same pattern whenever a non-idempotent effect (opinion modifiers, variable changes, events, etc.) is split across multiple loops.
+
+## Convert `every_country` Over Bloc Membership to `for_each_scope_loop`
+
+When an `every_country` or `every_other_country` loop filters on a bloc-membership idea that a maintained global array backs, iterate the array instead. `every_country` walks all 200+ tags; the array holds only the ~30 members (see `.claude/docs/performance-patterns.md` § "Prefer Engine Arrays Over every_country / any_country" for the performance rationale).
+
+Array-backed membership ideas (`check_common_mistakes.py` flags these automatically):
+
+| Idea                                         | Array                                                |
+| -------------------------------------------- | ---------------------------------------------------- |
+| `NATO_member`                                | `global.nato_members`                                |
+| `EU_member`                                  | `global.EU_member`                                   |
+| `CSTO_member`                                | `global.CSTO_member`                                 |
+| `AU_member`                                  | `global.AU_member`                                   |
+| `LoAS_member` / `LoAS_member_upd`            | `global.arab_league_members`                         |
+| `OAU_member`                                 | `global.OAU_member`                                  |
+| `ecowas_member_state`                        | `global.ECOWAS_member`                               |
+| `idea_gcc_member_state`                      | `global.gcc_member_state`                            |
+| `faction_warsaw_pact_idea`                   | `global.WARSAW_PACT_member`                          |
+| `RAJ_BRICS_associate` / `RAJ_BRICS_observer` | `global.BRICS_associates` / `global.BRICS_observers` |
+
+Ideas backed by TWO arrays (`p5_member`, `at_member`, `RAJ_BRICS`) cannot convert to a single array loop — leave those as `every_country`, or loop the primary array and re-check the idea inside.
+
+Array names are inconsistently pluralized — copy the exact spelling. These arrays are synced to the ideas via `on_add`/`on_remove` hooks on the idea definitions. Other bloc arrays exist (`global.mercosur_member_state`, `global.gcc_member_state`) but have no idea-based membership test; loops over them are usually already array-based.
+
+The LoAS pair is a special case: a `swap_ideas` upgrade (Egypt's `EGY_arab_league_tigh`) means a member holds exactly ONE of the two variants, so a loop filtering `has_idea = LoAS_member` alone silently misses upgraded members. The array covers both — converting these loops is a correctness fix, not just a perf one.
+
+### Before
+
+```
+every_country = {
+    limit = {
+        has_idea = NATO_member
+        is_european_nation = yes
+    }
+    add_war_support = 0.05
+}
+```
+
+### After
+
+```
+for_each_scope_loop = {
+    array = global.nato_members
+    tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+    if = {
+        limit = { is_european_nation = yes }
+        add_war_support = 0.05
+    }
+}
+```
+
+Conversion recipe:
+
+- Drop the membership condition — the array guarantees it.
+- `for_each_scope_loop` has **no top-level `limit`**: re-express any residual conditions as an inner `if = { limit = { ... } }`.
+- The loop auto-scopes into each member, same as `every_country` — the body needs no rewriting. The loop-entry country is `PREV`/`ROOT` inside the body; prefer `ROOT` when the loop may be nested (see the tooltip-consolidation section above).
+- **Tooltips are mandatory in player-facing contexts** (focus rewards, decision effects, event options): `for_each_scope_loop` produces no automatic tooltip, unlike `every_country`. Add `tooltip = TT_ALL_*` inside the loop (`TT_ALL_NATO_MEMBER_NATIONS_GAIN` is the canonical key), or keep a single summary `custom_effect_tooltip` outside it. Never pair the loop with a duplicate `effect_tooltip` — that reintroduces the double-write the tooltip-consolidation section removes.
+- `every_other_country` additionally needs a self-exclusion guard, since the array includes the acting country:
+
+```
+for_each_scope_loop = {
+    array = global.nato_members
+    if = {
+        limit = { NOT = { tag = ROOT } }
+        add_opinion_modifier = { target = ROOT modifier = NATO_member_modifier }
+    }
+}
+```
+
+### Trigger contexts
+
+`for_each_scope_loop` is an **effect** — it cannot appear in `available`/`visible`/`limit` blocks. The trigger-side conversion targets `any_of_scopes` / `all_of_scopes`:
+
+```
+# Before — walks all tags
+any_other_country = {
+    has_idea = NATO_member
+    has_war_with = ROOT
+}
+
+# After — checks only members
+any_of_scopes = {
+    array = global.nato_members
+    has_war_with = ROOT
+}
+```
+
+**Stale-entry caveat:** annexed or collapsed tags can linger in membership arrays. `on_annex` strips the annexed country from all bloc arrays via `remove_from_bloc_membership_arrays` (`common/scripted_effects/01_international_systems_effects.txt`), but old saves and unwired death paths still leave entries behind. Effect loops auto-skip non-existent scopes; trigger aggregations do **not** — an `all_of_scopes` over the array can become permanently unsatisfiable (the #2026 NATO ratification deadlock). Give every `all_of_scopes` (and any negated `any_of_scopes`) an existence escape:
+
+```
+all_of_scopes = {
+    array = global.nato_members
+    OR = {
+        has_country_flag = NATO_Ratified_@ROOT
+        exists = no
+    }
+}
+```
+
+**When NOT to convert:**
+
+- The array is not maintained on join/leave. Before wiring `on_add`/`on_remove` on a new bloc idea, its array only reflects the startup seed list — converting a loop over it silently drops runtime joiners. Verify the idea definition carries the array hooks first.
+- The limit mixes an array-backed idea with non-array conditions in an `OR` (splitting needs the mutual-exclusion guards from the section above).
+- The loop relies on `every_country` reaching non-members (e.g. applying an effect to everyone _except_ members via `NOT`).
