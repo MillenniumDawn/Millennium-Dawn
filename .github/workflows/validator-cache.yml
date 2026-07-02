@@ -1,0 +1,90 @@
+name: Validator Cache (main)
+
+# Builds the shared .validation_cache on main so every PR starts warm.
+# Caches saved during pull_request runs are scoped to that PR's merge ref;
+# only caches created here on refs/heads/main are visible to all PRs
+# (restored by coding-pipeline.yml's prepare-workspace job).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "common/**"
+      - "events/**"
+      - "history/**"
+      - "localisation/**"
+      - "interface/**"
+      - "gfx/flags/**"
+      - "tools/**"
+      - ".github/workflows/validator-cache.yml"
+  # Weekly rebuild: the disk cache's 7-day staleness marker ages inside the
+  # bundle across warm rebuilds, and GitHub evicts caches unused for 7 days.
+  # A quiet-period run absorbs the periodic cold rebuild (invisible to PRs)
+  # and keeps at least one live entry for prepare-workspace to restore.
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch: {}
+
+concurrency:
+  group: validator-cache-main
+  # Newest main state wins; cache commits are atomic, so a cancelled save
+  # never becomes visible.
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-cache:
+    name: Build validator disk cache
+    runs-on: ubuntu-latest
+    steps:
+      # Same union of directories as prepare-workspace in coding-pipeline.yml:
+      # validators cache only what is present on disk, so a narrower checkout
+      # would leave namespaces cold for every PR.
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            common
+            events
+            history
+            localisation
+            interface
+            gfx/flags
+            tools
+            resources/documentation
+            .claude
+
+      # Warm start from the previous entry: incremental rebuild instead of a
+      # cold full scan.
+      - name: Restore previous validator disk cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .validation_cache
+          key: md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-${{ github.sha }}
+          restore-keys: |
+            md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-
+            md-valcache-v1-${{ runner.os }}-
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
+
+      # Populates every validator's cache namespace. Non-gating: findings on
+      # main are a triage signal (visible as a step warning), not a reason to
+      # leave every PR cold — cached scan results are correct either way.
+      - name: Run all validators (cache warm-up)
+        continue-on-error: true
+        run: python3 tools/validation/run_all_validators.py --no-color
+
+      # run_id suffix: keys are immutable and the weekly scheduled run fires
+      # on an unchanged sha — without it the rebuild could never save. PR
+      # restores prefix-match the newest entry via restore-keys.
+      - name: Save validator disk cache
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .validation_cache
+          key: md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-${{ github.sha }}-${{ github.run_id }}
