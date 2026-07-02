@@ -3108,7 +3108,7 @@ focus_tree = {
 		id = GRE_hellenic_economy
 		icon = coa
 
-		x = 0
+		x = 4
 		y = 0
 
 		cost = 5
@@ -3368,8 +3368,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_military_industrial
-		icon = army_tank_industry
+		id = GRE_military_industrial		icon = army_tank_industry
 
 		x = 2
 		y = 1
@@ -3383,18 +3382,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GRE_military_industrial"
-			if = { limit = { has_country_flag = GRE_defer_payments_flag }
-				set_temp_variable = { skip_payment = 1 }
-				set_temp_variable = { debt_change = 7.5 }
-				GRE_defer_payment = yes
-			}
-			one_random_arms_factory = yes
 			if = {
 				limit = { has_dlc = "Arms Against Tyranny" }
 				mio:GRE_eas_materiel_manufacturer = {
 					add_mio_funds = 25
 				}
 			}
+			if = { limit = { has_country_flag = GRE_defer_payments_flag }
+				set_temp_variable = { skip_payment = 1 }
+				set_temp_variable = { debt_change = 7.5 }
+				GRE_defer_payment = yes
+			}
+			one_random_arms_factory = yes
 		}
 
 		ai_will_do = {
@@ -3411,8 +3410,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_agriculture_sector
-		icon = focus_CHL_focus_on_cattle_and_wool
+		id = GRE_agriculture_sector		icon = focus_CHL_focus_on_cattle_and_wool
 
 		x = 10
 		y = 1
@@ -3430,7 +3428,7 @@ focus_tree = {
 			add_to_variable = { GRE_economy_agriculture_district_income_tax_modifier = 0.05 tooltip = agriculture_district_income_tax_modifier_tt }
 			add_to_variable = { GRE_economy_agriculture_tax_modifier = 0.05 tooltip = agriculture_tax_modifier_tt }
 			add_to_variable = { GRE_economy_production_speed_agriculture_district_factor = 0.05 tooltip = production_speed_agriculture_district_factor_tt }
-			set_variable = { GRE_economy_agri_tier = 1 }
+			newline = yes
 			set_temp_variable = { debt_change = 2 }
 			GRE_pay_or_defer = yes
 		}
@@ -3446,8 +3444,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_power_corporations
-		icon = Coal_Power_Plant
+		id = GRE_power_corporations		icon = Coal_Power_Plant
 
 		x = 13
 		y = 2
@@ -3575,7 +3572,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = { focus = GRE_greek_bonds focus = GRE_skouries_mines }
+		prerequisite = { focus = GRE_greek_bonds focus = GRE_local_manufacturing }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
@@ -3667,14 +3664,23 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GRE_new_railways"
-			set_temp_variable = { debt_change = 3.5 }
-			GRE_pay_or_defer = yes
 			build_railway = {
 				level = 1
 				path = { 4109 15434 976 863 6930 3844 936 11818 }
 				start_state = 141
 				target_state = 140
 			}
+			newline = yes
+			140 = {
+				add_building_construction = {
+					type = rail_terminal
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { debt_change = 3.5 }
+			GRE_pay_or_defer = yes
 		}
 
 		ai_will_do = {
@@ -3696,7 +3702,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = { focus = GRE_military_industrial }
+		prerequisite = { focus = GRE_local_manufacturing }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
@@ -3707,7 +3713,16 @@ focus_tree = {
 				set_temp_variable = { debt_change = 3.5 }
 				GRE_defer_payment = yes
 			}
-			one_random_infrastructure = yes
+			if = {
+				limit = { all_owned_state = { free_building_slots = { building = infrastructure size < 1 } } }
+				add_tech_bonus = {
+					name = GRE_highway_initiatives
+					bonus = 0.35
+					uses = 2
+					category = CAT_infrastructure
+				}
+			}
+			else = { one_random_infrastructure = yes }
 		}
 
 		ai_will_do = {
@@ -3720,8 +3735,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_transport_sector
-		icon = construction4
+		id = GRE_transport_sector		icon = construction4
 
 		x = 2
 		y = 0
@@ -3757,8 +3771,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_vintage_wines
-		icon = vineyard
+		id = GRE_vintage_wines		icon = vineyard
 
 		x = -1
 		y = 2
@@ -3772,14 +3785,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GRE_vintage_wines"
-			if = {
-				limit = { check_variable = { GRE_economy_agri_tier = 1 } }
-				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = GRE_economy_modifier }
-				add_to_variable = { GRE_economy_agriculture_district_income_tax_modifier = 0.025 tooltip = agriculture_district_income_tax_modifier_tt }
-				add_to_variable = { GRE_economy_agriculture_tax_modifier = 0.025 tooltip = agriculture_tax_modifier_tt }
-				add_to_variable = { GRE_economy_production_speed_agriculture_district_factor = 0.025 tooltip = production_speed_agriculture_district_factor_tt }
-				set_variable = { GRE_economy_agri_tier = 2 }
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = GRE_economy_modifier }
+			add_to_variable = { GRE_economy_agriculture_district_income_tax_modifier = 0.025 tooltip = agriculture_district_income_tax_modifier_tt }
+			add_to_variable = { GRE_economy_agriculture_tax_modifier = 0.025 tooltip = agriculture_tax_modifier_tt }
+			add_to_variable = { GRE_economy_production_speed_agriculture_district_factor = 0.025 tooltip = production_speed_agriculture_district_factor_tt }
+			newline = yes
 			set_temp_variable = { debt_change = 2 }
 			GRE_pay_or_defer = yes
 		}
@@ -3795,8 +3805,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_tobacco_plantations
-		icon = Generic_Tobacco_Farming
+		id = GRE_tobacco_plantations		icon = Generic_Tobacco_Farming
 
 		x = 1
 		y = 1
@@ -3833,8 +3842,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_gas_oil_plants
-		icon = oil_production2
+		id = GRE_gas_oil_plants		icon = oil_production2
 
 		x = 0
 		y = 1
@@ -4053,7 +4061,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_industrial_lignite_mining
+		id = GRE_industrial_lignite_mining #Seek immersive localisation
 		icon = coal_mining_2
 
 		x = -1
@@ -4098,7 +4106,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_rare_element_prospecting
+		id = GRE_rare_element_prospecting #Seek immersive localisation
 		icon = focus_generic_resource_extraction
 
 		x = -1
@@ -4170,6 +4178,7 @@ focus_tree = {
 				add_to_variable = { GRE_economy_supply_combat_penalties_on_core_factor = -0.03 tooltip = supply_combat_penalties_on_core_factor_tt }
 				set_variable = { GRE_economy_transport_tier = 2 }
 			}
+			newline = yes
 			if = { limit = { has_country_flag = GRE_defer_payments_flag }
 				set_temp_variable = { skip_payment = 1 }
 				set_temp_variable = { debt_change = 2.5 }
@@ -4245,14 +4254,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GRE_cotton_plantations"
-			if = {
-				limit = { check_variable = { GRE_economy_agri_tier = 2 } }
-				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = GRE_economy_modifier }
-				add_to_variable = { GRE_economy_agriculture_district_income_tax_modifier = 0.025 tooltip = agriculture_district_income_tax_modifier_tt }
-				add_to_variable = { GRE_economy_agriculture_tax_modifier = 0.025 tooltip = agriculture_tax_modifier_tt }
-				add_to_variable = { GRE_economy_production_speed_agriculture_district_factor = 0.025 tooltip = production_speed_agriculture_district_factor_tt }
-				set_variable = { GRE_economy_agri_tier = 3 }
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = GRE_economy_modifier }
+			add_to_variable = { GRE_economy_agriculture_district_income_tax_modifier = 0.025 tooltip = agriculture_district_income_tax_modifier_tt }
+			add_to_variable = { GRE_economy_agriculture_tax_modifier = 0.025 tooltip = agriculture_tax_modifier_tt }
+			add_to_variable = { GRE_economy_production_speed_agriculture_district_factor = 0.025 tooltip = production_speed_agriculture_district_factor_tt }
+			newline = yes
 			set_temp_variable = { debt_change = 2 }
 			GRE_pay_or_defer = yes
 		}
@@ -4268,8 +4274,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_fisheries_expansion
-		icon = Canned_Fish
+		id = GRE_fisheries_expansion		icon = Canned_Fish
 
 		x = 0
 		y = 1
@@ -4306,8 +4311,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_aegean_wind_banks
-		icon = windmills
+		id = GRE_aegean_wind_banks		icon = windmills
 
 		x = 0
 		y = 1
@@ -4330,6 +4334,8 @@ focus_tree = {
 				set_temp_variable = { debt_change = 8.5 }
 				GRE_defer_payment = yes
 			}
+			143 = { add_state_modifier = { modifier = { state_renewable_energy_generation_modifier = 0.15 } } }
+			newline = yes
 			one_random_renewable_energy_infra = yes
 		}
 
@@ -4361,11 +4367,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GRE_resolution_crisis"
 			increase_economic_growth = yes
+			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = GRE_economy_modifier }
 			add_to_variable = { GRE_economy_stability_factor = 0.10 tooltip = stability_factor_tt }
 			add_to_variable = { GRE_economy_war_support_factor = 0.05 tooltip = war_support_factor_tt }
 			add_to_variable = { GRE_economy_political_power_factor = 0.20 tooltip = political_power_factor_tt }
 			add_to_variable = { GRE_economy_consumer_goods_factor = -0.08 tooltip = consumer_goods_factor_tt }
+			newline = yes
 			set_country_flag = GRE_debt_crisis_concluded
 			clr_country_flag = GRE_debt_crisis_active
 			if = {
@@ -4380,8 +4388,10 @@ focus_tree = {
 				limit = { has_idea = GRE_austerity_3 }
 				remove_ideas = GRE_austerity_3
 			}
+			newline = yes
 			add_stability = 0.15
 			add_political_power = 150
+			newline = yes
 			GRE_calculate_unified_debt = yes
 		}
 
@@ -4395,8 +4405,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_urban_railways
-		icon = SOV_i_like_trains
+		id = GRE_urban_railways		icon = SOV_i_like_trains
 
 		x = 0
 		y = 2
@@ -4410,6 +4419,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GRE_urban_railways"
+			141 = {
+				add_building_construction = {
+					type = rail_terminal
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
 			if = { limit = { check_variable = { GRE_economy_transport_tier = 3 } }
 				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = GRE_economy_modifier }
 				add_to_variable = { GRE_economy_production_speed_infrastructure_factor = 0.02 tooltip = production_speed_infrastructure_factor_tt }
@@ -4432,15 +4449,9 @@ focus_tree = {
 				add_to_variable = { GRE_economy_production_speed_rail_way_factor = 0.10 tooltip = production_speed_rail_way_factor_tt }
 				set_variable = { GRE_economy_transport_tier = 4 }
 			}
+			newline = yes
 			set_temp_variable = { debt_change = 5 }
 			GRE_pay_or_defer = yes
-			141 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
 		}
 
 		ai_will_do = {
@@ -4494,8 +4505,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_tourism_boom
-		icon = starttourismprojectscuba
+		id = GRE_tourism_boom		icon = starttourismprojectscuba
 
 		x = 7
 		y = 1
@@ -4513,8 +4523,10 @@ focus_tree = {
 			add_to_variable = { GRE_economy_office_park_income_tax_modifier = 0.10 tooltip = office_park_income_tax_modifier_tt }
 			add_to_variable = { GRE_economy_monthly_population = 0.05 tooltip = monthly_population_tt }
 			add_to_variable = { GRE_economy_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			newline = yes
 			country_event = { id = greece.641 days = 3 }
 			custom_effect_tooltip = GRE_tourism_boom_event_TT
+			newline = yes
 			set_temp_variable = { debt_change = 5 }
 			GRE_pay_or_defer = yes
 		}
@@ -4529,8 +4541,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_mass_tourism
-		icon = consumer_goods
+		id = GRE_mass_tourism		icon = consumer_goods
 
 		x = -1
 		y = 1
@@ -4561,8 +4572,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_premium_tourism
-		icon = economic_prosperity
+		id = GRE_premium_tourism		icon = economic_prosperity
 
 		x = 1
 		y = 1
@@ -4611,6 +4621,7 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = GRE_economy_modifier }
 			add_to_variable = { GRE_economy_population_tax_income_multiplier_modifier = 0.075 tooltip = population_tax_income_multiplier_modifier_tt }
 			add_to_variable = { GRE_economy_monthly_population = 0.03 tooltip = monthly_population_tt }
+			newline = yes
 			country_event = { id = greece.642 days = 3 }
 			custom_effect_tooltip = GRE_diaspora_remittances_event_TT
 		}
@@ -4643,6 +4654,7 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = GRE_economy_modifier }
 			add_to_variable = { GRE_economy_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
 			add_to_variable = { GRE_economy_productivity_growth_modifier = 0.075 tooltip = productivity_growth_modifier_tt }
+			newline = yes
 			set_temp_variable = { debt_change = 6 }
 			GRE_pay_or_defer = yes
 		}
@@ -4666,7 +4678,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = { focus = GRE_hellenic_economy }
+		prerequisite = { focus = GRE_debt_refactoring }
 
 		available = {
 			has_idea = EU_member
@@ -4714,7 +4726,9 @@ focus_tree = {
 			add_to_variable = { GRE_economy_production_speed_industrial_complex_factor = 0.08 tooltip = production_speed_industrial_complex_factor_tt }
 			add_to_variable = { GRE_economy_consumer_goods_factor = -0.05 tooltip = consumer_goods_factor_tt }
 			add_to_variable = { GRE_economy_stability_factor = 0.03 tooltip = stability_factor_tt }
+			newline = yes
 			increase_economic_growth = yes
+			newline = yes
 			country_event = { id = greece.643 days = 3 }
 			custom_effect_tooltip = GRE_recovery_facility_event_TT
 		}
@@ -4753,7 +4767,16 @@ focus_tree = {
 				set_temp_variable = { debt_change = 7.5 }
 				GRE_defer_payment = yes
 			}
-			one_random_infrastructure = yes
+			if = {
+				limit = { all_owned_state = { free_building_slots = { building = infrastructure size < 1 } } }
+				add_tech_bonus = {
+					name = GRE_highway_initiatives
+					bonus = 0.35
+					uses = 2
+					category = CAT_infrastructure
+				}
+			}
+			else = { one_random_infrastructure = yes }
 		}
 
 		ai_will_do = {
@@ -4769,8 +4792,9 @@ focus_tree = {
 		id = GRE_unemployed
 		icon = welfare
 
-		x = 22
+		x = 18
 		y = 0
+		relative_position_id = GRE_hellenic_economy
 
 		cost = 5
 
@@ -4899,8 +4923,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_strength
-		icon = industrial_complexes
+		id = GRE_strength		icon = industrial_complexes
 
 		x = 1
 		y = 1
@@ -4935,8 +4958,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = GRE_pharma
-		icon = pharma_drugs
+		id = GRE_pharma		icon = pharma_drugs
 
 		x = 1
 		y = 1
@@ -4955,13 +4977,14 @@ focus_tree = {
 				set_temp_variable = { debt_change = 4 }
 				GRE_defer_payment = yes
 			}
-			one_random_industrial_complex = yes
+			newline = yes
 			add_tech_bonus = {
 				name = GRE_pharma
 				bonus = 0.5
 				uses = 1
 				category = CAT_industry
 			}
+			one_office_construction = yes
 		}
 
 		ai_will_do = {
@@ -5153,211 +5176,6 @@ focus_tree = {
 		}
 
 		ai_will_do = { base = 10 }
-	}
-
-	focus = {
-		id = GRE_expand_elvo
-		icon = factory_complex
-
-		x = -7
-		y = 1
-		relative_position_id = GRE_strength
-
-		cost = 7.15
-
-		prerequisite = { focus = GRE_strength }
-
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		available = {
-			140 = {
-				free_building_slots = {
-					building = arms_factory
-					size > 0
-					include_locked = yes
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GRE_expand_elvo executed"
-			set_temp_variable = { debt_change = 7.5 }
-			GRE_pay_or_defer = yes
-			140 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
-			if = { limit = { has_dlc = "Arms Against Tyranny" }
-				mio:GRE_hellenic_vehicle_industry_tank_manufacturer = {
-					add_mio_funds = 50
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-		}
-	}
-
-	focus = {
-		id = GRE_buy_elvo
-		icon = industry_military
-
-		x = 1
-		y = 1
-		relative_position_id = GRE_expand_elvo
-
-		cost = 5.72
-
-		prerequisite = { focus = GRE_expand_elvo }
-		mutually_exclusive = { focus = GRE_sell_elvo }
-
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		available = {
-			140 = {
-				free_building_slots = {
-					building = arms_factory
-					size > 0
-					include_locked = yes
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GRE_buy_elvo executed"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			140 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
-			if = { limit = { has_dlc = "Arms Against Tyranny" }
-				mio:GRE_hellenic_vehicle_industry_tank_manufacturer = {
-					add_mio_funds = 50
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				OR = {
-					has_active_mission = bankruptcy_incoming_collapse
-					can_staff_an_arms_industry = no
-				}
-			}
-		}
-	}
-
-	focus = {
-		id = GRE_sell_elvo
-		icon = money
-
-		x = -1
-		y = 1
-		relative_position_id = GRE_expand_elvo
-
-		cost = 5.72
-
-		prerequisite = { focus = GRE_expand_elvo }
-		mutually_exclusive = { focus = GRE_buy_elvo }
-
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GRE_sell_elvo executed"
-			set_temp_variable = { treasury_change = 10 }
-			modify_treasury_effect = yes
-			140 = {
-				add_building_construction = {
-					type = arms_factory
-					level = -1
-					instant_build = yes
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-		}
-	}
-
-	focus = {
-		id = GRE_arms_subsidies
-		icon = decentralized_economy
-
-		x = 0
-		y = 1
-		relative_position_id = GRE_sell_elvo
-
-		cost = 5.72
-
-		prerequisite = { focus = GRE_sell_elvo }
-
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GRE_arms_subsidies executed"
-			add_ideas = GRE_booming_arms
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-		}
-	}
-
-	focus = {
-		id = GRE_restructure_elvo
-		icon = centralization
-
-		x = 0
-		y = 1
-		relative_position_id = GRE_buy_elvo
-
-		cost = 5.72
-
-		prerequisite = { focus = GRE_buy_elvo }
-
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GRE_restructure_elvo executed"
-			add_ideas = GRE_efficient_elvo
-			set_temp_variable = { debt_change = 5 }
-			GRE_pay_or_defer = yes
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-		}
 	}
 
 	focus = {
