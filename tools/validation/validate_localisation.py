@@ -22,6 +22,8 @@ from validator_common import (
     KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
     FileOpener,
+    Issue,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
@@ -63,8 +65,15 @@ _NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
 # word, quote, or line end) flagged instead of silently exempted.
 _PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
 
+# A formatter (Prettier/pre-commit --all-files) once split Paradox loc
+# `KEY:0 "value"` lines across two lines and rewrote double quotes to single
+# quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
+# than erroring, so they must be caught here.
+_MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
+_MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
-def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
+
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
     filename, valid_colors, subst_keys = args
     results = []
     text_file = FileOpener.open_text_file(
@@ -74,6 +83,26 @@ def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
     for line_idx, line in enumerate(lines):
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
+        if _MANGLED_SINGLE_QUOTE_VALUE_RE.match(line):
+            results.append(
+                Issue(
+                    severity=Severity.ERROR,
+                    category="mangled-loc-line",
+                    message="Loc value uses single quotes instead of double quotes (formatter-mangled, breaks in-game)",
+                    file=os.path.basename(filename),
+                    line=line_idx + 2,
+                )
+            )
+        elif _MANGLED_KEY_NO_VALUE_RE.match(line):
+            results.append(
+                Issue(
+                    severity=Severity.ERROR,
+                    category="mangled-loc-line",
+                    message="Loc key has no value on the same line (formatter-mangled, breaks in-game)",
+                    file=os.path.basename(filename),
+                    line=line_idx + 2,
+                )
+            )
         if "\u00a7" in line:
             # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution: those
             # keys intentionally split their \u00a7 codes across multiple values (one ends
