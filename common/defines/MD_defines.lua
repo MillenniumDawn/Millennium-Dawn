@@ -521,8 +521,8 @@
 	NDefines.NAir.REINFORCEMENT_DISABLING_DURATION_IN_LAND_CARRIER_TRANSFER = 12 -- 48 vanilla; reduced so AI is less reluctant to move planes onto carriers
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50 -- 10 vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10 -- 1 vanilla
+	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 10 -- 10 vanilla; one submarine_carrier_air_wing_size wing per launcher
+	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 1 -- 1 vanilla
 	NDefines.NAir.MAX_QUICK_WING_SELECTION = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
