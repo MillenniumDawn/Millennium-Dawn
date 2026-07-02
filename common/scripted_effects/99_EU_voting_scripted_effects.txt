@@ -404,8 +404,17 @@ focus_EU111_QMV_result = {
 		remove_from_array = { array = global.EU_council_votes value = 111 }
 		set_variable = { global.current_active_vote_disp = 0 }
 
+		# Snapshot members before annexing: annex_country fires on_annex, which removes each
+		# annexed member from global.EU_member. Looping global.EU_member live would mutate it
+		# mid-iteration and skip most members, leaving them independent instead of forming USoE.
+		clear_array = global.USoE_formation_members
 		for_each_scope_loop = {
 			array = global.EU_member
+			add_to_array = { global.USoE_formation_members = THIS }
+		}
+
+		for_each_scope_loop = {
+			array = global.USoE_formation_members
 			EUU = { inherit_technology = THIS }
 			set_country_flag = USoE_member
 			set_country_flag = USoE
@@ -443,6 +452,7 @@ focus_EU111_QMV_result = {
 				}
 			}
 		}
+		clear_array = global.USoE_formation_members
 		apply_USoE_technologies = yes
 	}
 	ROOT = {
