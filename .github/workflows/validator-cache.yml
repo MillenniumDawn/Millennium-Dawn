@@ -17,12 +17,13 @@ on:
       - "gfx/flags/**"
       - "tools/**"
       - ".github/workflows/validator-cache.yml"
-  # Weekly rebuild: the disk cache's 7-day staleness marker ages inside the
-  # bundle across warm rebuilds, and GitHub evicts caches unused for 7 days.
-  # A quiet-period run absorbs the periodic cold rebuild (invisible to PRs)
-  # and keeps at least one live entry for prepare-workspace to restore.
+  # Nightly rebuild (07:00 UTC = 3 AM ET in summer, 2 AM in winter — cron is
+  # UTC and does not track DST): keeps a warm cache for the next day's PRs
+  # even on quiet days, absorbs the periodic cold rebuild when the disk
+  # cache's 7-day staleness marker expires, and keeps GitHub's
+  # 7-day-unused eviction from ever leaving PRs with no entry.
   schedule:
-    - cron: "17 5 * * 1"
+    - cron: "0 7 * * *"
   workflow_dispatch: {}
 
 concurrency:
@@ -33,6 +34,8 @@ concurrency:
 
 permissions:
   contents: read
+  # actions: read lets the post-save step verify a restorable entry exists.
+  actions: read
 
 jobs:
   build-cache:
@@ -88,3 +91,16 @@ jobs:
         with:
           path: .validation_cache
           key: md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-${{ github.sha }}-${{ github.run_id }}
+
+      # cache/save only warns on failure; this makes a missing entry a red
+      # nightly run instead of PRs silently going cold.
+      - name: Verify a restorable cache entry exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh api "repos/${{ github.repository }}/actions/caches?key=md-valcache-v1-&per_page=1" --jq '.total_count')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No md-valcache-v1-* cache entry exists after the save step"
+            exit 1
+          fi
+          echo "$count md-valcache-v1-* cache entr(y/ies) present"
