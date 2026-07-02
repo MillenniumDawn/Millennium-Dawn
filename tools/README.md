@@ -24,7 +24,7 @@ python3 tools/run.py --list                              # see all available too
 python3 tools/run.py estimate_gdp USA --all              # run a tool by name
 python3 tools/run.py find_idea common/ideas/Greek.txt    # partial names work too
 python3 tools/run.py publish_workshop release --full      # pass args through
-python3 tools/run.py gfx_entry_generator_linux            # works on any platform
+python3 tools/run.py gfx_entry_generator                  # works on any platform
 ```
 
 ## Directory Structure
@@ -151,19 +151,15 @@ Auto-standardizers for focus trees, events, decisions, and ideas. See `standardi
 
 DDS conversion, GFX entry generation, texture and flag tools.
 
-| Script                           | Description                                                               |
-| -------------------------------- | ------------------------------------------------------------------------- |
-| **batchdds-2.py**                | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies) |
-| **convert_to_legacy_dds.py**     | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility    |
-| **duplicate_icon.py**            | Detects duplicate icon files in a focus tree file                         |
-| **find_duplicate_textures.py**   | Finds duplicate texture files in the mod                                  |
-| **flag-reference-checker.py**    | Validates flag references across the mod                                  |
-| **gfx_entry_generator.py**       | GFX sprite entry generator (Windows)                                      |
-| **gfx_entry_generator_gui.py**   | GFX sprite entry generator with GUI (Windows)                             |
-| **gfx_entry_generator_linux.py** | GFX sprite entry generator (cross-platform, deterministic sort)           |
-| **state_gfx.py**                 | Extracts province colors from state files and renders them on the map     |
-
-See `assets/gfxEntryGenerator.md` for the GFX entry generator guide.
+| Script                         | Description                                                                       |
+| ------------------------------ | --------------------------------------------------------------------------------- |
+| **batchdds-2.py**              | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies)         |
+| **convert_to_legacy_dds.py**   | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility            |
+| **duplicate_icon.py**          | Detects duplicate icon files in a focus tree file                                 |
+| **find_duplicate_textures.py** | Finds duplicate texture files in the mod                                          |
+| **flag-reference-checker.py**  | Validates flag references across the mod                                          |
+| **gfx_entry_generator_gui.py** | GFX sprite entry generator with GUI, calls into the root `gfx_entry_generator.py` |
+| **state_gfx.py**               | Extracts province colors from state files and renders them on the map             |
 
 ### Analysis (`analysis/`)
 
@@ -227,7 +223,7 @@ Tests for individual validators live in `validation/tests/`:
 
 ### Root-Level Scripts
 
-Hook entry points, CI tools, and shared libraries that stay at the `tools/` root.
+Hook entry points, CI tools, shared libraries, and other scripts that stay at the `tools/` root.
 
 | Script                            | Description                                                                                                                                                                                                                                                                                                                                        |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -236,6 +232,7 @@ Hook entry points, CI tools, and shared libraries that stay at the `tools/` root
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                   |
 | **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                    |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                |
+| **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                     |
 | **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse factories (`create_validation_parser`, `create_linting_parser`, `create_standard_parser`), entry points (`run_validator_main`, `run_tool_main`), `find_hoi4_install()`, `extract_block_from_text()`. |
 | **loc.py**                        | Localisation utilities                                                                                                                                                                                                                                                                                                                             |
 | **logging_tool.py**               | Logging utility                                                                                                                                                                                                                                                                                                                                    |
