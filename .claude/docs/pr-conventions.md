@@ -10,7 +10,7 @@ How to write PR descriptions for Millennium Dawn. Applies to any agent (Claude, 
 4. **No exhaustive change logs.** The diff and commit history have that; the PR body summarises.
 5. **No emoji, no AI attribution footers.** Per `~/.claude/CLAUDE.md`: never add "Generated with Claude Code" or co-author trailers.
 6. **No "this PR ..." preamble.** The reader already knows it's a PR.
-7. **No em dashes** (`—`). Use a period when the clause stands alone, a comma for participial phrases, a colon when introducing a list. Same rule applies to player-facing loc (see `.claude/rules/localisation-rules.md`).
+7. **No em dashes** (`—`). Use a period when the clause stands alone, a comma for participial phrases, a colon when introducing a list. Same rule applies to player-facing loc (see `.claude/docs/localisation-rules.md`).
 
 ## Structure
 

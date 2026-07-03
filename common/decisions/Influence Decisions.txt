@@ -971,4 +971,91 @@ influence_decisions = {
 			base = 1
 		}
 	}
+	BNL_lay_down_aswf_frigate = {
+		icon = GFX_decision_navy
+
+		allowed = { is_benelux_country = yes }
+
+		is_good = yes
+		selectable_mission = no
+		fire_only_once = no
+		priority = 100
+
+		days_mission_timeout = 365
+
+		activation = {
+			has_country_flag = BNL_aswf_program_active
+			NOT = { has_country_flag = BNL_aswf_program_complete }
+			check_variable = { BNL_aswf_delivered < 2 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BNL_lay_down_aswf_frigate"
+			if = {
+				limit = { original_tag = HOL }
+				if = {
+					limit = { check_variable = { BNL_aswf_delivered = 0 } }
+					create_ship = { type = frigate_hull_4 equipment_variant = "ASWF" creator = HOL name = "HNLMS Vondel" }
+				}
+				else = {
+					create_ship = { type = frigate_hull_4 equipment_variant = "ASWF" creator = HOL name = "HNLMS Wassenaer" }
+				}
+			}
+			else = {
+				if = {
+					limit = { check_variable = { BNL_aswf_delivered = 0 } }
+					create_ship = { type = frigate_hull_4 equipment_variant = "ASWF" creator = BEL name = "BNS Lieve" }
+				}
+				else = {
+					create_ship = { type = frigate_hull_4 equipment_variant = "ASWF" creator = BEL name = "BNS Schelde" }
+				}
+			}
+			add_to_variable = { BNL_aswf_delivered = 1 }
+			if = {
+				limit = { check_variable = { BNL_aswf_delivered = 2 } }
+				set_country_flag = BNL_aswf_program_complete
+			}
+		}
+	}
+	BNL_aswf_capability_update = {
+		icon = GFX_decision_navy
+
+		allowed = { is_benelux_country = yes }
+
+		is_good = yes
+		selectable_mission = no
+		fire_only_once = yes
+		priority = 100
+
+		days_mission_timeout = 365
+
+		activation = {
+			has_country_flag = BNL_aswf_program_complete
+			NOT = { has_country_flag = BNL_aswf_updated }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BNL_aswf_capability_update"
+			create_equipment_variant = {
+				name = "ASWF Mid-Life Update"
+				type = frigate_hull_4
+				parent_version = 0
+				allow_without_tech = yes
+				modules = {
+					fixed_ship_engine_slot = module_light_surface_jet_turbine_power3
+					fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+					fixed_ship_radar_slot = module_sonar_5
+					fixed_ship_auxillary_slot_2 = module_vls_sam_3
+					fixed_ship_auxillary_slot_1 = module_vls_lam_2
+					fixed_ship_auxillary_slot = module_chain_gun
+					fixed_ship_battery_slot = module_76mm_gun_4
+					front_1_custom_slot = module_asm_3
+					rear_1_custom_slot = module_light_helipad_2
+				}
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BNL_dynmod_union }
+			add_to_variable = { BNL_naval_morale_factor = 0.05 tooltip = naval_morale_factor_tt }
+			set_country_flag = BNL_aswf_updated
+		}
+	}
 }

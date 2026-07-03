@@ -202,7 +202,7 @@ def main():
 
         # history_techs should find issues with non-existent tech
         run_validator(
-            "validate_history_techs.py",
+            "validate_history.py",
             "history techs validator finds bad tech dependency",
             expect_issues=True,
         )

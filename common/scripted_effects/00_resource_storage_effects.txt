@@ -3,18 +3,12 @@
 #I WILL KILL YOU. DO. NOT. FUCK. WITH. THE. MATH.
 resource_storage_system = {
 	if = { limit = { has_game_rule = { rule = rule_enable_resource_storage_system option = yes } }
-		if = { limit = { check_expr = { value = modifier@resource_storage_max_capacity greater_than = 0 } }
+		if = { limit = { check_variable = { modifier@resource_storage_max_capacity > 0 } }
 			resource_storage_steel_calc_effect = yes
 			resource_storage_rubber_calc_effect = yes
 			resource_storage_light_calc_effect = yes
 			resource_storage_tech_calc_effect = yes
 			resource_storage_precious_calc_effect = yes
-
-			clamp_variable = { var = rubber_in_storage min = 0 max = modifier@resource_storage_max_capacity }
-			clamp_variable = { var = light_in_storage min = 0 max = modifier@resource_storage_max_capacity }
-			clamp_variable = { var = precious_in_storage min = 0 max = modifier@resource_storage_max_capacity }
-			clamp_variable = { var = tech_in_storage min = 0 max = modifier@resource_storage_max_capacity }
-			clamp_variable = { var = steel_in_storage min = 0 max = modifier@resource_storage_max_capacity }
 		}
 		update_dirty_resource_storage_var = yes
 	}
@@ -36,12 +30,16 @@ resource_storage_system_setup = {
 
 resource_storage_steel_calc_effect = {
 	#This should include all the steel that the nation has left, *including* the buff
-	set_temp_variable = { resource_base_value = resource@steel }
 	set_temp_variable = { old_resource_draw_value = steel_from_storage }
-	subtract_from_temp_variable = { resource_base_value = old_resource_draw_value }
+	set_temp_variable = {
+		resource_base_value = {
+			value = resource@steel
+			subtract = old_resource_draw_value
+		}
+	}
 
+	# Only draw resources if we have a deficit, want to draw, and have the resources to draw
 	if = {
-		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
 		limit = {
 			check_expr = { value = resource_base_value less_than = 1 }
 			check_expr = { value = steel_in_storage greater_than = 0 }
@@ -50,28 +48,39 @@ resource_storage_steel_calc_effect = {
 				has_country_flag = steel_storage_draw
 			}
 		}
-		multiply_temp_variable = { resource_base_value = -1 }
-		subtract_from_variable = { steel_in_storage = resource_base_value }
+		subtract_from_variable = {
+			var = steel_in_storage
+			value = {
+				value = resource_base_value
+				multiply = -1
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 
 		if = { limit = { check_expr = { value = steel_in_storage less_than = 0 } }
-			#We overdrew and don't have enough in storage anymore, so reduce the amount taken
+			#We overdrew and don't have enough in storage anymore, so reduce the amount taken and empty the store
 			add_to_temp_variable = { resource_base_value = steel_in_storage }
+			set_variable = { steel_in_storage = 0 }
 		}
 		set_variable = { steel_from_storage = resource_base_value }
 		set_variable = { steel_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
 	}
-	else = {
-		if = {
-			#check if we ran out. if we ran out, stop pulling
-			limit = { check_expr = { value = steel_in_storage equals = 0 } }
-			set_variable = { steel_from_storage = 0 }
-			set_variable = { steel_storage_display = 0 }
-		}
+	else_if = {
+		#check if we ran out. if we ran out, stop pulling
+		limit = { check_expr = { value = steel_in_storage equals = 0 } }
+		set_variable = { steel_from_storage = 0 }
+		set_variable = { steel_storage_display = 0 }
 	}
 	if = {
 		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
-		add_to_variable = { steel_in_storage = resource_base_value }
+		add_to_variable = {
+			var = steel_in_storage
+			value = {
+				value = resource_base_value
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 		set_variable = { steel_from_storage = 0 }
 		set_variable = { steel_storage_display = resource_base_value }
 	}
@@ -79,9 +88,13 @@ resource_storage_steel_calc_effect = {
 
 resource_storage_light_calc_effect = {
 	#This should include all the steel that the nation has left, *including* the buff
-	set_temp_variable = { resource_base_value = resource@aluminium }
 	set_temp_variable = { old_resource_draw_value = light_from_storage }
-	subtract_from_temp_variable = { resource_base_value = old_resource_draw_value }
+	set_temp_variable = {
+		resource_base_value = {
+			value = resource@aluminium
+			subtract = light_from_storage
+		}
+	}
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
@@ -93,28 +106,39 @@ resource_storage_light_calc_effect = {
 				has_country_flag = light_storage_draw
 			}
 		}
-		multiply_temp_variable = { resource_base_value = -1 }
-		subtract_from_variable = { light_in_storage = resource_base_value }
+		subtract_from_variable = {
+			var = light_in_storage
+			value = {
+				value = resource_base_value
+				multiply = -1
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 
 		if = { limit = { check_expr = { value = light_in_storage less_than = 0 } }
-			#We overdrew and don't have enough in storage anymore, so reduce the amount taken
+			#We overdrew and don't have enough in storage anymore, so reduce the amount taken and empty the store
 			add_to_temp_variable = { resource_base_value = light_in_storage }
+			set_variable = { light_in_storage = 0 }
 		}
 		set_variable = { light_from_storage = resource_base_value }
 		set_variable = { light_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
 	}
-	else = {
-		if = {
-			#check if we ran out. if we ran out, stop pulling
-			limit = { check_expr = { value = light_in_storage equals = 0 } }
-			set_variable = { light_from_storage = 0 }
-			set_variable = { light_storage_display = 0 }
-		}
+	else_if = {
+		#check if we ran out. if we ran out, stop pulling
+		limit = { check_expr = { value = light_in_storage equals = 0 } }
+		set_variable = { light_from_storage = 0 }
+		set_variable = { light_storage_display = 0 }
 	}
 	if = {
 		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
-		add_to_variable = { light_in_storage = resource_base_value }
+		add_to_variable = {
+			var = light_in_storage
+			value = {
+				value = resource_base_value
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 		set_variable = { light_from_storage = 0 }
 		set_variable = { light_storage_display = resource_base_value }
 	}
@@ -122,9 +146,13 @@ resource_storage_light_calc_effect = {
 
 resource_storage_rubber_calc_effect = {
 	#This should include all the steel that the nation has left, *including* the buff
-	set_temp_variable = { resource_base_value = resource@rubber }
 	set_temp_variable = { old_resource_draw_value = rubber_from_storage }
-	subtract_from_temp_variable = { resource_base_value = old_resource_draw_value }
+	set_temp_variable = {
+		resource_base_value = {
+			value = resource@rubber
+			subtract = rubber_from_storage
+		}
+	}
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
@@ -136,36 +164,52 @@ resource_storage_rubber_calc_effect = {
 				has_country_flag = rubber_storage_draw
 			}
 		}
-		multiply_temp_variable = { resource_base_value = -1 }
-		subtract_from_variable = { rubber_in_storage = resource_base_value }
+		subtract_from_variable = {
+			var = rubber_in_storage
+			value = {
+				value = resource_base_value
+				multiply = -1
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 
 		if = { limit = { check_expr = { value = rubber_in_storage less_than = 0 } }
-			#We overdrew and don't have enough in storage anymore, so reduce the amount taken
+			#We overdrew and don't have enough in storage anymore, so reduce the amount taken and empty the store
 			add_to_temp_variable = { resource_base_value = rubber_in_storage }
+			set_variable = { rubber_in_storage = 0 }
 		}
 		set_variable = { rubber_from_storage = resource_base_value }
 		set_variable = { rubber_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
-	} else = {
-		if = {
-			#check if we ran out. if we ran out, stop pulling
-			limit = { check_expr = { value = rubber_in_storage equals = 0 } }
-			set_variable = { rubber_from_storage = 0 }
-			set_variable = { rubber_storage_display = 0 }
-		}
+	}
+	else_if = {
+		#check if we ran out. if we ran out, stop pulling
+		limit = { check_expr = { value = rubber_in_storage equals = 0 } }
+		set_variable = { rubber_from_storage = 0 }
+		set_variable = { rubber_storage_display = 0 }
 	}
 	if = {
 		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
-		add_to_variable = { rubber_in_storage = resource_base_value }
+		add_to_variable = {
+			var = rubber_in_storage
+			value = {
+				value = resource_base_value
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 		set_variable = { rubber_from_storage = 0 }
 		set_variable = { rubber_storage_display = resource_base_value }
 	}
 }
 
 resource_storage_tech_calc_effect = {
-	set_temp_variable = { resource_base_value = resource@tungsten }
 	set_temp_variable = { old_resource_draw_value = tech_from_storage }
-	subtract_from_temp_variable = { resource_base_value = old_resource_draw_value }
+	set_temp_variable = {
+		resource_base_value = {
+			value = resource@tungsten
+			subtract = tech_from_storage
+		}
+	}
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
@@ -177,36 +221,52 @@ resource_storage_tech_calc_effect = {
 				has_country_flag = tech_storage_draw
 			}
 		}
-		multiply_temp_variable = { resource_base_value = -1 }
-		subtract_from_variable = { tech_in_storage = resource_base_value }
+		subtract_from_variable = {
+			var = tech_in_storage
+			value = {
+				value = resource_base_value
+				multiply = -1
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 
 		if = { limit = { check_expr = { value = tech_in_storage less_than = 0 } }
-			#We overdrew and don't have enough in storage anymore, so reduce the amount taken
+			#We overdrew and don't have enough in storage anymore, so reduce the amount taken and empty the store
 			add_to_temp_variable = { resource_base_value = tech_in_storage }
+			set_variable = { tech_in_storage = 0 }
 		}
 		set_variable = { tech_from_storage = resource_base_value }
 		set_variable = { tech_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
-	} else = {
-		if = {
-			#check if we ran out. if we ran out, stop pulling
-			limit = { check_expr = { value = tech_in_storage equals = 0 } }
-			set_variable = { tech_from_storage = 0 }
-			set_variable = { tech_storage_display = 0 }
-		}
+	}
+	else_if = {
+		#check if we ran out. if we ran out, stop pulling
+		limit = { check_expr = { value = tech_in_storage equals = 0 } }
+		set_variable = { tech_from_storage = 0 }
+		set_variable = { tech_storage_display = 0 }
 	}
 	if = {
 		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
-		add_to_variable = { tech_in_storage = resource_base_value }
+		add_to_variable = {
+			var = tech_in_storage
+			value = {
+				value = resource_base_value
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 		set_variable = { tech_from_storage = 0 }
 		set_variable = { tech_storage_display = resource_base_value }
 	}
 }
 
 resource_storage_precious_calc_effect = {
-	set_temp_variable = { resource_base_value = resource@chromium }
 	set_temp_variable = { old_resource_draw_value = precious_from_storage }
-	subtract_from_temp_variable = { resource_base_value = old_resource_draw_value }
+	set_temp_variable = {
+		resource_base_value = {
+			value = resource@chromium
+			subtract = precious_from_storage
+		}
+	}
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
@@ -218,28 +278,39 @@ resource_storage_precious_calc_effect = {
 				has_country_flag = precious_storage_draw
 			}
 		}
-
-		multiply_temp_variable = { resource_base_value = -1 }
-		subtract_from_variable = { precious_in_storage = resource_base_value }
+		subtract_from_variable = {
+			var = precious_in_storage
+			value = {
+				value = resource_base_value
+				multiply = -1
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 
 		if = { limit = { check_expr = { value = precious_in_storage less_than = 0 } }
-			#We overdrew and don't have enough in storage anymore, so reduce the amount taken
+			#We overdrew and don't have enough in storage anymore, so reduce the amount taken and empty the store
 			add_to_temp_variable = { resource_base_value = precious_in_storage }
+			set_variable = { precious_in_storage = 0 }
 		}
 		set_variable = { precious_from_storage = resource_base_value }
 		set_variable = { precious_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
-	} else = {
-		if = {
-			#check if we ran out. if we ran out, stop pulling
-			limit = { check_expr = { value = precious_in_storage equals = 0 } }
-			set_variable = { precious_from_storage = 0 }
-			set_variable = { precious_storage_display = 0 }
-		}
+	}
+	else_if = {
+		#check if we ran out. if we ran out, stop pulling
+		limit = { check_expr = { value = precious_in_storage equals = 0 } }
+		set_variable = { precious_from_storage = 0 }
+		set_variable = { precious_storage_display = 0 }
 	}
 	if = {
 		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
-		add_to_variable = { precious_in_storage = resource_base_value }
+		add_to_variable = {
+			var = precious_in_storage
+			value = {
+				value = resource_base_value
+				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+			}
+		}
 		set_variable = { precious_from_storage = 0 }
 		set_variable = { precious_storage_display = resource_base_value }
 	}

@@ -88,4 +88,4 @@ Before adding an entry, verify:
 
 - PR description conventions: `.claude/docs/pr-conventions.md`
 - Event conventions: `.claude/docs/event-reference.md`
-- Localisation rules: `.claude/rules/localisation-rules.md`
+- Localisation rules: `.claude/docs/localisation-rules.md`

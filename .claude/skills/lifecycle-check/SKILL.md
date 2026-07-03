@@ -62,7 +62,7 @@ Cannot be checked from files. Mark "not verifiable from code" and remind the use
 | Localisation spell-check | Cannot be checked automatically — note as "manual review needed" |
 | error.log clear          | Cannot be checked from files — note as "requires in-game test"   |
 | Playtest done            | Cannot be checked — note as "requires manual confirmation"       |
-| Code Resource compliance | Note that `/content-review` and `/review-branch` should be run   |
+| Code Resource compliance | Note that `/content-review` and `/audit` should be run           |
 
 #### Completion Phase
 

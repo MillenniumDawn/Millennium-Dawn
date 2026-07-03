@@ -181,6 +181,27 @@ _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 # nested deeper and are not matched.
 _EVENT_TITLEDESC_PATTERN = re.compile(r"^\t(?:title|desc)\s*=\s*(.+)$", re.MULTILINE)
 
+# `id = X` line inside an event block (literal single-space form, distinct
+# from _EVENT_ID_PATTERN's \s* form used in metadata parsing). Reused across
+# validate_unsupported_title_desc / validate_missing_triggered_only /
+# validate_missing_localisation / validate_triggered_only_unreferenced.
+_EVENT_ID_LITERAL_RE = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+
+# title/desc block-vs-inline detection (validate_unsupported_title_desc).
+_TITLE_DESC_BLOCK_RE = {
+    lt: re.compile(r"^\t" + lt + r" = \{", flags=re.MULTILINE)
+    for lt in ("title", "desc")
+}
+_TITLE_DESC_INLINE_RE = {
+    lt: re.compile(r"^\t" + lt + r" = \w", flags=re.MULTILINE)
+    for lt in ("title", "desc")
+}
+
+# Extracts values from title/desc/name fields that look like loc keys (contain
+# a dot). Covers simple form (title = foo.1.t) and block form
+# (triggered_desc { desc = foo.1.t }). validate_missing_localisation.
+_LOC_REF_PATTERN = re.compile(r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE)
+
 
 def _extract_random_event_ids(text: str) -> set:
     """Find event IDs referenced inside ``random_events = { ... }`` blocks.
@@ -295,7 +316,9 @@ class Validator(BaseValidator):
         if self._random_events_cache is not None:
             return self._random_events_cache
 
-        files = self._collect_files(["common/on_actions/**/*.txt"])
+        # Lookup pass: must scan full repo even in staged mode, or staged
+        # events lose their random_events MTTH exemption.
+        files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
         ids: set = set()
         for filepath in files:
             text = FileOpener.open_text_file(
@@ -315,16 +338,15 @@ class Validator(BaseValidator):
 
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
-        id_pat = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
         results = []
 
         for line_type in ["title", "desc"]:
-            block_pat = re.compile(r"^\t" + line_type + r" = \{", flags=re.MULTILINE)
-            inline_pat = re.compile(r"^\t" + line_type + r" = \w", flags=re.MULTILINE)
+            block_pat = _TITLE_DESC_BLOCK_RE[line_type]
+            inline_pat = _TITLE_DESC_INLINE_RE[line_type]
 
             for event in events:
                 if block_pat.search(event) and inline_pat.search(event):
-                    eid_match = id_pat.findall(event)
+                    eid_match = _EVENT_ID_LITERAL_RE.findall(event)
                     eid = eid_match[0] if eid_match else "unknown"
                     results.append(
                         f"{eid} - {paths.get(event, 'unknown')} - invalid {line_type} (has both block and inline forms)"
@@ -344,11 +366,10 @@ class Validator(BaseValidator):
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
         results = []
-        id_pattern = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
 
         for event in events:
             if "is_triggered_only = yes" not in event:
-                event_id = id_pattern.findall(event)
+                event_id = _EVENT_ID_LITERAL_RE.findall(event)
                 eid = event_id[0] if event_id else "unknown"
                 filename = paths.get(event, "unknown")
                 results.append(f"{eid} - {filename}")
@@ -393,24 +414,17 @@ class Validator(BaseValidator):
         loc_keys = self._load_localisation_keys()
         self.log(f"  Found {len(events)} events, {len(loc_keys)} localisation keys")
 
-        # Extracts values from title/desc/name fields that look like loc keys (contain a dot).
-        # Covers simple form (title = foo.1.t) and block form (triggered_desc { desc = foo.1.t }).
-        ref_pattern = re.compile(
-            r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE
-        )
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
-
         results = []
         for event in events:
             # Hidden events display no window, so their title/desc/option-name
             # loc is dead — never flag them for missing keys.
             if "hidden = yes" in event:
                 continue
-            eid_matches = pattern_id.findall(event)
+            eid_matches = _EVENT_ID_LITERAL_RE.findall(event)
             eid = eid_matches[0] if eid_matches else "unknown"
             filename = paths.get(event, "unknown")
 
-            loc_refs = [k for k in ref_pattern.findall(event) if "." in k]
+            loc_refs = [k for k in _LOC_REF_PATTERN.findall(event) if "." in k]
             missing = [k for k in loc_refs if k not in loc_keys]
             for key in missing:
                 results.append(f"{eid} - {filename}: missing loc key '{key}'")
@@ -429,12 +443,11 @@ class Validator(BaseValidator):
         )
 
         events, paths = self._get_all_events()
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
 
         triggered_only_ids: Dict[str, str] = {}
         for event in events:
             if "is_triggered_only = yes" in event:
-                matches = pattern_id.findall(event)
+                matches = _EVENT_ID_LITERAL_RE.findall(event)
                 if matches:
                     eid = matches[0]
                     triggered_only_ids[eid] = paths.get(event, "unknown")
@@ -443,8 +456,11 @@ class Validator(BaseValidator):
             f"  Found {len(triggered_only_ids)} triggered-only events — scanning for references..."
         )
 
+        # Reference scan: must cover the full repo even in staged mode — a
+        # staged event's references usually live in unstaged files.
         txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+            ignore_staged=True,
         )
         tracked = frozenset(triggered_only_ids.keys())
         args_list = [(f, tracked) for f in txt_files]

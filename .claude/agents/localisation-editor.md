@@ -1,7 +1,7 @@
 ---
 name: localisation-editor
 description: "Review and improve English localisation strings for any MD loc file — focus trees, events, decisions, ideas, scripted-GUI tooltips. Fixes grammar, spelling, tone, and adherence to project loc conventions."
-model: sonnet
+model: haiku
 color: blue
 memory: project
 ---
@@ -28,7 +28,7 @@ Caller passes one of:
 
 ## Required reading
 
-`.claude/docs/agent-conventions.md`, `.claude/rules/localisation-rules.md`, `.claude/docs/typo-watchlist.md`.
+`.claude/docs/agent-conventions.md`, `.claude/docs/localisation-rules.md`, `.claude/docs/typo-watchlist.md`.
 
 ## Workflow
 
