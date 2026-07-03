@@ -59,6 +59,7 @@ USAGE
 
 Needs scipy.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -240,14 +241,16 @@ def solve_amplitudes():
         80,
     )  # nuclear outperforms fossil by 2015
     pr = brentq(
-        lambda p: metric("ren", 2019, pf, p, pfis, 0)
-        - metric("fos", 2019, pf, 0, 0, 0),
+        lambda p: (
+            metric("ren", 2019, pf, p, pfis, 0) - metric("fos", 2019, pf, 0, 0, 0)
+        ),
         0.01,
         200,
     )  # renewable beats fossil by 2020
     pfus = brentq(
-        lambda p: metric("nuc", 2060, pf, pr, pfis, p)
-        - metric("ren", 2060, pf, pr, 0, 0),
+        lambda p: (
+            metric("nuc", 2060, pf, pr, pfis, p) - metric("ren", 2060, pf, pr, 0, 0)
+        ),
         0.01,
         200,
     )  # nuclear (fusion) retakes by 2060, stays above renewable at 2080

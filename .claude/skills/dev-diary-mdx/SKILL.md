@@ -96,12 +96,16 @@ Prompt for the fields that can't be reliably derived, offering defaults:
 - **description** — one line.
 - **author** — the **real** developer handle (e.g. `Luigi`). NOT the in-character
   narrator ("Luigi IV von Limingly").
-- **version tag** — default `v2.0`.
+- **version** — default `v2.0`. This is its own frontmatter field (not a tag)
+  and is schema-required: it must match `^v\d+\.\d+$` (see
+  `docs/src/content.config.ts`), or `bun run check` fails.
 - **date** — default today, format `YYYY-MM-DD`.
 
 Derive the **slug** by kebab-casing the title *without* the "Dev Diary #NN:"
 prefix (e.g. `Greenland: Holiday Paradise` -> `greenland-holiday-paradise`).
-Build `permalink: /dev-diaries/<NNN>-<slug>/` (zero-padded NNN).
+Build `permalink: /dev-diaries/<N>-<slug>/` using the **unpadded** diary number
+(`/dev-diaries/58-greenland-holiday-paradise/`, matching the `#NN` in the title).
+The `.mdx` filename keeps the zero-padded `<NNN>-<slug>.mdx` form.
 
 ## Step 5 — Assemble the `.mdx`
 
@@ -112,12 +116,12 @@ Write `docs/src/content/devDiaries/<NNN>-<slug>.mdx`, **UTF-8 without BOM**
 ---
 title: "Dev Diary #58: Greenland"
 description: <one line>
-permalink: /dev-diaries/058-greenland-holiday-paradise/
+permalink: /dev-diaries/58-greenland-holiday-paradise/
 author: Luigi
 date: 2026-06-12
+version: "v2.0"
 tags:
   - dev diary
-  - v2.0
 ---
 
 _By Luigi – 12 June 2026_
@@ -148,9 +152,9 @@ Body rules:
   - When two visuals are described in separate passages of one paragraph (e.g.
     the military tree, then "Moving to the GIS tree…"), **split** the paragraph
     at that boundary so each image sits with its own passage.
-  - Match the repo's reference form exactly:
-    `![picture1](assets/images/dev-diaries/<NNN>/picture-1.png)` — alt text
-    `![pictureN]`. (Descriptive alt text is more accessible; offer it as an
+  - Match the repo's reference form exactly, with an **absolute** path (leading
+    `/`): `![picture1](/assets/images/dev-diaries/<NNN>/picture-1.png)` — alt
+    text `![pictureN]`. (Descriptive alt text is more accessible; offer it as an
     option but default to `![pictureN]`.)
   - **If the prose gives no cue for an image** (e.g. a Decisions screenshot the
     author never calls out), do not drop it — place it at the position it

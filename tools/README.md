@@ -4,13 +4,16 @@ Development tools and scripts used by the Millennium Dawn team for quality assur
 
 ## Requirements
 
-Some scripts rely on non-native packages for Python. Install them with:
+Some scripts rely on non-native packages for Python. The dependency lists live
+in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root
+(pip 25.1+):
 
 ```bash
-pip install -r requirements.txt
+pip install --group runtime   # requests, pillow (for the scripts that need them)
+pip install --group dev       # pytest, pyyaml, ruff (for tests and linting)
 ```
 
-**Packages:** requests, pillow
+`python tools/dev_setup.py` installs these for you as part of the dev setup.
 
 ## Quick Start
 
@@ -21,7 +24,7 @@ python3 tools/run.py --list                              # see all available too
 python3 tools/run.py estimate_gdp USA --all              # run a tool by name
 python3 tools/run.py find_idea common/ideas/Greek.txt    # partial names work too
 python3 tools/run.py publish_workshop release --full      # pass args through
-python3 tools/run.py gfx_entry_generator_linux            # works on any platform
+python3 tools/run.py gfx_entry_generator                  # works on any platform
 ```
 
 ## Directory Structure
@@ -40,7 +43,8 @@ tools/
 ├── shared_utils.py    Shared utilities (Colors, FileOpener, path helpers, arg parsers)
 ├── loc.py             Localisation utilities
 ├── logging_tool.py    Logging utility
-├── validate_staged.py Pre-commit hook: routes staged files to validators
+├── precommit_validate.py Pre-commit hook: runs the commit-stage validators in parallel
+├── validate_staged.py Legacy staged-file router (no longer wired into pre-commit)
 ├── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ├── generate_validation_report.py CI: generates PR validation reports
 ├── validate_tools.py  CI: validates Python scripts in tools/
@@ -61,10 +65,8 @@ tools/
 2. Subclass `BaseValidator` from `validator_common`. Implement `run_validations(self, files: List[str]) -> None`.
 3. Use `self.add_error(category, message, file, line)` for structured issues. The PR report renderer picks these up for inline annotations.
 4. Use `DEFAULT_EXTRA_SKIP_PATTERNS` from `validator_common` for `EXTRA_SKIP_PATTERNS` (extend with domain-specific patterns if needed).
-5. Wire into CI:
-   - Add an entry to `.github/workflows/coding-pipeline.yml` in the `validate-core` or `validate-targeted` matrix.
-   - Add a `stages: [manual]` entry in `.pre-commit-config.yaml` (validators are manual-only in pre-commit; CI runs them unconditionally).
-6. Wire into `validate_staged.py` if the validator should run on staged files during pre-commit.
+5. Wire into CI: add an entry to `.github/workflows/coding-pipeline.yml` in the `validate-core` or `validate-targeted` matrix. This is the gate for most validators — they run CI-only.
+6. Decide if it should also run on `git commit`. Heavy cross-reference validators stay CI-only. A fast validator can join the commit-stage set: add it to the `_REGISTRY` in `tools/precommit_validate.py` (with its path rules and `--strict` flag) and pin its selection in `tools/tests/precommit_validate_test.py`. The `config_drift_test` enforces that every validator runs on pre-commit or CI.
 7. Add tests in `tools/validation/tests/`.
 
 ```python
@@ -149,19 +151,15 @@ Auto-standardizers for focus trees, events, decisions, and ideas. See `standardi
 
 DDS conversion, GFX entry generation, texture and flag tools.
 
-| Script                           | Description                                                               |
-| -------------------------------- | ------------------------------------------------------------------------- |
-| **batchdds-2.py**                | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies) |
-| **convert_to_legacy_dds.py**     | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility    |
-| **duplicate_icon.py**            | Detects duplicate icon files in a focus tree file                         |
-| **find_duplicate_textures.py**   | Finds duplicate texture files in the mod                                  |
-| **flag-reference-checker.py**    | Validates flag references across the mod                                  |
-| **gfx_entry_generator.py**       | GFX sprite entry generator (Windows)                                      |
-| **gfx_entry_generator_gui.py**   | GFX sprite entry generator with GUI (Windows)                             |
-| **gfx_entry_generator_linux.py** | GFX sprite entry generator (cross-platform, deterministic sort)           |
-| **state_gfx.py**                 | Extracts province colors from state files and renders them on the map     |
-
-See `assets/gfxEntryGenerator.md` for the GFX entry generator guide.
+| Script                         | Description                                                                       |
+| ------------------------------ | --------------------------------------------------------------------------------- |
+| **batchdds-2.py**              | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies)         |
+| **convert_to_legacy_dds.py**   | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility            |
+| **duplicate_icon.py**          | Detects duplicate icon files in a focus tree file                                 |
+| **find_duplicate_textures.py** | Finds duplicate texture files in the mod                                          |
+| **flag-reference-checker.py**  | Validates flag references across the mod                                          |
+| **gfx_entry_generator_gui.py** | GFX sprite entry generator with GUI, calls into the root `gfx_entry_generator.py` |
+| **state_gfx.py**               | Extracts province colors from state files and renders them on the map             |
 
 ### Analysis (`analysis/`)
 
@@ -225,17 +223,23 @@ Tests for individual validators live in `validation/tests/`:
 
 ### Root-Level Scripts
 
-Hook entry points, CI tools, and shared libraries that stay at the `tools/` root.
+Hook entry points, CI tools, shared libraries, and other scripts that stay at the `tools/` root.
 
 | Script                            | Description                                                                                                                                                                                                                                                                                                                                        |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **validate_staged.py**            | Pre-commit hook: routes staged files to the correct validator                                                                                                                                                                                                                                                                                      |
+| **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                |
+| **validate_staged.py**            | Legacy staged-file router; no longer wired into pre-commit (superseded by `precommit_validate.py`)                                                                                                                                                                                                                                                 |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                   |
 | **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                    |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                |
+| **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                     |
 | **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse factories (`create_validation_parser`, `create_linting_parser`, `create_standard_parser`), entry points (`run_validator_main`, `run_tool_main`), `find_hoi4_install()`, `extract_block_from_text()`. |
 | **loc.py**                        | Localisation utilities                                                                                                                                                                                                                                                                                                                             |
 | **logging_tool.py**               | Logging utility                                                                                                                                                                                                                                                                                                                                    |
+| **cleanup_or.py**                 | Library for `linting/check_common_mistakes.py`: finds redundant `AND`/single-condition `OR` blocks                                                                                                                                                                                                                                                 |
+| **assign_mio_icons.py**           | Manual tool: assigns MIO trait icons deterministically from the trait's winning modifier                                                                                                                                                                                                                                                           |
+| **summarize_game_log.py**         | Manual tool: parses scripted `log =` lines out of game.log into a "what happened" report after a test run                                                                                                                                                                                                                                          |
+| **sync_dynamic_tokens.py**        | Manual tool: regenerates `common/synchronized_dynamic_tokens` from error.log                                                                                                                                                                                                                                                                       |
 
 ---
 

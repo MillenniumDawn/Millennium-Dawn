@@ -1618,7 +1618,6 @@ country_event = {
 			increase_corruption = yes
 		}
 		newline = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
 		add_relative_party_popularity = yes
@@ -2126,7 +2125,7 @@ country_event = {
 
 	is_triggered_only = yes
 
-	immediate = { set_country_flag = { flag = ENG_devolution_event_cooldown days = 180 value = 1 } }
+	immediate = { set_country_flag = { flag = ENG_devolution_event_cooldown days = 700 value = 1 } }
 
 	# Okay, Fine
 	option = {
@@ -4281,101 +4280,133 @@ country_event = {
 	}
 
 	immediate = {
-		random_list = {
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_edward_beach_youth_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_chairman_international_award }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						var = ENG_decision_edward_beach_youth_amount_taken
-						value = ENG_decision_edward_taken
-						compare = greater_than
+		# Only roll when at least one Edward decision is still available, otherwise the random_list zeroes out entirely.
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						NOT = { has_country_flag = ENG_edward_beach_youth_decision_activated }
+						has_completed_focus = ENG_chairman_international_award
+						NOT = { check_variable = { var = ENG_decision_edward_beach_youth_amount_taken value = ENG_decision_edward_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_edward_global_youth_decision_activated }
+						has_completed_focus = ENG_commonwealth_youth_outreach
+						NOT = { check_variable = { var = ENG_decision_edward_global_youth_amount_taken value = ENG_decision_edward_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_edward_arts_culture_patronage_decision_activated }
+						has_completed_focus = ENG_trustee_network
+						NOT = { check_variable = { var = ENG_decision_edward_culture_patronage_amount_taken value = ENG_decision_edward_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_edward_production_guild_decision_activated }
+						has_completed_focus = ENG_production_guild_patronage
+						NOT = { check_variable = { var = ENG_decision_edward_production_guild_amount_taken value = ENG_decision_edward_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_edward_veteran_support_decision_activated }
+						has_completed_focus = ENG_steady_hand
+						NOT = { check_variable = { var = ENG_decision_edward_veteran_support_amount_taken value = ENG_decision_edward_taken compare = greater_than } }
 					}
 				}
-				activate_decision = ENG_edward_beach_youth_decision
 			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_edward_global_youth_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_commonwealth_youth_outreach }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						var = ENG_decision_edward_global_youth_amount_taken
-						value = ENG_decision_edward_taken
-						compare = greater_than
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_beach_youth_decision_activated
 					}
-				}
-				activate_decision = ENG_edward_global_youth_decision
-			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_edward_arts_culture_patronage_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_trustee_network }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						var = ENG_decision_edward_culture_patronage_amount_taken
-						value = ENG_decision_edward_taken
-						compare = greater_than
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_chairman_international_award }
 					}
-				}
-				activate_decision = ENG_edward_arts_culture_patronage_decision
-			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_edward_production_guild_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_production_guild_patronage }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						var = ENG_decision_edward_production_guild_amount_taken
-						value = ENG_decision_edward_taken
-						compare = greater_than
+					modifier = {
+						factor = 0
+						check_variable = {
+							var = ENG_decision_edward_beach_youth_amount_taken
+							value = ENG_decision_edward_taken
+							compare = greater_than
+						}
 					}
+					activate_decision = ENG_edward_beach_youth_decision
 				}
-				activate_decision = ENG_edward_production_guild_decision
-			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_edward_veteran_support_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_steady_hand }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						var = ENG_decision_edward_veteran_support_amount_taken
-						value = ENG_decision_edward_taken
-						compare = greater_than
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_global_youth_decision_activated
 					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_commonwealth_youth_outreach }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							var = ENG_decision_edward_global_youth_amount_taken
+							value = ENG_decision_edward_taken
+							compare = greater_than
+						}
+					}
+					activate_decision = ENG_edward_global_youth_decision
 				}
-				activate_decision = ENG_edward_veteran_support_decision
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_arts_culture_patronage_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_trustee_network }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							var = ENG_decision_edward_culture_patronage_amount_taken
+							value = ENG_decision_edward_taken
+							compare = greater_than
+						}
+					}
+					activate_decision = ENG_edward_arts_culture_patronage_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_production_guild_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_production_guild_patronage }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							var = ENG_decision_edward_production_guild_amount_taken
+							value = ENG_decision_edward_taken
+							compare = greater_than
+						}
+					}
+					activate_decision = ENG_edward_production_guild_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_veteran_support_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_steady_hand }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							var = ENG_decision_edward_veteran_support_amount_taken
+							value = ENG_decision_edward_taken
+							compare = greater_than
+						}
+					}
+					activate_decision = ENG_edward_veteran_support_decision
+				}
 			}
 		}
 		country_event = {
@@ -4629,6 +4660,7 @@ country_event = {
 					}
 					activate_decision = ENG_philip_innovation_recognition_decision
 				}
+				1 = {}
 			}
 		}
 		country_event = {
@@ -5654,7 +5686,7 @@ country_event = {
 	}
 
 	option = {
-		name = britain_md.39.41
+		name = britain_md.39.d1
 		log = "[GetDateText]: [This.GetName]: britain_md.39.41 executed"
 		ai_chance = {
 			base = 1
@@ -5980,7 +6012,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: british_flavor.2.a executed"
 		set_temp_variable = { percent_change = 1 }
 		set_temp_variable = { tag_index = ENG }
-		set_temp_variable = { influence_target = CHl }
+		set_temp_variable = { influence_target = CHI }
 		change_influence_percentage = yes
 		ai_chance = {
 			base = 1
@@ -6054,7 +6086,6 @@ country_event = {
 	option = {
 		name = british_flavor.4.b
 		log = "[GetDateText]: [This.GetName]: british_flavor.4.b executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.025 }
 		set_temp_variable = { temp_outlook_increase = 0.015 }
 		add_relative_party_popularity = yes
