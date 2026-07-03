@@ -26,6 +26,33 @@ concurrency:
 permissions:
   contents: read
 
+# Single source of truth for the bundled workspace cache. The cache "version"
+# hashes the path list, so the save (prepare-workspace) and every restore must
+# use a byte-identical WORKSPACE_PATHS — any drift is a silent 100% miss.
+# resources/documentation carries modifiers_documentation.md, the vanilla
+# modifier list validate_modifiers.py needs (~4000 names it would otherwise
+# false-positive on).
+# github.sha (the merge commit) is part of the key because the bundle holds
+# merge-ref content: reopening a PR after main advanced produces a new merge
+# commit for the same head sha, and without it consumers would restore the
+# stale pre-advance bundle.
+env:
+  WORKSPACE_KEY: md-workspace-v1-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}-${{ github.sha }}
+  WORKSPACE_PATHS: |
+    common
+    events
+    history
+    localisation
+    interface
+    gfx/flags
+    tools
+    resources/documentation
+    .claude
+    CLAUDE.md
+    *.mod
+    .workspace-manifest
+    .validation_cache
+
 jobs:
   # ───────────────────────────────────────────────────────────────
   # Detect which file groups changed so downstream jobs can skip
@@ -52,6 +79,7 @@ jobs:
       scripted-effects: ${{ steps.filter.outputs.scripted-effects }}
       style: ${{ steps.filter.outputs.style }}
       style-files: ${{ steps.filter.outputs.style_files }}
+      content: ${{ steps.filter.outputs.content }}
     steps:
       # No checkout — on pull_request events dorny/paths-filter fetches the
       # changed-file list straight from the GitHub API, so cloning the repo
@@ -107,19 +135,34 @@ jobs:
               - 'common/**/*.txt'
               - 'events/**/*.txt'
               - 'history/**/*.txt'
+            # Union of everything any validator job consumes — gates
+            # prepare-workspace so a gfx-only or workflow-only PR doesn't
+            # build a ~200MB bundle no job will restore.
+            content:
+              - 'common/**'
+              - 'events/**'
+              - 'history/**'
+              - 'localisation/**'
+              - 'interface/**'
 
   # ───────────────────────────────────────────────────────────────
-  # Style & common-mistakes — diff-scoped to the changed .txt files only,
-  # so a PR is flagged for the style it introduced, not the repo-wide
-  # backlog. The changed-file list comes from detect-changes (style_files).
+  # Prepare workspace — the run's single checkout. Bundles the validated
+  # directories plus the shared .validation_cache (warmed on main by
+  # validator-cache.yml) into one cache entry that every downstream job
+  # restores instead of checking out (~35s checkout → ~5-10s restore).
   # ───────────────────────────────────────────────────────────────
-  styling-check:
-    name: Style Check
+  prepare-workspace:
+    name: Prepare Workspace
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.style == 'true'
+    if: needs.detect-changes.outputs.content == 'true'
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
+      # actions: read lets the post-save step verify the bundle exists.
+      actions: read
     steps:
+      # Checkout precedes the cache steps: hashFiles() below needs tools/ on
+      # disk. Cone mode also materialises root files (CLAUDE.md, *.mod).
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
@@ -132,8 +175,81 @@ jobs:
             interface
             gfx/flags
             tools
+            resources/documentation
             .claude
-            CLAUDE.md
+
+      # Shared validator disk cache, built on main by validator-cache.yml.
+      # Content-hash validity tags make a stale cache safe: changed files
+      # miss and re-parse; unchanged files skip the expensive scan. The
+      # primary key never exact-matches (saved keys carry a run_id suffix);
+      # the restore-keys prefixes do the real matching, newest entry first.
+      - name: Restore shared validator disk cache
+        id: valcache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .validation_cache
+          key: md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-${{ github.event.pull_request.base.sha }}
+          restore-keys: |
+            md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-
+            md-valcache-v1-${{ runner.os }}-
+
+      # mkdir guarantees the .validation_cache path exists on a cold restore
+      # (a missing path would degrade the bundle for every consumer).
+      - name: Write workspace manifest
+        run: |
+          mkdir -p .validation_cache
+          {
+            echo "pr=${{ github.event.pull_request.number }}"
+            echo "head_sha=${{ github.event.pull_request.head.sha }}"
+            echo "merge_sha=${{ github.sha }}"
+            echo "run_id=${{ github.run_id }}"
+            echo "valcache_matched=${{ steps.valcache.outputs.cache-matched-key }}"
+          } | tee .workspace-manifest
+
+      # Explicit save (not the combined action's post-job save): the upload
+      # completes inside this step, so `needs: prepare-workspace` fully
+      # orders save-before-restore for every consumer.
+      - name: Save bundled workspace cache
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.WORKSPACE_PATHS }}
+          key: ${{ env.WORKSPACE_KEY }}
+
+      # cache/save only warns on failure. Without this check a failed save
+      # leaves this job green while every consumer dies on
+      # fail-on-cache-miss, and "Re-run failed jobs" can never recover
+      # because the green prepare-workspace won't re-run.
+      - name: Verify the bundle exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh api "repos/${{ github.repository }}/actions/caches?key=${WORKSPACE_KEY}&per_page=1" --jq '.total_count')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Workspace bundle ${WORKSPACE_KEY} was not saved"
+            exit 1
+          fi
+          echo "Workspace bundle ${WORKSPACE_KEY} confirmed"
+
+  # ───────────────────────────────────────────────────────────────
+  # Style & common-mistakes — diff-scoped to the changed .txt files only,
+  # so a PR is flagged for the style it introduced, not the repo-wide
+  # backlog. The changed-file list comes from detect-changes (style_files).
+  # ───────────────────────────────────────────────────────────────
+  styling-check:
+    name: Style Check
+    needs: [detect-changes, prepare-workspace]
+    if: needs.detect-changes.outputs.style == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Built by prepare-workspace this run. If eviction broke a "Re-run
+      # failed jobs", use "Re-run all jobs" so the bundle is rebuilt.
+      - name: Restore prepared workspace
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.WORKSPACE_PATHS }}
+          key: ${{ env.WORKSPACE_KEY }}
+          fail-on-cache-miss: true
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -168,7 +284,7 @@ jobs:
   # ───────────────────────────────────────────────────────────────
   structural-lint:
     name: Structural Lint
-    needs: [detect-changes]
+    needs: [detect-changes, prepare-workspace]
     if: >-
       needs.detect-changes.outputs.common == 'true' ||
       needs.detect-changes.outputs.events == 'true' ||
@@ -176,16 +292,12 @@ jobs:
       needs.detect-changes.outputs.localisation == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - name: Restore prepared workspace
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          fetch-depth: 1
-          sparse-checkout: |
-            common
-            events
-            history
-            localisation
-            tools
+          path: ${{ env.WORKSPACE_PATHS }}
+          key: ${{ env.WORKSPACE_KEY }}
+          fail-on-cache-miss: true
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -195,9 +307,13 @@ jobs:
       - name: Check localisation UTF-8 BOM
         run: python3 tools/linting/validate_localization_encoding.py
 
+      # find, not `git ls-files`: the restored bundle has no .git. Only the
+      # root Millennium_Dawn.mod/descriptor.mod are in the bundle (via the
+      # `*.mod` cache path); resources/ isn't, so the exclusion is belt-and-
+      # braces against future path-list additions.
       - name: Check .mod file encoding
         run: |
-          git ls-files -z -- '*.mod' ':!resources' \
+          find . -name '*.mod' -not -path './resources/*' -print0 \
             | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
 
   # ───────────────────────────────────────────────────────────────
@@ -205,7 +321,7 @@ jobs:
   # ───────────────────────────────────────────────────────────────
   validate-core:
     name: Validate ${{ matrix.validator.title }}
-    needs: [detect-changes]
+    needs: [detect-changes, prepare-workspace]
     if: >-
       needs.detect-changes.outputs.common == 'true' ||
       needs.detect-changes.outputs.events == 'true' ||
@@ -219,136 +335,64 @@ jobs:
           - script: validate_variables.py
             name: variables
             title: "Variables"
-            sparse: |
-              common
-              events
-              history
-              localisation
-              tools
           - script: validate_scripted_localisation.py
             name: scripted-localisation
             title: "Scripted Localisation"
-            sparse: |
-              common
-              events
-              history
-              localisation
-              interface
-              tools
           - script: validate_cosmetic_tags.py
             name: cosmetic-tags
             title: "Cosmetic Tags"
-            sparse: |
-              common
-              events
-              gfx/flags
-              history
-              localisation
-              tools
           - script: validate_localisation.py
             name: localisation
             title: "Localisation"
-            sparse: |
-              common
-              events
-              history
-              localisation
-              interface
-              tools
           - script: validate_events.py
             name: events
             title: "Events"
-            sparse: |
-              common
-              events
-              history
-              localisation
-              tools
           - script: validate_history.py
             name: history-files
             title: "History Files"
-            sparse: |
-              common/technologies
-              history/countries
-              history/units
-              history/states
-              tools
           - script: validate_unused_scripted.py
             name: unused-scripted
             title: "Unused Scripted Effects & Triggers"
-            sparse: |
-              common
-              events
-              history
-              tools
           - script: validate_agency_upgrades.py
             name: agency-upgrades
             title: "Intelligence Agency Upgrades"
-            sparse: |
-              common
-              events
-              history
-              localisation
-              interface
-              tools
           - script: validate_ideas.py
             name: ideas
             title: "Idea References"
             # informational: 30 pre-existing undefined-idea references on main
             # need triage. Switch to --strict once the backlog is cleared.
             strict: false
-            sparse: |
-              common
-              events
-              history
-              localisation
-              tools
           - script: validate_set_variables.py
             name: set-variables
             title: "Set Variable References"
             # informational: ~89 pre-existing unused-variable findings on main
             # need triage. Switch to --strict once the backlog is cleared.
             strict: false
-            sparse: |
-              common
-              events
-              history
-              localisation
-              tools
-              interface
-          # NOTE: validate_defines.py needs vanilla HOI4 files (not checked in)
-          # so it only runs as a pre-commit hook on contributors' machines.
-          # validate_unused_textures.py is intentionally not wired here either
+          - script: validate_defines.py
+            name: defines
+            title: "Defines"
+            # cross-references the committed vanilla_defines.txt manifest (CI
+            # has no HOI4 install); regenerate it after a game update via
+            # gen_vanilla_defines_manifest.py.
+          # NOTE: validate_unused_textures.py is intentionally not wired here
           # — ~22k pre-existing unreferenced textures make it a periodic
           # mod-size audit, not a per-PR signal. Run manually via
           # `pre-commit run md-validate-unused-textures --hook-stage manual`.
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      # Bundle includes the shared .validation_cache — one restore replaces
+      # both the old checkout and per-validator cache steps.
+      - name: Restore prepared workspace
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          fetch-depth: 1
-          sparse-checkout: ${{ matrix.validator.sparse }}
+          path: ${{ env.WORKSPACE_PATHS }}
+          key: ${{ env.WORKSPACE_KEY }}
+          fail-on-cache-miss: true
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.x"
-
-      # Restore .validation_cache/ from a previous run keyed on the PR base
-      # commit + validator code hash. The disk cache holds per-file scan
-      # results (mtime/size keyed) and aggregate indexes — a PR touching N
-      # files re-scans only those N. The restore-keys fallback walks back to
-      # any prior cache for this validator so cold starts on a new base SHA
-      # still get partial reuse.
-      - name: Restore validator disk cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .validation_cache
-          key: validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
-          restore-keys: |
-            validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
-            validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-
 
       - name: Run validation
         # Per-matrix opt-out: `strict: false` makes the validator informational
@@ -377,7 +421,7 @@ jobs:
   # ───────────────────────────────────────────────────────────────
   validate-targeted:
     name: ${{ matrix.validator.title }}
-    needs: [detect-changes]
+    needs: [detect-changes, prepare-workspace]
     if: >-
       needs.detect-changes.outputs.decisions == 'true' ||
       needs.detect-changes.outputs.oob == 'true' ||
@@ -399,102 +443,53 @@ jobs:
             name: decisions
             title: "Validate Decisions"
             should_run: ${{ needs.detect-changes.outputs.decisions }}
-            sparse: |
-              common
-              events
-              localisation/english
-              tools
           - script: validate_oob_units.py
             name: oob-units
             title: "Validate OOB Unit Names"
             should_run: ${{ needs.detect-changes.outputs.oob }}
-            sparse: |
-              history/units
-              common/units
-              common/ai_templates
-              common/scripted_effects
-              tools
           - script: validate_ai_roles.py
             name: ai-roles
             title: "Validate AI Role References"
             should_run: ${{ needs.detect-changes.outputs.ai-strategy }}
-            sparse: |
-              common/ai_strategy
-              common/ai_templates
-              tools
           - script: validate_ai_navy.py
             name: ai-navy
             title: "Validate AI Navy"
             should_run: ${{ needs.detect-changes.outputs.ai-navy }}
-            sparse: |
-              common/ai_navy
-              common/units
-              tools
           - script: validate_ai_equipment.py
             name: ai-equipment
             title: "Validate AI Equipment Coverage"
             should_run: ${{ needs.detect-changes.outputs.ai-equipment }}
-            sparse: |
-              common/ai_equipment
-              common/units
-              tools
           - script: validate_factions.py
             name: factions
             title: "Validate Faction System"
             should_run: ${{ needs.detect-changes.outputs.factions }}
-            sparse: |
-              common/factions
-              tools
           - script: validate_scripted_gui.py
             name: scripted-gui
             title: "Validate Scripted GUIs"
             should_run: ${{ (needs.detect-changes.outputs.scripted-guis == 'true' || needs.detect-changes.outputs.interface == 'true') && 'true' || 'false' }}
-            sparse: |
-              common
-              events
-              interface
-              localisation/english
-              tools
           - script: validate_focus_tree.py
             name: focus-tree
             title: "Validate Focus Tree Structure"
+            # the ai_will_do guard checks (#2233) are WARNING-severity: the
+            # ~1900-focus backlog surfaces in reports without gating PRs.
             should_run: ${{ needs.detect-changes.outputs.national-focus }}
-            sparse: |
-              common/national_focus
-              localisation/english
-              tools
           - script: validate_on_actions.py
             name: on-actions
             title: "Validate On Actions"
             should_run: ${{ (needs.detect-changes.outputs.on-actions == 'true' || needs.detect-changes.outputs.events == 'true') && 'true' || 'false' }}
-            sparse: |
-              common/on_actions
-              events
-              tools
           - script: validate_scripted_params.py
             name: scripted-params
             title: "Validate Scripted Effect Parameters"
             should_run: ${{ (needs.detect-changes.outputs.scripted-effects == 'true' || needs.detect-changes.outputs.national-focus == 'true' || needs.detect-changes.outputs.decisions == 'true' || needs.detect-changes.outputs.events == 'true') && 'true' || 'false' }}
-            sparse: |
-              common
-              events
-              tools
           - script: validate_gfx_references.py
             name: gfx-references
             title: "Validate GFX Sprite References"
-            # informational: undefined-sprite errors in MD .gui files are
-            # overwhelmingly vanilla sprites (GFX_divider, GFX_tab_large, etc.)
-            # the validator can't cross-reference — CI has no vanilla HOI4
-            # install. Re-enable with a committed vanilla_sprites.txt manifest
-            # (generated from a local install) if real missing-sprite gating is
-            # wanted. Findings still post to the PR report.
+            # informational: vanilla sprite names now come from the committed
+            # tools/validation/vanilla_sprites.txt manifest (regenerate with
+            # gen_vanilla_sprites_manifest.py after a HOI4 version bump). Flip
+            # to strict once a clean report is observed on main.
             strict: false
             should_run: ${{ (needs.detect-changes.outputs.interface == 'true' || needs.detect-changes.outputs.scripted-guis == 'true') && 'true' || 'false' }}
-            sparse: |
-              interface
-              common/scripted_guis
-              common/scripted_localisation
-              tools
           - script: validate_modifiers.py
             name: modifiers
             title: "Validate Modifier Names"
@@ -502,55 +497,29 @@ jobs:
             # for rarely-used but valid vanilla modifiers
             strict: false
             should_run: ${{ needs.detect-changes.outputs.common }}
-            # resources/documentation holds modifiers_documentation.md — the
-            # authoritative vanilla modifier list. Without it the known-good set
-            # loses ~4000 names and the validator false-positives on every one.
-            sparse: |
-              common
-              tools
-              resources/documentation
           - script: validate_simplifications.py
             name: simplifications
             title: "Suggest Scope Merges"
             # informational: WARNING-only simplification hints, never gates a PR
             strict: false
             should_run: ${{ (needs.detect-changes.outputs.scripted-effects == 'true' || needs.detect-changes.outputs.national-focus == 'true' || needs.detect-changes.outputs.decisions == 'true' || needs.detect-changes.outputs.on-actions == 'true' || needs.detect-changes.outputs.events == 'true') && 'true' || 'false' }}
-            sparse: |
-              common/national_focus
-              common/decisions
-              common/scripted_effects
-              common/scripted_triggers
-              common/on_actions
-              events
-              tools
     steps:
-      # Per-entry gate: only fetch + run when this validator's file group changed.
-      # Steps below each carry the same `if` so a skipped entry reports cleanly
-      # as "success with no work done" instead of bulk-skipping the whole job.
-      - name: Checkout code
+      # Per-entry gate: only restore + run when this validator's file group
+      # changed. Steps below each carry the same `if` so a skipped entry
+      # reports cleanly as "success with no work done" instead of
+      # bulk-skipping the whole job.
+      - name: Restore prepared workspace
         if: matrix.validator.should_run == 'true'
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          fetch-depth: 1
-          sparse-checkout: ${{ matrix.validator.sparse }}
+          path: ${{ env.WORKSPACE_PATHS }}
+          key: ${{ env.WORKSPACE_KEY }}
+          fail-on-cache-miss: true
       - name: Set up Python
         if: matrix.validator.should_run == 'true'
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.x"
-      # Restore .validation_cache/ — see the matching step in validate-core for
-      # the key strategy. Per-file mtime/size entries mean unchanged files are
-      # not re-scanned; the basename_index aggregate cache also pays back
-      # whenever a validator calls get_full_path().
-      - name: Restore validator disk cache
-        if: matrix.validator.should_run == 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .validation_cache
-          key: validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
-          restore-keys: |
-            validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
-            validators-v4-${{ runner.os }}-${{ matrix.validator.name }}-
       - name: Run validation
         if: matrix.validator.should_run == 'true'
         run: |
