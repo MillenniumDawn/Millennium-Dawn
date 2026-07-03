@@ -33,9 +33,8 @@ from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import extract_block, log_message, strip_inline_comment
-
 from common_utils import BaseStandardizer, collapse_blank_runs, run_standardizer
+from shared_utils import extract_block, log_message, strip_inline_comment
 
 # --------------------------------------------------------------------------- #
 # Classification loaders (cached per mod root)
