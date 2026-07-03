@@ -9,7 +9,7 @@ Millennium Dawn coding standards.
 from typing import Any, Dict, List
 
 from common_utils import BaseStandardizer, run_standardizer
-from shared_utils import collapse_or_compact, compact_block, extract_block
+from shared_utils import compact_block, extract_block
 
 
 class MIOStandardizer(BaseStandardizer):
@@ -347,9 +347,7 @@ class MIOStandardizer(BaseStandardizer):
 
         inner = full.split("{", 1)[1].rsplit("}", 1)[0].strip()
         if "{" in inner or "}" in inner:
-            # Nested block: collapse single-leaf chains to one line, else keep
-            # multi-line via compact_block (the helper's own fallback).
-            return collapse_or_compact(block_lines, indent)
+            return compact_block(block_lines)
 
         tokens = inner.split()
         if not tokens:
@@ -589,20 +587,29 @@ class MIOStandardizer(BaseStandardizer):
         return result
 
     def compact_allowed_block(self, block_lines: List[str]) -> str:
-        """Compact allowed block into a single standardized line.
-
-        Preserves nested braces (e.g. `OR = { ... }`) by extracting the content
-        between the outermost `{` and `}` of the `allowed` block as a whole,
-        rather than dropping every `}` token individually.
-        """
+        """Compact allowed block into a single standardized line"""
         if not block_lines:
             return "\tallowed = { }"
 
-        full = " ".join(line.strip() for line in block_lines if line.strip())
-        if "{" not in full or "}" not in full:
-            return "\tallowed = { }"
+        content_parts = []
+        for line in block_lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("allowed"):
+                after_brace = stripped.split("{", 1)[1] if "{" in stripped else ""
+                if "}" in after_brace:
+                    after_brace = after_brace.split("}", 1)[0]
+                if after_brace.strip():
+                    content_parts.append(after_brace.strip())
+            elif stripped == "}":
+                continue
+            else:
+                before_brace = stripped.split("}", 1)[0].strip()
+                if before_brace:
+                    content_parts.append(before_brace)
 
-        content = full.split("{", 1)[1].rsplit("}", 1)[0].strip()
+        content = " ".join(content_parts).strip()
         content = " ".join(content.split())
         content = content.replace("{ ", "{").replace(" }", "}")
         content = content.replace("=", " = ")
