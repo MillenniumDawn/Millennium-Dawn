@@ -81,25 +81,27 @@ create_investment_project = {
     set_temp_variable = { added = 0 }
 
     for_each_loop = {
-        array = investments_projects_state
+        array = ROOT.investments_projects_state
         index = i
         value = v
 
         if = {
             limit = {
-                check_variable = { v = state }
-                check_variable = { investments_projects_building^i = building_index }
+                check_variable = { v = THIS }
+                check_variable = { ROOT.investments_projects_building^i = building_index }
             }
             
-            add_to_variable = { investments_projects_building_amount^i = amount }
+            add_to_variable = { ROOT.investments_projects_building_amount^i = amount }
 
             set_temp_variable = { added = 1 }
 
             calculate_investment_project_cost = yes
-            set_temp_variable = { treasury_change = investment_project_cost }
-            multiply_temp_variable = { treasury_change = amount }
-            multiply_temp_variable = { treasury_change = -1 }
-            modify_treasury_effect = yes
+			ROOT = {
+				set_temp_variable = { treasury_change = investment_project_cost }
+				multiply_temp_variable = { treasury_change = amount }
+				multiply_temp_variable = { treasury_change = -1 }
+				modify_treasury_effect = yes
+			}
         }
     }
 
@@ -108,48 +110,53 @@ create_investment_project = {
             check_variable = { added = 0 }
         }
 
-        add_to_array = { investments_projects = investments_projects^num }
-        add_to_array = { investments_projects_state = state }
+        add_to_array = { ROOT.investments_projects = investments_projects^num }
+        add_to_array = { ROOT.investments_projects_state = THIS }
 
-        add_to_array = { investments_projects_building = building_index }
-        add_to_array = { investments_projects_building_amount = amount }
+        add_to_array = { ROOT.investments_projects_building = building_index }
+        add_to_array = { ROOT.investments_projects_building_amount = amount }
 
         calculate_investment_project_time = yes
-        add_to_array = { investments_projects_building_time = project_time }
-        add_to_array = { investments_projects_building_time_max = project_time }
+        add_to_array = { ROOT.investments_projects_building_time = project_time }
+        add_to_array = { ROOT.investments_projects_building_time_max = project_time }
 
         calculate_investment_project_cost = yes
-        add_to_array = { investments_projects_building_cost = investment_project_cost }
+        add_to_array = { ROOT.investments_projects_building_cost = investment_project_cost }
 
-        set_temp_variable = { treasury_change = investment_project_cost }
-        multiply_temp_variable = { treasury_change = amount }
-        multiply_temp_variable = { treasury_change = -1 }
-        modify_treasury_effect = yes
+		ROOT = {
+			set_temp_variable = { treasury_change = investment_project_cost }
+			multiply_temp_variable = { treasury_change = amount }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
     }
 
-	set_variable = { MD_active_investments_projects = investments_projects^num }
-	clamp_variable = { var = MD_active_investments_projects min = 0 max = MD_investments_max_projects }
+	set_variable = { ROOT.MD_active_investments_projects = ROOT.investments_projects^num }
+	clamp_variable = { var = ROOT.MD_active_investments_projects min = 0 max = ROOT.MD_investments_max_projects }
 
-	update_dirty_investments = yes
+	ROOT = {
+		update_dirty_investments = yes
+		update_dirty_investments_mapicon = yes
+	}
 
 	custom_effect_tooltip = create_investment_project_tt
 }
 
 remove_investment_project = {
     for_each_loop = {
-        array = investments_projects_state
+        array = ROOT.investments_projects_state
         index = i
         value = v
         break = break
 
         if = {
             limit = {
-                check_variable = { v = state }
-                check_variable = { investments_projects_building^i = building_index }
+                check_variable = { v = THIS }
+                check_variable = { ROOT.investments_projects_building^i = building_index }
             }
             
             set_temp_variable = { index = i }
-            remove_investment_project_by_index = yes
+            ROOT = { remove_investment_project_by_index = yes }
             set_temp_variable = { break = 1 }
         }
     }
@@ -231,10 +238,12 @@ remove_investment_project_by_index = {
 	clamp_variable = { var = MD_active_investments_projects min = 0 max = MD_investments_max_projects }
 
 	update_dirty_investments = yes
+	update_dirty_investments_mapicon = yes
 
 	custom_effect_tooltip = remove_investment_project_tt
 }
 
+# TODO: to implement new system in future?
 add_investment = {
     set_temp_variable = { added = 0 }
 
@@ -513,8 +522,7 @@ calculate_investment_project_time = {
 # Scope: PREV = state, ROOT = investing country (unchanged from old system).
 # Writes/returns: temp_variable investment_project_cost (the monetary cost).
 calculate_investment_project_cost = {
-	set_temp_variable = { _cost_idx = building_index }
-	set_temp_variable = { investment_project_cost = global.build_cost_array^_cost_idx }
+	set_temp_variable = { investment_project_cost = global.build_cost_array^building_index }
 
 	# AC Build Cost Modifiers
 	set_temp_variable = { investments_cost_modifier = 1 }
@@ -578,4 +586,48 @@ update_investments_max_projects = {
 	set_variable = { MD_investments_max_projects = modifier@max_investment_projects_base_factor }
 	multiply_variable = { MD_investments_max_projects = modifier }
 	round_variable = MD_investments_max_projects
+}
+
+investments_on_daily = {
+	update_investments_max_projects = yes
+            
+	for_loop_effect = {
+		start = 1
+		end = MD_investments_max_projects
+		value = v
+
+		if = {
+			limit = {
+				check_variable = { v < investments_projects^num }
+			}
+
+			subtract_from_variable = { investments_projects_building_time^v = 1 }
+
+			if = {
+				limit = {
+					check_variable = { investments_projects_building_time^v < 0 }
+				}
+
+				set_temp_variable = { index = v }
+				var:investments_projects_state^v = {
+					set_temp_variable = { building_index = investments_projects_building^v }
+					add_finished_building = yes
+
+					owner = {
+						set_temp_variable = { country = ROOT }
+						set_temp_variable = { country_from = FROM }
+						set_temp_variable = { amount = investments_projects_building_cost^v }
+						multiply_temp_variable = { amount = global.build_const_return_array^vnvestments_projects_building^v }
+						add_investment = yes
+					}
+				}
+
+				set_temp_variable = { amount = 1 }
+				remove_investment_project_by_index = yes
+			}
+			else = {
+				update_dirty_investments = yes
+			}
+		}
+	}
 }
