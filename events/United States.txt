@@ -2419,6 +2419,14 @@ country_event = {
 			factor = 1.75
 			has_global_flag = USA_iraqi_energy_crisis
 		}
+		modifier = {
+			factor = 0.75
+			GRE = { has_active_mission = GRE_austerity_tension_mission }
+		}
+		modifier = {
+			factor = 0.5
+			GRE = { has_active_mission = GRE_debt_crisis_mission }
+		}
 		# Force it to trigger
 		modifier = {
 			factor = 3000
@@ -22931,9 +22939,9 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		NOT = {
-			original_tag = USA
-		}
+		NOT = { original_tag = USA }
+		# Don't invite nations the US would immediately eject
+		NOT = { USA_f35_kick_candidate = yes }
 	}
 
 	option = {
@@ -22946,6 +22954,7 @@ country_event = {
 		change_influence_percentage = yes
 		add_to_array = { global.f35_members = THIS.id }
 		set_country_flag = USA_accepted_into_f35_program
+		set_country_flag = { flag = USA_f35_recently_joined value = 1 days = 180 }
 		if = {
 			limit = {
 				USA = {
@@ -23746,6 +23755,7 @@ country_event = {
 			set_country_flag = USA_f35_legacy_members
 		}
 		set_country_flag = USA_accepted_into_f35_program
+		set_country_flag = { flag = USA_f35_recently_joined value = 1 days = 180 }
 		ai_chance = {
 			base = 10
 		}
@@ -30376,14 +30386,14 @@ country_event = {
 		name = department_of_state.242.b
 		log = "[GetDateText]: [This.GetName]: department_of_state.242.b executed"
 		add_political_power = 50
-		every_other_country = {
-			limit = {
-				has_idea = NATO_member
-				NOT = { original_tag = USA }
-			}
-			country_event = {
-				id = department_of_state.60
-				days = 2
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = { NOT = { original_tag = USA } }
+				country_event = {
+					id = department_of_state.60
+					days = 2
+				}
 			}
 		}
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT

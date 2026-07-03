@@ -1,5 +1,7 @@
-# Author(s): BobguyTDG, Tasos, AngriestBird
+# Author(s): BobguyTDG, Tasos, AngriestBird, TheGeneral
 add_namespace = greece
+add_namespace = greece_military
+add_namespace = greece_debt
 
 # Outrage amidst new Austerity policies
 country_event = {
@@ -29,7 +31,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = GRE
-		has_country_flag = GRE_austerity
+		GRE_austerity_ongoing = yes
 	}
 
 	mean_time_to_happen = {
@@ -40,14 +42,6 @@ country_event = {
 		modifier = {
 			factor = 1.5
 			has_idea = GRE_austerity_3
-		}
-		modifier = {
-			factor = 1.80
-			has_idea = GRE_austerity_4
-		}
-		modifier = {
-			factor = 2.5
-			has_idea = GRE_austerity_5
 		}
 	}
 
@@ -68,8 +62,8 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = GRE
-		has_country_flag = GRE_austerity
-		NOT = { has_idea = GRE_austerity_5 }
+		GRE_austerity_ongoing = yes
+		NOT = { has_idea = GRE_austerity_3 }
 	}
 
 	mean_time_to_happen = {
@@ -101,18 +95,6 @@ country_event = {
 			swap_ideas = {
 				remove_idea = GRE_austerity_2
 				add_idea = GRE_austerity_3
-			}
-		}
-		else_if = { limit = { has_idea = GRE_austerity_3 }
-			swap_ideas = {
-				remove_idea = GRE_austerity_3
-				add_idea = GRE_austerity_4
-			}
-		}
-		else_if = { limit = { has_idea = GRE_austerity_4 }
-			swap_ideas = {
-				remove_idea = GRE_austerity_4
-				add_idea = GRE_austerity_5
 			}
 		}
 	}
@@ -206,24 +188,6 @@ news_event = {
 	}
 }
 
-# Helios Airways Flight 522 Crash
-country_event = {
-	id = greece.9
-	title = greece.9.t
-	desc = greece.9.d
-	picture = GFX_plane_crash
-	is_triggered_only = yes
-	trigger = {
-		original_tag = GRE
-	}
-
-	option = {
-		name = greece.9.a
-		log = "[GetDateText]: [This.GetName]: greece.9.a executed"
-		add_stability = -0.02
-	}
-}
-
 # Faction Invite
 country_event = {
 	id = greece.10
@@ -236,9 +200,22 @@ country_event = {
 	option = {
 		name = greece.10.a
 		log = "[GetDateText]: [This.GetName]: greece.10.a executed"
-		SOV = { give_guarantee = GRE }
+		if = {
+			limit = { country_exists = SOV }
+			SOV = { give_guarantee = GRE }
+		}
 		GRE = { country_event = diplomatic_response.1 }
-		ai_chance = { base = 3 }
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 2
+				has_opinion = { target = SOV value > 30 }
+			}
+			modifier = {
+				factor = 0.25
+				has_opinion = { target = SOV value < 0 }
+			}
+		}
 	}
 
 	# Decline
@@ -246,7 +223,13 @@ country_event = {
 		name = greece.10.b
 		log = "[GetDateText]: [This.GetName]: greece.10.b executed"
 		GRE = { country_event = diplomatic_response.2 }
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_opinion = { target = SOV value < 0 }
+			}
+		}
 	}
 }
 
@@ -256,6 +239,7 @@ news_event = {
 	title = greece.11.t
 	desc = greece.11.d
 	picture = GFX_political_deal
+	major = yes
 	fire_only_once = yes
 	is_triggered_only = yes
 
@@ -481,8 +465,24 @@ country_event = {
 			set_temp_variable = { tag_index = CHI.id }
 			change_influence_percentage = yes
 		}
+		diplomatic_relation = {
+			country = GRE
+			relation = docking_rights
+			active = yes
+		}
 		set_temp_variable = { treasury_change = -1 }
 		modify_treasury_effect = yes
+		ai_chance = {
+			base = 75
+			modifier = {
+				add = 20
+				has_opinion = { target = GRE value > 20 }
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = GRE value < -20 }
+			}
+		}
 	}
 
 	# Deny
@@ -490,6 +490,13 @@ country_event = {
 		name = greece.18.b
 		log = "[GetDateText]: [This.GetName]: greece.18.b executed"
 		GRE = { country_event = greece.20 }
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 50
+				has_opinion = { target = GRE value < -20 }
+			}
+		}
 	}
 }
 
@@ -525,24 +532,6 @@ country_event = {
 	}
 }
 
-# Second Greek Civil War
-news_event = {
-	id = greece.21
-	title = greece.21.t
-	desc = greece.21.d
-	picture = GFX_news_generic_soldiers
-	major = yes
-	is_triggered_only = yes
-	trigger = {
-		GRE = { has_civil_war = yes }
-	}
-
-	# Terrible News...
-	option = {
-		name = greece.21.a
-	}
-}
-
 # Austerity tensions dissipate
 country_event = {
 	id = greece.22
@@ -552,7 +541,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = GRE
-		has_country_flag = GRE_austerity
+		GRE_austerity_ongoing = yes
 		NOT = { has_idea = GRE_austerity_1 }
 	}
 
@@ -564,14 +553,6 @@ country_event = {
 		modifier = {
 			factor = 1.25
 			has_idea = GRE_austerity_3
-		}
-		modifier = {
-			factor = 1.5
-			has_idea = GRE_austerity_4
-		}
-		modifier = {
-			factor = 1.75
-			has_idea = GRE_austerity_5
 		}
 		modifier = {
 			factor = 1.2
@@ -586,119 +567,4900 @@ country_event = {
 	}
 }
 
-# Enosis at Last
+## Historical Flavor Events
+
+# Death of Stephen Saunders - 2000
 country_event = {
-	id = greece.23
-	title = greece.23.t
-	desc = greece.23.d
-	# TODO: add a event picture
+	id = greece.500
+	title = greece.500.t
+	desc = greece.500.d
+	picture = GFX_GRE_generic
 	is_triggered_only = yes
 
+	# Crack down on domestic terrorism
 	option = {
-		name = greece.23.a
-		log = "[GetDateText]: [This.GetName]: greece.23.a executed"
-		ENG = { country_event = greece.24 }
-		812 = {
-			add_core_of = GRE
+		name = greece.500.a
+		log = "[GetDateText]: [This.GetName]: greece.500.a executed"
+		add_political_power = -25
+		add_stability = 0.02
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			set_country_flag = GRE_cracked_down_17N
+		}
+
+		ai_chance = {
+			base = 6
 		}
 	}
+
+	# Cooperate with international intelligence
 	option = {
-		name = greece.23.b
-		log = "[GetDateText]: [This.GetName]: greece.23.b executed"
-		ENG = { country_event = greece.25 }
+		name = greece.500.b
+		log = "[GetDateText]: [This.GetName]: greece.500.b executed"
+		add_political_power = 15
+		add_war_support = 0.01
+		if = {
+			limit = { country_exists = ENG }
+			ENG = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = medium_increase
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 4
+		}
 	}
 }
 
-# Return Akrotiri
+# Trial of the Revolutionary Organization - 2003
 country_event = {
-	id = greece.24
-	title = greece.24.t
-	desc = greece.24.d
-	# TODO: add a event picture
+	id = greece.501
+	title = greece.501.t
+	desc = greece.501.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Deliver harsh sentences
+	option = {
+		name = greece.501.a
+		log = "[GetDateText]: [This.GetName]: greece.501.a executed"
+		add_stability = 0.03
+		add_political_power = -15
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_country_flag = GRE_cracked_down_17N
+				add = 3
+			}
+		}
+	}
+
+	# Reform security services
+	option = {
+		name = greece.501.b
+		log = "[GetDateText]: [This.GetName]: greece.501.b executed"
+		add_political_power = 25
+		add_stability = 0.01
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# War on Terror Protests - 2003
+country_event = {
+	id = greece.502
+	title = greece.502.t
+	desc = greece.502.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Allow peaceful demonstrations
+	option = {
+		name = greece.502.a
+		log = "[GetDateText]: [This.GetName]: greece.502.a executed"
+		add_stability = -0.02
+		add_political_power = 20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 6
+		}
+	}
+
+	# Restrict protests to maintain order
+	option = {
+		name = greece.502.b
+		log = "[GetDateText]: [This.GetName]: greece.502.b executed"
+		add_stability = 0.02
+		add_war_support = 0.01
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# Helios Airways Flight 522 Crash - 2005
+country_event = {
+	id = greece.503
+	title = greece.503.t
+	desc = greece.503.d
+	picture = GFX_plane_crash
+	is_triggered_only = yes
+
+	# Launch aviation safety reforms
+	option = {
+		name = greece.503.a
+		log = "[GetDateText]: [This.GetName]: greece.503.a executed"
+		add_political_power = -30
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = -0.2 }
+		modify_treasury_effect = yes
+
+		ai_chance = {
+			base = 6
+		}
+	}
+
+	# Hold a national day of mourning
+	option = {
+		name = greece.503.b
+		log = "[GetDateText]: [This.GetName]: greece.503.b executed"
+		add_stability = -0.01
+		add_war_support = 0.02
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# Kurdish Protests in Athens - 2006
+country_event = {
+	id = greece.504
+	title = greece.504.t
+	desc = greece.504.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Allow the protests to continue
+	option = {
+		name = greece.504.a
+		log = "[GetDateText]: [This.GetName]: greece.504.a executed"
+		add_stability = -0.01
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		if = {
+			limit = { country_exists = TUR }
+			TUR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = small_decrease
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 4
+		}
+	}
+
+	# Disperse the crowds
+	option = {
+		name = greece.504.b
+		log = "[GetDateText]: [This.GetName]: greece.504.b executed"
+		add_stability = 0.01
+		add_political_power = -10
+		if = {
+			limit = { country_exists = TUR }
+			TUR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = small_increase
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 6
+		}
+	}
+}
+
+# Gaza Crisis Protests - 2006
+country_event = {
+	id = greece.505
+	title = greece.505.t
+	desc = greece.505.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Express solidarity with the protesters
+	option = {
+		name = greece.505.a
+		log = "[GetDateText]: [This.GetName]: greece.505.a executed"
+		add_stability = 0.01
+		add_political_power = -15
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	# Urge restraint and diplomatic solutions
+	option = {
+		name = greece.505.b
+		log = "[GetDateText]: [This.GetName]: greece.505.b executed"
+		add_political_power = 20
+		add_stability = -0.01
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# 2007 Greek Forest Fires
+country_event = {
+	id = greece.506
+	title = greece.506.t
+	desc = greece.506.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Mobilize emergency resources
+	option = {
+		name = greece.506.a
+		log = "[GetDateText]: [This.GetName]: greece.506.a executed"
+		add_political_power = -40
+		add_stability = 0.03
+		set_temp_variable = { treasury_change = -0.5 }
+		modify_treasury_effect = yes
+		142 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
+
+		ai_chance = {
+			base = 6
+		}
+	}
+
+	# Request international assistance
+	option = {
+		name = greece.506.b
+		log = "[GetDateText]: [This.GetName]: greece.506.b executed"
+		add_stability = -0.02
+		add_political_power = 15
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
+		142 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
+
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# Alexandros Grigoropoulos Death - 2008 Riots
+country_event = {
+	id = greece.507
+	title = greece.507.t
+	desc = greece.507.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Prosecute the officers responsible
+	option = {
+		name = greece.507.a
+		log = "[GetDateText]: [This.GetName]: greece.507.a executed"
+		add_stability = 0.02
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
+		141 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+			damage_building = {
+				type = offices
+				damage = 0.5
+			}
+		}
+
+		ai_chance = {
+			base = 6
+		}
+	}
+
+	# Deploy riot police to restore order
+	option = {
+		name = greece.507.b
+		log = "[GetDateText]: [This.GetName]: greece.507.b executed"
+		add_stability = -0.03
+		add_war_support = 0.02
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+		141 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+			damage_building = {
+				type = offices
+				damage = 1.0
+			}
+		}
+
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# 2009 Greek Forest Fires
+country_event = {
+	id = greece.508
+	title = greece.508.t
+	desc = greece.508.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Invest in fire prevention infrastructure
+	option = {
+		name = greece.508.a
+		log = "[GetDateText]: [This.GetName]: greece.508.a executed"
+		add_political_power = -35
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = -0.4 }
+		modify_treasury_effect = yes
+		141 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
+		142 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
+
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	# Focus relief on affected communities
+	option = {
+		name = greece.508.b
+		log = "[GetDateText]: [This.GetName]: greece.508.b executed"
+		add_stability = -0.01
+		add_political_power = 10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
+		141 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
+		142 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Golden Dawn Enters Parliament - 2012
+country_event = {
+	id = greece.509
+	title = greece.509.t
+	desc = greece.509.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Monitor their activities closely
+	option = {
+		name = greece.509.a
+		log = "[GetDateText]: [This.GetName]: greece.509.a executed"
+		add_political_power = -20
+		add_stability = 0.02
+		add_to_variable = { GRE_nationalist_drift_effect = -0.01 }
+		hidden_effect = {
+			set_country_flag = GRE_monitored_golden_dawn
+		}
+
+		ai_chance = {
+			base = 6
+		}
+	}
+
+	# Ignore them as a fringe movement
+	option = {
+		name = greece.509.b
+		log = "[GetDateText]: [This.GetName]: greece.509.b executed"
+		add_stability = -0.03
+		add_political_power = 10
+		add_to_variable = { GRE_nationalist_drift_effect = 0.02 }
+		hidden_effect = {
+			set_country_flag = GRE_ignored_golden_dawn
+		}
+
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# Greek Solution Party Forms - 2013
+country_event = {
+	id = greece.510
+	title = greece.510.t
+	desc = greece.510.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Acknowledge the new political landscape
+	option = {
+		name = greece.510.a
+		log = "[GetDateText]: [This.GetName]: greece.510.a executed"
+		add_political_power = 15
+		add_stability = -0.01
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	# Dismiss them as populists
+	option = {
+		name = greece.510.b
+		log = "[GetDateText]: [This.GetName]: greece.510.b executed"
+		add_stability = 0.01
+		add_political_power = -10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Death of Pavlos Fyssas - 2013
+country_event = {
+	id = greece.511
+	title = greece.511.t
+	desc = greece.511.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Crack down on Golden Dawn
+	option = {
+		name = greece.511.a
+		log = "[GetDateText]: [This.GetName]: greece.511.a executed"
+		add_stability = 0.03
+		add_political_power = -25
+		add_to_variable = { GRE_nationalist_drift_effect = -0.02 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			set_country_flag = GRE_cracked_down_golden_dawn
+		}
+
+		ai_chance = {
+			base = 7
+			modifier = {
+				has_country_flag = GRE_monitored_golden_dawn
+				add = 3
+			}
+		}
+	}
+
+	# Call for calm and due process
+	option = {
+		name = greece.511.b
+		log = "[GetDateText]: [This.GetName]: greece.511.b executed"
+		add_stability = -0.02
+		add_political_power = 15
+		add_to_variable = { GRE_nationalist_drift_effect = 0.01 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 3
+			modifier = {
+				has_country_flag = GRE_ignored_golden_dawn
+				add = 3
+			}
+		}
+	}
+}
+
+# Trial of Golden Dawn Members - 2015
+country_event = {
+	id = greece.512
+	title = greece.512.t
+	desc = greece.512.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Push for maximum sentences
+	option = {
+		name = greece.512.a
+		log = "[GetDateText]: [This.GetName]: greece.512.a executed"
+		add_stability = 0.03
+		add_political_power = -15
+		add_to_variable = { GRE_nationalist_drift_effect = -0.02 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 6
+			modifier = {
+				has_country_flag = GRE_cracked_down_golden_dawn
+				add = 4
+			}
+		}
+	}
+
+	# Let justice take its course
+	option = {
+		name = greece.512.b
+		log = "[GetDateText]: [This.GetName]: greece.512.b executed"
+		add_political_power = 20
+		add_stability = 0.01
+
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# Major Aegean Earthquake - 2017
+country_event = {
+	id = greece.513
+	title = greece.513.t
+	desc = greece.513.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Launch a national relief effort
+	option = {
+		name = greece.513.a
+		log = "[GetDateText]: [This.GetName]: greece.513.a executed"
+		add_political_power = -35
+		add_stability = 0.03
+		set_temp_variable = { treasury_change = -0.4 }
+		modify_treasury_effect = yes
+		143 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	# Cooperate with Turkey on relief
+	option = {
+		name = greece.513.b
+		log = "[GetDateText]: [This.GetName]: greece.513.b executed"
+		add_stability = 0.01
+		add_political_power = -10
+		143 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
+		if = {
+			limit = { country_exists = TUR }
+			TUR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = large_increase
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# 2018 Attica Wildfires
+country_event = {
+	id = greece.514
+	title = greece.514.t
+	desc = greece.514.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Overhaul civil protection systems
+	option = {
+		name = greece.514.a
+		log = "[GetDateText]: [This.GetName]: greece.514.a executed"
+		add_political_power = -40
+		add_stability = 0.03
+		set_temp_variable = { treasury_change = -0.8 }
+		modify_treasury_effect = yes
+		141 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+			damage_building = {
+				type = offices
+				damage = 0.5
+			}
+		}
+
+		ai_chance = {
+			base = 6
+		}
+	}
+
+	# Provide immediate aid to victims
+	option = {
+		name = greece.514.b
+		log = "[GetDateText]: [This.GetName]: greece.514.b executed"
+		add_stability = -0.02
+		add_political_power = 15
+		set_temp_variable = { treasury_change = -0.3 }
+		modify_treasury_effect = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+		141 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.5
+			}
+			damage_building = {
+				type = offices
+				damage = 1.0
+			}
+		}
+
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# Another Athenian Earthquake - 2019
+country_event = {
+	id = greece.515
+	title = greece.515.t
+	desc = greece.515.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Strengthen building codes
+	option = {
+		name = greece.515.a
+		log = "[GetDateText]: [This.GetName]: greece.515.a executed"
+		add_political_power = -30
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = -0.3 }
+		modify_treasury_effect = yes
+		141 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
+
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	# Provide emergency relief
+	option = {
+		name = greece.515.b
+		log = "[GetDateText]: [This.GetName]: greece.515.b executed"
+		add_stability = -0.01
+		add_political_power = 10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		141 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Cyprus offered reunification under the Hellenic confederation
+country_event = {
+	id = greece.620
+	title = greece.620.t
+	desc = greece.620.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+
+	# Accept reunification
+	option = {
+		name = greece.620.a
+		log = "[GetDateText]: [This.GetName]: greece.620.a executed"
+		FROM = {
+			transfer_state = 145
+			add_state_core = 145
+		}
+		if = {
+			limit = { FROM = { owns_state = 145 owns_state = 146 } }
+			news_event = Turkey.88
+		}
+		if = {
+			limit = { FROM = { owns_state = 812 } }
+			FROM = { add_state_core = 812 }
+		}
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 2
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# Remain independent
+	option = {
+		name = greece.620.b
+		log = "[GetDateText]: [This.GetName]: greece.620.b executed"
+		add_opinion_modifier = { target = FROM modifier = small_decrease }
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+# Northern Cyprus offered reunification under the Hellenic confederation
+country_event = {
+	id = greece.621
+	title = greece.621.t
+	desc = greece.621.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+
+	# Accept reunification
+	option = {
+		name = greece.621.a
+		log = "[GetDateText]: [This.GetName]: greece.621.a executed"
+		FROM = {
+			transfer_state = 146
+			add_state_core = 146
+		}
+		if = {
+			limit = { FROM = { owns_state = 145 owns_state = 146 } }
+			news_event = Turkey.88
+		}
+		if = {
+			limit = { FROM = { owns_state = 812 } }
+			FROM = { add_state_core = 812 }
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				factor = 2
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# Remain separate
+	option = {
+		name = greece.621.b
+		log = "[GetDateText]: [This.GetName]: greece.621.b executed"
+		add_opinion_modifier = { target = FROM modifier = small_decrease }
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+# Greece petitions Turkey for support with its housing crisis
+country_event = {
+	id = greece.630
+	title = greece.630.t
+	desc = greece.630.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Extend support
+	option = {
+		name = greece.630.a
+		log = "[GetDateText]: [This.GetName]: greece.630.a executed"
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		FROM = {
+			add_opinion_modifier = { target = ROOT modifier = medium_increase }
+			country_event = { id = greece.631 days = 1 }
+		}
+		ai_chance = {
+			base = 6
+			modifier = {
+				factor = 2
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# Decline to intervene
+	option = {
+		name = greece.630.b
+		log = "[GetDateText]: [This.GetName]: greece.630.b executed"
+		FROM = { country_event = { id = greece.632 days = 1 } }
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# Turkey extends housing support
+country_event = {
+	id = greece.631
+	title = greece.631.t
+	desc = greece.631.d
+	picture = GFX_GRE_generic
 	is_triggered_only = yes
 
 	option = {
-		name = greece.24.a
-		log = "[GetDateText]: [This.GetName]: greece.24.a executed"
-		GRE = {
-			country_event = greece.26
-			if = {
-				limit = { has_country_flag = GRE_British_Akrotiri }
-				clr_country_flag = GRE_British_Akrotiri
+		name = greece.631.a
+		log = "[GetDateText]: [This.GetName]: greece.631.a executed"
+		modify_timed_idea = {
+			idea = GRE_homelessness_crisis_idea
+			days = -40
+		}
+		add_stability = 0.01
+	}
+}
+
+# Turkey declines to help
+country_event = {
+	id = greece.632
+	title = greece.632.t
+	desc = greece.632.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.632.a
+		log = "[GetDateText]: [This.GetName]: greece.632.a executed"
+	}
+}
+
+# A record tourist season
+country_event = {
+	id = greece.641
+	title = greece.641.t
+	desc = greece.641.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Reinvest in the islands
+	option = {
+		name = greece.641.a
+		log = "[GetDateText]: [This.GetName]: greece.641.a executed"
+		add_stability = 0.03
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 40
+				has_stability < 0.5
 			}
 		}
+	}
+
+	# Let private operators keep the windfall
+	option = {
+		name = greece.641.b
+		log = "[GetDateText]: [This.GetName]: greece.641.b executed"
+		set_temp_variable = { treasury_change = 10 }
+		modify_treasury_effect = yes
+		add_stability = -0.01
 		ai_chance = {
-			base = 0.25
+			base = 40
 			modifier = {
-				ai_is_threatened = yes
-				factor = 0.25
+				add = 40
+				check_variable = { treasury < 0 }
+			}
+		}
+	}
+}
+
+# The diaspora answers
+country_event = {
+	id = greece.642
+	title = greece.642.t
+	desc = greece.642.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Launch a sovereign diaspora fund
+	option = {
+		name = greece.642.a
+		log = "[GetDateText]: [This.GetName]: greece.642.a executed"
+		set_temp_variable = { treasury_change = 8 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 40
+				check_variable = { treasury < 0 }
+			}
+		}
+	}
+
+	# Match remittances with tax relief
+	option = {
+		name = greece.642.b
+		log = "[GetDateText]: [This.GetName]: greece.642.b executed"
+		add_stability = 0.03
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 40
+				has_stability < 0.5
+			}
+		}
+	}
+}
+
+# Brussels opens the taps
+country_event = {
+	id = greece.643
+	title = greece.643.t
+	desc = greece.643.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Front-load the projects
+	option = {
+		name = greece.643.a
+		log = "[GetDateText]: [This.GetName]: greece.643.a executed"
+		increase_economic_growth = yes
+		ai_chance = { base = 60 }
+	}
+
+	# Spend it carefully
+	option = {
+		name = greece.643.b
+		log = "[GetDateText]: [This.GetName]: greece.643.b executed"
+		add_stability = 0.03
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 40
+				has_stability < 0.5
+			}
+		}
+	}
+}
+
+# The multi-vector doctrine
+country_event = {
+	id = greece.650
+	title = greece.650.t
+	desc = greece.650.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Diversify our energy and trade partners
+	option = {
+		name = greece.650.a
+		log = "[GetDateText]: [This.GetName]: greece.650.a executed"
+		increase_economic_growth = yes
+		add_political_power = 40
+		add_stability = 0.03
+		ai_chance = { base = 55 }
+	}
+
+	# Position Greece as a regional mediator
+	option = {
+		name = greece.650.b
+		log = "[GetDateText]: [This.GetName]: greece.650.b executed"
+		add_political_power = 100
+		add_stability = 0.05
+		add_war_support = 0.03
+		ai_chance = { base = 45 }
+	}
+}
+
+country_event = {
+	id = greece_military.01
+	title = greece_military.01.t
+	desc = greece_military.01.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece_military.01.a
+		log = "[GetDateText]: [This.GetName]: greece_military.01.a executed"
+		mio:GRE_eas_materiel_manufacturer = {
+			add_mio_size = 1
+			complete_mio_trait = GRE_eas_mio_trait_pyrkal_propellant_and_motor_casting
+		}
+
+		set_country_flag = GRE_pyrkal_merge
+
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+country_event = {
+	id = greece_military.02
+	title = greece_military.02.t
+	desc = greece_military.02.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	# Expand the Fleet
+	option = {
+		name = greece_military.02.a
+		log = "[GetDateText]: [This.GetName]: greece_military.02.a executed"
+		add_timed_idea = {
+			idea = TUR_naval_expansion_response
+			days = 1095
+		}
+		add_opinion_modifier = { target = FROM modifier = GRE_aegean_encroachment }
+
+		ai_chance = {
+			base = 7
+		}
+	}
+
+	# Lodge a Diplomatic Protest
+	option = {
+		name = greece_military.02.b
+		log = "[GetDateText]: [This.GetName]: greece_military.02.b executed"
+		add_opinion_modifier = { target = FROM modifier = GRE_aegean_encroachment }
+
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+
+country_event = {
+	id = greece_debt.1
+	title = greece_debt.1.t
+	desc = greece_debt.1.desc
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	# India
+	option = {
+		name = greece_debt.1.a
+		trigger = {
+			country_exists = RAJ
+		}
+		log = "[GetDateText]: [This.GetName]: greece_debt.1.a executed"
+		RAJ = { country_event = { id = greece_debt.2 days = 2 random_hours = 12 } }
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		custom_effect_tooltip = GRE_debt_swap_accept_tt
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Russia
+	option = {
+		name = greece_debt.1.b
+		trigger = {
+			country_exists = SOV
+		}
+		log = "[GetDateText]: [This.GetName]: greece_debt.1.b executed"
+		SOV = { country_event = { id = greece_debt.2 days = 2 random_hours = 12 } }
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		custom_effect_tooltip = GRE_debt_swap_accept_tt
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# China
+	option = {
+		name = greece_debt.1.c
+		trigger = {
+			country_exists = CHI
+		}
+		log = "[GetDateText]: [This.GetName]: greece_debt.1.c executed"
+		CHI = { country_event = { id = greece_debt.2 days = 2 random_hours = 12 } }
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		custom_effect_tooltip = GRE_debt_swap_accept_tt
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Stay the Course
+	option = {
+		name = greece_debt.1.e
+		log = "[GetDateText]: [This.GetName]: greece_debt.1.e executed"
+
+		add_political_power = 100
+		add_stability = 0.05
+
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 5
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+# [FROM.GetName] Requests Debt Swap Deals
+country_event = {
+	id = greece_debt.2
+	title = greece_debt.2.t
+	desc = greece_debt.2.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Reject the Deal
+	option = {
+		name = greece_debt.2.a
+		log = "[GetDateText]: [This.GetName]: greece_debt.2.a executed"
+		add_opinion_modifier = { target = FROM modifier = GRE_debt_swap_rejected_opinion }
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
+	}
+
+	# Accept the Deal
+	option = {
+		name = greece_debt.2.b
+		log = "[GetDateText]: [This.GetName]: greece_debt.2.b executed"
+		FROM = {
+			GRE_calculate_proposed_debt = yes
+			set_variable = { GRE_debt_swap_holder_nation = PREV.id }
+			set_variable = { GRE_creditor_target = PREV.id }
+			set_temp_variable = { GRE_creditor_debt_change = GRE_proposed_debt_amount }
+			GRE_add_creditor = yes
+		}
+		# Creditor pays for the restructured debt, matching the decision path
+		set_temp_variable = { our_cost = FROM.GRE_proposed_debt_amount }
+		multiply_temp_variable = { our_cost = 0.75 }
+		set_temp_variable = { treasury_change = our_cost }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		add_opinion_modifier = { target = FROM modifier = GRE_debt_swap_accepted_opinion }
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+}
+
+# Small Debt Proposal - Sent to potential creditor
+country_event = {
+	id = greece_debt.10
+	title = greece_debt.10.t
+	desc = greece_debt.10.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Accept the Deal
+	option = {
+		name = greece_debt.10.a
+		log = "[GetDateText]: [This.GetName]: greece_debt.10.a executed"
+
+		# Pay cost from our treasury (we're buying their debt)
+		set_temp_variable = { our_cost = FROM.GRE_proposed_debt_amount }
+		multiply_temp_variable = { our_cost = 0.75 }
+		set_temp_variable = { treasury_change = our_cost }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+
+		FROM = { country_event = { id = greece_debt.12 days = 1 } }
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 2
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { treasury > 500 }
+			}
+		}
+	}
+
+	# Reject the Deal
+	option = {
+		name = greece_debt.10.b
+		log = "[GetDateText]: [This.GetName]: greece_debt.10.b executed"
+		FROM = { country_event = { id = greece_debt.13 days = 1 } }
+
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
+	}
+
+	# Counter-Offer - Higher Interest Rate
+	option = {
+		name = greece_debt.10.c
+		log = "[GetDateText]: [This.GetName]: greece_debt.10.c executed"
+
+		set_temp_variable = { our_cost = FROM.GRE_proposed_debt_amount }
+		multiply_temp_variable = { our_cost = 0.75 }
+		set_temp_variable = { treasury_change = our_cost }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+
+		# Set a higher rate for counter-offer
+		set_variable = { GRE_counter_offer_rate = 5 }
+		FROM = { country_event = { id = greece_debt.14 days = 1 } }
+
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 200 }
+			}
+		}
+	}
+}
+
+# Deal Accepted - Sent to Greece
+country_event = {
+	id = greece_debt.12
+	title = greece_debt.12.t
+	desc = greece_debt.12.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece_debt.12.a
+		log = "[GetDateText]: [This.GetName]: greece_debt.12.a executed"
+		set_variable = { GRE_creditor_target = FROM.id }
+		set_temp_variable = { GRE_creditor_debt_change = GRE_proposed_debt_amount }
+		GRE_add_creditor = yes
+	}
+}
+
+# Deal Rejected - Sent to Greece
+country_event = {
+	id = greece_debt.13
+	title = greece_debt.13.t
+	desc = greece_debt.13.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece_debt.13.a
+		log = "[GetDateText]: [This.GetName]: greece_debt.13.a executed"
+		add_political_power = 25
+	}
+}
+
+# Counter-Offer Received - Sent to Greece
+country_event = {
+	id = greece_debt.14
+	title = greece_debt.14.t
+	desc = greece_debt.14.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Accept counter-offer at higher rate
+	option = {
+		name = greece_debt.14.a
+		log = "[GetDateText]: [This.GetName]: greece_debt.14.a executed"
+
+		# Override the default rate with the counter-offer rate
+		set_variable = { GRE_creditor_target = FROM.id }
+		set_temp_variable = { GRE_creditor_debt_change = GRE_proposed_debt_amount }
+		GRE_add_creditor = yes
+
+		# Update the rate to the counter-offered one
+		for_each_loop = {
+			array = GRE_creditors
+			if = {
+				limit = { check_variable = { v = FROM.id } }
+				set_variable = { GRE_creditor_rate^i = FROM.GRE_counter_offer_rate }
+			}
+		}
+		FROM = {
+			set_variable = { GRE_our_interest_rate = GRE_counter_offer_rate }
+		}
+
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 2
+				gdp_debt_ratio_higher_90 = yes
+			}
+		}
+	}
+
+	# Reject counter-offer
+	option = {
+		name = greece_debt.14.b
+		log = "[GetDateText]: [This.GetName]: greece_debt.14.b executed"
+
+		custom_effect_tooltip = GRE_debt_counter_refund_tt
+		# Refund the creditor since the deal fell through
+		FROM = {
+			set_temp_variable = { refund = GRE.GRE_proposed_debt_amount }
+			multiply_temp_variable = { refund = 0.75 }
+			add_to_variable = { treasury = refund }
+		}
+
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# Debt Called In - Sent to Greece
+country_event = {
+	id = greece_debt.16
+	title = greece_debt.16.t
+	desc = greece_debt.16.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Comply - Pay the demanded amount
+	option = {
+		name = greece_debt.16.a
+		log = "[GetDateText]: [This.GetName]: greece_debt.16.a executed"
+		trigger = {
+			check_variable = { treasury > FROM.GRE_called_amount }
+		}
+
+		# Find creditor index, then repay after the loop to avoid mutating the array mid-iteration
+		set_temp_variable = { GRE_repay_index = -1 }
+		for_each_loop = {
+			array = GRE_creditors
+			if = {
+				limit = { check_variable = { v = FROM.id } }
+				set_temp_variable = { GRE_repay_index = i }
+			}
+		}
+		if = {
+			limit = { check_variable = { GRE_repay_index > -1 } }
+			set_temp_variable = { GRE_repay_amount = FROM.GRE_called_amount }
+			GRE_repay_creditor_debt = yes
+		}
+
+		ai_chance = {
+			base = 70
+		}
+	}
+
+	# Refuse - Diplomatic consequences
+	option = {
+		name = greece_debt.16.b
+		log = "[GetDateText]: [This.GetName]: greece_debt.16.b executed"
+
+		add_opinion_modifier = { target = FROM modifier = GRE_refused_debt_call_opinion }
+		add_stability = -0.05
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 3
+				check_variable = { treasury < FROM.GRE_called_amount }
+			}
+		}
+	}
+}
+
+# Debt Forgiven - Notification to Greece
+country_event = {
+	id = greece_debt.17
+	title = greece_debt.17.t
+	desc = greece_debt.17.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece_debt.17.a
+		log = "[GetDateText]: [This.GetName]: greece_debt.17.a executed"
+		add_opinion_modifier = { target = FROM modifier = GRE_debt_forgiven_opinion }
+	}
+}
+
+# Greece Fully Repaid - Notification to Creditor
+country_event = {
+	id = greece_debt.18
+	title = greece_debt.18.t
+	desc = greece_debt.18.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece_debt.18.a
+		log = "[GetDateText]: [This.GetName]: greece_debt.18.a executed"
+		add_opinion_modifier = { target = FROM modifier = GRE_debt_fully_repaid_opinion }
+	}
+}
+
+###################################
+# Chinese Investment Events
+###################################
+
+# GRE_chi_investments - Request to China for industrial investment
+country_event = {
+	id = greece.28
+	title = greece.28.t
+	desc = greece.28.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Accept - China pays and invests
+	option = {
+		name = greece.28.a
+		log = "[GetDateText]: [This.GetName]: greece.28.a executed"
+		set_temp_variable = { treasury_change = -7.50 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = FROM.id }
+		change_influence_percentage = yes
+		FROM = { country_event = { id = greece.29 days = 1 } }
+
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# Reject
+	option = {
+		name = greece.28.b
+		log = "[GetDateText]: [This.GetName]: greece.28.b executed"
+		FROM = { country_event = { id = greece.30 days = 1 } }
+
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
+	}
+}
+
+# China accepted industrial investment - GRE receives buildings
+country_event = {
+	id = greece.29
+	title = greece.29.t
+	desc = greece.29.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.29.a
+		log = "[GetDateText]: [This.GetName]: greece.29.a executed"
+		140 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+# China rejected industrial investment - GRE can self-fund
+country_event = {
+	id = greece.30
+	title = greece.30.t
+	desc = greece.30.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Self-fund
+	option = {
+		name = greece.30.a
+		log = "[GetDateText]: [This.GetName]: greece.30.a executed"
+		set_temp_variable = { debt_change = 3 }
+		GRE_pay_or_defer = yes
+		140 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		ai_chance = { base = 70 }
+	}
+
+	# Abandon
+	option = {
+		name = greece.30.b
+
+		ai_chance = { base = 30 }
+	}
+}
+
+# GRE_chi_investments_piraeus - Request to China for Piraeus port
+country_event = {
+	id = greece.31
+	title = greece.31.t
+	desc = greece.31.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.31.a
+		log = "[GetDateText]: [This.GetName]: greece.31.a executed"
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = FROM.id }
+		change_influence_percentage = yes
+		FROM = { country_event = { id = greece.32 days = 1 } }
+
+		ai_chance = {
+			base = 90
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
 			}
 		}
 	}
 
 	option = {
-		name = greece.24.b
-		log = "[GetDateText]: [This.GetName]: greece.24.b executed"
-		GRE = {
-			country_event = greece.27
+		name = greece.31.b
+		log = "[GetDateText]: [This.GetName]: greece.31.b executed"
+		FROM = { country_event = { id = greece.33 days = 1 } }
+
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
+	}
+}
+
+# China accepted Piraeus investment
+country_event = {
+	id = greece.32
+	title = greece.32.t
+	desc = greece.32.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.32.a
+		log = "[GetDateText]: [This.GetName]: greece.32.a executed"
+		141 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = dockyard
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+# China rejected Piraeus investment
+country_event = {
+	id = greece.33
+	title = greece.33.t
+	desc = greece.33.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.33.a
+		log = "[GetDateText]: [This.GetName]: greece.33.a executed"
+		set_temp_variable = { debt_change = 5 }
+		GRE_pay_or_defer = yes
+		141 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = dockyard
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = greece.33.b
+
+		ai_chance = { base = 40 }
+	}
+}
+
+# GRE_chi_real_estate - Request to China for real estate development
+country_event = {
+	id = greece.34
+	title = greece.34.t
+	desc = greece.34.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.34.a
+		log = "[GetDateText]: [This.GetName]: greece.34.a executed"
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = FROM.id }
+		change_influence_percentage = yes
+		FROM = { country_event = { id = greece.35 days = 1 } }
+
+		ai_chance = {
+			base = 85
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	option = {
+		name = greece.34.b
+		log = "[GetDateText]: [This.GetName]: greece.34.b executed"
+		FROM = { country_event = { id = greece.36 days = 1 } }
+
+		ai_chance = {
+			base = 15
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
+	}
+}
+
+# China accepted real estate investment
+country_event = {
+	id = greece.35
+	title = greece.35.t
+	desc = greece.35.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.35.a
+		log = "[GetDateText]: [This.GetName]: greece.35.a executed"
+		141 = {
+			add_extra_state_shared_building_slots = 3
+		}
+	}
+}
+
+# China rejected real estate investment
+country_event = {
+	id = greece.36
+	title = greece.36.t
+	desc = greece.36.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.36.a
+		log = "[GetDateText]: [This.GetName]: greece.36.a executed"
+		141 = {
+			add_extra_state_shared_building_slots = 3
+		}
+
+		ai_chance = { base = 80 }
+	}
+
+	option = {
+		name = greece.36.b
+
+		ai_chance = { base = 20 }
+	}
+}
+
+# GRE_chi_nationwide_investments - Request to China for nationwide programme
+country_event = {
+	id = greece.37
+	title = greece.37.t
+	desc = greece.37.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.37.a
+		log = "[GetDateText]: [This.GetName]: greece.37.a executed"
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = FROM.id }
+		change_influence_percentage = yes
+		FROM = { country_event = { id = greece.38 days = 1 } }
+
+		ai_chance = {
+			base = 75
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	option = {
+		name = greece.37.b
+		log = "[GetDateText]: [This.GetName]: greece.37.b executed"
+		FROM = { country_event = { id = greece.39 days = 1 } }
+
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
+	}
+}
+
+# China accepted nationwide investment
+country_event = {
+	id = greece.38
+	title = greece.38.t
+	desc = greece.38.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.38.a
+		log = "[GetDateText]: [This.GetName]: greece.38.a executed"
+		set_temp_variable = { skip_payment = 1 }
+		one_air_base = yes
+		one_random_industrial_complex = yes
+		one_office_construction = yes
+	}
+}
+
+# China rejected nationwide investment
+country_event = {
+	id = greece.39
+	title = greece.39.t
+	desc = greece.39.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.39.a
+		log = "[GetDateText]: [This.GetName]: greece.39.a executed"
+		one_air_base = yes
+		one_random_industrial_complex = yes
+		one_office_construction = yes
+
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = greece.39.b
+
+		ai_chance = { base = 50 }
+	}
+}
+
+# GRE_invest_elliniko - Request to China for Elliniko development
+country_event = {
+	id = greece.40
+	title = greece.40.t
+	desc = greece.40.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.40.a
+		log = "[GetDateText]: [This.GetName]: greece.40.a executed"
+		set_temp_variable = { treasury_change = -7 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = FROM.id }
+		change_influence_percentage = yes
+		FROM = { country_event = { id = greece.41 days = 1 } }
+
+		ai_chance = {
+			base = 70
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	option = {
+		name = greece.40.b
+		log = "[GetDateText]: [This.GetName]: greece.40.b executed"
+		FROM = { country_event = { id = greece.42 days = 1 } }
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
+	}
+}
+
+# China accepted Elliniko development
+country_event = {
+	id = greece.41
+	title = greece.41.t
+	desc = greece.41.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.41.a
+		log = "[GetDateText]: [This.GetName]: greece.41.a executed"
+		141 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+		142 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+# China rejected Elliniko development
+country_event = {
+	id = greece.42
+	title = greece.42.t
+	desc = greece.42.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.42.a
+		log = "[GetDateText]: [This.GetName]: greece.42.a executed"
+		set_temp_variable = { debt_change = 7 }
+		GRE_pay_or_defer = yes
+		141 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+		142 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = greece.42.b
+
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Aegean Pipeline - Turkey Events
+###################################
+
+###################################
+# ICBC Loan Events
+###################################
+
+# ICBC loan request - Sent to China
+country_event = {
+	id = greece.46
+	title = greece.46.t
+	desc = greece.46.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Accept - China pays, Greece receives
+	option = {
+		name = greece.46.a
+		log = "[GetDateText]: [This.GetName]: greece.46.a executed"
+		# China pays from treasury
+		set_temp_variable = { loan_amount = FROM.gdp_total }
+		multiply_temp_variable = { loan_amount = 0.10 }
+		clamp_temp_variable = { var = loan_amount max = 100 }
+		subtract_from_variable = { treasury = loan_amount }
+		# China gains influence over Greece
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = FROM.id }
+		change_influence_percentage = yes
+		FROM = { country_event = { id = greece.47 days = 1 } }
+
+		ai_chance = {
+			base = 80
+			modifier = { factor = 1.5 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
+			modifier = {
+				factor = 0.3
+				check_variable = { treasury < 50 }
+			}
+		}
+	}
+
+	# Reject
+	option = {
+		name = greece.46.b
+		log = "[GetDateText]: [This.GetName]: greece.46.b executed"
+		FROM = { country_event = { id = greece.48 days = 1 } }
+
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+}
+
+# ICBC loan accepted - Greece receives funds
+country_event = {
+	id = greece.47
+	title = greece.47.t
+	desc = greece.47.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.47.a
+		log = "[GetDateText]: [This.GetName]: greece.47.a executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = 0.10 }
+		clamp_temp_variable = { var = treasury_change max = 100 }
+		modify_treasury_effect = yes
+	}
+}
+
+# ICBC loan rejected - Greece gets nothing
+country_event = {
+	id = greece.48
+	title = greece.48.t
+	desc = greece.48.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.48.a
+	}
+}
+
+# ELAM Nationalist Movement Spreads
+# Fired by GRE_fund_elam focus - routes permanent idea through event
+country_event = {
+	id = greece.516
+	title = greece.516.t
+	desc = greece.516.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.516.a
+		log = "[GetDateText]: [This.GetName]: greece.516.a executed"
+		add_ideas = GRE_elam
+
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = greece.516.b
+		log = "[GetDateText]: [This.GetName]: greece.516.b executed"
+		add_stability = -0.03
+
+		ai_chance = { base = 0 }
+	}
+}
+
+#####################################################
+# Eastern Alignment Branch — BRICS+ Pivot outreach   #
+# Each focus uses a 3-event loop:                     #
+#   REQUEST (GRE -> partner)                          #
+#   ACCEPT-REPLY (partner -> GRE, applies payoff)     #
+#   REJECT-REPLY (partner -> GRE, sets retry flag)    #
+#####################################################
+
+# greece.530 — Russia outreach REQUEST
+country_event = {
+	id = greece.530
+	title = greece.530.t
+	desc = greece.530.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.530.a
+		log = "[GetDateText]: [This.GetName]: greece.530.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.531 days = 2 } }
+
+		ai_chance = {
+			base = 5
+			modifier = { factor = 2 has_opinion = { target = GRE value > 0 } }
+			modifier = { factor = 0.3 has_opinion = { target = GRE value < -50 } }
+			modifier = { factor = 1.5 GRE = { NOT = { has_idea = NATO_member } } }
+		}
+	}
+
+	option = {
+		name = greece.530.b
+		log = "[GetDateText]: [This.GetName]: greece.530.b executed"
+		GRE = { country_event = { id = greece.532 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.531 — Russia outreach ACCEPT-REPLY
+country_event = {
+	id = greece.531
+	title = greece.531.t
+	desc = greece.531.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.531.a
+		log = "[GetDateText]: [This.GetName]: greece.531.a executed"
+		add_opinion_modifier = { target = SOV modifier = declaration_of_friendship }
+		set_temp_variable = { receiver_nation = SOV }
+		set_temp_variable = { sender_nation = GRE }
+		set_improved_trade_agreement = yes
+		add_to_variable = { GRE_eastern_alignment_score = 1 }
+		GRE_check_eastern_alignment_swap = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.532 — Russia outreach REJECT-REPLY
+country_event = {
+	id = greece.532
+	title = greece.532.t
+	desc = greece.532.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.532.a
+		log = "[GetDateText]: [This.GetName]: greece.532.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = SOV modifier = small_decrease }
+		set_country_flag = GRE_russia_outreach_failed
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.533 — Russia milcoop REQUEST
+country_event = {
+	id = greece.533
+	title = greece.533.t
+	desc = greece.533.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.533.a
+		log = "[GetDateText]: [This.GetName]: greece.533.a executed"
+		add_opinion_modifier = { target = GRE modifier = military_cooperation }
+		GRE = { country_event = { id = greece.534 days = 2 } }
+
+		ai_chance = {
+			base = 5
+			modifier = { factor = 2 has_opinion = { target = GRE value > 25 } }
+			modifier = { factor = 1.5 GRE = { NOT = { has_idea = NATO_member } } }
+		}
+	}
+
+	option = {
+		name = greece.533.b
+		log = "[GetDateText]: [This.GetName]: greece.533.b executed"
+		GRE = { country_event = { id = greece.535 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 4 GRE = { has_idea = NATO_member } }
+		}
+	}
+}
+
+# greece.534 — Russia milcoop ACCEPT-REPLY
+country_event = {
+	id = greece.534
+	title = greece.534.t
+	desc = greece.534.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.534.a
+		log = "[GetDateText]: [This.GetName]: greece.534.a executed"
+		add_opinion_modifier = { target = SOV modifier = military_cooperation }
+		add_tech_bonus = {
+			name = GRE_russia_milcoop
+			bonus = 0.30
+			uses = 1
+			category = CAT_land_doctrine
+		}
+		add_to_variable = { GRE_eastern_alignment_score = 2 }
+		GRE_check_eastern_alignment_swap = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.535 — Russia milcoop REJECT-REPLY
+country_event = {
+	id = greece.535
+	title = greece.535.t
+	desc = greece.535.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.535.a
+		log = "[GetDateText]: [This.GetName]: greece.535.a executed"
+		add_political_power = -50
+		add_opinion_modifier = { target = SOV modifier = small_decrease }
+		set_country_flag = GRE_russia_milcoop_failed
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.536 — China outreach REQUEST
+country_event = {
+	id = greece.536
+	title = greece.536.t
+	desc = greece.536.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.536.a
+		log = "[GetDateText]: [This.GetName]: greece.536.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.537 days = 2 } }
+
+		ai_chance = {
+			base = 6
+			modifier = { factor = 2 has_opinion = { target = GRE value > 0 } }
+			modifier = { factor = 1.5 GRE = { NOT = { has_idea = NATO_member } } }
+		}
+	}
+
+	option = {
+		name = greece.536.b
+		log = "[GetDateText]: [This.GetName]: greece.536.b executed"
+		GRE = { country_event = { id = greece.538 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -25 } }
+		}
+	}
+}
+
+# greece.537 — China outreach ACCEPT-REPLY
+country_event = {
+	id = greece.537
+	title = greece.537.t
+	desc = greece.537.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.537.a
+		log = "[GetDateText]: [This.GetName]: greece.537.a executed"
+		add_opinion_modifier = { target = CHI modifier = declaration_of_friendship }
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI.id }
+		set_temp_variable = { influence_target = GRE.id }
+		change_influence_percentage = yes
+		add_to_variable = { GRE_eastern_alignment_score = 1 }
+		GRE_check_eastern_alignment_swap = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.538 — China outreach REJECT-REPLY
+country_event = {
+	id = greece.538
+	title = greece.538.t
+	desc = greece.538.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.538.a
+		log = "[GetDateText]: [This.GetName]: greece.538.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = CHI modifier = small_decrease }
+		set_country_flag = GRE_china_outreach_failed
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.539 — China BRI anchor REQUEST
+country_event = {
+	id = greece.539
+	title = greece.539.t
+	desc = greece.539.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.539.a
+		log = "[GetDateText]: [This.GetName]: greece.539.a executed"
+		add_opinion_modifier = { target = GRE modifier = military_cooperation }
+		GRE = { country_event = { id = greece.540 days = 2 } }
+
+		ai_chance = {
+			base = 6
+			modifier = { factor = 2 has_opinion = { target = GRE value > 25 } }
+		}
+	}
+
+	option = {
+		name = greece.539.b
+		log = "[GetDateText]: [This.GetName]: greece.539.b executed"
+		GRE = { country_event = { id = greece.541 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 GRE = { has_idea = NATO_member } }
+		}
+	}
+}
+
+# greece.540 — China BRI anchor ACCEPT-REPLY
+country_event = {
+	id = greece.540
+	title = greece.540.t
+	desc = greece.540.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.540.a
+		log = "[GetDateText]: [This.GetName]: greece.540.a executed"
+		add_opinion_modifier = { target = CHI modifier = military_cooperation }
+		add_timed_idea = { idea = GRE_chinese_investment days = 365 }
+		capital_scope = { add_extra_state_shared_building_slots = 1 }
+		add_to_variable = { GRE_eastern_alignment_score = 2 }
+		GRE_check_eastern_alignment_swap = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.541 — China BRI anchor REJECT-REPLY
+country_event = {
+	id = greece.541
+	title = greece.541.t
+	desc = greece.541.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.541.a
+		log = "[GetDateText]: [This.GetName]: greece.541.a executed"
+		add_political_power = -50
+		add_opinion_modifier = { target = CHI modifier = small_decrease }
+		set_country_flag = GRE_china_bri_anchor_failed
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.542 — Iran outreach REQUEST
+country_event = {
+	id = greece.542
+	title = greece.542.t
+	desc = greece.542.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.542.a
+		log = "[GetDateText]: [This.GetName]: greece.542.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.543 days = 2 } }
+
+		ai_chance = {
+			base = 4
+			modifier = { factor = 2 GRE = { NOT = { has_idea = NATO_member } } }
+		}
+	}
+
+	option = {
+		name = greece.542.b
+		log = "[GetDateText]: [This.GetName]: greece.542.b executed"
+		GRE = { country_event = { id = greece.544 days = 2 } }
+
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 GRE = { has_idea = NATO_member } }
+		}
+	}
+}
+
+# greece.543 — Iran outreach ACCEPT-REPLY
+country_event = {
+	id = greece.543
+	title = greece.543.t
+	desc = greece.543.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.543.a
+		log = "[GetDateText]: [This.GetName]: greece.543.a executed"
+		add_opinion_modifier = { target = PER modifier = declaration_of_friendship }
+		add_timed_idea = { idea = GRE_iran_barter_framework days = 365 }
+		add_to_variable = { GRE_eastern_alignment_score = 1 }
+		GRE_check_eastern_alignment_swap = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.544 — Iran outreach REJECT-REPLY
+country_event = {
+	id = greece.544
+	title = greece.544.t
+	desc = greece.544.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.544.a
+		log = "[GetDateText]: [This.GetName]: greece.544.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = PER modifier = small_decrease }
+		set_country_flag = GRE_iran_outreach_failed
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.545 — Iran med corridor REQUEST
+country_event = {
+	id = greece.545
+	title = greece.545.t
+	desc = greece.545.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.545.a
+		log = "[GetDateText]: [This.GetName]: greece.545.a executed"
+		add_opinion_modifier = { target = GRE modifier = military_cooperation }
+		GRE = { country_event = { id = greece.546 days = 2 } }
+
+		ai_chance = {
+			base = 4
+			modifier = { factor = 2 has_opinion = { target = GRE value > 25 } }
+		}
+	}
+
+	option = {
+		name = greece.545.b
+		log = "[GetDateText]: [This.GetName]: greece.545.b executed"
+		GRE = { country_event = { id = greece.547 days = 2 } }
+
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 GRE = { has_idea = NATO_member } }
+		}
+	}
+}
+
+# greece.546 — Iran med corridor ACCEPT-REPLY
+country_event = {
+	id = greece.546
+	title = greece.546.t
+	desc = greece.546.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.546.a
+		log = "[GetDateText]: [This.GetName]: greece.546.a executed"
+		add_opinion_modifier = { target = PER modifier = military_cooperation }
+		add_timed_idea = { idea = GRE_iran_med_corridor_idea days = 365 }
+		add_to_variable = { GRE_eastern_alignment_score = 2 }
+		GRE_check_eastern_alignment_swap = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.547 — Iran med corridor REJECT-REPLY
+country_event = {
+	id = greece.547
+	title = greece.547.t
+	desc = greece.547.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.547.a
+		log = "[GetDateText]: [This.GetName]: greece.547.a executed"
+		add_political_power = -50
+		add_opinion_modifier = { target = PER modifier = small_decrease }
+		set_country_flag = GRE_iran_med_corridor_failed
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.548 — Orthodox outreach REQUEST
+country_event = {
+	id = greece.548
+	title = greece.548.t
+	desc = greece.548.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.548.a
+		log = "[GetDateText]: [This.GetName]: greece.548.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.549 days = 2 } }
+
+		ai_chance = {
+			base = 7
+			modifier = { factor = 2 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.548.b
+		log = "[GetDateText]: [This.GetName]: greece.548.b executed"
+		GRE = { country_event = { id = greece.550 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.549 — Orthodox outreach ACCEPT-REPLY
+country_event = {
+	id = greece.549
+	title = greece.549.t
+	desc = greece.549.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.549.a
+		log = "[GetDateText]: [This.GetName]: greece.549.a executed"
+		add_opinion_modifier = { target = SER modifier = declaration_of_friendship }
+		if = {
+			limit = { country_exists = CYP }
+			add_opinion_modifier = { target = CYP modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = CYP modifier = declaration_of_friendship }
+		}
+		add_to_variable = { GRE_eastern_alignment_score = 1 }
+		GRE_check_eastern_alignment_swap = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.550 — Orthodox outreach REJECT-REPLY
+country_event = {
+	id = greece.550
+	title = greece.550.t
+	desc = greece.550.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.550.a
+		log = "[GetDateText]: [This.GetName]: greece.550.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = SER modifier = small_decrease }
+		set_country_flag = GRE_orthodox_outreach_failed
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.551 — Orthodox security REQUEST
+country_event = {
+	id = greece.551
+	title = greece.551.t
+	desc = greece.551.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.551.a
+		log = "[GetDateText]: [This.GetName]: greece.551.a executed"
+		add_opinion_modifier = { target = GRE modifier = military_cooperation }
+		GRE = { country_event = { id = greece.552 days = 2 } }
+
+		ai_chance = {
+			base = 5
+			modifier = { factor = 2 has_opinion = { target = GRE value > 25 } }
+		}
+	}
+
+	option = {
+		name = greece.551.b
+		log = "[GetDateText]: [This.GetName]: greece.551.b executed"
+		GRE = { country_event = { id = greece.553 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < 0 } }
+		}
+	}
+}
+
+# greece.552 — Orthodox security ACCEPT-REPLY
+country_event = {
+	id = greece.552
+	title = greece.552.t
+	desc = greece.552.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.552.a
+		log = "[GetDateText]: [This.GetName]: greece.552.a executed"
+		add_opinion_modifier = { target = SER modifier = military_cooperation }
+		if = {
+			limit = { country_exists = CYP }
+			add_opinion_modifier = { target = CYP modifier = military_cooperation }
+			reverse_add_opinion_modifier = { target = CYP modifier = military_cooperation }
+		}
+		if = {
+			limit = { country_exists = ARM }
+			add_opinion_modifier = { target = ARM modifier = declaration_of_friendship }
+		}
+		add_timed_idea = { idea = GRE_orthodox_defense_pact days = 730 }
+		add_to_variable = { GRE_eastern_alignment_score = 2 }
+		GRE_check_eastern_alignment_swap = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.553 — Orthodox security REJECT-REPLY
+country_event = {
+	id = greece.553
+	title = greece.553.t
+	desc = greece.553.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.553.a
+		log = "[GetDateText]: [This.GetName]: greece.553.a executed"
+		add_political_power = -50
+		add_opinion_modifier = { target = SER modifier = small_decrease }
+		set_country_flag = GRE_orthodox_security_failed
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.554 — BRICS welcome (SOV -> GRE on capstone)
+country_event = {
+	id = greece.554
+	title = greece.554.t
+	desc = greece.554.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.554.a
+		log = "[GetDateText]: [This.GetName]: greece.554.a executed"
+		add_political_power = 100
+		add_war_support = 0.05
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.555 — Multipolar Anchor world announcement
+news_event = {
+	id = greece.555
+	title = greece.555.t
+	desc = greece.555.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = greece.555.a
+		log = "[GetDateText]: [This.GetName]: greece.555.a executed"
+		trigger = { tag = GRE }
+		add_political_power = 50
+	}
+
+	option = {
+		name = greece.555.b
+		trigger = {
+			has_idea = NATO_member
+			NOT = { tag = GRE }
+		}
+	}
+
+	option = {
+		name = greece.555.c
+		trigger = {
+			NOT = { tag = GRE }
+			NOT = { has_idea = NATO_member }
+		}
+	}
+}
+
+#####################################################
+# Greek Western Alignment branch — diplomatic chain #
+# Each outreach uses a 3-event loop:                #
+#   REQUEST (GRE -> partner)                        #
+#   ACCEPT-REPLY (partner -> GRE, applies payoff)   #
+#   REJECT-REPLY (partner -> GRE, sets retry flag)  #
+#####################################################
+
+# greece.556 — Western Alignment world announcement
+news_event = {
+	id = greece.556
+	title = greece.556.t
+	desc = greece.556.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = greece.556.a
+		log = "[GetDateText]: [This.GetName]: greece.556.a executed"
+		trigger = { tag = GRE }
+		add_political_power = 50
+	}
+
+	option = {
+		name = greece.556.b
+		trigger = {
+			has_idea = NATO_member
+			NOT = { tag = GRE }
+		}
+	}
+
+	option = {
+		name = greece.556.c
+		trigger = {
+			NOT = { tag = GRE }
+			NOT = { has_idea = NATO_member }
+		}
+	}
+}
+
+# greece.557 — Franco-Hellenic Strategic Partnership REQUEST
+country_event = {
+	id = greece.557
+	title = greece.557.t
+	desc = greece.557.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.557.a
+		log = "[GetDateText]: [This.GetName]: greece.557.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.558 days = 2 } }
+
+		ai_chance = {
+			base = 8
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+			modifier = { factor = 0.5 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+
+	option = {
+		name = greece.557.b
+		log = "[GetDateText]: [This.GetName]: greece.557.b executed"
+		GRE = { country_event = { id = greece.559 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.558 — Franco-Hellenic Strategic Partnership ACCEPT-REPLY
+country_event = {
+	id = greece.558
+	title = greece.558.t
+	desc = greece.558.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.558.a
+		log = "[GetDateText]: [This.GetName]: greece.558.a executed"
+		add_opinion_modifier = { target = FRA modifier = declaration_of_friendship }
+		add_ideas = GRE_franco_hellenic_strategic_partnership
+		set_temp_variable = { receiver_nation = FRA }
+		set_temp_variable = { sender_nation = GRE }
+		set_improved_trade_agreement = yes
+		add_to_variable = { GRE_western_commitment = 2 }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.559 — Franco-Hellenic Strategic Partnership REJECT-REPLY
+country_event = {
+	id = greece.559
+	title = greece.559.t
+	desc = greece.559.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.559.a
+		log = "[GetDateText]: [This.GetName]: greece.559.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = FRA modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.560 — Eastern Mediterranean Trilateral REQUEST (to ISR)
+country_event = {
+	id = greece.560
+	title = greece.560.t
+	desc = greece.560.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.560.a
+		log = "[GetDateText]: [This.GetName]: greece.560.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.561 days = 2 } }
+
+		ai_chance = {
+			base = 8
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.560.b
+		log = "[GetDateText]: [This.GetName]: greece.560.b executed"
+		GRE = { country_event = { id = greece.562 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.561 — Eastern Mediterranean Trilateral ACCEPT-REPLY (ISR)
+country_event = {
+	id = greece.561
+	title = greece.561.t
+	desc = greece.561.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.561.a
+		log = "[GetDateText]: [This.GetName]: greece.561.a executed"
+		add_opinion_modifier = { target = ISR modifier = declaration_of_friendship }
+		add_to_variable = { GRE_western_commitment = 1 }
+		set_country_flag = GRE_isr_trilateral_signed
+		if = {
+			limit = { has_country_flag = GRE_cyp_trilateral_signed }
+			add_timed_idea = { idea = GRE_eastmed_trilateral_idea days = 180 }
+		}
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.562 — Eastern Mediterranean Trilateral REJECT-REPLY (ISR)
+country_event = {
+	id = greece.562
+	title = greece.562.t
+	desc = greece.562.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.562.a
+		log = "[GetDateText]: [This.GetName]: greece.562.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = ISR modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.563 — Eastern Mediterranean Trilateral REQUEST (to CYP)
+country_event = {
+	id = greece.563
+	title = greece.563.t
+	desc = greece.563.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.563.a
+		log = "[GetDateText]: [This.GetName]: greece.563.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.564 days = 2 } }
+
+		ai_chance = {
+			base = 12
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.563.b
+		log = "[GetDateText]: [This.GetName]: greece.563.b executed"
+		GRE = { country_event = { id = greece.565 days = 2 } }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.564 — Eastern Mediterranean Trilateral ACCEPT-REPLY (CYP)
+country_event = {
+	id = greece.564
+	title = greece.564.t
+	desc = greece.564.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.564.a
+		log = "[GetDateText]: [This.GetName]: greece.564.a executed"
+		add_opinion_modifier = { target = CYP modifier = declaration_of_friendship }
+		add_to_variable = { GRE_western_commitment = 1 }
+		set_country_flag = GRE_cyp_trilateral_signed
+		if = {
+			limit = { has_country_flag = GRE_isr_trilateral_signed }
+			add_timed_idea = { idea = GRE_eastmed_trilateral_idea days = 180 }
+		}
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.565 — Eastern Mediterranean Trilateral REJECT-REPLY (CYP)
+country_event = {
+	id = greece.565
+	title = greece.565.t
+	desc = greece.565.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.565.a
+		log = "[GetDateText]: [This.GetName]: greece.565.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = CYP modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.566 — Article-2 Mutual Defence Clause REQUEST (to FRA)
+country_event = {
+	id = greece.566
+	title = greece.566.t
+	desc = greece.566.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.566.a
+		log = "[GetDateText]: [This.GetName]: greece.566.a executed"
+		add_opinion_modifier = { target = GRE modifier = military_cooperation }
+		GRE = { country_event = { id = greece.567 days = 2 } }
+
+		ai_chance = {
+			base = 6
+			modifier = { factor = 2 has_opinion = { target = GRE value > 50 } }
+			modifier = { factor = 0.3 has_opinion = { target = GRE value < 0 } }
+		}
+	}
+
+	option = {
+		name = greece.566.b
+		log = "[GetDateText]: [This.GetName]: greece.566.b executed"
+		GRE = { country_event = { id = greece.568 days = 2 } }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.567 — Article-2 Mutual Defence Clause ACCEPT-REPLY (FRA)
+country_event = {
+	id = greece.567
+	title = greece.567.t
+	desc = greece.567.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.567.a
+		log = "[GetDateText]: [This.GetName]: greece.567.a executed"
+		add_opinion_modifier = { target = FRA modifier = military_cooperation }
+		swap_ideas = {
+			remove_idea = GRE_franco_hellenic_strategic_partnership
+			add_idea = GRE_franco_greek_mutual_defense
+		}
+		add_to_variable = { GRE_western_commitment = 2 }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.568 — Article-2 Mutual Defence Clause REJECT-REPLY (FRA)
+country_event = {
+	id = greece.568
+	title = greece.568.t
+	desc = greece.568.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.568.a
+		log = "[GetDateText]: [This.GetName]: greece.568.a executed"
+		add_political_power = -50
+		add_opinion_modifier = { target = FRA modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.569 — 3+1 Dialogue REQUEST (to USA)
+country_event = {
+	id = greece.569
+	title = greece.569.t
+	desc = greece.569.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.569.a
+		log = "[GetDateText]: [This.GetName]: greece.569.a executed"
+		add_opinion_modifier = { target = GRE modifier = military_cooperation }
+		GRE = { country_event = { id = greece.570 days = 2 } }
+
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.569.b
+		log = "[GetDateText]: [This.GetName]: greece.569.b executed"
+		GRE = { country_event = { id = greece.571 days = 2 } }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.570 — 3+1 Dialogue ACCEPT-REPLY (USA)
+country_event = {
+	id = greece.570
+	title = greece.570.t
+	desc = greece.570.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.570.a
+		log = "[GetDateText]: [This.GetName]: greece.570.a executed"
+		add_opinion_modifier = { target = USA modifier = military_cooperation }
+		add_timed_idea = { idea = GRE_3plus1_pact days = 180 }
+		add_to_variable = { GRE_western_commitment = 2 }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.571 — 3+1 Dialogue REJECT-REPLY (USA)
+country_event = {
+	id = greece.571
+	title = greece.571.t
+	desc = greece.571.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.571.a
+		log = "[GetDateText]: [This.GetName]: greece.571.a executed"
+		add_political_power = -25
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.572 — Pillar of the West world announcement (capstone)
+news_event = {
+	id = greece.572
+	title = greece.572.t
+	desc = greece.572.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = greece.572.a
+		log = "[GetDateText]: [This.GetName]: greece.572.a executed"
+		trigger = { tag = GRE }
+		add_political_power = 100
+		add_war_support = 0.05
+	}
+
+	option = {
+		name = greece.572.b
+		trigger = {
+			has_idea = NATO_member
+			NOT = { tag = GRE }
+		}
+	}
+
+	option = {
+		name = greece.572.c
+		trigger = {
+			NOT = { tag = GRE }
+			NOT = { has_idea = NATO_member }
+		}
+	}
+}
+
+# greece.575 — Alexandroupolis FSRU Online (news, milestone)
+news_event = {
+	id = greece.575
+	title = greece.575.t
+	desc = greece.575.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = greece.575.a
+		trigger = { tag = GRE }
+	}
+
+	option = {
+		name = greece.575.b
+		trigger = { NOT = { tag = GRE } }
+	}
+}
+
+# greece.577 — Piraeus Anchors IMEC Corridor (news, milestone)
+news_event = {
+	id = greece.577
+	title = greece.577.t
+	desc = greece.577.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = greece.577.a
+		trigger = { tag = GRE }
+	}
+
+	option = {
+		name = greece.577.b
+		trigger = { NOT = { tag = GRE } }
+	}
+}
+
+# greece.580 — Prespa Cooperation Roadmap REQUEST (to FYR)
+country_event = {
+	id = greece.580
+	title = greece.580.t
+	desc = greece.580.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.580.a
+		log = "[GetDateText]: [This.GetName]: greece.580.a executed"
+		add_opinion_modifier = { target = GRE modifier = free_trade_agreement }
+		GRE = { country_event = { id = greece.581 days = 2 } }
+
+		ai_chance = {
+			base = 8
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+			modifier = { factor = 0.5 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+
+	option = {
+		name = greece.580.b
+		log = "[GetDateText]: [This.GetName]: greece.580.b executed"
+		GRE = { country_event = { id = greece.596 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.581 — Prespa Cooperation ACCEPT-REPLY
+country_event = {
+	id = greece.581
+	title = greece.581.t
+	desc = greece.581.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.581.a
+		log = "[GetDateText]: [This.GetName]: greece.581.a executed"
+		add_opinion_modifier = { target = FYR modifier = free_trade_agreement }
+		add_political_power = 75
+		add_timed_idea = { idea = GRE_north_macedonian_ties days = 180 }
+		set_temp_variable = { receiver_nation = FYR }
+		set_temp_variable = { sender_nation = GRE }
+		set_improved_trade_agreement = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.596 — Prespa Cooperation REJECT-REPLY
+country_event = {
+	id = greece.596
+	title = greece.596.t
+	desc = greece.596.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.596.a
+		log = "[GetDateText]: [This.GetName]: greece.596.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = FYR modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.582 — Albanian Minority Framework REQUEST (to ALB)
+country_event = {
+	id = greece.582
+	title = greece.582.t
+	desc = greece.582.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.582.a
+		log = "[GetDateText]: [This.GetName]: greece.582.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.583 days = 2 } }
+
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+			modifier = { factor = 0.5 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+
+	option = {
+		name = greece.582.b
+		log = "[GetDateText]: [This.GetName]: greece.582.b executed"
+		GRE = { country_event = { id = greece.597 days = 2 } }
+
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.583 — Albanian Minority Framework ACCEPT-REPLY
+country_event = {
+	id = greece.583
+	title = greece.583.t
+	desc = greece.583.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.583.a
+		log = "[GetDateText]: [This.GetName]: greece.583.a executed"
+		add_opinion_modifier = { target = ALB modifier = declaration_of_friendship }
+		add_ideas = GRE_epirus_cultural_ties
+		144 = { add_extra_state_shared_building_slots = 1 }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.597 — Albanian Minority Framework REJECT-REPLY
+country_event = {
+	id = greece.597
+	title = greece.597.t
+	desc = greece.597.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.597.a
+		log = "[GetDateText]: [This.GetName]: greece.597.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = ALB modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.584 — EEZ Delimitation Accord REQUEST (to EGY)
+country_event = {
+	id = greece.584
+	title = greece.584.t
+	desc = greece.584.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.584.a
+		log = "[GetDateText]: [This.GetName]: greece.584.a executed"
+		add_opinion_modifier = { target = GRE modifier = free_trade_agreement }
+		add_opinion_modifier = { target = GRE modifier = eased_border_tensions }
+		GRE = { country_event = { id = greece.585 days = 2 } }
+
+		ai_chance = {
+			base = 8
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.584.b
+		log = "[GetDateText]: [This.GetName]: greece.584.b executed"
+		GRE = { country_event = { id = greece.598 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.585 — EEZ Delimitation ACCEPT-REPLY
+country_event = {
+	id = greece.585
+	title = greece.585.t
+	desc = greece.585.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.585.a
+		log = "[GetDateText]: [This.GetName]: greece.585.a executed"
+		add_opinion_modifier = { target = EGY modifier = free_trade_agreement }
+		add_opinion_modifier = { target = EGY modifier = eased_border_tensions }
+		set_temp_variable = { receiver_nation = EGY }
+		set_temp_variable = { sender_nation = GRE }
+		set_improved_trade_agreement = yes
+		add_timed_idea = { idea = GRE_eez_delimitation days = 180 }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.598 — EEZ Delimitation REJECT-REPLY
+country_event = {
+	id = greece.598
+	title = greece.598.t
+	desc = greece.598.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.598.a
+		log = "[GetDateText]: [This.GetName]: greece.598.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = EGY modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.586 — Mediterranean Axis REQUEST (to ITA)
+country_event = {
+	id = greece.586
+	title = greece.586.t
+	desc = greece.586.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.586.a
+		log = "[GetDateText]: [This.GetName]: greece.586.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		add_opinion_modifier = { target = GRE modifier = free_trade_agreement }
+		GRE = { country_event = { id = greece.587 days = 2 } }
+
+		ai_chance = {
+			base = 8
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.586.b
+		log = "[GetDateText]: [This.GetName]: greece.586.b executed"
+		GRE = { country_event = { id = greece.599 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.587 — Mediterranean Axis ACCEPT-REPLY
+country_event = {
+	id = greece.587
+	title = greece.587.t
+	desc = greece.587.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.587.a
+		log = "[GetDateText]: [This.GetName]: greece.587.a executed"
+		add_opinion_modifier = { target = ITA modifier = declaration_of_friendship }
+		add_opinion_modifier = { target = ITA modifier = free_trade_agreement }
+		set_temp_variable = { receiver_nation = ITA }
+		set_temp_variable = { sender_nation = GRE }
+		set_improved_trade_agreement = yes
+		add_timed_idea = { idea = GRE_italo_hellenic_axis days = 270 }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.599 — Mediterranean Axis REJECT-REPLY
+country_event = {
+	id = greece.599
+	title = greece.599.t
+	desc = greece.599.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.599.a
+		log = "[GetDateText]: [This.GetName]: greece.599.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = ITA modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.588 — IGB Pipeline Expansion REQUEST (to BUL)
+country_event = {
+	id = greece.588
+	title = greece.588.t
+	desc = greece.588.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.588.a
+		log = "[GetDateText]: [This.GetName]: greece.588.a executed"
+		add_opinion_modifier = { target = GRE modifier = free_trade_agreement }
+		GRE = { country_event = { id = greece.589 days = 2 } }
+
+		ai_chance = {
+			base = 8
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.588.b
+		log = "[GetDateText]: [This.GetName]: greece.588.b executed"
+		GRE = { country_event = { id = greece.600 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.589 — IGB Pipeline Expansion ACCEPT-REPLY
+country_event = {
+	id = greece.589
+	title = greece.589.t
+	desc = greece.589.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.589.a
+		log = "[GetDateText]: [This.GetName]: greece.589.a executed"
+		add_opinion_modifier = { target = BUL modifier = free_trade_agreement }
+		set_temp_variable = { receiver_nation = BUL }
+		set_temp_variable = { sender_nation = GRE }
+		set_improved_trade_agreement = yes
+		add_ideas = GRE_balkan_gas_transit
+		add_resource = { type = oil amount = 5 state = 974 }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.600 — IGB Pipeline Expansion REJECT-REPLY
+country_event = {
+	id = greece.600
+	title = greece.600.t
+	desc = greece.600.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.600.a
+		log = "[GetDateText]: [This.GetName]: greece.600.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = BUL modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.590 — Hellenic-Saudi Strategic Council REQUEST (to SAU)
+country_event = {
+	id = greece.590
+	title = greece.590.t
+	desc = greece.590.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.590.a
+		log = "[GetDateText]: [This.GetName]: greece.590.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		add_opinion_modifier = { target = GRE modifier = military_cooperation }
+		GRE = { country_event = { id = greece.591 days = 2 } }
+
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.590.b
+		log = "[GetDateText]: [This.GetName]: greece.590.b executed"
+		GRE = { country_event = { id = greece.601 days = 2 } }
+
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.591 — Hellenic-Saudi Strategic Council ACCEPT-REPLY
+country_event = {
+	id = greece.591
+	title = greece.591.t
+	desc = greece.591.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.591.a
+		log = "[GetDateText]: [This.GetName]: greece.591.a executed"
+		add_opinion_modifier = { target = SAU modifier = declaration_of_friendship }
+		add_opinion_modifier = { target = SAU modifier = military_cooperation }
+		set_temp_variable = { treasury_change = 6 }
+		modify_treasury_effect = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.601 — Hellenic-Saudi Strategic Council REJECT-REPLY
+country_event = {
+	id = greece.601
+	title = greece.601.t
+	desc = greece.601.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.601.a
+		log = "[GetDateText]: [This.GetName]: greece.601.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = SAU modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.592 — Hellenic-Emirati Investment Compact REQUEST (to UAE)
+country_event = {
+	id = greece.592
+	title = greece.592.t
+	desc = greece.592.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.592.a
+		log = "[GetDateText]: [This.GetName]: greece.592.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.593 days = 2 } }
+
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.592.b
+		log = "[GetDateText]: [This.GetName]: greece.592.b executed"
+		GRE = { country_event = { id = greece.602 days = 2 } }
+
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.593 — Hellenic-Emirati Investment Compact ACCEPT-REPLY
+country_event = {
+	id = greece.593
+	title = greece.593.t
+	desc = greece.593.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.593.a
+		log = "[GetDateText]: [This.GetName]: greece.593.a executed"
+		add_opinion_modifier = { target = UAE modifier = declaration_of_friendship }
+		add_timed_idea = { idea = GRE_gulf_capital_inflow days = 365 }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.602 — Hellenic-Emirati Investment Compact REJECT-REPLY
+country_event = {
+	id = greece.602
+	title = greece.602.t
+	desc = greece.602.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.602.a
+		log = "[GetDateText]: [This.GetName]: greece.602.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = UAE modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.594 — EastMed Gas Forum Accession REQUEST (to JOR)
+country_event = {
+	id = greece.594
+	title = greece.594.t
+	desc = greece.594.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.594.a
+		log = "[GetDateText]: [This.GetName]: greece.594.a executed"
+		add_opinion_modifier = { target = GRE modifier = declaration_of_friendship }
+		GRE = { country_event = { id = greece.595 days = 2 } }
+
+		ai_chance = {
+			base = 8
+			modifier = { factor = 1.5 has_opinion = { target = GRE value > 0 } }
+		}
+	}
+
+	option = {
+		name = greece.594.b
+		log = "[GetDateText]: [This.GetName]: greece.594.b executed"
+		GRE = { country_event = { id = greece.603 days = 2 } }
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_opinion = { target = GRE value < -50 } }
+		}
+	}
+}
+
+# greece.595 — EastMed Gas Forum Accession ACCEPT-REPLY
+country_event = {
+	id = greece.595
+	title = greece.595.t
+	desc = greece.595.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.595.a
+		log = "[GetDateText]: [This.GetName]: greece.595.a executed"
+		add_opinion_modifier = { target = JOR modifier = declaration_of_friendship }
+		set_temp_variable = { receiver_nation = JOR }
+		set_temp_variable = { sender_nation = GRE }
+		set_improved_trade_agreement = yes
+
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.603 — EastMed Gas Forum Accession REJECT-REPLY
+country_event = {
+	id = greece.603
+	title = greece.603.t
+	desc = greece.603.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.603.a
+		log = "[GetDateText]: [This.GetName]: greece.603.a executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = JOR modifier = small_decrease }
+
+		ai_chance = { base = 1 }
+	}
+}
+
+###############################
+# Eastern Brotherhood — Aegean Tension / Cyprus Momentum events
+###############################
+
+# greece.700 — Aegean Dialogue cycle (fired by GRE_aegean_dialogue_mission timeout)
+country_event = {
+	id = greece.700
+	title = greece.700.t
+	desc = greece.700.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.700.a
+		log = "[GetDateText]: [This.GetName]: greece.700.a executed"
+		set_temp_variable = { GRE_tension_change = -5 }
+		GRE_change_aegean_tension = yes
+		hidden_effect = {
+			activate_mission = GRE_aegean_dialogue_mission
+		}
+		ai_chance = { base = 30 }
+	}
+
+	option = {
+		name = greece.700.b
+		log = "[GetDateText]: [This.GetName]: greece.700.b executed"
+		add_political_power = -10
+		hidden_effect = {
+			activate_mission = GRE_aegean_dialogue_mission
+		}
+		ai_chance = { base = 70 }
+	}
+}
+
+# greece.701 — Turkey cancels migration cooperation (high tension)
+country_event = {
+	id = greece.701
+	title = greece.701.t
+	desc = greece.701.d
+	picture = GFX_riots_austerity
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = greece.701.a
+		log = "[GetDateText]: [This.GetName]: greece.701.a executed"
+		remove_ideas = GRE_migration_cooperation_idea
+		add_timed_idea = {
+			idea = GRE_migration_crisis_idea
+			days = 180
+		}
+		clr_country_flag = GRE_migration_deal_active
+		ai_chance = { base = 1 }
+	}
+}
+
+# greece.702 — Aegean incident (airspace violation, fired by assertiveness focus, self-recurs)
+country_event = {
+	id = greece.702
+	title = greece.702.t
+	desc = greece.702.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.702.a
+		log = "[GetDateText]: [This.GetName]: greece.702.a executed"
+		set_temp_variable = { GRE_tension_change = -5 }
+		GRE_change_aegean_tension = yes
+		hidden_effect = {
 			if = {
 				limit = {
-					NOT = { has_country_flag = GRE_British_Akrotiri }
+					has_country_flag = GRE_assertive_patrols
+					country_exists = TUR
+					NOT = { has_war_with = TUR }
+					NOT = { is_in_faction_with = TUR }
 				}
-				set_country_flag = GRE_British_Akrotiri
+				country_event = { id = greece.702 days = 90 }
 			}
 		}
+		ai_chance = { base = 50 }
+	}
 
+	option = {
+		name = greece.702.b
+		log = "[GetDateText]: [This.GetName]: greece.702.b executed"
+		set_temp_variable = { GRE_tension_change = 5 }
+		GRE_change_aegean_tension = yes
+		random = { chance = 25 country_event = { id = greece.705 days = 5 } }
+		hidden_effect = {
+			if = {
+				limit = {
+					has_country_flag = GRE_assertive_patrols
+					country_exists = TUR
+					NOT = { has_war_with = TUR }
+					NOT = { is_in_faction_with = TUR }
+				}
+				country_event = { id = greece.702 days = 90 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+# greece.703 — Turkey responds at moderate tension (GRE-only flavor, no player choice)
+country_event = {
+	id = greece.703
+	title = greece.703.t
+	desc = greece.703.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.703.a
+		log = "[GetDateText]: [This.GetName]: greece.703.a executed"
+		hidden_effect = {
+			if = {
+				limit = { country_exists = NCY }
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = TUR.id }
+				set_temp_variable = { influence_target = NCY.id }
+				change_influence_percentage = yes
+			}
+		}
+	}
+}
+
+# greece.704 — Cyprus gas crisis (fired by gas focus when tension > 70)
+country_event = {
+	id = greece.704
+	title = greece.704.t
+	desc = greece.704.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.704.a
+		log = "[GetDateText]: [This.GetName]: greece.704.a executed"
+		set_temp_variable = { GRE_momentum_change = -10 }
+		GRE_change_cyprus_momentum = yes
+		add_opinion_modifier = { target = TUR modifier = eased_border_tensions }
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = greece.704.b
+		log = "[GetDateText]: [This.GetName]: greece.704.b executed"
+		set_temp_variable = { GRE_tension_change = 5 }
+		GRE_change_aegean_tension = yes
+		random = { chance = 15 add_threat = 0.02 }
+		ai_chance = { base = 50 }
+	}
+}
+
+# greece.705 — Turkish ultimatum (very high tension + enosis completed)
+country_event = {
+	id = greece.705
+	title = greece.705.t
+	desc = greece.705.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = greece.705.a
+		log = "[GetDateText]: [This.GetName]: greece.705.a executed"
+		set_temp_variable = { GRE_momentum_change = -30 }
+		GRE_change_cyprus_momentum = yes
+		add_stability = 0.05
+		ai_chance = { base = 70 }
+	}
+
+	option = {
+		name = greece.705.b
+		log = "[GetDateText]: [This.GetName]: greece.705.b executed"
+		set_temp_variable = { GRE_tension_change = 10 }
+		GRE_change_aegean_tension = yes
+		add_war_support = 0.05
+		add_threat = 0.03
+		ai_chance = { base = 30 }
+	}
+}
+
+# greece.706 — Minor airspace violation flavor event (low/moderate tension)
+country_event = {
+	id = greece.706
+	title = greece.706.t
+	desc = greece.706.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.706.a
+		log = "[GetDateText]: [This.GetName]: greece.706.a executed"
+		add_threat = 0.01
+	}
+}
+
+# greece.710 — Confederation: autonomy choice
+country_event = {
+	id = greece.710
+	title = greece.710.t
+	desc = greece.710.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.710.a
+		log = "[GetDateText]: [This.GetName]: greece.710.a executed"
+		add_stability = 0.05
+		set_temp_variable = { GRE_momentum_change = 5 }
+		GRE_change_cyprus_momentum = yes
+		set_country_flag = GRE_confederation_autonomy_done
+		country_event = { id = greece.711 days = 10 }
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = greece.710.b
+		log = "[GetDateText]: [This.GetName]: greece.710.b executed"
+		add_political_power = 50
+		set_temp_variable = { GRE_momentum_change = 10 }
+		GRE_change_cyprus_momentum = yes
+		set_country_flag = GRE_confederation_autonomy_done
+		country_event = { id = greece.711 days = 10 }
+		ai_chance = { base = 50 }
+	}
+}
+
+# greece.711 — Confederation: economic distribution choice
+country_event = {
+	id = greece.711
+	title = greece.711.t
+	desc = greece.711.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.711.a
+		log = "[GetDateText]: [This.GetName]: greece.711.a executed"
+		if = {
+			limit = { country_exists = CYP }
+			add_opinion_modifier = { target = CYP modifier = free_trade_agreement }
+			reverse_add_opinion_modifier = { target = CYP modifier = free_trade_agreement }
+		}
+		if = {
+			limit = { country_exists = NCY }
+			add_opinion_modifier = { target = NCY modifier = free_trade_agreement }
+			reverse_add_opinion_modifier = { target = NCY modifier = free_trade_agreement }
+		}
+		set_country_flag = GRE_confederation_economy_done
+		country_event = { id = greece.712 days = 10 }
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = greece.711.b
+		log = "[GetDateText]: [This.GetName]: greece.711.b executed"
+		set_temp_variable = { GRE_momentum_change = 5 }
+		GRE_change_cyprus_momentum = yes
+		if = {
+			limit = { country_exists = NCY }
+			add_opinion_modifier = { target = NCY modifier = small_decrease }
+		}
+		set_country_flag = GRE_confederation_economy_done
+		country_event = { id = greece.712 days = 10 }
+		ai_chance = { base = 50 }
+	}
+}
+
+# greece.712 — Confederation: security guarantee choice
+country_event = {
+	id = greece.712
+	title = greece.712.t
+	desc = greece.712.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = greece.712.a
+		log = "[GetDateText]: [This.GetName]: greece.712.a executed"
+		add_ideas = GRE_aegean_defense_posture
+		set_country_flag = GRE_confederation_security_done
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = greece.712.b
+		log = "[GetDateText]: [This.GetName]: greece.712.b executed"
+		add_stability = 0.05
+		set_country_flag = GRE_confederation_security_done
+		ai_chance = { base = 50 }
+	}
+}
+
+# Greece issues demands over Cyprus and Northern Cyprus
+country_event = {
+	id = greece.720
+	title = greece.720.t
+	desc = greece.720.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.720.a
+		log = "[GetDateText]: [This.GetName]: greece.720.a executed"
+		if = {
+			limit = { country_exists = CYP }
+			CYP = { country_event = { id = greece.724 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = GRE_gain_cyprus_tt
+		}
+		if = {
+			limit = { country_exists = NCY }
+			NCY = { country_event = { id = greece.725 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = GRE_gain_north_cyprus_tt
+		}
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		custom_effect_tooltip = GRE_enosis_demand_refused_tt
+	}
+}
+
+# International reaction to the Cyprus war
+news_event = {
+	id = greece.721
+	title = greece.721.t
+	desc = greece.721.d
+	picture = GFX_GRE_generic
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = greece.721.a
+		log = "[GetDateText]: [This.GetName]: greece.721.a executed"
+		add_threat = 0.02
+	}
+}
+
+# How far will Athens go? (Cyprus)
+country_event = {
+	id = greece.722
+	title = greece.722.t
+	desc = greece.722.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Volunteers and materiel only
+	option = {
+		name = greece.722.a
+		log = "[GetDateText]: [This.GetName]: greece.722.a executed"
+		if = {
+			limit = { country_exists = CYP }
+			CYP = {
+				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = 3000 producer = GRE }
+				add_equipment_to_stockpile = { type = util_vehicle_1 amount = 200 producer = GRE }
+				add_stability = -0.05
+			}
+		}
+		add_political_power = -50
+		ai_chance = { base = 1 }
+	}
+
+	# Commit the Hellenic Armed Forces
+	option = {
+		name = greece.722.b
+		log = "[GetDateText]: [This.GetName]: greece.722.b executed"
+		if = {
+			limit = { is_in_faction = yes }
+			leave_faction = yes
+		}
+		set_country_flag = GRE_war_cyprus_active
+		if = {
+			limit = { country_exists = CYP }
+			declare_war_on = { target = CYP type = annex_everything }
+		}
+		add_war_support = 0.10
+		add_stability = -0.05
+		ai_chance = { base = 1 }
+	}
+}
+
+# How far will Athens go? (Northern Cyprus)
+country_event = {
+	id = greece.726
+	title = greece.726.t
+	desc = greece.726.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	# Volunteers and materiel only
+	option = {
+		name = greece.726.a
+		log = "[GetDateText]: [This.GetName]: greece.726.a executed"
+		if = {
+			limit = { country_exists = NCY }
+			NCY = {
+				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = 3000 producer = GRE }
+				add_equipment_to_stockpile = { type = util_vehicle_1 amount = 200 producer = GRE }
+				add_stability = -0.05
+			}
+		}
+		add_political_power = -50
+		ai_chance = { base = 1 }
+	}
+
+	# Commit the Hellenic Armed Forces
+	option = {
+		name = greece.726.b
+		log = "[GetDateText]: [This.GetName]: greece.726.b executed"
+		if = {
+			limit = { is_in_faction = yes }
+			leave_faction = yes
+		}
+		set_country_flag = GRE_war_ncyprus_active
+		if = {
+			limit = { country_exists = NCY }
+			declare_war_on = { target = NCY type = annex_everything }
+		}
+		add_war_support = 0.10
+		add_stability = -0.05
+		ai_chance = { base = 1 }
+	}
+}
+
+# Cyprus reunified by force
+country_event = {
+	id = greece.723
+	title = greece.723.t
+	desc = greece.723.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.723.a
+		log = "[GetDateText]: [This.GetName]: greece.723.a executed"
+		if = {
+			limit = { owns_state = 145  has_country_flag = GRE_war_cyprus_active }
+			transfer_state = 145
+			add_state_core = 145
+			clr_country_flag = GRE_war_cyprus_active
+		}
+		if = {
+			limit = { owns_state = 146  has_country_flag = GRE_war_ncyprus_active }
+			transfer_state = 146
+			add_state_core = 146
+			clr_country_flag = GRE_war_ncyprus_active
+		}
+		add_stability = 0.05
+		add_political_power = 100
+		set_temp_variable = { GRE_momentum_change = 30 }
+		GRE_change_cyprus_momentum = yes
+	}
+}
+
+# Greece asks an ally to pressure Turkey
+country_event = {
+	id = greece.730
+	title = greece.730.t
+	desc = greece.730.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.730.a
+		log = "[GetDateText]: [This.GetName]: greece.730.a executed"
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		FROM = { country_event = { id = greece.731 days = 2 } }
 		ai_chance = {
-			base = 0.75
+			base = 50
 			modifier = {
-				factor = 4
-				ai_is_threatened = yes
+				factor = 1.5
+				has_opinion = { target = FROM value > 30 }
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	option = {
+		name = greece.730.b
+		log = "[GetDateText]: [This.GetName]: greece.730.b executed"
+		FROM = { country_event = { id = greece.732 days = 2 } }
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+# An ally agreed to back Greece against Turkey
+country_event = {
+	id = greece.731
+	title = greece.731.t
+	desc = greece.731.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.731.a
+		log = "[GetDateText]: [This.GetName]: greece.731.a executed"
+		add_to_variable = { GRE_turkey_backers = 1 }
+		set_temp_variable = { GRE_tension_change = -5 }
+		GRE_change_aegean_tension = yes
+		set_temp_variable = { GRE_momentum_change = 5 }
+		GRE_change_cyprus_momentum = yes
+	}
+}
+
+# An ally declined to back Greece against Turkey
+country_event = {
+	id = greece.732
+	title = greece.732.t
+	desc = greece.732.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.732.a
+		log = "[GetDateText]: [This.GetName]: greece.732.a executed"
+	}
+}
+
+# Greece proposes deep economic integration to Cyprus
+country_event = {
+	id = greece.733
+	title = greece.733.t
+	desc = greece.733.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.733.a
+		log = "[GetDateText]: [This.GetName]: greece.733.a executed"
+		if = {
+			limit = { has_idea = GRE_enosis_campaign_idea }
+			swap_ideas = { remove_idea = GRE_enosis_campaign_idea add_idea = GRE_enosis_campaign_idea_2 }
+		}
+		else = {
+			add_ideas = GRE_enosis_campaign_idea_2
+		}
+		FROM = { country_event = { id = greece.734 days = 2 } }
+		ai_chance = {
+			base = 80
+			modifier = { factor = 1.5 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+
+	option = {
+		name = greece.733.b
+		log = "[GetDateText]: [This.GetName]: greece.733.b executed"
+		FROM = { country_event = { id = greece.735 days = 2 } }
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+}
+
+# Cyprus accepted deep economic integration
+country_event = {
+	id = greece.734
+	title = greece.734.t
+	desc = greece.734.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.734.a
+		log = "[GetDateText]: [This.GetName]: greece.734.a executed"
+		add_timed_idea = { idea = GRE_cypriot_integration_idea days = 730 }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = CYP.id }
+		change_influence_percentage = yes
+		set_temp_variable = { GRE_momentum_change = 10 }
+		GRE_change_cyprus_momentum = yes
+	}
+}
+
+# Cyprus refused deep economic integration
+country_event = {
+	id = greece.735
+	title = greece.735.t
+	desc = greece.735.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.735.a
+		log = "[GetDateText]: [This.GetName]: greece.735.a executed"
+		set_temp_variable = { GRE_momentum_change = -5 }
+		GRE_change_cyprus_momentum = yes
+		add_opinion_modifier = { target = CYP modifier = small_decrease }
+	}
+}
+
+# Greece proposes joint gas development with Cyprus
+country_event = {
+	id = greece.736
+	title = greece.736.t
+	desc = greece.736.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.736.a
+		log = "[GetDateText]: [This.GetName]: greece.736.a executed"
+		145 = { add_resource = { type = oil amount = 8 } }
+		FROM = { country_event = { id = greece.737 days = 2 } }
+		ai_chance = {
+			base = 75
+			modifier = { factor = 1.5 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+
+	option = {
+		name = greece.736.b
+		log = "[GetDateText]: [This.GetName]: greece.736.b executed"
+		FROM = { country_event = { id = greece.738 days = 2 } }
+		ai_chance = {
+			base = 25
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+}
+
+# Cyprus accepted joint gas development
+country_event = {
+	id = greece.737
+	title = greece.737.t
+	desc = greece.737.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.737.a
+		log = "[GetDateText]: [This.GetName]: greece.737.a executed"
+		144 = { add_resource = { type = oil amount = 8 } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = CYP.id }
+		change_influence_percentage = yes
+		set_temp_variable = { GRE_momentum_change = 15 }
+		GRE_change_cyprus_momentum = yes
+		if = {
+			limit = { check_variable = { GRE_aegean_tension > 70 } }
+			custom_effect_tooltip = GRE_cyprus_gas_crisis_event_tt
+			country_event = { id = greece.704 days = 5 }
+		}
+	}
+}
+
+# Cyprus refused joint gas development
+country_event = {
+	id = greece.738
+	title = greece.738.t
+	desc = greece.738.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.738.a
+		log = "[GetDateText]: [This.GetName]: greece.738.a executed"
+		set_temp_variable = { GRE_momentum_change = -5 }
+		GRE_change_cyprus_momentum = yes
+	}
+}
+
+# Greece offers investment and cultural exchange to Northern Cyprus
+country_event = {
+	id = greece.739
+	title = greece.739.t
+	desc = greece.739.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.739.a
+		log = "[GetDateText]: [This.GetName]: greece.739.a executed"
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		FROM = { country_event = { id = greece.740 days = 2 } }
+		ai_chance = {
+			base = 60
+			modifier = { factor = 1.5 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+
+	option = {
+		name = greece.739.b
+		log = "[GetDateText]: [This.GetName]: greece.739.b executed"
+		FROM = { country_event = { id = greece.741 days = 2 } }
+		ai_chance = {
+			base = 40
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+}
+
+# Northern Cyprus accepted investment and cultural exchange
+country_event = {
+	id = greece.740
+	title = greece.740.t
+	desc = greece.740.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.740.a
+		log = "[GetDateText]: [This.GetName]: greece.740.a executed"
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = NCY.id }
+		change_influence_percentage = yes
+		add_opinion_modifier = { target = NCY modifier = medium_increase }
+		set_temp_variable = { GRE_momentum_change = 15 }
+		GRE_change_cyprus_momentum = yes
+	}
+}
+
+# Northern Cyprus refused investment and cultural exchange
+country_event = {
+	id = greece.741
+	title = greece.741.t
+	desc = greece.741.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.741.a
+		log = "[GetDateText]: [This.GetName]: greece.741.a executed"
+		set_temp_variable = { GRE_momentum_change = -5 }
+		GRE_change_cyprus_momentum = yes
+	}
+}
+
+# Greece requests transfer of the Sovereign Base Areas from Britain
+country_event = {
+	id = greece.742
+	title = greece.742.t
+	desc = greece.742.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.742.a
+		log = "[GetDateText]: [This.GetName]: greece.742.a executed"
+		FROM = {
+			transfer_state = 812
+			give_military_access = ENG
+		}
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		FROM = {
+			add_opinion_modifier = { target = ROOT modifier = medium_increase }
+			country_event = { id = greece.743 days = 2 }
+		}
+		ai_chance = {
+			base = 55
+			modifier = {
+				factor = 1.5
+				has_opinion = { target = FROM value > 30 }
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	option = {
+		name = greece.742.b
+		log = "[GetDateText]: [This.GetName]: greece.742.b executed"
+		FROM = { country_event = { id = greece.744 days = 2 } }
+		ai_chance = {
+			base = 45
+		}
+	}
+}
+
+# Britain agreed to the bases accord, price is settled
+country_event = {
+	id = greece.743
+	title = greece.743.t
+	desc = greece.743.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.743.a
+		log = "[GetDateText]: [This.GetName]: greece.743.a executed"
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -15 }
+		modify_treasury_effect = yes
+		set_temp_variable = { GRE_momentum_change = 10 }
+		GRE_change_cyprus_momentum = yes
+	}
+}
+
+# Britain refused the bases accord
+country_event = {
+	id = greece.744
+	title = greece.744.t
+	desc = greece.744.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.744.a
+		log = "[GetDateText]: [This.GetName]: greece.744.a executed"
+		add_opinion_modifier = { target = ENG modifier = small_decrease }
+	}
+}
+
+# The pressure campaign concludes -- does Turkey back down?
+country_event = {
+	id = greece.745
+	title = greece.745.t
+	desc = greece.745.d
+	picture = GFX_GRE_generic
+	is_triggered_only = yes
+
+	option = {
+		name = greece.745.a
+		log = "[GetDateText]: [This.GetName]: greece.745.a executed"
+		if = {
+			limit = { check_variable = { GRE_turkey_backers > 2 } }
+			random_list = {
+				80 = {
+					custom_effect_tooltip = GRE_turkey_concedes_tt
+					set_temp_variable = { percent_change = -15 }
+					set_temp_variable = { tag_index = TUR.id }
+					set_temp_variable = { influence_target = CYP.id }
+					change_influence_percentage = yes
+					set_temp_variable = { influence_target = NCY.id }
+					change_influence_percentage = yes
+					set_temp_variable = { GRE_tension_change = -10 }
+					GRE_change_aegean_tension = yes
+					set_temp_variable = { GRE_momentum_change = 10 }
+					GRE_change_cyprus_momentum = yes
+					set_country_flag = GRE_turkey_backed_down
+				}
+				20 = {
+					custom_effect_tooltip = GRE_turkey_holds_firm_tt
+					set_temp_variable = { GRE_tension_change = 5 }
+					GRE_change_aegean_tension = yes
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { GRE_turkey_backers > 1 } }
+			random_list = {
+				60 = {
+					custom_effect_tooltip = GRE_turkey_concedes_tt
+					set_temp_variable = { percent_change = -15 }
+					set_temp_variable = { tag_index = TUR.id }
+					set_temp_variable = { influence_target = CYP.id }
+					change_influence_percentage = yes
+					set_temp_variable = { influence_target = NCY.id }
+					change_influence_percentage = yes
+					set_temp_variable = { GRE_tension_change = -10 }
+					GRE_change_aegean_tension = yes
+					set_temp_variable = { GRE_momentum_change = 10 }
+					GRE_change_cyprus_momentum = yes
+					set_country_flag = GRE_turkey_backed_down
+				}
+				40 = {
+					custom_effect_tooltip = GRE_turkey_holds_firm_tt
+					set_temp_variable = { GRE_tension_change = 5 }
+					GRE_change_aegean_tension = yes
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { GRE_turkey_backers > 0 } }
+			random_list = {
+				40 = {
+					custom_effect_tooltip = GRE_turkey_concedes_tt
+					set_temp_variable = { percent_change = -15 }
+					set_temp_variable = { tag_index = TUR.id }
+					set_temp_variable = { influence_target = CYP.id }
+					change_influence_percentage = yes
+					set_temp_variable = { influence_target = NCY.id }
+					change_influence_percentage = yes
+					set_temp_variable = { GRE_tension_change = -10 }
+					GRE_change_aegean_tension = yes
+					set_temp_variable = { GRE_momentum_change = 10 }
+					GRE_change_cyprus_momentum = yes
+					set_country_flag = GRE_turkey_backed_down
+				}
+				60 = {
+					custom_effect_tooltip = GRE_turkey_holds_firm_tt
+					set_temp_variable = { GRE_tension_change = 5 }
+					GRE_change_aegean_tension = yes
+				}
+			}
+		}
+		else = {
+			random_list = {
+				20 = {
+					custom_effect_tooltip = GRE_turkey_concedes_tt
+					set_temp_variable = { percent_change = -15 }
+					set_temp_variable = { tag_index = TUR.id }
+					set_temp_variable = { influence_target = CYP.id }
+					change_influence_percentage = yes
+					set_temp_variable = { influence_target = NCY.id }
+					change_influence_percentage = yes
+					set_temp_variable = { GRE_tension_change = -10 }
+					GRE_change_aegean_tension = yes
+					set_temp_variable = { GRE_momentum_change = 10 }
+					GRE_change_cyprus_momentum = yes
+					set_country_flag = GRE_turkey_backed_down
+				}
+				80 = {
+					custom_effect_tooltip = GRE_turkey_holds_firm_tt
+					set_temp_variable = { GRE_tension_change = 5 }
+					GRE_change_aegean_tension = yes
+				}
 			}
 		}
 	}
 }
 
-# Stay in Cyprus
+# Greece demands Cyprus accept Enosis
 country_event = {
-	id = greece.25
-	title = greece.25.t
-	desc = greece.25.d
-	# TODO: add a event picture
+	id = greece.724
+	title = greece.724.t
+	desc = greece.724.d
+	picture = GFX_GRE_generic
 	is_triggered_only = yes
 
 	option = {
-		name = greece.25.a
-		log = "[GetDateText]: [This.GetName]: greece.25.a executed"
+		name = greece.724.a
+		log = "[GetDateText]: [This.GetName]: greece.724.a executed"
+		FROM = {
+			custom_effect_tooltip = GRE_gain_cyprus_tt
+			transfer_state = 145
+			add_state_core = 145
+			set_temp_variable = { GRE_tension_change = -5 }
+			GRE_change_aegean_tension = yes
+		}
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				FROM = { check_variable = { GRE_cyprus_momentum > 50 } }
+			}
+			modifier = {
+				add = 30
+				FROM = { check_variable = { GRE_cyprus_momentum > 75 } }
+			}
+			modifier = {
+				add = 15
+				has_opinion = { target = TUR value < 0 }
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = TUR value > 30 }
+			}
+		}
+	}
+
+	option = {
+		name = greece.724.b
+		log = "[GetDateText]: [This.GetName]: greece.724.b executed"
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		FROM = {
+			news_event = { id = greece.721 days = 1 }
+			country_event = { id = greece.722 days = 1 }
+		}
+		ai_chance = {
+			base = 80
+			modifier = {
+				add = -20
+				FROM = { check_variable = { GRE_cyprus_momentum > 50 } }
+			}
+			modifier = {
+				add = -30
+				FROM = { check_variable = { GRE_cyprus_momentum > 75 } }
+			}
+			modifier = {
+				add = -15
+				has_opinion = { target = TUR value < 0 }
+			}
+		}
 	}
 }
 
-# Brits Agree
+# Greece demands Northern Cyprus submit to Athens
 country_event = {
-	id = greece.26
-	title = greece.26.t
-	desc = greece.26.d
-	picture = GFX_british_flag_two
+	id = greece.725
+	title = greece.725.t
+	desc = greece.725.d
+	picture = GFX_GRE_generic
 	is_triggered_only = yes
 
 	option = {
-		name = greece.26.a
-		log = "[GetDateText]: [This.GetName]: greece.26.a executed"
-		GRE = { transfer_state = 812 }
+		name = greece.725.a
+		log = "[GetDateText]: [This.GetName]: greece.725.a executed"
+		FROM = {
+			custom_effect_tooltip = GRE_gain_north_cyprus_tt
+			transfer_state = 146
+			add_state_core = 146
+			set_temp_variable = { GRE_tension_change = -5 }
+			GRE_change_aegean_tension = yes
+		}
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 40
+				FROM = { has_country_flag = GRE_turkey_backed_down }
+			}
+			modifier = {
+				add = 15
+				FROM = { check_variable = { GRE_cyprus_momentum > 50 } }
+			}
+			modifier = {
+				add = 20
+				FROM = { check_variable = { GRE_cyprus_momentum > 75 } }
+			}
+			modifier = {
+				add = 10
+				has_opinion = { target = TUR value < 0 }
+			}
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = GRE
+					ratio < 0.5
+				}
+			}
+		}
 	}
-}
-
-# Brits Disagree
-country_event = {
-	id = greece.27
-	title = greece.27.t
-	desc = greece.27.d
-	picture = GFX_declined_offer_no
-
-	is_triggered_only = yes
 
 	option = {
-		name = greece.27.a
-		log = "[GetDateText]: [This.GetName]: greece.27.a executed"
+		name = greece.725.b
+		log = "[GetDateText]: [This.GetName]: greece.725.b executed"
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		FROM = {
+			news_event = { id = greece.721 days = 1 }
+			country_event = { id = greece.726 days = 1 }
+		}
+		ai_chance = {
+			base = 95
+			modifier = {
+				add = -40
+				FROM = { has_country_flag = GRE_turkey_backed_down }
+			}
+			modifier = {
+				add = -15
+				FROM = { check_variable = { GRE_cyprus_momentum > 50 } }
+			}
+			modifier = {
+				add = -20
+				FROM = { check_variable = { GRE_cyprus_momentum > 75 } }
+			}
+			modifier = {
+				factor = 0.3
+				strength_ratio = {
+					tag = GRE
+					ratio < 0.5
+				}
+			}
+		}
 	}
 }

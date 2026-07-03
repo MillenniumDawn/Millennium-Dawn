@@ -47,7 +47,7 @@
 @refugee_percentage_adjuster = 0.005
 # Minimum workers per building
 @minimum_workers_per_building = 0.00001
-# Resource sale rate constant
+# Resource Sales Rate Constant
 @resource_sale_rate_constant = 0.00298
 # Upper bound for math expression clamps — HOI4 requires both min and max on every clamp, so this serves as a sane "effectively unbounded" max
 @math_expressions_max = 1000000
@@ -2244,6 +2244,42 @@ calculate_additional_income_rate = {
 		CZE_HUN_gdp_stolen_calculation = yes
 		add_to_variable = { additional_income_rate = CZE_HUN_gain_income_trade }
 	}
+	# Greece
+	if = {
+		limit = { original_tag = GRE }
+		# Golden Visa Programme income
+		if = {
+			limit = { has_completed_focus = GRE_golden_visa_deals }
+			# Higher corruption draws more visa buyers; scale income by corruption tier
+			set_temp_variable = { GRE_visa_corruption_tier = 1 }
+			if = { limit = { has_idea = corruption_level_02 } set_temp_variable = { GRE_visa_corruption_tier = 2 } }
+			else_if = { limit = { has_idea = corruption_level_03 } set_temp_variable = { GRE_visa_corruption_tier = 3 } }
+			else_if = { limit = { has_idea = corruption_level_04 } set_temp_variable = { GRE_visa_corruption_tier = 4 } }
+			else_if = { limit = { has_idea = corruption_level_05 } set_temp_variable = { GRE_visa_corruption_tier = 5 } }
+			else_if = { limit = { has_idea = corruption_level_06 } set_temp_variable = { GRE_visa_corruption_tier = 6 } }
+			else_if = { limit = { has_idea = corruption_level_07 } set_temp_variable = { GRE_visa_corruption_tier = 7 } }
+			else_if = { limit = { has_idea = corruption_level_08 } set_temp_variable = { GRE_visa_corruption_tier = 8 } }
+			else_if = { limit = { has_idea = corruption_level_09 } set_temp_variable = { GRE_visa_corruption_tier = 9 } }
+			else_if = { limit = { has_idea = corruption_level_10 } set_temp_variable = { GRE_visa_corruption_tier = 10 } }
+			set_temp_variable = { GRE_visa_rate = GRE_visa_corruption_tier }
+			subtract_from_temp_variable = { GRE_visa_rate = 1 }
+			multiply_temp_variable = { GRE_visa_rate = 0.00001 }
+			add_to_temp_variable = { GRE_visa_rate = 0.00006 }
+			set_variable = { GRE_golden_visa_income = gdp_total }
+			multiply_variable = { GRE_golden_visa_income = GRE_visa_rate }
+			add_to_variable = { additional_income_rate = GRE_golden_visa_income }
+		}
+	}
+	# Creditor income from holding Greek debt (runs on creditor nation scope)
+	if = {
+		limit = {
+			country_exists = GRE
+			check_variable = { GRE_interest_income_from_greece > 0 }
+		}
+		set_variable = { additional_income_GRE_creditor = GRE_interest_income_from_greece }
+		add_to_variable = { additional_income_rate = additional_income_GRE_creditor }
+	}
+
 	# Energy Load Sharing Income
 	if = { limit = { check_variable = { energy_load_sharing_nations^num > 0 } }
 		set_variable = { energy_load_sharing_income_var = { value = energy_load_sharing_use_var multiply = global.price_per_gw_for_els clamp = { min = 0 max = @math_expressions_max } } }
@@ -2343,8 +2379,10 @@ calculate_interest_rate = {
 		# The Debt to GDP Ratio helps dictate the ability of the nation to repay the debts
 		# debt / total gdp = debt_ratio
 		set_variable = { debt_ratio = debt }
-		clamp_variable = { var = gdp_total min = 0.001 }
-		divide_variable = { debt_ratio = gdp_total }
+		if = {
+			limit = { check_variable = { gdp_total > 0 } }
+			divide_variable = { debt_ratio = gdp_total }
+		}
 	}
 
 	# Remove high interest modifier if interest rate dropped below 15%
@@ -4086,6 +4124,20 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = CZE_foreign_monarchy }
 		}
 	}
+	# Greece
+	else_if = {
+		limit = { original_tag = GRE }
+		# Creditor debt interest payments
+		if = {
+			limit = {
+				GRE_has_creditors = yes
+				check_variable = { GRE_creditor_payment_total > 0 }
+			}
+			set_variable = { GRE_creditor_debt_expense = GRE_creditor_payment_total }
+			add_to_variable = { additional_expenses_rate = GRE_creditor_debt_expense }
+		}
+	}
+	# Hungary
 	else_if = {
 		limit = { original_tag = HUN }
 		if = {
@@ -4268,8 +4320,9 @@ update_display = {
 
 	set_variable = { display_income = { value = tax_gain add = resource_sale_rate } }
 	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
-	clamp_variable = { var = tax_gain min = 0.001 }
-	divide_variable = { resource_to_tax_income = tax_gain }
+	set_temp_variable = { tmp_tax_gain_divisor = tax_gain }
+	clamp_temp_variable = { var = tmp_tax_gain_divisor min = 0.001 }
+	divide_variable = { resource_to_tax_income = tmp_tax_gain_divisor }
 	if = { limit = { check_variable = { int_reinvest_mode = 2 } }
 		set_temp_variable = { _split_display_rate = { value = int_investments_rate multiply = 0.5 } }
 		add_to_variable = { display_income = _split_display_rate }
@@ -6529,7 +6582,7 @@ setup_employment_variables = {
 	}
 
 	# Set for the power ranking system
-	set_continent_nation_flag = yes
+	set_country_group_flags = yes
 }
 
 # Effect: set_initial_cost_resources
@@ -6722,12 +6775,13 @@ calculate_united_nations_base_budget = {
 		}
 	}
 
-	set_temp_variable = { un_member_count = global.UN_general_assembly^num }
-	clamp_temp_variable = { var = un_member_count min = 1 }
-	divide_variable = { global.target_const_speed_mod = un_member_count }
-	divide_variable = { global.target_research_speed_mod = un_member_count }
-	divide_variable = { global.target_civ_count = un_member_count }
-	divide_variable = { global.average_gdp_capita = un_member_count }
+	if = {
+		limit = { check_variable = { global.UN_general_assembly^num > 0 } }
+		divide_variable = { global.target_const_speed_mod = global.UN_general_assembly^num }
+		divide_variable = { global.target_research_speed_mod = global.UN_general_assembly^num }
+		divide_variable = { global.target_civ_count = global.UN_general_assembly^num }
+		divide_variable = { global.average_gdp_capita = global.UN_general_assembly^num }
+	}
 
 	multiply_temp_variable = { peak_const_speed_mod = 0.6 }
 	multiply_temp_variable = { peak_civ_count = 0.05 }
@@ -6745,8 +6799,10 @@ calculate_united_nations_base_budget = {
 
 		var:v = {
 			set_variable = { united_nations_contribution_percent = united_nations_base_expenses }
-			clamp_variable = { var = global.un_operating_budget_base min = 0.001 }
-			divide_variable = { united_nations_contribution_percent = global.un_operating_budget_base }
+			if = {
+				limit = { check_variable = { global.un_operating_budget_base > 0 } }
+				divide_variable = { united_nations_contribution_percent = global.un_operating_budget_base }
+			}
 			add_to_temp_array = { temp_array_mover = united_nations_base_expenses }
 			add_to_temp_array = { nation_tracker = THIS }
 		}
@@ -6901,8 +6957,10 @@ calculate_un_program_budgets = {
 			add_to_variable = { global.undio_budget = united_nations_unido_funding }
 			add_to_variable = { global.uncdf_budget = united_nations_uncdf_funding }
 			set_variable = { united_nations_aid_program_contribution_percent = united_nations_aid_expenses }
-			clamp_temp_variable = { var = total_un_programs min = 0.001 }
-			divide_variable = { united_nations_aid_program_contribution_percent = total_un_programs }
+			if = {
+				limit = { check_variable = { total_un_programs > 0 } }
+				divide_variable = { united_nations_aid_program_contribution_percent = total_un_programs }
+			}
 			check_for_subsidy_expiration = yes
 		}
 	}

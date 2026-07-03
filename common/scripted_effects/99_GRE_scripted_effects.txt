@@ -1,0 +1,313 @@
+# Author(s): AngriestBird
+
+# Greek Creditor System Effects
+
+# Adds a creditor to the Greek debt system
+# Required Input: GRE_creditor_debt_change (temp var, amount of debt to transfer)
+#                 GRE_creditor_target (persistent var, country ID)
+GRE_add_creditor = {
+	custom_effect_tooltip = GRE_add_creditor_tt
+	set_variable = { GRE_proposed_debt_amount = GRE_creditor_debt_change }
+
+	# Can't offload more debt than we actually hold, or we manufacture phantom creditor debt
+	if = {
+		limit = { check_variable = { GRE_proposed_debt_amount > debt } }
+		set_variable = { GRE_proposed_debt_amount = debt }
+	}
+
+	if = {
+		limit = { is_in_array = { GRE_creditors = GRE_creditor_target } }
+		set_temp_variable = { GRE_found_index = -1 }
+		for_each_loop = {
+			array = GRE_creditors
+			if = {
+				limit = { check_variable = { v = GRE_creditor_target } }
+				set_temp_variable = { GRE_found_index = i }
+			}
+		}
+		if = {
+			limit = { check_variable = { GRE_found_index > -1 } }
+			add_to_variable = { GRE_creditor_debt^GRE_found_index = GRE_proposed_debt_amount }
+		}
+	}
+	else = {
+		add_to_array = { GRE_creditors = GRE_creditor_target }
+		set_temp_variable = { GRE_new_index = GRE_creditors^num }
+		subtract_from_temp_variable = { GRE_new_index = 1 }
+		set_variable = { GRE_creditor_debt^GRE_new_index = GRE_proposed_debt_amount }
+		set_variable = { GRE_creditor_rate^GRE_new_index = 3 }
+	}
+
+	subtract_from_variable = { debt = GRE_proposed_debt_amount }
+	add_to_variable = { GRE_total_creditor_debt = GRE_proposed_debt_amount }
+
+	var:GRE_creditor_target = {
+		add_to_variable = { GRE_debt_held_by_us = GRE.GRE_proposed_debt_amount }
+		if = {
+			limit = { NOT = { check_variable = { GRE_our_interest_rate > 0 } } }
+			set_variable = { GRE_our_interest_rate = 3 }
+		}
+	}
+}
+
+# Computes the share of current debt to offload in a swap deal.
+# 25% when ratio is past 90%, otherwise 10%. Runs in Greece scope.
+# Result stored in GRE_proposed_debt_amount (persistent).
+GRE_calculate_proposed_debt = {
+	set_temp_variable = { GRE_proposed_debt_amount = debt }
+	if = {
+		limit = { gdp_debt_ratio_higher_90 = yes }
+		multiply_temp_variable = { GRE_proposed_debt_amount = 0.25 }
+	}
+	else = {
+		multiply_temp_variable = { GRE_proposed_debt_amount = 0.1 }
+	}
+	round_temp_variable = GRE_proposed_debt_amount
+	set_variable = { GRE_proposed_debt_amount = GRE_proposed_debt_amount }
+}
+
+# Removes a creditor from the system
+# Expects: GRE_creditor_remove_index (index to remove)
+GRE_remove_creditor = {
+	var:GRE_creditors^GRE_creditor_remove_index = {
+		set_variable = { GRE_debt_held_by_us = 0 }
+		set_variable = { GRE_our_interest_rate = 0 }
+		set_variable = { GRE_interest_income_from_greece = 0 }
+	}
+
+	remove_from_array = { array = GRE_creditors index = GRE_creditor_remove_index }
+	remove_from_array = { array = GRE_creditor_debt index = GRE_creditor_remove_index }
+	remove_from_array = { array = GRE_creditor_rate index = GRE_creditor_remove_index }
+
+	if = {
+		limit = { check_variable = { GRE_creditors^num = 0 } }
+		set_variable = { GRE_creditor_payment_total = 0 }
+		set_variable = { GRE_creditor_debt_expense = 0 }
+	}
+}
+
+# Weekly creditor interest payment processing
+# Called from on_weekly_GRE, scope = GRE
+GRE_process_creditor_payments = {
+	set_variable = { GRE_creditor_payment_total = 0 }
+
+	for_each_loop = {
+		array = GRE_creditors
+		value = v
+		index = i
+
+		# Weekly interest: debt * rate * 0.00019
+		set_temp_variable = { GRE_weekly_interest = GRE_creditor_debt^i }
+		multiply_temp_variable = { GRE_weekly_interest = 0.00019 }
+		multiply_temp_variable = { GRE_weekly_interest = GRE_creditor_rate^i }
+
+		var:GRE_creditors^i = {
+			set_variable = { GRE_interest_income_from_greece = ROOT.GRE_weekly_interest }
+		}
+
+		add_to_variable = { GRE_creditor_payment_total = GRE_weekly_interest }
+	}
+
+	set_variable = { GRE_total_creditor_debt = 0 }
+	for_each_loop = {
+		array = GRE_creditor_debt
+		add_to_variable = { GRE_total_creditor_debt = v }
+	}
+
+}
+
+# Distributes deferred focus costs proportionally across creditors
+# Expects: GRE_deferred_cost (amount to distribute)
+GRE_distribute_deferred_debt = {
+	set_temp_variable = { GRE_total_cd = 0 }
+	for_each_loop = {
+		array = GRE_creditor_debt
+		add_to_temp_variable = { GRE_total_cd = v }
+	}
+
+	if = {
+		limit = { check_variable = { GRE_total_cd > 0 } }
+		for_each_loop = {
+			array = GRE_creditors
+			value = v
+			index = i
+
+			# share = (their_debt / total_debt) * deferred_cost
+			set_temp_variable = { GRE_share = GRE_creditor_debt^i }
+			divide_temp_variable = { GRE_share = GRE_total_cd }
+			multiply_temp_variable = { GRE_share = GRE_deferred_cost }
+
+			add_to_variable = { GRE_creditor_debt^i = GRE_share }
+
+			var:GRE_creditors^i = {
+				add_to_variable = { GRE_debt_held_by_us = ROOT.GRE_share }
+			}
+		}
+		add_to_variable = { GRE_total_creditor_debt = GRE_deferred_cost }
+		custom_effect_tooltip = GRE_deferred_to_creditors_tt
+	}
+	else = {
+		set_temp_variable = { debt_change = GRE_deferred_cost }
+		modify_debt_effect = yes
+	}
+}
+
+# Repay a portion of debt to a specific creditor
+# Expects: GRE_repay_index (creditor index), GRE_repay_amount (amount to repay)
+GRE_repay_creditor_debt = {
+	clamp_temp_variable = { var = GRE_repay_amount min = 0 max = GRE_creditor_debt^GRE_repay_index }
+
+	set_temp_variable = { treasury_change = GRE_repay_amount }
+	multiply_temp_variable = { treasury_change = -1 }
+	modify_treasury_effect = yes
+
+	subtract_from_variable = { GRE_creditor_debt^GRE_repay_index = GRE_repay_amount }
+	subtract_from_variable = { GRE_total_creditor_debt = GRE_repay_amount }
+
+	var:GRE_creditors^GRE_repay_index = {
+		subtract_from_variable = { GRE_debt_held_by_us = ROOT.GRE_repay_amount }
+	}
+
+	if = {
+		limit = { check_variable = { GRE_creditor_debt^GRE_repay_index < 0.01 } }
+		var:GRE_creditors^GRE_repay_index = {
+			country_event = { id = greece_debt.18 days = 1 }
+		}
+		set_temp_variable = { GRE_creditor_remove_index = GRE_repay_index }
+		GRE_remove_creditor = yes
+	}
+}
+
+# Defers a focus payment into the creditor debt pool
+# Expects: debt_change (amount to defer)
+GRE_defer_payment = {
+	set_temp_variable = { GRE_deferred_cost = debt_change }
+	if = {
+		limit = { check_variable = { GRE_creditors^num > 0 } }
+		GRE_distribute_deferred_debt = yes
+	}
+	else = {
+		modify_debt_effect = yes
+	}
+}
+
+# Pays a treasury cost, or defers it into the creditor debt pool when the defer flag is set.
+# Expects: debt_change (positive cost amount)
+GRE_pay_or_defer = {
+	if = {
+		limit = { has_country_flag = GRE_defer_payments_flag }
+		GRE_defer_payment = yes
+	}
+	else = {
+		set_temp_variable = { treasury_change = debt_change }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+	}
+}
+
+# Calculates the unified Greek debt ratio
+# Generic debt (full weight) + creditor debt (half weight)
+# Result stored in GRE_unified_debt_ratio (decimal, e.g. 1.5 = 150%)
+GRE_calculate_unified_debt = {
+	set_variable = { GRE_effective_debt = debt }
+
+	# Creditor-held debt at half weight (restructured terms)
+	set_temp_variable = { GRE_creditor_half = GRE_total_creditor_debt }
+	multiply_temp_variable = { GRE_creditor_half = 0.5 }
+	add_to_variable = { GRE_effective_debt = GRE_creditor_half }
+
+	if = {
+		limit = { check_variable = { gdp_total > 0 } }
+		set_variable = { GRE_unified_debt_ratio = GRE_effective_debt }
+		divide_variable = { GRE_unified_debt_ratio = gdp_total }
+	}
+	else = {
+		set_variable = { GRE_unified_debt_ratio = 0 }
+	}
+
+	# Map ratio to 0-1 scale: 0% = 0, ~135%+ = 1.0
+	set_variable = { GRE_debt_variable = GRE_unified_debt_ratio }
+	multiply_variable = { GRE_debt_variable = 0.74 }
+	clamp_variable = { var = GRE_debt_variable min = 0 max = 1 }
+
+	set_variable = { GRE_debt_crisis_consumer = GRE_debt_variable }
+	multiply_variable = { GRE_debt_crisis_consumer = 0.1 }
+	set_variable = { GRE_debt_crisis_stability = GRE_debt_variable }
+	multiply_variable = { GRE_debt_crisis_stability = -0.25 }
+	set_variable = { GRE_debt_crisis_construction = GRE_debt_variable }
+	multiply_variable = { GRE_debt_crisis_construction = -0.5 }
+	set_variable = { GRE_debt_crisis_drift = GRE_debt_variable }
+	multiply_variable = { GRE_debt_crisis_drift = -0.8 }
+
+	if = {
+		limit = {
+			check_variable = { GRE_unified_debt_ratio > 0.9 }
+			NOT = { has_completed_focus = GRE_resolution_crisis }
+			NOT = { has_active_mission = GRE_austerity_tension_mission }
+			NOT = { has_active_mission = GRE_debt_crisis_mission }
+			NOT = { has_country_flag = GRE_debt_crisis_cooldown }
+		}
+		GRE_enter_austerity_phase = yes
+	}
+}
+
+GRE_enter_austerity_phase = {
+	set_country_flag = GRE_debt_crisis_experienced
+	if = {
+		limit = { GRE_austerity_ongoing = no }
+		add_ideas = GRE_austerity_1
+	}
+	activate_mission = GRE_austerity_tension_mission
+}
+
+GRE_exit_debt_crisis = {
+	if = {
+		limit = { has_idea = GRE_austerity_1 }
+		remove_ideas = GRE_austerity_1
+	}
+	else_if = {
+		limit = { has_idea = GRE_austerity_2 }
+		remove_ideas = GRE_austerity_2
+	}
+	else_if = {
+		limit = { has_idea = GRE_austerity_3 }
+		remove_ideas = GRE_austerity_3
+	}
+	set_country_flag = { flag = GRE_debt_crisis_cooldown value = 1 days = 365 }
+}
+
+GRE_startup_creditor_system = {
+	add_to_array = { GRE.GRE_potential_creditors = RAJ.id }
+	add_to_array = { GRE.GRE_potential_creditors = CHI.id }
+	add_to_array = { GRE.GRE_potential_creditors = SOV.id }
+	add_to_array = { GRE.GRE_potential_creditors = PER.id }
+	add_to_array = { GRE.GRE_potential_creditors = EGY.id }
+	add_to_array = { GRE.GRE_potential_creditors = BRA.id }
+}
+
+# Eastern Alignment Branch — promotes the spirit chain when score crosses thresholds.
+# Call AFTER any add_to_variable = { GRE_eastern_alignment_score = ... }.
+GRE_check_eastern_alignment_swap = {
+	if = {
+		limit = {
+			has_idea = GRE_eastern_outreach
+			check_variable = { GRE_eastern_alignment_score > 4 }
+		}
+		swap_ideas = {
+			remove_idea = GRE_eastern_outreach
+			add_idea = GRE_eurasian_partner
+		}
+	}
+}
+
+# Shifts Aegean tension. Expects temp var: GRE_tension_change (signed).
+GRE_change_aegean_tension = {
+	add_to_variable = { var = GRE_aegean_tension value = GRE_tension_change }
+	clamp_variable = { var = GRE_aegean_tension min = 0 max = 100 }
+}
+
+# Shifts Cyprus momentum. Expects temp var: GRE_momentum_change (signed).
+GRE_change_cyprus_momentum = {
+	add_to_variable = { var = GRE_cyprus_momentum value = GRE_momentum_change }
+	clamp_variable = { var = GRE_cyprus_momentum min = -100 max = 100 }
+}
