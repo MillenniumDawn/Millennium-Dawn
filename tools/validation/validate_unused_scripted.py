@@ -1,26 +1,33 @@
 #!/usr/bin/env python3
-##########################
-# Unused Scripted Effects & Triggers Validation
-# Finds scripted effects and triggers that are defined but never called
-# Checks:
-#   1. Scripted effects defined in common/scripted_effects/ but never used
-#   2. Scripted triggers defined in common/scripted_triggers/ but never used
-##########################
+# Find scripted effects and triggers defined in common/scripted_effects/ and
+# common/scripted_triggers/ that are never called anywhere in the mod.
 import glob
 import os
 import re
+import sys
 from pathlib import Path
 from typing import List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import disk_cache
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
-    Colors,
     Severity,
     run_validator_main,
-    scan_meta_constructed_names,
     should_skip_file,
     strip_comments,
+)
+
+# A name counts as "called" when it appears as `name = yes/no` or as a
+# custom_(effect|trigger)_tooltip target. Extracting every such token from a
+# def-file once and testing set membership is equivalent to the old per-name
+# `\bname\s*=\s*(?:yes|no)\b` search (same word boundaries, same identifier
+# capture) but avoids compiling a pattern per (name, file) — millions of calls.
+_CALL_YES_NO_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*(?:yes|no)\b")
+_CUSTOM_TT_REF_RE = re.compile(
+    r"custom_(?:effect|trigger)_tooltip\s*=\s*([A-Za-z_]\w*)\b"
 )
 
 # Patterns for known false positives — these are referenced by the game engine,
@@ -35,6 +42,18 @@ FALSE_POSITIVE_PATTERNS = [
     re.compile(
         r"^DIPLOMACY_.*_ENABLE_TRIGGER"
     ),  # Game rule triggers, engine-referenced
+    re.compile(
+        r"^is_diplomatic_action_valid_"
+    ),  # Diplo-action validity gates, engine-referenced by action token
+    re.compile(
+        r"^_unlock_btn_enabled$"
+    ),  # MIO catalog meta-dispatch empty-token-key fallback
+    re.compile(
+        r"^should_initiate_resistance$"
+    ),  # Vanilla engine hook — called on controller/owner change and daily
+    re.compile(
+        r"^should_(not_)?activate_active_crypto_bonuses$"
+    ),  # Vanilla engine crypto hooks — engine-read override points
 ]
 
 # Files whose definitions are entirely engine-referenced (all contents are false positives)
@@ -47,6 +66,9 @@ FALSE_POSITIVE_FILES = frozenset(
         # wants to check a faction mood level has a ready-made trigger, even if
         # many are not currently referenced anywhere in the mod.
         "00_internal_factions_trigger.txt",
+        # Dummy effect existing only to suppress false positives on dynamically
+        # built flag/variable names; deliberately never called.
+        "!_cwtools_dummy_effects.txt",
     }
 )
 
@@ -59,6 +81,13 @@ _TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
     r")"
 )
+
+# Regex: quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# Here the `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives
+# in the quoted assignment, so a leading placeholder with only a trailing constant
+# must still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
 
 
 def scan_for_meta_constructed_names(
@@ -88,8 +117,10 @@ def scan_for_meta_constructed_names(
 
         content_clean = strip_comments(content)
 
-        for m in _TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
+        templates = [m.group(1) for m in _TEMPLATE_RE.finditer(content_clean)]
+        templates += [m.group(1) for m in _QUOTED_TEMPLATE_RE.finditer(content_clean)]
+
+        for template in templates:
             # Split on every [VAR] segment — constant parts become prefix/suffix
             parts = re.split(r"\[[^\]]+\]", template)
             prefix = parts[0].lower()
@@ -127,40 +158,45 @@ def extract_definitions(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     Returns list of (name, filename, line_number) tuples.
     """
     filename, mod_path = args
-    results = []
 
     try:
         with open(filename, "r", encoding="utf-8-sig") as f:
             content = f.read()
     except Exception:
+        return []
+
+    def _compute():
+        results = []
+        clean_content = strip_comments(content)
+
+        # Find top-level definitions by tracking brace depth
+        lines = clean_content.split("\n")
+        brace_depth = 0
+        for line_num, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+
+            # Only match definitions at brace depth 0 (top level)
+            if brace_depth == 0:
+                m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", stripped)
+                if m:
+                    name = m.group(1)
+                    if name not in HOI4_BUILTIN_BLOCKS:
+                        rel_path = os.path.relpath(filename, mod_path)
+                        results.append((name, rel_path, line_num))
+
+            # Track brace depth
+            brace_depth += stripped.count("{") - stripped.count("}")
+
         return results
 
-    clean_content = strip_comments(content)
-
-    # Find top-level definitions by tracking brace depth
-    lines = clean_content.split("\n")
-    brace_depth = 0
-    for line_num, line in enumerate(lines, 1):
-        stripped = line.strip()
-        if not stripped:
-            continue
-
-        # Only match definitions at brace depth 0 (top level)
-        if brace_depth == 0:
-            m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", stripped)
-            if m:
-                name = m.group(1)
-                if name not in HOI4_BUILTIN_BLOCKS:
-                    rel_path = os.path.relpath(filename, mod_path)
-                    results.append((name, rel_path, line_num))
-
-        # Track brace depth
-        brace_depth += stripped.count("{") - stripped.count("}")
-
-    return results
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "unused_scripted.definitions", filename, content, _compute
+    )
 
 
-def scan_file_for_usages(args: Tuple[str, Set[str]]) -> Set[str]:
+def scan_file_for_usages(args: Tuple[str, Set[str], str]) -> Set[str]:
     """Scan a file for usages of any of the given names.
 
     A usage is when a name appears as a whole word — guarded by
@@ -170,24 +206,28 @@ def scan_file_for_usages(args: Tuple[str, Set[str]]) -> Set[str]:
     ``custom_effect_tooltip = name``) before trusting the hit for
     definition-directory files.
     """
-    filename, names_to_find = args
-    found = set()
+    filename, names_to_find, mod_path = args
 
     try:
         with open(filename, "r", encoding="utf-8-sig") as f:
             content = f.read()
     except Exception:
-        return found
+        return set()
 
-    content = strip_comments(content)
+    # Cache the content-dependent token extraction (the expensive part); the
+    # intersection with names_to_find is cheap and varies per call, so it stays
+    # outside the cache.
+    def _compute():
+        cleaned = strip_comments(content)
+        # Collect every identifier-like token in the file once, then intersect.
+        # Cheaper than running a word-boundary regex per name when names_to_find
+        # is large.
+        return set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", cleaned))
 
-    # Collect every identifier-like token in the file once, then intersect.
-    # Cheaper than running a word-boundary regex per name when names_to_find
-    # is large.
-    tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", content))
-    found = names_to_find & tokens
-
-    return found
+    tokens = disk_cache.per_file_cached_by_content(
+        mod_path, "unused_scripted.tokens", filename, content, _compute
+    )
+    return names_to_find & tokens
 
 
 class Validator(BaseValidator):
@@ -249,7 +289,7 @@ class Validator(BaseValidator):
             (def_files if def_dir in f.replace("\\", "/") else other_files).append(f)
 
         # First pass: find all names used in non-definition files
-        args_list = [(f, all_names) for f in other_files]
+        args_list = [(f, all_names, self.mod_path) for f in other_files]
         results = self._pool_map(scan_file_for_usages, args_list)
 
         used_names = set()
@@ -260,7 +300,7 @@ class Validator(BaseValidator):
         # within definition files (called by other scripted effects/triggers)
         remaining = all_names - used_names
         if remaining:
-            args_list = [(f, remaining) for f in def_files]
+            args_list = [(f, remaining, self.mod_path) for f in def_files]
             results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
 
             # For each name found in definition files, check if it appears
@@ -277,16 +317,9 @@ class Validator(BaseValidator):
                         content = strip_comments(f.read())
                 except Exception:
                     continue
-                for name in list(potentially_used - used_names):
-                    if name not in content:
-                        continue
-                    if re.search(rf"\b{re.escape(name)}\s*=\s*(?:yes|no)\b", content):
-                        used_names.add(name)
-                    elif re.search(
-                        rf"custom_(?:effect|trigger)_tooltip\s*=\s*{re.escape(name)}\b",
-                        content,
-                    ):
-                        used_names.add(name)
+                called = set(_CALL_YES_NO_RE.findall(content))
+                called.update(_CUSTOM_TT_REF_RE.findall(content))
+                used_names |= called & potentially_used
 
         # Build results for unused definitions
         unused = []
@@ -345,7 +378,7 @@ class Validator(BaseValidator):
                 other_files.append(f)
 
         # First pass: find all names used outside definition dirs
-        args_list = [(f, all_names) for f in other_files]
+        args_list = [(f, all_names, self.mod_path) for f in other_files]
         results = self._pool_map(scan_file_for_usages, args_list)
 
         used_names: set = set()
@@ -355,7 +388,7 @@ class Validator(BaseValidator):
         # Second pass: check cross-calls within definition files
         remaining = all_names - used_names
         if remaining:
-            args_list = [(f, remaining) for f in def_files]
+            args_list = [(f, remaining, self.mod_path) for f in def_files]
             def_results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
 
             potentially_used: set = set()
@@ -368,16 +401,9 @@ class Validator(BaseValidator):
                         content = strip_comments(f.read())
                 except Exception:
                     continue
-                for name in list(potentially_used - used_names):
-                    if name not in content:
-                        continue
-                    if re.search(rf"\b{re.escape(name)}\s*=\s*(?:yes|no)\b", content):
-                        used_names.add(name)
-                    elif re.search(
-                        rf"custom_(?:effect|trigger)_tooltip\s*=\s*{re.escape(name)}\b",
-                        content,
-                    ):
-                        used_names.add(name)
+                called = set(_CALL_YES_NO_RE.findall(content))
+                called.update(_CUSTOM_TT_REF_RE.findall(content))
+                used_names |= called & potentially_used
 
         # Third pass: detect names called via meta_effect/meta_trigger template
         # substitution (e.g. `set_leader_[IDEOLOGY] = yes`).  Only scan the

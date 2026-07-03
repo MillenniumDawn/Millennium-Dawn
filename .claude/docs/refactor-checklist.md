@@ -1,10 +1,6 @@
 # Refactor Breaking-Change Checklist
 
-Systematic steps to verify a large-scale rename, refactor, or subsystem rewrite doesn't silently break the game.
-
-Run these checks **after** automated review and **before** declaring the PR ready.
-
----
+Steps to verify a large-scale rename, refactor, or subsystem rewrite doesn't silently break the game. Run these **after** automated review and **before** declaring the PR ready.
 
 ## 1. Prefix / Name Rename Verification
 
@@ -13,32 +9,23 @@ When renaming a prefix (e.g., `AC_` -> `investments_`), verify no stale referenc
 ```bash
 # Flags
 grep -rn "old_flag_name" common/ events/
-
 # Variables
 grep -rn "old_variable_name" common/ events/
-
 # Event IDs
 grep -rn "old_namespace\." common/ events/
-
 # Decision IDs
 grep -rn "old_decision_id" common/ events/
-
 # Scripted loc names
 grep -rn "old_scripted_loc_name" common/ localisation/
-
 # GUI window names
 grep -rn "old_window_name" interface/ common/scripted_guis/
-
 # GFX sprite names
 grep -rn "GFX_old_prefix" interface/ gfx/
-
 # Opinion modifiers
 grep -rn "old_opinion_modifier" common/ localisation/
 ```
 
 **Tip:** Search the **entire repo**, not just changed files. Other subsystems, `on_actions`, and country-specific overrides may reference the old names.
-
----
 
 ## 2. Array Index Semantic Verification
 
@@ -61,8 +48,6 @@ When a function uses array subscripts (`^idx`), trace every caller to confirm `i
 
 **Example bug:** `project_build_amount^project_type` reads the build amount at the **building type** index, not the **slot** index. Fixed by using `project_build_amount^project`.
 
----
-
 ## 3. Global Variable -> Array Migration
 
 When replacing individual globals with an array, check:
@@ -72,8 +57,6 @@ When replacing individual globals with an array, check:
 - [ ] Every old global reference in **scripted localisation** is updated.
 - [ ] **Localisation strings** using `[?global.old_name]` are updated. These fail silently to 0.
 - [ ] Any **other mods or submods** that depend on this mod are checked (if applicable).
-
----
 
 ## 4. Function Precondition Verification
 
@@ -86,16 +69,12 @@ When a function's requirements change, verify all callers meet the new precondit
 | Assumes array Z is initialized        | `resize_array` or `set_variable` runs before first call |
 | Expects `project > -1` for slot logic | Callers with `project = -1` don't enter the slot branch |
 
----
-
 ## 5. Event Namespace and Option Consistency
 
 - [ ] `add_namespace = foo` at the top of the file matches every `country_event = { id = foo.N }`.
 - [ ] Every event option's `log =` string matches its `name =` key suffix (`.a`, `.b`, etc.).
 - [ ] Every option name key (`foo.N.a`, `foo.N.b`) has a matching loc entry.
 - [ ] Event title key is `foo.N.t`, description is `foo.N.d`.
-
----
 
 ## 6. Decision Namespace Consistency
 
@@ -104,8 +83,6 @@ When a function's requirements change, verify all callers meet the new precondit
 - [ ] `highlight_states_trigger` uses `THIS` or `ROOT` correctly for state scope.
 - [ ] `days_remove` / `days_mission_timeout` references a variable that exists at activation time.
 
----
-
 ## 7. GUI and GFX Cross-Reference
 
 - [ ] Every `window_name` in `scripted_gui` has a matching `containerWindowType` in `.gui` files.
@@ -113,30 +90,22 @@ When a function's requirements change, verify all callers meet the new precondit
 - [ ] Every `spriteType` referenced in `.gui` has a matching `name` in `.gfx` files.
 - [ ] Every `.gfx` `texturefile` path points to an existing `.dds` file.
 
----
-
 ## 8. Decision `visible` Block Performance
 
 - [ ] `visible = { always = no }` is fine for scripted-effect-only decisions.
 - [ ] Any non-trivial `visible` block is checked for `every_country` / `any_country` without a narrow array.
 - [ ] Complex `visible` blocks should be replaced with a cached flag set in `on_actions`.
 
----
-
 ## 9. `ai_will_do` Syntax
 
 - [ ] `ai_will_do = { base = N }` is used, not `factor = N` at root level.
 - [ ] `ai_chance` inside event options also uses `base = N`.
-
----
 
 ## 10. Scope Safety
 
 - [ ] `CONTROLLER` is only used inside a **state scope**.
 - [ ] `var:X = { ... }` checks `exists = yes` when X might be 0 or -1 (uninitialized).
 - [ ] Division operations guard the denominator with `clamp_temp_variable` or a zero-check.
-
----
 
 ## 11. Country Tag Removal / Consolidation
 

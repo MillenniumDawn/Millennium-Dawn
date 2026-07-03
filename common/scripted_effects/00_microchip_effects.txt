@@ -22,37 +22,6 @@ microchip_startup = {
 	}
 }
 
-#this auto-adds composites for nations that need only one building. This needs more work for nations that start w/ multiples
-composite_building_add = {
-	random_owned_controlled_state = {
-		add_building_construction = {
-			type = composite_plant
-			level = 1
-			instant_build = yes
-		}
-	}
-	ingame_update_setup = yes
-	if = { limit = { check_variable = { startup_composite_fac_needed > 0 } } composite_building_add_multi = yes }
-}
-
-composite_building_add_multi = {
-	while_loop_effect = {
-		limit = {
-			check_variable = { startup_composite_fac_needed > 0 }
-		}
-		random_owned_controlled_state = {
-			add_building_construction = {
-				type = composite_plant
-				level = 1
-				instant_build = yes
-			}
-		}
-		add_to_variable = { startup_composite_fac_needed = -1 }
-	}
-	ingame_update_setup = yes
-	clear_variable = startup_composite_fac_needed
-}
-
 microchip_update = {
 	if = { limit = { check_variable = { resource_produced@microchips > 0 } }
 		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
@@ -102,7 +71,8 @@ microchip_update = {
 			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
 			multiply_temp_variable = { country_microchip_reducer_max = 0.95 }
 			round_temp_variable = country_microchip_reducer_max
-		} else = {
+		}
+		else = {
 			#There should be no reduction here, because we have a surplus of all inputs
 			set_variable = { country_microchip_production_var = 0 }
 		}
@@ -134,6 +104,9 @@ microchip_update = {
 		}
 
 		clamp_variable = { var = country_microchip_production_var min = 0 max = country_microchip_reducer_max }
+	}
+	else = {
+		set_variable = { country_microchip_production_var = 0 }
 	}
 }
 
@@ -195,6 +168,9 @@ composite_update = {
 			#There should be no reduction here, because we have a surplus of all inputs
 			set_variable = { country_composite_production_var = 0 }
 		}
+	}
+	else = {
+		set_variable = { country_composite_production_var = 0 }
 	}
 }
 

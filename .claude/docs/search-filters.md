@@ -1,33 +1,27 @@
 # Search Filter Reference
 
-This document covers how `search_filters` work in Millennium Dawn focus trees, what every relevant filter means, and the conventions for assigning them correctly.
-
----
+How `search_filters` work in MD focus trees, what every relevant filter means, and how to assign them.
 
 ## How Search Filters Work
 
-Each focus can have one or more `search_filters` values. These power the filter buttons in the focus search UI — clicking a filter shows only focuses tagged with it. Every focus **must** have at least one filter.
+Each focus can have one or more `search_filters` values. They power the filter buttons in the focus search UI: clicking a filter shows only focuses tagged with it. Every focus **must** have at least one filter.
 
 ```
 search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ISRPOLIT }
 ```
 
-Multiple filters are space-separated inside the braces and written on a single line.
-
----
+Multiple filters are space-separated inside the braces, on a single line.
 
 ## Two-Layer Convention
 
-Most country trees in MD use a **two-layer** approach:
+Most country trees use a **two-layer** approach:
 
-1. **Country-specific filter** — identifies which country/faction the focus belongs to (e.g. `FOCUS_FILTER_ISRPOLIT`, `FOCUS_FILTER_RUSSIA_ECONOMY`). Always include this.
-2. **Generic filter** — the broad category it falls into (e.g. `FOCUS_FILTER_POLITICAL`, `FOCUS_FILTER_INDUSTRY`). Makes the focus discoverable through the global filter buttons.
+1. **Country-specific filter** — which country/faction the focus belongs to (e.g. `FOCUS_FILTER_ISRPOLIT`, `FOCUS_FILTER_RUSSIA_ECONOMY`). Always include this.
+2. **Generic filter** — the broad category (e.g. `FOCUS_FILTER_POLITICAL`, `FOCUS_FILTER_INDUSTRY`). Makes the focus discoverable through global filter buttons.
 
-Countries that use only custom filters (no generic layer) are invisible to generic filter searches. Always include both layers.
+Countries using only custom filters are invisible to generic searches. Always include both layers.
 
-**Exception:** Smaller or simpler trees may use only generic filters with no custom ones — this is fine.
-
----
+**Exception:** Smaller/simpler trees may use only generic filters with no custom ones — this is fine.
 
 ## Generic Filters — Full Reference
 
@@ -104,11 +98,9 @@ Countries that use only custom filters (no generic layer) are invisible to gener
 | ----------------------------- | --------------------------------------------------------------------------- |
 | `FOCUS_FILTER_COUNTER_DEBUFF` | Focuses specifically designed to remove a starting negative national spirit |
 
----
-
 ## Israel-Specific Filters
 
-Israel uses six custom filters. Every Israel focus should have the ISR custom filter **plus** the corresponding generic filter from the table below.
+Israel uses six custom filters. Every Israel focus needs the ISR custom filter **plus** the corresponding generic filter below.
 
 | ISR Filter                   | Purpose                                                                                               | Paired Generic Filter         |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------- |
@@ -139,11 +131,9 @@ When a focus has `FOCUS_FILTER_ISRMILITARY`, choose the generic based on its con
 | Natural resources, gas deals, energy agreements        | `FOCUS_FILTER_RESOURCE` + `FOCUS_FILTER_INDUSTRY` | ISR_pass_the_gas_deal, ISR_compromise_gas_deal, ISR_karish            |
 | General economic development, factories, fiscal policy | `FOCUS_FILTER_INDUSTRY`                           | ISR_middle_class, ISR_israel_green_deal, ISR_diamond_district         |
 
----
-
 ## Other Country Custom Filters (Quick Reference)
 
-These custom filters exist for other country trees — do not add them to Israel or other unrelated trees:
+These custom filters exist for other country trees — do not add them to Israel or unrelated trees:
 
 | Country       | Custom Filters                                                                                                                                               |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -161,8 +151,6 @@ These custom filters exist for other country trees — do not add them to Israel
 | South Ossetia | `FOCUS_FILTER_OSSETIA_*` (7 filters)                                                                                                                         |
 | Ural          | `FOCUS_FILTER_URAL_*` (3 filters)                                                                                                                            |
 
----
-
 ## Common Mistakes
 
 | Wrong                                                                  | Correct                                                                                                             |
@@ -174,11 +162,9 @@ These custom filters exist for other country trees — do not add them to Israel
 | Missing filter entirely                                                | Every focus must have at least one filter                                                                           |
 | Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific — never cross-assign                    |
 
----
-
 ## Checklist When Adding a New Focus
 
-1. Choose the **country-specific custom filter** that matches the focus's branch
-2. Choose the **generic filter** from the tables above (one or two — don't over-tag)
-3. For high-cost focuses (`cost >= 8`, or `cost >= 5` for military/economy/research focuses): add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` — this is AI-only, do not put it in `available`
-4. Write the `search_filters` line as a single line: `search_filters = { CUSTOM_FILTER GENERIC_FILTER }`
+1. Choose the **country-specific custom filter** matching the focus's branch.
+2. Choose the **generic filter** from the tables above (one or two — don't over-tag).
+3. For high-cost focuses, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` — AI-only, not in `available`. Thresholds: `cost >= 8` for any focus, or `cost >= 5` if tagged military / economy / research. **Why:** at/above these costs the focus commits enough treasury that an AI already in collapse digs deeper; the lower econ/mil/research threshold reflects that those focuses typically chain larger monetary effects on top of the focus cost.
+4. Write `search_filters` as a single line: `search_filters = { CUSTOM_FILTER GENERIC_FILTER }`.

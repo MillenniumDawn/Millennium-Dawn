@@ -96,10 +96,6 @@ basic_ai_space_program_production = {
 	}
 }
 
-missile_ui_update = {
-	add_to_variable = { global.missile_ui_updated = 1 }
-}
-
 #################################################
 ### effects for gui / buttons / trigger / loc ###
 #################################################
@@ -598,6 +594,7 @@ check_sat_systems_min_sat_num = {
 update_GNSS_system_stats = {
 	### GNSS mil system
 	set_variable = { var_GNSS_mil_sat_system_num = GNSS_satellite_array^var_GNSS_mil_system_idx }
+	set_variable = { var_GNSS_mil_sat_antarctic_bonus = antarctica_lab_effects_from_mil_satellites }
 
 	if = {
 		limit = {
@@ -617,10 +614,12 @@ update_GNSS_system_stats = {
 	}
 	set_variable = { var_GNSS_mil_sat_system_bonus = var_GNSS_mil_coverage }
 	add_to_variable = { var_GNSS_mil_sat_system_bonus = var_GNSS_mil_SBAS_bonus }
+	add_to_variable = { var_GNSS_mil_sat_system_bonus = var_GNSS_mil_sat_antarctic_bonus }
 	clamp_variable = { var = var_GNSS_mil_sat_system_bonus min = 0 }
 
 	### GNSS civ system
 	set_variable = { var_GNSS_civ_sat_system_num = GNSS_satellite_array^var_GNSS_civ_system_idx }
+	set_variable = { var_GNSS_civ_sat_antarctic_bonus = antarctica_lab_effects_from_civ_satellites }
 	if = {
 		limit = {
 			check_variable = {
@@ -639,6 +638,7 @@ update_GNSS_system_stats = {
 	}
 	set_variable = { var_GNSS_civ_sat_system_bonus = var_GNSS_civ_coverage }
 	add_to_variable = { var_GNSS_civ_sat_system_bonus = var_GNSS_civ_SBAS_bonus }
+	add_to_variable = { var_GNSS_civ_sat_system_bonus = var_GNSS_civ_sat_antarctic_bonus }
 	clamp_variable = { var = var_GNSS_civ_sat_system_bonus min = 0 }
 }
 
@@ -739,9 +739,12 @@ update_COM_system_stats = {
 			set_temp_variable = { temp3 = var_sat_network_traffic_mil }
 			subtract_from_temp_variable = { temp3 = 1 }
 			subtract_from_variable = { var_COM_mil_sat_system_bonus = temp3 }
-			clamp_variable = { var = var_COM_mil_sat_system_bonus min = 0 }
 		}
 	}
+
+	set_variable = { var_COM_mil_sat_antarctic_bonus = antarctica_lab_effects_from_mil_satellites }
+	add_to_variable = { var_COM_mil_sat_system_bonus = var_COM_mil_sat_antarctic_bonus }
+	clamp_variable = { var = var_COM_mil_sat_system_bonus min = 0 }
 
 	# Satellite Communication System - Civilian
 	if = { limit = { check_variable = { var_COM_civ_sat_system_num > var_COM_civ_sat_system_max } }
@@ -768,9 +771,11 @@ update_COM_system_stats = {
 			set_temp_variable = { temp4 = var_sat_network_traffic_civ }
 			subtract_from_temp_variable = { temp4 = 1 }
 			subtract_from_variable = { var_COM_civ_sat_system_bonus = temp4 }
-			clamp_variable = { var = var_COM_civ_sat_system_bonus min = 0 }
 		}
 	}
+	set_variable = { var_COM_civ_sat_antarctic_bonus = antarctica_lab_effects_from_civ_satellites }
+	add_to_variable = { var_COM_civ_sat_system_bonus = var_COM_civ_sat_antarctic_bonus }
+	clamp_variable = { var = var_COM_civ_sat_system_bonus min = 0 }
 }
 
 ### receiver from treaties (access granted)
@@ -813,6 +818,8 @@ update_SPY_system_stats = {
 		divide_variable = { var_SPY_mil_coverage = var_SPY_mil_sat_system_max }
 	}
 	set_variable = { var_SPY_mil_sat_system_bonus = var_SPY_mil_coverage }
+	set_variable = { var_SPY_mil_sat_antarctic_bonus = antarctica_lab_effects_from_mil_satellites }
+	add_to_variable = { var_SPY_mil_sat_system_bonus = var_SPY_mil_sat_antarctic_bonus }
 	clamp_variable = { var = var_SPY_mil_sat_system_bonus min = 0 }
 	update_SPY_mission_num = yes
 	### SPY civ system
@@ -831,6 +838,9 @@ update_SPY_system_stats = {
 		divide_variable = { var_SPY_civ_coverage = var_SPY_civ_sat_system_max }
 	}
 	set_variable = { var_SPY_civ_sat_system_bonus = var_SPY_civ_coverage }
+
+	set_variable = { var_SPY_civ_sat_antarctic_bonus = antarctica_lab_effects_from_civ_satellites }
+	add_to_variable = { var_SPY_civ_sat_system_bonus = var_SPY_civ_sat_antarctic_bonus }
 	clamp_variable = { var = var_SPY_civ_sat_system_bonus min = 0 }
 	update_SPY_mission_num = yes
 }
@@ -1857,8 +1867,6 @@ add_satellite_from_payload = {
 ###################################
 
 set_sat_orbit_startup = {
-	set_variable = { add_plus_X = 0 }
-	set_variable = { add_minus_X = 0 }
 	set_temp_variable = { temp1 = 0 }
 	while_loop_effect = {
 		limit = { check_variable = { temp1 < 180 } }
@@ -2831,21 +2839,8 @@ nuclear_reactor_fuel_consumption = {
 	clamp_variable = { var = var_reactor_material_stockpile min = 0 }
 
 	# Update Stockpile
-	add_to_variable = { var_reactor_material_stockpile = nuclear_reactor_fuel_production }
+	add_to_variable = { var_reactor_material_stockpile = total_nuclear_reactor_fuel_production }
 	clamp_variable = { var = var_reactor_material_stockpile min = 0 max = 20000000 }
-}
-
-# Function: setup_starting_reactor_stockpile
-# Purpose: Setups the current nuclear reactor and enrichment facilities setup
-setup_starting_reactor_stockpile = {
-	if = {
-		limit = { check_variable = { enrichment_facilities > 0 } }
-		set_country_flag = enabled_nuclear_reactor_fuel_production
-	}
-
-	set_temp_variable = { starting_reactor_grade_stockpile = nuclear_reactors }
-	multiply_temp_variable = { starting_reactor_grade_stockpile = 2500 }
-	set_variable = { var_reactor_material_stockpile = starting_reactor_grade_stockpile }
 }
 
 # Utilities
@@ -2903,7 +2898,7 @@ setup_missile_configuration_effect = {
 	if = { limit = { NOT = { has_country_flag = setup_missiles } }
 		set_country_flag = setup_missiles
 		set_variable = { orbit_selected_TAG = THIS.id }
-		set_variable = { nuclear_reactor_fuel_production = 0 }
+		set_variable = { total_nuclear_reactor_fuel_production = 0 }
 		resize_array = { missile_inventory_array = 154 }
 		add_dynamic_modifier = { modifier = satellite_system }
 		set_sat_orbit_startup = yes
@@ -2931,7 +2926,7 @@ setup_missile_configuration_effect = {
 		#for testing network traffic
 		set_COM_sat_receiver_tech_array = yes
 	}
-	missile_ui_update = yes
+	international_systems_update = yes
 }
 
 GNSS_mil_button_update = {
@@ -3019,5 +3014,5 @@ update_space_system_values = {
 	update_sat_systems_stats = yes
 	clear_spy_sat_mission_arrays = yes
 	update_SPY_mission_num = yes
-	missile_ui_update = yes
+	international_systems_update = yes
 }

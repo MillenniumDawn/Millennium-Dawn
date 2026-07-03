@@ -15,16 +15,22 @@ recog_ai_monthly = {
 			limit = {
 				is_ai = yes
 				has_civil_war = no
-				has_idea = Lacks_International_Recognition
+				has_idea = lacks_international_recognition
 				NOT = { has_country_flag = recog_ai_cooldown }
 			}
-			recog_ai_evaluate_actions = yes
+			# Per-month action probability — staggers NSAs so they don't all campaign on the
+			# same tick. With the 90-day post-action cooldown, this works out to ~3 actions/year
+			# per NSA, spread evenly instead of bunched on month 1.
+			random = {
+				chance = 30
+				recog_ai_evaluate_actions = yes
+			}
 		}
 
 		if = {
 			limit = {
 				has_civil_war = no
-				has_idea = Lacks_International_Recognition
+				has_idea = lacks_international_recognition
 				country_exists = THIS
 			}
 			recog_ai_consider_grants = yes
@@ -124,9 +130,10 @@ recog_ai_consider_grants = {
 			set_country_flag = Recognised_@PREV
 			set_country_flag = { flag = recog_ai_grant_cooldown days = 180 value = 1 }
 
+			# PREV here is the breakaway (outer every_country scope); target = PREV makes the modifier apply to the breakaway.
 			PREV = {
 				add_opinion_modifier = { target = PREV modifier = recognises_us }
-				add_to_variable = { Granted_Recognition = 1 }
+				recognition_grant_increment = yes
 			}
 
 			if = {

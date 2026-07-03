@@ -1,0 +1,698 @@
+# Check if party at index v is in opposition (in government)
+is_party_in_government = {
+	OR = {
+        is_in_array = { ruling_party = v }
+        is_in_array = { gov_coalition_array = v }
+    }
+}
+
+# Party-specific boost/attack/ban triggers extracted from subideology GUI
+# Excludes universal checks like has_political_power (handled in scripted_gui)
+boost_party_triggers = {
+	# Party 0 (Western Autocracy / democratic)
+	if = {
+		limit = { check_variable = { v = 0 } }
+		democratic_outlook_larger_than_0 = yes
+		NOT = { has_country_leader_with_trait = western_technocrat }
+		if = { limit = { tag = ITA }
+			has_country_flag = ITA_undemocratic_coup
+		}
+	}
+	# Party 1 (Conservatism / democratic)
+	else_if = {
+		limit = { check_variable = { v = 1 } }
+		democratic_outlook_larger_than_0 = yes
+	}
+	# Party 2 (Liberalism / democratic)
+	else_if = {
+		limit = { check_variable = { v = 2 } }
+		democratic_outlook_larger_than_0 = yes
+	}
+	# Party 3 (Socialism / democratic)
+	else_if = {
+		limit = { check_variable = { v = 3 } }
+		democratic_outlook_larger_than_0 = yes
+		if = {
+			limit = { tag = TUR }
+			NOT = { has_idea = TUR_party_rumours }
+		}
+	}
+	# Party 4 (Communist State / emerging)
+	else_if = {
+		limit = { check_variable = { v = 4 } }
+		emerging_outlook_larger_than_0 = yes
+		if = {
+			limit = {
+				OR = {
+					tag = POL
+					tag = EST
+					tag = LAT
+					tag = LIT
+					tag = FIN
+				}
+			}
+			NOT = { has_idea = POL_intolerance_of_communism_idea }
+		}
+		if = { limit = { tag = CZE }
+			NOT = { has_country_flag = CZE_kscm_eu_problem_flag }
+		}
+	}
+	# Party 5 (Anarchist Communism / emerging)
+	else_if = {
+		limit = { check_variable = { v = 5 } }
+		emerging_outlook_larger_than_0 = yes
+		if = {
+			limit = { tag = ITA }
+			has_country_flag = ITA_five_star_movement_founded
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = POL
+					tag = EST
+					tag = LAT
+					tag = LIT
+					tag = FIN
+				}
+			}
+			NOT = { has_idea = POL_intolerance_of_communism_idea }
+		}
+	}
+	# Party 6 (Conservative / emerging)
+	else_if = {
+		limit = { check_variable = { v = 6 } }
+		emerging_outlook_larger_than_0 = yes
+		if = {
+			limit = { tag = ITA }
+			has_country_flag = ITA_salvini_took_over_lega
+		}
+	}
+	# Party 7 (Emerging Autocracy / emerging)
+	else_if = {
+		limit = { check_variable = { v = 7 } }
+		emerging_outlook_larger_than_0 = yes
+		if = {
+			limit = { tag = ITA }
+			has_country_flag = ITA_undemocratic_coup
+		}
+	}
+	# Party 8 (Moderate Shiite / emerging)
+	else_if = {
+		limit = { check_variable = { v = 8 } }
+		emerging_outlook_larger_than_0 = yes
+		if = { limit = { original_tag = PER }
+			emerging_hardline_shiite_are_in_power = no
+			emerging_moderate_shiite_are_in_power = no
+		}
+		OR = {
+			original_tag = PER
+			original_tag = AZE
+			original_tag = IRQ
+			original_tag = BHR
+			original_tag = KUW
+			original_tag = TUR
+			original_tag = SAU
+			original_tag = LEB
+			original_tag = HEZ
+			original_tag = SYR
+			original_tag = PAK
+			original_tag = AFG
+			original_tag = RAJ
+			original_tag = SEN
+			original_tag = ALA
+			original_tag = FSA
+			original_tag = HOU
+			original_tag = DRU
+			original_tag = NIG
+			original_tag = OMA
+			original_tag = UAE
+			original_tag = QAT
+			original_tag = YEM
+		}
+	}
+	# Party 9 (Hardline Shiite / emerging)
+	else_if = {
+		limit = { check_variable = { v = 9 } }
+		emerging_outlook_larger_than_0 = yes
+		if = { limit = { original_tag = PER }
+			emerging_hardline_shiite_are_in_power = no
+			emerging_moderate_shiite_are_in_power = no
+		}
+		OR = {
+			original_tag = PER
+			original_tag = AZE
+			original_tag = IRQ
+			original_tag = BHR
+			original_tag = KUW
+			original_tag = TUR
+			original_tag = SAU
+			original_tag = LEB
+			original_tag = HEZ
+			original_tag = SYR
+			original_tag = PAK
+			original_tag = AFG
+			original_tag = RAJ
+			original_tag = SEN
+			original_tag = ALA
+			original_tag = FSA
+			original_tag = HOU
+			original_tag = DRU
+			original_tag = NIG
+			original_tag = OMA
+			original_tag = UAE
+			original_tag = QAT
+			original_tag = YEM
+		}
+	}
+	# Party 10 (Wahabbist Monarchist / fascism)
+	else_if = {
+		limit = { check_variable = { v = 10 } }
+		fascism_outlook_larger_than_0 = yes
+		OR = {
+			original_tag = KUW
+			original_tag = OMA
+			original_tag = UAE
+			original_tag = BHR
+			original_tag = QAT
+			original_tag = SAU
+			original_tag = YEM
+			original_tag = EGY
+			original_tag = LBA
+		}
+	}
+	# Party 11 (Salafi Jihadism / fascism)
+	else_if = {
+		limit = { check_variable = { v = 11 } }
+		fascism_outlook_larger_than_0 = yes
+		NOT = { original_tag = ISR }
+		check_variable = { party_popularity@fascism > 0 }
+		custom_trigger_tooltip = {
+			tooltip = opt_party12_tag_click_enabled
+			OR = {
+				has_country_flag = middle_east_nation_flag
+				original_tag = ALB
+				original_tag = BOS
+				original_tag = KOS
+				original_tag = SOV
+				original_tag = CHE
+				has_country_flag = central_asia_nation_flag
+				original_tag = AZE
+				original_tag = RAJ
+				original_tag = PAK
+				original_tag = SRI
+				original_tag = MLD
+				original_tag = PHI
+				original_tag = MAY
+				original_tag = IND
+				original_tag = BRU
+				original_tag = BAN
+				original_tag = SUR
+				has_country_flag = horn_of_africa_nation_flag
+				original_tag = COM
+				original_tag = TNZ
+				original_tag = KEN
+				original_tag = DAR
+				original_tag = SUD
+				original_tag = MAU
+				original_tag = SEN
+				original_tag = MAL
+				original_tag = NGR
+				original_tag = CAM
+				original_tag = BFA
+				original_tag = CHA
+				original_tag = CDI
+				original_tag = GAM
+				original_tag = GUB
+				original_tag = NIG
+				original_tag = LIB
+				original_tag = GUI
+				original_tag = LUR
+				original_tag = TOG
+				original_tag = BEN
+				original_tag = SEL
+				original_tag = MRT
+				original_tag = LGN
+				original_tag = CAR
+				has_global_flag = GAME_RULE_salafist_branch_enabled
+			}
+		}
+	}
+	# Party 12 (Moderate Islamism / neutrality)
+	else_if = {
+		limit = { check_variable = { v = 12 } }
+		neutrality_outlook_larger_than_0 = yes
+		check_variable = { party_popularity@fascism > 0 }
+		custom_trigger_tooltip = {
+			tooltip = opt_party13_tag_click_enabled
+			OR = {
+				has_country_flag = middle_east_nation_flag
+				original_tag = ALB
+				original_tag = BOS
+				original_tag = KOS
+				original_tag = SOV
+				original_tag = CHE
+				has_country_flag = central_asia_nation_flag
+				original_tag = AZE
+				original_tag = RAJ
+				original_tag = PAK
+				original_tag = SRI
+				original_tag = MLD
+				original_tag = PHI
+				original_tag = MAY
+				original_tag = IND
+				original_tag = BRU
+				original_tag = BAN
+				original_tag = SUR
+				has_country_flag = horn_of_africa_nation_flag
+				original_tag = COM
+				original_tag = TNZ
+				original_tag = KEN
+				original_tag = DAR
+				original_tag = SUD
+				original_tag = MAU
+				original_tag = SEN
+				original_tag = MAL
+				original_tag = NGR
+				original_tag = CAM
+				original_tag = BFA
+				original_tag = CHA
+				original_tag = CDI
+				original_tag = GAM
+				original_tag = GUB
+				original_tag = NIG
+				original_tag = LIB
+				original_tag = GUI
+				original_tag = LUR
+				original_tag = TOG
+				original_tag = BEN
+				original_tag = SEL
+				original_tag = MRT
+				original_tag = LGN
+				original_tag = CAR
+				has_global_flag = GAME_RULE_salafist_branch_enabled
+			}
+		}
+	}
+	# Party 13 (Non-Aligned Autocrat / neutrality)
+	else_if = {
+		limit = { check_variable = { v = 13 } }
+		neutrality_outlook_larger_than_0 = yes
+		if = {
+			limit = { tag = ITA }
+			has_country_flag = ITA_undemocratic_coup
+		}
+	}
+	# Party 14 (Neutral Conservatism / neutrality)
+	else_if = {
+		limit = { check_variable = { v = 14 } }
+		neutrality_outlook_larger_than_0 = yes
+	}
+	# Party 15 (Oligarchism / neutrality)
+	else_if = {
+		limit = { check_variable = { v = 15 } }
+		neutrality_outlook_larger_than_0 = yes
+		if = {
+			limit = { tag = ITA }
+			has_country_flag = ITA_undemocratic_coup
+		}
+	}
+	# Party 16 (Neutral Libertarian / neutrality)
+	else_if = {
+		limit = { check_variable = { v = 16 } }
+		neutrality_outlook_larger_than_0 = yes
+	}
+	# Party 17 (Neutral Green / neutrality)
+	else_if = {
+		limit = { check_variable = { v = 17 } }
+		neutrality_outlook_larger_than_0 = yes
+	}
+	# Party 18 (Neutral Social / neutrality)
+	else_if = {
+		limit = { check_variable = { v = 18 } }
+		neutrality_outlook_larger_than_0 = yes
+	}
+	# Party 19 (Neutral Communism / neutrality)
+	else_if = {
+		limit = { check_variable = { v = 19 } }
+		neutrality_outlook_larger_than_0 = yes
+		if = { limit = { original_tag = TUR }
+			NOT = {
+				has_idea = TUR_PKK_insurgency_ceasefire
+				has_idea = TUR_PKK_insurgency_active
+			}
+		}
+	}
+	# Party 20 (National Populism / nationalist)
+	else_if = {
+		limit = { check_variable = { v = 20 } }
+		nationalist_outlook_larger_than_0 = yes
+	}
+	# Party 21 (Military Junta / nationalist)
+	else_if = {
+		limit = { check_variable = { v = 21 } }
+		nationalist_outlook_larger_than_0 = yes
+	}
+	# Party 22 (Monarchist / nationalist)
+	else_if = {
+		limit = { check_variable = { v = 22 } }
+		nationalist_outlook_larger_than_0 = yes
+	}
+	# Party 23 (Monarchist variant / nationalist)
+	else_if = {
+		limit = { check_variable = { v = 23 } }
+		nationalist_outlook_larger_than_0 = yes
+		if = {
+			limit = { tag = ITA }
+			has_country_flag = ITA_undemocratic_coup
+		}
+	}
+}
+
+attack_party_triggers = {
+	# Party 0 (Western Autocracy)
+	if = {
+		limit = { check_variable = { v = 0 } }
+		party_0_has_more_than_threshold = yes
+		western_autocrats_are_in_power_or_coalition = no
+	}
+	# Party 1 (Conservatism)
+	else_if = {
+		limit = { check_variable = { v = 1 } }
+		party_1_has_more_than_threshold = yes
+		western_conservatism_are_in_power_or_coalition = no
+	}
+	# Party 2 (Liberalism)
+	else_if = {
+		limit = { check_variable = { v = 2 } }
+		party_2_has_more_than_threshold = yes
+		western_liberal_are_in_power_or_coalition = no
+	}
+	# Party 3 (Socialism)
+	else_if = {
+		limit = { check_variable = { v = 3 } }
+		party_3_has_more_than_threshold = yes
+		western_socialism_are_in_power_or_coalition = no
+	}
+	# Party 4 (Communist State)
+	else_if = {
+		limit = { check_variable = { v = 4 } }
+		party_4_has_more_than_threshold = yes
+		emerging_communist_state_in_power_or_coalition = no
+	}
+	# Party 5 (Anarchist Communism)
+	else_if = {
+		limit = { check_variable = { v = 5 } }
+		party_5_has_more_than_threshold = yes
+		emerging_anarchist_communism_in_power_or_coalition = no
+	}
+	# Party 6 (Conservative)
+	else_if = {
+		limit = { check_variable = { v = 6 } }
+		party_6_has_more_than_threshold = yes
+		emerging_conservative_in_power_or_coalition = no
+	}
+	# Party 7 (Emerging Autocracy)
+	else_if = {
+		limit = { check_variable = { v = 7 } }
+		party_7_has_more_than_threshold = yes
+		emerging_autocracy_in_power_or_coalition = no
+	}
+	# Party 8 (Moderate Shiite)
+	else_if = {
+		limit = { check_variable = { v = 8 } }
+		party_8_has_more_than_threshold = yes
+		emerging_mod_vilyat_e_faqih_in_power_or_coalition = no
+		if = { limit = { original_tag = PER }
+			OR = {
+				is_in_array = { ruling_party = 8 }
+				is_in_array = { gov_coalition_array = 8 }
+			}
+		}
+		if = { limit = { original_tag = PER }
+			emerging_hardline_shiite_are_in_power = no
+			emerging_moderate_shiite_are_in_power = no
+		}
+	}
+	# Party 9 (Hardline Shiite)
+	else_if = {
+		limit = { check_variable = { v = 9 } }
+		party_9_has_more_than_threshold = yes
+		emerging_vilayat_e_faqih_in_power_or_coalition = no
+		if = { limit = { original_tag = PER }
+			OR = {
+				is_in_array = { ruling_party = 9 }
+				is_in_array = { gov_coalition_array = 9 }
+			}
+		}
+		if = { limit = { original_tag = PER }
+			emerging_hardline_shiite_are_in_power = no
+			emerging_moderate_shiite_are_in_power = no
+		}
+	}
+	# Party 10 (Wahabbist Monarchist)
+	else_if = {
+		limit = { check_variable = { v = 10 } }
+		party_10_has_more_than_threshold = yes
+		salafist_kingdom_in_power_or_coalition = no
+	}
+	# Party 11 (Salafi Jihadism)
+	else_if = {
+		limit = { check_variable = { v = 11 } }
+		party_11_has_more_than_threshold = yes
+		salafist_caliphate_in_power_or_coalition = no
+	}
+	# Party 12 (Moderate Islamism)
+	else_if = {
+		limit = { check_variable = { v = 12 } }
+		party_12_has_more_than_threshold = yes
+		neutrality_muslim_brotherhood_in_power_or_coalition = no
+		if = {
+			limit = { original_tag = TAJ }
+			NOT = { has_idea = TAJ_woes_of_the_civilwar }
+		}
+	}
+	# Party 13 (Non-Aligned Autocrat)
+	else_if = {
+		limit = { check_variable = { v = 13 } }
+		party_13_has_more_than_threshold = yes
+		neutrality_neutral_autocracy_in_power_or_coalition = no
+	}
+	# Party 14 (Neutral Conservatism)
+	else_if = {
+		limit = { check_variable = { v = 14 } }
+		party_14_has_more_than_threshold = yes
+		neutrality_neutral_conservatism_in_power_or_coalition = no
+	}
+	# Party 15 (Oligarchism)
+	else_if = {
+		limit = { check_variable = { v = 15 } }
+		party_15_has_more_than_threshold = yes
+		neutrality_oligarchism_in_power_or_coalition = no
+	}
+	# Party 16 (Neutral Libertarian)
+	else_if = {
+		limit = { check_variable = { v = 16 } }
+		party_16_has_more_than_threshold = yes
+		neutrality_neutral_libertarian_in_power_or_coalition = no
+	}
+	# Party 17 (Neutral Green)
+	else_if = {
+		limit = { check_variable = { v = 17 } }
+		party_17_has_more_than_threshold = yes
+		neutrality_neutral_green_in_power_or_coalition = no
+	}
+	# Party 18 (Neutral Social)
+	else_if = {
+		limit = { check_variable = { v = 18 } }
+		party_18_has_more_than_threshold = yes
+		neutrality_neutral_communism_in_power_or_coalition = no
+	}
+	# Party 19 (Neutral Communism)
+	else_if = {
+		limit = { check_variable = { v = 19 } }
+		party_19_has_more_than_threshold = yes
+		neutrality_neutral_communism_in_power_or_coalition = no
+	}
+	# Party 20 (National Populism)
+	else_if = {
+		limit = { check_variable = { v = 20 } }
+		party_20_has_more_than_threshold = yes
+		nationalist_right_wing_populists_are_in_power_or_coalition = no
+		if = {
+			limit = { original_tag = TAJ }
+			NOT = { has_idea = TAJ_woes_of_the_civilwar }
+		}
+	}
+	# Party 21 (Military Junta)
+	else_if = {
+		limit = { check_variable = { v = 21 } }
+		party_21_has_more_than_threshold = yes
+		nationalist_fascists_are_in_power_or_coalition = no
+	}
+	# Party 22 (Monarchist)
+	else_if = {
+		limit = { check_variable = { v = 22 } }
+		party_22_has_more_than_threshold = yes
+		nationalist_military_junta_are_in_power_or_coalition = no
+	}
+	# Party 23 (Monarchist variant)
+	else_if = {
+		limit = { check_variable = { v = 23 } }
+		party_23_has_more_than_threshold = yes
+		nationalist_monarchists_are_in_power_or_coalition = no
+	}
+}
+
+ban_party_triggers = {
+	# Party 0 (Western Autocracy)
+	if = {
+		limit = { check_variable = { v = 0 } }
+		western_autocrats_are_in_power_or_coalition = no
+	}
+	# Party 1 (Conservatism)
+	else_if = {
+		limit = { check_variable = { v = 1 } }
+		has_elections = no
+		western_conservatism_are_in_power_or_coalition = no
+	}
+	# Party 2 (Liberalism)
+	else_if = {
+		limit = { check_variable = { v = 2 } }
+		has_elections = no
+		western_liberal_are_in_power_or_coalition = no
+	}
+	# Party 3 (Socialism)
+	else_if = {
+		limit = { check_variable = { v = 3 } }
+		has_elections = no
+		western_socialism_are_in_power_or_coalition = no
+	}
+	# Party 4 (Communist State)
+	else_if = {
+		limit = { check_variable = { v = 4 } }
+		emerging_communist_state_in_power_or_coalition = no
+	}
+	# Party 5 (Anarchist Communism)
+	else_if = {
+		limit = { check_variable = { v = 5 } }
+		has_elections = no
+		if = { limit = { original_tag = GER }
+			NOT = { has_idea = german_legacy }
+		}
+		emerging_anarchist_communism_in_power_or_coalition = no
+	}
+	# Party 6 (Conservative)
+	else_if = {
+		limit = { check_variable = { v = 6 } }
+		emerging_conservative_in_power_or_coalition = no
+	}
+	# Party 7 (Emerging Autocracy)
+	else_if = {
+		limit = { check_variable = { v = 7 } }
+		emerging_autocracy_in_power_or_coalition = no
+	}
+	# Party 8 (Moderate Shiite)
+	else_if = {
+		limit = { check_variable = { v = 8 } }
+		emerging_mod_vilyat_e_faqih_in_power_or_coalition = no
+	}
+	# Party 9 (Hardline Shiite)
+	else_if = {
+		limit = { check_variable = { v = 9 } }
+		emerging_vilayat_e_faqih_in_power_or_coalition = no
+	}
+	# Party 10 (Wahabbist Monarchist)
+	else_if = {
+		limit = { check_variable = { v = 10 } }
+		salafist_kingdom_in_power_or_coalition = no
+	}
+	# Party 11 (Salafi Jihadism)
+	else_if = {
+		limit = { check_variable = { v = 11 } }
+		salafist_caliphate_in_power_or_coalition = no
+	}
+	# Party 12 (Moderate Islamism)
+	else_if = {
+		limit = { check_variable = { v = 12 } }
+		has_elections = no
+		if = {
+			limit = { original_tag = TAJ }
+			NOT = { has_idea = TAJ_woes_of_the_civilwar }
+		}
+		neutrality_muslim_brotherhood_in_power_or_coalition = no
+	}
+	# Party 13 (Non-Aligned Autocrat)
+	else_if = {
+		limit = { check_variable = { v = 13 } }
+		neutrality_neutral_autocracy_in_power_or_coalition = no
+	}
+	# Party 14 (Neutral Conservatism)
+	else_if = {
+		limit = { check_variable = { v = 14 } }
+		has_elections = no
+		neutrality_neutral_conservatism_in_power_or_coalition = no
+	}
+	# Party 15 (Oligarchism)
+	else_if = {
+		limit = { check_variable = { v = 15 } }
+		has_elections = no
+		if = { limit = { original_tag = GER }
+			NOT = { has_idea = german_legacy }
+		}
+		neutrality_oligarchism_in_power_or_coalition = no
+	}
+	# Party 16 (Neutral Libertarian)
+	else_if = {
+		limit = { check_variable = { v = 16 } }
+		has_elections = no
+		neutrality_neutral_libertarian_in_power_or_coalition = no
+	}
+	# Party 17 (Neutral Green)
+	else_if = {
+		limit = { check_variable = { v = 17 } }
+		has_elections = no
+		neutrality_neutral_green_in_power_or_coalition = no
+	}
+	# Party 18 (Neutral Social)
+	else_if = {
+		limit = { check_variable = { v = 18 } }
+		has_elections = no
+		if = { limit = { original_tag = GER }
+			NOT = { has_idea = german_legacy }
+		}
+		neutrality_neutral_social_in_power_or_coalition = no
+	}
+	# Party 19 (Neutral Communism)
+	else_if = {
+		limit = { check_variable = { v = 19 } }
+		neutrality_neutral_communism_in_power_or_coalition = no
+	}
+	# Party 20 (National Populism)
+	else_if = {
+		limit = { check_variable = { v = 20 } }
+		has_elections = no
+		if = { limit = { original_tag = GER }
+			NOT = { has_idea = german_legacy }
+		}
+		if = {
+			limit = { original_tag = TAJ }
+			NOT = { has_idea = TAJ_woes_of_the_civilwar }
+		}
+		nationalist_right_wing_populists_are_in_power_or_coalition = no
+	}
+	# Party 21 (Military Junta)
+	else_if = {
+		limit = { check_variable = { v = 21 } }
+		nationalist_fascists_are_in_power_or_coalition = no
+	}
+	# Party 22 (Monarchist)
+	else_if = {
+		limit = { check_variable = { v = 22 } }
+		nationalist_military_junta_are_in_power_or_coalition = no
+	}
+	# Party 23 (Monarchist variant)
+	else_if = {
+		limit = { check_variable = { v = 23 } }
+		nationalist_monarchists_are_in_power_or_coalition = no
+	}
+}

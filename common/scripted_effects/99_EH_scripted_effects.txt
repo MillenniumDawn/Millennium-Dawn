@@ -209,18 +209,16 @@ EH_research_sites_scientist_protection_increase = {
 }
 
 EH_convergence_event_chain_effect = {
-	random_country = {
-		news_event = { id = EH_event.300 days = 1 random_days = 10 }
-		news_event = { id = EH_event.301 days = 12 random_days = 7 }
-		news_event = { id = EH_event.302 days = 23 random_days = 6 }
-		news_event = { id = EH_event.303 days = 32 random_days = 6 }
-		news_event = { id = EH_event.304 days = 41 random_days = 5 }
-		news_event = { id = EH_event.305 days = 47 random_days = 5 }
-		news_event = { id = EH_event.306 days = 52 random_days = 4 }
-		news_event = { id = EH_event.307 days = 58 random_days = 4 }
-		news_event = { id = EH_event.308 days = 64 }
-		news_event = { id = EH_event.309 days = 70 }
-	}
+	news_event = { id = EH_event.300 days = 1 random_days = 10 }
+	news_event = { id = EH_event.301 days = 12 random_days = 7 }
+	news_event = { id = EH_event.302 days = 23 random_days = 6 }
+	news_event = { id = EH_event.303 days = 32 random_days = 6 }
+	news_event = { id = EH_event.304 days = 41 random_days = 5 }
+	news_event = { id = EH_event.305 days = 47 random_days = 5 }
+	news_event = { id = EH_event.306 days = 52 random_days = 4 }
+	news_event = { id = EH_event.307 days = 58 random_days = 4 }
+	news_event = { id = EH_event.308 days = 64 }
+	news_event = { id = EH_event.309 days = 70 }
 	random_country = {
 		limit = { is_in_north_america = yes }
 		country_event = { id = EH_event.401 days = 80 random_days = 5 }
@@ -230,24 +228,36 @@ EH_convergence_event_chain_effect = {
 EH_set_randallite_effect = {
 	set_variable = { EH_randallite_stockpile = EH_total_randallite_var }
 	subtract_from_variable = { EH_randallite_stockpile = modifier@randallite_resource_cost_modifier }
+	clamp_variable = {
+		var = EH_randallite_stockpile
+		max = 300
+	}
 
 	set_variable = { EH_randallite_usage_var = EH_total_randallite_var }
 	subtract_from_variable = { EH_randallite_usage_var = EH_randallite_stockpile }
+	clamp_variable = {
+		var = EH_randallite_usage_var
+		max = 300
+	}
 	EH_refresh_gui = yes
 }
 
 EH_add_randallite_effect = {
 	custom_effect_tooltip = EH_add_randallite_effect_tt
 	add_to_variable = { EH_total_randallite_var = add_randallite }
+	clamp_variable = {
+		var = EH_total_randallite_var
+		max = 300
+	}
 	EH_refresh_gui = yes
 }
 
 EH_randallite_effects = {
-	set_variable = { EH_randallite_productivity_var = 0.01 }
-	set_variable = { EH_randallite_mech_production_speed_var = 0.004 }
-	set_variable = { EH_randallite_resource_income_var = 0.006 }
-	set_variable = { EH_randallite_industrial_capacity_var = 0.005 }
-	set_variable = { EH_randallite_cic_construction_boost_var = 0.01 }
+	set_variable = { EH_randallite_productivity_var = 0.002 }
+	set_variable = { EH_randallite_mech_production_speed_var = 0.002 }
+	set_variable = { EH_randallite_resource_income_var = 0.002 }
+	set_variable = { EH_randallite_industrial_capacity_var = 0.0015 }
+	set_variable = { EH_randallite_production_speed_buildings_var = 0.004 }
 
 	if = {
 		limit = {
@@ -301,7 +311,7 @@ EH_randallite_effects = {
 				compare = not_equals
 			}
 		}
-		add_to_variable = { EH_randallite_cic_construction_boost_var = EH_temp_randallite_cic_construction_boost_var }
+		add_to_variable = { EH_randallite_production_speed_buildings_var = EH_temp_randallite_cic_construction_boost_var }
 		custom_effect_tooltip = EH_randallite_cic_construction_boost_modified_TT
 	}
 
@@ -309,7 +319,7 @@ EH_randallite_effects = {
 	multiply_variable = { EH_randallite_mech_production_speed_var = EH_randallite_stockpile }
 	multiply_variable = { EH_randallite_resource_income_var = EH_randallite_stockpile }
 	multiply_variable = { EH_randallite_industrial_capacity_var = EH_randallite_stockpile }
-	multiply_variable = { EH_randallite_cic_construction_boost_var = EH_randallite_stockpile }
+	multiply_variable = { EH_randallite_production_speed_buildings_var = EH_randallite_stockpile }
 	EH_refresh_gui = yes
 }
 
@@ -606,10 +616,18 @@ EH_calculate_mechs_production_time_effect = {
 
 	set_temp_variable = { EH_mech_production_cost_modifier_var = 1 }
 	subtract_from_temp_variable = { EH_mech_production_cost_modifier_var = modifier@mech_production_speed_multiplier_modifier }
+	clamp_variable = {
+		var = EH_mech_production_cost_modifier_var
+		min = 0.05
+	}
 	multiply_variable = { EH_mech_production_cost_var = EH_mech_production_cost_modifier_var }
 
 	set_variable = { EH_add_mech_production_var = 100 }
 	divide_variable = { EH_add_mech_production_var = EH_mech_production_cost_var }
+	clamp_variable = {
+		var = EH_add_mech_production_var
+		min = 5
+	}
 
 	EH_calculate_randallite_mech_production_cost_effect = yes
 }

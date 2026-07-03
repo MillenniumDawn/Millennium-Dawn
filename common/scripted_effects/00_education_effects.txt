@@ -46,135 +46,25 @@ EDU_annual_pulse_for_learning_stuff = {
 	}
 }
 
+# Both belligerents in the same civil war share one literacy pool, so a splinter
+# inherits ROOT's rate instead of running the annexation average. Each pairing
+# below is one civil war: a match needs ROOT and FROM both inside the same group.
 EDU_learn_to_annex_your_neighbours = {
-	if = { # CONGOLESE CIVIL WAR CONDITIONALS
+	if = {
 		limit = {
-			ROOT = {
-				OR = {
-					tag = DRC
-					tag = MLC
-					tag = RCD
-				}
-			}
-			FROM = {
-				OR = {
-					tag = DRC
-					tag = MLC
-					tag = RCD
-				}
+			OR = {
+				AND = { ROOT = { OR = { tag = DRC tag = MLC tag = RCD } } FROM = { OR = { tag = DRC tag = MLC tag = RCD } } } # Congo
+				AND = { ROOT = { OR = { tag = AFR tag = SIE } } FROM = { OR = { tag = AFR tag = SIE } } } # Sierra Leone
+				AND = { ROOT = { OR = { tag = LIB tag = LUR } } FROM = { OR = { tag = LIB tag = LUR } } } # Liberia
+				AND = { ROOT = { OR = { tag = AGL tag = UNI } } FROM = { OR = { tag = AGL tag = UNI } } } # Angola
+				AND = { ROOT = { OR = { tag = JUB tag = SHB tag = SNA tag = SOM tag = SWS } } FROM = { OR = { tag = JUB tag = SHB tag = SNA tag = SOM tag = SWS } } } # Somalia
+				AND = { ROOT = { OR = { tag = SEN tag = CSM } } FROM = { OR = { tag = SEN tag = CSM } } } # Senegal
+				AND = { ROOT = { OR = { tag = CDI tag = FNC } } FROM = { OR = { tag = CDI tag = FNC } } } # Ivory Coast
 			}
 		}
 		set_variable = { literacy_rate = ROOT.literacy_rate }
 	}
-	else_if = { # SIERRA LEONE CIVIL WAR CONDITIONALS
-		limit = {
-			ROOT = {
-				OR = {
-					tag = AFR
-					tag = SIE
-				}
-			}
-			FROM = {
-				OR = {
-					tag = AFR
-					tag = SIE
-				}
-			}
-		}
-		set_variable = { literacy_rate = ROOT.literacy_rate }
-	}
-	else_if = { # LIBERIAN CIVIL WAR CONDITIONALS
-		limit = {
-			ROOT = {
-				OR = {
-					tag = LIB
-					tag = LUR
-				}
-			}
-			FROM = {
-				OR = {
-					tag = LIB
-					tag = LUR
-				}
-			}
-		}
-		set_variable = { literacy_rate = ROOT.literacy_rate }
-	}
-	else_if = { # ANGOLAN CIVIL WAR CONDITIONALS
-		limit = {
-			ROOT = {
-				OR = {
-					tag = AGL
-					tag = UNI
-				}
-			}
-			FROM = {
-				OR = {
-					tag = AGL
-					tag = UNI
-				}
-			}
-		}
-		set_variable = { literacy_rate = ROOT.literacy_rate }
-	}
-	else_if = { # SOMALI CIVIL WAR CONDITIONALS
-		limit = {
-			ROOT = {
-				OR = {
-					tag = JUB
-					tag = SHB
-					tag = SNA
-					tag = SOM
-					tag = SWS
-				}
-			}
-			FROM = {
-				OR = {
-					tag = JUB
-					tag = SHB
-					tag = SNA
-					tag = SOM
-					tag = SWS
-				}
-			}
-		}
-		set_variable = { literacy_rate = ROOT.literacy_rate }
-	}
-	else_if = { # SENEGALESE CIVIL WAR CONDITIONALS
-		limit = {
-			ROOT = {
-				OR = {
-					tag = SEN
-					tag = CSM
-				}
-			}
-			FROM = {
-				OR = {
-					tag = SEN
-					tag = CSM
-				}
-			}
-		}
-		set_variable = { literacy_rate = ROOT.literacy_rate }
-	}
-	else_if = { # IVORIAN CIVIL WAR CONDITIONALS
-		limit = {
-			ROOT = {
-				OR = {
-					tag = CDI
-					tag = FNC
-				}
-			}
-			FROM = {
-				OR = {
-					tag = CDI
-					tag = FNC
-				}
-			}
-		}
-		set_variable = { literacy_rate = ROOT.literacy_rate }
-	}
-	else_if = { # GENERIC CIVIL WAR CONDITIONALS
+	else_if = { # GENERIC CIVIL WAR via flag
 		limit = {
 			ROOT = { has_country_flag = EDU_civil_war_ongoing }
 			FROM = { has_country_flag = EDU_civil_war_ongoing }
@@ -198,27 +88,15 @@ EDU_learn_to_annex_your_neighbours = {
 # Gives literacy rate from annexed nations Reduces or Increases based on num of educated people
 EDU_annexation_math_education = {
 	log = "[GetDateText]: [ROOT.GetName]: Running Effect: EDU_annexation_math_education"
-	# ANNEXER LITERACY
+	# Each side's literate-population product (population * literacy rate)
 	set_variable = { winner_literacy = ROOT.literacy_rate }
-	# ANNEXER PCWR MATH
-	set_variable = { winner_pwcr = ROOT.population_total_m }
-	multiply_variable = { winner_pwcr = ROOT.winner_literacy }
-	# ANNEXEE LITERACY
+	set_variable = { winner_pwcr = { value = ROOT.population_total_m  multiply = ROOT.winner_literacy } }
 	set_variable = { loser_literacy = FROM.literacy_rate }
-	# ANNEXEE PCWR MATH
-	set_variable = { loser_pwcr = FROM.population_total_m }
-	multiply_variable = { loser_pwcr = loser_literacy }
-	# COMBINED POPULATION MATH
-	set_variable = { combined_population_m = ROOT.population_total_m }
-	add_to_variable = { combined_population_m = FROM.population_total_m }
-	# COMBINED PWCR MATH
-	set_variable = { combined_pwcr = ROOT.winner_pwcr }
-	add_to_variable = { combined_pwcr = loser_pwcr }
-	# COMBINED LITERACY RATE
-	set_variable = { combined_literacy = combined_pwcr }
-	divide_variable = { combined_literacy = combined_population_m }
-	# THE FUN BIT
-	set_variable = { literacy_rate = combined_literacy }
+	set_variable = { loser_pwcr = { value = FROM.population_total_m  multiply = loser_literacy } }
+	# Blended rate = combined literate population / combined population
+	set_variable = { combined_population_m = { value = ROOT.population_total_m  add = FROM.population_total_m } }
+	set_variable = { combined_pwcr = { value = ROOT.winner_pwcr  add = loser_pwcr } }
+	set_variable = { literacy_rate = { value = combined_pwcr  divide = combined_population_m } }
 	clamp_variable = {
 		var = literacy_rate
 		min = 0.01
@@ -235,42 +113,23 @@ EDU_annexation_math_education = {
 }
 
 EDU_update_education_idea_DYNMOD = {
-	set_temp_variable = { base_modifier = literacy_rate }
-	multiply_temp_variable = { base_modifier = 100 }
-	# MLW 64.1
-	# -30.9
-	# MLW 0.641
-	add_to_temp_variable = { base_modifier = -95 }
-	set_variable = { literacy_research = base_modifier }
-	set_variable = { literacy_education_cost = base_modifier }
-	set_variable = { literacy_productivity_gain = base_modifier }
-	set_variable = { literacy_educated_workers = base_modifier }
-	set_variable = { literacy_retarded_workers = base_modifier }
-	multiply_variable = { literacy_research = 0.005 }
-	# -0.587 - 0.019
-	# 58.7% slower
-	# -0.154 - 0.005
-	# 15.4% slower
-	multiply_variable = { literacy_education_cost = -0.01 }
-	multiply_variable = { literacy_productivity_gain = 0.02 }
-	multiply_variable = { literacy_educated_workers = 0.005 }
-	multiply_variable = { literacy_retarded_workers = -0.005 }
-	# 0.587
-	# 58.7% higher
-	# 0.154 - 0.005
-	# 15.4% higher
-	# Clamps to stop it from breaking the system (prevent negative in positives)
+	# Literacy as points above a 95% baseline (e.g. 64.1% literacy -> -30.9), then
+	# scaled into each education modifier.
+	set_temp_variable = { base_modifier = { value = literacy_rate  multiply = 100  add = -95 } }
+	set_variable = { literacy_research = { value = base_modifier  multiply = 0.005 } }
+	set_variable = { literacy_education_cost = { value = base_modifier  multiply = -0.01 } }
+	set_variable = { literacy_productivity_gain = { value = base_modifier  multiply = 0.02 } }
+	set_variable = { literacy_educated_workers = { value = base_modifier  multiply = 0.005 } }
+	set_variable = { literacy_uneducated_workers = { value = base_modifier  multiply = -0.005 } }
+	# Cap the positive-direction modifiers so high literacy can't break the system.
 	clamp_variable = { var = literacy_education_cost max = 1 }
 	clamp_variable = { var = literacy_productivity_gain max = 1 }
 	clamp_variable = { var = literacy_educated_workers max = 1 }
-	clamp_variable = { var = literacy_retarded_workers max = 1 }
+	clamp_variable = { var = literacy_uneducated_workers max = 1 }
 }
 
 EDU_check_education_spending = {
-	set_temp_variable = { LR_change_minimum = -0.05 }
-	set_temp_variable = { LR_change_maximum = 0 }
-
-	add_to_temp_variable = { LR_change_minimum = modifier@literacy_rate_education_modifier }
+	set_temp_variable = { LR_change_minimum = { value = modifier@literacy_rate_education_modifier  add = -0.05 } }
 	set_temp_variable = { LR_change_maximum = modifier@literacy_rate_education_modifier }
 
 	randomize_temp_variable = {
@@ -304,16 +163,16 @@ update_literacy_rate_event = {
 update_literacy_rate = {
 	custom_effect_tooltip = literacy_rate_change_TT
 	add_to_variable = { literacy_rate = LR_change }
+	clamp_variable = {
+		var = literacy_rate
+		min = 0.01
+		max = 1
+	}
 	EDU_update_education_idea_DYNMOD = yes
 	if = {
 		limit = {
 			is_agrarian_economy = yes
 		}
 		AGRI_update_math_variables = yes
-	}
-	clamp_variable = {
-		var = literacy_rate
-		min = 0.01
-		max = 1
 	}
 }
