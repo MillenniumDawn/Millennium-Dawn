@@ -1,24 +1,5 @@
 # Localisation Rules
 
-## Localisation Is Mandatory
-
-Every piece of new content — focuses, decisions, events, ideas, MIOs, dynamic modifiers, opinion modifiers — **must ship with complete localisation keys** in the same commit or output. Never produce a new script object without its matching loc.
-
-**What "complete" means:**
-- Focuses: `ID`, `ID_desc`
-- Decisions / decision categories: `ID`, `ID_desc`
-- Events: `ID.t`, `ID.d`, one key per option (`ID.a`, `ID.b`, …)
-- Ideas: `ID`, `ID_desc`
-- MIO traits: one key per trait token
-- Dynamic modifiers: `ID`, `ID_desc`
-- Opinion modifiers: `ID` only (no `_desc`)
-
-**Real-life immersion is required.** Loc strings must be grounded in verifiable real-world context: historical events, actual organizations, real policy names, documented geopolitical dynamics. Generic filler ("This focus improves the economy") is not acceptable. Every description should teach the player something true about the country or situation.
-
-**Use the `localisation-editor` agent** (via `/standardize` or directly) to review and polish loc strings before finalizing. The agent enforces the writing style rules in this file.
-
-**No placeholder strings.** `"TODO"`, `"PLACEHOLDER"`, `""`, or any empty string is a blocking error — the game renders it as visible garbage or a blank UI element.
-
 ## Language & Encoding
 
 - English is the only language to edit. All other language files are managed via Paratranz — **do not touch them**.

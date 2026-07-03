@@ -94,11 +94,14 @@ NOT = { has_idea = bar }
 `NOR` is **not** a HOI4 trigger keyword. Express "none of these" as separate `NOT` blocks or `NOT = { OR = { ... } }`:
 
 # Correct — separate NOT blocks
+
 NOT = { has_government = democratic }
 NOT = { has_idea = social_05 }
 
 # Also correct — NOT wrapping an OR
+
 NOT = { OR = { has_government = democratic has_idea = social_05 } }
+
 ```
 
 ## Use `random` over two-bucket `random_list`
@@ -106,11 +109,15 @@ NOT = { OR = { has_government = democratic has_idea = social_05 } }
 A `random_list` with two buckets where one is empty is a Bernoulli trial in the wrong syntax. Collapse it:
 
 ```
+
 # Heavier — placeholder bucket
+
 random_list = { 50 = { add_to_variable = { my_counter = 1 } } 50 = {} }
 
 # Lighter — direct probability roll
+
 random = { chance = 50 add_to_variable = { my_counter = 1 } }
+
 ```
 
 Three+ buckets, or two non-empty buckets with different effects, must stay as `random_list`. See `.claude/docs/simplification-patterns.md` for edge cases.
@@ -120,8 +127,11 @@ Three+ buckets, or two non-empty buckets with different effects, must stay as `r
 An `OR` block inside an `ai_will_do modifier` that covers all possible values of a trigger is always true and does nothing:
 
 ```
+
 # Wrong — OR(yes, no) is always true; modifier fires unconditionally
+
 modifier = { add = 1 OR = { is_historical_focus_on = yes is_historical_focus_on = no } }
+
 ```
 
 Remove the entire modifier block and fold the `add` amount into `base = N`. If a real condition was intended (e.g., add only when historical focus is on), write it without the tautological OR.
@@ -131,12 +141,16 @@ Remove the entire modifier block and fold the `add` amount into `base = N`. If a
 Multiple conditions in a trigger block are implicitly AND-ed. Never wrap them in redundant `AND = { }`:
 
 ```
+
 # Wrong — redundant AND wrapper
+
 trigger = { AND = { A B C } }
 
 # Correct — implicit AND
+
 trigger = { A B C }
-```
+
+````
 
 Applies to `trigger`, `limit`, `visible`, `available`, `activation`, `cancel_trigger`, and all other trigger contexts.
 
@@ -146,7 +160,7 @@ Invalid modifier names compile silently and do nothing — the game logs "Unknow
 
 ```bash
 grep -r "modifier_name_here" common/ideas/*.txt common/national_focus/*.txt | head -3
-```
+````
 
 No results means the name is wrong. Check the wiki or copy the exact spelling from a similar modifier in the codebase.
 
@@ -281,78 +295,11 @@ else = { ... }
 
 ## change_influence_percentage
 
-The scripted effect uses temp-variable arguments with these defaults:
-
-| Temp variable      | Required | Default   |
-| ------------------ | -------- | --------- |
-| `percent_change`   | yes      | —         |
-| `tag_index`        | no       | `ROOT.id` |
-| `influence_target` | no       | `THIS.id` |
-
-Three pitfalls:
-
-1. **Don't write redundant defaults.** `set_temp_variable = { tag_index = ROOT.id }` and `set_temp_variable = { influence_target = THIS.id }` are no-ops. Leave them out.
-2. **Orphan setters are silent bugs.** A `percent_change` / `tag_index` / `influence_target` triple with no following `change_influence_percentage = yes` does nothing. When auditing influence code, grep for `percent_change` setters and confirm each has a matching invocation in the same scope.
-3. **Loop-local temp vars need the call inside the loop.** Setting temp vars inside `random_other_country` / `random_country` / `every_country` then calling `change_influence_percentage = yes` outside the block runs the effect once with stale or undefined values. The invocation must live in the same scope as the temp-var writes.
-
-```
-# Wrong — call runs outside the loop; tag_index/influence_target resolve to outer scope
-random_other_country = {
-    limit = { ... }
-    set_temp_variable = { percent_change = 3 }
-    set_temp_variable = { tag_index = THIS.id }
-    set_temp_variable = { influence_target = PREV.id }
-}
-change_influence_percentage = yes
-
-# Correct — call inside the loop with the loop-local scopes
-random_other_country = {
-    limit = { ... }
-    set_temp_variable = { percent_change = 3 }
-    set_temp_variable = { tag_index = THIS.id }
-    set_temp_variable = { influence_target = PREV.id }
-    change_influence_percentage = yes
-}
-```
-
-Also watch for typos in the temp-var name itself (e.g., `influence_tBRAet` from a botched search-and-replace) — the engine accepts any name, so a typo silently sets a never-read variable and the influence change uses the default `THIS.id` target.
+Temp-var effect (`percent_change` required; `tag_index` defaults to `ROOT.id`, `influence_target` to `THIS.id`). Three silent-bug traps: redundant default setters, orphan setters with no following `change_influence_percentage = yes`, and loop-local temp vars whose `change_influence_percentage = yes` call must sit inside the loop. Full detail and examples: `.claude/docs/scripting-edge-cases.md`.
 
 # Array Index Semantics
 
-When a function uses `^index` array subscripts, the **meaning of the index variable** must be obvious and consistent. Bugs arise when two different index types are stored in similarly-named variables.
-
-| Variable name              | Should hold                  | Must NOT hold                                   |
-| -------------------------- | ---------------------------- | ----------------------------------------------- |
-| `project`, `slot`, `idx`   | Slot / array position (0..N) | Building type, category ID, or other lookup key |
-| `type`, `kind`, `category` | Lookup key / type ID (1..N)  | Slot index                                      |
-
-**Rule:** When a function parameter is an array index, document it in the function comment. Verify every caller passes the right kind of index. See `.claude/docs/refactor-checklist.md` for the full verification steps.
-
----
-
-## unlock_decision_tooltip
-
-When informing the player that a decision has become available, do **not** use `custom_effect_tooltip`. Use the dedicated engine keyword instead:
-
-```
-unlock_decision_tooltip = my_decision_id
-```
-
-This renders the correct "Decision unlocked" UI feedback and links directly to the decision panel. A bare `custom_effect_tooltip` with a hand-written loc key produces an inferior tooltip and can drift out of sync with the decision's own name.
-
----
-
-## has_completed_focus over country flags
-
-To check whether a focus has been completed, use the built-in trigger:
-
-```
-has_completed_focus = my_focus_id
-```
-
-Never use a manually set `country_flag` as a proxy for focus completion. The engine sets the completion state automatically, and a flag requires extra scripting to set, maintain, and clean up.
-
----
+`^index` subscripts: keep the index variable's meaning consistent: slot position `0..N` (`slot`, `idx`) vs lookup key `1..N` (`type`, `category`). Storing one where the other is expected reads the wrong array entry. Full table and rule: `.claude/docs/scripting-edge-cases.md`.
 
 ## Simplification & Performance Patterns
 
@@ -423,30 +370,3 @@ Copy-pasting from option A and forgetting to update to `.b` is a common source o
 ## Ignore Resources folder
 
 When making a plan or change, ignore any files in `resources/`.
-
-## Three-event pattern for cooperative requests
-
-Any event chain modelling a bilateral request (joint project, alliance proposal, trade agreement, cooperation offer, etc.) requires **exactly three events**:
-
-| # | Direction | Purpose |
-| - | --------- | ------- |
-| 1 | Sender → Receiver | The request. Receiver sees Yes / No options. |
-| 2 | Receiver → Sender | Acceptance reply — fires when receiver chooses Yes. |
-| 3 | Receiver → Sender | Rejection reply — fires when receiver chooses No. |
-
-Do not merge acceptance and rejection into one return event with conditional text. Separate events allow distinct titles, descriptions, and option-level effects on both sides.
-
-Minimum skeleton:
-
-```
-# Event 1 — request (fires on receiver)
-option = { name = foo.1.a   # Yes
-	ROOT = { country_event = { id = foo.2 } }
-}
-option = { name = foo.1.b   # No
-	ROOT = { country_event = { id = foo.3 } }
-}
-
-# Event 2 — acceptance (fires on sender)
-# Event 3 — rejection  (fires on sender)
-```

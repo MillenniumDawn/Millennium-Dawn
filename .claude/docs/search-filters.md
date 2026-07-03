@@ -143,7 +143,6 @@ These custom filters exist for other country trees — do not add them to Israel
 | Brazil        | `FOCUS_FILTER_BRAZILIAN_MERCOSUR`, `FOCUS_FILTER_UNASUL`, `FOCUS_FILTER_OPERATION_CAR_WASH`, `FOCUS_FILTER_AMAZON_CONSERVATION`                              |
 | Iran          | `FOCUS_FILTER_IRANIAN_NUCLEAR_DEV`, `FOCUS_FILTER_COLLAPSE_ISLAMIC_REPUBLIC`, `FOCUS_FILTER_THOUSAND`                                                        |
 | Korea         | `FOCUS_FILTER_KOREAN_PENINSULA`, `FOCUS_FILTER_KOREAN_NUCLEAR_ISSUE`                                                                                         |
-| China         | `FOCUS_FILTER_CHI_TECH_DEPENDENCE` (→`INDUSTRY`), `FOCUS_FILTER_CHI_RUSSIAN_ARMS` (→`MILITARY_LAWS`), `FOCUS_FILTER_CHI_WATER_SHORTAGE` (→`ECONOMY`); plus `FOCUS_FILTER_CORRUPTION` (→`POLITICAL`) for anti-corruption focuses. All other China focuses use exactly one generic. |
 | Italy         | `FOCUS_FILTER_ITA_MAFIA`                                                                                                                                     |
 | UK            | `FOCUS_FILTER_INNER_CIRCLE`                                                                                                                                  |
 | Czech Rep.    | `FOCUS_FILTER_SKODA`                                                                                                                                         |
