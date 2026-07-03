@@ -16,7 +16,9 @@ from common_utils import run_standardizer
 from standardize_decisions import DecisionStandardizer
 from standardize_events import EventStandardizer
 from standardize_focus_tree import standardize_focus_tree
+from standardize_history import HistoryStandardizer
 from standardize_ideas import IdeaStandardizer
+from standardize_localisation import LocalisationStandardizer, _detect_mod_root
 from standardize_mio import MIOStandardizer
 
 
@@ -32,6 +34,7 @@ Examples:
   python3 standardize.py decision input.txt
   python3 standardize.py idea input.txt -v
   python3 standardize.py mio input.txt
+  python3 standardize.py history "history/countries/CHI - China.txt"
         """,
     )
 
@@ -103,6 +106,35 @@ Examples:
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
 
+    history_parser = subparsers.add_parser(
+        "history", help="Standardize history/countries files (dated blocks)"
+    )
+    history_parser.add_argument("input_file", help="Input history file")
+    history_parser.add_argument(
+        "-o", "--output", help="Output file (default: overwrites input)"
+    )
+    history_parser.add_argument(
+        "-b", "--backup", action="store_true", help="Create backup before modifying"
+    )
+    history_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Verbose output"
+    )
+
+    loc_parser = subparsers.add_parser(
+        "localisation", help="Standardize localisation files by content category"
+    )
+    loc_parser.add_argument("input_file", help="Input .yml localisation file")
+    loc_parser.add_argument(
+        "-o", "--output", help="Output file (default: overwrites input)"
+    )
+    loc_parser.add_argument(
+        "-b", "--backup", action="store_true", help="Create backup before modifying"
+    )
+    loc_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    loc_parser.add_argument(
+        "--mod-root", help="Path to mod root (auto-detected if omitted)"
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -148,6 +180,38 @@ Examples:
             "Standardize HOI4 military industrial organization files according to Millennium Dawn coding standards",
             argv=sub_argv,
         )
+    elif args.command == "history":
+        run_standardizer(
+            HistoryStandardizer,
+            "Standardize HOI4 history/countries files according to Millennium Dawn coding standards",
+            argv=sub_argv,
+        )
+    elif args.command == "localisation":
+        from pathlib import Path
+
+        input_path = Path(args.input_file)
+        output_path = Path(args.output) if args.output else input_path
+
+        if args.mod_root:
+            mod_root = Path(args.mod_root)
+        else:
+            mod_root = _detect_mod_root(input_path)
+            if not mod_root:
+                print(
+                    "Error: could not detect mod root. Use --mod-root.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
+        if args.backup:
+            from shared_utils import create_backup
+
+            if not create_backup(str(input_path)):
+                sys.exit(1)
+
+        standardizer = LocalisationStandardizer(mod_root, verbose=args.verbose)
+        if not standardizer.standardize_file(input_path, output_path):
+            sys.exit(1)
     else:
         parser.print_help()
         sys.exit(1)
