@@ -1,0 +1,2881 @@
+GRE_debt_crisis_category = {
+	GRE_lie_about_financial_records_decision = {
+		icon = GFX_decision_gre_paying_ifc_debt
+
+		cost = 25
+
+		visible = {
+			NOT = { has_idea = euro }
+			has_completed_focus = GRE_convert_to_euro
+		}
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_lie_about_financial_records_decision"
+			set_country_flag = GRE_hide_financial_records
+			custom_effect_tooltip = GRE_joining_the_euro_interest_rate_tt
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	GRE_negotiate_debt_swap_deals_decision = {
+		icon = GFX_decision_gre_paying_ifc_debt
+
+		cost = 50
+
+		visible = {
+			has_country_flag = GRE_hide_financial_records
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_negotiate_debt_swap_deals_decision"
+			country_event = greece_debt.1
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	GRE_austerity_tension_mission = {
+
+		icon = GFX_decision_money_dec
+
+		activation = {
+			always = no
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GRE_unified_ratio_below_75_tt
+				check_variable = { GRE_unified_debt_ratio < 0.75 }
+			}
+		}
+
+		days_mission_timeout = 120
+
+		is_good = no
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect GRE_austerity_tension_mission"
+			add_political_power = 100
+			add_stability = 0.05
+			GRE_exit_debt_crisis = yes
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_austerity_tension_mission"
+			GRE = { country_event = greece.2 }
+			if = {
+				limit = { has_idea = GRE_austerity_1 }
+				swap_ideas = {
+					remove_idea = GRE_austerity_1
+					add_idea = GRE_austerity_2
+				}
+				activate_mission = GRE_austerity_tension_mission
+			}
+			else_if = {
+				limit = { has_idea = GRE_austerity_2 }
+				swap_ideas = {
+					remove_idea = GRE_austerity_2
+					add_idea = GRE_austerity_3
+				}
+				activate_mission = GRE_austerity_tension_mission
+			}
+			else_if = {
+				limit = { has_idea = GRE_austerity_3 }
+				add_stability = -0.05
+				activate_mission = GRE_debt_crisis_mission
+			}
+		}
+	}
+
+	GRE_debt_crisis_mission = {
+
+		icon = GFX_decision_bancru_collapse_button
+
+		activation = {
+			always = no
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GRE_unified_ratio_below_75_tt
+				check_variable = { GRE_unified_debt_ratio < 0.75 }
+			}
+		}
+
+		days_mission_timeout = 360
+
+		is_good = no
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect GRE_debt_crisis_mission"
+			add_political_power = 150
+			add_stability = 0.10
+			GRE_exit_debt_crisis = yes
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_debt_crisis_mission"
+			add_stability = -0.08
+			add_political_power = -75
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			if = {
+				limit = {
+					has_idea = EU_member
+					NOT = { has_global_flag = EUU_european_debt_crisis }
+					NOT = { has_global_flag = eurozone_reforms }
+					NOT = { has_active_mission = eurozone_reforms }
+				}
+				country_event = EUevent.7
+			}
+			activate_mission = GRE_debt_crisis_mission
+		}
+	}
+
+	GRE_austerity_placate_decision = {
+		icon = GFX_decision_generic_civil_support
+		cost = 75
+		visible = {
+			GRE_austerity_ongoing = yes
+		}
+		available = {
+			NOT = { has_idea = GRE_austerity_1 }
+		}
+
+		days_remove = 55
+		days_re_enable = 0
+		fire_only_once = no
+
+		complete_effect = {
+			add_stability = 0.05
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_austerity_placate_decision"
+			if = {
+				limit = { has_idea = GRE_austerity_2 }
+				swap_ideas = {
+					remove_idea = GRE_austerity_2
+					add_idea = GRE_austerity_1
+				}
+			}
+			else_if = {
+				limit = { has_idea = GRE_austerity_3 }
+				swap_ideas = {
+					remove_idea = GRE_austerity_3
+					add_idea = GRE_austerity_2
+				}
+			}
+		}
+		ai_will_do = {
+			base = 1
+
+			modifier = {
+				factor = 3
+				has_stability < 0.35
+			}
+			modifier = {
+				has_idea = GRE_austerity_2
+				factor = 3
+			}
+			modifier = {
+				has_idea = GRE_austerity_3
+				factor = 10
+			}
+		}
+	}
+
+	GRE_slash_public_spending_decision = {
+		icon = GFX_decision_money_dec
+
+		cost = 50
+
+		visible = {
+			GRE_austerity_ongoing = yes
+		}
+
+		days_re_enable = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_slash_public_spending_decision"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.05 }
+			modify_debt_effect = yes
+			add_stability = -0.05
+			GRE_calculate_unified_debt = yes
+			custom_effect_tooltip = GRE_buys_mission_time_tt
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = GRE_austerity_tension_mission }
+					add_days_mission_timeout = { mission = GRE_austerity_tension_mission days = 30 }
+				}
+				else_if = {
+					limit = { has_active_mission = GRE_debt_crisis_mission }
+					add_days_mission_timeout = { mission = GRE_debt_crisis_mission days = 30 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 2
+				has_idea = GRE_austerity_2
+			}
+			modifier = {
+				factor = 3
+				has_idea = GRE_austerity_3
+			}
+			modifier = {
+				factor = 2
+				has_active_mission = GRE_austerity_tension_mission
+			}
+			modifier = {
+				factor = 4
+				has_active_mission = GRE_debt_crisis_mission
+			}
+		}
+	}
+
+	GRE_emergency_tax_hikes_decision = {
+		icon = GFX_decision_gre_paying_ifc_debt
+
+		cost = 50
+
+		visible = {
+			GRE_austerity_ongoing = yes
+		}
+
+		days_re_enable = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_emergency_tax_hikes_decision"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.04 }
+			modify_debt_effect = yes
+			add_stability = -0.03
+			set_temp_variable = { party_popularity_increase = -0.03 }
+			set_temp_variable = { temp_outlook_increase = -0.03 }
+			add_relative_party_popularity = yes
+			GRE_calculate_unified_debt = yes
+			custom_effect_tooltip = GRE_buys_mission_time_tt
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = GRE_austerity_tension_mission }
+					add_days_mission_timeout = { mission = GRE_austerity_tension_mission days = 30 }
+				}
+				else_if = {
+					limit = { has_active_mission = GRE_debt_crisis_mission }
+					add_days_mission_timeout = { mission = GRE_debt_crisis_mission days = 30 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 2
+				has_idea = GRE_austerity_2
+			}
+			modifier = {
+				factor = 3
+				has_idea = GRE_austerity_3
+			}
+			modifier = {
+				factor = 2
+				has_active_mission = GRE_austerity_tension_mission
+			}
+			modifier = {
+				factor = 4
+				has_active_mission = GRE_debt_crisis_mission
+			}
+		}
+	}
+
+	GRE_privatization_drive_decision = {
+		icon = GFX_decision_bancru_ask_button
+
+		cost = 75
+
+		visible = {
+			GRE_austerity_ongoing = yes
+		}
+
+		days_re_enable = 200
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_privatization_drive_decision"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.08 }
+			modify_debt_effect = yes
+			add_stability = -0.04
+			GRE_calculate_unified_debt = yes
+			custom_effect_tooltip = GRE_buys_mission_time_tt
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = GRE_austerity_tension_mission }
+					add_days_mission_timeout = { mission = GRE_austerity_tension_mission days = 30 }
+				}
+				else_if = {
+					limit = { has_active_mission = GRE_debt_crisis_mission }
+					add_days_mission_timeout = { mission = GRE_debt_crisis_mission days = 30 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 2
+				has_idea = GRE_austerity_2
+			}
+			modifier = {
+				factor = 3
+				has_idea = GRE_austerity_3
+			}
+			modifier = {
+				factor = 2
+				has_active_mission = GRE_austerity_tension_mission
+			}
+			modifier = {
+				factor = 4
+				has_active_mission = GRE_debt_crisis_mission
+			}
+		}
+	}
+
+	GRE_defer_payments_decision = {
+		icon = GFX_decision_gre_paying_ifc_debt
+
+		cost = 75
+
+		visible = {
+			NOT = { has_country_flag = GRE_defer_payments_flag }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_defer_payments_decision"
+			set_country_flag = GRE_defer_payments_flag
+			custom_effect_tooltip = GRE_defer_payments_decision_tt
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 10
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 4
+				ai_has_deficit = yes
+			}
+			modifier = {
+				factor = 0.1
+				ai_has_surplus = yes
+			}
+		}
+	}
+
+	GRE_do_not_defer_payments_decision = {
+		icon = GFX_decision_gre_paying_ifc_debt
+
+		visible = {
+			has_country_flag = GRE_defer_payments_flag
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_do_not_defer_payments_decision"
+			clr_country_flag = GRE_defer_payments_flag
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 10
+				ai_has_surplus = yes
+			}
+			modifier = {
+				factor = 0.1
+				ai_has_deficit = yes
+			}
+		}
+	}
+
+	# Creditor Negotiation Decisions
+
+	GRE_propose_debt_deal = {
+		icon = GFX_decision_bancru_ask_button
+
+		cost = 100
+
+		target_array = GRE.GRE_potential_creditors
+
+		target_trigger = {
+			FROM = {
+				GRE_is_eligible_creditor = yes
+			}
+		}
+
+		target_root_trigger = {
+			OR = {
+				has_completed_focus = GRE_debt_swaps
+				has_active_mission = GRE_debt_crisis_mission
+			}
+			gdp_debt_ratio_higher_50 = yes
+			NOT = { has_completed_focus = GRE_resolution_crisis }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GRE_debt_ratio_above_50_tt
+				gdp_debt_ratio_higher_50 = yes
+			}
+		}
+
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_propose_debt_deal"
+			GRE_calculate_proposed_debt = yes
+			set_variable = { GRE_creditor_target = FROM.id }
+			FROM = { country_event = { id = greece_debt.10 days = 2 random_hours = 12 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_propose_debt_deal_accept_tt
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				gdp_debt_ratio_higher_90 = yes
+			}
+			modifier = {
+				factor = 3
+				has_active_mission = GRE_debt_crisis_mission
+			}
+		}
+	}
+
+	GRE_repay_creditor = {
+		icon = GFX_decision_bancru_ask_button
+
+		cost = 25
+
+		target_array = GRE.GRE_potential_creditors
+
+		target_trigger = {
+			FROM = {
+				GRE_is_creditor_of_greece = yes
+			}
+		}
+
+		target_root_trigger = {
+			GRE_has_creditors = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GRE_has_positive_treasury_tt
+				check_variable = { treasury > 10 }
+			}
+		}
+
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_repay_creditor"
+			set_temp_variable = { GRE_repay_index = -1 }
+			for_each_loop = {
+				array = GRE_creditors
+				if = {
+					limit = { check_variable = { v = FROM.id } }
+					set_temp_variable = { GRE_repay_index = i }
+				}
+			}
+			if = {
+				limit = { check_variable = { GRE_repay_index > -1 } }
+				set_temp_variable = { GRE_repay_amount = GRE_creditor_debt^GRE_repay_index }
+				multiply_temp_variable = { GRE_repay_amount = 0.1 }
+				round_temp_variable = GRE_repay_amount
+				custom_effect_tooltip = GRE_repay_10pct_tt
+				GRE_repay_creditor_debt = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 5
+				check_variable = { treasury > 100 }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_active_mission = GRE_debt_crisis_mission
+					has_active_mission = GRE_austerity_tension_mission
+				}
+			}
+		}
+	}
+}
+
+# Cyprus Conflict
+GRE_CYP_category = {
+	GRE_recognize_unified_cyprus = {
+		allowed = { original_tag = GRE }
+		icon = GFX_decision_generic_form_nation
+
+		available = {
+			OR = {
+				AND = {
+					has_country_flag = GRE_war_cyprus_active
+					owns_state = 145
+				}
+				AND = {
+					has_country_flag = GRE_war_ncyprus_active
+					owns_state = 146
+				}
+			}
+		}
+
+		visible = {
+			OR = {
+				has_country_flag = GRE_war_cyprus_active
+				has_country_flag = GRE_war_ncyprus_active
+			}
+		}
+
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_recognize_unified_cyprus"
+			country_event = { id = greece.723 days = 1 }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	###########CYPRUS CONFLICT - TURKEY INCREASE CYPRIOTS###########
+	TUR_CYP_incite_riot = {
+		allowed = { original_tag = TUR }
+		icon = GFX_decision_revolt
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = { has_decision = TUR_CYP_propaganda_south }
+				NOT = { has_decision = TUR_CYP_propaganda_north }
+			}
+			custom_trigger_tooltip = {
+				tooltip = GRE_enemy_blocked_us
+				NOT = { has_country_flag = TUR_greece_blocked_us }
+			}
+			has_equipment = {
+				infantry_weapons_1 > 99
+			}
+			custom_trigger_tooltip = {
+				tooltip = TUR_CYP_incite_riot_TT
+				check_variable = { 146.GRE_SUPPORT > 49 }
+			}
+		}
+
+		visible = {
+			country_exists = NCY
+			country_exists = CYP
+			country_exists = GRE
+		}
+
+		days_remove = 100
+		cost = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_CYP_incite_riot"
+			custom_effect_tooltip = GRE_south_-20_TT
+			custom_effect_tooltip = TUR_gain_20_strength
+			add_equipment_to_stockpile = {
+				type = infantry_weapons_1
+				amount = -100
+				producer = TUR
+			}
+			hidden_effect = {
+				add_to_variable = { 145.GRE_SUPPORT = -20 }
+				clamp_variable = {
+					var = 145.GRE_SUPPORT
+					min = 0
+					max = 100
+				}
+				add_to_variable = { 146.GRE_SUPPORT = 20 }
+				clamp_variable = {
+					var = 146.GRE_SUPPORT
+					min = 0
+					max = 100
+				}
+				GRE = {
+					country_event = {
+						id = greece.13
+						days = 0
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { 146.GRE_SUPPORT > 50 }
+			}
+			modifier = {
+				add = 1
+				has_equipment = {
+					infantry_weapons_1 > 499
+				}
+			}
+			modifier = {
+				add = 2
+				check_variable = { 146.GRE_SUPPORT > 80 }
+			}
+		}
+	}
+	###########CYPRUS CONFLICT - TURKEY PROPAGANDA NORTH CYPRIOTS###########
+	TUR_CYP_propaganda_north = {
+		allowed = { original_tag = TUR }
+		icon = eng_propaganda_campaigns
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = { has_decision = TUR_CYP_propaganda_south }
+				NOT = { has_decision = TUR_CYP_incite_riot }
+			}
+			custom_trigger_tooltip = {
+				tooltip = GRE_enemy_blocked_us
+				NOT = { has_country_flag = TUR_greece_blocked_us }
+			}
+			custom_trigger_tooltip = {
+				tooltip = TUR_GRE_support
+				check_variable = { 145.GRE_SUPPORT > 5 }
+			}
+		}
+
+		visible = {
+			country_exists = NCY
+			country_exists = CYP
+		}
+
+		days_remove = 100
+
+		cost = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_CYP_propaganda_north"
+			custom_effect_tooltip = GRE_unable_to_gain_strength
+			GRE = {
+				set_country_flag = GRE_cant_gain_strength
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_CYP_propaganda_north removed"
+			GRE = {
+				clr_country_flag = GRE_cant_gain_strength
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+
+			modifier = {
+				factor = 4
+				check_variable = { 146.GRE_SUPPORT > 50 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { 146.GRE_SUPPORT > 80 }
+			}
+		}
+	}
+	###########CYPRUS CONFLICT - TURKEY PROGANDA SOUTH CYPRIOTS###########
+	TUR_CYP_propaganda_south = {
+		allowed = { original_tag = TUR }
+		icon = eng_propaganda_campaigns
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = { has_decision = TUR_CYP_propaganda_north }
+				NOT = { has_decision = TUR_CYP_incite_riot }
+			}
+			custom_trigger_tooltip = {
+				tooltip = GRE_enemy_blocked_us
+				NOT = { has_country_flag = TUR_greece_blocked_us }
+			}
+			custom_trigger_tooltip = {
+				tooltip = TUR_GRE_support
+				check_variable = { 145.GRE_SUPPORT > 1 }
+			}
+		}
+
+		visible = {
+			country_exists = NCY
+			country_exists = CYP
+		}
+
+		days_remove = 100
+		cost = 30
+
+		complete_effect = {
+			custom_effect_tooltip = GRE_north_5_TT
+			custom_effect_tooltip = GRE_south_-5_TT
+			hidden_effect = {
+				log = "[GetDateText]: [Root.GetName]: Decision TUR_CYP_propaganda_south"
+				add_to_variable = { 146.GRE_SUPPORT = 5 }
+				add_to_variable = { 145.GRE_SUPPORT = -5 }
+				clamp_variable = { var = 146.GRE_SUPPORT min = 0 max = 100 }
+				clamp_variable = { var = 145.GRE_SUPPORT min = 0 max = 100 }
+			}
+		}
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 4
+				check_variable = { 146.GRE_SUPPORT > 50 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { 146.GRE_SUPPORT > 80 }
+			}
+		}
+	}
+	###########CYPRUS CONFLICT - TURKEY UNITE CYPRUS###########
+	TUR_unify_cyprus = {
+		allowed = { original_tag = TUR }
+		icon = eng_propaganda_campaigns
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_has_100_strength
+				check_variable = { 146.GRE_SUPPORT > 99 }
+			}
+		}
+
+		visible = {
+			country_exists = NCY
+			country_exists = CYP
+		}
+
+		days_remove = 100
+		cost = 30
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_unify_cyprus"
+			custom_effect_tooltip = TUR_unify_cyp
+			clr_country_flag = GRE_TUR_CYP
+			GRE = { clr_country_flag = GRE_TUR_CYP }
+			hidden_effect = {
+				news_event = Turkey.77
+				NCY = { set_cosmetic_tag = CYP_TURK_UNIFIED }
+				TUR = {
+					add_state_core = 146
+				}
+				145 = { transfer_state_to = NCY }
+				NCY = {
+					set_country_flag = is_VANGUARD
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+# Cyprus & Northern Cyprus — Diplomatic Actions
+CYP_NCY_diplomatic_category = {
+	CYP_seek_greek_union = {
+		allowed = { original_tag = CYP }
+		icon = eng_propaganda_campaigns
+
+		cost = 60
+		days_remove = 90
+
+		visible = {
+			country_exists = NCY
+			country_exists = GRE
+		}
+		available = {
+			NOT = { has_country_flag = CYP_seek_greek_union_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_seek_greek_union"
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = GRE.id }
+			set_temp_variable = { influence_target = CYP.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_seek_greek_union removed"
+			set_country_flag = { flag = CYP_seek_greek_union_cooldown days = 90 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 2
+				GRE = { influence_higher_50 = yes }
+			}
+		}
+	}
+
+	CYP_appeal_to_un = {
+		allowed = { original_tag = CYP }
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 50
+		fire_only_once = yes
+
+		visible = {
+			country_exists = NCY
+			country_exists = GRE
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_appeal_to_un"
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = GRE.id }
+			set_temp_variable = { influence_target = CYP.id }
+			change_influence_percentage = yes
+			set_temp_variable = { influence_target = NCY.id }
+			change_influence_percentage = yes
+			add_political_power = 50
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	CYP_economic_incentive_north = {
+		allowed = { original_tag = CYP }
+		icon = attract_foreign_investor
+
+		cost = 50
+		days_remove = 120
+
+		visible = {
+			country_exists = NCY
+			country_exists = GRE
+		}
+		available = {
+			NOT = { has_country_flag = CYP_economic_incentive_north_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_economic_incentive_north"
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = GRE.id }
+			set_temp_variable = { influence_target = NCY.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_economic_incentive_north removed"
+			set_country_flag = { flag = CYP_economic_incentive_north_cooldown days = 120 value = 1 }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	NCY_seek_turkish_union = {
+		allowed = { original_tag = NCY }
+		icon = eng_propaganda_campaigns
+
+		cost = 60
+		days_remove = 90
+
+		visible = {
+			country_exists = CYP
+			country_exists = TUR
+		}
+		available = {
+			NOT = { has_country_flag = NCY_seek_turkish_union_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NCY_seek_turkish_union"
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = TUR.id }
+			set_temp_variable = { influence_target = NCY.id }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { influence_target = CYP.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NCY_seek_turkish_union removed"
+			set_country_flag = { flag = NCY_seek_turkish_union_cooldown days = 120 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 2
+				TUR = { influence_higher_50 = yes }
+			}
+		}
+	}
+
+	NCY_recognition_campaign = {
+		allowed = { original_tag = NCY }
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 50
+		fire_only_once = yes
+
+		visible = {
+			country_exists = CYP
+			country_exists = TUR
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NCY_recognition_campaign"
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = TUR.id }
+			set_temp_variable = { influence_target = NCY.id }
+			change_influence_percentage = yes
+			add_stability = 0.02
+		}
+
+		ai_will_do = { base = 5 }
+	}
+}
+
+GRE_homelessness_crisis_category = {
+	GRE_issue_relief_funds_to_victims_decision = {
+		icon = attract_foreign_investor
+
+		days_remove = 20
+
+		cost = 25
+
+		available = {
+			has_idea = GRE_homelessness_crisis_idea
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_issue_relief_funds_to_victims_decision"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.001 }
+			modify_treasury_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_issue_relief_funds_to_victims_decision removed"
+			modify_timed_idea = {
+				idea = GRE_homelessness_crisis_idea
+				days = -40
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_reconstruction_efforts_in_athens_decision = {
+		icon = decision_generic_construction
+
+		days_remove = 20
+
+		cost = 25
+
+		available = {
+			has_idea = GRE_homelessness_crisis_idea
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_reconstruction_efforts_in_athens_decision"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.005 }
+			modify_treasury_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_reconstruction_efforts_in_athens_decision removed"
+			modify_timed_idea = {
+				idea = GRE_homelessness_crisis_idea
+				days = -80
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+
+	GRE_petition_turkey_for_support_decision = {
+		icon = GFX_decision_turkey
+
+		days_remove = 20
+
+		cost = 25
+
+		available = {
+			has_idea = GRE_homelessness_crisis_idea
+			country_exists = TUR
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_petition_turkey_for_support_decision taken"
+			TUR = { country_event = { id = greece.630 days = 3 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				modify_timed_idea = {
+					idea = GRE_homelessness_crisis_idea
+					days = -40
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+		}
+	}
+}
+
+GRE_generic_decisions_category = {
+	GRE_defense_innovation_research_mission = {
+		icon = GFX_decision_generic_research
+
+		days_mission_timeout = 100
+		fire_only_once = no
+		is_good = yes
+
+		fixed_random_seed = no
+
+		available = {
+			hidden_trigger = {
+				always = no
+			}
+		}
+
+		activation = {
+			has_completed_focus = GRE_defense_innovation_center
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_defense_innovation_research_mission"
+			if = {
+				limit = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
+				custom_effect_tooltip = GRE_defense_innovation_funding_tt
+				set_temp_variable = { debt_change = 25 }
+				GRE_pay_or_defer = yes
+				random_list = {
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_armor } }
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_artillery } }
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_inf } }
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_air_eqp } }
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_naval_all } }
+				}
+			}
+		}
+	}
+
+	GRE_integrate_sovereign_bases = {
+		icon = GFX_decision_generic_form_nation
+
+		cost = 75
+
+		visible = {
+			owns_state = 812
+			NOT = { 812 = { is_core_of = ROOT } }
+		}
+
+		available = {
+			owns_state = 812
+			custom_trigger_tooltip = {
+				tooltip = GRE_sovereign_bases_compliance_tt
+				812 = { compliance > 79 }
+			}
+		}
+
+		days_remove = 90
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_integrate_sovereign_bases"
+			custom_effect_tooltip = GRE_integrate_sovereign_bases_effect_tt
+			add_state_core = 812
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_rename_istanbul = {
+		icon = generic
+
+		cost = 25
+
+		visible = {
+			owns_state = 934
+		}
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_rename_istanbul"
+			set_province_name = { id = 9833 name = GRE_9833_name }
+			add_stability = 0.01
+		}
+
+		ai_will_do = {
+			base = 1000
+		}
+	}
+	GRE_archipelago_air_base_rapid_repair = {
+		icon = GFX_decision_generic_air
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set1_B_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set1_B_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_air_base_rapid_repair"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set1_A_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_state_repair_speed_air_base_factor_archipelagos = 0.20 tooltip = state_repair_speed_air_base_factor_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_air_base_rapid_repair remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_archipelago_anti_air_rapid_repair = {
+		icon = GFX_decision_generic_air
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set1_A_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set1_A_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_anti_air_rapid_repair"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set1_B_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_state_repair_speed_anti_air_building_factor_archipelagos = 0.20 tooltip = state_repair_speed_anti_air_building_factor_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_anti_air_rapid_repair remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+	GRE_archipelago_bunker_repair_protocols = {
+		icon = GFX_decision_fortification
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set2_B_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set2_B_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_bunker_repair_protocols"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set2_A_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_state_repair_speed_bunker_factor_archipelagos = 0.20 tooltip = state_repair_speed_bunker_factor_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_bunker_repair_protocols remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_archipelago_naval_base_repair_protocols = {
+		icon = GFX_decision_generic_naval
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set2_A_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set2_A_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_naval_base_repair_protocols"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set2_B_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_state_repair_speed_naval_base_factor_archipelagos = 0.20 tooltip = state_repair_speed_naval_base_factor_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_naval_base_repair_protocols remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+	GRE_archipelago_coastal_obstacle_network = {
+		icon = GFX_decision_fortification
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set3_B_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set3_B_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_coastal_obstacle_network"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set3_A_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan_country
+			}
+			add_to_variable = { GRE_naval_invasion_penalty_archipelagos = 0.10 tooltip = naval_invasion_penalty_tt }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_coastal_obstacle_network remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_archipelago_supply_disruption = {
+		icon = GFX_decision_generic_naval
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set3_A_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set3_A_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_supply_disruption"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set3_B_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan_country
+			}
+			add_to_variable = { GRE_supply_combat_penalties_on_core_factor_archipelagos = 0.15 tooltip = supply_combat_penalties_on_core_factor_tt }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_supply_disruption remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+	GRE_archipelago_coastal_battery_expansion = {
+		icon = GFX_decision_fortification
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set4_B_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set4_B_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_coastal_battery_expansion"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set4_A_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_state_coastal_bunker_max_level_terrain_limit_archipelagos = 1 tooltip = state_coastal_bunker_max_level_terrain_limit_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_coastal_battery_expansion remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_archipelago_island_fortress_expansion = {
+		icon = GFX_decision_fortification
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set4_A_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set4_A_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_island_fortress_expansion"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set4_B_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_state_bunker_max_level_terrain_limit_archipelagos = 1 tooltip = state_bunker_max_level_terrain_limit_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_island_fortress_expansion remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+	GRE_archipelago_attrition_doctrine = {
+		icon = GFX_decision_generic_military
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set5_B_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set5_B_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_attrition_doctrine"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set5_A_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_enemy_attrition_archipelagos = 0.10 tooltip = enemy_attrition_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_attrition_doctrine remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_archipelago_supply_interdiction = {
+		icon = GFX_decision_generic_naval
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set5_A_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set5_A_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_supply_interdiction"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set5_B_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_enemy_local_supplies_archipelagos = -0.15 tooltip = enemy_local_supplies_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_supply_interdiction remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+	GRE_archipelago_missile_battery_expansion = {
+		icon = GFX_decision_missile_rocket_button
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set6_B_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set6_B_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_missile_battery_expansion"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set6_A_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_state_rocket_site_max_level_terrain_limit_archipelagos = 1 tooltip = state_rocket_site_max_level_terrain_limit_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_missile_battery_expansion remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_archipelago_air_defense_expansion = {
+		icon = decision_generic_construction
+
+		cost = 75
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_archipelagos_strategy
+			NOT = { has_country_flag = GRE_archipelago_set6_A_chosen }
+		}
+
+		available = {
+			NOT = { has_country_flag = GRE_archipelago_set6_A_chosen }
+			NOT = { has_country_flag = GRE_archipelago_decision_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_air_defense_expansion"
+			set_country_flag = GRE_archipelago_decision_active
+			set_country_flag = GRE_archipelago_set6_B_chosen
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = GRE_archipelagos_defense_plan
+			}
+			143 = {
+				add_to_variable = { GRE_state_anti_air_building_max_level_terrain_limit_archipelagos = 1 tooltip = state_anti_air_building_max_level_terrain_limit_tt }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_archipelago_air_defense_expansion remove"
+			clr_country_flag = GRE_archipelago_decision_active
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_aegean_survey = {
+		icon = GFX_decision_oil
+
+		cost = 50
+		days_remove = 70
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_sovereign_waters
+		}
+
+		available = {
+			143 = { is_owned_by = GRE }
+			naval_strength_ratio = {
+				tag = TUR
+				ratio > 1.5
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_aegean_survey"
+			set_temp_variable = { debt_change = 4.50 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_aegean_survey removed"
+			set_country_flag = GRE_aegean_surveyed
+			143 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 2
+				naval_strength_ratio = { tag = TUR ratio > 1.25 }
+			}
+		}
+	}
+
+	GRE_aegean_extraction = {
+		icon = GFX_decision_oil
+
+		cost = 75
+		days_remove = 120
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_sovereign_waters
+		}
+
+		available = {
+			143 = { is_owned_by = GRE }
+			has_country_flag = GRE_aegean_surveyed
+			naval_strength_ratio = {
+				tag = TUR
+				ratio > 1.6
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_aegean_extraction"
+			set_temp_variable = { debt_change = 3.75 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_aegean_extraction removed"
+			set_country_flag = GRE_aegean_extracting
+			143 = {
+				add_resource = {
+					type = oil
+					amount = 4
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_aegean_offshore_industry = {
+		icon = GFX_decision_oil
+
+		cost = 100
+		days_remove = 150
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_sovereign_waters
+		}
+
+		available = {
+			143 = { is_owned_by = GRE }
+			has_country_flag = GRE_aegean_extracting
+			naval_strength_ratio = {
+				tag = TUR
+				ratio > 1.75
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_aegean_offshore_industry"
+			set_temp_variable = { debt_change = 13.50 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_aegean_offshore_industry removed"
+			143 = {
+				add_resource = {
+					type = oil
+					amount = 8
+				}
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_crete_survey = {
+		icon = GFX_decision_oil
+
+		cost = 50
+		days_remove = 70
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_sovereign_waters
+		}
+
+		available = {
+			144 = { is_owned_by = GRE }
+			naval_strength_ratio = {
+				tag = TUR
+				ratio > 1.5
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_crete_survey"
+			set_temp_variable = { debt_change = 4.50 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_crete_survey removed"
+			set_country_flag = GRE_crete_surveyed
+			144 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 2
+				naval_strength_ratio = { tag = TUR ratio > 1.25 }
+			}
+		}
+	}
+
+	GRE_crete_extraction = {
+		icon = GFX_decision_oil
+
+		cost = 75
+		days_remove = 120
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_sovereign_waters
+		}
+
+		available = {
+			144 = { is_owned_by = GRE }
+			has_country_flag = GRE_crete_surveyed
+			naval_strength_ratio = {
+				tag = TUR
+				ratio > 1.6
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_crete_extraction complete"
+			set_temp_variable = { debt_change = 5.63 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_crete_extraction remove"
+			set_country_flag = GRE_crete_extracting
+			144 = {
+				add_resource = {
+					type = oil
+					amount = 6
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	GRE_crete_offshore_industry = {
+		icon = GFX_decision_oil
+
+		cost = 100
+		days_remove = 150
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_sovereign_waters
+		}
+
+		available = {
+			144 = { is_owned_by = GRE }
+			has_country_flag = GRE_crete_extracting
+			naval_strength_ratio = {
+				tag = TUR
+				ratio > 1.75
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_crete_offshore_industry"
+			set_temp_variable = { debt_change = 19.75 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_crete_offshore_industry remove"
+			144 = {
+				add_resource = {
+					type = oil
+					amount = 12
+				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+GRE_creditor_management_category = {
+
+	GRE_creditor_call_in_debt = {
+		icon = GFX_decision_bancru_ask_button
+
+		cost = 150
+
+		visible = {
+			GRE_is_creditor_of_greece = yes
+			check_variable = { GRE_debt_held_by_us > 10 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GRE_creditor_holds_significant_debt_tt
+				check_variable = { GRE_debt_held_by_us > 10 }
+			}
+		}
+
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_creditor_call_in_debt"
+			set_temp_variable = { GRE_called_amount = GRE_debt_held_by_us }
+			multiply_temp_variable = { GRE_called_amount = 0.2 }
+			round_temp_variable = GRE_called_amount
+			set_variable = { GRE_called_amount = GRE_called_amount }
+			custom_effect_tooltip = GRE_call_in_20pct_tt
+			GRE = { country_event = { id = greece_debt.16 days = 1 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_creditor_call_in_debt_accept_tt
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_creditor_call_in_debt_reject_tt
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				has_opinion = { target = GRE value < -25 }
+			}
+		}
+	}
+
+	GRE_creditor_forgive_debt = {
+		icon = GFX_decision_bancru_ask_button
+
+		cost = 150
+
+		visible = {
+			GRE_is_creditor_of_greece = yes
+			check_variable = { GRE_debt_held_by_us > 0.01 }
+		}
+
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_creditor_forgive_debt"
+			set_temp_variable = { GRE_forgive_amount = GRE_debt_held_by_us }
+			multiply_temp_variable = { GRE_forgive_amount = 0.25 }
+			round_temp_variable = GRE_forgive_amount
+			custom_effect_tooltip = GRE_forgive_25pct_tt
+
+			GRE = {
+				for_each_loop = {
+					array = GRE_creditors
+					if = {
+						limit = { check_variable = { v = ROOT.id } }
+						subtract_from_variable = { GRE_creditor_debt^i = ROOT.GRE_forgive_amount }
+						subtract_from_variable = { GRE_total_creditor_debt = ROOT.GRE_forgive_amount }
+						if = {
+							limit = { check_variable = { GRE_creditor_debt^i < 0.01 } }
+							set_temp_variable = { GRE_creditor_remove_index = i }
+							GRE_remove_creditor = yes
+						}
+					}
+				}
+				country_event = { id = greece_debt.17 days = 1 }
+			}
+
+			subtract_from_variable = { GRE_debt_held_by_us = GRE_forgive_amount }
+			clamp_variable = { var = GRE_debt_held_by_us min = 0 max = 999999 }
+			add_opinion_modifier = { target = GRE modifier = GRE_forgave_debt_opinion }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_opinion = { target = GRE value > 150 }
+			}
+		}
+	}
+}
+
+GRE_prospecting_category = {
+
+	# Halkidiki Gold & Chromium (State 140)
+
+	GRE_halkidiki_prospecting_1 = {
+		name = GRE_halkidiki_prospecting
+		icon = GFX_decision_chromium
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_rare_element_prospecting
+		}
+
+		available = {
+			owns_state = 140
+			controls_state = 140
+			140 = { fuel_silo > 0 }
+			has_tech = excavation1
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 140 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_halkidiki_prospecting_1"
+			set_temp_variable = { debt_change = 3 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_halkidiki_prospecting_1"
+			add_resource = { type = chromium amount = 4 state = 140 }
+			set_country_flag = GRE_halkidiki_prospecting_1_done
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	GRE_halkidiki_prospecting_2 = {
+		name = GRE_halkidiki_prospecting
+		icon = GFX_decision_chromium
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = GRE_halkidiki_prospecting_1_done
+		}
+
+		available = {
+			owns_state = 140
+			controls_state = 140
+			140 = { fuel_silo > 1 }
+			has_tech = excavation2
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 140 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_halkidiki_prospecting_2"
+			set_temp_variable = { debt_change = 4 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_halkidiki_prospecting_2"
+			add_resource = { type = chromium amount = 4 state = 140 }
+			set_country_flag = GRE_halkidiki_prospecting_2_done
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	GRE_halkidiki_prospecting_3 = {
+		name = GRE_halkidiki_prospecting
+		icon = GFX_decision_steel
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = GRE_halkidiki_prospecting_2_done
+		}
+
+		available = {
+			owns_state = 140
+			controls_state = 140
+			140 = { fuel_silo > 2 }
+			has_tech = excavation3
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 140 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_halkidiki_prospecting_3"
+			set_temp_variable = { debt_change = 5 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_halkidiki_prospecting_3"
+			add_resource = { type = steel amount = 3 state = 140 }
+			set_country_flag = GRE_halkidiki_prospecting_3_done
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	GRE_halkidiki_prospecting_4 = {
+		name = GRE_halkidiki_prospecting
+		icon = GFX_decision_chromium
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = GRE_halkidiki_prospecting_3_done
+		}
+
+		available = {
+			owns_state = 140
+			controls_state = 140
+			140 = { fuel_silo > 3 }
+			has_tech = excavation5
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 140 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_halkidiki_prospecting_4"
+			set_temp_variable = { debt_change = 7 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_halkidiki_prospecting_4"
+			add_resource = { type = chromium amount = 4 state = 140 }
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	# Peloponnese Bauxite (State 142)
+
+	GRE_peloponnese_bauxite_1 = {
+		name = GRE_peloponnese_bauxite
+		icon = GFX_decision_aluminium
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_rare_element_prospecting
+		}
+
+		available = {
+			owns_state = 142
+			controls_state = 142
+			142 = { fuel_silo > 0 }
+			has_tech = excavation1
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 142 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_peloponnese_bauxite_1"
+			set_temp_variable = { debt_change = 3 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_peloponnese_bauxite_1"
+			add_resource = { type = aluminium amount = 4 state = 142 }
+			set_country_flag = GRE_peloponnese_bauxite_1_done
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	GRE_peloponnese_bauxite_2 = {
+		name = GRE_peloponnese_bauxite
+		icon = GFX_decision_aluminium
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = GRE_peloponnese_bauxite_1_done
+		}
+
+		available = {
+			owns_state = 142
+			controls_state = 142
+			142 = { fuel_silo > 1 }
+			has_tech = excavation2
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 142 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_peloponnese_bauxite_2"
+			set_temp_variable = { debt_change = 4 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_peloponnese_bauxite_2"
+			add_resource = { type = aluminium amount = 4 state = 142 }
+			set_country_flag = GRE_peloponnese_bauxite_2_done
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	GRE_peloponnese_bauxite_3 = {
+		name = GRE_peloponnese_bauxite
+		icon = GFX_decision_aluminium
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = GRE_peloponnese_bauxite_2_done
+		}
+
+		available = {
+			owns_state = 142
+			controls_state = 142
+			142 = { fuel_silo > 2 }
+			has_tech = excavation4
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 142 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_peloponnese_bauxite_3"
+			set_temp_variable = { debt_change = 6 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_peloponnese_bauxite_3"
+			add_resource = { type = aluminium amount = 5 state = 142 }
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	# Thessaly Nickel & Steel (State 139)
+
+	GRE_thessaly_mining_1 = {
+		name = GRE_thessaly_mining
+		icon = GFX_decision_steel
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_rare_element_prospecting
+		}
+
+		available = {
+			owns_state = 139
+			controls_state = 139
+			139 = { fuel_silo > 0 }
+			has_tech = excavation2
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 139 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_thessaly_mining_1"
+			set_temp_variable = { debt_change = 3 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_thessaly_mining_1"
+			add_resource = { type = steel amount = 3 state = 139 }
+			set_country_flag = GRE_thessaly_mining_1_done
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	GRE_thessaly_mining_2 = {
+		name = GRE_thessaly_mining
+		icon = GFX_decision_steel
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = GRE_thessaly_mining_1_done
+		}
+
+		available = {
+			owns_state = 139
+			controls_state = 139
+			139 = { fuel_silo > 1 }
+			has_tech = excavation3
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 139 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_thessaly_mining_2"
+			set_temp_variable = { debt_change = 4 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_thessaly_mining_2"
+			add_resource = { type = steel amount = 3 state = 139 }
+			set_country_flag = GRE_thessaly_mining_2_done
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	GRE_thessaly_mining_3 = {
+		name = GRE_thessaly_mining
+		icon = GFX_decision_steel
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = GRE_thessaly_mining_2_done
+		}
+
+		available = {
+			owns_state = 139
+			controls_state = 139
+			139 = { fuel_silo > 2 }
+			has_tech = excavation5
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 139 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_thessaly_mining_3"
+			set_temp_variable = { debt_change = 6 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_thessaly_mining_3"
+			add_resource = { type = steel amount = 2 state = 139 }
+			add_resource = { type = chromium amount = 2 state = 139 }
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	# Aegean Islands Minerals (State 143)
+
+	GRE_aegean_mining_1 = {
+		name = GRE_aegean_mining
+		icon = GFX_decision_aluminium
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = GRE_rare_element_prospecting
+		}
+
+		available = {
+			owns_state = 143
+			controls_state = 143
+			143 = { fuel_silo > 0 }
+			has_tech = excavation2
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 143 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_aegean_mining_1"
+			set_temp_variable = { debt_change = 3 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_aegean_mining_1"
+			add_resource = { type = aluminium amount = 3 state = 143 }
+			set_country_flag = GRE_aegean_mining_1_done
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	GRE_aegean_mining_2 = {
+		name = GRE_aegean_mining
+		icon = GFX_decision_aluminium
+
+		cost = 50
+		days_remove = 30
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = GRE_aegean_mining_1_done
+		}
+
+		available = {
+			owns_state = 143
+			controls_state = 143
+			143 = { fuel_silo > 1 }
+			has_tech = excavation4
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 143 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete GRE_aegean_mining_2"
+			set_temp_variable = { debt_change = 5 }
+			GRE_pay_or_defer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GRE_aegean_mining_2"
+			add_resource = { type = aluminium amount = 3 state = 143 }
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+}
+
+#####################################################
+# Eastern Alignment Branch — Diplomacy Decisions     #
+#####################################################
+GRE_diplomacy_category = {
+
+	# === OUTREACH ACTIONS ===
+	GRE_host_putin_summit = {
+		icon = generic_political_actions
+		cost = 50
+		days_remove = 70
+		days_re_enable = 180
+
+		available = {
+			country_exists = SOV
+			has_opinion = { target = SOV value > 0 }
+		}
+		visible = {
+			OR = {
+				has_idea = GRE_eastern_outreach
+				has_idea = GRE_eurasian_partner
+				has_idea = GRE_brics_anchor
+			}
+			country_exists = SOV
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_host_putin_summit"
+			add_opinion_modifier = { target = SOV modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = SOV modifier = declaration_of_friendship }
+			add_to_variable = { GRE_eastern_alignment_score = 1 tooltip = GRE_eastern_alignment_score_tt }
+			GRE_check_eastern_alignment_swap = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	GRE_cosco_pier_expansion = {
+		icon = generic_construction
+		cost = 25
+		days_remove = 90
+		days_re_enable = 180
+
+		available = {
+			country_exists = CHI
+			has_opinion = { target = CHI value > 0 }
+			num_of_civilian_factories_available_for_projects > 0
+		}
+		visible = {
+			OR = {
+				has_idea = GRE_eastern_outreach
+				has_idea = GRE_eurasian_partner
+				has_idea = GRE_brics_anchor
+			}
+			country_exists = CHI
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_cosco_pier_expansion resolved"
+			capital_scope = { add_extra_state_shared_building_slots = 1 }
+			add_to_variable = { GRE_eastern_alignment_score = 1 tooltip = GRE_eastern_alignment_score_tt }
+			GRE_check_eastern_alignment_swap = yes
+		}
+
+		modifier = {
+			civilian_factory_use = 1
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	GRE_instex_iran_barter = {
+		icon = GFX_decision_money_dec
+		cost = 40
+		days_remove = 60
+		days_re_enable = 180
+
+		available = {
+			country_exists = PER
+			has_opinion = { target = PER value > 0 }
+		}
+		visible = {
+			OR = {
+				has_idea = GRE_eastern_outreach
+				has_idea = GRE_eurasian_partner
+				has_idea = GRE_brics_anchor
+			}
+			country_exists = PER
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_instex_iran_barter"
+			add_opinion_modifier = { target = PER modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = PER modifier = declaration_of_friendship }
+			add_timed_idea = { idea = GRE_iran_barter_framework days = 180 }
+			add_to_variable = { GRE_eastern_alignment_score = 1 tooltip = GRE_eastern_alignment_score_tt }
+			GRE_check_eastern_alignment_swap = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	GRE_orthodox_patriarchate_summit = {
+		icon = generic_political_actions
+		cost = 25
+		days_remove = 50
+		days_re_enable = 180
+
+		available = {
+			OR = {
+				country_exists = SER
+				country_exists = CYP
+				country_exists = ARM
+			}
+		}
+		visible = {
+			OR = {
+				has_idea = GRE_eastern_outreach
+				has_idea = GRE_eurasian_partner
+				has_idea = GRE_brics_anchor
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_orthodox_patriarchate_summit"
+			if = {
+				limit = { country_exists = SER }
+				add_opinion_modifier = { target = SER modifier = declaration_of_friendship }
+				reverse_add_opinion_modifier = { target = SER modifier = declaration_of_friendship }
+			}
+			if = {
+				limit = { country_exists = CYP }
+				add_opinion_modifier = { target = CYP modifier = declaration_of_friendship }
+				reverse_add_opinion_modifier = { target = CYP modifier = declaration_of_friendship }
+			}
+			if = {
+				limit = { country_exists = ARM }
+				add_opinion_modifier = { target = ARM modifier = declaration_of_friendship }
+				reverse_add_opinion_modifier = { target = ARM modifier = declaration_of_friendship }
+			}
+			add_to_variable = { GRE_eastern_alignment_score = 1 tooltip = GRE_eastern_alignment_score_tt }
+			GRE_check_eastern_alignment_swap = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	# === RETRY DECISIONS ===
+	GRE_retry_russia_outreach = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = { has_country_flag = GRE_russia_outreach_failed }
+		available = {
+			country_exists = SOV
+			SOV = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_russia_outreach"
+			clr_country_flag = GRE_russia_outreach_failed
+			SOV = { country_event = { id = greece.530 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	GRE_retry_russia_milcoop = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = { has_country_flag = GRE_russia_milcoop_failed }
+		available = {
+			country_exists = SOV
+			SOV = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_russia_milcoop"
+			clr_country_flag = GRE_russia_milcoop_failed
+			SOV = { country_event = { id = greece.533 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	GRE_retry_china_outreach = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = { has_country_flag = GRE_china_outreach_failed }
+		available = {
+			country_exists = CHI
+			CHI = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_china_outreach"
+			clr_country_flag = GRE_china_outreach_failed
+			CHI = { country_event = { id = greece.536 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	GRE_retry_china_bri_anchor = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = { has_country_flag = GRE_china_bri_anchor_failed }
+		available = {
+			country_exists = CHI
+			CHI = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_china_bri_anchor"
+			clr_country_flag = GRE_china_bri_anchor_failed
+			CHI = { country_event = { id = greece.539 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	GRE_retry_iran_outreach = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = { has_country_flag = GRE_iran_outreach_failed }
+		available = {
+			country_exists = PER
+			PER = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_iran_outreach"
+			clr_country_flag = GRE_iran_outreach_failed
+			PER = { country_event = { id = greece.542 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	GRE_retry_iran_med_corridor = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = { has_country_flag = GRE_iran_med_corridor_failed }
+		available = {
+			country_exists = PER
+			PER = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_iran_med_corridor"
+			clr_country_flag = GRE_iran_med_corridor_failed
+			PER = { country_event = { id = greece.545 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	GRE_retry_orthodox_outreach = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = { has_country_flag = GRE_orthodox_outreach_failed }
+		available = {
+			country_exists = SER
+			SER = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_orthodox_outreach"
+			clr_country_flag = GRE_orthodox_outreach_failed
+			SER = { country_event = { id = greece.548 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	GRE_retry_orthodox_security = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = { has_country_flag = GRE_orthodox_security_failed }
+		available = {
+			country_exists = SER
+			SER = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_orthodox_security"
+			clr_country_flag = GRE_orthodox_security_failed
+			SER = { country_event = { id = greece.551 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	GRE_lobby_eu_partners = {
+		icon = generic_political_discourse
+		cost = 25
+		days_re_enable = 90
+
+		visible = { has_idea = GRE_western_outreach }
+		available = { has_political_power > 25 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_lobby_eu_partners"
+			add_to_variable = { GRE_western_commitment = 1 tooltip = GRE_western_commitment_tt }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+}
