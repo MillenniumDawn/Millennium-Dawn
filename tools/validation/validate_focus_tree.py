@@ -105,6 +105,40 @@ _SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^{}]*)\}")
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 
+# Cross-country event tooltip check (AGENTS.md "Cross-country event tooltips"):
+# a completion_reward that fires a country_event into another nation's scope
+# should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT so the player sees the
+# acceptance outcome. Foreignness is decided by the fire's nearest enclosing
+# scope-change (see _country_event_target_is_foreign).
+_COUNTRY_EVENT_RE = re.compile(r"\bcountry_event\b")
+_TT_IF_THEY_ACCEPT_RE = re.compile(r"\bTT_IF_THEY_ACCEPT\b")
+# Owner tag(s): `tag = XXX` inside a focus_tree's `country = { }` block.
+_FT_COUNTRY_BLOCK_RE = re.compile(r"\bcountry\s*=\s*\{")
+_OWNER_TAG_RE = re.compile(r"\btag\s*=\s*([A-Z]{3})\b")
+_LITERAL_TAG_RE = re.compile(r"^[A-Z]{3}$")
+# Iterators that step over other countries (every_country, random_other_country,
+# every_neighbor_country, every_puppet, ...).
+_COUNTRY_ITERATOR_RE = re.compile(r"^(?:every|random|all)_\w*(?:country|puppet)")
+# Scope labels that resolve to the current/self scope, never a foreign nation.
+_SELF_SCOPES = frozenset(
+    {"ROOT", "THIS", "PREV", "FROM", "OWNER", "CONTROLLER", "CAPITAL"}
+)
+# Wrapper blocks that don't change scope — walk through them when locating a
+# fire's nearest enclosing scope-change.
+_CONTROL_FLOW_SCOPES = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "random",
+        "hidden_effect",
+        "while_loop_effect",
+        "for_loop_effect",
+    }
+)
+# 3-letter all-caps tokens that are logic keywords, not country tags.
+_NON_TAG_KEYWORDS = frozenset({"AND", "NOT", "NOR"})
+
 
 def _top_level_text(body: str) -> str:
     """Return only the depth-0 characters of a block body, so focus-level
@@ -136,6 +170,76 @@ def _resolve_cost(token: Optional[str], constants: Dict[str, float]) -> Optional
 def _line_of(text: str, pos: int) -> int:
     """Return the 1-based line number of *pos* in *text*."""
     return text[:pos].count("\n") + 1
+
+
+def _label_before_brace(body: str, brace_idx: int) -> Optional[str]:
+    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
+
+    Returns None for an anonymous block (no `=` before the brace), e.g. a
+    color/array literal.
+    """
+    j = brace_idx - 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    if j < 0 or body[j] != "=":
+        return None
+    j -= 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    end = j + 1
+    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
+        j -= 1
+    return body[j + 1 : end] or None
+
+
+def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
+    """Return (label, open_brace_index) of the innermost block enclosing *pos*.
+
+    (None, -1) when *pos* is at the top level of *body*.
+    """
+    depth = 0
+    i = pos - 1
+    while i >= 0:
+        c = body[i]
+        if c == "}":
+            depth += 1
+        elif c == "{":
+            if depth == 0:
+                return _label_before_brace(body, i), i
+            depth -= 1
+        i -= 1
+    return None, -1
+
+
+def _country_event_target_is_foreign(
+    body: str, ce_pos: int, owner_tags: FrozenSet[str]
+) -> bool:
+    """True if the country_event at *ce_pos* fires into another nation's scope.
+
+    Walks outward from the fire through control-flow wrappers (if/random/
+    hidden_effect/...) until it reaches a scope-changing block. A literal
+    non-owner tag, a country iterator, or an event_target:/var: scope is
+    foreign; a self scope (ROOT/THIS/…), the owner's own tag, or the reward
+    root (bare fire to the focus owner) is not. Unknown scopes are treated as
+    non-foreign to keep this warning quiet.
+    """
+    pos = ce_pos
+    while True:
+        label, opener = _enclosing_block_label(body, pos)
+        if label is None:
+            return False
+        if label in _CONTROL_FLOW_SCOPES:
+            pos = opener
+            continue
+        if label in _SELF_SCOPES:
+            return False
+        if label.startswith("event_target:") or label.startswith("var:"):
+            return True
+        if _COUNTRY_ITERATOR_RE.match(label):
+            return True
+        if _LITERAL_TAG_RE.match(label) and label not in _NON_TAG_KEYWORDS:
+            return label not in owner_tags
+        return False
 
 
 def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[str]]]]:
@@ -411,6 +515,78 @@ def _extract_ai_guard_data(
         filepath,
         text + "\x00" + fingerprint,
         _compute,
+    )
+
+
+def _extract_cross_country_fires(args: Tuple[str, str]) -> List[Dict]:
+    """Pool worker: focuses whose completion_reward fires an event to another
+    nation without a TT_IF_THEY_ACCEPT tooltip.
+
+    Returns one dict (id, file, line) per non-compliant focus.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[Dict]:
+        owner_tags: Set[str] = set()
+        for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
+            cbody, _ = _extract_block(text, cm.start())
+            if cbody:
+                owner_tags.update(_OWNER_TAG_RE.findall(cbody))
+        owner_frozen = frozenset(owner_tags)
+
+        out: List[Dict] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            if not idm:
+                pos = fend
+                continue
+
+            flagged = False
+            rpos = fm.start()
+            while not flagged:
+                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
+                if not rm:
+                    break
+                rbody, rend = _extract_block(text, rm.start())
+                if not rbody or rend > fend:
+                    rpos = rm.end()
+                    continue
+                if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
+                    for ce in _COUNTRY_EVENT_RE.finditer(rbody):
+                        if _country_event_target_is_foreign(
+                            rbody, ce.start(), owner_frozen
+                        ):
+                            flagged = True
+                            break
+                rpos = rend
+
+            if flagged:
+                out.append(
+                    {
+                        "id": idm.group(1),
+                        "file": filepath,
+                        "line": _line_of(text, fm.start()),
+                    }
+                )
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.cross_country_tt.v1", filepath, text, _compute
     )
 
 
@@ -1047,6 +1223,55 @@ class Validator(BaseValidator):
             category="missing-bankruptcy-guard",
         )
 
+    def validate_cross_country_event_tooltips(self):
+        """Flag focuses that fire an event to another nation without a
+        TT_IF_THEY_ACCEPT tooltip.
+
+        AGENTS.md "Cross-country event tooltips": when a completion_reward fires
+        a country_event into a foreign scope, the player should see the outcome
+        via custom_effect_tooltip = TT_IF_THEY_ACCEPT. Reported per file as a
+        WARNING — the presence of the tooltip anywhere in the reward clears it,
+        so a reward already carrying one is not flagged.
+        """
+        self._log_section("Checking cross-country event fires for TT_IF_THEY_ACCEPT...")
+
+        files = self._collect_files(["common/national_focus/*.txt"])
+        data_lists = self._pool_map(
+            _extract_cross_country_fires,
+            [(f, self.mod_path) for f in files],
+            chunksize=10,
+        )
+
+        by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+        for sub in data_lists:
+            for d in sub:
+                if not self._is_reportable(d["file"]):
+                    continue
+                rel = os.path.relpath(d["file"], self.mod_path)
+                by_file[rel].append((d["id"], d["line"]))
+
+        results = []
+        for rel, hits in sorted(by_file.items()):
+            hits.sort(key=lambda h: h[1])
+            examples = ", ".join(f"{fid} (line {line})" for fid, line in hits[:3])
+            more = f" and {len(hits) - 3} more" if len(hits) > 3 else ""
+            results.append(
+                (
+                    f"{len(hits)} focus(es) fire an event to another nation without"
+                    f" a TT_IF_THEY_ACCEPT tooltip: {examples}{more}",
+                    rel,
+                    hits[0][1],
+                )
+            )
+
+        self._report(
+            results,
+            "All cross-country event fires carry a TT_IF_THEY_ACCEPT tooltip",
+            "Files with focuses firing an event to another nation without TT_IF_THEY_ACCEPT:",
+            Severity.WARNING,
+            category="missing-cross-country-tooltip",
+        )
+
     # -----------------------------------------------------------------------
     # Check 6: Dependency cycles
     # -----------------------------------------------------------------------
@@ -1181,6 +1406,7 @@ class Validator(BaseValidator):
         self.validate_missing_loc_keys()
         self.validate_tech_bonus_names()
         self.validate_ai_will_do_guards()
+        self.validate_cross_country_event_tooltips()
 
         if self.missing_icons:
             self.validate_focus_icons()
