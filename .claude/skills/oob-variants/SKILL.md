@@ -371,7 +371,7 @@ A country with MBT bonuses does NOT automatically get APC or IFV bonuses — eac
 
 ## Module Technology Validation
 
-Pitfalls 2, 3, and 14 above are enforced automatically. `validate_history_techs.py` builds a module → enabling-tech map from every `enable_equipment_modules` block in `common/technologies/` and reports any `create_equipment_variant` using a module without the enabling tech in the country's `set_technology` block. It also checks each granted tech's prerequisite chain, is DLC-aware, and runs in CI.
+Pitfalls 2, 3, and 14 above are enforced automatically. `validate_history.py` builds a module → enabling-tech map from every `enable_equipment_modules` block in `common/technologies/` and reports any `create_equipment_variant` using a module without the enabling tech in the country's `set_technology` block. It also checks each granted tech's prerequisite chain, is DLC-aware, checks OOB references and capital definitions, and runs in CI.
 
 When adding or editing a variant, grant the enabling tech in the matching block:
 
@@ -382,7 +382,7 @@ When adding or editing a variant, grant the enabling tech in the matching block:
 Also grant the tech's prerequisites (whatever `leads_to_tech` it), or the prerequisite check fails. Run the validator before committing variant changes:
 
 ```bash
-python3 tools/validation/validate_history_techs.py --strict
+python3 tools/validation/validate_history.py --strict
 ```
 
 ### Inherited-Technology Countries

@@ -27,7 +27,7 @@ Reviewer / analyzer agents also read:
 
 Loc-touching agents also read:
 
-- `.claude/rules/localisation-rules.md` — encoding, key format, style.
+- `.claude/docs/localisation-rules.md` — encoding, key format, style.
 - `.claude/docs/typo-watchlist.md` — recurring typos.
 
 ## Output format conventions

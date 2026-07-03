@@ -17,7 +17,7 @@ Review the full conversation and extract:
 
 For each pattern or rule, assess whether it applies broadly or only to the specific task:
 
-- **Broad rules** → `.claude/rules/general-rules.md` or `.claude/rules/localisation-rules.md`
+- **Broad rules** → `.claude/rules/general-rules.md` or `.claude/docs/localisation-rules.md`
 - **Documentation references** → `.claude/docs/`
 - **Skill improvements** → `.claude/skills/*/SKILL.md`
 - **Project context** (non-obvious, persists across sessions) → memory
@@ -34,7 +34,7 @@ Read the current state of:
 
 - `CLAUDE.md` — is the skill table up to date?
 - `.claude/rules/general-rules.md` — any rules that conflict with what we learned?
-- `.claude/rules/localisation-rules.md` — any gaps?
+- `.claude/docs/localisation-rules.md` — any gaps?
 - `AGENTS.md` — any conventions needing updates?
 
 Flag anything outdated or contradicting current practice.

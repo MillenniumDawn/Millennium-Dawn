@@ -1,0 +1,193 @@
+# Tokenized customizable topbar counter widget.
+# Adapted from Black Ice's dynamic topbar; sidebar paths removed, renamed for MD,
+# extended with a per-slot compare-against-country feature.
+# Tokens: common/ideas/zzz_topbar_tokens.txt
+# Effects: common/scripted_effects/BI_dynamic_topbar_effects.txt
+# Loc getters: common/scripted_localisation/BI_dynamic_topbar_scripted_loc.txt
+scripted_gui = {
+	BI_dynamic_topbar_view = {
+		context_type = player_context
+
+		window_name = "BI_dynamic_topbar_container"
+		parent_window_token = top_bar
+
+		dirty = BI_topbar_update
+
+		dynamic_lists = {
+			topbar_list = {
+				array = Root.topbar_array
+				change_scope = yes
+				value = topbar
+				index = topbar_i
+				entry_container = "topbar_list_container"
+			}
+			topbar_menu = {
+				array = topbar_menu@var:topbar_i
+				value = topbar_menu_v
+				index = topbar_menu_i
+				change_scope = yes
+				entry_container = "topbar_menu_container"
+			}
+		}
+
+		properties = {
+			topbar_icon = {
+				image = "GFX_[?topbar.GetTokenKey]"
+			}
+			topbar_menu_icon = {
+				image = "GFX_[?topbar_menu_v.GetTokenKey]"
+			}
+			list = {
+				frame = list_frame
+			}
+		}
+
+		effects = {
+			BI_add_dynamic_topbar_click = {
+				add_to_array = { topbar_array = token:topbar_empty }
+				add_to_variable = { ROOT.BI_topbar_update = 1 }
+			}
+
+			list_click = {
+				topbar_assign_information = yes
+				add_to_variable = { Root.BI_topbar_update = 1 }
+			}
+			list_shift_click = {
+				set_variable = { shift_click = 1 }
+				topbar_assign_information = yes
+				clear_variable = shift_click
+				add_to_variable = { Root.BI_topbar_update = 1 }
+			}
+			background_button_click = {
+				for_each_loop = {
+					array = topbar_array
+
+					clear_array = ROOT.topbar_menu@var:i
+				}
+				if = {
+					limit = {
+						OR = {
+							NOT = { check_variable = { selected_topbar = topbar_i } }
+							NOT = { has_variable = selected_topbar }
+						}
+					}
+					set_variable = { selected_topbar = topbar_i }
+
+					clear_variable = subcategory_selected
+
+					update_topbar_menu = yes
+				}
+				else = {
+					clear_variable = subcategory_selected
+					clear_variable = selected_topbar
+					clear_array = subcategory
+
+					for_each_loop = {
+						array = topbar_array
+
+						clear_array = topbar_menu@var:i
+					}
+				}
+				add_to_variable = { Root.BI_topbar_update = 1 }
+			}
+			background_button_right_click = {
+				remove_from_array = { array = topbar_array index = topbar_i }
+
+				add_to_variable = { Root.BI_topbar_update = 1 }
+			}
+
+			topbar_icon_click = {
+				meta_effect = {
+					text = {
+						custom_effect_tooltip = "[X]_tt"
+					}
+					X = "[?topbar.GetTokenKey]"
+				}
+			}
+			topbar_menu_icon_click = {
+				meta_effect = {
+					text = {
+						custom_effect_tooltip = "[X]_tt"
+					}
+					X = "[?topbar_menu_v.GetTokenKey]"
+				}
+			}
+
+			options_exit_button_click = {
+				clear_variable = subcategory_selected
+				clear_variable = selected_topbar
+				clear_array = subcategory
+
+				for_each_loop = {
+					array = topbar_array
+
+					clear_array = topbar_menu@var:i
+				}
+				add_to_variable = { Root.BI_topbar_update = 1 }
+			}
+		}
+
+		triggers = {
+			BI_add_dynamic_topbar_click_enabled = {
+				check_variable = { topbar_array^num < 16 }
+			}
+			list_click_enabled = {
+				if = {
+					limit = {
+						OR = {
+							is_in_array = { subcategory = topbar_menu_v }
+							check_variable = { subcategory_selected = topbar_menu_v }
+						}
+					}
+					set_temp_variable = { list_frame = 2 }
+				}
+				else = {
+					set_temp_variable = { list_frame = 1 }
+				}
+			}
+			topbar_menu_expand_icon_visible = {
+				OR = {
+					check_variable = { topbar_menu_v = token:topbar_menu_popularity }
+					check_variable = { topbar_menu_v = token:topbar_menu_factories }
+					check_variable = { topbar_menu_v = token:topbar_menu_economy }
+					check_variable = { topbar_menu_v = token:topbar_menu_energy }
+					check_variable = { topbar_menu_v = token:topbar_menu_influence }
+					check_variable = { topbar_menu_v = token:topbar_menu_eu }
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_total }
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_produced }
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_imported }
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_exported }
+					check_variable = { topbar_menu_v = token:topbar_menu_resource_consumed }
+				}
+			}
+
+			list_visible = {
+				check_variable = { topbar_menu_v > 0 }
+			}
+			topbar_menu_icon_visible = {
+				check_variable = { topbar_menu_v > 0 }
+			}
+
+			background_button_highlight_visible = {
+				has_variable = selected_topbar
+				check_variable = { selected_topbar = topbar_i }
+			}
+			topbar_menu_background_visible = {
+				has_variable = selected_topbar
+				check_variable = { selected_topbar = topbar_i }
+			}
+			options_exit_button_visible = {
+				has_variable = selected_topbar
+				check_variable = { selected_topbar = topbar_i }
+			}
+			topbar_menu_header_text_visible = {
+				has_variable = selected_topbar
+				check_variable = { selected_topbar = topbar_i }
+			}
+			shift_info_visible = {
+				has_variable = selected_topbar
+				check_variable = { selected_topbar = topbar_i }
+			}
+		}
+	}
+}
