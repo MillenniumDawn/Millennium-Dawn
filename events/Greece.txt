@@ -31,7 +31,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = GRE
-		has_country_flag = GRE_austerity
+		GRE_austerity_ongoing = yes
 	}
 
 	mean_time_to_happen = {
@@ -62,7 +62,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = GRE
-		has_country_flag = GRE_austerity
+		GRE_austerity_ongoing = yes
 		NOT = { has_idea = GRE_austerity_3 }
 	}
 
@@ -523,7 +523,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = GRE
-		has_country_flag = GRE_austerity
+		GRE_austerity_ongoing = yes
 		NOT = { has_idea = GRE_austerity_1 }
 	}
 
@@ -546,36 +546,6 @@ country_event = {
 	option = {
 		name = greece.22.a
 		log = "[GetDateText]: [This.GetName]: greece.22.a executed"
-	}
-}
-
-# Brits Agree
-country_event = {
-	id = greece.26
-	title = greece.26.t
-	desc = greece.26.d
-	picture = GFX_british_flag_two
-	is_triggered_only = yes
-
-	option = {
-		name = greece.26.a
-		log = "[GetDateText]: [This.GetName]: greece.26.a executed"
-		GRE = { transfer_state = 812 }
-	}
-}
-
-# Brits Disagree
-country_event = {
-	id = greece.27
-	title = greece.27.t
-	desc = greece.27.d
-	picture = GFX_declined_offer_no
-
-	is_triggered_only = yes
-
-	option = {
-		name = greece.27.a
-		log = "[GetDateText]: [This.GetName]: greece.27.a executed"
 	}
 }
 
@@ -1606,14 +1576,17 @@ country_event = {
 		name = greece.650.a
 		log = "[GetDateText]: [This.GetName]: greece.650.a executed"
 		increase_economic_growth = yes
+		add_political_power = 40
+		add_stability = 0.03
 	}
 
 	# Position Greece as a regional mediator
 	option = {
 		name = greece.650.b
 		log = "[GetDateText]: [This.GetName]: greece.650.b executed"
-		add_political_power = 50
-		add_stability = 0.02
+		add_political_power = 100
+		add_stability = 0.05
+		add_war_support = 0.03
 	}
 }
 
@@ -1779,11 +1752,18 @@ country_event = {
 		name = greece_debt.2.b
 		log = "[GetDateText]: [This.GetName]: greece_debt.2.b executed"
 		FROM = {
+			GRE_calculate_proposed_debt = yes
 			set_variable = { GRE_debt_swap_holder_nation = PREV.id }
 			set_variable = { GRE_creditor_target = PREV.id }
-			set_temp_variable = { GRE_creditor_debt_change = 150 }
+			set_temp_variable = { GRE_creditor_debt_change = GRE_proposed_debt_amount }
 			GRE_add_creditor = yes
 		}
+		# Creditor pays for the restructured debt, matching the decision path
+		set_temp_variable = { our_cost = FROM.GRE_proposed_debt_amount }
+		multiply_temp_variable = { our_cost = 0.75 }
+		set_temp_variable = { treasury_change = our_cost }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
 		add_opinion_modifier = { target = FROM modifier = GRE_debt_swap_accepted_opinion }
 
 		ai_chance = {
@@ -2579,6 +2559,8 @@ country_event = {
 
 		ai_chance = {
 			base = 80
+			modifier = { factor = 1.5 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
 			modifier = {
 				factor = 0.3
 				check_variable = { treasury < 50 }
@@ -2594,6 +2576,7 @@ country_event = {
 
 		ai_chance = {
 			base = 20
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
 		}
 	}
 }
@@ -2652,29 +2635,6 @@ country_event = {
 		add_stability = -0.03
 
 		ai_chance = { base = 0 }
-	}
-}
-
-# Russian Military Cooperation
-# Fired by GRE_russia_army_coop focus - routes doctrine reduction through event
-country_event = {
-	id = greece.520
-	title = greece.520.t
-	desc = greece.520.d
-	picture = GFX_political_deal
-	is_triggered_only = yes
-
-	option = {
-		name = greece.520.a
-		log = "[GetDateText]: [This.GetName]: greece.520.a executed"
-		add_doctrine_cost_reduction = {
-			name = GRE_russia_army_coop
-			category = CAT_land_doctrine
-			uses = 1
-			cost_reduction = 0.30
-		}
-
-		ai_chance = { base = 1 }
 	}
 }
 
@@ -4136,7 +4096,7 @@ country_event = {
 		set_temp_variable = { sender_nation = GRE }
 		set_improved_trade_agreement = yes
 		add_ideas = GRE_balkan_gas_transit
-		add_resource = { type = oil amount = 5 state = 163 }
+		add_resource = { type = oil amount = 5 state = 974 }
 
 		ai_chance = { base = 1 }
 	}
@@ -4725,7 +4685,7 @@ country_event = {
 			CYP = {
 				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = 3000 producer = GRE }
 				add_equipment_to_stockpile = { type = util_vehicle_1 amount = 200 producer = GRE }
-				add_war_support = 0.10
+				add_stability = -0.05
 			}
 		}
 		add_political_power = -50
@@ -4768,7 +4728,7 @@ country_event = {
 			NCY = {
 				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = 3000 producer = GRE }
 				add_equipment_to_stockpile = { type = util_vehicle_1 amount = 200 producer = GRE }
-				add_war_support = 0.10
+				add_stability = -0.05
 			}
 		}
 		add_political_power = -50
@@ -4914,6 +4874,8 @@ country_event = {
 		FROM = { country_event = { id = greece.734 days = 2 } }
 		ai_chance = {
 			base = 80
+			modifier = { factor = 1.5 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
 		}
 	}
 
@@ -4923,6 +4885,7 @@ country_event = {
 		FROM = { country_event = { id = greece.735 days = 2 } }
 		ai_chance = {
 			base = 20
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
 		}
 	}
 }
@@ -4977,10 +4940,11 @@ country_event = {
 		name = greece.736.a
 		log = "[GetDateText]: [This.GetName]: greece.736.a executed"
 		145 = { add_resource = { type = oil amount = 8 } }
-		146 = { add_resource = { type = oil amount = 8 } }
 		FROM = { country_event = { id = greece.737 days = 2 } }
 		ai_chance = {
 			base = 75
+			modifier = { factor = 1.5 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
 		}
 	}
 
@@ -4990,6 +4954,7 @@ country_event = {
 		FROM = { country_event = { id = greece.738 days = 2 } }
 		ai_chance = {
 			base = 25
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
 		}
 	}
 }
@@ -5051,6 +5016,8 @@ country_event = {
 		FROM = { country_event = { id = greece.740 days = 2 } }
 		ai_chance = {
 			base = 60
+			modifier = { factor = 1.5 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
 		}
 	}
 
@@ -5060,6 +5027,7 @@ country_event = {
 		FROM = { country_event = { id = greece.741 days = 2 } }
 		ai_chance = {
 			base = 40
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
 		}
 	}
 }
@@ -5116,7 +5084,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: greece.742.a executed"
 		FROM = {
 			transfer_state = 812
-			add_state_core = 812
 			give_military_access = ENG
 		}
 		add_opinion_modifier = { target = FROM modifier = medium_increase }

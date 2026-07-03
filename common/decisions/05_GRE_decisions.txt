@@ -49,7 +49,10 @@ GRE_debt_crisis_category = {
 		}
 
 		available = {
-			has_country_flag = GRE_austerity
+			custom_trigger_tooltip = {
+				tooltip = GRE_unified_ratio_below_75_tt
+				check_variable = { GRE_unified_debt_ratio < 0.75 }
+			}
 		}
 
 		days_mission_timeout = 120
@@ -57,8 +60,15 @@ GRE_debt_crisis_category = {
 		is_good = no
 		fire_only_once = no
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect GRE_austerity_tension_mission"
+			add_political_power = 100
+			add_stability = 0.05
+			GRE_exit_debt_crisis = yes
+		}
+
 		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_austerity_tension"
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_austerity_tension_mission"
 			GRE = { country_event = greece.2 }
 			if = {
 				limit = { has_idea = GRE_austerity_1 }
@@ -74,7 +84,60 @@ GRE_debt_crisis_category = {
 					remove_idea = GRE_austerity_2
 					add_idea = GRE_austerity_3
 				}
+				activate_mission = GRE_austerity_tension_mission
 			}
+			else_if = {
+				limit = { has_idea = GRE_austerity_3 }
+				add_stability = -0.05
+				activate_mission = GRE_debt_crisis_mission
+			}
+		}
+	}
+
+	GRE_debt_crisis_mission = {
+
+		icon = GFX_decision_bancru_collapse_button
+
+		activation = {
+			always = no
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GRE_unified_ratio_below_75_tt
+				check_variable = { GRE_unified_debt_ratio < 0.75 }
+			}
+		}
+
+		days_mission_timeout = 360
+
+		is_good = no
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect GRE_debt_crisis_mission"
+			add_political_power = 150
+			add_stability = 0.10
+			GRE_exit_debt_crisis = yes
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_debt_crisis_mission"
+			add_stability = -0.08
+			add_political_power = -75
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			if = {
+				limit = {
+					has_idea = EU_member
+					NOT = { has_global_flag = EUU_european_debt_crisis }
+					NOT = { has_global_flag = eurozone_reforms }
+					NOT = { has_active_mission = eurozone_reforms }
+				}
+				country_event = EUevent.7
+			}
+			activate_mission = GRE_debt_crisis_mission
 		}
 	}
 
@@ -82,7 +145,7 @@ GRE_debt_crisis_category = {
 		icon = GFX_decision_generic_civil_support
 		cost = 75
 		visible = {
-			has_country_flag = GRE_austerity
+			GRE_austerity_ongoing = yes
 		}
 		available = {
 			NOT = { has_idea = GRE_austerity_1 }
@@ -114,12 +177,175 @@ GRE_debt_crisis_category = {
 			base = 1
 
 			modifier = {
+				factor = 3
+				has_stability < 0.35
+			}
+			modifier = {
 				has_idea = GRE_austerity_2
 				factor = 3
 			}
 			modifier = {
 				has_idea = GRE_austerity_3
 				factor = 10
+			}
+		}
+	}
+
+	GRE_slash_public_spending_decision = {
+		icon = GFX_decision_money_dec
+
+		cost = 50
+
+		visible = {
+			GRE_austerity_ongoing = yes
+		}
+
+		days_re_enable = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_slash_public_spending_decision"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.05 }
+			modify_debt_effect = yes
+			add_stability = -0.05
+			GRE_calculate_unified_debt = yes
+			custom_effect_tooltip = GRE_buys_mission_time_tt
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = GRE_austerity_tension_mission }
+					add_days_mission_timeout = { mission = GRE_austerity_tension_mission days = 30 }
+				}
+				else_if = {
+					limit = { has_active_mission = GRE_debt_crisis_mission }
+					add_days_mission_timeout = { mission = GRE_debt_crisis_mission days = 30 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 2
+				has_idea = GRE_austerity_2
+			}
+			modifier = {
+				factor = 3
+				has_idea = GRE_austerity_3
+			}
+			modifier = {
+				factor = 2
+				has_active_mission = GRE_austerity_tension_mission
+			}
+			modifier = {
+				factor = 4
+				has_active_mission = GRE_debt_crisis_mission
+			}
+		}
+	}
+
+	GRE_emergency_tax_hikes_decision = {
+		icon = GFX_decision_gre_paying_ifc_debt
+
+		cost = 50
+
+		visible = {
+			GRE_austerity_ongoing = yes
+		}
+
+		days_re_enable = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_emergency_tax_hikes_decision"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.04 }
+			modify_debt_effect = yes
+			add_stability = -0.03
+			set_temp_variable = { party_popularity_increase = -0.03 }
+			set_temp_variable = { temp_outlook_increase = -0.03 }
+			add_relative_party_popularity = yes
+			GRE_calculate_unified_debt = yes
+			custom_effect_tooltip = GRE_buys_mission_time_tt
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = GRE_austerity_tension_mission }
+					add_days_mission_timeout = { mission = GRE_austerity_tension_mission days = 30 }
+				}
+				else_if = {
+					limit = { has_active_mission = GRE_debt_crisis_mission }
+					add_days_mission_timeout = { mission = GRE_debt_crisis_mission days = 30 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 2
+				has_idea = GRE_austerity_2
+			}
+			modifier = {
+				factor = 3
+				has_idea = GRE_austerity_3
+			}
+			modifier = {
+				factor = 2
+				has_active_mission = GRE_austerity_tension_mission
+			}
+			modifier = {
+				factor = 4
+				has_active_mission = GRE_debt_crisis_mission
+			}
+		}
+	}
+
+	GRE_privatization_drive_decision = {
+		icon = GFX_decision_bancru_ask_button
+
+		cost = 75
+
+		visible = {
+			GRE_austerity_ongoing = yes
+		}
+
+		days_re_enable = 200
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_privatization_drive_decision"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.08 }
+			modify_debt_effect = yes
+			add_stability = -0.04
+			GRE_calculate_unified_debt = yes
+			custom_effect_tooltip = GRE_buys_mission_time_tt
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = GRE_austerity_tension_mission }
+					add_days_mission_timeout = { mission = GRE_austerity_tension_mission days = 30 }
+				}
+				else_if = {
+					limit = { has_active_mission = GRE_debt_crisis_mission }
+					add_days_mission_timeout = { mission = GRE_debt_crisis_mission days = 30 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 2
+				has_idea = GRE_austerity_2
+			}
+			modifier = {
+				factor = 3
+				has_idea = GRE_austerity_3
+			}
+			modifier = {
+				factor = 2
+				has_active_mission = GRE_austerity_tension_mission
+			}
+			modifier = {
+				factor = 4
+				has_active_mission = GRE_debt_crisis_mission
 			}
 		}
 	}
@@ -141,6 +367,18 @@ GRE_debt_crisis_category = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 10
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 4
+				ai_has_deficit = yes
+			}
+			modifier = {
+				factor = 0.1
+				ai_has_surplus = yes
+			}
 		}
 	}
 
@@ -158,6 +396,14 @@ GRE_debt_crisis_category = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 10
+				ai_has_surplus = yes
+			}
+			modifier = {
+				factor = 0.1
+				ai_has_deficit = yes
+			}
 		}
 	}
 
@@ -176,10 +422,13 @@ GRE_debt_crisis_category = {
 			}
 		}
 
-		visible = {
-			has_completed_focus = GRE_debt_swaps
+		target_root_trigger = {
+			OR = {
+				has_completed_focus = GRE_debt_swaps
+				has_active_mission = GRE_debt_crisis_mission
+			}
 			gdp_debt_ratio_higher_50 = yes
-			NOT = { has_country_flag = GRE_debt_crisis_concluded }
+			NOT = { has_completed_focus = GRE_resolution_crisis }
 		}
 
 		available = {
@@ -193,19 +442,13 @@ GRE_debt_crisis_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_propose_debt_deal"
-			# Propose a larger share of debt the deeper the crisis runs (25% past 90%, else 10%)
-			set_temp_variable = { GRE_proposed_debt_amount = debt }
-			if = {
-				limit = { gdp_debt_ratio_higher_90 = yes }
-				multiply_temp_variable = { GRE_proposed_debt_amount = 0.25 }
-			}
-			else = {
-				multiply_temp_variable = { GRE_proposed_debt_amount = 0.1 }
-			}
-			round_temp_variable = GRE_proposed_debt_amount
-			set_variable = { GRE_proposed_debt_amount = GRE_proposed_debt_amount }
+			GRE_calculate_proposed_debt = yes
 			set_variable = { GRE_creditor_target = FROM.id }
 			FROM = { country_event = { id = greece_debt.10 days = 2 random_hours = 12 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_propose_debt_deal_accept_tt
+			}
 		}
 
 		ai_will_do = {
@@ -213,6 +456,10 @@ GRE_debt_crisis_category = {
 			modifier = {
 				factor = 3
 				gdp_debt_ratio_higher_90 = yes
+			}
+			modifier = {
+				factor = 3
+				has_active_mission = GRE_debt_crisis_mission
 			}
 		}
 	}
@@ -230,7 +477,7 @@ GRE_debt_crisis_category = {
 			}
 		}
 
-		visible = {
+		target_root_trigger = {
 			GRE_has_creditors = yes
 		}
 
@@ -255,10 +502,10 @@ GRE_debt_crisis_category = {
 			}
 			if = {
 				limit = { check_variable = { GRE_repay_index > -1 } }
-				# Repay 10% of debt to this creditor
 				set_temp_variable = { GRE_repay_amount = GRE_creditor_debt^GRE_repay_index }
 				multiply_temp_variable = { GRE_repay_amount = 0.1 }
 				round_temp_variable = GRE_repay_amount
+				custom_effect_tooltip = GRE_repay_10pct_tt
 				GRE_repay_creditor_debt = yes
 			}
 		}
@@ -268,6 +515,13 @@ GRE_debt_crisis_category = {
 			modifier = {
 				factor = 5
 				check_variable = { treasury > 100 }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_active_mission = GRE_debt_crisis_mission
+					has_active_mission = GRE_austerity_tension_mission
+				}
 			}
 		}
 	}
@@ -343,7 +597,7 @@ GRE_CYP_category = {
 		cost = 30
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TUR_incite_riot"
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_CYP_incite_riot"
 			custom_effect_tooltip = GRE_south_-20_TT
 			custom_effect_tooltip = TUR_gain_20_strength
 			add_equipment_to_stockpile = {
@@ -485,6 +739,7 @@ GRE_CYP_category = {
 				add_to_variable = { 146.GRE_SUPPORT = 5 }
 				add_to_variable = { 145.GRE_SUPPORT = -5 }
 				clamp_variable = { var = 146.GRE_SUPPORT min = 0 max = 100 }
+				clamp_variable = { var = 145.GRE_SUPPORT min = 0 max = 100 }
 			}
 		}
 		ai_will_do = {
@@ -524,6 +779,7 @@ GRE_CYP_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision TUR_unify_cyprus"
 			custom_effect_tooltip = TUR_unify_cyp
 			clr_country_flag = GRE_TUR_CYP
+			GRE = { clr_country_flag = GRE_TUR_CYP }
 			hidden_effect = {
 				news_event = Turkey.77
 				NCY = { set_cosmetic_tag = CYP_TURK_UNIFIED }
@@ -610,7 +866,7 @@ CYP_NCY_diplomatic_category = {
 
 	CYP_economic_incentive_north = {
 		allowed = { original_tag = CYP }
-		icon = GFX_decision_trade_deal
+		icon = attract_foreign_investor
 
 		cost = 50
 		days_remove = 120
@@ -633,7 +889,7 @@ CYP_NCY_diplomatic_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CYP_economic_incentive_north removed"
-			set_country_flag = { flag = CYP_economic_incentive_north_cooldown days = 1 value = 1 }
+			set_country_flag = { flag = CYP_economic_incentive_north_cooldown days = 120 value = 1 }
 		}
 
 		ai_will_do = { base = 3 }
@@ -667,7 +923,7 @@ CYP_NCY_diplomatic_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NCY_seek_turkish_union removed"
-			set_country_flag = { flag = NCY_seek_turkish_union_cooldown days = 1 value = 1 }
+			set_country_flag = { flag = NCY_seek_turkish_union_cooldown days = 120 value = 1 }
 		}
 
 		ai_will_do = {
@@ -820,13 +1076,50 @@ GRE_generic_decisions_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_defense_innovation_research_mission"
-			random_list = {
-				20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_armor } }
-				20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_artillery } }
-				20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_inf } }
-				20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_air_eqp } }
-				20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_naval_all } }
+			if = {
+				limit = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
+				custom_effect_tooltip = GRE_defense_innovation_funding_tt
+				set_temp_variable = { debt_change = 25 }
+				GRE_pay_or_defer = yes
+				random_list = {
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_armor } }
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_artillery } }
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_inf } }
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_air_eqp } }
+					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_naval_all } }
+				}
 			}
+		}
+	}
+
+	GRE_integrate_sovereign_bases = {
+		icon = GFX_decision_generic_form_nation
+
+		cost = 75
+
+		visible = {
+			owns_state = 812
+			NOT = { 812 = { is_core_of = ROOT } }
+		}
+
+		available = {
+			owns_state = 812
+			custom_trigger_tooltip = {
+				tooltip = GRE_sovereign_bases_compliance_tt
+				812 = { compliance > 79 }
+			}
+		}
+
+		days_remove = 90
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_integrate_sovereign_bases"
+			custom_effect_tooltip = GRE_integrate_sovereign_bases_effect_tt
+			add_state_core = 812
+		}
+
+		ai_will_do = {
+			base = 5
 		}
 	}
 
@@ -1031,11 +1324,9 @@ GRE_generic_decisions_category = {
 			set_country_flag = GRE_archipelago_set3_A_chosen
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = GRE_archipelagos_defense_plan
+				MODIFIER = GRE_archipelagos_defense_plan_country
 			}
-			143 = {
-				add_to_variable = { GRE_naval_invasion_penalty_archipelagos = 0.10 tooltip = naval_invasion_penalty_tt }
-			}
+			add_to_variable = { GRE_naval_invasion_penalty_archipelagos = 0.10 tooltip = naval_invasion_penalty_tt }
 		}
 
 		remove_effect = {
@@ -1071,11 +1362,9 @@ GRE_generic_decisions_category = {
 			set_country_flag = GRE_archipelago_set3_B_chosen
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = GRE_archipelagos_defense_plan
+				MODIFIER = GRE_archipelagos_defense_plan_country
 			}
-			143 = {
-				add_to_variable = { GRE_supply_combat_penalties_on_core_factor_archipelagos = 0.15 tooltip = supply_combat_penalties_on_core_factor_tt }
-			}
+			add_to_variable = { GRE_supply_combat_penalties_on_core_factor_archipelagos = 0.15 tooltip = supply_combat_penalties_on_core_factor_tt }
 		}
 
 		remove_effect = {
@@ -1621,12 +1910,20 @@ GRE_creditor_management_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_creditor_call_in_debt"
-			# Demand 20% of held debt
 			set_temp_variable = { GRE_called_amount = GRE_debt_held_by_us }
 			multiply_temp_variable = { GRE_called_amount = 0.2 }
 			round_temp_variable = GRE_called_amount
 			set_variable = { GRE_called_amount = GRE_called_amount }
+			custom_effect_tooltip = GRE_call_in_20pct_tt
 			GRE = { country_event = { id = greece_debt.16 days = 1 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_creditor_call_in_debt_accept_tt
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_creditor_call_in_debt_reject_tt
+			}
 		}
 
 		ai_will_do = {
@@ -1652,12 +1949,11 @@ GRE_creditor_management_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_creditor_forgive_debt"
-			# Forgive 25% of held debt
 			set_temp_variable = { GRE_forgive_amount = GRE_debt_held_by_us }
 			multiply_temp_variable = { GRE_forgive_amount = 0.25 }
 			round_temp_variable = GRE_forgive_amount
+			custom_effect_tooltip = GRE_forgive_25pct_tt
 
-			# Find our index in GRE's creditor array
 			GRE = {
 				for_each_loop = {
 					array = GRE_creditors
@@ -1665,7 +1961,6 @@ GRE_creditor_management_category = {
 						limit = { check_variable = { v = ROOT.id } }
 						subtract_from_variable = { GRE_creditor_debt^i = ROOT.GRE_forgive_amount }
 						subtract_from_variable = { GRE_total_creditor_debt = ROOT.GRE_forgive_amount }
-						# Check if fully forgiven
 						if = {
 							limit = { check_variable = { GRE_creditor_debt^i < 0.01 } }
 							set_temp_variable = { GRE_creditor_remove_index = i }
@@ -2257,7 +2552,7 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_host_putin_summit"
 			add_opinion_modifier = { target = SOV modifier = declaration_of_friendship }
 			reverse_add_opinion_modifier = { target = SOV modifier = declaration_of_friendship }
-			add_to_variable = { GRE_eastern_alignment_score = 1 }
+			add_to_variable = { GRE_eastern_alignment_score = 1 tooltip = GRE_eastern_alignment_score_tt }
 			GRE_check_eastern_alignment_swap = yes
 		}
 
@@ -2284,23 +2579,22 @@ GRE_diplomacy_category = {
 			country_exists = CHI
 		}
 
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GRE_cosco_pier_expansion"
-			add_to_variable = { civilian_factories_used_for_projects = 1 }
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_cosco_pier_expansion resolved"
 			capital_scope = { add_extra_state_shared_building_slots = 1 }
-			add_to_variable = { GRE_eastern_alignment_score = 1 }
+			add_to_variable = { GRE_eastern_alignment_score = 1 tooltip = GRE_eastern_alignment_score_tt }
 			GRE_check_eastern_alignment_swap = yes
-			add_to_variable = { civilian_factories_used_for_projects = -1 }
+		}
+
+		modifier = {
+			civilian_factory_use = 1
 		}
 
 		ai_will_do = { base = 5 }
 	}
 
 	GRE_instex_iran_barter = {
-		icon = generic_trade
+		icon = GFX_decision_money_dec
 		cost = 40
 		days_remove = 60
 		days_re_enable = 180
@@ -2323,7 +2617,7 @@ GRE_diplomacy_category = {
 			add_opinion_modifier = { target = PER modifier = declaration_of_friendship }
 			reverse_add_opinion_modifier = { target = PER modifier = declaration_of_friendship }
 			add_timed_idea = { idea = GRE_iran_barter_framework days = 180 }
-			add_to_variable = { GRE_eastern_alignment_score = 1 }
+			add_to_variable = { GRE_eastern_alignment_score = 1 tooltip = GRE_eastern_alignment_score_tt }
 			GRE_check_eastern_alignment_swap = yes
 		}
 
@@ -2368,7 +2662,7 @@ GRE_diplomacy_category = {
 				add_opinion_modifier = { target = ARM modifier = declaration_of_friendship }
 				reverse_add_opinion_modifier = { target = ARM modifier = declaration_of_friendship }
 			}
-			add_to_variable = { GRE_eastern_alignment_score = 1 }
+			add_to_variable = { GRE_eastern_alignment_score = 1 tooltip = GRE_eastern_alignment_score_tt }
 			GRE_check_eastern_alignment_swap = yes
 		}
 
@@ -2391,6 +2685,10 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_russia_outreach"
 			clr_country_flag = GRE_russia_outreach_failed
 			SOV = { country_event = { id = greece.530 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
 		}
 
 		ai_will_do = { base = 3 }
@@ -2411,6 +2709,10 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_russia_milcoop"
 			clr_country_flag = GRE_russia_milcoop_failed
 			SOV = { country_event = { id = greece.533 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
 		}
 
 		ai_will_do = { base = 3 }
@@ -2431,6 +2733,10 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_china_outreach"
 			clr_country_flag = GRE_china_outreach_failed
 			CHI = { country_event = { id = greece.536 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
 		}
 
 		ai_will_do = { base = 3 }
@@ -2451,6 +2757,10 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_china_bri_anchor"
 			clr_country_flag = GRE_china_bri_anchor_failed
 			CHI = { country_event = { id = greece.539 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
 		}
 
 		ai_will_do = { base = 3 }
@@ -2471,6 +2781,10 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_iran_outreach"
 			clr_country_flag = GRE_iran_outreach_failed
 			PER = { country_event = { id = greece.542 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
 		}
 
 		ai_will_do = { base = 3 }
@@ -2491,6 +2805,10 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_iran_med_corridor"
 			clr_country_flag = GRE_iran_med_corridor_failed
 			PER = { country_event = { id = greece.545 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
 		}
 
 		ai_will_do = { base = 3 }
@@ -2511,6 +2829,10 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_orthodox_outreach"
 			clr_country_flag = GRE_orthodox_outreach_failed
 			SER = { country_event = { id = greece.548 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
 		}
 
 		ai_will_do = { base = 3 }
@@ -2531,6 +2853,10 @@ GRE_diplomacy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_retry_orthodox_security"
 			clr_country_flag = GRE_orthodox_security_failed
 			SER = { country_event = { id = greece.551 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = GRE_retry_outreach_accept_tt
+			}
 		}
 
 		ai_will_do = { base = 3 }
@@ -2546,7 +2872,7 @@ GRE_diplomacy_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_lobby_eu_partners"
-			add_to_variable = { GRE_western_commitment = 1 }
+			add_to_variable = { GRE_western_commitment = 1 tooltip = GRE_western_commitment_tt }
 		}
 
 		ai_will_do = { base = 5 }

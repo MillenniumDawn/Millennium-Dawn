@@ -9,6 +9,12 @@ GRE_add_creditor = {
 	custom_effect_tooltip = GRE_add_creditor_tt
 	set_variable = { GRE_proposed_debt_amount = GRE_creditor_debt_change }
 
+	# Can't offload more debt than we actually hold, or we manufacture phantom creditor debt
+	if = {
+		limit = { check_variable = { GRE_proposed_debt_amount > debt } }
+		set_variable = { GRE_proposed_debt_amount = debt }
+	}
+
 	if = {
 		limit = { is_in_array = { GRE_creditors = GRE_creditor_target } }
 		set_temp_variable = { GRE_found_index = -1 }
@@ -33,7 +39,6 @@ GRE_add_creditor = {
 	}
 
 	subtract_from_variable = { debt = GRE_proposed_debt_amount }
-	clamp_variable = { var = debt min = 0 max = 999999 }
 	add_to_variable = { GRE_total_creditor_debt = GRE_proposed_debt_amount }
 
 	var:GRE_creditor_target = {
@@ -43,6 +48,22 @@ GRE_add_creditor = {
 			set_variable = { GRE_our_interest_rate = 3 }
 		}
 	}
+}
+
+# Computes the share of current debt to offload in a swap deal.
+# 25% when ratio is past 90%, otherwise 10%. Runs in Greece scope.
+# Result stored in GRE_proposed_debt_amount (persistent).
+GRE_calculate_proposed_debt = {
+	set_temp_variable = { GRE_proposed_debt_amount = debt }
+	if = {
+		limit = { gdp_debt_ratio_higher_90 = yes }
+		multiply_temp_variable = { GRE_proposed_debt_amount = 0.25 }
+	}
+	else = {
+		multiply_temp_variable = { GRE_proposed_debt_amount = 0.1 }
+	}
+	round_temp_variable = GRE_proposed_debt_amount
+	set_variable = { GRE_proposed_debt_amount = GRE_proposed_debt_amount }
 }
 
 # Removes a creditor from the system
@@ -57,6 +78,12 @@ GRE_remove_creditor = {
 	remove_from_array = { array = GRE_creditors index = GRE_creditor_remove_index }
 	remove_from_array = { array = GRE_creditor_debt index = GRE_creditor_remove_index }
 	remove_from_array = { array = GRE_creditor_rate index = GRE_creditor_remove_index }
+
+	if = {
+		limit = { check_variable = { GRE_creditors^num = 0 } }
+		set_variable = { GRE_creditor_payment_total = 0 }
+		set_variable = { GRE_creditor_debt_expense = 0 }
+	}
 }
 
 # Weekly creditor interest payment processing
@@ -86,6 +113,7 @@ GRE_process_creditor_payments = {
 		array = GRE_creditor_debt
 		add_to_variable = { GRE_total_creditor_debt = v }
 	}
+
 }
 
 # Distributes deferred focus costs proportionally across creditors
@@ -197,9 +225,9 @@ GRE_calculate_unified_debt = {
 		set_variable = { GRE_unified_debt_ratio = 0 }
 	}
 
-	# Map ratio to 0-1 scale: 0% = 0, 150%+ = 1.0
+	# Map ratio to 0-1 scale: 0% = 0, ~135%+ = 1.0
 	set_variable = { GRE_debt_variable = GRE_unified_debt_ratio }
-	multiply_variable = { GRE_debt_variable = 0.6667 }
+	multiply_variable = { GRE_debt_variable = 0.74 }
 	clamp_variable = { var = GRE_debt_variable min = 0 max = 1 }
 
 	set_variable = { GRE_debt_crisis_consumer = GRE_debt_variable }
@@ -213,18 +241,39 @@ GRE_calculate_unified_debt = {
 
 	if = {
 		limit = {
-			check_variable = { GRE_unified_debt_ratio > 1.5 }
-			NOT = { has_country_flag = GRE_debt_crisis_concluded }
-			NOT = { has_country_flag = GRE_debt_crisis_active }
+			check_variable = { GRE_unified_debt_ratio > 0.9 }
+			NOT = { has_completed_focus = GRE_resolution_crisis }
+			NOT = { has_active_mission = GRE_austerity_tension_mission }
+			NOT = { has_active_mission = GRE_debt_crisis_mission }
+			NOT = { has_country_flag = GRE_debt_crisis_cooldown }
 		}
-		set_country_flag = GRE_debt_crisis_active
-		if = {
-			limit = { NOT = { has_country_flag = GRE_austerity } }
-			set_country_flag = GRE_austerity
-			add_ideas = GRE_austerity_1
-		}
-		activate_mission = GRE_austerity_tension_mission
+		GRE_enter_austerity_phase = yes
 	}
+}
+
+GRE_enter_austerity_phase = {
+	set_country_flag = GRE_debt_crisis_experienced
+	if = {
+		limit = { GRE_austerity_ongoing = no }
+		add_ideas = GRE_austerity_1
+	}
+	activate_mission = GRE_austerity_tension_mission
+}
+
+GRE_exit_debt_crisis = {
+	if = {
+		limit = { has_idea = GRE_austerity_1 }
+		remove_ideas = GRE_austerity_1
+	}
+	else_if = {
+		limit = { has_idea = GRE_austerity_2 }
+		remove_ideas = GRE_austerity_2
+	}
+	else_if = {
+		limit = { has_idea = GRE_austerity_3 }
+		remove_ideas = GRE_austerity_3
+	}
+	set_country_flag = { flag = GRE_debt_crisis_cooldown value = 1 days = 365 }
 }
 
 GRE_startup_creditor_system = {

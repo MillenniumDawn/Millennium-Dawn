@@ -2250,8 +2250,23 @@ calculate_additional_income_rate = {
 		# Golden Visa Programme income
 		if = {
 			limit = { has_completed_focus = GRE_golden_visa_deals }
+			# Higher corruption draws more visa buyers; scale income by corruption tier
+			set_temp_variable = { GRE_visa_corruption_tier = 1 }
+			if = { limit = { has_idea = corruption_level_02 } set_temp_variable = { GRE_visa_corruption_tier = 2 } }
+			else_if = { limit = { has_idea = corruption_level_03 } set_temp_variable = { GRE_visa_corruption_tier = 3 } }
+			else_if = { limit = { has_idea = corruption_level_04 } set_temp_variable = { GRE_visa_corruption_tier = 4 } }
+			else_if = { limit = { has_idea = corruption_level_05 } set_temp_variable = { GRE_visa_corruption_tier = 5 } }
+			else_if = { limit = { has_idea = corruption_level_06 } set_temp_variable = { GRE_visa_corruption_tier = 6 } }
+			else_if = { limit = { has_idea = corruption_level_07 } set_temp_variable = { GRE_visa_corruption_tier = 7 } }
+			else_if = { limit = { has_idea = corruption_level_08 } set_temp_variable = { GRE_visa_corruption_tier = 8 } }
+			else_if = { limit = { has_idea = corruption_level_09 } set_temp_variable = { GRE_visa_corruption_tier = 9 } }
+			else_if = { limit = { has_idea = corruption_level_10 } set_temp_variable = { GRE_visa_corruption_tier = 10 } }
+			set_temp_variable = { GRE_visa_rate = GRE_visa_corruption_tier }
+			subtract_from_temp_variable = { GRE_visa_rate = 1 }
+			multiply_temp_variable = { GRE_visa_rate = 0.00001 }
+			add_to_temp_variable = { GRE_visa_rate = 0.00006 }
 			set_variable = { GRE_golden_visa_income = gdp_total }
-			multiply_variable = { GRE_golden_visa_income = 0.003 }
+			multiply_variable = { GRE_golden_visa_income = GRE_visa_rate }
 			add_to_variable = { additional_income_rate = GRE_golden_visa_income }
 		}
 	}
@@ -4114,7 +4129,10 @@ calculate_additional_expense_rate = {
 		limit = { original_tag = GRE }
 		# Creditor debt interest payments
 		if = {
-			limit = { check_variable = { GRE_creditor_payment_total > 0 } }
+			limit = {
+				GRE_has_creditors = yes
+				check_variable = { GRE_creditor_payment_total > 0 }
+			}
 			set_variable = { GRE_creditor_debt_expense = GRE_creditor_payment_total }
 			add_to_variable = { additional_expenses_rate = GRE_creditor_debt_expense }
 		}
@@ -6757,10 +6775,13 @@ calculate_united_nations_base_budget = {
 		}
 	}
 
-	divide_variable = { global.target_const_speed_mod = global.UN_general_assembly^num }
-	divide_variable = { global.target_research_speed_mod = global.UN_general_assembly^num }
-	divide_variable = { global.target_civ_count = global.UN_general_assembly^num }
-	divide_variable = { global.average_gdp_capita = global.UN_general_assembly^num }
+	if = {
+		limit = { check_variable = { global.UN_general_assembly^num > 0 } }
+		divide_variable = { global.target_const_speed_mod = global.UN_general_assembly^num }
+		divide_variable = { global.target_research_speed_mod = global.UN_general_assembly^num }
+		divide_variable = { global.target_civ_count = global.UN_general_assembly^num }
+		divide_variable = { global.average_gdp_capita = global.UN_general_assembly^num }
+	}
 
 	multiply_temp_variable = { peak_const_speed_mod = 0.6 }
 	multiply_temp_variable = { peak_civ_count = 0.05 }
