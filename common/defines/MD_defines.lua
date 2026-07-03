@@ -517,12 +517,10 @@
 	NDefines.NAir.CAPACITY_PENALTY = 4 -- 2
 	NDefines.NAir.DISRUPTION_FACTOR = 6.0 -- 4.0
 	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 8.0 -- 8.0
-	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
+	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 12 -- Increased to 12 to match the new air wing size.
 	NDefines.NAir.REINFORCEMENT_DISABLING_DURATION_IN_LAND_CARRIER_TRANSFER = 12 -- 48 vanilla; reduced so AI is less reluctant to move planes onto carriers
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50 -- 10 vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10 -- 1 vanilla
 	NDefines.NAir.MAX_QUICK_WING_SELECTION = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
@@ -614,7 +612,7 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_EFFECT = 0.3 -- 0.5
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2 -- 2.0
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
-	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1 -- Reduced to 100% from 200% -- 25% is vanilla
+	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 0.75 -- Reduced to 100% from 200% -- 25% is vanilla
 	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.001 -- HGA / (VAL * 100) = Add to Shore Bombard Mod
 	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.85 -- LGA / (VAL * 100) = Add to Shore Bombard Mod
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
@@ -1012,7 +1010,7 @@
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = true				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = true				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
-	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.3 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
+	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.4 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
 	NDefines.NAI.LAND_COMBAT_MISSILE_IMPORTANCE_FACTOR = 1.75 -- Importance of missiles for regions of strat importance. Higher = more -- 1.5
 	NDefines.NAI.LAND_DEFENSE_AA_IMPORTANCE_FACTOR = 1.0 -- Factor of AA on stat importance
 	NDefines.NAI.ROCKET_ASSIGN_SCORE_REDUCTION_PER_ASSIGNMENT = 2.0 -- 0.5 vanilla; each assigned missile wing reduces region score to prevent overstacking (vanilla 0.5 allowed ~20 wings per region)
@@ -1140,10 +1138,9 @@
 		200, -- NAVAL INVASION SUPPORT
 	}
 
-	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
-	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.1					-- 0.1
-	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.1		-- 0
-	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 800					-- 700
+	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.05					-- 0.1
+	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.05		-- 0
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 1000					-- 700
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 75 			-- 100
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_POW = 1.8			-- 1.8
 	NDefines.NIndustrialOrganisation.UNLOCKED_TRAITS_PER_SIZE_UP = 1			-- 1
