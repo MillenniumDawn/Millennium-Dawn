@@ -1,0 +1,3786 @@
+add_namespace = korea_north
+add_namespace = kim_jong_il_death
+add_namespace = korea_russia
+add_namespace = korea_russia_news
+add_namespace = korea_china
+add_namespace = nko_naval_buildup
+add_namespace = NKO_spa
+add_namespace = NKO_export
+
+###North Korea###
+country_event = {
+	id = korea_north.1
+
+	title = korea_north.1.t
+	desc = korea_north.1.d
+	picture = GFX_CHI_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea_north.1.a #This demand is ludicrous!
+		add_political_power = 25
+		ai_chance = {
+			factor = 50
+		}
+		log = "[GetDateText]: [This.GetName]: korea_north.1.a executed"
+	}
+
+	option = {
+		name = korea_north.1.b #It is better for us to concede...
+		diplomatic_relation = {
+			country = KOR
+			relation = guarantee
+			active = no
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 20
+				CHI = { has_completed_focus = CHI_End_US_Hegemony }
+			}
+			modifier = {
+				factor = 10
+				NKO = { has_completed_focus = NKO_our_pride_and_joy }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: korea_north.1.b executed"
+	}
+}
+
+news_event = {
+	id = korea_north.2
+	title = korea_north.2.t
+	desc = korea_north.2.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = korea_north.2.a
+	}
+}
+
+country_event = {
+	id = korea_north.3 #North Korea 2009 Revaluation
+	title = korea_north.3.t
+	desc = korea_north.3.d
+
+	picture = GFX_united_states_dollar
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea_north.3.a #25 to 1
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		hidden_effect = { country_event = { id = korea_north.4 days = 30 } }
+		log = "[GetDateText]: [This.GetName]: korea_north.3.a executed"
+	}
+
+	option = {
+		name = korea_north.3.b #100 to 1
+		add_political_power = 50
+		set_temp_variable = { treasury_change = 4 }
+		modify_treasury_effect = yes
+		hidden_effect = { country_event = { id = korea_north.5 days = 30 } }
+		log = "[GetDateText]: [This.GetName]: korea_north.3.b executed"
+	}
+}
+
+# Revaluation Success
+country_event = {
+	id = korea_north.4
+	title = korea_north.4.t
+	desc = korea_north.4.d
+
+	picture = GFX_stock_market
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea_north.4.a
+		log = "[GetDateText]: [This.GetName]: korea_north.4.a executed"
+		add_political_power = 100
+	}
+}
+
+# Relieving Conflicts
+country_event = {
+	id = korea_north.5
+	title = korea_north.5.t
+	desc = korea_north.5.d
+
+	picture = GFX_politics_eye
+
+	is_triggered_only = yes
+
+	# Maintain Status Quo
+	option = {
+		name = korea_north.5.a
+		hidden_effect = { country_event = { id = korea_north.6 days = 30 } }
+		log = "[GetDateText]: [This.GetName]: korea_north.5.a executed"
+	}
+
+	# Compromise
+	option = {
+		name = korea_north.5.b
+		add_political_power = -50
+		hidden_effect = {
+			random_list = {
+				20 = { country_event = { id = korea_north.4 days = 20 } }
+				80 = { country_event = { id = korea_north.6 days = 30 } }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: korea_north.5.b executed"
+	}
+}
+
+# Revaluation Failure...
+country_event = {
+	id = korea_north.6
+	title = korea_north.6.t
+	desc = korea_north.6.d
+
+	picture = GFX_stock_market
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: korea_north.6.a executed"
+		name = korea_north.6.a
+		add_stability = -0.05
+	}
+}
+
+# Nominate the Successor
+country_event = {
+	id = kim_jong_il_death.1
+	title = kim_jong_il_death.1.t
+	desc = kim_jong_il_death.1.d
+
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	# Kim Jong-un
+	option = {
+		name = kim_jong_il_death.1.a #Kim Jong-un
+		set_country_flag = NKO_kim_jong_un_successor
+		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.1.a executed"
+	}
+
+	# Kim Jong-nam
+	option = {
+		name = kim_jong_il_death.1.b #Kim Jong-nam
+		set_country_flag = NKO_kim_jong_nam_successor
+		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.1.b executed"
+	}
+}
+
+news_event = {
+	id = kim_jong_il_death.2
+	title = kim_jong_il_death.2.t
+	desc = kim_jong_il_death.2.d
+
+	picture = GFX_kim_jong_il_funeral
+	is_triggered_only = yes
+
+	option = {
+		name = kim_jong_il_death.2.a
+		if = {
+			limit = {
+				tag = NKO
+			}
+			set_country_flag = NKO_kim_jong_il_death_tt
+			kill_country_leader = yes
+			create_country_leader = {
+				name = "Funeral Committee"
+				picture = "Kim_Jong_il_death.dds"
+				expire = "2030.01.01"
+				ideology = Communist-State
+				traits = {
+					Eternal_Leader
+					Eternal_Leader_D
+				}
+			}
+			mark_focus_tree_layout_dirty = yes
+			complete_national_focus = NKO_kim_jong_il_death
+		}
+		ai_chance = { factor = 100 }
+		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.2.a executed"
+	}
+}
+
+# A Report from Kim Jong-un...
+country_event = {
+	id = kim_jong_il_death.3
+	title = kim_jong_il_death.3.t
+	desc = kim_jong_il_death.3.d
+
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+
+	option = {
+		name = kim_jong_il_death.3.a
+		add_political_power = 100
+		hidden_effect = {
+			80 = {
+				add_to_variable = { var = NKO_kim_jong_un value = 6 }
+				clamp_variable = { var = NKO_kim_jong_un min = 0 max = 100 }
+				subtract_from_variable = { var = NKO_kim_jong_nam value = 6 }
+				clamp_variable = { var = NKO_kim_jong_nam min = 0 max = 100 }
+			}
+			20 = {
+				add_to_variable = { var = NKO_kim_jong_nam value = 2 }
+				clamp_variable = { var = NKO_kim_jong_nam min = 0 max = 100 }
+				subtract_from_variable = { var = NKO_kim_jong_un value = 2 }
+				clamp_variable = { var = NKO_kim_jong_un min = 0 max = 100 }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.3.a executed"
+	}
+}
+
+# Kim Jong-name Takes the Power!
+news_event = {
+	id = kim_jong_il_death.4
+	title = kim_jong_il_death.4.t
+	desc = kim_jong_il_death.4.d
+
+	picture = GFX_nam_elected
+	is_triggered_only = yes
+
+	option = {
+		name = kim_jong_il_death.4.a
+		trigger = {
+				OR = {
+					has_idea = non_power
+					has_idea = minor_power
+					has_idea = regional_power
+				}
+		}
+		ai_chance = { factor = 100 }
+	}
+	option = {
+		name = kim_jong_il_death.4.b
+		trigger = {
+				OR = {
+					has_idea = large_power
+					has_idea = great_power
+					has_idea = super_power
+				}
+			}
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {
+	id = kim_jong_il_death.5 #Kim Jong-un takes the power!
+	title = kim_jong_il_death.5.t
+	desc = kim_jong_il_death.5.d
+
+	picture = GFX_north_korean_officials
+	is_triggered_only = yes
+
+	option = {
+		name = kim_jong_il_death.5.a
+		trigger = {
+				OR = {
+					has_idea = non_power
+					has_idea = minor_power
+					has_idea = regional_power
+				}
+		}
+		ai_chance = { factor = 100 }
+	}
+	option = {
+		name = kim_jong_il_death.5.b
+		trigger = {
+				OR = {
+					has_idea = large_power
+					has_idea = great_power
+					has_idea = super_power
+				}
+			}
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {
+	id = kim_jong_il_death.6 #The Military take the power!
+	title = kim_jong_il_death.6.t
+	desc = kim_jong_il_death.6.d
+
+	picture = GFX_anti_kim_coup
+	is_triggered_only = yes
+
+	option = {
+		name = kim_jong_il_death.6.a
+		trigger = {
+			NOT = { tag = KOR }
+				OR = {
+					has_idea = non_power
+					has_idea = minor_power
+					has_idea = regional_power
+				}
+		}
+		ai_chance = { factor = 100 }
+	}
+	option = {
+		name = kim_jong_il_death.6.b
+		trigger = {
+			NOT = { tag = KOR }
+				OR = {
+					has_idea = large_power
+					has_idea = great_power
+					has_idea = super_power
+				}
+			}
+		ai_chance = { factor = 100 }
+	}
+	option = {
+		name = kim_jong_il_death.6.c
+		trigger = {
+			OR = {
+				tag = KOR
+				tag = USA
+				tag = CHI
+				tag = JAP
+				tag = SOV
+			}
+		}
+		ai_chance = { factor = 100 }
+	}
+}
+
+country_event = {
+	id = kim_jong_il_death.7 #Zhou Yongkang eavesdropped on Jang Song-thaek's visit to China to meet with Hu Jintao
+	title = kim_jong_il_death.7.t
+	desc = kim_jong_il_death.7.d
+
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+
+	option = {
+		name = kim_jong_il_death.7.a
+		ai_chance = { factor = 50 }
+		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.7.a executed" #Tell Kim Jong-un about this information.
+	}
+	option = {
+		name = kim_jong_il_death.7.b
+		add_political_power = -50
+		ai_chance = { factor = 50 }
+		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.7.b executed" #Doing nothing. What does Kim Jong-un have to do with me?
+	}
+}
+
+###########RUSSIAN-KOREA FRIENDSHIP MECHANIC EVENTS###########
+#Russian Base
+country_event = {
+	id = korea_russia.1
+	title = korea_russia.1.t
+	desc = korea_russia.1.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.1.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.1.a executed"
+		add_ideas = SOV_NKO_base
+		SOV = {
+			country_event = korea_russia.2
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.1.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.1.b executed"
+		SOV = {
+			country_event = korea_russia.3
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#They agree
+country_event = {
+	id = korea_russia.2
+	title = korea_russia.2.t
+	desc = korea_russia.2.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.2.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.2.a executed"
+
+		ai_chance = { base = 1 }
+	}
+}
+
+#They agree
+country_event = {
+	id = korea_russia.3
+	title = korea_russia.3.t
+	desc = korea_russia.3.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.3.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.3.a executed"
+
+		ai_chance = { base = 1 }
+	}
+}
+
+#Russian Nuclear
+country_event = {
+	id = korea_russia.4
+	title = korea_russia.4.t
+	desc = korea_russia.4.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.4.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.4.a executed"
+		NKO = {
+			country_event = korea_russia.5
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.4.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.4.b executed"
+		NKO = {
+			country_event = korea_russia.3
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Russian Nuclear Agree
+country_event = {
+	id = korea_russia.5
+	title = korea_russia.5.t
+	desc = korea_russia.5.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.5.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.5.a executed"
+		set_country_flag = SOV_agree_nuclear
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#Russian Gives Us Armor
+country_event = {
+	id = korea_russia.6
+	title = korea_russia.6.t
+	desc = korea_russia.6.d
+	picture = GFX_nko_russian_ratnik
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.6.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.6.a executed"
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		add_ideas = NKO_korean_ratnik_conversion
+
+	}
+}
+
+#Korean ask about Gas Pipeline
+country_event = {
+	id = korea_russia.7
+	title = korea_russia.7.t
+	desc = korea_russia.7.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.7.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.7.a executed"
+		set_country_flag = SOV_gazprom_mechanic_korean_stream_agree
+		NKO = {
+			country_event = korea_russia.2
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.7.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.7.b executed"
+		NKO = {
+			country_event = korea_russia.3
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Korean Ask Friendship Russia
+country_event = {
+	id = korea_russia.8
+	title = korea_russia.8.t
+	desc = korea_russia.8.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.8.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.8.a executed"
+		add_ideas = NKO_korean_russian_friendship
+		if = {
+			limit = { NOT = { has_guaranteed = NKO } }
+			diplomatic_relation = {
+				country = NKO
+				relation = guarantee
+			}
+		}
+		NKO = {
+			country_event = korea_russia.9
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_government = communism
+				add = 99
+			}
+			modifier = {
+				has_government = nationalist
+				add = 99
+			}
+		}
+	}
+	option = {
+		name = korea_russia.8.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.8.b executed"
+		NKO = {
+			country_event = korea_russia.10
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_government = democratic
+				add = 99
+			}
+			modifier = {
+				has_government = neutrality
+				add = 99
+			}
+		}
+	}
+}
+
+#Friendship Russia Agree
+country_event = {
+	id = korea_russia.9
+	title = korea_russia.9.t
+	desc = korea_russia.9.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.9.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.9.a executed"
+		add_ideas = NKO_korean_russian_friendship
+		if = {
+			limit = { NOT = { has_guaranteed = SOV } }
+			diplomatic_relation = {
+				country = SOV
+				relation = guarantee
+			}
+		}
+		NKO_sanctions_positive = yes
+		news_event = {
+			hours = 6
+			id = korea_russia_news.1
+		}
+	}
+}
+
+#Friendship Russia Disagree
+country_event = {
+	id = korea_russia.10
+	title = korea_russia.10.t
+	desc = korea_russia.10.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.10.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.10.a executed"
+		add_ideas = NKO_korean_russian_friendship
+	}
+}
+
+#Russia ask Friendship Korea
+country_event = {
+	id = korea_russia.11
+	title = korea_russia.11.t
+	desc = korea_russia.11.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.11.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.11.a executed"
+		add_ideas = NKO_korean_russian_friendship
+		if = {
+			limit = { NOT = { has_guaranteed = SOV } }
+			diplomatic_relation = {
+				country = SOV
+				relation = guarantee
+			}
+		}
+		SOV = {
+			country_event = korea_russia.12
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.11.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.11.b executed"
+		SOV = {
+			country_event = korea_russia.13
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Friendship Russia Agree
+country_event = {
+	id = korea_russia.12
+	title = korea_russia.12.t
+	desc = korea_russia.12.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.12.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.12.a executed"
+		add_ideas = NKO_korean_russian_friendship
+		if = {
+			limit = { NOT = { has_guaranteed = NKO } }
+			diplomatic_relation = {
+				country = NKO
+				relation = guarantee
+			}
+		}
+		news_event = {
+			hours = 6
+			id = korea_russia_news.1
+		}
+	}
+}
+
+#Friendship Russia Disagree
+country_event = {
+	id = korea_russia.13
+	title = korea_russia.13.t
+	desc = korea_russia.13.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.13.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.13.a executed"
+	}
+}
+
+#Korea Ask About Cruiser
+country_event = {
+	id = korea_russia.14
+	title = korea_russia.14.t
+	desc = korea_russia.14.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.14.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.14.a executed"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		NKO = {
+			country_event = korea_russia.15
+		}
+		if = {
+			limit = {
+				has_idea = NKO_korean_russian_friendship
+			}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.14.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.14.b executed"
+		NKO = {
+			country_event = korea_russia.3
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Russia Agree about Cruiser
+country_event = {
+	id = korea_russia.15
+	title = korea_russia.15.t
+	desc = korea_russia.15.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.15.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.15.a executed"
+		if = {
+			limit = {
+				has_tech = cruiser_hull_1
+			}
+			set_technology = { cruiser_hull_2 = 1 }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { has_tech = cruiser_hull_1 }
+			}
+			set_technology = { cruiser_hull_1 = 1 }
+			set_temp_variable = { percent_change = 11 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		if = {
+			limit = {
+				has_idea = NKO_korean_russian_friendship
+				NOT = { has_tech = destroyer_hull_1 }
+			}
+			set_technology = { destroyer_hull_1 = 1 }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		else_if = {
+			limit = {
+				has_idea = NKO_korean_russian_friendship
+				has_tech = destroyer_hull_1
+			}
+			set_technology = { destroyer_hull_2 = 1 }
+			set_temp_variable = { percent_change = 11 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+#Country trade agreement agaisnt sanctions
+country_event = {
+	id = korea_russia.16
+	title = korea_russia.16.t
+	desc = korea_russia.16.d
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.16.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.16.a executed"
+		ROOT = {
+			add_opinion_modifier = {
+				target = NKO
+				modifier = trade_mission
+			}
+		}
+		set_temp_variable = { receiver_nation = ROOT.id }
+		set_temp_variable = { sender_nation = NKO.id }
+		set_improved_trade_agreement = yes
+		NKO = {
+			country_event = korea_russia.17
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_government = communism
+				add = 99
+			}
+			modifier = {
+				has_government = nationalist
+				add = 99
+			}
+		}
+	}
+	option = {
+		name = korea_russia.16.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.16.b executed"
+		ROOT = {
+			add_opinion_modifier = {
+				target = NKO
+				modifier = recent_actions_negative
+			}
+		}
+		NKO = {
+			country_event = korea_russia.18
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_government = democratic
+				add = 99
+			}
+			modifier = {
+				has_government = neutrality
+				add = 99
+			}
+		}
+	}
+}
+
+#Country trade agreement agree
+country_event = {
+	id = korea_russia.17
+	title = korea_russia.17.t
+	desc = korea_russia.17.d
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.17.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.17.a executed"
+		NKO = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = trade_mission
+			}
+		}
+		set_temp_variable = { receiver_nation = NKO.id }
+		set_temp_variable = { sender_nation = FROM.id }
+		set_improved_trade_agreement = yes
+		NKO_sanctions_positive = yes
+	}
+}
+
+#Country trade agreement disagree
+country_event = {
+	id = korea_russia.18
+	title = korea_russia.18.t
+	desc = korea_russia.18.d
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.18.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.18.a executed"
+		NKO = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = recent_actions_negative
+			}
+		}
+	}
+}
+
+#Korea Ask About Fighter
+country_event = {
+	id = korea_russia.19
+	title = korea_russia.19.t
+	desc = korea_russia.19.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.19.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.19.a executed"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		NKO = {
+			country_event = korea_russia.20
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.19.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.19.b executed"
+		NKO = {
+			country_event = korea_russia.3
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Russia Agree about Fighter
+country_event = {
+	id = korea_russia.20
+	title = korea_russia.20.t
+	desc = korea_russia.20.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.20.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.20.a executed"
+		if = {
+			limit = {
+				has_tech = gen_3_light
+			}
+			set_technology = { gen_3_medium = 1 }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { has_tech = gen_3_light }
+			}
+			set_technology = { gen_3_light = 1 }
+			set_temp_variable = { percent_change = 11 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+#Russia Hire our Workers
+country_event = {
+	id = korea_russia.21
+	title = korea_russia.21.t
+	desc = korea_russia.21.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.21.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.21.a executed"
+
+	}
+}
+
+#Exercises with Russia
+country_event = {
+	id = korea_russia.22
+	title = korea_russia.22.t
+	desc = korea_russia.22.d
+	picture = GFX_nko_exercises_russa
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.22.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.22.a executed"
+		add_timed_idea = {
+			idea = NKO_joint_exercises_nko_idea
+			days = 29
+		}
+		NKO = {
+			country_event = korea_russia.23
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.22.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.22.b executed"
+		NKO = {
+			country_event = korea_russia.24
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Exercises with Russia - Russia Agree
+country_event = {
+	id = korea_russia.23
+	title = korea_russia.23.t
+	desc = korea_russia.23.d
+	picture = GFX_nko_exercises_russa
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.23.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.23.a executed"
+		add_timed_idea = {
+			idea = NKO_joint_exercises_sov_idea
+			days = 29
+		}
+	}
+}
+
+#Exercises with Russia - Russia Disagree
+country_event = {
+	id = korea_russia.24
+	title = korea_russia.24.t
+	desc = korea_russia.24.d
+	picture = GFX_nko_exercises_russa
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.24.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.24.a executed"
+		add_timed_idea = {
+			idea = NKO_joint_exercises_sov_idea
+			days = 29
+		}
+	}
+}
+
+#Treaty on Comprehensive Strategic Partnership News
+news_event = {
+	id = korea_russia_news.1
+	title = korea_russia_news.1.t
+	desc = korea_russia_news.1.d
+	picture = GFX_north_korea_russia
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia_news.1.a
+		trigger = {
+			OR = {
+				original_tag = SOV
+				original_tag = NKO
+			}
+		}
+	}
+
+	option = {
+		name = korea_russia_news.1.b
+		trigger = {
+			NOT = {
+				OR = {
+					original_tag = SOV
+					original_tag = NKO
+				}
+			}
+		}
+	}
+}
+
+#Korea Ask About Fighter
+country_event = {
+	id = korea_china.1
+	title = korea_china.1.t
+	desc = korea_china.1.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.1.a
+		log = "[GetDateText]: [This.GetName]: korea_china.1.a executed"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		NKO = {
+			country_event = korea_china.2
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.1.b
+		log = "[GetDateText]: [This.GetName]: korea_china.1.b executed"
+		NKO = {
+			country_event = korea_china.3
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree about Fighter
+country_event = {
+	id = korea_china.2
+	title = korea_china.2.t
+	desc = korea_china.2.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.2.a
+		log = "[GetDateText]: [This.GetName]: korea_china.2.a executed"
+		if = {
+			limit = {
+				has_tech = gen_3_light
+			}
+			set_technology = { gen_3_medium = 1 }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { has_tech = gen_3_light }
+			}
+			set_technology = { gen_3_light = 1 }
+			set_temp_variable = { percent_change = 11 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+#China Disagree about Fighter
+country_event = {
+	id = korea_china.3
+	title = korea_china.3.t
+	desc = korea_china.3.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.3.a
+		log = "[GetDateText]: [This.GetName]: korea_china.3.a executed"
+	}
+}
+
+# Korea Ask Military Support
+country_event = {
+	id = korea_china.4
+	title = korea_china.4.t
+	desc = korea_china.4.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.4.a
+		log = "[GetDateText]: [This.GetName]: korea_china.4.a executed"
+		NKO = {
+			country_event = korea_china.5
+		}
+		if = {
+			limit = { NOT = { NKO = { is_guaranteed_by = CHI } } }
+			give_guarantee = NKO
+		}
+		if = {
+			limit = { NOT = { NKO = { has_non_aggression_pact_with = CHI } } }
+			diplomatic_relation = {
+				country = NKO
+				relation = non_aggression_pact
+				active = yes
+			}
+		}
+
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.4.b
+		log = "[GetDateText]: [This.GetName]: korea_china.4.b executed"
+		NKO = {
+			country_event = korea_china.6
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Military Support
+country_event = {
+	id = korea_china.5
+	title = korea_china.5.t
+	desc = korea_china.5.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.5.a
+		log = "[GetDateText]: [This.GetName]: korea_china.5.a executed"
+		diplomatic_relation = {
+			country = CHI
+			relation = military_access
+			active = yes
+		}
+	}
+}
+
+#China Disagree
+country_event = {
+	id = korea_china.6
+	title = korea_china.6.t
+	desc = korea_china.6.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.6.a
+		log = "[GetDateText]: [This.GetName]: korea_china.6.a executed"
+
+	}
+}
+
+#Korea Ask Invest Resourse
+country_event = {
+	id = korea_china.7
+	title = korea_china.7.t
+	desc = korea_china.7.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.7.a
+		log = "[GetDateText]: [This.GetName]: korea_china.7.a executed"
+		NKO = {
+			country_event = korea_china.8
+		}
+		set_temp_variable = { treasury_change = -5.6 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.7.b
+		log = "[GetDateText]: [This.GetName]: korea_china.7.b executed"
+		NKO = {
+			country_event = korea_china.6
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Invest Resourse
+country_event = {
+	id = korea_china.8
+	title = korea_china.8.t
+	desc = korea_china.8.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.8.a
+		log = "[GetDateText]: [This.GetName]: korea_china.8.a executed"
+		601 = {
+			add_resource = {
+				type = tungsten
+				amount = 2
+			}
+			add_resource = {
+				type = chromium
+				amount = 2
+			}
+		}
+		602 = {
+			add_resource = {
+				type = oil
+				amount = 2
+			}
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+	}
+}
+
+#Korea Ask Invest Factories
+country_event = {
+	id = korea_china.9
+	title = korea_china.9.t
+	desc = korea_china.9.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.9.a
+		log = "[GetDateText]: [This.GetName]: korea_china.9.a executed"
+		NKO = {
+			country_event = korea_china.10
+		}
+		set_temp_variable = { treasury_change = -17 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.9.b
+		log = "[GetDateText]: [This.GetName]: korea_china.9.b executed"
+		NKO = {
+			country_event = korea_china.6
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Invest Factories
+country_event = {
+	id = korea_china.10
+	title = korea_china.10.t
+	desc = korea_china.10.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.10.a
+		log = "[GetDateText]: [This.GetName]: korea_china.10.a executed"
+		602 = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 2
+				instant_build = yes
+			}
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+	}
+}
+
+#Korea Ask Invest Banks
+country_event = {
+	id = korea_china.11
+	title = korea_china.11.t
+	desc = korea_china.11.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.11.a
+		log = "[GetDateText]: [This.GetName]: korea_china.11.a executed"
+		NKO = {
+			country_event = korea_china.12
+		}
+		set_temp_variable = { percent_change = 6 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		add_political_power = -75
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.11.b
+		log = "[GetDateText]: [This.GetName]: korea_china.11.b executed"
+		NKO = {
+			country_event = korea_china.6
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Invest Banks
+country_event = {
+	id = korea_china.12
+	title = korea_china.12.t
+	desc = korea_china.12.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.12.a
+		log = "[GetDateText]: [This.GetName]: korea_china.12.a executed"
+		increase_economic_growth = yes
+		NKO_sanctions_positive = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+	}
+}
+
+#Korea Ask Invest Huawei
+country_event = {
+	id = korea_china.13
+	title = korea_china.13.t
+	desc = korea_china.13.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.13.a
+		log = "[GetDateText]: [This.GetName]: korea_china.13.a executed"
+		NKO = {
+			country_event = korea_china.14
+		}
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.13.b
+		log = "[GetDateText]: [This.GetName]: korea_china.13.b executed"
+		NKO = {
+			country_event = korea_china.6
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Invest Banks
+country_event = {
+	id = korea_china.14
+	title = korea_china.14.t
+	desc = korea_china.14.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.14.a
+		log = "[GetDateText]: [This.GetName]: korea_china.14.a executed"
+		add_tech_bonus = {
+			name = SOV_expand_the_tech_industry
+			bonus = 0.30
+			uses = 2
+			category = CAT_internet_tech
+		}
+	}
+}
+
+#Korea Ask China Base
+country_event = {
+	id = korea_china.15
+	title = korea_china.15.t
+	desc = korea_china.15.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.15.a
+		log = "[GetDateText]: [This.GetName]: korea_china.15.a executed"
+		NKO = {
+			country_event = korea_china.16
+		}
+		set_temp_variable = { percent_change = 6 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.15.b
+		log = "[GetDateText]: [This.GetName]: korea_china.15.b executed"
+		NKO = {
+			country_event = korea_china.6
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Base
+country_event = {
+	id = korea_china.16
+	title = korea_china.16.t
+	desc = korea_china.16.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.16.a
+		log = "[GetDateText]: [This.GetName]: korea_china.16.a executed"
+		add_ideas = CHI_NKO_base
+	}
+}
+
+country_event = {
+	id = korea_russia.53
+	title = korea_russia.53.t
+	desc = korea_russia.53.d
+	picture = GFX_submarine
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.53.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.53.a executed"
+		set_technology = { tech_submarine_engineering_2 = 1 }
+		set_technology = { tech_submarine_engineering_3 = 1 }
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = {
+	id = NKO_spa.0
+	title = NKO_spa.0.t
+	desc = NKO_spa.0.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NKO
+		has_idea = NKO_spa_umbrella
+		NOT = { has_civil_war = yes }
+		NOT = { has_country_flag = NKO_spa_recent_session }
+	}
+
+	option = {
+		name = NKO_spa.0.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.0.a executed"
+		NKO_spa_open_session = yes
+		set_country_flag = { flag = NKO_spa_recent_session days = 100 value = 1 }
+		country_event = { id = NKO_spa.10 days = 365 }
+	}
+}
+
+# NKO_spa.1 — Session-open alert (fired by .10 cycle).
+country_event = {
+	id = NKO_spa.1
+	title = NKO_spa.1.t
+	desc = NKO_spa.1.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.1.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.1.a executed"
+	}
+}
+
+# NKO_spa.5 — Force-pick alert.
+country_event = {
+	id = NKO_spa.5
+	title = NKO_spa.5.t
+	desc = NKO_spa.5.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.5.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.5.a executed"
+	}
+}
+
+# NKO_spa.6 — Civil-war / collapse cleanup.
+country_event = {
+	id = NKO_spa.6
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		NKO_spa_suppress_for_collapse = yes
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.6 executed"
+	}
+}
+
+country_event = {
+	id = NKO_spa.10
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.10 executed"
+		hidden_effect = {
+			if = {
+				limit = {
+					original_tag = NKO
+					has_idea = NKO_spa_umbrella
+					NOT = { has_civil_war = yes }
+					NOT = { has_country_flag = NKO_spa_recent_session }
+				}
+				NKO_spa_open_session = yes
+				country_event = { id = NKO_spa.1 hours = 6 }
+				set_country_flag = { flag = NKO_spa_recent_session days = 100 value = 1 }
+			}
+			country_event = { id = NKO_spa.10 days = 365 }
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.20
+	title = NKO_spa.20.t
+	desc = NKO_spa.20.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.20.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.20.a executed"
+		add_political_power = 25
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.21
+	title = NKO_spa.21.t
+	desc = NKO_spa.21.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.21.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.21.a executed"
+		army_experience = 25
+		hidden_effect = {
+			set_temp_variable = { NKO_spa_eq_amount = 75 }
+			random_list = {
+				15 = { NKO_spa_give_latest_tank = yes }
+				15 = { NKO_spa_give_latest_apc = yes }
+				15 = { NKO_spa_give_latest_ifv = yes }
+				15 = { NKO_spa_give_latest_recon = yes }
+				15 = { NKO_spa_give_latest_sp_aa = yes }
+				15 = { NKO_spa_give_latest_sp_arty = yes }
+				10 = { NKO_spa_give_latest_sp_rocket_arty = yes }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.22
+	title = NKO_spa.22.t
+	desc = NKO_spa.22.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.22.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.22.a executed"
+		army_experience = 50
+		add_war_support = 0.03
+		add_manpower = 5000
+	}
+}
+
+country_event = {
+	id = NKO_spa.23
+	title = NKO_spa.23.t
+	desc = NKO_spa.23.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.23.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.23.a executed"
+		set_temp_variable = { treasury_change = 0.5 }
+		modify_treasury_effect = yes
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			random_list = {
+				20 = { add_resource = { type = steel amount = 2 } }
+				20 = { add_resource = { type = aluminium amount = 2 } }
+				20 = { add_resource = { type = chromium amount = 2 } }
+				20 = { add_resource = { type = tungsten amount = 2 } }
+				20 = { add_resource = { type = oil amount = 2 } }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.24
+	title = NKO_spa.24.t
+	desc = NKO_spa.24.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.24.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.24.a executed"
+		add_tech_bonus = {
+			name = NKO_spa_research_bonus
+			bonus = 0.5
+			uses = 1
+			category = CAT_computing_tech
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.25
+	title = NKO_spa.25.t
+	desc = NKO_spa.25.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.25.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.25.a executed"
+		add_stability = 0.03
+		add_manpower = 8000
+	}
+}
+
+country_event = {
+	id = NKO_spa.26
+	title = NKO_spa.26.t
+	desc = NKO_spa.26.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.26.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.26.a executed"
+		add_political_power = 25
+		set_temp_variable = { treasury_change = 0.5 }
+		modify_treasury_effect = yes
+	}
+}
+
+country_event = {
+	id = NKO_spa.27
+	title = NKO_spa.27.t
+	desc = NKO_spa.27.d
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			clr_country_flag = NKO_spa_27_rolled_factory
+			clr_country_flag = NKO_spa_27_rolled_offices
+			clr_country_flag = NKO_spa_27_rolled_refinery
+			clr_country_flag = NKO_spa_27_rolled_agri
+			random_list = {
+				25 = { set_country_flag = NKO_spa_27_rolled_factory }
+				25 = { set_country_flag = NKO_spa_27_rolled_offices }
+				25 = { set_country_flag = NKO_spa_27_rolled_refinery }
+				25 = { set_country_flag = NKO_spa_27_rolled_agri }
+			}
+		}
+	}
+
+	option = {
+		name = NKO_spa.27.factory_take
+		trigger = { has_country_flag = NKO_spa_27_rolled_factory }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.27.factory_take executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+		hidden_effect = { clr_country_flag = NKO_spa_27_rolled_factory }
+	}
+	option = {
+		name = NKO_spa.27.factory_cash
+		trigger = { has_country_flag = NKO_spa_27_rolled_factory }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.27.factory_cash executed"
+		set_temp_variable = { treasury_change = 0.5 }
+		modify_treasury_effect = yes
+		hidden_effect = { clr_country_flag = NKO_spa_27_rolled_factory }
+	}
+
+	option = {
+		name = NKO_spa.27.offices_take
+		trigger = { has_country_flag = NKO_spa_27_rolled_offices }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.27.offices_take executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = offices
+				level = 1
+				instant_build = yes
+			}
+		}
+		hidden_effect = { clr_country_flag = NKO_spa_27_rolled_offices }
+	}
+	option = {
+		name = NKO_spa.27.offices_cash
+		trigger = { has_country_flag = NKO_spa_27_rolled_offices }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.27.offices_cash executed"
+		set_temp_variable = { treasury_change = 0.75 }
+		modify_treasury_effect = yes
+		hidden_effect = { clr_country_flag = NKO_spa_27_rolled_offices }
+	}
+
+	option = {
+		name = NKO_spa.27.refinery_take
+		trigger = { has_country_flag = NKO_spa_27_rolled_refinery }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.27.refinery_take executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = synthetic_refinery
+				level = 1
+				instant_build = yes
+			}
+		}
+		hidden_effect = { clr_country_flag = NKO_spa_27_rolled_refinery }
+	}
+	option = {
+		name = NKO_spa.27.refinery_cash
+		trigger = { has_country_flag = NKO_spa_27_rolled_refinery }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.27.refinery_cash executed"
+		set_temp_variable = { treasury_change = 0.45 }
+		modify_treasury_effect = yes
+		hidden_effect = { clr_country_flag = NKO_spa_27_rolled_refinery }
+	}
+
+	option = {
+		name = NKO_spa.27.agri_take
+		trigger = { has_country_flag = NKO_spa_27_rolled_agri }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.27.agri_take executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = agriculture_district
+				level = 1
+				instant_build = yes
+			}
+		}
+		hidden_effect = { clr_country_flag = NKO_spa_27_rolled_agri }
+	}
+	option = {
+		name = NKO_spa.27.agri_cash
+		trigger = { has_country_flag = NKO_spa_27_rolled_agri }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.27.agri_cash executed"
+		set_temp_variable = { treasury_change = 0.45 }
+		modify_treasury_effect = yes
+		hidden_effect = { clr_country_flag = NKO_spa_27_rolled_agri }
+	}
+}
+
+country_event = {
+	id = NKO_spa.30
+	title = NKO_spa.30.t
+	desc = NKO_spa.30.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.30.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.30.a executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+		}
+		hidden_effect = { country_event = { id = NKO_spa.31 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.31
+	title = NKO_spa.31.t
+	desc = NKO_spa.31.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.31.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.31.a executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+		hidden_effect = { country_event = { id = NKO_spa.32 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.32
+	title = NKO_spa.32.t
+	desc = NKO_spa.32.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.32.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.32.a executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.33
+	title = NKO_spa.33.t
+	desc = NKO_spa.33.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.33.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.33.a executed"
+		set_temp_variable = { NKO_spa_eq_amount = 1000 }
+		NKO_spa_give_latest_inf_weapons = yes
+		hidden_effect = { country_event = { id = NKO_spa.34 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.34
+	title = NKO_spa.34.t
+	desc = NKO_spa.34.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.34.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.34.a executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
+			}
+		}
+		hidden_effect = { country_event = { id = NKO_spa.35 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.35
+	title = NKO_spa.35.t
+	desc = NKO_spa.35.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.35.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.35.a executed"
+		set_temp_variable = { NKO_spa_eq_amount = 1500 }
+		NKO_spa_give_latest_inf_weapons = yes
+		army_experience = 25
+	}
+}
+
+country_event = {
+	id = NKO_spa.36
+	title = NKO_spa.36.t
+	desc = NKO_spa.36.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.36.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.36.a executed"
+		army_experience = 50
+		navy_experience = 50
+		air_experience = 50
+		add_war_support = 0.02
+		add_manpower = 5000
+		hidden_effect = { country_event = { id = NKO_spa.37 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.37
+	title = NKO_spa.37.t
+	desc = NKO_spa.37.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.37.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.37.a executed"
+		army_experience = 75
+		navy_experience = 75
+		air_experience = 75
+		add_war_support = 0.03
+		add_manpower = 5000
+		hidden_effect = { country_event = { id = NKO_spa.38 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.38
+	title = NKO_spa.38.t
+	desc = NKO_spa.38.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.38.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.38.a executed"
+		army_experience = 100
+		navy_experience = 100
+		air_experience = 100
+		add_war_support = 0.05
+		add_manpower = 5000
+	}
+}
+
+country_event = {
+	id = NKO_spa.39
+	title = NKO_spa.39.t
+	desc = NKO_spa.39.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.39.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.39.a executed"
+		set_temp_variable = { treasury_change = 0.3 }
+		modify_treasury_effect = yes
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_resource = {
+				type = steel
+				amount = 2
+			}
+		}
+		hidden_effect = { country_event = { id = NKO_spa.40 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.40
+	title = NKO_spa.40.t
+	desc = NKO_spa.40.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.40.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.40.a executed"
+		set_temp_variable = { treasury_change = 0.4 }
+		modify_treasury_effect = yes
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_resource = {
+				type = aluminium
+				amount = 2
+			}
+		}
+		hidden_effect = { country_event = { id = NKO_spa.41 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.41
+	title = NKO_spa.41.t
+	desc = NKO_spa.41.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.41.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.41.a executed"
+		set_temp_variable = { treasury_change = 0.5 }
+		modify_treasury_effect = yes
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_resource = {
+				type = chromium
+				amount = 2
+			}
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.42
+	title = NKO_spa.42.t
+	desc = NKO_spa.42.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.42.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.42.a executed"
+		hidden_effect = {
+			random_list = {
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_industry bonus = 0.5 uses = 1 category = CAT_industry } }
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_computing bonus = 0.5 uses = 1 category = CAT_computing_tech } }
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_infantry bonus = 0.5 uses = 1 category = CAT_inf } }
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_armor bonus = 0.5 uses = 1 category = CAT_armor } }
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_artillery bonus = 0.5 uses = 1 category = CAT_artillery } }
+			}
+			country_event = { id = NKO_spa.43 days = 30 }
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.43
+	title = NKO_spa.43.t
+	desc = NKO_spa.43.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.43.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.43.a executed"
+		hidden_effect = {
+			random_list = {
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_aircraft bonus = 0.5 uses = 1 category = CAT_air_eqp } }
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_naval bonus = 0.5 uses = 1 category = CAT_naval_all } }
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_aa bonus = 0.5 uses = 1 category = CAT_aa } }
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_at bonus = 0.5 uses = 1 category = CAT_at } }
+				20 = { add_tech_bonus = { name = NKO_spa_research_bonus_inf bonus = 0.5 uses = 1 category = CAT_inf } }
+			}
+			country_event = { id = NKO_spa.44 days = 30 }
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.44
+	title = NKO_spa.44.t
+	desc = NKO_spa.44.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.44.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.44.a executed"
+		add_tech_bonus = {
+			name = NKO_spa_research_bonus_general_industry
+			bonus = 0.75
+			uses = 1
+			ahead_reduction = 1
+			category = CAT_industry
+		}
+		add_tech_bonus = {
+			name = NKO_spa_research_bonus_general_electronics
+			bonus = 0.75
+			uses = 1
+			ahead_reduction = 1
+			category = CAT_computing_tech
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.45
+	title = NKO_spa.45.t
+	desc = NKO_spa.45.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.45.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.45.a executed"
+		add_stability = 0.03
+		add_manpower = 5000
+		hidden_effect = { country_event = { id = NKO_spa.46 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.46
+	title = NKO_spa.46.t
+	desc = NKO_spa.46.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.46.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.46.a executed"
+		add_stability = 0.04
+		add_manpower = 10000
+		hidden_effect = { country_event = { id = NKO_spa.47 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.47
+	title = NKO_spa.47.t
+	desc = NKO_spa.47.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.47.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.47.a executed"
+		add_stability = 0.05
+		add_manpower = 15000
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = agriculture_district
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+country_event = {
+	id = NKO_spa.48
+	title = NKO_spa.48.t
+	desc = NKO_spa.48.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.48.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.48.a executed"
+		add_political_power = 30
+		set_temp_variable = { int_investment_change = 0.5 }
+		modify_international_investment_effect = yes
+		hidden_effect = { country_event = { id = NKO_spa.49 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.49
+	title = NKO_spa.49.t
+	desc = NKO_spa.49.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.49.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.49.a executed"
+		add_political_power = 40
+		set_temp_variable = { int_investment_change = 0.7 }
+		modify_international_investment_effect = yes
+		hidden_effect = { country_event = { id = NKO_spa.50 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.50
+	title = NKO_spa.50.t
+	desc = NKO_spa.50.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.50.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.50.a executed"
+		add_political_power = 50
+		set_temp_variable = { int_investment_change = 1.0 }
+		modify_international_investment_effect = yes
+	}
+}
+
+country_event = {
+	id = NKO_spa.51
+	title = NKO_spa.51.t
+	desc = NKO_spa.51.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.51.military
+		trigger = { has_idea = the_military }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.51.military executed"
+		set_temp_variable = { temp_opinion = 15 }
+		change_the_military_opinion = yes
+		hidden_effect = { country_event = { id = NKO_spa.52 days = 30 } }
+	}
+	option = {
+		name = NKO_spa.51.cadres
+		trigger = { has_idea = communist_cadres }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.51.cadres executed"
+		set_temp_variable = { temp_opinion = 15 }
+		change_communist_cadres_opinion = yes
+		hidden_effect = { country_event = { id = NKO_spa.52 days = 30 } }
+	}
+	option = {
+		name = NKO_spa.51.donju
+		trigger = { has_idea = the_donju }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.51.donju executed"
+		set_temp_variable = { temp_opinion = 15 }
+		change_the_donju_opinion = yes
+		hidden_effect = { country_event = { id = NKO_spa.52 days = 30 } }
+	}
+	option = {
+		name = NKO_spa.51.farmers
+		trigger = { has_idea = farmers }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.51.farmers executed"
+		set_temp_variable = { temp_opinion = 15 }
+		change_farmers_opinion = yes
+		hidden_effect = { country_event = { id = NKO_spa.52 days = 30 } }
+	}
+	option = {
+		name = NKO_spa.51.labour
+		trigger = { has_idea = labour_unions }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.51.labour executed"
+		set_temp_variable = { temp_opinion = 15 }
+		change_labour_unions_opinion = yes
+		hidden_effect = { country_event = { id = NKO_spa.52 days = 30 } }
+	}
+	option = {
+		name = NKO_spa.51.none
+		trigger = {
+			NOT = { has_idea = the_military }
+			NOT = { has_idea = communist_cadres }
+			NOT = { has_idea = the_donju }
+			NOT = { has_idea = farmers }
+			NOT = { has_idea = labour_unions }
+		}
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.51.none executed"
+		add_political_power = 25
+		hidden_effect = { country_event = { id = NKO_spa.52 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.52
+	title = NKO_spa.52.t
+	desc = NKO_spa.52.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.52.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.52.a executed"
+		random_owned_controlled_state = {
+			limit = { is_capital = no }
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+		hidden_effect = { country_event = { id = NKO_spa.53 days = 30 } }
+	}
+}
+
+country_event = {
+	id = NKO_spa.53
+	title = NKO_spa.53.t
+	desc = NKO_spa.53.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_spa.53.a
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.53.a executed"
+		add_political_power = 50
+		add_stability = 0.03
+		set_temp_variable = { treasury_change = 0.2 }
+		modify_treasury_effect = yes
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.1
+	title = nko_naval_buildup.1.t
+	desc = nko_naval_buildup.1.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.1.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.1.a executed"
+		hidden_effect = {
+			country_event = { id = nko_naval_buildup.50 days = 30 }
+		}
+	}
+}
+
+# --- Submarine track router ---------------------------------
+country_event = {
+	id = nko_naval_buildup.10
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				check_variable = { NKO_submarine_progress > 99 }
+				NOT = { has_country_flag = NKO_sub_tier_4_reached }
+			}
+			set_country_flag = NKO_sub_tier_4_reached
+			swap_ideas = {
+				remove_idea = NKO_sub_tier_3
+				add_idea = NKO_sub_tier_4
+			}
+			country_event = { id = nko_naval_buildup.14 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_submarine_progress > 74 }
+				NOT = { has_country_flag = NKO_sub_tier_3_reached }
+			}
+			set_country_flag = NKO_sub_tier_3_reached
+			swap_ideas = {
+				remove_idea = NKO_sub_tier_2
+				add_idea = NKO_sub_tier_3
+			}
+			country_event = { id = nko_naval_buildup.13 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_submarine_progress > 49 }
+				NOT = { has_country_flag = NKO_sub_tier_2_reached }
+			}
+			set_country_flag = NKO_sub_tier_2_reached
+			swap_ideas = {
+				remove_idea = NKO_sub_tier_1
+				add_idea = NKO_sub_tier_2
+			}
+			country_event = { id = nko_naval_buildup.12 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_submarine_progress > 24 }
+				NOT = { has_country_flag = NKO_sub_tier_1_reached }
+			}
+			set_country_flag = NKO_sub_tier_1_reached
+			add_ideas = NKO_sub_tier_1
+			country_event = { id = nko_naval_buildup.11 days = 0 }
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.11
+	title = nko_naval_buildup.11.t
+	desc = nko_naval_buildup.11.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.11.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.11.a executed"
+		navy_experience = 13
+		NKO_naval_buildup_grant_mastery_naval = yes
+		add_manpower = 300
+		add_timed_idea = { idea = NKO_sub_drill_momentum days = 60 }
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.12
+	title = nko_naval_buildup.12.t
+	desc = nko_naval_buildup.12.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.12.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.12.a executed"
+		navy_experience = 15
+		NKO_naval_buildup_grant_mastery_naval = yes
+		add_manpower = 500
+		if = {
+			limit = { has_tech = attack_submarine_hull_3 }
+			add_tech_bonus = {
+				name = nko_naval_buildup_yono_bonus
+				bonus = 0.2
+				uses = 1
+				category = CAT_sub
+			}
+		}
+		else = {
+			add_tech_bonus = {
+				name = nko_naval_buildup_yono_bonus
+				bonus = 0.5
+				uses = 1
+				category = CAT_sub
+			}
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.13
+	title = nko_naval_buildup.13.t
+	desc = nko_naval_buildup.13.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.13.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.13.a executed"
+		navy_experience = 20
+		NKO_naval_buildup_grant_mastery_naval = yes
+		set_temp_variable = { treasury_change = 0.5 }
+		modify_treasury_effect = yes
+		add_timed_idea = { idea = NKO_sub_drill_momentum days = 90 }
+		set_temp_variable = { NKO_naval_eq_amount = 4 }
+		NKO_naval_grant_latest_attack_sub = yes
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.14
+	title = nko_naval_buildup.14.t
+	desc = nko_naval_buildup.14.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.14.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.14.a executed"
+		navy_experience = 38
+		NKO_naval_buildup_grant_mastery_naval = yes
+		add_war_support = 0.05
+		add_manpower = 1500
+		if = {
+			limit = {
+				has_tech = attack_submarine_hull_3
+				has_tech = missile_submarine_hull_3
+			}
+			add_tech_bonus = {
+				name = nko_naval_buildup_sinpo_bonus
+				bonus = 0.4
+				uses = 1
+				category = CAT_sub
+			}
+		}
+		else = {
+			add_tech_bonus = {
+				name = nko_naval_buildup_sinpo_bonus
+				bonus = 1.0
+				uses = 2
+				category = CAT_sub
+			}
+		}
+		set_temp_variable = { NKO_naval_eq_amount = 2 }
+		NKO_naval_grant_latest_missile_sub = yes
+		hidden_effect = {
+			country_event = { id = nko_naval_buildup.60 days = 2 }
+		}
+	}
+}
+
+# --- Missile boat track router ------------------------------
+country_event = {
+	id = nko_naval_buildup.20
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				check_variable = { NKO_missile_boat_progress > 99 }
+				NOT = { has_country_flag = NKO_mb_tier_4_reached }
+			}
+			set_country_flag = NKO_mb_tier_4_reached
+			swap_ideas = {
+				remove_idea = NKO_mb_tier_3
+				add_idea = NKO_mb_tier_4
+			}
+			country_event = { id = nko_naval_buildup.24 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_missile_boat_progress > 74 }
+				NOT = { has_country_flag = NKO_mb_tier_3_reached }
+			}
+			set_country_flag = NKO_mb_tier_3_reached
+			swap_ideas = {
+				remove_idea = NKO_mb_tier_2
+				add_idea = NKO_mb_tier_3
+			}
+			country_event = { id = nko_naval_buildup.23 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_missile_boat_progress > 49 }
+				NOT = { has_country_flag = NKO_mb_tier_2_reached }
+			}
+			set_country_flag = NKO_mb_tier_2_reached
+			swap_ideas = {
+				remove_idea = NKO_mb_tier_1
+				add_idea = NKO_mb_tier_2
+			}
+			country_event = { id = nko_naval_buildup.22 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_missile_boat_progress > 24 }
+				NOT = { has_country_flag = NKO_mb_tier_1_reached }
+			}
+			set_country_flag = NKO_mb_tier_1_reached
+			add_ideas = NKO_mb_tier_1
+			country_event = { id = nko_naval_buildup.21 days = 0 }
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.21
+	title = nko_naval_buildup.21.t
+	desc = nko_naval_buildup.21.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.21.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.21.a executed"
+		navy_experience = 10
+		NKO_naval_buildup_grant_mastery_naval = yes
+		add_manpower = 200
+		add_timed_idea = { idea = NKO_mb_swarm_momentum days = 60 }
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.22
+	title = nko_naval_buildup.22.t
+	desc = nko_naval_buildup.22.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.22.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.22.a executed"
+		navy_experience = 15
+		NKO_naval_buildup_grant_mastery_naval = yes
+		add_manpower = 500
+		set_temp_variable = { treasury_change = 0.3 }
+		modify_treasury_effect = yes
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.23
+	title = nko_naval_buildup.23.t
+	desc = nko_naval_buildup.23.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.23.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.23.a executed"
+		navy_experience = 20
+		NKO_naval_buildup_grant_mastery_naval = yes
+		if = {
+			limit = { has_tech = destroyer_hull_3 }
+			add_tech_bonus = {
+				name = nko_naval_buildup_kumsong_bonus
+				bonus = 0.3
+				uses = 1
+				category = CAT_naval_modules
+			}
+		}
+		else = {
+			add_tech_bonus = {
+				name = nko_naval_buildup_kumsong_bonus
+				bonus = 0.75
+				uses = 1
+				category = CAT_naval_modules
+			}
+		}
+		add_timed_idea = { idea = NKO_mb_swarm_momentum days = 90 }
+		set_temp_variable = { NKO_naval_eq_amount = 6 }
+		NKO_naval_grant_latest_frigate = yes
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.24
+	title = nko_naval_buildup.24.t
+	desc = nko_naval_buildup.24.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.24.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.24.a executed"
+		navy_experience = 30
+		NKO_naval_buildup_grant_mastery_naval = yes
+		add_war_support = 0.04
+		if = {
+			limit = { has_tech = destroyer_hull_3 }
+			add_tech_bonus = {
+				name = nko_naval_buildup_wolfpack_bonus
+				bonus = 0.2
+				uses = 1
+				category = CAT_naval_doctrine
+			}
+		}
+		else = {
+			add_tech_bonus = {
+				name = nko_naval_buildup_wolfpack_bonus
+				bonus = 0.5
+				uses = 1
+				category = CAT_naval_doctrine
+			}
+		}
+		set_temp_variable = { NKO_naval_eq_amount = 4 }
+		NKO_naval_grant_latest_destroyer = yes
+		hidden_effect = {
+			country_event = { id = nko_naval_buildup.61 days = 2 }
+		}
+	}
+}
+
+# --- Coastal defense track router ---------------------------
+country_event = {
+	id = nko_naval_buildup.30
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				check_variable = { NKO_coastal_defense_progress > 99 }
+				NOT = { has_country_flag = NKO_cd_tier_4_reached }
+			}
+			set_country_flag = NKO_cd_tier_4_reached
+			swap_ideas = {
+				remove_idea = NKO_cd_tier_3
+				add_idea = NKO_cd_tier_4
+			}
+			country_event = { id = nko_naval_buildup.34 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_coastal_defense_progress > 74 }
+				NOT = { has_country_flag = NKO_cd_tier_3_reached }
+			}
+			set_country_flag = NKO_cd_tier_3_reached
+			swap_ideas = {
+				remove_idea = NKO_cd_tier_2
+				add_idea = NKO_cd_tier_3
+			}
+			country_event = { id = nko_naval_buildup.33 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_coastal_defense_progress > 49 }
+				NOT = { has_country_flag = NKO_cd_tier_2_reached }
+			}
+			set_country_flag = NKO_cd_tier_2_reached
+			swap_ideas = {
+				remove_idea = NKO_cd_tier_1
+				add_idea = NKO_cd_tier_2
+			}
+			country_event = { id = nko_naval_buildup.32 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_coastal_defense_progress > 24 }
+				NOT = { has_country_flag = NKO_cd_tier_1_reached }
+			}
+			set_country_flag = NKO_cd_tier_1_reached
+			add_ideas = NKO_cd_tier_1
+			country_event = { id = nko_naval_buildup.31 days = 0 }
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.31
+	title = nko_naval_buildup.31.t
+	desc = nko_naval_buildup.31.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.31.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.31.a executed"
+		army_experience = 13
+		NKO_naval_buildup_grant_mastery_land = yes
+		add_manpower = 800
+		601 = {
+			add_building_construction = {
+				type = coastal_bunker
+				level = 1
+				province = 6944
+				instant_build = yes
+			}
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.32
+	title = nko_naval_buildup.32.t
+	desc = nko_naval_buildup.32.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.32.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.32.a executed"
+		army_experience = 15
+		NKO_naval_buildup_grant_mastery_land = yes
+		add_manpower = 500
+		add_timed_idea = { idea = NKO_cd_bunker_momentum days = 60 }
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.33
+	title = nko_naval_buildup.33.t
+	desc = nko_naval_buildup.33.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.33.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.33.a executed"
+		army_experience = 20
+		NKO_naval_buildup_grant_mastery_land = yes
+		601 = {
+			add_building_construction = {
+				type = coastal_bunker
+				level = 2
+				province = 6822
+				instant_build = yes
+			}
+		}
+		add_timed_idea = { idea = NKO_cd_bunker_momentum days = 90 }
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.34
+	title = nko_naval_buildup.34.t
+	desc = nko_naval_buildup.34.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.34.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.34.a executed"
+		army_experience = 30
+		NKO_naval_buildup_grant_mastery_land = yes
+		add_war_support = 0.05
+		add_tech_bonus = {
+			name = nko_naval_buildup_ashm_bonus
+			bonus = 0.5
+			uses = 1
+			category = CAT_cm
+		}
+		hidden_effect = {
+			country_event = { id = nko_naval_buildup.62 days = 2 }
+		}
+	}
+}
+
+# --- Naval special operations track router ------------------
+country_event = {
+	id = nko_naval_buildup.40
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				check_variable = { NKO_naval_specops_progress > 99 }
+				NOT = { has_country_flag = NKO_so_tier_4_reached }
+			}
+			set_country_flag = NKO_so_tier_4_reached
+			swap_ideas = {
+				remove_idea = NKO_so_tier_3
+				add_idea = NKO_so_tier_4
+			}
+			country_event = { id = nko_naval_buildup.44 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_naval_specops_progress > 74 }
+				NOT = { has_country_flag = NKO_so_tier_3_reached }
+			}
+			set_country_flag = NKO_so_tier_3_reached
+			swap_ideas = {
+				remove_idea = NKO_so_tier_2
+				add_idea = NKO_so_tier_3
+			}
+			country_event = { id = nko_naval_buildup.43 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_naval_specops_progress > 49 }
+				NOT = { has_country_flag = NKO_so_tier_2_reached }
+			}
+			set_country_flag = NKO_so_tier_2_reached
+			swap_ideas = {
+				remove_idea = NKO_so_tier_1
+				add_idea = NKO_so_tier_2
+			}
+			country_event = { id = nko_naval_buildup.42 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_naval_specops_progress > 24 }
+				NOT = { has_country_flag = NKO_so_tier_1_reached }
+			}
+			set_country_flag = NKO_so_tier_1_reached
+			add_ideas = NKO_so_tier_1
+			country_event = { id = nko_naval_buildup.41 days = 0 }
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.41
+	title = nko_naval_buildup.41.t
+	desc = nko_naval_buildup.41.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.41.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.41.a executed"
+		army_experience = 10
+		NKO_naval_buildup_grant_mastery_sf = yes
+		add_manpower = 1000
+		add_timed_idea = { idea = NKO_so_recon_momentum days = 60 }
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.42
+	title = nko_naval_buildup.42.t
+	desc = nko_naval_buildup.42.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.42.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.42.a executed"
+		army_experience = 18
+		NKO_naval_buildup_grant_mastery_sf = yes
+		add_manpower = 600
+		add_tech_bonus = {
+			name = nko_naval_buildup_sniper_bonus
+			bonus = 0.5
+			uses = 1
+			category = CAT_inf
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.43
+	title = nko_naval_buildup.43.t
+	desc = nko_naval_buildup.43.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.43.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.43.a executed"
+		army_experience = 23
+		NKO_naval_buildup_grant_mastery_sf = yes
+		add_manpower = 800
+		add_timed_idea = { idea = NKO_so_recon_momentum days = 90 }
+		set_temp_variable = { NKO_spa_eq_amount = 1500 }
+		NKO_spa_give_latest_inf_weapons = yes
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.44
+	title = nko_naval_buildup.44.t
+	desc = nko_naval_buildup.44.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.44.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.44.a executed"
+		army_experience = 35
+		NKO_naval_buildup_grant_mastery_sf = yes
+		add_war_support = 0.05
+		add_manpower = 1200
+		add_tech_bonus = {
+			name = nko_naval_buildup_storm_corps_bonus
+			bonus = 0.5
+			uses = 1
+			category = CAT_land_doctrine
+		}
+		set_temp_variable = { NKO_spa_eq_amount = 2500 }
+		NKO_spa_give_latest_inf_weapons = yes
+		hidden_effect = {
+			country_event = { id = nko_naval_buildup.63 days = 2 }
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.50
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				has_country_flag = NKO_naval_buildup_unlocked
+				NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
+				NOT = { has_country_flag = NKO_naval_buildup_recent_incident }
+				NOT = { has_civil_war = yes }
+			}
+			set_country_flag = {
+				flag = NKO_naval_buildup_recent_incident
+				days = 30
+				value = 1
+			}
+			random_list = {
+				20 = { country_event = { id = nko_naval_buildup.51 days = 0 } }
+				20 = { country_event = { id = nko_naval_buildup.52 days = 0 } }
+				20 = { country_event = { id = nko_naval_buildup.53 days = 0 } }
+				15 = { country_event = { id = nko_naval_buildup.54 days = 0 } }
+				15 = { country_event = { id = nko_naval_buildup.55 days = 0 } }
+				10 = { country_event = { id = nko_naval_buildup.56 days = 0 } }
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = NKO_naval_buildup_unlocked
+				NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
+			}
+			country_event = { id = nko_naval_buildup.50 days = 60 }
+		}
+	}
+}
+
+# .51 Naval Drill at Wonsan (submarine theme)
+country_event = {
+	id = nko_naval_buildup.51
+	title = nko_naval_buildup.51.t
+	desc = nko_naval_buildup.51.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.51.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.51.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_stability = -0.01
+		add_war_support = 0.01
+	}
+	option = {
+		name = nko_naval_buildup.51.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.51.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.51.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.51.c executed"
+		add_political_power = 25
+	}
+}
+
+# .52 Foreign Recon Vessel Sighted (coastal theme)
+country_event = {
+	id = nko_naval_buildup.52
+	title = nko_naval_buildup.52.t
+	desc = nko_naval_buildup.52.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.52.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.52.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_stability = -0.01
+	}
+	option = {
+		name = nko_naval_buildup.52.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.52.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.52.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.52.c executed"
+		add_political_power = 15
+	}
+}
+
+# .53 Submarine Defection Crisis (sub / SF theme)
+country_event = {
+	id = nko_naval_buildup.53
+	title = nko_naval_buildup.53.t
+	desc = nko_naval_buildup.53.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.53.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.53.a executed"
+		add_to_variable = { var = NKO_naval_points value = 3 }
+		add_stability = -0.02
+		add_political_power = -10
+	}
+	option = {
+		name = nko_naval_buildup.53.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.53.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.53.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.53.c executed"
+		add_stability = 0.01
+	}
+}
+
+# .54 Nampo Yard Workers Exceed Quota (industrial)
+country_event = {
+	id = nko_naval_buildup.54
+	title = nko_naval_buildup.54.t
+	desc = nko_naval_buildup.54.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.54.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.54.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_stability = 0.01
+		add_political_power = -10
+	}
+	option = {
+		name = nko_naval_buildup.54.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.54.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+}
+
+# .55 Reconnaissance Bureau Mission Brief (SF theme)
+country_event = {
+	id = nko_naval_buildup.55
+	title = nko_naval_buildup.55.t
+	desc = nko_naval_buildup.55.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.55.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_war_support = 0.01
+		add_stability = -0.01
+	}
+	option = {
+		name = nko_naval_buildup.55.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.55.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.c executed"
+		add_political_power = 15
+	}
+}
+
+# .56 Smuggler Vessel Caught (coastal / propaganda)
+country_event = {
+	id = nko_naval_buildup.56
+	title = nko_naval_buildup.56.t
+	desc = nko_naval_buildup.56.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.56.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.56.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_war_support = 0.02
+	}
+	option = {
+		name = nko_naval_buildup.56.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.56.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.56.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.56.c executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+		add_stability = -0.01
+		add_political_power = 25
+	}
+}
+
+# --- Track-completion milestone events ----------------------
+# Fire 2 days after each tier-4 flavor event (.14/.24/.34/.44) when a track
+# reaches 100. Single-fire per game; gated by has_country_flag check.
+# Grant substantial concrete bonuses: equipment stockpile bursts, free
+# coastal-state buildings, manpower / war_support / experience.
+country_event = {
+	id = nko_naval_buildup.60
+	title = nko_naval_buildup.60.t
+	desc = nko_naval_buildup.60.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nko_naval_buildup.60.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.60.a executed"
+		navy_experience = 100
+		add_war_support = 0.05
+		add_manpower = 3000
+		add_to_variable = { NKO_naval_tracks_at_max = 1 }
+		603 = {
+			add_building_construction = {
+				type = naval_base
+				level = 2
+				province = 1003
+				instant_build = yes
+			}
+		}
+		set_temp_variable = { treasury_change = 1.0 }
+		modify_treasury_effect = yes
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.61
+	title = nko_naval_buildup.61.t
+	desc = nko_naval_buildup.61.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nko_naval_buildup.61.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.61.a executed"
+		navy_experience = 100
+		add_war_support = 0.05
+		add_manpower = 2500
+		add_to_variable = { NKO_naval_tracks_at_max = 1 }
+		random_owned_controlled_state = {
+			limit = { is_coastal = yes }
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = dockyard
+				level = 2
+				instant_build = yes
+			}
+		}
+		set_temp_variable = { treasury_change = 1.0 }
+		modify_treasury_effect = yes
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.62
+	title = nko_naval_buildup.62.t
+	desc = nko_naval_buildup.62.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nko_naval_buildup.62.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.62.a executed"
+		army_experience = 100
+		add_stability = 0.05
+		add_war_support = 0.05
+		add_manpower = 8000
+		add_to_variable = { NKO_naval_tracks_at_max = 1 }
+		601 = {
+			add_building_construction = {
+				type = coastal_bunker
+				level = 3
+				province = 6944
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = coastal_bunker
+				level = 3
+				province = 6822
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = coastal_bunker
+				level = 3
+				province = 6922
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = coastal_bunker
+				level = 3
+				province = 6928
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = coastal_bunker
+				level = 3
+				province = 3852
+				instant_build = yes
+			}
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.63
+	title = nko_naval_buildup.63.t
+	desc = nko_naval_buildup.63.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nko_naval_buildup.63.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.63.a executed"
+		army_experience = 100
+		add_war_support = 0.07
+		add_manpower = 5000
+		add_to_variable = { NKO_naval_tracks_at_max = 1 }
+		set_temp_variable = { NKO_spa_eq_amount = 5000 }
+		NKO_spa_give_latest_inf_weapons = yes
+		add_timed_idea = { idea = NKO_so_recon_momentum days = 365 }
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.70
+	title = nko_naval_buildup.70.t
+	desc = nko_naval_buildup.70.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nko_naval_buildup.70.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.70.a executed"
+		navy_experience = 13
+		add_war_support = 0.03
+		add_political_power = 25
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.71
+	title = nko_naval_buildup.71.t
+	desc = nko_naval_buildup.71.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nko_naval_buildup.71.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.71.a executed"
+		navy_experience = 15
+		add_manpower = 600
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.72
+	title = nko_naval_buildup.72.t
+	desc = nko_naval_buildup.72.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nko_naval_buildup.72.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.72.a executed"
+		navy_experience = 15
+		add_manpower = 500
+		set_temp_variable = { NKO_naval_eq_amount = 2 }
+		NKO_naval_grant_latest_attack_sub = yes
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.73
+	title = nko_naval_buildup.73.t
+	desc = nko_naval_buildup.73.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nko_naval_buildup.73.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.73.a executed"
+		navy_experience = 25
+		add_war_support = 0.05
+		add_manpower = 1000
+	}
+}
+
+# --- Capstone news event ------------------------------------
+news_event = {
+	id = nko_naval_buildup.99
+	title = nko_naval_buildup.99.t
+	desc = nko_naval_buildup.99.d
+	picture = GFX_submarine
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.99.a
+		trigger = { original_tag = NKO }
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.99.a executed"
+	}
+
+	option = {
+		name = nko_naval_buildup.99.b
+		trigger = { NOT = { original_tag = NKO } }
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.99.b executed"
+	}
+}
+
+#############################################################
+# Second Economic Committee — arms & manpower export events  #
+#############################################################
+# Russia requests artillery shells and rockets while at war. Fired from
+# 99_NKO_on_actions.txt (on_monthly) when SOV is at war and off cooldown.
+country_event = {
+	id = NKO_export.1
+	title = NKO_export.1.t
+	desc = NKO_export.1.d
+	picture = GFX_north_korea_russia
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.1.a # Fulfil the order — shells, rockets, and a generous price
+		log = "[GetDateText]: [This.GetName]: NKO_export.1.a executed"
+		set_temp_variable = { NKO_arms_client_id = SOV.id }
+		SOV = { save_event_target_as = NKO_arms_client }
+		NKO_export_do_munitions = yes
+		set_temp_variable = { NKO_arms_export_payment = 2 }
+		NKO_arms_export_credit_payment = yes
+		add_tech_bonus = { name = MBT_4 bonus = 0.5 uses = 1 category = CAT_mbt }
+		add_tech_bonus = { name = microprocessors bonus = 0.5 uses = 1 category = CAT_computing_tech }
+		ai_chance = { factor = 80 }
+	}
+
+	option = {
+		name = NKO_export.1.b # Not at this time
+		log = "[GetDateText]: [This.GetName]: NKO_export.1.b executed"
+		ai_chance = { factor = 20 }
+	}
+}
+
+# North Korea offers a conventional arms package. Fired by the arms-export decision
+# (NKO_export_munitions). ROOT = the client being offered; FROM = North Korea.
+# AI accepts when it is losing its war.
+country_event = {
+	id = NKO_export.10
+	title = NKO_export.10.t
+	desc = NKO_export.10.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.10.a # Accept the shipment
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.a executed from [FROM.GetTag]"
+		FROM = { country_event = { id = NKO_export.11 days = 1 } }
+		ai_chance = {
+			factor = 80
+			modifier = { factor = 3  surrender_progress > 0.5 }
+		}
+	}
+
+	option = {
+		name = NKO_export.10.b # Decline the offer
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.b executed from [FROM.GetTag]"
+		FROM = { country_event = { id = NKO_export.12 days = 1 } }
+		ai_chance = {
+			factor = 20
+			modifier = { factor = 0  surrender_progress > 0.5 }
+		}
+	}
+}
+
+# The client accepted our arms package. FROM = the accepting client. Delivers the
+# equipment from our stockpile, grants the client the munitions idea, pays us, and
+# registers the deal.
+country_event = {
+	id = NKO_export.11
+	title = NKO_export.11.t
+	desc = NKO_export.11.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	immediate = {
+		set_temp_variable = { NKO_arms_client_id = FROM.id }
+		FROM = { save_event_target_as = NKO_arms_client }
+		NKO_export_do_munitions = yes
+	}
+
+	option = {
+		name = NKO_export.11.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.11.a executed from [FROM.GetTag]"
+	}
+}
+
+# The client declined our arms package. FROM = the declining client.
+country_event = {
+	id = NKO_export.12
+	title = NKO_export.12.t
+	desc = NKO_export.12.d
+	picture = GFX_decision_nko_armor_button
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.12.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.12.a executed from [FROM.GetTag]"
+	}
+}
+
+# Capstone — ten nations supplied. Fired from the NKO_arms_export_capstone decision.
+country_event = {
+	id = NKO_export.99
+	title = NKO_export.99.t
+	desc = NKO_export.99.d
+	picture = GFX_NKO_russian_treaty
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.99.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.99.a executed"
+	}
+}
+
+# North Korea offers to deploy intervention forces. Fired by the Storm Corps
+# decision (NKO_export_do_troops). FROM = North Korea. The host's acceptance is
+# what grants Pyongyang military access.
+country_event = {
+	id = NKO_export.22
+	title = NKO_export.22.t
+	desc = NKO_export.22.d
+	picture = GFX_decision_sov_nko_soldiers
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.22.a # Accept the intervention force
+		log = "[GetDateText]: [This.GetName]: NKO_export.22.a executed from [FROM.GetTag]"
+		add_opinion_modifier = { target = FROM modifier = trade_mission }
+		FROM = {
+			set_rule = { can_send_volunteers = yes }
+			country_event = { id = NKO_export.23 days = 1 }
+		}
+		ai_chance = {
+			factor = 80
+			modifier = { factor = 2  surrender_progress > 0.5 }
+		}
+	}
+
+	option = {
+		name = NKO_export.22.b # Decline
+		log = "[GetDateText]: [This.GetName]: NKO_export.22.b executed from [FROM.GetTag]"
+		ai_chance = { factor = 20 }
+	}
+}
+
+# Hidden finalize on the North Korean side once the host accepts. FROM = the
+# accepting host. Registers the deal and starts the manpower watch.
+country_event = {
+	id = NKO_export.23
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_temp_variable = { NKO_arms_client_id = FROM.id }
+		FROM = { save_event_target_as = NKO_arms_client }
+		NKO_export_finalize_troops = yes
+	}
+}
+
+# Hidden per-host manpower watcher. Seeded by NKO_export_finalize_troops, fires on
+# the host every 30 days while our forces are deployed. When the host runs low on
+# manpower it appeals to its patron (event_target:NKO_storm_corps_patron).
+country_event = {
+	id = NKO_export.21
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				has_war = yes
+				NOT = { has_manpower > 50000 }
+				NOT = { has_country_flag = NKO_manpower_request_cooldown }
+			}
+			set_country_flag = { flag = NKO_manpower_request_cooldown value = 1 days = 120 }
+			event_target:NKO_storm_corps_patron = { country_event = { id = NKO_export.20 days = 2 } }
+		}
+		if = {
+			limit = { has_country_flag = NKO_storm_corps_host }
+			country_event = { id = NKO_export.21 days = 30 }
+		}
+	}
+}
+
+# A host nation where the Storm Corps is deployed requests manpower
+# reinforcements. Fired from the per-host watcher (NKO_export.21) when the host is
+# low on manpower. FROM = the requesting host.
+country_event = {
+	id = NKO_export.20
+	title = NKO_export.20.t
+	desc = NKO_export.20.d
+	picture = GFX_decision_sov_nko_soldiers
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.20.a # Send a tenth of our recruitable manpower
+		log = "[GetDateText]: [This.GetName]: NKO_export.20.a executed on [FROM.GetTag]"
+		custom_effect_tooltip = NKO_export_send_manpower_tt
+		FROM = { set_temp_variable = { NKO_mp_send = manpower } }
+		multiply_temp_variable = { NKO_mp_send = 0.1 }
+		clamp_temp_variable = { var = NKO_mp_send min = 0 }
+		FROM = { add_manpower = NKO_mp_send }
+		multiply_temp_variable = { NKO_mp_send = -1 }
+		add_manpower = NKO_mp_send
+		add_opinion_modifier = { target = FROM modifier = trade_mission }
+		FROM = { add_opinion_modifier = { target = NKO modifier = trade_mission } }
+		ai_chance = { factor = 70 }
+	}
+
+	option = {
+		name = NKO_export.20.b # We cannot spare the men
+		log = "[GetDateText]: [This.GetName]: NKO_export.20.b executed on [FROM.GetTag]"
+		FROM = { add_opinion_modifier = { target = NKO modifier = declined_faction_request } }
+		ai_chance = {
+			factor = 30
+			modifier = { factor = 0  NOT = { has_manpower > 100000 } }
+		}
+	}
+}
+
+country_event = {
+	id = NKO_export.40
+	title = NKO_export.40.t
+	desc = NKO_export.40.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = NKO_export.40.a
+		log = "[GetDateText]: [This.GetName]: NKO_export.40.a executed"
+		NKO_sanctions_set_max = yes
+		add_war_support = 0.05
+		add_stability = -0.02
+	}
+
+	option = {
+		name = NKO_export.40.b
+		log = "[GetDateText]: [This.GetName]: NKO_export.40.b executed"
+		NKO_sanctions_set_max = yes
+		add_political_power = -50
+	}
+}
