@@ -78,6 +78,8 @@ FALSE_POSITIVE_FILES = frozenset(
         "MD_regional_owned_triggers.txt",  # is_<region>_state_owned
         "MD_missile_scripted_triggers.txt",  # has_<satellite>_in_orbit constellation set
         "00_law_blocking_triggers.txt",  # <law>_change_blocked full law-category set
+        "00_law_blocking_effects.txt",  # block_<law>_increase/decrease/change preset library
+        "00_internal_faction_effects.txt",  # internal-faction opinion helper library
         "00_debt_ratio_triggers.txt",  # gdp_debt_ratio_<cmp>_<n> threshold ladder
         "99_PER_scripted_triggers.txt",  # <country>_has_<cmp>_<n>_influence threshold ladder
         "99_HEZ_scripted_triggers.txt",  # HEZ_ai_can_<action> AI-gate set
