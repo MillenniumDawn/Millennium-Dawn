@@ -1,0 +1,117 @@
+name: Validator Cache (main)
+
+# Builds the shared .validation_cache on main so every PR starts warm.
+# Caches saved during pull_request runs are scoped to that PR's merge ref;
+# only caches created here on refs/heads/main are visible to all PRs
+# (restored by coding-pipeline.yml's prepare-workspace job).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "common/**"
+      - "events/**"
+      - "history/**"
+      - "localisation/**"
+      - "interface/**"
+      - "gfx/flags/**"
+      - "tools/**"
+      - ".github/workflows/validator-cache.yml"
+  # Nightly rebuild (07:00 UTC = 3 AM ET in summer, 2 AM in winter — cron is
+  # UTC and does not track DST): keeps a warm cache for the next day's PRs
+  # even on quiet days, absorbs the periodic cold rebuild when the disk
+  # cache's 7-day staleness marker expires, and keeps GitHub's
+  # 7-day-unused eviction from ever leaving PRs with no entry.
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: validator-cache-main
+  # Newest main state wins; cache commits are atomic, so a cancelled save
+  # never becomes visible.
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  # actions: read lets the post-save step verify this run's entry exists.
+  actions: read
+
+jobs:
+  build-cache:
+    name: Build validator disk cache
+    runs-on: ubuntu-latest
+    steps:
+      # Same union of directories as prepare-workspace in coding-pipeline.yml:
+      # validators cache only what is present on disk, so a narrower checkout
+      # would leave namespaces cold for every PR.
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            common
+            events
+            history
+            localisation
+            interface
+            gfx/flags
+            tools
+            resources/documentation
+            .claude
+
+      # Snapshot the hash before the validator run litters tools/ with
+      # __pycache__/ — hashFiles evaluated at save time would include the
+      # .pyc files and produce a key no clean-checkout restore can match.
+      - name: Compute validator code hash
+        id: toolshash
+        run: echo "hash=${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
+      # Warm start from the previous entry: incremental rebuild instead of a
+      # cold full scan. The primary key never exact-matches (saved keys carry
+      # a run_id suffix); the restore-keys prefixes do the real matching,
+      # newest entry first.
+      - name: Restore previous validator disk cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .validation_cache
+          key: md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}
+          restore-keys: |
+            md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
+            md-valcache-v1-${{ runner.os }}-
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
+
+      # Populates every validator's cache namespace. Non-strict, so findings
+      # on main exit 0 (cached scan results are correct either way) while a
+      # harness crash exits non-zero, fails the job, and skips the save —
+      # leaving the previous night's entry in place for PRs.
+      - name: Run all validators (cache warm-up)
+        run: python3 tools/validation/run_all_validators.py --no-color
+
+      # run_id suffix: keys are immutable and the nightly scheduled run fires
+      # on an unchanged sha — without it the rebuild could never save. PR
+      # restores prefix-match the newest entry via restore-keys.
+      - name: Save validator disk cache
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .validation_cache
+          key: md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}-${{ github.run_id }}
+
+      # cache/save only warns on failure; checking for THIS run's exact key
+      # (not any md-valcache-v1-* survivor from a previous night) makes a
+      # failed save a red run instead of PRs silently going cold.
+      - name: Verify this run's cache entry exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_KEY: md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}-${{ github.run_id }}
+        run: |
+          count=$(gh api "repos/${{ github.repository }}/actions/caches?key=${EXPECTED_KEY}&per_page=1" --jq '.total_count')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Cache entry ${EXPECTED_KEY} was not saved"
+            exit 1
+          fi
+          echo "Cache entry ${EXPECTED_KEY} confirmed"
