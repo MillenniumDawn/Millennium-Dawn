@@ -2007,16 +2007,32 @@ EU_apply_for_membership_category = {
 		}
 	}
 
-	EU_join_the_Euro = {
+	EU_join_the_euro_decision = {
 		cost = 100
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_less_than_3_5_tt
-				check_expr = { value = ROOT.interest_rate less_than = { value = 3.5 } }
-			}
-			# Danish Specific Content
 			if = { limit = { original_tag = DEN }
 				has_country_flag = DEN_accept
+			}
+			if = { limit = { original_tag = GRE }
+				has_completed_focus = GRE_convert_to_euro
+				if = { limit = { has_country_flag = GRE_hide_financial_records }
+					custom_trigger_tooltip = {
+						tooltip = interest_rate_less_than_6_5_tt
+						check_variable = { ROOT.interest_rate < 6.5 }
+					}
+				}
+				else = {
+					custom_trigger_tooltip = {
+						tooltip = interest_rate_less_than_3_5_tt
+						check_variable = { ROOT.interest_rate < 3.5 }
+					}
+				}
+			}
+			else = {
+				custom_trigger_tooltip = {
+					tooltip = interest_rate_less_than_3_5_tt
+					check_variable = { ROOT.interest_rate < 3.5 }
+				}
 			}
 			OR = {
 				has_idea = corruption_level_05
@@ -2045,7 +2061,15 @@ EU_apply_for_membership_category = {
 		fire_only_once = yes # Will not re-enable after being removed
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete EU_join_the_Euro"
+			log = "[GetDateText]: [Root.GetName]: Decision complete EU_join_the_euro_decision"
+			if = {
+				limit = {
+					original_tag = GRE
+					has_idea = GRE_the_drachma_idea
+				}
+				remove_ideas = GRE_the_drachma_idea
+				add_ideas = GRE_euro_adopted
+			}
 			joining_the_euro = yes
 		}
 
