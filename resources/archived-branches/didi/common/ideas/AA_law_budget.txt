@@ -1,0 +1,3367 @@
+ideas = {
+	bureaucracy = {
+		law = yes
+		use_list_view = yes
+
+		bureau_01 = {
+			cost = 200
+			removal_cost = -1
+			level = 1
+
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_02
+							has_idea = bureau_03
+							has_idea = bureau_04
+							has_idea = bureau_05
+						}
+						bureau_decrease_blocked = yes
+					}
+					bureau_decrease_blocked = no
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+				if = { limit = { original_tag = DEN }
+					NOT = { has_idea = DEN_special_municipal_districts_idea }
+					NOT = { has_idea = DEN_direct_governance_idea }
+				}
+				if = { limit = { original_tag = FRA }
+					NOT = { has_idea = FRA_administrative_reforms_1 }
+					NOT = { has_idea = FRA_administrative_reforms_2 }
+					NOT = { has_idea = FRA_idea_central }
+				}
+			}
+			on_add = {
+				custom_effect_tooltip = bureau_01_TT
+				if = {
+					limit = { tag = USA }
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 3 }
+				set_variable = { law_change = 1 }
+				subtract_from_variable = { law_change = bureaucracy }
+				law_attitude_change = yes
+				set_variable = { bureaucracy = 1 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea bureau_01"
+				PER_centralized_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_buru_cool_down
+						}
+					}
+					set_country_flag = PER_removed_bureau_01
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 50
+					has_idea = bureau_02
+					has_country_flag = wants_bureau_01
+				}
+				# Killswitch for the AI
+				# reference 00_desire_law_triggers.txt
+				modifier = {
+					factor = 0
+					OR = {
+						NOT = { has_country_flag = wants_bureau_01 }
+						has_bureau_idea_law_desired = yes
+					}
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		bureau_02 = {
+			cost = 80
+			removal_cost = -1
+			level = 2
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_03
+							has_idea = bureau_04
+							has_idea = bureau_05
+						}
+						bureau_decrease_blocked = yes
+					}
+					bureau_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = bureau_01
+						bureau_increase_blocked = yes
+					}
+					bureau_increase_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = bureau_01
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				if = { limit = { original_tag = DEN }
+					NOT = { has_idea = DEN_direct_governance_idea }
+				}
+				if = { limit = { original_tag = FRA }
+					NOT = { has_idea = FRA_administrative_reforms_2 }
+					NOT = { has_idea = FRA_idea_central }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea bureau_02"
+				custom_effect_tooltip = bureau_02_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 3 }
+				set_variable = { law_change = 2 }
+				subtract_from_variable = { law_change = bureaucracy }
+				law_attitude_change = yes
+				set_variable = { bureaucracy = 2 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				PER_centralized_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_buru_cool_down
+						}
+					}
+					set_country_flag = PER_removed_bureau_02
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.25
+				production_speed_buildings_factor = -0.05
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = bureau_01
+					OR = {
+						has_country_flag = wants_bureau_02
+						has_country_flag = wants_bureau_03
+						has_country_flag = wants_bureau_04
+						has_country_flag = wants_bureau_05
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = bureau_03
+					OR = {
+						has_country_flag = wants_bureau_01
+						has_country_flag = wants_bureau_02
+					}
+				}
+				modifier = {
+					factor = 0
+					has_bureau_idea_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		bureau_03 = {
+			default = yes
+			removal_cost = -1
+			level = 3
+
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_04
+							has_idea = bureau_05
+						}
+						bureau_decrease_blocked = yes
+					}
+					bureau_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_01
+							has_idea = bureau_02
+						}
+						bureau_increase_blocked = yes
+					}
+					bureau_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_01
+							has_idea = bureau_02
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				if = { limit = { original_tag = DEN }
+					NOT = { has_idea = DEN_direct_governance_idea }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = bureau_03_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 3 }
+				set_variable = { law_change = 3 }
+				subtract_from_variable = { law_change = bureaucracy }
+				law_attitude_change = yes
+				set_variable = { bureaucracy = 3 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea bureau_03"
+
+				PER_centralized_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_buru_cool_down
+						}
+					}
+					set_country_flag = PER_removed_bureau_03
+				}
+			}
+			modifier = {
+				political_power_gain = 0.50
+				production_speed_buildings_factor = -0.1
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = bureau_02
+					OR = {
+						has_country_flag = wants_bureau_03
+						has_country_flag = wants_bureau_04
+						has_country_flag = wants_bureau_05
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = bureau_04
+					OR = {
+						has_country_flag = wants_bureau_01
+						has_country_flag = wants_bureau_02
+						has_country_flag = wants_bureau_03
+					}
+				}
+				modifier = {
+					factor = 0
+					has_bureau_idea_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		bureau_04 = {
+			cost = 30
+			removal_cost = -1
+			level = 4
+
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = { original_tag = GER }
+					custom_trigger_tooltip = {
+						tooltip = GER_Grundgesetz_tt
+					}
+					NOT = {
+						hidden_trigger = {
+						has_country_flag = GER_Grundgesetz
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_idea = bureau_05
+						bureau_decrease_blocked = yes
+					}
+					bureau_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_01
+							has_idea = bureau_02
+							has_idea = bureau_03
+						}
+						bureau_increase_blocked = yes
+					}
+					bureau_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_01
+							has_idea = bureau_02
+							has_idea = bureau_03
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				if = {
+					limit = {
+						original_tag = SIN
+						has_idea = SIN_decentralize_the_government_idea
+					}
+					custom_trigger_tooltip = {
+						tooltip = SIN_decentralize_the_government_idea_trigger_tt
+						NOT = { has_idea = SIN_decentralize_the_government_idea }
+					}
+				}
+				if = {
+					limit = { original_tag = FRA }
+					NOT = { has_idea = FRA_idea_decentral }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = bureau_04_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 3 }
+				set_variable = { law_change = 4 }
+				subtract_from_variable = { law_change = bureaucracy }
+				law_attitude_change = yes
+				set_variable = { bureaucracy = 4 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				PER_centralized_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_buru_cool_down
+						}
+					}
+					set_country_flag = PER_removed_bureau_04
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.75
+				production_speed_buildings_factor = -0.15
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = bureau_03
+					OR = {
+						has_country_flag = wants_bureau_04
+						has_country_flag = wants_bureau_05
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = bureau_05
+					OR = {
+						has_country_flag = wants_bureau_01
+						has_country_flag = wants_bureau_02
+						has_country_flag = wants_bureau_03
+						has_country_flag = wants_bureau_04
+					}
+				}
+				modifier = {
+					factor = 0
+					has_bureau_idea_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		bureau_05 = {
+			cost = 10
+			removal_cost = -1
+			level = 5
+
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = { original_tag = GER }
+					custom_trigger_tooltip = {
+						tooltip = GER_Grundgesetz_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = GER_Grundgesetz
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_01
+							has_idea = bureau_02
+							has_idea = bureau_03
+							has_idea = bureau_04
+						}
+						bureau_increase_blocked = yes
+					}
+					bureau_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = bureau_01
+							has_idea = bureau_02
+							has_idea = bureau_03
+							has_idea = bureau_04
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				if = {
+					limit = {
+						original_tag = SIN
+						has_idea = SIN_decentralize_the_government_idea
+					}
+					custom_trigger_tooltip = {
+						tooltip = SIN_decentralize_the_government_idea_trigger_tt
+						NOT = { has_idea = SIN_decentralize_the_government_idea }
+					}
+				}
+				if = {
+					limit = { original_tag = FRA }
+					NOT = { has_idea = FRA_idea_decentral }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = bureau_05_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 3 }
+				set_variable = { law_change = 5 }
+				subtract_from_variable = { law_change = bureaucracy }
+				law_attitude_change = yes
+				set_variable = { bureaucracy = 5 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				PER_centralized_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_buru_cool_down
+						}
+					}
+					set_country_flag = PER_removed_bureau_05
+				}
+			}
+
+			modifier = {
+				political_power_gain = 1.0
+				production_speed_buildings_factor = -0.2
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = bureau_04
+					has_country_flag = wants_bureau_05
+				}
+				modifier = {
+					factor = 0
+					has_bureau_idea_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+	}
+	crime_fighting = {
+		law = yes
+		use_list_view = yes
+
+		police_01 = {
+			removal_cost = -1
+			level = 1
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = { original_tag = GER }
+					custom_trigger_tooltip = {
+						tooltip = GER_Grundgesetz_tt
+					}
+					NOT = {
+						hidden_trigger = {
+						has_country_flag = GER_Grundgesetz
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_02
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						police_decrease_blocked = yes
+					}
+					police_decrease_blocked = no
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = police_01_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 5 }
+				set_variable = { law_change = 1 }
+				subtract_from_variable = { law_change = crime_fighting }
+				law_attitude_change = yes
+				set_variable = { crime_fighting = 1 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_01"
+				PER_police_change = yes
+				if = {
+					limit = { original_tag = BOT }
+					BOT_update_anti_poaching = yes
+				}
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_police_cool_down
+						}
+					}
+					set_country_flag = PER_removed_police_01
+				}
+			}
+
+			modifier = {
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to reduce if is above desired level
+					factor = 15
+					has_idea = police_02
+					has_country_flag = wants_police_01
+				}
+				modifier = {
+					factor = 0
+					has_police_idea_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		police_02 = {
+			default = yes
+			removal_cost = -1
+			level = 2
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						police_decrease_blocked = yes
+					}
+					police_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = police_01
+						police_increase_blocked = yes
+					}
+					police_increase_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = police_01
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea police_02"
+				custom_effect_tooltip = police_02_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 5 }
+				set_variable = { law_change = 2 }
+				subtract_from_variable = { law_change = crime_fighting }
+				law_attitude_change = yes
+				set_variable = { crime_fighting = 2 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				PER_police_change = yes
+				if = {
+					limit = { original_tag = BOT }
+					BOT_update_anti_poaching = yes
+				}
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_police_cool_down
+						}
+					}
+					set_country_flag = PER_removed_police_02
+				}
+			}
+			modifier = {
+				command_power_gain = 0.25
+				political_power_gain = -0.1
+				stability_factor = 0.05
+				foreign_subversive_activites = -0.15
+				decryption = 1
+				planning_speed = 0.10
+				foreign_influence_defense_modifier = 0.05
+				required_garrison_factor = -0.1
+			}
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = police_01
+					OR = {
+						has_country_flag = wants_police_02
+						has_country_flag = wants_police_03
+						has_country_flag = wants_police_04
+						has_country_flag = wants_police_05
+					}
+				}
+				modifier = {
+					add = 25
+					has_idea = police_03
+					OR = {
+						has_country_flag = wants_police_01
+						has_country_flag = wants_police_02
+					}
+				}
+				modifier = {
+					factor = 0
+					has_police_idea_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		police_03 = {
+			removal_cost = -1
+			level = 3
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_04
+							has_idea = police_05
+						}
+						police_decrease_blocked = yes
+					}
+					police_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_01
+							has_idea = police_02
+						}
+						police_increase_blocked = yes
+					}
+					police_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_01
+							has_idea = police_02
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = police_03_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 5 }
+				set_variable = { law_change = 3 }
+				subtract_from_variable = { law_change = crime_fighting }
+				law_attitude_change = yes
+				set_variable = { crime_fighting = 3 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_03"
+				PER_police_change = yes
+				if = {
+					limit = { original_tag = BOT }
+					BOT_update_anti_poaching = yes
+				}
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_police_cool_down
+						}
+					}
+					set_country_flag = PER_removed_police_03
+				}
+			}
+
+			modifier = {
+				command_power_gain = 0.5
+				political_power_gain = -0.2
+				stability_factor = 0.10
+				drift_defence_factor = 0.30
+				foreign_subversive_activites = -0.35
+				decryption = 1
+				encryption = 1
+				planning_speed = 0.15
+				foreign_influence_defense_modifier = 0.10
+				required_garrison_factor = -0.2
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { #Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = police_02
+					OR = {
+						has_country_flag = wants_police_03
+						has_country_flag = wants_police_04
+						has_country_flag = wants_police_05
+					}
+				}
+				modifier = {
+					add = 25
+					has_idea = police_04
+					OR = {
+						has_country_flag = wants_police_01
+						has_country_flag = wants_police_02
+						has_country_flag = wants_police_03
+					}
+				}
+				modifier = {
+					factor = 0
+					has_police_idea_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		police_04 = {
+			removal_cost = -1
+			level = 4
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_idea = police_05
+						police_decrease_blocked = yes
+					}
+					police_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_01
+							has_idea = police_02
+							has_idea = police_03
+						}
+						police_increase_blocked = yes
+					}
+					police_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_01
+							has_idea = police_02
+							has_idea = police_03
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = police_04_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 5 }
+				set_variable = { law_change = 4 }
+				subtract_from_variable = { law_change = crime_fighting }
+				law_attitude_change = yes
+				set_variable = { crime_fighting = 4 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_04"
+				PER_police_change = yes
+				if = {
+					limit = { original_tag = BOT }
+					BOT_update_anti_poaching = yes
+				}
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_police_cool_down
+						}
+					}
+					set_country_flag = PER_removed_police_04
+				}
+			}
+
+			modifier = {
+				command_power_gain = 0.75
+				political_power_gain = -0.3
+				stability_factor = 0.15
+				drift_defence_factor = 0.80
+				foreign_subversive_activites = -0.50
+				decryption = 2
+				encryption = 1
+				planning_speed = 0.20
+				foreign_influence_defense_modifier = 0.15
+				required_garrison_factor = -0.3
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 25
+					has_idea = police_03
+					OR = {
+						has_country_flag = wants_police_04
+						has_country_flag = wants_police_05
+					}
+				}
+				modifier = {
+					add = 25
+					has_idea = police_05
+					OR = {
+						has_country_flag = wants_police_01
+						has_country_flag = wants_police_02
+						has_country_flag = wants_police_03
+						has_country_flag = wants_police_04
+					}
+				}
+				modifier = {
+					factor = 0
+					has_police_idea_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		police_05 = {
+			removal_cost = -1
+			level = 5
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_01
+							has_idea = police_02
+							has_idea = police_03
+							has_idea = police_04
+						}
+						police_increase_blocked = yes
+					}
+					police_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = police_01
+							has_idea = police_02
+							has_idea = police_03
+							has_idea = police_04
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+			}
+			on_add = {
+				custom_effect_tooltip = police_05_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 5 }
+				set_variable = { law_change = 5 }
+				subtract_from_variable = { law_change = crime_fighting }
+				law_attitude_change = yes
+				set_variable = { crime_fighting = 5 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_05"
+				PER_police_change = yes
+				if = {
+					limit = { original_tag = BOT }
+					BOT_update_anti_poaching = yes
+				}
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_police_cool_down
+						}
+					}
+					set_country_flag = PER_removed_police_05
+				}
+			}
+			modifier = {
+				command_power_gain = 1
+				political_power_gain = -0.5
+				stability_factor = 0.20
+				drift_defence_factor = 1.50
+				foreign_subversive_activites = -0.90
+				decryption = 2
+				encryption = 2
+				planning_speed = 0.20
+				foreign_influence_defense_modifier = 0.20
+				required_garrison_factor = -0.4
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 25
+					has_idea = police_04
+					has_country_flag = wants_police_05
+				}
+				modifier = {
+					factor = 0
+					has_police_idea_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+	}
+
+	education_budget = {
+		law = yes
+		use_list_view = yes
+
+		edu_01 = {
+			cost = 200
+			removal_cost = -1
+			level = 1
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_02
+							has_idea = edu_03
+							has_idea = edu_04
+							has_idea = edu_05
+						}
+						edu_decrease_blocked = yes
+					}
+					edu_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						original_tag = SIN
+						has_idea = SIN_centralized_education_idea
+					}
+					custom_trigger_tooltip = {
+						tooltip = SIN_centralized_education_idea_trigger_tt
+						NOT = { has_idea = SIN_centralized_education_idea }
+					}
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = edu_01_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 6 }
+				set_variable = { law_change = 1 }
+				subtract_from_variable = { law_change = education_budget }
+				law_attitude_change = yes
+				set_variable = { education_budget = 1 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_01"
+				PER_education_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_edu_cool_down
+						}
+					}
+					set_country_flag = PER_removed_edu_01
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 25
+					has_idea = edu_02
+					has_country_flag = wants_edu_01
+				}
+				modifier = {
+					factor = 0
+					has_education_law_desired = yes
+				}
+			}
+
+			modifier = {
+				research_speed_factor = 0.02
+				literacy_rate_education_modifier = 0.02
+			}
+
+			cancel_if_invalid = no
+		}
+
+		edu_02 = {
+			default = yes
+			cost = 80
+			removal_cost = -1
+			level = 2
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_03
+							has_idea = edu_04
+							has_idea = edu_05
+						}
+						edu_decrease_blocked = yes
+					}
+					edu_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = edu_01
+						edu_increase_blocked = yes
+					}
+					edu_increase_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = edu_01
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				if = {
+					limit = {
+						original_tag = SIN
+						has_idea = SIN_centralized_education_idea
+					}
+					custom_trigger_tooltip = {
+						tooltip = SIN_centralized_education_idea_trigger_tt
+						NOT = { has_idea = SIN_centralized_education_idea }
+					}
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = edu_02_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 6 }
+				set_variable = { law_change = 2 }
+				subtract_from_variable = { law_change = education_budget }
+				law_attitude_change = yes
+				set_variable = { education_budget = 2 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_02"
+				PER_education_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_edu_cool_down
+						}
+					}
+					set_country_flag = PER_removed_edu_02
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 25
+					has_idea = edu_03
+					OR = {
+						has_country_flag = wants_edu_02
+						has_country_flag = wants_edu_01
+					}
+				}
+				modifier = {
+					add = 25
+					has_idea = edu_01
+					OR = {
+						has_country_flag = wants_edu_02
+						has_country_flag = wants_edu_03
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
+					}
+				}
+				modifier = {
+					factor = 0
+					has_education_law_desired = yes
+				}
+			}
+
+			modifier = {
+				research_speed_factor = 0.05
+				production_speed_buildings_factor = 0.02
+				special_project_speed_factor = 0.04
+				stability_factor = 0.01
+				foreign_influence_modifier = 0.05
+				productivity_growth_modifier = 0.04
+				literacy_rate_education_modifier = 0.04
+			}
+
+			cancel_if_invalid = no
+		}
+
+		edu_03 = {
+			removal_cost = -1
+			level = 3
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_04
+							has_idea = edu_05
+						}
+						edu_decrease_blocked = yes
+					}
+					edu_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_01
+							has_idea = edu_02
+						}
+						edu_increase_blocked = yes
+					}
+					edu_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_01
+							has_idea = edu_02
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = edu_03_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 6 }
+				set_variable = { law_change = 3 }
+				subtract_from_variable = { law_change = education_budget }
+				law_attitude_change = yes
+				set_variable = { education_budget = 3 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_03"
+				PER_education_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_edu_cool_down
+						}
+					}
+					set_country_flag = PER_removed_edu_03
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = edu_02
+					OR = {
+						has_country_flag = wants_edu_03
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+				add = 25
+					has_idea = edu_04
+					OR = {
+						has_country_flag = wants_edu_01
+						has_country_flag = wants_edu_02
+						has_country_flag = wants_edu_03
+					}
+				}
+				modifier = {
+					factor = 0
+					has_education_law_desired = yes
+				}
+			}
+
+			modifier = {
+				political_power_gain = -0.05
+				foreign_influence_defense_modifier = -0.05
+				research_speed_factor = 0.10
+				production_speed_buildings_factor = 0.03
+				special_project_speed_factor = 0.08
+				stability_factor = 0.02
+				foreign_influence_modifier = 0.10
+				productivity_growth_modifier = 0.08
+				literacy_rate_education_modifier = 0.06
+			}
+
+			cancel_if_invalid = no
+		}
+
+		edu_04 = {
+			cost = 30
+			removal_cost = -1
+			level = 4
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_05
+						}
+						edu_decrease_blocked = yes
+					}
+					edu_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_01
+							has_idea = edu_02
+							has_idea = edu_03
+						}
+						edu_increase_blocked = yes
+					}
+					edu_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_01
+							has_idea = edu_02
+							has_idea = edu_03
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = edu_04_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 6 }
+				set_variable = { law_change = 4 }
+				subtract_from_variable = { law_change = education_budget }
+				law_attitude_change = yes
+				set_variable = { education_budget = 4 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_04"
+				PER_education_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_edu_cool_down
+						}
+					}
+					set_country_flag = PER_removed_edu_04
+				}
+			}
+
+			modifier = {
+				political_power_gain = -0.15
+				foreign_influence_defense_modifier = -0.10
+				research_speed_factor = 0.15
+				production_speed_buildings_factor = 0.04
+				special_project_speed_factor = 0.12
+				stability_factor = 0.03
+				foreign_influence_modifier = 0.15
+				productivity_growth_modifier = 0.12
+				literacy_rate_education_modifier = 0.08
+			}
+
+			cancel_if_invalid = no
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = edu_03
+					OR = {
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = edu_05
+					OR = {
+						has_country_flag = wants_edu_01
+						has_country_flag = wants_edu_02
+						has_country_flag = wants_edu_03
+						has_country_flag = wants_edu_04
+					}
+				}
+				modifier = { # no money
+					factor = 0
+					has_education_law_desired = yes
+				}
+			}
+		}
+		edu_05 = {
+			cost = 10
+			removal_cost = -1
+			level = 5
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_01
+							has_idea = edu_02
+							has_idea = edu_03
+							has_idea = edu_04
+						}
+						edu_increase_blocked = yes
+					}
+					edu_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = edu_01
+							has_idea = edu_02
+							has_idea = edu_03
+							has_idea = edu_04
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = edu_05_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 6 }
+				set_variable = { law_change = 5 }
+				subtract_from_variable = { law_change = education_budget }
+				law_attitude_change = yes
+				set_variable = { education_budget = 5 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_05"
+				PER_education_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_edu_cool_down
+						}
+					}
+					set_country_flag = PER_removed_edu_05
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = edu_04
+					has_country_flag = wants_edu_05
+				}
+				modifier = { #for BRIKS members
+					factor = 0
+					has_education_law_desired = yes
+				}
+			}
+
+			modifier = {
+				political_power_gain = -0.20
+				foreign_influence_defense_modifier = -0.15
+				research_speed_factor = 0.20
+				production_speed_buildings_factor = 0.05
+				special_project_speed_factor = 0.16
+				stability_factor = 0.05
+				foreign_influence_modifier = 0.20
+				productivity_growth_modifier = 0.16
+				literacy_rate_education_modifier = 0.10
+			}
+
+			cancel_if_invalid = no
+		}
+	}
+
+	health_budget = {
+		law = yes
+		use_list_view = yes
+		health_01 = {
+			cost = 200
+			removal_cost = -1
+			level = 1
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_02
+							has_idea = health_03
+							has_idea = health_04
+							has_idea = health_05
+							has_idea = health_06
+						}
+						health_decrease_blocked = yes
+					}
+					health_decrease_blocked = no
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = health_01_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 7 }
+				set_variable = { law_change = 1 }
+				subtract_from_variable = { law_change = health_budget }
+				law_attitude_change = yes
+				set_variable = { health_budget = 1 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea health_01 [health_budget idea_law]"
+				PER_health_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_health_cool_down
+						}
+					}
+					set_country_flag = PER_removed_health_01
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 25
+					has_idea = health_02
+					has_country_flag = wants_health_01
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		health_02 = {
+			cost = 80
+			default = yes
+			removal_cost = -1
+			level = 2
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_03
+							has_idea = health_04
+							has_idea = health_05
+							has_idea = health_06
+						}
+						health_decrease_blocked = yes
+					}
+					health_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = health_01
+						health_increase_blocked = yes
+					}
+					health_increase_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = health_01
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = health_02_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 7 }
+				set_variable = { law_change = 2 }
+				subtract_from_variable = { law_change = health_budget }
+				law_attitude_change = yes
+				set_variable = { health_budget = 2 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea health_02 [health_budget idea_law]"
+				PER_health_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_health_cool_down
+						}
+					}
+					set_country_flag = PER_removed_health_02
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = health_01
+					OR = {
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = health_03
+					OR = {
+						has_country_flag = wants_health_01
+						has_country_flag = wants_health_02
+					}
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.05
+				monthly_population = 0.1
+				weekly_casualties_war_support = 0.005
+				army_morale_factor = 0.025
+				stability_factor = 0.03
+			}
+
+			cancel_if_invalid = no
+		}
+
+		health_03 = {
+			removal_cost = -1
+			level = 3
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_04
+							has_idea = health_05
+							has_idea = health_06
+						}
+						health_decrease_blocked = yes
+					}
+					health_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+						}
+						health_increase_blocked = yes
+					}
+					health_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = health_03_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 7 }
+				set_variable = { law_change = 3 }
+				subtract_from_variable = { law_change = health_budget }
+				law_attitude_change = yes
+				set_variable = { health_budget = 3 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea health_03 [health_budget idea_law]"
+				PER_health_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_health_cool_down
+						}
+					}
+					set_country_flag = PER_removed_health_03
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 10
+					has_idea = health_02
+					OR = {
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					factor = 10
+					has_idea = health_04
+					OR = {
+						has_country_flag = wants_health_01
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
+					}
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.1
+				monthly_population = 0.25
+				weekly_casualties_war_support = 0.010
+				army_morale_factor = 0.05
+				consumer_goods_factor = -0.01
+				stability_factor = 0.06
+			}
+
+			cancel_if_invalid = no
+		}
+
+		health_04 = {
+			cost = 40
+			removal_cost = -1
+			level = 4
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_05
+							has_idea = health_06
+						}
+						health_decrease_blocked = yes
+					}
+					health_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+							has_idea = health_03
+						}
+						health_increase_blocked = yes
+					}
+					health_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+							has_idea = health_03
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = health_04_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 7 }
+				set_variable = { law_change = 4 }
+				subtract_from_variable = { law_change = health_budget }
+				law_attitude_change = yes
+				set_variable = { health_budget = 4 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea health_04 [health_budget idea_law]"
+				PER_health_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_health_cool_down
+						}
+					}
+					set_country_flag = PER_removed_health_04
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 10
+					has_idea = health_03
+					OR = {
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					factor = 10
+					has_idea = health_05
+					OR = {
+						has_country_flag = wants_health_01
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+					}
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.15
+				monthly_population = 0.40
+				weekly_casualties_war_support = 0.015
+				army_morale_factor = 0.075
+				consumer_goods_factor = -0.02
+				stability_factor = 0.09
+			}
+
+			cancel_if_invalid = no
+		}
+
+		health_05 = {
+			cost = 30
+			removal_cost = -1
+			level = 5
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_06
+						}
+						health_decrease_blocked = yes
+					}
+					health_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+							has_idea = health_03
+							has_idea = health_04
+						}
+						health_increase_blocked = yes
+					}
+					health_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+							has_idea = health_03
+							has_idea = health_04
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				if = {
+					limit = { original_tag = ENG }
+					NOT = { has_idea = ENG_idea_privatized_nhs }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = health_05_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 7 }
+				set_variable = { law_change = 5 }
+				subtract_from_variable = { law_change = health_budget }
+				law_attitude_change = yes
+				set_variable = { health_budget = 5 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea health_05 [health_budget idea_law]"
+				PER_health_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_health_cool_down
+						}
+					}
+					set_country_flag = PER_removed_health_05
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = health_04
+					OR = {
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = health_06
+					OR = {
+						has_country_flag = wants_health_01
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+					}
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.2
+				monthly_population = 0.55
+				weekly_casualties_war_support = 0.020
+				army_morale_factor = 0.100
+				consumer_goods_factor = -0.03
+				stability_factor = 0.12
+			}
+
+			cancel_if_invalid = no
+		}
+		health_06 = {
+			cost = 10
+			removal_cost = -1
+			level = 6
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+							has_idea = health_03
+							has_idea = health_04
+							has_idea = health_05
+						}
+						health_increase_blocked = yes
+					}
+					health_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+							has_idea = health_03
+							has_idea = health_04
+							has_idea = health_05
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				if = {
+					limit = { original_tag = ENG }
+					NOT = { has_idea = ENG_idea_privatized_nhs }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = health_06_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 7 }
+				set_variable = { law_change = 6 }
+				subtract_from_variable = { law_change = health_budget }
+				law_attitude_change = yes
+				set_variable = { health_budget = 6 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea health_06 [health_budget idea_law]"
+				PER_health_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_health_cool_down
+						}
+					}
+					set_country_flag = PER_removed_health_06
+				}
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 25
+					has_idea = health_05
+					has_country_flag = wants_health_06
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.25
+				monthly_population = 0.75
+				weekly_casualties_war_support = 0.025
+				army_morale_factor = 0.125
+				consumer_goods_factor = -0.04
+				stability_factor = 0.15
+			}
+
+			cancel_if_invalid = no
+		}
+	}
+
+	social_budget = {
+		law = yes
+		use_list_view = yes
+
+		social_01 = {
+			cost = 200
+			removal_cost = -1
+			level = 1
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_02
+							has_idea = social_03
+							has_idea = social_04
+							has_idea = social_05
+							has_idea = social_06
+						}
+						social_decrease_blocked = yes
+					}
+					social_decrease_blocked = no
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+				if = { limit = { original_tag = DEN }
+					if = {
+						limit = { has_idea = DEN_intensify_the_flexicurity_idea }
+						custom_trigger_tooltip = {
+							tooltip = DEN_intensify_the_flexicurity_idea_trigger_tt
+							NOT = { has_idea = DEN_intensify_the_flexicurity_idea }
+						}
+					}
+				}
+			}
+			on_add = {
+				custom_effect_tooltip = social_01_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 8 }
+				set_variable = { law_change = 1 }
+				subtract_from_variable = { law_change = social_budget }
+				law_attitude_change = yes
+				set_variable = { social_budget = 1 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_01 [social_budget idea_law]"
+				PER_social_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_01
+				}
+			}
+
+			cancel_if_invalid = no
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = social_02
+					has_country_flag = wants_social_01
+				}
+				modifier = {
+					factor = 0
+					has_social_law_desired = yes
+				}
+			}
+		}
+
+		social_02 = {
+			default = yes
+			cost = 80
+			removal_cost = -1
+			level = 2
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_03
+							has_idea = social_04
+							has_idea = social_05
+							has_idea = social_06
+						}
+						social_decrease_blocked = yes
+					}
+					social_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = social_01
+						social_increase_blocked = yes
+					}
+					social_increase_blocked = no
+				}
+				if = {
+					limit = {
+						has_idea = social_01
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = social_02_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 8 }
+				set_variable = { law_change = 2 }
+				subtract_from_variable = { law_change = social_budget }
+				law_attitude_change = yes
+				set_variable = { social_budget = 2 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_02 [social_budget idea_law]"
+				PER_social_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_02
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.06
+				political_power_factor = 0.10
+				stability_factor = 0.03
+				high_unemployment_threshold_modifier = 0.01
+			}
+
+			cancel_if_invalid = no
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = social_01
+					OR = {
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = social_03
+					OR = {
+						has_country_flag = wants_social_01
+						has_country_flag = wants_social_02
+					}
+				}
+				modifier = {
+					factor = 0
+					has_social_law_desired = yes
+				}
+			}
+		}
+
+		social_03 = {
+			removal_cost = -1
+			level = 3
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_04
+							has_idea = social_05
+							has_idea = social_06
+						}
+						social_decrease_blocked = yes
+					}
+					social_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+						}
+						social_increase_blocked = yes
+					}
+					social_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea social_03 [social_budget idea_law]"
+				custom_effect_tooltip = social_03_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 8 }
+				set_variable = { law_change = 3 }
+				subtract_from_variable = { law_change = social_budget }
+				law_attitude_change = yes
+				set_variable = { social_budget = 3 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				PER_social_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_03
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.14
+				political_power_factor = 0.14
+				stability_factor = 0.06
+				high_unemployment_threshold_modifier = 0.02
+			}
+
+			cancel_if_invalid = no
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = social_02
+					OR = {
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = social_04
+					OR = {
+						has_country_flag = wants_social_01
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
+					}
+				}
+				modifier = {
+					factor = 0
+					has_social_law_desired = yes
+				}
+			}
+		}
+
+		social_04 = {
+			cost = 40
+			removal_cost = -1
+			level = 4
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_05
+							has_idea = social_06
+						}
+						social_decrease_blocked = yes
+					}
+					social_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+							has_idea = social_03
+						}
+						social_increase_blocked = yes
+					}
+					social_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+							has_idea = social_03
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = social_04_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 8 }
+				set_variable = { law_change = 4 }
+				subtract_from_variable = { law_change = social_budget }
+				law_attitude_change = yes
+				set_variable = { social_budget = 4 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_04 [social_budget idea_law]"
+				PER_social_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_04
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.20
+				political_power_factor = 0.20
+				monthly_population = 0.05
+				stability_factor = 0.09
+				high_unemployment_threshold_modifier = 0.03
+			}
+
+			cancel_if_invalid = no
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 25
+					has_idea = social_03
+					OR = {
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 10
+					has_idea = social_05
+					OR = {
+						has_country_flag = wants_social_01
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+					}
+				}
+				modifier = {
+					factor = 0
+					has_social_law_desired = yes
+				}
+			}
+		}
+
+		social_05 = {
+			cost = 30
+			removal_cost = -1
+			level = 5
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_06
+						}
+						social_decrease_blocked = yes
+					}
+					social_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+							has_idea = social_03
+							has_idea = social_04
+						}
+						social_increase_blocked = yes
+					}
+					social_increase_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+							has_idea = social_03
+							has_idea = social_04
+						}
+						has_active_mission = cheap_loan_from_the_imf_mission
+					}
+					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = social_05_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 8 }
+				set_variable = { law_change = 5 }
+				subtract_from_variable = { law_change = social_budget }
+				law_attitude_change = yes
+				set_variable = { social_budget = 5 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_05 [social_budget idea_law]"
+				PER_social_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_05
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.24
+				political_power_factor = 0.24
+				monthly_population = 0.15
+				stability_factor = 0.12
+				high_unemployment_threshold_modifier = 0.04
+			}
+
+			cancel_if_invalid = no
+
+			ai_will_do = {
+				factor = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = social_04
+					OR = {
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
+					}
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = social_06
+					OR = {
+						has_country_flag = wants_social_01
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+					}
+				}
+				modifier = {
+					factor = 0
+					has_social_law_desired = yes
+				}
+			}
+		}
+
+		social_06 = {
+			cost = 10
+			removal_cost = -1
+			level = 6
+			available = {
+				if = {
+					limit = { original_tag = UKR }
+					custom_trigger_tooltip = {
+						tooltip = UKR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = UKR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						original_tag = ISR
+						is_ai = no
+					}
+					custom_trigger_tooltip = {
+						tooltip = ISR_parliament_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = ISR_parliament_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+							has_idea = social_03
+							has_idea = social_04
+							has_idea = social_05
+						}
+						social_increase_blocked = yes
+					}
+					social_increase_blocked = no
+				}
+				NOT = { has_country_flag = cant_change_laws_flag }
+			}
+			on_add = {
+				custom_effect_tooltip = social_06_TT
+				if = {
+					limit = {
+						tag = USA
+					}
+					custom_effect_tooltip = usa_cant_change_laws_TT
+				}
+				set_variable = { law_attitude = 8 }
+				set_variable = { law_change = 6 }
+				subtract_from_variable = { law_change = social_budget }
+				law_attitude_change = yes
+				set_variable = { social_budget = 6 }
+				ingame_update_setup = yes
+				set_law_vars = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_06 [social_budget idea_law]"
+				PER_social_change = yes
+			}
+			on_remove = {
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_06
+				}
+			}
+
+			modifier = {
+				political_power_gain = 0.3
+				political_power_factor = 0.3
+				monthly_population = 0.30
+				stability_factor = 0.15
+				high_unemployment_threshold_modifier = 0.05
+			}
+
+			cancel_if_invalid = no
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 25
+					has_idea = social_05
+					has_country_flag = wants_social_06
+				}
+				modifier = {
+					factor = 0
+					has_social_law_desired = yes
+				}
+			}
+		}
+	}
+}

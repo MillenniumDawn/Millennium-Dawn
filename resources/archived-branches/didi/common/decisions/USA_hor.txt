@@ -1,0 +1,137 @@
+USA_congress_chart = {
+	# Upto 25  more Reps support the Bill
+	ask_for_small_house_bill_support = {
+		available = {
+			has_country_flag = bill_on_house_floor_flag
+		}
+		visible = {
+			has_country_flag = bill_on_house_floor_flag
+		}
+		fire_only_once = no
+		cost = 50
+		complete_effect = {
+			custom_effect_tooltip = mtg_usa_house_small_support_tt
+			set_temp_variable = { temp_factor = random }
+			multiply_temp_variable = { temp_factor = 25 }
+			clamp_temp_variable = { var = temp_factor max = 25 min = 10 }
+			add_to_variable = { representative_bill_support = temp_factor }
+			round_variable = representative_bill_support
+			clamp_variable = { var = representative_bill_support max = representatives_total min = 0 }
+		}
+	}
+
+	# Upto 50 more Reps support the bill
+	ask_for_medium_house_support = {
+		available = {
+			has_country_flag = bill_on_house_floor_flag
+		}
+		visible = {
+			has_country_flag = bill_on_house_floor_flag
+		}
+		fire_only_once = no
+		cost = 100
+		complete_effect = {
+			custom_effect_tooltip = mtg_usa_house_medium_support_tt
+			set_temp_variable = { temp_factor = random }
+			multiply_temp_variable = { temp_factor = 50 }
+			clamp_temp_variable = { var = temp_factor max = 50 min = 20 }
+			add_to_variable = { representative_bill_support = temp_factor }
+			round_variable = representative_bill_support
+			clamp_variable = { var = representative_bill_support max = representatives_total min = 0 }
+		}
+	}
+
+	# Upto 125 more Reps support the bill
+	ask_for_large_house_bill_support = {
+		available = {
+			has_country_flag = bill_on_house_floor_flag
+		}
+		visible = {
+			has_country_flag = bill_on_house_floor_flag
+		}
+		fire_only_once = no
+		cost = 250
+		complete_effect = {
+			custom_effect_tooltip = mtg_usa_house_large_support_tt
+			set_temp_variable = { temp_factor = random }
+			multiply_temp_variable = { temp_factor = 125 }
+			clamp_temp_variable = { var = temp_factor max = 125 min = 80 }
+			add_to_variable = { representative_bill_support = temp_factor }
+			round_variable = representative_bill_support
+			clamp_variable = { var = representative_bill_support max = representatives_total min = 0 }
+		}
+	}
+
+	#House starts voting on the bill
+	house_debating_bill = {
+		available = {
+			check_variable = { representative_bill_support > 217 }
+		}
+		activation = {
+			has_country_flag = bill_on_house_floor_flag
+		}
+		is_good = no
+		selectable_mission = no
+		days_mission_timeout = 100
+		timeout_effect = {
+			USA_house_large_opposition = yes
+			clr_country_flag = bill_on_house_floor_flag
+			set_variable = { representative_bill_support = 0 }
+			clr_country_flag = increase_bureau_spending_flag
+			clr_country_flag = decrease_bureau_spending_flag
+			clr_country_flag = increase_police_spending_flag
+			clr_country_flag = decrease_police_spending_flag
+			clr_country_flag = increase_education_spending_flag
+			clr_country_flag = decrease_education_spending_flag
+			clr_country_flag = increase_health_spending_flag
+			clr_country_flag = decrease_health_spending_flag
+			clr_country_flag = increase_social_spending_flag
+			clr_country_flag = decrease_social_spending_flag
+			clr_country_flag = increase_military_spending_flag
+			clr_country_flag = decrease_military_spending_flag
+			clr_country_flag = increase_conscription_spending_flag
+			clr_country_flag = decrease_conscription_spending_flag
+			clr_country_flag = increase_intervention_spending_flag
+			clr_country_flag = decrease_intervention_spending_flag
+			clr_country_flag = increase_officertrain_spending_flag
+			clr_country_flag = decrease_officertrain_spending_flag
+			clr_country_flag = increase_milwomen_spending_flag
+			clr_country_flag = decrease_milwomen_spending_flag
+			clr_country_flag = increase_economy_spending_flag
+			clr_country_flag = decrease_economy_spending_flag
+		}
+		complete_effect = {
+			USA_house_small_opposition = yes
+			clr_country_flag = bill_on_house_floor_flag
+			set_country_flag = bill_on_senate_floor_flag
+			set_variable = { senators_bill_support = 0 }
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = increase_bureau_spending_flag
+						has_country_flag = decrease_police_spending_flag
+						has_country_flag = increase_education_spending_flag
+						has_country_flag = increase_health_spending_flag
+						has_country_flag = increase_social_spending_flag
+						has_country_flag = decrease_military_spending_flag
+						has_country_flag = decrease_conscription_spending_flag
+						has_country_flag = decrease_intervention_spending_flag
+						has_country_flag = decrease_officertrain_spending_flag
+						has_country_flag = decrease_milwomen_spending_flag
+						has_country_flag = increase_economy_spending_flag
+					}
+				}
+				add_to_variable = { senators_bill_support = democratic_senators }
+				multiply_variable = { senators_bill_support = senators_support }
+				divide_variable = { senators_bill_support = senators_total }
+				round_variable = senators_bill_support
+			}
+			else = {
+				add_to_variable = { senators_bill_support = republican_senators }
+				multiply_variable = { senators_bill_support = senators_support }
+				divide_variable = { senators_bill_support = senators_total }
+				round_variable = senators_bill_support
+			}
+		}
+	}
+}
