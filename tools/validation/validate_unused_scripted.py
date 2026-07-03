@@ -54,6 +54,9 @@ FALSE_POSITIVE_PATTERNS = [
     re.compile(
         r"^should_(not_)?activate_active_crypto_bonuses$"
     ),  # Vanilla engine crypto hooks — engine-read override points
+    re.compile(
+        r"_in_coalition$"
+    ),  # Coalition-party membership helper library (01_political_triggers.txt)
 ]
 
 # Files whose definitions are entirely engine-referenced (all contents are false positives)
@@ -69,6 +72,16 @@ FALSE_POSITIVE_FILES = frozenset(
         # Dummy effect existing only to suppress false positives on dynamically
         # built flag/variable names; deliberately never called.
         "!_cwtools_dummy_effects.txt",
+        # Systematic preset trigger libraries — one member per region / satellite
+        # / law / threshold.
+        "MD_regional_triggers.txt",  # is_<region>_state
+        "MD_regional_owned_triggers.txt",  # is_<region>_state_owned
+        "MD_missile_scripted_triggers.txt",  # has_<satellite>_in_orbit constellation set
+        "00_law_blocking_triggers.txt",  # <law>_change_blocked full law-category set
+        "00_debt_ratio_triggers.txt",  # gdp_debt_ratio_<cmp>_<n> threshold ladder
+        "99_PER_scripted_triggers.txt",  # <country>_has_<cmp>_<n>_influence threshold ladder
+        "99_HEZ_scripted_triggers.txt",  # HEZ_ai_can_<action> AI-gate set
+        "99_NIG_scripted_triggers.txt",  # NIG_<religion>_majority pairs
     }
 )
 
