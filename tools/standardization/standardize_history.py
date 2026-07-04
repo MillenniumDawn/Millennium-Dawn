@@ -288,7 +288,11 @@ class HistoryStandardizer(BaseStandardizer):
     # -- classification bootstrap ------------------------------------------- #
 
     def _ensure_classification(self, input_file: str) -> None:
-        if self._law is not None and self._faction is not None and self._modvars is not None:
+        if (
+            self._law is not None
+            and self._faction is not None
+            and self._modvars is not None
+        ):
             return
         root = self._mod_root or _detect_mod_root(input_file)
         if root:
@@ -296,7 +300,9 @@ class HistoryStandardizer(BaseStandardizer):
             self._law = law if self._law is None else self._law
             self._faction = faction if self._faction is None else self._faction
             self._modvars = (
-                _load_modifier_variables(root) if self._modvars is None else self._modvars
+                _load_modifier_variables(root)
+                if self._modvars is None
+                else self._modvars
             )
             log_message("INFO", f"Mod root: {root}", self.verbose)
         else:
@@ -445,7 +451,11 @@ class HistoryStandardizer(BaseStandardizer):
                 props["equipment"].append((self._equipment_domain(lines), stmt))
             elif head in ("set_oob", "set_air_oob", "set_naval_oob"):
                 props["equipment"].append((self._equipment_domain(lines), stmt))
-            elif head in ("start_politics_input", "startup_politics", "create_country_leader"):
+            elif head in (
+                "start_politics_input",
+                "startup_politics",
+                "create_country_leader",
+            ):
                 props["leader_top"].append(stmt)
             elif head in ("set_popularities", "set_politics"):
                 props["politics_top"].append(stmt)
@@ -499,7 +509,11 @@ class HistoryStandardizer(BaseStandardizer):
         out.extend(stmt["lines"])
 
     def _emit_group(
-        self, header: str, stmts: List[Dict[str, List[str]]], indent: str, out: List[str]
+        self,
+        header: str,
+        stmts: List[Dict[str, List[str]]],
+        indent: str,
+        out: List[str],
     ) -> None:
         if not stmts:
             return
@@ -521,7 +535,9 @@ class HistoryStandardizer(BaseStandardizer):
         for stmt in stmts:
             self._emit_stmt(stmt, out, seen)
 
-    def _emit_equipment(self, props: Dict[str, Any], indent: str, out: List[str]) -> None:
+    def _emit_equipment(
+        self, props: Dict[str, Any], indent: str, out: List[str]
+    ) -> None:
         if not props["equipment"]:
             return
         labels = {0: "Army Equipment", 1: "Air Force Equipment", 2: "Naval Equipment"}

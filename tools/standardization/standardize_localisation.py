@@ -389,9 +389,13 @@ def main():
     )
     parser.add_argument("input_file", help="Input .yml localisation file")
     parser.add_argument("-o", "--output", help="Output file (default: overwrite input)")
-    parser.add_argument("-b", "--backup", action="store_true", help="Create backup first")
+    parser.add_argument(
+        "-b", "--backup", action="store_true", help="Create backup first"
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-    parser.add_argument("--mod-root", help="Path to mod root (auto-detected if omitted)")
+    parser.add_argument(
+        "--mod-root", help="Path to mod root (auto-detected if omitted)"
+    )
     args = parser.parse_args()
 
     input_path = Path(args.input_file)
