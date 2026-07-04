@@ -22,6 +22,8 @@ from validator_common import (
     KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
     FileOpener,
+    Issue,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
@@ -57,9 +59,21 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
 _NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
+# A § followed by whitespace and a digit is a prose section sign (e.g. a legal
+# citation like "15 U.S.C. § 1"), never a color code; game markup never puts a
+# space after §. Requiring the digit keeps a dangling/broken code (§ before a
+# word, quote, or line end) flagged instead of silently exempted.
+_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+
+# A formatter (Prettier/pre-commit --all-files) once split Paradox loc
+# `KEY:0 "value"` lines across two lines and rewrote double quotes to single
+# quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
+# than erroring, so they must be caught here.
+_MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
+_MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
     filename, valid_colors, subst_keys = args
     results = []
     text_file = FileOpener.open_text_file(
@@ -69,29 +83,52 @@ def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
     for line_idx, line in enumerate(lines):
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
-        if "\u00a7" in line and "desc_end" not in line and "U.S.C." not in line:
+        if _MANGLED_SINGLE_QUOTE_VALUE_RE.match(line):
+            results.append(
+                Issue(
+                    severity=Severity.ERROR,
+                    category="mangled-loc-line",
+                    message="Loc value uses single quotes instead of double quotes (formatter-mangled, breaks in-game)",
+                    file=os.path.basename(filename),
+                    line=line_idx + 2,
+                )
+            )
+        elif _MANGLED_KEY_NO_VALUE_RE.match(line):
+            results.append(
+                Issue(
+                    severity=Severity.ERROR,
+                    category="mangled-loc-line",
+                    message="Loc key has no value on the same line (formatter-mangled, breaks in-game)",
+                    file=os.path.basename(filename),
+                    line=line_idx + 2,
+                )
+            )
+        if "\u00a7" in line:
             # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution: those
             # keys intentionally split their \u00a7 codes across multiple values (one ends
             # with \u00a7Y, another supplies \u00a7!) so only the merged result is balanced.
             key_match = _LINE_KEY_RE.match(line)
             if key_match and key_match.group(1) in subst_keys:
                 continue
-            count = line.count("\u00a7")
+            color_line = _PROSE_SECTION_SIGN_RE.sub("", line)
+            if "\u00a7" not in color_line:
+                continue
+            count = color_line.count("\u00a7")
             if count % 2 != 0:
                 results.append(
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - odd number of \u00a7 symbols ({count})"
                 )
-            elif count != line.count("\u00a7!") * 2:
+            elif count != color_line.count("\u00a7!") * 2:
                 expected = count // 2
-                actual = line.count("\u00a7!")
+                actual = color_line.count("\u00a7!")
                 results.append(
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - expected {expected} \u00a7! but got {actual}"
                 )
             else:
                 try:
-                    for idx, ch in enumerate(line):
-                        if ch == "\u00a7" and idx + 1 < len(line):
-                            next_ch = line[idx + 1]
+                    for idx, ch in enumerate(color_line):
+                        if ch == "\u00a7" and idx + 1 < len(color_line):
+                            next_ch = color_line[idx + 1]
                             if next_ch not in valid_colors and next_ch not in [
                                 "!",
                                 "[",
@@ -189,13 +226,28 @@ def get_all_colors(mod_path: str) -> List[str]:
         return list("WGRBYCMwgrbycm!")
 
 
-def process_txt_for_loc_key_refs(
-    args: Tuple,
-) -> List[str]:
-    """Pool worker: check localization_key = VALUE references in one .txt file."""
-    filename, valid_keys, scripted_keys = args
+# The valid/scripted loc key sets are ~200k entries; shipping them with every
+# pool task pickled ~23 MB per chunk and dominated this validator's runtime.
+# _txt_refs_init plants them as worker globals once per worker instead.
+_W_VALID_KEYS: frozenset = frozenset()
+_W_SCRIPTED_KEYS: frozenset = frozenset()
+
+
+def _txt_refs_init(valid_keys: frozenset, scripted_keys: frozenset) -> None:
+    global _W_VALID_KEYS, _W_SCRIPTED_KEYS
+    _W_VALID_KEYS = valid_keys
+    _W_SCRIPTED_KEYS = scripted_keys
+
+
+def process_txt_for_loc_key_refs(filename: str) -> List[str]:
+    """Pool worker: check localization_key = VALUE references in one .txt file.
+
+    Reads the valid/scripted key sets from worker globals (set by
+    _txt_refs_init), so the large set is shipped once per worker, not per task.
+    """
     if _should_skip(filename):
         return []
+    valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -222,13 +274,14 @@ def process_txt_for_loc_key_refs(
     return results
 
 
-def process_txt_for_custom_tt_refs(
-    args: Tuple,
-) -> List[str]:
-    """Pool worker: check custom_effect_tooltip / custom_trigger_tooltip keys in one .txt file."""
-    filename, valid_keys, scripted_keys = args
+def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
+    """Pool worker: check custom_effect_tooltip / custom_trigger_tooltip keys in one .txt file.
+
+    Valid/scripted key sets come from worker globals set by _txt_refs_init.
+    """
     if _should_skip(filename):
         return []
+    valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -238,7 +291,7 @@ def process_txt_for_custom_tt_refs(
     ):
         return []
     simple_pattern = r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)"
-    trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)"
+    trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(?!\{)(\S+)"
     basename = os.path.basename(filename)
     results = []
     for pattern in [simple_pattern, trigger_pattern]:
@@ -442,15 +495,26 @@ class Validator(BaseValidator):
             "Missing l_english: line in localisation files:",
         )
 
+    def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
+        """Scan txt files with a worker that needs the valid/scripted key sets,
+        shipped once per worker (loc_keys is ~200k entries; per-task shipping
+        pickled it ~23 MB per chunk)."""
+        return self._pool_map_init(
+            worker,
+            txt_files,
+            _txt_refs_init,
+            (frozenset(loc_keys), frozenset(scripted_loc_keys)),
+            chunksize=30,
+        )
+
     def validate_localization_key_references(
         self, loc_keys: Dict, scripted_loc_keys: set
     ):
         self._log_section("Checking localization_key references...")
 
         txt_files = self._collect_files(["**/*.txt"])
-        args_list = [(f, loc_keys, scripted_loc_keys) for f in txt_files]
-        all_results = self._pool_map(
-            process_txt_for_loc_key_refs, args_list, chunksize=30
+        all_results = self._scan_txt_refs(
+            process_txt_for_loc_key_refs, txt_files, loc_keys, scripted_loc_keys
         )
 
         results = sorted({k for file_res in all_results for k in file_res})
@@ -466,9 +530,8 @@ class Validator(BaseValidator):
         self._log_section("Checking custom tooltip references...")
 
         txt_files = self._collect_files(["**/*.txt"])
-        args_list = [(f, loc_keys, scripted_loc_keys) for f in txt_files]
-        all_results = self._pool_map(
-            process_txt_for_custom_tt_refs, args_list, chunksize=30
+        all_results = self._scan_txt_refs(
+            process_txt_for_custom_tt_refs, txt_files, loc_keys, scripted_loc_keys
         )
 
         results = sorted({r for file_res in all_results for r in file_res})

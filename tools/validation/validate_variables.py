@@ -29,6 +29,12 @@ _FLAG_LONG_FORM_RE = re.compile(
     r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{\s*flag\s*=\s*([^\s{}]+)\s*\}",
 )
 
+# Math expression operators with a numeric literal that has >5 decimal places.
+# HOI4 silently truncates at 5, so the value computed at runtime is wrong.
+_MATH_PRECISION_RE = re.compile(
+    r"\b(add|subtract|multiply|divide|value)\s*=\s*[-+]?\d*\.\d{6,}"
+)
+
 
 def _scan_flags_in_file(
     text: str, flag_type: str
@@ -134,6 +140,34 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     return (days_issues, long_form_issues)
 
 
+def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
+    """Pool worker: scan one file for math expression literals with >5 decimal places.
+
+    Returns a list of 'rel:line - description' strings.
+    """
+    filename, mod_path = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    rel = os.path.relpath(filename, mod_path)
+
+    issues: List[str] = []
+    for m in _MATH_PRECISION_RE.finditer(cleaned):
+        line = cleaned[: m.start()].count("\n") + 1
+        issues.append(
+            f"{rel}:{line} - math expression literal with >5 decimal places"
+            f" (engine truncates silently): {m.group(0).strip()}"
+        )
+    return issues
+
+
 def _scan_targets_in_text(
     text_file: str, filename: str
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
@@ -206,6 +240,30 @@ def process_file_for_all_targets(
         text_file,
         lambda: _scan_targets_in_text(text_file, filename),
     )
+
+
+def _scan_targets_in_loc(args: Tuple[str, Tuple[str, ...]]) -> set:
+    """Return which of `potential_targets` appear as [target.GetName]-style loc
+    references in one yml file. Pooled; the union across files is order-
+    independent, matching the old single-process accumulator exactly."""
+    filename, potential_targets = args
+    if should_skip_file(filename):
+        return set()
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=True, strip_comments_flag=True
+    )
+    found: set = set()
+    if ".get" in text_file:
+        for target in potential_targets:
+            tl = target.lower()
+            if (
+                f"[{tl}.getname" in text_file
+                or f"[{tl}.getadjective" in text_file
+                or f"[event_target:{tl}.getname" in text_file
+                or f"[event_target:{tl}.getadjective" in text_file
+            ):
+                found.add(target)
+    return found
 
 
 def _map_with_optional_pool(func, args_list, workers, pool, chunksize=50):
@@ -461,6 +519,26 @@ class Validator(BaseValidator):
             f"Unused {flag_type} flags were encountered - they are not used via 'has_{flag_type}_flag' at least once. Flags with @ are skipped.",
         )
 
+    def validate_math_precision(self):
+        """Flag math expression operator literals with >5 decimal places (ERROR)."""
+        self._log_section("Checking for math expression precision issues...")
+
+        txt_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        )
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_math_precision, args_list, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No math expression precision issues found",
+            "Math expression literals with >5 decimal places (engine silently truncates):",
+            severity=Severity.ERROR,
+            category="math-precision",
+        )
+
     def validate_flag_syntax(self):
         """Combined check for two flag syntax issues in a single pool_map pass:
 
@@ -587,37 +665,21 @@ class Validator(BaseValidator):
             if target not in used_paths:
                 potential_results.append(target)
 
-        targets_used_in_loc = []
         if self.staged_files:
             yml_files_to_scan = [f for f in self.staged_files if f.endswith(".yml")]
         else:
-            yml_files_to_scan = glob.iglob(
-                os.path.join(self.mod_path, "**", "*.yml"), recursive=True
+            yml_files_to_scan = list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.yml"), recursive=True)
             )
 
-        for filename in yml_files_to_scan:
-            if should_skip_file(filename):
-                continue
-            # Lowercased on purpose: case-insensitive scan for
-            # [target.GetName]/[event_target:target.GetAdjective] loc usage so a
-            # target isn't falsely reported unused over a case difference.
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=True, strip_comments_flag=True
-            )
-
-            if ".get" in text_file:
-                not_encountered_targets = [
-                    i for i in potential_results if i not in targets_used_in_loc
-                ]
-                for target in not_encountered_targets:
-                    target_lower = target.lower()
-                    if (
-                        f"[{target_lower}.getname" in text_file
-                        or f"[{target_lower}.getadjective" in text_file
-                        or f"[event_target:{target_lower}.getname" in text_file
-                        or f"[event_target:{target_lower}.getadjective" in text_file
-                    ):
-                        targets_used_in_loc.append(target)
+        targets_tuple = tuple(potential_results)
+        targets_used_in_loc: set = set()
+        for found in self._pool_map(
+            _scan_targets_in_loc,
+            [(f, targets_tuple) for f in yml_files_to_scan],
+            chunksize=30,
+        ):
+            targets_used_in_loc |= found
 
         for target in potential_results:
             if target not in targets_used_in_loc:
@@ -651,6 +713,8 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
+        self.validate_math_precision()
+
         if self.staged_only:
             # Variable validation cross-references flags across all files
             # (used in A, set in B). Scanning only staged files produces

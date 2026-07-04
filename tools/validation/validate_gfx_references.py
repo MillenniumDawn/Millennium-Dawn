@@ -11,7 +11,7 @@ import glob
 import os
 import re
 import sys
-from typing import List, Optional, Set, Tuple
+from typing import FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -126,16 +126,30 @@ _FLAG_SPRITE_RE = re.compile(
     r"^GFX_(?:flag_|.*_flag$|.*_coat_of_arms$|.*_shield$)", re.IGNORECASE
 )
 
-# Sprites defined purely in vanilla (game install) that we can't track when
-# the vanilla install isn't present. We accept all vanilla-looking names
-# rather than false-positiving on them. The heuristic: if the name has no
-# MD-identifying prefix and a short common suffix, it's probably vanilla.
-# We limit false-positive suppression to a small explicit allowlist of
-# patterns, not a broad sweep.
-#
-# When the vanilla HOI4 install IS detected (Steam path), the validator
-# instead reads its interface/*.gfx files directly and adds them to the
-# defined-sprites set — much more accurate than the prefix heuristic.
+# Vanilla sprite names come from three sources, best first:
+#   1. A live HOI4 install (Steam path or $HOI4_PATH): interface/*.gfx read
+#      directly and folded into the defined-sprites set.
+#   2. The committed vanilla_sprites.txt manifest (generated from a local
+#      install by gen_vanilla_sprites_manifest.py) — what CI uses.
+#   3. The _VANILLA_PREFIXES heuristic below, only when neither exists:
+#      accept vanilla-looking names rather than false-positive on them.
+_VANILLA_SPRITES_MANIFEST = os.path.join(
+    os.path.dirname(__file__), "vanilla_sprites.txt"
+)
+
+
+def _load_vanilla_sprite_manifest() -> FrozenSet[str]:
+    # UnicodeDecodeError too: decoding happens lazily during iteration, and a
+    # corrupt manifest should degrade to the heuristic, not crash the run.
+    try:
+        with open(_VANILLA_SPRITES_MANIFEST, encoding="utf-8") as fh:
+            return frozenset(
+                line.strip() for line in fh if line.strip() and not line.startswith("#")
+            )
+    except (OSError, UnicodeDecodeError):
+        return frozenset()
+
+
 _VANILLA_PREFIXES = (
     "GFX_zoom_",
     "GFX_topbar_",
@@ -191,6 +205,29 @@ def _read_raw(filepath: str) -> Optional[str]:
         return None
 
 
+def sprite_names_from_gfx_text(raw: str) -> Set[str]:
+    """Return the set of GFX sprite names defined in raw .gfx file content.
+
+    Shared with gen_vanilla_sprites_manifest.py so the committed manifest is
+    built with exactly the parse the validator applies to mod files.
+    """
+    text = _strip_comments(raw)
+    names: Set[str] = set()
+    for m in _GFX_SPRITE_TYPES.finditer(text):
+        block_start = m.end()
+        snippet, end = extract_block_from_text(text, block_start - 1)
+        if end == -1:
+            # Unbalanced braces: fall back to scanning the rest of the line.
+            line_end = text.find("\n", m.start())
+            snippet = text[
+                block_start : line_end if line_end != -1 else block_start + 200
+            ]
+        nm = _GFX_NAME.search(snippet)
+        if nm:
+            names.add(nm.group(1))
+    return names
+
+
 def _parse_gfx_file(args: Tuple[str, str]) -> Set[str]:
     """Return the set of GFX sprite names defined in a .gfx file."""
     filepath, mod_path = args
@@ -198,25 +235,8 @@ def _parse_gfx_file(args: Tuple[str, str]) -> Set[str]:
     if raw is None:
         return set()
 
-    def _compute():
-        text = _strip_comments(raw)
-        names: Set[str] = set()
-        for m in _GFX_SPRITE_TYPES.finditer(text):
-            block_start = m.end()
-            snippet, end = extract_block_from_text(text, block_start - 1)
-            if end == -1:
-                # Unbalanced braces: fall back to scanning the rest of the line.
-                line_end = text.find("\n", m.start())
-                snippet = text[
-                    block_start : line_end if line_end != -1 else block_start + 200
-                ]
-            nm = _GFX_NAME.search(snippet)
-            if nm:
-                names.add(nm.group(1))
-        return names
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.gfx", filepath, raw, _compute
+        mod_path, "gfx_ref.gfx", filepath, raw, lambda: sprite_names_from_gfx_text(raw)
     )
 
 
@@ -326,6 +346,9 @@ class GfxReferenceValidator(BaseValidator):
 
     def __init__(self, mod_path: str, **kwargs):
         super().__init__(mod_path, **kwargs)
+        # True once vanilla sprite names (live install or manifest) were folded
+        # into the defined set — disables the _is_likely_vanilla heuristic.
+        self._vanilla_defs_loaded = False
 
     def _build_gfx_definitions(self) -> Tuple[Set[str], Set[str]]:
         """Scan all interface/*.gfx files and return (all_defined, mod_defined).
@@ -363,15 +386,27 @@ class GfxReferenceValidator(BaseValidator):
                 vanilla_defined.update(s)
             new = vanilla_defined - defined
             defined.update(vanilla_defined)
+            self._vanilla_defs_loaded = True
             self.log(
                 f"  Found {len(vanilla_defined)} GFX sprite names in vanilla "
                 f"({len(new)} new) at {vanilla_dir}"
             )
         else:
-            self.log(
-                "  Vanilla HOI4 interface/ not detected — set HOI4_PATH to "
-                "enable vanilla sprite cross-reference (CI runs without it)"
-            )
+            manifest = _load_vanilla_sprite_manifest()
+            if manifest:
+                new = manifest - defined
+                defined.update(manifest)
+                self._vanilla_defs_loaded = True
+                self.log(
+                    f"  Loaded {len(manifest)} vanilla GFX sprite names from "
+                    f"vanilla_sprites.txt ({len(new)} new)"
+                )
+            else:
+                self.log(
+                    "  No vanilla HOI4 install detected and no vanilla_sprites.txt"
+                    " manifest — set HOI4_PATH or run"
+                    " gen_vanilla_sprites_manifest.py (prefix heuristic active)"
+                )
         return defined, mod_defined
 
     def _collect_gui_refs(self, defined: Set[str]) -> List[Tuple[str, str, int]]:
@@ -473,7 +508,9 @@ class GfxReferenceValidator(BaseValidator):
                 continue
             if _is_flag_sprite(sprite):
                 continue
-            if _is_likely_vanilla(sprite):
+            # Prefix heuristic only when no vanilla names were loaded — with a
+            # live install or manifest the defined set already covers vanilla.
+            if not self._vanilla_defs_loaded and _is_likely_vanilla(sprite):
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
             key = (sprite, rel, line)

@@ -1,4 +1,5 @@
 calculate_expected_spending = {
+	resolve_gdp_c_deltas = yes
 	calculate_expected_welfare_spending = yes
 	calculate_expected_healthcare_spending = yes
 	calculate_expected_education_spending = yes
@@ -15,7 +16,7 @@ calculate_expected_welfare_spending = {
 		value = v
 
 		set_temp_variable = { buf = global.expected_social_sp^v }
-		apply_gdp_c_mod = yes
+		add_to_temp_variable = { buf = gdp_c_delta }
 		multiply_temp_variable = { buf = party_pop_array^v }
 		add_to_variable = { expected_welfare_spending = buf }
 	}
@@ -44,7 +45,7 @@ calculate_expected_healthcare_spending = {
 		value = v
 
 		set_temp_variable = { buf = global.expected_med_sp^v }
-		apply_gdp_c_mod = yes
+		add_to_temp_variable = { buf = gdp_c_delta }
 		multiply_temp_variable = { buf = party_pop_array^v }
 		add_to_variable = { expected_health_spending = buf }
 	}
@@ -74,7 +75,7 @@ calculate_expected_education_spending = {
 		value = v
 
 		set_temp_variable = { buf = global.expected_ed_sp^v }
-		apply_gdp_c_mod_for_lvl_5 = yes
+		add_to_temp_variable = { buf = gdp_c_delta_lvl5 }
 		multiply_temp_variable = { buf = party_pop_array^v }
 		add_to_variable = { expected_edu_spending = buf }
 	}
@@ -104,7 +105,7 @@ calculate_expected_police_spending = {
 		value = v
 
 		set_temp_variable = { buf = global.expected_police_sp^v }
-		apply_gdp_c_mod_for_lvl_5 = yes
+		add_to_temp_variable = { buf = gdp_c_delta_lvl5 }
 		multiply_temp_variable = { buf = party_pop_array^v }
 		add_to_variable = { expected_police_spending = buf }
 	}
@@ -134,7 +135,7 @@ calculate_expected_adm_spending = {
 		value = v
 
 		set_temp_variable = { buf = global.expected_adm_sp^v }
-		apply_gdp_c_mod_for_lvl_5 = yes
+		add_to_temp_variable = { buf = gdp_c_delta_lvl5 }
 		multiply_temp_variable = { buf = party_pop_array^v }
 		add_to_variable = { expected_adm_spending = buf }
 	}
@@ -164,7 +165,7 @@ calculate_expected_military_spending = {
 		value = v
 
 		set_temp_variable = { buf = global.expected_military_sp^v }
-		apply_mil_gdp_c_mod = yes
+		add_to_temp_variable = { buf = gdp_c_delta_mil }
 		multiply_temp_variable = { buf = party_pop_array^v }
 		add_to_variable = { expected_military_sp = buf }
 	}
@@ -207,94 +208,47 @@ calculate_expected_military_spending = {
 	}
 }
 
-apply_gdp_c_mod_for_lvl_5 = {
+resolve_gdp_c_deltas = {
 	if = {
 		limit = { check_variable = { gdp_per_capita < 5 } }
-		subtract_from_temp_variable = { buf = 1.5 }
+		set_temp_variable = { gdp_c_delta = -1.8 }
+		set_temp_variable = { gdp_c_delta_lvl5 = -1.5 }
+		set_temp_variable = { gdp_c_delta_mil = -1.5 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 10 } }
-		subtract_from_temp_variable = { buf = 1 }
+		set_temp_variable = { gdp_c_delta = -1.2 }
+		set_temp_variable = { gdp_c_delta_lvl5 = -1 }
+		set_temp_variable = { gdp_c_delta_mil = -1 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 15 } }
-		subtract_from_temp_variable = { buf = 0.5 }
+		set_temp_variable = { gdp_c_delta = -0.6 }
+		set_temp_variable = { gdp_c_delta_lvl5 = -0.5 }
+		set_temp_variable = { gdp_c_delta_mil = -0.5 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 20 } }
-		add_to_temp_variable = { buf = 0.1 }
+		set_temp_variable = { gdp_c_delta = -0.1 }
+		set_temp_variable = { gdp_c_delta_lvl5 = 0.1 }
+		set_temp_variable = { gdp_c_delta_mil = 0 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 30 } }
-		add_to_temp_variable = { buf = 0.4 }
+		set_temp_variable = { gdp_c_delta = 0.4 }
+		set_temp_variable = { gdp_c_delta_lvl5 = 0.4 }
+		set_temp_variable = { gdp_c_delta_mil = 0.2 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 40 } }
-		add_to_temp_variable = { buf = 0.8 }
+		set_temp_variable = { gdp_c_delta = 0.9 }
+		set_temp_variable = { gdp_c_delta_lvl5 = 0.8 }
+		set_temp_variable = { gdp_c_delta_mil = 0.6 }
 	}
 	else = {
-		add_to_temp_variable = { buf = 1.2 }
-	}
-}
-
-apply_gdp_c_mod = {
-	if = {
-		limit = { check_variable = { gdp_per_capita < 5 } }
-		subtract_from_temp_variable = { buf = 1.8 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 10 } }
-		subtract_from_temp_variable = { buf = 1.2 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 15 } }
-		subtract_from_temp_variable = { buf = 0.6 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 20 } }
-		subtract_from_temp_variable = { buf = 0.1 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 30 } }
-		add_to_temp_variable = { buf = 0.4 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 40 } }
-		add_to_temp_variable = { buf = 0.9 }
-	}
-	else = {
-		add_to_temp_variable = { buf = 1.4 }
-	}
-}
-
-apply_mil_gdp_c_mod = {
-	if = {
-		limit = { check_variable = { gdp_per_capita < 5 } }
-		subtract_from_temp_variable = { buf = 1.5 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 10 } }
-		subtract_from_temp_variable = { buf = 1 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 15 } }
-		subtract_from_temp_variable = { buf = 0.5 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 20 } }
-		# kekl, its still easier to add 0 then to check for 20 4 times
-		add_to_temp_variable = { buf = 0 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 30 } }
-		add_to_temp_variable = { buf = 0.2 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 40 } }
-		add_to_temp_variable = { buf = 0.6 }
-	}
-	else = {
-		add_to_temp_variable = { buf = 1 }
+		set_temp_variable = { gdp_c_delta = 1.4 }
+		set_temp_variable = { gdp_c_delta_lvl5 = 1.2 }
+		set_temp_variable = { gdp_c_delta_mil = 1 }
 	}
 }
 

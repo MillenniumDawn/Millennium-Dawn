@@ -1,0 +1,260 @@
+# Author(s): XCezor
+
+# Makes AI apply Antarctic station module changes, restocks fuel and calls observers
+ai_antarctica_monthly = {
+	if = {
+		limit = { is_debug = yes }
+		log = "[THIS.GetTag] is managing Antarctic Station"
+	}
+
+	ai_install_station_module_in_empty_slot = yes
+	ai_restock_station_fuel = yes
+	ai_antarctica_call_observers = yes
+}
+
+# Build module in station empty slot
+# Open own station -> click an empty slot ->
+# let the game pick a default module for that slot's category -> randomize
+# which module within that category -> validate exactly like the GUI would
+# (researched, power/staff balance, no duplicate labs, slot unlocked) ->
+# click Install.
+ai_install_station_module_in_empty_slot = {
+	antarctica_find_player_station = yes # Yeah it basically looks for THIS tag, not an actual player
+
+	if = {
+		limit = {
+			check_variable = { player_station_id > 0 }
+			meta_trigger = {
+				text = {
+					NOT = { check_variable = { global.research_station_[ID]_install_pending > 0 } }
+				}
+				ID = "[?player_station_id]"
+			}
+		}
+
+		set_variable = { selected_antarctica_station = player_station_id }
+		antarctica_set_selected_station_controller = yes
+
+		if = {
+			limit = { check_variable = { selected_antarctica_station_tier > 0 } }
+
+			# Slots: 1,2,4,5,6,7,8,9,10,11,12,13,14 (3 DOESN'T EXIST DON'T MESS WITH IT UNLESS YOU WANT TO REWRITE WHOLE SYSTEM YES I CANNOT COUNT).
+			clear_array = ai_antarctica_empty_slots
+
+			meta_effect = {
+				text = {
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_1 < 1 } } add_to_array = { ai_antarctica_empty_slots = 1 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_2 < 1 } } add_to_array = { ai_antarctica_empty_slots = 2 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_4 < 1 } } add_to_array = { ai_antarctica_empty_slots = 4 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_5 < 1 } } add_to_array = { ai_antarctica_empty_slots = 5 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_6 < 1 } } add_to_array = { ai_antarctica_empty_slots = 6 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_7 < 1 } } add_to_array = { ai_antarctica_empty_slots = 7 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_8 < 1 } } add_to_array = { ai_antarctica_empty_slots = 8 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_9 < 1 } } add_to_array = { ai_antarctica_empty_slots = 9 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_10 < 1 } } add_to_array = { ai_antarctica_empty_slots = 10 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_11 < 1 } } add_to_array = { ai_antarctica_empty_slots = 11 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_12 < 1 } } add_to_array = { ai_antarctica_empty_slots = 12 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_13 < 1 } } add_to_array = { ai_antarctica_empty_slots = 13 } }
+					if = { limit = { check_variable = { global.research_station_[ID]_module_slot_14 < 1 } } add_to_array = { ai_antarctica_empty_slots = 14 } }
+				}
+				ID = "[?player_station_id]"
+			}
+
+			set_temp_variable = { ai_antarctica_empty_slot_count = ai_antarctica_empty_slots^num }
+
+			if = {
+				limit = { check_variable = { ai_antarctica_empty_slot_count > 0 } }
+
+				# Pick a random empty slot.
+				set_temp_variable = { ai_antarctica_slot_index = 0 }
+				if = {
+					limit = { check_variable = { ai_antarctica_empty_slot_count > 1 } }
+					set_temp_variable_to_random = {
+						var = ai_antarctica_slot_index
+						min = 0
+						max = ai_antarctica_empty_slot_count
+						integer = yes
+					}
+					if = {
+						limit = { check_variable = { ai_antarctica_slot_index = ai_antarctica_empty_slot_count } }
+						subtract_from_variable = { ai_antarctica_slot_index = 1 }
+					}
+				}
+
+				set_variable = { selected_antarctica_station_selected_slot = ai_antarctica_empty_slots^ai_antarctica_slot_index }
+
+				# Mimic clicking the slot: this sets selected_antarctica_station_selected_module_category
+				# and a default selected_antarctica_station_selected_module for that category/slot.
+				antarctica_set_selected_station_preview_defaults = yes
+
+				# Only continue if this slot is actually unlocked at the station's current tier.
+				if = {
+					limit = { antarctica_station_slot_unlocked_by_tier = yes }
+
+					# Randomize which module within the category to try installing.
+					set_temp_variable = { ai_antarctica_module_max = 4 }
+					if = {
+						limit = { check_variable = { selected_antarctica_station_selected_module_category = 1 } }
+						set_temp_variable = { ai_antarctica_module_max = 10 }
+					}
+					else_if = {
+						limit = { check_variable = { selected_antarctica_station_selected_module_category = 5 } }
+						set_temp_variable = { ai_antarctica_module_max = 12 }
+					}
+
+					set_temp_variable_to_random = {
+						var = ai_antarctica_module_pick
+						min = 1
+						max = ai_antarctica_module_max
+						integer = yes
+					}
+					if = {
+						limit = { check_variable = { ai_antarctica_module_pick > ai_antarctica_module_max } }
+						set_variable = { ai_antarctica_module_pick = ai_antarctica_module_max }
+					}
+
+					set_variable = { selected_antarctica_station_selected_module = ai_antarctica_module_pick }
+
+					# Refresh preview power/staff/cost for the just picked module.
+					antarctica_calculate_selected_preview_module_install_time = yes
+
+					# Full module validation pass to ensure AI isn't cheating. If the module will not be valid, nothing happens.
+					if = {
+						limit = {
+							check_variable = { selected_antarctica_station_selected_module > 0 }
+							antarctica_is_module_researched = yes
+							antarctica_can_install_module_power_balance = yes
+							antarctica_can_install_module_staff_availability = yes
+							antarctica_can_install_module_no_duplicate_laboratories = yes
+							antarctica_station_selected_slot_module_different = yes
+						}
+
+						antarctica_queue_selected_station_module_install = yes
+
+						if = {
+							limit = { is_debug = yes }
+							log = "[THIS.GetTag] AI queued Antarctica module install: station = [?player_station_id] slot = [?selected_antarctica_station_selected_slot] module = [?selected_antarctica_station_selected_module]"
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# Simply restocks station fuel if the original triggers are met:
+# Station has at least one diesel engine and it doesn't have delivery incoming
+ai_restock_station_fuel = {
+	antarctica_find_player_station = yes
+
+	if = {
+		limit = { check_variable = { player_station_id > 0 } }
+
+		set_variable = { selected_antarctica_station = player_station_id }
+		antarctica_set_selected_station_controller = yes
+
+		if = {
+			limit = { is_station_fuel_supply_ready = yes }
+			antarctica_send_supplies_to_selected_station = yes
+		}
+	}
+}
+
+ai_antarctica_call_observers = {
+	if = {
+		limit = {
+			has_country_flag = is_antarctica_atcp_consultative_member
+			NOT = { has_country_flag = antarctica_observer_mission_in_progress }
+			NOT = { has_global_flag = antarctica_blizzard_active }
+		}
+
+		random = {
+			chance = 5
+
+			# Collect every eligible target station id.
+			clear_array = ai_antarctica_observer_candidates
+
+			for_each_loop = {
+				array = global.antarctica_station_ids
+				value = ai_antarctica_candidate_station_id
+
+				if = {
+					limit = {
+						check_variable = { ai_antarctica_candidate_station_id > 0 }
+						meta_trigger = {
+							text = {
+								has_global_flag = research_station_[ID]_exists
+								NOT = { check_variable = { global.research_station_[ID]_controller = THIS.id } }
+								NOT = { has_global_flag = research_station_[ID]_observers_incoming }
+							}
+							ID = "[?ai_antarctica_candidate_station_id]"
+						}
+					}
+					add_to_array = { ai_antarctica_observer_candidates = ai_antarctica_candidate_station_id }
+				}
+			}
+
+			set_temp_variable = { ai_antarctica_observer_candidate_count = ai_antarctica_observer_candidates^num }
+
+			if = {
+				limit = { check_variable = { ai_antarctica_observer_candidate_count > 0 } }
+
+				# Pick a random eligible target.
+				set_temp_variable = { ai_antarctica_observer_index = 0 }
+				if = {
+					limit = { check_variable = { ai_antarctica_observer_candidate_count > 1 } }
+					set_temp_variable_to_random = {
+						var = ai_antarctica_observer_index
+						min = 0
+						max = ai_antarctica_observer_candidate_count
+						integer = yes
+					}
+					if = {
+						limit = { check_variable = { ai_antarctica_observer_index = ai_antarctica_observer_candidate_count } }
+						subtract_from_variable = { ai_antarctica_observer_index = 1 }
+					}
+				}
+
+				set_variable = { selected_antarctica_station = ai_antarctica_observer_candidates^ai_antarctica_observer_index }
+				antarctica_set_selected_station_controller = yes
+
+				# Re-validate exactly like antarctica_station_send_observers_button_click,
+				# in case anything changed between candidate collection and selection.
+				if = {
+					limit = {
+						check_variable = { selected_antarctica_station > 0 }
+						has_country_flag = is_antarctica_atcp_consultative_member
+						NOT = { has_country_flag = antarctica_observer_mission_in_progress }
+						meta_trigger = {
+							text = {
+								NOT = { has_global_flag = research_station_[ID]_observers_incoming }
+							}
+							ID = "[?selected_antarctica_station]"
+						}
+					}
+
+					set_variable = { antarctica_observer_target_station = selected_antarctica_station }
+					set_variable = { antarctica_observer_target_country = selected_antarctica_station_controller }
+					set_country_flag = antarctica_observer_mission_in_progress
+					meta_effect = {
+						text = {
+							set_global_flag = research_station_[ID]_observers_incoming
+						}
+						ID = "[?selected_antarctica_station]"
+					}
+
+					# Notify the target station owner immediately, then resolve inspection in 7 days.
+					var:selected_antarctica_station_controller = {
+						country_event = MD_antarctica.1
+					}
+					country_event = { id = MD_antarctica.2 days = 7 }
+
+					if = {
+						limit = { is_debug = yes }
+						log = "[Root.GetTag] AI sent Antarctica observers to station = [?selected_antarctica_station]"
+					}
+				}
+			}
+		}
+	}
+}

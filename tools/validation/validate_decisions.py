@@ -60,7 +60,56 @@ def _scan_activations_in_file(filename: str) -> Tuple[set, set]:
 
 # --- Decision parsing helpers ---
 
+_REMOVE_DECISION_RE = re.compile(r"\bremove_decision\s*=\s*(\w+)")
+_REMOVE_TARGETED_BLOCK_RE = re.compile(
+    r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
+)
+_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\w+)")
+
+
+def _scan_external_removals(filename: str) -> set:
+    if _should_skip(filename):
+        return set()
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if "remove_decision" not in text_file:
+        return set()
+    out = set(_REMOVE_DECISION_RE.findall(text_file))
+    for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
+        out.update(_REMOVE_DECISION_NAME_RE.findall(block))
+    return out
+
+
 _TAG_TOKEN_PATTERN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
+
+# Decision-block / category-block parsing patterns (hoisted from cached
+# closures in parse_all_decisions / parse_all_decision_names /
+# parse_decision_categories / parse_categories_with_decisions).
+_DECISIONS_BLOCK_RE = re.compile(
+    r"^\t[^\t#]+ = \{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
+)
+_DECISION_TOKEN_LINE_RE = re.compile(r"^\t(.+) =", flags=re.MULTILINE)
+_CATEGORY_BLOCK_RE = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
+_CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
+_CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
+
+# FROM-usage detection (hoisted from validate_targets_no_trigger /
+# validate_from_without_targets).
+_FROM_BLOCK_RE = re.compile(r"\bFROM\s*=\s*\{")
+_FROM_WORD_RE = re.compile(r"\bFROM\b")
+
+# Bare trigger names needing a has_ prefix (hoisted from validate_bare_trigger_names).
+_BARE_TRIGGERS = {
+    "political_power": "has_political_power",
+    "stability": "has_stability",
+    "war_support": "has_war_support",
+    "manpower": "has_manpower",
+}
+_BARE_TRIGGER_RE = re.compile(
+    r"^\t+(" + "|".join(_BARE_TRIGGERS.keys()) + r")\s+[<>]",
+    flags=re.MULTILINE,
+)
 
 
 def _flat_tag_pins(block: str) -> set:
@@ -174,6 +223,7 @@ class DecisionFactory:
         self.remove_effect = extract_value_multi_line(dec, "remove_effect")
         self.cancel_trigger = extract_value_multi_line(dec, "cancel_trigger")
         self.cancel_if_not_visible = "cancel_if_not_visible = yes" in dec
+        self.activation = extract_value_multi_line(dec, "activation")
         self.target_root_trigger = extract_value_multi_line(dec, "target_root_trigger")
         self.target_trigger = extract_value_multi_line(dec, "target_trigger")
         self.targets = extract_value_multi_line(dec, "targets")
@@ -259,9 +309,6 @@ def parse_all_decisions(
 
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions")
-        _decisions_pattern = re.compile(
-            r"^\t[^\t#]+ = \{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
-        )
         decisions = []
         paths = {}
 
@@ -271,7 +318,7 @@ def parse_all_decisions(
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
-            matches = _decisions_pattern.findall(text_file)
+            matches = _DECISIONS_BLOCK_RE.findall(text_file)
             for match in matches:
                 decisions.append(match)
                 paths[match] = os.path.basename(filename)
@@ -308,11 +355,10 @@ def parse_all_decision_names(
 
     def _parse():
         decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
-        _names_pattern = re.compile(r"^\t(.+) =", flags=re.MULTILINE)
         names = []
         name_paths = {}
         for d in decisions:
-            name = _names_pattern.findall(d)[0]
+            name = _DECISION_TOKEN_LINE_RE.findall(d)[0]
             names.append(name)
             name_paths[name] = dec_paths[d]
         return names, name_paths
@@ -328,18 +374,16 @@ def parse_decision_categories(
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
         categories = {}
-        _cat_pattern = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
-        _name_pattern = re.compile(r"^(.*) = \{")
 
         for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
-            matches = re.findall(_cat_pattern, text_file)
+            matches = _CATEGORY_BLOCK_RE.findall(text_file)
             for match in matches:
                 if not visible_when_empty and "visible_when_empty = yes" in match:
                     continue
-                name = re.findall(_name_pattern, match)
+                name = _CATEGORY_NAME_RE.findall(match)
                 if name:
                     categories[name[0]] = match
 
@@ -361,7 +405,6 @@ def parse_categories_with_decisions(
         result = {cat: [] for cat in category_names}
 
         filepath = str(Path(mod_path) / "common" / "decisions")
-        _dec_pattern = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
         for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
             if "categories" in filename:
@@ -376,7 +419,7 @@ def parse_categories_with_decisions(
                         pattern, text_file, flags=re.DOTALL | re.MULTILINE
                     )
                     for match in matches:
-                        dec_names = _dec_pattern.findall(match)
+                        dec_names = _CATEGORY_DECISION_TOKEN_RE.findall(match)
                         result[category].extend(dec_names)
 
         return result
@@ -738,7 +781,6 @@ class Validator(BaseValidator):
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
-        from_pattern = re.compile(r"\bFROM\s*=\s*\{")
         for d in factories:
             if not (d.targets or d.target_array):
                 continue
@@ -746,9 +788,9 @@ class Validator(BaseValidator):
                 continue
             # Only flag if there's at least one FROM = { ... } block in visible or available
             has_from_filter = False
-            if d.visible and from_pattern.search(d.visible):
+            if d.visible and _FROM_BLOCK_RE.search(d.visible):
                 has_from_filter = True
-            if d.available and from_pattern.search(d.available):
+            if d.available and _FROM_BLOCK_RE.search(d.available):
                 has_from_filter = True
             if has_from_filter:
                 results.append(f"{d.token:<55}{d.source_basename}")
@@ -782,7 +824,6 @@ class Validator(BaseValidator):
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
-        from_pattern = re.compile(r"\bFROM\b")
         for d in factories:
             if d.targets or d.target_array:
                 continue
@@ -792,11 +833,11 @@ class Validator(BaseValidator):
                 continue
 
             offending = []
-            if d.visible and from_pattern.search(d.visible):
+            if d.visible and _FROM_WORD_RE.search(d.visible):
                 offending.append("visible")
-            if d.available and from_pattern.search(d.available):
+            if d.available and _FROM_WORD_RE.search(d.available):
                 offending.append("available")
-            if d.complete_effect and from_pattern.search(d.complete_effect):
+            if d.complete_effect and _FROM_WORD_RE.search(d.complete_effect):
                 offending.append("complete_effect")
 
             if offending:
@@ -1329,18 +1370,6 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for bare trigger names missing has_ prefix...")
 
-        BARE_TRIGGERS = {
-            "political_power": "has_political_power",
-            "stability": "has_stability",
-            "war_support": "has_war_support",
-            "manpower": "has_manpower",
-        }
-
-        pattern = re.compile(
-            r"^\t+(" + "|".join(BARE_TRIGGERS.keys()) + r")\s+[<>]",
-            flags=re.MULTILINE,
-        )
-
         results = []
         dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
         for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
@@ -1351,9 +1380,9 @@ class Validator(BaseValidator):
             )
             # Remove check_variable blocks where bare names are valid
             cleaned = re.sub(r"check_variable\s*=\s*\{[^}]*\}", "", text_file)
-            for match in pattern.finditer(cleaned):
+            for match in _BARE_TRIGGER_RE.finditer(cleaned):
                 bare = match.group(1)
-                correct = BARE_TRIGGERS[bare]
+                correct = _BARE_TRIGGERS[bare]
                 line_num = cleaned[: match.start()].count("\n") + 1
                 basename = os.path.basename(filename)
                 results.append(
@@ -1408,7 +1437,9 @@ class Validator(BaseValidator):
         """Flag missions that have a visible block.
 
         The HOI4 engine ignores visible on mission-type decisions entirely.
-        Use activation = { ... } to control when a mission appears.
+        For script-activated missions (activation = { always = no }) the fix
+        is to delete the dead block — moving the condition into activation
+        would make the mission double-activate.
         """
         self._log_section(
             "Checking missions with visible block (does nothing for missions)..."
@@ -1419,14 +1450,21 @@ class Validator(BaseValidator):
 
         for d in factories:
             if d.mission_subtype and d.visible:
-                results.append(
-                    f"{d.token:<55}{d.source_basename} - visible does nothing on missions; use activation"
+                script_activated = (
+                    d.activation
+                    and "always = no" in d.activation
+                    and not d.cancel_if_not_visible
                 )
+                if script_activated:
+                    advice = "delete the dead visible block (mission is script-activated; do NOT move it to activation)"
+                else:
+                    advice = "delete the dead visible block, or move the condition to activation if it should gate appearance"
+                results.append(f"{d.token:<55}{d.source_basename} - {advice}")
 
         self._report(
             results,
             "✓ No missions with useless visible block",
-            "Missions with visible block (does nothing — use activation instead):",
+            "Missions with visible block (engine ignores it on missions):",
         )
 
     def validate_war_with_targeted(self):
@@ -1463,6 +1501,44 @@ class Validator(BaseValidator):
             results,
             "✓ No targeted decisions misusing war_with_on_* = FROM",
             "Targeted decisions using war_with_on_* = FROM (silently fails — use war_with_target_on_* = yes):",
+        )
+
+    def validate_missing_war_hint(self):
+        """Flag decisions that declare war but carry no war_with_* hint.
+
+        A decision whose complete_effect/remove_effect/timeout_effect calls
+        create_wargoal or declare_war should set one of the war_with_on_* (fixed
+        target) or war_with_target_on_* (FROM target) attributes so the AI
+        prepares for the war. create_wargoal inside an effect_tooltip still
+        represents an intended war, so its presence counts; the hint anywhere in
+        the decision body clears it.
+        """
+        self._log_section(
+            "Checking decisions declaring war for a missing war_with_* hint..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+        hints = (
+            "war_with_on_complete",
+            "war_with_on_remove",
+            "war_with_on_timeout",
+            "war_with_target_on_complete",
+            "war_with_target_on_remove",
+            "war_with_target_on_timeout",
+        )
+
+        for d in factories:
+            if not re.search(r"\b(?:create_wargoal|declare_war_on)\b", d.raw):
+                continue
+            if any(hint in d.raw for hint in hints):
+                continue
+            results.append(f"{d.token:<55}{d.source_basename}")
+
+        self._report(
+            results,
+            "✓ No decisions declaring war without a war_with_* hint",
+            "Decisions that declare war but have no war_with_on_* / war_with_target_on_* hint (AI won't prepare):",
         )
 
     def validate_cancel_if_not_visible(self):
@@ -1615,26 +1691,15 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
 
-        remove_pat = re.compile(r"\bremove_decision\s*=\s*(\w+)")
-        remove_targeted_block_pat = re.compile(
-            r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
-        )
-        decision_name_pat = re.compile(r"\bdecision\s*=\s*(\w+)")
         externally_removed: set = set()
-
-        for filename in glob.iglob(
-            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        for found in self._pool_map(
+            _scan_external_removals,
+            list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+            ),
+            chunksize=30,
         ):
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if "remove_decision" not in text_file:
-                continue
-            externally_removed.update(remove_pat.findall(text_file))
-            for block in remove_targeted_block_pat.findall(text_file):
-                externally_removed.update(decision_name_pat.findall(block))
+            externally_removed |= found
 
         results = []
 
@@ -1719,6 +1784,7 @@ class Validator(BaseValidator):
         self.validate_missing_localisation()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
+        self.validate_missing_war_hint()
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
         self.validate_state_target_with_targets()
