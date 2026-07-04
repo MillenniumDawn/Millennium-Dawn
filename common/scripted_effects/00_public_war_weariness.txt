@@ -11,9 +11,21 @@ AB_war_main = {
 		country_event = { id = anti_bully.3 days = 45 } #delay the next increase in AB penalty for x days
 	}
 	else = {
-		add_to_variable = { penalty_factor = -2 }
-		public_war_weariness_penalty_effect = yes
-		country_event = { id = anti_bully.3 days = 45 }
+		if = { #No active AB war: wind the accumulated penalty back down, then stop
+			limit = { check_variable = { penalty_factor > 0 } }
+			add_to_variable = { penalty_factor = -2 }
+			if = { #Never overshoot below zero
+				limit = { check_variable = { penalty_factor < 0 } }
+				set_variable = { penalty_factor = 0 }
+			}
+			public_war_weariness_penalty_effect = yes
+			country_event = { id = anti_bully.3 days = 45 }
+			else = { #Penalty fully wound down: end the recurring event and reset the counters
+				set_variable = { penalty_factor = 0 }
+				set_variable = { anti_bully_wars = 0 }
+				set_variable = { war_support_factor_var = 0 }
+			}
+		}
 	}
 }
 
