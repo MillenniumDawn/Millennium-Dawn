@@ -5,11 +5,13 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+
 from gfx_entry_generator import (
     _build_scripted_gui_text,
     _extract_manual_body,
     generate_decisions,
     generate_decisions_desc,
+    generate_modifier_icons,
     generate_scripted_gui,
     merge_gfx_entries,
 )
@@ -205,3 +207,109 @@ def test_generate_scripted_gui_skips_underscore_dirs(tmp_path):
     out = (root / "interface" / "MD_scripted_gui.gfx").read_text(encoding="utf-8")
     assert 'name = "GFX_bushehr_red"' in out
     assert "propaganda_green" not in out  # _manual/ skipped
+
+
+# --- generate_modifier_icons -----------------------------------------------
+
+
+def _modifier_icons_tree(root):
+    (root / "gfx" / "texticons" / "modifier_icons").mkdir(parents=True)
+    (root / "interface").mkdir()
+    (
+        root / "gfx" / "texticons" / "modifier_icons" / "air_spirit_texticon.dds"
+    ).write_bytes(b"x")
+    (
+        root
+        / "gfx"
+        / "texticons"
+        / "modifier_icons"
+        / "Aircraft_Company_cost_factor.dds"
+    ).write_bytes(b"x")
+    return root
+
+
+def test_modifier_icons_emits_gfx_full_stem(tmp_path):
+    _modifier_icons_tree(tmp_path)
+    generate_modifier_icons(tmp_path)
+    out = (tmp_path / "interface" / "modifiericons_texticons.gfx").read_text(
+        encoding="utf-8"
+    )
+    # Files whose stem already ends in _texticon: GFX_<full_stem>
+    assert 'name = "GFX_air_spirit_texticon"' in out
+    assert 'texturefile = "gfx/texticons/modifier_icons/air_spirit_texticon.dds"' in out
+    # Files without _texticon suffix: GFX_<stem> (workshop convention)
+    assert 'name = "GFX_Aircraft_Company_cost_factor"' in out
+    assert (
+        'texturefile = "gfx/texticons/modifier_icons/Aircraft_Company_cost_factor.dds"'
+        in out
+    )
+    # Every block has legacy_lazy_load = no
+    assert "legacy_lazy_load = no" in out
+
+
+def test_modifier_icons_preserves_existing_gfx_name(tmp_path):
+    """A GFX block already wired in the .gfx keeps its existing name even if the
+    stem-derived default would differ (e.g. hand-rolled MD cost-factor entries
+    with a `_texticon` suffix). This avoids orphaning and breaking .gui refs."""
+    _modifier_icons_tree(tmp_path)
+    out_path = tmp_path / "interface" / "modifiericons_texticons.gfx"
+    out_path.write_text(
+        "spriteTypes = {\n"
+        "\tspriteType = {\n"
+        '\t\tname = "GFX_Aircraft_Company_cost_factor_texticon"\n'
+        '\t\ttexturefile = "gfx/texticons/modifier_icons/Aircraft_Company_cost_factor.dds"\n'
+        "\t\tlegacy_lazy_load = no\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    generate_modifier_icons(tmp_path)
+    out = out_path.read_text(encoding="utf-8")
+    # The existing GFX_Aircraft_Company_cost_factor_texticon block is preserved verbatim
+    assert 'name = "GFX_Aircraft_Company_cost_factor_texticon"' in out
+    # No duplicate GFX_Aircraft_Company_cost_factor block was added
+    assert 'name = "GFX_Aircraft_Company_cost_factor"' not in out
+
+
+def test_modifier_icons_protected_set_keeps_role_icon_texturefile(tmp_path):
+    """A protected GFX name (e.g. GFX_anti_air_texticon role icon) keeps its
+    existing non-modifier_icons texturefile. The local .dds with the same stem
+    is left unreferenced rather than added under a duplicate GFX name; the
+    role icon block survives intact so vanilla references keep resolving."""
+    (tmp_path / "gfx" / "texticons" / "modifier_icons").mkdir(parents=True)
+    (tmp_path / "interface").mkdir()
+    (
+        tmp_path / "gfx" / "texticons" / "modifier_icons" / "anti_air_texticon.dds"
+    ).write_bytes(b"x")
+    out_path = tmp_path / "interface" / "modifiericons_texticons.gfx"
+    out_path.write_text(
+        "spriteTypes = {\n"
+        "\tSpriteType = {\n"
+        '\t\tname = "GFX_anti_air_texticon"\n'
+        '\t\ttexturefile = "gfx/interface/equipmentdesigner/tanks/role_icons/role_icon_3.dds"\n'
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    generate_modifier_icons(tmp_path)
+    out = out_path.read_text(encoding="utf-8")
+    # The role-icon texturefile survives untouched
+    assert (
+        'texturefile = "gfx/interface/equipmentdesigner/tanks/role_icons/role_icon_3.dds"'
+        in out
+    )
+    # Only the role-icon block exists (no duplicate local entry was added)
+    assert out.count('name = "GFX_anti_air_texticon"') == 1
+
+
+def test_modifier_icons_idempotent(tmp_path):
+    _modifier_icons_tree(tmp_path)
+    generate_modifier_icons(tmp_path)
+    first = (tmp_path / "interface" / "modifiericons_texticons.gfx").read_text(
+        encoding="utf-8"
+    )
+    generate_modifier_icons(tmp_path)
+    second = (tmp_path / "interface" / "modifiericons_texticons.gfx").read_text(
+        encoding="utf-8"
+    )
+    assert first == second
