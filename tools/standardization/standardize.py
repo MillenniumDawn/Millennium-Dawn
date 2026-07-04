@@ -130,7 +130,9 @@ Examples:
     loc_parser.add_argument(
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
-    loc_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    loc_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Verbose output"
+    )
     loc_parser.add_argument(
         "--mod-root", help="Path to mod root (auto-detected if omitted)"
     )

@@ -81,6 +81,8 @@ def scan_text(text: str, name: str) -> list[str]:
             continue
         if fence is not None:
             continue
+        if "](" not in raw_line:
+            continue
         line = mask_inline_code(raw_line)
         if EMPTY_TARGET_RE.search(line):
             errors.append(f"{name}:{i}: empty link target `]()` -- {raw_line.strip()}")

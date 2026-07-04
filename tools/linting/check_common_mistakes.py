@@ -586,6 +586,16 @@ _RE_ADD_TO_VAR = re.compile(
     r"^\s*(add_to_variable|add_to_temp_variable)\s*=\s*\{.*\}\s*$"
 )
 _RE_DIVIDE_VAR = re.compile(r"\bdivide_variable\s*=\s*\{\s*(\S+)\s*=\s*(\S+)\s*\}")
+
+# Globals that are guaranteed non-zero at game start, so dividing by them
+# never produces NaN. Hand-maintained: add a global here when it represents a
+# count/population/total that the mod initialises to a positive value in
+# scripted_effects or history. The `^num` suffix counts an array's entries.
+_NONZERO_GLOBAL_DIVISORS = frozenset(
+    {
+        "global.UN_general_assembly^num",
+    }
+)
 _RE_EVERY_COUNTRY_OPEN = re.compile(r"^\s*(every_other_country|every_country)\s*=\s*\{")
 _RE_ANY_COUNTRY_OPEN = re.compile(r"^\s*(any_other_country|any_country)\s*=\s*\{")
 # Maps each bloc-membership idea to the global array that should track it.
@@ -725,15 +735,13 @@ def _check_decision_allowed_dynamic(lines):
                         ):
                             in_allowed = True
                             allowed_depth = dbl_code.count("{") - dbl_code.count("}")
-                        elif in_allowed:
+                        if in_allowed:
                             allowed_depth += dbl_code.count("{") - dbl_code.count("}")
                             if _RE_DECISION_ALLOWED_DYNAMIC.search(dbl_code):
                                 trigger = _RE_DECISION_ALLOWED_DYNAMIC.search(
                                     dbl_code
                                 ).group()
-                                if trigger == "original_tag" or trigger == "tag":
-                                    pass
-                                else:
+                                if trigger not in ("original_tag", "tag"):
                                     issues.append(
                                         (
                                             cat_start + k + p + 1,
@@ -979,7 +987,10 @@ def _check_divide_variable_zero_guard(lines):
             try:
                 float(divisor)
             except ValueError:
-                if divisor not in guarded_vars:
+                if (
+                    divisor not in guarded_vars
+                    and divisor not in _NONZERO_GLOBAL_DIVISORS
+                ):
                     issues.append(
                         (
                             i + 1,
