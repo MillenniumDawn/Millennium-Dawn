@@ -11,6 +11,8 @@ import tempfile
 from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import disk_cache
 from shared_utils import Colors
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -88,11 +90,17 @@ def launch_validator(
         output_path,
     ] + combined_flags
 
-    return subprocess.Popen(
+    # Capture stderr per validator so a crash leaves a traceback to read;
+    # previously DEVNULL made crashes undiagnosable from the suite output.
+    stderr_path = os.path.join(output_dir, f"{name}.stderr.log")
+    stderr_fh = open(stderr_path, "w", encoding="utf-8")
+    proc = subprocess.Popen(
         cmd,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=stderr_fh,
     )
+    proc._md_stderr_fh = stderr_fh
+    return proc
 
 
 def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
@@ -108,6 +116,20 @@ def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
         except Exception:
             pass
     return 0, 0
+
+
+def _print_stderr_tail(output_dir: str, name: str, max_lines: int = 15) -> None:
+    """Print the tail of a crashed validator's captured stderr (the traceback)."""
+    stderr_path = os.path.join(output_dir, f"{name}.stderr.log")
+    try:
+        with open(stderr_path, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.read().strip().splitlines()
+    except OSError:
+        return
+    if not lines:
+        return
+    for line in lines[-max_lines:]:
+        print(f"    {line}")
 
 
 def _issue_sort_key(issue: Dict):
@@ -142,11 +164,15 @@ def collect_all_issues(
                     # surviving representative vary between runs.
                     issues.sort(key=_issue_sort_key)
                     for issue in issues:
+                        # Message is part of the key — distinct findings on the
+                        # same line (e.g. two missing loc keys) must both survive.
+                        # Matches report_lib's dedupe key.
                         key = (
                             issue.get("file", ""),
                             issue.get("line", 0),
                             issue.get("severity", ""),
                             issue.get("category", ""),
+                            issue.get("message", ""),
                         )
                         if key not in seen_keys:
                             seen_keys.add(key)
@@ -237,6 +263,23 @@ def main():
             "CACHE_VERSION bumps. Sets MD_NO_CACHE=1 for child validators."
         ),
     )
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help=(
+            "Delete the entire .validation_cache/ before running, then rebuild "
+            "it from scratch this run. Use to reset a stale or oversized cache."
+        ),
+    )
+    parser.add_argument(
+        "--cache-max-age-days",
+        type=float,
+        default=7.0,
+        help=(
+            "Auto-clear .validation_cache/ when it is older than this many days "
+            "(since creation/last clear), then rebuild. 0 disables. Default: 7."
+        ),
+    )
     parser.add_argument("--format", choices=["text", "json", "both"], default="text")
     parser.add_argument(
         "--output", "-o", type=str, help="Output file for combined report"
@@ -271,6 +314,24 @@ def main():
 
     VALIDATORS = discover_validators()
     mod_path = os.path.abspath(args.path)
+
+    if args.clear_cache:
+        disk_cache.clear(mod_path)
+        disk_cache.stamp_created(mod_path)
+        print("Cleared .validation_cache/ (rebuilding from scratch this run).")
+    else:
+        # Auto-reset a cache that's been accumulating orphaned rows (deleted
+        # files, stale namespace hashes) for longer than the age limit.
+        if disk_cache.clear_if_stale(mod_path, args.cache_max_age_days):
+            print(
+                f"Cache older than {args.cache_max_age_days:g} day(s) — "
+                "cleared and rebuilding from scratch."
+            )
+        # Old CACHE_VERSION dirs are orphaned on a version bump (often 100k+
+        # files); drop them so the cache doesn't grow without bound.
+        pruned = disk_cache.prune_old_versions(mod_path)
+        if pruned:
+            print(f"Pruned stale cache version(s): {', '.join(sorted(pruned))}")
 
     # TemporaryDirectory guarantees cleanup even on crashes — the previous
     # mkdtemp + per-file os.remove pattern leaked the dir on every non-clean
@@ -308,7 +369,11 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     crashed_validators = []
 
     for name, _script, label in VALIDATORS:
-        returncode = processes[name].wait()
+        proc = processes[name]
+        returncode = proc.wait()
+        fh = getattr(proc, "_md_stderr_fh", None)
+        if fh is not None:
+            fh.close()
         error_count, warning_count = read_validator_counts(output_dir, name)
 
         if error_count > 0 or warning_count > 0:
@@ -322,6 +387,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             print(
                 f"{Colors.RED}✗ {label}{Colors.ENDC} (crashed, exit code {returncode})"
             )
+            _print_stderr_tail(output_dir, name)
             crashed_validators.append(label)
             total_errors += 1
         else:
@@ -370,7 +436,9 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             f"{total_warnings} warning(s){Colors.ENDC}"
         )
 
-    return 1 if args.strict else 0
+    # Warnings are advisory everywhere else (per-validator --strict gates on
+    # errors only; the CI legend says warnings never block) — match that here.
+    return 1 if (args.strict and total_errors > 0) else 0
 
 
 if __name__ == "__main__":

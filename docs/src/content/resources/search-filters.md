@@ -19,14 +19,14 @@ Multiple filters are space-separated inside the braces, on a single line.
 
 Most country trees use a **two-layer** approach:
 
-1. **Country-specific filter** — which country/faction the focus belongs to (e.g. `FOCUS_FILTER_ISRPOLIT`, `FOCUS_FILTER_RUSSIA_ECONOMY`). Always include this.
-2. **Generic filter** — the broad category (e.g. `FOCUS_FILTER_POLITICAL`, `FOCUS_FILTER_INDUSTRY`). Makes the focus discoverable through global filter buttons.
+1. **Country-specific filter**: which country/faction the focus belongs to (e.g. `FOCUS_FILTER_ISRPOLIT`, `FOCUS_FILTER_RUSSIA_ECONOMY`). Always include this.
+2. **Generic filter**: the broad category (e.g. `FOCUS_FILTER_POLITICAL`, `FOCUS_FILTER_INDUSTRY`). Makes the focus discoverable through global filter buttons.
 
 Countries using only custom filters are invisible to generic searches. Always include both layers.
 
-**Exception:** Smaller/simpler trees may use only generic filters with no custom ones — this is fine.
+**Exception:** Smaller/simpler trees may use only generic filters with no custom ones, this is fine.
 
-## Generic Filters — Full Reference
+## Generic Filters: Full Reference
 
 ### Political & Governance
 
@@ -108,9 +108,9 @@ Israel uses six custom filters. Every Israel focus needs the ISR custom filter *
 | ISR Filter                   | Purpose                                                                                               | Paired Generic Filter         |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------- |
 | `FOCUS_FILTER_ISRPOLIT`      | Party politics, government composition, ideology changes, electoral mechanics, constitutional reforms | `FOCUS_FILTER_POLITICAL`      |
-| `FOCUS_FILTER_ISRMILITARY`   | IDF doctrine, training, military organisation — see subcategory table below                           | varies (see below)            |
+| `FOCUS_FILTER_ISRMILITARY`   | IDF doctrine, training, military organisation, see subcategory table below                            | varies (see below)            |
 | `FOCUS_FILTER_ISRFOREIGNPOL` | Diplomacy, treaties, alliances, regional relations (Abraham Accords, Arab states, USA, etc.)          | `FOCUS_FILTER_FOREIGN_POLICY` |
-| `FOCUS_FILTER_ISRECON`       | Israeli economic development, fiscal policy, high-tech sector — see subcategory table                 | varies (see below)            |
+| `FOCUS_FILTER_ISRECON`       | Israeli economic development, fiscal policy, high-tech sector, see subcategory table                  | varies (see below)            |
 | `FOCUS_FILTER_ISRPALSTUFF`   | Israeli-Palestinian conflict mechanics: intifada, settlements, operations, occupation                 | `FOCUS_FILTER_INSURGENCY`     |
 | `FOCUS_FILTER_ISRPOLICE`     | Israeli law enforcement, Mišmeret Yisraʾel, internal security institutions                            | `FOCUS_FILTER_STABILITY`      |
 
@@ -136,7 +136,7 @@ When a focus has `FOCUS_FILTER_ISRMILITARY`, choose the generic based on its con
 
 ## Other Country Custom Filters (Quick Reference)
 
-These custom filters exist for other country trees — do not add them to Israel or unrelated trees:
+These custom filters exist for other country trees, do not add them to Israel or unrelated trees:
 
 | Country       | Custom Filters                                                                                                                                               |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -163,11 +163,11 @@ These custom filters exist for other country trees — do not add them to Israel
 | Using `FOCUS_FILTER_DIPLOMACY` for all foreign policy                  | Use `FOCUS_FILTER_FOREIGN_POLICY` for general relations; `FOCUS_FILTER_DIPLOMACY` for specific diplomatic actions   |
 | Tagging economic investment focuses without `FOCUS_FILTER_EXPENDITURE` | Add `FOCUS_FILTER_EXPENDITURE` to high-cost industrial/economic focuses, and add a bankruptcy guard in `ai_will_do` |
 | Missing filter entirely                                                | Every focus must have at least one filter                                                                           |
-| Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific — never cross-assign                    |
+| Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific, never cross-assign                     |
 
 ## Checklist When Adding a New Focus
 
 1. Choose the **country-specific custom filter** matching the focus's branch.
-2. Choose the **generic filter** from the tables above (one or two — don't over-tag).
-3. For high-cost focuses, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` — AI-only, not in `available`. Thresholds: `cost >= 8` for any focus, or `cost >= 5` if tagged military / economy / research. **Why:** at/above these costs the focus commits enough treasury that an AI already in collapse digs deeper; the lower econ/mil/research threshold reflects that those focuses typically chain larger monetary effects on top of the focus cost.
+2. Choose the **generic filter** from the tables above (one or two, don't over-tag).
+3. For high-cost focuses, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`: AI-only, not in `available`. Thresholds: `cost >= 8` for any focus, or `cost >= 5` if tagged military / economy / research. **Why:** at/above these costs the focus commits enough treasury that an AI already in collapse digs deeper; the lower econ/mil/research threshold reflects that those focuses typically chain larger monetary effects alongside the focus cost.
 4. Write `search_filters` as a single line: `search_filters = { CUSTOM_FILTER GENERIC_FILTER }`.

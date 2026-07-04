@@ -90,8 +90,8 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 **Style**:
 
-- stdlib-only for **runtime/shipped** tool deps (the validators and linters import only stdlib + the pinned `requests`/`pillow` in `tools/requirements.txt`). This does **not** apply to **dev tooling** — ruff, pytest, black, isort are sanctioned dev dependencies, configured in `pyproject.toml`.
-- Passes `ruff check` (config in `pyproject.toml`: `E`+`F`, with `E402`/`E741`/`E501` ignored). Don't reintroduce unused imports, bare `except:`, or unused variables.
+- stdlib-only for **runtime/shipped** tool deps (the validators and linters import only stdlib + the pinned `requests`/`pillow` in the `runtime` dependency-group in `pyproject.toml`). This does **not** apply to **dev tooling** — ruff and pytest are sanctioned dev dependencies in the `dev` dependency-group. All Python deps live in `pyproject.toml` under `[dependency-groups]` (no `requirements.txt`); ruff handles lint, import order, and formatting (black and isort were retired).
+- Passes `ruff check` (config in `pyproject.toml`: `E`+`F`+`I`, with `E402`/`E741`/`E501` ignored) and `ruff format`. Don't reintroduce unused imports, bare `except:`, or unused variables.
 - No comments that restate what the code does.
 - Pre-compiled regex at module level.
 - f-strings, not `.format()`.

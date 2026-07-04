@@ -340,7 +340,17 @@ scripted_gui = {
 		}
 
 		# AI Section
-		ai_enabled = { NOT = { original_tag = ZOM } }
+		# ai_enabled enables the AI for this GUI
+		# NOTE: This mirrors MD_special_countries which is used in other areas
+		ai_enabled = {
+			NOT = {
+				OR = {
+					original_tag = ZOM
+					original_tag = ALN
+				}
+			}
+		}
+		# ai_test_interval is the time in hours that is used to test the ai_check
 		ai_test_interval = 120 # 5 Days
 		ai_check = { has_available_treasury = yes }
 		ai_max_weight_taken_per_test = 3 # Allow the AI to select up to 3 if necessary
@@ -354,17 +364,20 @@ scripted_gui = {
 					factor = 5
 					# Interest Rate Methodology
 					modifier = {
-						set_temp_variable = { temp_interest_rate = 1.50 }
-						multiply_temp_variable = { temp_interest_rate = interest_rate }
-						has_variable = interest_rate
+						set_temp_variable = {
+							temp_interest_rate = { value = 1.5 multiply = interest_rate }
+						}
+						check_variable = { temp_interest_rate > 1 }
 						factor = temp_interest_rate
 					}
 					# GDP Debt Ratio Methodology
 					# Start being more likely to pay debt
 					modifier = {
-						set_temp_variable = { temp_debt_ratio = 2 }
-						multiply_temp_variable = { temp_debt_ratio = debt_ratio }
-						check_variable = { debt_ratio > 0.50 }
+						check_expr = {
+							value = 2
+							multiply = debt_ratio
+							greater_than = { value = 0.50 }
+						}
 						factor = temp_debt_ratio
 					}
 					# Killswitches
@@ -382,17 +395,20 @@ scripted_gui = {
 					factor = 5
 					# Interest Rate Methodology
 					modifier = {
-						set_temp_variable = { temp_interest_rate = 1.50 }
-						multiply_temp_variable = { temp_interest_rate = interest_rate }
-						has_variable = interest_rate
+						set_temp_variable = {
+							temp_interest_rate = { value = 1.5 multiply = interest_rate }
+						}
+						check_variable = { temp_interest_rate > 1 }
 						factor = temp_interest_rate
 					}
 					# GDP Debt Ratio Methodology
 					# Start being more likely to pay debt
 					modifier = {
-						set_temp_variable = { temp_debt_ratio = 2 }
-						multiply_temp_variable = { temp_debt_ratio = debt_ratio }
-						check_variable = { debt_ratio > 0.50 }
+						check_expr = {
+							value = 2
+							multiply = debt_ratio
+							greater_than = { value = 0.50 }
+						}
 						factor = temp_debt_ratio
 					}
 					# Killswitches
@@ -410,17 +426,20 @@ scripted_gui = {
 					factor = 5
 					# Interest Rate Methodology
 					modifier = {
-						set_temp_variable = { temp_interest_rate = 1.50 }
-						multiply_temp_variable = { temp_interest_rate = interest_rate }
-						has_variable = interest_rate
+						set_temp_variable = {
+							temp_interest_rate = { value = 1.5 multiply = interest_rate }
+						}
+						check_variable = { temp_interest_rate > 1 }
 						factor = temp_interest_rate
 					}
 					# GDP Debt Ratio Methodology
 					# Start being more likely to pay debt
 					modifier = {
-						set_temp_variable = { temp_debt_ratio = 2 }
-						multiply_temp_variable = { temp_debt_ratio = debt_ratio }
-						check_variable = { debt_ratio > 0.50 }
+						check_expr = {
+							value = 2
+							multiply = debt_ratio
+							greater_than = { value = 0.50 }
+						}
 						factor = temp_debt_ratio
 					}
 					# Killswitches
@@ -458,26 +477,26 @@ scripted_gui = {
 
 	tradeview_market_prices = {
 		window_name = "MD_tradeview_market_prices"
-        context_type = player_context
+		context_type = player_context
 		parent_window_token = trade_tab
 	}
 
 	countryeconomyview_tab = {
 		window_name = "MD_countryeconomyview_tabs"
-        context_type = player_context
+		context_type = player_context
 		parent_window_token = trade_tab
 
 		effects = {
-            trade_tab_click = {
+			trade_tab_click = {
 				set_variable = { MD_tradeview_tab_trade_state = 1 }
 				set_variable = { MD_tradeview_tab_economy_state = 2 }
-            }
+			}
 
 			economy_tab_click = {
 				set_variable = { MD_tradeview_tab_trade_state = 2 }
 				set_variable = { MD_tradeview_tab_economy_state = 1 }
 				update_money_dirty_variable = yes
-            }
+			}
 		}
 
 		properties = {
@@ -491,27 +510,16 @@ scripted_gui = {
 		}
 	}
 
-    countryeconomyview = {
+	countryeconomyview = {
 		window_name = "MD_countryeconomyview"
-        context_type = player_context
+		context_type = player_context
 		parent_window_token = trade_tab
 
 		dirty = global.update_monie_ui
 
 		visible = {
-			AND = {
-				is_ai = no
-				check_variable = { MD_tradeview_tab_economy_state = 1 }
-			}
-		}
-
-		properties = {
-			# Project Property Files
-			industrial_projects = { image = "[IndustrialProjectsEnabledTexture]" }
-			service_constructions = { image = "[OfficeProjectsEnabledTexture]" }
-			infrastructure_investiture = { image = "[InfraProjectsEnabledTexture]" }
-			arms_industry_stipends = { image = "[ArmsIndustryEnabledTexture]" }
-			retool_shipyards = { image = "[RetoolShipyardsEnabledTexture]" }
+			is_ai = no
+			check_variable = { MD_tradeview_tab_economy_state = 1 }
 		}
 
 		triggers = {
@@ -643,6 +651,26 @@ scripted_gui = {
 
 
 			# - Industrial Projects
+			industrial_projects_glow_visible = {
+				has_country_flag = industrial_projects_flag
+			}
+
+			service_constructions_glow_visible = {
+				has_country_flag = service_constructions_flag
+			}
+
+			infrastructure_investiture_glow_visible = {
+				has_country_flag = infrastructure_investiture_flag
+			}
+
+			arms_industry_stipends_glow_visible = {
+				has_country_flag = arms_industry_stipends_flag
+			}
+
+			retool_shipyards_glow_visible = {
+				has_country_flag = retool_shipyards_flag
+			}
+
 			# This action triggers a hidden idea to increase industrial complex construction speed
 			industrial_projects_click_enabled = {
 				NOT = {
@@ -695,114 +723,82 @@ scripted_gui = {
 
 			# - Civilian Factories Employment
 			increase_employment_civilian_factories_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { civilian_factory_employment_var < 1.0 }
-				}
+				has_political_power > 20
+				check_variable = { civilian_factory_employment_var < 1.0 }
 			}
 			decrease_employment_civilian_factories_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { civilian_factory_employment_var > 0 }
-				}
+				has_political_power > 20
+				check_variable = { civilian_factory_employment_var > 0 }
 			}
 
 			# - Military Factories Employment
 			increase_employment_military_factories_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { military_factory_employment_var < 1.0 }
-				}
+				has_political_power > 20
+				check_variable = { military_factory_employment_var < 1.0 }
 			}
 			decrease_employment_military_factories_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { military_factory_employment_var > 0 }
-				}
+				has_political_power > 20
+				check_variable = { military_factory_employment_var > 0 }
 			}
 
 			# - Offices Employment
 			increase_employment_offices_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { office_employment_var < 1.0 }
-				}
+				has_political_power > 20
+				check_variable = { office_employment_var < 1.0 }
 			}
 			decrease_employment_offices_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { office_employment_var > 0 }
-				}
+				has_political_power > 20
+				check_variable = { office_employment_var > 0 }
 			}
 
 			# - Naval Factories Employment
 			increase_employment_dockyards_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { naval_factory_employment_var < 1.0 }
-				}
+				has_political_power > 20
+				check_variable = { naval_factory_employment_var < 1.0 }
 			}
 			decrease_employment_dockyards_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { naval_factory_employment_var > 0 }
-				}
+				has_political_power > 20
+				check_variable = { naval_factory_employment_var > 0 }
 			}
 
 			# - Commercialized Agriculture District
 			increase_employment_agriculture_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { agriculture_district_employment_var < 1.0 }
-				}
+				has_political_power > 20
+				check_variable = { agriculture_district_employment_var < 1.0 }
 			}
 			decrease_employment_agriculture_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { agriculture_district_employment_var > 0 }
-				}
+				has_political_power > 20
+				check_variable = { agriculture_district_employment_var > 0 }
 			}
 
 			# - Synthetic Refineries
-			increase_employment_rafineries_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { synthetic_refinery_employment_var < 1.0 }
-				}
+			increase_employment_refineries_click_enabled = {
+				has_political_power > 20
+				check_variable = { synthetic_refinery_employment_var < 1.0 }
 			}
-			decrease_employment_rafineries_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { synthetic_refinery_employment_var > 0 }
-				}
+			decrease_employment_refineries_click_enabled = {
+				has_political_power > 20
+				check_variable = { synthetic_refinery_employment_var > 0 }
 			}
 
 			# - Microchip Plant
 			increase_employment_microchips_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { microchip_plant_employment_var < 1.0 }
-				}
+				has_political_power > 20
+				check_variable = { microchip_plant_employment_var < 1.0 }
 			}
 			decrease_employment_microchips_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { microchip_plant_employment_var > 0 }
-				}
+				has_political_power > 20
+				check_variable = { microchip_plant_employment_var > 0 }
 			}
 
 			# - Composite Plant
 			increase_employment_composites_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { composite_plant_employment_var < 1.0 }
-				}
+				has_political_power > 20
+				check_variable = { composite_plant_employment_var < 1.0 }
 			}
 			decrease_employment_composites_click_enabled = {
-				AND = {
-					has_political_power > 20
-					check_variable = { composite_plant_employment_var > 0 }
-				}
+				has_political_power > 20
+				check_variable = { composite_plant_employment_var > 0 }
 			}
 
 			# Stats
@@ -1001,7 +997,21 @@ scripted_gui = {
 
 				add_to_variable = { printing_money_var = 1 }
 
-				set_country_flag = { flag = printed_money_recently value = 1 days = 30 }
+				if = {
+					limit = { has_idea = gold_standard_back }
+					set_country_flag = { flag = printed_money_recently value = 1 days = 90 }
+				}
+				else_if = {
+					limit = { has_idea = silver_standard }
+					set_country_flag = { flag = printed_money_recently value = 1 days = 60 }
+				}
+				else_if = {
+					limit = { has_idea = bi_metal_standard }
+					set_country_flag = { flag = printed_money_recently value = 1 days = 45 }
+				}
+				else = {
+					set_country_flag = { flag = printed_money_recently value = 1 days = 30 }
+				}
 				ingame_update_setup = yes
 
 				multiply_temp_variable = { printing = 0.001 }
@@ -1020,7 +1030,13 @@ scripted_gui = {
 				add_to_variable = { currency_strength = -0.05 }
 				clamp_currency_strength = yes
 				set_country_flag = { flag = monetary_expand_active value = 1 days = 180 }
-				set_country_flag = { flag = monetary_expand_cooldown value = 1 days = 545 }
+				if = {
+					limit = { OR = { has_idea = silver_standard has_idea = bi_metal_standard } }
+					set_country_flag = { flag = monetary_expand_cooldown value = 1 days = 730 }
+				}
+				else = {
+					set_country_flag = { flag = monetary_expand_cooldown value = 1 days = 545 }
+				}
 				ingame_update_setup = yes
 				log = "[GetDateText]: [ROOT.GetName]: GUI: Expand Money Supply activated"
 			}
@@ -1338,7 +1354,7 @@ scripted_gui = {
 			}
 			# - Synthetic Refineries
 			# This action decreases employment in this building type
-			decrease_employment_rafineries_click = {
+			decrease_employment_refineries_click = {
 				if = {
 					limit = { NOT = { check_variable = { synthetic_refinery_employment_var = 0 } } }
 					subtract_from_variable = { synthetic_refinery_employment_var = 0.05 }
@@ -1348,7 +1364,7 @@ scripted_gui = {
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
-			increase_employment_rafineries_click = {
+			increase_employment_refineries_click = {
 				if = {
 					limit = { NOT = { check_variable = { synthetic_refinery_employment_var = 1 } } }
 					add_to_variable = { synthetic_refinery_employment_var = 0.05 }

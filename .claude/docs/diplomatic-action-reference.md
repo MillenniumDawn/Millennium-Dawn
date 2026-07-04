@@ -139,9 +139,7 @@ ai_acceptance = {
 	condition_three = {
 		base = 0
 		modifier = {
-			set_temp_variable = { opinion_calculator = opinion@ROOT }
-			multiply_temp_variable = { opinion_calculator = 0.05 }
-			check_variable = { opinion_calculator > -60 }
+			check_opinion_calculation = yes
 			add = opinion_calculator
 		}
 	}

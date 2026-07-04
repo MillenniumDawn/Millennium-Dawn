@@ -38,9 +38,9 @@ def test_validators_discovered():
 def test_validator_exposes_contract(modname):
     mod, classes = _validator_class(modname)
     assert classes, f"{modname} exposes no BaseValidator subclass"
-    assert hasattr(
-        classes[0], "run_validations"
-    ), f"{modname}'s validator has no run_validations()"
+    assert hasattr(classes[0], "run_validations"), (
+        f"{modname}'s validator has no run_validations()"
+    )
 
 
 @pytest.mark.parametrize("modname", VALIDATORS)

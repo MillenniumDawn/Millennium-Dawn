@@ -131,7 +131,7 @@ Drop the model assets into `gfx/models/buildings/landmarks/`:
 - `landmark_my_landmark_idle_animation.anim`
 - `landmark_my_landmark_destroyed_destroy_animation.anim`
 
-If you're reusing a vanilla mesh, skip this step — the engine resolves the path against vanilla as a fallback when MD doesn't ship its own copy.
+If you're reusing a vanilla mesh, skip this step, the engine resolves the path against vanilla as a fallback when MD doesn't ship its own copy.
 
 ### Step 5: Add the icon sprite
 
@@ -165,7 +165,7 @@ Inside the state's `history.buildings = { }` block, add a dedicated province blo
 }
 ```
 
-**Use a dedicated province block** containing only the landmark. Combining a landmark with `naval_base = N` in the same province block breaks rendering — the Big Ben gotcha. If the province already has other buildings, either move the landmark to a different province in the same state, or move the other building into its own block elsewhere in the file.
+**Use a dedicated province block** containing only the landmark. Combining a landmark with `naval_base = N` in the same province block breaks rendering, the Big Ben gotcha. If the province already has other buildings, either move the landmark to a different province in the same state, or move the other building into its own block elsewhere in the file.
 
 ### Step 7: Add the world-space spawn line
 
@@ -248,17 +248,17 @@ The file must be UTF-8 with BOM. All landmark loc lives here for centralised mai
 mapbuildings.cpp:679: map/buildings.txt error at line N: map building location is not over the land - ignoring instance.
 ```
 
-The XZ falls on a sea-province pixel. Floating harbor coordinates are not valid landmark spawns — they sit in water. Move the XZ to a land pixel.
+The XZ falls on a sea-province pixel. Floating harbor coordinates are not valid landmark spawns, they sit in water. Move the XZ to a land pixel.
 
 ### Icon shows in state UI but 3D model never renders
 
 The most common silent failure. Walk through this checklist:
 
 1. Does `map/buildings.txt` have a `landmark_spawn` line for the right state ID? If not, that's the bug.
-2. Run `prov_at(x, z)` — does it return the province ID where the state file places the landmark? If not, the spawn is in the wrong province.
+2. Run `prov_at(x, z)`: does it return the province ID where the state file places the landmark? If not, the spawn is in the wrong province.
 3. Does the province block in the state file contain only the landmark? If it also has `naval_base = N`, the naval base will block landmark rendering.
 4. Does the player have the DLC named in `dlc_allowed`? Check `~/.local/share/Steam/steamapps/common/Hearts of Iron IV/dlc/`.
-5. Do the entity and mesh definitions exist in MD's `landmarks.asset` / `landmarks.gfx`? MD's files file-override vanilla — vanilla entity/mesh definitions for new landmarks must be copied into MD.
+5. Do the entity and mesh definitions exist in MD's `landmarks.asset` / `landmarks.gfx`? MD's files file-override vanilla, vanilla entity/mesh definitions for new landmarks must be copied into MD.
 
 ### Map reworks silently drop spawn lines
 
@@ -277,10 +277,10 @@ If history shows the line existed and was removed, restore it (the old XZ may st
 1. Copy the building definition from vanilla's `01_landmark_buildings.txt` into MD's.
 2. Copy the entity (regular + destroyed) from vanilla's `landmarks.asset` into MD's.
 3. Copy the mesh (regular + destroyed) from vanilla's `landmarks.gfx` into MD's.
-4. The `.mesh` / `.dds` / `.anim` binary files in `gfx/models/buildings/landmarks/` can stay vanilla-only — those resolve through the engine's path-based fallback.
+4. The `.mesh` / `.dds` / `.anim` binary files in `gfx/models/buildings/landmarks/` can stay vanilla-only, those resolve through the engine's path-based fallback.
 
 ## See Also
 
-- [GFX Entity & Asset Errors](/dev-resources/gfx-entity-errors/) — for the general `pdx_entity.cpp` and `assetfactory.cpp` error patterns
-- [Art Standards](/dev-resources/art-standards/) — DDS format specifications for the mesh textures
-- [Terrain Photo System](/dev-resources/terrain-photo-guide/) — a similar multi-file system pattern for state-level art
+- [GFX Entity & Asset Errors](/dev-resources/gfx-entity-errors/), for the general `pdx_entity.cpp` and `assetfactory.cpp` error patterns
+- [Art Standards](/dev-resources/art-standards/), DDS format specifications for the mesh textures
+- [Terrain Photo System](/dev-resources/terrain-photo-guide/), a similar multi-file system pattern for state-level art

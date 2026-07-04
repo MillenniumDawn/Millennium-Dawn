@@ -193,7 +193,8 @@ def test_report_mixed_input_shapes():
 
 
 def test_report_persists_issues_without_category():
-    """Every finding is stored, category or not.
+    """Every finding is stored, and a missing category falls back to the
+    (cleaned) fail_msg so the grouped end-of-run report has a sensible label.
 
     Issues must reach the JSON sidecar (and the CI report built from it) even
     when the caller omits a category — otherwise a _report call would fail the
@@ -208,4 +209,28 @@ def test_report_persists_issues_without_category():
     )
     assert v.errors_found == 1
     assert len(v._issues) == 1
-    assert v._issues[0].category == ""
+    # No explicit category → grouped under the cleaned fail_msg label.
+    assert v._issues[0].category == "Found issues"
+
+
+def test_render_issues_caps_per_category():
+    """The console render caps each category and notes the overflow; the
+    full list stays in ``_issues`` for the JSON sidecar."""
+    v = _make_validator()
+    cap = v.MAX_RENDERED_PER_CATEGORY
+    for i in range(cap + 7):
+        v.add_warning("big-category", f"finding {i}", file="a.txt", line=i + 1)
+    v._render_issues()
+    rendered = [ln for ln in v.output_lines if " - finding " in ln]
+    assert len(rendered) == cap
+    assert any("and 7 more" in ln for ln in v.output_lines)
+    assert len(v._issues) == cap + 7
+
+
+def test_render_issues_emits_parseable_lines():
+    """Rendered lines keep the two-space ``file:line - message`` shape that
+    report_lib's text-fallback parser (loader._LOG_ISSUE_RE) matches."""
+    v = _make_validator()
+    v.add_error("cat", "broken thing", file="events/x.txt", line=12)
+    v._render_issues()
+    assert "  events/x.txt:12 - broken thing" in v.output_lines

@@ -5,6 +5,7 @@ Two passes: extract all `set_variable = X` targets, then scan the whole mod
 for `\\bX\\b` references and report vars whose net refs (refs minus sets) is
 zero. Both passes are multiprocessed and disk-cached via `disk_cache`.
 """
+
 import glob
 import hashlib
 import os
@@ -48,8 +49,31 @@ _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
 # so a value on the RHS of an assignment (`set_variable = { x = y }` → `y`) is
 # correctly counted as a read. The `(?:scope\.)*` tail lets the scope-stripped
 # target (see _strip_scope_prefix) still be recognised inside a scoped write
-# like `set_variable = { THIS.eurosceptic = ... }`.
+# like `set_variable = { THIS.europeanism = ... }`.
 _SET_TARGET_PREFIX_RE = re.compile(r"set_variable\s*=\s*\{?\s*(?:[a-z_][a-z0-9_]*\.)*$")
+
+
+def _resolve_mod_root(path: str) -> str:
+    """Walk up from `path` to the directory that looks like the mod root.
+
+    Reference counting must cover the whole mod, but `--path` may point at a
+    subdirectory (e.g. common/scripted_effects/). Walk up until a directory
+    holding `descriptor.mod` (or both `common/` and `localisation/`) is found
+    and scan references from there; otherwise fall back to `path` unchanged.
+    Walking up from the *given* path (not the tool's own location) keeps
+    sibling-checkout runs correct.
+    """
+    cur = os.path.abspath(path)
+    while True:
+        if os.path.exists(os.path.join(cur, "descriptor.mod")) or (
+            os.path.isdir(os.path.join(cur, "common"))
+            and os.path.isdir(os.path.join(cur, "localisation"))
+        ):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            return os.path.abspath(path)
+        cur = parent
 
 
 def _strip_scope_prefix(name: str) -> str:
@@ -316,29 +340,37 @@ class Validator(BaseValidator):
         # Scan every file once with a single tokenizer pass — no per-file regex
         # build. .yml is restricted to English; other languages are Paratranz
         # mirrors that only echo the same [?var] references, adding no signal.
-        if self.staged_files:
-            files_to_scan = [
-                f
-                for f in self.staged_files
-                if f.endswith(".txt")
-                or (
-                    f.endswith(".yml")
-                    and "localisation/english/" in f.replace("\\", "/")
-                )
-            ]
-        else:
-            txt_files = list(
-                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+        #
+        # Reference counting is ALWAYS global, even under --staged or a narrowed
+        # --path: a variable defined in a changed file can be referenced
+        # anywhere in the mod (dynamic modifiers, scripted localisation, loc,
+        # other scripted effects). Restricting this scan to the staged subset
+        # was hiding cross-file references and reporting live variables as
+        # `refs: 0`. Only pass 1 above is narrowed to staged files (which
+        # definitions to report on); the scan below is whole-mod. Per-file
+        # content-hashed caching keeps repeat runs cheap. `_resolve_mod_root`
+        # also rescues a `--path` pointed at a subdirectory by scanning from the
+        # true mod root rather than the subfolder.
+        scan_root = _resolve_mod_root(self.mod_path)
+        txt_files = list(
+            glob.iglob(os.path.join(scan_root, "**", "*.txt"), recursive=True)
+        )
+        yml_files = list(
+            glob.iglob(
+                os.path.join(scan_root, "localisation", "english", "**", "*.yml"),
+                recursive=True,
             )
-            yml_files = list(
-                glob.iglob(
-                    os.path.join(
-                        self.mod_path, "localisation", "english", "**", "*.yml"
-                    ),
-                    recursive=True,
-                )
+        )
+        # Scripted-GUI properties read variables via [?THIS.var|C0] interpolation
+        # in interface/*.gui. A variable referenced only from a GUI file (common
+        # for display-only vars backing a text/progressbar element) has zero .txt
+        # refs and was wrongly reported unused — scan .gui too.
+        gui_files = list(
+            glob.iglob(
+                os.path.join(scan_root, "interface", "**", "*.gui"), recursive=True
             )
-            files_to_scan = txt_files + yml_files
+        )
+        files_to_scan = txt_files + yml_files + gui_files
 
         # Partition into bare names and global.-dotted names (lowercased -> orig
         # case). A scoped read like THIS.foo stores/reads bare `foo`; a global.X
@@ -358,20 +390,13 @@ class Validator(BaseValidator):
         var_ref_counts = {var: 0 for var in cleaned_vars}
         dynamic_patterns: set = set()
         if files_to_scan and (bare_map or dotted_map):
-            if self.workers == 1:
-                _pass2_init(self.mod_path, bare_map, dotted_map, namespace)
-                all_file_counts = [
-                    count_all_variables_in_file(f) for f in files_to_scan
-                ]
-            else:
-                with Pool(
-                    processes=self.workers,
-                    initializer=_pass2_init,
-                    initargs=(self.mod_path, bare_map, dotted_map, namespace),
-                ) as p:
-                    all_file_counts = p.map(
-                        count_all_variables_in_file, files_to_scan, chunksize=20
-                    )
+            all_file_counts = self._pool_map_init(
+                count_all_variables_in_file,
+                files_to_scan,
+                _pass2_init,
+                (self.mod_path, bare_map, dotted_map, namespace),
+                chunksize=20,
+            )
             for file_counts, file_patterns in all_file_counts:
                 for var, count in file_counts.items():
                     var_ref_counts[var] = var_ref_counts.get(var, 0) + count

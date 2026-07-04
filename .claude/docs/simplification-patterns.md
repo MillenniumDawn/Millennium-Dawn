@@ -131,6 +131,21 @@ else = { set_variable = { page = 1 } }
 
 **Why:** Two-state toggles are cleaner with `if/else`. The `else` branch is guaranteed to execute when the `if` doesn't, removing the need for a second trigger check.
 
+## Collapse Government-Match Ideology Enumerations
+
+An `OR` of `AND`s comparing the current scope's government to one other country, one ideology at a time, is just the engine-native country comparison: a country has only one government, so only its own ideology's clause can match.
+
+```
+OR = {
+ AND = { has_government = democratic  FROM = { has_government = democratic } }
+ # ... one AND per ideology group ...
+}
+# same gov      -> has_government = FROM
+# different gov -> NOT = { has_government = FROM }
+```
+
+Collapse **only when all five groups are enumerated** — a partial set changes meaning for the omitted groups (a latent bug, not a mechanical simplification). Keep the comparison scope exact: the bare `has_government = X` is `THIS`, the named scope is the target. Five-branch `if`/`else_if` chains keyed on `has_government`, and the removed `is_same_government` / `has_same_ideology` triggers, reduce the same way. `tools/validation/validate_simplifications.py` flags the safe (exhaustive) cases.
+
 ## Consolidate Identical-Body `else_if` Chains into `OR`
 
 When N consecutive `else_if` branches all execute the same effects, collapse them into one branch with an `OR` limit.
@@ -188,6 +203,81 @@ meta_effect = {
 **Why:** The N decisions still exist as separate objects (engine requirement, decision IDs must be static), but their activation logic is a single block. Adding a new slot is a parameter increment instead of N more lines.
 
 **Caveat:** `meta_effect` runs at parse time, not runtime. It cannot reference runtime variables in its parameter substitution, only static text or `[]`-formatted variables.
+
+## Migrate Per-Index Flags + `meta_trigger`/`meta_effect` to Runtime Arrays
+
+This is the inverse of the section above, and the more common cleanup. `meta_effect`/`meta_trigger` is the right tool when fanning out over **static identifiers** (decision IDs, focus IDs — things the engine requires to exist at parse time). It is the **wrong** tool when used to fan out over **runtime per-index state** — a set of flags like `POTEF_nominee_0..23`, `focus_[EUXXX]_EP_agenda`, or `[PG_X]_influence`. That anti-pattern creates N country flags plus N parse-time meta blocks where a single runtime array or variable would do, and the per-nation expansion balloons scripted localisation (the EU subsystem shed ~16,000 generated lines this way).
+
+The EU subsystem (`common/scripted_effects/99_eu_scripted_effects.txt`, `99_EU_voting_scripted_effects.txt`, `common/decisions/EU_*`, `common/scripted_triggers/99_EU_*`) is the reference implementation.
+
+### Before (one country flag per index + a meta block to set/scan them)
+
+```
+# Set the per-index flag via parse-time substitution
+meta_effect = {
+    text = { set_country_flag = POTEF_nominee_[subideology] }
+    subideology = "[?var_gov_index|0]"
+}
+
+# Scan all 24 flags to ask "has anyone nominated?"
+NOT = {
+    OR = {
+        has_country_flag = POTEF_nominee_0
+        has_country_flag = POTEF_nominee_1
+        # ... 22 more ...
+    }
+}
+```
+
+### After (one global array indexed by the runtime value)
+
+```
+# Store the nominating country's id at the subideology slot. 0 = unset.
+set_variable = { global.POTEF_nominee_country^var_gov_index = THIS.id }
+
+# A single flat check replaces the 24-flag scan.
+NOT = { check_variable = { global.POTEF_nominee_country^var_gov_index value = 0 compare = greater_than } }
+```
+
+**Why:** Removes N flags and the meta block entirely; the index is now a real runtime variable so loops (`for_each_loop`), lookups, and display loc all read one source of truth. Adding a slot is no code change at all.
+
+### Sentinel-value gating with country IDs
+
+Storing a **country id** in an array slot doubles as a set/unset sentinel: runtime country ids are always `> 0` (id 0 is reserved for rebels and never held by a live EU member), so `check_variable = { slot > 0 }` means "this slot is filled" and resetting the slot to `0` clears it. An uninitialized slot reads `0` and fails the gate safely — no `has_country_flag` needed. Use `compare = greater_than` (or `not_equals 0`); never inline `>=`/`<=` (invalid — see general-rules).
+
+### Set ↔ clear symmetry is mandatory
+
+Every flag or array slot that gates a **cycle** (an election, a vote, an agenda) must have a clear site that is actually reached when the cycle ends. Trace the full lifecycle before merging:
+
+1. **Init** — set/reset at EU startup (`on_startup`-driven effect) so a fresh game and a reloaded save both have a defined value.
+2. **Write** — set when the triggering event happens (nomination, vote pass).
+3. **Clear** — reset to `0` / `clr_country_flag` at cycle end so the next cycle can run.
+
+A flag that is set but never cleared (or a slot never reset) silently locks the next cycle out. Grep every set site against every clear site — asymmetry is the bug. Reference: `clear_potef_electoral_values` resets every `global.POTEF_nominee_country^v` and clears `POTEF_has_nominated` for all members at election end.
+
+### Permanent ledger vs cycle-state — decide which you are building
+
+- **Cycle-state** (`global.current_active_agenda_disp`, the nominee slots): reset every cycle. Visibility gates read it (`> 0` = a cycle is live).
+- **Permanent ledger** (`global.EU_passed_votes`): an append-only record of what has ever passed, read-only via `is_in_array`, intentionally **never** cleared. Replacing a per-country `any_of_scopes { has_country_flag = focus_EU202_yes }` scan with `is_in_array = { array = global.EU_passed_votes value = 202 }` is correct **only** if something appends 202 to that array when the vote passes (`cleanup_european_union_voting` does, with the caller setting `vote_passed = 1`). A ledger that is read but never written is permanently false.
+
+Document which kind each array is in a one-line comment at its first write site — they look identical but reviewers must know whether a missing clear is a bug or intentional.
+
+### Loop type follows the array contents
+
+Numeric-index arrays (vote ids, subideology indices, token arrays) use `for_each_loop`. Scope-object arrays (countries, states — e.g. `global.EU_member`) use `for_each_scope_loop`. Mismatching them silently no-ops or misbehaves. (Also in general-rules; the migration is where it bites most.)
+
+### Scripted-loc fallthrough
+
+When the display moves from a per-flag scriptloc to one variable-driven `defined_text`, every reachable input value still needs a matching `text` entry or a final catch-all `text` with no `trigger`. A `defined_text` that falls through with no match renders **blank** (or a literal `[token]`). Check the idle state (`current_active_agenda_disp = 0`) and the empty/all-one-party cases.
+
+### Clean up what the migration orphans
+
+Removing the flags/triggers leaves dead artifacts — sweep them in the same change:
+
+- **`!_cwtools_dummy_effects.txt`** stubs for the removed flags/effects.
+- **Orphaned English loc keys** for removed triggers/tooltips (e.g. `tooltip_influence_on_leader_of_EU_trade_policy_25_percent`). Grep the key across `common/ events/ interface/` first — and watch for keys assembled dynamically (`tooltip_[token]`), which a literal grep misses. English source keys are safe to delete; never touch other-language files (Paratranz-managed).
+
+---
 
 ## Consolidate `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop`
 
@@ -308,6 +398,36 @@ multiply_variable = { var = my_ratio value = 0.01 }
 
 **Why:** `multiply_variable` is a single engine operation with no zero-division risk. `0.01` is the exact reciprocal of `100`, so the result is identical. Prefer multiplication for all constant divisors.
 
+## Fold a Single-Use Temp into the Accumulate Effect
+
+A scratch temp that is built up only to be added to (or multiplied into) one target on the next line is pure overhead. A math expression is a valid `value` for the accumulate effects (`add_to_variable`, `subtract_from_variable`, `multiply_variable`, `divide_variable`), not just `set_variable` — so fold the build straight in.
+
+### Before (temp built, used once)
+
+```
+set_temp_variable = { cumulative_productivity = overall_productivity }
+multiply_temp_variable = { cumulative_productivity = 0.001 }
+multiply_temp_variable = { cumulative_productivity = population_total_m }
+add_to_variable = { global.cumulative_world_productivity = cumulative_productivity }
+```
+
+### After (no temp)
+
+```
+add_to_variable = {
+    var = global.cumulative_world_productivity
+    value = {
+        value = overall_productivity
+        multiply = 0.001
+        multiply = population_total_m
+    }
+}
+```
+
+**Why:** One single-pass expression replaces three temp writes plus the add, and drops the temp variable entirely. Only fold a temp that is read exactly once — keep it when the intermediate is reused by several later statements.
+
+**Caveat:** Accumulate-with-math-expression is rare (vanilla and MD historically used a temp), but confirmed working in-engine. A self-referencing accumulate can also be written `set_variable = { X = { value = X  add = { ...expr... } } }`, which reads the pre-write value of `X`. See `.claude/docs/hoi4-data-structures.md` (Math Expressions).
+
 ## Prefer `random` Over Two-Bucket `random_list` With an Empty Side
 
 When a `random_list` has exactly two buckets and one is empty (a "do nothing" placeholder for the "miss" case), collapse it to `random = { chance = N effect }`. Same semantics, lighter engine path, less script.
@@ -368,8 +488,10 @@ every_country = {
 ```
 for_each_scope_loop = {
     array = global.group_A_members
-    limit = { NOT = { has_idea = group_B } }
-    country_event = { id = my_event.1 days = 2 }
+    if = {
+        limit = { NOT = { has_idea = group_B } }
+        country_event = { id = my_event.1 days = 2 }
+    }
 }
 every_country = {
     limit = { has_idea = group_B }
@@ -377,6 +499,112 @@ every_country = {
 }
 ```
 
+Note the inner `if`: `for_each_scope_loop` has no top-level `limit` parameter (see the conversion section below).
+
 **Why:** The original single loop guaranteed each country received the effect exactly once. Splitting without guards causes countries in both groups to fire or receive the effect multiple times. This silently introduces double-firing events, stacked opinion modifiers, or duplicated resource transfers.
 
 Apply the same pattern whenever a non-idempotent effect (opinion modifiers, variable changes, events, etc.) is split across multiple loops.
+
+## Convert `every_country` Over Bloc Membership to `for_each_scope_loop`
+
+When an `every_country` or `every_other_country` loop filters on a bloc-membership idea that a maintained global array backs, iterate the array instead. `every_country` walks all 200+ tags; the array holds only the ~30 members (see `.claude/docs/performance-patterns.md` § "Prefer Engine Arrays Over every_country / any_country" for the performance rationale).
+
+Array-backed membership ideas (`check_common_mistakes.py` flags these automatically):
+
+| Idea                                         | Array                                                |
+| -------------------------------------------- | ---------------------------------------------------- |
+| `NATO_member`                                | `global.nato_members`                                |
+| `EU_member`                                  | `global.EU_member`                                   |
+| `CSTO_member`                                | `global.CSTO_member`                                 |
+| `AU_member`                                  | `global.AU_member`                                   |
+| `LoAS_member` / `LoAS_member_upd`            | `global.arab_league_members`                         |
+| `OAU_member`                                 | `global.OAU_member`                                  |
+| `ecowas_member_state`                        | `global.ECOWAS_member`                               |
+| `idea_gcc_member_state`                      | `global.gcc_member_state`                            |
+| `faction_warsaw_pact_idea`                   | `global.WARSAW_PACT_member`                          |
+| `RAJ_BRICS_associate` / `RAJ_BRICS_observer` | `global.BRICS_associates` / `global.BRICS_observers` |
+
+Ideas backed by TWO arrays (`p5_member`, `at_member`, `RAJ_BRICS`) cannot convert to a single array loop — leave those as `every_country`, or loop the primary array and re-check the idea inside.
+
+Array names are inconsistently pluralized — copy the exact spelling. These arrays are synced to the ideas via `on_add`/`on_remove` hooks on the idea definitions. Other bloc arrays exist (`global.mercosur_member_state`, `global.gcc_member_state`) but have no idea-based membership test; loops over them are usually already array-based.
+
+The LoAS pair is a special case: a `swap_ideas` upgrade (Egypt's `EGY_arab_league_tigh`) means a member holds exactly ONE of the two variants, so a loop filtering `has_idea = LoAS_member` alone silently misses upgraded members. The array covers both — converting these loops is a correctness fix, not just a perf one.
+
+### Before
+
+```
+every_country = {
+    limit = {
+        has_idea = NATO_member
+        is_european_nation = yes
+    }
+    add_war_support = 0.05
+}
+```
+
+### After
+
+```
+for_each_scope_loop = {
+    array = global.nato_members
+    tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+    if = {
+        limit = { is_european_nation = yes }
+        add_war_support = 0.05
+    }
+}
+```
+
+Conversion recipe:
+
+- Drop the membership condition — the array guarantees it.
+- `for_each_scope_loop` has **no top-level `limit`**: re-express any residual conditions as an inner `if = { limit = { ... } }`.
+- The loop auto-scopes into each member, same as `every_country` — the body needs no rewriting. The loop-entry country is `PREV`/`ROOT` inside the body; prefer `ROOT` when the loop may be nested (see the tooltip-consolidation section above).
+- **Tooltips are mandatory in player-facing contexts** (focus rewards, decision effects, event options): `for_each_scope_loop` produces no automatic tooltip, unlike `every_country`. Add `tooltip = TT_ALL_*` inside the loop (`TT_ALL_NATO_MEMBER_NATIONS_GAIN` is the canonical key), or keep a single summary `custom_effect_tooltip` outside it. Never pair the loop with a duplicate `effect_tooltip` — that reintroduces the double-write the tooltip-consolidation section removes.
+- `every_other_country` additionally needs a self-exclusion guard, since the array includes the acting country:
+
+```
+for_each_scope_loop = {
+    array = global.nato_members
+    if = {
+        limit = { NOT = { tag = ROOT } }
+        add_opinion_modifier = { target = ROOT modifier = NATO_member_modifier }
+    }
+}
+```
+
+### Trigger contexts
+
+`for_each_scope_loop` is an **effect** — it cannot appear in `available`/`visible`/`limit` blocks. The trigger-side conversion targets `any_of_scopes` / `all_of_scopes`:
+
+```
+# Before — walks all tags
+any_other_country = {
+    has_idea = NATO_member
+    has_war_with = ROOT
+}
+
+# After — checks only members
+any_of_scopes = {
+    array = global.nato_members
+    has_war_with = ROOT
+}
+```
+
+**Stale-entry caveat:** annexed or collapsed tags can linger in membership arrays. `on_annex` strips the annexed country from all bloc arrays via `remove_from_bloc_membership_arrays` (`common/scripted_effects/01_international_systems_effects.txt`), but old saves and unwired death paths still leave entries behind. Effect loops auto-skip non-existent scopes; trigger aggregations do **not** — an `all_of_scopes` over the array can become permanently unsatisfiable (the #2026 NATO ratification deadlock). Give every `all_of_scopes` (and any negated `any_of_scopes`) an existence escape:
+
+```
+all_of_scopes = {
+    array = global.nato_members
+    OR = {
+        has_country_flag = NATO_Ratified_@ROOT
+        exists = no
+    }
+}
+```
+
+**When NOT to convert:**
+
+- The array is not maintained on join/leave. Before wiring `on_add`/`on_remove` on a new bloc idea, its array only reflects the startup seed list — converting a loop over it silently drops runtime joiners. Verify the idea definition carries the array hooks first.
+- The limit mixes an array-backed idea with non-array conditions in an `OR` (splitting needs the mutual-exclusion guards from the section above).
+- The loop relies on `every_country` reaching non-members (e.g. applying an effect to everyone _except_ members via `NOT`).

@@ -27,11 +27,7 @@ country_event = {
 
 			var:v = {
 				if = {
-					limit = {
-						NOT = { has_country_flag = auto_accept_all_sc_votes }
-						NOT = { has_country_flag = auto_reject_all_sc_votes }
-						NOT = { has_country_flag = auto_abstain_all_sc_votes }
-					}
+					limit = { NOT = { has_auto_sc_vote = yes } }
 					meta_effect = {
 						text = {
 							country_event = UNSC.[ID]
@@ -39,16 +35,7 @@ country_event = {
 						ID = "[?global.current_sc_vote_type]"
 					}
 				} else = {
-					if = {
-						limit = { has_country_flag = auto_accept_all_sc_votes }
-						add_to_array = { global.security_council_vote_yes = THIS }
-					} else_if = {
-						limit = { has_country_flag = auto_reject_all_sc_votes }
-						add_to_array = { global.security_council_vote_no = THIS }
-					} else_if = {
-						limit = { has_country_flag = auto_abstain_all_sc_votes }
-						add_to_array = { global.security_council_vote_abstain = THIS }
-					}
+					process_auto_sc_vote = yes
 				}
 				if = {
 					limit = {
@@ -168,9 +155,7 @@ country_event = {
 			}
 			modifier = {
 				add = 10
-				FROM = {
-					has_same_ideology = yes
-				}
+				FROM = { has_government = ROOT }
 			}
 			modifier = {
 				add = 20
@@ -304,9 +289,7 @@ country_event = {
 			}
 			modifier = {
 				add = 10
-				FROM = {
-					has_same_ideology = yes
-				}
+				FROM = { has_government = ROOT }
 			}
 			modifier = {
 				add = 20
@@ -435,9 +418,7 @@ country_event = {
 			}
 			modifier = {
 				add = 10
-				FROM = {
-					has_same_ideology = yes
-				}
+				FROM = { has_government = ROOT }
 			}
 			modifier = {
 				add = 20
@@ -566,9 +547,7 @@ country_event = {
 			}
 			modifier = {
 				add = 10
-				FROM = {
-					has_same_ideology = yes
-				}
+				FROM = { has_government = ROOT }
 			}
 			modifier = {
 				add = 20
@@ -651,11 +630,7 @@ country_event = {
 
 			var:v = {
 				if = {
-					limit = {
-						NOT = { has_country_flag = auto_accept_all_ga_votes }
-						NOT = { has_country_flag = auto_reject_all_ga_votes }
-						NOT = { has_country_flag = auto_abstain_all_ga_votes }
-					}
+					limit = { NOT = { has_auto_ga_vote = yes } }
 					meta_effect = {
 						text = {
 							country_event = UN.[ID]
@@ -663,16 +638,7 @@ country_event = {
 						ID = "[?global.current_ga_vote_type]"
 					}
 				} else = {
-					if = {
-						limit = { has_country_flag = auto_accept_all_ga_votes }
-						add_to_array = { global.general_assembly_vote_yes = THIS }
-					} else_if = {
-						limit = { has_country_flag = auto_reject_all_ga_votes }
-						add_to_array = { global.general_assembly_vote_no = THIS }
-					} else_if = {
-						limit = { has_country_flag = auto_abstain_all_ga_votes }
-						add_to_array = { global.general_assembly_vote_abstain = THIS }
-					}
+					process_auto_ga_vote = yes
 				}
 				if = {
 					limit = {
@@ -785,9 +751,7 @@ country_event = {
 					target = FROM
 					value < 0
 				}
-				FROM = {
-					has_same_ideology = yes
-				}
+				FROM = { has_government = ROOT }
 			}
 			modifier = {
 				add = 10
@@ -868,9 +832,7 @@ country_event = {
 					target = FROM
 					value < 0
 				}
-				FROM = {
-					has_same_ideology = yes
-				}
+				FROM = { has_government = ROOT }
 			}
 			modifier = {
 				add = 10
@@ -960,9 +922,7 @@ country_event = {
 					target = FROM
 					value < 0
 				}
-				FROM = {
-					has_same_ideology = yes
-				}
+				FROM = { has_government = ROOT }
 			}
 			modifier = {
 				add = 10
@@ -1052,9 +1012,7 @@ country_event = {
 					target = FROM
 					value < 0
 				}
-				FROM = {
-					has_same_ideology = yes
-				}
+				FROM = { has_government = ROOT }
 			}
 			modifier = {
 				add = 10
@@ -3158,24 +3116,17 @@ country_event = {
 				NOT = { has_country_flag = trade_agreement@FROM }
 			}
 			FROM = {
-				set_country_flag = trade_agreement@PREV
-
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { tag_index = PREV.id }
 				change_influence_percentage = yes
-				add_to_variable = { signed_trade_agreements = 1 }
 			}
-			set_country_flag = trade_agreement@FROM
-
-			add_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
-			add_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
-			reverse_add_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
-			reverse_add_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
 			set_temp_variable = { percent_change = 1 }
 			set_temp_variable = { tag_index = FROM.id }
 			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
-			add_to_variable = { signed_trade_agreements = 1 }
+			set_temp_variable = { receiver_nation = FROM.id }
+			set_temp_variable = { sender_nation = THIS.id }
+			set_improved_trade_agreement = yes
 		}
 
 		if = {
@@ -3842,24 +3793,17 @@ country_event = {
 				NOT = { has_country_flag = trade_agreement@FROM }
 			}
 			FROM = {
-				set_country_flag = trade_agreement@PREV
-
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { tag_index = PREV.id }
 				change_influence_percentage = yes
-				add_to_variable = { signed_trade_agreements = 1 }
 			}
-			set_country_flag = trade_agreement@FROM
-
-			add_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
-			add_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
-			reverse_add_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
-			reverse_add_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
 			set_temp_variable = { percent_change = 1 }
 			set_temp_variable = { tag_index = FROM.id }
 			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
-			add_to_variable = { signed_trade_agreements = 1 }
+			set_temp_variable = { receiver_nation = FROM.id }
+			set_temp_variable = { sender_nation = THIS.id }
+			set_improved_trade_agreement = yes
 		}
 
 		if = {

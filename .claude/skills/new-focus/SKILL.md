@@ -43,7 +43,7 @@ Steps:
 
    **Content review standards (docs/src/content/resources/content-review-guide.md):**
    - Generic tree baseline is 114 focuses; aim to meet or exceed
-   - All buildings in effects need monetary costs (use scripted effects from `docs/src/content/resources/code-resource.md`)
+   - All buildings in effects need monetary costs (use scripted effects from `docs/src/content/resources/scripted-effects-reference.md`)
    - Limit permanent effects to 5 per focus; use timed ideas for more
    - Balanced paths; no path objectively stronger than another
    - Fictional/implausible paths must be locked behind a game rule

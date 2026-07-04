@@ -20,6 +20,16 @@ from validator_common import (
     strip_comments,
 )
 
+# A name counts as "called" when it appears as `name = yes/no` or as a
+# custom_(effect|trigger)_tooltip target. Extracting every such token from a
+# def-file once and testing set membership is equivalent to the old per-name
+# `\bname\s*=\s*(?:yes|no)\b` search (same word boundaries, same identifier
+# capture) but avoids compiling a pattern per (name, file) — millions of calls.
+_CALL_YES_NO_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*(?:yes|no)\b")
+_CUSTOM_TT_REF_RE = re.compile(
+    r"custom_(?:effect|trigger)_tooltip\s*=\s*([A-Za-z_]\w*)\b"
+)
+
 # Patterns for known false positives — these are referenced by the game engine,
 # called dynamically, or serve as convention-based callbacks rather than being
 # explicitly invoked via `name = yes` in script files.
@@ -32,6 +42,18 @@ FALSE_POSITIVE_PATTERNS = [
     re.compile(
         r"^DIPLOMACY_.*_ENABLE_TRIGGER"
     ),  # Game rule triggers, engine-referenced
+    re.compile(
+        r"^is_diplomatic_action_valid_"
+    ),  # Diplo-action validity gates, engine-referenced by action token
+    re.compile(
+        r"^_unlock_btn_enabled$"
+    ),  # MIO catalog meta-dispatch empty-token-key fallback
+    re.compile(
+        r"^should_initiate_resistance$"
+    ),  # Vanilla engine hook — called on controller/owner change and daily
+    re.compile(
+        r"^should_(not_)?activate_active_crypto_bonuses$"
+    ),  # Vanilla engine crypto hooks — engine-read override points
 ]
 
 # Files whose definitions are entirely engine-referenced (all contents are false positives)
@@ -44,6 +66,9 @@ FALSE_POSITIVE_FILES = frozenset(
         # wants to check a faction mood level has a ready-made trigger, even if
         # many are not currently referenced anywhere in the mod.
         "00_internal_factions_trigger.txt",
+        # Dummy effect existing only to suppress false positives on dynamically
+        # built flag/variable names; deliberately never called.
+        "!_cwtools_dummy_effects.txt",
     }
 )
 
@@ -56,6 +81,13 @@ _TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
     r")"
 )
+
+# Regex: quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# Here the `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives
+# in the quoted assignment, so a leading placeholder with only a trailing constant
+# must still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
 
 
 def scan_for_meta_constructed_names(
@@ -85,8 +117,10 @@ def scan_for_meta_constructed_names(
 
         content_clean = strip_comments(content)
 
-        for m in _TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
+        templates = [m.group(1) for m in _TEMPLATE_RE.finditer(content_clean)]
+        templates += [m.group(1) for m in _QUOTED_TEMPLATE_RE.finditer(content_clean)]
+
+        for template in templates:
             # Split on every [VAR] segment — constant parts become prefix/suffix
             parts = re.split(r"\[[^\]]+\]", template)
             prefix = parts[0].lower()
@@ -283,16 +317,9 @@ class Validator(BaseValidator):
                         content = strip_comments(f.read())
                 except Exception:
                     continue
-                for name in list(potentially_used - used_names):
-                    if name not in content:
-                        continue
-                    if re.search(rf"\b{re.escape(name)}\s*=\s*(?:yes|no)\b", content):
-                        used_names.add(name)
-                    elif re.search(
-                        rf"custom_(?:effect|trigger)_tooltip\s*=\s*{re.escape(name)}\b",
-                        content,
-                    ):
-                        used_names.add(name)
+                called = set(_CALL_YES_NO_RE.findall(content))
+                called.update(_CUSTOM_TT_REF_RE.findall(content))
+                used_names |= called & potentially_used
 
         # Build results for unused definitions
         unused = []
@@ -374,16 +401,9 @@ class Validator(BaseValidator):
                         content = strip_comments(f.read())
                 except Exception:
                     continue
-                for name in list(potentially_used - used_names):
-                    if name not in content:
-                        continue
-                    if re.search(rf"\b{re.escape(name)}\s*=\s*(?:yes|no)\b", content):
-                        used_names.add(name)
-                    elif re.search(
-                        rf"custom_(?:effect|trigger)_tooltip\s*=\s*{re.escape(name)}\b",
-                        content,
-                    ):
-                        used_names.add(name)
+                called = set(_CALL_YES_NO_RE.findall(content))
+                called.update(_CUSTOM_TT_REF_RE.findall(content))
+                used_names |= called & potentially_used
 
         # Third pass: detect names called via meta_effect/meta_trigger template
         # substitution (e.g. `set_leader_[IDEOLOGY] = yes`).  Only scan the

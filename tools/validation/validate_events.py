@@ -4,6 +4,7 @@
 Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
+
 import os
 import re
 import sys
@@ -81,6 +82,33 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     return {eid: counts[eid] for eid in tracked_ids if eid in counts}
 
 
+# Event IDs built at runtime by string interpolation never appear as a literal
+# `namespace.number` token, so the whole-token scan can't see them. Matches the
+# namespace before a `.[…]` / `.N[…]` interpolation following an event-firing
+# keyword, e.g. `country_event = UN.[ID]` or `country_event = MD_cyber.1[TYPE]`.
+_DYNAMIC_EVENT_NS_PATTERN = re.compile(
+    r"(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*(?:\{\s*id\s*=\s*)?([A-Za-z_]\w*)\.[A-Za-z0-9_.]*\["
+)
+
+
+def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
+    """Pool worker: namespaces fired via string-interpolated event IDs in a file.
+
+    Any triggered-only event in a returned namespace is reachable through dynamic
+    dispatch and must not be reported as unreferenced.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return set()
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
+
+
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
     """Pool worker: find id-only long-form event calls in one .txt file."""
     filename, mod_path = args
@@ -152,6 +180,27 @@ _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
 _EVENT_TITLEDESC_PATTERN = re.compile(r"^\t(?:title|desc)\s*=\s*(.+)$", re.MULTILINE)
+
+# `id = X` line inside an event block (literal single-space form, distinct
+# from _EVENT_ID_PATTERN's \s* form used in metadata parsing). Reused across
+# validate_unsupported_title_desc / validate_missing_triggered_only /
+# validate_missing_localisation / validate_triggered_only_unreferenced.
+_EVENT_ID_LITERAL_RE = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+
+# title/desc block-vs-inline detection (validate_unsupported_title_desc).
+_TITLE_DESC_BLOCK_RE = {
+    lt: re.compile(r"^\t" + lt + r" = \{", flags=re.MULTILINE)
+    for lt in ("title", "desc")
+}
+_TITLE_DESC_INLINE_RE = {
+    lt: re.compile(r"^\t" + lt + r" = \w", flags=re.MULTILINE)
+    for lt in ("title", "desc")
+}
+
+# Extracts values from title/desc/name fields that look like loc keys (contain
+# a dot). Covers simple form (title = foo.1.t) and block form
+# (triggered_desc { desc = foo.1.t }). validate_missing_localisation.
+_LOC_REF_PATTERN = re.compile(r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE)
 
 
 def _extract_random_event_ids(text: str) -> set:
@@ -267,7 +316,9 @@ class Validator(BaseValidator):
         if self._random_events_cache is not None:
             return self._random_events_cache
 
-        files = self._collect_files(["common/on_actions/**/*.txt"])
+        # Lookup pass: must scan full repo even in staged mode, or staged
+        # events lose their random_events MTTH exemption.
+        files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
         ids: set = set()
         for filepath in files:
             text = FileOpener.open_text_file(
@@ -287,16 +338,15 @@ class Validator(BaseValidator):
 
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
-        id_pat = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
         results = []
 
         for line_type in ["title", "desc"]:
-            block_pat = re.compile(r"^\t" + line_type + r" = \{", flags=re.MULTILINE)
-            inline_pat = re.compile(r"^\t" + line_type + r" = \w", flags=re.MULTILINE)
+            block_pat = _TITLE_DESC_BLOCK_RE[line_type]
+            inline_pat = _TITLE_DESC_INLINE_RE[line_type]
 
             for event in events:
                 if block_pat.search(event) and inline_pat.search(event):
-                    eid_match = id_pat.findall(event)
+                    eid_match = _EVENT_ID_LITERAL_RE.findall(event)
                     eid = eid_match[0] if eid_match else "unknown"
                     results.append(
                         f"{eid} - {paths.get(event, 'unknown')} - invalid {line_type} (has both block and inline forms)"
@@ -316,11 +366,10 @@ class Validator(BaseValidator):
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
         results = []
-        id_pattern = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
 
         for event in events:
             if "is_triggered_only = yes" not in event:
-                event_id = id_pattern.findall(event)
+                event_id = _EVENT_ID_LITERAL_RE.findall(event)
                 eid = event_id[0] if event_id else "unknown"
                 filename = paths.get(event, "unknown")
                 results.append(f"{eid} - {filename}")
@@ -365,20 +414,17 @@ class Validator(BaseValidator):
         loc_keys = self._load_localisation_keys()
         self.log(f"  Found {len(events)} events, {len(loc_keys)} localisation keys")
 
-        # Extracts values from title/desc/name fields that look like loc keys (contain a dot).
-        # Covers simple form (title = foo.1.t) and block form (triggered_desc { desc = foo.1.t }).
-        ref_pattern = re.compile(
-            r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE
-        )
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
-
         results = []
         for event in events:
-            eid_matches = pattern_id.findall(event)
+            # Hidden events display no window, so their title/desc/option-name
+            # loc is dead — never flag them for missing keys.
+            if "hidden = yes" in event:
+                continue
+            eid_matches = _EVENT_ID_LITERAL_RE.findall(event)
             eid = eid_matches[0] if eid_matches else "unknown"
             filename = paths.get(event, "unknown")
 
-            loc_refs = [k for k in ref_pattern.findall(event) if "." in k]
+            loc_refs = [k for k in _LOC_REF_PATTERN.findall(event) if "." in k]
             missing = [k for k in loc_refs if k not in loc_keys]
             for key in missing:
                 results.append(f"{eid} - {filename}: missing loc key '{key}'")
@@ -397,12 +443,11 @@ class Validator(BaseValidator):
         )
 
         events, paths = self._get_all_events()
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
 
         triggered_only_ids: Dict[str, str] = {}
         for event in events:
             if "is_triggered_only = yes" in event:
-                matches = pattern_id.findall(event)
+                matches = _EVENT_ID_LITERAL_RE.findall(event)
                 if matches:
                     eid = matches[0]
                     triggered_only_ids[eid] = paths.get(event, "unknown")
@@ -411,8 +456,11 @@ class Validator(BaseValidator):
             f"  Found {len(triggered_only_ids)} triggered-only events — scanning for references..."
         )
 
+        # Reference scan: must cover the full repo even in staged mode — a
+        # staged event's references usually live in unstaged files.
         txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+            ignore_staged=True,
         )
         tracked = frozenset(triggered_only_ids.keys())
         args_list = [(f, tracked) for f in txt_files]
@@ -423,12 +471,26 @@ class Validator(BaseValidator):
             for eid, count in file_counts.items():
                 total_counts[eid] = total_counts.get(eid, 0) + count
 
+        # Namespaces dispatched via runtime-interpolated IDs (e.g. UN.[ID],
+        # MD_cyber.1[TYPE]) never appear as literal tokens — exempt them.
+        dyn_ns_lists = self._pool_map(
+            scan_dynamic_event_namespaces, args_list, chunksize=30
+        )
+        dynamic_namespaces: Set[str] = set()
+        for s in dyn_ns_lists:
+            dynamic_namespaces.update(s)
+
         # The definition itself contributes 1 occurrence (id = X inside the event block).
         # Anything > 1 means it's referenced somewhere else.
         results = []
         for eid in sorted(triggered_only_ids):
-            if total_counts.get(eid, 0) <= 1:
-                results.append(f"{eid} - {triggered_only_ids[eid]}")
+            if total_counts.get(eid, 0) > 1:
+                continue
+            last_dot = eid.rfind(".")
+            ns = eid[:last_dot] if last_dot >= 0 else eid
+            if ns in dynamic_namespaces:
+                continue
+            results.append(f"{eid} - {triggered_only_ids[eid]}")
 
         self._report(
             results,
@@ -515,12 +577,19 @@ class Validator(BaseValidator):
         self._log_section("Checking hidden events for pointless localisation...")
 
         meta, _ = self._get_event_metadata()
+        loc_keys = self._load_localisation_keys()
         results = []
 
         for ev in meta:
             if not ev["is_hidden"] or not ev["title_desc_refs"]:
                 continue
-            detail = "; ".join(ev["title_desc_refs"])
+            # Only flag when the declared title/desc actually resolves to a real
+            # loc key. A hidden event declaring `title = foo.t` with no `foo.t`
+            # in any .yml has nothing to remove, so it is not a finding.
+            real = [k for k in ev["title_desc_refs"] if k in loc_keys]
+            if not real:
+                continue
+            detail = "; ".join(real)
             results.append(f"{ev['id']} - {ev['file']}: {detail}")
 
         self._report(

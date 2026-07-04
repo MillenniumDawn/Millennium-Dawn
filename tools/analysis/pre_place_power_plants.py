@@ -44,14 +44,12 @@ from estimate_gdp import (
     RESOURCE_FACTOR_KEYS,
     STATES_DIR,
     build_modifier_stack,
-)
-from estimate_gdp import calculate_gdp as _calculate_gdp  # noqa: E402
-from estimate_gdp import finalize_gdp as _finalize_gdp
-from estimate_gdp import (
     parse_all_ideas,
     parse_country_history,
     parse_state_file_from_content,
 )
+from estimate_gdp import calculate_gdp as _calculate_gdp  # noqa: E402
+from estimate_gdp import finalize_gdp as _finalize_gdp
 
 REPO_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
 
@@ -220,7 +218,9 @@ def energy_supply_non_fossil(states, modifier_stack, has_nuclear):
         infra = s["buildings"].get("renewable_energy_infra", 0)
         if infra > 0:
             factor = s.get("state_renewable_capacity_factor_modifier_var", 1.0)
-            avg_factor = factor / 2  # monthly output = rand(0..1) * factor, so expected value is factor/2
+            avg_factor = (
+                factor / 2
+            )  # monthly output = rand(0..1) * factor, so expected value is factor/2
             renewables += infra * RENEWABLE_BASE_GW * avg_factor
     ren_mult = 1 + modifier_stack.get("renewable_energy_gain_multiplier", 0)
     renewables *= ren_mult * energy_gain_mult

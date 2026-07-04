@@ -2,7 +2,7 @@
 
 Recurring patterns for data-driven scripted GUIs in MD. Reference implementations: MIO Unlock Catalog (`common/scripted_guis/00_mio_unlock_catalog.txt`) and the EU council (`common/scripted_guis/01_european_union_guis.txt`).
 
-For raw scripted_gui mechanics (context types, parent windows, AI checks), see [`/.claude/rules/scripted-gui-rules.md`](../rules/scripted-gui-rules.md). This doc is about the recurring shapes built on top of those primitives.
+For raw scripted_gui mechanics (context types, parent windows, AI checks), see [`.claude/docs/scripted-gui-rules.md`](./scripted-gui-rules.md). This doc is about the recurring shapes built on top of those primitives.
 
 ## Data-driven entries via `dynamic_lists`
 
@@ -10,7 +10,7 @@ When a catalog has N similar entries (votes, MIO unlocks, member states), replac
 
 ### Backing array
 
-Holds integer entry IDs (1..N), not tokens. EU votes use the vote ID directly; MIO catalog uses 1..23 mapped to a parallel `global.mio_catalog_all_tokens` master array.
+Holds integer entry IDs (1..N), not tokens. EU votes use the vote ID directly; MIO catalog uses 1..23 mapped to a parallel `global.mio_catalog_all_tokens` master array. Because the IDs are 1-based but `add_to_array` is 0-based, the token array reserves a never-read index-0 slot so `array^v` lines up (otherwise every `^v` lookup is shifted by one — the cause of issue #1955).
 
 ```
 add_to_array = { mio_catalog_visible_array = 1 }
@@ -95,6 +95,77 @@ instantTextboxType = {
 
 23 entries × 5 fields (name, trait, equip label, icon, desc) = 115 `defined_text` branches. Verbose, but every branch is one line; the alternative is 23 entry-container copies with 5 hardcoded fields each (~30 lines per copy = 690 lines). Net win once you have ~6+ entries.
 
+### When the dispatcher explodes — gridbox over an array of scopes
+
+The single-`v` dispatcher only scales in **one** dimension. The moment the display is an **entity × category matrix** — and especially when the entity axis is a _runtime-variable set_ — branch count becomes N×M and the dispatcher is the wrong tool.
+
+The EU Parliament member breakdown was the cautionary case: "which countries hold seats in political group N, and how many" is `tags × 24 groups`. It had been built as **1,536 `TAG_party_N_PG` `defined_text` blocks + 1,536 backing loc strings**, concatenated into 24 per-group tokens and shown in a hover tooltip (tooltips can't host a gridbox, which forced the concatenation). Every new EU member meant hand-writing 24 more blocks + 24 loc keys + editing 24 concatenations.
+
+The fix is to stop enumerating and **render from data**: a `gridboxType` over a backing array of **scope objects** (not integer IDs), with `change_scope = yes` so each row scopes _into_ the country and reads generic getters. No per-entity loc, no per-entity GUI.
+
+```
+# Effect: rebuild the array for the selected category (loops the member array)
+EU_select_party_members = {
+    clear_array = global.EU_MEP_members_current
+    set_temp_variable = { sel_party = global.EU_selected_party }
+    for_each_scope_loop = {
+        array = global.EU_member
+        meta_effect = {
+            text = {
+                if = {
+                    limit = { check_variable = { THIS.MEP_party_[sp] > 0 } }
+                    set_variable = { THIS.MEP_party_selected_display = THIS.MEP_party_[sp] }
+                    add_to_array = { global.EU_MEP_members_current = THIS }
+                }
+            }
+            sp = "[?sel_party]"
+        }
+    }
+}
+```
+
+```
+# Scripted_gui: one gridbox, scope-changing
+dynamic_lists = {
+    eu_party_members_list = {
+        array = global.EU_MEP_members_current
+        entry_container = "eu_party_member_detail"
+        change_scope = yes
+    }
+}
+```
+
+```
+# Entry container: generic getters + a per-scope variable — zero per-entity content
+instantTextBoxType = { name = "..._tag"   text = "[?THIS.GetNameWithFlag]" }
+instantTextBoxType = { name = "..._seats" text = "[?THIS.MEP_party_selected_display]" }
+```
+
+This replaced 3,072 hand-written lines with one effect + one gridbox + one entry container.
+
+**Rules of thumb:**
+
+- One dimension, fixed entry set → scripted-loc dispatcher on `v` (above).
+- Two dimensions, or an entity set that grows when content is added → gridbox over an array of scopes with `change_scope = yes`; read per-scope variables, never enumerate.
+- A gridbox can't live in a tooltip. If the data is currently in a hover tooltip and needs a real list, move it into a window/side panel first (a click handler that sets a selector variable + flag, then bumps the dirty var).
+
+### Adding a new entity must cost nothing
+
+The payoff test for a data-driven display: **adding one more entity should require no localisation or GUI edits.** For the EU, adding a member nation now needs only the standard join (gain the `EU_member` idea, land in `global.EU_member`) and a valid domestic party setup so the parliament election assigns it seats — the breakdown picks it up automatically because every loop iterates `global.EU_member` and every row renders through generic getters. If a new entity still forces you to hand-write per-entity blocks, the display is still enumerated, not data-driven.
+
+EU parliament reference implementation:
+
+| Piece                    | Location                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| Populate effect          | `EU_select_party_members` — `common/scripted_effects/99_eu_scripted_effects.txt`    |
+| Selector + open handler  | `eu_view_party_N_members_click` — `common/scripted_guis/01_european_union_guis.txt` |
+| Gridbox scripted_gui     | `eu_party_member_detail_gui` — same file                                            |
+| Window + entry container | `eu_party_member_detail_container` / `eu_party_member_detail` — `interface/eu.gui`  |
+| Per-scope data           | `THIS.MEP_party_0..23`, `THIS.MEP_Total`; aggregates `global.MEP_PG_party_N`        |
+| Entity set               | `global.EU_member`                                                                  |
+
+---
+
 ## Dirty variable — MD standard
 
 GUIs with `dirty = global.X` only refresh when X's value changes. Use this to avoid per-tick re-evaluation of expensive triggers / scripted-loc.
@@ -130,7 +201,7 @@ Every click handler / state-toggling effect in the scripted*gui should end with 
 
 ### Player-only guard
 
-The [`scripted-gui-rules.md` dirty rule](../rules/scripted-gui-rules.md) says to guard bumps with `is_ai = no` for GUIs the AI also interacts with. In practice MD's `update_*_dirty_variable` effects don't carry the guard — the dirty variable is only bumped from player-initiated click paths in the scripted_gui's `effects` block, reached only when the player clicks. If your effect can be invoked from an AI on_action, wrap the call site (not the dirty effect itself) with `is_ai = no`.
+The [`scripted-gui-rules.md` dirty rule](./scripted-gui-rules.md) says to guard bumps with `is_ai = no` for GUIs the AI also interacts with. In practice MD's `update_*_dirty_variable` effects don't carry the guard — the dirty variable is only bumped from player-initiated click paths in the scripted_gui's `effects` block, reached only when the player clicks. If your effect can be invoked from an AI on_action, wrap the call site (not the dirty effect itself) with `is_ai = no`.
 
 ## Filter checkbox — image swap, not frame swap
 

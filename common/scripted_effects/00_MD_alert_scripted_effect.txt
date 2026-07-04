@@ -100,6 +100,17 @@ md_alert_click = {
 		}
 	}
 
+	if = {
+		limit = {
+			check_variable = { md_alerts^alert_idx = token:md_idle_nuclear_reactors }
+		}
+		if = {
+			limit = { NOT = { has_country_flag = open_energy_screen } }
+			set_country_flag = open_energy_screen
+			update_global_energy_ui = yes
+		}
+	}
+
 	md_alert_update_gui = yes
 }
 
@@ -163,7 +174,7 @@ md_check_spending_alerts = {
 
 	set_temp_variable = { alert_id = token:md_negative_expected_defense_spending }
 	set_temp_variable = { spending_delta = expected_military_sp }
-	subtract_from_temp_variable = { spending_delta = Military_Spending }
+	subtract_from_temp_variable = { spending_delta = military_spending }
 	md_check_spending_alert = yes
 }
 
@@ -173,6 +184,27 @@ md_check_energy_balance_alert = {
 	set_temp_variable = { alert_id = token:md_negative_eletricity }
 	if = {
 		limit = { check_variable = { energy_balance_value_display < 1 } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+}
+
+# Fires when the country has built nuclear reactors but is still on the non_nuclear_power idea,
+# leaving the reactors idle. Removes itself once a nuclear idea (nuclear_energy, nuclear_power_def,
+# or nuclear_power_off) is selected, the reactors are dismantled, or nuclear plants are disabled.
+# Call this at the end of calculate_energy_use (after nuclear_reactors is set).
+md_check_idle_nuclear_reactors_alert = {
+	set_temp_variable = { alert_id = token:md_idle_nuclear_reactors }
+	if = {
+		limit = {
+			NOT = { has_country_flag = disable_nuclear_power_plant_flag }
+			has_nuclear_reactors = yes
+			has_idea = non_nuclear_power
+		}
 		set_temp_variable = { alert_color = 2 }
 		add_md_alert_unless_exists = yes
 	}
