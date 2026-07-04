@@ -11,8 +11,6 @@
 calculate_energy_use = {
 	# Add the Dynamic Modifiers for the System in case they are not present
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = no_fuel_penalties_modifier } } } add_dynamic_modifier = { modifier = no_fuel_penalties_modifier } }
-
 	#set temp vars for each multiplier and add 1 to the multipliers (which are percentages).
 	#IE: if energy_use_multiplier is modified to 40% (.4) it will be treated as a 140% (1.4) multiplication on its correlating modifier
 	# Energy Use Multiplier
@@ -56,11 +54,11 @@ calculate_energy_use = {
 	multiply_temp_variable = { energy_use_multiplier_synthetic_refinery = 0.2 }
 
 	set_temp_variable = { energy_use_multiplier_composite_plant = 1 }
-	add_to_temp_variable = { energy_use_multiplier_composite_plant = modifier@energy_use_modifier_composite_plants }
+	add_to_temp_variable = { energy_use_multiplier_composite_plant = modifier@energy_use_modifier_composite_plant }
 	multiply_temp_variable = { energy_use_multiplier_composite_plant = 0.8 }
 
 	set_temp_variable = { energy_use_multiplier_microchip_plant = 1 }
-	add_to_temp_variable = { energy_use_multiplier_microchip_plant = modifier@energy_use_modifier_microchip_plants }
+	add_to_temp_variable = { energy_use_multiplier_microchip_plant = modifier@energy_use_modifier_microchip_plant }
 	multiply_temp_variable = { energy_use_multiplier_microchip_plant = 0.75 }
 
 	set_temp_variable = { energy_use_multiplier_civs = 1 }
@@ -79,15 +77,19 @@ calculate_energy_use = {
 	add_to_temp_variable = { energy_use_multiplier_mils = modifier@energy_use_modifier_mils }
 	multiply_temp_variable = { energy_use_multiplier_mils = 0.5 }
 
+	set_temp_variable = { energy_use_multiplier_dockyards = 1 }
+	add_to_temp_variable = { energy_use_multiplier_dockyards = modifier@energy_use_modifier_dockyards }
+	multiply_temp_variable = { energy_use_multiplier_dockyards = 0.5 }
+
 	# Apply unified multipliers to building counts
 	set_temp_variable = { energy_use_synthetic_refinery = synthetic_refinery_total }
 	multiply_temp_variable = { energy_use_synthetic_refinery = energy_use_multiplier_synthetic_refinery }
 
-	set_temp_variable = { energy_use_composite_plants = composite_plant_total }
-	multiply_temp_variable = { energy_use_composite_plants = energy_use_multiplier_composite_plant }
+	set_temp_variable = { energy_use_composite_plant = composite_plant_total }
+	multiply_temp_variable = { energy_use_composite_plant = energy_use_multiplier_composite_plant }
 
-	set_temp_variable = { energy_use_microchip_plants = microchip_plant_total }
-	multiply_temp_variable = { energy_use_microchip_plants = energy_use_multiplier_microchip_plant }
+	set_temp_variable = { energy_use_microchip_plant = microchip_plant_total }
+	multiply_temp_variable = { energy_use_microchip_plant = energy_use_multiplier_microchip_plant }
 
 	set_temp_variable = { energy_use_civs = industrial_complex_total }
 	multiply_temp_variable = { energy_use_civs = energy_use_multiplier_civs }
@@ -99,15 +101,18 @@ calculate_energy_use = {
 	multiply_temp_variable = { energy_use_agriculture_district = energy_use_multiplier_agriculture_district }
 
 	set_temp_variable = { energy_use_mils = military_fac }
-	add_to_temp_variable = { energy_use_mils = num_of_naval_factories }
 	multiply_temp_variable = { energy_use_mils = energy_use_multiplier_mils }
+
+	set_temp_variable = { var = energy_use_dockyards value = num_of_naval_factories }
+	multiply_temp_variable = { var = energy_use_dockyards value = energy_use_multiplier_dockyards }
 
 	set_temp_variable = { energy_use_buildings = energy_use_civs }
 	add_to_temp_variable = { energy_use_buildings = energy_use_offices }
 	add_to_temp_variable = { energy_use_buildings = energy_use_agriculture_district }
 	add_to_temp_variable = { energy_use_buildings = energy_use_mils }
-	add_to_temp_variable = { energy_use_buildings = energy_use_microchip_plants }
-	add_to_temp_variable = { energy_use_buildings = energy_use_composite_plants }
+	add_to_temp_variable = { var = energy_use_buildings value = energy_use_dockyards }
+	add_to_temp_variable = { energy_use_buildings = energy_use_microchip_plant }
+	add_to_temp_variable = { energy_use_buildings = energy_use_composite_plant }
 	add_to_temp_variable = { energy_use_buildings = energy_use_synthetic_refinery }
 
 	# Additive Section of All Internal Sources of Energy Consumption
@@ -134,8 +139,9 @@ calculate_energy_use = {
 	multiply_temp_variable = { energy_use_offices = display_multiplier }
 	multiply_temp_variable = { energy_use_agriculture_district = display_multiplier }
 	multiply_temp_variable = { energy_use_mils = display_multiplier }
-	multiply_temp_variable = { energy_use_microchip_plants = display_multiplier }
-	multiply_temp_variable = { energy_use_composite_plants = display_multiplier }
+	multiply_temp_variable = { var = energy_use_dockyards value = display_multiplier }
+	multiply_temp_variable = { energy_use_microchip_plant = display_multiplier }
+	multiply_temp_variable = { energy_use_composite_plant = display_multiplier }
 	multiply_temp_variable = { energy_use_synthetic_refinery = display_multiplier }
 
 	# Display Variables for the Energy Consumption per Type
@@ -146,8 +152,9 @@ calculate_energy_use = {
 	set_variable = { energy_use_offices_total_display_var = energy_use_offices }
 	set_variable = { energy_use_agriculture_district_total_display_var = energy_use_agriculture_district }
 	set_variable = { energy_use_mils_total_display_var = energy_use_mils }
-	set_variable = { energy_use_microchip_plants_total_display_var = energy_use_microchip_plants }
-	set_variable = { energy_use_composite_plants_total_display_var = energy_use_composite_plants }
+	set_variable = { var = energy_use_dockyards_total_display_var value = energy_use_dockyards }
+	set_variable = { energy_use_microchip_plant_total_display_var = energy_use_microchip_plant }
+	set_variable = { energy_use_composite_plant_total_display_var = energy_use_composite_plant }
 	set_variable = { energy_use_synthetic_refinery_total_display_var = energy_use_synthetic_refinery }
 
 	# Net Energy Balance Calculations
@@ -173,6 +180,15 @@ calculate_energy_use = {
 
 	multiply_variable = { hydroelectric_energy_generation = temp_energy_gain_m }
 	multiply_variable = { geothermal_energy_generation = temp_energy_gain_m }
+
+	set_temp_variable = { hydroelectric_generation_multiplier_modifier = 1 }
+	add_to_temp_variable = { hydroelectric_generation_multiplier_modifier = modifier@hydroelectric_power_generation_modifier }
+	multiply_variable = { hydroelectric_energy_generation = hydroelectric_generation_multiplier_modifier }
+
+	set_temp_variable = { geothermal_generation_multiplier_modifier = 1 }
+	add_to_temp_variable = { geothermal_generation_multiplier_modifier = modifier@geothermal_power_generation_modifier }
+	multiply_variable = { geothermal_energy_generation = geothermal_generation_multiplier_modifier }
+
 	add_to_variable = { energy_sum = hydroelectric_energy_generation }
 	add_to_variable = { energy_sum = geothermal_energy_generation }
 
@@ -182,7 +198,13 @@ calculate_energy_use = {
 		set_variable = { fossil_pp_fuel_consumption = 0 }
 	}
 	else = {
-		set_variable = { fossil_pp_energy_generation = modifier@fossil_energy_gain }
+		# Strip out raw building output from the country modifier (will be re-added with per-state modifiers applied) and keep flat idea bonuses
+		set_variable = { var = fossil_pp_energy_generation value = modifier@fossil_energy_gain }
+		set_temp_variable = { var = fossil_building_base value = number_of_fossil_pps }
+		multiply_temp_variable = { var = fossil_building_base value = 2 }
+		subtract_from_variable = { var = fossil_pp_energy_generation value = fossil_building_base }
+		add_to_variable = { var = fossil_pp_energy_generation value = state_fossil_energy_var }
+
 		set_temp_variable = { fossil_pp_energy_generation_multiplier = 1 }
 		add_to_temp_variable = { fossil_pp_energy_generation_multiplier = modifier@fossil_pp_energy_generation_modifier }
 		multiply_variable = { fossil_pp_energy_generation = fossil_pp_energy_generation_multiplier }
@@ -195,10 +217,12 @@ calculate_energy_use = {
 		multiply_variable = { fossil_pp_fuel_consumption = -1 }
 
 		# Generation of Power per Fossil Power Plant
-		set_variable = { fossil_pp_energy_per_plant_display = 1 }
+		set_variable = { fossil_pp_energy_per_plant_display = 2 }
 		multiply_variable = { fossil_pp_energy_per_plant_display = fossil_pp_energy_generation_multiplier }
 		multiply_variable = { fossil_pp_energy_per_plant_display = temp_energy_gain_m }
 	}
+
+	multiply_variable = { fossil_pp_energy_generation = fossil_powerplants_manpower_fulfillment }
 
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
@@ -245,7 +269,13 @@ calculate_energy_use = {
 		set_variable = { net_nuclear_fuel_display = nuclear_reactor_fuel_production }
 		subtract_from_variable = { net_nuclear_fuel_display = nuclear_fuel_consumption }
 
-		set_variable = { nuclear_energy_generation = modifier@nuclear_energy_gain }
+		# Strip out raw reactor output from the country modifier (will be re-added with per-state modifiers applied) and keep flat idea bonuses
+		set_variable = { var = nuclear_energy_generation value = modifier@nuclear_energy_gain }
+		set_temp_variable = { var = nuclear_building_base value = nuclear_reactors }
+		multiply_temp_variable = { var = nuclear_building_base value = 4 }
+		subtract_from_variable = { var = nuclear_energy_generation value = nuclear_building_base }
+		add_to_variable = { var = nuclear_energy_generation value = state_nuclear_energy_var }
+
 		set_temp_variable = { nuclear_energy_generation_multiplier = 1 }
 		add_to_temp_variable = { nuclear_energy_generation_multiplier = modifier@nuclear_energy_generation_modifier }
 		multiply_variable = { nuclear_energy_generation = nuclear_energy_generation_multiplier }
@@ -258,10 +288,11 @@ calculate_energy_use = {
 		}
 
 		multiply_variable = { nuclear_energy_generation = temp_energy_gain_m }
+		multiply_variable = { nuclear_energy_generation = nuclear_reactors_manpower_fulfillment }
 		add_to_variable = { energy_sum = nuclear_energy_generation }
 
-		# Generation of Power per Fossil Power Plant
-		set_variable = { nuclear_energy_per_reactor_display = 2 }
+		# Generation of Power per Nuclear Reactor
+		set_variable = { nuclear_energy_per_reactor_display = 4 }
 		multiply_variable = { nuclear_energy_per_reactor_display = nuclear_energy_generation_multiplier }
 		multiply_variable = { nuclear_energy_per_reactor_display = temp_energy_gain_m }
 	}
@@ -299,6 +330,7 @@ calculate_energy_use = {
 			check_variable = { stored_energy = max_stored_energy }
 			check_variable = { energy_balance > 0 }
 			check_variable = { fossil_pp_fuel_consumption < 0 }
+			check_variable = { fossil_pp_energy_generation > 0 }
 		}
 		set_temp_variable = { saved_fuel = energy_balance }
 		clamp_temp_variable = {
@@ -307,12 +339,17 @@ calculate_energy_use = {
 			min = 0
 		}
 		set_variable = { free_fossil_powerplants_power = saved_fuel }
+
+		# Calculate fuel savings proportionally: fraction of generation shut down = fraction of fuel saved
+		# This is always correct regardless of energy_gain_m, manpower, or other multiplier combinations
+		set_temp_variable = { fuel_saved = saved_fuel }
+		divide_temp_variable = { fuel_saved = fossil_pp_energy_generation }
+		multiply_temp_variable = { fuel_saved = fossil_pp_fuel_consumption }
+		multiply_temp_variable = { fuel_saved = -1 }
+
 		subtract_from_variable = { fossil_pp_energy_generation = saved_fuel }
 		subtract_from_variable = { energy_sum = saved_fuel }
-		multiply_temp_variable = { saved_fuel = 20 } #base fossil powerplant fuel consumption, found in buildings.txt, positive sicne its saved fuel instead of consumed
-		multiply_temp_variable = { saved_fuel = fossil_pp_fuel_consumption_multiplier }
-		divide_temp_variable = { saved_fuel = fossil_pp_energy_generation_multiplier }
-		add_to_variable = { fossil_pp_fuel_consumption = saved_fuel }
+		add_to_variable = { fossil_pp_fuel_consumption = fuel_saved }
 	}
 
 	divide_temp_variable = { energy_fulfillment = energy_consumption }
@@ -362,9 +399,19 @@ calculate_energy_use = {
 
 	set_variable = { non_electric_fuel_display = non_electric_fuel_consumption }
 	multiply_variable = { non_electric_fuel_display = 24 }
+	md_check_nuclear_fuel_alert = yes
+	md_check_energy_balance_alert = yes
+	update_global_energy_ui = yes
+}
 
-	force_update_dynamic_modifier = yes
-	add_to_variable = { global.energy_ui = 1 }
+update_global_energy_ui = {
+	if = {
+		limit = { check_variable = { global.energy_ui > 1000000 } }
+		set_variable = { global.energy_ui = 1 }
+	}
+	else = {
+		add_to_variable = { global.energy_ui = 1 }
+	}
 }
 
 # Effect: calculate_energy_load_sharing
@@ -392,10 +439,10 @@ calculate_energy_load_sharing = {
 				array = energy_load_sharing_nations
 				var:v = {
 					set_temp_variable = { energy_lack = energy_difference_variable }
+					clamp_temp_variable = { var = energy_lack max = 0 } # Only share if recipient has a deficit; ignore surplus
 					set_variable = { PREV.energy_load_sharing_nations_value^i = energy_lack }
 					set_variable = { energy_load_sharing_gain_var = energy_lack }
 					multiply_variable = { energy_load_sharing_gain_var = -1 }
-					force_update_dynamic_modifier = yes
 				}
 			}
 			set_temp_variable = { total_energy_required_to_share = 0 }
@@ -413,11 +460,9 @@ calculate_energy_load_sharing = {
 				array = energy_load_sharing_nations
 				var:v = {
 					set_variable = { energy_load_sharing_gain_var = 0 }
-					force_update_dynamic_modifier = yes
 				}
 			}
 		}
-		force_update_dynamic_modifier = yes
 	}
 	# Clear variables if you're neither a provider nor a recipient
 	if = {
@@ -438,19 +483,18 @@ energy_on_daily = {
 	if = { limit = { check_variable = { fuel_k = 0 } }
 		set_variable = { no_fuel_penalties_var = -0.5 }
 		ingame_update_setup = yes
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = no_fuel_penalties_modifier } } } add_dynamic_modifier = { modifier = no_fuel_penalties_modifier } }
 	}
-	set_temp_variable = { daily_energy_balance = energy_balance }
-	multiply_temp_variable = { daily_energy_balance = 24 } #gw to gwh
-	add_to_variable = { stored_energy = daily_energy_balance }
-
-	if = { limit = { check_variable = { ROOT.max_stored_energy = 0 } }
-		set_temp_variable = { temp_maximum = 1 }
+	# Update stored energy based on daily balance and storage capacity
+	if = { limit = { check_variable = { ROOT.max_stored_energy > 0 } }
+		set_temp_variable = { daily_energy_balance = energy_balance }
+		multiply_temp_variable = { daily_energy_balance = 24 } #gw to gwh
+		add_to_variable = { stored_energy = daily_energy_balance }
+		clamp_variable = { var = ROOT.stored_energy min = 0 max = ROOT.max_stored_energy }
 	}
 	else = {
-		set_temp_variable = { temp_maximum = ROOT.max_stored_energy }
+		set_variable = { ROOT.stored_energy = 0 }
 	}
-
-	clamp_variable = { var = ROOT.stored_energy min = 0 max = temp_maximum }
 }
 
 # Effect: random_renewable_variable_calculation
@@ -466,76 +510,18 @@ random_renewable_variable_calculation = {
 	}
 }
 
-# Effect: setup_starting_fossil_powerplants
-# Purpose: Sets the onstartup energy required for all nations without manually setting every fossil fuel power plant
-setup_starting_fossil_powerplants = {
-	set_variable = { startup_energy_needed = energy_consumption } #startup_energy_needed will be the number of needed fossil power plants
-	subtract_from_variable = { startup_energy_needed = energy_sum }
-	round_variable = startup_energy_needed
-	clamp_variable = { var = startup_energy_needed min = 1 } #so every country, even the smallest ones, start with 1 fossil fuel power plant
-	while_loop_effect = {
-		limit = { check_variable = { startup_energy_needed > 0.00001 } }
-		random_owned_controlled_state = {
-			limit = { check_variable = { building_level@fossil_powerplant < 21 } }
-			add_building_construction = {
-				type = fossil_powerplant
-				level = 1
-				instant_build = yes
-			}
-		}
-		add_to_variable = { startup_energy_needed = -1 }
-	}
-	clear_variable = startup_energy_needed
-	calculate_energy_use = yes
-}
-
-build_fossil_fuel_power_plant_effect = {
-	custom_effect_tooltip = energy_build_fossil_powerplant_TT
-	if = {
-		limit = {
-			check_variable = { temp_change > 0 }
-		}
-		set_temp_variable = { treasury_change = temp_change }
-		if = { limit = { is_ai = no }
-			multiply_temp_variable = { treasury_change = -5 }
-		}
-		else = {
-			multiply_temp_variable = { treasury_change = -2 }
-		}
-		modify_treasury_effect = yes
-		random_owned_controlled_state = {
-			limit = {
-				NOT = {
-					has_state_flag = building_fossil_fuel_powerplant
-				}
-			}
-			custom_effect_tooltip = building_fossil_fuel_powerplant_tt
-			set_state_flag = {
-				flag = building_fossil_fuel_powerplant
-				days = 100
-				value = 1
-			}
-		}
-	}
-	else = {
-		random_owned_controlled_state = {
-			limit = {
-				check_variable = { number_of_fossil_pps_state_var > 0 }
-			}
-			add_to_variable = { number_of_fossil_pps_state_var = temp_change }
-		}
-	}
-	ingame_update_setup = yes
-}
-
 build_battery_park_effect = {
 	custom_effect_tooltip = build_battery_park_effect_TT
 	set_temp_variable = { battery_cost_multiplier = modifier@battery_park_construction_cost }
 	add_to_temp_variable = { battery_cost_multiplier = 1 }
-	set_temp_variable = { treasury_change = temp_change }
-	multiply_temp_variable = { treasury_change = -100 } #starts at 1000$/kwh in 2000, goes down to 100$/kwh with techs
-	multiply_temp_variable = { treasury_change = battery_cost_multiplier }
-	modify_treasury_effect = yes
+
+	if = {
+		limit = { NOT = { check_variable = { skip_payment = 1 } } }
+		set_temp_variable = { treasury_change = temp_change }
+		multiply_temp_variable = { treasury_change = -100 } #starts at 1000$/kwh in 2000, goes down to 100$/kwh with techs
+		multiply_temp_variable = { treasury_change = battery_cost_multiplier }
+		modify_treasury_effect = yes
+	}
 	hidden_effect = {
 		random_owned_controlled_state = {
 			add_to_variable = { number_of_battery_parks_state_var = temp_change }

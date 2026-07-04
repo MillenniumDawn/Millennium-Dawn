@@ -1,11 +1,16 @@
-﻿capital = 703
+capital = 703
 2000.1.1 = {
+	set_variable = { currency_strength = 0.55 }
 	set_cosmetic_tag = BLR
 	set_country_flag = dynamic_flag
 	set_country_flag = dynamic_rebel_flag
+	set_country_flag = is_getting_cdf_subsidies
+	add_to_array = { global.uncdf_recipients = THIS }
+	add_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
 	set_variable = { gdp_per_capita = 8.053 }
 
 	complete_special_project = sp:sp_microchip_production
+	complete_special_project = sp:sp_helicopter_project
 
 	if = {
 		limit = { has_dlc = "No Step Back" }
@@ -14,10 +19,11 @@
 
 		set_technology = {
 			mbt_tech_ops = 1
+			mbt_tech = 1
 			nsb_Anti_Air_0 = 1
 			nsb_artillery_0 = 1
-
 			helo_ops_tech = 1
+			nsb_transport_helicopter_2 = 1
 			nsb_attack_helicopter_tech_1 = 1
 			nsb_engine_tech_1 = 1
 			nsb_atgm_tech_1 = 1
@@ -27,6 +33,7 @@
 			nsb_gun_pods_tech_1 = 1
 			nsb_light_nose_gun_tech_1 = 1
 			nsb_defense_tech_1 = 1
+			nsb_transport_helicopter_1 = 1
 		}
 
 		else = {
@@ -42,6 +49,8 @@
 				SP_R_arty_0 = 1
 				Anti_Air_0 = 1
 				SP_Anti_Air_0 = 1
+				transport_helicopter_2 = 1
+				transport_helicopter_1 = 1
 			}
 		}
 	}
@@ -61,6 +70,7 @@
 			set_technology = {
 				early_fighter = 1
 				transport_plane1 = 1
+				early_bomber = 1
 			}
 		}
 	}
@@ -87,6 +97,12 @@
 	reverse_add_opinion_modifier = { target = ABK modifier = russian_proficient }
 
 	add_ideas = {
+		partially_nationalized_healthcare
+		balanced_protections
+		standard_maintenance
+		russia_rouble
+		standard_regulations
+
 		# Economic/Factions
 		stagnation
 		rampant_corruption
@@ -133,19 +149,18 @@
 		post_conventional_rail = 1
 		early_freight_locomotive = 1
 
-
 		armoured_mass_assault = 1
 
 		night_vision_1 = 1
 		night_vision_2 = 1
 
 		#For templates
-		infantry_weapons = 1
+		infantry_weapons_1 = 1
 		support_weapons = 1
-		special_forces = 1
+		special_forces_tech_1 = 1
 
 		combat_eng_equipment = 1
-		command_control_equipment = 1
+		cnc_equipment_1 = 1
 		Anti_tank_0 = 1
 		Heavy_Anti_tank_0 = 1
 		Anti_tank_0 = 1
@@ -153,48 +168,54 @@
 		Anti_tank_1 = 1
 		Heavy_Anti_tank_0 = 1
 		Heavy_Anti_tank_1 = 1
-		util_vehicle_0 = 1
 		util_vehicle_1 = 1
 		util_vehicle_2 = 1
 		util_vehicle_3 = 1
+		util_vehicle_4 = 1
 
-		transport_helicopter1 = 1
-		nsb_transport_helicopter1 = 1
-
-		body_armor_1980 = 1
+		body_armor_1 = 1
 
 		basic_computing = 1
 		integrated_circuit = 1
 		computing1 = 1
-		decryption1 = 1
-		encryption1 = 1
 		microprocessors = 1
 		computing2 = 1
-		decryption2 = 1
-		encryption2 = 1
 		radar = 1
 		internet1 = 1
 		fuel_silos = 1
 
-		industrial_electrospun_polymeric_nanofibers = 1
-		multiwalled_carbon_nanotubes = 1
-		stereolitography = 1
-		early_3D_printers = 1
-		DNA_fingerprinting = 1
+		nanofibers_1 = 1
+		nanofibers_2 = 1
+		printing_1 = 1
+		printing_2 = 1
+		genetics_1 = 1
 		fuel_refining = 1
 		early_renewables = 1
 		renewables = 1
 		electrification_1 = 1
 		construction1 = 1
 	}
+
+	if = {
+		limit = { NOT = { has_dlc = "La Resistance" } }
+		set_technology = {
+			decryption1 = 1
+			decryption2 = 1
+			encryption1 = 1
+			encryption2 = 1
+		}
+	}
 	if = { limit = { has_dlc = "Gotterdammerung" }
 		set_technology = {
+			air_defense = 1
 			SAM = 1
 			SAM0 = 1
 		}
-	}
 
-	complete_special_project = sp:sp_helicopter_project
+		else = {
+			complete_special_project = sp:sp_space_program_non_gdm
+		}
+	}
 
 	# Influence Targets
 	add_to_array = { BLR.influence_targets = LIT } # Lith
@@ -217,7 +238,7 @@
 	add_to_array = { influence_array_val = 7 }
 	add_to_array = { influence_array = CHI.id }
 	add_to_array = { influence_array_val = 5 }
-	startup_influence = yes
+	sort_influence = yes
 
 	# Economy
 	set_variable = { var = debt value = 8.247 }
@@ -307,4 +328,36 @@
 	recruit_character = BLR_khrenin
 	recruit_character = BLR_stanislav_zas
 
+	if = {
+		limit = {
+			has_dlc = "La Resistance"
+		}
+		create_intelligence_agency = {
+			name = "Committee for State Security (KGB)"
+			icon = GFX_intelligence_agency_logo_generic_1
+		}
+		set_country_flag = MD_skip_treasury_cost
+		upgrade_intelligence_agency = upgrade_form_department
+		upgrade_intelligence_agency = upgrade_establish_cyber_operations_division
+		clr_country_flag = MD_skip_treasury_cost
+	}
+
+
+	# Relation Starting Configuration (moved from on_startup)
+	add_opinion_modifier = { target = CUB modifier = sanctions }
+	add_relation_modifier = { target = USA modifier = USA_World_Economical_Relations }
+	add_relation_modifier = { target = SOV modifier = SOV_World_Economical_Relations }
+	add_relation_modifier = { target = CHI modifier = CHI_World_Economical_Relations }
+	add_relation_modifier = { target = FRA modifier = FRA_World_Economical_Relations }
+	add_relation_modifier = { target = GER modifier = GER_World_Economical_Relations }
+	add_relation_modifier = { target = ENG modifier = ENG_World_Economical_Relations }
+	add_relation_modifier = { target = SPR modifier = SPR_World_Economical_Relations }
+	add_relation_modifier = { target = ITA modifier = ITA_World_Economical_Relations }
+	add_relation_modifier = { target = UKR modifier = UKR_World_Economical_Relations }
+	add_relation_modifier = { target = ISR modifier = ISR_World_Economical_Relations }
+	add_opinion_modifier = { target = TTP modifier = AlQaida_Are_Terrorists }
+	add_opinion_modifier = { target = TTP modifier = AlQaida_Are_Terrorists_Trade }
+	add_opinion_modifier = { target = TAL modifier = Taliban_Are_Terrorists }
+	add_opinion_modifier = { target = TAL modifier = Taliban_Are_Terrorists_Trade }
+	reverse_add_opinion_modifier = { target = SOV modifier = RUS_OIL }
 }

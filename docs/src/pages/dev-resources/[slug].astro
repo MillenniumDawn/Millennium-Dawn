@@ -1,0 +1,29 @@
+---
+import type { CollectionEntry } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import { MarkdownDocLayout } from "@/app/layouts";
+import { getArticleFooterProps } from "@/shared/lib/content/article-footer-props";
+import { getResourceHeroProps } from "@/shared/lib/content/article-hero-props";
+import { getEntryBaseId, getResourcePath } from "@/shared/lib/routing/content-routes";
+import { buildMarkdownDocStaticPaths, renderMarkdownDocEntry } from "@/shared/lib/content/markdown-doc-entry";
+import ArticleShell from "@/shared/ui/ArticleShell.astro";
+import MarkdownContent from "@/shared/ui/MarkdownContent.astro";
+
+interface Props {
+  entry: CollectionEntry<"resources">;
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  return buildMarkdownDocStaticPaths("resources", getEntryBaseId);
+};
+
+const { entry }: Props = Astro.props;
+const { Content, headings } = await renderMarkdownDocEntry(entry);
+const heroProps = getResourceHeroProps(entry);
+---
+
+<MarkdownDocLayout entry={entry} canonicalPath={getResourcePath(entry)} headings={headings}>
+  <ArticleShell {...heroProps} {...getArticleFooterProps(entry)}>
+    <MarkdownContent Content={Content} />
+  </ArticleShell>
+</MarkdownDocLayout>

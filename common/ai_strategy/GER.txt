@@ -16,14 +16,6 @@ GER_spy_on_SOV = { #Spy on SOV, infiltrate Russian army
 	enable = {
 		NOT = { SOV = { is_subject_of = GER } }
 	}
-	abort = {
-		OR = {
-			SOV = {
-				is_in_faction_with = GER
-			}
-			NOT = { country_exists = SOV }
-		}
-	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = SOV }
 	ai_strategy = { type = operative_operation value = 80 operation = operation_capture_cipher operation_target = SOV }
@@ -33,14 +25,6 @@ GER_spy_on_SER = { #Spy on SER
 	enable = {
 		NOT = { SER = { is_subject_of = GER } }
 	}
-	abort = {
-		OR = {
-			SER = {
-				is_in_faction_with = GER
-			}
-			NOT = { country_exists = SER }
-		}
-	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = operative_mission value = 30 mission = build_intel_network mission_target = SER }
 	ai_strategy = { type = operative_operation value = 30 operation = operation_capture_cipher operation_target = SER }
@@ -49,14 +33,6 @@ GER_spy_on_PER = { #Spy on SOV, infiltrate Russian army
 	allowed = { original_tag = GER }
 	enable = {
 		NOT = { PER = { is_subject_of = GER } }
-	}
-	abort = {
-		OR = {
-			PER = {
-				is_in_faction_with = GER
-			}
-			NOT = { country_exists = PER }
-		}
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = operative_mission value = 30 mission = build_intel_network mission_target = PER }
@@ -105,8 +81,10 @@ GER_Transatlantic = {
 		}
 		country_exists = USA
 		NOT = { has_war_with = USA }
-		USA = { NOT = { has_government = fascism } }
-		USA = { has_idea = NATO_member }
+		USA = {
+			NOT = { has_government = fascism }
+			has_idea = NATO_member
+		}
 	}
 	abort_when_not_enabled = yes
 
@@ -123,8 +101,8 @@ GER_support_baltics_LAT = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		OR = {
-			LAT = {
+		LAT = {
+			OR = {
 				has_government = democratic
 				has_government = neutrality
 			}
@@ -146,8 +124,8 @@ GER_support_baltics_EST = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		OR = {
-			EST = {
+		EST = {
+			OR = {
 				has_government = democratic
 				has_government = neutrality
 			}
@@ -169,8 +147,8 @@ GER_support_baltics_LIT = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		OR = {
-			LIT = {
+		LIT = {
+			OR = {
 				has_government = democratic
 				has_government = neutrality
 			}
@@ -191,10 +169,8 @@ GER_stationate_baltics = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		OR = {
-			LIT = {
-				has_idea = NATO_member
-			}
+		LIT = {
+			has_idea = NATO_member
 		}
 	}
 	abort_when_not_enabled = yes
@@ -410,7 +386,7 @@ GER_KOS_relations = {
 }
 #Armenia Content
 GER_againts_armenian_expansion_italy_puppet = {
-	allowed = { tag = GER }
+	allowed = { original_tag = GER }
 	enable = {
 		is_subject = no
 		has_war = no
@@ -431,7 +407,7 @@ GER_againts_armenian_expansion_italy_puppet = {
 	ai_strategy = { type = influence id = "ITA" value = 200 }
 }
 GER_againts_armenian_expansion_poland_puppet = {
-	allowed = { tag = GER }
+	allowed = { original_tag = GER }
 	enable = {
 		is_subject = no
 		has_war = no
@@ -484,7 +460,6 @@ GER_lakota_help = {
 GER_reduce_Swiss_border_garrison = {
 	allowed = { original_tag = GER }
 	enable = {
-		original_tag = GER
 		OR = {
 			SWI = { has_government = democratic }
 			SWI = { has_government = neutrality }
@@ -502,7 +477,6 @@ GER_reduce_Swiss_border_garrison = {
 GER_reduce_Austria_border_garrison = {
 	allowed = { original_tag = GER }
 	enable = {
-		original_tag = GER
 		OR = {
 			AUS = { has_government = democratic }
 			AUS = { has_government = neutrality }
@@ -566,9 +540,8 @@ ENG_german_bases = {
 
 #german forces in peace#
 German_garrisons_in_peace = {
-	allowed = { tag = GER }
+	allowed = { original_tag = GER }
 	enable = {
-		tag = GER
 		has_idea = NATO_member
 		OR = {
 			has_war = no
@@ -595,7 +568,8 @@ GER_default_naval_breakdown = {
 		OR = {
 			has_defensive_war = yes
 			threat > 0.6
-			any_country = {
+			any_of_scopes = {
+				array = potential_and_current_enemies
 				is_justifying_wargoal_against = GER
 			}
 		}
@@ -620,19 +594,18 @@ GER_rebuild_army = {
 		OR = {
 			has_defensive_war = yes
 			threat > 0.6
-			any_country = {
+			any_of_scopes = {
+				array = potential_and_current_enemies
 				is_justifying_wargoal_against = GER
 			}
 		}
 	}
 
-	abort = {
-		num_divisions > 50
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = L_Inf value = 5 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 20 }
-	ai_strategy = { type = role_ratio id = mechanized value = 10 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 10 }
 	ai_strategy = { type = role_ratio id = armor value = 40 }
 	ai_strategy = { type = role_ratio id = marines value = 5 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
@@ -647,7 +620,8 @@ GER_air_force_breakdown = {
 		OR = {
 			has_defensive_war = yes
 			threat > 0.6
-			any_country = {
+			any_of_scopes = {
+				array = potential_and_current_enemies
 				is_justifying_wargoal_against = GER
 			}
 		}
@@ -657,8 +631,7 @@ GER_air_force_breakdown = {
 	#unit ratios - set the base number of planes per airfield / cv slot that the nation wants
 	ai_strategy = { type = unit_ratio id = cas value = 8 }
 	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
-	ai_strategy = { type = unit_ratio id = heavy_fighter value = 4 }
-	ai_strategy = { type = unit_ratio id = interceptor value = 8 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 12 }
 	ai_strategy = { type = unit_ratio id = scout_plane value = 2 }
 	ai_strategy = { type = unit_ratio id = suicide value = 4 }
 
@@ -668,7 +641,6 @@ GER_air_force_breakdown = {
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -80 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_airframe value = -25 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_fighter_airframe value = 0 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -25 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -80 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -75 }
@@ -767,6 +739,6 @@ GER_construct_additional_microchips = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = build_building id = microchip_plant value = 15 }
-	ai_strategy = { type = building_target id = microchip_plant value = 75 }
+	ai_strategy = { type = build_building id = microchip_plant value = 50 }
+	ai_strategy = { type = building_target id = microchip_plant value = 50 }
 }

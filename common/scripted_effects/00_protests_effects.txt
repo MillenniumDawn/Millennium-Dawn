@@ -7,20 +7,20 @@ apply_protest_effects = {
 	calculate_protest_drift = yes
 
 	add_to_variable = { protest_strength = protest_drift }
-	if = {
-		limit = {
-			check_variable = { THIS.protest_strength > 35 }
-			NOT = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } }
-		}
-
-		roll_protest_chance = yes
-	}
 }
 
 apply_passive_protest_drift = {
+	# Display vars persisted only while the player has the panel open. AI never
+	# writes drift_passive_last; player only writes it when MD_protests_GUI is open.
+	if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+		set_variable = { drift_passive_last = 0 }
+	}
 	random = {
 		chance = 50
 		subtract_from_variable = { protest_strength = 2 }
+		if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+			set_variable = { drift_passive_last = -2 }
+		}
 	}
 
 	if = { limit = { NOT = { has_variable = protest_strength } } set_variable = { protest_strength = 0 } }
@@ -36,225 +36,55 @@ apply_passive_radicalisation_drift = {
 
 	if = { limit = { NOT = { has_variable = protest_radicalisation } } set_variable = { protest_radicalisation = 0 } }
 
-	clamp_variable = {
-		var = THIS.protest_radicalisation
-		min = 0
-		max = 10
-	}
+	clamp_variable = { var = protest_radicalisation min = 0 max = 10 }
 }
 
 calculate_protest_drift = {
-	if = {
-		limit = {
-			has_fuel < 1
-		}
-
+	if = { limit = { has_fuel < 1 }
 		add_to_temp_variable = { protest_drift = 1 }
 	}
-	if = {
-		limit = {
-			check_variable = { THIS.expected_welfare_spending > THIS.social_budget }
-		}
 
-		set_temp_variable = { buf = THIS.expected_welfare_spending }
-		subtract_from_temp_variable = { buf = THIS.social_budget }
-		add_to_temp_variable = { protest_drift = buf }
-	}else_if = {
-		limit = {
-			check_variable = { THIS.social_budget > THIS.expected_welfare_spending }
-		}
-		set_temp_variable = { buf = THIS.expected_welfare_spending }
-		subtract_from_temp_variable = { buf = THIS.social_budget }
-		add_to_temp_variable = { protest_drift = buf }
-	}
-	if = {
-		limit = {
-			check_variable = { THIS.expected_health_spending > THIS.health_budget }
-		}
+	set_temp_variable = { buf = expected_welfare_spending }
+	subtract_from_temp_variable = { buf = social_budget }
+	add_to_temp_variable = { protest_drift = buf }
 
-		set_temp_variable = { buf = THIS.expected_health_spending }
-		subtract_from_temp_variable = { buf = THIS.health_budget }
-		add_to_temp_variable = { protest_drift = buf }
-	}else_if = {
-		limit = {
-			check_variable = { THIS.health_budget > THIS.expected_health_spending }
-		}
-		set_temp_variable = { buf = THIS.expected_health_spending }
-		subtract_from_temp_variable = { buf = THIS.health_budget }
-		add_to_temp_variable = { protest_drift = buf }
-	}
-	if = {
-		limit = {
-			check_variable = { THIS.expected_edu_spending > THIS.education_budget }
-		}
+	set_temp_variable = { buf = expected_health_spending }
+	subtract_from_temp_variable = { buf = health_budget }
+	add_to_temp_variable = { protest_drift = buf }
 
-		set_temp_variable = { buf = THIS.expected_edu_spending }
-		subtract_from_temp_variable = { buf = THIS.education_budget }
-		add_to_temp_variable = { protest_drift = buf }
-	}else_if = {
-		limit = {
-			check_variable = { THIS.education_budget > THIS.expected_edu_spending }
-		}
-		set_temp_variable = { buf = THIS.expected_edu_spending }
-		subtract_from_temp_variable = { buf = THIS.education_budget }
-		add_to_temp_variable = { protest_drift = buf }
-	}
-	if = {
-		limit = {
-			check_variable = { THIS.expected_police_spending > THIS.crime_fighting }
-		}
+	set_temp_variable = { buf = expected_edu_spending }
+	subtract_from_temp_variable = { buf = education_budget }
+	add_to_temp_variable = { protest_drift = buf }
 
-		set_temp_variable = { buf = THIS.expected_police_spending }
-		subtract_from_temp_variable = { buf = THIS.crime_fighting }
-		add_to_temp_variable = { protest_drift = buf }
-	}else_if = {
-		limit = {
-			check_variable = { THIS.crime_fighting > THIS.expected_police_spending }
-		}
-		set_temp_variable = { buf = THIS.expected_police_spending }
-		subtract_from_temp_variable = { buf = THIS.crime_fighting }
-		add_to_temp_variable = { protest_drift = buf }
-	}
-	if = {
-		limit = {
-			check_variable = { THIS.expected_adm_spending > THIS.bureaucracy }
-		}
+	set_temp_variable = { buf = expected_police_spending }
+	subtract_from_temp_variable = { buf = crime_fighting }
+	add_to_temp_variable = { protest_drift = buf }
 
-		set_temp_variable = { buf = THIS.expected_adm_spending }
-		subtract_from_temp_variable = { buf = THIS.bureaucracy }
-		add_to_temp_variable = { protest_drift = buf }
-	}else_if = {
-		limit = {
-			check_variable = { THIS.bureaucracy > THIS.expected_adm_spending }
-		}
-		set_temp_variable = { buf = THIS.expected_adm_spending }
-		subtract_from_temp_variable = { buf = THIS.bureaucracy }
-		add_to_temp_variable = { protest_drift = buf }
-	}
-	if = {
-		limit = {
-			check_variable = { THIS.expected_military_sp > THIS.Military_Spending }
-		}
+	set_temp_variable = { buf = expected_adm_spending }
+	subtract_from_temp_variable = { buf = bureaucracy }
+	add_to_temp_variable = { protest_drift = buf }
 
-		set_temp_variable = { buf = THIS.expected_military_sp }
-		subtract_from_temp_variable = { buf = THIS.Military_Spending }
-		add_to_temp_variable = { protest_drift = buf }
-	}else_if = {
-		limit = {
-			check_variable = { THIS.Military_Spending > THIS.expected_military_sp }
-		}
-		set_temp_variable = { buf = THIS.expected_military_sp }
-		subtract_from_temp_variable = { buf = THIS.Military_Spending }
-		add_to_temp_variable = { protest_drift = buf }
-	}
+	set_temp_variable = { buf = expected_military_sp }
+	subtract_from_temp_variable = { buf = Military_Spending }
+	add_to_temp_variable = { protest_drift = buf }
+
 	multiply_temp_variable = { protest_drift = 0.5 }
-}
-
-roll_protest_chance = {
-	random_list = {
-		500 = {
-			# nothing
-		}
-		var:protest_strength = {
-			if = {
-				limit = { check_variable = { THIS.protest_radicalisation < 3 } }
-				random_list = {
-					10 = {
-						country_event = { id = protests.1 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.2 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.3 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.4 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.5 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.6 random_days = 27 }
-					}
-				}
-			}
-			else_if = {
-				limit = { check_variable = { THIS.protest_radicalisation < 7 } }
-				random_list = {
-					10 = {
-						country_event = { id = protests.10 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.11 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.12 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.13 random_days = 27 }
-					}
-					10 = {
-						country_event = { id = protests.14 random_days = 27 }
-					}
-				}
-			}
-			else = {
-				random_list = {
-					90 = {
-						random_list = {
-							10 = {
-								country_event = { id = protests.10 random_days = 27 }
-							}
-							10 = {
-								country_event = { id = protests.11 random_days = 27 }
-							}
-							10 = {
-								country_event = { id = protests.12 random_days = 27 }
-							}
-							10 = {
-								country_event = { id = protests.13 random_days = 27 }
-							}
-							10 = {
-								country_event = { id = protests.14 random_days = 27 }
-							}
-						}
-					}
-					10 = {
-						country_event = { id = protests.20 random_days = 27 }
-					}
-				}
-			}
-		}
-	}
 }
 
 calculate_unrest_growth = {
 	#Grab our old protest strength
 	set_temp_variable = { start_protest_str = protest_strength }
-	#Calculate based off economics how much the protests should drift
-	calculate_protest_drift = yes
-	add_to_variable = { protest_strength = protest_drift }
 
-	#low stability in elected government = unrest
-	if = {
-		limit = {
-			has_stability < 0.2
-			has_elections = yes
-		}
-		set_temp_variable = { stab_hold = stability }
-		set_temp_variable = { protest_add = 0.2 }
-		subtract_from_temp_variable = { protest_add = stab_hold }
-		add_to_variable = { protest_strength = protest_add }
-	}
-	#High interest = unrest
-	if = {
-		limit = { check_variable = { interest_rate > 8.9 } }
-		set_temp_variable = { rate_hold = interest_rate }
-		subtract_from_temp_variable = { rate_hold = 8.9 }
-		add_to_variable = { protest_strength = protest_drift }
-	}
 
+	MD_protests_calc_deterministic_drift = yes
+	add_to_variable = { protest_strength = det_spending_drift }
+	add_to_variable = { protest_strength = det_stability_drift }
+	add_to_variable = { protest_strength = det_interest_drift }
+	add_to_variable = { protest_strength = det_war_drift }
+	add_to_variable = { protest_strength = det_corruption_drift }
+
+	#Random sources: the live tick rolls a real poisson value; the panel
+	#projection (MD_protests_recompute_display) uses the expected value instead.
 	if = {
 		limit = { has_idea = recession }
 		randomize_temp_variable = {
@@ -262,6 +92,9 @@ calculate_unrest_growth = {
 			distribution = poisson
 			min = 0.5
 			lambda = 3
+		}
+		if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+			set_variable = { drift_recession_last = protest_drift }
 		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
@@ -274,37 +107,29 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 4
 		}
+		if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+			set_variable = { drift_depression_last = protest_drift }
+		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
-	#Long wars = unrest
-	if = {
-		limit = { check_variable = { months_at_war > 36 } }
-		set_temp_variable = { months_hold = months_at_war }
-		divide_temp_variable = { months_hold = 24 }
-		add_to_variable = { protest_strength = months_hold }
-	}
-
-	#If goverment popularity is less than 30%, check for needing elections or corruption
 	if = {
 		limit = {
-			check_variable = { government_coalition_strength < 0.3 }
 			OR = {
-				has_elections = no
-				OR = {
-					has_idea = paralyzing_corruption
-					has_idea = crippling_corruption
-					has_idea = rampant_corruption
-					has_idea = unrestrained_corruption
-					has_idea = systematic_corruption
-					has_idea = widespread_corruption
-				}
+				has_idea = CT_internet_monitoring
+				has_idea = CT_protesting_arrests
 			}
 		}
 
-		set_temp_variable = { protest_drift = 0.3 }
-		set_temp_variable = { gov_pop_hold = government_coalition_strength }
-		subtract_from_temp_variable = { protest_drift = government_coalition_strength }
+		randomize_temp_variable = {
+			var = protest_drift
+			distribution = poisson
+			min = 0.5
+			lambda = 5
+		}
+		if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+			set_variable = { drift_ct_last = protest_drift }
+		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -326,12 +151,156 @@ calculate_unrest_growth = {
 
 	round_variable = protest_strength
 
-	clamp_variable = {
-		var = protest_strength
-		min = 0
+	clamp_variable = { var = protest_strength min = 0 max = 100 }
+
+	# Display-only computations: only run when the player has the panel open.
+	if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+		MD_protests_compute_drift_total = yes
+		MD_protests_count_resisting_cores = yes
+		add_to_variable = { global.protest_ui_dirty = 1 }
 	}
 
 	check_protest_trigger = yes
+}
+
+# Computes the five deterministic drift sources into det_*_drift temp vars
+# (always set, AI-safe, no save cost) and mirrors them into the drift_*_last
+# display vars gated to player + open-panel. Also zeros the three random
+# display vars so callers only set them when their source is active.
+# Shared by the live monthly tick (calculate_unrest_growth) and the panel
+# projection (MD_protests_recompute_display) so the drift formulas live in one
+# place. The live tick adds det_*_drift to protest_strength and rolls the random
+# sources for real; the projection adds the random sources' expected value.
+MD_protests_calc_deterministic_drift = {
+	set_temp_variable = { det_spending_drift = 0 }
+	set_temp_variable = { det_stability_drift = 0 }
+	set_temp_variable = { det_interest_drift = 0 }
+	set_temp_variable = { det_war_drift = 0 }
+	set_temp_variable = { det_corruption_drift = 0 }
+
+	set_temp_variable = { protest_drift = 0 }
+	calculate_protest_drift = yes
+	set_temp_variable = { det_spending_drift = protest_drift }
+
+	if = {
+		limit = {
+			has_stability < 0.2
+			has_elections = yes
+		}
+		set_temp_variable = { det_stability_drift = 0.2 }
+		subtract_from_temp_variable = { det_stability_drift = stability }
+	}
+
+	if = {
+		limit = { check_variable = { interest_rate > 8.9 } }
+		set_temp_variable = { det_interest_drift = interest_rate }
+		subtract_from_temp_variable = { det_interest_drift = 8.9 }
+	}
+
+	if = {
+		limit = { check_variable = { months_at_war > 36 } }
+		set_temp_variable = { det_war_drift = months_at_war }
+		divide_temp_variable = { det_war_drift = 24 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { government_coalition_strength < 0.3 }
+			OR = {
+				has_elections = no
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+				has_idea = unrestrained_corruption
+				has_idea = systematic_corruption
+				has_idea = widespread_corruption
+			}
+		}
+		set_temp_variable = { det_corruption_drift = 0.3 }
+		subtract_from_temp_variable = { det_corruption_drift = government_coalition_strength }
+	}
+
+	if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+		set_variable = { drift_spending_last = det_spending_drift }
+		set_variable = { drift_stability_last = det_stability_drift }
+		set_variable = { drift_interest_last = det_interest_drift }
+		set_variable = { drift_war_last = det_war_drift }
+		set_variable = { drift_corruption_last = det_corruption_drift }
+		set_variable = { drift_recession_last = 0 }
+		set_variable = { drift_depression_last = 0 }
+		set_variable = { drift_ct_last = 0 }
+	}
+}
+
+
+MD_protests_recompute_display = {
+	MD_protests_calc_deterministic_drift = yes
+
+	if = { limit = { has_idea = recession }
+		set_variable = { drift_recession_last = 3 }
+	}
+	if = { limit = { has_idea = depression }
+		set_variable = { drift_depression_last = 4 }
+	}
+	if = {
+		limit = {
+			OR = {
+				has_idea = CT_internet_monitoring
+				has_idea = CT_protesting_arrests
+			}
+		}
+		set_variable = { drift_ct_last = 5 }
+	}
+
+	MD_protests_compute_drift_total = yes
+}
+
+# PREV (not ROOT): every_core_state switches to state scope; PREV is the country
+# that owns the iteration. ROOT depends on how this effect was entered and is unsafe.
+MD_protests_count_resisting_cores = {
+	set_variable = { cores_resisting_count = 0 }
+	set_variable = { MD_top_resistant_state_value = 0 }
+	if = {
+		limit = { has_active_mission = MD_incoming_revolt }
+		every_core_state = {
+			limit = { has_resistance = yes }
+			PREV = { add_to_variable = { cores_resisting_count = 1 } }
+			set_temp_variable = { state_resistance_val = resistance }
+			if = {
+				limit = { check_variable = { state_resistance_val > PREV.MD_top_resistant_state_value } }
+				PREV = { set_variable = { MD_top_resistant_state_value = state_resistance_val } }
+				save_global_event_target_as = MD_top_resistant_state_scope
+			}
+		}
+	}
+}
+
+MD_protests_clear_display_vars = {
+	clear_variable = drift_spending_last
+	clear_variable = drift_stability_last
+	clear_variable = drift_interest_last
+	clear_variable = drift_recession_last
+	clear_variable = drift_depression_last
+	clear_variable = drift_war_last
+	clear_variable = drift_corruption_last
+	clear_variable = drift_ct_last
+	clear_variable = drift_passive_last
+	clear_variable = drift_total_last
+	clear_variable = cores_resisting_count
+	clear_variable = MD_top_resistant_state_value
+	clear_global_event_target = MD_top_resistant_state_scope
+}
+
+MD_protests_compute_drift_total = {
+	set_variable = { drift_total_last = drift_passive_last }
+	add_to_variable = { drift_total_last = drift_spending_last }
+	add_to_variable = { drift_total_last = drift_stability_last }
+	add_to_variable = { drift_total_last = drift_interest_last }
+	add_to_variable = { drift_total_last = drift_recession_last }
+	add_to_variable = { drift_total_last = drift_depression_last }
+	add_to_variable = { drift_total_last = drift_war_last }
+	add_to_variable = { drift_total_last = drift_corruption_last }
+	add_to_variable = { drift_total_last = drift_ct_last }
 }
 
 check_protest_trigger = {
@@ -348,6 +317,7 @@ check_protest_trigger = {
 			chance = var:protest_roll
 			country_event = { id = protests.200 days = 1 }
 			activate_mission = MD_incoming_protest_movement
+			set_country_flag = MD_protest_mission_active
 		}
 	}
 }
@@ -356,17 +326,20 @@ random_protest_events = {
 	if = {
 		limit = {
 			has_country_flag = MD_protests_began
+			any_core_state = {
+				has_resistance = yes
+			}
 		}
 		country_event = { id = protests.101 days = 30 }
 		country_event = protests.102
 		random_list = {
-			50 = {
+			70 = {
 				# Nothing happens
 			}
-			20 = {
+			10 = {
 				country_event = { id = protests.104 days = 30 }
 			}
-			20 = {
+			10 = {
 				country_event = { id = protests.105 days = 30 }
 			}
 			10 = {

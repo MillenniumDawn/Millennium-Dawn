@@ -20,7 +20,6 @@ country_event = {
 			}
 		}
 		ROJ = { country_event = { days = 5 id = SyriaFocus.1 } }
-		set_country_flag = Rojava_Question_Solved
 	}
 	option = {
 		name = SyriaFocus.0.b
@@ -42,7 +41,6 @@ country_event = {
 			}
 		}
 		ROJ = { country_event = { days = 5 id = SyriaFocus.4 } }
-		set_country_flag = Rojava_Question_Solved
 	}
 	option = {
 		name = SyriaFocus.0.c
@@ -67,7 +65,6 @@ country_event = {
 		remove_state_core = 193
 		remove_state_core = 571
 		remove_state_core = 575
-		set_country_flag = Rojava_Question_Solved
 		hidden_effect = { news_event = { id = SyriaFocusNews.0 hours = 6 } }
 	}
 }
@@ -125,6 +122,9 @@ country_event = {
 		ai_chance = {
 			base = 90
 		}
+		set_temp_variable = { wargoal_on = ROJ }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = { type = annex_everything target = ROJ }
 		remove_state_core = 193
 		remove_state_core = 571
@@ -195,19 +195,23 @@ country_event = {
 	option = {
 		name = SyriaFocus.4.a
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.4.a executed"		#This is what we wanted
+		FROM = {
+			country_event = { days = 5 id = SyriaFocus.5 }
+			set_country_flag = Promised_Federated_Syria
+		}
+
 		ai_chance = {
 			base = 80
 		}
-		FROM = { country_event = { days = 5 id = SyriaFocus.5 } }
-		FROM = { set_country_flag = Promised_Federated_Syria }
 	}
 	option = {
 		name = SyriaFocus.4.b
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.4.b executed"		#We have new goals
+		FROM = { country_event = { days = 5 id = SyriaFocus.2 } }
+
 		ai_chance = {
 			base = 20
 		}
-		FROM = { country_event = { days = 5 id = SyriaFocus.2 } }
 	}
 }
 
@@ -327,17 +331,16 @@ country_event = {
 	fire_only_once = yes
 
 	immediate = {
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.8 executed"
 		random_list = {
-			10 = { country_event = SyriaFocus.9 }		#Assad dies, strong civil war
-			70 = { country_event = SyriaFocus.10 }		#Medium civil war
-			20 = { country_event = SyriaFocus.11 }		#Low scale civil war
+			10 = { country_event = SyriaFocus.9 }
+			70 = { country_event = SyriaFocus.10 }
+			20 = { country_event = SyriaFocus.11 }
 		}
 	}
 
-	option = {
-		name = SyriaFocus.8.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocus.8.a executed"
-		ai_chance = { base = 100 }
+	trigger = {
+		tag = SYR
 	}
 }
 
@@ -666,20 +669,22 @@ country_event = {
 		ai_chance = { base = 90 }
 		FROM = {
 			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 		}
-		SYR = { set_country_flag = SYR_Post_War_Tree_Finished }
-		SYR = { country_event = SyriaFocus.17 }
+		SYR = {
+			set_country_flag = SYR_Post_War_Tree_Finished
+			country_event = SyriaFocus.17
+		}
 		give_guarantee = FROM
 	}
 	option = {
 		name = SyriaFocus.16.b
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.16.b executed"		#Don't agree to their request
 		ai_chance = { base = 10 }
-		SYR = { set_country_flag = SYR_Request_Rejected }
-		SYR = { country_event = SyriaFocus.18 }
+		SYR = {
+			set_country_flag = SYR_Request_Rejected
+			country_event = SyriaFocus.18
+		}
 	}
 }
 
@@ -702,7 +707,6 @@ country_event = {
 		}
 		set_temp_variable = { percent_change = 1 }
 		set_temp_variable = { tag_index = FROM }
-		set_temp_variable = { influence_target = THIS }
 		change_influence_percentage = yes
 	}
 }
@@ -752,7 +756,6 @@ country_event = {
 				num_divisions < 15			#If we took heavy casualties, integrate
 			}
 		}
-		set_country_flag = FSA_Syrian_Arab_Army_Decision
 		add_popularity = { ideology = communism popularity = 0.1 }
 		# Reduction of 20% for the ruling party
 		set_party_index_to_ruling_party = yes
@@ -788,8 +791,6 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
 		add_relative_party_popularity = yes
-
-		set_country_flag = FSA_Syrian_Arab_Army_Decision
 	}
 }
 
@@ -811,28 +812,20 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.05 }
 		add_relative_party_popularity = yes
 
-
 		set_temp_variable = { temp_opinion = 5 }
 		change_the_military_opinion = yes
-		create_corps_commander = {
-			name = "Ali Abdullah Ayyoub"
-			portrait_path = "gfx/leaders/SYR/Gen_Ali_Abdullah_Ayyoub.dds"
-			traits = { trait_engineer }
-			skill = 4
-			logistics_skill = 4
-			planning_skill = 4
-			attack_skill = 4
-			defense_skill = 4
-		}
-		create_corps_commander = {
-			name = "Abdel Fatah Qudsiyeh"
-			portrait_path = "gfx/leaders/SYR/Portrait_Abdel_Fatah_Qudsiyeh.dds"
-			traits = { trait_engineer }
-			skill = 2
-			logistics_skill = 2
-			planning_skill = 2
-			attack_skill = 2
-			defense_skill = 2
+		set_country_flag = SYR_unlock_ayyoub_qudsiyeh
+		effect_tooltip = {
+			create_corps_commander = {
+				name = "Abdel Fatah Qudsiyeh"
+				portrait_path = "gfx/leaders/SYR/Portrait_Abdel_Fatah_Qudsiyeh.dds"
+				traits = { trait_engineer }
+				skill = 2
+				attack_skill = 2
+				defense_skill = 2
+				planning_skill = 2
+				logistics_skill = 2
+			}
 		}
 	}
 	option = {
@@ -996,7 +989,7 @@ country_event = {
 		ai_chance = { base = 100 }
 		hidden_effect = {
 			if = {
-				limit = { ROJ = { exists = no } }
+				limit = { NOT = { country_exists = ROJ } }
 				release = ROJ
 				ROJ = { load_oob = ROJ_2017 }
 			}
@@ -1039,7 +1032,7 @@ country_event = {
 		ai_chance = { base = 100 }
 		hidden_effect = {
 			if = {
-				limit = { DRU = { exists = no } }
+				limit = { NOT = { country_exists = DRU } }
 				release = DRU
 				DRU = { load_oob = DRU_2017 }
 			}
@@ -1095,7 +1088,7 @@ country_event = {
 		ai_chance = { base = 100 }
 		hidden_effect = {
 			if = {
-				limit = { ALA = { exists = no } }
+				limit = { NOT = { country_exists = ALA } }
 				release = ALA
 				ALA = { load_oob = ALA_2017 }
 			}
@@ -1289,6 +1282,8 @@ country_event = {
 		name = SyriaFocus.32.a		#Damn
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.32.a executed"
 		ai_chance = { base = 100 }
+		set_temp_variable = { wargoal_on = LEB }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			type = puppet_wargoal_focus
 			target = LEB
@@ -1416,6 +1411,8 @@ country_event = {
 		name = SyriaFocus.37.a		#Damn
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.37.a executed"
 		ai_chance = { base = 100 }
+		set_temp_variable = { wargoal_on = HEZ }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			type = puppet_wargoal_focus
 			target = HEZ
@@ -2269,6 +2266,9 @@ country_event = {
 		name = SyriaFocus.54.a
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.54.a executed"
 		ai_chance = { base = 80 }
+		set_temp_variable = { wargoal_on = FROM }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			type = annex_everything
 			target = FROM
@@ -2299,10 +2299,8 @@ country_event = {
 		name = SyriaFocus.55.a
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.55.a executed"
 		ai_chance = { base = 100 }
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 20 }
-		set_politics = { ruling_party = nationalist }
+		set_temp_variable = { rul_party_temp = 20 }
+		change_ruling_party_effect = yes
 		FROM = { country_event = SyriaFocus.56 }
 	}
 	option = {
@@ -3044,9 +3042,9 @@ country_event = {
 				factor = 0.25
 				OR = {
 					owns_state = 710
-					AND = {
-						710 = { NOT = { is_claimed_by = ROOT } }
-						710 = { NOT = { is_core_of = ROOT } }
+					710 = {
+						NOT = { is_claimed_by = ROOT }
+						NOT = { is_core_of = ROOT }
 					}
 				}
 			}
@@ -3216,16 +3214,16 @@ country_event = {
 				factor = 0.2
 				OR = {
 					FROM = {
-						OR = {
-							owns_state = 145
-							owns_state = 146
+						owns_any_state_of = {
+							145
+							146
 						}
 					}
 					FROM = {
 						any_subject_country = {
-							OR = {
-								owns_state = 145
-								owns_state = 146
+							owns_any_state_of = {
+								145
+								146
 							}
 						}
 					}
@@ -3278,16 +3276,16 @@ country_event = {
 				factor = 5
 				OR = {
 					FROM = {
-						OR = {
-							owns_state = 145
-							owns_state = 146
+						owns_any_state_of = {
+							145
+							146
 						}
 					}
 					FROM = {
 						any_subject_country = {
-							OR = {
-								owns_state = 145
-								owns_state = 146
+							owns_any_state_of = {
+								145
+								146
 							}
 						}
 					}
@@ -3454,6 +3452,9 @@ country_event = {
 				idea = israel_new_intifada
 				days = 360
 			}
+			set_temp_variable = { wargoal_on = HAM }
+			set_temp_variable = { wargoal_type = 2 }
+			add_threat_from_wargoal_effect = yes
 			create_wargoal = {
 				type = annex_everything
 				target = HAM
@@ -3996,7 +3997,7 @@ country_event = {
 	id = SyriaFocus.86
 	title = SyriaFocus.86.t
 	desc = SyriaFocus.86.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4022,7 +4023,7 @@ country_event = {
 	id = SyriaFocus.87
 	title = SyriaFocus.87.t
 	desc = SyriaFocus.87.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4044,7 +4045,7 @@ country_event = {
 	id = SyriaFocus.88
 	title = SyriaFocus.88.t
 	desc = SyriaFocus.88.d
-	picture = GFX_elections
+	picture = GFX_election
 
 	is_triggered_only = yes
 
@@ -4143,7 +4144,7 @@ country_event = {
 	id = SyriaFocus.89
 	title = SyriaFocus.89.t
 	desc = SyriaFocus.89.d
-	picture = GFX_elections
+	picture = GFX_election
 	is_triggered_only = yes
 
 	option = {
@@ -4189,31 +4190,31 @@ country_event = {
 		}
 		if = {
 			limit = {
-				Or = {
+				OR = {
 					has_idea = alawite_high_command
 					has_idea = alawite_high_command_strengthened
 				}
 			}
-			country_event = { id = SyriaFocus.98 }
+			country_event = SyriaFocus.98
 		}
 	}
 	option = {
 		name = SyriaFocus.89.b
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.89.b executed"
 		ai_chance = { base = 25 }
-		country_event = { id = SyriaFocus.90 }
+		country_event = SyriaFocus.90
 		if = {
 			limit = {
 				has_idea = alawite_high_command_strengthened
 			}
-			country_event = { id = SyriaFocus.98 }
+			country_event = SyriaFocus.98
 		}
 	}
 	option = {
 		name = SyriaFocus.89.c
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.89.c executed"
 		ai_chance = { base = 25 }
-		country_event = { id = SyriaFocus.88 }
+		country_event = SyriaFocus.88
 	}
 }
 
@@ -4222,7 +4223,7 @@ country_event = {
 	id = SyriaFocus.90
 	title = SyriaFocus.90.t
 	desc = SyriaFocus.90.d
-	picture = GFX_elections
+	picture = GFX_election
 
 	is_triggered_only = yes
 
@@ -4285,10 +4286,10 @@ country_event = {
 		meta_effect = {
 			text = {
 				set_politics = {
-				ruling_party = democratic
-				elections_allowed = yes
-				last_election = "[YEAR].[MONTH].1"
-				election_frequency = 60
+					ruling_party = democratic
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
 				}
 			}
 			YEAR = global.year
@@ -4336,7 +4337,6 @@ country_event = {
 		ai_chance = { base = 50 }
 		set_temp_variable = { add_col_one = 17 }
 		add_coalition_members_effect = yes
-		set_country_flag = federalists_in_coalition
 		set_temp_variable = { party_index = 17 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
@@ -4349,7 +4349,6 @@ country_event = {
 		ai_chance = { base = 50 }
 		set_temp_variable = { add_col_one = 20 }
 		add_coalition_members_effect = yes
-		set_country_flag = nationalists_in_coalition
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
@@ -4363,7 +4362,7 @@ country_event = {
 	id = SyriaFocus.92
 	title = SyriaFocus.92.t
 	desc = SyriaFocus.92.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4379,7 +4378,7 @@ country_event = {
 	id = SyriaFocus.93
 	title = SyriaFocus.93.t
 	desc = SyriaFocus.93.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4395,7 +4394,7 @@ country_event = {
 	id = SyriaFocus.94
 	title = SyriaFocus.94.t
 	desc = SyriaFocus.94.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4459,7 +4458,7 @@ country_event = {
 	id = SyriaFocus.97
 	title = SyriaFocus.97.t
 	desc = SyriaFocus.97.d
-	picture = GFX_elections
+	picture = GFX_election
 	is_triggered_only = yes
 	trigger = {
 		original_tag = SYR
@@ -4476,7 +4475,7 @@ country_event = {
 		ai_chance = { base = 50 }
 		hidden_effect = {
 			if = {
-				limit = { DRU = { exists = no } }
+				limit = { NOT = { country_exists = DRU } }
 				release = DRU
 				DRU = { load_oob = DRU_2017 }
 			}
@@ -4517,7 +4516,7 @@ country_event = {
 		ai_chance = { base = 50 }
 		hidden_effect = {
 			if = {
-				limit = { DRU = { exists = no } }
+				limit = { NOT = { country_exists = DRU } }
 				release = DRU
 				DRU = { load_oob = DRU_2017 }
 			}
@@ -4589,7 +4588,7 @@ country_event = {
 				change_oligarchs_opinion = yes
 			}
 			if = {
-				limit = { ALA = { exists = no } }
+				limit = { NOT = { country_exists = ALA } }
 				release = ALA
 				hidden_effect = {
 					ALA = { load_oob = ALA_2017 }
@@ -4603,10 +4602,9 @@ country_event = {
 				}
 			}
 			ALA = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 22 }
-				set_politics = { ruling_party = nationalist elections_allowed = no }
+				set_temp_variable = { rul_party_temp = 22 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
 				add_popularity = { ideology = nationalist popularity = 0.6 }
 			}
 		}
@@ -4678,7 +4676,7 @@ country_event = {
 	id = SyriaFocus.100
 	title = SyriaFocus.100.t
 	desc = SyriaFocus.100.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4694,7 +4692,7 @@ country_event = {
 	id = SyriaFocus.101
 	title = SyriaFocus.101.t
 	desc = SyriaFocus.101.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4710,7 +4708,7 @@ country_event = {
 	id = SyriaFocus.102
 	title = SyriaFocus.102.t
 	desc = SyriaFocus.102.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4732,7 +4730,7 @@ country_event = {
 	id = SyriaFocus.103
 	title = SyriaFocus.103.t
 	desc = SyriaFocus.103.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4755,7 +4753,7 @@ country_event = {
 	id = SyriaFocus.104
 	title = SyriaFocus.104.t
 	desc = SyriaFocus.104.d
-#	picture = GFX_coup
+#	picture = GFX_army_coup_event
 
 	is_triggered_only = yes
 
@@ -4898,7 +4896,7 @@ country_event = {
 		ai_chance = { base = 100 }
 		hidden_effect = {
 			if = {
-				limit = { ROJ = { exists = no } }
+				limit = { NOT = { country_exists = ROJ } }
 				release = ROJ
 				ROJ = { load_oob = ROJ_2017 }
 			}
@@ -4918,7 +4916,6 @@ country_event = {
 
 }
 
-
 ###################
 ### News Events ###
 ###################
@@ -4937,7 +4934,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.0.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.0.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -4956,7 +4952,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.1.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.1.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -4975,7 +4970,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.2.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.2.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -4994,7 +4988,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.3.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.3.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5006,11 +4999,11 @@ news_event = {
 	title = SyriaFocusNews.4.t
 	desc = {
 		text = SyriaFocusNews.4.d1
-		trigger = { SYR = { has_country_flag = Al_Assad_Dead } }
+		trigger = { SYR = { has_global_flag = Al_Assad_Dead } }
 	}
 	desc = {
 		text = SyriaFocusNews.4.d2
-		trigger = { SYR = { NOT = { has_country_flag = Al_Assad_Dead } } }
+		trigger = { SYR = { NOT = { has_global_flag = Al_Assad_Dead } } }
 	}
 	picture = GFX_news_SSNP
 
@@ -5024,7 +5017,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.4.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.4.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5047,7 +5039,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.5.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.5.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5070,7 +5061,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.6.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.6.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5089,7 +5079,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.7.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.7.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5108,7 +5097,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.8.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.8.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5127,7 +5115,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.9.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.9.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5146,7 +5133,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.10.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.10.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5165,7 +5151,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.11.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.11.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5184,7 +5169,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.12.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.12.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5203,7 +5187,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.13.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.13.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5222,7 +5205,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.14.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.14.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5241,7 +5223,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.15.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.15.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5260,7 +5241,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.16.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.16.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5279,7 +5259,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.17.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.17.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5298,7 +5277,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.18.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.18.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5317,7 +5295,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.19.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.19.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5336,7 +5313,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.20.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.20.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -5355,7 +5331,6 @@ news_event = {
 
 	option = {
 		name = SyriaFocusNews.21.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocusNews.21.a executed"
 		ai_chance = { base = 100 }
 	}
 }

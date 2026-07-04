@@ -1,0 +1,155 @@
+#Author(s): Angriest_Bird
+
+
+# temp_change = the change number
+# Purpose: PHI_change_strength_of_milf is to change the full strength of the Moro Islamic Liberation Front
+PHI_change_strength_of_milf = {
+	custom_effect_tooltip = PHI_change_milf_strength_tt
+	add_to_variable = { PHI_strength_of_milf = temp_change }
+	clamp_variable = {
+		min = 0
+		max = 100
+		var = PHI_strength_of_milf
+	}
+	PHI_update_the_effects_of_islamic_strength = yes
+}
+
+PHI_update_the_effects_of_islamic_strength = {
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = PHI_islamism_dynamic_modifier } } }
+		add_dynamic_modifier = { modifier = PHI_islamism_dynamic_modifier }
+		set_country_flag = phi_milf_exists
+		if = {
+			limit = { NOT = { has_variable = PHI_strength_of_milf } }
+			set_variable = { var = PHI_strength_of_milf value = 35 }
+		}
+	}
+
+	set_temp_variable = { opinion_modifier = PHI_strength_of_milf }
+
+	set_variable = { var = PHI_fascism_drift_effect value = opinion_modifier }
+	set_variable = { var = PHI_stability_factor_effect value = opinion_modifier }
+	set_variable = { var = PHI_political_power_factor_effect value = opinion_modifier }
+
+	multiply_variable = { var = PHI_fascism_drift_effect value = 0.003 }
+	multiply_variable = { var = PHI_stability_factor_effect value = -0.004 }
+	multiply_variable = { var = PHI_political_power_factor_effect value = -0.004 }
+
+	force_update_dynamic_modifier = yes
+}
+
+
+# ============================================================
+# PHI Corruption Tier System
+# ============================================================
+
+# temp_change = positive or negative value
+# Overwrites the stub already present above
+PHI_change_the_strength_of_corruption = {
+	custom_effect_tooltip = PHI_change_the_strength_of_corruption_tt
+	add_to_variable = { PHI_corruption_strength = temp_change }
+	clamp_variable = {
+		var = PHI_corruption_strength
+		min = 0
+		max = 100
+	}
+	PHI_check_corruption_tier_change = yes
+}
+
+PHI_check_corruption_tier_change = {
+	if = {
+		limit = { check_variable = { PHI_corruption_strength < 1 } }
+		PHI_decrease_corruption_tier = yes
+	}
+	else_if = {
+		limit = { check_variable = { PHI_corruption_strength > 99 } }
+		PHI_increase_corruption_tier = yes
+	}
+}
+
+PHI_decrease_corruption_tier = {
+	# Strength hit 0 — player is winning, corruption IMPROVES (goes towards negligible)
+	if = {
+		limit = { has_idea = paralyzing_corruption }
+		swap_ideas = { remove_idea = paralyzing_corruption add_idea = crippling_corruption }
+	}
+	else_if = {
+		limit = { has_idea = crippling_corruption }
+		swap_ideas = { remove_idea = crippling_corruption add_idea = rampant_corruption }
+	}
+	else_if = {
+		limit = { has_idea = rampant_corruption }
+		swap_ideas = { remove_idea = rampant_corruption add_idea = unrestrained_corruption }
+	}
+	else_if = {
+		limit = { has_idea = unrestrained_corruption }
+		swap_ideas = { remove_idea = unrestrained_corruption add_idea = systematic_corruption }
+	}
+	else_if = {
+		limit = { has_idea = systematic_corruption }
+		swap_ideas = { remove_idea = systematic_corruption add_idea = widespread_corruption }
+	}
+	else_if = {
+		limit = { has_idea = widespread_corruption }
+		swap_ideas = { remove_idea = widespread_corruption add_idea = medium_corruption }
+	}
+	else_if = {
+		limit = { has_idea = medium_corruption }
+		swap_ideas = { remove_idea = medium_corruption add_idea = modest_corruption }
+	}
+	else_if = {
+		limit = { has_idea = modest_corruption }
+		swap_ideas = { remove_idea = modest_corruption add_idea = slight_corruption }
+	}
+	else_if = {
+		limit = { has_idea = slight_corruption }
+		swap_ideas = { remove_idea = slight_corruption add_idea = negligible_corruption }
+	}
+	# negligible_corruption is the floor — no tier below it, just reset
+	set_variable = { PHI_corruption_strength = 99 }
+	country_event = { id = PHI_corruption_event.1 days = 1 }
+}
+
+PHI_increase_corruption_tier = {
+	if = {
+		limit = { has_idea = paralyzing_corruption }
+		# Already at max — just reset, no tier change
+	}
+	else_if = {
+		limit = { has_idea = crippling_corruption }
+		swap_ideas = { remove_idea = crippling_corruption add_idea = paralyzing_corruption }
+	}
+	else_if = {
+		limit = { has_idea = rampant_corruption }
+		swap_ideas = { remove_idea = rampant_corruption add_idea = crippling_corruption }
+	}
+	else_if = {
+		limit = { has_idea = unrestrained_corruption }
+		swap_ideas = { remove_idea = unrestrained_corruption add_idea = rampant_corruption }
+	}
+	else_if = {
+		limit = { has_idea = systematic_corruption }
+		swap_ideas = { remove_idea = systematic_corruption add_idea = unrestrained_corruption }
+	}
+	else_if = {
+		limit = { has_idea = widespread_corruption }
+		swap_ideas = { remove_idea = widespread_corruption add_idea = systematic_corruption }
+	}
+	else_if = {
+		limit = { has_idea = medium_corruption }
+		swap_ideas = { remove_idea = medium_corruption add_idea = widespread_corruption }
+	}
+	else_if = {
+		limit = { has_idea = modest_corruption }
+		swap_ideas = { remove_idea = modest_corruption add_idea = medium_corruption }
+	}
+	else_if = {
+		limit = { has_idea = slight_corruption }
+		swap_ideas = { remove_idea = slight_corruption add_idea = modest_corruption }
+	}
+	else_if = {
+		limit = { has_idea = negligible_corruption }
+		swap_ideas = { remove_idea = negligible_corruption add_idea = slight_corruption }
+	}
+	set_variable = { PHI_corruption_strength = 1 }
+	country_event = { id = PHI_corruption_event.2 days = 1 }
+}

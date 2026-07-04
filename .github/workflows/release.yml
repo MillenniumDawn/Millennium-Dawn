@@ -1,0 +1,65 @@
+name: Create Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      with:
+        fetch-depth: 1
+
+    - name: Create Release
+      uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+
+    - name: Close matching milestone
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        TAG_NAME: ${{ github.ref_name }}
+      with:
+        script: |
+          const tag = process.env.TAG_NAME;
+          // Strip leading 'v' to match milestone title (v2.0 -> 2.0)
+          const version = tag.replace(/^v/, '');
+
+          const milestones = await github.rest.issues.listMilestones({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+          });
+
+          const milestone = milestones.data.find(m => m.title === version || m.title === tag);
+
+          if (!milestone) {
+            console.log(`No open milestone matching "${version}" or "${tag}" found`);
+            return;
+          }
+
+          await github.rest.issues.updateMilestone({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            milestone_number: milestone.number,
+            state: 'closed',
+          });
+
+          console.log(`Closed milestone "${milestone.title}"`);

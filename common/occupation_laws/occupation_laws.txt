@@ -146,13 +146,13 @@ autonomous_occupation = {
 		base = 200
 
 		modifier = {
+			add = 500
 			set_temp_variable = { resistance_limit = 30 }
 			if = {
 				limit = { occupation_law = martial_law_occupation }
 				set_temp_variable = { resistance_limit = 35 }
 			}
 			resistance < autonomous_occupation # if we are under base resistance try to build compliance instead
-			add = 500
 		}
 	}
 }
@@ -471,7 +471,7 @@ HOL_WIC_law = {
 		OR = {
 			FROM = { capital_scope = { is_on_continent = north_america } }
 			FROM = { capital_scope = { is_on_continent = south_america } }
-			FROM = { is_west_african_nation = yes }
+			FROM = { has_country_flag = west_african_nation_flag }
 		}
 	}
 
@@ -491,8 +491,6 @@ HOL_WIC_law = {
 			check_variable = { resistance_target_without_law > 0.3 }
 			add = 200
 		}
-
-
 		modifier = {
 			check_variable = { resistance_target_without_law > 0.44 }
 
@@ -520,7 +518,7 @@ HOL_VOC_law = {
 			FROM = { capital_scope = { is_on_continent = asia } }
 			AND = {
 				FROM = { is_west_african_nation = no }
-				FROM = { is_african_nation = yes }
+				FROM = { is_in_array = { global.is_african_nation = THIS.id } }
 			}
 		}
 	}
@@ -542,6 +540,50 @@ HOL_VOC_law = {
 			add = 200
 		}
 
+
+		modifier = {
+			check_variable = { resistance_target_without_law > 0.44 }
+
+			set_temp_variable = { requirement_limit = 0.35 }
+			if = {
+				limit = { occupation_law = local_police_force_garrison }
+				set_temp_variable = { requirement_limit = 0.55 }
+			}
+			check_variable = { garrison_min_support_ratio < requirement_limit }
+
+			add = 350
+		}
+	}
+}
+
+senbu_occupation_law = {
+	icon = 16
+	sound_effect = "Martial_Law_Interface_Autonomous_Occupation_Unique_DEM"
+
+	fallback_law = foreign_civilian_oversight
+
+	visible = {
+		original_tag = JAP
+		has_completed_focus = JAP_office_for_colonialism
+	}
+
+	available = {
+		is_in_asia = yes
+	}
+
+	state_modifier = { #CHANGES HERE NEED TO BE APPLIED ALSO IN senbu_occupation_law_fake_idea idea
+		compliance_gain = 0.01
+		required_garrison_factor = 0.15
+		local_factories = 0.25
+		local_resources = 0.25
+	}
+
+	ai_will_do = {
+		base = 250
+		modifier = {
+			check_variable = { resistance_target_without_law > 0.3 }
+			add = 200
+		}
 
 		modifier = {
 			check_variable = { resistance_target_without_law > 0.44 }

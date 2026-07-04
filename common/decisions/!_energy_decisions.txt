@@ -22,8 +22,11 @@ decision_category_energy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_building_enrichment_facilities"
 			clear_variable = ROOT.enrichment_facility_time
-			clr_country_flag = build_three_enrichment_facility
 			clr_country_flag = single_enrichment_facility
+		}
+
+		ai_will_do = {
+			base = 0
 		}
 	}
 
@@ -50,9 +53,10 @@ decision_category_energy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_building_battery_parks"
 			clear_variable = ROOT.battery_park_time
-			clr_country_flag = build_three_battery_park
 			clr_country_flag = single_battery_park
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
 	energy_automatic_fuel_purchase = {
@@ -70,211 +74,7 @@ decision_category_energy = {
 			activate_mission = energy_automatic_fuel_purchase
 			set_country_flag = { flag = recently_bought_fuel value = 1 days = 28 }
 		}
-	}
 
-	block_all_reactor_grade_purchases = {
-		icon = GFX_decision_energy_buycancel_button
-		allowed = { always = yes }
-
-		visible = {
-			NOT = { has_country_flag = not_accepting_new_energy_offers }
-			has_enrichment_facilities = yes
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision block_all_reactor_grade_purchases"
-			set_country_flag = not_accepting_new_energy_offers
-		}
-	}
-
-	unblock_all_reactor_grade_purchases = {
-		icon = GFX_decision_energy_buyagree_button
-		allowed = { always = yes }
-
-		visible = {
-			has_country_flag = not_accepting_new_energy_offers
-			has_enrichment_facilities = yes
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision unblock_all_reactor_grade_purchases"
-			clr_country_flag = not_accepting_new_energy_offers
-		}
-	}
-
-	auto_accept_all_reactor_grade_purchases = {
-		icon = GFX_decision_energy_buycancel_button
-		allowed = { always = yes }
-
-		visible = {
-			NOT = { has_country_flag = auto_accept_all_purchases }
-			has_enrichment_facilities = yes
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision auto_accept_all_reactor_grade_purchases"
-			set_country_flag = auto_accept_all_purchases
-		}
-	}
-
-	stop_auto_accept_all_reactor_grade_purchases = {
-		icon = GFX_decision_energy_buycancel_button
-		allowed = { always = yes }
-
-		visible = {
-			has_country_flag = auto_accept_all_purchases
-			has_enrichment_facilities = yes
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision stop_auto_accept_all_reactor_grade_purchases"
-			clr_country_flag = auto_accept_all_purchases
-		}
-	}
-
-	energy_buy_reactor_grade_material = {
-		icon = GFX_decision_energy_buy_button
-		allowed = { always = yes }
-		visible = {
-			ROOT = {
-				set_temp_variable = { temp = nuclear_fuel_consumption }
-				multiply_temp_variable = { temp = 2 }
-				NOT = { check_variable = { nuclear_reactor_fuel_production > temp } }
-				# Check if you have nuclear reactors
-				has_nuclear_reactors = yes
-			}
-			FROM = {
-				NOT = { has_war_with = ROOT }
-				NOT = {
-					any_allied_country = {
-						has_war_with = ROOT
-					}
-				}
-				NOT = { has_country_flag = not_accepting_new_energy_offers }
-			}
-		}
-		available = {
-			FROM = {
-				has_enrichment_facilities = yes
-				has_reactor_material_stockpile = yes
-				NOT = { has_country_flag = currently_considering_an_offer }
-			}
-		}
-		days_remove = 90
-		days_re_enable = 90
-		target_array = global.enrichment_countries
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision energy_buy_reactor_grade_material"
-			FROM = {
-				set_country_flag = currently_considering_an_offer
-				set_temp_variable = { temp_purchase_tag = PREV.id }
-				if = {
-					limit = { NOT = { has_country_flag = auto_accept_all_purchases } }
-					set_variable = { purchaser_tag_reactor = temp_purchase_tag }
-					country_event = energy.1
-				}
-				else = {
-					set_temp_variable = { change_resource = -2500 }
-					change_reactor_grade_material_effect = yes
-					set_temp_variable = { treasury_change = 2 }
-					modify_treasury_effect = yes
-					var:temp_purchase_tag = {
-						set_temp_variable = { change_resource = 2500 }
-						change_reactor_grade_material_effect = yes
-						set_temp_variable = { treasury_change = -2 }
-						modify_treasury_effect = yes
-					}
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 1
-			# Buy Fuel if you're short
-			modifier = {
-				factor = 5
-				ROOT = { check_variable = { var_reactor_material_stockpile < 5000 } }
-			}
-			modifier = {
-				factor = 2
-				FROM = { is_in_faction_with = ROOT }
-			}
-			modifier = {
-				factor = 2
-				ROOT = { has_idea = NATO_member }
-				FROM = { has_idea = NATO_member }
-			}
-			modifier = {
-				factor = 2
-				ROOT = { has_idea = CSTO_member }
-				FROM = { has_idea = CSTO_member }
-			}
-			modifier = {
-				factor = 0.25
-				OR = {
-					AND = {
-						ROOT = { original_tag = USA }
-						FROM = { original_tag = SOV }
-					}
-					AND = {
-						ROOT = { original_tag = SOV }
-						FROM = { original_tag = USA }
-					}
-					AND = {
-						ROOT = { original_tag = CHI }
-						FROM = { original_tag = USA }
-					}
-					AND = {
-						ROOT = { original_tag = USA }
-						FROM = { original_tag = CHI }
-					}
-					AND = {
-						ROOT = { original_tag = CHI }
-						FROM = { original_tag = RAJ }
-					}
-					AND = {
-						ROOT = { original_tag = RAJ }
-						FROM = { original_tag = CHI }
-					}
-					AND = {
-						ROOT = { original_tag = TAI }
-						FROM = { original_tag = CHI }
-					}
-					AND = {
-						ROOT = { original_tag = CHI }
-						FROM = { original_tag = TAI }
-					}
-				}
-			}
-			modifier = {
-				factor = 1.5
-				ROOT = {
-					has_opinion = {
-						value > 100
-						target = FROM
-					}
-				}
-			}
-			# Don't rely on people you hate or doomsday stockpile nuclear fuel
-			modifier = {
-				factor = 0
-				FROM = {
-					has_opinion = {
-						target = ROOT
-						value < 75
-					}
-				}
-			}
-			# Do not buy more reactor grade if you can sustain more than 10 weeks of nuclear fuel consumption
-			modifier = {
-				factor = 0
-				ROOT = {
-					set_temp_variable = { nuclear_fuel_consumption_tmp = nuclear_fuel_consumption }
-					multiply_temp_variable = { nuclear_fuel_consumption_tmp = 10 }
-					check_variable = { var_reactor_material_stockpile > nuclear_fuel_consumption_tmp }
-				}
-			}
-		}
+		ai_will_do = { base = 0 }
 	}
 }

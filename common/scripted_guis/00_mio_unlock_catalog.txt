@@ -1,0 +1,96 @@
+scripted_gui = {
+
+	# Toolbar button on the production tab — toggles the catalog window.
+	mio_catalog_mio_list_btn = {
+		context_type = player_context
+		parent_window_token = production_tab
+		window_name = "mio_catalog_open_btn_mio_list"
+
+		visible = { is_custom_mio_country = no }
+
+		effects = {
+			mio_cat_open_btn_click = {
+				if = {
+					limit = { has_country_flag = mio_catalog_is_open }
+					clr_country_flag = mio_catalog_is_open
+				}
+				else = {
+					set_country_flag = mio_catalog_is_open
+					mio_catalog_rebuild_visible_yes = yes
+				}
+				update_mio_catalog_dirty_variable = yes
+			}
+		}
+	}
+
+	mio_unlock_catalog = {
+		context_type = player_context
+		parent_window_token = production_tab
+		window_name = "mio_unlock_catalog_window"
+
+		dirty = global.mio_catalog_dirty_update_var
+
+		visible = {
+			OR = {
+				has_country_flag = mio_catalog_is_open
+				is_ai = yes
+			}
+		}
+
+		dynamic_lists = {
+			mio_catalog_grid = {
+				array = mio_catalog_visible_array
+				entry_container = "mio_catalog_entry_container"
+			}
+		}
+
+		effects = {
+			mio_unlock_catalog_close_button_click = {
+				clr_country_flag = mio_catalog_is_open
+				update_mio_catalog_dirty_variable = yes
+			}
+
+			mio_catalog_filter_toggle_btn_click = {
+				if = {
+					limit = { has_country_flag = mio_catalog_filter_available }
+					clr_country_flag = mio_catalog_filter_available
+				}
+				else = {
+					set_country_flag = mio_catalog_filter_available
+				}
+				mio_catalog_rebuild_visible_yes = yes
+				update_mio_catalog_dirty_variable = yes
+			}
+
+			mio_cat_unlock_btn_click = {
+				add_political_power = -50
+				mio_catalog_entry_unlock_yes = yes
+				mio_catalog_rebuild_visible_yes = yes
+				update_mio_catalog_dirty_variable = yes
+			}
+		}
+
+		triggers = {
+			# Click gate also requires the uniform 50 PP cost; glow shows once prereqs are met
+			# so the player sees which entries to save PP for.
+			mio_cat_unlock_btn_click_enabled = {
+				has_political_power > 49
+				mio_catalog_entry_prereqs_yes = yes
+			}
+
+			mio_cat_unlock_btn_glow_visible = {
+				mio_catalog_entry_prereqs_yes = yes
+			}
+		}
+
+		properties = {
+			icon = {
+				image = "[mio_catalog_entry_icon_key]"
+			}
+
+			mio_catalog_filter_toggle_btn = {
+				image = "[mio_catalog_filter_toggle_icon]"
+			}
+		}
+	}
+}

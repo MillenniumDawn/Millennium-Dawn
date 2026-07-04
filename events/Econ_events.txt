@@ -1,4 +1,4 @@
-﻿add_namespace = econvent
+add_namespace = econvent
 add_namespace = extended_econevent
 add_namespace = News_bankruptcy
 add_namespace = diplo_action_tools
@@ -65,10 +65,9 @@ country_event = {
 				}
 				decrease_economic_growth = yes
 			}
-			60 = {
-				# No EFfect
-			}
+			60 = {}
 		}
+
 
 		set_temp_variable = { temp_opinion = -10 }
 		change_wall_street_opinion = yes
@@ -614,7 +613,7 @@ country_event = {
 		change_labour_unions_opinion = yes
 
 		ai_chance = {
-			factor = 0.25
+			base = 0.25
 		}
 	}
 }
@@ -1323,14 +1322,14 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		is_arid_nation = yes
+		has_country_flag = arid_nation_flag
 		NOT = { has_country_flag = drought }
 	}
 
 	mean_time_to_happen = {
 		modifier = {
 			factor = 1.4
-			is_african_nation = yes
+			is_in_array = { global.is_african_nation = THIS.id }
 		}
 		modifier = {
 			factor = 1.2
@@ -1569,7 +1568,11 @@ country_event = {
 		NOT = {
 			has_country_flag = increased_consumer_confidence
 			has_idea = economic_boom
-			has_idea = bankrupcy
+			has_active_mission = debt_default_main_mission
+			#JAP
+			has_idea = JAP_entrenched_demand_shortfall_idea_1
+			has_idea = JAP_entrenched_demand_shortfall_idea_2
+			has_idea = JAP_entrenched_demand_shortfall_idea_3
 		}
 	}
 
@@ -1648,10 +1651,14 @@ country_event = {
 	trigger = {
 		NOT = {
 			has_idea = economic_boom
-			has_idea = bankrupcy
+			has_active_mission = debt_default_main_mission
 			has_country_flag = stock_market_boom_accelerate
 			has_country_flag = stock_market_boom_slowed
 			has_country_flag = stock_market_boom
+			#JAP
+			has_idea = JAP_entrenched_demand_shortfall_idea_1
+			has_idea = JAP_entrenched_demand_shortfall_idea_2
+			has_idea = JAP_entrenched_demand_shortfall_idea_3
 
 			# Communists cannot get stock market boom...
 			has_communist_government_or_in_coalition = yes
@@ -1821,24 +1828,54 @@ country_event = {
 			limit = {
 				influence_higher_10 = yes
 			}
-			random_list = {
-				10 = {
-					modifier = {
-						factor = 5
-						is_subject_of = ROOT
+			if = {
+				limit = { is_subject_of = ROOT }
+				if = {
+					limit = {
+						OR = {
+							is_in_faction_with = ROOT
+							is_neighbor_of = ROOT
+						}
 					}
-					modifier = {
-						factor = 3
-						is_in_faction_with = ROOT
+					random = {
+						chance = 100
+						country_event = { id = econvent.12 random_days = 100 }
 					}
-					modifier = {
-						factor = 2
-						is_neighbor_of = ROOT
+				}
+				else = {
+					random = {
+						chance = 50
+						country_event = { id = econvent.12 random_days = 100 }
 					}
+				}
+			}
+			else_if = {
+				limit = { is_in_faction_with = ROOT }
+				if = {
+					limit = { is_neighbor_of = ROOT }
+					random = {
+						chance = 60
+						country_event = { id = econvent.12 random_days = 100 }
+					}
+				}
+				else = {
+					random = {
+						chance = 30
+						country_event = { id = econvent.12 random_days = 100 }
+					}
+				}
+			}
+			else_if = {
+				limit = { is_neighbor_of = ROOT }
+				random = {
+					chance = 20
 					country_event = { id = econvent.12 random_days = 100 }
 				}
-				90 = {
-
+			}
+			else = {
+				random = {
+					chance = 10
+					country_event = { id = econvent.12 random_days = 100 }
 				}
 			}
 		}
@@ -1892,20 +1929,33 @@ country_event = {
 				add_ideas = depression
 			}
 		}
-		random_list = {
-			10 = {
-				modifier = {
-					factor = 5
-					is_subject_of = ROOT
+		if = {
+			limit = { is_subject_of = ROOT }
+			if = {
+				limit = { is_in_faction_with = ROOT }
+				random = {
+					chance = 100
+					country_event = { id = econvent.12 random_days = 100 }
 				}
-				modifier = {
-					factor = 3
-					is_in_faction_with = ROOT
+			}
+			else = {
+				random = {
+					chance = 50
+					country_event = { id = econvent.12 random_days = 100 }
 				}
+			}
+		}
+		else_if = {
+			limit = { is_in_faction_with = ROOT }
+			random = {
+				chance = 30
 				country_event = { id = econvent.12 random_days = 100 }
 			}
-			90 = {
-
+		}
+		else = {
+			random = {
+				chance = 10
+				country_event = { id = econvent.12 random_days = 100 }
 			}
 		}
 		clr_country_flag = disable_cycle_costs
@@ -2108,7 +2158,7 @@ country_event = {
 	picture = GFX_stock_market
 	is_triggered_only = yes
 	trigger = {
-		NOT = { has_idea = Non_State_Actor }
+		NOT = { has_idea = non_state_actor }
 		NOT = { has_country_flag = private_investor_civilian_industry }
 		any_owned_state = {
 			free_building_slots = {
@@ -2178,28 +2228,7 @@ country_event = {
 
 		# Free Industrial Complex
 		random_owned_controlled_state = {
-			limit = {
-				free_building_slots = {
-					building = industrial_complex
-					size > 0
-					include_locked = yes
-				}
-				OR = {
-					is_in_home_area = yes
-					NOT = {
-						owner = {
-							any_owned_state = {
-								free_building_slots = {
-									building = industrial_complex
-									size > 0
-									include_locked = yes
-								}
-								is_in_home_area = yes
-							}
-						}
-					}
-				}
-			}
+			limit = { free_shared_building_slots = yes }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = industrial_complex
@@ -2220,7 +2249,7 @@ country_event = {
 	picture = GFX_stock_market
 	is_triggered_only = yes
 	trigger = {
-		NOT = { has_idea = Non_State_Actor }
+		NOT = { has_idea = non_state_actor }
 		NOT = { has_country_flag = private_investor_office_park }
 		any_owned_state = {
 			free_building_slots = {
@@ -2262,7 +2291,7 @@ country_event = {
 			has_idea = economic_boom
 		}
 		modifier = {
-			factor = 2.
+			factor = 2.0
 			has_idea = fast_growth
 		}
 		modifier = {
@@ -2293,28 +2322,7 @@ country_event = {
 
 		# Free Industrial Complex
 		random_owned_controlled_state = {
-			limit = {
-				free_building_slots = {
-					building = offices
-					size > 0
-					include_locked = yes
-				}
-				OR = {
-					is_in_home_area = yes
-					NOT = {
-						owner = {
-							any_owned_state = {
-								free_building_slots = {
-									building = offices
-									size > 0
-									include_locked = yes
-								}
-								is_in_home_area = yes
-							}
-						}
-					}
-				}
-			}
+			limit = { free_shared_building_slots = yes }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = offices
@@ -2401,6 +2409,9 @@ country_event = {
 		custom_effect_tooltip = bankruptcy_bailout_influence_TT
 		FROM = { news_event = { id = News_bankruptcy.1 hours = 3 } }
 
+		set_temp_variable = { treasury_quarter = treasury }
+		multiply_temp_variable = { treasury_quarter = 0.25 }
+
 		ai_chance = {
 			base = 90
 			modifier = {
@@ -2431,7 +2442,7 @@ country_event = {
 			modifier = {
 				factor = 1.05
 				FROM = {
-					PREV_is_on_same_continent = yes
+					is_on_same_continent_as = PREV
 				}
 			}
 			modifier = {
@@ -2467,6 +2478,28 @@ country_event = {
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 15 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { our_cost > gdp_total }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 0 }
+				check_variable = { interest_rate > 8 }
+			}
+			modifier = {
+				factor = 0.25
+				check_variable = { treasury < 0 }
+				check_variable = { interest_rate < 8 }
+			}
+			modifier = {
+				factor = 0.15
+				check_variable = { potential_expense > potential_income }
+			}
+			modifier = {
+				factor = 0.1
+				check_variable = { our_cost > treasury_quarter }
 			}
 		}
 	}
@@ -2552,6 +2585,9 @@ country_event = {
 		custom_effect_tooltip = bankruptcy_bailout_influence_second_biggest_TT
 		FROM = { news_event = { id = News_bankruptcy.2 hours = 3 } }
 
+		set_temp_variable = { treasury_quarter = treasury }
+		multiply_temp_variable = { treasury_quarter = 0.25 }
+
 		ai_chance = {
 			base = 90
 			modifier = {
@@ -2571,6 +2607,28 @@ country_event = {
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 15 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 0 }
+				check_variable = { interest_rate > 8 }
+			}
+			modifier = {
+				factor = 0.25
+				check_variable = { treasury < 0 }
+				check_variable = { interest_rate < 8 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { our_cost > gdp_total }
+			}
+			modifier = {
+				factor = 0.15
+				check_variable = { potential_expense > potential_income }
+			}
+			modifier = {
+				factor = 0.1
+				check_variable = { our_cost > treasury_quarter }
 			}
 		}
 	}
@@ -2613,8 +2671,12 @@ country_event = {
 		custom_effect_tooltip = bankruptcy_bailout_sum_TT
 		custom_effect_tooltip = bankruptcy_bailout_influence_neighbour_TT
 		FROM = { news_event = { id = News_bankruptcy.3 hours = 3 } }
+
+		set_temp_variable = { treasury_quarter = treasury }
+		multiply_temp_variable = { treasury_quarter = 0.25 }
+
 		ai_chance = {
-			factor = 90
+			base = 90
 			modifier = {
 				factor = 0.25
 				FROM = { original_tag = GRE }
@@ -2633,6 +2695,28 @@ country_event = {
 				factor = 0
 				check_variable = { interest_rate > 15 }
 			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 0 }
+				check_variable = { interest_rate > 8 }
+			}
+			modifier = {
+				factor = 0.25
+				check_variable = { treasury < 0 }
+				check_variable = { interest_rate < 8 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { our_cost > gdp_total }
+			}
+			modifier = {
+				factor = 0.15
+				check_variable = { potential_expense > potential_income }
+			}
+			modifier = {
+				factor = 0.1
+				check_variable = { our_cost > treasury_quarter }
+			}
 		}
 	}
 	#We have no help to offer
@@ -2641,7 +2725,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: bankruptcy.3.b executed"
 		FROM = { country_event = { id = bankruptcy.4 hours = 3 } }
 		ai_chance = {
-			factor = 10
+			base = 10
 			modifier = {
 				factor = 2.5
 				check_variable = { interest_rate > 5 }
@@ -2698,8 +2782,12 @@ country_event = {
 			}
 		}
 		FROM = { news_event = { id = News_bankruptcy.3 hours = 3 } }
+
+		set_temp_variable = { treasury_quarter = treasury }
+		multiply_temp_variable = { treasury_quarter = 0.25 }
+
 		ai_chance = {
-			factor = 90
+			base = 90
 			modifier = {
 				factor = 0.8
 				check_variable = { interest_rate > 5 }
@@ -2713,15 +2801,37 @@ country_event = {
 				factor = 0
 				check_variable = { interest_rate > 15 }
 			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 0 }
+				check_variable = { interest_rate > 8 }
+			}
+			modifier = {
+				factor = 0.25
+				check_variable = { treasury < 0 }
+				check_variable = { interest_rate < 8 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { our_cost > gdp_total }
+			}
+			modifier = {
+				factor = 0.15
+				check_variable = { potential_expense > potential_income }
+			}
+			modifier = {
+				factor = 0.1
+				check_variable = { our_cost > treasury_quarter }
+			}
 		}
 	}
 	#We have no help to offer
 	option = {
-		name = bankruptcy.3.b
+		name = bankruptcy.5.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.5.b executed"
 		FROM = { country_event = { id = bankruptcy.4 hours = 3 } }
 		ai_chance = {
-			factor = 10
+			base = 10
 			modifier = {
 				factor = 2.5
 				check_variable = { interest_rate > 5 }
@@ -2763,21 +2873,13 @@ country_event = {
 			every_country = {
 				limit = {
 					is_ai = no
-					OR = {
-						AND = { ROOT = { is_North_America = yes } is_North_America = yes }
-						AND = { ROOT = { is_South_America = yes } is_South_America = yes }
-						AND = { ROOT = { is_middle_eastern_nation = yes } is_middle_eastern_nation = yes }
-						AND = { ROOT = { is_african_nation = yes } is_african_nation = yes }
-						AND = { ROOT = { is_european_nation = yes } is_european_nation = yes }
-						AND = { ROOT = { is_asian_nation = yes } is_asian_nation = yes }
-						AND = { ROOT = { is_oceania_nation = yes } is_oceania_nation = yes }
-					}
+					election_notification_scripted_trigger = yes
 				}
 				news_event = { days = 1 id = News_bankruptcy.4 }
 			}
 		}
 		ai_chance = {
-			factor = 95
+			base = 95
 		}
 	}
 	#Block new elections
@@ -2869,15 +2971,7 @@ country_event = {
 			every_country = {
 				limit = {
 					is_ai = no
-					OR = {
-						AND = { ROOT = { is_North_America = yes } is_North_America = yes }
-						AND = { ROOT = { is_South_America = yes } is_South_America = yes }
-						AND = { ROOT = { is_middle_eastern_nation = yes } is_middle_eastern_nation = yes }
-						AND = { ROOT = { is_african_nation = yes } is_african_nation = yes }
-						AND = { ROOT = { is_european_nation = yes } is_european_nation = yes }
-						AND = { ROOT = { is_asian_nation = yes } is_asian_nation = yes }
-						AND = { ROOT = { is_oceania_nation = yes } is_oceania_nation = yes }
-					}
+					election_notification_scripted_trigger = yes
 				}
 				news_event = { days = 1 id = News_bankruptcy.5 }
 			}
@@ -2913,12 +3007,14 @@ country_event = {
 			FROM = {
 				NOT = {
 					OR = {
-						has_idea = Non_State_Actor
+						has_idea = non_state_actor
 						is_in_array = { global.Unrecognised_States = THIS }
 					}
 				}
 			}
 		}
+		set_temp_variable = { wargoal_on = FROM }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = { type = puppet_wargoal_focus target = FROM }
 		ai_chance = {
 			base = 40
@@ -2988,7 +3084,7 @@ country_event = {
 						NOT = { is_neighbor_of = FROM }
 					}
 					#Dont attack stupid AI. This is disable
-					has_global_flag = GAME_RULE_rule_disable_ai_debt_war
+					has_game_rule = { rule = rule_enable_ai_debt_war option = yes }
 				}
 			}
 			modifier = { # To prevent countries from suiciding because of Fuckestan not having money
@@ -5157,7 +5253,6 @@ news_event = {
 		clear_variable = debt_bailout
 		set_temp_variable = { percent_change = 15 }
 		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
 		ingame_update_setup = yes
 	}
@@ -5181,7 +5276,6 @@ news_event = {
 		clear_variable = debt_bailout
 		set_temp_variable = { percent_change = 10 }
 		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
 		ingame_update_setup = yes
 		add_opinion_modifier = { target = FROM modifier = granted_bailout }
@@ -5205,7 +5299,6 @@ news_event = {
 		clear_variable = debt_bailout
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
 		ingame_update_setup = yes
 

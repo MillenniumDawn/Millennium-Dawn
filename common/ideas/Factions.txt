@@ -8,10 +8,12 @@ ideas = {
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: add idea NATO_member"
 				add_to_array = { global.nato_members = THIS }
+				update_nato_dirty_variable = yes
 			}
 			on_remove = {
 				log = "[GetDateText]: [Root.GetName]: remove idea NATO_member"
 				remove_from_array = { global.nato_members = THIS }
+				update_nato_dirty_variable = yes
 			}
 
 			cancel = {
@@ -66,12 +68,12 @@ ideas = {
 
 			cancel = {
 				OR = {
-					is_in_faction = no
-					NOT = {
-						is_in_faction_with = SOV
-					}
-					SOV = {
-						is_subject = yes
+					# CSTO dissolves if its patron is subjugated
+					SOV = { is_subject = yes }
+					# Drop the spirit once the holder is neither in Russia's faction nor its subject
+					AND = {
+						NOT = { is_in_faction_with = SOV }
+						NOT = { is_subject_of = SOV }
 					}
 				}
 			}
@@ -79,6 +81,22 @@ ideas = {
 			modifier = {
 				custom_modifier_tooltip = CSTO_member_tooltip
 			}
+		}
+
+		#UNASUL Joint Defense Mechanism
+		UNASUL_member = {
+			picture = unasur_member
+			allowed_civil_war = { always = yes }
+			on_remove = { log = "[GetDateText]: [Root.GetName]: remove idea UNASUL_member" }
+
+			cancel = {
+				OR = {
+					is_in_faction = no
+					NOT = { has_faction_template = faction_template_unasul }
+				}
+			}
+
+			modifier = { custom_modifier_tooltip = UNASUL_member_tooltip }
 		}
 
 		#GCC Member
@@ -108,6 +126,47 @@ ideas = {
 				local_resources_chromium_factor = 0.10
 				ai_get_ally_desire_factor = -1000
 				custom_modifier_tooltip = idea_gcc_member_state_TT
+			}
+		}
+
+		#British Commonwealth Alliance
+		faction_Commonwealth_of_Nations = {
+			picture = faction_british_commonwealth
+
+			allowed = {
+				is_commonwealth_member = yes
+			}
+
+			modifier = {
+				custom_modifier_tooltip = faction_Commonwealth_of_Nations_TT
+			}
+		}
+
+		#Monroe Alliance
+		faction_monroe_alliance = {
+
+			picture = faction_monroe_alliance
+
+			allowed = {
+				original_tag = USA
+			}
+
+			modifier = {
+				custom_modifier_tooltip = faction_monroe_alliance_TT
+			}
+		}
+
+		#Chinese United Front
+		faction_chinese_united_front = {
+
+			picture = faction_chinese_united_front
+
+			allowed = {
+				original_tag = CHI
+			}
+
+			modifier = {
+				custom_modifier_tooltip = faction_chinese_united_front_TT
 			}
 		}
 
@@ -217,6 +276,18 @@ ideas = {
 			}
 		}
 
+		# ASO Member
+		faction_aso_alliance = {
+			picture = ASO_faction
+			cancel = {
+				is_in_faction = no
+			}
+
+			modifier = {
+				custom_modifier_tooltip = faction_aso_TT
+			}
+		}
+
 		#SEATO Member
 		faction_seato_alliance = {
 			picture = morale_bonus
@@ -316,6 +387,40 @@ ideas = {
 				custom_modifier_tooltip = muslim_brotherhood_faction_member_tt2
 				education_cost_multiplier_modifier = -0.05
 				social_cost_multiplier_modifier = -0.05
+			}
+		}
+
+		# Warsaw Pact Idea
+		faction_warsaw_pact_idea = {
+			picture = warsaw_pact_idea
+			on_add = {
+				add_to_array = { global.WARSAW_PACT_member = THIS.id }
+			}
+			on_remove = {
+				if = {
+					limit = { is_in_array = { global.WARSAW_PACT_member = THIS.id } }
+					remove_from_array = { global.WARSAW_PACT_member = THIS.id }
+				}
+			}
+			cancel = {
+				NOT = { has_autonomy_state = autonomy_warsaw }
+				SOV = {
+					NOT = {
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+					}
+				}
+			}
+			modifier = {
+				custom_modifier_tooltip = faction_warsaw_pact_member_tt
+				send_volunteer_size = 5
+				send_volunteer_divisions_required = -0.25
+				send_volunteers_tension = -0.15
+				air_volunteer_cap = 25
+				coordination_bonus = 0.08
+				army_org_factor = 0.10
+				communism_drift = 0.02
 			}
 		}
 	}

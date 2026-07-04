@@ -1,0 +1,444 @@
+#category = short_term medium_term or long_term
+
+### Joint Military Exercises
+
+faction_goal_joint_military_exercises = {
+	name = joint_military_exercises_goal_name
+	description = joint_military_exercises_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_ARMY_XP
+	visible = {
+		has_faction_research_unlocked = yes
+	}
+	completed = {
+		num_faction_members > 5
+		count_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			unit = infantry
+			equipment_ratio = 0.8
+			size > 99
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			army_experience = 75
+			add_tech_bonus = {
+				name = joint_exercises_tech_bonus
+				bonus = 0.5
+				uses = 1
+				category = CAT_land_doctrine
+			}
+		}
+	}
+	ai_will_do = {
+		base = 2
+		modifier = {
+			add = 3
+			has_war = yes
+		}
+	}
+}
+
+### Economic Integration
+
+faction_goal_economic_integration = {
+	name = economic_integration_goal_name
+	description = economic_integration_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_INDUSTRY
+	visible = {
+		has_faction_research_unlocked = yes
+	}
+	completed = {
+		num_faction_members > 5
+		all_allied_country = {
+			num_of_civilian_factories > 14
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 150
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_timed_idea = {
+				idea = faction_economic_integration_idea
+				years = 3
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 2
+			has_war = no
+		}
+	}
+}
+
+### Technology Sharing Program
+
+faction_goal_technology_sharing = {
+	name = technology_sharing_goal_name
+	description = technology_sharing_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_RESEARCH
+	visible = {
+		has_faction_research_unlocked = yes
+	}
+	completed = {
+		num_faction_members > 5
+		count_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			buildings = { internet_station }
+			size > 49
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 150
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_tech_bonus = {
+				name = tech_sharing_bonus
+				bonus = 0.5
+				uses = 2
+				category = CAT_computing_tech
+			}
+		}
+	}
+	ai_will_do = {
+		base = 2
+	}
+}
+
+### Regional Stability Initiative
+
+faction_goal_regional_stability = {
+	name = regional_stability_goal_name
+	description = regional_stability_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	visible = {
+		has_faction_research_unlocked = yes
+	}
+	completed = {
+		num_faction_members > 5
+		all_allied_country = {
+			has_stability > 0.49
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 150
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_political_power = 100
+			add_stability = 0.05
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 2
+			has_stability > 0.6
+		}
+	}
+}
+
+### Counter-Terrorism Cooperation
+
+faction_goal_counter_terrorism = {
+	name = counter_terrorism_goal_name
+	description = counter_terrorism_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	allowed = {
+		has_dlc = "La Resistance"
+	}
+	visible = {
+		has_dlc = "La Resistance"
+		any_allied_country = {
+			has_intelligence_agency = no
+		}
+	}
+	completed = {
+		num_faction_members > 3
+		all_allied_country = {
+			has_intelligence_agency = yes
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 150
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			limit = {
+				has_intelligence_agency = yes
+				NOT = { has_done_agency_upgrade = upgrade_anti_partisan }
+			}
+			upgrade_intelligence_agency = upgrade_anti_partisan
+		}
+		every_faction_member = {
+			limit = {
+				has_intelligence_agency = yes
+				NOT = { has_done_agency_upgrade = upgrade_passive_defense }
+			}
+			upgrade_intelligence_agency = upgrade_passive_defense
+		}
+	}
+	ai_will_do = {
+		base = 2
+	}
+}
+
+### Semiconductor Supremacy
+
+faction_goal_semiconductor_supremacy = {
+	name = semiconductor_supremacy_goal_name
+	description = semiconductor_supremacy_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_RESEARCH
+	visible = {
+		count_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION_NAME
+			}
+			buildings = { microchip_plant }
+			size > 0
+		}
+	}
+	completed = {
+		num_faction_members > 3
+		count_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION_NAME
+			}
+			buildings = { microchip_plant }
+			size > 49
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 500
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 2
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_tech_bonus = {
+				name = semiconductor_supremacy_tech_bonus
+				bonus = 0.75
+				uses = 2
+				category = CAT_microchips
+			}
+			add_tech_bonus = {
+				name = semiconductor_supremacy_computing_bonus
+				bonus = 0.5
+				uses = 2
+				category = CAT_computing_tech
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 5
+			check_variable = { microchip_plant_total > 9 }
+		}
+	}
+}
+
+### Strategic Resource Security
+
+faction_goal_strategic_resource_security = {
+	name = strategic_resource_security_goal_name
+	description = strategic_resource_security_goal_desc
+	category = long_term
+	group = resources_to_market_icon
+	visible = {
+		has_resources_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			resource = oil
+			amount < 300
+			extracted = yes
+		}
+	}
+	available = {
+		has_resources_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			resource = oil
+			amount < 300
+			extracted = yes
+		}
+	}
+	completed = {
+		num_faction_members > 3
+		has_resources_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			resource = oil
+			amount > 299
+			extracted = yes
+		}
+		has_resources_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			resource = rubber
+			amount > 149
+			extracted = yes
+		}
+		has_resources_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			resource = aluminium
+			amount > 149
+			extracted = yes
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 400
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 2
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_tech_bonus = {
+				name = resource_security_tech_bonus
+				bonus = 0.5
+				uses = 1
+				category = CAT_excavation_tech
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+### Collective Cyber Defense
+
+faction_goal_collective_cyber_defense = {
+	name = collective_cyber_defense_goal_name
+	description = collective_cyber_defense_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_RESEARCH
+	allowed = {
+		has_dlc = "La Resistance"
+	}
+	visible = {
+		has_dlc = "La Resistance"
+	}
+	completed = {
+		num_faction_members > 5
+		all_allied_country = {
+			has_intelligence_agency = yes
+			has_done_agency_upgrade = upgrade_crypto_strength
+			has_done_agency_upgrade = upgrade_crypto_strength_2
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 400
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			limit = {
+				has_intelligence_agency = yes
+				NOT = { has_done_agency_upgrade = upgrade_decryption_boost }
+			}
+			upgrade_intelligence_agency = upgrade_decryption_boost
+		}
+		every_faction_member = {
+			add_stability = 0.03
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 3
+			has_done_agency_upgrade = upgrade_crypto_strength_2
+		}
+	}
+}
+
+### Economic Powerhouse
+
+faction_goal_economic_powerhouse = {
+	name = economic_powerhouse_goal_name
+	description = economic_powerhouse_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_INDUSTRY
+	visible = {
+		has_faction_research_unlocked = yes
+	}
+	completed = {
+		num_faction_members > 5
+		custom_override_tooltip = {
+			tooltip = faction_gdp_per_capita_target_tt
+			check_variable = { gdp_per_capita > 14.999 }
+			all_allied_country = {
+				check_variable = { gdp_per_capita > 4.999 }
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 500
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 2
+		newline = yes
+		every_faction_member = {
+			tooltip = INFLUENCE_TOP_THREE
+			visible_when_empty = yes
+			limit = {
+				faction_influence_rank < 4
+			}
+			add_political_power = 150
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 3
+			check_variable = { gdp_per_capita > 19.999 }
+		}
+	}
+}

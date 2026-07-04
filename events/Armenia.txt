@@ -82,7 +82,6 @@ country_event = {
 			}
 			add_to_variable = { party_pop_array^4 = 0.05 }
 			recalculate_party = yes
-			custom_effect_tooltip = FRA_communist_rise_5_TT
 		}
 	}
 	option = {
@@ -511,8 +510,22 @@ country_event = {
 	option = {
 		name = arme.14.a
 		log = "[GetDateText]: [This.GetName]: arme.14.a executed"
-		set_country_flag = USR_armenia_create_union_state
-		add_ideas = USR_union_state_idea
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		ARM_unionstate_integration_effect = yes
+	}
+	option = {
+		name = arme.14.b
+		log = "[GetDateText]: [This.GetName]: arme.14.b executed"
+		ai_chance = {
+			base = 10
+		}
+		ARM = { country_event = union_state.15 }
 	}
 }
 
@@ -583,13 +596,6 @@ country_event = {
 		add_political_power = 50
 		add_command_power = 10
 		army_experience = 5
-		if = {
-			limit = {
-				has_idea = sunni
-			}
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
-		}
 		if = {
 			limit = {
 				NOT = {
@@ -853,6 +859,7 @@ country_event = {
 		set_temp_variable = { percent_change = -3 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = ARM }
+		change_influence_percentage = yes
 		ai_chance = {
 			base = 10
 			modifier = { # very high influence ensures acceptance
@@ -1695,13 +1702,13 @@ country_event = {
 		name = arme.40.a
 		log = "[GetDateText]: [This.GetName]: arme.40.a executed"
 		add_equipment_to_stockpile = {
-			type = infantry_weapons3
+			type = infantry_weapons_4
 			amount = -6000
 			producer = SOV
 		}
 		ARM = {
 			add_equipment_to_stockpile = {
-				type = infantry_weapons3
+				type = infantry_weapons_4
 				amount = 6000
 				producer = SOV
 			}
@@ -1769,7 +1776,6 @@ country_event = {
 		hidden_effect = {
 			create_dynamic_country = {
 				original_tag = ARM
-				set_country_flag = djavakhk_dynamic
 				copy_tag = ARM
 				set_state_owner = 1033
 				country_event = arme.42
@@ -1815,7 +1821,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.41.b executed"
 		ARM = {
 			country_event = arme.44
-			set_country_flag = djavakhq_pizdec
 			uncomplete_national_focus = {
 				focus = ARM_protect_minority_rights
 				uncomplete_children = yes
@@ -1882,11 +1887,8 @@ country_event = {
 			}
 		}
 		set_temp_variable = { rul_party_temp = 14 }
+		set_temp_variable = { disable_elections = 1 }
 		change_ruling_party_effect = yes
-		set_politics = {
-			ruling_party = neutrality
-			elections_allowed = no
-		}
 		set_temp_variable = { party_index = 14 }
 		set_temp_variable = { party_popularity_increase = 0.50 }
 		set_temp_variable = { temp_outlook_increase = 0.50 }
@@ -2578,12 +2580,12 @@ country_event = {
 		set_temp_variable = { treasury_change = 15 }
 		modify_treasury_effect = yes
 		add_equipment_to_stockpile = {
-			type = command_control_equipment2
+			type = cnc_equipment_3
 			amount = -2000
 			producer = POL
 		}
 		add_equipment_to_stockpile = {
-			type = infantry_weapons
+			type = infantry_weapons_1
 			amount = -4500
 			producer = POL
 		}
@@ -2670,12 +2672,12 @@ country_event = {
 		set_temp_variable = { treasury_change = -15 }
 		modify_treasury_effect = yes
 		add_equipment_to_stockpile = {
-			type = command_control_equipment2
+			type = cnc_equipment_3
 			amount = 2000
 			producer = POL
 		}
 		add_equipment_to_stockpile = {
-			type = infantry_weapons
+			type = infantry_weapons_1
 			amount = 4500
 			producer = POL
 		}
@@ -2954,7 +2956,6 @@ country_event = {
 	}
 }
 
-
 #Legacy of Grunwald
 country_event = {
 	id = arme.66
@@ -3108,7 +3109,6 @@ country_event = {
 		change_influence_percentage = yes
 	}
 }
-
 
 #Greece Military Cooperation
 country_event = {
@@ -3787,7 +3787,6 @@ country_event = {
 	}
 }
 
-
 #Anti Turkish - Disagree
 country_event = {
 	id = arme.85
@@ -3919,12 +3918,12 @@ country_event = {
 		eurosceptic_change = yes
 		add_opinion_modifier = { modifier = recent_actions_positive target = GRE }
 		reverse_add_opinion_modifier = { modifier = recent_actions_positive target = GRE }
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-				NOT = { tag = GRE }
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			if = { limit = { NOT = { tag = GRE } }
+				add_opinion_modifier = { target = ARM modifier = supports_us }
 			}
-			add_opinion_modifier = { target = ARM modifier = supports_us }
 		}
 	}
 }
@@ -4108,6 +4107,7 @@ country_event = {
 		newline = yes
 		1035 = {
 			set_temp_variable = { electric_addition = 1.53 }
+			set_temp_variable = { storage_addition = 0.30 }
 			add_hydroelectric_energy_production_effect = yes
 		}
 	}
@@ -4150,7 +4150,7 @@ country_event = {
 		set_temp_variable = { treasury_change = -20 }
 		modify_treasury_effect = yes
 		add_equipment_to_stockpile = {
-			type = infantry_weapons3
+			type = infantry_weapons_4
 			amount = 6000
 			producer = SOV
 		}
@@ -4257,7 +4257,7 @@ country_event = {
 		set_temp_variable = { treasury_change = 20 }
 		modify_treasury_effect = yes
 		add_equipment_to_stockpile = {
-			type = infantry_weapons3
+			type = infantry_weapons_4
 			amount = -6000
 			producer = SOV
 		}
@@ -4619,14 +4619,8 @@ country_event = {
 				type = annex_everything
 			}
 		}
-		add_opinion_modifier = {
-			modifier = recent_actions_negative
-			target = ARM
-		}
-		reverse_add_opinion_modifier = {
-			modifier = recent_actions_negative
-			target = ARM
-		}
+		add_opinion_modifier = { modifier = recent_actions_negative target = ARM }
+		reverse_add_opinion_modifier = { modifier = recent_actions_negative target = ARM }
 	}
 }
 
@@ -4695,7 +4689,6 @@ country_event = {
 		}
 	}
 }
-
 
 #Trade Agreements with France
 country_event = {
@@ -4823,7 +4816,6 @@ country_event = {
 		reverse_add_opinion_modifier = { target = FRA modifier = recent_actions_negative }
 	}
 }
-
 
 #Education Agreements with France
 country_event = {
@@ -5181,7 +5173,13 @@ country_event = {
 	option = {
 		name = arme.116.a
 		log = "[GetDateText]: [This.GetName]: arme.116.a executed"
-		add_ideas = cfa_franc
+		if = {
+			limit = { FRA = { has_completed_focus = FRA_introduce_the_eco } }
+			add_ideas = the_eco
+		}
+		else = {
+			add_ideas = cfa_franc
+		}
 		add_opinion_modifier = { target = FRA modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = FRA modifier = recent_actions_positive }
 	}
@@ -5202,7 +5200,6 @@ country_event = {
 		reverse_add_opinion_modifier = { target = FRA modifier = recent_actions_negative }
 	}
 }
-
 
 #Join to Partnership Command State USA
 country_event = {
@@ -5569,7 +5566,7 @@ country_event = {
 	option = {
 		name = arme.125.a
 		log = "[GetDateText]: [This.GetName]: arme.125.a executed"
-		add_ideas = Major_Non_NATO_Ally
+		NATO_major_non_nato_ally_join = yes
 		add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 	}
@@ -5847,7 +5844,6 @@ country_event = {
 	}
 }
 
-
 #Anca Lobbing
 country_event = {
 	id = arme.133
@@ -6028,7 +6024,6 @@ country_event = {
 	}
 }
 
-
 #
 country_event = {
 	id = arme.138
@@ -6133,10 +6128,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.138.a executed"
 		add_ideas = ARM_eu_coop_agreement
 		ARM_eu_ger_fra_check_script = yes
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = ARM modifier = recent_actions_positive }
 		}
 		ai_chance = {
@@ -6265,10 +6259,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.141.a executed"
 		ARM_eu_cooperation_script = yes
 		ARM_eu_ger_fra_check_script = yes
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = ARM modifier = recent_actions_positive }
 		}
 		ai_chance = {
@@ -6331,7 +6324,6 @@ country_event = {
 		reverse_add_opinion_modifier = { target = USA modifier = drama }
 	}
 }
-
 
 #Belarus Trade Center
 country_event = {
@@ -6591,7 +6583,6 @@ country_event = {
 	}
 }
 
-
 #Armyane Leave Sirya
 country_event = {
 	id = arme.152
@@ -6670,7 +6661,6 @@ country_event = {
 		change_influence_percentage = yes
 	}
 }
-
 
 #Help Siryans with Mines
 country_event = {
@@ -6801,8 +6791,6 @@ country_event = {
 	}
 }
 
-
-
 country_event = {
 	id = arme.159
 	title = arme.159.t
@@ -6815,10 +6803,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.159.a executed"
 		add_ideas = ARM_eu_lgbt
 		ARM_eu_ger_fra_check_script = yes
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = ARM modifier = recent_actions_positive }
 		}
 		ai_chance = {
@@ -7309,15 +7296,18 @@ country_event = {
 				owner = ROJ
 			}
 		}
-		create_corps_commander = {
-			name = "Nubar Ozanyan"
-			picture = "gfx/leaders/ARM/nubar_ozanyan.dds"
-			traits = { politically_connected guerrilla_officer }
-			skill = 4
-			attack_skill = 4
-			defense_skill = 1
-			planning_skill = 4
-			logistics_skill = 2
+		set_country_flag = ROJ_unlock_nubar_ozanyan
+		effect_tooltip = {
+			create_corps_commander = {
+				name = "Nubar Ozanyan"
+				portrait_path = "gfx/leaders/ARM/nubar_ozanyan.dds"
+				traits = { politically_connected guerrilla_officer }
+				skill = 4
+				attack_skill = 4
+				defense_skill = 1
+				planning_skill = 4
+				logistics_skill = 2
+			}
 		}
 		effect_tooltip = {
 			add_opinion_modifier = {
@@ -7611,7 +7601,10 @@ country_event = {
 			idea = ARM_armenian_turkish_cooperation_idea
 			days = 2000
 		}
-		break_embargo = ARM
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			break_embargo = ARM
+		}
 		add_opinion_modifier = {
 			modifier = recent_actions_positive
 			target = ARM
@@ -7653,7 +7646,10 @@ country_event = {
 			idea = ARM_armenian_turkish_cooperation_idea
 			days = 2000
 		}
-		break_embargo = ARM
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			break_embargo = ARM
+		}
 		add_political_power = 150
 		add_war_support = -0.1
 		set_party_index_to_ruling_party = yes
@@ -7984,7 +7980,6 @@ country_event = {
 	}
 }
 
-
 #########HISTORICAL EVENTS
 #Opposition tries to impeach Kocharyan
 country_event = {
@@ -8078,7 +8073,10 @@ country_event = {
 			modifier = drama
 			target = HUN
 		}
-		send_embargo = HUN
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = HUN
+		}
 		add_opinion_modifier = {
 			modifier = recent_actions_negative
 			target = AZE
@@ -8103,10 +8101,9 @@ country_event = {
 		add_political_power = 100
 		set_temp_variable = { treasury_change = -4 }
 		modify_treasury_effect = yes
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = AZE modifier = recent_actions_negative }
 		}
 		HUN = {
@@ -8130,18 +8127,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.195.a executed"
 		set_temp_variable = { treasury_change = 4 }
 		modify_treasury_effect = yes
-		add_opinion_modifier = {
-			modifier = recent_actions_positive
-			target = AZE
-		}
-		reverse_add_opinion_modifier = {
-			modifier = recent_actions_positive
-			target = AZE
-		}
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		add_opinion_modifier = { modifier = recent_actions_positive target = AZE }
+		reverse_add_opinion_modifier = { modifier = recent_actions_positive target = AZE }
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = HUN modifier = recent_actions_negative }
 		}
 	}
@@ -8235,14 +8225,11 @@ country_event = {
 		hidden_effect = {
 			country_event = { id = arme.200 days = 35 }
 		}
-		trigger = {
-			emerging_reactionaries_are_in_power = yes
-			has_country_flag = oppos_killed
-		}
 		ai_chance = {
 			base = 1
 		}
 	}
+
 	option = {
 		name = arme.199.b
 		log = "[GetDateText]: [This.GetName]: arme.199.b executed"
@@ -8255,10 +8242,6 @@ country_event = {
 		}
 		add_relative_party_popularity = yes
 		hold_election = ARM
-		trigger = {
-			emerging_reactionaries_are_in_power = yes
-			has_country_flag = oppos_lived
-		}
 		ai_chance = {
 			base = 1
 		}
@@ -8908,8 +8891,22 @@ country_event = {
 	option = {
 		name = arme.222.a
 		log = "[GetDateText]: [This.GetName]: arme.222.a executed"
-		set_country_flag = USR_armenia_create_union_state
-		add_ideas = USR_union_state_idea
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				has_government = communism
+			}
+		}
+		ARM_unionstate_integration_effect = yes
+	}
+	option = {
+		name = arme.222.b
+		log = "[GetDateText]: [This.GetName]: arme.222.b executed"
+		ai_chance = {
+			base = 10
+		}
+		ARM = { country_event = union_state.15 }
 	}
 }
 
@@ -10002,8 +9999,7 @@ country_event = {
 		ARM = {
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
-		}
-		ARM = {
+
 			puppet = SOO
 		}
 		SOO = {
@@ -10154,8 +10150,7 @@ country_event = {
 		ARM = {
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
-		}
-		ARM = {
+
 			puppet = SOO
 		}
 		SOO = {
@@ -10225,8 +10220,7 @@ country_event = {
 		ARM = {
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
-		}
-		ARM = {
+
 			puppet = SOO
 		}
 		SOO = {
@@ -10462,6 +10456,8 @@ country_event = {
 	option = {
 		name = arm_empire.16.a
 		log = "[GetDateText]: [This.GetName]: arm_empire.16.a executed"
+		set_temp_variable = { wargoal_on = ITA }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = ITA
 			type = puppet_wargoal_focus
@@ -10560,7 +10556,7 @@ country_event = {
 				puppet = CHE
 			}
 			CHE = {
-				set_country_flag = SUB_subject_rebeliion_flag
+				set_country_flag = SUB_subject_rebellion_flag
 				ARM_chechen_battalions_script = yes
 				set_politics = {
 					ruling_party = nationalist
@@ -10598,7 +10594,7 @@ country_event = {
 				puppet = CHE
 			}
 			CHE = {
-				set_country_flag = SUB_subject_rebeliion_flag
+				set_country_flag = SUB_subject_rebellion_flag
 				ARM_chechen_battalions_script = yes
 				set_politics = {
 					ruling_party = nationalist
@@ -10697,6 +10693,8 @@ country_event = {
 	option = {
 		name = arm_empire.23.a
 		log = "[GetDateText]: [This.GetName]: arm_empire.23.a executed"
+		set_temp_variable = { wargoal_on = CHE }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = CHE
 			type = puppet_wargoal_focus
@@ -10961,17 +10959,10 @@ country_event = {
 			set_temp_variable = { party_popularity_increase = 0.25 }
 			set_temp_variable = { temp_outlook_increase = 0.25 }
 			add_relative_party_popularity = yes
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 22 }
-			update_government_coalition_strength = yes
-			update_party_name = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = nationalist
-			}
+			set_temp_variable = { rul_party_temp = 22 }
+			change_ruling_party_effect = yes
+			clr_country_flag = SOV_did_not_allow_duma_to_speak
+			mark_focus_tree_layout_dirty = yes
 			complete_national_focus = SOV_kob_party_start
 		}
 		custom_effect_tooltip = jreci_kick
@@ -11063,7 +11054,6 @@ news_event = {
 
 	option = {
 		name = arm_empire_news.1.a
-		log = "[GetDateText]: [This.GetName]: arm_empire_news.1.a executed"
 	}
 }
 #Italish Civil War - World Event
@@ -11079,7 +11069,6 @@ news_event = {
 
 	option = {
 		name = arm_empire_news.2.a
-		log = "[GetDateText]: [This.GetName]: arm_empire_news.2.a executed"
 	}
 }
 
@@ -11096,7 +11085,6 @@ news_event = {
 
 	option = {
 		name = arm_empire_news.3.a
-		log = "[GetDateText]: [This.GetName]: arm_empire_news.3.a executed"
 	}
 }
 
@@ -11113,7 +11101,6 @@ news_event = {
 
 	option = {
 		name = arm_empire_news.4.a
-		log = "[GetDateText]: [This.GetName]: arm_empire_news.4.a executed"
 	}
 }
 
@@ -11466,13 +11453,11 @@ country_event = {
 		set_country_flag = peace_accepted_ura
 		if = {
 			limit = {
-				AND = {
-					SYR = {
-						has_country_flag = peace_accepted_ura
-					}
-					ISR = {
-						has_country_flag = peace_accepted_ura
-					}
+				SYR = {
+					has_country_flag = peace_accepted_ura
+				}
+				ISR = {
+					has_country_flag = peace_accepted_ura
 				}
 			}
 			ISR = {
@@ -12067,7 +12052,7 @@ country_event = {
 			create_production_license = {
 				target = ARM
 				equipment = {
-					type = infantry_weapons3
+					type = infantry_weapons_4
 					version = 0
 				}
 				cost_factor = 0.03
@@ -12171,6 +12156,7 @@ country_event = {
 		set_temp_variable = { percent_change = 8 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = ARM }
+		change_influence_percentage = yes
 		ai_chance = {
 			base = 1
 		}
@@ -12204,6 +12190,7 @@ country_event = {
 		set_temp_variable = { percent_change = 1 }
 		set_temp_variable = { tag_index = ARM }
 		set_temp_variable = { influence_target = NKR }
+		change_influence_percentage = yes
 	}
 }
 
@@ -12291,7 +12278,6 @@ country_event = {
 	}
 }
 
-
 country_event = {
 	id = arm_economic.2
 	title = arm_economic.2.t
@@ -12341,7 +12327,6 @@ country_event = {
 		}
 	}
 }
-
 
 country_event = {
 	id = arm_economic.3
@@ -12396,7 +12381,6 @@ country_event = {
 		}
 	}
 }
-
 
 country_event = {
 	id = arm_economic.4
@@ -12687,7 +12671,6 @@ country_event = {
 
 	}
 }
-
 
 country_event = {
 	id = arm_economic.9
@@ -13157,7 +13140,7 @@ country_event = {
 	}
 
 	option = {
-		name = arm_economic.19.b
+		name = arm_economic.20.b
 		log = "[GetDateText]: [This.GetName]: arm_economic.19.b executed"
 		trigger = {
 			OR = {
@@ -13288,8 +13271,7 @@ country_event = {
 		SOV = {
 			add_opinion_modifier = { target = ROOT modifier = military_cooperation }
 			reverse_add_opinion_modifier = { target = ROOT modifier = military_cooperation }
-		}
-		SOV = {
+
 			army_experience = 50
 			navy_experience = 50
 			air_experience = 50
@@ -13302,8 +13284,9 @@ country_event = {
 			air_experience = 50
 			add_command_power = 50
 			add_war_support = 0.05
+
+			country_event = arm_dashnak.3
 		}
-		ARM = { country_event = arm_dashnak.3 }
 		ai_chance = {
 			base = 5
 		}
@@ -13786,6 +13769,8 @@ country_event = {
 				}
 			}
 			GRE = {
+				set_temp_variable = { wargoal_on = TUR }
+				add_threat_from_wargoal_effect = yes
 				create_wargoal = {
 					target = TUR
 					type = take_claimed_state
@@ -13799,6 +13784,8 @@ country_event = {
 				}
 			}
 			SYR = {
+				set_temp_variable = { wargoal_on = TUR }
+				add_threat_from_wargoal_effect = yes
 				create_wargoal = {
 					target = TUR
 					type = take_claimed_state
@@ -13812,6 +13799,8 @@ country_event = {
 				}
 			}
 			KUR = {
+				set_temp_variable = { wargoal_on = TUR }
+				add_threat_from_wargoal_effect = yes
 				create_wargoal = {
 					target = TUR
 					type = take_claimed_state
@@ -13819,6 +13808,8 @@ country_event = {
 			}
 		}
 		ARM = {
+			set_temp_variable = { wargoal_on = TUR }
+			add_threat_from_wargoal_effect = yes
 			create_wargoal = {
 				target = TUR
 				type = take_claimed_state
@@ -14298,20 +14289,14 @@ country_event = {
 				set_state_owner = 163
 				clr_country_flag = dynamic_flag
 				clr_country_flag = dynamic_rebel_flag
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = no
-				}
 				set_popularities = {
 					communism = 5
 					nationalist = 95
 				}
 				inherit_technology = ARM
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = {
-					ruling_party = 22
-				}
+				set_temp_variable = { rul_party_temp = 22 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
 				set_temp_variable = {
 					current_cons_popularity = party_pop_array^22
 				}
@@ -14338,10 +14323,10 @@ country_event = {
 					volunteer_women
 					international_bankers
 					oligarchs
-					The_Clergy
+					the_clergy
 					officer_military_school
 					nuclear_energy
-					Lacks_International_Recognition
+					lacks_international_recognition
 
 					# Armenian Unique
 					armenian_perseverance
@@ -14354,7 +14339,7 @@ country_event = {
 				set_variable = { domestic_influence_amount = 10 }
 				add_to_array = { influence_array = ARM.id }
 				add_to_array = { influence_array_val = 90 }
-				startup_influence = yes
+				sort_influence = yes
 
 				declare_war_on = {
 					target = TUR

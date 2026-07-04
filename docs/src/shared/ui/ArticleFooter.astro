@@ -1,0 +1,31 @@
+---
+import { BASE_LINK_CLASS, MUTED_TEXT_CLASS } from "./tailwind";
+
+interface Props {
+  lastUpdated?: Date;
+  editUrl?: string;
+}
+
+const { lastUpdated, editUrl }: Props = Astro.props;
+const showFooter = lastUpdated != null || editUrl != null;
+---
+
+{
+  showFooter && (
+    <footer class="mt-xl flex flex-wrap items-center gap-x-lg gap-y-sm border-t border-border-light pt-lg text-sm print:hidden">
+      {lastUpdated && (
+        <p class={MUTED_TEXT_CLASS}>
+          Last updated:{" "}
+          <time datetime={lastUpdated.toISOString()}>
+            {lastUpdated.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+          </time>
+        </p>
+      )}
+      {editUrl && (
+        <a class={BASE_LINK_CLASS} href={editUrl} target="_blank" rel="noopener noreferrer">
+          Edit on GitHub
+        </a>
+      )}
+    </footer>
+  )
+}

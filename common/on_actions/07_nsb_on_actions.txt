@@ -5,7 +5,8 @@ on_actions = {
 	#ROOT is winner #FROM gets annexed - This will also fire on_annex
 	on_civil_war_end = {
 	}
-
+	#TODO: Check on this - it might need to be opposite ideologies only
+	#Is this part of why the guarantees just randomly disappear with no warning?
 	on_ruling_party_change = {
 		effect = {
 			#Nullify all guarantees
@@ -73,7 +74,7 @@ on_actions = {
 			}
 			else_if = { limit = { FROM = { has_idea = instilled_aggression_spirit } }
 				character = {
-					IF = {
+					if = {
 						limit = { is_navy_leader = yes }
 
 						random = {
@@ -85,7 +86,7 @@ on_actions = {
 			}
 			else_if = { limit = { FROM = { has_idea = calculated_restraint_spirit } }
 				character = {
-					IF = {
+					if = {
 						limit = { is_navy_leader = yes }
 
 						random = {
@@ -97,7 +98,7 @@ on_actions = {
 			}
 			else_if = { limit = { FROM = { has_idea = signals_training_spirit } }
 				character = {
-					IF = {
+					if = {
 						limit = { is_navy_leader = yes }
 
 						random = {
@@ -123,9 +124,9 @@ on_actions = {
 							FROM = { has_idea = military_science_doctorate_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
 						}
 						ROOT = {
-							random_list = {
-								25 = { add_skill_level = 1 }
-								75 = { }
+							random = {
+								chance = 25
+								add_skill_level = 1
 							}
 						}
 					}
@@ -399,6 +400,28 @@ on_actions = {
 		}
 	}
 
+	on_recall_volunteers = {
+		effect = {
+			FROM = {
+				if = {
+					limit = {
+						has_idea = unsc_restricted_volunteers_too
+					}
+					ROOT = {
+						add_to_variable = { sent_to_sanctioned_nations = -1 }
+						if = {
+							limit = {
+								check_variable = { sent_to_sanctioned_nations < 1 }
+							}
+							clr_country_flag = has_sent_volunteers_to_restricted_nation
+							clear_variable = sent_to_sanctioned_nations
+						}
+					}
+				}
+			}
+		}
+	}
+
 	# called when a country send volunteers to another
 	# ROOT is sender, FROM is receiver
 	on_send_volunteers = {
@@ -411,6 +434,20 @@ on_actions = {
 				for_each_scope_loop = {
 					array = allies
 					add_opinion_modifier = { target = ROOT modifier = sent_allied_nation_intervention_forces }
+				}
+				if = {
+					limit = {
+						has_idea = unsc_restricted_volunteers_too
+					}
+					ROOT = {
+						add_to_variable = { sent_to_sanctioned_nations = 1 }
+
+						set_country_flag = has_sent_volunteers_to_restricted_nation
+
+						apply_united_nations_sanctions = yes
+						#sanction the nation for sending volunteers
+						#sanctions get removed when the volunteers are removed
+					}
 				}
 			}
 
@@ -428,17 +465,18 @@ on_actions = {
 					limit = {
 						NOT = { is_in_array = { ROOT.COM_volunteer_nations = FROM.id } }
 					}
-					ROOT = {
-						add_to_array = { COM_volunteer_nations = FROM.id }
-					}
+					add_to_array = { ROOT.COM_volunteer_nations = FROM.id }
 				}
 			}
-		}
-	}
-
-	# ROOT is capitulated country, FROM is winner
-	on_capitulation = {
-		effect = {
+			if = {
+				limit = { ROOT = { original_tag = LBA } }
+				if = {
+					limit = {
+						NOT = { is_in_array = { ROOT.LBA_volunteer_nations = FROM.id } }
+					}
+					add_to_array = { ROOT.LBA_volunteer_nations = FROM.id }
+				}
+			}
 		}
 	}
 

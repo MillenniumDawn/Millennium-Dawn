@@ -1,0 +1,180 @@
+MER_clear_mercosur_member_state_variables = {
+	set_variable = { mercosur_member_state_political_power_factor = 0 }
+	set_variable = { mercosur_member_state_stability_factor = 0 }
+	set_variable = { mercosur_member_state_productivity_growth_modifier = 0 }
+	set_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0 }
+	set_variable = { mercosur_member_state_foreign_influence_modifier = 0 }
+	set_variable = { mercosur_member_state_interest_rate_multiplier_modifier = 0 }
+	set_variable = { mercosur_member_state_total_workforce_modifier = 0 }
+	set_variable = { mercosur_member_state_high_unemployment_threshold_modifier = 0 }
+	set_variable = { mercosur_member_state_research_speed_factor = 0 }
+	set_variable = { mercosur_member_state_corruption_cost_factor = 0 }
+	set_variable = { mercosur_member_state_production_speed_infrastructure_factor = 0 }
+	set_variable = { mercosur_member_state_production_speed_internet_station_factor = 0 }
+	set_variable = { mercosur_member_state_infrastructure_cost_multiplier_modifier = 0 }
+	set_variable = { mercosur_member_state_production_speed_industrial_complex_factor = 0 }
+	set_variable = { mercosur_member_state_production_speed_offices_factor = 0 }
+}
+
+MER_sync_mercosur_member_state_from_existing = {
+	for_each_scope_loop = {
+		array = global.mercosur_member_state
+		if = {
+			limit = { NOT = { tag = ROOT } }
+			ROOT = {
+				set_variable = { var = mercosur_member_state_political_power_factor value = PREV.mercosur_member_state_political_power_factor }
+				set_variable = { var = mercosur_member_state_stability_factor value = PREV.mercosur_member_state_stability_factor }
+				set_variable = { var = mercosur_member_state_productivity_growth_modifier value = PREV.mercosur_member_state_productivity_growth_modifier }
+				set_variable = { var = mercosur_member_state_tax_gain_multiplier_modifier value = PREV.mercosur_member_state_tax_gain_multiplier_modifier }
+				set_variable = { var = mercosur_member_state_foreign_influence_modifier value = PREV.mercosur_member_state_foreign_influence_modifier }
+				set_variable = { var = mercosur_member_state_interest_rate_multiplier_modifier value = PREV.mercosur_member_state_interest_rate_multiplier_modifier }
+				set_variable = { var = mercosur_member_state_total_workforce_modifier value = PREV.mercosur_member_state_total_workforce_modifier }
+				set_variable = { var = mercosur_member_state_high_unemployment_threshold_modifier value = PREV.mercosur_member_state_high_unemployment_threshold_modifier }
+				set_variable = { var = mercosur_member_state_research_speed_factor value = PREV.mercosur_member_state_research_speed_factor }
+				set_variable = { var = mercosur_member_state_corruption_cost_factor value = PREV.mercosur_member_state_corruption_cost_factor }
+				set_variable = { var = mercosur_member_state_production_speed_infrastructure_factor value = PREV.mercosur_member_state_production_speed_infrastructure_factor }
+				set_variable = { var = mercosur_member_state_production_speed_internet_station_factor value = PREV.mercosur_member_state_production_speed_internet_station_factor }
+				set_variable = { var = mercosur_member_state_infrastructure_cost_multiplier_modifier value = PREV.mercosur_member_state_infrastructure_cost_multiplier_modifier }
+				set_variable = { var = mercosur_member_state_production_speed_industrial_complex_factor value = PREV.mercosur_member_state_production_speed_industrial_complex_factor }
+				set_variable = { var = mercosur_member_state_production_speed_offices_factor value = PREV.mercosur_member_state_production_speed_offices_factor }
+			}
+		}
+	}
+}
+
+MER_sync_mercosur_member_stability_delta = {
+	for_each_scope_loop = {
+		array = global.mercosur_member_state
+		add_to_variable = { mercosur_member_state_stability_factor = MER_mercosur_member_state_stability_delta }
+	}
+}
+
+MER_recalculate_unasul_member_state_stability_factor = {
+	set_variable = { global.MER_unasul_member_state_stability_factor = global.MER_unasul_stability_factor }
+	add_to_variable = { global.MER_unasul_member_state_stability_factor = global.MER_unasul_democratic_clause_stability_factor }
+}
+
+MER_remove_unasul_faction_membership_silent = {
+	if = {
+		limit = { has_idea = UNASUL_member }
+
+		if = {
+			limit = { has_country_flag = MER_unasul_faction_leader }
+			clr_country_flag = MER_unasul_faction_leader
+		}
+
+		if = {
+			limit = {
+				is_faction_leader = yes
+				any_other_country = {
+					has_idea = UNASUL_member
+					is_in_faction_with = ROOT
+				}
+			}
+			random_other_country = {
+				limit = {
+					has_idea = UNASUL_member
+					is_in_faction_with = ROOT
+				}
+				set_faction_leader = yes
+				set_country_flag = MER_unasul_faction_leader
+			}
+		}
+		else_if = {
+			limit = {
+				is_faction_leader = yes
+				NOT = {
+					any_other_country = {
+						has_idea = UNASUL_member
+						is_in_faction_with = ROOT
+					}
+				}
+			}
+			clr_global_flag = MER_unasul_faction_formed
+		}
+
+		remove_ideas = UNASUL_member
+		leave_faction = yes
+	}
+}
+
+UNASUL_leave = {
+	if = {
+		limit = { has_idea = UNASUL_member }
+
+		MER_remove_unasul_faction_membership_silent = yes
+
+		custom_effect_tooltip = UNASUL_leave_tt
+		hidden_effect = { news_event = { id = mercosur_news.3 hours = 6 } }
+	}
+}
+
+MER_suspend_mercosur_member_effect = {
+	if = {
+		limit = { has_dynamic_modifier = mercosur_member_state_modifier }
+
+		for_each_scope_loop = {
+			array = global.mercosur_member_state
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { mercosur_member_state_productivity_growth_modifier = -0.01 }
+				add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = -0.01 }
+				add_to_variable = { mercosur_member_state_foreign_influence_modifier = -0.01 }
+			}
+		}
+
+		MER_clear_mercosur_member_state_variables = yes
+		remove_dynamic_modifier = { modifier = mercosur_member_state_modifier }
+		remove_from_array = { global.mercosur_member_state = THIS }
+	}
+}
+
+MER_place_mercosur_member_on_probation_effect = {
+	if = {
+		limit = { has_dynamic_modifier = mercosur_member_state_modifier }
+		add_to_variable = { global.MER_mercosur_democratic_clause_stability_factor = -0.05 }
+		set_temp_variable = { MER_mercosur_member_state_stability_delta = -0.05 }
+		MER_sync_mercosur_member_stability_delta = yes
+	}
+}
+
+MER_suspend_unasul_member_effect = {
+	if = {
+		limit = { has_dynamic_modifier = unasul_member_state_modifier }
+
+		if = {
+			limit = { has_country_flag = MER_unasul_counted_member }
+			add_to_variable = { global.MER_unasul_political_power_factor = -0.01 }
+			add_to_variable = { global.MER_unasul_stability_factor = -0.01 }
+			MER_recalculate_unasul_member_state_stability_factor = yes
+			clr_country_flag = MER_unasul_counted_member
+		}
+
+		if = {
+			limit = { has_idea = UNASUL_member }
+			MER_remove_unasul_faction_membership_silent = yes
+		}
+
+		remove_dynamic_modifier = { modifier = unasul_member_state_modifier }
+		remove_from_array = { global.unasul_member_state = THIS }
+	}
+}
+
+MER_place_unasul_member_on_probation_effect = {
+	if = {
+		limit = { has_dynamic_modifier = unasul_member_state_modifier }
+		add_to_variable = { global.MER_unasul_democratic_clause_stability_factor = -0.05 }
+		MER_recalculate_unasul_member_state_stability_factor = yes
+	}
+}
+
+MER_trigger_democratic_clause_reviews = {
+	if = {
+		limit = { has_dynamic_modifier = mercosur_member_state_modifier }
+		country_event = { id = mercosur.109 hours = 1 }
+	}
+	if = {
+		limit = { has_dynamic_modifier = unasul_member_state_modifier }
+		country_event = { id = mercosur.116 hours = 1 }
+	}
+}

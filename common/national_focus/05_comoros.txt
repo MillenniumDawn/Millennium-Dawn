@@ -179,7 +179,7 @@ focus_tree = {
 				}
 			}
 			clr_country_flag = COM_army_route_3
-			custom_effect_tooltip = COM_african_mercenaries_tt
+			custom_effect_tooltip = COM_african_mercenaries_1_tt
 		}
 
 		ai_will_do = {
@@ -447,32 +447,6 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = COM_reform_defunct_pmc_units
-		icon = invite_pmcs
-
-		x = 6
-		y = 3
-		relative_position_id = COM_army
-
-		cost = 5
-
-		prerequisite = { focus = COM_invite_the_pmcs }
-
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
-
-		available = {
-			OR = {
-				has_country_flag = COM_expanded_private_military_operations
-				has_country_leader = { name = "Robert Denard" ruling_only = yes }
-			}
-		}
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_reform_defunct_pmc_units executed"
 			custom_effect_tooltip = COM_reform_defunct_pmc_units_tt
@@ -502,6 +476,37 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_the_police_force executed"
 			add_ideas = COM_militarized_police_force_idea
 			increase_policing_budget = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_reform_defunct_pmc_units
+		icon = invite_pmcs
+
+		x = 6
+		y = 3
+		relative_position_id = COM_army
+
+		cost = 5
+
+		prerequisite = { focus = COM_invite_the_pmcs }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
+
+		available = {
+			OR = {
+				has_country_flag = COM_expanded_private_military_operations
+				has_country_leader = { name = "Robert Denard" ruling_only = yes }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_reform_defunct_pmc_units executed"
+			custom_effect_tooltip = COM_reform_defunct_pmc_units_tt
 		}
 
 		ai_will_do = {
@@ -948,7 +953,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_available_helicopters executed"
 			add_equipment_to_stockpile = {
-				type = transport_helicopter1
+				type = transport_helicopter_1
 				amount = 5
 				producer = SWI
 			}
@@ -1646,7 +1651,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_subsidies_for_education"
 			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
-			add_ideas = civilian_industry_project
+			improve_civilian_industrial_projects = yes
 			increase_education_budget = yes
 		}
 
@@ -1679,10 +1684,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_social_agenda"
-			swap_ideas = {
-				remove_idea = civilian_industry_project
-				add_idea = civilian_industry_project2
-			}
+			improve_civilian_industrial_projects = yes
 			increase_social_spending = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_maritime_industry_opinion = yes
@@ -1715,13 +1717,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_befriend_the_west executed"
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
-				}
-				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.EU_member
+				for_each_scope_loop = {
+					array = global.EU_member
+					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { NOT = { tag = ROOT } }
 						add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
 					}
 				}
@@ -1823,19 +1823,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_non_nato_ally executed"
-			add_ideas = Major_Non_NATO_Ally
-			set_country_flag = Major_Non_NATO_Ally
-			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-			}
-			for_each_scope_loop = {
-				array = global.nato_members
-				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-			}
+			NATO_major_non_nato_ally_join = yes
 			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { tag_index = FRA }
 			set_temp_variable = { influence_target = COM }
@@ -1863,10 +1851,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_befriend_the_west executed"
-			every_country = {
-				limit = {
-					has_idea = CSTO_member
-				}
+			for_each_scope_loop = {
+				array = global.CSTO_member
+				tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
 				add_opinion_modifier = {
 					target = COM
 					modifier = declaration_of_friendship
@@ -2003,10 +1990,6 @@ focus_tree = {
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = COM }
 			change_influence_percentage = yes
-			SOV = {
-				set_country_flag = SOV_comoros_wagner_placed
-				clr_country_flag = SOV_comoros_wagner_notplaced
-			}
 		}
 
 		ai_will_do = {
@@ -2038,13 +2021,7 @@ focus_tree = {
 			add_ideas = hybrid_regime_western
 			add_stability = -0.05
 			set_country_flag = do_not_retire
-			if = {
-				limit = { has_government = democratic }
-				set_politics = {
-					ruling_party = democratic
-					elections_allowed = no
-				}
-			}
+			disable_elections_with_no_leader_change = yes
 			add_to_array = { gov_coalition_array = 22 }
 			recalculate_party = yes
 			update_government_coalition_strength = yes
@@ -2081,13 +2058,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_draw_closer_to_the_au executed"
 			add_political_power = 100
-			custom_effect_tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
-			}
 			for_each_scope_loop = {
 				array = global.AU_member
-				add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
+				tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
+				}
 			}
 			add_timed_idea = {
 				idea = AZE_trade_idea
@@ -2307,7 +2284,7 @@ focus_tree = {
 			}
 			diplomatic_relation = { country = SAU relation = non_aggression_pact }
 			add_equipment_to_stockpile = {
-				type = infantry_weapons1
+				type = infantry_weapons_2
 				amount = 4000
 				producer = SAU
 			}
@@ -2685,7 +2662,6 @@ focus_tree = {
 			add_ideas = BRA_idea_harsher_conscription
 			add_stability = 0.15
 			remove_ideas = COM_big_problems_idea
-			set_cosmetic_tag = UAR_12_democratic
 		}
 
 		ai_will_do = {
@@ -3037,7 +3013,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 0
 		}
 	}
 
@@ -3233,6 +3209,9 @@ focus_tree = {
 			newline = yes
 			custom_effect_tooltip = TT_IF_THEY_REJECT
 			effect_tooltip = {
+
+				set_temp_variable = { wargoal_on = FRA }
+				add_threat_from_wargoal_effect = yes
 				create_wargoal = {
 					target = FRA
 					type = take_core_state
@@ -4013,10 +3992,6 @@ focus_tree = {
 			set_temp_variable = { sender_nation = COM.id }
 			set_improved_trade_agreement = yes
 		}
-
-		ai_will_do = {
-			base = 10
-		}
 	}
 
 	focus = {
@@ -4078,13 +4053,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_ministry_of_economy executed"
 			add_stability = 0.05
 			add_tech_bonus = {
-				name = COM_ministry_of_economy
+				name = CAT_3d
 				bonus = 0.15
 				uses = 1
 				category = CAT_3d
 			}
 			add_tech_bonus = {
-				name = COM_ministry_of_economy
+				name = CAT_nfibers
 				bonus = 0.15
 				uses = 1
 				category = CAT_nfibers
@@ -4093,6 +4068,48 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_debt_refactoring
+		icon = money
+
+		x = -3
+		y = 1
+		relative_position_id = COM_ministry_of_economy
+
+		cost = 7.86
+
+		prerequisite = { focus = COM_ministry_of_economy }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			gdp_debt_ratio_higher_50 = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_attract_foreign_investors"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = 0.05 }
+			clamp_temp_variable = { var = debt_change min = 0 max = 100 }
+			modify_debt_effect = yes
+			add_timed_idea = {
+				idea = idea_generic_temporary_debt_refactoring
+				days = 730
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 10
+				check_variable = { interest_rate > 5 }
+			}
+			modifier = {
+				factor = 5
+				gdp_debt_ratio_higher_50 = yes
+			}
 		}
 	}
 
@@ -4241,7 +4258,7 @@ focus_tree = {
 			add_political_power = 75
 			every_other_country = {
 				limit = {
-					is_east_african_nation = yes
+					has_country_flag = east_african_nation_flag
 					NOT = { has_war_with = COM }
 				}
 				add_opinion_modifier = { target = COM modifier = improve_trade }
@@ -4272,7 +4289,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_india executed"
 			every_other_country = {
 				limit = {
-					is_east_african_nation = yes
+					has_country_flag = east_african_nation_flag
 					NOT = { has_war_with = COM }
 				}
 				set_temp_variable = { percent_change = -5 }
@@ -4311,40 +4328,30 @@ focus_tree = {
 				add_ideas = { COM_eau_military_coop_idea }
 				army_experience = 15
 				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = COM }
-				set_temp_variable = { influence_target = KEN }
 				change_influence_percentage = yes
 			}
 			TNZ = {
 				add_ideas = { COM_eau_military_coop_idea }
 				army_experience = 15
 				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = COM }
-				set_temp_variable = { influence_target = TNZ }
 				change_influence_percentage = yes
 			}
 			MOZ = {
 				add_ideas = { COM_eau_military_coop_idea }
 				army_experience = 15
 				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = COM }
-				set_temp_variable = { influence_target = MOZ }
 				change_influence_percentage = yes
 			}
 			MAD = {
 				add_ideas = { COM_eau_military_coop_idea }
 				army_experience = 15
 				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = COM }
-				set_temp_variable = { influence_target = MAD }
 				change_influence_percentage = yes
 			}
 			MLW = {
 				add_ideas = { COM_eau_military_coop_idea }
 				army_experience = 15
 				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = COM }
-				set_temp_variable = { influence_target = MLW }
 				change_influence_percentage = yes
 			}
 			add_ideas = { COM_eau_military_coop_idea }
@@ -4353,6 +4360,6 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
- 		}
+		 }
 	}
 }

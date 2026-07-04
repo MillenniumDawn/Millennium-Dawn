@@ -1,4 +1,4 @@
- ### Other generic politics decisions at the bottom of the file ###
+### Other generic politics decisions at the bottom of the file ###
 coalition_decisions = {
 	###Decisions countdown ###
 	#activate_decision
@@ -37,7 +37,7 @@ coalition_decisions = {
 				limit = {
 					has_country_leader_with_trait = western_technocrat
 				}
-				country_event = { id = MD4_election_campaign.0 }
+				country_event = MD4_election_campaign.0
 			}
 			clr_country_flag = coalition_reshuffling
 			if = {
@@ -59,8 +59,6 @@ coalition_decisions = {
 				limit = { is_ai = yes }
 				custom_effect_tooltip = AI_form_government_TT
 				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
 					set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
 					subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
 					set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
@@ -78,7 +76,8 @@ coalition_decisions = {
 								compare = less_than_or_equals
 							}
 						}
-						add_to_array = { ruling_party = max_index_1 }
+						set_temp_variable = { rul_party_temp = max_index_1 }
+						change_ruling_party_effect = yes
 						for_each_loop = {
 							array = party_pop_elect_array
 							index = i1
@@ -94,7 +93,8 @@ coalition_decisions = {
 						limit = {
 							check_variable = { cost1 > cost2 } #coalition 2 is prefered - lowest
 						}
-						add_to_array = { ruling_party = max_index_2 }
+						set_temp_variable = { rul_party_temp = max_index_2 }
+						change_ruling_party_effect = yes
 						for_each_loop = {
 							array = party_pop_elect_array
 							index = i2
@@ -281,8 +281,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^0 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 0 } #is already in coalition
-					is_in_array = { ruling_party = 0 } #is already in coalition
+					western_autocrats_are_in_coalition = yes #is already in coalition
+					western_autocrats_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -310,35 +310,34 @@ coalition_decisions = {
 							bigger_than_ruling_elect_zero = yes
 						}
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 4 } #emerging communist
-						is_in_array = { gov_coalition_array = 5 } #left-wing radical
-						is_in_array = { gov_coalition_array = 8 } #mod shiite islamist
-						is_in_array = { gov_coalition_array = 9 } #shiite islamist
-						is_in_array = { gov_coalition_array = 11 } #jihadist
-						is_in_array = { gov_coalition_array = 19 } #neutral communist
+						emerging_communist_state_are_in_coalition = yes #emerging communist
+						emerging_anarchist_communism_are_in_coalition = yes #left-wing radical
+						emerging_moderate_shiite_are_in_coalition = yes #mod shiite islamist
+						emerging_hardline_shiite_are_in_coalition = yes #shiite islamist
+						salafist_caliphate_are_in_coalition = yes #jihadist
+						neutrality_neutral_communism_are_in_coalition = yes #neutral communist
 						AND = {
 							NOT = {
 								tag = ISR
 							}
-							is_in_array = { gov_coalition_array = 21 } #fascist
+							nationalist_fascist_are_in_coalition = yes #fascist
 						}
-						is_in_array = { ruling_party = 4 } #emerging communist
-						is_in_array = { ruling_party = 5 } #left-wing radical
-						is_in_array = { ruling_party = 8 } #mod shiite islamist
-						is_in_array = { ruling_party = 9 } #shiite islamist
-						is_in_array = { ruling_party = 11 } #jihadist
-						is_in_array = { ruling_party = 19 } #neutral communist
+						emerging_communist_state_are_in_power = yes #emerging communist
+						emerging_anarchist_communism_are_in_power = yes #left-wing radical
+						emerging_moderate_shiite_are_in_power = yes #mod shiite islamist
+						emerging_hardline_shiite_are_in_power = yes #shiite islamist
+						salafist_caliphate_are_in_power = yes #jihadist
+						neutrality_neutral_communism_are_in_power = yes #neutral communist
 						AND = {
 							NOT = {
 								tag = ISR
 							}
-							is_in_array = { gov_coalition_array = 21 } #fascist
+							nationalist_fascist_are_in_coalition = yes #fascist
 						}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -346,7 +345,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Western_Autocracy_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_0 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 0 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^0 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 }
@@ -360,15 +361,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_democratic = party_pop_elect_array^0 }
 				}
 			}
-			country_event = { id = coalition.0 }
+			country_event = coalition.0
 		}
 	}
 	Western_Autocracy_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 0 } }
-
-
+		visible = { western_autocrats_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -376,7 +375,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Western_Autocracy_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_0 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 0 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^0 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -405,8 +406,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^1 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 1 } #is already in coalition
-					is_in_array = { ruling_party = 1 } #is already in coalition
+					western_conservatism_are_in_coalition = yes #is already in coalition
+					western_conservatism_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -434,51 +435,46 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 4 } #emerging communist
-							is_in_array = { gov_coalition_array = 5 } #left-wing radical
-							is_in_array = { gov_coalition_array = 8 } #mod shiite islamist
-							is_in_array = { gov_coalition_array = 9 } #shiite islamist
-							is_in_array = { gov_coalition_array = 11 } #jihadist
-							is_in_array = { gov_coalition_array = 19 } #neutral communist
-							is_in_array = { gov_coalition_array = 21 } #fascist
-							is_in_array = { ruling_party = 4 } #emerging communist
-							is_in_array = { ruling_party = 5 } #left-wing radical
-							is_in_array = { ruling_party = 8 } #mod shiite islamist
-							is_in_array = { ruling_party = 9 } #shiite islamist
-							is_in_array = { ruling_party = 11 } #jihadist
-							is_in_array = { ruling_party = 19 } #neutral communist
-							is_in_array = { ruling_party = 21 } #fascist
+							emerging_communist_state_are_in_coalition = yes #emerging communist
+							emerging_anarchist_communism_are_in_coalition = yes #left-wing radical
+							emerging_moderate_shiite_are_in_coalition = yes #mod shiite islamist
+							emerging_hardline_shiite_are_in_coalition = yes #shiite islamist
+							salafist_caliphate_are_in_coalition = yes #jihadist
+							neutrality_neutral_communism_are_in_coalition = yes #neutral communist
+							nationalist_fascist_are_in_coalition = yes #fascist
+							emerging_communist_state_are_in_power = yes #emerging communist
+							emerging_anarchist_communism_are_in_power = yes #left-wing radical
+							emerging_moderate_shiite_are_in_power = yes #mod shiite islamist
+							emerging_hardline_shiite_are_in_power = yes #shiite islamist
+							salafist_caliphate_are_in_power = yes #jihadist
+							neutrality_neutral_communism_are_in_power = yes #neutral communist
+							nationalist_fascist_are_in_power = yes #fascist
 						#}
 						#won't join social democrats if both are strong
 						custom_trigger_tooltip = {
 							tooltip = mutual_socialism_20_tt
-							AND = {
-								OR = {
-									is_in_array = { gov_coalition_array = 3 } #social democrats
-									is_in_array = { ruling_party = 3 } #social democrats
-								}
-								check_variable = { party_pop_elect_array^3 > 0.2 } #social democrats
-								check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
-								NOT = { TAG = GER }
+							OR = {
+								western_social_democrats_are_in_coalition = yes #social democrats
+								western_social_democrats_are_in_power = yes #social democrats
 							}
+							check_variable = { party_pop_elect_array^3 > 0.2 } #social democrats
+							check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
+							NOT = { TAG = GER }
 						}
 						custom_trigger_tooltip = {
 							tooltip = mutual_neutral_Social_20_tt
 							#won't join democratic socialists if both are strong
-							AND = {
-								OR = {
-									is_in_array = { gov_coalition_array = 18 } #social democrats
-									is_in_array = { ruling_party = 18 } #social democrats
-								}
-								check_variable = { party_pop_elect_array^18 > 0.2 } #social democrats
-								check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
+							OR = {
+								neutrality_neutral_social_are_in_coalition = yes #social democrats
+								neutrality_neutral_social_are_in_power = yes #social democrats
 							}
+							check_variable = { party_pop_elect_array^18 > 0.2 } #social democrats
+							check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
 						}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -486,7 +482,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision conservatism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_1 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 1 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^1 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -501,15 +499,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_democratic = party_pop_elect_array^1 }
 				}
 			}
-			country_event = { id = coalition.1 }
+			country_event = coalition.1
 		}
 	}
 	conservatism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 1 } }
-
-
+		visible = { western_conservatism_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -517,7 +513,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision conservatism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_1 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 1 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^1 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -546,8 +544,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^2 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 2 } #is already in coalition
-					is_in_array = { ruling_party = 2 } #is already in coalition
+					western_liberals_are_in_coalition = yes #is already in coalition
+					western_liberals_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -577,75 +575,67 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 4 } #Communist-State
-							is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-							is_in_array = { gov_coalition_array = 6 } #Autocracy
-							is_in_array = { gov_coalition_array = 7 } #Conservative (reactionary)
-							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 10 } #Kingdom
-							is_in_array = { gov_coalition_array = 11 } #Caliphate
-							is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							emerging_communist_state_are_in_coalition = yes #Communist-State
+							emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+							emerging_reactionaries_are_in_coalition = yes #Conservative (reactionary)
+							emerging_autocracy_are_in_coalition = yes #Autocracy
+							emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_coalition = yes #Kingdom
+							salafist_caliphate_are_in_coalition = yes #Caliphate
+							neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+							nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+							nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_coalition = yes #Monarchist
 							#won't join coalition if:
-							is_in_array = { ruling_party = 4 } #Communist-State
-							is_in_array = { ruling_party = 5 } #anarchist_communism
-							is_in_array = { ruling_party = 6 } #Autocracy
-							is_in_array = { ruling_party = 7 } #Conservative (reactionary)
-							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-							is_in_array = { ruling_party = 10 } #Kingdom
-							is_in_array = { ruling_party = 11 } #Caliphate
-							is_in_array = { ruling_party = 19 } #Neutral_Communism
-							is_in_array = { ruling_party = 21 } #Nat_Fascism
-							is_in_array = { ruling_party = 22 } #Nat_Autocracy
-							is_in_array = { ruling_party = 23 } #Monarchist
+							emerging_communist_state_are_in_power = yes #Communist-State
+							emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+							emerging_reactionaries_are_in_power = yes #Conservative (reactionary)
+							emerging_autocracy_are_in_power = yes #Autocracy
+							emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_power = yes #Kingdom
+							salafist_caliphate_are_in_power = yes #Caliphate
+							neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+							nationalist_fascist_are_in_power = yes #Nat_Fascism
+							nationalist_military_junta_are_in_power = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_power = yes #Monarchist
 						#}
 						custom_trigger_tooltip = {
 							tooltip = mutual_conservatism_25_tt
 							#won't join conservatives if both are strong
-							AND = {
-								OR = {
-									is_in_array = { gov_coalition_array = 1 } #conservatives
-									is_in_array = { ruling_party = 1 } #conservatives
-								}
-								check_variable = { party_pop_elect_array^1 > 0.25 } #conservatives
-								check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
+							OR = {
+								western_conservatism_are_in_coalition = yes #conservatives
+								western_conservatism_are_in_power = yes #conservatives
 							}
+							check_variable = { party_pop_elect_array^1 > 0.25 } #conservatives
+							check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
 						}
 						custom_trigger_tooltip = {
 							tooltip = mutual_socialism_25_tt
 							#won't join social democrats if both are strong
-							AND = {
-								NOT = { tag = USA }
-								OR = {
-									is_in_array = { gov_coalition_array = 3 } #social democrats
-									is_in_array = { ruling_party = 3 } #social democrats
-								}
-								check_variable = { party_pop_elect_array^3 > 0.25 } #social democrats
-								check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
+							NOT = { tag = USA }
+							OR = {
+								western_social_democrats_are_in_coalition = yes #social democrats
+								western_social_democrats_are_in_power = yes #social democrats
 							}
+							check_variable = { party_pop_elect_array^3 > 0.25 } #social democrats
+							check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
 						}
 						custom_trigger_tooltip = {
 							tooltip = USA_dems_reps_tt
 							#USA - Democrats (liberalism) and Republicans can't team up unless one is insignificant
-							AND = {
-								TAG = USA
-								OR = {
-									is_in_array = { gov_coalition_array = 1 } #conservatives
-									is_in_array = { ruling_party = 1 } #conservatives
-								}
-								check_variable = { party_pop_elect_array^1 > 0.05 } #conservatives
-								check_variable = { party_pop_elect_array^2 > 0.05 } #liberalism
+							TAG = USA
+							OR = {
+								western_conservatism_are_in_coalition = yes #conservatives
+								western_conservatism_are_in_power = yes #conservatives
 							}
-							AND = {
-								TAG = USA
-								OR = {
-									is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-									is_in_array = { ruling_party = 14 } #Neutral_conservatism
-								}
+							check_variable = { party_pop_elect_array^1 > 0.05 } #conservatives
+							check_variable = { party_pop_elect_array^2 > 0.05 } #liberalism
+							TAG = USA
+							OR = {
+								neutrality_neutral_conservatism_are_in_coalition = yes #Neutral_conservatism
+								neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
 							}
 						}
 					}
@@ -659,7 +649,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision liberalism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_2 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 2 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^2 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -672,13 +664,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_democratic = party_pop_elect_array^2 }
 				}
 			}
-			country_event = { id = coalition.2 }
+			country_event = coalition.2
 		}
 	}
 	liberalism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 2 } }
+		visible = { western_liberals_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -686,7 +678,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision liberalism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_2 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 2 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^2 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -713,8 +707,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^3 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 3 } #is already in coalition
-					is_in_array = { ruling_party = 3 } #is already in coalition
+					western_social_democrats_are_in_coalition = yes #is already in coalition
+					western_social_democrats_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -743,63 +737,59 @@ coalition_decisions = {
 							bigger_than_ruling_elect_three = yes
 						}
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 6 } #Autocracy
-						is_in_array = { gov_coalition_array = 7 } #Conservative (reactionary)
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
+						emerging_reactionaries_are_in_coalition = yes #Conservative (reactionary)
+						emerging_autocracy_are_in_coalition = yes #Autocracy
+						emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+						emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+						salafist_kingdom_are_in_coalition = yes #Kingdom
+						salafist_caliphate_are_in_coalition = yes #Caliphate
 						AND = {
 							NOT = {
 								tag = ITA
 							}
-							is_in_array = { gov_coalition_array = 14 } #neutral conservatives
+							neutrality_neutral_conservatism_are_in_coalition = yes #neutral conservatives
 						}
-						is_in_array = { gov_coalition_array = 16 } #libertarians
-						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
+						neutrality_neutral_libertarians_are_in_coalition = yes #libertarians
+						nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
+						nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+						nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
+						nationalist_monarchists_are_in_coalition = yes #Monarchist
 						#won't join coalition if:
-						is_in_array = { ruling_party = 6 } #Autocracy
-						is_in_array = { ruling_party = 7 } #Conservative (reactionary)
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
+						emerging_reactionaries_are_in_power = yes #Conservative (reactionary)
+						emerging_autocracy_are_in_power = yes #Autocracy
+						emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+						emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+						salafist_kingdom_are_in_power = yes #Kingdom
+						salafist_caliphate_are_in_power = yes #Caliphate
 						AND = {
 							NOT = {
 								tag = ITA
 							}
-							is_in_array = { ruling_party = 14 } #neutral conservatives
+							neutrality_neutral_conservatism_are_in_power = yes #neutral conservatives
 						}
-						is_in_array = { ruling_party = 16 } #libertarians
-						is_in_array = { ruling_party = 20 } #Nat_Populism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 22 } #Nat_Autocracy
-						is_in_array = { ruling_party = 23 } #Monarchist
+						neutrality_neutral_libertarians_are_in_power = yes #libertarians
+						nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
+						nationalist_fascist_are_in_power = yes #Nat_Fascism
+						nationalist_military_junta_are_in_power = yes #Nat_Autocracy
+						nationalist_monarchists_are_in_power = yes #Monarchist
 						#won't join conservatives if both are strong
 						custom_trigger_tooltip = {
 							tooltip = mutual_conservatism_20_tt
-							AND = {
-								OR = {
-									is_in_array = { gov_coalition_array = 1 } #conservatives
-									is_in_array = { ruling_party = 1 } #conservatives
-								}
-								check_variable = { party_pop_elect_array^1 > 0.2 } #conservatives
-								check_variable = { party_pop_elect_array^3 > 0.2 } #socialism
-								NOT = { TAG = GER }
+							OR = {
+								western_conservatism_are_in_coalition = yes #conservatives
+								western_conservatism_are_in_power = yes #conservatives
 							}
+							check_variable = { party_pop_elect_array^1 > 0.2 } #conservatives
+							check_variable = { party_pop_elect_array^3 > 0.2 } #socialism
+							NOT = { TAG = GER }
 						}
 						#USA - Democrats and Republicans can't team up at all
 						custom_trigger_tooltip = {
 							tooltip = USA_dems_reps_tt
-							AND = {
-								tag = USA
-								OR = {
-									is_in_array = { gov_coalition_array = 1 } #conservatives
-									is_in_array = { ruling_party = 1 } #conservatives
-								}
+							tag = USA
+							OR = {
+								western_conservatism_are_in_coalition = yes #conservatives
+								western_conservatism_are_in_power = yes #conservatives
 							}
 						}
 					}
@@ -807,14 +797,15 @@ coalition_decisions = {
 			}
 		}
 
-
 		ai_will_do = { base = 0 }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision socialism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_3 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 3 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^3 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -827,13 +818,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_democratic = party_pop_elect_array^3 }
 				}
 			}
-			country_event = { id = coalition.3 }
+			country_event = coalition.3
 		}
 	}
 	socialism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 3 } }
+		visible = { western_social_democrats_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -841,7 +832,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision socialism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_3 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 3 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^3 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -869,8 +862,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^4 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 4 } #is already in coalition
-					is_in_array = { ruling_party = 4 } #is already in coalition
+					emerging_communist_state_are_in_coalition = yes #is already in coalition
+					emerging_communist_state_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -896,41 +889,40 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-							is_in_array = { gov_coalition_array = 1 } #conservatism
-							is_in_array = { gov_coalition_array = 2 } #liberalism
-							is_in_array = { gov_coalition_array = 6 } #Conservative (reactionary)
-							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 10 } #Kingdom
-							is_in_array = { gov_coalition_array = 11 } #Caliphate
-							is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-							is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							western_autocrats_are_in_coalition = yes #Western_Autocracy
+							western_conservatism_are_in_coalition = yes #conservatism
+							western_liberals_are_in_coalition = yes #liberalism
+							emerging_reactionaries_are_in_coalition = yes #Conservative (reactionary)
+							emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_coalition = yes #Kingdom
+							salafist_caliphate_are_in_coalition = yes #Caliphate
+							neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+							neutrality_neutral_conservatism_are_in_coalition = yes #Neutral_conservatism
+							neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+							nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
+							nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+							nationalist_monarchists_are_in_coalition = yes #Monarchist
 							#won't join coalition if:
-							is_in_array = { ruling_party = 0 } #Western_Autocracy
-							is_in_array = { ruling_party = 1 } #conservatism
-							is_in_array = { ruling_party = 2 } #liberalism
-							is_in_array = { ruling_party = 6 } #Conservative (reactionary)
-							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-							is_in_array = { ruling_party = 10 } #Kingdom
-							is_in_array = { ruling_party = 11 } #Caliphate
-							is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-							is_in_array = { ruling_party = 14 } #Neutral_conservatism
-							is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-							is_in_array = { ruling_party = 20 } #Nat_Populism
-							is_in_array = { ruling_party = 21 } #Nat_Fascism
-							is_in_array = { ruling_party = 23 } #Monarchist
+							western_autocrats_are_in_power = yes #Western_Autocracy
+							western_conservatism_are_in_power = yes #conservatism
+							western_liberals_are_in_power = yes #liberalism
+							emerging_reactionaries_are_in_power = yes #Conservative (reactionary)
+							emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_power = yes #Kingdom
+							salafist_caliphate_are_in_power = yes #Caliphate
+							neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+							neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
+							neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+							nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
+							nationalist_fascist_are_in_power = yes #Nat_Fascism
+							nationalist_monarchists_are_in_power = yes #Monarchist
 						#}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -938,7 +930,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Communist-State_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_4 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 4 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^4 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -953,13 +947,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_communism = party_pop_elect_array^4 }
 				}
 			}
-			country_event = { id = coalition.4 }
+			country_event = coalition.4
 		}
 	}
 	Communist-State_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 4 } }
+		visible = { emerging_communist_state_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -967,7 +961,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Communist-State_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_4 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 4 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^4 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -995,8 +991,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^5 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 5 } #is already in coalition
-					is_in_array = { ruling_party = 5 } #is already in coalition
+					emerging_anarchist_communism_are_in_coalition = yes #is already in coalition
+					emerging_anarchist_communism_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -1023,41 +1019,40 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-							is_in_array = { gov_coalition_array = 1 } #conservatism
-							is_in_array = { gov_coalition_array = 2 } #liberalism
-							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 10 } #Kingdom
-							is_in_array = { gov_coalition_array = 11 } #Caliphate
-							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-							is_in_array = { gov_coalition_array = 15 } #oligarchism
-							is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							western_autocrats_are_in_coalition = yes #Western_Autocracy
+							western_conservatism_are_in_coalition = yes #conservatism
+							western_liberals_are_in_coalition = yes #liberalism
+							emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_coalition = yes #Kingdom
+							salafist_caliphate_are_in_coalition = yes #Caliphate
+							neutrality_neutral_conservatism_are_in_coalition = yes #Neutral_conservatism
+							neutrality_neutral_oligarch_are_in_coalition = yes #oligarchism
+							neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+							nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
+							nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+							nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_coalition = yes #Monarchist
 							#won't join coalition if:
-							is_in_array = { ruling_party = 0 } #Western_Autocracy
-							is_in_array = { ruling_party = 1 } #conservatism
-							is_in_array = { ruling_party = 2 } #liberalism
-							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-							is_in_array = { ruling_party = 10 } #Kingdom
-							is_in_array = { ruling_party = 11 } #Caliphate
-							is_in_array = { ruling_party = 14 } #Neutral_conservatism
-							is_in_array = { ruling_party = 15 } #oligarchism
-							is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-							is_in_array = { ruling_party = 20 } #Nat_Populism
-							is_in_array = { ruling_party = 21 } #Nat_Fascism
-							is_in_array = { ruling_party = 22 } #Nat_Autocracy
-							is_in_array = { ruling_party = 23 } #Monarchist
+							western_autocrats_are_in_power = yes #Western_Autocracy
+							western_conservatism_are_in_power = yes #conservatism
+							western_liberals_are_in_power = yes #liberalism
+							emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_power = yes #Kingdom
+							salafist_caliphate_are_in_power = yes #Caliphate
+							neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
+							neutrality_neutral_oligarch_are_in_power = yes #oligarchism
+							neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+							nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
+							nationalist_fascist_are_in_power = yes #Nat_Fascism
+							nationalist_military_junta_are_in_power = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_power = yes #Monarchist
 						#}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -1065,7 +1060,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision anarchist_communism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_5 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 5 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^5 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -1080,13 +1077,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_communism = party_pop_elect_array^5 }
 				}
 			}
-			country_event = { id = coalition.5 }
+			country_event = coalition.5
 		}
 	}
 	anarchist_communism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 5 } }
+		visible = { emerging_anarchist_communism_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -1094,7 +1091,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision anarchist_communism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_5 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 5 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^5 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -1122,8 +1121,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^6 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 6 } #is already in coalition
-					is_in_array = { ruling_party = 6 } #is already in coalition
+					emerging_reactionaries_are_in_coalition = yes #is already in coalition
+					emerging_reactionaries_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -1149,44 +1148,43 @@ coalition_decisions = {
 							bigger_than_ruling_elect_six = yes
 						}
 					#won't join coalition if:
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
+						western_conservatism_are_in_coalition = yes #conservatism
+						western_liberals_are_in_coalition = yes #liberalism
+						western_social_democrats_are_in_coalition = yes #socialism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
 						AND = {
 							NOT = {
 								tag = ITA
 							}
-							is_in_array = { gov_coalition_array = 5 } #anarchist_communism
+							emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
 						}
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 18 } #neutral_Social
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+						salafist_kingdom_are_in_coalition = yes #Kingdom
+						salafist_caliphate_are_in_coalition = yes #Caliphate
+						neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+						neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
 					#won't join coalition if:
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
+						western_conservatism_are_in_power = yes #conservatism
+						western_liberals_are_in_power = yes #liberalism
+						western_social_democrats_are_in_power = yes #socialism
+						emerging_communist_state_are_in_power = yes #Communist-State
 						AND = {
 							NOT = {
 								tag = ITA
 							}
-							is_in_array = { ruling_party = 5 } #anarchist_communism
+							emerging_anarchist_communism_are_in_power = yes #anarchist_communism
 						}
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 18 } #neutral_Social
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
+						salafist_kingdom_are_in_power = yes #Kingdom
+						salafist_caliphate_are_in_power = yes #Caliphate
+						neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+						neutrality_neutral_social_are_in_power = yes #neutral_Social
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -1194,7 +1192,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Conservative_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_6 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 6 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^6 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -1209,13 +1209,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_communism = party_pop_elect_array^6 }
 				}
 			}
-			country_event = { id = coalition.6 }
+			country_event = coalition.6
 		}
 	}
 	Conservative_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 6 } }
+		visible = { emerging_reactionaries_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -1223,7 +1223,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Conservative_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_6 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 6 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^6 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -1251,8 +1253,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^7 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 7 } #is already in coalition
-					is_in_array = { ruling_party = 7 } #is already in coalition
+					emerging_autocracy_are_in_coalition = yes #is already in coalition
+					emerging_autocracy_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -1286,31 +1288,31 @@ coalition_decisions = {
 									NOT = {
 										tag = ISR
 									}
-									is_in_array = { gov_coalition_array = 1 } #conservatism
+									western_conservatism_are_in_coalition = yes #conservatism
 								}
-								is_in_array = { gov_coalition_array = 2 } #liberalism
-								is_in_array = { gov_coalition_array = 3 } #socialism
-								is_in_array = { gov_coalition_array = 4 } #Communist-State
-								is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-								is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-								is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-								is_in_array = { gov_coalition_array = 18 } #neutral_Social
-								is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+								western_liberals_are_in_coalition = yes #liberalism
+								western_social_democrats_are_in_coalition = yes #socialism
+								emerging_communist_state_are_in_coalition = yes #Communist-State
+								emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+								neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+								neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+								neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+								neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
 								#won't join coalition if:
 								AND = {
 									NOT = {
 										tag = ISR
 									}
-									is_in_array = { ruling_party = 1 } #conservatism
+									western_conservatism_are_in_power = yes #conservatism
 								}
-								is_in_array = { ruling_party = 2 } #liberalism
-								is_in_array = { ruling_party = 3 } #socialism
-								is_in_array = { ruling_party = 4 } #Communist-State
-								is_in_array = { ruling_party = 5 } #anarchist_communism
-								is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-								is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-								is_in_array = { ruling_party = 18 } #neutral_Social
-								is_in_array = { ruling_party = 19 } #Neutral_Communism
+								western_liberals_are_in_power = yes #liberalism
+								western_social_democrats_are_in_power = yes #socialism
+								emerging_communist_state_are_in_power = yes #Communist-State
+								emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+								neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+								neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+								neutrality_neutral_social_are_in_power = yes #neutral_Social
+								neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
 							#}
 						}
 					}
@@ -1318,14 +1320,15 @@ coalition_decisions = {
 			}
 		}
 
-
 		ai_will_do = { base = 0 }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision Autocracy_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_7 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 7 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^7 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -1340,13 +1343,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_communism = party_pop_elect_array^7 }
 				}
 			}
-			country_event = { id = coalition.7 }
+			country_event = coalition.7
 		}
 	}
 	Autocracy_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 7 } }
+		visible = { emerging_autocracy_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -1354,7 +1357,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Autocracy_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_7 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 7 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^7 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -1381,8 +1386,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^8 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 8 } #is already in coalition
-					is_in_array = { ruling_party = 8 } #is already in coalition
+					emerging_moderate_shiite_are_in_coalition = yes #is already in coalition
+					emerging_moderate_shiite_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -1408,34 +1413,33 @@ coalition_decisions = {
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 17 } #Neutral_green
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
+						western_autocrats_are_in_coalition = yes #Western_Autocracy
+						western_conservatism_are_in_coalition = yes #conservatism
+						western_liberals_are_in_coalition = yes #liberalism
+						western_social_democrats_are_in_coalition = yes #socialism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						salafist_kingdom_are_in_coalition = yes #Kingdom
+						salafist_caliphate_are_in_coalition = yes #Caliphate
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+						nationalist_monarchists_are_in_coalition = yes #Monarchist
 						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 17 } #Neutral_green
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 23 } #Monarchist
+						western_autocrats_are_in_power = yes #Western_Autocracy
+						western_conservatism_are_in_power = yes #conservatism
+						western_liberals_are_in_power = yes #liberalism
+						western_social_democrats_are_in_power = yes #socialism
+						emerging_communist_state_are_in_power = yes #Communist-State
+						salafist_kingdom_are_in_power = yes #Kingdom
+						salafist_caliphate_are_in_power = yes #Caliphate
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_power = yes #Neutral_green
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+						nationalist_monarchists_are_in_power = yes #Monarchist
 					#}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -1443,7 +1447,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Mod_Vilayat_e_Faqih_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_8 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 8 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^8 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -1458,13 +1464,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_communism = party_pop_elect_array^8 }
 				}
 			}
-			country_event = { id = coalition.8 }
+			country_event = coalition.8
 		}
 	}
 	Mod_Vilayat_e_Faqih_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 8 } }
+		visible = { emerging_moderate_shiite_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -1472,7 +1478,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Mod_Vilayat_e_Faqih_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_8 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 8 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^8 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -1500,8 +1508,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^9 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 9 } #is already in coalition
-					is_in_array = { ruling_party = 9 } #is already in coalition
+					emerging_hardline_shiite_are_in_coalition = yes #is already in coalition
+					emerging_hardline_shiite_are_in_power = yes #is already in coalition
 
 				}
 			}
@@ -1528,34 +1536,33 @@ coalition_decisions = {
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 17 } #Neutral_green
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
+						western_autocrats_are_in_coalition = yes #Western_Autocracy
+						western_conservatism_are_in_coalition = yes #conservatism
+						western_liberals_are_in_coalition = yes #liberalism
+						western_social_democrats_are_in_coalition = yes #socialism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						salafist_kingdom_are_in_coalition = yes #Kingdom
+						salafist_caliphate_are_in_coalition = yes #Caliphate
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+						nationalist_monarchists_are_in_coalition = yes #Monarchist
 						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 17 } #Neutral_green
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 23 } #Monarchist
+						western_autocrats_are_in_power = yes #Western_Autocracy
+						western_conservatism_are_in_power = yes #conservatism
+						western_liberals_are_in_power = yes #liberalism
+						western_social_democrats_are_in_power = yes #socialism
+						emerging_communist_state_are_in_power = yes #Communist-State
+						salafist_kingdom_are_in_power = yes #Kingdom
+						salafist_caliphate_are_in_power = yes #Caliphate
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_power = yes #Neutral_green
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+						nationalist_monarchists_are_in_power = yes #Monarchist
 					#}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -1563,7 +1570,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Vilayat_e_Faqih_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_9 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 9 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^9 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -1578,13 +1587,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_communism = party_pop_elect_array^9 }
 				}
 			}
-			country_event = { id = coalition.9 }
+			country_event = coalition.9
 		}
 	}
 	Vilayat_e_Faqih_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 9 } }
+		visible = { emerging_hardline_shiite_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -1592,7 +1601,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Vilayat_e_Faqih_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_9 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 9 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^9 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -1622,8 +1633,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^10 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 10 } #is already in coalition
-					is_in_array = { ruling_party = 10 } #is already in coalition
+					salafist_kingdom_are_in_coalition = yes #is already in coalition
+					salafist_kingdom_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -1649,38 +1660,37 @@ coalition_decisions = {
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 17 } #Neutral_green
-						is_in_array = { gov_coalition_array = 18 } #neutral_Social
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
+						western_conservatism_are_in_coalition = yes #conservatism
+						western_liberals_are_in_coalition = yes #liberalism
+						western_social_democrats_are_in_coalition = yes #socialism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+						emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+						emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+						neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+						neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+						nationalist_monarchists_are_in_coalition = yes #Monarchist
 						#won't join coalition if:
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 17 } #Neutral_green
-						is_in_array = { ruling_party = 18 } #neutral_Social
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 23 } #Monarchist
+						western_conservatism_are_in_power = yes #conservatism
+						western_liberals_are_in_power = yes #liberalism
+						western_social_democrats_are_in_power = yes #socialism
+						emerging_communist_state_are_in_power = yes #Communist-State
+						emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+						emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+						emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+						neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_power = yes #Neutral_green
+						neutrality_neutral_social_are_in_power = yes #neutral_Social
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+						nationalist_monarchists_are_in_power = yes #Monarchist
 					#}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -1688,7 +1698,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Kingdom_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_10 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 10 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^10 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -1703,15 +1715,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_fascism = party_pop_elect_array^10 }
 				}
 			}
-			country_event = { id = coalition.10 }
+			country_event = coalition.10
 		}
 	}
 	Kingdom_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 10 } }
-
-
+		visible = { salafist_kingdom_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -1719,7 +1729,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Kingdom_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_10 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 10 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^10 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -1746,8 +1758,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^11 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 11 } #is already in coalition
-					is_in_array = { ruling_party = 11 } #is already in coalition
+					salafist_caliphate_are_in_coalition = yes #is already in coalition
+					salafist_caliphate_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -1773,46 +1785,45 @@ coalition_decisions = {
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 6 } #Conservative
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-						is_in_array = { gov_coalition_array = 15 } #oligarchism
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 17 } #Neutral_green
-						is_in_array = { gov_coalition_array = 18 } #neutral_Social
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
+						western_conservatism_are_in_coalition = yes #conservatism
+						western_liberals_are_in_coalition = yes #liberalism
+						western_social_democrats_are_in_coalition = yes #socialism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+						emerging_reactionaries_are_in_coalition = yes #Conservative
+						emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+						emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+						neutrality_neutral_conservatism_are_in_coalition = yes #Neutral_conservatism
+						neutrality_neutral_oligarch_are_in_coalition = yes #oligarchism
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+						neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+						nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
+						nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+						nationalist_monarchists_are_in_coalition = yes #Monarchist
 						#won't join coalition if:
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 6 } #Conservative
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 14 } #Neutral_conservatism
-						is_in_array = { ruling_party = 15 } #oligarchism
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 17 } #Neutral_green
-						is_in_array = { ruling_party = 18 } #neutral_Social
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 20 } #Nat_Populism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 23 } #Monarchist
+						western_conservatism_are_in_power = yes #conservatism
+						western_liberals_are_in_power = yes #liberalism
+						western_social_democrats_are_in_power = yes #socialism
+						emerging_communist_state_are_in_power = yes #Communist-State
+						emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+						emerging_reactionaries_are_in_power = yes #Conservative
+						emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+						emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+						neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
+						neutrality_neutral_oligarch_are_in_power = yes #oligarchism
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_power = yes #Neutral_green
+						neutrality_neutral_social_are_in_power = yes #neutral_Social
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+						nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
+						nationalist_fascist_are_in_power = yes #Nat_Fascism
+						nationalist_monarchists_are_in_power = yes #Monarchist
 					#}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -1820,7 +1831,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Caliphate_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_11 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 11 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^11 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -1835,13 +1848,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_fascism = party_pop_elect_array^11 }
 				}
 			}
-			country_event = { id = coalition.11 }
+			country_event = coalition.11
 		}
 	}
 	Caliphate_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 11 } }
+		visible = { salafist_caliphate_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -1849,7 +1862,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Caliphate_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_11 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 11 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^11 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -1877,8 +1892,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^12 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 12 } #is already in coalition
-					is_in_array = { ruling_party = 12 } #is already in coalition
+					neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #is already in coalition
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes #is already in coalition
 
 				}
 			}
@@ -1905,40 +1920,39 @@ coalition_decisions = {
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 7 } #Autocracy
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 17 } #Neutral_green
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
+						western_autocrats_are_in_coalition = yes #Western_Autocracy
+						western_liberals_are_in_coalition = yes #liberalism
+						western_social_democrats_are_in_coalition = yes #socialism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						emerging_autocracy_are_in_coalition = yes #Autocracy
+						salafist_kingdom_are_in_coalition = yes #Kingdom
+						neutrality_neutral_autocracy_are_in_coalition = yes #Neutral_Autocracy
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+						nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
+						nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+						nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
+						nationalist_monarchists_are_in_coalition = yes #Monarchist
 						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 7 } #Autocracy
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 17 } #Neutral_green
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 20 } #Nat_Populism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 22 } #Nat_Autocracy
-						is_in_array = { ruling_party = 23 } #Monarchist
+						western_autocrats_are_in_power = yes #Western_Autocracy
+						western_liberals_are_in_power = yes #liberalism
+						western_social_democrats_are_in_power = yes #socialism
+						emerging_communist_state_are_in_power = yes #Communist-State
+						emerging_autocracy_are_in_power = yes #Autocracy
+						salafist_kingdom_are_in_power = yes #Kingdom
+						neutrality_neutral_autocracy_are_in_power = yes #Neutral_Autocracy
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_power = yes #Neutral_green
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+						nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
+						nationalist_fascist_are_in_power = yes #Nat_Fascism
+						nationalist_military_junta_are_in_power = yes #Nat_Autocracy
+						nationalist_monarchists_are_in_power = yes #Monarchist
 					#}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -1946,7 +1960,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Muslim_Brotherhood_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_12 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 12 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^12 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -1961,13 +1977,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_neutrality = party_pop_elect_array^12 }
 				}
 			}
-			country_event = { id = coalition.12 }
+			country_event = coalition.12
 		}
 	}
 	Neutral_Muslim_Brotherhood_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 12 } }
+		visible = { neutrality_neutral_muslim_brotherhood_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -1975,7 +1991,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Muslim_Brotherhood_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_12 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 12 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^12 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -2003,8 +2021,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^13 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 13 } #is already in coalition
-					is_in_array = { ruling_party = 13 } #is already in coalition
+					neutrality_neutral_autocracy_are_in_coalition = yes #is already in coalition
+					neutrality_neutral_autocracy_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -2034,27 +2052,27 @@ coalition_decisions = {
 							}
 							#hidden_trigger = {
 								#won't join coalition if:
-								is_in_array = { gov_coalition_array = 1 } #conservatism
-								is_in_array = { gov_coalition_array = 2 } #liberalism
-								is_in_array = { gov_coalition_array = 3 } #socialism
-								is_in_array = { gov_coalition_array = 4 } #Communist-State
-								is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-								is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-								is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-								is_in_array = { gov_coalition_array = 17 } #Neutral_green
-								is_in_array = { gov_coalition_array = 18 } #neutral_Social
-								is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+								western_conservatism_are_in_coalition = yes #conservatism
+								western_liberals_are_in_coalition = yes #liberalism
+								western_social_democrats_are_in_coalition = yes #socialism
+								emerging_communist_state_are_in_coalition = yes #Communist-State
+								emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+								neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+								neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+								neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+								neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+								neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
 								#won't join coalition if:
-								is_in_array = { ruling_party = 1 } #conservatism
-								is_in_array = { ruling_party = 2 } #liberalism
-								is_in_array = { ruling_party = 3 } #socialism
-								is_in_array = { ruling_party = 4 } #Communist-State
-								is_in_array = { ruling_party = 5 } #anarchist_communism
-								is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-								is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-								is_in_array = { ruling_party = 17 } #Neutral_green
-								is_in_array = { ruling_party = 18 } #neutral_Social
-								is_in_array = { ruling_party = 19 } #Neutral_Communism
+								western_conservatism_are_in_power = yes #conservatism
+								western_liberals_are_in_power = yes #liberalism
+								western_social_democrats_are_in_power = yes #socialism
+								emerging_communist_state_are_in_power = yes #Communist-State
+								emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+								neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+								neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+								neutrality_neutral_green_are_in_power = yes #Neutral_green
+								neutrality_neutral_social_are_in_power = yes #neutral_Social
+								neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
 							#}
 						}
 					}
@@ -2062,14 +2080,15 @@ coalition_decisions = {
 			}
 		}
 
-
 		ai_will_do = { base = 0 }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Autocracy_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_13 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 13 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^13 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -2084,13 +2103,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_neutrality = party_pop_elect_array^13 }
 				}
 			}
-			country_event = { id = coalition.13 }
+			country_event = coalition.13
 		}
 	}
 	Neutral_Autocracy_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 13 } }
+		visible = { neutrality_neutral_autocracy_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -2098,7 +2117,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Autocracy_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_13 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 13 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^13 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -2126,8 +2147,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^14 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 14 } #is already in coalition
-					is_in_array = { ruling_party = 14 } #is already in coalition
+					neutrality_neutral_conservatism_are_in_coalition = yes #is already in coalition
+					neutrality_neutral_conservatism_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -2159,36 +2180,35 @@ coalition_decisions = {
 							NOT = {
 								tag = ITA
 							}
-							is_in_array = { gov_coalition_array = 3 } #socialist
+							western_social_democrats_are_in_coalition = yes #socialist
 						}
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 18 } #neutral_Social
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+						salafist_kingdom_are_in_coalition = yes #Kingdom
+						salafist_caliphate_are_in_coalition = yes #Caliphate
+						neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+						nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+						nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
 						#won't join coalition if:
 						AND = {
 							NOT = {
 								tag = ITA
 							}
-							is_in_array = { ruling_party = 3 } #socialist
+							western_social_democrats_are_in_power = yes #socialist
 						}
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 18 } #neutral_Social
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 22 } #Nat_Autocracy
+						emerging_communist_state_are_in_power = yes #Communist-State
+						emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+						salafist_kingdom_are_in_power = yes #Kingdom
+						salafist_caliphate_are_in_power = yes #Caliphate
+						neutrality_neutral_social_are_in_power = yes #neutral_Social
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+						nationalist_fascist_are_in_power = yes #Nat_Fascism
+						nationalist_military_junta_are_in_power = yes #Nat_Autocracy
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -2196,7 +2216,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_conservatism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_14 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 14 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^14 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -2211,13 +2233,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_neutrality = party_pop_elect_array^14 }
 				}
 			}
-			country_event = { id = coalition.14 }
+			country_event = coalition.14
 		}
 	}
 	Neutral_conservatism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 14 } }
+		visible = { neutrality_neutral_conservatism_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -2225,7 +2247,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_conservatism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_14 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 14 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^14 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -2253,8 +2277,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^15 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 15 } #is already in coalition
-					is_in_array = { ruling_party = 15 } #is already in coalition
+					neutrality_neutral_oligarch_are_in_coalition = yes #is already in coalition
+					neutrality_neutral_oligarch_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -2279,28 +2303,27 @@ coalition_decisions = {
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
+						salafist_kingdom_are_in_coalition = yes #Kingdom
+						salafist_caliphate_are_in_coalition = yes #Caliphate
+						nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+						neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
 						#won't join coalition if:
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
+						salafist_kingdom_are_in_power = yes #Kingdom
+						salafist_caliphate_are_in_power = yes #Caliphate
+						nationalist_fascist_are_in_power = yes #Nat_Fascism
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+						emerging_communist_state_are_in_power = yes #Communist-State
+						emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+						neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
 					#}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -2308,7 +2331,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision oligarchism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_15 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 15 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^15 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -2323,13 +2348,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_neutrality = party_pop_elect_array^15 }
 				}
 			}
-			country_event = { id = coalition.15 }
+			country_event = coalition.15
 		}
 	}
 	oligarchism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 15 } }
+		visible = { neutrality_neutral_oligarch_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -2337,7 +2362,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision oligarchism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_15 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 15 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^15 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -2365,8 +2392,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^16 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 16 } #is already in coalition
-					is_in_array = { ruling_party = 16 } #is already in coalition
+					neutrality_neutral_libertarians_are_in_coalition = yes #is already in coalition
+					neutrality_neutral_libertarians_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -2393,47 +2420,46 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-							is_in_array = { gov_coalition_array = 3 } #socialism
-							is_in_array = { gov_coalition_array = 4 } #Communist-State
-							is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-							is_in_array = { gov_coalition_array = 7 } #Autocracy
-							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 10 } #Kingdom
-							is_in_array = { gov_coalition_array = 11 } #Caliphate
-							is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-							is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-							is_in_array = { gov_coalition_array = 15 } #oligarchism
-							is_in_array = { gov_coalition_array = 18 } #neutral_Social
-							is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							western_autocrats_are_in_coalition = yes #Western_Autocracy
+							western_social_democrats_are_in_coalition = yes #socialism
+							emerging_communist_state_are_in_coalition = yes #Communist-State
+							emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+							emerging_autocracy_are_in_coalition = yes #Autocracy
+							emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_coalition = yes #Kingdom
+							salafist_caliphate_are_in_coalition = yes #Caliphate
+							neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+							neutrality_neutral_autocracy_are_in_coalition = yes #Neutral_Autocracy
+							neutrality_neutral_oligarch_are_in_coalition = yes #oligarchism
+							neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+							neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
+							nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+							nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_coalition = yes #Monarchist
 							#won't join coalition if:
-							is_in_array = { ruling_party = 0 } #Western_Autocracy
-							is_in_array = { ruling_party = 3 } #socialism
-							is_in_array = { ruling_party = 4 } #Communist-State
-							is_in_array = { ruling_party = 5 } #anarchist_communism
-							is_in_array = { ruling_party = 7 } #Autocracy
-							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-							is_in_array = { ruling_party = 10 } #Kingdom
-							is_in_array = { ruling_party = 11 } #Caliphate
-							is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-							is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-							is_in_array = { ruling_party = 15 } #oligarchism
-							is_in_array = { ruling_party = 18 } #neutral_Social
-							is_in_array = { ruling_party = 19 } #Neutral_Communism
-							is_in_array = { ruling_party = 21 } #Nat_Fascism
-							is_in_array = { ruling_party = 22 } #Nat_Autocracy
-							is_in_array = { ruling_party = 23 } #Monarchist
+							western_autocrats_are_in_power = yes #Western_Autocracy
+							western_social_democrats_are_in_power = yes #socialism
+							emerging_communist_state_are_in_power = yes #Communist-State
+							emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+							emerging_autocracy_are_in_power = yes #Autocracy
+							emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_power = yes #Kingdom
+							salafist_caliphate_are_in_power = yes #Caliphate
+							neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+							neutrality_neutral_autocracy_are_in_power = yes #Neutral_Autocracy
+							neutrality_neutral_oligarch_are_in_power = yes #oligarchism
+							neutrality_neutral_social_are_in_power = yes #neutral_Social
+							neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
+							nationalist_fascist_are_in_power = yes #Nat_Fascism
+							nationalist_military_junta_are_in_power = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_power = yes #Monarchist
 						#}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -2441,7 +2467,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Libertarian_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_16 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 16 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^16 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -2456,15 +2484,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_neutrality = party_pop_elect_array^16 }
 				}
 			}
-			country_event = { id = coalition.16 }
+			country_event = coalition.16
 		}
 	}
 	Neutral_Libertarian_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 16 } }
-
-
+		visible = { neutrality_neutral_libertarians_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -2472,7 +2498,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Libertarian_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_16 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 16 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^16 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -2500,8 +2528,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^17 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 17 } #is already in coalition
-					is_in_array = { ruling_party = 17 } #is already in coalition
+					neutrality_neutral_green_are_in_coalition = yes #is already in coalition
+					neutrality_neutral_green_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -2528,37 +2556,36 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-							is_in_array = { gov_coalition_array = 6 } #Conservative
-							is_in_array = { gov_coalition_array = 7 } #Autocracy
-							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 10 } #Kingdom
-							is_in_array = { gov_coalition_array = 11 } #Caliphate
-							is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							western_autocrats_are_in_coalition = yes #Western_Autocracy
+							emerging_reactionaries_are_in_coalition = yes #Conservative
+							emerging_autocracy_are_in_coalition = yes #Autocracy
+							emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_coalition = yes #Kingdom
+							salafist_caliphate_are_in_coalition = yes #Caliphate
+							neutrality_neutral_autocracy_are_in_coalition = yes #Neutral_Autocracy
+							nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
+							nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+							nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_coalition = yes #Monarchist
 							#won't join coalition if:
-							is_in_array = { ruling_party = 0 } #Western_Autocracy
-							is_in_array = { ruling_party = 6 } #Conservative
-							is_in_array = { ruling_party = 7 } #Autocracy
-							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-							is_in_array = { ruling_party = 10 } #Kingdom
-							is_in_array = { ruling_party = 11 } #Caliphate
-							is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-							is_in_array = { ruling_party = 20 } #Nat_Populism
-							is_in_array = { ruling_party = 21 } #Nat_Fascism
-							is_in_array = { ruling_party = 22 } #Nat_Autocracy
-							is_in_array = { ruling_party = 23 } #Monarchist
+							western_autocrats_are_in_power = yes #Western_Autocracy
+							emerging_reactionaries_are_in_power = yes #Conservative
+							emerging_autocracy_are_in_power = yes #Autocracy
+							emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_power = yes #Kingdom
+							salafist_caliphate_are_in_power = yes #Caliphate
+							neutrality_neutral_autocracy_are_in_power = yes #Neutral_Autocracy
+							nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
+							nationalist_fascist_are_in_power = yes #Nat_Fascism
+							nationalist_military_junta_are_in_power = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_power = yes #Monarchist
 						#}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -2566,7 +2593,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_green_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_17 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 17 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^17 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -2581,13 +2610,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_neutrality = party_pop_elect_array^17 }
 				}
 			}
-			country_event = { id = coalition.17 }
+			country_event = coalition.17
 		}
 	}
 	Neutral_green_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 17 } }
+		visible = { neutrality_neutral_green_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -2595,7 +2624,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_green_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_17 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 17 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^17 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -2623,8 +2654,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^18 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 18 } #is already in coalition
-					is_in_array = { ruling_party = 18 } #is already in coalition
+					neutrality_neutral_social_are_in_coalition = yes #is already in coalition
+					neutrality_neutral_social_are_in_power = yes #is already in coalition
 
 				}
 			}
@@ -2652,41 +2683,40 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-							is_in_array = { gov_coalition_array = 1 } #conservatism
-							is_in_array = { gov_coalition_array = 2 } #liberalism
-							is_in_array = { gov_coalition_array = 6 } #Conservative
-							is_in_array = { gov_coalition_array = 7 } #Autocracy
-							is_in_array = { gov_coalition_array = 10 } #Kingdom
-							is_in_array = { gov_coalition_array = 11 } #Caliphate
-							is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-							is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							western_autocrats_are_in_coalition = yes #Western_Autocracy
+							western_conservatism_are_in_coalition = yes #conservatism
+							western_liberals_are_in_coalition = yes #liberalism
+							emerging_reactionaries_are_in_coalition = yes #Conservative
+							emerging_autocracy_are_in_coalition = yes #Autocracy
+							salafist_kingdom_are_in_coalition = yes #Kingdom
+							salafist_caliphate_are_in_coalition = yes #Caliphate
+							neutrality_neutral_autocracy_are_in_coalition = yes #Neutral_Autocracy
+							neutrality_neutral_conservatism_are_in_coalition = yes #Neutral_conservatism
+							neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+							nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
+							nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+							nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_coalition = yes #Monarchist
 							#won't join coalition if:
-							is_in_array = { ruling_party = 0 } #Western_Autocracy
-							is_in_array = { ruling_party = 1 } #conservatism
-							is_in_array = { ruling_party = 2 } #liberalism
-							is_in_array = { ruling_party = 6 } #Conservative
-							is_in_array = { ruling_party = 7 } #Autocracy
-							is_in_array = { ruling_party = 10 } #Kingdom
-							is_in_array = { ruling_party = 11 } #Caliphate
-							is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-							is_in_array = { ruling_party = 14 } #Neutral_conservatism
-							is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-							is_in_array = { ruling_party = 20 } #Nat_Populism
-							is_in_array = { ruling_party = 21 } #Nat_Fascism
-							is_in_array = { ruling_party = 22 } #Nat_Autocracy
-							is_in_array = { ruling_party = 23 } #Monarchist
+							western_autocrats_are_in_power = yes #Western_Autocracy
+							western_conservatism_are_in_power = yes #conservatism
+							western_liberals_are_in_power = yes #liberalism
+							emerging_reactionaries_are_in_power = yes #Conservative
+							emerging_autocracy_are_in_power = yes #Autocracy
+							salafist_kingdom_are_in_power = yes #Kingdom
+							salafist_caliphate_are_in_power = yes #Caliphate
+							neutrality_neutral_autocracy_are_in_power = yes #Neutral_Autocracy
+							neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
+							neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+							nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
+							nationalist_fascist_are_in_power = yes #Nat_Fascism
+							nationalist_military_junta_are_in_power = yes #Nat_Autocracy
+							nationalist_monarchists_are_in_power = yes #Monarchist
 						#}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -2694,7 +2724,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision neutral_Social_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_18 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 18 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^18 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -2709,13 +2741,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_neutrality = party_pop_elect_array^18 }
 				}
 			}
-			country_event = { id = coalition.18 }
+			country_event = coalition.18
 		}
 	}
 	neutral_Social_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 18 } }
+		visible = { neutrality_neutral_social_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -2723,7 +2755,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision neutral_Social_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_18 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 18 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^18 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -2751,8 +2785,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^19 > election_threshold } #failed elections
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 19 } #is already in coalition
-					is_in_array = { ruling_party = 19 } #is already in coalition
+					neutrality_neutral_communism_are_in_coalition = yes #is already in coalition
+					neutrality_neutral_communism_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -2779,47 +2813,46 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-							is_in_array = { gov_coalition_array = 1 } #conservatism
-							is_in_array = { gov_coalition_array = 2 } #liberalism
-							is_in_array = { gov_coalition_array = 6 } #Conservative
-							is_in_array = { gov_coalition_array = 7 } #Autocracy
-							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-							is_in_array = { gov_coalition_array = 10 } #Kingdom
-							is_in_array = { gov_coalition_array = 11 } #Caliphate
-							is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-							is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-							is_in_array = { gov_coalition_array = 15 } #oligarchism
-							is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							western_autocrats_are_in_coalition = yes #Western_Autocracy
+							western_conservatism_are_in_coalition = yes #conservatism
+							western_liberals_are_in_coalition = yes #liberalism
+							emerging_reactionaries_are_in_coalition = yes #Conservative
+							emerging_autocracy_are_in_coalition = yes #Autocracy
+							emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_coalition = yes #Kingdom
+							salafist_caliphate_are_in_coalition = yes #Caliphate
+							neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+							neutrality_neutral_autocracy_are_in_coalition = yes #Neutral_Autocracy
+							neutrality_neutral_conservatism_are_in_coalition = yes #Neutral_conservatism
+							neutrality_neutral_oligarch_are_in_coalition = yes #oligarchism
+							neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+							nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
+							nationalist_fascist_are_in_coalition = yes #Nat_Fascism
+							nationalist_monarchists_are_in_coalition = yes #Monarchist
 							#won't join coalition if:
-							is_in_array = { ruling_party = 0 } #Western_Autocracy
-							is_in_array = { ruling_party = 1 } #conservatism
-							is_in_array = { ruling_party = 2 } #liberalism
-							is_in_array = { ruling_party = 6 } #Conservative
-							is_in_array = { ruling_party = 7 } #Autocracy
-							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-							is_in_array = { ruling_party = 10 } #Kingdom
-							is_in_array = { ruling_party = 11 } #Caliphate
-							is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-							is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-							is_in_array = { ruling_party = 14 } #Neutral_conservatism
-							is_in_array = { ruling_party = 15 } #oligarchism
-							is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-							is_in_array = { ruling_party = 20 } #Nat_Populism
-							is_in_array = { ruling_party = 21 } #Nat_Fascism
-							is_in_array = { ruling_party = 23 } #Monarchist
+							western_autocrats_are_in_power = yes #Western_Autocracy
+							western_conservatism_are_in_power = yes #conservatism
+							western_liberals_are_in_power = yes #liberalism
+							emerging_reactionaries_are_in_power = yes #Conservative
+							emerging_autocracy_are_in_power = yes #Autocracy
+							emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+							emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+							salafist_kingdom_are_in_power = yes #Kingdom
+							salafist_caliphate_are_in_power = yes #Caliphate
+							neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+							neutrality_neutral_autocracy_are_in_power = yes #Neutral_Autocracy
+							neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
+							neutrality_neutral_oligarch_are_in_power = yes #oligarchism
+							neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+							nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
+							nationalist_fascist_are_in_power = yes #Nat_Fascism
+							nationalist_monarchists_are_in_power = yes #Monarchist
 						#}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -2827,7 +2860,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Communism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_19 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 19 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^19 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -2842,13 +2877,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_neutrality = party_pop_elect_array^19 }
 				}
 			}
-			country_event = { id = coalition.19 }
+			country_event = coalition.19
 		}
 	}
 	Neutral_Communism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 19 } }
+		visible = { neutrality_neutral_communism_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -2856,7 +2891,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Communism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_19 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 19 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^19 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -2884,8 +2921,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^20 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 20 } #is already in coalition
-					is_in_array = { ruling_party = 20 } #is already in coalition
+					nationalist_right_wing_populists_are_in_coalition = yes #is already in coalition
+					nationalist_right_wing_populists_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -2915,31 +2952,30 @@ coalition_decisions = {
 						}
 						#hidden_trigger = {
 							#won't join coalition if:
-							is_in_array = { gov_coalition_array = 3 } #socialism
-							is_in_array = { gov_coalition_array = 4 } #Communist-State
-							is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-							is_in_array = { gov_coalition_array = 10 } #Kingdom
-							is_in_array = { gov_coalition_array = 11 } #Caliphate
-							is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-							is_in_array = { gov_coalition_array = 17 } #Neutral_green
-							is_in_array = { gov_coalition_array = 18 } #neutral_Social
-							is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+							western_social_democrats_are_in_coalition = yes #socialism
+							emerging_communist_state_are_in_coalition = yes #Communist-State
+							emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+							salafist_kingdom_are_in_coalition = yes #Kingdom
+							salafist_caliphate_are_in_coalition = yes #Caliphate
+							neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+							neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+							neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+							neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
 							#won't join coalition if:
-							is_in_array = { ruling_party = 3 } #socialism
-							is_in_array = { ruling_party = 4 } #Communist-State
-							is_in_array = { ruling_party = 5 } #anarchist_communism
-							is_in_array = { ruling_party = 10 } #Kingdom
-							is_in_array = { ruling_party = 11 } #Caliphate
-							is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-							is_in_array = { ruling_party = 17 } #Neutral_green
-							is_in_array = { ruling_party = 18 } #neutral_Social
-							is_in_array = { ruling_party = 19 } #Neutral_Communism
+							western_social_democrats_are_in_power = yes #socialism
+							emerging_communist_state_are_in_power = yes #Communist-State
+							emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+							salafist_kingdom_are_in_power = yes #Kingdom
+							salafist_caliphate_are_in_power = yes #Caliphate
+							neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+							neutrality_neutral_green_are_in_power = yes #Neutral_green
+							neutrality_neutral_social_are_in_power = yes #neutral_Social
+							neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
 						#}
 					}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -2947,7 +2983,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Populism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_20 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 20 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^20 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -2962,13 +3000,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_nationalist = party_pop_elect_array^20 }
 				}
 			}
-			country_event = { id = coalition.20 }
+			country_event = coalition.20
 		}
 	}
 	Nat_Populism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 20 } }
+		visible = { nationalist_right_wing_populists_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -2976,7 +3014,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Populism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_20 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 20 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^20 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -3004,8 +3044,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^21 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 21 } #is already in coalition
-					is_in_array = { ruling_party = 21 } #is already in coalition
+					nationalist_fascist_are_in_coalition = yes #is already in coalition
+					nationalist_fascist_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -3035,39 +3075,39 @@ coalition_decisions = {
 							}
 							#hidden_trigger = {
 								#won't join coalition if:
-								is_in_array = { gov_coalition_array = 1 } #conservatism
-								is_in_array = { gov_coalition_array = 2 } #liberalism
-								is_in_array = { gov_coalition_array = 3 } #socialism
-								is_in_array = { gov_coalition_array = 4 } #Communist-State
-								is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-								is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-								is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-								is_in_array = { gov_coalition_array = 10 } #Kingdom
-								is_in_array = { gov_coalition_array = 11 } #Caliphate
-								is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-								is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-								is_in_array = { gov_coalition_array = 15 } #oligarchism
-								is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-								is_in_array = { gov_coalition_array = 17 } #Neutral_green
-								is_in_array = { gov_coalition_array = 18 } #neutral_Social
-								is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+								western_conservatism_are_in_coalition = yes #conservatism
+								western_liberals_are_in_coalition = yes #liberalism
+								western_social_democrats_are_in_coalition = yes #socialism
+								emerging_communist_state_are_in_coalition = yes #Communist-State
+								emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+								emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+								emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+								salafist_kingdom_are_in_coalition = yes #Kingdom
+								salafist_caliphate_are_in_coalition = yes #Caliphate
+								neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+								neutrality_neutral_conservatism_are_in_coalition = yes #Neutral_conservatism
+								neutrality_neutral_oligarch_are_in_coalition = yes #oligarchism
+								neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+								neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+								neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+								neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
 								#won't join coalition if:
-								is_in_array = { ruling_party = 1 } #conservatism
-								is_in_array = { ruling_party = 2 } #liberalism
-								is_in_array = { ruling_party = 3 } #socialism
-								is_in_array = { ruling_party = 4 } #Communist-State
-								is_in_array = { ruling_party = 5 } #anarchist_communism
-								is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-								is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-								is_in_array = { ruling_party = 10 } #Kingdom
-								is_in_array = { ruling_party = 11 } #Caliphate
-								is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-								is_in_array = { ruling_party = 14 } #Neutral_conservatism
-								is_in_array = { ruling_party = 15 } #oligarchism
-								is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-								is_in_array = { ruling_party = 17 } #Neutral_green
-								is_in_array = { ruling_party = 18 } #neutral_Social
-								is_in_array = { ruling_party = 19 } #Neutral_Communism
+								western_conservatism_are_in_power = yes #conservatism
+								western_liberals_are_in_power = yes #liberalism
+								western_social_democrats_are_in_power = yes #socialism
+								emerging_communist_state_are_in_power = yes #Communist-State
+								emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+								emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+								emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+								salafist_kingdom_are_in_power = yes #Kingdom
+								salafist_caliphate_are_in_power = yes #Caliphate
+								neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+								neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
+								neutrality_neutral_oligarch_are_in_power = yes #oligarchism
+								neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+								neutrality_neutral_green_are_in_power = yes #Neutral_green
+								neutrality_neutral_social_are_in_power = yes #neutral_Social
+								neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
 							#}
 						}
 					}
@@ -3075,14 +3115,15 @@ coalition_decisions = {
 			}
 		}
 
-
 		ai_will_do = { base = 0 }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Fascism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_21 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 21 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^21 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -3097,13 +3138,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_nationalist = party_pop_elect_array^21 }
 				}
 			}
-			country_event = { id = coalition.21 }
+			country_event = coalition.21
 		}
 	}
 	Nat_Fascism_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 21 } }
+		visible = { nationalist_fascist_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -3111,7 +3152,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Fascism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_21 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 21 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^21 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -3138,8 +3181,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^22 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 22 } #is already in coalition
-					is_in_array = { ruling_party = 22 } #is already in coalition
+					nationalist_military_junta_are_in_coalition = yes #is already in coalition
+					nationalist_military_junta_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -3165,34 +3208,33 @@ coalition_decisions = {
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 17 } #Neutral_green
-						is_in_array = { gov_coalition_array = 18 } #neutral_Social
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+						western_conservatism_are_in_coalition = yes #conservatism
+						western_liberals_are_in_coalition = yes #liberalism
+						western_social_democrats_are_in_coalition = yes #socialism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+						neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_conservatism_are_in_coalition = yes #Neutral_conservatism
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+						neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
 						#won't join coalition if:
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 14 } #Neutral_conservatism
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 17 } #Neutral_green
-						is_in_array = { ruling_party = 18 } #neutral_Social
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
+						western_conservatism_are_in_power = yes #conservatism
+						western_liberals_are_in_power = yes #liberalism
+						western_social_democrats_are_in_power = yes #socialism
+						emerging_communist_state_are_in_power = yes #Communist-State
+						emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+						neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_power = yes #Neutral_green
+						neutrality_neutral_social_are_in_power = yes #neutral_Social
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
 					#}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -3200,7 +3242,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Autocracy_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_22 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 22 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^22 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -3215,13 +3259,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_nationalist = party_pop_elect_array^22 }
 				}
 			}
-			country_event = { id = coalition.22 }
+			country_event = coalition.22
 		}
 	}
 	Nat_Autocracy_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 22 } }
+		visible = { nationalist_military_junta_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -3229,7 +3273,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Autocracy_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_22 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 22 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^22 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -3256,8 +3302,8 @@ coalition_decisions = {
 			check_variable = { party_pop_elect_array^23 > election_threshold }
 			NOT = {
 				OR = {
-					is_in_array = { gov_coalition_array = 23 } #is already in coalition
-					is_in_array = { ruling_party = 23 } #is already in coalition
+					nationalist_monarchists_are_in_coalition = yes #is already in coalition
+					nationalist_monarchists_are_in_power = yes #is already in coalition
 				}
 			}
 		}
@@ -3283,36 +3329,35 @@ coalition_decisions = {
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 17 } #Neutral_green
-						is_in_array = { gov_coalition_array = 18 } #neutral_Social
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+						western_liberals_are_in_coalition = yes #liberalism
+						western_social_democrats_are_in_coalition = yes #socialism
+						emerging_communist_state_are_in_coalition = yes #Communist-State
+						emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
+						emerging_moderate_shiite_are_in_coalition = yes #Mod_Vilayat_e_Faqih
+						emerging_hardline_shiite_are_in_coalition = yes #Vilayat_e_Faqih
+						salafist_kingdom_are_in_coalition = yes #Kingdom
+						neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_coalition = yes #Neutral_green
+						neutrality_neutral_social_are_in_coalition = yes #neutral_Social
+						neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
 						#won't join coalition if:
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 17 } #Neutral_green
-						is_in_array = { ruling_party = 18 } #neutral_Social
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
+						western_liberals_are_in_power = yes #liberalism
+						western_social_democrats_are_in_power = yes #socialism
+						emerging_communist_state_are_in_power = yes #Communist-State
+						emerging_anarchist_communism_are_in_power = yes #anarchist_communism
+						emerging_moderate_shiite_are_in_power = yes #Mod_Vilayat_e_Faqih
+						emerging_hardline_shiite_are_in_power = yes #Vilayat_e_Faqih
+						salafist_kingdom_are_in_power = yes #Kingdom
+						neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
+						neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
+						neutrality_neutral_green_are_in_power = yes #Neutral_green
+						neutrality_neutral_social_are_in_power = yes #neutral_Social
+						neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
 					#}
 				}
 			}
 		}
-
 
 		ai_will_do = { base = 0 }
 
@@ -3320,7 +3365,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Monarchist_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_23 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 23 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^23 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
@@ -3335,13 +3382,13 @@ coalition_decisions = {
 					add_to_variable = { coalition_nationalist = party_pop_elect_array^23 }
 				}
 			}
-			country_event = { id = coalition.23 }
+			country_event = coalition.23
 		}
 	}
 	Monarchist_remove = {
 		icon = decision
 		available = { NOT = { has_country_flag = coalition_party_negotiations } }
-		visible = { is_in_array = { gov_coalition_array = 23 } }
+		visible = { nationalist_monarchists_are_in_coalition = yes }
 
 		ai_will_do = { base = 0 }
 
@@ -3349,7 +3396,9 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Monarchist_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				pol_distance_matrix_23 = yes
+				set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+				set_temp_variable = { pol_dist_target_index = 23 }
+				get_pol_distance = yes
 				multiply_variable = { pol_distance_current = party_pop_elect_array^23 } #size
 				set_variable = { pp_cost_to_invite = pol_distance_current }
 				multiply_variable = { pp_cost_to_invite = 1500 } #75%
@@ -3383,9 +3432,6 @@ coalition_decisions = {
 				}
 			}
 		}
-		available = {
-		}
-
 
 
 		ai_will_do = { base = 0 }
@@ -3393,7 +3439,7 @@ coalition_decisions = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision give_up_coalition_0"
 			set_max_index_1 = yes
-			country_event = { id = coalition_pass.0 }
+			country_event = coalition_pass.0
 		}
 	}
 	give_up_coalition_1 = {
@@ -3409,9 +3455,6 @@ coalition_decisions = {
 				}
 			}
 		}
-		available = {
-		}
-
 
 
 		ai_will_do = { base = 0 }
@@ -3419,7 +3462,7 @@ coalition_decisions = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision give_up_coalition_1"
 			set_max_index_2 = yes
-			country_event = { id = coalition_pass.1 }
+			country_event = coalition_pass.1
 		}
 	}
 }

@@ -1,126 +1,185 @@
 scripted_gui = {
 	CPD_peace_deal_builder = {
-		# this seems to error in the log but doesn't crash, try later with other contexts
-		context_type = diplomatic_action
-		# context_type = player_context
+			# Parser emits an "Unexpected token: context_type" warning in the
+			# error log for this value, but the GUI works correctly at runtime
+			# — the warning is a known false positive. Do not change this to
+			# player_context; that breaks the diplomatic-action entry point.
+			context_type = diplomatic_action
 
-		window_name = "CPD_peace_deal_builder"
+			window_name = "CPD_peace_deal_builder"
 
-		visible = {
-			always = yes
-			#	has_country_flag = CPD_considering_peace_deal
-		}
+			dirty = global.CPD_dirty
 
-		dynamic_lists = {
-			CPD_actionable_states_gridbox = {
-				array = ROOT.CPD_state_list
-				change_scope = yes
-				entry_container = "CPD_peace_deal_state_entry"
-			}
-			CPD_current_deal_gridbox = {
-				array = ROOT.CPD_current_deal_list
-				change_scope = yes
-				entry_container = "CPD_current_peace_deal_entry"
-			}
-			# work back and fix this if it turns out to be unoptimised
-		}
-
-		properties = {
-			# Single State Action
-			CPD_annex_state_button = { image = "[CPD_ANNEX_STATE_BUTTON_LOC]" }
-			CPD_make_puppet_in_state_button = { image = "[CPD_MAKE_PUPPET_IN_STATE_BUTTON_LOC]" }
-			CPD_demilitarise_state_button = { image = "[CPD_DEMILITARISE_STATE_BUTTON_LOC]" }
-			CPD_liberate_in_state_button = { image = "[CPD_LIBERATE_IN_STATE_BUTTON_LOC]" }
-			# Full Country Action
-			# CPD_full_puppet_button = { image = "[CPD_FULL_PUPPET_BUTTON_LOC]" }
-
-			# CPD_demands_tab_button = { frame = ROOT.CPD_selected_demands_frame_var }
-			# CPD_concessions_tab_button = { frame = ROOT.CPD_selected_concessions_frame_var }
-		}
-
-		effects = {
-			# Select Concessions/Demand Types
-			CPD_demands_tab_button_click = {
-				ROOT = {
-					# set_variable = { CPD_selected_demands_frame_var = 1 }
-					# set_variable = { CPD_selected_concessions_frame_var = 2 }
-					clr_country_flag = CPD_giving_concessions
+			dynamic_lists = {
+				CPD_actionable_states_gridbox = {
+					array = ROOT.CPD_state_list
+					change_scope = yes
+					entry_container = "CPD_peace_deal_state_entry"
 				}
-				CPD_demand_concede_switch = yes
-			}
-			CPD_concessions_tab_button_click = {
-				ROOT = {
-					# set_variable = { CPD_selected_demands_frame_var = 2 }
-					# set_variable = { CPD_selected_concessions_frame_var = 1 }
-					set_country_flag = CPD_giving_concessions
+				CPD_current_deal_gridbox = {
+					array = ROOT.CPD_current_deal_list
+					change_scope = yes
+					entry_container = "CPD_current_peace_deal_entry"
 				}
-				CPD_demand_concede_switch = yes
 			}
 
-			# Single State Action
-			CPD_annex_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 1 } }
-			CPD_make_puppet_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 2 } }
-			CPD_demilitarise_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 3 } }
-			CPD_liberate_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 4 } } # need to make this possible to select between multiple cores
-			# Full Country Action
-			# CPD_full_puppet_button_click = { CPD_fully_puppet = yes }
+			effects = {
+				# Demands / Concessions tabs
+				CPD_demands_tab_button_click = {
+					ROOT = { clr_country_flag = CPD_giving_concessions }
+					CPD_demand_concede_switch = yes
+					add_to_variable = { global.CPD_dirty = 1 }
+				}
+				CPD_concessions_tab_button_click = {
+					ROOT = { set_country_flag = CPD_giving_concessions }
+					CPD_demand_concede_switch = yes
+					add_to_variable = { global.CPD_dirty = 1 }
+				}
 
-			# ADD STATE TO PEACE DEAL BUILD WITH CURRENT PARAMETERS
-			CPD_add_state_with_parameters_button_click = { CPD_change_state_actions = yes }
-			CPD_clear_from_current_deal_button_click = { CPD_remove_from_deal = yes }
-		}
-		triggers = {
-			# CPD_demilitarise_state_button_visible = { has_country_flag = DREAD_HAS_FINISHED_THIS }
-			CPD_liberate_in_state_button_visible = { has_country_flag = DREAD_HAS_FINISHED_THIS }
-			#
-			CPD_add_state_with_parameters_button_click_enabled = { NOT = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } } }
+				# State action buttons - select which action applies to clicked states
+				CPD_annex_state_button_click = {
+					set_variable = { ROOT.CPD_state_option_selection = 1 }
+					add_to_variable = { global.CPD_dirty = 1 }
+				}
+				CPD_make_puppet_in_state_button_click = {
+					set_variable = { ROOT.CPD_state_option_selection = 2 }
+					add_to_variable = { global.CPD_dirty = 1 }
+				}
+				CPD_demilitarise_state_button_click = {
+					set_variable = { ROOT.CPD_state_option_selection = 3 }
+					add_to_variable = { global.CPD_dirty = 1 }
+				}
+				CPD_liberate_in_state_button_click = {
+					set_variable = { ROOT.CPD_state_option_selection = 4 }
+					add_to_variable = { global.CPD_dirty = 1 }
+				}
+				CPD_resource_rights_button_click = {
+					set_variable = { ROOT.CPD_state_option_selection = 5 }
+					add_to_variable = { global.CPD_dirty = 1 }
+				}
 
-			CPD_AIA_acceptance_ICON_visible = {
-				is_ai = yes
-				CPD_AI_will_accept = yes
+				# Country action buttons - dirty bump is inside each toggle effect
+				CPD_ceasefire_button_click = { CPD_toggle_ceasefire = yes }
+				CPD_war_reparations_button_click = { CPD_toggle_war_reparations = yes }
+				CPD_forced_neutrality_button_click = { CPD_toggle_forced_neutrality = yes }
+				CPD_regime_change_button_click = { CPD_toggle_regime_change = yes }
+				CPD_military_basing_button_click = { CPD_toggle_military_basing = yes }
+				CPD_full_puppet_button_click = { CPD_toggle_full_puppet = yes }
+
+				# State list interactions
+				CPD_add_state_with_parameters_button_click = { CPD_change_state_actions = yes }
+				CPD_clear_from_current_deal_button_click = { CPD_remove_from_deal = yes }
 			}
-			CPD_AIA_decline_ICON_visible = {
-				OR = {
-					is_ai = no
-					AND = {
-						is_ai = yes
-						CPD_AI_will_accept = no
+
+			triggers = {
+				# Block all state action buttons when ceasefire is active
+				CPD_annex_state_button_click_enabled = {
+					ROOT = {
+						NOT = { has_country_flag = CPD_ceasefire_demand }
+						NOT = { has_country_flag = CPD_ceasefire_concession }
 					}
 				}
+				CPD_make_puppet_in_state_button_click_enabled = {
+					ROOT = {
+						NOT = { has_country_flag = CPD_ceasefire_demand }
+						NOT = { has_country_flag = CPD_ceasefire_concession }
+						NOT = { has_country_flag = CPD_full_puppet_demand }
+						NOT = { has_country_flag = CPD_full_puppet_concession }
+					}
+				}
+				CPD_demilitarise_state_button_click_enabled = {
+					ROOT = {
+						NOT = { has_country_flag = CPD_ceasefire_demand }
+						NOT = { has_country_flag = CPD_ceasefire_concession }
+					}
+				}
+				CPD_liberate_in_state_button_click_enabled = {
+					ROOT = {
+						NOT = { has_country_flag = CPD_ceasefire_demand }
+						NOT = { has_country_flag = CPD_ceasefire_concession }
+					}
+				}
+				CPD_resource_rights_button_click_enabled = {
+					ROOT = {
+						NOT = { has_country_flag = CPD_ceasefire_demand }
+						NOT = { has_country_flag = CPD_ceasefire_concession }
+					}
+				}
+
+				CPD_add_state_with_parameters_button_click_enabled = {
+					NOT = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
+					ROOT = {
+						NOT = { has_country_flag = CPD_ceasefire_demand }
+						NOT = { has_country_flag = CPD_ceasefire_concession }
+					}
+					OR = {
+						NOT = { ROOT = { check_variable = { CPD_state_option_selection = 2 } } }
+						ROOT = {
+							NOT = { has_country_flag = CPD_full_puppet_demand }
+							NOT = { has_country_flag = CPD_full_puppet_concession }
+						}
+					}
+					# Block demilitarising already-demilitarised states
+					OR = {
+						NOT = { ROOT = { check_variable = { CPD_state_option_selection = 3 } } }
+						NOT = { is_demilitarized_zone = yes }
+					}
+				}
+
+				CPD_AIA_acceptance_ICON_visible = {
+					is_ai = yes
+					CPD_AI_will_accept = yes
+				}
+				# Negate the accept-icon trigger directly so CPD_AI_will_accept
+				# (which runs the expensive CPD_AI_will_accept_calculation) is
+				# evaluated once per frame instead of twice.
+				CPD_AIA_decline_ICON_visible = {
+					NOT = {
+						is_ai = yes
+						CPD_AI_will_accept = yes
+					}
+				}
+				# Send-readiness — mirrors the can_be_sent gate so the player sees
+				# whether the deal is currently sendable before clicking Send.
+				# Each trigger evaluates CPD_deal_is_sendable independently — the
+				# engine doesn't resolve cross-references between visibility
+				# triggers, so chaining them caused both icons to show at once.
+				CPD_send_ready_ICON_visible = { CPD_deal_is_sendable = yes }
+				CPD_send_blocked_ICON_visible = { NOT = { CPD_deal_is_sendable = yes } }
 			}
+
+			ai_enabled = { always = no }
 		}
 
-		ai_enabled = { always = no }
-	}
-
-	# Receiver Event
 	CPD_built_peace_deal = {
-		# this seems to error in the log but doesn't crash, try later with other contexts
-		context_type = diplomatic_action
-		# context_type = player_context
+			# Parser emits an "Unexpected token: context_type" warning in the
+			# error log for this value, but the GUI works correctly at runtime
+			# — the warning is a known false positive. Do not change this to
+			# player_context; that breaks the diplomatic-action entry point.
+			context_type = diplomatic_action
 
-		window_name = "CPD_built_peace_deal"
+			window_name = "CPD_built_peace_deal"
 
-		visible = { always = yes }
+			dirty = global.CPD_dirty
 
-		dynamic_lists = {
-			CPD_current_deal_gridbox_CONCESSIONS_TO_RECEIVER = {
-				array = ROOT.CPD_current_deal_list_CONCESSIONS
-				change_scope = yes
-				entry_container = "CPD_current_peace_deal_entry"
+			dynamic_lists = {
+				CPD_current_deal_gridbox_CONCESSIONS_TO_RECEIVER = {
+					array = ROOT.CPD_current_deal_list_CONCESSIONS
+					change_scope = yes
+					entry_container = "CPD_current_peace_deal_entry"
+				}
+				CPD_current_deal_gridbox_DEMANDS_TO_RECEIVER = {
+					array = ROOT.CPD_current_deal_list_DEMANDS
+					change_scope = yes
+					entry_container = "CPD_current_peace_deal_entry"
+				}
 			}
-			CPD_current_deal_gridbox_DEMANDS_TO_RECEIVER = {
-				array = ROOT.CPD_current_deal_list_DEMANDS
-				change_scope = yes
-				entry_container = "CPD_current_peace_deal_entry"
+
+			properties = {
+				CPD_built_peace_deal_flag_SENDER = { image = "[ROOT.GetFlag]" }
+				CPD_built_peace_deal_flag_RECEIVER = { image = "[THIS.GetFlag]" }
 			}
-		}
 
-		properties = {
-			CPD_built_peace_deal_flag_SENDER = { image = "[ROOT.GetFlag]" }
-			CPD_built_peace_deal_flag_RECEIVER = { image = "[THIS.GetFlag]" }
+			ai_enabled = { always = no }
 		}
-
-		ai_enabled = { always = no }
-	}
 }

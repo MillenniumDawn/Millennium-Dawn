@@ -1,4 +1,46 @@
 on_actions = {
+	on_declare_war = {
+		effect = {
+			# MNNA under attack — fire intervention dilemma to the NATO leader
+			# Skipped if NATO leader is already handling another MNNA attack (event targets are global, so 2nd within 7d would clobber the 1st)
+			if = {
+				limit = {
+					FROM = {
+						has_idea = Major_Non_NATO_Ally
+						NOT = { is_subject_of = ROOT }
+					}
+					NOT = { has_government = democratic }
+					NOT = { has_idea = NATO_member }
+					NOT = { has_idea = Major_Non_NATO_Ally }
+					any_of_scopes = {
+						array = global.nato_members
+						is_faction_leader = yes
+						NOT = { has_country_flag = collapsed_nation }
+						NOT = { has_country_flag = mnna_event_cooldown }
+						NOT = { has_war_with = ROOT }
+						NOT = { tag = ROOT }
+					}
+				}
+				save_event_target_as = mnna_aggressor
+				FROM = { save_event_target_as = mnna_defender }
+				random_scope_in_array = {
+					array = global.nato_members
+					limit = {
+						is_faction_leader = yes
+						NOT = { has_country_flag = collapsed_nation }
+						NOT = { has_country_flag = mnna_event_cooldown }
+						NOT = { has_war_with = event_target:mnna_aggressor }
+					}
+					set_country_flag = {
+						flag = mnna_event_cooldown
+						days = 7
+						value = 1
+					}
+					country_event = { id = department_of_state.232 days = 2 }
+				}
+			}
+		}
+	}
 	on_weekly_USA = {
 		random_events = {
 			1000 = 0
@@ -22,11 +64,20 @@ on_actions = {
 				}
 				remove_ideas = landmark_ICBMsilominot_hidden
 			}
+
+			if = {
+				limit = {
+					NOT = { has_government = communism }
+					has_country_flag = washington_dc_renamed_due_to_gus_hall
+					NOT = { has_country_flag = collapsed_nation }
+				}
+				country_event = { id = usa.70 days = 1 }
+			}
 		}
 	}
 	on_monthly_USA = {
 		random_events = {
-			750 = 0
+			3000 = 0
 
 			100 = usa_economic_events.init # Initialize the Great Financial Crisis
 			1000 = usa_economic_events.35 # End of the Great Recession
@@ -54,17 +105,16 @@ on_actions = {
 					}
 				}
 				USA = {
-					random_list = {
-						35 = {
+					random = {
+						chance = 35
+
 							country_event = {
 								id = department_of_state.01
 								days = 20
 							}
-						}
-						65 = {
-							# Nothing
-						}
+
 					}
+
 				}
 			}
 			if = {
@@ -109,6 +159,27 @@ on_actions = {
 						}
 					}
 				}
+			}
+			if = {
+				limit = {
+					NOT = { has_global_flag = saddam_hussein_captured }
+					has_global_flag = success_of_operation_iraqi_freedom
+					IRQ = { is_subject_of = USA }
+					date > 2003.12.12
+					date < 2006.12.30
+				}
+				set_global_flag = saddam_hussein_captured
+			}
+			if = {
+				limit = {
+					NOT = { has_global_flag = saddam_sentenced_to_death }
+					date > 2006.12.29
+					date < 2015.1.1
+					has_global_flag = success_of_operation_iraqi_freedom
+					IRQ = { is_subject_of = USA }
+				}
+				set_global_flag = saddam_sentenced_to_death
+				news_event = { id = wotnews.13 random_days = 14 random_hours = 24 hours = 6 }
 			}
 		}
 	}

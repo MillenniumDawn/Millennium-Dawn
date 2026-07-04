@@ -12,7 +12,6 @@ on_actions = {
 				if = {
 					limit = { check_variable = { chi_chips > tai_chips } }
 					remove_dynamic_modifier = { modifier = the_great_chip_race_modifier }
-					clr_country_flag = has_great_chip
 				}
 
 				divide_temp_variable = { chi_chips = tai_chips }
@@ -27,6 +26,33 @@ on_actions = {
 					NOT = { has_country_flag = has_had_chip_event }
 				}
 				country_event = taiwan.18
+			}
+		}
+	}
+	on_weekly_CHI = {
+		effect = {
+			if = {
+				limit = {
+					NOT = { has_country_flag = CHI_promise_of_elections }
+					CHI = {
+						has_elections = yes
+						NOT = { has_completed_focus = CHI_Free_and_Fair_Elections }
+					}
+				}
+				set_country_flag = CHI_promise_of_elections
+				country_event = china.6
+			}
+
+			if = {
+				limit = { has_war_with = NKO }
+				if = {
+					limit = { has_idea = CHI_china_economic_assistant }
+					remove_ideas = CHI_china_economic_assistant
+				}
+				if = {
+					limit = { NKO = { has_idea = NKO_china_economic_assistant } }
+					NKO = { remove_ideas = NKO_china_economic_assistant }
+				}
 			}
 		}
 	}
@@ -64,9 +90,11 @@ on_actions = {
 					date > 2049.12.20
 				}
 				annex_country = { target = MAC transfer_troops = yes }
-				1106 = { add_core_of = CHI }
-				1106 = { remove_dynamic_modifier = { modifier = CHI_macau } }
-				1106 = { add_dynamic_modifier = { modifier = CHI_special_economic_zone } }
+				1106 = {
+					add_core_of = CHI
+					remove_dynamic_modifier = { modifier = CHI_macau }
+					add_dynamic_modifier = { modifier = CHI_special_economic_zone }
+				}
 			}
 			if = {
 				limit = {
@@ -74,15 +102,13 @@ on_actions = {
 						has_communist_government_or_in_coalition = yes
 						has_communist_government = yes
 					}
-					AND = {
-						OR = {
-							MON = { is_subject_of = CHI }
-							MON = { exists = no }
-						}
-						OR = {
-							TAI = { is_subject_of = CHI }
-							TAI = { exists = no }
-						}
+					OR = {
+						MON = { is_subject_of = CHI }
+						NOT = { country_exists = MON }
+					}
+					OR = {
+						TAI = { is_subject_of = CHI }
+						NOT = { country_exists = TAI }
 					}
 				}
 				country_event = { id = china.58 days = 1 }
@@ -93,8 +119,8 @@ on_actions = {
 						has_communist_government_or_in_coalition = yes
 						has_communist_government = yes
 					}
-					MON = { exists = no }
-					TAI = { exists = no }
+					NOT = { country_exists = MON }
+					NOT = { country_exists = TAI }
 					is_greater_china_state_owned = yes
 					is_outer_manchuria_state_owned = yes
 					is_buryatia_state_owned = yes

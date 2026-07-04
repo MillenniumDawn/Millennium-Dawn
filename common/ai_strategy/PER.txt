@@ -9,6 +9,7 @@ PER_support_shias = {
 	enable = {
 		NOT = { tag = PER }
 		has_idea = shia
+		NOT = { has_country_flag = Insulted_Iran }
 	}
 	targets = {
 		FSA
@@ -24,7 +25,7 @@ PER_support_shias = {
 		KUW
 		LEB
 	}
-	abort = { has_country_flag = Insulted_Iran }
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "PER" value = 200 }
 	ai_strategy = { type = protect id = "PER" value = 200 }
@@ -37,7 +38,6 @@ PER_support_shias = {
 PER_Hell_bent_on_sending_volunteer_to_iraq = {
 	allowed = { original_tag = PER }
 	enable = {
-		original_tag = PER
 		country_exists = IRQ
 		PER = {
 			has_war = no
@@ -272,9 +272,7 @@ PER_rival_saudis = {
 	enable = {
 		country_exists = SAU
 	}
-	abort = {
-		is_in_faction_with = SAU
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = antagonize id = "SAU" value = 200 }
 	ai_strategy = { type = contain id = "SAU" value = 200 }
@@ -286,7 +284,6 @@ PER_rival_saudis = {
 PER_do_no_volunteer_in_iraq = {
 	allowed = { original_tag = PER }
 	enable = {
-		original_tag = PER
 		OR = {
 			has_global_flag = PER_iraqi_falling
 			AND = {
@@ -330,9 +327,7 @@ PER_support_SUD = {
 		}
 	}
 
-	abort = {
-		has_war_with = PER
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "SUD" value = 50 }
 	ai_strategy = { type = influence id = "SUD" value = 50 }
@@ -400,8 +395,8 @@ PER_warm_with_USA = {
 	enable = {
 		NOT = { has_war_with = USA }
 		PER = {
-			emerging_moderate_shiite_are_not_in_power = yes
-			emerging_hardline_shiite_are_not_in_power = yes
+			emerging_moderate_shiite_are_in_power = no
+			emerging_hardline_shiite_are_in_power = no
 		}
 	}
 	abort_when_not_enabled = yes
@@ -440,13 +435,8 @@ PER_default_naval_breakdown = {
 	ai_strategy = { type = role_ratio id = naval_corvettes value = 50 }
 	ai_strategy = { type = role_ratio id = naval_frigate value = 10 }
 	ai_strategy = { type = role_ratio id = naval_destroyer value = 4 }
-	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = 0 }
 	ai_strategy = { type = role_ratio id = naval_attack_submarine value = 31 }
-	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 0 }
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 5 }
-	ai_strategy = { type = role_ratio id = naval_carrier value = 0 }
-	ai_strategy = { type = role_ratio id = naval_cruiser value = 0 }
-
 }
 
 ##
@@ -558,15 +548,12 @@ PER_support_houthis_during_the_yemeni_war = {
 PER_california_help = {
 	allowed = { original_tag = PER }
 	enable = {
-		original_tag = PER
 		country_exists = CAL
-		PER = {
-			has_war = no
-			OR = {
-				has_government = nationalist
-				has_government = neutrality
-				has_government = democratic
-			}
+		has_war = no
+		OR = {
+			has_government = nationalist
+			has_government = neutrality
+			has_government = democratic
 		}
 	}
 	abort_when_not_enabled = yes
@@ -576,11 +563,8 @@ PER_california_help = {
 PER_confederate_states_america_help = {
 	allowed = { original_tag = PER }
 	enable = {
-		original_tag = PER
 		country_exists = CSA
-		PER = {
-			has_war = no
-		}
+		has_war = no
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = send_volunteers_desire id = "CSA" value = 1000 }
@@ -588,6 +572,14 @@ PER_confederate_states_america_help = {
 }
 
 PER_CENTO_intervention_in_syria = {
+	allowed = {
+		OR = {
+			original_tag = PER
+			original_tag = TUR
+			original_tag = PAK
+			original_tag = IRQ
+		}
+	}
 	enable = {
 		has_idea = faction_cento_alliance
 		has_relation_modifier = {
@@ -623,4 +615,70 @@ PER_support_shia_revolutions = {
 	ai_strategy = { type = befriend id = PER value = 200 }
 	ai_strategy = { type = send_volunteers_desire id = PER value = 200 }
 	ai_strategy = { type = support id = PER value = 200 }
+}
+
+# Wartime execution — asymmetric air/missile doctrine
+PER_asymmetric_air_war = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_war = yes
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = fighter value = 8 }
+	ai_strategy = { type = unit_ratio id = cas value = 6 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 6 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 6 }
+	ai_strategy = { type = air_factory_balance value = 12 }
+}
+
+# Counter superpower navy — boost naval bombers when outmatched at sea
+PER_counter_superpower_navy = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_war = yes
+		OR = {
+			has_war_with = USA
+			has_war_with = ENG
+			enemies_naval_strength_ratio > 1.2
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 12 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 6 }
+}
+
+# Total war against Israel
+PER_total_war_against_israel = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_war_with = ISR
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = ISR value = 300 }
+	ai_strategy = { type = contain id = ISR value = 300 }
+	ai_strategy = { type = force_build_armies value = 100 }
+	ai_strategy = { type = unit_ratio id = fighter value = 6 }
+	ai_strategy = { type = unit_ratio id = cas value = 6 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 10 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 12 }
+	ai_strategy = { type = air_factory_balance value = 14 }
+}
+
+# Pre-war air escalation — build air when tensions rise (prepare_for_war handled by MD_war_declaration_ai.txt)
+PER_prewar_regional_escalation = {
+	allowed = { original_tag = PER }
+	enable = {
+		OR = {
+			threat > 0.15
+			has_wargoal_against = ISR
+		}
+		NOT = { has_war_with = ISR }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = fighter value = 7 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 5 }
 }

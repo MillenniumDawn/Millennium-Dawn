@@ -1,0 +1,42 @@
+---
+import { getCollection } from "astro:content";
+import { BaseLayout } from "@/app/layouts";
+import { SearchableIndex } from "@/features/searchable-index";
+import { STATIC_PAGE_META } from "@/shared/lib/seo/page-meta";
+import { toCardItem } from "@/shared/lib/content/cards";
+import { getTutorialPath } from "@/shared/lib/routing/content-routes";
+import { BODY_TEXT_CLASS, PAGE_TITLE_CLASS } from "@/shared/ui/tailwind";
+
+const tutorialEntries = (await getCollection("tutorials")).slice().sort((a, b) => {
+  const ao = a.data.order ?? Number.MAX_SAFE_INTEGER;
+  const bo = b.data.order ?? Number.MAX_SAFE_INTEGER;
+  if (ao !== bo) return ao - bo;
+  return a.data.title.localeCompare(b.data.title);
+});
+
+const pageMeta = STATIC_PAGE_META.tutorials;
+const cards = tutorialEntries.map((entry) => toCardItem(entry, { url: getTutorialPath(entry) }));
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  description={pageMeta.description}
+  canonicalPath={pageMeta.canonicalPath}
+  toc="off"
+>
+  <h1 class={PAGE_TITLE_CLASS}>Tutorials for Millennium Dawn</h1>
+  <p class={BODY_TEXT_CLASS}>
+    The following is a non-exhaustive list of tutorials and guides available on the website. You can contribute updates
+    and corrections through pull requests.
+  </p>
+
+  <SearchableIndex
+    items={cards}
+    ariaLabel="Player tutorials"
+    pageSize={8}
+    filterLabel="Search"
+    filterPlaceholder="Type to filter..."
+    emptyText="No tutorials matched your search."
+  />
+</BaseLayout>

@@ -1,0 +1,37 @@
+---
+import { getEntry } from "astro:content";
+import { BaseLayout } from "@/app/layouts";
+import { STATIC_PAGE_META } from "@/shared/lib/seo/page-meta";
+import { BODY_TEXT_CLASS, PAGE_TITLE_CLASS } from "@/shared/ui/tailwind";
+import { DevDiaryList } from "@/widgets/dev-diary-list";
+
+const archiveEntry = await getEntry("devDiaryArchive", "index");
+if (!archiveEntry) {
+  throw new Error("Missing devDiaryArchive/index data entry");
+}
+const groups = archiveEntry.data;
+const pageMeta = STATIC_PAGE_META.devDiaries;
+
+const headings = groups.map((group) => ({
+  depth: 2,
+  slug: group.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+  text: group.title,
+}));
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  description={pageMeta.description}
+  canonicalPath={pageMeta.canonicalPath}
+  toc="auto"
+  headings={headings}
+>
+  <h1 class={PAGE_TITLE_CLASS}>Dev Diary Lists</h1>
+  <p class={BODY_TEXT_CLASS}>
+    The Millennium Dawn team rarely writes dev diaries due to release cadence. This section keeps an archive of
+    in-repository and external diary entries.
+  </p>
+
+  <DevDiaryList groups={groups} />
+</BaseLayout>

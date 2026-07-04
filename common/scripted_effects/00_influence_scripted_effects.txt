@@ -10,24 +10,18 @@ init_influence = {
 	clear_array = influence_array
 }
 
-# Effect: startup_influence
-# Purpose: This is the main effect that is used to startup the influence array. Everything else is fired in the on_startup.
-startup_influence = {
-	sort_influence = yes
-}
-
 # Effect: update_dirty_influence_var
 # Purpose: This is the main effect that is used to update the dirty influence variable
 update_dirty_influence_var = {
 	if = {
-		limit = {
-			NOT = { has_variable = global.update_influence_ui }
-			check_variable = { global.update_influence_ui = 10000 }
+		limit = { is_ai = no }
+		if = {
+			limit = { NOT = { has_variable = global.update_influence_ui } }
+			set_variable = { global.update_influence_ui = 1 }
 		}
-		set_variable = { global.update_influence_ui = 1 }
-	}
-	else = {
-		add_to_variable = { global.update_influence_ui = 1 }
+		else = {
+			add_to_variable = { global.update_influence_ui = 1 }
+		}
 	}
 }
 
@@ -38,8 +32,6 @@ recalculate_influence = {
 		delete_influencer_check = yes
 		sort_influence = yes
 		calculate_influence_percentage = yes
-		set_counter_terror_influencer = yes
-		force_update_map_mode = { mapmode = influence_map_mode }
 		update_dirty_influence_var = yes
 	}
 }
@@ -47,8 +39,6 @@ recalculate_influence = {
 # Effect: sort_influence
 # Purpose: This is the main effect that is used to sort the influence array
 sort_influence = {
-	# Creation of temp arrays.
-	# The arrays are "copied" from influence_array and influence_array_val for sorting
 	resize_temp_array = {
 		array = influence_array_val_temp
 		size = influence_array_val^num
@@ -57,7 +47,7 @@ sort_influence = {
 		array = influence_array_temp
 		size = influence_array_val^num
 	}
-	# Sort the values by largest influencer
+	# Sort by largest influencer; write only entries above threshold from existing nations
 	for_loop_effect = {
 		end = influence_array_val^num
 		value = v
@@ -66,56 +56,54 @@ sort_influence = {
 			value = max
 			index = max_index
 		}
-		set_temp_variable = { influence_array_val_temp^v = max } #sets biggest at the earliest available position
-		set_temp_variable = { influence_array_temp^v = influence_array^max_index } #sets biggest TAG at the earliest available position
-		set_variable = { influence_array_val^max_index = -1 } #removes it from selection
+		set_temp_variable = { current_tag = influence_array^max_index }
+		if = { limit = {
+			NOT = { check_variable = { max < 0.01 } }
+			country_exists = var:current_tag
+		}
+			set_temp_variable = { influence_array_val_temp^v = max }
+			set_temp_variable = { influence_array_temp^v = current_tag }
+		}
+		set_variable = { influence_array_val^max_index = -1 }
 	}
 
-	# Clears the Values
 	init_influence = yes
 
+	# Unfilled temp slots are 0 from resize; skip them on restore
 	set_temp_variable = { influence_total = 0 }
-	# Restores destroyed arrays in the above process - i.e. if they were deleted due to being less then 1%
 	for_each_loop = {
 		array = influence_array_val_temp
-		add_to_array = { influence_array_val = v }
-		add_to_temp_variable = { influence_total = v }
+		value = v
+		if = { limit = { NOT = { check_variable = { v = 0 } } }
+			add_to_array = { influence_array_val = v }
+			add_to_temp_variable = { influence_total = v }
+		}
 	}
 	add_to_temp_variable = { influence_total = domestic_influence_amount }
 	for_each_loop = {
 		array = influence_array_temp
-		add_to_array = { influence_array = v }
+		value = v
+		if = { limit = { NOT = { check_variable = { v = 0 } } }
+			add_to_array = { influence_array = v }
+		}
 	}
 	clear_temp_array = influence_array_val_temp
 	clear_temp_array = influence_array_temp
 
 	set_temp_variable = { new_influence_scalar = 100 }
 	divide_temp_variable = { new_influence_scalar = influence_total }
-	multiply_variable = { domestic_influence_amount = new_influence_scalar }
-	clamp_variable = { var = domestic_influence_amount max = 100 min = 0 }
+	set_temp_variable = { foreign_sum = 0 }
 	for_each_loop = {
 		array = influence_array_val
 		value = v
 		index = i
 		multiply_variable = { influence_array_val^i = new_influence_scalar }
 		clamp_variable = { var = influence_array_val^i max = 100 min = 0 }
+		add_to_temp_variable = { foreign_sum = influence_array_val^i }
 	}
-
-	set_temp_variable = { new_influence_total = 0 }
-	add_to_temp_variable = { new_influence_total = domestic_influence_amount }
-	for_each_loop = {
-		array = influence_array_val
-		value = v
-		index = i
-		add_to_temp_variable = { new_influence_total = v }
-	}
-
-	if = { limit = { NOT = { check_variable = { new_influence_total = 100 } } }
-		set_temp_variable = { difference = 100 }
-		subtract_from_temp_variable = { difference = new_influence_total }
-		add_to_variable = { domestic_influence_amount = difference }
-		clamp_variable = { var = domestic_influence_amount min = 0 }
-	}
+	set_variable = { domestic_influence_amount = 100 }
+	subtract_from_variable = { domestic_influence_amount = foreign_sum }
+	clamp_variable = { var = domestic_influence_amount max = 100 min = 0 }
 }
 
 # Effect: calculate_influence_percentage
@@ -161,8 +149,6 @@ calculate_influence_percentage = {
 	multiply_variable = { neutrality_drift_influence_var = 0.001 }
 	multiply_variable = { communism_drift_influence_var = 0.001 }
 	multiply_variable = { democratic_drift_influence_var = 0.001 }
-
-	force_update_dynamic_modifier = yes
 }
 
 # Influence AI Section:
@@ -259,6 +245,9 @@ economic_exploitation_action = {
 	every_neighbor_country = {
 		add_opinion_modifier = { target = PREV modifier = exploited_neighbor }
 	}
+	every_allied_country = {
+		add_opinion_modifier = { target = PREV modifier = exploited_ally }
+	}
 }
 
 # Effect: manipulate_politics_action
@@ -301,53 +290,60 @@ manipulate_politics_action = {
 }
 
 economic_aid_action = {
-	PREV = {
-		PREV = {
-			country_event = { id = influence.0 }
-		}
+	PREV.PREV = {
+		country_event = influence.0
 	}
 }
 
-target_other_influencer_action = {
-	PREV = {
-		PREV = {
-			country_event = { id = influence.22 }
+# MP Enhancements flat Economic Aid transfer.
+# Runs in the SENDER scope. Requires temp vars: mp_aid_amount, mp_aid_influence.
+# event_target:influence_sender / influence_recipient must be set by the caller.
+mp_economic_aid_transfer = {
+	# Hoist the per-option temp vars to globals so they survive the scope switch below.
+	set_variable = { global.mp_aid_amount = mp_aid_amount }
+	set_variable = { global.mp_aid_influence = mp_aid_influence }
+
+	subtract_from_variable = { treasury = global.mp_aid_amount }
+
+	# Influence: influencer = sender, influencee = recipient. Effect uses var:influence_target internally.
+	set_temp_variable = { percent_change = global.mp_aid_influence }
+	set_temp_variable = { tag_index = event_target:influence_sender.id }
+	set_temp_variable = { influence_target = event_target:influence_recipient.id }
+	change_influence_percentage = yes
+
+	event_target:influence_recipient = {
+		add_to_variable = { treasury = global.mp_aid_amount }
+		add_opinion_modifier = { target = event_target:influence_sender modifier = given_economic_aid_mp }
+		event_target:influence_sender = {
+			set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
 		}
+	}
+
+	update_money_dirty_variable = yes
+	update_dirty_influence_var = yes
+}
+
+target_other_influencer_action = {
+	PREV.PREV = {
+		country_event = influence.22
 	}
 }
 
 influence_coup_action = {
-	PREV = {
-		PREV = {
-			country_event = { id = influence.44 }
-		}
+	PREV.PREV = {
+		country_event = influence.44
 	}
 }
 
 # Effect: delete_influencer_check
-# Purpose: This is the main effect that is used to delete an influencer
+# Purpose: Merges duplicate influencer entries before the sort pass.
+# Below-threshold and annexed-nation pruning are handled inside sort_influence.
+# Note: remove_from_array inside a forward-iterating loop can skip consecutive duplicates
+# (index shift); any missed entries are pruned on the next recalculate_influence call.
 delete_influencer_check = {
-	# Influence Array Indexer
-	# Purpose:
-	# The loop conditional is configured to remove a influencer if they fall below 0.01% influence
-	for_each_loop = {
-		array = influence_array_val
-		if = { limit = { check_variable = { influence_array_val^i < 0.01 } }
-			if = { limit = { check_variable = { influence_array^i > 0 } }
-				log = "[GetDateText]: [This.GetName]: Influencer Falling Below 0.01%. Debug Code: 1000. Influencer: [?var:influence_array^i.GetName] Index: [?i]"
-				remove_from_array = { array = influence_array index = i }
-				remove_from_array = { array = influence_array_val index = i }
-			}
-		}
-	}
-
-	# Delete Double Influencer
-	# Purpose:
-	# Configured to remove "Double Influencer"
 	for_each_loop = {
 		array = influence_array
 		index = i
-		# Ensures the Index is Not Empty
 		if = { limit = { NOT = { check_variable = { influence_array^i = 0 } } }
 			if = {
 				limit = {
@@ -364,21 +360,6 @@ delete_influencer_check = {
 				remove_from_array = { array = influence_array index = c }
 				remove_from_array = { array = influence_array_val index = c }
 			}
-		}
-	}
-
-
-	# Delete Non-Existent Nation
-	# Purpose:
-	# Configured to remove nations that no longer exist. i.e. They have been annexed. It is a garbage collection event.
-	for_loop_effect = {
-		end = influence_array^num
-		value = v
-		set_temp_variable = { temp_tag = 0 }
-		add_to_temp_variable = { temp_tag = influence_array^v }
-		if = { limit = { NOT = { country_exists = var:temp_tag } }
-			remove_from_array = { array = influence_array index = v }
-			remove_from_array = { array = influence_array_val index = v }
 		}
 	}
 }
@@ -401,6 +382,7 @@ change_domestic_influence_percentage = {
 	set_temp_variable = { temp_total = 100 }
 	subtract_from_temp_variable = { temp_total = domestic_influence_amount }
 
+	clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
 	divide_temp_variable = { temp_total = influence_outlook_amount }
 	for_each_loop = {
 		array = influence_array_val
@@ -439,6 +421,7 @@ change_current_influencer_index_percentage = {
 	set_temp_variable = { temp_total = 100 }
 	subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
 
+	clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
 	divide_temp_variable = { temp_total = influence_outlook_amount }
 	multiply_variable = { domestic_influence_amount = temp_total }
 	for_each_loop = {
@@ -446,7 +429,7 @@ change_current_influencer_index_percentage = {
 		value = v
 		index = i
 
-		if = { limit = { NOT = { check_variable = { i = 0 } } }
+		if = { limit = { NOT = { check_variable = { i = influencer_index } } }
 			multiply_variable = { influence_array_val^i = temp_total }
 		}
 	}
@@ -460,9 +443,15 @@ change_current_influencer_index_percentage = {
 # Purpose: This is the main effect that is used to change influence on another nation
 # Parameters:
 # - percent_change: The percentage change to the influence
-# - tag_index: The tag of the influencer nation, supports all native country scopes
-# - influence_target: The tag of the influence target nation, supports all native country scopes
+# - tag_index: The tag of the influencer nation (defaults to ROOT if not set)
+# - influence_target: The tag of the influence target nation (defaults to THIS if not set)
 change_influence_percentage = {
+	if = { limit = { check_variable = { tag_index = 0 } }
+		set_temp_variable = { tag_index = ROOT.id }
+	}
+	if = { limit = { check_variable = { influence_target = 0 } }
+		set_temp_variable = { influence_target = THIS.id }
+	}
 	set_temp_variable = { tg = tag_index }
 	set_temp_variable = { it = influence_target }
 	set_temp_variable = { itd = 0 }
@@ -485,7 +474,7 @@ change_influence_percentage = {
 		else = {
 			set_temp_variable = { itd = THIS.domestic_influence_amount }
 			set_temp_variable = { size_of_influence_array = -1 }
-			set_temp_variable = { influencer_index = 0 }
+			set_temp_variable = { influencer_index = -1 }
 
 			for_each_loop = {
 				array = influence_array
@@ -498,7 +487,7 @@ change_influence_percentage = {
 					add_to_temp_variable = { PREV.size_of_influence_array = 1 }
 				}
 			}
-			if = { limit = { check_variable = { influencer_index = 0 } }
+			if = { limit = { check_variable = { influencer_index = -1 } }
 				add_to_array = { influence_array = var:tag_index }
 				add_to_array = { influence_array_val = 0 }
 
@@ -512,11 +501,11 @@ change_influence_percentage = {
 
 				var:tag_index = {
 					set_temp_variable = { influence_change = modifier@foreign_influence_modifier }
-					if = { limit = { PREV_is_not_on_same_continent = yes }
+					if = { limit = { NOT = { is_on_same_continent_as = PREV } }
 						add_to_temp_variable = { influence_change = modifier@foreign_influence_continent_modifier }
 					}
-					if = { limit = { PREV_is_on_same_continent = yes }
-						add_to_temp_variable = { influence_change = modifier@foreign_influence_continent_modifier }
+					if = { limit = { is_on_same_continent_as = PREV }
+						add_to_temp_variable = { influence_change = modifier@foreign_influence_home_continent_modifier }
 					}
 				}
 
@@ -558,6 +547,13 @@ change_influence_percentage = {
 						check_variable = { tag_index = FRA.id }
 					}
 					add_to_temp_variable = { influence_change = 0.10 }
+				}
+				if = {
+					limit = {
+						has_idea = the_eco
+						check_variable = { tag_index = FRA.id }
+					}
+					add_to_temp_variable = { influence_change = 0.12 }
 				}
 				if = {
 					limit = {
@@ -612,7 +608,6 @@ change_influence_percentage = {
 							has_idea = USR_parlament_idea
 							has_idea = USR_gos_sovet_idea
 							has_idea = USR_council_ministers_idea
-							has_idea = USR_money_palata_idea
 							has_idea = USR_money_palata_idea
 							has_idea = USR_eternal_commitie_idea
 							has_idea = USR_valute_idea
@@ -721,18 +716,14 @@ change_influence_percentage = {
 					}
 					if = {
 						limit = {
-							OR = {
-								has_idea = ARM_usa_ngo_leave_idea
-							}
+							has_idea = ARM_usa_ngo_leave_idea
 							check_variable = { tag_index = USA }
 						}
 						add_to_temp_variable = { influence_change = -0.15 }
 					}
 					if = {
 						limit = {
-							OR = {
-								has_idea = ARM_zhirayr_no_russian_idea
-							}
+							has_idea = ARM_zhirayr_no_russian_idea
 							check_variable = { tag_index = SOV }
 						}
 						add_to_temp_variable = { influence_change = -0.15 }
@@ -1021,6 +1012,7 @@ change_influence_percentage = {
 					set_temp_variable = { temp_total = 100 }
 					subtract_from_temp_variable = { temp_total = percent_change }
 
+					clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
 					divide_temp_variable = { temp_total = influence_outlook_amount }
 
 					# Apply redistribution to domestic and all other influences
@@ -1050,6 +1042,7 @@ change_influence_percentage = {
 					set_temp_variable = { temp_total = 100 }
 					subtract_from_temp_variable = { temp_total = domestic_influence_amount }
 
+					clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
 					divide_temp_variable = { temp_total = influence_outlook_amount }
 					for_each_loop = {
 						array = influence_array_val
@@ -1079,6 +1072,7 @@ change_influence_percentage = {
 				set_temp_variable = { temp_total = 100 }
 				subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
 
+				clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
 				divide_temp_variable = { temp_total = influence_outlook_amount }
 				multiply_variable = { domestic_influence_amount = temp_total }
 				for_each_loop = {
@@ -1086,7 +1080,7 @@ change_influence_percentage = {
 					value = v
 					index = i
 
-					if = { limit = { NOT = { check_variable = { i = 0 } } }
+					if = { limit = { NOT = { check_variable = { i = influencer_index } } }
 						multiply_variable = { influence_array_val^i = temp_total }
 					}
 				}
@@ -1095,55 +1089,6 @@ change_influence_percentage = {
 		}
 
 		recalculate_influence = yes
-
-		# Counter-terrorism state influencer tracking
-		if = {
-			limit = {
-				is_in_array = { global.ct_states = THIS.id }
-				no_jihadist_government = yes
-			}
-
-			# Check if influencer (tg) is in top 5 positions (indices 0-4)
-			set_temp_variable = { is_top_5_influencer = 0 }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { influence_array^0 = tg }
-						check_variable = { influence_array^1 = tg }
-						check_variable = { influence_array^2 = tg }
-						check_variable = { influence_array^3 = tg }
-						check_variable = { influence_array^4 = tg }
-					}
-				}
-				set_temp_variable = { is_top_5_influencer = 1 }
-			}
-
-			if = { limit = { check_variable = { is_top_5_influencer = 1 } }
-				var:tg = {
-					if = {
-						limit = {
-							PREV = { is_in_array = { global.middle_east_ct_states = THIS.id } }
-							NOT = { has_country_flag = middle_east_influencer }
-						}
-						set_country_flag = middle_east_influencer
-					}
-					if = {
-						limit = {
-							PREV = { is_in_array = { global.africa_ct_states = THIS.id } }
-							NOT = { has_country_flag = africa_influencer }
-						}
-						set_country_flag = africa_influencer
-					}
-					if = {
-						limit = {
-							PREV = { is_in_array = { global.asia_ct_states = THIS.id } }
-							NOT = { has_country_flag = asia_influencer }
-						}
-						set_country_flag = asia_influencer
-					}
-				}
-			}
-		}
 	}
 	set_temp_variable = { percent_change = percent_change_temp }
 }
@@ -1171,32 +1116,32 @@ update_auto_influence_array = {
 		log = "[GetDateText]: [THIS.GetName]: auto_influence_cap [?auto_influence_cap]"
 	}
 	set_variable = { auto_influence_cost = 0 }
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
-		add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
-	}
 
 	for_each_loop = {
 		array = auto_influence_array
+		value = v
+		index = i
 		if = { limit = { check_variable = { i > auto_influence_cap } NOT = { check_variable = { v = 0 } } }
 			if = { limit = { is_debug = yes }
 				log = "[GetDateText]: [THIS.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i.GetName] from auto influence list"
 			}
 			set_variable = { auto_influence_array^i = 0 }
-			var:auto_influence_array^i = {
-				PREV = {
-					remove_auto_influencer_request = yes
-				}
-			}
+			subtract_from_variable = { auto_influence_users = 1 }
 		}
-		if = {
-			limit = { NOT = { check_variable = { v = 0 } } }
+		if = { limit = { NOT = { check_variable = { v = 0 } } }
 			add_to_variable = { auto_influence_cost = 1.50 }
 		}
 	}
 
-	if = {
-		limit = { check_variable = { auto_influence_array^0 = 0 } }
-		remove_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+	if = { limit = { check_variable = { auto_influence_cost > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
+			add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+		}
+	}
+	else = {
+		if = { limit = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } }
+			remove_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+		}
 	}
 
 	clamp_variable = { var = ROOT.auto_influence_users min = 0 max = 10 }
@@ -1234,16 +1179,27 @@ remove_auto_influencer_request = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [Root.GetName]: Removal of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
 	}
-	set_temp_variable = { index = 0 }
+	set_temp_variable = { index = -1 }
+	set_temp_variable = { found_match = 0 }
 	for_each_loop = {
 		array = auto_influence_array
-		if = { limit = { check_variable = { v = PREV.id } }
+		index = i
+		value = v
+		if = {
+			limit = {
+				check_variable = { v = PREV.id }
+				check_variable = { found_match = 0 }
+			}
 			set_temp_variable = { index = i }
+			set_temp_variable = { found_match = 1 }
+			set_temp_variable = { break = 1 }
 		}
 	}
 
-	set_variable = { auto_influence_array^index = 0 }
-	subtract_from_variable = { auto_influence_users = 1 }
-	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	if = { limit = { check_variable = { index > -1 } }
+		set_variable = { auto_influence_array^index = 0 }
+		subtract_from_variable = { auto_influence_users = 1 }
+		clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	}
 	custom_effect_tooltip = influence_remove_auto_request_TT
 }

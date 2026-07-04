@@ -1,178 +1,76 @@
-# Millennium Dawn Developer Guide
+# Millennium Dawn: A Modern Day Mod
 
-Welcome to the comprehensive development guide for Millennium Dawn, a modern-era Hearts of Iron IV modification that brings the complexities of contemporary geopolitics to your gaming experience.
+![Millennium Dawn Header](https://i.imgur.com/hpEdk0J.png)
+![Millennium Dawn Features](https://i.imgur.com/MYaznE7.png)
 
-## About Millennium Dawn
+Millennium Dawn is a multi-mod project set in 2000 and continues to the modern day and beyond.
+The mod boasts new and unique tech trees, focus trees, events, and decisions to immerse you in the intricacies of the modern era.
 
-Millennium Dawn is an ambitious mod project spanning from the year 2000 to the present day and beyond. Our mod transforms Hearts of Iron IV with:
+This repo is the source code for [Millennium Dawn: A Modern Day Mod](https://steamcommunity.com/sharedfiles/filedetails/?id=2777392649)
 
-- **Modern Geopolitical Systems**: Experience realistic economic frameworks, political dynamics, and international relations
-- **Advanced Mechanics**: National taxation systems, debt management, internal political factions, and influence networks
-- **Rich Content**: Unique technology trees, focus trees, events, and decision paths tailored for the modern era
-- **Enhanced Experience**: Original 3D models, custom soundtrack, and immersive gameplay elements
+## Quick Links
 
-## Quick Start
+- [Discord](http://discord.gg/millenniumdawn) - Community and support
+- [Reddit](https://www.reddit.com/r/MillenniumDawn/)
+- [Git Setup Guide](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs) - Repository setup
+- [Contribution Guide](./CONTRIBUTING.md) - Contribution policies
 
-### Essential Resources
-- **[Discord Community](http://discord.gg/millenniumdawn)** - Join our active development community
-- **[Contribution Guidelines](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs)** - Complete workflow procedures
+## Features
 
-### Development Environment Setup
+- **Economic Systems**: Taxation, debt management, international investment
+- **Political Mechanics**: Internal factions, influence, party systems
+- **Rich Content**: Focus trees, events, decisions for 150+ nations
+- **Modern Era**: Realistic geopolitical organizations (EU, NATO, etc.)
 
-#### Python Installation
+## Contributing
 
-Python powers our development tools and automation scripts.
+Available issues can be found in our [GitHub Issues](https://github.com/MillenniumDawn/Millennium-Dawn/issues)
 
-**Windows Installation:**
-```bash
-# Download from python.org and ensure "Add Python to PATH" is checked
-python --version  # Verify installation
+We also take open source contributions of any form whether they be localization, code, additions, content, or more.
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes following style guidelines
+4. Run pre-commit hooks
+5. Update [Changelog.txt](./Changelog.txt)
+6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md)
+7. Submit a pull request
+
+See [Contributing](./CONTRIBUTING.md) for more details including stylization, pre-commit information and more.
+
+**NOTE**: Millennium Dawn's development team allows for AI assisted coding if and only if the developer is capable and is able to review the code it produces.
+More details can be found in the team's [Contribution Policy](./CONTRIBUTING.md#ai-policy)
+
+## Project Structure
+
+```
+common/          - Game data (focuses, ideas, events, decisions)
+localisation/    - Language files
+events/          - Event chains
+history/         - Historical country data
+map/             - Terrain, states
+interface/       - UI definitions
+gfx/             - Graphics assets
+tools/           - Scripts for supporting development such as validators, standardizations, and other utilities
+docs/            - Development documentation
 ```
 
-**macOS Installation:**
-```bash
-# Using Homebrew (recommended)
-brew install python
-python3 --version  # Verify installation
-```
+## Documentation
 
-**Linux Installation:**
-```bash
-sudo apt update && sudo apt install python3 python3-pip
-python3 --version  # Verify installation
-```
+| Topic               | Location                                                                                                    |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Code Style          | [docs/src/content/resources/code-stylization-guide.md](./docs/src/content/resources/code-stylization-guide.md) |
+| Modifiers & Effects | [docs/src/content/resources/code-resource.md](./docs/src/content/resources/code-resource.md)                   |
+| Game Rules          | [docs/src/content/tutorials/game-rules.md](./docs/src/content/tutorials/game-rules.md)                         |
 
-#### Pre-commit Setup
+## License
 
-Pre-commit ensures code quality and consistency across contributions.
+See [LICENSE](./LICENSE) file for details.
 
-```bash
-# Install pre-commit
-pip install pre-commit
+## Security
 
-# Navigate to repository and install hooks
-cd millennium-dawn
-pre-commit install
-```
-
-## Development Standards
-
-### Code Style Guidelines
-
-**Localization Files (.yml):**
-- Use 1-space indentation
-- Remove trailing 0/1 after colons in string pairs
-- Maintain consistent key formatting
-
-**Script Files:**
-- Use 1 tab indentation (equivalent to 4 spaces)
-- Place comments above or below relevant code blocks
-- Follow existing naming conventions
-
-**Documentation:**
-- Document all significant changes in the changelog
-- Use clear, descriptive commit messages
-- Include relevant context for complex changes
-
-### Quality Assurance
-
-Our development pipeline includes:
-- **CWTools Integration**: Automated syntax checking and validation
-- **Pipeline Formatters**: Consistent code formatting across the project
-- **Pre-commit Hooks**: Automatic style enforcement and issue detection
-
-## Community Contribution
-
-### Open Development Philosophy
-
-Millennium Dawn embraces community-driven development. We encourage:
-
-- **Forking and Branching**: Create custom versions for experimentation
-- **Submod Development**: Build extensions and specialized content
-- **Feature Contributions**: Submit improvements via pull requests
-- **Collaborative Development**: Work with our team on major features
-
-### Getting Your Contributions Merged
-
-1. **Fork the Repository**: Create your own development branch
-2. **Follow Style Guidelines**: Ensure code meets our standards
-3. **Test Thoroughly**: Verify functionality before submission
-4. **Submit Pull Request**: Include detailed description of changes
-5. **Engage with Reviews**: Respond to feedback and iterate as needed
-
-## Access Levels and Responsibilities
-
-### Developer Access
-**New Developer Onboarding:**
-- Initial access period: 2 months from join date
-- Role-based permissions system
-- Regular activity expected across all contribution types
-- Access reviewed based on Discord engagement and contribution frequency
-
-### Playtester Access
-**Requirements:**
-- Complete initial playtest within 48 hours of access
-- Minimum one playtest monthly thereafter
-- Provide detailed feedback reports with substantive analysis
-- Document bugs, balance issues, and gameplay observations
-
-### Maintainer Privileges
-**Responsibilities:**
-- Master branch push/pull access
-- Merge request approval authority
-- Code review and quality assurance
-- Community guidance and mentorship
-
-**Process:**
-Contact council members via Discord for merge request reviews and approval workflows.
-
-## Contributing Guidelines
-
-### For All Contributors
-
-1. **Add Yourself**: Include your information in [`AUTHORS.md`](./docs/misc/authors.md)
-2. **Document Changes**: Update [`Changelog.txt`](./Changelog.txt) with your modifications
-3. **Follow Conventions**: Adhere to established coding and documentation standards
-4. **Stay Engaged**: Participate in community discussions and development planning
-
-### Contribution Workflow
-
-```bash
-# Fork repository and create feature branch
-git checkout -b feature/your-feature-name
-
-# Make changes following style guidelines
-# Run pre-commit hooks
-pre-commit run --all-files
-
-# Commit with descriptive messages
-git commit -m "feat: add modern economic indicators system"
-
-# Push and create pull request
-git push origin feature/your-feature-name
-```
-
-## Resources and Support
-
-### Development Resources
-- **Modding Resources**: Shared documentation and assets for team members
-- **Style Guide**: This document and coding standards
-- **Community Forums**: Discord channels for technical discussions
-- **Documentation**: Comprehensive guides in the repository wiki
-
-### Getting Help
-
-- **Discord Community**: Active support channels for development questions
-- **Mentorship Program**: Experienced developers available for guidance
-- **Code Reviews**: Collaborative improvement process for all contributions
-- **Documentation**: Extensive guides and examples in our resource library
+See [SECURITY](./SECURITY.md) file for security details.
 
 ---
 
-## Acknowledgments
-
-Millennium Dawn thrives because of our dedicated community of developers, playtesters, and contributors. Whether you're fixing a typo, implementing major features, or providing crucial feedback, every contribution matters.
-
-Thank you for helping us create the definitive modern-era Hearts of Iron IV experience.
-
-**— The Millennium Dawn Development Team**
+_Created by the Millennium Dawn Development Team_

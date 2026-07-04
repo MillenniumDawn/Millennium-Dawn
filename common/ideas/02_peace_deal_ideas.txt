@@ -1,0 +1,67 @@
+ideas = {
+	country = {
+		# Weekly cash drain is applied via calculate_additional_expense_rate in
+		# 00_money_system.txt. The variable CPD_reparations_weekly is set on
+		# this scope at deal-sign in 02_peace_deal_effects.txt and read each
+		# weekly economic tick. Idea persists for 365 days; signing additional
+		# reparations deals stacks the weekly amount and refreshes the timer.
+		# on_remove clears the accumulated variable when the timer finally
+		# expires (or the idea is otherwise removed).
+		CPD_war_reparations_payer = {
+			allowed_civil_war = { always = yes }
+			picture = debt
+
+			on_remove = {
+				clear_variable = CPD_reparations_weekly
+			}
+
+			modifier = {
+				stability_factor = -0.05
+			}
+		}
+
+		# Weekly cash income via calculate_additional_income_rate. Mirror of payer.
+		CPD_war_reparations_receiver = {
+			allowed_civil_war = { always = yes }
+			picture = gold
+
+			on_remove = {
+				clear_variable = CPD_reparations_weekly
+			}
+
+			modifier = {
+				stability_factor = 0.02
+			}
+		}
+
+		CPD_forced_neutrality_spirit = {
+			allowed_civil_war = { always = yes }
+			picture = generic_neutrality
+
+			on_add = {
+				set_rule = { can_join_factions = no }
+				set_rule = { can_create_factions = no }
+			}
+
+			on_remove = {
+				set_rule = { can_join_factions = yes }
+				set_rule = { can_create_factions = yes }
+			}
+
+			modifier = {
+				political_power_factor = -0.05
+			}
+		}
+
+		CPD_regime_change_instability = {
+			allowed_civil_war = { always = yes }
+			picture = generic_political_discourse
+
+			modifier = {
+				stability_factor = -0.1
+				political_power_factor = -0.2
+				war_support_factor = -0.1
+			}
+		}
+	}
+}

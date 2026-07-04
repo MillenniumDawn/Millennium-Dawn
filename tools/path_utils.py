@@ -3,24 +3,17 @@
 Path utility functions for coding standards scripts.
 """
 
+
 def clean_filepath(filepath):
-    """
-    Clean up the filepath to show only from relevant directory onwards.
+    """Trim a filepath to start from the first known mod directory.
 
     Args:
-        filepath (str): The full filepath to clean
+        filepath (str): The full filepath to clean.
 
     Returns:
-        str: The cleaned filepath showing only from the relevant directory
+        str: The trimmed path, or the original if no known prefix is present.
     """
-    if 'common' in filepath:
-        return 'common' + filepath.split('common', 1)[1]
-    elif 'events' in filepath:
-        return 'events' + filepath.split('events', 1)[1]
-    elif 'history' in filepath:
-        return 'history' + filepath.split('history', 1)[1]
-    elif 'interface' in filepath:
-        return 'interface' + filepath.split('interface', 1)[1]
-    else:
-        # If none of the directories are found, return the original filepath
-        return filepath
+    for prefix in ("common", "events", "history", "interface"):
+        if prefix in filepath:
+            return prefix + filepath.split(prefix, 1)[1]
+    return filepath

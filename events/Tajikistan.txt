@@ -34,7 +34,7 @@ country_event = {
 				}
 				create_country_leader = {
 					name = "Emomali Rahmon"
-					picture = "emomali_rahmon.dds"
+					picture = "Emomali_Rahmon.dds"
 					ideology = Nat_Populism
 					traits = {
 						nationalist_Nat_Populism
@@ -49,7 +49,7 @@ country_event = {
 			else = {
 				create_country_leader = {
 					name = "Emomali Rahmon"
-					picture = "emomali_rahmon.dds"
+					picture = "Emomali_Rahmon.dds"
 					ideology = Conservative
 					traits = {
 						emerging_Conservative
@@ -78,7 +78,6 @@ news_event = {
 
 	option = {
 		name = tajik_flavor.2.a
-		log = "[GetDateText]: [This.GetName]: tajik_flavor.2.a executed"
 		ai_chance = {
 			base = 1
 		}
@@ -88,13 +87,10 @@ news_event = {
 
 country_event = {
 	id = tajik_flavor.3
-
 	hidden = yes
 	is_triggered_only = yes
-
-	option = {
-		name = tajik_flavor.3.a
-		log = "[GetDateText]: [This.GetName]: tajik_flavor.3.a executed"
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: tajik_flavor.3 executed"
 		UZB = {
 			set_autonomy = {
 				target = ROOT
@@ -156,9 +152,6 @@ country_event = {
 				nationalist_Nat_Autocracy
 			}
 		}
-		ai_chance = {
-			base = 1
-		}
 	}
 }
 
@@ -202,8 +195,9 @@ country_event = {
 	}
 }
 
+# Tajikistan Invites Us to the TAJ Pact
 country_event = {
-	id = tajik_focus.2 # TAJ Pact invitiation
+	id = tajik_focus.2
 	title = tajik_focus.2.t
 	desc = tajik_focus.2.d
 	picture = GFX_event_tajikistan_flag
@@ -212,7 +206,37 @@ country_event = {
 	option = {
 		name = tajik_focus.2.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.2.a executed"
-		FROM = { country_event = { id = md4.17 days = 1 } }
+		if = {
+			limit = {
+				original_tag = PER
+				is_faction_leader = yes
+				has_faction_template = faction_template_aor
+			}
+			dismantle_faction = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { original_tag = PER }
+				is_faction_leader = yes
+			}
+			if = {
+				limit = { check_variable = { allies^num > 0 } }
+				random_allied_country = {
+					set_faction_leader = yes
+				}
+				leave_faction = yes
+			}
+			else = {
+				dismantle_faction = yes
+			}
+		}
+		else_if = {
+			limit = { is_in_faction = yes }
+			leave_faction = yes
+		}
+		TAJ = {
+			add_to_faction = PREV
+		}
 		ai_chance = {
 			base = 10
 		}
@@ -222,10 +246,7 @@ country_event = {
 		name = tajik_focus.2.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.2.b executed"
 		TAJ = {
-			country_event = {
-				id = tajik_focus.3
-				days = 1
-			}
+			country_event = { id = tajik_focus.3 days = 1 }
 		}
 		ai_chance = {
 			base = 1
@@ -237,8 +258,9 @@ country_event = {
 	}
 }
 
+# They rejected
 country_event = {
-	id = tajik_focus.3 # They rejected
+	id = tajik_focus.3
 	title = tajik_focus.3.t
 	desc = tajik_focus.3.d
 
@@ -247,15 +269,15 @@ country_event = {
 	option = {
 		name = tajik_focus.3.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.3.a executed"
-		FROM = { country_event = { id = md4.17 hours = 3 } }
 		ai_chance = {
 			base = 1
 		}
 	}
 }
 
+# Tajikistan asks for investments
 country_event = {
-	id = tajik_focus.4 # Tajikistan asks for investments
+	id = tajik_focus.4
 	title = tajik_focus.4.t
 	desc = tajik_focus.4.d
 
@@ -273,9 +295,7 @@ country_event = {
 			change_influence_percentage = yes
 		}
 		TAJ = {
-			country_event = {
-				id = tajik_focus.5
-			}
+			country_event = tajik_focus.5
 		}
 		ai_chance = {
 			base = 1
@@ -290,9 +310,7 @@ country_event = {
 		name = tajik_focus.4.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.4.b executed"
 		TAJ = {
-			country_event = {
-				id = tajik_focus.6
-			}
+			country_event = tajik_focus.6
 		}
 		ai_chance = {
 			base = 1
@@ -693,17 +711,8 @@ country_event = { # A Change in Course?
 		log = "[GetDateText]: [This.GetName]: tajik_focus.19.a executed"
 		set_country_flag = TAJ_changed_in_course
 		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 19 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
+			set_temp_variable = { rul_party_temp = 19 }
+			change_ruling_party_effect = yes
 			set_temp_variable = { party_index = 4 }
 			set_temp_variable = { party_popularity_increase = -0.99 }
 			set_temp_variable = { temp_outlook_increase = -0.99 }
@@ -806,7 +815,10 @@ country_event = { # Tajikistan Pursues Aggressive Nationalization
 	option = { # Embargo
 		name = tajik_focus.20.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.20.b executed"
-		send_embargo = TAJ
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = TAJ
+		}
 		TAJ = {
 			country_event = {
 				id = tajik_focus.21
@@ -871,6 +883,7 @@ country_event = { # Tajikistan Wants a Non-Aggro Pact
 			TAJ = {
 				custom_effect_tooltip = TAJ_decrease_bda_unrest_5_TT
 				add_to_variable = { var = TAJ_badakhshan_unrest_var value = -5 }
+				clamp_variable = { var = TAJ_badakhshan_unrest_var min = 0 }
 				add_stability = 0.05
 			}
 		}
@@ -1164,7 +1177,7 @@ country_event = { # UTO Demands
 		log = "[GetDateText]: [This.GetName]: tajik_focus.280.a executed"
 		if = {
 			limit = {
-				emerging_communist_state_are_not_in_power = yes
+				emerging_communist_state_are_in_power = no
 			}
 			activate_mission = TAJ_communist_demand
 		}
@@ -1176,7 +1189,7 @@ country_event = { # UTO Demands
 		}
 		if = {
 			limit = {
-				neutrality_muslim_brotherhood_not_in_power_or_coalition = yes
+				neutrality_muslim_brotherhood_in_power_or_coalition = no
 			}
 			activate_mission = TAJ_islamist_demand
 		}
@@ -1195,16 +1208,6 @@ country_event = { # Re-Join CSTO?
 	trigger = {
 		NOT = {
 			has_war_with = SOV
-		}
-		if = {
-			limit = {
-				KYR = {
-					is_in_faction_with = SOV
-				}
-				NOT = {
-					has_war_with = KYR
-				}
-			}
 		}
 	}
 
@@ -1296,17 +1299,9 @@ country_event = { # Tajik Revolution
 						has_country_flag = TAJ_play_as_IRP
 					}
 					hidden_effect = {
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 12 }
-						update_government_coalition_strength = yes
-						set_coalition_drift = yes
-						set_ruling_leader = yes
-						set_leader = yes
-						set_politics = {
-							ruling_party = neutrality
-							elections_allowed = no
-						}
+						set_temp_variable = { rul_party_temp = 12 }
+						set_temp_variable = { disable_elections = 1 }
+						change_ruling_party_effect = yes
 					}
 					create_country_leader = {
 						name = "Sayid Abdulloh Nuri"
@@ -1322,17 +1317,9 @@ country_event = { # Tajik Revolution
 						has_country_flag = TAJ_play_as_democratic
 					}
 					hidden_effect = {
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 20 }
-						update_government_coalition_strength = yes
-						set_coalition_drift = yes
-						set_ruling_leader = yes
-						set_leader = yes
-						set_politics = {
-							ruling_party = nationalist
-							elections_allowed = no
-						}
+						set_temp_variable = { rul_party_temp = 20 }
+						set_temp_variable = { disable_elections = 1 }
+						change_ruling_party_effect = yes
 					}
 					create_country_leader = {
 						name = "Mahmadruzi Iskandarov"
@@ -1349,17 +1336,9 @@ country_event = { # Tajik Revolution
 						has_country_flag = TAJ_play_as_communist
 					}
 					hidden_effect = {
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 4 }
-						update_government_coalition_strength = yes
-						set_coalition_drift = yes
-						set_ruling_leader = yes
-						set_leader = yes
-						set_politics = {
-							ruling_party = communism
-							elections_allowed = no
-						}
+						set_temp_variable = { rul_party_temp = 4 }
+						set_temp_variable = { disable_elections = 1 }
+						change_ruling_party_effect = yes
 					}
 					create_country_leader = {
 						name = "Shodi Shabdolov"
@@ -1461,12 +1440,17 @@ country_event = { # Tajik Revolution
 					add_to_array = { influence_array_val = 18 }
 					add_to_array = { influence_array = TUR.id }
 					add_to_array = { influence_array_val = 15 }
-					startup_influence = yes
+					sort_influence = yes
 
 					### Ruling Party
 					add_to_array = { ruling_party = 6 }
 					startup_politics = yes
 					load_focus_tree = { tree = tajikistan_focus keep_completed = yes }
+
+					# Economic initialization
+					set_temp_variable = { nation_to_copy_from = PREV.id }
+					setup_employment_variables = yes
+					ingame_update_setup = yes
 				}
 				# Transferring States
 				724 = {
@@ -1498,17 +1482,9 @@ country_event = { # Tajik Revolution
 						has_country_flag = TAJ_play_as_IRP
 					}
 					hidden_effect = {
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 12 }
-						update_government_coalition_strength = yes
-						set_coalition_drift = yes
-						set_ruling_leader = yes
-						set_leader = yes
-						set_politics = {
-							ruling_party = neutrality
-							elections_allowed = no
-						}
+						set_temp_variable = { rul_party_temp = 12 }
+						set_temp_variable = { disable_elections = 1 }
+						change_ruling_party_effect = yes
 					}
 					create_country_leader = {
 						name = "Sayid Abdulloh Nuri"
@@ -1524,17 +1500,9 @@ country_event = { # Tajik Revolution
 						has_country_flag = TAJ_play_as_democratic
 					}
 					hidden_effect = {
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 20 }
-						update_government_coalition_strength = yes
-						set_coalition_drift = yes
-						set_ruling_leader = yes
-						set_leader = yes
-						set_politics = {
-							ruling_party = nationalist
-							elections_allowed = no
-						}
+						set_temp_variable = { rul_party_temp = 20 }
+						set_temp_variable = { disable_elections = 1 }
+						change_ruling_party_effect = yes
 					}
 					create_country_leader = {
 						name = "Mahmadruzi Iskandarov"
@@ -1551,17 +1519,9 @@ country_event = { # Tajik Revolution
 						has_country_flag = TAJ_play_as_communist
 					}
 					hidden_effect = {
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 4 }
-						update_government_coalition_strength = yes
-						set_coalition_drift = yes
-						set_ruling_leader = yes
-						set_leader = yes
-						set_politics = {
-							ruling_party = communism
-							elections_allowed = no
-						}
+						set_temp_variable = { rul_party_temp = 4 }
+						set_temp_variable = { disable_elections = 1 }
+						change_ruling_party_effect = yes
 					}
 					create_country_leader = {
 						name = "Shodi Shabdolov"
@@ -1663,12 +1623,17 @@ country_event = { # Tajik Revolution
 					add_to_array = { influence_array_val = 18 }
 					add_to_array = { influence_array = TUR.id }
 					add_to_array = { influence_array_val = 15 }
-					startup_influence = yes
+					sort_influence = yes
 
 					### Ruling Party
 					add_to_array = { ruling_party = 6 }
 					startup_politics = yes
 					load_focus_tree = { tree = tajikistan_focus keep_completed = yes }
+
+					# Economic initialization
+					set_temp_variable = { nation_to_copy_from = PREV.id }
+					setup_employment_variables = yes
+					ingame_update_setup = yes
 				}
 				# Transferring States
 				724 = {
@@ -1792,7 +1757,8 @@ country_event = { # Tajik Revolution
 	}
 }
 
-country_event = { # Victory in Civil War
+# Victory in Civil War
+country_event = {
 	id = tajik_focus.30
 	title = tajik_focus.30.t
 	desc = tajik_focus.30.d
@@ -1812,6 +1778,10 @@ country_event = { # Victory in Civil War
 			}
 			drop_cosmetic_tag = yes
 			clr_country_flag = is_TAJIKISTAN
+			# Civil war drains fuel (state 724 with the agriculture district goes to Rahmon).
+			# Refill reserves so fossil power plants pass the fuel_k = 0 killswitch check.
+			set_fuel_ratio = 0.5
+			ingame_update_setup = yes
 		}
 		ai_chance = {
 			base = 1
@@ -1819,7 +1789,8 @@ country_event = { # Victory in Civil War
 	}
 }
 
-country_event = { # Silent Erosion
+# Silent Erosion
+country_event = {
 	id = tajik_focus.31
 	title = tajik_focus.31.t
 	desc = tajik_focus.31.d
@@ -1947,7 +1918,7 @@ country_event = { # Asking Taliban for U.S. Weapons & Intel
 			}
 		}
 		add_equipment_to_stockpile = {
-			type = util_vehicle_2
+			type = util_vehicle_3
 			amount = -400
 			producer = USA
 		}
@@ -1992,7 +1963,7 @@ country_event = { # Taliban Smuggles American Vehicles
 		name = tajik_focus.36.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.36.a executed"
 		add_equipment_to_stockpile = {
-			type = util_vehicle_2
+			type = util_vehicle_3
 			amount = 400
 			producer = USA
 		}
@@ -2095,13 +2066,13 @@ country_event = { # China Accepts
 		name = tajik_focus.40.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.40.a executed"
 		add_equipment_to_stockpile = {
-			type = infantry_weapons2
+			type = infantry_weapons_3
 			amount = 100
 			producer = CHI
 		}
 		newline = yes
 		add_equipment_to_stockpile = {
-			type = util_vehicle_1
+			type = util_vehicle_2
 			amount = 500
 			producer = CHI
 		}
@@ -2241,9 +2212,7 @@ country_event = { # Tajikistan Requests Concessions
 		name = tajik_focus.44.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.44.a executed"
 		TAJ = {
-			country_event = {
-				id = tajik_focus.45
-			}
+			country_event = tajik_focus.45
 		}
 		effect_tooltip = {
 			set_temp_variable = { treasury_change = -50.00 }
@@ -2270,9 +2239,7 @@ country_event = { # Tajikistan Requests Concessions
 		name = tajik_focus.44.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.44.b executed"
 		TAJ = {
-			country_event = {
-				id = tajik_focus.46
-			}
+			country_event = tajik_focus.46
 		}
 		ai_chance = {
 			base = 1
@@ -2369,9 +2336,7 @@ country_event = {
 		name = tajik_focus.49.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.49.a executed"
 		SOV = {
-			country_event = {
-				id = tajik_focus.50
-			}
+			country_event = tajik_focus.50
 		}
 		ai_chance = {
 			base = 1
@@ -2382,9 +2347,7 @@ country_event = {
 		name = tajik_focus.49.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.49.b executed"
 		USA = {
-			country_event = {
-				id = tajik_focus.50
-			}
+			country_event = tajik_focus.50
 		}
 		ai_chance = {
 			base = 1
@@ -2395,9 +2358,7 @@ country_event = {
 		name = tajik_focus.49.c
 		log = "[GetDateText]: [This.GetName]: tajik_focus.49.c executed"
 		CHI = {
-			country_event = {
-				id = tajik_focus.50
-			}
+			country_event = tajik_focus.50
 		}
 		ai_chance = {
 			base = 1
@@ -2408,9 +2369,7 @@ country_event = {
 		name = tajik_focus.49.d1
 		log = "[GetDateText]: [This.GetName]: tajik_focus.49.d1 executed"
 		RAJ = {
-			country_event = {
-				id = tajik_focus.50
-			}
+			country_event = tajik_focus.50
 		}
 		ai_chance = {
 			base = 1
@@ -2450,10 +2409,16 @@ country_event = {
 			}
 			SOV = {
 				country_event = tajik_focus.52
-				diplomatic_relation = { country = TAJ relation = military_access active = no }
+				if = {
+					limit = { SOV = { has_military_access_to = TAJ } }
+					diplomatic_relation = { country = TAJ relation = military_access active = no }
+				}
 			}
-			USA = {
-				diplomatic_relation = { country = TAJ relation = military_access active = yes }
+			if = {
+				limit = { NOT = { USA = { has_military_access_to = TAJ } } }
+				USA = {
+					diplomatic_relation = { country = TAJ relation = military_access active = yes }
+				}
 			}
 		}
 		if = {
@@ -2468,10 +2433,16 @@ country_event = {
 			}
 			SOV = {
 				country_event = tajik_focus.52
-				diplomatic_relation = { country = TAJ relation = military_access active = no }
+				if = {
+					limit = { SOV = { has_military_access_to = TAJ } }
+					diplomatic_relation = { country = TAJ relation = military_access active = no }
+				}
 			}
-			RAJ = {
-				diplomatic_relation = { country = TAJ relation = military_access active = yes }
+			if = {
+				limit = { NOT = { RAJ = { has_military_access_to = TAJ } } }
+				RAJ = {
+					diplomatic_relation = { country = TAJ relation = military_access active = yes }
+				}
 			}
 		}
 		if = {
@@ -2486,10 +2457,16 @@ country_event = {
 			}
 			SOV = {
 				country_event = tajik_focus.52
-				diplomatic_relation = { country = TAJ relation = military_access active = no }
+				if = {
+					limit = { SOV = { has_military_access_to = TAJ } }
+					diplomatic_relation = { country = TAJ relation = military_access active = no }
+				}
 			}
-			CHI = {
-				diplomatic_relation = { country = TAJ relation = military_access active = yes }
+			if = {
+				limit = { NOT = { CHI = { has_military_access_to = TAJ } } }
+				CHI = {
+					diplomatic_relation = { country = TAJ relation = military_access active = yes }
+				}
 			}
 		}
 		TAJ = {
@@ -2699,6 +2676,7 @@ country_event = {
 	}
 }
 
+# Invitation to CSTO
 country_event = {
 	id = tajik_focus.55
 	title = tajik_focus.55.t
@@ -2740,17 +2718,8 @@ country_event = {
 		custom_effect_tooltip = TAJ_merge_parties_TT
 		set_country_flag = TAJ_party_name
 		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 20 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = nationalist
-				elections_allowed = yes
-			}
+			set_temp_variable = { rul_party_temp = 20 }
+			change_ruling_party_effect = yes
 			set_temp_variable = { party_index = 6 }
 			set_temp_variable = { party_popularity_increase = -0.99 }
 			set_temp_variable = { temp_outlook_increase = -0.99 }
@@ -2761,7 +2730,7 @@ country_event = {
 			add_relative_party_popularity = yes
 			create_country_leader = {
 				name = "Emomali Rahmon"
-				picture = "emomali_rahmon.dds"
+				picture = "Emomali_Rahmon.dds"
 				ideology = Nat_Populism
 				traits = {
 					nationalist_Nat_Populism
@@ -3135,59 +3104,7 @@ country_event = {
 		custom_effect_tooltip = TAJ_elections_allowable_TT
 		clr_country_flag = TAJ_dictatorship_flag
 		hidden_effect = {
-			set_country_flag = no_leader_change
-			if = {
-				limit = {
-					check_variable = { term_limit > 0 }
-				}
-				set_variable = { current_term = 1 }
-			}
-			if = {
-				limit = {
-					has_government = democratic
-				}
-				set_politics = {
-					ruling_party = democratic
-					elections_allowed = yes
-				}
-			}
-			else_if = {
-				limit = {
-					has_government = communism
-				}
-				set_politics = {
-					ruling_party = communism
-					elections_allowed = yes
-				}
-			}
-			else_if = {
-				limit = {
-					has_government = fascism
-				}
-				set_politics = {
-					ruling_party = fascism
-					elections_allowed = yes
-				}
-			}
-			else_if = {
-				limit = {
-					has_government = neutrality
-				}
-				set_politics = {
-					ruling_party = neutrality
-					elections_allowed = yes
-				}
-			}
-			else_if = {
-				limit = {
-					has_government = nationalist
-				}
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = yes
-				}
-			}
-			clr_country_flag = no_leader_change
+			enable_elections_with_no_leader_change = yes
 		}
 		ai_chance = {
 			base = 20
@@ -3243,7 +3160,6 @@ country_event = {
 		name = tajik_focus.63.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.62.a executed"
 		set_temp_variable = { percent_change = 5 }
-		set_temp_variable = { tag_index = ROOT }
 		set_temp_variable = { influence_target = TAJ }
 		change_influence_percentage = yes
 		TAJ = {
@@ -3260,7 +3176,7 @@ country_event = {
 				}
 			}
 			add_equipment_to_stockpile = {
-				type = attack_helicopter1 #Mi-24
+				type = attack_helicopter_1 #Mi-24
 				amount = -150
 				producer = SOV
 			}
@@ -3288,7 +3204,7 @@ country_event = {
 				}
 			}
 			add_equipment_to_stockpile = {
-				type = attack_helicopter1
+				type = attack_helicopter_1
 				amount = -150
 				producer = USA
 			}
@@ -3368,7 +3284,7 @@ country_event = {
 				}
 			}
 			add_equipment_to_stockpile = {
-				type = attack_helicopter1 #Mi-24
+				type = attack_helicopter_1 #Mi-24
 				amount = 150
 				producer = SOV
 			}
@@ -3398,7 +3314,7 @@ country_event = {
 				}
 			}
 			add_equipment_to_stockpile = {
-				type = attack_helicopter1
+				type = attack_helicopter_1
 				amount = 150
 				producer = USA
 			}
@@ -3644,17 +3560,9 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.2 }
 		add_relative_party_popularity = yes
 		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 12 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = no
-			}
+			set_temp_variable = { rul_party_temp = 12 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
 		}
 		if = {
 			limit = {
@@ -3821,7 +3729,7 @@ country_event = {
 		custom_effect_tooltip = TAJ_lose_10_prod_TT
 		newline = yes
 		add_equipment_to_stockpile = {
-			type = infantry_weapons
+			type = infantry_weapons_1
 			amount = -100
 		}
 		ai_chance = {
@@ -4017,7 +3925,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.7.a executed"
 		add_manpower = -750
 		add_equipment_to_stockpile = {
-			type = infantry_weapons
+			type = infantry_weapons_1
 			amount = -200
 		}
 		ai_chance = {
@@ -4137,11 +4045,11 @@ country_event = {
 		name = tajik_radicalism.10.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.10.a executed"
 		add_equipment_to_stockpile = {
-			type = util_vehicle_equipment
+			type = util_vehicle_type
 			amount = -100
 		}
 		add_equipment_to_stockpile = {
-			type = infantry_weapons
+			type = infantry_weapons_1
 			amount = -350
 		}
 		ai_chance = {
@@ -4219,9 +4127,7 @@ country_event = {
 		set_temp_variable = { treasury_change = -5.00 }
 		modify_treasury_effect = yes
 		SOV = {
-			country_event = {
-				id = tajik_radicalism.120
-			}
+			country_event = tajik_radicalism.120
 		}
 		ai_chance = {
 			base = 1
@@ -4239,11 +4145,7 @@ country_event = {
 				target = TAJ
 				modifier = recent_actions_negative
 			}
-		}
-		SOV = {
-			country_event = {
-				id = tajik_radicalism.121
-			}
+			country_event = tajik_radicalism.121
 		}
 		ai_chance = {
 			base = 1
@@ -4508,17 +4410,9 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.2 }
 		add_relative_party_popularity = yes
 		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 10 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = fascism
-				elections_allowed = no
-			}
+			set_temp_variable = { rul_party_temp = 10 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
 			create_country_leader = {
 				name = "Hafiz Saeed Khan"
 				picture = "hafiz_saeed_khan.dds"
@@ -4673,20 +4567,10 @@ country_event = {
 					target = BDA
 					type = annex_everything
 				}
-			}
-			TAJ = {
 				set_cosmetic_tag = TAJ_islamist_government_2
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 10 }
-				update_government_coalition_strength = yes
-				set_coalition_drift = yes
-				set_ruling_leader = yes
-				set_leader = yes
-				set_politics = {
-					ruling_party = fascism
-					elections_allowed = no
-				}
+				set_temp_variable = { rul_party_temp = 10 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
 				create_country_leader = {
 					name = "Hafiz Saeed Khan"
 					picture = "hafiz_saeed_khan.dds"
@@ -4791,11 +4675,8 @@ country_event = {
 			active = yes
 		}
 		FROM = {
-			country_event = {
-				id = iranic_confederation.2
-			}
-		}
-		FROM = {
+			country_event = iranic_confederation.2
+
 			add_to_variable = { var = iranic_states value = 1 }
 			clamp_variable = { var = iranic_states min = 0 max = 100 }
 		}
@@ -4807,12 +4688,9 @@ country_event = {
 	option = { # No
 		name = iranic_confederation.1.b
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.1.b executed"
-		set_country_flag = rejected_iranic_confederation_member
 		set_country_flag = is_IRAN
 		FROM = {
-			country_event = {
-				id = iranic_confederation.3
-			}
+			country_event = iranic_confederation.3
 		}
 		ai_chance = {
 			base = 0
@@ -5441,9 +5319,7 @@ country_event = {
 			add_core_of = FROM
 		}
 		FROM = {
-			country_event = {
-				id = iranic_confederation.11
-			}
+			country_event = iranic_confederation.11
 		}
 		ai_chance = {
 			base = 1
@@ -5462,9 +5338,7 @@ country_event = {
 			add_core_of = FROM
 		}
 		FROM = {
-			country_event = {
-				id = iranic_confederation.12
-			}
+			country_event = iranic_confederation.12
 		}
 		ai_chance = {
 			base = 0
@@ -5482,6 +5356,8 @@ country_event = {
 	option = {
 		name = iranic_confederation.11.a
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.11.a executed"
+		set_temp_variable = { wargoal_on = PAK }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = PAK
 			type = take_core_state
@@ -5525,9 +5401,7 @@ country_event = {
 			add_core_of = FROM
 		}
 		FROM = {
-			country_event = {
-				id = iranic_confederation.16
-			}
+			country_event = iranic_confederation.16
 		}
 		ai_chance = {
 			base = 1
@@ -5546,9 +5420,7 @@ country_event = {
 			add_core_of = FROM
 		}
 		FROM = {
-			country_event = {
-				id = iranic_confederation.17
-			}
+			country_event = iranic_confederation.17
 		}
 		ai_chance = {
 			base = 0
@@ -5566,6 +5438,8 @@ country_event = {
 	option = {
 		name = iranic_confederation.16.a
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.16.a executed"
+		set_temp_variable = { wargoal_on = TUR }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = TUR
 			type = take_core_state
@@ -5603,9 +5477,7 @@ country_event = {
 		name = iranic_confederation.18.a
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.18.a executed"
 		FROM = {
-			country_event = {
-				id = iranic_confederation.19
-			}
+			country_event = iranic_confederation.19
 		}
 		ai_chance = {
 			base = 1
@@ -5620,11 +5492,7 @@ country_event = {
 				target = ROOT
 				autonomy_state = autonomy_irn_province
 			}
-		}
-		FROM = {
-			country_event = {
-				id = iranic_confederation.20
-			}
+			country_event = iranic_confederation.20
 		}
 		ai_chance = {
 			base = 1
@@ -5642,6 +5510,8 @@ country_event = {
 	option = {
 		name = iranic_confederation.19.a
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.19.a executed"
+		set_temp_variable = { wargoal_on = FROM }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = FROM
 			type = puppet_wargoal_focus
@@ -5843,14 +5713,14 @@ country_event = { # Monthly Goods (Variation 1)
 			# Get some rifles
 			newline = yes
 			add_equipment_to_stockpile = {
-				type = infantry_weapons
+				type = infantry_weapons_1
 				amount = 100
 				producer = SOV
 			}
 			newline = yes
 			# Get some utility trucks
 			add_equipment_to_stockpile = {
-				type = util_vehicle_0
+				type = util_vehicle_1
 				amount = 25
 				producer = C01
 			}
@@ -5873,14 +5743,14 @@ country_event = { # Monthly Goods (Variation 1)
 			# Get some rifles
 			newline = yes
 			add_equipment_to_stockpile = {
-				type = infantry_weapons
+				type = infantry_weapons_1
 				amount = 200
 				producer = SOV
 			}
 			newline = yes
 			# Get some utility trucks
 			add_equipment_to_stockpile = {
-				type = util_vehicle_0
+				type = util_vehicle_1
 				amount = 50
 				producer = C01
 			}
@@ -5907,14 +5777,14 @@ country_event = { # Monthly Goods (Variation 1)
 			# Get some rifles
 			newline = yes
 			add_equipment_to_stockpile = {
-				type = infantry_weapons
+				type = infantry_weapons_1
 				amount = 350
 				producer = SOV
 			}
 			newline = yes
 			# Get some utility trucks
 			add_equipment_to_stockpile = {
-				type = util_vehicle_0
+				type = util_vehicle_1
 				amount = 75
 				producer = C01
 			}
@@ -5932,7 +5802,6 @@ country_event = { # Monthly Goods (Variation 1)
 			random_country = {
 				set_temp_variable = { percent_change = 1.50 }
 				set_temp_variable = { tag_index = TAJ }
-				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 		}
@@ -6155,7 +6024,7 @@ country_event = { # Islamist Pamphlets Spread
 		NOT = {
 			has_government = fascism
 		}
-		neutrality_muslim_brotherhood_not_in_power_or_coalition = yes
+		neutrality_muslim_brotherhood_in_power_or_coalition = no
 	}
 	is_triggered_only = yes
 
@@ -6695,14 +6564,13 @@ country_event = { # Tajikistan Increases Narcotics Flow Into Our Markets
 		clamp_variable = { var = TAJ_drugs_police_modifier min = 0 max = 0.99 }
 		add_to_variable = { var = TAJ_corruption_drugs_modifier value = 0.02 }
 		clamp_variable = { var = TAJ_corruption_drugs_modifier min = 0 max = 0.99 }
-		random_list = {
-			30 = {
+		random = {
+			chance = 30
+
 				add_stability = -0.01
-			}
-			70 = {
-				# nothing happens
-			}
+
 		}
+
 		ai_chance = {
 			base = 1
 		}
@@ -6800,6 +6668,9 @@ country_event = { # Tajikistan Threatens to Lower Border Security!
 			}
 			has_country_flag = SOV_attack_if_repeated_TAJ
 		}
+		set_temp_variable = { wargoal_on = TAJ }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = TAJ
 			type = annex_everything
@@ -6941,6 +6812,8 @@ country_event = { # Tajikistan Fails to Comply
 			}
 			remove_from_faction = TAJ
 		}
+		set_temp_variable = { wargoal_on = TAJ }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = TAJ
 			type = puppet_wargoal_focus
@@ -6960,13 +6833,12 @@ country_event = { # Tajikistan Fails to Comply
 }
 
 #Tajik Lore Events
-
-country_event = { # Nadyrov's Plea
+# Nadyrov's Plea
+country_event = {
 	id = tajik_lore.0
 	title = tajik_lore.0.t
 	desc = tajik_lore.0.d
 	picture = GFX_TAJ_Army_reform
-
 	is_triggered_only = yes
 	fire_only_once = yes
 
@@ -6977,6 +6849,10 @@ country_event = { # Nadyrov's Plea
 	option = { # Just another day on the Job
 		name = tajik_lore.0.a
 		log = "[GetDateText]: [This.GetName]: tajik_lore.0.a executed"
+
+		hidden_effect = {
+			set_country_flag = TAJ_tajik_lore.1
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -7138,6 +7014,9 @@ country_event = { # Hills Ablaze
 	option = { # Rally the troops
 		name = tajik_lore.7.b
 		log = "[GetDateText]: [This.GetName]: tajik_lore.7.b executed"
+		set_temp_variable = { wargoal_on = UZB }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			type = annex_everything
 			target = UZB
@@ -7204,6 +7083,9 @@ country_event = { # Mine the borders (Uzbek Event)
 				id = tajik_lore.10
 				days = 1
 			}
+			hidden_effect = {
+				set_country_flag = TAJ_tajik_lore.11
+			}
 		}
 		hidden_effect = {
 			news_event = {
@@ -7246,6 +7128,9 @@ country_event = { # Uzbekistan lays its landmines
 	option = { # We will not accept this
 		name = tajik_lore.10.b
 		log = "[GetDateText]: [This.GetName]: tajik_lore.10.b executed"
+		set_temp_variable = { wargoal_on = UZB }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			type = annex_everything
 			target = UZB
@@ -7290,20 +7175,17 @@ news_event = { # Uzbekistan Strikes Tajikistan in Targeted IMU Operation (News)
 	title = tajik_lore.12.t
 	desc = tajik_lore.12.d
 	picture = GFX_News_TAJ_Uzbek_fighter_jetts
-
 	is_triggered_only = yes
-	fire_only_once = yes
 	major = yes
 
 	option = { # A World in Disarray
 		name = tajik_lore.12.a
 		trigger = {
 			NOT = {
-				TAG = TAJ
-				TAG = UZB
+				tag = TAJ
+				tag = UZB
 			}
 		}
-		log = "[GetDateText]: [This.GetName]: tajik_lore.12.a executed"
 		ai_chance = {
 			base = 1
 		}
@@ -7311,9 +7193,8 @@ news_event = { # Uzbekistan Strikes Tajikistan in Targeted IMU Operation (News)
 	option = { # A Shadow Looms Over Us
 		name = tajik_lore.12.b
 		trigger = {
-			TAG = TAJ
+			tag = TAJ
 		}
-		log = "[GetDateText]: [This.GetName]: tajik_lore.12.b executed"
 		ai_chance = {
 			base = 1
 		}
@@ -7321,9 +7202,8 @@ news_event = { # Uzbekistan Strikes Tajikistan in Targeted IMU Operation (News)
 	option = { # A Decisive Blow
 		name = tajik_lore.12.c
 		trigger = {
-			TAG = UZB
+			tag = UZB
 		}
-		log = "[GetDateText]: [This.GetName]: tajik_lore.12.c executed"
 		ai_chance = {
 			base = 1
 		}
@@ -7342,7 +7222,6 @@ news_event = { # Uzbekistan Mines the Tajik Border (News)
 
 	option = { # Days of Hazy lay ahead
 		name = tajik_lore.13.a
-		log = "[GetDateText]: [This.GetName]: tajik_lore.13.a executed"
 		ai_chance = {
 			base = 1
 		}
@@ -7361,7 +7240,6 @@ news_event = { # Uzbek Invasion of Tajikistan (News)
 
 	option = { # A carefully tread that ended in hellfire
 		name = tajik_lore.14.a
-		log = "[GetDateText]: [This.GetName]: tajik_lore.14.a executed"
 		ai_chance = {
 			base = 1
 		}

@@ -1,0 +1,523 @@
+# Hong Kong scripted effects
+# Triad mechanic, LegCo motion seat calculations, Railway/XRL motion outcomes
+
+#####################
+# Triad System
+#####################
+
+# set_temp_variable = { HKG_modify_triad_strength = +- }
+HKG_modify_triad_strength = {
+	add_to_variable = { HKG_triad_strength = HKG_modify_triad_strength }
+	clamp_variable = {
+		var = HKG_triad_strength
+		min = 0
+		max = 100
+	}
+	custom_effect_tooltip = HKG_modify_triad_strength_tt
+}
+
+# set_temp_variable = { HKG_modify_triad_evidence = +- }
+HKG_modify_triad_evidence = {
+	add_to_variable = { HKG_triad_evidence = HKG_modify_triad_evidence }
+	clamp_variable = {
+		var = HKG_triad_evidence
+		min = 0
+		max = 10
+	}
+	custom_effect_tooltip = HKG_modify_triad_evidence_tt
+}
+
+# set_temp_variable = { HKG_triads_delta = X } before calling
+triads_update_political_power_factor = {
+	add_to_variable = { HKG_triads_pp_cost = HKG_triads_delta }
+	clamp_variable = {
+		var = HKG_triads_pp_cost
+		min = 0
+		max = 5
+	}
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = HKG_triads_dynamic_modifier } } }
+		add_dynamic_modifier = { modifier = HKG_triads_dynamic_modifier }
+	}
+}
+
+#####################
+# LegCo Seat System
+#####################
+
+# Seat counts for the post-handover Legislative Council (70 seats post-2012)
+set_total_legco_seats = {
+	set_variable = { HKG_total_legco_seats = 70 }
+}
+
+# Recalculate four-year electoral cycle seat allocations
+calculate_legco_seats_four_yearly = {
+	set_variable = { HKG_legco_geographic_seats = 35 }
+	set_variable = { HKG_legco_functional_seats = 35 }
+}
+
+# Sum geographic + functional seats
+calculate_total_legco_seats = {
+	set_variable = { HKG_total_legco_seats = HKG_legco_geographic_seats }
+	add_to_variable = { HKG_total_legco_seats = HKG_legco_functional_seats }
+}
+
+# Simple majority threshold (half of total + 1)
+calculate_required_legco_seats = {
+	set_variable = { HKG_legco_required_seats = HKG_total_legco_seats }
+	multiply_variable = { HKG_legco_required_seats = 0.5 }
+	round_variable = HKG_legco_required_seats
+}
+
+# Two-thirds supermajority threshold for special motions (typo "sepcially" preserved for compatibility)
+calculate_sepcially_required_legco_seats = {
+	set_variable = { HKG_legco_specially_required_seats = HKG_total_legco_seats }
+	multiply_variable = { HKG_legco_specially_required_seats = 0.6667 }
+	round_variable = HKG_legco_specially_required_seats
+}
+
+
+
+# Contract class enum: 1 = destroyer, 2 = frigate, 3 = attack submarine,
+# 4 = cruiser, 5 = aircraft carrier.
+
+HKG_contract_initialize = {
+	set_country_flag = HKG_contract_active
+	if = {
+		limit = { country_exists = CHI }
+		CHI = { set_country_flag = HKG_contract_system_live }
+	}
+	set_variable = { HKG_contract_standing = 0 }
+	set_variable = { HKG_contract_funds = 0 }
+	set_variable = { HKG_contract_completed = 0 }
+	set_variable = { HKG_contract_count = 0 }
+	set_variable = { HKG_contract_gui_dirty = 0 }
+	set_variable = { HKG_contract_band_low = 25 }
+	set_variable = { HKG_contract_band_mid = 50 }
+	set_variable = { HKG_contract_band_high = 75 }
+	set_variable = { HKG_contract_standing_max = 100 }
+	set_variable = { HKG_contract_standing_gain = 10 }
+	set_variable = { HKG_contract_standing_loss = 15 }
+	set_variable = { HKG_contract_max_slots = 3 }
+	set_variable = { HKG_contract_grace = 90 }
+	set_variable = { HKG_contract_version = 2 }
+	HKG_contract_build_slots = yes
+	HKG_contract_refresh_gui = yes
+}
+
+HKG_contract_build_slots = {
+	clear_array = HKG_contract_occupied_array
+	clear_array = HKG_contract_class_array
+	clear_array = HKG_contract_quota_array
+	clear_array = HKG_contract_total_array
+	clear_array = HKG_contract_deadline_array
+	clear_array = HKG_contract_final_array
+	clear_array = HKG_contract_pp_array
+	clear_array = HKG_contract_prod_array
+	clear_array = HKG_contract_idea_array
+	clear_array = HKG_contract_license_array
+	for_loop_effect = {
+		start = 0
+		end = 3
+		add_to_array = { HKG_contract_occupied_array = 0 }
+		add_to_array = { HKG_contract_class_array = 0 }
+		add_to_array = { HKG_contract_quota_array = 0 }
+		add_to_array = { HKG_contract_total_array = 0 }
+		add_to_array = { HKG_contract_deadline_array = 0 }
+		add_to_array = { HKG_contract_final_array = 0 }
+		add_to_array = { HKG_contract_pp_array = 0 }
+		add_to_array = { HKG_contract_prod_array = 0 }
+		add_to_array = { HKG_contract_idea_array = 0 }
+		add_to_array = { HKG_contract_license_array = 0 }
+	}
+}
+
+# Any single in-flight v1 contract is dropped; its scalar variables are left
+# orphaned and unread by design.
+HKG_contract_migrate_v2 = {
+	set_variable = { HKG_contract_version = 2 }
+	set_variable = { HKG_contract_count = 0 }
+	set_variable = { HKG_contract_max_slots = 3 }
+	set_variable = { HKG_contract_grace = 90 }
+	set_variable = { HKG_contract_band_low = 25 }
+	set_variable = { HKG_contract_band_mid = 50 }
+	set_variable = { HKG_contract_band_high = 75 }
+	set_variable = { HKG_contract_standing_max = 100 }
+	set_variable = { HKG_contract_standing_gain = 10 }
+	set_variable = { HKG_contract_standing_loss = 15 }
+	clr_country_flag = HKG_contract_in_progress
+	clr_country_flag = HKG_contract_offer_pending
+	HKG_contract_build_slots = yes
+	HKG_contract_refresh_gui = yes
+}
+
+HKG_contract_refresh_gui = {
+	set_variable = { HKG_contract_disp_class_0 = HKG_contract_class_array^0 }
+	set_variable = { HKG_contract_disp_quota_0 = HKG_contract_quota_array^0 }
+	set_variable = { HKG_contract_disp_total_0 = HKG_contract_total_array^0 }
+	set_variable = { HKG_contract_disp_deadline_0 = HKG_contract_deadline_array^0 }
+	set_variable = { HKG_contract_disp_license_0 = HKG_contract_license_array^0 }
+	set_variable = { HKG_contract_disp_class_1 = HKG_contract_class_array^1 }
+	set_variable = { HKG_contract_disp_quota_1 = HKG_contract_quota_array^1 }
+	set_variable = { HKG_contract_disp_total_1 = HKG_contract_total_array^1 }
+	set_variable = { HKG_contract_disp_deadline_1 = HKG_contract_deadline_array^1 }
+	set_variable = { HKG_contract_disp_license_1 = HKG_contract_license_array^1 }
+	set_variable = { HKG_contract_disp_class_2 = HKG_contract_class_array^2 }
+	set_variable = { HKG_contract_disp_quota_2 = HKG_contract_quota_array^2 }
+	set_variable = { HKG_contract_disp_total_2 = HKG_contract_total_array^2 }
+	set_variable = { HKG_contract_disp_deadline_2 = HKG_contract_deadline_array^2 }
+	set_variable = { HKG_contract_disp_license_2 = HKG_contract_license_array^2 }
+	add_to_variable = { HKG_contract_gui_dirty = 1 }
+}
+
+HKG_contract_generate_offer = {
+	set_variable = { HKG_contract_offer_license = 0 }
+	random = {
+		chance = 30
+		set_variable = { HKG_contract_offer_license = 1 }
+	}
+	# With no escort hull tech, only a license contract is possible.
+	if = {
+		limit = { HKG_contract_can_build_any = no }
+		set_variable = { HKG_contract_offer_license = 1 }
+	}
+	if = {
+		limit = { check_variable = { HKG_contract_offer_license = 1 } }
+		random_list = {
+			10 = { set_variable = { HKG_contract_offer_class = 1 } }
+			10 = { set_variable = { HKG_contract_offer_class = 2 } }
+			25 = { set_variable = { HKG_contract_offer_class = 3 } }
+			30 = { set_variable = { HKG_contract_offer_class = 4 } }
+			25 = { set_variable = { HKG_contract_offer_class = 5 } }
+		}
+	}
+	else = {
+		random_list = {
+			50 = {
+				set_variable = { HKG_contract_offer_class = 1 }
+				modifier = { factor = 0 NOT = { has_tech = destroyer_hull_1 } }
+			}
+			50 = {
+				set_variable = { HKG_contract_offer_class = 2 }
+				modifier = { factor = 0 NOT = { has_tech = frigate_hull_1 } }
+			}
+			35 = {
+				set_variable = { HKG_contract_offer_class = 3 }
+				modifier = { factor = 0 NOT = { has_tech = attack_submarine_hull_1 } }
+				modifier = { factor = 0 NOT = { check_variable = { HKG_contract_standing > HKG_contract_band_low } } }
+			}
+			35 = {
+				set_variable = { HKG_contract_offer_class = 4 }
+				modifier = { factor = 0 NOT = { has_tech = cruiser_hull_1 } }
+				modifier = { factor = 0 NOT = { check_variable = { HKG_contract_standing > HKG_contract_band_mid } } }
+			}
+			25 = {
+				set_variable = { HKG_contract_offer_class = 5 }
+				modifier = { factor = 0 NOT = { has_tech = carrier_hull_1 } }
+				modifier = { factor = 0 NOT = { check_variable = { HKG_contract_standing > HKG_contract_band_high } } }
+			}
+		}
+	}
+	HKG_contract_set_offer_terms = yes
+	set_country_flag = HKG_contract_offer_pending
+	add_to_variable = { HKG_contract_gui_dirty = 1 }
+}
+
+HKG_contract_set_offer_terms = {
+	if = {
+		limit = { check_variable = { HKG_contract_offer_class = 1 } }
+		set_variable = { HKG_contract_offer_quota = 2 }
+		set_variable = { HKG_contract_offer_deadline = 365 }
+		set_variable = { HKG_contract_offer_funds = 10 }
+		set_variable = { HKG_contract_offer_pp = 25 }
+		set_variable = { HKG_contract_offer_productivity = 10 }
+		set_variable = { HKG_contract_offer_idea_days = 365 }
+	}
+	else_if = {
+		limit = { check_variable = { HKG_contract_offer_class = 2 } }
+		set_variable = { HKG_contract_offer_quota = 2 }
+		set_variable = { HKG_contract_offer_deadline = 400 }
+		set_variable = { HKG_contract_offer_funds = 14 }
+		set_variable = { HKG_contract_offer_pp = 25 }
+		set_variable = { HKG_contract_offer_productivity = 12 }
+		set_variable = { HKG_contract_offer_idea_days = 365 }
+	}
+	else_if = {
+		limit = { check_variable = { HKG_contract_offer_class = 3 } }
+		set_variable = { HKG_contract_offer_quota = 1 }
+		set_variable = { HKG_contract_offer_deadline = 480 }
+		set_variable = { HKG_contract_offer_funds = 22 }
+		set_variable = { HKG_contract_offer_pp = 40 }
+		set_variable = { HKG_contract_offer_productivity = 20 }
+		set_variable = { HKG_contract_offer_idea_days = 540 }
+	}
+	else_if = {
+		limit = { check_variable = { HKG_contract_offer_class = 4 } }
+		set_variable = { HKG_contract_offer_quota = 1 }
+		set_variable = { HKG_contract_offer_deadline = 540 }
+		set_variable = { HKG_contract_offer_funds = 30 }
+		set_variable = { HKG_contract_offer_pp = 45 }
+		set_variable = { HKG_contract_offer_productivity = 24 }
+		set_variable = { HKG_contract_offer_idea_days = 540 }
+	}
+	else = {
+		set_variable = { HKG_contract_offer_quota = 1 }
+		set_variable = { HKG_contract_offer_deadline = 730 }
+		set_variable = { HKG_contract_offer_funds = 50 }
+		set_variable = { HKG_contract_offer_pp = 80 }
+		set_variable = { HKG_contract_offer_productivity = 45 }
+		set_variable = { HKG_contract_offer_idea_days = 730 }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { HKG_contract_offer_class = 1 }
+				check_variable = { HKG_contract_offer_class = 2 }
+			}
+			HKG_contract_china_naval_drive = no
+		}
+		set_variable = { HKG_contract_offer_quota = 1 }
+	}
+	if = {
+		limit = { check_variable = { HKG_contract_offer_license = 1 } }
+		multiply_variable = { HKG_contract_offer_funds = 1.5 }
+		multiply_variable = { HKG_contract_offer_pp = 1.5 }
+		multiply_variable = { HKG_contract_offer_deadline = 1.25 }
+		round_variable = HKG_contract_offer_funds
+		round_variable = HKG_contract_offer_pp
+		round_variable = HKG_contract_offer_deadline
+	}
+	if = {
+		limit = { has_country_flag = HKG_contract_better_terms }
+		multiply_variable = { HKG_contract_offer_funds = 1.25 }
+		multiply_variable = { HKG_contract_offer_pp = 1.25 }
+		multiply_variable = { HKG_contract_offer_productivity = 1.25 }
+		multiply_variable = { HKG_contract_offer_deadline = 1.5 }
+		round_variable = HKG_contract_offer_funds
+		round_variable = HKG_contract_offer_pp
+		round_variable = HKG_contract_offer_productivity
+		round_variable = HKG_contract_offer_deadline
+	}
+	set_variable = { HKG_contract_offer_advance = HKG_contract_offer_funds }
+	multiply_variable = { HKG_contract_offer_advance = 0.5 }
+	round_variable = HKG_contract_offer_advance
+}
+
+HKG_contract_accept_offer = {
+	set_temp_variable = { free_slot = -1 }
+	for_loop_effect = {
+		start = 0
+		end = 3
+		if = {
+			limit = {
+				check_variable = { free_slot < 0 }
+				check_variable = { HKG_contract_occupied_array^v = 0 }
+			}
+			set_temp_variable = { free_slot = v }
+		}
+	}
+	if = {
+		limit = { check_variable = { free_slot > -1 } }
+		set_variable = { HKG_contract_occupied_array^free_slot = 1 }
+		set_variable = { HKG_contract_class_array^free_slot = HKG_contract_offer_class }
+		set_variable = { HKG_contract_quota_array^free_slot = HKG_contract_offer_quota }
+		set_variable = { HKG_contract_total_array^free_slot = HKG_contract_offer_quota }
+		set_variable = { HKG_contract_deadline_array^free_slot = HKG_contract_offer_deadline }
+		set_variable = { HKG_contract_pp_array^free_slot = HKG_contract_offer_pp }
+		set_variable = { HKG_contract_prod_array^free_slot = HKG_contract_offer_productivity }
+		set_variable = { HKG_contract_idea_array^free_slot = HKG_contract_offer_idea_days }
+		set_variable = { HKG_contract_license_array^free_slot = HKG_contract_offer_license }
+		set_temp_variable = { final_pay = HKG_contract_offer_funds }
+		subtract_from_temp_variable = { final_pay = HKG_contract_offer_advance }
+		set_variable = { HKG_contract_final_array^free_slot = final_pay }
+		add_to_variable = { HKG_contract_count = 1 }
+		set_temp_variable = { treasury_change = HKG_contract_offer_advance }
+		modify_treasury_effect = yes
+		add_to_variable = { HKG_contract_funds = HKG_contract_offer_advance }
+		add_manpower = 1000
+		if = {
+			limit = { check_variable = { HKG_contract_count > 1 } }
+			for_loop_effect = {
+				start = 0
+				end = 3
+				if = {
+					limit = { check_variable = { HKG_contract_occupied_array^v = 1 } }
+					add_to_variable = { HKG_contract_deadline_array^v = HKG_contract_grace }
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { HKG_contract_offer_license = 1 } }
+			HKG_contract_grant_license_tech = yes
+		}
+	}
+	clr_country_flag = HKG_contract_offer_pending
+	HKG_contract_refresh_gui = yes
+}
+
+# Each set_technology also grants the predecessor tech so the naval tree has no
+# skipped-ahead gaps.
+HKG_contract_grant_license_tech = {
+	if = {
+		limit = { check_variable = { HKG_contract_offer_class = 1 } }
+		set_technology = { tech_naval_systems_engineering = 1 destroyer_hull_1 = 1 popup = no }
+	}
+	else_if = {
+		limit = { check_variable = { HKG_contract_offer_class = 2 } }
+		set_technology = { tech_naval_systems_engineering = 1 frigate_hull_1 = 1 popup = no }
+	}
+	else_if = {
+		limit = { check_variable = { HKG_contract_offer_class = 3 } }
+		set_technology = { tech_submarine_engineering_1 = 1 attack_submarine_hull_1 = 1 popup = no }
+	}
+	else_if = {
+		limit = { check_variable = { HKG_contract_offer_class = 4 } }
+		set_technology = { tech_naval_systems_engineering = 1 cruiser_hull_1 = 1 popup = no }
+	}
+	else = {
+		set_technology = { aircraft_carrier_engineering = 1 carrier_hull_1 = 1 popup = no }
+	}
+}
+
+# Grants only the first naval tech HKG has not yet researched. The list is
+# prerequisite-ordered, so each call advances exactly one connected step.
+HKG_contract_unlock_next_naval_tech = {
+	if = { limit = { NOT = { has_tech = tech_naval_systems_engineering } } set_technology = { tech_naval_systems_engineering = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_early_naval_weapon_systems } } set_technology = { tech_early_naval_weapon_systems = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_naval_weapon_systems } } set_technology = { tech_naval_weapon_systems = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_combat_support_systems } } set_technology = { tech_combat_support_systems = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_diesel_power_systems_1 } } set_technology = { tech_diesel_power_systems_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_light_guns_1 } } set_technology = { tech_light_guns_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_torpedoes_1 } } set_technology = { tech_torpedoes_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_turret_missiles_surface_1 } } set_technology = { tech_turret_missiles_surface_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_combat_sonar_1 } } set_technology = { tech_combat_sonar_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_combat_radar_1 } } set_technology = { tech_combat_radar_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = frigate_hull_1 } } set_technology = { frigate_hull_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = destroyer_hull_1 } } set_technology = { destroyer_hull_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = cruiser_hull_1 } } set_technology = { cruiser_hull_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = tech_submarine_engineering_1 } } set_technology = { tech_submarine_engineering_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = attack_submarine_hull_1 } } set_technology = { attack_submarine_hull_1 = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = aircraft_carrier_engineering } } set_technology = { aircraft_carrier_engineering = 1 popup = yes } }
+	else_if = { limit = { NOT = { has_tech = carrier_hull_1 } } set_technology = { carrier_hull_1 = 1 popup = yes } }
+}
+
+HKG_contract_decline_offer = {
+	clr_country_flag = HKG_contract_offer_pending
+	add_to_variable = { HKG_contract_gui_dirty = 1 }
+}
+
+HKG_contract_credit_delivery = {
+	set_temp_variable = { target_slot = -1 }
+	set_temp_variable = { best_deadline = 999999 }
+	for_loop_effect = {
+		start = 0
+		end = 3
+		if = {
+			limit = {
+				check_variable = { HKG_contract_occupied_array^v = 1 }
+				check_variable = { HKG_contract_class_array^v = deliver_class }
+				check_variable = { HKG_contract_quota_array^v > 0 }
+				check_variable = { HKG_contract_deadline_array^v < best_deadline }
+			}
+			set_temp_variable = { target_slot = v }
+			set_temp_variable = { best_deadline = HKG_contract_deadline_array^v }
+		}
+	}
+	if = {
+		limit = { check_variable = { target_slot > -1 } }
+		subtract_from_variable = { HKG_contract_quota_array^target_slot = 1 }
+		if = {
+			limit = { check_variable = { HKG_contract_quota_array^target_slot < 1 } }
+			set_temp_variable = { done_slot = target_slot }
+			HKG_contract_fulfill_slot = yes
+		}
+	}
+	HKG_contract_refresh_gui = yes
+}
+
+HKG_contract_fulfill_slot = {
+	log = "[GetDateText]: [Root.GetName]: HKG_contract_fulfill_slot - contract paid out"
+	set_variable = { HKG_contract_last_payment = HKG_contract_final_array^done_slot }
+	set_temp_variable = { treasury_change = HKG_contract_final_array^done_slot }
+	modify_treasury_effect = yes
+	add_to_variable = { HKG_contract_funds = HKG_contract_final_array^done_slot }
+	set_temp_variable = { pp_reward = HKG_contract_pp_array^done_slot }
+	add_political_power = pp_reward
+	set_temp_variable = { idea_len = HKG_contract_idea_array^done_slot }
+	add_timed_idea = { idea = HKG_contract_dockyard_revenue days = idea_len }
+	add_to_variable = { HKG_contract_standing = HKG_contract_standing_gain }
+	clamp_variable = { var = HKG_contract_standing min = 0 max = HKG_contract_standing_max }
+	add_to_variable = { HKG_contract_completed = 1 }
+	if = {
+		limit = { check_variable = { HKG_contract_class_array^done_slot = 5 } }
+		set_country_flag = HKG_contract_carrier_milestone
+	}
+	HKG_contract_clear_slot = yes
+	subtract_from_variable = { HKG_contract_count = 1 }
+	country_event = { id = HKG_contract.2 days = 1 }
+}
+
+HKG_contract_miss_slot = {
+	add_timed_idea = { idea = HKG_contract_beijing_displeasure days = 365 }
+	subtract_from_variable = { HKG_contract_standing = HKG_contract_standing_loss }
+	clamp_variable = { var = HKG_contract_standing min = 0 max = HKG_contract_standing_max }
+	set_temp_variable = { done_slot = gone_slot }
+	HKG_contract_clear_slot = yes
+	subtract_from_variable = { HKG_contract_count = 1 }
+	country_event = { id = HKG_contract.3 days = 1 }
+}
+
+HKG_contract_clear_slot = {
+	set_variable = { HKG_contract_occupied_array^done_slot = 0 }
+	set_variable = { HKG_contract_class_array^done_slot = 0 }
+	set_variable = { HKG_contract_quota_array^done_slot = 0 }
+	set_variable = { HKG_contract_total_array^done_slot = 0 }
+	set_variable = { HKG_contract_deadline_array^done_slot = 0 }
+	set_variable = { HKG_contract_final_array^done_slot = 0 }
+	set_variable = { HKG_contract_pp_array^done_slot = 0 }
+	set_variable = { HKG_contract_prod_array^done_slot = 0 }
+	set_variable = { HKG_contract_idea_array^done_slot = 0 }
+	set_variable = { HKG_contract_license_array^done_slot = 0 }
+}
+
+HKG_contract_weekly_tick = {
+	set_temp_variable = { HKG_contract_tick_changed = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 3
+		if = {
+			limit = { check_variable = { HKG_contract_occupied_array^v = 1 } }
+			subtract_from_variable = { HKG_contract_deadline_array^v = 7 }
+			set_temp_variable = { HKG_contract_tick_changed = 1 }
+			if = {
+				limit = { check_variable = { HKG_contract_deadline_array^v < 1 } }
+				set_temp_variable = { gone_slot = v }
+				HKG_contract_miss_slot = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { HKG_contract_tick_changed = 1 } }
+		HKG_contract_refresh_gui = yes
+	}
+}
+
+HKG_contract_check_capstone = {
+	if = {
+		limit = { NOT = { has_country_flag = HKG_contract_capstone_done } }
+		if = {
+			limit = {
+				NOT = { has_country_flag = HKG_contract_carrier_milestone }
+				has_navy_size = { archetype = carrier size > 0 }
+			}
+			set_country_flag = HKG_contract_carrier_milestone
+		}
+		if = {
+			limit = { HKG_contract_capstone_ready = yes }
+			set_country_flag = HKG_contract_capstone_done
+			add_ideas = HKG_contract_naval_power
+			add_to_variable = { HKG_contract_gui_dirty = 1 }
+			news_event = { id = HKG_contract.50 days = 1 }
+		}
+	}
+}

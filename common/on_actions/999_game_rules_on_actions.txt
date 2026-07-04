@@ -5,12 +5,13 @@
 on_actions = {
 	on_startup = {
 		effect = {
-			# Remove Microstates from the Game
+			# Remove Microstates from the Game (Tiny Tier)
 			if = {
 				limit = {
-					has_game_rule = {
-						rule = remove_micro_states
-						option = yes
+					OR = {
+						has_game_rule = { rule = remove_micro_states option = tiny }
+						has_game_rule = { rule = remove_micro_states option = smaller }
+						has_game_rule = { rule = remove_micro_states option = insignificant }
 					}
 				}
 				ITA = {
@@ -187,6 +188,94 @@ on_actions = {
 				}
 				set_global_flag = GAME_RULE_microstates_removed
 			}
+			# Remove Microstates from the Game (Smaller Tier)
+			if = {
+				limit = {
+					OR = {
+						has_game_rule = { rule = remove_micro_states option = smaller }
+						has_game_rule = { rule = remove_micro_states option = insignificant }
+					}
+				}
+				RAJ = {
+					add_state_core = 484
+					add_state_core = 983
+					annex_country = { target = BHU transfer_troops = yes }
+					for_each_scope_loop = {
+						array = core_states
+						remove_core_of = BHU
+					}
+				}
+				SEN = {
+					add_state_core = 361
+					add_state_core = 365
+					add_state_core = 1002
+					add_state_core = 1003
+					annex_country = { target = GAM transfer_troops = yes }
+					annex_country = { target = GUB transfer_troops = yes }
+					for_each_scope_loop = {
+						array = core_states
+						remove_core_of = GAM
+						remove_core_of = GUB
+					}
+				}
+				ETH = {
+					add_state_core = 230
+					add_state_core = 1020
+					annex_country = { target = DJI transfer_troops = yes }
+					for_each_scope_loop = {
+						array = core_states
+						remove_core_of = DJI
+					}
+				}
+				GUI = {
+					add_state_core = 355
+					add_state_core = 356
+					add_state_core = 358
+					annex_country = { target = LIB transfer_troops = yes }
+					annex_country = { target = LUR transfer_troops = yes }
+					annex_country = { target = SIE transfer_troops = yes }
+					for_each_scope_loop = {
+						array = core_states
+						remove_core_of = LIB
+						remove_core_of = LUR
+						remove_core_of = SIE
+					}
+				}
+			}
+			# Remove Microstates from the Game (Insignificant Tier)
+			if = {
+				limit = {
+					has_game_rule = { rule = remove_micro_states option = insignificant }
+				}
+				VIE = {
+					add_state_core = 515
+					add_state_core = 516
+					add_state_core = 517
+					annex_country = { target = LAO transfer_troops = yes }
+					for_each_scope_loop = {
+						array = core_states
+						remove_core_of = LAO
+					}
+				}
+				HOL = {
+					add_state_core = 878
+					add_state_core = 1006
+					annex_country = { target = SUR transfer_troops = yes }
+					for_each_scope_loop = {
+						array = core_states
+						remove_core_of = SUR
+					}
+				}
+				VEN = {
+					add_state_core = 877
+					add_state_core = 1005
+					annex_country = { target = GUY transfer_troops = yes }
+					for_each_scope_loop = {
+						array = core_states
+						remove_core_of = GUY
+					}
+				}
+			}
 
 			# Debt Rule
 			if = {
@@ -233,20 +322,35 @@ on_actions = {
 						option = yes
 					}
 				}
-				every_country = {
-					limit = { OR = { has_idea = NATO_member has_idea = Major_Non_NATO_Ally } }
-					every_country = {
+				for_each_scope_loop = {
+					array = global.nato_members
+					for_each_scope_loop = {
+						array = global.nato_members
 						remove_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
 					}
 					remove_from_tech_sharing_group = NATO_Tech_Share
 					remove_ideas = NATO_member
+				}
+				every_country = {
+					limit = { has_idea = Major_Non_NATO_Ally }
 					remove_ideas = Major_Non_NATO_Ally
 				}
 				USA = {
 					dismantle_faction = yes
-					clear_array = global.nato_member
+					clear_array = global.nato_members
 				}
 				set_global_flag = GAME_RULE_nato_disabled
+			}
+
+			# Disable coup contest event chain
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = rule_disable_coup_contest
+						option = yes
+					}
+				}
+				set_global_flag = GAME_RULE_coup_contest_disabled
 			}
 
 			# Disable CSTO
@@ -257,8 +361,8 @@ on_actions = {
 						option = yes
 					}
 				}
-				every_country = {
-					limit = { has_idea = CSTO_member }
+				for_each_scope_loop = {
+					array = global.CSTO_member
 					remove_ideas = CSTO_member
 					remove_from_tech_sharing_group = CSTO_Tech_Share
 				}
@@ -279,37 +383,14 @@ on_actions = {
 				}
 				set_global_flag = game_rule_allow_cheat_decisions
 			}
-			#LIC HRE & Alaska Focuses
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = LIC_HRE_Alaska
-						option = yes
-					}
-				}
-				set_global_flag = game_rule_LIC_HRE_Alaska
-			}
 			#South Ossetia Scythia path
 			if = {
 				limit = {
-					has_game_rule = {
-						rule = SOO_Scythia
-						option = yes
-					}
+					has_game_rule = { rule = SOO_Scythia option = yes }
 				}
 				set_global_flag = game_rule_SOO_Scythia
 			}
 
-			#Tesak Cuba path
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = CUB_Tesak
-						option = yes
-					}
-				}
-				set_global_flag = game_rule_CUB_Tesak
-			}
 			# Allow toggling cheat decisions
 			if = {
 				limit = {
@@ -337,30 +418,19 @@ on_actions = {
 				limit = {
 					has_game_rule = {
 						rule = allow_division_limiter
-						option = no
+						option = yes
 					}
 				}
-				set_global_flag = GAME_RULE_division_limiter_disabled
+				set_global_flag = GAME_RULE_division_limiter_enabled
 			}
-			else = {
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = allow_division_limiter
-							option = yes
-						}
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = allow_division_limiter
+						option = potato_edition
 					}
-					set_global_flag = GAME_RULE_division_limiter_enabled
 				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = allow_division_limiter
-							option = potato_edition
-						}
-					}
-					set_global_flag = GAME_RULE_division_limiter_potato_edition_enabled
-				}
+				set_global_flag = GAME_RULE_division_limiter_potato_edition_enabled
 			}
 
 			# Disable Public War Weariness System
@@ -616,7 +686,6 @@ on_actions = {
 						}
 					}
 				}
-				set_global_flag = GAME_RULE_rule_randomize_ideologies
 			}
 			# Random Religions
 			if = {
@@ -662,7 +731,6 @@ on_actions = {
 						8 = { add_ideas = fifty_fifty_divide }
 					}
 				}
-				set_global_flag = GAME_RULE_rule_randomize_religion
 			}
 			# Random Internal Factions
 			if = {
@@ -774,107 +842,34 @@ on_actions = {
 						3 = { add_ideas = chaebols }
 					}
 				}
-				set_global_flag = GAME_RULE_randomize_internal_factions
 			}
 
 			# Allow Edgy Flags
 			if = {
 				limit = {
-					has_game_rule = {
-						rule = allow_edgy_flags
-						option = yes
-					}
+					has_game_rule = { rule = allow_edgy_flags option = yes }
 				}
 				set_global_flag = GAME_RULE_allow_edgy_flags
-			}
-
-			# Allowable Formable Nations
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = allow_multiple_formables
-						option = no
-					}
-				}
-				set_global_flag = GAME_RULE_no_allow_multiple_formables
-			}
-
-			# Spread Influence Cooldown
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days
-					}
-				}
-				set_global_flag = GAME_RULE_spread_influence_30_days
-			}
-			else = {
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days
-						}
-					}
-					set_global_flag = GAME_RULE_spread_influence_60_days
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = rule_spread_influence_cooldown_limits option = spread_influence_0_days
-						}
-					}
-					set_global_flag = GAME_RULE_spread_influence_0_days
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days
-						}
-					}
-					set_global_flag = GAME_RULE_spread_influence_14_days
-				}
-			}
-
-			# Monthly Domestic Indpendence Tick Enable
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_monthly_domestic_independence_tick option = yes
-					}
-				}
-				set_global_flag = GAME_RULE_enable_monthly_domestic_independence_tick
-			}
-			else = {
-				set_global_flag = GAME_RULE_disable_monthly_domestic_independence_tick
 			}
 
 			# Monthly Domestic Indpendence Tick Amount
 			if = {
 				limit = {
-					has_game_rule = {
-						rule = rule_monthly_domestic_independence_gain_amount option = amount_10_gain
-					}
+					has_game_rule = { rule = rule_monthly_domestic_independence_gain_amount option = amount_10_gain }
 				}
-				set_global_flag = GAME_RULE_monthly_domestic_independence_gain_amount_10
 				set_variable = { global.rule_monthly_domestic_independence_gain_amount = 0.10 }
 			}
 			else = {
 				if = {
 					limit = {
-						has_game_rule = {
-							rule = rule_monthly_domestic_independence_gain_amount option = amount_05_gain
-						}
+						has_game_rule = { rule = rule_monthly_domestic_independence_gain_amount option = amount_05_gain }
 					}
-					set_global_flag = GAME_RULE_monthly_domestic_independence_gain_amount_05
 					set_variable = { global.rule_monthly_domestic_independence_gain_amount = 0.05 }
 				}
-				if = {
+				else_if = {
 					limit = {
-						has_game_rule = {
-							rule = rule_monthly_domestic_independence_gain_amount option = amount_15_gain
-						}
+						has_game_rule = { rule = rule_monthly_domestic_independence_gain_amount option = amount_15_gain }
 					}
-					set_global_flag = GAME_RULE_monthly_domestic_independence_gain_amount_15
 					set_variable = { global.rule_monthly_domestic_independence_gain_amount = 0.15 }
 				}
 			}
@@ -882,151 +877,41 @@ on_actions = {
 			# Investment Gain Percent
 			if = {
 				limit = {
-					has_game_rule = {
-						rule = rule_spread_influence_amount_gain option = gain_1_5_percent_spread
-					}
+					has_game_rule = { rule = rule_spread_influence_amount_gain option = gain_1_5_percent_spread }
 				}
-				set_global_flag = GAME_RULE_gain_1_5_percent_spread
 				set_variable = { global.percent_change_value = 1.5 }
 			}
 			else = {
 				if = {
 					limit = {
-						has_game_rule = {
-							rule = rule_spread_influence_amount_gain option = gain_4_percent_spread
-						}
+						has_game_rule = { rule = rule_spread_influence_amount_gain option = gain_4_percent_spread }
 					}
-					set_global_flag = GAME_RULE_gain_4_percent_spread
 					set_variable = { global.percent_change_value = 4 }
 				}
-				if = {
+				else_if = {
 					limit = {
-						has_game_rule = {
-							rule = rule_spread_influence_amount_gain option = gain_3_percent_spread
-						}
+						has_game_rule = { rule = rule_spread_influence_amount_gain option = gain_3_percent_spread }
 					}
-					set_global_flag = GAME_RULE_gain_3_percent_spread
 					set_variable = { global.percent_change_value = 3 }
 				}
-				if = {
+				else_if = {
 					limit = {
-						has_game_rule = {
-							rule = rule_spread_influence_amount_gain option = gain_2_percent_spread
-						}
+						has_game_rule = { rule = rule_spread_influence_amount_gain option = gain_2_percent_spread }
 					}
-					set_global_flag = GAME_RULE_gain_2_percent_spread
 					set_variable = { global.percent_change_value = 2 }
 				}
-				if = {
+				else_if = {
 					limit = {
-						has_game_rule = {
-							rule = rule_spread_influence_amount_gain option = gain_1_percent_spread
-						}
+						has_game_rule = { rule = rule_spread_influence_amount_gain option = gain_1_percent_spread }
 					}
-					set_global_flag = GAME_RULE_gain_1_percent_spread
 					set_variable = { global.percent_change_value = 1 }
 				}
-				if = {
+				else_if = {
 					limit = {
-						has_game_rule = {
-							rule = rule_spread_influence_amount_gain option = gain_0_5_percent_spread
-						}
+						has_game_rule = { rule = rule_spread_influence_amount_gain option = gain_0_5_percent_spread }
 					}
-					set_global_flag = GAME_RULE_gain_0_5_percent_spread
 					set_variable = { global.percent_change_value = 0.5 }
 				}
-			}
-
-			# Investment Cooldown
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_influence_cooldown_limits option = day_14_cooldown
-					}
-				}
-				set_global_flag = GAME_RULE_influence_cooldown_limits_14
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_influence_cooldown_limits option = day_30_cooldown
-					}
-				}
-				set_global_flag = GAME_RULE_influence_cooldown_limits_30
-			}
-
-			# Investment Gain Percent
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_invest_influence_amount_gain option = gain_1_5_percent_invest
-					}
-				}
-				set_global_flag = GAME_RULE_gain_1_5_percent_invest
-			}
-			else = {
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = rule_invest_influence_amount_gain option = gain_0_5_percent_invest
-						}
-					}
-					set_global_flag = GAME_RULE_gain_0_5_percent_invest
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = rule_invest_influence_amount_gain option = gain_1_percent_invest
-						}
-					}
-					set_global_flag = GAME_RULE_gain_1_percent_invest
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = rule_invest_influence_amount_gain option = gain_2_percent_invest
-						}
-					}
-					set_global_flag = GAME_RULE_gain_2_percent_invest
-				}
-			}
-
-			# Vanilla Game Rules
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = allow_guarantees
-						option = ALWAYS_FREE
-					}
-				}
-				set_global_flag = GAME_RULE_always_free_guarantees
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = allow_guarantees
-						option = LIMITED
-					}
-				}
-				set_global_flag = GAME_RULE_limited_guarantees
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = allow_guarantees
-						option = SAME_IDEOLOGY
-					}
-				}
-				set_global_flag = GAME_RULE_same_ideology_guarantees
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = allow_guarantees
-						option = BLOCKED
-					}
-				}
-				set_global_flag = GAME_RULE_blocked_guarantees
 			}
 
 			#Revoke Guarantees
@@ -1114,20 +999,6 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_allow_lend_lease_blocked
-			}
-
-			# Enable Ledger
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = allow_enable_ledger
-						option = yes
-					}
-				}
-				set_global_flag = GAME_RULE_allow_enable_ledger
-			}
-			else = {
-				set_global_flag = GAME_RULE_disable_ledger
 			}
 
 			# Colored Puppets
@@ -1292,6 +1163,15 @@ on_actions = {
 				}
 				set_global_flag = GAME_RULE_conditional_peace_deals_ENABLED
 			}
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = allowed_CPD_AI
+						option = yes
+					}
+				}
+				set_global_flag = GAME_RULE_CPD_AI_offers_ENABLED
+			}
 
 			# Coups
 			if = {
@@ -1350,17 +1230,18 @@ on_actions = {
 				}
 				set_global_flag = GAME_RULE_allow_kick_faction_blocked
 			}
-
-			# # Disable Missile Alert AI
-			# if = {
-			# 	limit = {
-			# 		has_game_rule = {
-			# 			rule = rule_disable_missile_alert_ai
-			# 			option = yes
-			# 		}
-			# 	}
-			# 	set_global_flag = GAME_RULE_disabled_missile_alert_ai
-			# }
+			# MP Enhancements: let every country create factions, bypassing the power-ranking gate
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = rule_allow_MP_enhancements
+						option = yes
+					}
+				}
+				every_country = {
+					set_rule = { can_create_factions = yes }
+				}
+			}
 
 			# Player Energy Difficulty
 			if = {
@@ -1370,7 +1251,6 @@ on_actions = {
 						option = very_easy
 					}
 				}
-				set_global_flag = GAME_RULE_energy_very_easy_difficulty
 				every_country = {
 					limit = { is_ai = no }
 					add_ideas = player_energy_very_easy_difficulty
@@ -1383,7 +1263,6 @@ on_actions = {
 						option = easy
 					}
 				}
-				set_global_flag = GAME_RULE_energy_easy_difficulty
 				every_country = {
 					limit = { is_ai = no }
 					add_ideas = player_energy_easy_difficulty
@@ -1393,19 +1272,9 @@ on_actions = {
 				limit = {
 					has_game_rule = {
 						rule = rule_player_energy_difficulty
-						option = normal
-					}
-				}
-				set_global_flag = GAME_RULE_energy_normal_difficulty
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_player_energy_difficulty
 						option = hard
 					}
 				}
-				set_global_flag = GAME_RULE_energy_hard_difficulty
 				every_country = {
 					limit = { is_ai = no }
 					add_ideas = player_energy_hard_difficulty
@@ -1418,7 +1287,6 @@ on_actions = {
 						option = very_hard
 					}
 				}
-				set_global_flag = GAME_RULE_energy_very_hard_difficulty
 				every_country = {
 					limit = { is_ai = no }
 					add_ideas = player_energy_very_hard_difficulty
@@ -1433,7 +1301,6 @@ on_actions = {
 						option = very_easy
 					}
 				}
-				set_global_flag = GAME_RULE_energy_ai_very_easy_difficulty
 				every_country = {
 					limit = { is_ai = yes }
 					add_ideas = ai_energy_very_easy_difficulty
@@ -1446,21 +1313,12 @@ on_actions = {
 						option = easy
 					}
 				}
-				set_global_flag = GAME_RULE_energy_ai_easy_difficulty
 				every_country = {
 					limit = { is_ai = yes }
 					add_ideas = ai_energy_easy_difficulty
 				}
 			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_AI_energy_difficulty
-						option = normal
-					}
-				}
-				set_global_flag = GAME_RULE_energy_ai_normal_difficulty
-			}
+
 			if = {
 				limit = {
 					has_game_rule = {
@@ -1468,7 +1326,6 @@ on_actions = {
 						option = hard
 					}
 				}
-				set_global_flag = GAME_RULE_energy_ai_hard_difficulty
 				every_country = {
 					limit = { is_ai = yes }
 					add_ideas = ai_energy_hard_difficulty
@@ -1481,7 +1338,6 @@ on_actions = {
 						option = very_hard
 					}
 				}
-				set_global_flag = GAME_RULE_energy_ai_very_hard_difficulty
 				every_country = {
 					limit = { is_ai = yes }
 					add_ideas = ai_energy_very_hard_difficulty
@@ -1491,10 +1347,7 @@ on_actions = {
 			# Disable Energy Load Sharing System
 			if = {
 				limit = {
-					has_game_rule = {
-						rule = rule_enable_energy_load_sharing
-						option = no
-					}
+					has_game_rule = { rule = rule_enable_energy_load_sharing option = no }
 				}
 				set_global_flag = GAME_RULE_disable_energy_load_sharing
 			}
@@ -1536,59 +1389,6 @@ on_actions = {
 					}
 					set_variable = { global.price_per_gw_for_els = 0.75 }
 				}
-			}
-
-			# Enable Help GUI
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = allow_enable_help_gui
-						option = yes
-					}
-				}
-				set_global_flag = GAME_RULE_enable_help_gui
-			}
-
-			# Disable Debt Wars
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_enable_ai_debt_war
-						option = yes
-					}
-				}
-				set_global_flag = GAME_RULE_rule_disable_ai_debt_war
-			}
-
-			# Disable the AI from using the "Freedom" Continuous Focus
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_disable_AI_using_freedom_cont_focus
-						option = no
-					}
-				}
-				set_global_flag = GAME_RULE_rule_disable_using_freedom_cont_focus
-			}
-
-			# Syria Arab Spring Historical Option
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_syria_arab_spring_choice
-						option = historical_civil_war
-					}
-				}
-				set_global_flag = GAME_RULE_guarantee_syrian_historical_as_civil_war
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_syria_arab_spring_choice
-						option = historical_isis_spawn
-					}
-				}
-				set_global_flag = GAME_RULE_guarantee_islamic_state_spawn
 			}
 
 			# Volunteers
@@ -1712,26 +1512,7 @@ on_actions = {
 				}
 				set_variable = { global.monthly_internal_faction_tick_rate = 0.75 }
 			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_md_annex
-						option = yes
-					}
-				}
-				set_global_flag = MD_RULE_OPTION_ANNEX
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_disable_muslim_brotherhood_civil_war
-						option = yes
-					}
-				}
-				set_global_flag = GAME_RULE_disable_muslim_brotherhood
-			}
 
-			#
 			# Unique Nations Stuff
 			# Determines AI Routes for tree shit
 			FRA = {
@@ -1810,15 +1591,6 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = CAN_ai_behavior
-							option = STAND_ALONE_CANADA
-						}
-					}
-					set_global_flag = CAN_STAND_ALONE_CANADA_PATH
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = CAN_ai_behavior
 							option = RANDOM
 						}
 					}
@@ -1826,7 +1598,6 @@ on_actions = {
 						25 = { }	#Default
 						25 = { set_global_flag = CAN_ai_nationalist_canada }
 						25 = { set_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO }
-						25 = { set_global_flag = CAN_STAND_ALONE_CANADA_PATH }
 					}
 				}
 			}
@@ -1909,40 +1680,6 @@ on_actions = {
 				}
 			}
 
-			JAP = {
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = JAP_ai_behavior
-							option = RANDOM
-						}
-					}
-					random_list = {
-						34 = { }	#Default
-						33 = { set_global_flag = JAP_RED_STAR_OVER_TOKYO_FOCUS_PATH }
-						33 = { set_global_flag = JAP_RETURN_OF_THE_EMPIRE_FOCUS_PATH }
-					}
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = JAP_ai_behavior
-							option = RED_STAR_OVER_TOKYO
-						}
-					}
-					set_global_flag = JAP_RED_STAR_OVER_TOKYO_FOCUS_PATH
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = JAP_ai_behavior
-							option = RETURN_OF_THE_EMPIRE
-						}
-					}
-					set_global_flag = JAP_RETURN_OF_THE_EMPIRE_FOCUS_PATH
-				}
-			}
-
 			SWE = {
 				if = {
 					limit = {
@@ -1984,6 +1721,40 @@ on_actions = {
 						}
 					}
 					set_global_flag = SWE_RED_SWEDEN_FOCUS_PATH
+				}
+			}
+
+			GRN = {
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = GRN_ai_behavior
+							option = RANDOM
+						}
+					}
+					random_list = {
+						10 = { }	#Default
+						45 = { set_global_flag = GRN_SCANDINAVIAN_SERENITY_FOCUS_PATH }
+						45 = { set_global_flag = GRN_CONTINENTAL_HEGEMONY_FOCUS_PATH }
+					}
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = GRN_ai_behavior
+							option = GRN_SCANDINAVIAN_SERENITY
+						}
+					}
+					set_global_flag = GRN_SCANDINAVIAN_SERENITY_FOCUS_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = GRN_ai_behavior
+							option = GRN_CONTINENTAL_HEGEMONY
+						}
+					}
+					set_global_flag = GRN_CONTINENTAL_HEGEMONY_FOCUS_PATH
 				}
 			}
 
@@ -2059,9 +1830,9 @@ on_actions = {
 							option = RANDOM
 						}
 					}
-					random_list = {
-						50 = { }	#Default
-						50 = { set_global_flag = BHR_DAY_OF_RAGE_FOCUS_PATH }
+					random = {
+						chance = 50
+						set_global_flag = BHR_DAY_OF_RAGE_FOCUS_PATH
 					}
 				}
 				if = {
@@ -2147,20 +1918,11 @@ on_actions = {
 						}
 					}
 					random_list = {
-						25 = { set_global_flag = HOL_POPULIST_AI_FOCUS  }
-						25 = { set_global_flag = HOL_VOC_AI_FOCUS  }
-						25 = { set_global_flag = HOL_WIC_AI_FOCUS  }
-						25 = { set_global_flag = HOL_NVU_AI_FOCUS  }
+						25 = { set_global_flag = HOL_POPULIST_AI_FOCUS }
+						25 = { set_global_flag = HOL_VOC_AI_FOCUS }
+						25 = { set_global_flag = HOL_WIC_AI_FOCUS }
+						25 = { set_global_flag = HOL_NVU_AI_FOCUS }
 					}
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = HOL_ai_behavior
-							option = HOL_DEMOCRATIC_RULE
-						}
-					}
-					set_global_flag = HOL_DEMOCRATIC_AI_FOCUS
 				}
 				if = {
 					limit = {
@@ -2209,8 +1971,7 @@ on_actions = {
 						}
 					}
 					random_list = {
-						25 = { set_global_flag = RULE_OPTION_PRO_BOSNIAN_LEADERSHIP_PEACEFUL }	#Default
-						25 = { set_global_flag = PRO_BOSNIAN_LEADERSHIP_COMMIE }
+						25 = { }	#Default
 						25 = { set_global_flag = PRO_LEADERSHIP_TO_SRPSKA }
 						25 = { set_global_flag = PRO_BOSNIAN_LEADERSHIP_MUSLIM_NATION }
 					}
@@ -2241,58 +2002,6 @@ on_actions = {
 						}
 					}
 					set_global_flag = PRO_LEADERSHIP_TO_SRPSKA
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = BOS_ai_behavior
-							option = PRO_LEADERSHIP_TO_SRPSKA_SRPSKA_FIRST
-						}
-					}
-					set_global_flag = PRO_LEADERSHIP_TO_SRPSKA_SRPSKA_FIRST
-				}
-			}
-			ENG = {
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = ENG_ai_behavior
-							option = RANDOM
-						}
-					}
-					random_list = {
-						25 = { }	#Default
-						25 = { set_global_flag = ENG_RULE_OPTION_EUROPEAN_FUTURE }
-						25 = { set_global_flag = ENG_RULE_OPTION_RED_REPUBLIC }
-						25 = { set_global_flag = ENG_RULE_OPTION_RULE_BRITANNIA }
-					}
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = ENG_ai_behavior
-							option = EUROPEAN_FUTURE
-						}
-					}
-					set_global_flag = ENG_RULE_OPTION_EUROPEAN_FUTURE
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = ENG_ai_behavior
-							option = RED_REPUBLIC
-						}
-					}
-					set_global_flag = ENG_RULE_OPTION_RED_REPUBLIC
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = ENG_ai_behavior
-							option = RULE_BRITANNIA
-						}
-					}
-					set_global_flag = ENG_RULE_OPTION_RULE_BRITANNIA
 				}
 			}
 
@@ -2332,9 +2041,9 @@ on_actions = {
 						}
 					}
 					random_list = {
-						25 = { set_country_flag = NIG_PDP_EMPOWERED_PATH }
-						25 = { set_country_flag = NIG_ANPP_EMPOWERD_PATH }
-						25 = { set_country_flag = NIG_RISE_OF_BOKO_HARAM_PATH }
+						25 = { set_global_flag = NIG_PDP_EMPOWERED_PATH }
+						25 = { set_global_flag = NIG_ANPP_EMPOWERD_PATH }
+						25 = { set_global_flag = NIG_RISE_OF_BOKO_HARAM_PATH }
 						25 = { }
 					}
 				}
@@ -2376,9 +2085,9 @@ on_actions = {
 						}
 					}
 					random_list = {
-						25 = { set_country_flag = GRE_KKE_PATH }
-						25 = { set_country_flag = GRE_GOLDEN_DAWN_PATH }
-						25 = { set_country_flag = GRE_HELLENIC_REPUBLIC_PATH }
+						25 = { set_global_flag = GRE_KKE_PATH }
+						25 = { set_global_flag = GRE_GOLDEN_DAWN_PATH }
+						25 = { set_global_flag = GRE_HELLENIC_REPUBLIC_PATH }
 						25 = { }
 					}
 				}
@@ -2474,15 +2183,14 @@ on_actions = {
 						}
 					}
 					random_list = {
-						10 = { set_country_flag = SOV_PUTIN_PATH }
-						10 = { set_country_flag = SOV_PEACEFUL_REFORM_PATH }
-						10 = { set_country_flag = SOV_RISE_OF_RUSSIA_PATH }
-						10 = { set_country_flag = SOV_THE_RED_MENACE_PATH }
-						10 = { set_country_flag = SOV_NAZBOL_RUSSIA_PATH }
-						10 = { set_country_flag = SOV_IRON_DIMON_PATH }
-						10 = { set_country_flag = SOV_LIBERAL_DIMON_PATH }
-						10 = { set_country_flag = SOV_OLIGARCHS_RUSSIA_PATH }
-						10 = { set_country_flag = RANDOM }
+						10 = { set_global_flag = SOV_PUTIN_PATH }
+						10 = { set_global_flag = SOV_PEACEFUL_REFORM_PATH }
+						10 = { set_global_flag = SOV_RISE_OF_RUSSIA_PATH }
+						10 = { set_global_flag = SOV_THE_RED_MENACE_PATH }
+						10 = { set_global_flag = SOV_NAZBOL_RUSSIA_PATH }
+						10 = { set_global_flag = SOV_IRON_DIMON_PATH }
+						10 = { set_global_flag = SOV_LIBERAL_DIMON_PATH }
+						10 = { set_global_flag = SOV_OLIGARCHS_RUSSIA_PATH }
 					}
 				}
 			}
@@ -2546,10 +2254,10 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = USA_ai_behavior
-							option = GREAT_COLLAPSE
+							option = THE_GREAT_REBELLION
 						}
 					}
-					set_global_flag = USA_THE_GREAT_COLLAPSE
+					set_global_flag = USA_THE_GREAT_REBELLION
 				}
 				if = {
 					limit = {
@@ -2559,12 +2267,12 @@ on_actions = {
 						}
 					}
 					random_list = {
-						5 = { set_global_flag = USA_DEMOCRAT_PATH }
-						5 = { set_global_flag = USA_REPUBLICAN_PATH }
-						25 = { set_global_flag = USA_REFORMED_REPUBLIC_PATH }
-						25 = { set_global_flag = USA_ALL_AHEAD_SLOW }
-						20 = { set_global_flag = USA_POST_UNITED_PATH }
-						20 = { set_global_flag = USA_THE_GREAT_COLLAPSE }
+						15 = { set_global_flag = USA_DEMOCRAT_PATH }
+						15 = { set_global_flag = USA_REPUBLICAN_PATH }
+						20 = { set_global_flag = USA_REFORMED_REPUBLIC_PATH }
+						20 = { set_global_flag = USA_ALL_AHEAD_SLOW }
+						10 = { set_global_flag = USA_POST_UNITED_PATH }
+						10 = { set_global_flag = USA_THE_GREAT_REBELLION }
 					}
 				}
 			}
@@ -2615,7 +2323,7 @@ on_actions = {
 					}
 					random_list = {
 						25 = { set_global_flag = USB_REVANCHIST_PATH }
-						25 = { set_global_flag = ISOLATION_PATH }
+						25 = { set_global_flag = USB_ISOLATION_PATH }
 						25 = { set_global_flag = USB_ARCADIA_PATH }
 						25 = { set_global_flag = USB_SECOND_COAL_WARS }
 					}
@@ -2911,9 +2619,9 @@ on_actions = {
 						}
 					}
 					random_list = {
-						25 = { set_country_flag = SWI_MOUNTAIN_FORTRESS_PATH }
-						25 = { set_country_flag = SWI_NATO_PATH }
-						25 = { set_country_flag = SWI_SWISS_PROTECTION_LEAGUE }
+						25 = { set_global_flag = SWI_MOUNTAIN_FORTRESS_PATH }
+						25 = { set_global_flag = SWI_NATO_PATH }
+						25 = { set_global_flag = SWI_SWISS_PROTECTION_LEAGUE_PATH }
 						25 = { }
 					}
 				}
@@ -2964,6 +2672,17 @@ on_actions = {
 			}
 
 			ITA = {
+				# Default rule: bias toward the historical Democratic Party (DEMOCRATICP) coalition
+				# so the AI always has a strategy plan to follow when the player leaves the rule alone.
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = ITA_ai_behavior
+							option = DEFAULT
+						}
+					}
+					set_global_flag = ITA_DEMOCRATICP_FOCUS_PATH
+				}
 				if = {
 					limit = {
 						has_game_rule = {
@@ -3061,18 +2780,19 @@ on_actions = {
 							option = RANDOM
 						}
 					}
+					# Historical coalitions (democraticp + forza) get higher weight so
+					# RANDOM still feels plausible most playthroughs.
 					random_list = {
-						25 = { }
 						25 = { set_global_flag = ITA_DEMOCRATICP_FOCUS_PATH }
 						25 = { set_global_flag = ITA_FORZA_FOCUS_PATH }
-						25 = { set_global_flag = ITA_SOCIALL_FOCUS_PATH }
-						25 = { set_global_flag = ITA_RADICALP_FOCUS_PATH }
-						25 = { set_global_flag = ITA_LEFTP_FOCUS_PATH }
-						25 = { set_global_flag = ITA_RIGHTP_FOCUS_PATH }
-						25 = { set_global_flag = ITA_LEU_FOCUS_PATH }
-						25 = { set_global_flag = ITA_GREENS_FOCUS_PATH }
-						25 = { set_global_flag = ITA_EAST_FOCUS_PATH }
-						25 = { set_global_flag = ITA_NONCOM_FOCUS_PATH }
+						10 = { set_global_flag = ITA_SOCIALL_FOCUS_PATH }
+						7 = { set_global_flag = ITA_RADICALP_FOCUS_PATH }
+						7 = { set_global_flag = ITA_LEFTP_FOCUS_PATH }
+						7 = { set_global_flag = ITA_RIGHTP_FOCUS_PATH }
+						5 = { set_global_flag = ITA_LEU_FOCUS_PATH }
+						5 = { set_global_flag = ITA_GREENS_FOCUS_PATH }
+						5 = { set_global_flag = ITA_EAST_FOCUS_PATH }
+						4 = { set_global_flag = ITA_NONCOM_FOCUS_PATH }
 					}
 				}
 			}
@@ -3188,59 +2908,6 @@ on_actions = {
 						25 = { set_global_flag = SPR_NACION_UNIDAD_IMPERIO_PATH }
 						25 = { set_global_flag = SPR_RENACIMIENTO_NACIONALISTA_PATH }
 						25 = { set_global_flag = SPR_CONSERVATIVE_LEANINGS_PATH }
-					}
-				}
-			}
-			PER = {
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = PER_ai_behavior
-							option = PER_REVOLUTIONARY_PERSIA
-						}
-					}
-					set_global_flag = PER_REVOLUTIONARY_PERSIA_PATH
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = PER_ai_behavior
-							option = PER_FIRE_HAS_NO_FRIENDS_IRAN
-						}
-					}
-					set_global_flag = PER_FIRE_HAS_NO_FRIENDS_IRAN
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = PER_ai_behavior
-							option = PER_PAN_PERSIA
-						}
-					}
-					set_global_flag = PER_PAN_PERSIA
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = PER_ai_behavior
-							option = PER_NO_REVOULT_IRAN
-						}
-					}
-					set_global_flag = PER_NO_REVOULT_IRAN
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = PER_ai_behavior
-							option = RANDOM
-						}
-					}
-					random_list = {
-						20 = { }
-						20 = { set_global_flag = PER_REVOLUTIONARY_PERSIA_PATH }
-						20 = { set_global_flag = PER_PAN_PERSIA }
-						20 = { set_global_flag = PER_FIRE_HAS_NO_FRIENDS_IRAN }
-						20 = { set_global_flag = PER_NO_REVOULT_IRAN }
 					}
 				}
 			}
@@ -3446,15 +3113,6 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = GEO_2013_behavior
-							option = GEO_GEORGIAN_DREAMS
-						}
-					}
-					set_global_flag = GEO_GEORGIAN_DREAMS_PATH
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = GEO_2013_behavior
 							option = GEO_UNITED_NATIONAL_MOVEMENT
 						}
 					}
@@ -3486,7 +3144,6 @@ on_actions = {
 						}
 					}
 					random_list = {
-						25 = { set_global_flag = GEO_GEORGIAN_DREAMS_PATH }
 						25 = { set_global_flag = GEO_UNITED_NATIONAL_MOVEMENT_PATH }
 						25 = { set_global_flag = GEO_NATIONALIST_2013_PATH }
 						25 = { set_global_flag = GEO_UNITED_GEORGIA_PATH }
@@ -3545,20 +3202,13 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = GEO_help_CHE_behavior
-							option = GEO_WONT_HELP
-						}
-					}
-					set_global_flag = GEO_DONT_HELP_CHE
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = GEO_help_CHE_behavior
 							option = RANDOM
 						}
 					}
-					50 = { set_global_flag = GEO_HELP_CHE }
-					50 = { set_global_flag = GEO_DONT_HELP_CHE }
+					random = {
+						chance = 50
+						set_global_flag = GEO_HELP_CHE
+					}
 				}
 				if = {
 					limit = {
@@ -3585,8 +3235,10 @@ on_actions = {
 							option = RANDOM
 						}
 					}
-					50 = { set_global_flag = GEO_ATTACK_RUS_PATH }
-					50 = { set_global_flag = GEO_WEAKBOY_PATH }
+					random_list = {
+						50 = { set_global_flag = GEO_ATTACK_RUS_PATH }
+						50 = { set_global_flag = GEO_WEAKBOY_PATH }
+					}
 				}
 			}
 			BLR = {
@@ -3661,22 +3313,15 @@ on_actions = {
 							option = RANDOM
 						}
 					}
-					15 = { set_global_flag = BLR_POST_LUKA_DEFAULT_PATH }
-					15 = { set_global_flag = BLR_NATIONALIST_PATH }
-					15 = { set_global_flag = BLR_MOMMY_PATH }
-					15 = { set_global_flag = BLR_NEUTRALITY_PATH }
-					15 = { set_global_flag = BLR_DEMOCRATIC_PATH }
-					15 = { set_global_flag = BLR_RUS_NATIONALIST_PATH }
-					15 = { set_global_flag = BLR_COMMUNISM_PATH }
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = BLR_union_state_ai_behavior
-							option = BLR_WONT_FOLLOW_UNION_STATE
-						}
+					random_list = {
+						15 = { set_global_flag = BLR_POST_LUKA_DEFAULT_PATH }
+						15 = { set_global_flag = BLR_NATIONALIST_PATH }
+						15 = { set_global_flag = BLR_MOMMY_PATH }
+						15 = { set_global_flag = BLR_NEUTRALITY_PATH }
+						15 = { set_global_flag = BLR_DEMOCRATIC_PATH }
+						15 = { set_global_flag = BLR_RUS_NATIONALIST_PATH }
+						15 = { set_global_flag = BLR_COMMUNISM_PATH }
 					}
-					set_global_flag = BLR_DONT_FOLLOW_UNION_STATE
 				}
 				if = {
 					limit = {
@@ -3694,8 +3339,10 @@ on_actions = {
 							option = RANDOM
 						}
 					}
-					50 = { set_global_flag = BLR_DONT_FOLLOW_UNION_STATE }
-					50 = { set_global_flag = BLR_FOLLOW_UNION_STATE }
+					random = {
+						chance = 50
+						set_global_flag = BLR_FOLLOW_UNION_STATE
+					}
 				}
 			}
 			PMR = {
@@ -3773,15 +3420,6 @@ on_actions = {
 				}
 			}
 			CUB = {
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = CUB_ai_behavior
-							option = CUB_HISTORIC_DEFAULT
-						}
-					}
-					set_global_flag = CUB_HISTORIC_DEFAULT_PATH
-				}
 				if = {
 					limit = {
 						has_game_rule = {
@@ -4123,20 +3761,10 @@ on_actions = {
 					}
 					random_list = {
 						10 = { }	#Default
-						15 = { set_global_flag = EST_HISTORICAL }
 						25 = { set_global_flag = EST_FASCIST }
 						15 = { set_global_flag = EST_DEMOCRATIC }
 						25 = { set_global_flag = EST_CENTER }
 					}
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = EST_AI_BEHAVIOR
-							option = HISTORICAL
-						}
-					}
-					set_global_flag = EST_HISTORICAL
 				}
 				if = {
 					limit = {
@@ -4177,20 +3805,10 @@ on_actions = {
 					}
 					random_list = {
 						10 = { }	#Default
-						15 = { set_global_flag = ROM_HISTORICAL }
 						25 = { set_global_flag = ROM_FASCIST }
 						15 = { set_global_flag = ROM_DEMOCRATIC }
 						25 = { set_global_flag = ROM_CENTER }
 					}
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = ROM_AI_BEHAVIOR
-							option = HISTORICAL
-						}
-					}
-					set_global_flag = ROM_HISTORICAL
 				}
 				if = {
 					limit = {
@@ -4240,102 +3858,29 @@ on_actions = {
 					}
 					set_global_flag = BREAKING_HISTORY
 				}
-			}
 
-			# Zombie Game Mode
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = zombie_mode_enabled
-						option = yes
+				# Zombie Mode
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = zombie_mode_enabled
+							option = yes
+						}
 					}
+					set_global_flag = GAME_RULE_zombie_mode_enabled
 				}
-				ZOM = {
-					add_state_core = 459
-					transfer_state = 459
-					add_manpower = 6000000
-					load_oob = "ZOM_2000"
-					add_named_threat = { threat = 100 }
 
-					declare_war_on = {
-						target = RAJ
-						type = annex_everything
-					}
-
-					add_timed_idea = {
-						idea = shock_and_zombie_awe
-						days = 180
-					}
-
-					RAJ = {
-						country_event = zombie.8
-						create_faction_from_template = faction_template_anti_zombie_coalition
-					}
-
-					# Difficult Settings
-					if = {
-						limit = {
+				# Event Horizon Scenario
+				if = {
+					limit = {
+						NOT = {
 							has_game_rule = {
-								rule = zombie_difficulty
-								option = HARD
+								rule = rule_event_horizon_scenario
+								option = DEFAULT
 							}
-						}
-						capital_scope = {
-							create_unit = {
-								division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
-								count = 129
-								owner = ZOM
-								prioritize_location = 1510
-							}
-						}
-						modify_timed_idea = {
-							idea = shock_and_zombie_awe
-							days = 180
 						}
 					}
-					if = {
-						limit = {
-							has_game_rule = {
-								rule = zombie_difficulty
-								option = EXTREME
-							}
-						}
-						capital_scope = {
-							create_unit = {
-								division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
-								count = 258
-								owner = ZOM
-								prioritize_location = 1510
-							}
-						}
-						modify_timed_idea = {
-							idea = shock_and_zombie_awe
-							days = 365
-						}
-					}
-					if = {
-						limit = {
-							has_game_rule = {
-								rule = zombie_difficulty
-								option = INSANE
-							}
-						}
-						capital_scope = {
-							create_unit = {
-								division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
-								count = 909
-								owner = ZOM
-								prioritize_location = 1510
-							}
-						}
-						add_ideas = {
-							better_instincts
-						}
-						modify_timed_idea = {
-							idea = shock_and_zombie_awe
-							days = 730
-						}
-					}
+					set_global_flag = GAME_RULE_event_horizon_enabled
 				}
 			}
 		}

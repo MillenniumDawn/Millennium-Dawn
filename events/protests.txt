@@ -8,14 +8,17 @@ country_event = { # Protests Erupt in Capital
 
 	is_triggered_only = yes
 	trigger = {
-		NOT = {
-			has_country_flag = MD_protest_cooldown
-		}
+		NOT = { has_country_flag = MD_protest_cooldown }
+		NOT = { tag = ZOM }
+		NOT = { tag = ALN }
+		NOT = { has_war_with = ZOM }
+		NOT = { has_war_with = ALN }
 	}
 	option = {
 		name = protests.100.a
 		log = "[GetDateText]: [This.GetName]: protests.100.a executed"
 		activate_mission = MD_incoming_revolt
+		set_country_flag = MD_protest_mission_active
 		set_country_flag = MD_protests_began
 		every_owned_state = {
 			limit = {
@@ -42,11 +45,15 @@ country_event = { # Protests Spread
 	is_triggered_only = yes
 
 	trigger = {
+		NOT = { has_country_flag = MD_protest_cooldown }
 		NOT = {
-			has_country_flag = MD_protest_cooldown
 			all_core_state = {
 				has_resistance = yes
 			}
+		}
+		any_core_state = {
+			has_resistance = no
+			NOT = { has_state_flag = MD_dont_protest_again }
 		}
 	}
 
@@ -64,7 +71,7 @@ country_event = { # Protests Spread
 	option = {
 		name = protests.101.a
 		log = "[GetDateText]: [This.GetName]: protests.101.a executed"
-		set_temp_variable = { temp_productivity_change = -50 }
+		set_temp_variable = { temp_productivity_change = -30 }
 		every_owned_state = {
 			limit = {
 				is_capital = no
@@ -96,6 +103,7 @@ country_event = { # Regional Protests Put Down
 		NOT = { has_country_flag = MD_protest_cooldown }
 		any_owned_state = {
 			is_core_of = ROOT
+			has_resistance = yes
 			compliance > 49
 			resistance < 40
 		}
@@ -106,7 +114,6 @@ country_event = { # Regional Protests Put Down
 		log = "[GetDateText]: [This.GetName]: protests.102.a executed"
 		every_owned_state = {
 			limit = {
-				is_capital = no
 				has_resistance = yes
 				is_core_of = ROOT
 				compliance > 49
@@ -129,9 +136,6 @@ country_event = { # Protests Die Down Nation-wide
 
 	trigger = {
 		NOT = { has_country_flag = MD_protest_cooldown }
-		any_owned_state = {
-			has_resistance = yes
-		}
 	}
 
 	option = {
@@ -142,6 +146,11 @@ country_event = { # Protests Die Down Nation-wide
 				has_resistance = yes
 			}
 			cancel_resistance = yes
+		}
+		every_owned_state = {
+			limit = {
+				has_state_flag = MD_dont_protest_again
+			}
 			clr_state_flag = MD_dont_protest_again
 		}
 		set_country_flag = {
@@ -166,6 +175,8 @@ country_event = { # Protesters Set Industrial Assets Ablaze
 	trigger = {
 		NOT = { has_country_flag = MD_protest_cooldown }
 		any_owned_state = {
+			has_resistance = yes
+			is_core_of = ROOT
 			industrial_complex > 0
 		}
 	}
@@ -185,7 +196,7 @@ country_event = { # Protesters Set Industrial Assets Ablaze
 			}
 		}
 		newline = yes
-		set_temp_variable = { temp_productivity_change = -50 }
+		set_temp_variable = { temp_productivity_change = -20 }
 		state_flat_productivity_change_effect = yes
 		ai_chance = { base = 10 }
 	}
@@ -205,7 +216,7 @@ country_event = { # Protesters Set Industrial Assets Ablaze
 			}
 		}
 		newline = yes
-		set_temp_variable = { temp_productivity_change = -25 }
+		set_temp_variable = { temp_productivity_change = -10 }
 		state_flat_productivity_change_effect = yes
 		newline = yes
 		set_temp_variable = { treasury_change = -12.5 }
@@ -225,6 +236,8 @@ country_event = { # Protesters Set Business Parks
 	trigger = {
 		NOT = { has_country_flag = MD_protest_cooldown }
 		any_owned_state = {
+			has_resistance = yes
+			is_core_of = ROOT
 			offices > 0
 		}
 	}
@@ -244,7 +257,7 @@ country_event = { # Protesters Set Business Parks
 			}
 		}
 		newline = yes
-		set_temp_variable = { temp_productivity_change = -50 }
+		set_temp_variable = { temp_productivity_change = -20 }
 		state_flat_productivity_change_effect = yes
 		ai_chance = { base = 10 }
 	}
@@ -264,7 +277,7 @@ country_event = { # Protesters Set Business Parks
 			}
 		}
 		newline = yes
-		set_temp_variable = { temp_productivity_change = -25 }
+		set_temp_variable = { temp_productivity_change = -10 }
 		state_flat_productivity_change_effect = yes
 		newline = yes
 		set_temp_variable = { treasury_change = -15.75 }
@@ -304,7 +317,7 @@ country_event = { # Protesters Set Arms Factories
 			}
 		}
 		newline = yes
-		set_temp_variable = { temp_productivity_change = -50 }
+		set_temp_variable = { temp_productivity_change = -20 }
 		state_flat_productivity_change_effect = yes
 		ai_chance = { base = 10 }
 	}
@@ -324,7 +337,7 @@ country_event = { # Protesters Set Arms Factories
 			}
 		}
 		newline = yes
-		set_temp_variable = { temp_productivity_change = -25 }
+		set_temp_variable = { temp_productivity_change = -10 }
 		state_flat_productivity_change_effect = yes
 		newline = yes
 		set_temp_variable = { treasury_change = -12.5 }
@@ -340,10 +353,8 @@ country_event = {
 	picture = GFX_politics_demands
 
 	trigger = {
-		NOT = {
-			has_country_flag = MD_protest_cooldown
-			has_country_flag = MD_protests_began
-		}
+		NOT = { has_country_flag = MD_protest_cooldown }
+		NOT = { has_country_flag = MD_protests_began }
 	}
 
 	is_triggered_only = yes

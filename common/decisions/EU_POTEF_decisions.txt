@@ -2,16 +2,14 @@
 EU_environmental_imperialism_category = {
 	EU_POTEF_environmental_imperialism_decision = {
 		cost = 100
+		target_root_trigger = {
+			has_idea = EU_president
+			has_country_flag = environmental_imperialism
+		}
 		target_trigger = {
 			FROM = {
 				NOT = { has_country_flag = EU_POTEF_environmental_imperialism_target }
 				NOT = { has_idea = USoE_environmental_sanctions }
-				OR = {
-					has_idea = regional_power
-					has_idea = large_power
-					has_idea = great_power
-					has_idea = superpower
-				}
 				renewable_energy_infra < num_owned_states
 				OR = {
 					AND = {
@@ -81,23 +79,15 @@ EU_environmental_imperialism_category = {
 				}
 			}
 		}
-		available = {
-			has_country_flag = environmental_imperialism
-		}
+
+		target_array = global.PR_regional_or_greater_powers
 
 		visible = {
 			has_country_flag = environmental_imperialism
-			has_idea = EU_president
 			FROM = {
 				NOT = { has_country_flag = EU_POTEF_environmental_imperialism_target }
-			}
-			FROM = {
 				NOT = { has_idea = USoE_environmental_sanctions }
-			}
-			FROM = {
 				NOT = { has_country_flag = fossil_energy_pact }
-			}
-			FROM = {
 				NOT = { has_country_flag = break_environmental_sanctions }
 			}
 		}
@@ -111,7 +101,7 @@ EU_environmental_imperialism_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 		}
 	}
 
@@ -141,9 +131,7 @@ EU_environmental_imperialism_category = {
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
 			var:global.eupresfederation = {
-				country_event = {
-					id = USoEevent.5
-				}
+				country_event = USoEevent.5
 			}
 			clr_country_flag = EU_POTEF_environmental_imperialism_target
 		}
@@ -151,13 +139,11 @@ EU_environmental_imperialism_category = {
 			add_ideas = USoE_environmental_sanctions
 			clr_country_flag = EU_POTEF_environmental_imperialism_target
 			var:global.eupresfederation = {
-				country_event = {
-					id = USoEevent.6
-				}
+				country_event = USoEevent.6
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 		}
 	}
 
@@ -209,47 +195,38 @@ EU_environmental_imperialism_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 		}
 	}
 
 	EU_POTEF_break_environmental_sanctions_decision = {
+		cost = 100
+
+		target_array = global.EU_member
+		target_root_trigger = {
+			has_idea = USoE_environmental_sanctions
+		}
 		target_trigger = {
 			FROM = {
 				has_idea = EU_president
 			}
 		}
-		cost = 100
-		available = {
-			has_idea = USoE_environmental_sanctions
-		}
 
-		visible = {
-			has_idea = USoE_environmental_sanctions
-		}
 		complete_effect = {
 			remove_ideas = USoE_environmental_sanctions
 			set_country_flag = break_environmental_sanctions
 			FROM = {
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = betrayed_our_cause
-				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = betrayed_our_cause
-				}
-			}
-			FROM = {
+				add_opinion_modifier = { target = ROOT modifier = betrayed_our_cause }
+				reverse_add_opinion_modifier = { target = ROOT modifier = betrayed_our_cause }
+
+				set_temp_variable = { wargoal_on = ROOT }
+				set_temp_variable = { wargoal_type = 1 }
+				add_threat_from_wargoal_effect = yes
 				create_wargoal = {
 					type = topple_government
 					target = ROOT
 				}
-			}
-			FROM = {
-				country_event = {
-					id = USoEevent.7
-				}
+				country_event = USoEevent.7
 			}
 			if = {
 				limit = {
@@ -276,7 +253,7 @@ EU_environmental_imperialism_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 0
+			base = 0
 			modifier = {
 				add = 1
 				strength_ratio = {
@@ -342,6 +319,7 @@ EU_office_category = {
 			election_POTEF_in_member_state = yes
 			set_global_flag = ongoing_potef_election
 		}
+		ai_will_do = { base = 0 }
 	}
 
 	EU_POTEF_election_campaign = {
@@ -362,6 +340,8 @@ EU_office_category = {
 			POTEF_election = yes
 			set_POTEF_elect = yes
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
 	EU_POTEF_term = {
@@ -384,6 +364,8 @@ EU_office_category = {
 			log = "[GetDateText]: [Root.GetName]: mission EU_POTEF_term"
 			activate_mission = EU_POTEF_election_campaign
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
 
@@ -453,18 +435,14 @@ EU_office_category = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_POTEF_nominee_trigger_2
-				all_country = {
-					if = {
-						limit = {
-							has_idea = EU_member
-							is_in_array = { ruling_party = temp_idx }
+				all_of_scopes = {
+					array = global.EU_member
+					is_in_array = { ruling_party = temp_idx }
+					meta_trigger = {
+						text = {
+							NOT = { has_country_flag = POTEF_nominee_[subideology] }
 						}
-						meta_trigger = {
-							text = {
-								NOT = { has_country_flag = POTEF_nominee_[subideology] }
-							}
-							subideology = "[?temp_idx|0]"
-						}
+						subideology = "[?temp_idx|0]"
 					}
 				}
 			}
@@ -473,7 +451,8 @@ EU_office_category = {
 		visible = {
 			has_global_flag = european_federation
 			has_idea = EU_member
-			any_country = {
+			any_of_scopes = {
+				array = global.EU_member
 				has_active_mission = EU_POTEF_election_campaign
 			}
 			NOT = {
@@ -526,18 +505,15 @@ EU_office_category = {
 				}
 				subideology = "[?var_gov_index|0]"
 			}
-			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				news_event = { id = EU_POTEF_news.1 }
-			}
 			for_each_scope_loop = {
 				array = global.EU_member
-				news_event = { id = EU_POTEF_news.1 }
+				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				news_event = EU_POTEF_news.1
 			}
 		}
 
 		ai_will_do = {
-			factor = 1
+			base = 1
 		}
 	}
 
@@ -556,6 +532,7 @@ EU_office_category = {
 			log = "[GetDateText]: [Root.GetName]: decision EU_POTEF_show_election_polls"
 			set_country_flag = POTEF_polls
 		}
+		ai_will_do = { base = 0 }
 	}
 
 	EU_POTEF_hide_election_polls = {
@@ -570,9 +547,10 @@ EU_office_category = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: decision EU_POTEF_show_election_polls"
+			log = "[GetDateText]: [Root.GetName]: decision EU_POTEF_hide_election_polls"
 			clr_country_flag = POTEF_polls
 		}
+		ai_will_do = { base = 0 }
 	}
 
 	EU_POTEF_campaign_in_member_state = {
@@ -620,7 +598,8 @@ EU_office_category = {
 		fixed_random_seed = no
 
 		visible = {
-			any_country = {
+			any_of_scopes = {
+				array = global.EU_member
 				has_active_mission = EU_POTEF_election_campaign
 			}
 		}
@@ -720,13 +699,10 @@ EU_office_category = {
 						}
 						add_to_variable = { FROM.party_pop_array^var_gov_index = 0.05 }
 						recalculate_party = yes
-						custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-						effect_tooltip = {
-							news_event = { id = EU_POTEF_news.5 }
-						}
 						for_each_scope_loop = {
 							array = global.EU_member
-							news_event = { id = EU_POTEF_news.5 }
+							tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+							news_event = EU_POTEF_news.5
 						}
 					}
 					1 = {
@@ -771,20 +747,17 @@ EU_office_category = {
 								}
 							}
 						}
-						custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-						effect_tooltip = {
-							news_event = { id = EU_POTEF_news.6 }
-						}
 						for_each_scope_loop = {
 							array = global.EU_member
-							news_event = { id = EU_POTEF_news.6 }
+							tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+							news_event = EU_POTEF_news.6
 						}
 					}
 				}
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 
 		}
 	}
@@ -816,17 +789,11 @@ EU_defense_category = {
 				limit = {
 					has_idea = EDU_major_non_EU_ally
 				}
-
-				FROM = {
-					add_to_faction = PREV
-				}
-				add_ai_strategy = {
-					type = alliance
-					id = FROM
-					value = 200
-				}
+				ROOT = { add_to_faction = PREV }
+				add_ai_strategy = { type = alliance id = FROM value = 200 }
 			}
 		}
+		ai_will_do = { base = 0 }
 	}
 
 	EU_POTEF_call_major_non_EU_ally = {
@@ -865,7 +832,7 @@ EU_defense_category = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			base = 1
 		}
 	}
 }

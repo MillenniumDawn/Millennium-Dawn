@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import { RedirectLayout } from "@/app/layouts";
+
+interface Props {
+  entry: CollectionEntry<"redirects">;
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const entries = await getCollection("redirects");
+  return entries.map((entry) => ({
+    params: { slug: entry.data.permalink.replace(/^\/+|\/+$/g, "") },
+    props: { entry },
+  }));
+};
+
+const { entry }: Props = Astro.props;
+const fromPath = entry.data.permalink;
+---
+
+<RedirectLayout
+  title={entry.data.title}
+  fromPath={fromPath}
+  toPath={entry.data.redirect_to}
+  robots={entry.data.robots}
+/>

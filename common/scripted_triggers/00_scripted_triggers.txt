@@ -8,6 +8,24 @@ is_available_to_collaboration_government = { # occupied_countries.1 should be up
 	}
 }
 
+controls_a_coastal_state = {
+	any_controlled_state = {
+		is_coastal = yes
+	}
+}
+
+controls_a_state_with_hydroelectric = {
+	any_controlled_state = {
+		has_dynamic_modifier = { modifier = hydroelectric_infrastructure_in_state }
+	}
+}
+
+controls_a_state_with_geothermal = {
+	any_controlled_state = {
+		has_dynamic_modifier = { modifier = geothermal_infrastructure_in_state }
+	}
+}
+
 no_building_slots = {
 	custom_trigger_tooltip = {
 		tooltip = TT_NO_BUILDING_SLOTS
@@ -136,7 +154,7 @@ has_at_least_regional_power_status = {
 			has_idea = regional_power
 			has_idea = large_power
 			has_idea = great_power
-			has_idea = superpower
+			has_idea = super_power
 		}
 	}
 }
@@ -146,7 +164,7 @@ has_at_least_major_power_status = {
 		tooltip = has_at_least_major_power_status_tt
 		OR = {
 			has_idea = large_power
-			has_idea = superpower
+			has_idea = super_power
 			has_idea = great_power
 		}
 	}
@@ -156,7 +174,7 @@ has_at_least_great_power_status = {
 	custom_trigger_tooltip = {
 		tooltip = has_at_least_great_power_status_tt
 		OR = {
-			has_idea = superpower
+			has_idea = super_power
 			has_idea = great_power
 		}
 	}
@@ -334,20 +352,6 @@ can_ROOT_get_wargoal_on_THIS = {
 	NOT = { is_subject_of = ROOT }
 }
 
-has_specialist_level_trigger = {
-	skill > 5
-	skill < 6
-}
-
-has_expert_level_trigger = {
-	skill > 6
-	skill < 7
-}
-
-has_genius_level_trigger = {
-	skill > 7
-}
-
 state_has_any_resource = {
 	OR = {
 		has_resources_amount = {
@@ -435,15 +439,14 @@ STATE_productivity_higher_than_999 = {
 	}
 }
 
-not_locked_faction = {
+is_locked_faction = {
 	custom_trigger_tooltip = {
-		tooltip = not_in_a_locked_faction_TT
-		hidden_trigger = {
-			OR = {
-				has_idea = NATO_member
-				has_idea = CSTO_member
-				has_idea = faction_resistance_axis_member
-			}
+		tooltip = is_locked_faction_tt
+		OR = {
+			has_idea = NATO_member
+			has_idea = CSTO_member
+			has_idea = UNASUL_member
+			has_idea = faction_resistance_axis_member
 		}
 	}
 }
@@ -460,6 +463,235 @@ currently_has_a_5_year_plan_selected = {
 			has_decision = generic_initiate_naval_5_year_plan
 			has_decision = generic_initiate_technology_5_year_plan
 			has_decision = generic_initiate_energy_5_year_plan
+		}
+	}
+}
+
+election_notification_scripted_trigger = {
+	OR = {
+		AND = { PREV = { has_country_flag = north_america_nation_flag } has_country_flag = north_america_nation_flag }
+		AND = { PREV = { has_country_flag = south_america_nation_flag } has_country_flag = south_america_nation_flag }
+		AND = { PREV = { has_country_flag = middle_east_nation_flag } has_country_flag = middle_east_nation_flag }
+		AND = { PREV = { has_country_flag = african_nation_flag } has_country_flag = african_nation_flag }
+		AND = { PREV = { has_country_flag = european_nation_flag } has_country_flag = european_nation_flag }
+		AND = { PREV = { has_country_flag = asian_nation_flag } has_country_flag = asian_nation_flag }
+		AND = { PREV = { has_country_flag = oceania_nation_flag } has_country_flag = oceania_nation_flag }
+	}
+}
+
+we_are_the_only_superpower = {
+	all_of_scopes = {
+		array = global.PR_superpowers
+		tooltip = TT_NO_OTHER_SUPERPOWER_EXISTS
+		tag = PREV
+	}
+}
+
+we_are_being_justified_against_or_wargoal_against_us = {
+	any_of_scopes = {
+		array = potential_and_current_enemies
+		OR = {
+			is_justifying_wargoal_against = PREV
+			has_wargoal_against = PREV
+		}
+	}
+}
+
+# UAR GDP Share Check
+# Checks if ROOT's UAR GDP share exceeds the threshold (40%)
+# Uses total_uar_gdp and total_arabic_gdp variables
+# Clamps denominator to prevent division by zero
+uar_has_required_gdp_share = {
+	set_temp_variable = { gdp_share = total_uar_gdp }
+	clamp_temp_variable = { var = total_arabic_gdp min = 0.001 }
+	divide_temp_variable = { gdp_share = total_arabic_gdp }
+	custom_trigger_tooltip = {
+		tooltip = UAR_unite_uar_tt
+		check_variable = { gdp_share > 0.40 }
+	}
+}
+
+# Random construction location triggers
+# Shared by the one_/two_/three_/four_ random building helpers in 00_scripted_effects.txt.
+# Each gates a state as a valid drop spot for a random instant-build: owned by the builder,
+# has a free slot, and is in the home area (or no home-area state has a free slot, so any owned state qualifies).
+
+# All shared-slot buildings (arms factory, civilian factory, offices, refineries, plants, agriculture, etc.)
+# draw from the same pooled state building slots, so one slot check covers them all.
+free_shared_building_slots = {
+	is_owned_by = PREV
+	free_building_slots = { building = industrial_complex size > 0 include_locked = yes }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = industrial_complex size > 0 include_locked = yes }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+dockyard_random_build_loc = {
+	is_owned_by = PREV
+	is_coastal = yes
+	free_building_slots = { building = dockyard size > 0 include_locked = yes }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = dockyard size > 0 include_locked = yes }
+					is_coastal = yes
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+infrastructure_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = infrastructure size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = infrastructure size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+nuclear_reactor_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = nuclear_reactor size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = nuclear_reactor size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+renewable_energy_infra_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = renewable_energy_infra size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = renewable_energy_infra size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+air_base_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = air_base size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = air_base size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+radar_station_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = radar_station size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = radar_station size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+anti_air_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = anti_air_building size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = anti_air_building size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+network_infrastructure_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = internet_station size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = internet_station size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+fuel_reserve_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = fuel_silo size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = fuel_silo size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+fossil_powerplant_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = fossil_powerplant size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = fossil_powerplant size > 0 }
+					is_in_home_area = yes
+				}
+			}
 		}
 	}
 }

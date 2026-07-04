@@ -11,7 +11,7 @@ KUR_war_on_terror_category = {
 
 		available = {
 			NOT = { has_war_with = IRQ }
-			IRQ = {	any_owned_state = {	is_controlled_by = USA } }
+			IRQ = { any_owned_state = { is_controlled_by = USA } }
 		}
 
 
@@ -27,14 +27,19 @@ KUR_war_on_terror_category = {
 
 		war_with_on_remove = IRQ
 
+		cost = 55
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove KUR_join_invasion_of_iraq"
 			set_country_flag = KUR_joined_the_invasion_of_iraq
-			add_political_power = -55
 			if = {
 				limit = { is_subject_of = IRQ }
 				IRQ = { release = KUR }
 			}
+
+			set_temp_variable = { wargoal_on = IRQ }
+			set_temp_variable = { wargoal_type = 2 }
+			add_threat_from_wargoal_effect = yes
 			create_wargoal = {
 				target = IRQ
 				type = annex_everything
@@ -49,14 +54,17 @@ KUR_war_on_terror_category = {
 
 KUR_the_great_divide = {
 	KUR_propose_reunification = {
+		allowed = { original_tag = KUR }
 		cost = 100
 
 		visible = {
-			original_tag = KUR
 			country_exists = PUK
 		}
 
 		days_remove = 50
+		cancel_trigger = {
+			NOT = { country_exists = PUK }
+		}
 
 		available = {
 			has_stability > 0.50
@@ -79,13 +87,13 @@ KUR_the_great_divide = {
 	}
 
 	PUK_stomp_out_the_iek = {
+		allowed = { NOT = { original_tag = IEK } }
 		cost = 100
 
 		visible = {
 			630 = {
 				is_owned_and_controlled_by = ROOT
 			}
-			NOT = { original_tag = IEK }
 			country_exists = IEK
 			IEK = { is_subject = no }
 		}
@@ -94,6 +102,16 @@ KUR_the_great_divide = {
 
 		available = {
 			has_stability > 0.30
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { country_exists = IEK }
+				IEK = { is_subject = yes }
+				NOT = {
+					630 = { is_owned_and_controlled_by = ROOT }
+				}
+			}
 		}
 
 		remove_effect = {
@@ -126,6 +144,8 @@ KUR_the_great_divide = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove KUR_declare_kurdistan"
 			hidden_effect = {
+				set_country_flag = KUR_peshmerga_unified
+				news_event = { id = KurdistanNews.12 hours = 6 }
 				if = {
 					limit = {
 						original_tag = KUR

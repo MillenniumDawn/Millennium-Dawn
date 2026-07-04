@@ -68,7 +68,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 355
+			base = 355
 		}
 	}
 	focus = {
@@ -807,7 +807,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 355
+			base = 355
 		}
 	}
 	focus = {
@@ -2621,9 +2621,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_soc_dem"
 			hidden_effect = { add_dynamic_modifier = { modifier = PMR_democrat_inner_modifier } }
-			add_to_variable = { PMR_democrat_inner_political_power_factor = 0.05 }
-			add_to_variable = { PMR_democrat_inner_stability_factor = -0.04 }
-			custom_effect_tooltip = PMR_democrat_inner_start2_tt
+			custom_effect_tooltip = { localization_key = adds_dynamic_modifier_tt MODIFIER = PMR_democrat_inner_modifier }
+			add_to_variable = { PMR_democrat_inner_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			add_to_variable = { PMR_democrat_inner_stability_factor = -0.04 tooltip = stability_factor_tt }
 			remove_ideas = PMR_14_army
 		}
 
@@ -2687,9 +2687,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_freedom"
-			add_to_variable = { PMR_democrat_inner_democratic_drift = 0.01 }
-			add_to_variable = { PMR_democrat_inner_stability_factor = -0.06 }
-			custom_effect_tooltip = PMR_democrat_inner17_tt
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PMR_democrat_inner_modifier }
+			add_to_variable = { PMR_democrat_inner_democratic_drift = 0.01 tooltip = democratic_drift_tt }
+			add_to_variable = { PMR_democrat_inner_stability_factor = -0.06 tooltip = stability_factor_tt }
 			remove_ideas = PMR_internet_cencor
 		}
 
@@ -2770,10 +2770,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_new_society"
-			add_to_variable = { PMR_democrat_inner_stability_factor = -0.07 }
-			add_to_variable = { PMR_democrat_inner_political_power_factor = -0.03 }
-			add_to_variable = { PMR_democrat_inner_population_tax_income_multiplier_modifier = 0.03 }
-			custom_effect_tooltip = PMR_democrat_inner19_tt
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PMR_democrat_inner_modifier }
+			add_to_variable = { PMR_democrat_inner_stability_factor = -0.07 tooltip = stability_factor_tt }
+			add_to_variable = { PMR_democrat_inner_political_power_factor = -0.03 tooltip = political_power_factor_tt }
+			add_to_variable = { PMR_democrat_inner_population_tax_income_multiplier_modifier = 0.03 tooltip = population_tax_income_multiplier_modifier_tt }
 		}
 
 		ai_will_do = {
@@ -2866,7 +2866,6 @@ focus_tree = {
 			}
 		}
 	}
-
 
 	focus = {
 		id = PMR_partnership
@@ -3025,20 +3024,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_contact_eu"
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					set_temp_variable = { percent_change = 3 }
-					set_temp_variable = { tag_index = ROOT.id }
-					set_temp_variable = { influence_target = FRA.id }
-					change_influence_percentage = yes
-					add_opinion_modifier = { target = PMR modifier = supports_us }
-				}
-				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.EU_member
+				for_each_scope_loop = {
+					array = global.EU_member
+					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { NOT = { tag = ROOT } }
 						set_temp_variable = { percent_change = 3 }
-						set_temp_variable = { tag_index = ROOT.id }
-						set_temp_variable = { influence_target = THIS.id }
 						change_influence_percentage = yes
 						add_opinion_modifier = { target = PMR modifier = supports_us }
 					}
@@ -3570,6 +3561,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_red_moldova"
+
+			set_temp_variable = { wargoal_on = MLV }
+			add_threat_from_wargoal_effect = yes
 			create_wargoal = {
 				type = puppet_wargoal_focus
 				target = MLV
@@ -3916,7 +3910,7 @@ focus_tree = {
 						modify_kolbasna_support = yes
 					}
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 50000
 						producer = PMR
 					}
@@ -3935,7 +3929,7 @@ focus_tree = {
 						modify_kolbasna_support = yes
 					}
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 30000
 						producer = PMR
 					}
@@ -3954,7 +3948,7 @@ focus_tree = {
 						modify_kolbasna_support = yes
 					}
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 10000
 						producer = PMR
 					}
@@ -3973,7 +3967,7 @@ focus_tree = {
 						modify_kolbasna_support = yes
 					}
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 3000
 						producer = PMR
 					}
@@ -4969,17 +4963,9 @@ focus_tree = {
 				clr_country_flag = dynamic_flag
 				set_temp_variable = { party_index = 23 }
 				add_relative_party_popularity = yes
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 23 }
-				update_party_name = yes
-				set_coalition_drift = yes
-				set_ruling_leader = yes
-				set_leader = yes
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = no
-				}
+				set_temp_variable = { rul_party_temp = 23 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
 			}
 		}
 
@@ -5636,7 +5622,6 @@ focus_tree = {
 		}
 	}
 
-
 	focus = {
 		id = PMR_vs_pmr
 		icon = pmr_soldier
@@ -5950,7 +5935,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
-				type = Inf_equipment
+				type = infantry_weapons_type
 				amount = 3000
 				producer = SOV
 			}
@@ -6643,7 +6628,6 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_moldova_finish"
 			add_political_power = 55
 			set_temp_variable = { percent_change = 0.1 }
-			set_temp_variable = { tag_index = PMR }
 			set_temp_variable = { influence_target = MLV }
 			change_influence_percentage = yes
 			MLV = {
@@ -6684,20 +6668,18 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_moldova_weapons"
 			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = PMR }
 			set_temp_variable = { influence_target = MLV }
 			change_influence_percentage = yes
 			hidden_effect = {
 				if = {
 					limit = { PMR = { is_ai = yes } }
 					set_temp_variable = { percent_change = 5 }
-					set_temp_variable = { tag_index = PMR }
 					set_temp_variable = { influence_target = MLV }
 					change_influence_percentage = yes
 				}
 			}
 			add_equipment_to_stockpile = {
-				type = Inf_equipment
+				type = infantry_weapons_type
 				amount = -1000
 				producer = PMR
 			}
@@ -6736,14 +6718,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_moldova_money"
 			set_temp_variable = { percent_change = 4.5 }
-			set_temp_variable = { tag_index = PMR }
 			set_temp_variable = { influence_target = MLV }
 			change_influence_percentage = yes
 			hidden_effect = {
 				if = {
 					limit = { PMR = { is_ai = yes } }
 					set_temp_variable = { percent_change = 4.5 }
-					set_temp_variable = { tag_index = PMR }
 					set_temp_variable = { influence_target = MLV }
 					change_influence_percentage = yes
 				}
@@ -6909,7 +6889,7 @@ focus_tree = {
 						modify_kolbasna_support = yes
 					}
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 50000
 						producer = PMR
 					}
@@ -6928,7 +6908,7 @@ focus_tree = {
 						modify_kolbasna_support = yes
 					}
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 30000
 						producer = PMR
 					}
@@ -6947,7 +6927,7 @@ focus_tree = {
 						modify_kolbasna_support = yes
 					}
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 10000
 						producer = PMR
 					}
@@ -6966,7 +6946,7 @@ focus_tree = {
 						modify_kolbasna_support = yes
 					}
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 3000
 						producer = PMR
 					}
@@ -7113,8 +7093,7 @@ focus_tree = {
 			country_exists = MLV
 			MLV = {
 				influence_higher_20 = yes
-			}
-			MLV = {
+
 				NOT = { is_in_faction_with = PMR }
 			}
 		}
@@ -7125,6 +7104,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_kishenev"
+
+			set_temp_variable = { wargoal_on = MLV }
+			add_threat_from_wargoal_effect = yes
 			create_wargoal = {
 				type = puppet_wargoal_focus
 				target = MLV
@@ -7167,6 +7149,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_buharest"
+
+			set_temp_variable = { wargoal_on = ROM }
+			add_threat_from_wargoal_effect = yes
 			create_wargoal = {
 				type = puppet_wargoal_focus
 				target = ROM
@@ -7211,7 +7196,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_buy_general"
 			set_temp_variable = { percent_change = 3.5 }
-			set_temp_variable = { tag_index = PMR }
 			set_temp_variable = { influence_target = UKR }
 			change_influence_percentage = yes
 			set_temp_variable = { treasury_change = -0.8 }
@@ -7244,9 +7228,9 @@ focus_tree = {
 			nationalist_military_junta_are_in_power = yes
 			UKR = {
 				influence_higher_20 = yes
-			}
-			UKR = { owns_state = 695 }
-			UKR = {
+
+				owns_state = 695
+
 				NOT = { is_in_faction_with = PMR }
 			}
 			NOT = { country_exists = OPR }
@@ -7270,7 +7254,6 @@ focus_tree = {
 				UKR = { country_event = transnistria.20 }
 				hidden_effect = {
 					set_temp_variable = { percent_change = 15.5 }
-					set_temp_variable = { tag_index = PMR }
 					set_temp_variable = { influence_target = OPR }
 					change_influence_percentage = yes
 					delete_unit_template_and_units = {
@@ -7643,14 +7626,16 @@ focus_tree = {
 			set_cosmetic_tag = PMR_Moldova
 			clr_country_flag = dynamic_flag
 			set_capital = { state = 147 }
-			remove_ideas = Lacks_International_Recognition
+			remove_ideas = lacks_international_recognition
 			news_event = {
 				hours = 6
 				id = transnistria_news.4
 			}
-			PMR = { add_state_core = 152 }
-			PMR = { add_state_core = 335 }
-			PMR = { add_state_core = 1111 }
+			PMR = {
+				add_state_core = 152
+				add_state_core = 335
+				add_state_core = 1111
+			}
 		}
 
 		ai_will_do = {

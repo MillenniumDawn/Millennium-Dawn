@@ -1,0 +1,50 @@
+ID Localisation
+
+AA_Equipment MANPADS
+L_AT_Equipment ATGM
+H_AT_Equipment Mounted ATGM
+infantry_weapons_type Small Arms
+land_drone_equipment_type Drone 1985
+cnc_equipment_type C&C Equipment
+artillery_equipment Artillery
+space_artillery_equipment_type Orbital Fire Control Relay
+util_vehicle_type Utility Vehicle
+heavy_tank_chassis Attack Helicopter
+medium_tank_chassis Main Battle Tank
+super_heavy_tank_chassis Walker Tank
+super_heavy_tank_artillery_chassis
+small_plane_airframe Light Fighter
+cv_small_plane_airframe Light CV Fighter
+medium_plane_airframe Multi-Role Fighter
+cv_medium_plane_airframe CV Multi-Role Fighter
+large_plane_airframe Strategic Bomber
+mothership_equipment Arsenal Bird
+ballistic_missile_equipment Intermediate Range Ballistic Missiles
+nuclear_ballistic_missile_equipment Nuclear Intermediate Range Ballistic Missiles
+nuclear_missile_equipment Intercontinental Ballistic Missiles
+guided_missile_equipment Ground Launched Cruise Missiles
+hypersonic_missile_equipment Hypersonic Cruise Missiles
+sam_missile_equipment Surface to Air Missiles
+Missile
+corvette Corvette
+stealth_corvette Stealth Corvette
+frigate Frigate
+stealth_frigate Stealth Frigate
+heavy_frigate Heavy Frigate
+destroyer Destroyer
+stealth_destroyer Stealth Destroyers
+cruiser Cruiser
+battle_cruiser Battlecruisers
+battleship_hull_0 Battleships
+helicopter_operator Helicopter Operators
+carrier Aircraft Carrier
+attack_submarine Attack Submarines
+missile_submarine Missile Submarines
+patrol_boat Patrol Boat
+support_ship_hull Support Ship
+repair_ship_hull Repair Ship
+convoy Convoy
+train_equipment Civilian Trains
+zombie Zombie Virus
+zombie_runner Runner Strain
+zombie_brute Brute Strain

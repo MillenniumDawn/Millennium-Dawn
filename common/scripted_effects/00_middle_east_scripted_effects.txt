@@ -193,7 +193,7 @@ IRQ_MNF_setup = {
 			ingame_startup_nations_effect = yes
 
 			add_ideas = {
-				Non_State_Actor
+				non_state_actor
 				sunni
 				widespread_corruption
 				intervention_neo_imperialism
@@ -218,7 +218,6 @@ IRQ_MNF_setup = {
 			}
 			171 = {
 				transfer_state_to = MNF
-				set_state_flag = MNF_starting_state_setup
 			}
 		}
 
@@ -250,6 +249,7 @@ IRQ_MNF_setup = {
 						pro_american
 					}
 				}
+				set_country_flag = is_iraq_mnf
 				if = {
 					limit = { NOT = { has_war_with = IRQ } }
 					declare_war_on = {
@@ -368,9 +368,6 @@ syrian_civil_war_setup = {
 					}
 				}
 
-				add_to_array = { global.rival_governments = THIS }
-				set_country_flag = rival_government_SYR
-
 				set_global_flag = FSA_free_syrian_army_active_flag
 
 				set_temp_variable = { rul_party_temp = opposition_party_index }
@@ -378,7 +375,6 @@ syrian_civil_war_setup = {
 
 				set_temp_variable = { rul_party_temp = opposition_party_index }
 				change_ruling_party_effect = yes
-				set_cosmetic_tag = NULL
 
 				ingame_startup_nations_effect = yes
 
@@ -583,11 +579,7 @@ AS_spawn_isis_into_game = {
 				threat = 5
 				name = ISIS.threat
 			}
-			every_country = {
-				limit = { no_jihadist_government = yes }
-				add_opinion_modifier = { target = ISI modifier = terrorism_is_no_no }
-				add_opinion_modifier = { target = ISI modifier = terrorism_is_no_no_trade }
-			}
+			apply_terrorism_opinion_to_world = yes
 		}
 	}
 }
@@ -1305,7 +1297,7 @@ calculate_monthly_arab_spring_change = {
 		add_to_variable = { arab_spring_change = 2 }
 	}
 	else_if = { limit = { has_idea = widespread_corruption }
-		add_to_variable = { arab_spring_change = 2 }
+		add_to_variable = { arab_spring_change = 1 }
 	}
 	else_if = { limit = { has_idea = modest_corruption }
 		add_to_variable = { arab_spring_change = -1 }
@@ -1419,9 +1411,16 @@ calculate_monthly_arab_spring_change = {
 	}
 	else_if = {
 		limit = {
-			check_variable = { government_coalition_strength > 0.899 }
+			check_variable = { government_coalition_strength > 0.799 }
+			check_variable = { government_coalition_strength < 0.899 }
 		}
 		add_to_variable = { arab_spring_change = -4 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { government_coalition_strength > 0.899 }
+		}
+		add_to_variable = { arab_spring_change = -5 }
 	}
 }
 
@@ -1543,6 +1542,17 @@ update_social_conservatism_idea = {
 # On Actions
 on_weekly_gcc_dominant_member_check = {
 	if = { limit = { has_country_flag = gcc_dominant_member }
+		# Gulf Cooperation Council Unity Additions
+		if = { limit = { threat > 0.75 }
+			add_to_variable = { global.gcc_unity = 0.75 }
+		}
+		else_if = { limit = { threat > 0.50 }
+			add_to_variable = { global.gcc_unity = 0.50 }
+		}
+		else_if = { limit = { threat > 0.25 }
+			add_to_variable = { global.gcc_unity = 0.25 }
+		}
+		clamp_variable = { var = global.gcc_unity min = 0 max = 100 }
 
 		if = {
 			limit = {
@@ -1558,7 +1568,7 @@ on_weekly_gcc_dominant_member_check = {
 			create_faction_from_template = faction_template_gcc
 			# Add to Faction
 			for_each_scope_loop = {
-				array = global.gcc_members
+				array = global.gcc_member_state
 				PREV = { add_to_faction = PREV }
 			}
 			set_country_flag = gcc_formed
@@ -1585,15 +1595,180 @@ on_weekly_gcc_dominant_member_check = {
 			}
 			# Add to Faction
 			for_each_scope_loop = {
-				array = global.gcc_members
+				array = global.gcc_member_state
 				if = { limit = { has_completed_focus = GCC_joint_defense_agreement }
 					for_each_scope_loop = {
-						array = global.gcc_members
-						if = { limit = { NOT = { tag = PREV } }
+						array = global.gcc_member_state
+						if = { limit = { NOT = { tag = ROOT } }
 							give_guarantee = PREV
 						}
 					}
 				}
+			}
+		}
+	}
+}
+
+# Idempotent: always clears, then re-adds when both the refreshed country and the peer are MB.
+# Operates on the entry scope (saved as mb_origin) rather than ROOT, so it stays correct when
+# called from scope-changing loops (startup for_each_scope_loop, civil-war random_other_country).
+mb_refresh_relations_effect = {
+	if = {
+		limit = { is_in_array = { global.possible_muslim_brotherhood_nation = THIS.id } }
+		save_event_target_as = mb_origin
+		# Became MB — strip stale anti-MB state from when it was a suppressor
+		if = {
+			limit = {
+				is_muslim_brotherhood = yes
+				has_country_flag = mb_designated_terrorist
+			}
+			clr_country_flag = mb_designated_terrorist
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = { NOT = { tag = event_target:mb_origin } }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_branded_terrorist }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_counter_bloc }
+						event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
+					}
+				}
+			}
+		}
+		if = {
+			limit = { is_muslim_brotherhood = yes }
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = { NOT = { tag = event_target:mb_origin } }
+						# It is now MB, so it can no longer be a crackdown patron or its target
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_crackdown_patron }
+						event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_crackdown_patron } }
+						# Repression-funding modifiers v held against it-as-patron are stale
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_funding_repression }
+					}
+				}
+			}
+		}
+		# Lost MB status — strip the hub idea and bloc-side modifiers it acquired while MB
+		if = {
+			limit = {
+				NOT = { is_muslim_brotherhood = yes }
+				has_idea = muslim_brotherhood_faction_member
+			}
+			remove_ideas = muslim_brotherhood_faction_member
+		}
+		if = {
+			limit = { NOT = { is_muslim_brotherhood = yes } }
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = { NOT = { tag = event_target:mb_origin } }
+						# Bloc-solidarity and sponsor-of-network modifiers are stale once it is no longer MB
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_solidarity }
+						event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_solidarity } }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_sponsored_network }
+						event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_sponsored_network } }
+						# Subversion-funding modifiers v held against it-as-sponsor are stale
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_funding_subversion }
+					}
+				}
+			}
+		}
+		for_each_loop = {
+			array = global.possible_muslim_brotherhood_nation
+			value = v
+			var:v = {
+				if = {
+					limit = { NOT = { tag = event_target:mb_origin } }
+					remove_opinion_modifier = { target = event_target:mb_origin modifier = muslim_brotherhood_relations }
+					event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = muslim_brotherhood_relations } }
+					if = {
+						limit = {
+							is_muslim_brotherhood = yes
+							event_target:mb_origin = { is_muslim_brotherhood = yes }
+						}
+						add_opinion_modifier = { target = event_target:mb_origin modifier = muslim_brotherhood_relations }
+						reverse_add_opinion_modifier = { target = event_target:mb_origin modifier = muslim_brotherhood_relations }
+					}
+				}
+			}
+		}
+	}
+}
+
+# Entry scope (saved as mb_origin) = country adding the crackdown idea
+mb_apply_crackdown_opinions_effect = {
+	save_event_target_as = mb_origin
+	set_temp_variable = { temp_opinion = -8 }
+	change_the_ulema_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_wahabi_ulema_opinion = yes
+	for_each_loop = {
+		array = global.possible_muslim_brotherhood_nation
+		value = v
+		var:v = {
+			if = {
+				limit = {
+					NOT = { tag = event_target:mb_origin }
+					is_muslim_brotherhood = yes
+				}
+				event_target:mb_origin = {
+					add_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood }
+				}
+				add_opinion_modifier = { target = event_target:mb_origin modifier = is_muslim_brotherhood_negative }
+			}
+		}
+	}
+	for_each_loop = {
+		array = global.crackdown_countries
+		value = v
+		var:v = {
+			if = {
+				limit = { NOT = { tag = event_target:mb_origin } }
+				add_opinion_modifier = { target = event_target:mb_origin modifier = is_cracking_down_on_muslim_brotherhood_positive }
+				event_target:mb_origin = {
+					add_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood_positive }
+				}
+			}
+		}
+	}
+	event_target:mb_origin = { add_to_array = { global.crackdown_countries = THIS.id } }
+}
+
+# Entry scope (saved as mb_origin) = country removing the crackdown idea
+mb_remove_crackdown_opinions_effect = {
+	save_event_target_as = mb_origin
+	event_target:mb_origin = { remove_from_array = { global.crackdown_countries = THIS.id } }
+	set_temp_variable = { temp_opinion = 8 }
+	change_the_ulema_opinion = yes
+	set_temp_variable = { temp_opinion = -5 }
+	change_the_wahabi_ulema_opinion = yes
+	for_each_loop = {
+		array = global.possible_muslim_brotherhood_nation
+		value = v
+		var:v = {
+			if = {
+				limit = { NOT = { tag = event_target:mb_origin } }
+				event_target:mb_origin = {
+					remove_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood }
+				}
+				remove_opinion_modifier = { target = event_target:mb_origin modifier = is_muslim_brotherhood_negative }
+			}
+		}
+	}
+	for_each_loop = {
+		array = global.crackdown_countries
+		value = v
+		var:v = {
+			remove_opinion_modifier = { target = event_target:mb_origin modifier = is_cracking_down_on_muslim_brotherhood_positive }
+			event_target:mb_origin = {
+				remove_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood_positive }
 			}
 		}
 	}

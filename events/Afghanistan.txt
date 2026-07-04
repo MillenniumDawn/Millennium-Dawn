@@ -1,4 +1,4 @@
-﻿add_namespace = Afghanistan
+add_namespace = Afghanistan
 add_namespace = AfghanistanNews
 add_namespace = AfghanistanBorderWars
 add_namespace = AfghanistanInvestment
@@ -8,7 +8,6 @@ add_namespace = AfghanistanHostageCrisis
 add_namespace = ContactIran
 add_namespace = AfghanistanPeaceCkecks
 add_namespace = AfghanistanPolicalEvents
-
 
 #Death of Ahmad Shah Massoud Neutral_conservatism
 country_event = {
@@ -71,19 +70,11 @@ country_event = {
 		name = Afghanistan.4.a
 		log = "[GetDateText]: [This.GetName]: Afghanistan.4.a executed"
 		ai_chance = { base = 100 }
-		set_country_flag = AFG_bonn_Agreement_Singed
 		if = {
 			limit = { has_country_flag = AFG_new_administration_Karzai }
 			custom_effect_tooltip = TT_KARZAI_ADMINISTRATION
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 0 } #Western autocracy
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = democratic
-				elections_allowed = yes
-			}
+			set_temp_variable = { rul_party_temp = 0 }
+			change_ruling_party_effect = yes
 			add_popularity = {
 				ideology = democratic
 				popularity = 0.25
@@ -154,9 +145,8 @@ country_event = {
 					set_leader = yes
 				}
 			}
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 12 } #Muslim Brotherhood
+			set_temp_variable = { rul_party_temp = 12 }
+			change_ruling_party_effect = yes
 			for_each_loop = {
 				array = ruling_party
 				value = v
@@ -191,9 +181,8 @@ country_event = {
 				}
 			}
 			set_variable = { current_term = 1 }
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 12 } #Muslim Brotherhood
+			set_temp_variable = { rul_party_temp = 12 }
+			change_ruling_party_effect = yes
 			for_each_loop = {
 				array = ruling_party
 				value = v
@@ -203,15 +192,9 @@ country_event = {
 		if = {
 			limit = { has_country_flag = AFG_new_administration_Zahir_Shah }
 			custom_effect_tooltip = TT_SHAH_ADMINISTRATION
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 23 } #monarchist
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = nationalist
-				elections_allowed = no
-			}
+			set_temp_variable = { rul_party_temp = 23 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
 			add_popularity = {
 				ideology = nationalist
 				popularity = 0.15
@@ -304,7 +287,6 @@ country_event = { # Iran refuses
 		name = ContactIran.1.a
 		log = "[GetDateText]: [This.GetName]: ContactIran.1.a executed"
 
-
 		ai_chance = {
 			base = 1
 		}
@@ -323,17 +305,17 @@ country_event = { # Iran accepts
 		log = "[GetDateText]: [This.GetName]: ContactIran.2.a executed"
 
 		if = {
-			limit = { has_tech = infantry_weapons2 }
+			limit = { has_tech = infantry_weapons_3 }
 				add_equipment_to_stockpile = {
-				type = infantry_weapons2
+				type = infantry_weapons_3
 				amount = 7000
 				producer = PER
 			}
 		}
 		else_if = {
-			limit = { has_tech = infantry_weapons1 }
+			limit = { has_tech = infantry_weapons_2 }
 			add_equipment_to_stockpile = {
-				type = infantry_weapons1
+				type = infantry_weapons_2
 				amount = 7000
 				producer = PER
 			}
@@ -393,7 +375,6 @@ country_event = {
 		name = ContactIran.3.a
 		log = "[GetDateText]: [This.GetName]: ContactIran.3.a executed"
 		#PER = { add_to_faction = AFG }
-		set_country_flag = AFG_Iran_accepts
 		AFG = {
 			country_event = {
 				id = ContactIran.4
@@ -431,6 +412,7 @@ country_event = { # Iran accepts
 
 	option = {
 		name = ContactIran.4.a
+		log = "[GetDateText]: [This.GetName]: ContactIran.4.a"
 
 		ai_chance = {
 			base = 1
@@ -447,6 +429,7 @@ country_event = { # Iran refuses
 
 	option = {
 		name = ContactIran.5.a
+		log = "[GetDateText]: [This.GetName]: ContactIran.5.a"
 
 		ai_chance = {
 			base = 1
@@ -487,7 +470,6 @@ country_event = {
 		add_command_power = 20
 		set_country_flag = afg_active_taliban_insurgency
 		custom_effect_tooltip = AFG_support_afghan_counter_insurgency_tt
-		set_country_flag = AFG_new_insurgency
 		add_ideas = AFG_afghan_morning_taliban_by_night
 		hidden_effect = {
 			TAL = {
@@ -703,17 +685,6 @@ news_event = {
 		else_if = {
 			limit = {
 				has_equipment = {
-					medium_plane_airframe > 0
-				}
-			}
-			add_equipment_to_stockpile = {
-				type = medium_plane_airframe
-				amount = -1
-			}
-		}
-		else_if = {
-			limit = {
-				has_equipment = {
 					small_plane_strike_airframe > 0
 				}
 			}
@@ -790,7 +761,6 @@ news_event = {
 
 	option = {
 		name = TalibanInsurgency.8.a
-		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.8.a executed"
 
 		ai_chance = {
 			base = 1
@@ -804,7 +774,6 @@ country_event = {
 
 	hidden = yes
 	is_triggered_only = yes
-
 
 	immediate = {
 		clr_global_flag = Afghanistan_Civil_War_Over
@@ -1108,7 +1077,6 @@ news_event = {
 
 	option = {
 		name = TalibanInsurgency.15.a
-		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.15.b executed"
 
 		ai_chance = {
 			base = 1
@@ -1127,7 +1095,6 @@ news_event = {
 
 	option = {
 		name = TalibanInsurgency.16.a
-		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.16.b executed"
 
 		ai_chance = {
 			base = 1
@@ -1286,14 +1253,22 @@ country_event = {
 
 					modifier = {
 						factor = 3
-						any_country = {
-							OR = {
-								has_idea = large_power
-								has_idea = great_power
-								has_idea = superpower
+						OR = {
+							any_of_scopes = {
+								array = global.PR_superpowers
+								no_jihadist_government = yes
+								has_military_access_to = AFG
 							}
-							no_jihadist_government = yes
-							has_military_access_to = AFG
+							any_of_scopes = {
+								array = global.PR_great_powers
+								no_jihadist_government = yes
+								has_military_access_to = AFG
+							}
+							any_of_scopes = {
+								array = global.PR_large_powers
+								no_jihadist_government = yes
+								has_military_access_to = AFG
+							}
 						}
 					}
 
@@ -1704,7 +1679,6 @@ news_event = {
 	}
 }
 
-
 #Taliban Attacks Police
 country_event = {
 	id = TalibanAttack.0
@@ -1731,11 +1705,11 @@ country_event = {
 		add_manpower = -25
 		add_stability = -0.01
 		add_equipment_to_stockpile = {
-			type = Inf_equipment
+			type = infantry_weapons_type
 			amount = -100
 		}
 		add_equipment_to_stockpile = {
-			type = cnc_equipment
+			type = cnc_equipment_type
 			amount = -25
 		}
 		if = {
@@ -1744,25 +1718,6 @@ country_event = {
 				check_variable = {
 					var = taliban_strength
 					value = 0
-					compare = greater_than_or_equals
-				}
-				check_variable = {
-					var = taliban_strength
-					value = 25
-					compare = less_than
-				}
-			}
-			set_temp_variable = { taliban_strength_increase = 1 }
-			increase_taliban_strength = yes
-			 add_to_variable = { var = taliban_attack_strength value = 0.01 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
-		}
-		else_if = {
-			limit = {
-				original_tag = AFG
-				check_variable = {
-					var = taliban_strength
-					value = 25
 					compare = greater_than_or_equals
 				}
 				check_variable = {
@@ -1843,7 +1798,6 @@ news_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: TalibanAttack.1.a executed"
 		name = TalibanAttack.1.a
 
 		ai_chance = {
@@ -2019,7 +1973,6 @@ news_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: TalibanAttack.4.a executed"
 		name = TalibanAttack.4.a
 
 		ai_chance = {
@@ -2170,7 +2123,6 @@ news_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: TalibanAttack.6.a executed"
 		name = TalibanAttack.6.a
 
 		ai_chance = {
@@ -2195,8 +2147,6 @@ country_event = {
 				compare = greater_than_or_equals
 			}
 			has_country_flag = afg_active_taliban_insurgency
-		}
-		AFG = {
 			num_divisions > 4
 		}
 	}
@@ -2207,7 +2157,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: TalibanAttack.7.a executed"
 		add_manpower = -5
 		add_equipment_to_stockpile = {
-			type = util_vehicle_equipment
+			type = util_vehicle_type
 			amount = -2
 		}
 		add_stability = -0.01
@@ -2316,7 +2266,6 @@ news_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: TalibanAttack.8.a executed"
 		name = TalibanAttack.8.a
 
 		ai_chance = {
@@ -2489,15 +2438,15 @@ news_event = {
 			USA_house_small_opposition = yes
 		}
 		add_equipment_to_stockpile = {
-			type = Inf_equipment
+			type = infantry_weapons_type
 			amount = -5
 		}
 		add_equipment_to_stockpile = {
-			type = cnc_equipment
+			type = cnc_equipment_type
 			amount = -3
 		}
 		add_equipment_to_stockpile = {
-			type = util_vehicle_equipment
+			type = util_vehicle_type
 			amount = -2
 		}
 
@@ -2532,15 +2481,15 @@ news_event = {
 				set_temp_variable = { arg_popularity = -0.02 }
 				add_ruling_outlook_popularity = yes
 				add_equipment_to_stockpile = {
-					type = Inf_equipment
+					type = infantry_weapons_type
 					amount = -5
 				}
 				add_equipment_to_stockpile = {
-					type = cnc_equipment
+					type = cnc_equipment_type
 					amount = -3
 				}
 				add_equipment_to_stockpile = {
-					type = util_vehicle_equipment
+					type = util_vehicle_type
 					amount = -2
 				}
 			}
@@ -2756,7 +2705,6 @@ news_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: TalibanAttack.14.a executed"
 		name = TalibanAttack.14.a
 
 		ai_chance = {
@@ -2907,7 +2855,6 @@ news_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: TalibanAttack.16.a executed"
 		name = TalibanAttack.16.a
 
 		ai_chance = {
@@ -2915,7 +2862,6 @@ news_event = {
 		}
 	}
 }
-
 
 #Asks USA for Guarantee
 country_event = {
@@ -2935,7 +2881,6 @@ country_event = {
 		AFG = {
 			set_temp_variable = { percent_change = 4 }
 			set_temp_variable = { tag_index = USA.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			give_military_access = USA
 			country_event = {
@@ -2961,10 +2906,8 @@ country_event = {
 					AFG = { has_added_tension_amount > 10 }
 					AFG = { has_offensive_war = yes }
 					AFG = {
-						NOT = {
-							has_government = democratic
-							has_government = neutrality
-						}
+						NOT = { has_government = democratic }
+						NOT = { has_government = neutrality }
 					}
 				}
 			}
@@ -3061,7 +3004,6 @@ country_event = {
 		AFG = {
 			set_temp_variable = { percent_change = 4 }
 			set_temp_variable = { tag_index = CHI.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			give_military_access = CHI
 			country_event = {
@@ -3079,11 +3021,9 @@ country_event = {
 			modifier = {
 				factor = 2
 				AFG = {
-					NOT = {
-						has_government = democratic
-						has_government = neutrality
-						has_government = fascism
-					}
+					NOT = { has_government = democratic }
+					NOT = { has_government = neutrality }
+					NOT = { has_government = fascism }
 				}
 			}
 
@@ -3364,10 +3304,8 @@ country_event = {
 
 			modifier = {
 				factor = 5
-				NOT = {
-					has_idea = great_power
-					has_idea = superpower
-				}
+				NOT = { has_idea = great_power }
+				NOT = { has_idea = super_power }
 			}
 		}
 	}
@@ -3400,35 +3338,7 @@ country_event = {
 	desc = Afghanistan.18.d
 	picture = GFX_AFG_Anti_Taliban_Uprising2
 
-	fire_only_once = yes
-	#is_triggered_only = yes
-
-	trigger = {
-		tag = AFG
-		AFG = {
-			has_war_with = TAL
-			NOT = { has_country_flag = afg_active_taliban_insurgency }
-		}
-		TAL = {
-			has_idea = anti_taliban_guerrillas
-		}
-		#USA = {
-		#	has_country_flag = Operation_enduring_freedom
-		#}
-		OR = {
-			has_volunteers_amount_from = {
-				tag = USA
-				count > 0
-			}
-			has_volunteers_amount_from = {
-				tag = PER
-				count > 0
-			}
-			#AFG = {controls_province = 10737}
-		}
-		#date > 2000.1.11
-		date < 2006.1.1
-	}
+	is_triggered_only = yes
 
 	option = {
 		name = Afghanistan.18.a
@@ -3471,7 +3381,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.1.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.1.a executed"
 	}
 }
 
@@ -3487,7 +3396,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.2.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.2.a executed"
 	}
 
 }
@@ -3504,7 +3412,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.3.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.3.a executed"
 	}
 
 }
@@ -3521,7 +3428,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.4.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.4.a executed"
 	}
 
 }
@@ -3538,7 +3444,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.5.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.5.a executed"
 	}
 
 }
@@ -3556,7 +3461,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.6.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.6.a executed"
 	}
 
 }
@@ -3573,7 +3477,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.7.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.7.a executed"
 	}
 }
 
@@ -3589,7 +3492,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.8.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.8.a executed"
 	}
 }
 
@@ -3603,7 +3505,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.9.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.9.a executed"
 	}
 }
 
@@ -3617,7 +3518,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.10.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.10.a executed"
 	}
 }
 
@@ -3800,10 +3700,8 @@ news_event = {
 	option = {
 		name = AfghanistanNews.18.a
 		trigger = {
-			NOT = {
-				original_tag = SOV
-				original_tag = USA
-			}
+			NOT = { original_tag = SOV }
+			NOT = { original_tag = USA }
 		}
 
 		ai_chance = {
@@ -3880,7 +3778,6 @@ news_event = {
 
 	option = {
 		name = AfghanistanNews.21.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanNews.21.a executed"
 		ai_chance = {
 			base = 1
 		}
@@ -3909,8 +3806,6 @@ country_event = {
 				}
 			}
 			set_temp_variable = { percent_change = 1 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			country_event = {
 				id = AfghanistanInvestment.2
@@ -3979,8 +3874,6 @@ country_event = {
 				}
 			}
 			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			country_event = {
 				id = AfghanistanInvestment.3
@@ -4049,8 +3942,6 @@ country_event = {
 				}
 			}
 			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			country_event = {
 				id = AfghanistanInvestment.4
@@ -4241,16 +4132,11 @@ country_event = {
 	option = {
 		name = AfghanistanInvestment.6.a
 		log = "[GetDateText]: [This.GetName]: AfghanistanInvestment.6.a executed"
-		#set_temp_variable = { treasury_change = -10 }
-		#modify_treasury_effect = yes
-		add_ideas = AFG_Trade_WTO_Support
 		set_temp_variable = { receiver_nation = AFG.id }
 		set_temp_variable = { sender_nation = ROOT.id }
 		set_improved_trade_agreement = yes
 		AFG = {
 			set_temp_variable = { percent_change = 1 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			country_event = {
 				id = AfghanistanInvestment.7
@@ -4319,8 +4205,6 @@ country_event = {
 				}
 			}
 			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			country_event = {
 				id = AfghanistanInvestment.3
@@ -4465,23 +4349,8 @@ country_event = {
 	title = AfghanistanHostageCrisis.1.t
 	desc = AfghanistanHostageCrisis.1.d
 	picture = GFX_afghan_sk_hostage_crisis
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
-	trigger = {
-		original_tag = AFG
-		AFG = {
-			check_variable = {
-				var = taliban_strength
-				value = 5
-				compare = greater_than_or_equals
-			}
-			has_country_flag = afg_active_taliban_insurgency
-			gives_military_access_to = KOR
-			gives_military_access_to = USA
-			date > 2007.7.19
-		}
-	}
 
 	#Attemp to release hostages
 	option = {
@@ -4746,7 +4615,6 @@ news_event = {
 }
 #Aloya jirga (No war on terror)
 
-
 #Revive the peshawar accords
 #starting of the event
 #adds time desisions to make changes to goverment and who to put support behind
@@ -4766,9 +4634,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Afghanistan.22.a executed"
 		ai_chance = { base = 100 }
 		country_event = { id = Afghanistan.26 days = 3 }
-		#set_country_flag = Massoud_Running
-		#set_country_flag = Abdullah_Running
-
 	}
 
 }
@@ -4790,7 +4655,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Afghanistan.23.a executed"
 		ai_chance = { base = 100 }
 		custom_effect_tooltip = AFG_Burhanuddin_Rabbani_leaderTT
-		set_country_flag = Burhanuddin_Running
 	}
 	option = {
 		name = Afghanistan.23.b
@@ -4816,7 +4680,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Afghanistan.24.a executed"
 		ai_chance = { base = 100 }
 		custom_effect_tooltip = AFG_Abdullah_Abdullah_leaderTT
-		set_country_flag = Qasim_Running
 	}
 	option = {
 		name = Afghanistan.24.b
@@ -4842,7 +4705,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Afghanistan.25.a executed"
 		ai_chance = { base = 100 }
 		custom_effect_tooltip = AFG_Yunus_QanuniTT
-		set_country_flag = yunus_Running
 		#load_oob = AFG_load_focus_end_of_war
 	}
 	option = {
@@ -4874,10 +4736,6 @@ country_event = {
 					ideology = fascism
 					popularity = 0.2
 				}
-				set_politics = {
-					ruling_party = fascism
-					elections_allowed = no
-				}
 			}
 			else = {
 				add_popularity = {
@@ -4900,20 +4758,15 @@ country_event = {
 			}
 			hidden_effect = {
 				set_country_flag = no_leader_change
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 10 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
+				set_temp_variable = { rul_party_temp = 10 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
 				set_temp_variable = { party_index = 10 }
 				set_temp_variable = { party_popularity_increase = 0.10 }
 				add_relative_party_popularity = yes
 				set_temp_variable = { party_index = 11 }
 				set_temp_variable = { party_popularity_increase = 0.10 }
 				add_relative_party_popularity = yes
-				set_ruling_leader = yes
-				set_leader = yes
 				clr_country_flag = no_leader_change
 				news_event = {
 					id = AfghanistanNews.8
@@ -5185,7 +5038,7 @@ country_event = {
 			AFG = {
 				effect_tooltip = {
 					add_equipment_to_stockpile = {
-						type = infantry_weapons1
+						type = infantry_weapons_2
 						amount = 4000
 						producer = SOV
 					}
@@ -5234,11 +5087,11 @@ country_event = {
 	option = {
 		name = Afghanistan.35.b
 		log = "[GetDateText]: [This.GetName]: Afghanistan.35.b executed"
-		AFG = { country_event = Afghanistan.38 }
 		AFG = {
+			country_event = Afghanistan.38
 			effect_tooltip = {
 				add_equipment_to_stockpile = {
-					type = infantry_weapons1
+					type = infantry_weapons_2
 					amount = 4000
 					producer = SOV
 				}
@@ -5427,7 +5280,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Afghanistan.38.a executed"
 		ai_chance = { base = 100 }
 		add_equipment_to_stockpile = {
-			type = infantry_weapons1
+			type = infantry_weapons_2
 			amount = 4000
 			producer = SOV
 		}
@@ -5515,7 +5368,7 @@ country_event = {
 		AFG = { country_event = Afghanistan.38 }
 		effect_tooltip = {
 			add_equipment_to_stockpile = {
-				type = infantry_weapons1
+				type = infantry_weapons_2
 				amount = 4000
 				producer = SOV
 			}
@@ -5651,9 +5504,9 @@ country_event = {
 	hidden = yes
 	fire_only_once = yes
 	is_triggered_only = yes
-	option = {
-		log = "[GetDateText]: [This.GetName]: Afghanistan.49.a executed"
-		#Clear core status
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: Afghanistan.49 executed"
 		409 = {
 			remove_core_of = AFG
 			remove_core_of = TAL
@@ -5690,19 +5543,13 @@ country_event = {
 			remove_core_of = AFG
 			remove_core_of = TAL
 		}
-		#Make the winner Afghanistan
 		drop_cosmetic_tag = yes
 		clr_country_flag = dynamic_flag
-		set_cosmetic_tag = AFG_national_flag
+		set_cosmetic_tag = AFG
 		if = {
-			limit = { has_idea = Non_State_Actor }
-			remove_ideas = Non_State_Actor
+			limit = { has_idea = non_state_actor }
+			remove_ideas = non_state_actor
 		}
-		if = {
-			limit = { has_idea = rival_government }
-			remove_ideas = rival_government
-		}
-		#AFG = { load_oob = AFG_load_focus_end_of_war }
 		add_state_core = 409
 		add_state_core = 410
 		add_state_core = 411
@@ -5714,7 +5561,6 @@ country_event = {
 		add_state_core = 1152
 		set_capital = { state = 414 }
 		AFG = { news_event = { id = AfghanistanNews.1 hours = 6 } }
-		ai_chance = { base = 100 }
 	}
 }
 
@@ -5723,44 +5569,17 @@ country_event = {
 
 	hidden = yes
 	is_triggered_only = yes
-	#Invest Mil event
-	option = {
-		log = "[GetDateText]: [This.GetName]: Afghanistan.53.a executed"
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: Afghanistan.53 executed"
 		AFG = {
 			random_owned_state = {
 				invest_mic = yes
 			}
 		}
-		ai_chance = { base = 100 }
 	}
 }
-#country_event = { # Feeding loop phase one
-#	id = Afghanistan.54
-#
-#	trigger = {
-#		has_war_with = TAL
-#		has_global_flag = afg_active_taliban_insurgency_global_phase_one
-#	}
-#
-#	is_triggered_only = yes
-#	hidden = yes
-#
-#	immediate = {
-#		if = { #able To break the loop + need to add to it
-#			limit = {
-#				AFG = {
-#					has_global_flag = afg_active_taliban_insurgency_global_phase_one
-#				}
-#			}
-#			country_event = { id = Afghanistan.54 hours = 24 }
-#		}
-#	}
-#
-#	option = {
-#		log = "[GetLogInfo]: event Afghanistan.54"
-#		AFG_kick_out_units_from_tal_lands_phase_one = yes
-#	}
-#}
+
 #dont link these up
 country_event = {
 	id = Afghanistan.56 #establish diplo recon over tal
@@ -5804,7 +5623,6 @@ country_event = {
 	}
 }
 
-
 # country_event = {
 # 	id = Afghanistan.64 # Pakistan rejects
 # 	title = Afghanistan.64.t
@@ -5844,7 +5662,10 @@ country_event = {
 		name = Afghanistan.64.a
 		log = "[GetDateText]: [This.GetName]: Afghanistan.64.a executed"
 		ai_chance = { base = 100 }
-		send_embargo = PAK
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = PAK
+		}
 	}
 	option = {
 		name = Afghanistan.64.b
@@ -5980,7 +5801,6 @@ country_event = {
 }
 #Eastern Front
 
-
 #Islamic Democracy Party Coup - Atta Muhammad Nur
 country_event = {
 	id = AfghanistanPolicalEvents.0
@@ -5994,9 +5814,6 @@ country_event = {
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.0.a"
 		custom_effect_tooltip = AFG_available_as_MillleaderTT
 		custom_effect_tooltip = AFG_atta_muhammad_nur_tt
-		hidden_effect = {
-			add_ideas = atta_muhammad_nur
-		}
 		newline = yes
 		unlock_decision_tooltip = AFG_atta_installs_leadership
 	}
@@ -6015,14 +5832,12 @@ country_event = {
 		name = AfghanistanPolicalEvents.1.a
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.1.a"
 		AFG = {
-			country_event = {
-				id = AfghanistanPolicalEvents.3
-			}
+			country_event = AfghanistanPolicalEvents.3
 		}
 		effect_tooltip = {
 			AFG = {
 				add_equipment_to_stockpile = {
-					type = Inf_equipment
+					type = infantry_weapons_type
 					producer = USA
 					amount = 5000
 				}
@@ -6032,18 +5847,17 @@ country_event = {
 					amount = 100
 				}
 				add_equipment_to_stockpile = {
-					type = util_vehicle_equipment
+					type = util_vehicle_type
 					producer = USA
 					amount = 500
 				}
 				set_temp_variable = { percent_change = 5 }
 				set_temp_variable = { tag_index = USA }
-				set_temp_variable = { influence_target = AFG }
 				change_influence_percentage = yes
 			}
 		}
 		add_equipment_to_stockpile = {
-			type = Inf_equipment
+			type = infantry_weapons_type
 			producer = USA
 			amount = -5000
 		}
@@ -6053,7 +5867,7 @@ country_event = {
 			amount = -100
 		}
 		add_equipment_to_stockpile = {
-			type = util_vehicle_equipment
+			type = util_vehicle_type
 			producer = USA
 			amount = -500
 		}
@@ -6065,9 +5879,7 @@ country_event = {
 		name = AfghanistanPolicalEvents.1.b
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.1.b"
 		AFG = {
-			country_event = {
-				id = AfghanistanPolicalEvents.2
-			}
+			country_event = AfghanistanPolicalEvents.2
 		}
 	}
 }
@@ -6099,7 +5911,7 @@ country_event = {
 		name = AfghanistanPolicalEvents.3.a
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.3.a"
 		add_equipment_to_stockpile = {
-			type = Inf_equipment
+			type = infantry_weapons_type
 			producer = USA
 			amount = 5000
 		}
@@ -6109,7 +5921,7 @@ country_event = {
 			amount = 100
 		}
 		add_equipment_to_stockpile = {
-			type = util_vehicle_equipment
+			type = util_vehicle_type
 			producer = USA
 			amount = 500
 		}
@@ -6130,11 +5942,8 @@ country_event = {
 	option = {
 		name = AfghanistanPolicalEvents.4.a
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.4.a"
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 0 } #Western autocracy
-		set_ruling_leader = yes
-		set_leader = yes
+		set_temp_variable = { rul_party_temp = 0 }
+		change_ruling_party_effect = yes
 		clr_country_flag = AFG_Endorse_the_american_candidate
 		clr_country_flag = AFG_Islamic_Democracy
 		clr_country_flag = AFG_Naveen
@@ -6146,11 +5955,8 @@ country_event = {
 	option = {
 		name = AfghanistanPolicalEvents.4.b
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.4.b"
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 14 }
-		set_ruling_leader = yes
-		set_leader = yes
+		set_temp_variable = { rul_party_temp = 14 }
+		change_ruling_party_effect = yes
 		clr_country_flag = AFG_Endorse_the_american_candidate
 		clr_country_flag = AFG_Islamic_Democracy
 		clr_country_flag = AFG_Naveen
@@ -6162,11 +5968,8 @@ country_event = {
 	option = {
 		name = AfghanistanPolicalEvents.4.c
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.4.c"
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 12 }
-		set_ruling_leader = yes
-		set_leader = yes
+		set_temp_variable = { rul_party_temp = 12 }
+		change_ruling_party_effect = yes
 		clr_country_flag = AFG_Endorse_the_american_candidate
 		clr_country_flag = AFG_Islamic_Democracy
 		clr_country_flag = AFG_Naveen
@@ -6176,13 +5979,10 @@ country_event = {
 		mark_focus_tree_layout_dirty = yes
 	}
 	option = {
-		name = AfghanistanPolicalEvents.5.b
+		name = AfghanistanPolicalEvents.4.d
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.5.b"
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 2 }
-		set_ruling_leader = yes
-		set_leader = yes
+		set_temp_variable = { rul_party_temp = 2 }
+		change_ruling_party_effect = yes
 		clr_country_flag = AFG_Endorse_the_american_candidate
 		clr_country_flag = AFG_Islamic_Democracy
 		clr_country_flag = AFG_Naveen
@@ -6203,11 +6003,8 @@ country_event = {
 	option = {
 		name = AfghanistanPolicalEvents.5.a
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.5.a"
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 0 }
-		set_ruling_leader = yes
-		set_leader = yes
+		set_temp_variable = { rul_party_temp = 0 }
+		change_ruling_party_effect = yes
 		clr_country_flag = AFG_Endorse_the_american_candidate
 		clr_country_flag = AFG_Islamic_Democracy
 		clr_country_flag = AFG_Naveen
@@ -6219,11 +6016,8 @@ country_event = {
 	option = {
 		name = AfghanistanPolicalEvents.5.b
 		log = "[GetLogInfo]: event AfghanistanPolicalEvents.5.b"
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 2 }
-		set_ruling_leader = yes
-		set_leader = yes
+		set_temp_variable = { rul_party_temp = 2 }
+		change_ruling_party_effect = yes
 		clr_country_flag = AFG_Endorse_the_american_candidate
 		clr_country_flag = AFG_Islamic_Democracy
 		clr_country_flag = AFG_Naveen
@@ -6318,7 +6112,6 @@ country_event = {
 	desc = AfghanistanBorderWars.2.d
 
 	is_triggered_only = yes
-
 
 	option = {
 		name = AfghanistanBorderWars.2.a
@@ -6422,6 +6215,7 @@ country_event = {
 	# Okay
 	option = {
 		name = AfghanistanBorderWars.5.a
+		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.5.a"
 		ai_chance = {
 			base = 1
 		}
@@ -6438,6 +6232,10 @@ country_event = {
 	# Okay
 	option = {
 		name = AfghanistanBorderWars.6.a
+		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.6.a"
+		set_temp_variable = { wargoal_on = TAL }
+		set_temp_variable = { wargoal_type = 1 }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = TAL
 			type = liberate_wargoal
@@ -6454,6 +6252,12 @@ country_event = {
 	title = AfghanistanBorderWars.7.t
 	desc = AfghanistanBorderWars.7.d
 	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = AFG
+			original_tag = TAL
+		}
+	}
 
 	option = {
 		name = AfghanistanBorderWars.7.a
@@ -6524,6 +6328,12 @@ country_event = {
 	title = AfghanistanBorderWars.8.t
 	desc = AfghanistanBorderWars.8.d
 	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = AFG
+			original_tag = TAL
+		}
+	}
 
 	option = {
 		name = AfghanistanBorderWars.8.a
@@ -6589,6 +6399,7 @@ country_event = {
 
 	option = {
 		name = AfghanistanBorderWars.9.a
+		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.9.a"
 		ai_chance = {
 			base = 1
 		}

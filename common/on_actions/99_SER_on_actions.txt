@@ -1,229 +1,68 @@
 on_actions = {
 	on_daily_SER = {
 		effect = {
-			# Federation to SER Added
 			if = {
-				limit = {
-					VOJ = {
-						has_country_flag = our_federation
-						has_autonomy_state = autonomy_autonomous_province1
+				limit = { 134 = { is_owned_and_controlled_by = SER } }
+				# Montenegro Independence Referendum Ended
+				if = {
+					limit = {
+						has_country_flag = SER_montenegro_independence
+						check_variable = { SER_Montenegro_separatism < 1 }
+						check_variable = { SER_Montenegro_combatants < 500 }
+						NOT = { has_country_flag = SER_montenegro_independence_dead }
 					}
-					NOT = { has_idea = SER_confederation_idea }
+					country_event = Serbia.17
 				}
-				add_ideas = SER_confederation_idea
-			}
-			else_if = {
-				limit = {
-					VOJ = {	has_country_flag = our_federation }
-					NOT = {
-						VOJ = {	has_autonomy_state = autonomy_autonomous_province1 }
+				# Montenegro Independence Referendum Failed
+				else_if = {
+					limit = {
+						check_variable = { SER_Montenegro_separatism > 99 }
 					}
-					has_idea = SER_confederation_idea
+					country_event = Serbia.15
 				}
-				remove_ideas = SER_confederation_idea
-			}
-
-			if = {
-				limit = {
-					134 = { is_owned_and_controlled_by = SER }
-					has_country_flag = SER_montenegro_independence
-					check_variable = { SER_Montenegro_separatism < 1 }
-					check_variable = { SER_Montenegro_combatants < 500 }
-					NOT = { has_country_flag = SER_montenegro_independence_dead }
-				}
-				country_event = { id = Serbia.17 }
-			}
-			# Montenegro Independence Referendum Failed
-			if = {
-				limit = {
-					134 = { is_owned_and_controlled_by = SER }
-					check_variable = { SER_Montenegro_separatism > 99 }
-				}
-				country_event = { id = Serbia.15 }
 			}
 
 			if = {
-				limit = {
-					SER = { has_completed_focus = SER_confederation_created }
-					OR = {
-						BOS = {	has_autonomy_state = autonomy_balkan_federation }
-						KOS = {	has_autonomy_state = autonomy_balkan_federation }
-						FYR = {	has_autonomy_state = autonomy_balkan_federation }
-						CRO = {	has_autonomy_state = autonomy_balkan_federation }
-						SLV = {	has_autonomy_state = autonomy_balkan_federation }
-						MNT = {	has_autonomy_state = autonomy_balkan_federation }
-						GRE = {	has_autonomy_state = autonomy_balkan_federation }
-						BUL = {	has_autonomy_state = autonomy_balkan_federation }
-						ALB = {	has_autonomy_state = autonomy_balkan_federation }
-						ROM = {	has_autonomy_state = autonomy_balkan_federation }
-					}
-					NOT = { has_idea = SER_federation }
+				limit = { has_completed_focus = SER_confederation_created }
+				set_temp_variable = { ser_has_fed_subject = 0 }
+				if = {
+					limit = { any_subject_country = { has_autonomy_state = autonomy_balkan_federation } }
+					set_temp_variable = { ser_has_fed_subject = 1 }
 				}
-				add_ideas = SER_federation
-			}
-			else_if = {
-				limit = {
-					SER = { has_completed_focus = SER_confederation_created }
-					NOT = {
-					OR = {
-						BOS = {	has_autonomy_state = autonomy_balkan_federation }
-						KOS = {	has_autonomy_state = autonomy_balkan_federation }
-						FYR = {	has_autonomy_state = autonomy_balkan_federation }
-						CRO = {	has_autonomy_state = autonomy_balkan_federation }
-						SLV = {	has_autonomy_state = autonomy_balkan_federation }
-						MNT = {	has_autonomy_state = autonomy_balkan_federation }
-						GRE = {	has_autonomy_state = autonomy_balkan_federation }
-						BUL = {	has_autonomy_state = autonomy_balkan_federation }
-						ALB = {	has_autonomy_state = autonomy_balkan_federation }
-						ROM = {	has_autonomy_state = autonomy_balkan_federation }
+				if = {
+					limit = {
+						NOT = { has_idea = SER_federation }
+						check_variable = { ser_has_fed_subject = 1 }
 					}
-					}
-					has_idea = SER_federation
+					add_ideas = SER_federation
 				}
-				remove_ideas = SER_federation
+				else_if = {
+					limit = {
+						has_idea = SER_federation
+						check_variable = { ser_has_fed_subject = 0 }
+					}
+					remove_ideas = SER_federation
+				}
 			}
-		}
-	}
-
-	on_weekly_CRO = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_BUL = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_ROM = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_SLV = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_BOS = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_RSK = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_MNT = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_KOS = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_FYR = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_ALB = {
-		effect = {
-			SER_subject_weekly_setup = yes
-		}
-	}
-
-	on_weekly_GRE = {
-		effect = {
-			SER_subject_weekly_setup = yes
 		}
 	}
 
 	on_daily_VOJ = {
 		effect = {
-			#Province to VOJ Added
+			# Vojvodina start Rebellion
 			if = {
 				limit = {
-					VOJ = {	has_autonomy_state = autonomy_autonomous_province }
-					NOT = {
-						has_country_flag = our_military
-						has_idea = SER_subject_idea
-					}
-				}
-				add_ideas = SER_subject_idea
-			}
-			#Province to VOJ Delete
-			if = {
-				limit = {
-					NOT = {
-						VOJ = {	has_autonomy_state = autonomy_autonomous_province }
-					}
-					has_idea = SER_subject_idea
-				}
-				remove_ideas = SER_subject_idea
-			}
-			#Subject to VOJ Added
-			if = {
-				limit = {
-					VOJ = {	has_autonomy_state = autonomy_autonomous_province1 }
-					has_country_flag = our_federation
-					NOT = { has_idea = SER_republic_ser }
-				}
-				add_ideas = SER_republic_ser
-			}
-			#Subject to VOJ Deleted
-			if = {
-				limit = {
-					NOT = {
-						VOJ = {	has_autonomy_state = autonomy_autonomous_province1 }
-					}
-					has_country_flag = our_federation
-					has_idea = SER_republic_ser
-				}
-				remove_ideas = SER_republic_ser
-			}
-			###Subject VOJ Puppet###
-			if = {
-				limit = {
-					NOT = { has_autonomy_state = autonomy_autonomous_province }
-					NOT = { has_country_flag = VOJ_new_autonomy }
-					is_subject_of = SER
-				}
-				SER = {
-					set_autonomy = {
-						target = VOJ
-						autonomy_state = autonomy_autonomous_province
-					}
-				}
-			}
-			#Vojvodina start Rebelleion
-			if = {
-				limit = {
-					check_variable = { VOJ.voj_separ > 55 }
-					VOJ = {	has_country_flag = start_reb_voj }
+					check_variable = { voj_separ > 55 }
+					NOT = { has_country_flag = start_reb_voj }
 					OR = {
-						VOJ = {	has_autonomy_state = autonomy_autonomous_province1 }
-						VOJ = {	has_autonomy_state = autonomy_autonomous_province }
+						has_autonomy_state = autonomy_autonomous_province1
+						has_autonomy_state = autonomy_autonomous_province
 					}
 				}
 				set_country_flag = start_reb_voj
-				VOJ = {
-					country_event = {
-						id = SerbiaFocus.99
-						days = 1
-					}
+				country_event = {
+					id = SerbiaFocus.99
+					days = 1
 				}
 			}
 		}
