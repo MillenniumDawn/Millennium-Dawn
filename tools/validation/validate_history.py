@@ -50,6 +50,10 @@ _CAPITAL_RE = re.compile(r"^capital\s*=\s*\d+", re.MULTILINE)
 _COMPLETE_SP_RE = re.compile(r"^\s*complete_special_project\s*=\s*sp:([a-zA-Z0-9_]+)")
 # `is_special_project_completed = sp:sp_X` inside a tech's `allow` block.
 _SP_REQUIRED_RE = re.compile(r"is_special_project_completed\s*=\s*sp:([a-zA-Z0-9_]+)")
+# A project's `project_output` unlock tooltip and the tech it advertises.
+_CUSTOM_TOOLTIP_RE = re.compile(r"\bcustom_effect_tooltip\s*=\s*\{")
+_SP_UNLOCK_TECH_KEY_RE = re.compile(r"localization_key\s*=\s*SP_UNLOCK_TECH\b")
+_TECH_PARAM_RE = re.compile(r"\bTECH\s*=\s*([a-zA-Z0-9_]+)")
 
 
 def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict, Dict]:
@@ -231,17 +235,21 @@ def parse_tech_sp_requirements(mod_path: str) -> Dict[str, Set[str]]:
     return dict(sp_reqs)
 
 
-def parse_sp_allowed_dlc(mod_path: str) -> Dict[str, str]:
-    """Map each special project to the DLC its `allowed` block requires, if any.
+def parse_sp_allowed_dlc(mod_path: str) -> Dict[str, List[str]]:
+    """Map each special project to the DLC(s) its `allowed` block requires.
 
     A project gated on `allowed = { has_dlc = "X" }` does not exist without DLC
     X, so a tech requiring it is not actually locked when X is absent (the whole
-    subsystem is off). Projects with a generic `allowed` (always yes, a tag
-    check, or none) are not in the returned map. Used to suppress false
-    positives in the SP-completion check for configurations lacking the DLC.
+    subsystem is off). Some projects require *several* DLCs at once (e.g.
+    `has_dlc = "No Step Back" has_dlc = "By Blood Alone"`, an implicit AND); the
+    project exists only when every one is present, so all are collected and the
+    SP-completion check suppresses the requirement when any of them is absent.
+    Projects with a generic `allowed` (always yes, a tag check, or none) are not
+    in the returned map. No project gates its `allowed` on an OR of DLCs, so the
+    flat AND reading is exact.
     """
     projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
-    allowed_dlc: Dict[str, str] = {}
+    allowed_dlc: Dict[str, List[str]] = {}
 
     for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
         try:
@@ -261,11 +269,118 @@ def parse_sp_allowed_dlc(mod_path: str) -> Dict[str, str]:
             # Brace-match the allowed block so a has_dlc nested inside (e.g. in
             # an OR) is still seen; a flat `[^{}]*` capture would miss it.
             allowed_end = _match_brace_end(block, allowed.end())
-            dlc = _HAS_DLC_RE.search(block[allowed.end() : allowed_end])
-            if dlc:
-                allowed_dlc[name] = dlc.group(1)
+            dlcs = _HAS_DLC_RE.findall(block[allowed.end() : allowed_end])
+            if dlcs:
+                allowed_dlc[name] = sorted(set(dlcs))
 
     return allowed_dlc
+
+
+def parse_sp_always_yes(mod_path: str) -> Set[str]:
+    """Return special projects whose `allowed` block is `always = yes` — i.e. no
+    DLC, tag, or other gate.
+
+    These exist for every player, so a `complete_special_project` grant for one
+    must not be trapped inside a positive `has_dlc` if-block: a player without
+    that DLC would then never complete a project that is available to them (and
+    any base-game tech gated on it stays locked). Used by the SP-misplacement
+    check.
+    """
+    projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
+    always: Set[str] = set()
+
+    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+        except Exception:
+            continue
+
+        content = strip_comments(content)
+        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
+            name = m.group(1)
+            end = _match_brace_end(content, m.end())
+            block = content[m.end() : end]
+            allowed = re.search(r"allowed\s*=\s*\{", block)
+            if not allowed:
+                continue
+            allowed_end = _match_brace_end(block, allowed.end())
+            body = block[allowed.end() : allowed_end - 1]
+            if _HAS_DLC_RE.search(body):
+                continue
+            if re.search(r"\balways\s*=\s*yes\b", body):
+                always.add(name)
+
+    return always
+
+
+def parse_sp_output_claims(mod_path: str) -> Dict[str, List[str]]:
+    """Map each special project to the tech(s) its `project_output` claims to
+    unlock via an `SP_UNLOCK_TECH` tooltip.
+
+    Projects advertise their reward with
+    `custom_effect_tooltip = { localization_key = SP_UNLOCK_TECH TECH = <tech> }`.
+    The `TECH` parameter names the technology the player is told the project
+    unlocks; it must be a tech the project actually gates (i.e. that tech's
+    `allow` block contains `is_special_project_completed = sp:<project>`).
+    Returned map is project -> [claimed tech, ...].
+    """
+    projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
+    claims: Dict[str, List[str]] = defaultdict(list)
+
+    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+        except Exception:
+            continue
+
+        content = strip_comments(content)
+        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
+            name = m.group(1)
+            block = content[m.end() : _match_brace_end(content, m.end())]
+            for cet in _CUSTOM_TOOLTIP_RE.finditer(block):
+                body = block[cet.end() : _match_brace_end(block, cet.end()) - 1]
+                if not _SP_UNLOCK_TECH_KEY_RE.search(body):
+                    continue
+                for tp in _TECH_PARAM_RE.finditer(body):
+                    claims[name].append(tp.group(1))
+
+    return dict(claims)
+
+
+def validate_sp_output_consistency(
+    sp_gated_techs: Dict[str, Set[str]],
+    sp_output_claims: Dict[str, List[str]],
+) -> List[str]:
+    """Validate that every tech a project's `project_output` claims to unlock is
+    actually gated by that project. Returns error strings.
+
+    A project whose `SP_UNLOCK_TECH` tooltip names a tech it does not gate shows
+    the player a false reward (the tech unlocks off a different project, or off
+    no project at all). `sp_gated_techs` maps project -> techs it gates (a tech
+    whose `allow` requires `is_special_project_completed = sp:<project>`).
+    """
+    results = []
+    for project in sorted(sp_output_claims):
+        gated = sp_gated_techs.get(project, set())
+        for tech in sorted(set(sp_output_claims[project])):
+            if tech in gated:
+                continue
+            owner = sorted(p for p, ts in sp_gated_techs.items() if tech in ts)
+            if owner:
+                where = "gated by " + ", ".join(f"sp:{p}" for p in owner)
+            elif gated:
+                where = "gated by no project; this project gates " + ", ".join(
+                    sorted(gated)
+                )
+            else:
+                where = "gated by no project, and this project gates nothing"
+            results.append(
+                f"sp:{project}: project_output claims to unlock {tech}, but {tech} "
+                f"is {where}"
+            )
+    return results
 
 
 def _parse_tech_file(
@@ -749,7 +864,7 @@ def validate_country_dlc_techs(
 
 
 def validate_country_sp_requirements(
-    args: Tuple[str, Dict[str, Set[str]], Dict[str, str], str],
+    args: Tuple[str, Dict[str, Set[str]], Dict[str, List[str]], str],
 ) -> List[str]:
     """Validate that a country completes every special project required by the
     techs in its `set_technology` block, in every DLC configuration where it
@@ -790,10 +905,11 @@ def validate_country_sp_requirements(
             for sp in required:
                 if sp in sp_set:
                     continue
-                gate = sp_allowed_dlc.get(sp)
-                # DLC-limited project that cannot exist in this configuration:
-                # the subsystem is off, so the tech is not actually locked.
-                if gate is not None and gate in absent:
+                gates = sp_allowed_dlc.get(sp)
+                # DLC-limited project that cannot exist in this configuration: if
+                # any required DLC is absent the whole subsystem is off, so the
+                # tech is not actually locked.
+                if gates and any(g in absent for g in gates):
                     continue
                 missing.add(sp)
             if missing:
@@ -818,6 +934,54 @@ def validate_country_sp_requirements(
                 f"but they are not completed at game start [{label}]"
             )
 
+    return results
+
+
+def validate_country_sp_misplacement(
+    args: Tuple[str, Set[str], str],
+) -> List[str]:
+    """Flag an always-available special project that is completed ONLY inside a
+    positive `has_dlc` if-block. Returns error strings.
+
+    Because `allowed = { always = yes }` projects exist for every player, gating
+    their `complete_special_project` behind a DLC means non-DLC players never
+    complete a project available to them (and any base-game tech that requires
+    it stays locked). The fix is to hoist the completion to unconditional scope.
+
+    Only reported when the file has NO unconditional completion of the project:
+    a redundant completion inside a DLC block that also has an unconditional one
+    is harmless.
+    """
+    filepath, always_yes, mod_path = args
+    filename = os.path.basename(filepath)
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except Exception:
+        return []
+
+    content = strip_comments(content)
+    _techs, sps, _dlcs = _walk_history_tokens(_tokenize_history(content))
+
+    # A completion is unconditional only when its guard carries no DLC at all;
+    # a guard of {DLC: False} sits in a non-DLC `else` and is itself gated.
+    unconditional = {name for name, guard in sps if not guard}
+    gated: Dict[str, Set[str]] = defaultdict(set)
+    for name, guard in sps:
+        if name not in always_yes or name in unconditional:
+            continue
+        present = [dlc for dlc, is_present in guard.items() if is_present]
+        if present:
+            gated[name].update(present)
+
+    results = []
+    for name in sorted(gated):
+        dlcs = ", ".join(sorted(gated[name]))
+        results.append(
+            f"{filename}: sp:{name} is always-available but is completed only "
+            f'inside a "{dlcs}" block - hoist it to unconditional scope so '
+            f"players without that DLC still complete it"
+        )
     return results
 
 
@@ -974,6 +1138,8 @@ class Validator(BaseValidator):
         self.tech_dlc_reqs = {}
         self.tech_sp_reqs = {}
         self.sp_allowed_dlc = {}
+        self.sp_always_yes = set()
+        self.sp_output_claims = {}
 
     def _build_tech_graph(self):
         """Build the technology dependency graph from tech definition files."""
@@ -993,6 +1159,8 @@ class Validator(BaseValidator):
         # each special project to the DLC its own `allowed` block requires.
         self.tech_sp_reqs = parse_tech_sp_requirements(self.mod_path)
         self.sp_allowed_dlc = parse_sp_allowed_dlc(self.mod_path)
+        self.sp_always_yes = parse_sp_always_yes(self.mod_path)
+        self.sp_output_claims = parse_sp_output_claims(self.mod_path)
 
         techs_with_prereqs = len(self.prerequisites)
         self.log(f"  Found {len(self.all_techs)} technology definitions")
@@ -1090,6 +1258,36 @@ class Validator(BaseValidator):
             validate_country_sp_requirements,
         )
 
+    def validate_sp_misplacement(self):
+        """Validate that no always-available special project is completed only
+        inside a positive has_dlc if-block."""
+        files = self._get_history_files()
+        args_list = [(f, self.sp_always_yes, self.mod_path) for f in files]
+        self._validate_history_files(
+            "Checking always-available special projects for DLC-gated completions...",
+            "✓ All always-available special projects are completed unconditionally",
+            "History files completing an always-available special project only inside a DLC block:",
+            args_list,
+            validate_country_sp_misplacement,
+        )
+
+    def validate_sp_output_consistency(self):
+        """Validate that each special project's `project_output` unlock tooltip
+        names a tech the project actually gates."""
+        self._log_section(
+            "Checking special project output tooltips against unlocked techs..."
+        )
+        sp_gated_techs: Dict[str, Set[str]] = defaultdict(set)
+        for tech, sps in self.tech_sp_reqs.items():
+            for sp in sps:
+                sp_gated_techs[sp].add(tech)
+        results = validate_sp_output_consistency(sp_gated_techs, self.sp_output_claims)
+        self._report(
+            results,
+            "✓ All special project output tooltips match a gated technology",
+            "Special projects whose output tooltip advertises a tech they do not gate:",
+        )
+
     def validate_oob_references(self):
         """Validate that every state-owning nation has a land OOB on game start."""
         self._log_section("Checking OOB references in history files...")
@@ -1141,6 +1339,8 @@ class Validator(BaseValidator):
         self.validate_equipment_modules()
         self.validate_dlc_branch_techs()
         self.validate_sp_completions()
+        self.validate_sp_misplacement()
+        self.validate_sp_output_consistency()
         self.validate_oob_references()
         self.validate_capital_defined()
 

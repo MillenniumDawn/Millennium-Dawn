@@ -105,7 +105,33 @@ def test_parse_sp_allowed_dlc_maps_dlc_limited_only(tmp_path):
         "}\n",
     )
     allowed = V.parse_sp_allowed_dlc(str(tmp_path))
-    assert allowed == {"sp_armoured_vehicle_project": "No Step Back"}
+    assert allowed == {"sp_armoured_vehicle_project": ["No Step Back"]}
+
+
+def test_parse_sp_allowed_dlc_collects_multiple_dlcs(tmp_path):
+    # A project whose allowed block ANDs two DLCs must map to both, sorted.
+    _write_sp(
+        tmp_path,
+        "sp_air_railguns = {\n"
+        '\tallowed = { has_dlc = "By Blood Alone" has_dlc = "No Step Back" }\n'
+        "}\n",
+    )
+    allowed = V.parse_sp_allowed_dlc(str(tmp_path))
+    assert allowed == {"sp_air_railguns": ["By Blood Alone", "No Step Back"]}
+
+
+def test_parse_sp_always_yes(tmp_path):
+    _write_sp(
+        tmp_path,
+        "sp_awacs_project = {\n\tallowed = { always = yes }\n}\n"
+        "sp_armoured_vehicle_project = {\n"
+        '\tallowed = { has_dlc = "No Step Back" }\n'
+        "}\n"
+        "sp_libya_gmmr_phase3_project = {\n"
+        "\tallowed = { original_tag = LBA }\n"
+        "}\n",
+    )
+    assert V.parse_sp_always_yes(str(tmp_path)) == {"sp_awacs_project"}
 
 
 def test_parse_history_file_returns_sp_set_per_branch(tmp_path, monkeypatch):
@@ -242,7 +268,7 @@ def test_dlc_limited_sp_suppressed_when_dlc_absent(tmp_path, monkeypatch):
     # absent, must not be flagged: without the DLC the subsystem does not exist.
     monkeypatch.setenv("MD_NO_CACHE", "1")
     tech_sp_reqs = {"nsb_armor_tech": {"sp_armoured_vehicle_project"}}
-    sp_allowed_dlc = {"sp_armoured_vehicle_project": "No Step Back"}
+    sp_allowed_dlc = {"sp_armoured_vehicle_project": ["No Step Back"]}
     fp = _write_country(
         tmp_path,
         "TST - Test.txt",
@@ -267,7 +293,7 @@ def test_dlc_limited_sp_flagged_when_dlc_present_and_missing(tmp_path, monkeypat
     # project is never completed: this is a real gap.
     monkeypatch.setenv("MD_NO_CACHE", "1")
     tech_sp_reqs = {"mbt_tech": {"sp_armoured_vehicle_project"}}
-    sp_allowed_dlc = {"sp_armoured_vehicle_project": "No Step Back"}
+    sp_allowed_dlc = {"sp_armoured_vehicle_project": ["No Step Back"]}
     fp = _write_country(
         tmp_path,
         "TST - Test.txt",
@@ -285,6 +311,90 @@ def test_dlc_limited_sp_flagged_when_dlc_present_and_missing(tmp_path, monkeypat
     assert len(errors) == 1
     assert "mbt_tech" in errors[0]
     assert "No Step Back" in errors[0]
+
+
+def test_compound_dlc_sp_suppressed_when_any_required_dlc_absent(tmp_path, monkeypatch):
+    # A tech gated on a project that needs BOTH DLCs must not be flagged in a
+    # configuration missing either one — the project cannot exist there. Here the
+    # tech is granted in the NOT-No-Step-Back branch, and the project also needs
+    # No Step Back, so the requirement is moot. The old first-DLC-only parse
+    # (which recorded only "By Blood Alone") would have flagged this.
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    tech_sp_reqs = {"tech_tank_nuclear_engine_1": {"sp_nuclear_engine_tank"}}
+    sp_allowed_dlc = {"sp_nuclear_engine_tank": ["By Blood Alone", "No Step Back"]}
+    fp = _write_country(
+        tmp_path,
+        "TST - Test.txt",
+        "if = {\n"
+        '\tlimit = { has_dlc = "No Step Back" }\n'
+        "\tset_technology = { other_tech = 1 }\n"
+        "\telse = {\n"
+        "\t\tset_technology = { tech_tank_nuclear_engine_1 = 1 }\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert (
+        V.validate_country_sp_requirements(
+            (fp, tech_sp_reqs, sp_allowed_dlc, str(tmp_path))
+        )
+        == []
+    )
+
+
+def test_sp_misplacement_flags_dlc_only_completion(tmp_path):
+    always_yes = {"sp_helicopter_project"}
+    fp = _write_country(
+        tmp_path,
+        "TST - Test.txt",
+        "if = {\n"
+        '\tlimit = { has_dlc = "No Step Back" }\n'
+        "\tcomplete_special_project = sp:sp_helicopter_project\n"
+        "}\n",
+    )
+    errors = V.validate_country_sp_misplacement((fp, always_yes, str(tmp_path)))
+    assert len(errors) == 1
+    assert "sp_helicopter_project" in errors[0]
+    assert "No Step Back" in errors[0]
+
+
+def test_sp_misplacement_clean_when_unconditional(tmp_path):
+    always_yes = {"sp_helicopter_project"}
+    fp = _write_country(
+        tmp_path,
+        "TST - Test.txt",
+        "complete_special_project = sp:sp_helicopter_project\n",
+    )
+    assert V.validate_country_sp_misplacement((fp, always_yes, str(tmp_path))) == []
+
+
+def test_sp_misplacement_clean_with_redundant_dlc_duplicate(tmp_path):
+    # An unconditional completion plus a redundant one inside a DLC block is fine.
+    always_yes = {"sp_helicopter_project"}
+    fp = _write_country(
+        tmp_path,
+        "TST - Test.txt",
+        "complete_special_project = sp:sp_helicopter_project\n"
+        "if = {\n"
+        '\tlimit = { has_dlc = "No Step Back" }\n'
+        "\tcomplete_special_project = sp:sp_helicopter_project\n"
+        "}\n",
+    )
+    assert V.validate_country_sp_misplacement((fp, always_yes, str(tmp_path))) == []
+
+
+def test_sp_misplacement_ignores_dlc_gated_project(tmp_path):
+    # A genuinely DLC-gated project (not in always_yes) completed inside its
+    # matching DLC block is correct, not a misplacement.
+    always_yes = {"sp_helicopter_project"}
+    fp = _write_country(
+        tmp_path,
+        "TST - Test.txt",
+        "if = {\n"
+        '\tlimit = { has_dlc = "Gotterdammerung" }\n'
+        "\tcomplete_special_project = sp:sp_nuclear_warhead_program\n"
+        "}\n",
+    )
+    assert V.validate_country_sp_misplacement((fp, always_yes, str(tmp_path))) == []
 
 
 def test_validate_country_sp_requirements_flags_multi_sp_tech(tmp_path, monkeypatch):
@@ -305,6 +415,56 @@ def test_validate_country_sp_requirements_flags_multi_sp_tech(tmp_path, monkeypa
     assert "sp_fully_autonomous_fighters" in errors[0]
     # The already-completed SP must not be listed as missing.
     assert "sp_aircraft_project" not in errors[0]
+
+
+def test_parse_sp_output_claims(tmp_path):
+    _write_sp(
+        tmp_path,
+        "sp_agriculture_drone = {\n"
+        "\tproject_output = {\n"
+        "\t\tcountry_effects = {\n"
+        "\t\t\tcustom_effect_tooltip = {\n"
+        "\t\t\t\tlocalization_key = SP_UNLOCK_TECH\n"
+        "\t\t\t\tTECH = programmable_harvesters\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+        "sp_no_tooltip = {\n\tallowed = { always = yes }\n}\n",
+    )
+    claims = V.parse_sp_output_claims(str(tmp_path))
+    assert claims == {"sp_agriculture_drone": ["programmable_harvesters"]}
+
+
+def test_sp_output_consistency_flags_wrong_tech():
+    # The project gates programmable_harvesters but its tooltip advertises a
+    # different tech that another project gates.
+    sp_gated = {
+        "sp_agriculture_drone": {"programmable_harvesters"},
+        "sp_other": {"improved_harvesting_automation"},
+    }
+    claims = {"sp_agriculture_drone": ["improved_harvesting_automation"]}
+    errors = V.validate_sp_output_consistency(sp_gated, claims)
+    assert len(errors) == 1
+    assert "sp_agriculture_drone" in errors[0]
+    assert "improved_harvesting_automation" in errors[0]
+    assert "sp:sp_other" in errors[0]
+
+
+def test_sp_output_consistency_flags_gateless_project():
+    # A project that gates nothing but advertises a tech is flagged.
+    sp_gated = {"sp_real": {"air_tech_gunship_railgun_1"}}
+    claims = {"sp_air_gunship_railcannons": ["air_tech_gunship_railgun_1"]}
+    errors = V.validate_sp_output_consistency(sp_gated, claims)
+    assert len(errors) == 1
+    assert "sp_air_gunship_railcannons" in errors[0]
+    assert "sp:sp_real" in errors[0]
+
+
+def test_sp_output_consistency_clean_when_matches():
+    sp_gated = {"sp_agriculture_drone": {"programmable_harvesters"}}
+    claims = {"sp_agriculture_drone": ["programmable_harvesters"]}
+    assert V.validate_sp_output_consistency(sp_gated, claims) == []
 
 
 def test_validate_country_sp_requirements_unknown_tech_passes(tmp_path, monkeypatch):
