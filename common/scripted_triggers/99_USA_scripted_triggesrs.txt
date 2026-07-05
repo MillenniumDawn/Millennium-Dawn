@@ -37,3 +37,43 @@ congress_high_support_trigger = {
 		check_variable = { var = representatives_support value = 261 compare = greater_than_or_equals }
 	}
 }
+
+# True for a country the USA would eject from the F-35 program: hostile to the US, dominated or
+# puppeted by a rival power, stoking world tension, or no longer a Western ally.
+# Evaluated in the member country's scope. Used to both bar invites and drive the kick decision.
+USA_f35_kick_candidate = {
+	OR = {
+		USA = { has_opinion = { target = PREV value < 0 } }
+		AND = {
+			CHI = {
+				NOT = { has_government = democratic }
+				NOT = { has_government = neutrality }
+			}
+			check_variable = { influence_array^0 = CHI }
+			check_variable = { influence_array_val^0 > 19.999 }
+		}
+		AND = {
+			PER = {
+				OR = {
+					emerging_hardline_shiite_are_in_power = yes
+					emerging_moderate_shiite_are_in_power = yes
+				}
+			}
+			check_variable = { influence_array^0 = PER }
+			check_variable = { influence_array_val^0 > 19.999 }
+		}
+		AND = {
+			SOV = { NOT = { has_idea = Major_Non_NATO_Ally } }
+			check_variable = { influence_array^0 = SOV }
+			check_variable = { influence_array_val^0 > 19.999 }
+		}
+		has_added_tension_amount > 19
+		is_subject_of = CHI
+		is_subject_of = PER
+		is_subject_of = SOV
+		AND = {
+			NOT = { has_idea = NATO_member }
+			NOT = { has_idea = Major_Non_NATO_Ally }
+		}
+	}
+}
