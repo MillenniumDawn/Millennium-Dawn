@@ -32,11 +32,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
-# the orphaned v4 tree (100k+ files) on the next suite run. v6 invalidated the
-# scripted_params token cache after the 3-tuple → 4-tuple token format change
-# (the cache keys on file content, not validator source, so a format change in
-# the token shape requires a version bump to avoid stale 3-tuple entries).
-CACHE_VERSION = 6
+# the orphaned v4 tree (100k+ files) on the next suite run.
+CACHE_VERSION = 5
 
 _CACHE_DIR_NAME = ".validation_cache"
 # Records when the cache was created / last cleared (one unix timestamp), so the
