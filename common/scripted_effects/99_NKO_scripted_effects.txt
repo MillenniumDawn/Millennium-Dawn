@@ -265,34 +265,24 @@ NKO_spa_initialise = {
 			add_ideas = NKO_spa_debuff_construction
 		}
 
-		# Seed the picks counter at 0 so the .gui's [?picks_made|0] token has
-		# a real value to render on the very first frame.
-		set_variable = { NKO_spa_picks_made = 0 }
+		# Seed the active-mandate counter so the .gui token renders 0 / 2 on the
+		# very first frame.
+		set_variable = { NKO_spa_active_mandates = 0 }
 	}
 }
 
 # -----------------------------------------------------------------------------
-# Open a session — resets picks counter, sets the session-active flag, and
-# fires the session-open alert event. Called from the cycle event NKO_spa.10
-# and from the inaugural NKO_spa.0.
-# -----------------------------------------------------------------------------
-NKO_spa_open_session = {
-	hidden_effect = {
-		set_variable = { NKO_spa_picks_made = 0 }
-	}
-}
-
-# -----------------------------------------------------------------------------
-# Per-domain pass effects — called from each mandate's complete_effect.
-# Removes the standing debuff, applies the 365-day bonus idea, sets the
-# 366-day lock flag, increments the session picks counter.
+# Per-domain pass effects — called from each mandate's complete_effect. Removes
+# the standing debuff, applies the 365-day bonus idea, and increments the
+# active-mandate counter (one of two slots; freed when the bonus lapses via
+# the bonus idea's on_remove).
 # -----------------------------------------------------------------------------
 
 NKO_spa_pass_industry = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_industry } remove_ideas = NKO_spa_debuff_industry }
 		add_timed_idea = { idea = NKO_spa_bonus_industry days = 365 }
-		add_to_variable = { NKO_spa_picks_made = 1 }
+		add_to_variable = { NKO_spa_active_mandates = 1 }
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Industrial Acceleration"
 	}
 }
@@ -301,7 +291,7 @@ NKO_spa_pass_production = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_production } remove_ideas = NKO_spa_debuff_production }
 		add_timed_idea = { idea = NKO_spa_bonus_production days = 365 }
-		add_to_variable = { NKO_spa_picks_made = 1 }
+		add_to_variable = { NKO_spa_active_mandates = 1 }
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Equipment Production Mandate"
 	}
 }
@@ -310,7 +300,7 @@ NKO_spa_pass_military = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_military } remove_ideas = NKO_spa_debuff_military }
 		add_timed_idea = { idea = NKO_spa_bonus_military days = 365 }
-		add_to_variable = { NKO_spa_picks_made = 1 }
+		add_to_variable = { NKO_spa_active_mandates = 1 }
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Songun Resolution"
 	}
 }
@@ -319,7 +309,7 @@ NKO_spa_pass_economy = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_economy } remove_ideas = NKO_spa_debuff_economy }
 		add_timed_idea = { idea = NKO_spa_bonus_economy days = 365 }
-		add_to_variable = { NKO_spa_picks_made = 1 }
+		add_to_variable = { NKO_spa_active_mandates = 1 }
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Juche Self-Reliance"
 	}
 }
@@ -338,7 +328,7 @@ NKO_spa_pass_research = {
 		else = {
 			add_timed_idea = { idea = NKO_spa_bonus_research days = 365 }
 		}
-		add_to_variable = { NKO_spa_picks_made = 1 }
+		add_to_variable = { NKO_spa_active_mandates = 1 }
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Research Drive"
 	}
 }
@@ -347,7 +337,7 @@ NKO_spa_pass_agriculture = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_agriculture } remove_ideas = NKO_spa_debuff_agriculture }
 		add_timed_idea = { idea = NKO_spa_bonus_agriculture days = 365 }
-		add_to_variable = { NKO_spa_picks_made = 1 }
+		add_to_variable = { NKO_spa_active_mandates = 1 }
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Agricultural Drive"
 	}
 }
@@ -356,7 +346,7 @@ NKO_spa_pass_foreign = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_foreign } remove_ideas = NKO_spa_debuff_foreign }
 		add_timed_idea = { idea = NKO_spa_bonus_foreign days = 365 }
-		add_to_variable = { NKO_spa_picks_made = 1 }
+		add_to_variable = { NKO_spa_active_mandates = 1 }
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Foreign Policy Directive"
 	}
 }
@@ -365,7 +355,7 @@ NKO_spa_pass_construction = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_construction } remove_ideas = NKO_spa_debuff_construction }
 		add_timed_idea = { idea = NKO_spa_bonus_construction days = 365 }
-		add_to_variable = { NKO_spa_picks_made = 1 }
+		add_to_variable = { NKO_spa_active_mandates = 1 }
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Construction Battalion"
 	}
 }
