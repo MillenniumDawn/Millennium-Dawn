@@ -50,6 +50,7 @@ scripted_gui = {
 					# TLDR: Don't have the screen open as Jamaica. It's stupid.
 					OR = {
 						has_idea = EU_member
+						has_country_flag = EU_candidate
 						has_idea = super_power
 						has_idea = great_power
 						original_tag = USA
@@ -66,15 +67,20 @@ scripted_gui = {
 		# ai_check = Ensures they are in the EU before opening the GUI
 		ai_enabled = {
 			NOT = { has_global_flag = GAME_RULE_eu_disabled }
-			is_in_array = { global.EU_potential = THIS.id }
+			OR = {
+				is_in_array = { global.EU_potential = THIS.id }
+				original_tag = USA
+				original_tag = CHI
+			}
 		}
 		ai_check = {
-			has_idea = EU_member
 			OR = {
-				has_idea = super_power
-				has_idea = great_power
-				has_idea = large_power
-				has_idea = regional_power
+				AND = {
+					has_idea = EU_member
+					has_at_least_regional_power_status = yes
+				}
+				has_at_least_great_power_status = yes
+				has_country_flag = EU_candidate
 			}
 		}
 		# Test Interval — 4.5 days. EP vote windows are 14 days, so the AI still gets ~3
@@ -169,7 +175,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.eucouncil equals = EUU.id }
+					check_variable = { global.eucouncil = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -189,7 +195,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.euforeignaffairs equals = EUU.id }
+					check_variable = { global.euforeignaffairs = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -209,7 +215,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.euarmy equals = EUU.id }
+					check_variable = { global.euarmy = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -229,7 +235,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.eunavy equals = EUU.id }
+					check_variable = { global.eunavy = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -253,7 +259,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.euparliamentpresident equals = EUU.id }
+					check_variable = { global.euparliamentpresident = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -269,7 +275,7 @@ scripted_gui = {
 				has_idea = EU_member
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.eu_commission equals = EUU.id }
+					check_variable = { global.eu_commission = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -285,7 +291,7 @@ scripted_gui = {
 				has_idea = euro
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.eucentralbank equals = EUU.id }
+					check_variable = { global.eucentralbank = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -305,7 +311,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.eufinance equals = EUU.id }
+					check_variable = { global.eufinance = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -325,7 +331,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.euambassador equals = EUU.id }
+					check_variable = { global.euambassador = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -345,7 +351,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.eufrontex equals = EUU.id }
+					check_variable = { global.eufrontex = EUU.id }
 				}
 				OR = {
 					EU_does_not_hold_another_office = yes
@@ -363,7 +369,7 @@ scripted_gui = {
 				always = no
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
-					check_expr = { value = global.eupresfederation equals = EUU.id }
+					check_variable = { global.eupresfederation = EUU.id }
 				}
 				OR = {
 					EU_influence_on_all_other_members_5_percent = yes
@@ -524,7 +530,7 @@ scripted_gui = {
 					if = {
 						limit = { is_ai = yes }
 						OR = {
-							check_expr = { value = THIS.europeanism less_than = { value = 0.40 } }
+							check_variable = { THIS.europeanism < 0.40 }
 							EU_external_sov_chi_influence_50 = yes
 						}
 					}
@@ -635,12 +641,12 @@ scripted_gui = {
 			PG_party_0_influence_click_enabled = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
-					NOT = { check_expr = { value = global.PG_party_support_array^0 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^0 > 0 } }
 					tooltip = party_not_supporting_tt
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^0 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^0 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -659,11 +665,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^1 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^1 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^1 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^1 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -681,11 +687,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^2 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^2 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^2 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^2 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -704,11 +710,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^3 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^3 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^3 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^3 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -727,11 +733,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^4 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^4 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^4 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^4 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -750,11 +756,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^5 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^5 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^5 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^5 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -773,11 +779,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^6 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^6 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^6 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^6 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -796,11 +802,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^7 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^7 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^7 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^7 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -819,11 +825,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^8 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^8 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^8 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^8 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -842,11 +848,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^9 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^9 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^9 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^9 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -865,11 +871,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^10 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^10 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^10 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^10 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -888,11 +894,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^11 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^11 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^11 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^11 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -911,11 +917,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^12 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^12 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^12 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^12 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -934,11 +940,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^13 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^13 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^13 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^13 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -957,11 +963,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^14 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^14 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^14 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^14 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -980,11 +986,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^15 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^15 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^15 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^15 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1003,11 +1009,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^16 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^16 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^16 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^16 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1026,11 +1032,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^17 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^17 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^17 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^17 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1049,11 +1055,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^18 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^18 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^18 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^18 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1072,11 +1078,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^19 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^19 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^19 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^19 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1095,11 +1101,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^20 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^20 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^20 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^20 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1118,11 +1124,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^21 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^21 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^21 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^21 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1141,11 +1147,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^22 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^22 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^22 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^22 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1164,11 +1170,11 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = party_not_supporting_tt
-					NOT = { check_expr = { value = global.PG_party_support_array^23 greater_than = { value = 0 } } }
+					NOT = { check_variable = { global.PG_party_support_array^23 > 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_mep_rep_tt
-					check_expr = { value = global.MEP_PG_party_array^23 greater_than = { value = 0 } }
+					check_variable = { global.MEP_PG_party_array^23 > 0 }
 				}
 				check_expr = {
 					value = political_power
@@ -1188,7 +1194,7 @@ scripted_gui = {
 				EU_parliament_in_session = yes
 				custom_trigger_tooltip = {
 					tooltip = pass_vote_button_click_enabled_tt
-					check_expr = { value = global.active_MEP_Support greater_than_or_equals = global.MEP_Majority }
+					check_variable = { var = global.active_MEP_Support value = global.MEP_Majority compare = greater_than_or_equals }
 				}
 				hidden_trigger = { is_ai = no }
 			}
@@ -1197,7 +1203,6 @@ scripted_gui = {
 				has_idea = EU_member
 			}
 			remove_vote_button_click_enabled = {
-
 				EU_parliament_in_session = yes
 				hidden_trigger = {
 					has_global_flag = EU_active_EP_agenda_holder
@@ -1290,14 +1295,14 @@ scripted_gui = {
 				EU_european_union_council_voting_trigger = yes
 			}
 			support_council_vote_button_click_enabled = {
-				NOT = { check_expr = { value = global.current_active_vote_disp equals = 0 } }
+				NOT = { check_variable = { global.current_active_vote_disp = 0 } }
 				NOT = { is_in_array = { array = global.EU_active_vote_supporters value = THIS } }
 			}
 			reject_council_vote_button_visible = {
 				EU_european_union_council_voting_trigger = yes
 			}
 			reject_council_vote_button_click_enabled = {
-				NOT = { check_expr = { value = global.current_active_vote_disp equals = 0 } }
+				NOT = { check_variable = { global.current_active_vote_disp = 0 } }
 				NOT = { is_in_array = { array = global.EU_active_vote_rejecters value = THIS } }
 			}
 
@@ -1308,8 +1313,8 @@ scripted_gui = {
 			EU_min_call_rate_click_enabled = {
 				has_idea = EU_member
 				EU_ongoing_mff_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 998 } }
-				check_expr = { value = global.EU_budget_min_call_rate less_than = { value = 10 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
+				check_variable = { global.EU_budget_min_call_rate < 10 }
 				has_political_power > global.EU_15_per_member_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1321,15 +1326,15 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
 			EU_min_call_rate_right_click_enabled = {
 				has_idea = EU_member
 				EU_ongoing_mff_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 998 } }
-				check_expr = { value = global.EU_budget_min_call_rate greater_than = { value = 0 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
+				check_variable = { global.EU_budget_min_call_rate > 0 }
 				has_political_power > global.EU_15_per_member_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1341,7 +1346,7 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
@@ -1351,10 +1356,10 @@ scripted_gui = {
 			EU_global_call_rate_click_enabled = {
 				has_idea = EU_member
 				EU_ongoing_mff_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 998 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
 				any_of_scopes = {
 					array = global.EU_member
-					check_expr = { value = THIS.EU_budget_call_rate less_than = { value = 100 } }
+					check_variable = { THIS.EU_budget_call_rate < 100 }
 				}
 				has_political_power > global.EU_10_per_member_cost
 				custom_trigger_tooltip = {
@@ -1367,18 +1372,18 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
 			EU_global_call_rate_right_click_enabled = {
 				has_idea = EU_member
 				EU_ongoing_mff_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 998 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
 				any_of_scopes = {
 					array = global.EU_member
-					check_expr = { value = THIS.EU_budget_call_rate greater_than = { value = global.EU_budget_min_call_rate } }
-					check_expr = { value = THIS.EU_budget_call_rate greater_than = { value = 0 } }
+					check_variable = { THIS.EU_budget_call_rate > global.EU_budget_min_call_rate }
+					check_variable = { THIS.EU_budget_call_rate > 0 }
 				}
 				has_political_power > global.EU_10_per_member_cost
 				custom_trigger_tooltip = {
@@ -1391,7 +1396,7 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
@@ -1401,8 +1406,8 @@ scripted_gui = {
 			EU_THIS_call_rate_click_enabled = {
 				has_idea = EU_member
 				EU_ongoing_mff_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 998 } }
-				check_expr = { value = THIS.EU_budget_call_rate less_than = { value = 100 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
+				check_variable = { THIS.EU_budget_call_rate < 100 }
 				has_political_power > THIS.EU_mff_country_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1414,15 +1419,15 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
 			EU_THIS_call_rate_right_click_enabled = {
 				has_idea = EU_member
 				EU_ongoing_mff_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 998 } }
-				check_expr = { value = THIS.EU_budget_call_rate greater_than = { value = global.EU_budget_min_call_rate } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 998 } }
+				check_variable = { THIS.EU_budget_call_rate > global.EU_budget_min_call_rate }
 				has_political_power > THIS.EU_mff_country_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1434,7 +1439,7 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
@@ -1444,11 +1449,11 @@ scripted_gui = {
 			# Budget Sections
 			EU_global_expenses_click_enabled = {
 				has_idea = EU_member
-				check_expr = { value = global.EU_global_exp_ratio less_than = { value = 0.80 } }
-				check_expr = { value = global.EU_growth_exp_ratio greater_than = { value = 0.05 } }
-				check_expr = { value = global.EU_natural_exp_ratio greater_than = { value = 0.05 } }
+				check_variable = { global.EU_global_exp_ratio < 0.80 }
+				check_variable = { global.EU_growth_exp_ratio > 0.05 }
+				check_variable = { global.EU_natural_exp_ratio > 0.05 }
 				EU_ongoing_budget_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 999 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 				has_political_power > global.EU_10_per_member_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1460,17 +1465,17 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
 			EU_global_expenses_right_click_enabled = {
 				has_idea = EU_member
-				check_expr = { value = global.EU_global_exp_ratio greater_than = { value = 0.09 } }
-				check_expr = { value = global.EU_growth_exp_ratio less_than = { value = 0.80 } }
-				check_expr = { value = global.EU_natural_exp_ratio less_than = { value = 0.80 } }
+				check_variable = { global.EU_global_exp_ratio > 0.09 }
+				check_variable = { global.EU_growth_exp_ratio < 0.80 }
+				check_variable = { global.EU_natural_exp_ratio < 0.80 }
 				EU_ongoing_budget_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 999 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 				has_political_power > global.EU_10_per_member_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1482,7 +1487,7 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
@@ -1491,11 +1496,11 @@ scripted_gui = {
 			}
 			EU_administration_expenses_click_enabled = {
 				has_idea = EU_member
-				check_expr = { value = global.EU_admin_exp_ratio less_than = { value = 0.80 } }
-				check_expr = { value = global.EU_growth_exp_ratio greater_than = { value = 0.05 } }
-				check_expr = { value = global.EU_natural_exp_ratio greater_than = { value = 0.05 } }
+				check_variable = { global.EU_admin_exp_ratio < 0.80 }
+				check_variable = { global.EU_growth_exp_ratio > 0.05 }
+				check_variable = { global.EU_natural_exp_ratio > 0.05 }
 				EU_ongoing_budget_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 999 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 				has_political_power > global.EU_10_per_member_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1507,17 +1512,17 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
 			EU_administration_expenses_right_click_enabled = {
 				has_idea = EU_member
-				check_expr = { value = global.EU_admin_exp_ratio greater_than = { value = 0.09 } }
-				check_expr = { value = global.EU_growth_exp_ratio less_than = { value = 0.80 } }
-				check_expr = { value = global.EU_natural_exp_ratio less_than = { value = 0.80 } }
+				check_variable = { global.EU_admin_exp_ratio > 0.09 }
+				check_variable = { global.EU_growth_exp_ratio < 0.80 }
+				check_variable = { global.EU_natural_exp_ratio < 0.80 }
 				EU_ongoing_budget_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 999 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 				has_political_power > global.EU_10_per_member_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1529,7 +1534,7 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
@@ -1538,10 +1543,10 @@ scripted_gui = {
 			}
 			EU_growth_natural_subsidies_click_enabled = {
 				has_idea = EU_member
-				check_expr = { value = global.EU_natural_exp_ratio greater_than = { value = 0.09 } }
-				check_expr = { value = global.EU_growth_exp_ratio less_than = { value = 0.80 } }
+				check_variable = { global.EU_natural_exp_ratio > 0.09 }
+				check_variable = { global.EU_growth_exp_ratio < 0.80 }
 				EU_ongoing_budget_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 999 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 				has_political_power > global.EU_10_per_member_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1553,16 +1558,16 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
 			EU_growth_natural_subsidies_right_click_enabled = {
 				has_idea = EU_member
-				check_expr = { value = global.EU_growth_exp_ratio greater_than = { value = 0.09 } }
-				check_expr = { value = global.EU_natural_exp_ratio less_than = { value = 0.80 } }
+				check_variable = { global.EU_growth_exp_ratio > 0.09 }
+				check_variable = { global.EU_natural_exp_ratio < 0.80 }
 				EU_ongoing_budget_draft_trigger = yes
-				NOT = { check_expr = { value = global.current_active_agenda_disp equals = 999 } }
+				NOT = { check_variable = { global.current_active_agenda_disp = 999 } }
 				has_political_power > global.EU_10_per_member_cost
 				custom_trigger_tooltip = {
 					tooltip = EU_central_bank_taken
@@ -1574,7 +1579,7 @@ scripted_gui = {
 								has_idea = ECB_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 			}
@@ -1599,14 +1604,14 @@ scripted_gui = {
 				any_of_scopes = {
 					array = global.EU_member
 					has_idea = euro
-					check_expr = { value = THIS.interest_rate greater_than = { value = 4.0 } }
+					check_variable = { THIS.interest_rate > 4.0 }
 				}
 			}
 			EU_adjust_omt_program_right_click_enabled = {
 				has_idea = EU_member
 				has_idea = ECB_president
 				has_idea = ECB_zero_interest_rate_policy
-				check_expr = { value = global.OMT_size_limit greater_than = { value = 0 } }
+				check_variable = { global.OMT_size_limit > 0 }
 			}
 			EU_run_omt_program_right_click_enabled = {
 				has_idea = EU_member
@@ -1614,7 +1619,7 @@ scripted_gui = {
 				has_idea = ECB_zero_interest_rate_policy
 				custom_trigger_tooltip = {
 					tooltip = tooltip_ECB_Outright_Monetary_Transactions_available
-					check_expr = { value = global.OMT_size_limit greater_than = { value = 0 } }
+					check_variable = { global.OMT_size_limit > 0 }
 				}
 			}
 
@@ -2297,9 +2302,9 @@ scripted_gui = {
 						limit = {
 							NOT = {
 								OR = {
-									check_expr = { value = global.current_active_agenda_disp equals = 0 }
-									check_expr = { value = global.current_active_agenda_disp equals = 998 }
-									check_expr = { value = global.current_active_agenda_disp equals = 999 }
+									check_variable = { global.current_active_agenda_disp = 0 }
+									check_variable = { global.current_active_agenda_disp = 998 }
+									check_variable = { global.current_active_agenda_disp = 999 }
 								}
 							}
 						}
@@ -2310,14 +2315,14 @@ scripted_gui = {
 					if = {
 						limit = {
 							has_global_flag = EU_budget_EP_block
-							check_expr = { value = global.current_active_agenda_disp equals = 999 }
+							check_variable = { global.current_active_agenda_disp = 999 }
 						}
 						clr_global_flag = EU_budget_EP_block
 					}
 					if = {
 						limit = {
 							has_global_flag = EU_mff_EP_block
-							check_expr = { value = global.current_active_agenda_disp equals = 998 }
+							check_variable = { global.current_active_agenda_disp = 998 }
 						}
 						clr_global_flag = EU_mff_EP_block
 					}
@@ -2325,8 +2330,8 @@ scripted_gui = {
 						limit = {
 							NOT = {
 								OR = {
-									check_expr = { value = global.current_active_agenda_disp equals = 998 }
-									check_expr = { value = global.current_active_agenda_disp equals = 999 }
+									check_variable = { global.current_active_agenda_disp = 998 }
+									check_variable = { global.current_active_agenda_disp = 999 }
 								}
 							}
 						}
@@ -2351,24 +2356,24 @@ scripted_gui = {
 					clr_global_flag_PG_X_support = yes
 					set_variable = { global.active_MEP_Support = 0 }
 					if = {
-						limit = { check_expr = { value = global.current_active_agenda_disp equals = 999 } }
+						limit = { check_variable = { global.current_active_agenda_disp = 999 } }
 						EU_rollback_budget_values = yes
 					}
 					if = {
-						limit = { check_expr = { value = global.current_active_agenda_disp equals = 998 } }
+						limit = { check_variable = { global.current_active_agenda_disp = 998 } }
 						EU_rollback_mff_values = yes
 					}
 					if = {
 						limit = {
 							has_global_flag = EU_budget_EP_block
-							check_expr = { value = global.current_active_agenda_disp equals = 999 }
+							check_variable = { global.current_active_agenda_disp = 999 }
 						}
 						clr_global_flag = EU_budget_EP_block
 					}
 					if = {
 						limit = {
 							has_global_flag = EU_mff_EP_block
-							check_expr = { value = global.current_active_agenda_disp equals = 998 }
+							check_variable = { global.current_active_agenda_disp = 998 }
 						}
 						clr_global_flag = EU_mff_EP_block
 					}
@@ -2376,8 +2381,8 @@ scripted_gui = {
 						limit = {
 							NOT = {
 								OR = {
-									check_expr = { value = global.current_active_agenda_disp equals = 998 }
-									check_expr = { value = global.current_active_agenda_disp equals = 999 }
+									check_variable = { global.current_active_agenda_disp = 998 }
+									check_variable = { global.current_active_agenda_disp = 999 }
 								}
 							}
 						}
@@ -3025,7 +3030,7 @@ scripted_gui = {
 							}
 							if = {
 								limit = {
-									check_expr = { value = THIS.interest_rate less_than = { value = 4.0 } }
+									check_variable = { THIS.interest_rate < 4.0 }
 								}
 								set_temp_variable = { modify_europeanism = -0.05 }
 								set_temp_variable = { modify_europeanism_target = THIS }
@@ -3056,7 +3061,7 @@ scripted_gui = {
 					subtract_from_variable = { var = global.OMT_size_limit value = 200 }
 					if = {
 						limit = {
-							check_expr = { value = global.OMT_size_limit less_than = { value = 0 } }
+							check_variable = { global.OMT_size_limit < 0 }
 						}
 						set_variable = { global.OMT_size_limit = 0 }
 					}
@@ -3068,7 +3073,7 @@ scripted_gui = {
 							}
 							if = {
 								limit = {
-									check_expr = { value = THIS.interest_rate less_than = { value = 4.0 } }
+									check_variable = { THIS.interest_rate < 4.0 }
 								}
 								set_temp_variable = { modify_europeanism = 0.05 }
 								set_temp_variable = { modify_europeanism_target = THIS }
@@ -3111,11 +3116,11 @@ scripted_gui = {
 				ai_will_do = {
 					base = 1
 					modifier = {
-						check_expr = { value = THIS.europeanism less_than = { value = 0.70 } }
+						check_variable = { THIS.europeanism < 0.70 }
 						add = 25
 					}
 					modifier = {
-						check_expr = { value = THIS.europeanism less_than = { value = 0.50 } }
+						check_variable = { THIS.europeanism < 0.50 }
 						add = 25
 					}
 					modifier = {
@@ -3144,7 +3149,7 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 5
-						check_expr = { value = THIS.breach_of_EU_value greater_than = { value = 5 } }
+						check_variable = { THIS.breach_of_EU_value > 5 }
 					}
 					# Killswitch
 					modifier = {
@@ -3152,7 +3157,7 @@ scripted_gui = {
 						OR = {
 							has_country_flag = cant_invoke_article_50
 							AND = {
-								check_expr = { value = THIS.europeanism greater_than = { value = 0.50 } }
+								check_variable = { THIS.europeanism > 0.50 }
 								has_elections = yes
 							}
 							NOT = { EU_external_chi_influence_50 = yes }
@@ -3169,15 +3174,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3190,15 +3195,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3211,15 +3216,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3232,15 +3237,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3253,15 +3258,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3274,15 +3279,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3295,15 +3300,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3316,15 +3321,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3337,15 +3342,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3358,15 +3363,15 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism less_than = { value = 0.30 } }
+						check_variable = { THIS.europeanism < 0.30 }
 					}
 					modifier = {
 						factor = 0
@@ -3379,11 +3384,11 @@ scripted_gui = {
 					base = 40
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.05 } }
+						check_variable = { THIS.EU_pop_ratio > 0.05 }
 					}
 					modifier = {
 						add = 30
-						check_expr = { value = THIS.EU_pop_ratio greater_than = { value = 0.1 } }
+						check_variable = { THIS.EU_pop_ratio > 0.1 }
 					}
 					modifier = {
 						factor = 0
@@ -3396,11 +3401,11 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						add = 5
-						check_expr = { value = THIS.europeanism less_than = { value = 0.70 } }
+						check_variable = { THIS.europeanism < 0.70 }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.europeanism greater_than = { value = 0.70 } }
+						check_variable = { THIS.europeanism > 0.70 }
 					}
 					modifier = {
 						factor = 0
@@ -3419,7 +3424,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3428,7 +3433,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3437,7 +3442,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3446,7 +3451,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3455,7 +3460,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3464,7 +3469,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3473,7 +3478,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3482,7 +3487,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3491,7 +3496,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3500,7 +3505,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3509,7 +3514,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3518,7 +3523,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3527,7 +3532,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3536,7 +3541,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3545,7 +3550,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3554,7 +3559,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3563,7 +3568,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3572,7 +3577,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3581,7 +3586,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3590,7 +3595,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3599,7 +3604,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3608,7 +3613,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3617,7 +3622,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3626,7 +3631,7 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						factor = 0
-						check_expr = { value = global.active_MEP_Support greater_than = { value = global.MEP_Majority } }
+						check_variable = { global.active_MEP_Support > global.MEP_Majority }
 					}
 				}
 			}
@@ -3683,10 +3688,10 @@ scripted_gui = {
 						OR = {
 							AND = {
 								gov_is_eurosceptical = yes
-								check_expr = { value = THIS.europeanism less_than = { value = 0.05 } }
+								check_variable = { europeanism < 0.05 }
 							}
 							has_political_power < 300
-							check_expr = { value = interest_rate greater_than = { value = 8.0 } }
+							check_variable = { interest_rate > 9 }
 						}
 					}
 				}
@@ -3719,10 +3724,10 @@ scripted_gui = {
 						OR = {
 							AND = {
 								gov_is_eurosceptical = yes
-								check_expr = { value = global.var_europeanism less_than = { value = 0.05 } }
+								check_variable = { europeanism < 0.05 }
 							}
 							has_political_power < 300
-							check_expr = { value = interest_rate greater_than = { value = 8.0 } }
+							check_variable = { interest_rate > 9 }
 						}
 					}
 				}
@@ -3754,27 +3759,17 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 0
-						has_idea = EU_member
 						OR = {
-							AND = {
-								NOT = { gov_is_eurosceptical = yes }
-								check_expr = { value = THIS.europeanism greater_than = { value = 0.95 } }
-							}
-							has_political_power < 50
-							check_expr = { value = interest_rate greater_than = { value = 8.0 } }
+							has_country_flag = EU_candidate
+							has_idea = EU_member
 						}
-					}
-					modifier = {
-						factor = 0
-						has_country_flag = EU_candidate
-						NOT = { has_idea = EU_member }
 						OR = {
 							AND = {
 								NOT = { gov_is_eurosceptical = yes }
-								check_expr = { value = THIS.europeanism greater_than = { value = 0.95 } }
+								check_variable = { europeanism > 0.89 }
 							}
 							has_political_power < 50
-							check_expr = { value = interest_rate greater_than = { value = 8.0 } }
+							check_variable = { interest_rate > 9 }
 						}
 					}
 				}
@@ -3801,14 +3796,17 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 0
-						has_idea = EU_member
+						OR = {
+							has_country_flag = EU_candidate
+							has_idea = EU_member
+						}
 						OR = {
 							AND = {
 								NOT = { gov_is_eurosceptical = yes }
-								check_expr = { value = global.var_europeanism greater_than = { value = 0.95 } }
+								check_variable = { europeanism > 0.89 }
 							}
-							has_political_power < 200
-							check_expr = { value = interest_rate greater_than = { value = 8.0 } }
+							has_political_power < 50
+							check_variable = { interest_rate > 9 }
 						}
 					}
 				}
@@ -3831,33 +3829,33 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism greater_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 5 } }
-						check_expr = { value = global.EU_budget_min_call_rate less_than = { value = 2.5 } }
+						check_variable = { global.var_europeanism > 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 5 }
+						check_variable = { global.EU_budget_min_call_rate < 2.5 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism greater_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 4 } }
-						check_expr = { value = global.EU_budget_min_call_rate less_than = { value = 2.0 } }
+						check_variable = { global.var_europeanism > 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 4 }
+						check_variable = { global.EU_budget_min_call_rate < 2.0 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism greater_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 3 } }
-						check_expr = { value = global.EU_budget_min_call_rate less_than = { value = 1.5 } }
+						check_variable = { global.var_europeanism > 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 3 }
+						check_variable = { global.EU_budget_min_call_rate < 1.5 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism greater_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 2 } }
-						check_expr = { value = global.EU_budget_min_call_rate less_than = { value = 1.0 } }
+						check_variable = { global.var_europeanism > 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 2 }
+						check_variable = { global.EU_budget_min_call_rate < 1.0 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism greater_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 1 } }
-						check_expr = { value = global.EU_budget_min_call_rate greater_than = { value = 0.5 } }
+						check_variable = { global.var_europeanism > 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 1 }
+						check_variable = { global.EU_budget_min_call_rate > 0.5 }
 					}
 				}
 			}
@@ -3866,39 +3864,39 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism less_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 5 } }
-						check_expr = { value = global.EU_budget_min_call_rate greater_than = { value = 2.5 } }
+						check_variable = { global.var_europeanism < 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 5 }
+						check_variable = { global.EU_budget_min_call_rate > 2.5 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism less_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 4 } }
-						check_expr = { value = global.EU_budget_min_call_rate greater_than = { value = 2.0 } }
+						check_variable = { global.var_europeanism < 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 4 }
+						check_variable = { global.EU_budget_min_call_rate > 2.0 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism less_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 3 } }
-						check_expr = { value = global.EU_budget_min_call_rate greater_than = { value = 1.5 } }
+						check_variable = { global.var_europeanism < 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 3 }
+						check_variable = { global.EU_budget_min_call_rate > 1.5 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism less_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 2 } }
-						check_expr = { value = global.EU_budget_min_call_rate greater_than = { value = 1.0 } }
+						check_variable = { global.var_europeanism < 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 2 }
+						check_variable = { global.EU_budget_min_call_rate > 1.0 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism less_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 1 } }
-						check_expr = { value = global.EU_budget_min_call_rate greater_than = { value = 0.5 } }
+						check_variable = { global.var_europeanism < 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 1 }
+						check_variable = { global.EU_budget_min_call_rate > 0.5 }
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism less_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl less_than = { value = 1 } }
-						check_expr = { value = global.EU_budget_min_call_rate greater_than = { value = 0.0 } }
+						check_variable = { global.var_europeanism < 0.80 }
+						check_variable = { global.EU_average_eco_lvl < 1 }
+						check_variable = { global.EU_budget_min_call_rate > 0.0 }
 					}
 				}
 			}
@@ -3907,8 +3905,8 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism less_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl less_than = { value = 3 } }
+						check_variable = { global.var_europeanism < 0.80 }
+						check_variable = { global.EU_average_eco_lvl < 3 }
 					}
 				}
 			}
@@ -3917,8 +3915,8 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism greater_than = { value = 0.80 } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = 3 } }
+						check_variable = { global.var_europeanism > 0.80 }
+						check_variable = { global.EU_average_eco_lvl > 3 }
 					}
 				}
 			}
@@ -3927,9 +3925,9 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism less_than = { value = 0.60 } }
-						check_expr = { value = global.EU_average_gdpc_lvl less_than = { value = EU_average_gdpc_lvl } }
-						check_expr = { value = global.EU_average_eco_lvl less_than = { value = EU_average_eco_lvl } }
+						check_variable = { global.var_europeanism < 0.60 }
+						check_variable = { global.EU_average_gdpc_lvl < EU_average_gdpc_lvl }
+						check_variable = { global.EU_average_eco_lvl < EU_average_eco_lvl }
 					}
 				}
 			}
@@ -3938,9 +3936,9 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.var_europeanism greater_than = { value = 0.60 } }
-						check_expr = { value = global.EU_average_gdpc_lvl greater_than = { value = EU_average_gdpc_lvl } }
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = EU_average_eco_lvl } }
+						check_variable = { global.var_europeanism > 0.60 }
+						check_variable = { global.EU_average_gdpc_lvl > EU_average_gdpc_lvl }
+						check_variable = { global.EU_average_eco_lvl > EU_average_eco_lvl }
 					}
 
 				}
@@ -3950,7 +3948,7 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_global_exp_ratio less_than = { value = 0.12 } }
+						check_variable = { global.EU_global_exp_ratio < 0.12 }
 						OR = {
 							is_in_array = { ruling_party = 2 } ### liberalism
 							is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
@@ -3958,12 +3956,12 @@ scripted_gui = {
 					}
 					modifier = {
 						add = 4
-						check_expr = { value = global.EU_global_exp_ratio less_than = { value = 0.18 } }
+						check_variable = { global.EU_global_exp_ratio < 0.18 }
 						EU_is_leader_of_foreign_policy = yes
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.EU_budget_draft_invested_PP greater_than = { value = 99 } }
+						check_variable = { THIS.EU_budget_draft_invested_PP > 99 }
 					}
 				}
 			}
@@ -3972,7 +3970,7 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_global_exp_ratio greater_than = { value = 0.09 } }
+						check_variable = { global.EU_global_exp_ratio > 0.09 }
 						OR = {
 							is_in_array = { ruling_party = 20 } ### Nat_Populism
 							is_in_array = { ruling_party = 21 } ### Nat_Fascism
@@ -3982,7 +3980,7 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.EU_budget_draft_invested_PP greater_than = { value = 99 } }
+						check_variable = { THIS.EU_budget_draft_invested_PP > 99 }
 					}
 				}
 			}
@@ -3991,7 +3989,7 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_admin_exp_ratio less_than = { value = 0.18 } }
+						check_variable = { global.EU_admin_exp_ratio < 0.18 }
 						OR = {
 							is_in_array = { ruling_party = 20 } ### Nat_Populism
 							is_in_array = { ruling_party = 21 } ### Nat_Fascism
@@ -4001,7 +3999,7 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.EU_budget_draft_invested_PP greater_than = { value = 99 } }
+						check_variable = { THIS.EU_budget_draft_invested_PP > 99 }
 					}
 				}
 			}
@@ -4010,7 +4008,7 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_admin_exp_ratio greater_than = { value = 0.09 } }
+						check_variable = { global.EU_admin_exp_ratio > 0.09 }
 						OR = {
 							is_in_array = { ruling_party = 2 } ### liberalism
 							is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
@@ -4018,7 +4016,7 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.EU_budget_draft_invested_PP greater_than = { value = 99 } }
+						check_variable = { THIS.EU_budget_draft_invested_PP > 99 }
 					}
 				}
 			}
@@ -4027,7 +4025,7 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_growth_exp_ratio less_than = { value = 0.60 } }
+						check_variable = { global.EU_growth_exp_ratio < 0.60 }
 						OR = {
 							is_in_array = { ruling_party = 3 } ### socialism
 							is_in_array = { ruling_party = 18 } ### neutral_Social
@@ -4036,7 +4034,7 @@ scripted_gui = {
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_growth_exp_ratio less_than = { value = 0.70 } }
+						check_variable = { global.EU_growth_exp_ratio < 0.70 }
 						OR = {
 							is_in_array = { ruling_party = 2 } ### liberalism
 							is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
@@ -4044,7 +4042,7 @@ scripted_gui = {
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_growth_exp_ratio less_than = { value = 0.60 } }
+						check_variable = { global.EU_growth_exp_ratio < 0.60 }
 						OR = {
 							is_in_array = { ruling_party = 4 } ### Communist-State
 							is_in_array = { ruling_party = 5 } ### anarchist_communism
@@ -4053,15 +4051,15 @@ scripted_gui = {
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_average_eco_lvl greater_than = { value = EU_average_eco_lvl } }
+						check_variable = { global.EU_average_eco_lvl > EU_average_eco_lvl }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = global.EU_average_eco_lvl less_than = { value = EU_average_eco_lvl } }
+						check_variable = { global.EU_average_eco_lvl < EU_average_eco_lvl }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.EU_budget_draft_invested_PP greater_than = { value = 99 } }
+						check_variable = { THIS.EU_budget_draft_invested_PP > 99 }
 					}
 				}
 			}
@@ -4070,7 +4068,7 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_natural_exp_ratio less_than = { value = 0.60 } }
+						check_variable = { global.EU_natural_exp_ratio < 0.60 }
 						OR = {
 							is_in_array = { ruling_party = 1 } ### conservatism
 							is_in_array = { ruling_party = 6 } ### Conservative
@@ -4079,16 +4077,16 @@ scripted_gui = {
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_natural_exp_ratio less_than = { value = 0.60 } }
+						check_variable = { global.EU_natural_exp_ratio < 0.60 }
 						is_in_array = { ruling_party = 17 } ### Neutral_green
 					}
 					modifier = {
 						add = 1
-						check_expr = { value = global.EU_average_gdpc_lvl greater_than = { value = EU_average_gdpc_lvl } }
+						check_variable = { global.EU_average_gdpc_lvl > EU_average_gdpc_lvl }
 					}
 					modifier = {
 						factor = 0
-						check_expr = { value = THIS.EU_budget_draft_invested_PP greater_than = { value = 99 } }
+						check_variable = { THIS.EU_budget_draft_invested_PP > 99 }
 					}
 				}
 			}
@@ -4101,7 +4099,7 @@ scripted_gui = {
 							array = global.EU_member
 							has_idea = EU_member
 							has_idea = euro
-							check_expr = { value = THIS.interest_rate greater_than = { value = 4.0 } }
+							check_variable = { THIS.interest_rate > 4.0 }
 						}
 					}
 						### Euroscepticism
@@ -4109,7 +4107,7 @@ scripted_gui = {
 					add = -40
 					any_of_scopes = {
 						array = global.EU_member
-							check_expr = { value = THIS.europeanism less_than_or_equals = 0.4 }
+							check_variable = { var = THIS.europeanism value = 0.4 compare = less_than_or_equals }
 						}
 					}
 				}
@@ -4119,12 +4117,12 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = 40
-						check_expr = { value = global.OMT_total_value greater_than = { value = 0 } }
+						check_variable = { global.OMT_total_value > 0 }
 						any_of_scopes = {
 							array = global.EU_member
 							has_idea = EU_member
 							has_idea = euro
-							check_expr = { value = THIS.interest_rate greater_than = { value = 4.0 } }
+							check_variable = { THIS.interest_rate > 4.0 }
 						}
 					}
 					### Euroscepticism
@@ -4132,7 +4130,7 @@ scripted_gui = {
 						add = -80
 						any_of_scopes = {
 							array = global.EU_member
-							check_expr = { value = THIS.europeanism less_than_or_equals = 0.6 }
+							check_variable = { var = THIS.europeanism value = 0.6 compare = less_than_or_equals }
 						}
 					}
 					modifier = {
@@ -4143,13 +4141,13 @@ scripted_gui = {
 								limit = {
 									has_idea = euro
 								}
-								check_expr = { value = THIS.interest_rate less_than = { value = 4.0 } }
+								check_variable = { THIS.interest_rate < 4.0 }
 							}
 						}
 					}
 					modifier = {
 						add = -80
-						check_expr = { value = global.OMT_size_limit greater_than = { value = 2000 } }
+						check_variable = { global.OMT_size_limit > 2000 }
 					}
 				}
 			}
@@ -4158,12 +4156,12 @@ scripted_gui = {
 					base = 0
 					modifier = {
 						add = -80
-						check_expr = { value = global.OMT_total_value greater_than = { value = 0 } }
+						check_variable = { global.OMT_total_value > 0 }
 						any_of_scopes = {
 							array = global.EU_member
 							has_idea = EU_member
 							has_idea = euro
-							check_expr = { value = THIS.interest_rate greater_than = { value = 4.0 } }
+							check_variable = { THIS.interest_rate > 4.0 }
 						}
 					}
 						### Euroscepticism
@@ -4171,7 +4169,7 @@ scripted_gui = {
 					add = 40
 					any_of_scopes = {
 						array = global.EU_member
-							check_expr = { value = THIS.europeanism less_than_or_equals = 0.5 }
+							check_variable = { var = THIS.europeanism value = 0.5 compare = less_than_or_equals }
 						}
 					}
 				}
@@ -4185,7 +4183,7 @@ scripted_gui = {
 							array = global.EU_member
 							has_idea = EU_member
 							has_idea = euro
-							check_expr = { value = THIS.interest_rate greater_than = { value = 4.0 } }
+							check_variable = { THIS.interest_rate > 4.0 }
 						}
 					}
 				}
@@ -4328,12 +4326,12 @@ scripted_gui = {
 								has_idea = EU_commission_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 				custom_trigger_tooltip = {
 					tooltip = no_council_vote_tt
-					check_expr = { value = global.current_active_vote_disp equals = 0 }
+					check_variable = { global.current_active_vote_disp = 0 }
 				}
 				custom_trigger_tooltip = {
 					tooltip = EU_no_external_chi_influence_15_tt
@@ -4349,14 +4347,14 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = no_high_sceptics_tt
 					NOT = {
-						check_expr = { value = THIS.europeanism less_than_or_equals = 0.6 }
+						check_variable = { var = THIS.europeanism value = 0.6 compare = less_than_or_equals }
 					}
 				}
 			}
 			eu_council_voting_members_list_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = no_ongoing_vote
-					NOT = { check_expr = { value = global.current_active_vote_disp equals = 0 } }
+					NOT = { check_variable = { global.current_active_vote_disp = 0 } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = country_not_supporting
@@ -4518,59 +4516,59 @@ scripted_gui = {
 							modifier = {
 								add = -100
 								#multiple values can be checked for adding mods
-								check_expr = { value = THIS.europeanism less_than = { value = 0.50 } }
+								check_variable = { THIS.europeanism < 0.50 }
 							}
 							modifier = {
 								add = -50
-								check_expr = { value = THIS.europeanism less_than = { value = 0.75 } }
+								check_variable = { THIS.europeanism < 0.75 }
 							}
 							modifier = {
 								add = -10
-								check_expr = { value = THIS.europeanism less_than = { value = 0.85 } }
+								check_variable = { THIS.europeanism < 0.85 }
 							}
 							# Historical Expansion AI Improvement
 							modifier = {
 								add = 250
 								is_historical_focus_on = yes
 								date > 2004.1.1
-								check_expr = { value = v equals = 601 }
+								check_variable = { v = 601 }
 							}
 							modifier = {
 								add = 250
 								is_historical_focus_on = yes
 								date > 2007.1.1
-								check_expr = { value = v equals = 602 }
+								check_variable = { v = 602 }
 							}
 							modifier = {
 								add = 250
 								is_historical_focus_on = yes
 								date > 2013.1.1
-								check_expr = { value = v equals = 603 }
+								check_variable = { v = 603 }
 							}
 							modifier = {
 								factor = 3
 								has_global_flag = USA_great_financial_crisis
 								OR = {
-									check_expr = { value = v equals = 203 }
-									check_expr = { value = v equals = 204 }
-									check_expr = { value = v equals = 205 }
+									check_variable = { v = 203 }
+									check_variable = { v = 204 }
+									check_variable = { v = 205 }
 								}
 							}
 							# Game Rule for the European Union AI
 							modifier = {
 								factor = 0
 								OR = {
-									check_expr = { value = v equals = 110 }
-									check_expr = { value = v equals = 111 }
-									check_expr = { value = v equals = 112 }
+									check_variable = { v = 110 }
+									check_variable = { v = 111 }
+									check_variable = { v = 112 }
 								}
 								has_game_rule = { rule = rule_enable_ai_european_union_end_game_paths option = no }
 							}
 							# Do not immediately retry the same vote twice in a row
 							modifier = {
 								factor = 0
-								NOT = { check_expr = { value = global.EUU_recently_failed_vote equals = -1 } }
-								check_expr = { value = global.EUU_recently_failed_vote equals = v }
+								NOT = { check_variable = { global.EUU_recently_failed_vote = -1 } }
+								check_variable = { global.EUU_recently_failed_vote = v }
 							}
 							modifier = {
 								factor = 0
@@ -4620,7 +4618,7 @@ scripted_gui = {
 		}
 		ai_check = {
 			has_idea = EU_member
-			check_expr = { value = global.current_active_agenda_disp equals = 0 }
+			check_variable = { global.current_active_agenda_disp = 0 }
 			NOT = { has_country_flag = delay_next_parliament_vote }
 		}
 		ai_test_interval = 168 # 7 Days
@@ -4652,12 +4650,12 @@ scripted_gui = {
 								has_idea = EU_commission_president
 							}
 						}
-						check_expr = { value = global.EU_member^num less_than = { value = 2 } }
+						check_variable = { global.EU_member^num < 2 }
 					}
 				}
 				custom_trigger_tooltip = {
 					tooltip = no_active_agenda
-					check_expr = { value = global.current_active_agenda_disp equals = 0 }
+					check_variable = { global.current_active_agenda_disp = 0 }
 				}
 				custom_trigger_tooltip = {
 					tooltip = no_active_budget_mff_draft
@@ -4675,58 +4673,58 @@ scripted_gui = {
 						SOV = { has_idea = EU_member }
 					}
 				}
-				if = { limit = { check_expr = { value = v equals = 101 } }
+				if = { limit = { check_variable = { v = 101 } }
 					has_political_power > 200
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 102 } }
+					limit = { check_variable = { v = 102 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_convention_tt
 						is_in_array = { global.EU_passed_votes = 101 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 103 } }
+					limit = { check_variable = { v = 103 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_constitution_tt
 						is_in_array = { global.EU_passed_votes = 102 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 104 } }
+					limit = { check_variable = { v = 104 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_con_pass_tt
 						is_in_array = { global.EU_passed_votes = 103 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 105 } }
+					limit = { check_variable = { v = 105 } }
 					custom_trigger_tooltip = {
 						tooltip = treaty_of_lisbon_tt
 						is_in_array = { global.EU_passed_votes = 104 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 201 } }
+					limit = { check_variable = { v = 201 } }
 					has_political_power > 200
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 202 } }
+					limit = { check_variable = { v = 202 } }
 					custom_trigger_tooltip = {
 						tooltip = ecb_intervention_tt
 						is_in_array = { global.EU_passed_votes = 201 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 203 } }
+					limit = { check_variable = { v = 203 } }
 					has_political_power > 200
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 204 } }
+					limit = { check_variable = { v = 204 } }
 					has_political_power > 200
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 205 } }
+					limit = { check_variable = { v = 205 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_fin_stab_facility_tt
 						is_in_array = { global.EU_passed_votes = 204 }
@@ -4737,7 +4735,7 @@ scripted_gui = {
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 206 } }
+					limit = { check_variable = { v = 206 } }
 					custom_trigger_tooltip = {
 						tooltip = treaty_of_lisbon_tt
 						is_in_array = { global.EU_passed_votes = 104 }
@@ -4748,14 +4746,14 @@ scripted_gui = {
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 207 } }
+					limit = { check_variable = { v = 207 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_stability_mech_tt
 						is_in_array = { global.EU_passed_votes = 205 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 208 } }
+					limit = { check_variable = { v = 208 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_eco_govment_tt
 						is_in_array = { global.EU_passed_votes = 207 }
@@ -4766,25 +4764,25 @@ scripted_gui = {
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 301 } }
+					limit = { check_variable = { v = 301 } }
 					has_political_power > 200
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 302 } }
+					limit = { check_variable = { v = 302 } }
 					custom_trigger_tooltip = {
 						tooltip = eda_pass_tt
 						is_in_array = { global.EU_passed_votes = 301 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 303 } }
+					limit = { check_variable = { v = 303 } }
 					custom_trigger_tooltip = {
 						tooltip = perm_struc_cooperation_tt
 						is_in_array = { global.EU_passed_votes = 302 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 304 } }
+					limit = { check_variable = { v = 304 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_def_fund_tt
 						is_in_array = { global.EU_passed_votes = 303 }
@@ -4795,21 +4793,21 @@ scripted_gui = {
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 305 } }
+					limit = { check_variable = { v = 305 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_security_council_tt
 						is_in_array = { global.EU_passed_votes = 304 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 306 } }
+					limit = { check_variable = { v = 306 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_security_council_tt
 						is_in_array = { global.EU_passed_votes = 304 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 307 } }
+					limit = { check_variable = { v = 307 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_army_tt
 						is_in_array = { global.EU_passed_votes = 305 }
@@ -4824,7 +4822,7 @@ scripted_gui = {
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 308 } }
+					limit = { check_variable = { v = 308 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_army_tt
 						is_in_array = { global.EU_passed_votes = 305 }
@@ -4835,26 +4833,26 @@ scripted_gui = {
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 401 } }
+					limit = { check_variable = { v = 401 } }
 					has_political_power > 200
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 402 } }
+					limit = { check_variable = { v = 402 } }
 					has_political_power > 200
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 403 } }
+					limit = { check_variable = { v = 403 } }
 					has_political_power > 200
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 404 } }
+					limit = { check_variable = { v = 404 } }
 					custom_trigger_tooltip = {
 						tooltip = dublin_II_tt
 						is_in_array = { global.EU_passed_votes = 403 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 405 } }
+					limit = { check_variable = { v = 405 } }
 					custom_trigger_tooltip = {
 						tooltip = dublin_II_tt
 						is_in_array = { global.EU_passed_votes = 403 }
@@ -4863,7 +4861,7 @@ scripted_gui = {
 					has_global_flag = EUU_migrant_crisis_triggered
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 406 } }
+					limit = { check_variable = { v = 406 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_border_coast_guard_tt
 						is_in_array = { global.EU_passed_votes = 408 }
@@ -4874,7 +4872,7 @@ scripted_gui = {
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 407 } }
+					limit = { check_variable = { v = 407 } }
 					custom_trigger_tooltip = {
 						tooltip = dublin_II_tt
 						is_in_array = { global.EU_passed_votes = 403 }
@@ -4885,19 +4883,19 @@ scripted_gui = {
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 408 } }
+					limit = { check_variable = { v = 408 } }
 					custom_trigger_tooltip = {
 						tooltip = frontex_pass_tt
 						is_in_array = { global.EU_passed_votes = 407 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 601 } }
+					limit = { check_variable = { v = 601 } }
 					has_political_power > 300
 					date > 2002.1.1
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 602 } }
+					limit = { check_variable = { v = 602 } }
 					has_political_power > 300
 					is_in_array = { global.EU_passed_votes = 601 }
 					custom_trigger_tooltip = {
@@ -4906,11 +4904,11 @@ scripted_gui = {
 					}
 					custom_trigger_tooltip = {
 						tooltip = no_ongoing_expansion_tt
-						check_expr = { value = global.EU_expansion_check equals = 0 }
+						check_variable = { global.EU_expansion_check = 0 }
 					}
 				}
 				else_if = {
-					limit = { check_expr = { value = v equals = 603 } }
+					limit = { check_variable = { v = 603 } }
 					has_political_power > 300
 					custom_trigger_tooltip = {
 						tooltip = allow_2013_enlargement_tt
@@ -4918,19 +4916,19 @@ scripted_gui = {
 					}
 					custom_trigger_tooltip = {
 						tooltip = no_ongoing_expansion_tt
-						check_expr = { value = global.EU_expansion_check equals = 0 }
+						check_variable = { global.EU_expansion_check = 0 }
 					}
 				}
 				else_if = {
 					limit = {
 						OR = {
-							check_expr = { value = v equals = 605 }
-							check_expr = { value = v equals = 606 }
-							check_expr = { value = v equals = 607 }
-							check_expr = { value = v equals = 608 }
-							check_expr = { value = v equals = 609 }
-							check_expr = { value = v equals = 610 }
-							check_expr = { value = v equals = 611 }
+							check_variable = { v = 605 }
+							check_variable = { v = 606 }
+							check_variable = { v = 607 }
+							check_variable = { v = 608 }
+							check_variable = { v = 609 }
+							check_variable = { v = 610 }
+							check_variable = { v = 611 }
 						}
 					}
 					has_political_power > 300
@@ -4940,17 +4938,17 @@ scripted_gui = {
 					}
 					custom_trigger_tooltip = {
 						tooltip = no_ongoing_expansion_tt
-						check_expr = { value = global.EU_expansion_check equals = 0 }
+						check_variable = { global.EU_expansion_check = 0 }
 					}
 				}
-				else_if = { limit = { check_expr = { value = v equals = 650 } }
+				else_if = { limit = { check_variable = { v = 650 } }
 					has_political_power > 300
 					custom_trigger_tooltip = {
 						tooltip = 2013_enlargement_pass_tt
 						is_in_array = { global.EU_passed_votes = 603 }
 					}
 				}
-				else_if = { limit = { check_expr = { value = v equals = 651 } }
+				else_if = { limit = { check_variable = { v = 651 } }
 					has_political_power > 300
 					custom_trigger_tooltip = {
 						tooltip = extended_enlargement_framework_pass_tt
@@ -4960,14 +4958,14 @@ scripted_gui = {
 				else_if = {
 					limit = {
 						OR = {
-							check_expr = { value = v equals = 652 }
-							check_expr = { value = v equals = 654 }
-							check_expr = { value = v equals = 655 }
-							check_expr = { value = v equals = 656 }
-							check_expr = { value = v equals = 657 }
-							check_expr = { value = v equals = 658 }
-							check_expr = { value = v equals = 659 }
-							check_expr = { value = v equals = 660 }
+							check_variable = { v = 652 }
+							check_variable = { v = 654 }
+							check_variable = { v = 655 }
+							check_variable = { v = 656 }
+							check_variable = { v = 657 }
+							check_variable = { v = 658 }
+							check_variable = { v = 659 }
+							check_variable = { v = 660 }
 						}
 					}
 					has_political_power > 300
@@ -4976,14 +4974,14 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 651 }
 					}
 				}
-				else_if = { limit = { check_expr = { value = v equals = 653 } }
+				else_if = { limit = { check_variable = { v = 653 } }
 					has_political_power > 300
 					custom_trigger_tooltip = {
 						tooltip = eu_russia_treaty_pass_tt
 						is_in_array = { global.EU_passed_votes = 652 }
 					}
 				}
-				else_if = { limit = { check_expr = { value = v equals = 112 } }
+				else_if = { limit = { check_variable = { v = 112 } }
 					custom_trigger_tooltip = {
 						tooltip = federalized_eu_tt
 						is_in_array = { global.EU_passed_votes = 110 }
@@ -4994,7 +4992,7 @@ scripted_gui = {
 					}
 					has_political_power > 300
 				}
-				else_if = { limit = { check_expr = { value = v equals = 110 } }
+				else_if = { limit = { check_variable = { v = 110 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_min_fin_eco_tt
 						is_in_array = { global.EU_passed_votes = 208 }
@@ -5012,7 +5010,7 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 406 }
 					}
 				}
-				else_if = { limit = { check_expr = { value = v equals = 111 } }
+				else_if = { limit = { check_variable = { v = 111 } }
 					custom_trigger_tooltip = {
 						tooltip = federalized_eu_tt
 						is_in_array = { global.EU_passed_votes = 110 }
@@ -5059,14 +5057,14 @@ scripted_gui = {
 				if = {
 					limit = {
 						OR = {
-							check_expr = { value = v equals = 101 }
-							check_expr = { value = v equals = 201 }
-							check_expr = { value = v equals = 203 }
-							check_expr = { value = v equals = 204 }
-							check_expr = { value = v equals = 301 }
-							check_expr = { value = v equals = 401 }
-							check_expr = { value = v equals = 402 }
-							check_expr = { value = v equals = 403 }
+							check_variable = { v = 101 }
+							check_variable = { v = 201 }
+							check_variable = { v = 203 }
+							check_variable = { v = 204 }
+							check_variable = { v = 301 }
+							check_variable = { v = 401 }
+							check_variable = { v = 402 }
+							check_variable = { v = 403 }
 						}
 					}
 					hidden_effect = { add_political_power = -200 }
@@ -5074,29 +5072,29 @@ scripted_gui = {
 				else_if = {
 					limit = {
 						OR = {
-							check_expr = { value = v equals = 601 }
-							check_expr = { value = v equals = 602 }
-							check_expr = { value = v equals = 603 }
-							check_expr = { value = v equals = 605 }
-							check_expr = { value = v equals = 606 }
-							check_expr = { value = v equals = 607 }
-							check_expr = { value = v equals = 608 }
-							check_expr = { value = v equals = 609 }
-							check_expr = { value = v equals = 610 }
-							check_expr = { value = v equals = 611 }
-							check_expr = { value = v equals = 650 }
-							check_expr = { value = v equals = 651 }
-							check_expr = { value = v equals = 652 }
-							check_expr = { value = v equals = 653 }
-							check_expr = { value = v equals = 654 }
-							check_expr = { value = v equals = 655 }
-							check_expr = { value = v equals = 656 }
-							check_expr = { value = v equals = 657 }
-							check_expr = { value = v equals = 658 }
-							check_expr = { value = v equals = 659 }
-							check_expr = { value = v equals = 660 }
-							check_expr = { value = v equals = 112 }
-							check_expr = { value = v equals = 111 }
+							check_variable = { v = 601 }
+							check_variable = { v = 602 }
+							check_variable = { v = 603 }
+							check_variable = { v = 605 }
+							check_variable = { v = 606 }
+							check_variable = { v = 607 }
+							check_variable = { v = 608 }
+							check_variable = { v = 609 }
+							check_variable = { v = 610 }
+							check_variable = { v = 611 }
+							check_variable = { v = 650 }
+							check_variable = { v = 651 }
+							check_variable = { v = 652 }
+							check_variable = { v = 653 }
+							check_variable = { v = 654 }
+							check_variable = { v = 655 }
+							check_variable = { v = 656 }
+							check_variable = { v = 657 }
+							check_variable = { v = 658 }
+							check_variable = { v = 659 }
+							check_variable = { v = 660 }
+							check_variable = { v = 112 }
+							check_variable = { v = 111 }
 						}
 					}
 					hidden_effect = { add_political_power = -300 }
@@ -5120,15 +5118,15 @@ scripted_gui = {
 							modifier = {
 								add = -100
 								#multiple values can be checked for adding mods
-								check_expr = { value = THIS.europeanism less_than = { value = 0.50 } }
+								check_variable = { THIS.europeanism < 0.50 }
 							}
 							modifier = {
 								add = -50
-								check_expr = { value = THIS.europeanism less_than = { value = 0.75 } }
+								check_variable = { THIS.europeanism < 0.75 }
 							}
 							modifier = {
 								add = -10
-								check_expr = { value = THIS.europeanism less_than = { value = 0.85 } }
+								check_variable = { THIS.europeanism < 0.85 }
 							}
 							#Socalist Block
 							modifier = {
@@ -5148,7 +5146,7 @@ scripted_gui = {
 							# Historical AI Focus
 							modifier = {
 								add = 250
-								check_expr = { value = v equals = 601 }
+								check_variable = { v = 601 }
 								date > 2004.1.1
 								OR = {
 									is_historical_focus_on = yes
@@ -5159,7 +5157,7 @@ scripted_gui = {
 							}
 							modifier = {
 								add = 250
-								check_expr = { value = v equals = 602 }
+								check_variable = { v = 602 }
 								date > 2007.1.1
 								OR = {
 									is_historical_focus_on = yes
@@ -5170,7 +5168,7 @@ scripted_gui = {
 							}
 							modifier = {
 								add = 250
-								check_expr = { value = v equals = 603 }
+								check_variable = { v = 603 }
 								date > 2013.1.1
 								OR = {
 									is_historical_focus_on = yes
@@ -5183,9 +5181,9 @@ scripted_gui = {
 							modifier = {
 								add = 250
 								OR = {
-									check_expr = { value = v equals = 101 }
-									check_expr = { value = v equals = 102 }
-									check_expr = { value = v equals = 103 }
+									check_variable = { v = 101 }
+									check_variable = { v = 102 }
+									check_variable = { v = 103 }
 								}
 							}
 							# The EU should be more proactive if the Great Financial Crisis in the US occured
@@ -5193,18 +5191,18 @@ scripted_gui = {
 								factor = 3
 								has_global_flag = USA_great_financial_crisis
 								OR = {
-									check_expr = { value = v equals = 203 }
-									check_expr = { value = v equals = 204 }
-									check_expr = { value = v equals = 205 }
+									check_variable = { v = 203 }
+									check_variable = { v = 204 }
+									check_variable = { v = 205 }
 								}
 							}
 							# Game Rule for the European Union AI
 							modifier = {
 								factor = 0
 								OR = {
-									check_expr = { value = v equals = 110 }
-									check_expr = { value = v equals = 111 }
-									check_expr = { value = v equals = 112 }
+									check_variable = { v = 110 }
+									check_variable = { v = 111 }
+									check_variable = { v = 112 }
 								}
 								has_game_rule = { rule = rule_enable_ai_european_union_end_game_paths option = no }
 							}
@@ -5213,7 +5211,7 @@ scripted_gui = {
 								factor = 0
 								OR = {
 									has_global_flag = EP_AI_hold_their_vote
-									NOT = { check_expr = { value = global.current_active_agenda_disp equals = 0 } }
+									NOT = { check_variable = { global.current_active_agenda_disp = 0 } }
 								}
 							}
 						}
