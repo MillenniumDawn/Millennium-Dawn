@@ -80,6 +80,8 @@ FALSE_POSITIVE_FILES = frozenset(
         "05_misc_mechanic_scripted_triggers.txt",
         "MD_Country_Groups_Triggers.txt",
         "MD_missile_scripted_triggers.txt",
+        "MD_regional_owned_triggers.txt",
+        "MD_regional_triggers.txt",
         "00_scripted_effects.txt",
         "00_law_blocking_effects.txt",
     }
