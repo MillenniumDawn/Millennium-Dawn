@@ -775,6 +775,12 @@ class Validator(BaseValidator):
             "_QMV_voted",
             "_EP_approval",
             "recognised_opponent_",
+            # Regional infrastructure flags set in 00_country_group_flags.txt
+            # (parallel to the other sub-regional flags) that currently have
+            # no has_country_flag consumer; kept for runtime/future use.
+            "somali_nation_flag",
+            "sudanese_nation_flag",
+            "iranian_nation_flag",
         ]
 
         for flag_type, fp_cleared, fp_missing, fp_unused in [
