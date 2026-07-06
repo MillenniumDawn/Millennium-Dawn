@@ -74,7 +74,13 @@ country_event = {
 			limit = { has_idea = non_state_actor }
 			remove_ideas = non_state_actor
 		}
-		add_to_array = { global.UN_general_assembly = THIS }
+		if = {
+			limit = { NOT = { is_in_array = { global.UN_general_assembly = THIS } } }
+			add_to_array = { global.UN_general_assembly = THIS }
+			add_dynamic_modifier = { modifier = united_nations_member }
+		}
+		clr_country_flag = recent_un_ascension_attempt
+		remove_stale_ga_membership_votes_for_this = yes
 		international_systems_update = yes
 	}
 }
@@ -361,7 +367,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 50
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 			modifier = {
 				factor = 10
@@ -399,7 +405,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 0
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 			modifier = {
 				factor = 10
@@ -430,7 +436,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 0
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 		}
 	}
@@ -445,12 +451,21 @@ country_event = {
 
 	immediate = {
 		news_event = recognition.121
+		set_temp_variable = { recog_owner_found = 0 }
 		random_scope_in_array = {
 			array = global.UN_general_assembly
 			limit = {
 				has_country_flag = original_owner_@PREV
 			}
 			country_event = recognition.14
+			PREV = { set_temp_variable = { recog_owner_found = 1 } }
+		}
+		if = {
+			limit = { check_variable = { recog_owner_found = 0 } }
+			random_scope_in_array = {
+				array = global.UN_general_assembly
+				country_event = recognition.14
+			}
 		}
 	}
 }
@@ -904,7 +919,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 50
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 			modifier = {
 				factor = 10
@@ -927,7 +942,7 @@ country_event = {
 	#No
 	option = {
 		name = recognition.15.b
-		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
+		add_to_array = { global.general_assembly_vote_no = THIS }
 		log = "[GetDateText]: [THIS.GetName] has voted no"
 
 		international_systems_update = yes
@@ -952,7 +967,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 		}
 	}
@@ -968,7 +983,7 @@ country_event = {
 
 			modifier = {
 				factor = 0
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 		}
 	}
