@@ -86,7 +86,11 @@ country_event = {
 	#Abstain
 	option = {
 		name = UNSC.1.c
-		add_to_array = { global.security_council_vote_abstain = THIS }
+		# Answered after an early mission completion: the tally is already resolved and cleared
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
 		log = "[GetDateText]: [THIS.GetName] has abstained from voting in SC vote type [?global.current_sc_vote_type]"
 
 		international_systems_update = yes
@@ -131,7 +135,10 @@ country_event = {
 	option = {
 		name = UNSC.1.a
 		log = "[GetDateText]: [THIS.GetName] has voted yes in SC vote type [?global.current_sc_vote_type]"
-		add_to_array = { global.security_council_vote_yes = THIS }
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}
 
 		international_systems_update = yes
 		ai_chance = {
@@ -174,14 +181,17 @@ country_event = {
 	#No
 	option = {
 		name = UNSC.1.b
-		add_to_array = { global.security_council_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no in SC vote type [?global.current_sc_vote_type]"
 		if = {
-			limit = {
-				is_in_array = { global.p5_sc_members = THIS }
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_no = THIS }
+			if = {
+				limit = {
+					is_in_array = { global.p5_sc_members = THIS }
+				}
+				set_global_flag = security_council_veto
 			}
-			set_global_flag = security_council_veto
 		}
+		log = "[GetDateText]: [THIS.GetName] has voted no in SC vote type [?global.current_sc_vote_type]"
 
 		international_systems_update = yes
 		ai_chance = {
@@ -466,7 +476,10 @@ country_event = {
 	#Abstain
 	option = {
 		name = UN.6.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
 		log = "[GetDateText]: [THIS.GetName] has abstained from voting in GA vote type [?global.current_ga_vote_type]"
 
 		international_systems_update = yes
@@ -483,7 +496,10 @@ country_event = {
 	option = {
 		name = UN.6.a
 		log = "[GetDateText]: [THIS.GetName] has voted yes in GA vote type [?global.current_ga_vote_type]"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}
 
 		international_systems_update = yes
 		ai_chance = {
@@ -671,7 +687,10 @@ country_event = {
 	#No
 	option = {
 		name = UN.6.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}
 		log = "[GetDateText]: [THIS.GetName] has voted no in GA vote type [?global.current_ga_vote_type]"
 
 		international_systems_update = yes
