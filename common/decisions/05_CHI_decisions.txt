@@ -10546,19 +10546,12 @@ CHI_military_decisions_category = {
 		ai_will_do = { base = 1 }
 	}
 
-	# Corruption path — periodically rein in the cliques, trading business income for order (CHI_the_northeast_tiger)
+	# Corruption path — periodic anti-graft audit that recovers embezzled funds into the treasury (CHI_the_northeast_tiger)
 	CHI_rein_in_cliques = {
 		icon = GFX_decision_generic_intelligence_operation
 
 		visible = {
 			has_completed_focus = CHI_the_northeast_tiger
-		}
-
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = CHI_clique_income_req_tt
-				check_variable = { CHI_pla_business_income > 10 }
-			}
 		}
 
 		cost = 50
@@ -10567,8 +10560,11 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_rein_in_cliques executed"
-			subtract_from_variable = { CHI_pla_business_income = 5 }
-			clamp_variable = { var = CHI_pla_business_income min = 0 max = 500 }
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			newline = yes
+			set_temp_variable = { treasury_change = 75 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = { base = 1 }
@@ -10579,7 +10575,7 @@ CHI_military_decisions_category = {
 		icon = GFX_decision_generic_army_support
 
 		visible = {
-			has_country_flag = CHI_arms_for_influence_unlocked
+			has_completed_focus = CHI_arms_for_influence
 		}
 
 		target_array = global.countries
@@ -10608,7 +10604,6 @@ CHI_military_decisions_category = {
 			effect_tooltip = {
 				set_temp_variable = { treasury_change = 100 }
 				modify_treasury_effect = yes
-				add_to_variable = { CHI_pla_business_income = 5 }
 			}
 		}
 
