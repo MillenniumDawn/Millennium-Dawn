@@ -74,7 +74,13 @@ country_event = {
 			limit = { has_idea = non_state_actor }
 			remove_ideas = non_state_actor
 		}
-		add_to_array = { global.UN_general_assembly = THIS }
+		if = {
+			limit = { NOT = { is_in_array = { global.UN_general_assembly = THIS } } }
+			add_to_array = { global.UN_general_assembly = THIS }
+			add_dynamic_modifier = { modifier = united_nations_member }
+		}
+		clr_country_flag = recent_un_ascension_attempt
+		remove_stale_ga_membership_votes_for_this = yes
 		international_systems_update = yes
 	}
 }
@@ -296,12 +302,21 @@ country_event = {
 	hidden = yes
 
 	immediate = {
+		set_temp_variable = { recog_owner_found = 0 }
 		random_scope_in_array = {
 			array = global.UN_general_assembly
 			limit = {
 				has_country_flag = original_owner_@PREV
 			}
 			country_event = recognition.11
+			PREV = { set_temp_variable = { recog_owner_found = 1 } }
+		}
+		if = {
+			limit = { check_variable = { recog_owner_found = 0 } }
+			random_scope_in_array = {
+				array = global.UN_general_assembly
+				country_event = recognition.11
+			}
 		}
 	}
 }
@@ -353,7 +368,10 @@ country_event = {
 	option = {
 		name = recognition.12.a
 		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.security_council_vote_yes = THIS }
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}
 
 		international_systems_update = yes
 
@@ -361,7 +379,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 50
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 			modifier = {
 				factor = 10
@@ -384,14 +402,17 @@ country_event = {
 	#No
 	option = {
 		name = recognition.12.b
-		add_to_array = { global.security_council_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
 		if = {
-			limit = {
-				is_in_array = { global.p5_sc_members = THIS }
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_no = THIS }
+			if = {
+				limit = {
+					is_in_array = { global.p5_sc_members = THIS }
+				}
+				set_global_flag = security_council_veto
 			}
-			set_global_flag = security_council_veto
 		}
+		log = "[GetDateText]: [THIS.GetName] has voted no"
 
 		international_systems_update = yes
 
@@ -399,7 +420,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 0
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 			modifier = {
 				factor = 10
@@ -422,7 +443,10 @@ country_event = {
 	#Abstain
 	option = {
 		name = recognition.12.c
-		add_to_array = { global.security_council_vote_abstain = THIS }
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
 		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
 
 		international_systems_update = yes
@@ -430,7 +454,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 0
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 		}
 	}
@@ -445,12 +469,21 @@ country_event = {
 
 	immediate = {
 		news_event = recognition.121
+		set_temp_variable = { recog_owner_found = 0 }
 		random_scope_in_array = {
 			array = global.UN_general_assembly
 			limit = {
 				has_country_flag = original_owner_@PREV
 			}
 			country_event = recognition.14
+			PREV = { set_temp_variable = { recog_owner_found = 1 } }
+		}
+		if = {
+			limit = { check_variable = { recog_owner_found = 0 } }
+			random_scope_in_array = {
+				array = global.UN_general_assembly
+				country_event = recognition.14
+			}
 		}
 	}
 }
@@ -896,7 +929,10 @@ country_event = {
 	option = {
 		name = recognition.15.a
 		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}
 
 		international_systems_update = yes
 
@@ -904,7 +940,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 50
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 			modifier = {
 				factor = 10
@@ -927,7 +963,10 @@ country_event = {
 	#No
 	option = {
 		name = recognition.15.b
-		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}
 		log = "[GetDateText]: [THIS.GetName] has voted no"
 
 		international_systems_update = yes
@@ -952,14 +991,17 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 		}
 	}
 	#Abstain
 	option = {
 		name = recognition.15.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
 		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
 
 		international_systems_update = yes
@@ -968,7 +1010,7 @@ country_event = {
 
 			modifier = {
 				factor = 0
-				has_country_flag = Recognised_@FROM
+				has_country_flag = Recognised_@FROM.FROM
 			}
 		}
 	}

@@ -28,12 +28,7 @@ country_event = {
 			var:v = {
 				if = {
 					limit = { NOT = { has_auto_sc_vote = yes } }
-					meta_effect = {
-						text = {
-							country_event = UNSC.[ID]
-						}
-						ID = "[?global.current_sc_vote_type]"
-					}
+					country_event = UNSC.1
 				} else = {
 					process_auto_sc_vote = yes
 				}
@@ -48,27 +43,62 @@ country_event = {
 	}
 }
 #event for SC votes
-#Pressure to end war
 country_event = {
 	id = UNSC.1
-	title = UNSC.1.t
-	desc = UNSC.1.d
 	picture = GFX_UN_gen_assembly
 
 	is_triggered_only = yes
 	timeout_days = 4
 
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 1 } }
+		text = UNSC.1.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 2 } }
+		text = UNSC.2.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 3 } }
+		text = UNSC.3.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 4 } }
+		text = UNSC.4.t
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 1 } }
+		text = UNSC.1.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 2 } }
+		text = UNSC.2.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 3 } }
+		text = UNSC.3.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 4 } }
+		text = UNSC.4.d
+	}
+
 	#Abstain
 	option = {
 		name = UNSC.1.c
-		add_to_array = { global.security_council_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+		# Answered after an early mission completion: the tally is already resolved and cleared
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting in SC vote type [?global.current_sc_vote_type]"
 
 		international_systems_update = yes
 		ai_chance = {
 			base = 0
 			modifier = {
 				add = 5
+				check_variable = { global.current_sc_vote_type = 1 }
 				has_opinion = {
 					target = FROM
 					value < 5
@@ -82,25 +112,40 @@ country_event = {
 				add = 1000
 				has_war_with = FROM
 			}
-
 			modifier = {
 				add = -10000
+				check_variable = { global.current_sc_vote_type = 1 }
 				has_war_with = ALN
+			}
+			modifier = {
+				add = 5
+				check_variable = { global.current_sc_vote_type > 1 }
+				has_opinion = {
+					target = FROM
+					value < 20
+				}
+				has_opinion = {
+					target = FROM
+					value > -20
+				}
 			}
 		}
 	}
 	#Yes
 	option = {
 		name = UNSC.1.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.security_council_vote_yes = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted yes in SC vote type [?global.current_sc_vote_type]"
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}
 
 		international_systems_update = yes
-
 		ai_chance = {
 			base = 0
 			modifier = {
 				add = 20
+				check_variable = { global.current_sc_vote_type = 1 }
 				has_opinion = {
 					target = FROM
 					value < -5
@@ -118,27 +163,37 @@ country_event = {
 				add = 50
 				is_in_array = { potential_and_current_enemies = FROM }
 			}
-
 			modifier = {
 				add = -10000
+				check_variable = { global.current_sc_vote_type = 1 }
 				has_war_with = ALN
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type > 1 }
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
 			}
 		}
 	}
 	#No
 	option = {
 		name = UNSC.1.b
-		add_to_array = { global.security_council_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
 		if = {
-			limit = {
-				is_in_array = { global.p5_sc_members = THIS }
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_no = THIS }
+			if = {
+				limit = {
+					is_in_array = { global.p5_sc_members = THIS }
+				}
+				set_global_flag = security_council_veto
 			}
-			set_global_flag = security_council_veto
 		}
+		log = "[GetDateText]: [THIS.GetName] has voted no in SC vote type [?global.current_sc_vote_type]"
 
 		international_systems_update = yes
-
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -159,6 +214,7 @@ country_event = {
 			}
 			modifier = {
 				add = 20
+				check_variable = { global.current_sc_vote_type = 1 }
 				has_opinion = {
 					target = FROM
 					value > 5
@@ -184,397 +240,18 @@ country_event = {
 				add = 10
 				has_guaranteed = FROM
 			}
-
 			modifier = {
 				add = 10000
+				check_variable = { global.current_sc_vote_type = 1 }
 				has_war_with = ALN
 			}
-		}
-	}
-}
-#Sanction for tension
-country_event = {
-	id = UNSC.2
-	title = UNSC.2.t
-	desc = UNSC.2.d
-	picture = GFX_UN_gen_assembly
-
-	is_triggered_only = yes
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UNSC.2.c
-		add_to_array = { global.security_council_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 5
-				has_opinion = {
-					target = FROM
-					value < 20
-				}
-				has_opinion = {
-					target = FROM
-					value > -20
-				}
-			}
-			modifier = {
-				add = 1000
-				has_war_with = FROM
-			}
-		}
-	}
-	#Yes
-	option = {
-		name = UNSC.2.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.security_council_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
 			modifier = {
 				add = 20
-				has_opinion = {
-					target = FROM
-					value < -20
-				}
-			}
-			modifier = {
-				add = 20
-				is_embargoed_by = FROM
-			}
-			modifier = {
-				add = 30
-				is_neighbor_of = FROM
-			}
-			modifier = {
-				add = 50
-				is_in_array = { potential_and_current_enemies = FROM }
-			}
-		}
-	}
-	#No
-	option = {
-		name = UNSC.2.b
-		add_to_array = { global.security_council_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-		if = {
-			limit = {
-				is_in_array = { global.p5_sc_members = THIS }
-			}
-			set_global_flag = security_council_veto
-		}
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 1000
-				tag = FROM
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				is_in_faction_with = FROM
-			}
-			modifier = {
-				add = 10
-				FROM = { has_government = ROOT }
-			}
-			modifier = {
-				add = 20
+				check_variable = { global.current_sc_vote_type > 1 }
 				has_opinion = {
 					target = FROM
 					value > 20
 				}
-			}
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 200
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 20
-				is_guaranteed_by = FROM
-			}
-			modifier = {
-				add = 10
-				has_non_aggression_pact_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_guaranteed = FROM
-			}
-		}
-	}
-}
-#Regulate volunteers
-country_event = {
-	id = UNSC.3
-	title = UNSC.3.t
-	desc = UNSC.3.d
-	picture = GFX_UN_gen_assembly
-
-	is_triggered_only = yes
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UNSC.3.c
-		add_to_array = { global.security_council_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 5
-				has_opinion = {
-					target = FROM
-					value < 20
-				}
-				has_opinion = {
-					target = FROM
-					value > -20
-				}
-			}
-			modifier = {
-				add = 1000
-				has_war_with = FROM
-			}
-		}
-	}
-	#Yes
-	option = {
-		name = UNSC.3.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.security_council_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_opinion = {
-					target = FROM
-					value < -20
-				}
-			}
-			modifier = {
-				add = 20
-				is_embargoed_by = FROM
-			}
-			modifier = {
-				add = 30
-				is_neighbor_of = FROM
-			}
-			modifier = {
-				add = 50
-				is_in_array = { potential_and_current_enemies = FROM }
-			}
-		}
-	}
-	#No
-	option = {
-		name = UNSC.3.b
-		add_to_array = { global.security_council_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-		if = {
-			limit = {
-				is_in_array = { global.p5_sc_members = THIS }
-			}
-			set_global_flag = security_council_veto
-		}
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 1000
-				tag = FROM
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				is_in_faction_with = FROM
-			}
-			modifier = {
-				add = 10
-				FROM = { has_government = ROOT }
-			}
-			modifier = {
-				add = 20
-				has_opinion = {
-					target = FROM
-					value > 20
-				}
-			}
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 200
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 20
-				is_guaranteed_by = FROM
-			}
-			modifier = {
-				add = 10
-				has_non_aggression_pact_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_guaranteed = FROM
-			}
-		}
-	}
-}
-#Arms embargo
-country_event = {
-	id = UNSC.4
-	title = UNSC.4.t
-	desc = UNSC.4.d
-	picture = GFX_UN_gen_assembly
-	timeout_days = 4
-
-	is_triggered_only = yes
-
-	#Abstain
-	option = {
-		name = UNSC.4.c
-		add_to_array = { global.security_council_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 5
-				has_opinion = {
-					target = FROM
-					value < 20
-				}
-				has_opinion = {
-					target = FROM
-					value > -20
-				}
-			}
-			modifier = {
-				add = 1000
-				has_war_with = FROM
-			}
-		}
-	}
-	#Yes
-	option = {
-		name = UNSC.4.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.security_council_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_opinion = {
-					target = FROM
-					value < -20
-				}
-			}
-			modifier = {
-				add = 20
-				is_embargoed_by = FROM
-			}
-			modifier = {
-				add = 30
-				is_neighbor_of = FROM
-			}
-			modifier = {
-				add = 50
-				is_in_array = { potential_and_current_enemies = FROM }
-			}
-		}
-	}
-	#No
-	option = {
-		name = UNSC.4.b
-		add_to_array = { global.security_council_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-		if = {
-			limit = {
-				is_in_array = { global.p5_sc_members = THIS }
-			}
-			set_global_flag = security_council_veto
-		}
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 1000
-				tag = FROM
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				is_in_faction_with = FROM
-			}
-			modifier = {
-				add = 10
-				FROM = { has_government = ROOT }
-			}
-			modifier = {
-				add = 20
-				has_opinion = {
-					target = FROM
-					value > 20
-				}
-			}
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 200
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 20
-				is_guaranteed_by = FROM
-			}
-			modifier = {
-				add = 10
-				has_non_aggression_pact_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_guaranteed = FROM
 			}
 		}
 	}
@@ -610,6 +287,20 @@ country_event = {
 	}
 }
 
+#SC Resolution Failed - generic news for types 1-4
+news_event = {
+	id = UNSC.12
+	title = UNSC.12.t
+	desc = UNSC.12.d
+	picture = GFX_UN_event_global_2
+
+	is_triggered_only = yes
+
+	option = {
+		name = UNSC.12.a
+	}
+}
+
 #event to scope GA votes
 country_event = {
 	id = UN.100
@@ -631,12 +322,7 @@ country_event = {
 			var:v = {
 				if = {
 					limit = { NOT = { has_auto_ga_vote = yes } }
-					meta_effect = {
-						text = {
-							country_event = UN.[ID]
-						}
-						ID = "[?global.current_ga_vote_type]"
-					}
+					country_event = UN.6
 				} else = {
 					process_auto_ga_vote = yes
 				}
@@ -651,29 +337,157 @@ country_event = {
 	}
 }
 #events for GA votes
-#security council seat confirmation event
 country_event = {
 	id = UN.6
-
-	is_triggered_only = yes
-
-	title = UN.6.t
-	desc = UN.6.d
 	picture = GFX_UN_gen_assembly
 
+	is_triggered_only = yes
 	timeout_days = 4
+
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 6 } }
+		text = UN.6.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 7 } }
+		text = UN.7.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 8 } }
+		text = UN.8.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 9 } }
+		text = UN.9.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 10 } }
+		text = UN.10.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 11 } }
+		text = UN.11.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 12 } }
+		text = UN.12.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 13 } }
+		text = UN.13.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 14 } }
+		text = UN.14.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 15 } }
+		text = UN.15.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 16 } }
+		text = UN.16.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 17 } }
+		text = UN.17.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 18 } }
+		text = UN.18.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 19 } }
+		text = UN.19.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 20 } }
+		text = UN.20.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 21 } }
+		text = UN.21.t
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 6 } }
+		text = UN.6.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 7 } }
+		text = UN.7.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 8 } }
+		text = UN.8.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 9 } }
+		text = UN.9.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 10 } }
+		text = UN.10.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 11 } }
+		text = UN.11.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 12 } }
+		text = UN.12.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 13 } }
+		text = UN.13.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 14 } }
+		text = UN.14.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 15 } }
+		text = UN.15.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 16 } }
+		text = UN.16.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 17 } }
+		text = UN.17.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 18 } }
+		text = UN.18.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 19 } }
+		text = UN.19.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 20 } }
+		text = UN.20.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 21 } }
+		text = UN.21.d
+	}
 
 	#Abstain
 	option = {
 		name = UN.6.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting in GA vote type [?global.current_ga_vote_type]"
 
 		international_systems_update = yes
 		ai_chance = {
 			base = 0
 			modifier = {
 				add = 1000
+				check_variable = { global.current_ga_vote_type = 6 }
 				tag = FROM
 			}
 		}
@@ -681,31 +495,48 @@ country_event = {
 	#Yes
 	option = {
 		name = UN.6.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted yes in GA vote type [?global.current_ga_vote_type]"
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}
 
 		international_systems_update = yes
-
 		ai_chance = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				check_variable = { global.current_ga_vote_type = 6 }
+			}
 			modifier = {
 				add = 200
+				check_variable = { global.current_ga_vote_type = 6 }
 				is_puppet_of = FROM
 			}
 			modifier = {
 				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 6 }
+					AND = { check_variable = { global.current_ga_vote_type > 9 } check_variable = { global.current_ga_vote_type < 22 } }
+				}
 				is_ally_with = FROM
 			}
 			modifier = {
 				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
 				is_in_faction_with = FROM
 			}
 			modifier = {
 				add = 20
+				check_variable = { global.current_ga_vote_type = 6 }
 				is_guaranteed_by = FROM
 			}
 			modifier = {
 				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 6 }
+					AND = { check_variable = { global.current_ga_vote_type > 9 } check_variable = { global.current_ga_vote_type < 22 } }
+				}
 				has_opinion = {
 					target = FROM
 					value > -1
@@ -713,40 +544,29 @@ country_event = {
 			}
 			modifier = {
 				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
 				is_on_same_continent_as = FROM
 				has_opinion = {
 					target = FROM
 					value > -1
 				}
 			}
-		}
-	}
-	#No
-	option = {
-		name = UN.6.b
-		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
 			modifier = {
-				add = -10
-				has_non_aggression_pact_with = FROM
-			}
-			modifier = {
-				add = 50
-				is_in_array = { potential_and_current_enemies = FROM }
-			}
-			modifier = {
-				add = 50
-				FROM = {
-					has_war = yes
-				}
+				add = 500
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				has_war_with = FROM
 			}
 			modifier = {
 				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
 				has_opinion = {
 					target = FROM
 					value < 0
@@ -755,6 +575,156 @@ country_event = {
 			}
 			modifier = {
 				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 500
+				check_variable = { global.current_ga_vote_type > 9 }
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				OR = {
+					check_variable = { global.current_ga_vote_type = 10 }
+					check_variable = { global.current_ga_vote_type = 12 }
+					check_variable = { global.current_ga_vote_type = 16 }
+					check_variable = { global.current_ga_vote_type = 20 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 10 }
+					check_variable = { global.current_ga_vote_type = 12 }
+				}
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 15
+				OR = {
+					check_variable = { global.current_ga_vote_type = 11 }
+					check_variable = { global.current_ga_vote_type = 13 }
+					check_variable = { global.current_ga_vote_type = 17 }
+					check_variable = { global.current_ga_vote_type = 21 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 11 }
+					check_variable = { global.current_ga_vote_type = 14 }
+					check_variable = { global.current_ga_vote_type = 16 }
+				}
+				num_of_civilian_factories < 30
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 13 }
+				amount_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 14 }
+					check_variable = { global.current_ga_vote_type = 18 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 15 }
+				num_of_civilian_factories > 30
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 15 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 17 }
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 18 }
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				add = 25
+				check_variable = { global.current_ga_vote_type = 19 }
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 19 }
+				has_offensive_war = no
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 20 }
+				is_in_faction_with = FROM
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 21 }
+				amount_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 21 }
+				num_of_civilian_factories > 30
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.6.b
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}
+		log = "[GetDateText]: [THIS.GetName] has voted no in GA vote type [?global.current_ga_vote_type]"
+
+		international_systems_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = -10
+				check_variable = { global.current_ga_vote_type = 6 }
+				has_non_aggression_pact_with = FROM
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_ga_vote_type = 6 }
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_ga_vote_type = 6 }
+				FROM = {
+					has_war = yes
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+				FROM = { has_government = ROOT }
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
 				is_on_same_continent_as = FROM
 				has_opinion = {
 					target = FROM
@@ -763,6 +733,7 @@ country_event = {
 			}
 			modifier = {
 				add = 20
+				check_variable = { global.current_ga_vote_type = 6 }
 				any_of_scopes = {
 					array = allies
 					has_opinion = {
@@ -773,6 +744,7 @@ country_event = {
 			}
 			modifier = {
 				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
 				has_opinion = {
 					target = FROM
 					value < -11
@@ -780,1379 +752,151 @@ country_event = {
 			}
 			modifier = {
 				add = 100
-				has_war_with = FROM
-			}
-		}
-	}
-}
-#raid non-binding sanctions event
-country_event = {
-	id = UN.7
-
-	is_triggered_only = yes
-
-	title = UN.7.t
-	desc = UN.7.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.7.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.7.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
+				check_variable = { global.current_ga_vote_type = 6 }
 				has_war_with = FROM
 			}
 			modifier = {
-				add = 10
-				is_embargoed_by = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < 0
-				}
-				FROM = { has_government = ROOT }
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.7.b
-		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
 				add = 500
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
 				is_puppet_of = FROM
 			}
 			modifier = {
 				add = 100
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
 				is_guaranteed_by = FROM
 			}
 			modifier = {
 				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
 				has_war = yes
 			}
 			modifier = {
 				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
 				has_opinion = {
 					target = FROM
 					value > -1
 				}
-			}
-		}
-	}
-}
-#decrease budget event
-country_event = {
-	id = UN.8
-
-	is_triggered_only = yes
-
-	title = UN.8.t
-	desc = UN.8.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.8.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.8.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				has_war_with = FROM
-			}
-			modifier = {
-				add = 10
-				is_embargoed_by = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < 0
-				}
-				FROM = { has_government = ROOT }
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.8.b
-		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 100
-				is_guaranteed_by = FROM
-			}
-			modifier = {
-				add = 10
-				has_war = yes
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-}
-#increase budget event
-country_event = {
-	id = UN.9
-
-	is_triggered_only = yes
-
-	title = UN.9.t
-	desc = UN.9.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.9.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.9.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				has_war_with = FROM
-			}
-			modifier = {
-				add = 10
-				is_embargoed_by = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < 0
-				}
-				FROM = { has_government = ROOT }
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.9.b
-		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 100
-				is_guaranteed_by = FROM
-			}
-			modifier = {
-				add = 10
-				has_war = yes
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-}
-
-#UNGA Non-Binding Resolution Events
-#poverty reduction resolution
-#Modifiers: stability_factor +3%, consumer_goods_factor +4%
-#Benefit: stability boost. Cost: consumer goods increase.
-#AI: peaceful nations lean yes, nations at war or needing military output lean no.
-country_event = {
-	id = UN.10
-
-	is_triggered_only = yes
-
-	title = UN.10.t
-	desc = UN.10.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.10.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.10.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
 			}
 			modifier = {
 				add = 20
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				has_stability < 0.5
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
+				OR = {
+					AND = { check_variable = { global.current_ga_vote_type > 9 } check_variable = { global.current_ga_vote_type < 14 } }
+					AND = { check_variable = { global.current_ga_vote_type > 16 } check_variable = { global.current_ga_vote_type < 19 } }
+					AND = { check_variable = { global.current_ga_vote_type > 19 } check_variable = { global.current_ga_vote_type < 22 } }
 				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.10.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
 				has_war = yes
 			}
 			modifier = {
 				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 10 }
+					check_variable = { global.current_ga_vote_type = 12 }
+				}
 				has_stability > 0.7
 			}
 			modifier = {
 				add = 10
+				check_variable = { global.current_ga_vote_type > 9 }
 				has_opinion = {
 					target = FROM
 					value < -10
 				}
 			}
-		}
-	}
-}
-#food security resolution
-#Modifiers: agriculture +5%, ag construction +5%, consumer_goods +2%, factory output -2%
-#Benefit: agriculture boost. Cost: factory output reduction.
-#AI: agricultural/developing nations lean yes, industrialized/wartime nations lean no.
-country_event = {
-	id = UN.11
-
-	is_triggered_only = yes
-
-	title = UN.11.t
-	desc = UN.11.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.11.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.11.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
 			modifier = {
 				add = 15
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories < 30
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.11.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
-				num_of_military_factories > 50
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#global health resolution
-#Modifiers: stability +3%, health cost -10%, consumer_goods +3%
-#Benefit: stability and cheaper healthcare. Cost: consumer goods increase.
-#AI: peacetime nations with low stability lean yes, wartime nations lean no.
-country_event = {
-	id = UN.12
-
-	is_triggered_only = yes
-
-	title = UN.12.t
-	desc = UN.12.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.12.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.12.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 20
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				has_stability < 0.5
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.12.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 10
-				has_stability > 0.7
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#education initiative resolution
-#Modifiers: research +3%, education cost -10%, consumer_goods +2%, construction speed -2%
-#Benefit: research and education boost. Cost: slower construction.
-#AI: tech-focused peaceful nations lean yes, nations building up or at war lean no.
-country_event = {
-	id = UN.13
-
-	is_triggered_only = yes
-
-	title = UN.13.t
-	desc = UN.13.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.13.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.13.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 15
-				has_war = no
-			}
-			modifier = {
-				add = 15
-				amount_research_slots > 3
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.13.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
-				num_of_civilian_factories > 50
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#clean energy resolution
-#Modifiers: renewable construction +10%, renewable cost -5%, fossil construction -10%, factory output -2%
-#Benefit: renewable energy boost. Cost: fossil fuel and factory penalties.
-#AI: controversial - heavily industrialized nations lean no, smaller/peaceful nations lean yes.
-country_event = {
-	id = UN.14
-
-	is_triggered_only = yes
-
-	title = UN.14.t
-	desc = UN.14.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.14.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.14.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories < 30
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.14.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 15
-				has_war = yes
-			}
-			modifier = {
-				add = 20
+				check_variable = { global.current_ga_vote_type = 11 }
 				num_of_military_factories > 50
 			}
 			modifier = {
 				add = 15
+				check_variable = { global.current_ga_vote_type > 12 }
+				check_variable = { global.current_ga_vote_type < 15 }
 				num_of_civilian_factories > 50
 			}
 			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#economic growth resolution
-#Modifiers: productivity +0.5, factory output +3%, consumer_goods +3%, PP -5%
-#Benefit: productivity and factory boost. Cost: PP reduction and consumer goods.
-#AI: industrial nations lean yes since factory output offsets costs, small nations lean no due to PP loss.
-country_event = {
-	id = UN.15
-
-	is_triggered_only = yes
-
-	title = UN.15.t
-	desc = UN.15.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.15.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.15.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
+				add = 15
+				check_variable = { global.current_ga_vote_type > 13 }
+				check_variable = { global.current_ga_vote_type < 16 }
+				has_war = yes
 			}
 			modifier = {
 				add = 20
-				num_of_civilian_factories > 30
+				check_variable = { global.current_ga_vote_type = 14 }
+				num_of_military_factories > 50
 			}
 			modifier = {
-				add = 10
+				add = 20
+				check_variable = { global.current_ga_vote_type = 15 }
+				num_of_civilian_factories < 15
+			}
+			modifier = {
+				add = 25
+				OR = {
+					check_variable = { global.current_ga_vote_type = 16 }
+					check_variable = { global.current_ga_vote_type = 19 }
+				}
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 16 }
 				num_of_military_factories > 30
 			}
 			modifier = {
 				add = 10
-				is_ally_with = FROM
+				check_variable = { global.current_ga_vote_type = 16 }
+				has_offensive_war = yes
 			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.15.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
 			modifier = {
 				add = 15
-				has_war = yes
+				check_variable = { global.current_ga_vote_type = 17 }
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type > 16 }
+				check_variable = { global.current_ga_vote_type < 19 }
+				is_major = yes
+			}
+			modifier = {
+				add = 25
+				check_variable = { global.current_ga_vote_type = 18 }
+				num_of_military_factories > 50
 			}
 			modifier = {
 				add = 20
+				check_variable = { global.current_ga_vote_type = 18 }
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 19 }
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 19 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 20 }
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 21 }
 				num_of_civilian_factories < 15
 			}
 			modifier = {
 				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#infrastructure development resolution
-#Modifiers: infra construction +10%, civ factory construction +5%, arms factory construction -5%, consumer_goods +2%
-#Benefit: faster civilian building. Cost: slower arms factories.
-#AI: peacetime builders lean yes, nations at war or militarizing lean no.
-country_event = {
-	id = UN.16
-
-	is_triggered_only = yes
-
-	title = UN.16.t
-	desc = UN.16.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.16.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.16.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 20
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories < 30
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.16.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 25
-				has_war = yes
-			}
-			modifier = {
-				add = 20
-				num_of_military_factories > 30
-			}
-			modifier = {
-				add = 10
-				has_offensive_war = yes
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#reduced inequality resolution
-#Modifiers: stability +5%, consumer_goods +4%, PP -5%
-#Benefit: strong stability boost. Cost: PP and consumer goods increase.
-#AI: unstable nations lean yes, nations needing PP (at war, major powers) lean no.
-country_event = {
-	id = UN.17
-
-	is_triggered_only = yes
-
-	title = UN.17.t
-	desc = UN.17.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.17.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.17.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 20
-				has_stability < 0.5
-			}
-			modifier = {
-				add = 15
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.17.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
-				has_stability > 0.7
-			}
-			modifier = {
-				add = 15
-				is_major = yes
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#climate action resolution
-#Modifiers: renewable construction +5%, fossil construction -15%, factory output -3%, stability +2%
-#Benefit: small stability and renewable boost. Cost: heavy fossil and factory penalties.
-#AI: most controversial - heavy industry nations strongly oppose, small peaceful nations lean yes.
-country_event = {
-	id = UN.18
-
-	is_triggered_only = yes
-
-	title = UN.18.t
-	desc = UN.18.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.18.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.18.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories < 20
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.18.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 25
-				num_of_military_factories > 50
-			}
-			modifier = {
-				add = 20
-				num_of_civilian_factories > 50
-			}
-			modifier = {
-				add = 15
-				is_major = yes
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#peace and institutions resolution
-#Modifiers: PP +0.5, drift defence +10%, foreign subversive -10%, consumer_goods +2%, arms factory construction -5%
-#Benefit: PP gain and ideology protection. Cost: slower arms factories.
-#AI: peaceful nations lean yes, wartime/militaristic nations lean no since arms factory penalty hurts them.
-country_event = {
-	id = UN.19
-
-	is_triggered_only = yes
-
-	title = UN.19.t
-	desc = UN.19.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.19.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.19.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 25
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				has_offensive_war = no
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.19.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 25
-				has_war = yes
-			}
-			modifier = {
-				add = 20
-				has_offensive_war = yes
-			}
-			modifier = {
-				add = 15
-				num_of_military_factories > 30
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#trade partnerships resolution
-#Modifiers: trade opinion +10%, trade cost -5%, PP -3%, consumer_goods +1%
-#Benefit: better trade deals. Cost: small PP reduction.
-#AI: trade-oriented peaceful nations lean yes, isolationist/wartime nations lean no.
-country_event = {
-	id = UN.20
-
-	is_triggered_only = yes
-
-	title = UN.20.t
-	desc = UN.20.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.20.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.20.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 20
-				has_war = no
-			}
-			modifier = {
-				add = 15
-				is_in_faction_with = FROM
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.20.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
-				has_offensive_war = yes
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
-			}
-		}
-	}
-}
-#digital development resolution
-#Modifiers: internet construction +10%, microchip construction +5%, research +2%, consumer_goods +3%, infra construction -3%
-#Benefit: tech infrastructure and research boost. Cost: consumer goods and slower basic infra.
-#AI: tech-capable nations lean yes, developing nations needing basic infra lean no.
-country_event = {
-	id = UN.21
-
-	is_triggered_only = yes
-
-	title = UN.21.t
-	desc = UN.21.d
-	picture = GFX_UN_gen_assembly
-
-	timeout_days = 4
-
-	#Abstain
-	option = {
-		name = UN.21.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		international_systems_update = yes
-		ai_chance = {
-			base = 0
-		}
-	}
-	#Yes
-	option = {
-		name = UN.21.a
-		log = "[GetDateText]: [THIS.GetName] has voted yes"
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 500
-				is_puppet_of = FROM
-			}
-			modifier = {
-				add = 15
-				has_war = no
-			}
-			modifier = {
-				add = 20
-				amount_research_slots > 3
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories > 30
-			}
-			modifier = {
-				add = 10
-				is_ally_with = FROM
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value > -1
-				}
-			}
-		}
-	}
-	#No
-	option = {
-		name = UN.21.b
-		add_to_array = { global.general_assembly_vote_no = THIS }
-		log = "[GetDateText]: [THIS.GetName] has voted no"
-
-		international_systems_update = yes
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
-				num_of_civilian_factories < 15
-			}
-			modifier = {
-				add = 10
+				check_variable = { global.current_ga_vote_type = 21 }
 				amount_research_slots < 3
-			}
-			modifier = {
-				add = 10
-				has_opinion = {
-					target = FROM
-					value < -10
-				}
 			}
 		}
 	}
@@ -2160,34 +904,246 @@ country_event = {
 
 #400 series events - events that fire after a UN GA Vote is held over implementing something
 #Nations that voted no or abstained on a passed non-binding resolution get a chance to accept it
-#Each resolution type dispatches to its own event via meta_effect: UN.410-UN.421
-
-#poverty reduction - accept/reject
-#Modifiers: stability +3%, consumer_goods +2%, PP +0.25
 country_event = {
 	id = UN.410
+	picture = GFX_UN_gen_assembly
 
 	is_triggered_only = yes
 
-	title = UN.410.t
-	desc = UN.410.d
-	picture = GFX_UN_gen_assembly
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 10 } }
+		text = UN.410.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 11 } }
+		text = UN.411.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 12 } }
+		text = UN.412.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 13 } }
+		text = UN.413.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 14 } }
+		text = UN.414.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 15 } }
+		text = UN.415.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 16 } }
+		text = UN.416.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 17 } }
+		text = UN.417.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 18 } }
+		text = UN.418.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 19 } }
+		text = UN.419.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 20 } }
+		text = UN.420.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 21 } }
+		text = UN.421.t
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 10 } }
+		text = UN.410.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 11 } }
+		text = UN.411.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 12 } }
+		text = UN.412.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 13 } }
+		text = UN.413.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 14 } }
+		text = UN.414.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 15 } }
+		text = UN.415.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 16 } }
+		text = UN.416.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 17 } }
+		text = UN.417.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 18 } }
+		text = UN.418.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 19 } }
+		text = UN.419.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 20 } }
+		text = UN.420.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 21 } }
+		text = UN.421.d
+	}
 
 	#Accept the Resolution
 	option = {
 		name = UN.410.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Poverty Reduction resolution"
-		add_timed_idea = { idea = unga_resolution_poverty_reduction days = 365 }
+		log = "[GetDateText]: [THIS.GetName] has accepted the passed UNGA resolution type [?ga_resolution_vote_type]"
+		if = {
+			limit = { check_variable = { ga_resolution_vote_type = 10 } }
+			add_timed_idea = { idea = unga_resolution_poverty_reduction days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 11 } }
+			add_timed_idea = { idea = unga_resolution_food_security days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 12 } }
+			add_timed_idea = { idea = unga_resolution_global_health days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 13 } }
+			add_timed_idea = { idea = unga_resolution_education_initiative days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 14 } }
+			add_timed_idea = { idea = unga_resolution_clean_energy days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 15 } }
+			add_timed_idea = { idea = unga_resolution_economic_growth days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 16 } }
+			add_timed_idea = { idea = unga_resolution_infrastructure days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 17 } }
+			add_timed_idea = { idea = unga_resolution_reduced_inequality days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 18 } }
+			add_timed_idea = { idea = unga_resolution_climate_action days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 19 } }
+			add_timed_idea = { idea = unga_resolution_peace_institutions days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 20 } }
+			add_timed_idea = { idea = unga_resolution_trade_partnerships days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 21 } }
+			add_timed_idea = { idea = unga_resolution_digital_development days = 365 }
+		}
+		clear_variable = ga_resolution_proposer
+		clear_variable = ga_resolution_vote_type
 
 		ai_chance = {
 			base = 0
 			modifier = {
 				add = 15
+				OR = {
+					AND = { check_variable = { ga_resolution_vote_type > 9 } check_variable = { ga_resolution_vote_type < 14 } }
+					check_variable = { ga_resolution_vote_type = 17 }
+					check_variable = { ga_resolution_vote_type = 21 }
+				}
 				has_war = no
 			}
 			modifier = {
 				add = 10
+				OR = {
+					check_variable = { ga_resolution_vote_type = 10 }
+					check_variable = { ga_resolution_vote_type = 12 }
+				}
 				has_stability < 0.5
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { ga_resolution_vote_type = 11 }
+					check_variable = { ga_resolution_vote_type = 14 }
+					check_variable = { ga_resolution_vote_type = 16 }
+				}
+				num_of_civilian_factories < 30
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 13 }
+				amount_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { ga_resolution_vote_type = 14 }
+					check_variable = { ga_resolution_vote_type = 18 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 15 }
+				num_of_civilian_factories > 30
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 15 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 20
+				OR = {
+					check_variable = { ga_resolution_vote_type = 16 }
+					check_variable = { ga_resolution_vote_type = 20 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 17 }
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 18 }
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				add = 25
+				check_variable = { ga_resolution_vote_type = 19 }
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 19 }
+				has_offensive_war = no
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 20 }
+				is_in_faction = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 21 }
+				amount_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 21 }
+				num_of_civilian_factories > 30
 			}
 		}
 	}
@@ -2195,731 +1151,125 @@ country_event = {
 	#Reject the Resolution
 	option = {
 		name = UN.410.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Poverty Reduction resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_poverty_reduction }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
+		log = "[GetDateText]: [THIS.GetName] has rejected the passed UNGA resolution type [?ga_resolution_vote_type]"
+		if = {
+			limit = { check_variable = { ga_resolution_proposer > 0 } }
+			var:ga_resolution_proposer = {
+				add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+				add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
 			}
 		}
+		clear_variable = ga_resolution_proposer
+		clear_variable = ga_resolution_vote_type
 
 		ai_chance = {
 			base = 0
 			modifier = {
 				add = 20
+				OR = {
+					AND = { check_variable = { ga_resolution_vote_type > 9 } check_variable = { ga_resolution_vote_type < 14 } }
+					AND = { check_variable = { ga_resolution_vote_type > 16 } check_variable = { ga_resolution_vote_type < 19 } }
+					AND = { check_variable = { ga_resolution_vote_type > 19 } check_variable = { ga_resolution_vote_type < 22 } }
+				}
 				has_war = yes
 			}
 			modifier = {
 				add = 10
+				OR = {
+					check_variable = { ga_resolution_vote_type = 10 }
+					check_variable = { ga_resolution_vote_type = 12 }
+				}
 				has_stability > 0.7
 			}
-		}
-	}
-}
-
-#food security - accept/reject
-#Modifiers: agriculture +5%, ag construction +5%, consumer_goods +2%, factory output -2%
-country_event = {
-	id = UN.411
-
-	is_triggered_only = yes
-
-	title = UN.411.t
-	desc = UN.411.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.411.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Food Security resolution"
-		add_timed_idea = { idea = unga_resolution_food_security days = 365 }
-
-		ai_chance = {
-			base = 0
 			modifier = {
 				add = 15
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories < 30
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.411.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Food Security resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_food_security }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
-				num_of_military_factories > 50
-			}
-		}
-	}
-}
-
-#global health - accept/reject
-#Modifiers: stability +3%, health cost -10%, consumer_goods +3%
-country_event = {
-	id = UN.412
-
-	is_triggered_only = yes
-
-	title = UN.412.t
-	desc = UN.412.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.412.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Global Health resolution"
-		add_timed_idea = { idea = unga_resolution_global_health days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 15
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				has_stability < 0.5
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.412.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Global Health resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_global_health }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 10
-				has_stability > 0.7
-			}
-		}
-	}
-}
-
-#education initiative - accept/reject
-#Modifiers: research +3%, education cost -10%, consumer_goods +2%, construction speed -2%
-country_event = {
-	id = UN.413
-
-	is_triggered_only = yes
-
-	title = UN.413.t
-	desc = UN.413.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.413.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Education Initiative resolution"
-		add_timed_idea = { idea = unga_resolution_education_initiative days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 15
-				has_war = no
-			}
-			modifier = {
-				add = 15
-				amount_research_slots > 3
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.413.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Education Initiative resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_education_initiative }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
-				num_of_civilian_factories > 50
-			}
-		}
-	}
-}
-
-#clean energy - accept/reject
-#Modifiers: renewable construction +10%, renewable cost -5%, fossil construction -10%, factory output -2%
-country_event = {
-	id = UN.414
-
-	is_triggered_only = yes
-
-	title = UN.414.t
-	desc = UN.414.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.414.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Clean Energy resolution"
-		add_timed_idea = { idea = unga_resolution_clean_energy days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories < 30
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.414.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Clean Energy resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_clean_energy }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 15
-				has_war = yes
-			}
-			modifier = {
-				add = 20
+				check_variable = { ga_resolution_vote_type = 11 }
 				num_of_military_factories > 50
 			}
 			modifier = {
 				add = 15
+				check_variable = { ga_resolution_vote_type > 12 }
+				check_variable = { ga_resolution_vote_type < 15 }
 				num_of_civilian_factories > 50
 			}
-		}
-	}
-}
-
-#economic growth - accept/reject
-#Modifiers: productivity +0.5, factory output +3%, consumer_goods +3%, PP -5%
-country_event = {
-	id = UN.415
-
-	is_triggered_only = yes
-
-	title = UN.415.t
-	desc = UN.415.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.415.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Economic Growth resolution"
-		add_timed_idea = { idea = unga_resolution_economic_growth days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				num_of_civilian_factories > 30
-			}
-			modifier = {
-				add = 10
-				num_of_military_factories > 30
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.415.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Economic Growth resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_economic_growth }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
 			modifier = {
 				add = 15
+				check_variable = { ga_resolution_vote_type > 13 }
+				check_variable = { ga_resolution_vote_type < 16 }
 				has_war = yes
 			}
 			modifier = {
 				add = 20
+				check_variable = { ga_resolution_vote_type = 14 }
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 15 }
 				num_of_civilian_factories < 15
 			}
-		}
-	}
-}
-
-#infrastructure development - accept/reject
-#Modifiers: infra construction +10%, civ factory construction +5%, arms factory construction -5%, consumer_goods +2%
-country_event = {
-	id = UN.416
-
-	is_triggered_only = yes
-
-	title = UN.416.t
-	desc = UN.416.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.416.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Infrastructure Development resolution"
-		add_timed_idea = { idea = unga_resolution_infrastructure days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories < 30
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.416.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Infrastructure Development resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_infrastructure }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
 			modifier = {
 				add = 25
+				OR = {
+					check_variable = { ga_resolution_vote_type = 16 }
+					check_variable = { ga_resolution_vote_type = 19 }
+				}
 				has_war = yes
 			}
 			modifier = {
 				add = 20
+				check_variable = { ga_resolution_vote_type = 16 }
 				num_of_military_factories > 30
 			}
 			modifier = {
 				add = 10
+				check_variable = { ga_resolution_vote_type = 16 }
 				has_offensive_war = yes
 			}
-		}
-	}
-}
-
-#reduced inequality - accept/reject
-#Modifiers: stability +5%, consumer_goods +4%, PP -5%
-country_event = {
-	id = UN.417
-
-	is_triggered_only = yes
-
-	title = UN.417.t
-	desc = UN.417.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.417.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Reduced Inequality resolution"
-		add_timed_idea = { idea = unga_resolution_reduced_inequality days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_stability < 0.5
-			}
 			modifier = {
 				add = 15
-				has_war = no
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.417.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Reduced Inequality resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_reduced_inequality }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
+				check_variable = { ga_resolution_vote_type = 17 }
 				has_stability > 0.7
 			}
 			modifier = {
 				add = 15
+				check_variable = { ga_resolution_vote_type > 16 }
+				check_variable = { ga_resolution_vote_type < 19 }
 				is_major = yes
-			}
-		}
-	}
-}
-
-#climate action - accept/reject
-#Modifiers: renewable construction +5%, fossil construction -15%, factory output -3%, stability +2%
-country_event = {
-	id = UN.418
-
-	is_triggered_only = yes
-
-	title = UN.418.t
-	desc = UN.418.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.418.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Climate Action resolution"
-		add_timed_idea = { idea = unga_resolution_climate_action days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories < 20
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.418.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Climate Action resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_climate_action }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
 			}
 			modifier = {
 				add = 25
+				check_variable = { ga_resolution_vote_type = 18 }
 				num_of_military_factories > 50
 			}
 			modifier = {
 				add = 20
+				check_variable = { ga_resolution_vote_type = 18 }
 				num_of_civilian_factories > 50
 			}
 			modifier = {
-				add = 15
-				is_major = yes
-			}
-		}
-	}
-}
-
-#peace and institutions - accept/reject
-#Modifiers: PP +0.5, drift defence +10%, foreign subversive -10%, consumer_goods +2%, arms factory construction -5%
-country_event = {
-	id = UN.419
-
-	is_triggered_only = yes
-
-	title = UN.419.t
-	desc = UN.419.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.419.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Peace & Institutions resolution"
-		add_timed_idea = { idea = unga_resolution_peace_institutions days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 25
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				has_offensive_war = no
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.419.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Peace & Institutions resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_peace_institutions }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 25
-				has_war = yes
-			}
-			modifier = {
 				add = 20
+				check_variable = { ga_resolution_vote_type = 19 }
 				has_offensive_war = yes
 			}
 			modifier = {
 				add = 15
+				check_variable = { ga_resolution_vote_type = 19 }
 				num_of_military_factories > 30
 			}
-		}
-	}
-}
-
-#trade partnerships - accept/reject
-#Modifiers: trade opinion +10%, trade cost -5%, PP -3%, consumer_goods +1%
-country_event = {
-	id = UN.420
-
-	is_triggered_only = yes
-
-	title = UN.420.t
-	desc = UN.420.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.420.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Trade Partnerships resolution"
-		add_timed_idea = { idea = unga_resolution_trade_partnerships days = 365 }
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = no
-			}
 			modifier = {
 				add = 15
-				is_in_faction = yes
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.420.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Trade Partnerships resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_trade_partnerships }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
+				check_variable = { ga_resolution_vote_type = 20 }
 				has_offensive_war = yes
 			}
-		}
-	}
-}
-
-#digital development - accept/reject
-#Modifiers: internet construction +10%, microchip construction +5%, research +2%, consumer_goods +3%, infra construction -3%
-country_event = {
-	id = UN.421
-
-	is_triggered_only = yes
-
-	title = UN.421.t
-	desc = UN.421.d
-	picture = GFX_UN_gen_assembly
-
-	#Accept the Resolution
-	option = {
-		name = UN.421.a
-		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Digital Development resolution"
-		add_timed_idea = { idea = unga_resolution_digital_development days = 365 }
-
-		ai_chance = {
-			base = 0
 			modifier = {
 				add = 15
-				has_war = no
-			}
-			modifier = {
-				add = 20
-				amount_research_slots > 3
-			}
-			modifier = {
-				add = 10
-				num_of_civilian_factories > 30
-			}
-		}
-	}
-
-	#Reject the Resolution
-	option = {
-		name = UN.421.b
-		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Digital Development resolution"
-
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-			var:v = {
-				if = {
-					limit = { has_idea = unga_resolution_digital_development }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
-					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
-				}
-			}
-		}
-
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 20
-				has_war = yes
-			}
-			modifier = {
-				add = 15
+				check_variable = { ga_resolution_vote_type = 21 }
 				num_of_civilian_factories < 15
 			}
 			modifier = {
 				add = 10
+				check_variable = { ga_resolution_vote_type = 21 }
 				amount_research_slots < 3
 			}
 		}
@@ -3075,27 +1425,7 @@ country_event = {
 		name = UNSC.201.a
 		log = "[GetDateText]: [This.GetName]: UNSC.201.a"
 
-		set_country_flag = has_had_current_un_sc_vote_swayed
-
-		if = {
-			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
-			remove_from_array = { global.security_council_vote_yes = THIS }
-		} else_if = {
-			limit = { is_in_array = { global.security_council_vote_no = THIS } }
-			remove_from_array = { global.security_council_vote_no = THIS }
-		} else = {
-			remove_from_array = { global.security_council_vote_abstain = THIS }
-		}
-
-		if = {
-			limit = { check_variable = { current_sway_direction = 1 } }
-			add_to_array = { global.security_council_vote_yes = THIS }
-		} else_if = {
-			limit = { check_variable = { current_sway_direction = 2 } }
-			add_to_array = { global.security_council_vote_no = THIS }
-		} else = {
-			add_to_array = { global.security_council_vote_abstain = THIS }
-		}
+		sc_sway_direction_effect = yes
 
 		if = {
 			limit = {
@@ -3261,27 +1591,7 @@ country_event = {
 		name = UNSC.202.a
 		log = "[GetDateText]: [This.GetName]: UNSC.202.a"
 
-		set_country_flag = has_had_current_un_sc_vote_swayed
-
-		if = {
-			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
-			remove_from_array = { global.security_council_vote_yes = THIS }
-		} else_if = {
-			limit = { is_in_array = { global.security_council_vote_no = THIS } }
-			remove_from_array = { global.security_council_vote_no = THIS }
-		} else = {
-			remove_from_array = { global.security_council_vote_abstain = THIS }
-		}
-
-		if = {
-			limit = { check_variable = { current_sway_direction = 1 } }
-			add_to_array = { global.security_council_vote_yes = THIS }
-		} else_if = {
-			limit = { check_variable = { current_sway_direction = 2 } }
-			add_to_array = { global.security_council_vote_no = THIS }
-		} else = {
-			add_to_array = { global.security_council_vote_abstain = THIS }
-		}
+		sc_sway_direction_effect = yes
 
 		set_temp_variable = { gdp_value_tracker = gdp_total }
 		multiply_temp_variable = { gdp_value_tracker = 0.0025 }
@@ -3400,27 +1710,7 @@ country_event = {
 		name = UNSC.203.a
 		log = "[GetDateText]: [This.GetName]: UNSC.203.a"
 
-		set_country_flag = has_had_current_un_sc_vote_swayed
-
-		if = {
-			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
-			remove_from_array = { global.security_council_vote_yes = THIS }
-		} else_if = {
-			limit = { is_in_array = { global.security_council_vote_no = THIS } }
-			remove_from_array = { global.security_council_vote_no = THIS }
-		} else = {
-			remove_from_array = { global.security_council_vote_abstain = THIS }
-		}
-
-		if = {
-			limit = { check_variable = { current_sway_direction = 1 } }
-			add_to_array = { global.security_council_vote_yes = THIS }
-		} else_if = {
-			limit = { check_variable = { current_sway_direction = 2 } }
-			add_to_array = { global.security_council_vote_no = THIS }
-		} else = {
-			add_to_array = { global.security_council_vote_abstain = THIS }
-		}
+		sc_sway_direction_effect = yes
 
 		clear_variable = current_sway_direction
 
@@ -3549,27 +1839,7 @@ country_event = {
 		name = UNSC.204.a
 		log = "[GetDateText]: [This.GetName]: UNSC.204.a"
 
-		set_country_flag = has_had_current_un_sc_vote_swayed
-
-		if = {
-			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
-			remove_from_array = { global.security_council_vote_yes = THIS }
-		} else_if = {
-			limit = { is_in_array = { global.security_council_vote_no = THIS } }
-			remove_from_array = { global.security_council_vote_no = THIS }
-		} else = {
-			remove_from_array = { global.security_council_vote_abstain = THIS }
-		}
-
-		if = {
-			limit = { check_variable = { current_sway_direction = 1 } }
-			add_to_array = { global.security_council_vote_yes = THIS }
-		} else_if = {
-			limit = { check_variable = { current_sway_direction = 2 } }
-			add_to_array = { global.security_council_vote_no = THIS }
-		} else = {
-			add_to_array = { global.security_council_vote_abstain = THIS }
-		}
+		sc_sway_direction_effect = yes
 
 		clear_variable = current_sway_direction
 

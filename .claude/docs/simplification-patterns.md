@@ -608,3 +608,42 @@ all_of_scopes = {
 - The array is not maintained on join/leave. Before wiring `on_add`/`on_remove` on a new bloc idea, its array only reflects the startup seed list — converting a loop over it silently drops runtime joiners. Verify the idea definition carries the array hooks first.
 - The limit mixes an array-backed idea with non-array conditions in an `OR` (splitting needs the mutual-exclusion guards from the section above).
 - The loop relies on `every_country` reaching non-members (e.g. applying an effect to everyone _except_ members via `NOT`).
+
+## Consolidate Near-Identical Event Families into One Generic Event
+
+When N events share identical option effect bodies and differ only in title/desc and ai_chance weights, collapse them into one event keyed on the type variable. UN.6-21, UN.410-421, and UNSC.1-4 collapsed from 32 events (~2,800 lines) to 3 this way, with zero loc churn.
+
+### Recipe
+
+1. Verify the family first: option ORDER must match (the first option is the timeout default) and option effect bodies must be identical. Catalog every ai_chance difference per type.
+2. Keep the lowest event id as the generic event. Add one triggered `title`/`desc` block per type, reusing the EXISTING loc keys:
+
+```
+title = {
+	trigger = { check_variable = { global.current_ga_vote_type = 6 } }
+	text = UN.6.t
+}
+title = {
+	trigger = { check_variable = { global.current_ga_vote_type = 7 } }
+	text = UN.7.t
+}
+```
+
+3. Merge ai_chance mechanically: group each `(add, condition)` modifier by the set of types that carry it, then emit one modifier per group, gated with `check_variable` / `OR` / range checks. If option bases differ across types, use `base = 0` plus a per-type gated `add`. Then re-expand the merged block per type and diff against the originals; the multisets must match exactly or you changed AI behavior.
+4. Replace the dispatch (`meta_effect` or if/else_if chain) with one literal `country_event`.
+5. Delete the collapsed events. Keep all their `.t`/`.d` loc keys (the triggered blocks reference them). Delete orphaned per-event option keys only after a repo-wide grep.
+
+### The delayed-fire trap
+
+Triggered titles/descs and ai_chance evaluate at display/fire time, not at dispatch time. If the event fires with `days = N` and the type lives in a global that is cleared before then (vote finishers clear their globals in the same execution), every title trigger fails and the event renders blank. Gate delayed events on a per-recipient variable set just before firing, cleared in every option:
+
+```
+fire_result_event = {
+	set_variable = { my_event_type = global.current_type }
+	country_event = { id = foo.1 days = 1 }
+}
+```
+
+Guard the setter against overwriting a still-pending window (`NOT = { check_variable = { my_event_type > 0 } }`), or a second fire relabels the open event. Events fired with no delay, while the global is guaranteed set for the event's lifetime, may gate on the global directly.
+
+**Caveat:** literal-only effects (`add_timed_idea`, `add_ideas`, `set_country_flag`, event ids) still need an if/else_if type branch inside the shared option. The array-lookup literal wall applies; the branch is the honest form.
