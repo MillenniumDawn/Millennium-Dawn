@@ -2874,16 +2874,49 @@ CHI_national_commitee_decisions_category = {
 				set_country_flag = CHI_17_nc_needs_to_be_started
 				activate_mission = CHI_17_national_congress_mission
 				if = {
-					limit = { NOT = { has_country_flag = CHI_hu_jintao_became_leader } }
-					set_country_flag = CHI_hu_jintao_became_leader
-					set_variable = { CHI_ic_leader = 2 }
+					limit = { NOT = { has_country_flag = CHI_16th_congress_successor_set } }
+					set_country_flag = CHI_16th_congress_successor_set
+					# Deterministische backstop: garandeert Hu voor de historische AI (default drift landt normaal al Hu)
+					if = {
+						limit = { is_historical_focus_on = yes is_ai = yes }
+						set_power_balance = {
+							id = CHI_factional_balance
+							left_side = CHI_princeling_shanghai
+							right_side = CHI_tuanpai_youth_league
+							set_value = 0.40
+						}
+					}
 					kill_country_leader = yes
-					create_country_leader = {
-						name = "Hu Jintao"
-						picture = "Hu_jintao.dds"
-						ideology = Communist-State
-						traits = {
-							emerging_Communist-State
+					if = {
+						limit = {
+							is_power_balance_in_range = {
+								id = CHI_factional_balance
+								range > CHI_shanghai_clique_leaning
+							}
+						}
+						set_country_flag = CHI_hu_jintao_became_leader
+						set_variable = { CHI_ic_leader = 2 }
+						create_country_leader = {
+							name = "Hu Jintao"
+							picture = "Hu_jintao.dds"
+							ideology = Communist-State
+							traits = {
+								emerging_Communist-State
+								CHI_bop_drift_hu
+							}
+						}
+					}
+					else = {
+						set_country_flag = CHI_zeng_qinghong_became_leader
+						set_variable = { CHI_ic_leader = 4 }
+						create_country_leader = {
+							name = "Zeng Qinghong"
+							picture = "Zeng_Qinghong.dds"
+							ideology = Communist-State
+							traits = {
+								emerging_Communist-State
+								CHI_bop_drift_zeng
+							}
 						}
 					}
 				}
@@ -2902,21 +2935,54 @@ CHI_national_commitee_decisions_category = {
 				set_country_flag = CHI_19_nc_needs_to_be_started
 				activate_mission = CHI_19_national_congress_mission
 				if = {
-					limit = { NOT = { has_country_flag = CHI_xi_jinping_became_leader } }
-					set_country_flag = CHI_xi_jinping_became_leader
-					set_variable = { CHI_ic_leader = 3 }
+					limit = { NOT = { has_country_flag = CHI_18th_congress_successor_set } }
+					set_country_flag = CHI_18th_congress_successor_set
+					# Deterministische backstop: de historische AI heeft de BoP via CHI_back_princeling_network normaal al princeling gezet; deze set garandeert Xi als de decision-pacing faalt
+					if = {
+						limit = { is_historical_focus_on = yes is_ai = yes }
+						set_power_balance = {
+							id = CHI_factional_balance
+							left_side = CHI_princeling_shanghai
+							right_side = CHI_tuanpai_youth_league
+							set_value = -0.45
+						}
+					}
 					kill_country_leader = yes
-					create_country_leader = {
-						name = "Xi Jinping"
-						picture = "Xi_Jinping.dds"
-						ideology = Communist-State
-						traits = {
-							ex_engineer
-							emerging_Communist-State
-							rational
-							polished
-							honest
-							capable
+					if = {
+						limit = {
+							is_power_balance_in_range = {
+								id = CHI_factional_balance
+								range > CHI_collective_leadership_active
+							}
+						}
+						set_country_flag = CHI_bo_xilai_became_leader
+						set_variable = { CHI_ic_leader = 5 }
+						create_country_leader = {
+							name = "Bo Xilai"
+							picture = "bo_xilai.dds"
+							ideology = Communist-State
+							traits = {
+								emerging_Communist-State
+								CHI_bop_drift_bo
+							}
+						}
+					}
+					else = {
+						set_country_flag = CHI_xi_jinping_became_leader
+						set_variable = { CHI_ic_leader = 3 }
+						create_country_leader = {
+							name = "Xi Jinping"
+							picture = "Xi_Jinping.dds"
+							ideology = Communist-State
+							traits = {
+								ex_engineer
+								emerging_Communist-State
+								rational
+								polished
+								honest
+								capable
+								CHI_bop_drift_xi
+							}
 						}
 					}
 				}
@@ -11615,5 +11681,68 @@ CHI_space_program = {
 		}
 
 		ai_will_do = { base = 2 }
+	}
+}
+
+CHI_factional_balance_category = {
+
+	CHI_back_princeling_network = {
+		icon = GFX_decision_sco_watch_button
+
+		allowed = { original_tag = CHI }
+
+		available = {
+			has_country_flag = CHI_ic_initialized
+		}
+
+		cost = 75
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_back_princeling_network"
+			add_power_balance_value = {
+				id = CHI_factional_balance
+				value = -0.20
+				tooltip_side = CHI_princeling_shanghai
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 200
+				is_historical_focus_on = yes
+				has_country_leader = { name = "Hu Jintao" }
+				date > 2008.1.1
+				is_power_balance_in_range = {
+					id = CHI_factional_balance
+					range > CHI_shanghai_clique_leaning
+				}
+			}
+		}
+	}
+
+	CHI_promote_youth_league = {
+		icon = GFX_decision_sco_watch_button
+
+		allowed = { original_tag = CHI }
+
+		available = {
+			has_country_flag = CHI_ic_initialized
+		}
+
+		cost = 75
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_promote_youth_league"
+			add_power_balance_value = {
+				id = CHI_factional_balance
+				value = 0.20
+				tooltip_side = CHI_tuanpai_youth_league
+			}
+		}
+
+		ai_will_do = { base = 0 }
 	}
 }

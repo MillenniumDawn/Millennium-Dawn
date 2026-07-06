@@ -570,10 +570,6 @@ focus_tree = {
 
 		available = {
 			has_country_leader = { name =  "Jiang Zemin" }
-			is_power_balance_in_range = {
-				id = CHI_factional_balance
-				range > CHI_shanghai_clique_leaning
-			}
 		}
 
 		bypass = { NOT = { has_country_leader = { name =  "Jiang Zemin" } } }
@@ -1731,7 +1727,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHI_the_chinese_dream"
-			add_power_balance_value = { id = CHI_factional_balance value = 0.08 tooltip_side = CHI_princeling_shanghai }
+			add_power_balance_value = { id = CHI_factional_balance value = -0.08 tooltip_side = CHI_princeling_shanghai }
 			add_timed_idea = { idea = CHI_chinese_dream_momentum years = 3 }
 			set_country_flag = CHI_xi_era_begun
 		}
@@ -1765,7 +1761,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHI_document_nine"
 			add_timed_idea = { idea = CHI_ideological_rectification years = 2 }
 			newline = yes
-			add_power_balance_value = { id = CHI_factional_balance value = 0.05 tooltip_side = CHI_princeling_shanghai }
+			add_power_balance_value = { id = CHI_factional_balance value = -0.05 tooltip_side = CHI_princeling_shanghai }
 			newline = yes
 			every_other_country = {
 				limit = { has_government = democratic }
@@ -1836,7 +1832,7 @@ focus_tree = {
 			add_to_variable = { CHI_pol_political_power_factor = 0.10 tooltip = political_power_factor_tt }
 			add_to_variable = { CHI_pol_expected_adm_modifier = 1 tooltip = expected_adm_modifier_tt }
 			newline = yes
-			add_power_balance_value = { id = CHI_factional_balance value = 0.05 tooltip_side = CHI_princeling_shanghai }
+			add_power_balance_value = { id = CHI_factional_balance value = -0.05 tooltip_side = CHI_princeling_shanghai }
 			decrease_corruption = yes
 		}
 
@@ -2060,7 +2056,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHI_abolish_term_limits"
 			add_ideas = CHI_personal_rule_mandate
-			add_power_balance_value = { id = CHI_factional_balance value = 0.10 tooltip_side = CHI_princeling_shanghai }
+			add_power_balance_value = { id = CHI_factional_balance value = -0.10 tooltip_side = CHI_princeling_shanghai }
 			newline = yes
 			add_country_leader_trait = CHI_xi_abolishes_limits
 		}
@@ -2376,7 +2372,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHI_chongqing_model_nationalisation"
 			add_ideas = CHI_chongqing_model_idea
-			add_power_balance_value = { id = CHI_factional_balance value = -0.05 tooltip_side = CHI_princeling_shanghai }
+			add_power_balance_value = { id = CHI_factional_balance value = -0.05 }
 			set_country_flag = CHI_bo_xilai_path
 		}
 
@@ -6876,6 +6872,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -11413,12 +11413,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CHI_Chinese_Dominance executed"
-			CHI = {
-				add_to_variable = { CHI_sco_balance = 3 tooltip = CHI_sco_balance_tt }
-				clamp_variable = { var = CHI_sco_balance min = -10 max = 10 }
-				add_to_variable = { CHI_chinese_aggression = 2 tooltip = CHI_chinese_aggression_tt }
-				clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
-			}
+			add_to_variable = { CHI_sco_balance = 3 tooltip = CHI_sco_balance_tt }
+			clamp_variable = { var = CHI_sco_balance min = -10 max = 10 }
+			add_to_variable = { CHI_chinese_aggression = 2 tooltip = CHI_chinese_aggression_tt }
+			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
 			newline	= yes
 			set_temp_variable = { temp_opinion = 10 }
 			change_communist_cadres_opinion = yes
@@ -11443,6 +11441,10 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
@@ -11463,21 +11465,7 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Chinese_Dominance }
 
 		available = {
-			if = {
-				limit = { has_government = communism }
-				SOV = { has_government = communism }
-			}
-			else_if = {
-				limit = { has_government = democratic }
-				SOV = { has_government = democratic }
-			}
-			else_if = {
-				limit = { has_government = fascism }
-				SOV = { has_government = fascism }
-			}
-			else = {
-				SOV = { has_government = neutrality }
-			}
+			has_government = SOV
 			NOT = { has_completed_focus = CHI_Wolf_Warrior_Diplomacy }
 			custom_trigger_tooltip = {
 				tooltip = CHI_chinese_aggression_max_1_tt
@@ -11498,12 +11486,8 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			SOV = {
-				add_opinion_modifier = {
-					target = CHI
-					modifier = diplomatic_support
-				}
-			}
+			add_opinion_modifier = { target = SOV modifier = diplomatic_support }
+			reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_support }
 			add_to_variable = { CHI_sco_cohesion = 2 tooltip = CHI_sco_cohesion_tt }
 			clamp_variable = { var = CHI_sco_cohesion min = 0 max = 100 }
 			log = "[GetDateText]: [This.GetName]: focus CHI_Equal_Partners executed"
