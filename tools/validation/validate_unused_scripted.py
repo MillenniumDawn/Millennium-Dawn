@@ -69,9 +69,7 @@ FALSE_POSITIVE_FILES = frozenset(
         # Dummy effect existing only to suppress false positives on dynamically
         # built flag/variable names; deliberately never called.
         "!_cwtools_dummy_effects.txt",
-        # Convention/preset libraries — kept fully populated so any content that
-        # needs a ready-made trigger/effect has one, even when a given entry is
-        # not currently referenced anywhere in the mod. Whitelisted wholesale.
+        # Convention/preset libraries
         "00_scripted_triggers.txt",
         "00_law_blocking_triggers.txt",
         "00_influence_scripted_triggers.txt",
