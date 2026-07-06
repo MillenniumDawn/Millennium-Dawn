@@ -211,51 +211,67 @@ calculate_expected_military_spending = {
 resolve_gdp_c_deltas = {
 	if = {
 		limit = { check_variable = { gdp_per_capita < 5 } }
-		set_temp_variable = { gdp_c_delta = -1.8 }
-		set_temp_variable = { gdp_c_delta_lvl5 = -1.5 }
-		set_temp_variable = { gdp_c_delta_mil = -1.5 }
+		set_temp_variable = { gdp_c_tier = 0 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 10 } }
-		set_temp_variable = { gdp_c_delta = -1.2 }
-		set_temp_variable = { gdp_c_delta_lvl5 = -1 }
-		set_temp_variable = { gdp_c_delta_mil = -1 }
+		set_temp_variable = { gdp_c_tier = 1 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 15 } }
-		set_temp_variable = { gdp_c_delta = -0.6 }
-		set_temp_variable = { gdp_c_delta_lvl5 = -0.5 }
-		set_temp_variable = { gdp_c_delta_mil = -0.5 }
+		set_temp_variable = { gdp_c_tier = 2 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 20 } }
-		set_temp_variable = { gdp_c_delta = -0.1 }
-		set_temp_variable = { gdp_c_delta_lvl5 = 0.1 }
-		set_temp_variable = { gdp_c_delta_mil = 0 }
+		set_temp_variable = { gdp_c_tier = 3 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 30 } }
-		set_temp_variable = { gdp_c_delta = 0.4 }
-		set_temp_variable = { gdp_c_delta_lvl5 = 0.4 }
-		set_temp_variable = { gdp_c_delta_mil = 0.2 }
+		set_temp_variable = { gdp_c_tier = 4 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 40 } }
-		set_temp_variable = { gdp_c_delta = 0.9 }
-		set_temp_variable = { gdp_c_delta_lvl5 = 0.8 }
-		set_temp_variable = { gdp_c_delta_mil = 0.6 }
+		set_temp_variable = { gdp_c_tier = 5 }
 	}
 	else = {
-		set_temp_variable = { gdp_c_delta = 1.4 }
-		set_temp_variable = { gdp_c_delta_lvl5 = 1.2 }
-		set_temp_variable = { gdp_c_delta_mil = 1 }
+		set_temp_variable = { gdp_c_tier = 6 }
 	}
+	set_temp_variable = { gdp_c_delta = global.gdp_c_delta_table^gdp_c_tier }
+	set_temp_variable = { gdp_c_delta_lvl5 = global.gdp_c_delta_lvl5_table^gdp_c_tier }
+	set_temp_variable = { gdp_c_delta_mil = global.gdp_c_delta_mil_table^gdp_c_tier }
 }
 
 setup_initial_expected_spending_by_party = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: Setup for expected spending started"
 	}
+	clear_array = global.gdp_c_delta_table
+	add_to_array = { global.gdp_c_delta_table = -1.8 }
+	add_to_array = { global.gdp_c_delta_table = -1.2 }
+	add_to_array = { global.gdp_c_delta_table = -0.6 }
+	add_to_array = { global.gdp_c_delta_table = -0.1 }
+	add_to_array = { global.gdp_c_delta_table = 0.4 }
+	add_to_array = { global.gdp_c_delta_table = 0.9 }
+	add_to_array = { global.gdp_c_delta_table = 1.4 }
+
+	clear_array = global.gdp_c_delta_lvl5_table
+	add_to_array = { global.gdp_c_delta_lvl5_table = -1.5 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = -1 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = -0.5 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = 0.1 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = 0.4 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = 0.8 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = 1.2 }
+
+	clear_array = global.gdp_c_delta_mil_table
+	add_to_array = { global.gdp_c_delta_mil_table = -1.5 }
+	add_to_array = { global.gdp_c_delta_mil_table = -1 }
+	add_to_array = { global.gdp_c_delta_mil_table = -0.5 }
+	add_to_array = { global.gdp_c_delta_mil_table = 0 }
+	add_to_array = { global.gdp_c_delta_mil_table = 0.2 }
+	add_to_array = { global.gdp_c_delta_mil_table = 0.6 }
+	add_to_array = { global.gdp_c_delta_mil_table = 1 }
+
 	add_to_array = { global.expected_adm_sp = 2.5 }
 	add_to_array = { global.expected_adm_sp = 2.5 }
 	add_to_array = { global.expected_adm_sp = 1.5 }
