@@ -10,33 +10,18 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Key directories: `com
 
 Validation runs on GitHub CI at PR time — don't run proactively. Standardization tools: `tools/standardization/` (see its README). Diff summary: `python3 tools/analysis/review_branch.py [base-branch]`.
 
-**Never run `pre-commit run --all-files`.** Pre-commit's auto-fixers (trailing-whitespace, end-of-file-fixer, mixed-line-ending, fix-byte-order-marker) rewrite every matching file in the repo and leave hundreds of unrelated whitespace-only modifications in the worktree. Always scope runs to actually-modified files: `pre-commit run --files <path1> <path2>`, or rely on the normal `git commit` flow which only feeds staged files to the hooks. The branch you are on may already carry whitespace noise from a prior `--all-files` run — if it does, revert anything outside the scope of the task before committing.
+**Never run `pre-commit run --all-files`.** The auto-fixers rewrite every matching file in the repo and leave hundreds of unrelated whitespace-only modifications in the worktree. Always scope runs to actually-modified files (`pre-commit run --files <path1> <path2>`) or rely on the normal `git commit` flow, which only feeds staged files to the hooks. If the branch already carries whitespace noise from a prior `--all-files` run, revert anything outside the task's scope before committing.
 
-### Pre-commit vs CI divergence
-
-Pre-commit and CI do not run the same hook set. Things that pass locally can still fail CI, and vice versa:
-
-- Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `check_common_mistakes.py` and `validate_defines.py`. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
-- `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
-- `check_braces.py`, `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land broken braces or BOM regressions.
-- `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate the manifest with `gen_vanilla_defines_manifest.py` after a HOI4 version bump (same for `vanilla_sprites.txt` via `gen_vanilla_sprites_manifest.py`).
-- `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`strict: false`, informational) until the ~30 pre-existing undefined-idea references on main are triaged. Once cleared, flip the CI entry to strict.
-- `validate_unused_textures.py` is wired into pre-commit as `stages: [manual]` and into CI as informational (`strict: false`). The repo currently carries ~22k unreferenced textures — informational mode keeps the audit visible without blocking PRs.
-- `validate_set_variables.py` runs **CI-only** (informational). Its false-positive volume at repo scale makes it too noisy for a commit gate, so it has no pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) against a specific variable when needed.
-
-### Tooling deprecation watch
-
-- `pre-commit/mirrors-prettier` is archived upstream. Maintained fork: `rbubley/mirrors-prettier`. Migrate next time the prettier pin needs touching.
+Pre-commit and CI run **different hook sets** — passing locally does not guarantee passing CI, and vice versa. Before wiring, judging, or debugging any validator, read `.claude/docs/validation-pipeline.md` (CI-only validators, pre-commit-only fixers, strictness divergences, vanilla-manifest regeneration, deprecation watch).
 
 ## Formatting
 
 - Tabs for indentation; `{` on same line, `}` on own line at outer indent; 1 blank line between elements
 - Simple checks on one line: `available = { has_country_flag = some_flag }`
-- Comments are small, targeted, and load-bearing: add one only when the _why_ is non-obvious and removing it would lose real information, and keep it to a single line. Cut anything that restates the code, narrates a change, points at callers, or justifies a mechanic in flavour prose (see `.claude/rules/general-rules.md`; Python tooling: `tools/COMMENT_STYLE.md`)
+- Comments are small, targeted, and load-bearing — comment policy: `.claude/rules/general-rules.md` (Python tooling: `tools/COMMENT_STYLE.md`)
 - Remove unused/commented-out code
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
-- Prefix country-specific variables with tag (e.g., `ISR_operation_success`)
-- **snake_case** for all identifiers
+- Prefix country-specific variables with tag (e.g., `ISR_operation_success`); **snake_case** for all identifiers
 
 ## Performance
 
@@ -51,13 +36,7 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 - Omit defaults: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
 - No empty `mutually_exclusive`/`available` blocks; limit permanent effects to 5
 - Never `available = { always = no }` with a `bypass` — use matching condition
-- High-cost focuses (cost >= 8, or >= 5 for mil/econ/research): add a bankruptcy guard inside `ai_will_do`:
-  ```
-  modifier = {
-      factor = 0
-      has_active_mission = bankruptcy_incoming_collapse
-  }
-  ```
+- High-cost focuses (cost >= 8, or >= 5 for mil/econ/research): add the standard bankruptcy guard (`has_active_mission = bankruptcy_incoming_collapse` → `factor = 0`) inside `ai_will_do` — block in `.claude/docs/focus-tree-reference.md`
 - Ref: `.claude/docs/focus-tree-reference.md`
 
 ## Decisions
@@ -69,51 +48,31 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 ## Events
 
 - Always `is_triggered_only = yes`; log only if option has effects; `major = yes` for news only
-- Date-based events: use `common/scripted_effects/00_yearly_effects.txt` with owner-guard pattern
-- Cross-country events: add `TT_IF_THEY_ACCEPT` tooltip; add `TT_IF_THEY_REJECT` only if rejection has consequences (see `.claude/rules/general-rules.md`)
+- Date-based events: owner-guard pattern in `common/scripted_effects/00_yearly_effects.txt`
 - `add_building_construction` for `naval_base` requires `province = XXXXX`
-- New subideology parties: register in `common/scripted_localisation/00_subideology_scripted_localisation.txt`
+- New subideology parties: register in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
 - Ref: `.claude/docs/event-reference.md`
 
 ## Ideas
 
-- Always include `picture = sprite_name` — ideas without a picture show a blank icon
-- Include `allowed_civil_war = { always = yes }` for civil war tags
-- Use `original_tag` not `tag` in `allowed` blocks
-- `country`/`hidden_ideas` categories: remove `allowed = { always = no }` (default) and `allowed = { tag = TAG }`; other categories: `allowed` is load-bearing
-- Remove `cancel = { always = no }` and empty `on_add = { log = "" }`
-- Ref: `.claude/docs/idea-reference.md`
+- Always `picture = sprite_name` (no picture = blank icon); `original_tag` not `tag` in `allowed` blocks
+- Category-specific `allowed`-block scoping and removable defaults (`cancel`, `on_add`, `allowed_civil_war`): `.claude/docs/idea-reference.md`
 
 ## MIOs
 
-- ID: `TAG_organization_name`; always `allowed = { original_tag = TAG }`
-- `task_capacity` proportional to nation size (10-25)
-- Trait grid `y = 0..9`; add `initial_trait` for defining bonus
-- Ref: `.claude/docs/mio-reference.md`
+- ID: `TAG_organization_name`; always `allowed = { original_tag = TAG }`; sizing, trait grid, and `initial_trait` rules: `.claude/docs/mio-reference.md`
 
 ## Intelligence Agency Upgrades
 
-New upgrades require wiring across five files: definition, on_actions registry (four arrays + bump `resize_array size =`), loc triple (`id`/`_name`/`_gfx`), scripted_gui prereqs, sprite in `interface/*.gfx`. See `common/intelligence_agency_upgrades/README.md`.
+New upgrades require wiring across five files — read `common/intelligence_agency_upgrades/README.md` before touching them.
 
 ## AI Strategies & Equipment
 
-Unit production has three layers: threat gate (`ai_is_threatened` live scripted trigger), role ratios, templates. See `.claude/docs/ai-strategy-reference.md`.
-
-- `role_ratio id` must match `role` in `common/ai_templates/` (validated by pre-commit hook)
-- Unit names are case-sensitive (validated by pre-commit hook)
-- Subjects are excluded from `ai_default_no_build_units` (`is_subject = no`) and get a defensive baseline via `ai_subject_defensive_build`
-- `give_AI_templates` uses `division_template` with `has_template` guards
-
-Equipment variants (`common/ai_equipment/`): see `.claude/docs/ai-equipment-reference.md`. Key rules:
-
-- Every role template needs `category`, `roles`, top-level `priority`; every design needs `target_variant` with `type`, `match_value`, `modules`
-- Nations blocked from generic files must have all roles covered in custom/shared files (validated by pre-commit hook)
-- CV planes: `ai_type` must be one of `cv_fighter`/`cv_interceptor`/`cv_cas`/`cv_naval_bomber`/`cv_suicide`
-- `equipment_variant_production_factor` penalties cascade to subtypes — keep base penalties <= -25%
+Unit production has three layers — threat gate (`ai_is_threatened`), role ratios, templates: `.claude/docs/ai-strategy-reference.md`. Equipment variants (role coverage, `target_variant`, CV-plane `ai_type`s, penalty cascades): `.claude/docs/ai-equipment-reference.md`. Both dirs have pre-commit-validated naming (role_ratio ↔ ai_templates roles, case-sensitive unit names, nation coverage) — read the doc before editing `common/ai_strategy/`, `common/ai_equipment/`, or `common/ai_templates/`.
 
 ## Shell Session
 
-- **Never reset the working directory.** Do not `cd` to a different repo, drive, or temp path "just to run one command." The working directory is fixed for the session; relative paths and follow-up edits assume it. Use absolute paths or per-command flags (e.g., `git -C <dir>`, `grep <path>`, `pre-commit run --files <path>`) instead. Even commands that appear to recover (`cd <repo-root> && ...`) have already broken the invariant for any tool that snapshots cwd before the command runs.
+**Never reset the working directory.** No `cd` to another repo, drive, or temp path — the cwd is fixed for the session, and relative paths, follow-up edits, and tool snapshots assume it. Use absolute paths or per-command flags (`git -C <dir>`, `grep <path>`, `pre-commit run --files <path>`).
 
 ## Git Commits
 
@@ -131,12 +90,14 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 
 ## Key Resources
 
-- [HOI4 Scripting](.claude/docs/hoi4-data-structures.md) | [Documentation Index](.claude/docs/documentation-references.md)
+- [HOI4 Scripting](.claude/docs/hoi4-data-structures.md) | [Documentation Index](.claude/docs/documentation-references.md) (complete doc catalog)
 - [Focus Trees](.claude/docs/focus-tree-reference.md) | [Events](.claude/docs/event-reference.md) | [Decisions](.claude/docs/decision-reference.md)
 - [Ideas](.claude/docs/idea-reference.md) | [MIOs](.claude/docs/mio-reference.md) | [Search Filters](.claude/docs/search-filters.md)
 - [AI Strategy](.claude/docs/ai-strategy-reference.md) | [AI Equipment](.claude/docs/ai-equipment-reference.md)
+- [OOB & Equipment Variants](.claude/docs/oob-variants-reference.md) | [Namelists](.claude/docs/namelist-reference.md)
 - [Diplomatic Actions](.claude/docs/diplomatic-action-reference.md) | [Content Guidelines](.claude/docs/content-guidelines.md)
 - [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
-- [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`) | [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
-- [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — full list of non-vanilla modifier keys defined in `common/modifier_definitions/`
+- [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
+- [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
+- [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — non-vanilla modifier keys in `common/modifier_definitions/`
