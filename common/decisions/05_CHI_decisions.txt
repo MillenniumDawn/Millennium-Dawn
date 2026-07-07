@@ -3194,7 +3194,6 @@ CHI_national_commitee_decisions_category = {
 			}
 		}
 	}
-
 	CHI_eleventh_five_year_plan_mission = {
 		icon = generic_construction
 
@@ -3344,6 +3343,60 @@ CHI_national_commitee_decisions_category = {
 			base = 1
 		}
 	}
+	CHI_build_public_housing = {
+		icon = generic_construction
+
+		state_target = yes
+		on_map_mode = map_only
+
+		highlight_states = {
+			highlight_states_trigger = {
+				is_owned_and_controlled_by = ROOT
+				NOT = { has_state_flag = CHI_housing_project_complete }
+			}
+			highlight_color_before_active = 3
+			highlight_color_while_active = 2
+		}
+
+		target_trigger = {
+			FROM = { is_core_of = CHI }
+		}
+
+		visible = {
+			has_completed_focus = CHI_public_rental_housing_drive
+			FROM = {
+				NOT = { has_state_flag = CHI_housing_project_complete }
+			}
+		}
+
+		available = {
+			num_of_civilian_factories_available_for_projects > 14
+			FROM = {
+				NOT = { has_state_flag = CHI_housing_project_complete }
+			}
+		}
+
+		cost = 75
+		days_remove = 730
+
+		modifier = {
+			civilian_factory_use = 15
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_build_public_housing in [FROM.GetName] started"
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_build_public_housing in [FROM.GetName] completed"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_political_system }
+			add_to_variable = { CHI_pol_consumer_goods_expected_value = -0.01 tooltip = consumer_goods_expected_value_tt }
+			add_to_variable = { CHI_pol_population_tax_income_multiplier_modifier = 0.005 tooltip = population_tax_income_multiplier_modifier_tt }
+			FROM = { set_state_flag = CHI_housing_project_complete }
+		}
+
+		ai_will_do = { base = 3 }
+	}
 
 	CHI_grey_society_crisis = {
 		icon = generic_political_discourse
@@ -3356,7 +3409,7 @@ CHI_national_commitee_decisions_category = {
 
 		available = { hidden_trigger = { always = no } }
 
-		visible = { has_country_flag = CHI_grey_society_crisis_started }
+		activation = { has_country_flag = CHI_grey_society_crisis_started }
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission CHI_grey_society_crisis timed out"
@@ -3608,12 +3661,13 @@ CHI_national_commitee_decisions_category = {
 	}
 }
 
+
 CHI_SAR_decisions_category = {
 
 	CHI_pressure_derecognize_TAI = {
 		allowed = { original_tag = CHI }
 
-		icon = x
+		icon = eng_trade_unions_demand
 
 		target_array = global.countries
 
@@ -3674,6 +3728,7 @@ CHI_SAR_decisions_category = {
 	}
 	CHI_establish_education_centres = {
 		allowed = { original_tag = CHI }
+		icon = generic_nationalism
 
 		visible = {
 			has_completed_focus = CHI_ETK_education_centres
@@ -3722,7 +3777,7 @@ CHI_SAR_decisions_category = {
 	CHI_han_settlement_small = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_nationalism
 
 		allowed = { original_tag = CHI }
 
@@ -3774,7 +3829,7 @@ CHI_SAR_decisions_category = {
 	CHI_han_settlement_medium = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_nationalism
 
 		allowed = { original_tag = CHI }
 
@@ -3824,7 +3879,7 @@ CHI_SAR_decisions_category = {
 	}
 
 	CHI_han_settlement_large = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_nationalism
 
 		allowed = { original_tag = CHI }
 
@@ -3875,7 +3930,7 @@ CHI_SAR_decisions_category = {
 		}
 	}
 	CHI_MON_reunification_retry = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_form_nation
 
 		allowed = { original_tag = CHI }
 
@@ -3908,10 +3963,10 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	TAI_media_infiltration = {
+	CHI_TAI_media_infiltration = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_brainwash
 
 		allowed = { original_tag = CHI }
 
@@ -3932,7 +3987,7 @@ CHI_SAR_decisions_category = {
 		days_re_enable = 120
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TAI_media_infiltration"
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_media_infiltration"
 			TAI = {
 				add_to_variable = { party_pop_array^1 = 0.02 }
 				add_to_variable = { party_pop_array^2 = -0.01 }
@@ -3958,10 +4013,10 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	TAI_business_council_funding = {
+	CHI_TAI_business_council_funding = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_economy
+		icon = generic_welfare
 
 		allowed = { original_tag = CHI }
 
@@ -3981,7 +4036,7 @@ CHI_SAR_decisions_category = {
 		days_re_enable = 90
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TAI_business_council_funding"
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_business_council_funding"
 			TAI = { add_to_variable = { pan_blue_coalition_support = 0.02 } }
 			add_to_variable = { CHI_TAI_trust = 3 }
 			random = {
@@ -4004,10 +4059,10 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	TAI_cultural_exchange_program = {
+	CHI_TAI_cultural_exchange_program = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_political_discourse
+		icon = eng_trade_unions_support
 
 		allowed = { original_tag = CHI }
 
@@ -4026,7 +4081,7 @@ CHI_SAR_decisions_category = {
 		days_re_enable = 60
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TAI_cultural_exchange_program"
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_cultural_exchange_program"
 			add_to_variable = { CHI_TAI_trust = 3 }
 			TAI = {
 				add_to_variable = { party_pop_array^14 = 0.01 }
@@ -4052,10 +4107,10 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	TAI_cross_strait_infrastructure_investment = {
+	CHI_TAI_cross_strait_infrastructure_investment = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_economy
+		icon = generic_construction
 
 		allowed = { original_tag = CHI }
 
@@ -4077,7 +4132,7 @@ CHI_SAR_decisions_category = {
 		days_re_enable = 180
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TAI_cross_strait_infrastructure_investment"
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_cross_strait_infrastructure_investment"
 			add_to_variable = { CHI_TAI_trust = 6 }
 			TAI = {
 				random_owned_state = {
@@ -4118,7 +4173,7 @@ CHI_SAR_decisions_category = {
 	CHI_TAI_pro_china_party_networks_mission = {
 		allowed = { original_tag = CHI }
 
-		icon = peoples_republic_of_china
+		icon = eng_propaganda_campaigns
 
 		is_good = yes
 		days_mission_timeout = 30
@@ -4156,12 +4211,9 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	### Taiwan Strait Aggression Decisions ###
-
-	## Chinese Military Decisions
 	CHI_TAI_amphibious_exercise = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = INS_take_java
 
 		visible = {
 			has_completed_focus = CHI_TAI_fleet_modernization
@@ -4198,7 +4250,7 @@ CHI_SAR_decisions_category = {
 		fixed_random_seed = no
 
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_air
+		icon = recruit_operative
 
 		visible = {
 			has_completed_focus = CHI_TAI_air_superiority
@@ -4241,7 +4293,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_rocket_test = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = generic_operation
 
 		visible = {
 			has_completed_focus = CHI_TAI_dongfeng_program
@@ -4287,7 +4339,7 @@ CHI_SAR_decisions_category = {
 		fixed_random_seed = no
 
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = generic_intelligence_operation
 
 		visible = {
 			has_completed_focus = CHI_TAI_air_superiority
@@ -4327,7 +4379,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_blockade_simulation = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_TAI_dongfeng_program
@@ -4363,7 +4415,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_cyberattack = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = hol_radio_oranje
 
 		visible = {
 			has_completed_focus = CHI_TAI_cyber_warfare
@@ -4393,12 +4445,11 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	## Chinese counter-decisions (reactive to US actions)
 	CHI_TAI_shadow_carrier = {
 		fixed_random_seed = no
 
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_naval
+		icon = HOL_air_carrier
 
 		visible = {
 			has_completed_focus = CHI_TAI_cross_strait_policy
@@ -4433,7 +4484,7 @@ CHI_SAR_decisions_category = {
 		fixed_random_seed = no
 
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_air
+		icon = eneric_air
 
 		visible = {
 			has_completed_focus = CHI_TAI_cross_strait_policy
@@ -4464,7 +4515,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_un_protest = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_civil_support
 
 		visible = {
 			has_completed_focus = CHI_TAI_cross_strait_policy
@@ -4491,7 +4542,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_maritime_zone = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_TAI_blockade_capability
@@ -4533,7 +4584,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_partial_blockade = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_country_flag = CHI_TAI_maritime_zone_active
@@ -4579,7 +4630,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_full_blockade = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_country_flag = CHI_TAI_partial_blockade_active
@@ -4617,10 +4668,9 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	## Naval exercise decision
 	CHI_TAI_strait_naval_exercise = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_TAI_amphibious_doctrine
@@ -4666,12 +4716,11 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	## Chinese diplomatic decisions
 	CHI_TAI_influence_us_election = {
 		fixed_random_seed = no
 
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_brainwash
 
 		visible = {
 			has_completed_focus = CHI_TAI_lobby_network
@@ -4711,10 +4760,9 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	## Chinese proxy decisions
 	CHI_TAI_support_houthis = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = infiltrate_state
 
 		visible = {
 			has_completed_focus = CHI_TAI_proxy_strategy
@@ -4756,7 +4804,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_scs_provocations = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = infiltrate_state
 
 		visible = {
 			has_completed_focus = CHI_TAI_proxy_strategy
@@ -4794,7 +4842,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_middleeast_diversion = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_political_discourse
+		icon = infiltrate_state
 
 		visible = {
 			has_completed_focus = CHI_TAI_proxy_strategy
@@ -4849,7 +4897,7 @@ CHI_SAR_decisions_category = {
 		fixed_random_seed = no
 
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = ger_military_buildup
 
 		visible = {
 			has_completed_focus = CHI_TAI_proxy_strategy
@@ -4897,7 +4945,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_nk_provocations = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = eng_blackshirt_march
 
 		visible = {
 			has_completed_focus = CHI_TAI_proxy_strategy
@@ -4927,7 +4975,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_support_russia = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = recogn_russia_button
 
 		visible = {
 			has_completed_focus = CHI_TAI_proxy_strategy
@@ -4959,12 +5007,11 @@ CHI_SAR_decisions_category = {
 		}
 	}
 
-	## Distract America decisions
 	CHI_TAI_fund_us_opposition = {
 		fixed_random_seed = no
 
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_welfare
 
 		visible = {
 			has_completed_focus = CHI_TAI_distract_america
@@ -5007,7 +5054,7 @@ CHI_SAR_decisions_category = {
 
 	CHI_TAI_exploit_us_commitments = {
 		allowed = { original_tag = CHI }
-		icon = GFX_decision_generic_military
+		icon = generic_civil_support
 
 		visible = {
 			has_completed_focus = CHI_TAI_distract_america
@@ -5041,10 +5088,8 @@ CHI_SAR_decisions_category = {
 
 CHI_south_china_sea_category = {
 
-	# ===== Path A — Cabbage Strategy =====
-
 	CHI_scs_deploy_maritime_militia = {
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_The_Cabbage_Strategy
@@ -5081,7 +5126,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_island_construction_runway = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_The_Sansha_Administrative_Upgrade
@@ -5127,7 +5172,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_island_construction_sam_battery = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_The_Sansha_Administrative_Upgrade
@@ -5173,7 +5218,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_island_construction_radar = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_The_Sansha_Administrative_Upgrade
@@ -5219,7 +5264,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_island_construction_civilian = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_The_Sansha_Administrative_Upgrade
@@ -5265,7 +5310,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_standoff_philippines = {
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_The_Scarborough_Model
@@ -5339,7 +5384,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_standoff_vietnam = {
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_The_Scarborough_Model
@@ -5413,7 +5458,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_standoff_malaysia = {
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_The_Scarborough_Model
@@ -5487,7 +5532,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_natuna_provocation = {
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_The_Cabbage_Tightens
@@ -5519,7 +5564,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_natuna_press_claim = {
-		icon = GFX_decision_generic_naval
+		icon = eng_trade_unions_demand
 
 		fire_only_once = yes
 
@@ -5555,10 +5600,8 @@ CHI_south_china_sea_category = {
 		}
 	}
 
-	# ===== Path B — Spirit of Zheng He =====
-
 	CHI_scs_invoke_doc_2002 = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_political_discourse
 
 		fire_only_once = yes
 
@@ -5592,7 +5635,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_block_asean_consensus = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_break_treaty
 
 		visible = {
 			has_completed_focus = CHI_The_Maritime_Silk_Road_Initiative
@@ -5630,7 +5673,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_joint_development_VIE = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_The_Maritime_Silk_Road_Initiative
@@ -5677,7 +5720,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_joint_development_PHI = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_The_Maritime_Silk_Road_Initiative
@@ -5724,7 +5767,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_joint_development_MAY = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_The_Maritime_Silk_Road_Initiative
@@ -5771,7 +5814,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_infrastructure_loan_VIE = {
-		icon = GFX_decision_generic_political_discourse
+		icon = syr_money_button
 
 		visible = {
 			has_country_flag = CHI_scs_jdz_signed_VIE
@@ -5813,7 +5856,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_infrastructure_loan_PHI = {
-		icon = GFX_decision_generic_political_discourse
+		icon = syr_money_button
 
 		visible = {
 			has_country_flag = CHI_scs_jdz_signed_PHI
@@ -5855,7 +5898,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_infrastructure_loan_MAY = {
-		icon = GFX_decision_generic_political_discourse
+		icon = syr_money_button
 
 		visible = {
 			has_country_flag = CHI_scs_jdz_signed_MAY
@@ -5897,7 +5940,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_boundary_codification_VIE = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_decision
 
 		fire_only_once = yes
 
@@ -5938,7 +5981,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_boundary_codification_PHI = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_decision
 
 		fire_only_once = yes
 
@@ -5979,7 +6022,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_boundary_codification_MAY = {
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_decision
 
 		fire_only_once = yes
 
@@ -6020,7 +6063,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_first_island_chain_exercise = {
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_Liu_Huaqing_Doctrine
@@ -6053,7 +6096,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_carrier_strike_group_deployment = {
-		icon = GFX_decision_generic_naval
+		icon = HOL_air_carrier
 
 		visible = {
 			has_completed_focus = CHI_The_PLAN_Expeditionary_Buildup
@@ -6093,7 +6136,7 @@ CHI_south_china_sea_category = {
 	CHI_scs_assertive_patrol_VIE = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_The_Mandate_Of_The_Seas
@@ -6155,7 +6198,7 @@ CHI_south_china_sea_category = {
 	CHI_scs_assertive_patrol_PHI = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_The_Mandate_Of_The_Seas
@@ -6217,7 +6260,7 @@ CHI_south_china_sea_category = {
 	CHI_scs_assertive_patrol_MAY = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		visible = {
 			has_completed_focus = CHI_The_Mandate_Of_The_Seas
@@ -6277,7 +6320,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_demand_tribute_VIE = {
-		icon = GFX_decision_generic_naval
+		icon = eng_trade_unions_demand
 
 		fire_only_once = yes
 
@@ -6323,7 +6366,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_demand_tribute_PHI = {
-		icon = GFX_decision_generic_naval
+		icon = eng_trade_unions_demand
 
 		fire_only_once = yes
 
@@ -6369,7 +6412,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_demand_tribute_MAY = {
-		icon = GFX_decision_generic_naval
+		icon = eng_trade_unions_demand
 
 		fire_only_once = yes
 
@@ -6415,7 +6458,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_summon_dragon_king_blessing = {
-		icon = GFX_decision_generic_political_discourse
+		icon = eng_abdication_crisis
 
 		visible = {
 			has_completed_focus = CHI_The_Mandate_Of_The_Seas
@@ -6440,7 +6483,7 @@ CHI_south_china_sea_category = {
 	}
 
 	CHI_scs_reclaim_taiping = {
-		icon = GFX_decision_generic_naval
+		icon = eng_puppet_usa
 
 		fire_only_once = yes
 
@@ -6479,11 +6522,10 @@ CHI_south_china_sea_category = {
 	}
 }
 
-# Japan branch rework
 CHI_japan_strategy = {
 
 	CHI_activate_rare_earth_embargo = {
-		icon = GFX_decision_generic_industry
+		icon = SWI_isolate_switzerland
 
 		allowed = { original_tag = CHI }
 
@@ -6527,7 +6569,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_lift_rare_earth_embargo = {
-		icon = GFX_decision_generic_political_actions
+		icon = SWI_support_humanitarian_efforts
 
 		allowed = { original_tag = CHI }
 
@@ -6566,9 +6608,8 @@ CHI_japan_strategy = {
 		}
 	}
 
-
 	CHI_patrol_diaoyu_fishing_grounds = {
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		allowed = { original_tag = CHI }
 
@@ -6602,7 +6643,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_deploy_paf_maritime_militia = {
-		icon = GFX_decision_generic_naval
+		icon = SWE_set_navy_budget
 
 		allowed = { original_tag = CHI }
 
@@ -6638,7 +6679,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_recall_paf_maritime_militia = {
-		icon = GFX_decision_generic_political_actions
+		icon = SWE_set_navy_budget
 
 		allowed = { original_tag = CHI }
 
@@ -6671,9 +6712,8 @@ CHI_japan_strategy = {
 		}
 	}
 
-
 	CHI_jap_capitulate_to_demands = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_political_discourse
 
 		allowed = { original_tag = JAP }
 
@@ -6716,7 +6756,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_jap_diversify_rare_earth = {
-		icon = GFX_decision_generic_industry
+		icon = generic_construction
 
 		allowed = { original_tag = JAP }
 
@@ -6762,9 +6802,8 @@ CHI_japan_strategy = {
 		}
 	}
 
-
 	CHI_jap_reinforce_coast_guard = {
-		icon = GFX_decision_generic_naval
+		icon = generic_naval
 
 		allowed = { original_tag = JAP }
 
@@ -6798,7 +6837,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_jap_open_back_channel = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_political_actions
 
 		allowed = { original_tag = JAP }
 
@@ -6836,9 +6875,8 @@ CHI_japan_strategy = {
 		}
 	}
 
-
 	CHI_push_rcep_signing = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_political_actions
 
 		allowed = { original_tag = CHI }
 
@@ -6870,9 +6908,8 @@ CHI_japan_strategy = {
 		}
 	}
 
-
 	CHI_cancel_east_china_sea_exercise = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_break_treaty
 
 		allowed = { original_tag = CHI }
 
@@ -6905,9 +6942,8 @@ CHI_japan_strategy = {
 		}
 	}
 
-
 	CHI_convene_bilateral_channel = {
-		icon = GFX_decision_generic_political_actions
+		icon = hol_exchange_intelligence_data
 
 		allowed = { original_tag = CHI }
 
@@ -6937,9 +6973,8 @@ CHI_japan_strategy = {
 		}
 	}
 
-
 	CHI_invite_JAP_mitsubishi_aerospace = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -6976,7 +7011,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_kawasaki_aerospace = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7012,7 +7047,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_jsw = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7055,7 +7090,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_mhi_tank = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7097,7 +7132,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_komatsu = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7139,7 +7174,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_subaru = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7181,7 +7216,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_howa = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7223,7 +7258,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_nec = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7265,7 +7300,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_toshiba = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7307,7 +7342,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_mitsubishi_shipbuilding = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7344,7 +7379,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_kawasaki_shipbuilding = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7380,7 +7415,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_ihi = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7416,7 +7451,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_jmu = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7452,7 +7487,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_toyota = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7489,7 +7524,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_honda = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7526,7 +7561,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_nippon_steel = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7563,7 +7598,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_hitachi = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7600,7 +7635,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_panasonic = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7637,7 +7672,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_invite_JAP_jr_east = {
-		icon = GFX_decision_generic_industry
+		icon = JAP_zaibatsu_faction
 		fire_only_once = yes
 
 		visible = {
@@ -7674,12 +7709,10 @@ CHI_japan_strategy = {
 	}
 }
 
-### Belt and Road Initiative ###
-
 CHI_BRI_management = {
 
 	CHI_FOCAC_Summit = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_speech
 
 		visible = {
 			has_completed_focus = CHI_Forum_on_China_African_Cooperation
@@ -7719,7 +7752,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_BRI_Forum_Triennial = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_speech
 
 		visible = {
 			has_completed_focus = CHI_BRI_Forum_Beijing
@@ -7753,7 +7786,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_Debt_Restructuring = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_fundraising
 
 		visible = {
 			has_completed_focus = CHI_Win_Win_Cooperation
@@ -7792,7 +7825,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_Asset_Seizure = {
-		icon = GFX_decision_generic_naval
+		icon = infiltrate_state
 
 		visible = {
 			has_completed_focus = CHI_Predatory_Lending_Doctrine
@@ -7829,7 +7862,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_Surveillance_Export = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_police_action
 
 		visible = {
 			has_completed_focus = CHI_Digital_Silk_Road_Initiative
@@ -7879,10 +7912,9 @@ CHI_BRI_management = {
 
 	# BRI type-counter tier promotion decisions
 	# Each promotes the next tier idea when the corresponding counter threshold is met.
-	# Cost: 25 PP. AI claims automatically (factor = 100).
 
 	CHI_BRI_promote_maritime_network = {
-		icon = GFX_decision_generic_operation
+		icon = syr_self_button
 
 		visible = {
 			NOT = { has_idea = CHI_bri_ports_tier_3_idea }
@@ -7923,7 +7955,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_BRI_promote_overland_corridors = {
-		icon = GFX_decision_generic_operation
+		icon = syr_self_button
 
 		visible = {
 			NOT = { has_idea = CHI_bri_railways_tier_3_idea }
@@ -7964,7 +7996,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_BRI_promote_energy_arteries = {
-		icon = GFX_decision_generic_operation
+		icon = syr_self_button
 
 		visible = {
 			NOT = { has_idea = CHI_bri_pipelines_tier_3_idea }
@@ -8005,7 +8037,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_BRI_promote_digital_silk_road = {
-		icon = GFX_decision_generic_operation
+		icon = syr_self_button
 
 		visible = {
 			NOT = { has_idea = CHI_bri_telecom_tier_3_idea }
@@ -8046,7 +8078,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_BRI_promote_resource_concessions = {
-		icon = GFX_decision_generic_operation
+		icon = syr_self_button
 
 		visible = {
 			NOT = { has_idea = CHI_bri_mines_tier_3_idea }
@@ -8087,7 +8119,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_BRI_promote_power_generation = {
-		icon = GFX_decision_generic_operation
+		icon = syr_self_button
 
 		visible = {
 			NOT = { has_idea = CHI_bri_powerplants_tier_3_idea }
@@ -8128,7 +8160,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_BRI_promote_economic_zones = {
-		icon = GFX_decision_generic_operation
+		icon = syr_self_button
 
 		visible = {
 			NOT = { has_idea = CHI_bri_industrial_zones_tier_3_idea }
@@ -8169,7 +8201,7 @@ CHI_BRI_management = {
 	}
 
 	CHI_BRI_promote_prestige_diplomacy = {
-		icon = GFX_decision_generic_operation
+		icon = syr_self_button
 
 		visible = {
 			NOT = { has_idea = CHI_bri_prestige_tier_3_idea }
@@ -8213,7 +8245,7 @@ CHI_BRI_management = {
 CHI_BRI_recipient_actions = {
 
 	BRI_apply_for_port_project = {
-		icon = GFX_decision_generic_naval
+		icon = generic_decision
 		name = BRI_apply_named_PORT
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
@@ -8250,7 +8282,7 @@ CHI_BRI_recipient_actions = {
 	}
 
 	BRI_apply_for_railway_project = {
-		icon = GFX_decision_generic_industry
+		icon = generic_decision
 		name = BRI_apply_named_RAIL
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
@@ -8303,7 +8335,7 @@ CHI_BRI_recipient_actions = {
 	}
 
 	BRI_apply_for_pipeline_project = {
-		icon = GFX_decision_generic_industry
+		icon = generic_decision
 		name = BRI_apply_named_PIPELINE
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
@@ -8345,7 +8377,7 @@ CHI_BRI_recipient_actions = {
 	}
 
 	BRI_apply_for_telecom_project = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_decision
 		name = BRI_apply_named_TELECOM
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
@@ -8393,7 +8425,7 @@ CHI_BRI_recipient_actions = {
 	}
 
 	BRI_apply_for_sez_project = {
-		icon = GFX_decision_generic_industry
+		icon = generic_decision
 		name = BRI_apply_named_SEZ
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
@@ -8430,7 +8462,7 @@ CHI_BRI_recipient_actions = {
 	}
 
 	BRI_apply_for_mining_project = {
-		icon = GFX_decision_generic_industry
+		icon = generic_decision
 		name = BRI_apply_named_MINE
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
@@ -8474,7 +8506,7 @@ CHI_BRI_recipient_actions = {
 	}
 
 	BRI_apply_for_powerplant_project = {
-		icon = GFX_decision_generic_industry
+		icon = generic_decision
 		name = BRI_apply_named_ENERGY
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
@@ -8510,7 +8542,7 @@ CHI_BRI_recipient_actions = {
 	}
 
 	BRI_apply_for_prestige_project = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_decision
 		name = BRI_apply_named_PRESTIGE
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
@@ -8547,7 +8579,7 @@ CHI_BRI_recipient_actions = {
 	}
 
 	BRI_request_loan_extension = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_decision
 		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
 		visible = {
@@ -8582,7 +8614,7 @@ CHI_BRI_recipient_actions = {
 CHI_VEN_petrocaribe_program = {
 
 	CHI_VEN_oil_processing_aid = {
-		icon = GFX_decision_generic_industry
+		icon = oil
 		visible = { country_exists = VEN VEN = { has_opinion_modifier = CHI_loans_for_oil_partner } }
 		available = {
 			has_political_power > 74
@@ -8611,7 +8643,7 @@ CHI_VEN_petrocaribe_program = {
 	}
 
 	CHI_VEN_emergency_food_aid = {
-		icon = GFX_decision_generic_political_action
+		icon = SWI_support_humanitarian_efforts
 		visible = { country_exists = VEN }
 		available = {
 			has_political_power > 49
@@ -8639,7 +8671,7 @@ CHI_VEN_petrocaribe_program = {
 	}
 
 	CHI_VEN_currency_swap_line = {
-		icon = GFX_decision_generic_industry
+		icon = sovfed_money_button
 		visible = {
 			country_exists = VEN
 			date > 2017.1.1
@@ -8668,7 +8700,7 @@ CHI_VEN_petrocaribe_program = {
 CHI_LATAM_security_options = {
 
 	CHI_LATAM_emergency_aid = {
-		icon = GFX_decision_generic_political_action
+		icon = SWI_support_humanitarian_efforts
 		available = {
 			has_political_power > 49
 			custom_trigger_tooltip = {
@@ -8699,7 +8731,7 @@ CHI_LATAM_security_options = {
 	}
 
 	CHI_LATAM_military_advisors = {
-		icon = GFX_decision_generic_army
+		icon = generic_army_support
 		available = {
 			has_political_power > 74
 			has_army_experience > 49
@@ -8724,7 +8756,7 @@ CHI_LATAM_security_options = {
 	}
 
 	CHI_LATAM_intel_sharing_pact = {
-		icon = GFX_decision_generic_political_action
+		icon = recruit_operative
 		available = {
 			has_political_power > 49
 			any_other_country = { is_South_America = yes has_opinion_modifier = CHI_security_umbrella }
@@ -8750,7 +8782,7 @@ CHI_LATAM_security_options = {
 CHI_pacific_pla_training = {
 
 	CHI_pla_train_SOL = {
-		icon = GFX_decision_generic_army
+		icon = generic_naval
 		visible = { country_exists = SOL }
 		available = {
 			has_political_power > 49
@@ -8774,7 +8806,7 @@ CHI_pacific_pla_training = {
 	}
 
 	CHI_pla_joint_maritime_exercise = {
-		icon = GFX_decision_generic_navy
+		icon = generic_naval
 		available = {
 			has_political_power > 49
 			has_navy_experience > 24
@@ -8802,7 +8834,7 @@ CHI_pacific_pla_training = {
 	}
 
 	CHI_BRI_redirect_more_to_investments = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_fundraising
 		days_remove = 1
 		days_re_enable = 90
 		fire_only_once = no
@@ -8819,7 +8851,7 @@ CHI_pacific_pla_training = {
 	}
 
 	CHI_BRI_redirect_more_to_bri = {
-		icon = GFX_decision_generic_political_actions
+		icon = generic_fundraising
 		days_remove = 1
 		days_re_enable = 90
 		fire_only_once = no
@@ -8839,7 +8871,7 @@ CHI_pacific_pla_training = {
 CHI_olympic_preparations = {
 
 	CHI_olympic_mission = {
-		icon = GFX_decision_generic_china
+		icon = olympics
 		fire_only_once = yes
 		is_good = yes
 		days_mission_timeout = 1285
@@ -8867,7 +8899,7 @@ CHI_olympic_preparations = {
 	}
 
 	CHI_olympic_venue_construction = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		available = {
 			check_variable = { treasury > 15 }
@@ -8905,7 +8937,7 @@ CHI_olympic_preparations = {
 	}
 
 	CHI_olympic_athlete_village = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		available = {
 			check_variable = { treasury > 10 }
@@ -8942,7 +8974,7 @@ CHI_olympic_preparations = {
 	}
 
 	CHI_olympic_transport_links = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		available = {
 			check_variable = { treasury > 10 }
@@ -8986,7 +9018,7 @@ CHI_olympic_preparations = {
 	}
 
 	CHI_olympic_environmental_program = {
-		icon = GFX_decision_generic_political_action
+		icon = generic_forestry
 		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		available = {
 			check_variable = { treasury > 8 }
@@ -9009,268 +9041,10 @@ CHI_olympic_preparations = {
 	}
 }
 
-CHI_hsr_construction = {
-
-	CHI_hsr_beijing_tianjin = {
-		icon = GFX_decision_generic_construction
-		visible = { has_completed_focus = CHI_high_speed_rail_one }
-		available = {
-			check_variable = { treasury > 15 }
-		}
-		cost = 0
-		fire_only_once = yes
-		days_remove = 365
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_beijing_tianjin executed"
-			newline = yes
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-		}
-
-		remove_effect = {
-			# Need to build railway from Beijing to Tianjin
-			547 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = no
-				}
-				add_state_modifier = {
-					modifier = {
-						state_production_speed_buildings_factor = 0.10
-					}
-				}
-			}
-			548 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = no
-				}
-				add_state_modifier = {
-					modifier = {
-						state_production_speed_buildings_factor = 0.10
-					}
-				}
-			}
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_beijing_tianjin completed"
-		}
-
-		ai_will_do = { base = 5 }
-	}
-
-	CHI_hsr_wuhan_guangzhou = {
-		icon = GFX_decision_generic_construction
-		visible = { has_completed_focus = CHI_high_speed_rail_one }
-		available = {
-			check_variable = { treasury > 15 }
-		}
-		cost = 0
-		fire_only_once = yes
-		days_remove = 365
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_wuhan_guangzhou executed"
-			newline = yes
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-		}
-
-		remove_effect = {
-			# Need to build railway from Wuhan to Guangzhou
-			570 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = no
-				}
-				add_state_modifier = {
-					modifier = {
-						state_production_speed_buildings_factor = 0.10
-					}
-				}
-			}
-			534 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = no
-				}
-				add_state_modifier = {
-					modifier = {
-						state_production_speed_buildings_factor = 0.10
-					}
-				}
-			}
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_wuhan_guangzhou completed"
-		}
-
-		ai_will_do = { base = 5 }
-	}
-
-	CHI_hsr_beijing_shanghai = {
-		icon = GFX_decision_generic_construction
-		visible = { has_completed_focus = CHI_high_speed_rail_one }
-		available = {
-			check_variable = { treasury > 20 }
-		}
-		cost = 0
-		fire_only_once = yes
-		days_remove = 365
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_beijing_shanghai executed"
-			newline = yes
-			set_temp_variable = { treasury_change = -20 }
-			modify_treasury_effect = yes
-		}
-
-		remove_effect = {
-			# Need to build railway from Beijing to Shanghai
-			547 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = no
-				}
-				add_state_modifier = {
-					modifier = {
-						state_production_speed_buildings_factor = 0.10
-					}
-				}
-			}
-			540 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = no
-				}
-				add_state_modifier = {
-					modifier = {
-						state_production_speed_buildings_factor = 0.10
-					}
-				}
-			}
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_beijing_shanghai completed"
-		}
-
-		ai_will_do = { base = 5 }
-	}
-
-	CHI_hsr_chengdu_chongqing = {
-		icon = GFX_decision_generic_construction
-		visible = { has_completed_focus = CHI_high_speed_rail_one }
-		available = {
-			check_variable = { treasury > 15 }
-		}
-		cost = 0
-		fire_only_once = yes
-		days_remove = 365
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_chengdu_chongqing executed"
-			newline = yes
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-		}
-
-		remove_effect = {
-			# Need to build railway from Chengdu to Chongqing
-			586 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = no
-				}
-				add_state_modifier = {
-					modifier = {
-						state_production_speed_buildings_factor = 0.10
-						state_productivity_growth_modifier = 0.05
-					}
-				}
-			}
-			583 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = no
-				}
-				add_state_modifier = {
-					modifier = {
-						state_production_speed_buildings_factor = 0.10
-						state_productivity_growth_modifier = 0.05
-					}
-				}
-			}
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_chengdu_chongqing completed"
-		}
-
-		ai_will_do = { base = 5 }
-	}
-}
-
-CHI_public_housing_construction = {
-	CHI_build_public_housing = {
-		icon = x
-
-		state_target = yes
-		on_map_mode = map_only
-
-		highlight_states = {
-			highlight_states_trigger = {
-				is_owned_and_controlled_by = ROOT
-				NOT = { has_state_flag = CHI_housing_project_complete }
-			}
-			highlight_color_before_active = 3
-			highlight_color_while_active = 2
-		}
-
-		target_trigger = {
-			FROM = { is_core_of = CHI }
-		}
-
-		visible = {
-			has_completed_focus = CHI_public_rental_housing_drive
-			FROM = {
-				NOT = { has_state_flag = CHI_housing_project_complete }
-			}
-		}
-
-		available = {
-			num_of_civilian_factories_available_for_projects > 14
-			FROM = {
-				NOT = { has_state_flag = CHI_housing_project_complete }
-			}
-		}
-
-		cost = 75
-		days_remove = 730
-
-		modifier = {
-			civilian_factory_use = 15
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_build_public_housing in [FROM.GetName] started"
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_build_public_housing in [FROM.GetName] completed"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_political_system }
-			add_to_variable = { CHI_pol_consumer_goods_expected_value = -0.01 tooltip = consumer_goods_expected_value_tt }
-			add_to_variable = { CHI_pol_population_tax_income_multiplier_modifier = 0.005 tooltip = population_tax_income_multiplier_modifier_tt }
-			FROM = { set_state_flag = CHI_housing_project_complete }
-		}
-
-		ai_will_do = { base = 3 }
-	}
-}
-
 CHI_water_shortage_category = {
 
 	CHI_water_conservation_project = {
-		icon = GFX_decision_generic_construction
+		icon = hol_drain_water_lines
 
 		state_target = yes
 		on_map_mode = map_only
@@ -9325,7 +9099,7 @@ CHI_water_shortage_category = {
 	}
 
 	CHI_drip_irrigation_rollout = {
-		icon = GFX_decision_generic_construction
+		icon = hol_drain_water_lines
 
 		visible = { has_completed_focus = CHI_hybrid_rice_super_program }
 
@@ -9350,7 +9124,7 @@ CHI_water_shortage_category = {
 	}
 
 	CHI_anti_desertification_belt = {
-		icon = GFX_decision_generic_construction
+		icon = generic_forestry
 
 		visible = { has_completed_focus = CHI_grain_for_green_program }
 
@@ -9375,7 +9149,7 @@ CHI_water_shortage_category = {
 	}
 
 	CHI_urban_water_recycling = {
-		icon = GFX_decision_generic_construction
+		icon = hol_drain_water_lines
 
 		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 
@@ -9402,8 +9176,206 @@ CHI_water_shortage_category = {
 
 CHI_railway_improvement = {
 
+	CHI_hsr_beijing_tianjin = {
+		icon = CHI_railways
+		visible = { has_completed_focus = CHI_high_speed_rail_one }
+		available = {
+			check_variable = { treasury > 15 }
+		}
+		cost = 0
+		fire_only_once = yes
+		days_remove = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_beijing_tianjin executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			# Need to build railway from Beijing to Tianjin
+			547 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = no
+				}
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.10
+					}
+				}
+			}
+			548 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = no
+				}
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.10
+					}
+				}
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_beijing_tianjin completed"
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	CHI_hsr_wuhan_guangzhou = {
+		icon = CHI_railways
+		visible = { has_completed_focus = CHI_high_speed_rail_one }
+		available = {
+			check_variable = { treasury > 15 }
+		}
+		cost = 0
+		fire_only_once = yes
+		days_remove = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_wuhan_guangzhou executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			# Need to build railway from Wuhan to Guangzhou
+			570 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = no
+				}
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.10
+					}
+				}
+			}
+			534 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = no
+				}
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.10
+					}
+				}
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_wuhan_guangzhou completed"
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	CHI_hsr_beijing_shanghai = {
+		icon = CHI_railways
+		visible = { has_completed_focus = CHI_high_speed_rail_one }
+		available = {
+			check_variable = { treasury > 20 }
+		}
+		cost = 0
+		fire_only_once = yes
+		days_remove = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_beijing_shanghai executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			# Need to build railway from Beijing to Shanghai
+			547 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = no
+				}
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.10
+					}
+				}
+			}
+			540 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = no
+				}
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.10
+					}
+				}
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_beijing_shanghai completed"
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	CHI_hsr_chengdu_chongqing = {
+		icon = CHI_railways
+		visible = { has_completed_focus = CHI_high_speed_rail_one }
+		available = {
+			check_variable = { treasury > 15 }
+		}
+		cost = 0
+		fire_only_once = yes
+		days_remove = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_chengdu_chongqing executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			# Need to build railway from Chengdu to Chongqing
+			586 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = no
+				}
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.10
+						state_productivity_growth_modifier = 0.05
+					}
+				}
+			}
+			583 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = no
+				}
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.10
+						state_productivity_growth_modifier = 0.05
+					}
+				}
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hsr_chengdu_chongqing completed"
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
 	CHI_railway_north_upgrade = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 		visible = { has_completed_focus = CHI_beijing_tianjin_hsr }
 		available = {
 			check_variable = { treasury > 12 }
@@ -9444,7 +9416,7 @@ CHI_railway_improvement = {
 	}
 
 	CHI_railway_east_upgrade = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 		visible = { has_completed_focus = CHI_beijing_tianjin_hsr }
 		available = {
 			check_variable = { treasury > 12 }
@@ -9485,7 +9457,7 @@ CHI_railway_improvement = {
 	}
 
 	CHI_railway_south_upgrade = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 		visible = { has_completed_focus = CHI_beijing_tianjin_hsr }
 		available = {
 			check_variable = { treasury > 12 }
@@ -9526,7 +9498,7 @@ CHI_railway_improvement = {
 	}
 
 	CHI_railway_central_upgrade = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 		visible = { has_completed_focus = CHI_beijing_tianjin_hsr }
 		available = {
 			check_variable = { treasury > 12 }
@@ -9567,7 +9539,7 @@ CHI_railway_improvement = {
 	}
 
 	CHI_railway_west_upgrade = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 		visible = { has_completed_focus = CHI_beijing_tianjin_hsr }
 		available = {
 			check_variable = { treasury > 12 }
@@ -9613,14 +9585,10 @@ CHI_railway_improvement = {
 	}
 }
 
-# ===== CHI Industrial Investment Programme =====
-# Gobi Solar expansion (unlocked by CHI_gobi_solar_offshore_wind)
-# and foreign petrochemical company invitations (unlocked by CHI_caojing_seven_chem_bases)
-
 CHI_industrial_investment_category = {
 
 	CHI_gobi_desert_solar_expansion = {
-		icon = x
+		icon = generic_solar
 
 		visible = {
 			has_completed_focus = CHI_gobi_solar_offshore_wind
@@ -9664,7 +9632,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_invite_basf_caojing = {
-		icon = x
+		icon = generic_construction
 		fire_only_once = yes
 
 		visible = {
@@ -9702,7 +9670,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_invite_bayer_nanjing = {
-		icon = x
+		icon = hol_exchange_intelligence_data
 		fire_only_once = yes
 
 		visible = {
@@ -9740,7 +9708,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_invite_exxonmobil_jv = {
-		icon = x
+		icon = hol_exchange_intelligence_data
 		fire_only_once = yes
 
 		visible = {
@@ -9778,7 +9746,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_invite_shell_chem = {
-		icon = x
+		icon = hol_exchange_intelligence_data
 		fire_only_once = yes
 
 		visible = {
@@ -9809,7 +9777,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_invite_saudi_aramco = {
-		icon = x
+		icon = sau_oil
 		fire_only_once = yes
 
 		visible = {
@@ -9843,10 +9811,8 @@ CHI_industrial_investment_category = {
 		}
 	}
 
-	# Semiconductor sector decisions — unlocked by focuses in the Semiconductor Industry branch
-
 	CHI_mature_node_export_drive_decision = {
-		icon = x
+		icon = generic_decision
 
 		visible = {
 			has_completed_focus = CHI_hua_hong_mature_node
@@ -9890,7 +9856,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_fabless_provincial_subsidy_decision = {
-		icon = x
+		icon = generic_welfare
 
 		visible = {
 			has_completed_focus = CHI_fabless_design_cluster
@@ -9934,7 +9900,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_replace_synopsys_cadence_decision = {
-		icon = x
+		icon = generic_merge_plant_materiel
 		fire_only_once = yes
 
 		visible = {
@@ -9977,7 +9943,7 @@ CHI_industrial_investment_category = {
 	CHI_duv_breakthrough_decision = {
 		fixed_random_seed = no
 
-		icon = x
+		icon = generic_decision
 		fire_only_once = yes
 
 		visible = {
@@ -10037,7 +10003,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_critical_minerals_export_license_decision = {
-		icon = x
+		icon = generic_decision
 
 		visible = {
 			has_completed_focus = CHI_strategic_materials
@@ -10081,7 +10047,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_cxmt_hbm_qualification_decision = {
-		icon = x
+		icon = generic_decision
 		fire_only_once = yes
 
 		visible = {
@@ -10127,7 +10093,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_big_fund_iii_allocate_tranche_decision = {
-		icon = x
+		icon = generic_decision
 
 		visible = {
 			has_completed_focus = CHI_big_fund_phase2
@@ -10172,7 +10138,7 @@ CHI_industrial_investment_category = {
 	}
 
 	CHI_rare_earth_chip_leverage_decision = {
-		icon = x
+		icon = generic_decision
 		fire_only_once = yes
 
 		visible = {
@@ -10211,9 +10177,8 @@ CHI_industrial_investment_category = {
 
 CHI_military_decisions_category = {
 
-	# Reform path — stand up the five theatre commands (CHI_joint_operations_command)
 	CHI_eastern_theatre_command = {
-		icon = GFX_decision_generic_military
+		icon = generic_army_support
 
 		visible = {
 			has_completed_focus = CHI_joint_operations_command
@@ -10234,7 +10199,7 @@ CHI_military_decisions_category = {
 	}
 
 	CHI_southern_theatre_command = {
-		icon = GFX_decision_generic_military
+		icon = generic_army_support
 
 		visible = {
 			has_completed_focus = CHI_joint_operations_command
@@ -10255,7 +10220,7 @@ CHI_military_decisions_category = {
 	}
 
 	CHI_western_theatre_command = {
-		icon = GFX_decision_generic_military
+		icon = generic_army_support
 
 		visible = {
 			has_completed_focus = CHI_joint_operations_command
@@ -10276,7 +10241,7 @@ CHI_military_decisions_category = {
 	}
 
 	CHI_northern_theatre_command = {
-		icon = GFX_decision_generic_military
+		icon = generic_army_support
 
 		visible = {
 			has_completed_focus = CHI_joint_operations_command
@@ -10297,7 +10262,7 @@ CHI_military_decisions_category = {
 	}
 
 	CHI_central_theatre_command = {
-		icon = GFX_decision_generic_military
+		icon = generic_army_support
 
 		visible = {
 			has_completed_focus = CHI_joint_operations_command
@@ -10317,63 +10282,66 @@ CHI_military_decisions_category = {
 		ai_will_do = { base = 5 }
 	}
 
-	# Reform path — transform each defense conglomerate's research culture (CHI_original_innovation_problem)
 	CHI_norinco_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
 		cost = 50
+
+		days_remove = 365
 
 		fire_only_once = yes
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_norinco_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_norinco_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_norinco_innovation_tt
+			add_timed_idea = { idea = CHI_norinco_innovation_idea days = 365 }
 		}
+
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_caic_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
 		cost = 50
 
+		days_remove = 365
+
 		fire_only_once = yes
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_caic_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_caic_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_caic_innovation_tt
+			add_timed_idea = { idea = CHI_caic_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_inner_mongolia_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
 		cost = 50
 
+		days_remove = 365
+
 		fire_only_once = yes
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_inner_mongolia_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_inner_mongolia_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_inner_mongolia_innovation_tt
+			add_timed_idea = { idea = CHI_inner_mongolia_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_avic_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10383,15 +10351,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_avic_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_avic_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_avic_innovation_tt
+			add_timed_idea = { idea = CHI_avic_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_cetc_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10401,15 +10368,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_cetc_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_cetc_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_cetc_innovation_tt
+			add_timed_idea = { idea = CHI_cetc_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_casic_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10419,15 +10385,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_casic_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_casic_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_casic_innovation_tt
+			add_timed_idea = { idea = CHI_casic_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_casc_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10437,15 +10402,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_casc_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_casc_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_casc_innovation_tt
+			add_timed_idea = { idea = CHI_casc_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_haig_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10455,15 +10419,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_haig_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_haig_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_haig_innovation_tt
+			add_timed_idea = { idea = CHI_haig_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_sac_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10473,15 +10436,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_sac_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_sac_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_sac_innovation_tt
+			add_timed_idea = { idea = CHI_sac_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_cssc_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10491,15 +10453,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_cssc_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_cssc_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_cssc_innovation_tt
+			add_timed_idea = { idea = CHI_cssc_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_csic_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10509,15 +10470,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_csic_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_csic_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_csic_innovation_tt
+			add_timed_idea = { idea = CHI_csic_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_csgc_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10527,15 +10487,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_csgc_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_csgc_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_csgc_innovation_tt
+			add_timed_idea = { idea = CHI_csgc_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_poly_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10545,15 +10504,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_poly_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_poly_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_poly_innovation_tt
+			add_timed_idea = { idea = CHI_poly_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
 	CHI_crrc_innovation = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 
@@ -10563,16 +10521,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_crrc_innovation executed"
-			hidden_effect = { add_timed_idea = { idea = CHI_crrc_innovation_idea days = 365 } }
-			custom_effect_tooltip = CHI_crrc_innovation_tt
+			add_timed_idea = { idea = CHI_crrc_innovation_idea days = 365 }
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
-	# Reform path — weaponise the rare earth supply against a major rival (CHI_rare_earth_leverage)
 	CHI_rare_earth_embargo_decision = {
-		icon = GFX_decision_generic_operation
+		icon = SWI_isolate_switzerland
 
 		visible = {
 			has_completed_focus = CHI_rare_earth_leverage
@@ -10596,17 +10552,14 @@ CHI_military_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_rare_earth_embargo_decision on [From.GetName]"
-			FROM = {
-				add_dynamic_modifier = { modifier = CHI_rare_earth_embargoed days = 180 } #This can be an idea
-			}
+			FROM = { add_dynamic_modifier = { modifier = CHI_rare_earth_embargoed days = 180 } } #This can be an idea
 		}
 
 		ai_will_do = { base = 1 }
 	}
 
-	# Corruption path — periodic anti-graft audit that recovers embezzled funds into the treasury (CHI_the_northeast_tiger)
 	CHI_rein_in_cliques = {
-		icon = GFX_decision_generic_intelligence_operation
+		icon = generic_intelligence_operation
 
 		visible = {
 			has_completed_focus = CHI_the_northeast_tiger
@@ -10627,58 +10580,12 @@ CHI_military_decisions_category = {
 
 		ai_will_do = { base = 1 }
 	}
-
-	# Corruption path — sell arms abroad for cash and influence (CHI_arms_for_influence)
-	CHI_arms_for_influence_offer = {
-		icon = GFX_decision_generic_army_support
-
-		visible = {
-			has_completed_focus = CHI_arms_for_influence
-		}
-
-		target_array = global.countries
-
-		target_trigger = {
-			country_exists = FROM
-			FROM = {
-				NOT = { original_tag = CHI }
-				is_major = no
-				NOT = { is_in_faction_with = ROOT }
-			}
-		}
-
-		available = {
-			NOT = { has_war_with = FROM }
-		}
-
-		cost = 50
-
-		days_re_enable = 365
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_arms_for_influence_offer to [From.GetName]"
-			FROM = { country_event = { id = CHI_military_event.7 days = 2 } }
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				set_temp_variable = { treasury_change = 100 }
-				modify_treasury_effect = yes
-			}
-		}
-
-		ai_will_do = { base = 1 }
-	}
 }
-
-# ===== CHI National Megaprojects =====
-# Flagship state-directed builds unlocked by CHI_four_trillion_stimulus.
-# Each funds buildings + a permanent CHI_economy_modifier bonus, electricity-forward.
 
 CHI_megaprojects = {
 
-	### South-North Water Transfer — three routes, capstone fires once all three complete ###
-
 	CHI_snwt_eastern_route = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_four_trillion_stimulus
@@ -10735,7 +10642,7 @@ CHI_megaprojects = {
 	}
 
 	CHI_snwt_central_route = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_four_trillion_stimulus
@@ -10794,7 +10701,7 @@ CHI_megaprojects = {
 	}
 
 	CHI_snwt_western_route = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_four_trillion_stimulus
@@ -10849,10 +10756,8 @@ CHI_megaprojects = {
 		}
 	}
 
-	### Ultra-High-Voltage National Grid — two stages, west generation then east transmission ###
-
 	CHI_uhv_west_generation = {
-		icon = GFX_decision_generic_industry
+		icon = generic_electricity
 
 		visible = {
 			has_completed_focus = CHI_four_trillion_stimulus
@@ -10909,7 +10814,7 @@ CHI_megaprojects = {
 	}
 
 	CHI_uhv_east_transmission = {
-		icon = GFX_decision_generic_industry
+		icon = decision_generic_electricity
 
 		visible = {
 			has_country_flag = CHI_uhv_west_done
@@ -10963,10 +10868,8 @@ CHI_megaprojects = {
 		}
 	}
 
-	### National Fusion Program — EAST / BEST / CFETR, Hefei (Anhui) ###
-
 	CHI_fusion_program = {
-		icon = GFX_decision_generic_industry
+		icon = decision_generic_electricity
 
 		visible = {
 			has_completed_focus = CHI_four_trillion_stimulus
@@ -11022,10 +10925,8 @@ CHI_megaprojects = {
 		}
 	}
 
-	### Three-North Shelterbelt — the "Great Green Wall" ###
-
 	CHI_three_north_shelterbelt = {
-		icon = GFX_decision_generic_political_action
+		icon = generic_forestry
 
 		visible = {
 			has_completed_focus = CHI_four_trillion_stimulus
@@ -11087,69 +10988,8 @@ CHI_megaprojects = {
 		}
 	}
 
-	### Hong Kong-Zhuhai-Macau Bridge / Greater Bay Area integration ###
-
-	CHI_gba_bridge = {
-		icon = GFX_decision_generic_construction
-
-		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
-			NOT = { has_country_flag = CHI_gba_bridge_done }
-			595 = { is_owned_by = CHI }
-		}
-
-		available = {
-			check_variable = { treasury > 20 }
-			num_of_civilian_factories_available_for_projects > 9
-		}
-
-		cost = 0
-		fire_only_once = yes
-		days_remove = 720
-
-		modifier = {
-			civilian_factory_use = 9
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_gba_bridge executed"
-			newline = yes
-			set_temp_variable = { treasury_change = -20 }
-			modify_treasury_effect = yes
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CHI_gba_bridge completed"
-			534 = {
-				add_building_construction = { type = infrastructure level = 1 instant_build = no }
-				add_state_modifier = { modifier = { state_production_speed_buildings_factor = 0.05 } }
-			}
-			532 = {
-				add_building_construction = { type = infrastructure level = 1 instant_build = no }
-				add_state_modifier = { modifier = { state_production_speed_buildings_factor = 0.05 } }
-			}
-			595 = {
-				add_state_modifier = { modifier = { state_production_speed_buildings_factor = 0.05 } }
-			}
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
-			add_to_variable = { CHI_economy_trade_opinion_factor = 0.05 tooltip = trade_opinion_factor_tt }
-			add_to_variable = { CHI_economy_production_speed_buildings_factor = 0.03 tooltip = production_speed_buildings_factor_tt }
-			set_country_flag = CHI_gba_bridge_done
-		}
-
-		ai_will_do = {
-			base = 3
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-		}
-	}
-
-	### Sichuan-Tibet Railway ###
-
 	CHI_sichuan_tibet_railway = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		visible = {
 			has_completed_focus = CHI_four_trillion_stimulus
@@ -11205,10 +11045,8 @@ CHI_megaprojects = {
 		}
 	}
 
-	### Mega Rail Hubs — repeatable, capped at five, one per major-city state ###
-
 	CHI_build_mega_rail_hub = {
-		icon = GFX_decision_generic_construction
+		icon = generic_construction
 
 		state_target = yes
 		on_map_mode = map_only
@@ -11295,7 +11133,7 @@ CHI_megaprojects = {
 	}
 
 	CHI_invest_domestic_arms_lines = {
-		icon = GFX_decision_generic_military
+		icon = generic_factory
 
 		visible = {
 			OR = {
@@ -11324,7 +11162,7 @@ CHI_megaprojects = {
 	}
 
 	CHI_localise_licensed_system = {
-		icon = GFX_decision_generic_research
+		icon = generic_factory
 
 		visible = {
 			has_completed_focus = CHI_own_designs
@@ -11352,12 +11190,10 @@ CHI_megaprojects = {
 
 CHI_space_program = {
 
-	# --- Program missions (non-selectable, success/fail at timeout) ---
-
 	CHI_shenzhou_mission = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_research
+		icon = buran_timer_button
 
 		days_mission_timeout = 150
 
@@ -11395,7 +11231,7 @@ CHI_space_program = {
 	CHI_tiangong_mission = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		days_mission_timeout = 180
 
@@ -11433,7 +11269,7 @@ CHI_space_program = {
 	CHI_chang_e_mission = {
 		fixed_random_seed = no
 
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		days_mission_timeout = 180
 
@@ -11468,7 +11304,7 @@ CHI_space_program = {
 	}
 
 	CHI_crewed_lunar_landing_mission = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		days_mission_timeout = 365
 
@@ -11496,7 +11332,7 @@ CHI_space_program = {
 	}
 
 	CHI_asteroid_survey_mission = {
-		icon = GFX_decision_generic_research
+		icon = asteroid_mining
 
 		days_mission_timeout = 365
 
@@ -11521,10 +11357,8 @@ CHI_space_program = {
 		}
 	}
 
-	# --- Repeatable launch cadence ---
-
 	CHI_launch_payload = {
-		icon = GFX_decision_generic_research
+		icon = generic_operation
 
 		fire_only_once = no
 
@@ -11561,10 +11395,8 @@ CHI_space_program = {
 		ai_will_do = { base = 3 }
 	}
 
-	# --- Retry decisions (re-run a failed program mission) ---
-
 	CHI_retry_shenzhou_mission = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		fire_only_once = no
 
@@ -11589,7 +11421,7 @@ CHI_space_program = {
 	}
 
 	CHI_retry_tiangong_mission = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		fire_only_once = no
 
@@ -11614,7 +11446,7 @@ CHI_space_program = {
 	}
 
 	CHI_retry_chang_e_mission = {
-		icon = GFX_decision_generic_research
+		icon = generic_research
 
 		fire_only_once = no
 
@@ -11638,10 +11470,8 @@ CHI_space_program = {
 		ai_will_do = { base = 5 }
 	}
 
-	# --- Asteroid mining investment ---
-
 	CHI_asteroid_mining_investment = {
-		icon = GFX_decision_generic_research
+		icon = asteroid_mining
 
 		fire_only_once = no
 
@@ -11679,7 +11509,7 @@ CHI_space_program = {
 CHI_factional_balance_category = {
 
 	CHI_back_princeling_network = {
-		icon = GFX_decision_sco_watch_button
+		icon = eng_propaganda_campaigns
 
 		available = {
 			has_country_flag = CHI_ic_initialized
@@ -11713,7 +11543,7 @@ CHI_factional_balance_category = {
 	}
 
 	CHI_promote_youth_league = {
-		icon = GFX_decision_sco_watch_button
+		icon = eng_propaganda_campaigns
 
 		available = {
 			has_country_flag = CHI_ic_initialized
