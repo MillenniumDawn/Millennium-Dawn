@@ -69,6 +69,19 @@ FALSE_POSITIVE_FILES = frozenset(
         # Dummy effect existing only to suppress false positives on dynamically
         # built flag/variable names; deliberately never called.
         "!_cwtools_dummy_effects.txt",
+        # Convention/preset libraries
+        "00_scripted_triggers.txt",
+        "00_law_blocking_triggers.txt",
+        "00_influence_scripted_triggers.txt",
+        "01_political_triggers.txt",
+        "01_international_triggers.txt",
+        "05_misc_mechanic_scripted_triggers.txt",
+        "MD_Country_Groups_Triggers.txt",
+        "MD_missile_scripted_triggers.txt",
+        "MD_regional_owned_triggers.txt",
+        "MD_regional_triggers.txt",
+        "00_scripted_effects.txt",
+        "00_law_blocking_effects.txt",
     }
 )
 

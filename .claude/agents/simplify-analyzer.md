@@ -37,18 +37,11 @@ Caller passes a single file path (always single-file scope unless explicitly bro
 
 ## What to check / produce
 
-**Always-safe simplifications**:
+**Always-safe simplifications** — the full catalog with before/after lives in `.claude/docs/simplification-patterns.md`; the common ones (empty blocks, focus defaults, `if/else`, `* 0.01`, flat triggers, `original_tag`) are already loaded via `general-rules.md` / `AGENTS.md`. Three that are easy to get wrong:
 
-- Remove `cancel = { always = no }` from ideas (checked hourly, never true).
-- Remove `allowed = { always = no }` and `allowed = { tag = TAG }` / `allowed = { original_tag = TAG }` from `country` and `hidden_ideas` categories **only** — bypassed by `add_ideas` for country spirits. Keep in `AA_law_budget` and other categories.
-- Remove empty `on_add = { log = "" }`, `mutually_exclusive = { }`, `available = { }`.
-- Remove focus default fields: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`.
-- Replace `tag = TAG` → `original_tag = TAG` in `allowed` blocks.
-- Collapse complementary `if = { limit = { A } } if = { limit = { NOT = A } }` → `if/else`.
-- Replace `/ 100` → `* 0.01`.
-- Remove `hidden_trigger = { ... }` nested directly inside `custom_trigger_tooltip` — redundant.
-- Flatten verbose scope expansions when a flat trigger exists: `TAG = { exists = yes }` → `country_exists = TAG`; `TAG = { is_puppet = yes }` → `is_puppet_of = TAG`.
-- Collapse N parallel `else_if` lookup chains into array indexing (see `simplification-patterns.md`).
+- Remove `hidden_trigger = { ... }` nested directly inside `custom_trigger_tooltip` — redundant there.
+- Remove `allowed = { always = no }` and `allowed = { tag/original_tag = TAG }` from `country` and `hidden_ideas` categories **only** — bypassed by `add_ideas` for country spirits. Keep `allowed` in `AA_law_budget` and every other category.
+- Collapse N parallel `if`/`else_if` lookup branches into array indexing (see `simplification-patterns.md`).
 
 **Cross-flag — do not refactor, just note**:
 
