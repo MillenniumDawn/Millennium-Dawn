@@ -1,3 +1,8 @@
+---
+name: audit
+description: "Comprehensive pre-merge review of one file or the whole branch diff: dispatches parallel reviewer agents (correctness, adversarial edge cases, performance, simplification, content) and merges findings. Use when asked to audit or fully review a branch or file. Replaces /review-branch."
+---
+
 Run a comprehensive review of a single file or the entire branch diff (correctness, edge cases, simplification, performance, and content design) by dispatching the canonical reviewers in parallel and merging their findings. This is the single Millennium Dawn pre-merge review command; it absorbs the former `/review-branch`.
 
 **Syntax:** `/audit [file_path]`
@@ -34,10 +39,10 @@ Don't fan out every reviewer on every change. Scale to the size and type of what
 Launch all applicable lanes **in a single message** so they run concurrently. Pass each agent the file path (file mode) or the already-gathered diff (branch mode) inline. Each lane is a **focused agent**, not a `general-purpose` agent running a whole sub-skill, and each is told explicitly: do not re-run `git`, do not re-gather context, report findings only.
 
 - **`code-quality-reviewer`** — rules, standards, correctness, readability, and localisation against project conventions.
-- **Adversarial edge cases** — dispatch **`head-mod-developer`** (or `game-mod-developer`). Tell it to apply the checklist in `.claude/skills/adversarial-review/SKILL.md` (existence/scope guards, timing/state transitions, variable/array safety, silent NOPs) and hunt for edge cases, silent failures, and logic gaps rule-based review misses. It must **not** re-run git and must **not** dispatch `tools-reviewer` — the main agent handles tools (below).
+- **Adversarial edge cases** — dispatch **`head-mod-developer`**. Tell it to apply the checklist in `.claude/docs/bug-patterns.md` (existence/scope guards, timing/state transitions, variable/array safety, silent NOPs) and hunt for edge cases, silent failures, and logic gaps rule-based review misses. It must **not** re-run git and must **not** dispatch `tools-reviewer` — the main agent handles tools (below).
 - **`performance-analyzer`** — the anti-patterns from `.claude/docs/performance-patterns.md`.
 - **`simplify-analyzer`** — simplification opportunities (collapse `if/else_if` chains, array lookups, dead code). For `.yml` loc, this lane is replaced by `localisation-editor` per step 2.
-- **Content design** — dispatch **`head-mod-developer`** (or `game-mod-developer`). Tell it to read `docs/src/content/resources/content-review-guide.md`, `docs/src/content/resources/new-general-guidelines.md`, and `.claude/docs/content-guidelines.md` (once), then check the changed files against the full checklist (Economic, Political, Visual, Military, AI, Code, Miscellaneous). Skip categories that don't apply to the file type (no Military checks on a decisions file, no Economic checks on a character file). It must **not** re-run git.
+- **Content design** — dispatch **`head-mod-developer`**. Tell it to read `docs/src/content/resources/content-review-guide.md`, `docs/src/content/resources/new-general-guidelines.md`, and `.claude/docs/content-guidelines.md` (once), then check the changed files against the full checklist (Economic, Political, Visual, Military, AI, Code, Miscellaneous). Skip categories that don't apply to the file type (no Military checks on a decisions file, no Economic checks on a character file). It must **not** re-run git.
 - **`tools-reviewer`** — **only if** `tools/**` changed. Dispatch it directly here, in the same parallel batch, with the list of changed tooling files. Do not nest it under another lane.
 
 ### 4. Wait for all reviewers to complete

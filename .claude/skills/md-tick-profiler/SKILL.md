@@ -1,6 +1,6 @@
 ---
 name: md-tick-profiler
-description: Visualize and explain Millennium Dawn's recurring per-tick workload — the daily / weekly / monthly on_action hooks and everything they run — as an interactive profiler-style call tree (flamegraph), sized by script "ops" with clickable file:line links, plus a text report for precise itemization. Use this whenever the user asks about MD performance, lag, tick cost, on_actions, "what runs each day / week / month", why the game is slow, profiling the mod, the in-game profiler crashing on MD, or wants to see or visualize where the game's per-tick scripted work comes from and what causes it. Reach for this even when the user doesn't say the word "profiler" — any question about the cost or contents of the recurring daily/weekly/monthly scripted load belongs here.
+description: Visualize and explain MD's recurring per-tick scripted workload (the daily/weekly/monthly on_action hooks and everything they run) as an interactive flamegraph sized by script ops with file:line links, plus a text report. Use for any question about MD performance, lag, tick cost, on_actions, "what runs each day/week/month", why the game is slow, or profiling the mod (the in-game profiler crashes on MD) — even without the word "profiler".
 user-invocable: true
 allowed-tools:
   - Bash
@@ -10,7 +10,7 @@ allowed-tools:
 # MD Tick Profiler
 
 The base-game `profile` console command crashes on a mod as large as Millennium
-Dawn, so this skill gives the same *kind* of view — a drill-down call tree of
+Dawn, so this skill gives the same _kind_ of view — a drill-down call tree of
 what each recurring tick runs and what's causing the load — reconstructed
 **statically** from the scripts by `tools/analysis/tick_audit.py`.
 
@@ -30,7 +30,7 @@ list of scripted instructions **for every country**. An **op** is one such
 instruction — a `key = ...` statement: set a variable, check a condition
 (`limit`/trigger), fire an event, call an effect. A node's op count is its own
 statements plus everything it transitively calls. **More ops = more work per
-tick = more lag.** It is a *proxy for cost, not measured milliseconds* — the
+tick = more lag.** It is a _proxy for cost, not measured milliseconds_ — the
 real profiler would give ms, but it crashes on MD, so this is the honest
 stand-in. Always frame it this way so the user isn't misled into reading ops as
 time.
@@ -87,6 +87,7 @@ click in.
 ### 3. Let them explore
 
 Tell the user the three interactions:
+
 - **Click any row** to open what it calls (lazy, so it stays fast).
 - **Click a `file:line`** to jump to that exact spot in VS Code.
 - **Type in the filter box** (e.g. a country tag `PER`, a system `money`, an
@@ -109,7 +110,7 @@ python tools/run.py tick_audit --tag USA                # everything USA runs
 
 Full detail on the report, the accuracy contract, and every flag lives in
 [references/reading-the-flamegraph.md](references/reading-the-flamegraph.md) —
-read it before answering questions about *why* a number looks the way it does
+read it before answering questions about _why_ a number looks the way it does
 (e.g. "why is every country's daily column the same", "does this event really
 fire", global-vs-per-country hooks, staggering).
 

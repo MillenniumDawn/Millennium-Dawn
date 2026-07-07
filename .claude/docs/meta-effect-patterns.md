@@ -1,4 +1,4 @@
-# Tokenization Patterns
+# Meta-Effect Patterns
 
 Use HOI4 tokens (`token:NAME`) and `meta_effect` / `meta_trigger` runtime substitution to collapse N-branch dispatch cascades into one parameterized call (handle 23 MIOs / 40 votes / N decisions without copy-paste branching), while keeping `[!trigger]` tooltip rendering intact.
 
@@ -24,7 +24,7 @@ temp_effect = {
 }
 ```
 
-At evaluation, `ORG` resolves to `GENERIC_krepost_state_defense_bureau` and the engine sees the literal effect `unlock_military_industrial_organization_tooltip = mio:GENERIC_krepost_state_defense_bureau`. Reference: `common/scripted_effects/00_ct_ai_effects.txt:3-13`.
+At evaluation, `ORG` resolves to `GENERIC_krepost_state_defense_bureau` and the engine sees the literal effect `unlock_military_industrial_organization_tooltip = mio:GENERIC_krepost_state_defense_bureau`. Live example: `ct_ai_infiltrate_agent` in `common/scripted_effects/00_ct_ai_effects.txt` interpolates `[?selected_org]` into a dynamic flag name.
 
 ### Use case: unlock the right MIO from a dynamic_list iteration
 

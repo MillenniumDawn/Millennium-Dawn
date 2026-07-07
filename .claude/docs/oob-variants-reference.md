@@ -1,6 +1,6 @@
-Reference guide for editing OOB (Order of Battle) files and equipment variants in Millennium Dawn. For valid equipment types and modifiers, see `resources/documentation/modifiers_documentation.md` and `resources/documentation/effects_documentation.md`.
+# OOB & Equipment Variants Reference
 
-This skill is not invocable — it documents patterns and conventions for OOB and variant work.
+Reference guide for editing OOB (Order of Battle) files and equipment variants in Millennium Dawn. For valid equipment types and modifiers, see `resources/documentation/modifiers_documentation.md` and `resources/documentation/effects_documentation.md`.
 
 ## File Structure
 

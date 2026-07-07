@@ -1,4 +1,4 @@
-# Dynamic Modifiers Reference
+# Dynamic Modifier Tooltips
 
 Dynamic modifiers are variable-driven national modifiers defined in `common/dynamic_modifiers/`. When a focus, decision, or event interacts with one, a `custom_effect_tooltip` shows the player what is happening. Two tooltip keys:
 
