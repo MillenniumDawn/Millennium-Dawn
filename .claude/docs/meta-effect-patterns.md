@@ -1,4 +1,4 @@
-# Tokenization Patterns
+# Meta-Effect Patterns
 
 Use HOI4 tokens (`token:NAME`) and `meta_effect` / `meta_trigger` runtime substitution to collapse N-branch dispatch cascades into one parameterized call (handle 23 MIOs / 40 votes / N decisions without copy-paste branching), while keeping `[!trigger]` tooltip rendering intact.
 
@@ -24,7 +24,7 @@ temp_effect = {
 }
 ```
 
-At evaluation, `ORG` resolves to `GENERIC_krepost_state_defense_bureau` and the engine sees the literal effect `unlock_military_industrial_organization_tooltip = mio:GENERIC_krepost_state_defense_bureau`. Reference: `common/scripted_effects/00_ct_ai_effects.txt:3-13`.
+At evaluation, `ORG` resolves to `GENERIC_krepost_state_defense_bureau` and the engine sees the literal effect `unlock_military_industrial_organization_tooltip = mio:GENERIC_krepost_state_defense_bureau`. Live example: `ct_ai_infiltrate_agent` in `common/scripted_effects/00_ct_ai_effects.txt` interpolates `[?selected_org]` into a dynamic flag name.
 
 ### Use case: unlock the right MIO from a dynamic_list iteration
 
@@ -55,7 +55,7 @@ mio_catalog_entry_prereqs_yes = {
 
 > **Gotcha — `^v` indexing is 0-based, `v` is 1-based.** The dynamic-list/loop `v` runs 1..N, but `add_to_array` builds the array 0-based, so `array^v` returns entry `v+1` (and `array^N` is out of range → empty token → falls into the `_unlock_btn_enabled = { always = no }` fallback). A scripted trigger can't `set_temp_variable` to decrement `v`, so reserve a never-read index-0 slot at array seeding to make the array 1-based. This was the cause of issue #1955 (catalogue criteria shifted by one).
 
-Reference: `common/scripted_triggers/01_international_triggers.txt:11-24` (`has_support_of_p5` uses meta_trigger with `thname = "[?FROM.GetTag]"`).
+Reference: `common/scripted_triggers/00_mio_catalog_triggers.txt:317-326` (`mio_catalog_entry_prereqs_yes`, the trigger shown above).
 
 ### Why this matters for tooltips
 
