@@ -1,6 +1,6 @@
 # Scripting Edge Cases
 
-Niche scripting pitfalls moved out of the always-loaded `general-rules.md`. Read this when editing influence code (`change_influence_percentage`) or any function that uses `^index` array subscripts.
+Niche scripting pitfalls moved out of the always-loaded `general-rules.md`. Read this when editing influence code (`change_influence_percentage`), any function that uses `^index` array subscripts, or gates on elected/optional office holders.
 
 ## change_influence_percentage
 
@@ -50,3 +50,31 @@ When a function uses `^index` array subscripts, the **meaning of the index varia
 | `type`, `kind`, `category` | Lookup key / type ID (1..N)  | Slot index                                      |
 
 **Rule:** Document an array-index parameter in the function comment. Verify every caller passes the right kind of index. See `.claude/docs/refactor-checklist.md` for the full verification steps.
+
+## Guard Gates on Optional / Elected Office Holders — Worked Example
+
+The rule (`general-rules.md`): any gate on "the holder of office X" needs a defined branch for the vacant case, or it is unsatisfiable while nobody holds the office.
+
+```
+# Wrong — un-completable while every office holder is vacant
+available = {
+	any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes }
+	# ...influence requirement on the holder...
+}
+
+# Correct — fall back to a satisfiable bar when no holder exists
+available = {
+	OR = {
+		AND = {
+			any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes }
+			# ...influence requirement on the holder...
+		}
+		AND = {
+			NOT = { any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes } }
+			# ...broad fallback so the path is never hard-locked...
+		}
+	}
+}
+```
+
+Mirror the vacant case in the tooltip (e.g. "if no office is filled, this requires X instead"), and guard `var:`-stored country refs with `check_variable = { var:holder > 0 }` before scoping in — an uninitialized holder reads 0.
