@@ -253,23 +253,7 @@ for_each_scope_loop = {
 
 ## Prefer `random` Over Two-Bucket `random_list`
 
-`random_list = { N = { effect } M = {} }` (or empty-first variant) is a weighted-dispatch list with one real outcome — overkill for a Bernoulli trial. Use `random = { chance = N effect }`: same probability, one less dispatch layer, fewer lines.
-
-```
-# Heavier — weighted list with placeholder bucket
-random_list = {
-    50 = { add_to_variable = { my_counter = 1 } }
-    50 = {}
-}
-
-# Lighter — direct probability trial
-random = {
-    chance = 50
-    add_to_variable = { my_counter = 1 }
-}
-```
-
-**Why:** `random_list` constructs and resolves a weighted list every call; `random = { chance = N }` is a single roll. For hot paths (on_weekly counters, AI scoring, GUI dirty triggers) savings compound. See `.claude/docs/simplification-patterns.md` for the full pattern and edge cases.
+`random = { chance = N }` is a single roll; a two-bucket `random_list` with one empty bucket resolves a weighted list for the same result. Full pattern and edge cases: `.claude/docs/simplification-patterns.md`.
 
 ## Avoid `effect_tooltip` + `for_each_scope_loop` Duplication
 
