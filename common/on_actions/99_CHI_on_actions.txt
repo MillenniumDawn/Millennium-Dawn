@@ -1,9 +1,7 @@
 
 on_actions = {
-	# Taiwan election result — affects CHI_TAI_trust
 	on_ruling_party_change = {
 		effect = {
-			# Pan-Green (DPP, liberalism index 2) wins → trust penalty
 			if = {
 				limit = {
 					original_tag = TAI
@@ -22,7 +20,6 @@ on_actions = {
 					country_event = { id = china_sar.004 days = 7 }
 				}
 			}
-			# Pan-Blue (KMT conservatism index 1 or Neutral_conservatism index 14) wins → trust bonus
 			else_if = {
 				limit = {
 					original_tag = TAI
@@ -32,10 +29,11 @@ on_actions = {
 					}
 					country_exists = CHI
 				}
-				CHI = { add_to_variable = { CHI_TAI_trust = 5 } }
+				CHI = {
+					add_to_variable = { CHI_TAI_trust = 5 }
+					clamp_variable = { var = CHI_TAI_trust min = 0 max = 100 }
+				}
 			}
-
-			### US president change — affects CHI_taiwan_us_support
 			if = {
 				limit = {
 					original_tag = USA
@@ -44,96 +42,7 @@ on_actions = {
 						has_completed_focus = CHI_TAI_cross_strait_policy
 					}
 				}
-				# Clear previous president flags
-				CHI = {
-					clr_country_flag = CHI_trump_is_president
-					clr_country_flag = CHI_harris_us_support_floor
-				}
-
-				# Pro-Taiwan presidents — increase us_support
-				if = {
-					limit = { USA = { has_country_leader = { name = "John McCain" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = 10 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "Joe Biden" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = 8 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "Hillary Clinton" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = 6 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "Kamala Harris" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = 6 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						set_country_flag = CHI_harris_us_support_floor
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "George W. Bush" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = 5 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "Barack Obama" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = 5 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "Mitt Romney" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = 4 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "Al Gore" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				# Anti-Taiwan / manipuleerbare presidenten — decrease us_support
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "John Kerry" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = -2 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
-				else_if = {
-					limit = { USA = { has_country_leader = { name = "Donald Trump" } } }
-					CHI = {
-						add_to_variable = { CHI_taiwan_us_support = -10 tooltip = CHI_taiwan_us_support_tt }
-						clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-						set_country_flag = CHI_trump_is_president
-						country_event = { id = china_sar.026 days = 3 }
-					}
-				}
+				CHI = { CHI_update_us_president_support = yes }
 			}
 
 			if = {
@@ -150,7 +59,6 @@ on_actions = {
 		}
 	}
 
-	### Taiwan Strait — monthly checks
 	on_monthly_CHI = {
 		effect = {
 			if = {
@@ -159,8 +67,6 @@ on_actions = {
 					country_exists = TAI
 					NOT = { has_war_with = TAI }
 				}
-
-				# Tension decay: -1 per month if no recent provocation
 				if = {
 					limit = {
 						NOT = { has_country_flag = CHI_recent_provocation }
@@ -169,8 +75,6 @@ on_actions = {
 					add_to_variable = { CHI_taiwan_strait_tension = -1 }
 					clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
 				}
-
-				# US support passive decay: -1 every other month if economic leverage active
 				if = {
 					limit = {
 						has_completed_focus = CHI_TAI_economic_leverage
@@ -182,15 +86,13 @@ on_actions = {
 					clr_country_flag = CHI_us_support_decay_tick
 					set_country_flag = CHI_us_support_decay_tick
 				}
-				if = {
+				else_if = {
 					limit = {
 						has_completed_focus = CHI_TAI_economic_leverage
 						NOT = { has_country_flag = CHI_us_support_decay_tick }
 					}
 					set_country_flag = CHI_us_support_decay_tick
 				}
-
-				# Harris floor: us_support cannot drop below 40 while Harris is president
 				if = {
 					limit = {
 						has_country_flag = CHI_harris_us_support_floor
@@ -198,8 +100,6 @@ on_actions = {
 					}
 					set_variable = { CHI_taiwan_us_support = 40 }
 				}
-
-				# Crisis trigger: tension reaches 100
 				if = {
 					limit = {
 						check_variable = { CHI_taiwan_strait_tension > 99 }
@@ -208,8 +108,6 @@ on_actions = {
 					set_country_flag = CHI_taiwan_crisis_triggered
 					country_event = { id = china_sar.019 days = 1 }
 				}
-
-				# Diplomatic isolation milestone: recognition below 5
 				if = {
 					limit = {
 						check_variable = { CHI_taiwan_recognition_count < 5 }
@@ -218,8 +116,6 @@ on_actions = {
 					set_country_flag = CHI_taiwan_diplomatic_alone
 					country_event = { id = china_sar.011 days = 1 }
 				}
-
-				# USA at war with multiple nations — us_support penalty
 				if = {
 					limit = {
 						NOT = { has_country_flag = CHI_usa_multiwar_penalty_applied }
@@ -243,8 +139,6 @@ on_actions = {
 					add_to_variable = { CHI_taiwan_us_support = -8 tooltip = CHI_taiwan_us_support_tt }
 					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 				}
-
-				# Lobby network periodic events
 				if = {
 					limit = {
 						has_completed_focus = CHI_TAI_lobby_network
@@ -257,15 +151,13 @@ on_actions = {
 						50 = { country_event = { id = china_sar.013 days = 3 } }
 					}
 				}
-				if = {
+				else_if = {
 					limit = {
 						has_completed_focus = CHI_TAI_lobby_network
 						NOT = { has_country_flag = CHI_lobby_event_cooldown }
 					}
 					set_country_flag = CHI_lobby_event_cooldown
 				}
-
-				# Blockade monthly effects
 				if = {
 					limit = { has_country_flag = CHI_TAI_full_blockade_active }
 					add_to_variable = { CHI_taiwan_strait_tension = 2 tooltip = CHI_taiwan_strait_tension_tt }
@@ -273,6 +165,10 @@ on_actions = {
 					add_to_variable = { CHI_taiwan_us_support = -3 tooltip = CHI_taiwan_us_support_tt }
 					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 				}
+			}
+			if = {
+				limit = { has_completed_focus = CHI_TAI_cross_strait_policy }
+				CHI_update_us_president_support = yes
 			}
 
 			if = {
@@ -289,7 +185,6 @@ on_actions = {
 				CHI_military_corruption_monthly_tick = yes
 			}
 
-			### Korean Peninsula tension decay ###
 			if = {
 				limit = {
 					has_variable = CHI_korea_peninsula_tension
@@ -298,7 +193,6 @@ on_actions = {
 				add_to_variable = { CHI_korea_peninsula_tension = -1 }
 			}
 
-			### Demographic aging index tick ###
 			if = {
 				limit = {
 					has_variable = CHI_demographic_policy_stage
@@ -332,7 +226,6 @@ on_actions = {
 				}
 			}
 
-			### SCO Yearly Cohesion Cap Reset ###
 			if = {
 				limit = {
 					has_completed_focus = CHI_Form_the_SCO
@@ -342,13 +235,10 @@ on_actions = {
 				set_country_flag = { flag = sco_yearly_cohesion_reset days = 350 value = 1 }
 			}
 
-			### SCO Variable Threshold Monitoring ###
 			if = {
 				limit = {
 					has_completed_focus = CHI_Form_the_SCO
 				}
-
-				# Low cohesion warning
 				if = {
 					limit = {
 						check_variable = { CHI_sco_cohesion < 2 }
@@ -357,8 +247,6 @@ on_actions = {
 					set_country_flag = { flag = sco_low_cohesion_fired days = 365 value = 1 }
 					country_event = { id = CHI_sco.20 days = 1 }
 				}
-
-				# High cohesion milestone
 				if = {
 					limit = {
 						check_variable = { CHI_sco_cohesion > 8 }
@@ -367,8 +255,6 @@ on_actions = {
 					set_country_flag = { flag = sco_high_cohesion_fired days = 365 value = 1 }
 					country_event = { id = CHI_sco.21 days = 1 }
 				}
-
-				# China dominant — balance > 5
 				if = {
 					limit = {
 						check_variable = { CHI_sco_balance > 5 }
@@ -377,8 +263,6 @@ on_actions = {
 					set_country_flag = { flag = sco_china_dominant_fired days = 365 value = 1 }
 					country_event = { id = CHI_sco.22 days = 1 }
 				}
-
-				# Russia dominant — balance < -5
 				if = {
 					limit = {
 						check_variable = { CHI_sco_balance < -5 }
@@ -388,8 +272,6 @@ on_actions = {
 					country_event = { id = CHI_sco.23 days = 1 }
 				}
 			}
-
-			### South China Sea — ADIZ recurring intercept and Quad formation ###
 			if = {
 				limit = {
 					has_idea = CHI_scs_adiz
@@ -408,8 +290,6 @@ on_actions = {
 				set_global_flag = quad_formed
 				news_event = { id = china_scs.60 days = 1 }
 			}
-
-			### Japan branch rework — Senkaku Pressure tick & threshold incidents ###
 			if = {
 				limit = {
 					has_country_flag = CHI_paf_militia_toggle_active
@@ -418,8 +298,6 @@ on_actions = {
 				}
 				add_to_variable = { CHI_senkaku_pressure = 2 tooltip = CHI_senkaku_pressure_tt }
 				clamp_variable = { var = CHI_senkaku_pressure min = 0 max = 100 }
-
-				# Threshold 30 — first incident
 				if = {
 					limit = {
 						check_variable = { CHI_senkaku_pressure > 29 }
@@ -428,35 +306,29 @@ on_actions = {
 					set_country_flag = senkaku_incident_30_fired
 					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
 				}
-				# Threshold 60 — second incident
 				if = {
 					limit = {
 						check_variable = { CHI_senkaku_pressure > 59 }
 						NOT = { has_country_flag = senkaku_incident_60_fired }
 					}
 					set_country_flag = senkaku_incident_60_fired
-					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
+					JAP = { country_event = { id = CHI_foreign.216 days = 3 } }
 				}
-				# Threshold 90 — third and final pre-crisis incident
 				if = {
 					limit = {
 						check_variable = { CHI_senkaku_pressure > 89 }
 						NOT = { has_country_flag = senkaku_incident_90_fired }
 					}
 					set_country_flag = senkaku_incident_90_fired
-					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
+					JAP = { country_event = { id = CHI_foreign.217 days = 3 } }
 				}
 			}
-
-			### Uyghur Threat — monthly tick ###
 			if = {
 				limit = {
 					controls_state = 592
 				}
 				CHI_uighur_monthly_tick = yes
 			}
-
-			### National Committee — active commissions accrue influence and improve their idea tier ###
 			if = {
 				limit = { has_country_flag = CHI_ic_initialized }
 				CHI_gain_commission_influence = yes
@@ -466,7 +338,6 @@ on_actions = {
 
 	on_annex = {
 		effect = {
-			# When CHI annexes TAI, clean up the Taiwan aggression system
 			if = {
 				limit = {
 					ROOT = { original_tag = CHI }
@@ -481,8 +352,6 @@ on_actions = {
 					clr_country_flag = CHI_recent_provocation
 				}
 			}
-
-			# NPM annexed NEP under Chinese sponsorship - settlement event
 			if = {
 				limit = {
 					ROOT = { original_tag = NPM }
@@ -509,53 +378,26 @@ on_actions = {
 						rule = allow_easter_eggs
 						option = yes
 					}
-				}
-				if = {
-					limit = {
-						FROM = {
-							original_tag = CHI
-							OR = {
-								has_country_flag = {
-									flag = CHI_cnc_general_quote_used
-									days > 30
-								}
-								NOT = { has_country_flag = CHI_cnc_general_quote_used }
+					ROOT = {
+						OR = {
+							has_trait = CHI_special_weapons_general
+							has_trait = CHI_infantry_general
+							has_trait = CHI_tank_general
+							has_trait = CHI_nuke_general
+						}
+					}
+					FROM = {
+						original_tag = CHI
+						OR = {
+							has_country_flag = {
+								flag = CHI_cnc_general_quote_used
+								days > 30
 							}
-						}
-					}
-					if = {
-						limit = { ROOT = { has_trait = CHI_special_weapons_general } }
-						FROM = {
-							scoped_sound_effect = "CHI_general_leang_shout"
-							clr_country_flag = CHI_cnc_general_quote_used
-							set_country_flag = CHI_cnc_general_quote_used
-						}
-					}
-					else_if = {
-						limit = { ROOT = { has_trait = CHI_infantry_general } }
-						FROM = {
-							scoped_sound_effect = "CHI_general_fai_shout"
-							clr_country_flag = CHI_cnc_general_quote_used
-							set_country_flag = CHI_cnc_general_quote_used
-						}
-					}
-					else_if = {
-						limit = { ROOT = { has_trait = CHI_tank_general } }
-						FROM = {
-							scoped_sound_effect = "CHI_general_kwai_shout"
-							clr_country_flag = CHI_cnc_general_quote_used
-							set_country_flag = CHI_cnc_general_quote_used
-						}
-					}
-					else_if = {
-						limit = { ROOT = { has_trait = CHI_nuke_general } }
-						FROM = {
-							scoped_sound_effect = "CHI_general_tao_shout"
-							clr_country_flag = CHI_cnc_general_quote_used
-							set_country_flag = CHI_cnc_general_quote_used
+							NOT = { has_country_flag = CHI_cnc_general_quote_used }
 						}
 					}
 				}
+				CHI_general_quote_shout = yes
 			}
 		}
 	}
@@ -567,76 +409,21 @@ on_actions = {
 						rule = allow_easter_eggs
 						option = yes
 					}
+					ROOT = {
+						OR = {
+							has_trait = CHI_special_weapons_general
+							has_trait = CHI_infantry_general
+							has_trait = CHI_tank_general
+							has_trait = CHI_nuke_general
+						}
+					}
+					FROM = { original_tag = CHI }
 				}
-				if = {
-					limit = { FROM = { original_tag = CHI } }
-					if = {
-						limit = { ROOT = { has_trait = CHI_special_weapons_general } }
-						FROM = {
-							scoped_sound_effect = "CHI_general_leang_shout"
-							clr_country_flag = CHI_cnc_general_quote_used
-							set_country_flag = CHI_cnc_general_quote_used
-						}
-					}
-					else_if = {
-						limit = { ROOT = { has_trait = CHI_infantry_general } }
-						FROM = {
-							scoped_sound_effect = "CHI_general_fai_shout"
-							clr_country_flag = CHI_cnc_general_quote_used
-							set_country_flag = CHI_cnc_general_quote_used
-						}
-					}
-					else_if = {
-						limit = { ROOT = { has_trait = CHI_tank_general } }
-						FROM = {
-							scoped_sound_effect = "CHI_general_kwai_shout"
-							clr_country_flag = CHI_cnc_general_quote_used
-							set_country_flag = CHI_cnc_general_quote_used
-						}
-					}
-					else_if = {
-						limit = { ROOT = { has_trait = CHI_nuke_general } }
-						FROM = {
-							scoped_sound_effect = "CHI_general_tao_shout"
-							clr_country_flag = CHI_cnc_general_quote_used
-							set_country_flag = CHI_cnc_general_quote_used
-						}
-					}
-				}
+				CHI_general_quote_shout = yes
 			}
 		}
 	}
 
-	### SCO Save Compatibility ###
-	on_startup = {
-		effect = {
-			CHI = {
-				if = {
-					limit = { NOT = { has_country_flag = sco_rework_v2_initialized } }
-					set_country_flag = sco_rework_v2_initialized
-					set_variable = { global.sco_megaproject_energy_grid_active = 0 }
-					set_variable = { global.sco_megaproject_railway_active = 0 }
-					set_variable = { global.sco_megaproject_dev_bank_active = 0 }
-					set_variable = { global.sco_megaproject_air_defense_active = 0 }
-					set_variable = { global.sco_cohesion_yearly_contribution = 0 }
-				}
-			}
-		}
-	}
-
-	### Japan branch rework — variable init ###
-	on_startup = {
-		effect = {
-			CHI = {
-				if = {
-					limit = { NOT = { has_variable = CHI_senkaku_pressure } }
-					set_variable = { CHI_senkaku_pressure = 0 }
-				}
-			}
-		}
-	}
-
-	### Belt and Road — seed named-project max counts on eligible recipients ###
 	on_startup = {
 		effect = {
 			every_country = {
@@ -646,15 +433,14 @@ on_actions = {
 		}
 	}
 
-	### Pacific PLA basing cancellation: target loses basing if relations collapse ###
 	on_monthly = {
 		effect = {
 			if = {
 				limit = {
-					has_idea = CHI_pla_basing_economic_help
-					NOT = { tag = CHI }
 					country_exists = CHI
+					NOT = { original_tag = CHI }
 					has_opinion = { target = CHI value < 0 }
+					has_idea = CHI_pla_basing_economic_help
 				}
 				remove_ideas = CHI_pla_basing_economic_help
 				remove_opinion_modifier = { target = CHI modifier = CHI_pla_basing_partner }
@@ -668,11 +454,15 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
+					country_exists = CHI
+					CHI = { NOT = { has_country_flag = { flag = CHI_communique_defender_cd days < 30 } } }
 					has_idea = CHI_brokered_non_aggression_pact
 					FROM = { has_idea = CHI_brokered_non_aggression_pact }
-					country_exists = CHI
 				}
-				CHI = { country_event = { id = chi_bri.134 days = 1 } }
+				CHI = {
+					set_country_flag = { flag = CHI_communique_defender_cd days = 30 value = 1 }
+					country_event = { id = chi_bri.134 days = 1 }
+				}
 			}
 		}
 	}

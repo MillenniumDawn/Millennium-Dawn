@@ -2650,7 +2650,6 @@ country_event = {
 }
 
 # CHI_foreign.55 — Beijing Summit Convenes
-# Fired by decision CHI_beijing_hosted_talks to CHI itself
 country_event = {
 	id = CHI_foreign.55
 	title = CHI_foreign.55.t
@@ -6591,6 +6590,121 @@ country_event = {
 
 }
 
+# CHI_foreign.216 — Senkaku ADIZ Confrontation (JAP receiver)
+# Fired by on_monthly_CHI when CHI_senkaku_pressure crosses the 60 threshold.
+country_event = {
+	id = CHI_foreign.216
+	title = CHI_foreign.216.t
+	desc = CHI_foreign.216.d
+	picture = x
+	is_triggered_only = yes
+
+	# Option A — Scramble fighters and hold the ADIZ line.
+	option = {
+		name = CHI_foreign.216.a
+		log = "[GetDateText]: [This.GetName]: CHI_foreign.216.a executed"
+		add_timed_idea = { idea = JAP_jcg_emergency_deployment days = 270 }
+		CHI = {
+			add_to_variable = { var = CHI_senkaku_pressure value = 8 tooltip = CHI_senkaku_pressure_tt }
+			clamp_variable = { var = CHI_senkaku_pressure min = 0 max = 100 }
+			add_to_variable = { CHI_chinese_aggression = 2 tooltip = CHI_chinese_aggression_tt }
+			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_government = nationalist
+			}
+		}
+	}
+
+	# Option B — Route the incident to a quiet back-channel.
+	option = {
+		name = CHI_foreign.216.b
+		log = "[GetDateText]: [This.GetName]: CHI_foreign.216.b executed"
+		add_opinion_modifier = { target = CHI modifier = senkaku_back_channel }
+		CHI = {
+			set_country_flag = CHI_senkaku_back_channel_open
+			add_opinion_modifier = { target = JAP modifier = senkaku_back_channel }
+			add_to_variable = { var = CHI_senkaku_pressure value = -14 tooltip = CHI_senkaku_pressure_tt }
+			clamp_variable = { var = CHI_senkaku_pressure min = 0 max = 100 }
+			add_to_variable = { CHI_chinese_aggression = -2 tooltip = CHI_chinese_aggression_tt }
+			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 0
+				has_government = nationalist
+			}
+			modifier = {
+				add = 30
+				NOT = { has_government = nationalist }
+			}
+		}
+	}
+
+}
+
+# CHI_foreign.217 — Senkaku Standoff at the Brink (JAP receiver)
+# Fired by on_monthly_CHI when CHI_senkaku_pressure crosses the 90 threshold.
+country_event = {
+	id = CHI_foreign.217
+	title = CHI_foreign.217.t
+	desc = CHI_foreign.217.d
+	picture = x
+	is_triggered_only = yes
+
+	# Option A — Deploy a PLAN task group and stare Tokyo down.
+	option = {
+		name = CHI_foreign.217.a
+		log = "[GetDateText]: [This.GetName]: CHI_foreign.217.a executed"
+		add_timed_idea = { idea = JAP_jcg_emergency_deployment days = 365 }
+		add_timed_idea = { idea = JAP_revisionist_pride days = 365 }
+		CHI = {
+			add_to_variable = { var = CHI_senkaku_pressure value = 10 tooltip = CHI_senkaku_pressure_tt }
+			clamp_variable = { var = CHI_senkaku_pressure min = 0 max = 100 }
+			add_to_variable = { CHI_chinese_aggression = 3 tooltip = CHI_chinese_aggression_tt }
+			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
+		}
+		ai_chance = {
+			base = 55
+			modifier = {
+				add = 35
+				has_government = nationalist
+			}
+		}
+	}
+
+	# Option B — Pull back before the shooting starts.
+	option = {
+		name = CHI_foreign.217.b
+		log = "[GetDateText]: [This.GetName]: CHI_foreign.217.b executed"
+		add_opinion_modifier = { target = CHI modifier = senkaku_back_channel }
+		CHI = {
+			set_country_flag = CHI_senkaku_back_channel_open
+			add_opinion_modifier = { target = JAP modifier = senkaku_back_channel }
+			add_to_variable = { var = CHI_senkaku_pressure value = -20 tooltip = CHI_senkaku_pressure_tt }
+			clamp_variable = { var = CHI_senkaku_pressure min = 0 max = 100 }
+			add_to_variable = { CHI_chinese_aggression = -3 tooltip = CHI_chinese_aggression_tt }
+			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
+		}
+		ai_chance = {
+			base = 45
+			modifier = {
+				factor = 0
+				has_government = nationalist
+			}
+			modifier = {
+				add = 30
+				NOT = { has_government = nationalist }
+			}
+		}
+	}
+
+}
+
 # CHI_foreign.213 — Anti-Japanese Boycott Pressure (JAP receiver)
 # Fired by CHI_anti_japanese_boycott_campaign focus.
 country_event = {
@@ -6873,13 +6987,7 @@ country_event = {
 			base = 40
 		}
 	}
-
-	# Option B — Downgrade the Quad to a dialogue.
-
 }
-
-# CHI_foreign.224 — The Tokyo Communique (JAP receiver)
-# Fired by CHI_the_tokyo_communique focus completion. Replaces the older auto-completion.
 country_event = {
 	id = CHI_foreign.224
 	title = CHI_foreign.224.t
@@ -6960,14 +7068,6 @@ country_event = {
 	}
 
 }
-
-##############################################
-### CHI Japan branch — Tokyo Communique chain
-### CHI_foreign.206 – CHI_foreign.208
-##############################################
-
-# CHI_foreign.206 — It Is Done (CHI receiver)
-# Fired by CHI_the_tokyo_communique focus completion.
 country_event = {
 	id = CHI_foreign.206
 	title = CHI_foreign.206.t
@@ -7022,9 +7122,6 @@ country_event = {
 	}
 
 }
-
-# CHI_foreign.208 — Washington Notes the Communique (USA news event, narrative only)
-# Fired by CHI_foreign.206.a.
 news_event = {
 	id = CHI_foreign.208
 	title = CHI_foreign.208.t
@@ -7058,17 +7155,6 @@ news_event = {
 	}
 
 }
-
-##############################################
-### china_news — Japan branch atmospheric    ###
-### china_news.yasukuni_recall               ###
-### china_news.boycott_streets               ###
-### china_news.panda_arrives_tokyo           ###
-##############################################
-
-# china_news.yasukuni_recall — Ambassador Recalled from Tokyo
-# Fired by CHI_the_yasukuni_protest_doctrine focus.
-# The CHI_yasukuni_diplomatic_freeze opinion modifier is applied by the focus, not here.
 news_event = {
 	id = china_news.yasukuni_recall
 	title = china_news.yasukuni_recall.t
@@ -7084,8 +7170,6 @@ news_event = {
 
 }
 
-# china_news.boycott_streets — Anti-Japanese Boycott Reaches the Streets
-# Fired by CHI_anti_japanese_boycott_campaign focus.
 news_event = {
 	id = china_news.boycott_streets
 	title = china_news.boycott_streets.t
@@ -7101,8 +7185,6 @@ news_event = {
 
 }
 
-# china_news.panda_arrives_tokyo — Pandas Land at Narita
-# Fired by CHI_the_panda_diplomacy_renewal focus. +5 mutual opinion narrative reinforcement.
 news_event = {
 	id = china_news.panda_arrives_tokyo
 	title = china_news.panda_arrives_tokyo.t
@@ -7122,12 +7204,6 @@ news_event = {
 	}
 
 }
-
-##############################################
-### CHI_foreign — Japan industry invitations ###
-### CHI_foreign.231 – CHI_foreign.249         ###
-##############################################
-
 country_event = {
 	id = CHI_foreign.231
 	title = CHI_foreign.231.t
@@ -8281,7 +8357,6 @@ country_event = {
 
 }
 
-# chi_bri.30 -- USA Reaction to Petroyuan (USA scope, fired by CHI_Petroyuan_Settlement focus)
 country_event = {
 	id = chi_bri.30
 	title = chi_bri.30.t
@@ -8331,7 +8406,6 @@ country_event = {
 
 }
 
-# chi_bri.40 -- BRF Triennial Opening (CHI scope, fired by CHI_BRI_Forum_Triennial decision)
 country_event = {
 	id = chi_bri.40
 	title = chi_bri.40.t
@@ -8457,7 +8531,6 @@ country_event = {
 
 }
 
-# chi_bri.43 -- BRF Outcome (CHI scope)
 country_event = {
 	id = chi_bri.43
 	title = chi_bri.43.t
@@ -8487,7 +8560,6 @@ country_event = {
 
 }
 
-# chi_bri.50 -- Pax Sinica Capstone (CHI scope, fired by CHI_Pax_Sinica focus)
 country_event = {
 	id = chi_bri.50
 	title = chi_bri.50.t
@@ -8519,7 +8591,6 @@ country_event = {
 
 }
 
-# chi_bri.70 -- African Continental Integration Triumph (CHI scope, fired by CHI_African_Continental_Integration focus)
 country_event = {
 	id = chi_bri.70
 	title = chi_bri.70.t
@@ -9569,11 +9640,6 @@ country_event = {
 	}
 
 }
-
-# chi_bri.95 -- CAI Aggression Check: Hidden Monthly Cancellation (CHI scope)
-# Fired by D.4 focus completion (and re-fires itself every 30 days while CHI_eu_market_access is held).
-# Cancels the CAI idea and swaps signatory modifiers to suspended on the 6 EU majors when
-# CHI_chinese_aggression crosses 25. If the threshold is not met, schedules itself again.
 country_event = {
 	id = chi_bri.95
 	is_triggered_only = yes
@@ -9630,7 +9696,6 @@ country_event = {
 
 }
 
-# chi_bri.96 -- Bide endgame news event: The Centre Holds (fired by CHI_Tianxia_Realized focus)
 news_event = {
 	id = chi_bri.96
 	title = chi_bri.96.t
@@ -10686,8 +10751,6 @@ country_event = {
 
 }
 
-# The Mate 60 Surprise
-# Fired 90 days after CHI_smic_advanced_node completes.
 country_event = {
 	id = CHI_semiconductor_events.2
 	title = CHI_semiconductor_events.2.t
@@ -10723,9 +10786,6 @@ country_event = {
 	}
 
 }
-
-# Synopsys and Cadence Cut Us Off
-# Fired 180 days after CHI_smee_lithography completes.
 country_event = {
 	id = CHI_semiconductor_events.3
 	title = CHI_semiconductor_events.3.t
@@ -10755,8 +10815,6 @@ country_event = {
 
 }
 
-# CXMT HBM2 Ahead of Schedule
-# Fired 60 days after CHI_memory_independence completes.
 country_event = {
 	id = CHI_semiconductor_events.4
 	title = CHI_semiconductor_events.4.t
@@ -10802,9 +10860,6 @@ country_event = {
 	}
 
 }
-
-# Rare-Earth-for-Chips Leverage — request (fires on USA)
-# Fired by CHI_rare_earth_chip_leverage_decision. ROOT = USA, FROM = China.
 country_event = {
 	id = CHI_semiconductor_events.5
 	title = CHI_semiconductor_events.5.t
@@ -10831,9 +10886,6 @@ country_event = {
 	}
 
 }
-
-# Rare-Earth-for-Chips Leverage — acceptance reply (fires on China)
-# ROOT = China, FROM = USA.
 country_event = {
 	id = CHI_semiconductor_events.6
 	title = CHI_semiconductor_events.6.t
@@ -10851,9 +10903,6 @@ country_event = {
 	}
 
 }
-
-# Rare-Earth-for-Chips Leverage — rejection reply (fires on China)
-# ROOT = China, FROM = USA.
 country_event = {
 	id = CHI_semiconductor_events.7
 	title = CHI_semiconductor_events.7.t
@@ -10868,13 +10917,6 @@ country_event = {
 	}
 
 }
-
-# ===== CHI_three_noc_overseas — NOC Overseas Investment Events =====
-# Fired by the CHI_three_noc_overseas focus completion.
-
-# KAZ block — CNPC / PetroKazakhstan ($4.18B)
-
-# CHI_foreign.054 — KAZ receives CNPC acquisition proposal
 country_event = {
 	id = CHI_foreign.054
 	title = CHI_foreign.054.t
@@ -10901,7 +10943,6 @@ country_event = {
 
 }
 
-# CHI_foreign.063 — CHI notified: KAZ approved CNPC acquisition
 country_event = {
 	id = CHI_foreign.063
 	title = CHI_foreign.063.t
@@ -11152,7 +11193,6 @@ country_event = {
 
 }
 
-# CHI_military_event.5 — The Reckoning (fired by CHI_guatian_reckoning)
 country_event = {
 	id = CHI_military_event.5
 	title = CHI_military_event.5.t
@@ -11178,7 +11218,6 @@ country_event = {
 
 }
 
-# CHI_military_event.6 — Bow to the China Dream (fired by CHI_bow_to_china_dream)
 country_event = {
 	id = CHI_military_event.6
 	title = CHI_military_event.6.t
@@ -11203,7 +11242,6 @@ country_event = {
 
 }
 
-# CHI_military_event.10 - Anti-Corruption Scandal (fired from CHI_military_corruption_monthly_tick once the empire grows large)
 country_event = {
 	id = CHI_military_event.10
 	title = CHI_military_event.10.t
@@ -11256,7 +11294,6 @@ country_event = {
 
 }
 
-# CHI_space_events.2 — Taikonauts on the Moon (fired by CHI_crewed_lunar_landing_mission timeout)
 country_event = {
 	id = CHI_space_events.2
 	title = CHI_space_events.2.t
@@ -11270,7 +11307,7 @@ country_event = {
 		add_stability = 0.05
 		add_war_support = 0.05
 		add_tech_bonus = {
-			name = CHI_space_events_moon
+			name = CHI_space_events.2.t
 			ahead_reduction = 1
 			uses = 1
 			category = CAT_space
@@ -11279,7 +11316,6 @@ country_event = {
 	}
 
 }
-# CHI_space_events.10 — Lunar funding: satellite and tracking network (fired by CHI_change_lunar_exploration completion)
 country_event = {
 	id = CHI_space_events.10
 	title = CHI_space_events.10.t
