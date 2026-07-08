@@ -936,6 +936,13 @@
 		reforme_expectance_government_change_update = yes
 	}
 
+	#temporary/decaying reform-expectancy channel for one-off populist decisions (item 4e/10)
+	ITA_modify_reform_expectance_temp_effect = {
+		custom_effect_tooltip = ITA_modify_reform_expectancy_temp_effect_TT
+		add_to_variable = { ITA_drift_switch_temp_var = drift_switch_change }
+		reforme_expectance_government_change_update = yes
+	}
+
 	prevent_parties_disappearing = {
 		if = {
 			limit = {
@@ -1200,11 +1207,14 @@
 			min = -0.5
 			max = 0.5
 		}
+		#effective reform pressure = persistent level + decaying temporary channel (item 4e)
+		set_temp_variable = { ITA_re_effective = drift_switch_var_base }
+		add_to_temp_variable = { ITA_re_effective = ITA_drift_switch_temp_var }
 		if = {
 			limit = {
 				has_country_leader_with_trait = western_technocrat
 			}
-			set_temp_variable = { coalition_drift_switch_var = drift_switch_var_base }
+			set_temp_variable = { coalition_drift_switch_var = ITA_re_effective }
 			if = {
 				limit = { check_variable = { gov_coalition_array^num > 0 } }
 				divide_temp_variable = { coalition_drift_switch_var = gov_coalition_array^num }
@@ -1363,7 +1373,7 @@
 					has_country_leader_with_trait = western_technocrat
 				}
 			}
-			set_temp_variable = { coalition_drift_switch_var = drift_switch_var_base }
+			set_temp_variable = { coalition_drift_switch_var = ITA_re_effective }
 			set_temp_variable = { number_of_government_parties = gov_coalition_array^num }
 			add_to_temp_variable = { number_of_government_parties = 1 } #the ruling party
 			divide_temp_variable = { coalition_drift_switch_var = number_of_government_parties }
@@ -1532,6 +1542,42 @@
 					add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
 			}
 		}
+		#5%/30% popularity taper: reform-expectancy pressure can't drive a party below ~5% (item 4c)
+		if = { limit = { check_variable = { democratic_drift_var < 0 } }
+			set_temp_variable = { ITA_re_taper = party_popularity@democratic }
+			subtract_from_temp_variable = { ITA_re_taper = 0.05 }
+			divide_temp_variable = { ITA_re_taper = 0.25 }
+			clamp_temp_variable = { var = ITA_re_taper min = 0 max = 1 }
+			multiply_variable = { democratic_drift_var = ITA_re_taper }
+		}
+		if = { limit = { check_variable = { communism_drift_var < 0 } }
+			set_temp_variable = { ITA_re_taper = party_popularity@communism }
+			subtract_from_temp_variable = { ITA_re_taper = 0.05 }
+			divide_temp_variable = { ITA_re_taper = 0.25 }
+			clamp_temp_variable = { var = ITA_re_taper min = 0 max = 1 }
+			multiply_variable = { communism_drift_var = ITA_re_taper }
+		}
+		if = { limit = { check_variable = { fascism_drift_var < 0 } }
+			set_temp_variable = { ITA_re_taper = party_popularity@fascism }
+			subtract_from_temp_variable = { ITA_re_taper = 0.05 }
+			divide_temp_variable = { ITA_re_taper = 0.25 }
+			clamp_temp_variable = { var = ITA_re_taper min = 0 max = 1 }
+			multiply_variable = { fascism_drift_var = ITA_re_taper }
+		}
+		if = { limit = { check_variable = { neutrality_drift_var < 0 } }
+			set_temp_variable = { ITA_re_taper = party_popularity@neutrality }
+			subtract_from_temp_variable = { ITA_re_taper = 0.05 }
+			divide_temp_variable = { ITA_re_taper = 0.25 }
+			clamp_temp_variable = { var = ITA_re_taper min = 0 max = 1 }
+			multiply_variable = { neutrality_drift_var = ITA_re_taper }
+		}
+		if = { limit = { check_variable = { nationalist_drift_var < 0 } }
+			set_temp_variable = { ITA_re_taper = party_popularity@nationalist }
+			subtract_from_temp_variable = { ITA_re_taper = 0.05 }
+			divide_temp_variable = { ITA_re_taper = 0.25 }
+			clamp_temp_variable = { var = ITA_re_taper min = 0 max = 1 }
+			multiply_variable = { nationalist_drift_var = ITA_re_taper }
+		}
 	}
 	reform_expectance_from_situation = {
 		# Clamp stability input at 0.3 so a spiral can't compound reform pressure indefinitely
@@ -1685,11 +1731,8 @@
 		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_taxes }
 		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_war }
 		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_interest_rate }
-
-		#this correction reduces the absolute value of reform expectance
-		set_temp_variable = { drift_switch_var_correction = drift_switch_var_base }
-		multiply_temp_variable = { drift_switch_var_correction = -0.2 } #very heavy correction to avoid excessive values
-		add_to_variable = { reform_expectance_drift_display_var = drift_switch_var_correction }
+		#reform_expectance_drift_display_var now holds only the situational pressure S;
+		#mean-reversion (k*M) is applied monthly in 07_italy_on_actions.txt (item 4a)
 	}
 
 	remove_gov_crisis_ai_flags = {
@@ -1779,27 +1822,27 @@
 		if = {
 			limit = { has_government = fascism }
 				set_temp_variable = { party_pop_stab = party_popularity@fascism }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				multiply_temp_variable = { party_pop_stab = 0.04 }
 		}
 		else_if = {
 			limit = { has_government = communism }
 				set_temp_variable = { party_pop_stab = party_popularity@communism }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				multiply_temp_variable = { party_pop_stab = 0.04 }
 		}
 		else_if = {
 			limit = { has_government = democratic }
 				set_temp_variable = { party_pop_stab = party_popularity@democratic }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				multiply_temp_variable = { party_pop_stab = 0.04 }
 		}
 		else_if = {
 			limit = { has_government = neutrality }
 				set_temp_variable = { party_pop_stab = party_popularity@neutrality }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				multiply_temp_variable = { party_pop_stab = 0.04 }
 		}
 		else_if = {
 			limit = { has_government = nationalist }
 				set_temp_variable = { party_pop_stab = party_popularity@nationalist }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				multiply_temp_variable = { party_pop_stab = 0.04 }
 		}
 		subtract_from_temp_variable = { base_stability = party_pop_stab }
 		if = {
@@ -1810,13 +1853,13 @@
 				}
 			}
 			add_to_variable = { var = ITA_stability_factor_var value = modifier@stability_weekly }
-			clamp_variable = { var = ITA_stability_factor_var min = -0.2 max = 0.2 }
+			clamp_variable = { var = ITA_stability_factor_var min = -0.1 max = 0.1 }
 		}
 	}
 
 	low_stability_protests_effect = {
 		set_temp_variable = { stability_protests_gain = stability }
-		add_to_temp_variable = { stability_protests_gain = -0.333 }
+		add_to_temp_variable = { stability_protests_gain = -0.25 }
 		add_to_variable = { stability_protests_counter = stability_protests_gain }
 		if = {
 			limit = {

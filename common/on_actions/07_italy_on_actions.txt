@@ -227,16 +227,19 @@ on_actions = {
 				government_crisis_check = yes
 			}
 			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } }
-				add_to_variable = { reform_expectance_from_situation_counter = 1 }
-				if = {
-					limit = {
-						check_variable = { reform_expectance_from_situation_counter > 11 }
-					}
-					reform_expectance_from_situation = yes
-					#add the final value of the changes to the reform expectance variable
-					subtract_from_variable = { drift_switch_var_base = reform_expectance_drift_display_var }
-					set_variable = { reform_expectance_from_situation_counter = 0 }
-				}
+				#monthly reform-expectancy update: M -= (S + k*M)/12, k = 0.4 mean-reversion (item 4a/4b)
+				reform_expectance_from_situation = yes
+				set_temp_variable = { ITA_re_monthly_delta = reform_expectance_drift_display_var }
+				set_temp_variable = { ITA_re_meanrev = drift_switch_var_base }
+				multiply_temp_variable = { ITA_re_meanrev = 0.4 }
+				add_to_temp_variable = { ITA_re_monthly_delta = ITA_re_meanrev }
+				divide_temp_variable = { ITA_re_monthly_delta = 12 }
+				subtract_from_variable = { drift_switch_var_base = ITA_re_monthly_delta }
+				#surface the true signed change to Reform Expectancy for the meter (item 3)
+				set_variable = { ITA_reform_expectance_change_display_var = ITA_re_monthly_delta }
+				multiply_variable = { ITA_reform_expectance_change_display_var = -1 }
+				#decay the temporary channel toward 0 (item 4e)
+				multiply_variable = { ITA_drift_switch_temp_var = 0.9 }
 				reforme_expectance_government_change_update = yes
 			}
 			if = { limit = { NOT = { has_country_flag = privatized_alitalia } NOT = { has_idea = ITA_privatizations } NOT = { has_country_flag = ITA_alitalia_collapsed } }
