@@ -151,11 +151,10 @@ on_actions = {
 	}
 
 	### Taiwan Strait — monthly checks
-	on_monthly = {
+	on_monthly_CHI = {
 		effect = {
 			if = {
 				limit = {
-					original_tag = CHI
 					has_completed_focus = CHI_TAI_cross_strait_policy
 					country_exists = TAI
 					NOT = { has_war_with = TAI }
@@ -278,7 +277,6 @@ on_actions = {
 
 			if = {
 				limit = {
-					original_tag = CHI
 					has_completed_focus = CHI_Belt_and_Road_Initiative
 				}
 				CHI_BRI_monthly_tick = yes
@@ -286,10 +284,182 @@ on_actions = {
 
 			if = {
 				limit = {
-					original_tag = CHI
 					has_completed_focus = CHI_the_poly_compromise
 				}
 				CHI_military_corruption_monthly_tick = yes
+			}
+
+			### Korean Peninsula tension decay ###
+			if = {
+				limit = {
+					has_variable = CHI_korea_peninsula_tension
+					check_variable = { CHI_korea_peninsula_tension > 30 }
+				}
+				add_to_variable = { CHI_korea_peninsula_tension = -1 }
+			}
+
+			### Demographic aging index tick ###
+			if = {
+				limit = {
+					has_variable = CHI_demographic_policy_stage
+				}
+				if = {
+					limit = { check_variable = { CHI_demographic_policy_stage = 1 } }
+					add_to_variable = { CHI_demographic_aging = 0.40 }
+				}
+				else_if = {
+					limit = { check_variable = { CHI_demographic_policy_stage = 2 } }
+					add_to_variable = { CHI_demographic_aging = 0.08 }
+				}
+				else_if = {
+					limit = { check_variable = { CHI_demographic_policy_stage = 3 } }
+					add_to_variable = { CHI_demographic_aging = 0.02 }
+				}
+				else = {
+					add_to_variable = { CHI_demographic_aging = -0.10 }
+				}
+				clamp_variable = { var = CHI_demographic_aging min = 0 max = 100 }
+				CHI_apply_demographic_tier = yes
+
+				if = {
+					limit = {
+						check_variable = { CHI_demographic_aging > 49 }
+						NOT = { has_country_flag = CHI_demographic_fading_warned }
+						NOT = { has_active_mission = CHI_grey_society_crisis }
+					}
+					set_country_flag = CHI_demographic_fading_warned
+					country_event = { id = CHI_political_events.50 days = 1 }
+				}
+			}
+
+			### SCO Yearly Cohesion Cap Reset ###
+			if = {
+				limit = {
+					has_completed_focus = CHI_Form_the_SCO
+					NOT = { has_country_flag = sco_yearly_cohesion_reset }
+				}
+				set_variable = { global.sco_cohesion_yearly_contribution = 0 }
+				set_country_flag = { flag = sco_yearly_cohesion_reset days = 350 value = 1 }
+			}
+
+			### SCO Variable Threshold Monitoring ###
+			if = {
+				limit = {
+					has_completed_focus = CHI_Form_the_SCO
+				}
+
+				# Low cohesion warning
+				if = {
+					limit = {
+						check_variable = { CHI_sco_cohesion < 2 }
+						NOT = { has_country_flag = sco_low_cohesion_fired }
+					}
+					set_country_flag = { flag = sco_low_cohesion_fired days = 365 value = 1 }
+					country_event = { id = CHI_sco.20 days = 1 }
+				}
+
+				# High cohesion milestone
+				if = {
+					limit = {
+						check_variable = { CHI_sco_cohesion > 8 }
+						NOT = { has_country_flag = sco_high_cohesion_fired }
+					}
+					set_country_flag = { flag = sco_high_cohesion_fired days = 365 value = 1 }
+					country_event = { id = CHI_sco.21 days = 1 }
+				}
+
+				# China dominant — balance > 5
+				if = {
+					limit = {
+						check_variable = { CHI_sco_balance > 5 }
+						NOT = { has_country_flag = sco_china_dominant_fired }
+					}
+					set_country_flag = { flag = sco_china_dominant_fired days = 365 value = 1 }
+					country_event = { id = CHI_sco.22 days = 1 }
+				}
+
+				# Russia dominant — balance < -5
+				if = {
+					limit = {
+						check_variable = { CHI_sco_balance < -5 }
+						NOT = { has_country_flag = sco_russia_dominant_fired }
+					}
+					set_country_flag = { flag = sco_russia_dominant_fired days = 365 value = 1 }
+					country_event = { id = CHI_sco.23 days = 1 }
+				}
+			}
+
+			### South China Sea — ADIZ recurring intercept and Quad formation ###
+			if = {
+				limit = {
+					has_idea = CHI_scs_adiz
+					NOT = { has_country_flag = { flag = CHI_scs_adiz_intercept_cd days < 120 } }
+				}
+				clr_country_flag = CHI_scs_adiz_intercept_cd
+				set_country_flag = { flag = CHI_scs_adiz_intercept_cd days = 120 value = 1 }
+				country_event = { id = china_scs.21 days = 1 }
+			}
+
+			if = {
+				limit = {
+					check_variable = { CHI_chinese_aggression > 30 }
+					NOT = { has_global_flag = quad_formed }
+				}
+				set_global_flag = quad_formed
+				news_event = { id = china_scs.60 days = 1 }
+			}
+
+			### Japan branch rework — Senkaku Pressure tick & threshold incidents ###
+			if = {
+				limit = {
+					has_country_flag = CHI_paf_militia_toggle_active
+					country_exists = JAP
+					NOT = { has_war_with = JAP }
+				}
+				add_to_variable = { CHI_senkaku_pressure = 2 tooltip = CHI_senkaku_pressure_tt }
+				clamp_variable = { var = CHI_senkaku_pressure min = 0 max = 100 }
+
+				# Threshold 30 — first incident
+				if = {
+					limit = {
+						check_variable = { CHI_senkaku_pressure > 29 }
+						NOT = { has_country_flag = senkaku_incident_30_fired }
+					}
+					set_country_flag = senkaku_incident_30_fired
+					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
+				}
+				# Threshold 60 — second incident
+				if = {
+					limit = {
+						check_variable = { CHI_senkaku_pressure > 59 }
+						NOT = { has_country_flag = senkaku_incident_60_fired }
+					}
+					set_country_flag = senkaku_incident_60_fired
+					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
+				}
+				# Threshold 90 — third and final pre-crisis incident
+				if = {
+					limit = {
+						check_variable = { CHI_senkaku_pressure > 89 }
+						NOT = { has_country_flag = senkaku_incident_90_fired }
+					}
+					set_country_flag = senkaku_incident_90_fired
+					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
+				}
+			}
+
+			### Uyghur Threat — monthly tick ###
+			if = {
+				limit = {
+					controls_state = 592
+				}
+				CHI_uighur_monthly_tick = yes
+			}
+
+			### National Committee — active commissions accrue influence and improve their idea tier ###
+			if = {
+				limit = { has_country_flag = CHI_ic_initialized }
+				CHI_gain_commission_influence = yes
 			}
 		}
 	}
@@ -433,223 +603,6 @@ on_actions = {
 						}
 					}
 				}
-			}
-		}
-	}
-
-	### Korean Peninsula tension decay ###
-	on_monthly = {
-		effect = {
-			if = {
-				limit = {
-					original_tag = CHI
-					has_variable = CHI_korea_peninsula_tension
-					check_variable = { CHI_korea_peninsula_tension > 30 }
-				}
-				add_to_variable = { CHI_korea_peninsula_tension = -1 }
-			}
-		}
-	}
-
-	### Demographic aging index tick ###
-	on_monthly = {
-		effect = {
-			if = {
-				limit = {
-					original_tag = CHI
-					has_variable = CHI_demographic_policy_stage
-				}
-				if = {
-					limit = { check_variable = { CHI_demographic_policy_stage = 1 } }
-					add_to_variable = { CHI_demographic_aging = 0.40 }
-				}
-				else_if = {
-					limit = { check_variable = { CHI_demographic_policy_stage = 2 } }
-					add_to_variable = { CHI_demographic_aging = 0.08 }
-				}
-				else_if = {
-					limit = { check_variable = { CHI_demographic_policy_stage = 3 } }
-					add_to_variable = { CHI_demographic_aging = 0.02 }
-				}
-				else = {
-					add_to_variable = { CHI_demographic_aging = -0.10 }
-				}
-				clamp_variable = { var = CHI_demographic_aging min = 0 max = 100 }
-				CHI_apply_demographic_tier = yes
-
-				if = {
-					limit = {
-						check_variable = { CHI_demographic_aging > 49 }
-						NOT = { has_country_flag = CHI_demographic_fading_warned }
-						NOT = { has_active_mission = CHI_grey_society_crisis }
-					}
-					set_country_flag = CHI_demographic_fading_warned
-					country_event = { id = CHI_political_events.50 days = 1 }
-				}
-			}
-		}
-	}
-
-	### SCO Yearly Cohesion Cap Reset ###
-	on_monthly = {
-		effect = {
-			if = {
-				limit = {
-					original_tag = CHI
-					has_completed_focus = CHI_Form_the_SCO
-					NOT = { has_country_flag = sco_yearly_cohesion_reset }
-				}
-				set_variable = { global.sco_cohesion_yearly_contribution = 0 }
-				set_country_flag = { flag = sco_yearly_cohesion_reset days = 350 value = 1 }
-			}
-		}
-	}
-
-	### SCO Variable Threshold Monitoring ###
-	on_monthly = {
-		effect = {
-			if = {
-				limit = {
-					original_tag = CHI
-					has_completed_focus = CHI_Form_the_SCO
-				}
-
-				# Low cohesion warning
-				if = {
-					limit = {
-						check_variable = { CHI_sco_cohesion < 2 }
-						NOT = { has_country_flag = sco_low_cohesion_fired }
-					}
-					set_country_flag = { flag = sco_low_cohesion_fired days = 365 value = 1 }
-					country_event = { id = CHI_sco.20 days = 1 }
-				}
-
-				# High cohesion milestone
-				if = {
-					limit = {
-						check_variable = { CHI_sco_cohesion > 8 }
-						NOT = { has_country_flag = sco_high_cohesion_fired }
-					}
-					set_country_flag = { flag = sco_high_cohesion_fired days = 365 value = 1 }
-					country_event = { id = CHI_sco.21 days = 1 }
-				}
-
-				# China dominant — balance > 5
-				if = {
-					limit = {
-						check_variable = { CHI_sco_balance > 5 }
-						NOT = { has_country_flag = sco_china_dominant_fired }
-					}
-					set_country_flag = { flag = sco_china_dominant_fired days = 365 value = 1 }
-					country_event = { id = CHI_sco.22 days = 1 }
-				}
-
-				# Russia dominant — balance < -5
-				if = {
-					limit = {
-						check_variable = { CHI_sco_balance < -5 }
-						NOT = { has_country_flag = sco_russia_dominant_fired }
-					}
-					set_country_flag = { flag = sco_russia_dominant_fired days = 365 value = 1 }
-					country_event = { id = CHI_sco.23 days = 1 }
-				}
-			}
-		}
-	}
-
-	### South China Sea — ADIZ recurring intercept and Quad formation ###
-	on_monthly = {
-		effect = {
-			if = {
-				limit = {
-					original_tag = CHI
-					has_idea = CHI_scs_adiz
-					NOT = { has_country_flag = { flag = CHI_scs_adiz_intercept_cd days < 120 } }
-				}
-				clr_country_flag = CHI_scs_adiz_intercept_cd
-				set_country_flag = { flag = CHI_scs_adiz_intercept_cd days = 120 value = 1 }
-				country_event = { id = china_scs.21 days = 1 }
-			}
-
-			if = {
-				limit = {
-					original_tag = CHI
-					check_variable = { CHI_chinese_aggression > 30 }
-					NOT = { has_global_flag = quad_formed }
-				}
-				set_global_flag = quad_formed
-				news_event = { id = china_scs.60 days = 1 }
-			}
-		}
-	}
-
-	### Japan branch rework — Senkaku Pressure tick & threshold incidents ###
-	on_monthly = {
-		effect = {
-			if = {
-				limit = {
-					original_tag = CHI
-					has_country_flag = CHI_paf_militia_toggle_active
-					country_exists = JAP
-					NOT = { has_war_with = JAP }
-				}
-				add_to_variable = { CHI_senkaku_pressure = 2 tooltip = CHI_senkaku_pressure_tt }
-				clamp_variable = { var = CHI_senkaku_pressure min = 0 max = 100 }
-
-				# Threshold 30 — first incident
-				if = {
-					limit = {
-						check_variable = { CHI_senkaku_pressure > 29 }
-						NOT = { has_country_flag = senkaku_incident_30_fired }
-					}
-					set_country_flag = senkaku_incident_30_fired
-					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
-				}
-				# Threshold 60 — second incident
-				if = {
-					limit = {
-						check_variable = { CHI_senkaku_pressure > 59 }
-						NOT = { has_country_flag = senkaku_incident_60_fired }
-					}
-					set_country_flag = senkaku_incident_60_fired
-					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
-				}
-				# Threshold 90 — third and final pre-crisis incident
-				if = {
-					limit = {
-						check_variable = { CHI_senkaku_pressure > 89 }
-						NOT = { has_country_flag = senkaku_incident_90_fired }
-					}
-					set_country_flag = senkaku_incident_90_fired
-					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
-				}
-			}
-		}
-	}
-
-	### Uyghur Threat — monthly tick ###
-	on_monthly = {
-		effect = {
-			if = {
-				limit = {
-					original_tag = CHI
-					controls_state = 592
-				}
-				CHI_uighur_monthly_tick = yes
-			}
-		}
-	}
-
-	### National Committee — active commissions accrue influence and improve their idea tier ###
-	on_monthly = {
-		effect = {
-			if = {
-				limit = {
-					original_tag = CHI
-					has_country_flag = CHI_ic_initialized
-				}
-				CHI_gain_commission_influence = yes
-				CHI_apply_commission_ideas = yes
 			}
 		}
 	}

@@ -21,207 +21,252 @@ CHI_add_influence_to_active_commission = {
 		limit = { check_variable = { CHI_ic_slot_check = 1 } }
 		add_to_variable = { CHI_ic_inf_org = 5 }
 		clamp_variable = { var = CHI_ic_inf_org min = 0 max = 100 }
+		set_temp_variable = { CHI_ic_tier_target = 1 }
+		CHI_apply_single_commission_tier = yes
 	}
 	else_if = {
 		limit = { check_variable = { CHI_ic_slot_check = 2 } }
 		add_to_variable = { CHI_ic_inf_pub = 5 }
 		clamp_variable = { var = CHI_ic_inf_pub min = 0 max = 100 }
+		set_temp_variable = { CHI_ic_tier_target = 2 }
+		CHI_apply_single_commission_tier = yes
 	}
 	else_if = {
 		limit = { check_variable = { CHI_ic_slot_check = 3 } }
 		add_to_variable = { CHI_ic_inf_ufwd = 5 }
 		clamp_variable = { var = CHI_ic_inf_ufwd min = 0 max = 100 }
+		set_temp_variable = { CHI_ic_tier_target = 3 }
+		CHI_apply_single_commission_tier = yes
 	}
 	else_if = {
 		limit = { check_variable = { CHI_ic_slot_check = 4 } }
 		add_to_variable = { CHI_ic_inf_intl = 5 }
 		clamp_variable = { var = CHI_ic_inf_intl min = 0 max = 100 }
+		set_temp_variable = { CHI_ic_tier_target = 4 }
+		CHI_apply_single_commission_tier = yes
 	}
 	else_if = {
 		limit = { check_variable = { CHI_ic_slot_check = 5 } }
 		add_to_variable = { CHI_ic_inf_social = 5 }
 		clamp_variable = { var = CHI_ic_inf_social min = 0 max = 100 }
+		set_temp_variable = { CHI_ic_tier_target = 5 }
+		CHI_apply_single_commission_tier = yes
 	}
 	else_if = {
 		limit = { check_variable = { CHI_ic_slot_check = 6 } }
 		add_to_variable = { CHI_ic_inf_cplac = 5 }
 		clamp_variable = { var = CHI_ic_inf_cplac min = 0 max = 100 }
+		set_temp_variable = { CHI_ic_tier_target = 6 }
+		CHI_apply_single_commission_tier = yes
 	}
 	else_if = {
 		limit = { check_variable = { CHI_ic_slot_check = 7 } }
 		add_to_variable = { CHI_ic_inf_nsc = 5 }
 		clamp_variable = { var = CHI_ic_inf_nsc min = 0 max = 100 }
+		set_temp_variable = { CHI_ic_tier_target = 7 }
+		CHI_apply_single_commission_tier = yes
 	}
 }
 
 # Brings each commission idea to the tier matching its influence (35 / 70 / 100 milestones). Idempotent; safe to call repeatedly.
 CHI_apply_commission_ideas = {
+	set_temp_variable = { CHI_ic_tier_target = 1 } CHI_apply_single_commission_tier = yes
+	set_temp_variable = { CHI_ic_tier_target = 2 } CHI_apply_single_commission_tier = yes
+	set_temp_variable = { CHI_ic_tier_target = 3 } CHI_apply_single_commission_tier = yes
+	set_temp_variable = { CHI_ic_tier_target = 4 } CHI_apply_single_commission_tier = yes
+	set_temp_variable = { CHI_ic_tier_target = 5 } CHI_apply_single_commission_tier = yes
+	set_temp_variable = { CHI_ic_tier_target = 6 } CHI_apply_single_commission_tier = yes
+	set_temp_variable = { CHI_ic_tier_target = 7 } CHI_apply_single_commission_tier = yes
+}
+
+CHI_apply_single_commission_tier = {
 	if = {
-		limit = { check_variable = { CHI_ic_inf_org > 99 } }
+		limit = { check_variable = { CHI_ic_tier_target = 1 } }
 		if = {
-			limit = { NOT = { has_idea = CHI_organisation_department_3 } }
-			if = { limit = { has_idea = CHI_organisation_department_1 } remove_ideas = CHI_organisation_department_1 }
-			if = { limit = { has_idea = CHI_organisation_department_2 } remove_ideas = CHI_organisation_department_2 }
-			add_ideas = CHI_organisation_department_3
+			limit = { check_variable = { CHI_ic_inf_org > 99 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_organisation_department_3 } }
+				if = { limit = { has_idea = CHI_organisation_department_1 } remove_ideas = CHI_organisation_department_1 }
+				if = { limit = { has_idea = CHI_organisation_department_2 } remove_ideas = CHI_organisation_department_2 }
+				add_ideas = CHI_organisation_department_3
+			}
+		}
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_org > 69 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_organisation_department_2 } }
+				if = { limit = { has_idea = CHI_organisation_department_1 } remove_ideas = CHI_organisation_department_1 }
+				add_ideas = CHI_organisation_department_2
+			}
+		}
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_org > 34 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_organisation_department_1 } }
+				add_ideas = CHI_organisation_department_1
+			}
 		}
 	}
 	else_if = {
-		limit = { check_variable = { CHI_ic_inf_org > 69 } }
+		limit = { check_variable = { CHI_ic_tier_target = 2 } }
 		if = {
-			limit = { NOT = { has_idea = CHI_organisation_department_2 } }
-			if = { limit = { has_idea = CHI_organisation_department_1 } remove_ideas = CHI_organisation_department_1 }
-			add_ideas = CHI_organisation_department_2
+			limit = { check_variable = { CHI_ic_inf_pub > 99 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_publicity_department_3 } }
+				if = { limit = { has_idea = CHI_publicity_department_1 } remove_ideas = CHI_publicity_department_1 }
+				if = { limit = { has_idea = CHI_publicity_department_2 } remove_ideas = CHI_publicity_department_2 }
+				add_ideas = CHI_publicity_department_3
+			}
+		}
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_pub > 69 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_publicity_department_2 } }
+				if = { limit = { has_idea = CHI_publicity_department_1 } remove_ideas = CHI_publicity_department_1 }
+				add_ideas = CHI_publicity_department_2
+			}
+		}
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_pub > 34 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_publicity_department_1 } }
+				add_ideas = CHI_publicity_department_1
+			}
 		}
 	}
 	else_if = {
-		limit = { check_variable = { CHI_ic_inf_org > 34 } }
+		limit = { check_variable = { CHI_ic_tier_target = 3 } }
 		if = {
-			limit = { NOT = { has_idea = CHI_organisation_department_1 } }
-			add_ideas = CHI_organisation_department_1
+			limit = { check_variable = { CHI_ic_inf_ufwd > 99 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_united_front_department_3 } }
+				if = { limit = { has_idea = CHI_united_front_department_1 } remove_ideas = CHI_united_front_department_1 }
+				if = { limit = { has_idea = CHI_united_front_department_2 } remove_ideas = CHI_united_front_department_2 }
+				add_ideas = CHI_united_front_department_3
+			}
 		}
-	}
-	if = {
-		limit = { check_variable = { CHI_ic_inf_pub > 99 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_publicity_department_3 } }
-			if = { limit = { has_idea = CHI_publicity_department_1 } remove_ideas = CHI_publicity_department_1 }
-			if = { limit = { has_idea = CHI_publicity_department_2 } remove_ideas = CHI_publicity_department_2 }
-			add_ideas = CHI_publicity_department_3
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_ufwd > 69 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_united_front_department_2 } }
+				if = { limit = { has_idea = CHI_united_front_department_1 } remove_ideas = CHI_united_front_department_1 }
+				add_ideas = CHI_united_front_department_2
+			}
 		}
-	}
-	else_if = {
-		limit = { check_variable = { CHI_ic_inf_pub > 69 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_publicity_department_2 } }
-			if = { limit = { has_idea = CHI_publicity_department_1 } remove_ideas = CHI_publicity_department_1 }
-			add_ideas = CHI_publicity_department_2
-		}
-	}
-	else_if = {
-		limit = { check_variable = { CHI_ic_inf_pub > 34 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_publicity_department_1 } }
-			add_ideas = CHI_publicity_department_1
-		}
-	}
-	if = {
-		limit = { check_variable = { CHI_ic_inf_ufwd > 99 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_united_front_department_3 } }
-			if = { limit = { has_idea = CHI_united_front_department_1 } remove_ideas = CHI_united_front_department_1 }
-			if = { limit = { has_idea = CHI_united_front_department_2 } remove_ideas = CHI_united_front_department_2 }
-			add_ideas = CHI_united_front_department_3
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_ufwd > 34 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_united_front_department_1 } }
+				add_ideas = CHI_united_front_department_1
+			}
 		}
 	}
 	else_if = {
-		limit = { check_variable = { CHI_ic_inf_ufwd > 69 } }
+		limit = { check_variable = { CHI_ic_tier_target = 4 } }
 		if = {
-			limit = { NOT = { has_idea = CHI_united_front_department_2 } }
-			if = { limit = { has_idea = CHI_united_front_department_1 } remove_ideas = CHI_united_front_department_1 }
-			add_ideas = CHI_united_front_department_2
+			limit = { check_variable = { CHI_ic_inf_intl > 99 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_international_department_3 } }
+				if = { limit = { has_idea = CHI_international_department_1 } remove_ideas = CHI_international_department_1 }
+				if = { limit = { has_idea = CHI_international_department_2 } remove_ideas = CHI_international_department_2 }
+				add_ideas = CHI_international_department_3
+			}
+		}
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_intl > 69 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_international_department_2 } }
+				if = { limit = { has_idea = CHI_international_department_1 } remove_ideas = CHI_international_department_1 }
+				add_ideas = CHI_international_department_2
+			}
+		}
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_intl > 34 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_international_department_1 } }
+				add_ideas = CHI_international_department_1
+			}
 		}
 	}
 	else_if = {
-		limit = { check_variable = { CHI_ic_inf_ufwd > 34 } }
+		limit = { check_variable = { CHI_ic_tier_target = 5 } }
 		if = {
-			limit = { NOT = { has_idea = CHI_united_front_department_1 } }
-			add_ideas = CHI_united_front_department_1
+			limit = { check_variable = { CHI_ic_inf_social > 99 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_society_department_3 } }
+				if = { limit = { has_idea = CHI_society_department_1 } remove_ideas = CHI_society_department_1 }
+				if = { limit = { has_idea = CHI_society_department_2 } remove_ideas = CHI_society_department_2 }
+				add_ideas = CHI_society_department_3
+			}
 		}
-	}
-	if = {
-		limit = { check_variable = { CHI_ic_inf_intl > 99 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_international_department_3 } }
-			if = { limit = { has_idea = CHI_international_department_1 } remove_ideas = CHI_international_department_1 }
-			if = { limit = { has_idea = CHI_international_department_2 } remove_ideas = CHI_international_department_2 }
-			add_ideas = CHI_international_department_3
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_social > 69 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_society_department_2 } }
+				if = { limit = { has_idea = CHI_society_department_1 } remove_ideas = CHI_society_department_1 }
+				add_ideas = CHI_society_department_2
+			}
 		}
-	}
-	else_if = {
-		limit = { check_variable = { CHI_ic_inf_intl > 69 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_international_department_2 } }
-			if = { limit = { has_idea = CHI_international_department_1 } remove_ideas = CHI_international_department_1 }
-			add_ideas = CHI_international_department_2
-		}
-	}
-	else_if = {
-		limit = { check_variable = { CHI_ic_inf_intl > 34 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_international_department_1 } }
-			add_ideas = CHI_international_department_1
-		}
-	}
-	if = {
-		limit = { check_variable = { CHI_ic_inf_social > 99 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_society_department_3 } }
-			if = { limit = { has_idea = CHI_society_department_1 } remove_ideas = CHI_society_department_1 }
-			if = { limit = { has_idea = CHI_society_department_2 } remove_ideas = CHI_society_department_2 }
-			add_ideas = CHI_society_department_3
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_social > 34 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_society_department_1 } }
+				add_ideas = CHI_society_department_1
+			}
 		}
 	}
 	else_if = {
-		limit = { check_variable = { CHI_ic_inf_social > 69 } }
+		limit = { check_variable = { CHI_ic_tier_target = 6 } }
 		if = {
-			limit = { NOT = { has_idea = CHI_society_department_2 } }
-			if = { limit = { has_idea = CHI_society_department_1 } remove_ideas = CHI_society_department_1 }
-			add_ideas = CHI_society_department_2
+			limit = { check_variable = { CHI_ic_inf_cplac > 99 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_central_political_commission_3 } }
+				if = { limit = { has_idea = CHI_central_political_commission_1 } remove_ideas = CHI_central_political_commission_1 }
+				if = { limit = { has_idea = CHI_central_political_commission_2 } remove_ideas = CHI_central_political_commission_2 }
+				add_ideas = CHI_central_political_commission_3
+			}
+		}
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_cplac > 69 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_central_political_commission_2 } }
+				if = { limit = { has_idea = CHI_central_political_commission_1 } remove_ideas = CHI_central_political_commission_1 }
+				add_ideas = CHI_central_political_commission_2
+			}
+		}
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_cplac > 34 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_central_political_commission_1 } }
+				add_ideas = CHI_central_political_commission_1
+			}
 		}
 	}
 	else_if = {
-		limit = { check_variable = { CHI_ic_inf_social > 34 } }
+		limit = { check_variable = { CHI_ic_tier_target = 7 } }
 		if = {
-			limit = { NOT = { has_idea = CHI_society_department_1 } }
-			add_ideas = CHI_society_department_1
+			limit = { check_variable = { CHI_ic_inf_nsc > 99 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_national_security_commission_3 } }
+				if = { limit = { has_idea = CHI_national_security_commission_1 } remove_ideas = CHI_national_security_commission_1 }
+				if = { limit = { has_idea = CHI_national_security_commission_2 } remove_ideas = CHI_national_security_commission_2 }
+				add_ideas = CHI_national_security_commission_3
+			}
 		}
-	}
-	if = {
-		limit = { check_variable = { CHI_ic_inf_cplac > 99 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_central_political_commission_3 } }
-			if = { limit = { has_idea = CHI_central_political_commission_1 } remove_ideas = CHI_central_political_commission_1 }
-			if = { limit = { has_idea = CHI_central_political_commission_2 } remove_ideas = CHI_central_political_commission_2 }
-			add_ideas = CHI_central_political_commission_3
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_nsc > 69 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_national_security_commission_2 } }
+				if = { limit = { has_idea = CHI_national_security_commission_1 } remove_ideas = CHI_national_security_commission_1 }
+				add_ideas = CHI_national_security_commission_2
+			}
 		}
-	}
-	else_if = {
-		limit = { check_variable = { CHI_ic_inf_cplac > 69 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_central_political_commission_2 } }
-			if = { limit = { has_idea = CHI_central_political_commission_1 } remove_ideas = CHI_central_political_commission_1 }
-			add_ideas = CHI_central_political_commission_2
-		}
-	}
-	else_if = {
-		limit = { check_variable = { CHI_ic_inf_cplac > 34 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_central_political_commission_1 } }
-			add_ideas = CHI_central_political_commission_1
-		}
-	}
-	if = {
-		limit = { check_variable = { CHI_ic_inf_nsc > 99 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_national_security_commission_3 } }
-			if = { limit = { has_idea = CHI_national_security_commission_1 } remove_ideas = CHI_national_security_commission_1 }
-			if = { limit = { has_idea = CHI_national_security_commission_2 } remove_ideas = CHI_national_security_commission_2 }
-			add_ideas = CHI_national_security_commission_3
-		}
-	}
-	else_if = {
-		limit = { check_variable = { CHI_ic_inf_nsc > 69 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_national_security_commission_2 } }
-			if = { limit = { has_idea = CHI_national_security_commission_1 } remove_ideas = CHI_national_security_commission_1 }
-			add_ideas = CHI_national_security_commission_2
-		}
-	}
-	else_if = {
-		limit = { check_variable = { CHI_ic_inf_nsc > 34 } }
-		if = {
-			limit = { NOT = { has_idea = CHI_national_security_commission_1 } }
-			add_ideas = CHI_national_security_commission_1
+		else_if = {
+			limit = { check_variable = { CHI_ic_inf_nsc > 34 } }
+			if = {
+				limit = { NOT = { has_idea = CHI_national_security_commission_1 } }
+				add_ideas = CHI_national_security_commission_1
+			}
 		}
 	}
 }
@@ -575,43 +620,71 @@ CHI_BRI_monthly_tick = {
 
 	if = {
 		limit = { check_variable = { CHI_bri_global_presence > 199 } }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_4 } remove_ideas = CHI_BRI_presence_tier_4 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_3 } remove_ideas = CHI_BRI_presence_tier_3 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_2 } remove_ideas = CHI_BRI_presence_tier_2 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_1 } remove_ideas = CHI_BRI_presence_tier_1 }
-		if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_5 } } add_ideas = CHI_BRI_presence_tier_5 }
+		set_temp_variable = { CHI_bri_presence_target_tier = 5 }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_bri_global_presence > 149 } }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_5 } remove_ideas = CHI_BRI_presence_tier_5 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_3 } remove_ideas = CHI_BRI_presence_tier_3 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_2 } remove_ideas = CHI_BRI_presence_tier_2 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_1 } remove_ideas = CHI_BRI_presence_tier_1 }
-		if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_4 } } add_ideas = CHI_BRI_presence_tier_4 }
+		set_temp_variable = { CHI_bri_presence_target_tier = 4 }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_bri_global_presence > 99 } }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_5 } remove_ideas = CHI_BRI_presence_tier_5 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_4 } remove_ideas = CHI_BRI_presence_tier_4 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_2 } remove_ideas = CHI_BRI_presence_tier_2 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_1 } remove_ideas = CHI_BRI_presence_tier_1 }
-		if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_3 } } add_ideas = CHI_BRI_presence_tier_3 }
+		set_temp_variable = { CHI_bri_presence_target_tier = 3 }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_bri_global_presence > 49 } }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_5 } remove_ideas = CHI_BRI_presence_tier_5 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_4 } remove_ideas = CHI_BRI_presence_tier_4 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_3 } remove_ideas = CHI_BRI_presence_tier_3 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_1 } remove_ideas = CHI_BRI_presence_tier_1 }
-		if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_2 } } add_ideas = CHI_BRI_presence_tier_2 }
+		set_temp_variable = { CHI_bri_presence_target_tier = 2 }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_bri_global_presence > 24 } }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_5 } remove_ideas = CHI_BRI_presence_tier_5 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_4 } remove_ideas = CHI_BRI_presence_tier_4 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_3 } remove_ideas = CHI_BRI_presence_tier_3 }
-		if = { limit = { has_idea = CHI_BRI_presence_tier_2 } remove_ideas = CHI_BRI_presence_tier_2 }
-		if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_1 } } add_ideas = CHI_BRI_presence_tier_1 }
+		set_temp_variable = { CHI_bri_presence_target_tier = 1 }
+	}
+	else = {
+		set_temp_variable = { CHI_bri_presence_target_tier = 0 }
+	}
+
+	if = {
+		limit = { NOT = { check_variable = { CHI_bri_presence_tier_applied = CHI_bri_presence_target_tier } } }
+		if = {
+			limit = { check_variable = { CHI_bri_global_presence > 199 } }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_4 } remove_ideas = CHI_BRI_presence_tier_4 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_3 } remove_ideas = CHI_BRI_presence_tier_3 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_2 } remove_ideas = CHI_BRI_presence_tier_2 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_1 } remove_ideas = CHI_BRI_presence_tier_1 }
+			if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_5 } } add_ideas = CHI_BRI_presence_tier_5 }
+		}
+		else_if = {
+			limit = { check_variable = { CHI_bri_global_presence > 149 } }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_5 } remove_ideas = CHI_BRI_presence_tier_5 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_3 } remove_ideas = CHI_BRI_presence_tier_3 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_2 } remove_ideas = CHI_BRI_presence_tier_2 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_1 } remove_ideas = CHI_BRI_presence_tier_1 }
+			if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_4 } } add_ideas = CHI_BRI_presence_tier_4 }
+		}
+		else_if = {
+			limit = { check_variable = { CHI_bri_global_presence > 99 } }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_5 } remove_ideas = CHI_BRI_presence_tier_5 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_4 } remove_ideas = CHI_BRI_presence_tier_4 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_2 } remove_ideas = CHI_BRI_presence_tier_2 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_1 } remove_ideas = CHI_BRI_presence_tier_1 }
+			if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_3 } } add_ideas = CHI_BRI_presence_tier_3 }
+		}
+		else_if = {
+			limit = { check_variable = { CHI_bri_global_presence > 49 } }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_5 } remove_ideas = CHI_BRI_presence_tier_5 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_4 } remove_ideas = CHI_BRI_presence_tier_4 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_3 } remove_ideas = CHI_BRI_presence_tier_3 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_1 } remove_ideas = CHI_BRI_presence_tier_1 }
+			if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_2 } } add_ideas = CHI_BRI_presence_tier_2 }
+		}
+		else_if = {
+			limit = { check_variable = { CHI_bri_global_presence > 24 } }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_5 } remove_ideas = CHI_BRI_presence_tier_5 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_4 } remove_ideas = CHI_BRI_presence_tier_4 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_3 } remove_ideas = CHI_BRI_presence_tier_3 }
+			if = { limit = { has_idea = CHI_BRI_presence_tier_2 } remove_ideas = CHI_BRI_presence_tier_2 }
+			if = { limit = { NOT = { has_idea = CHI_BRI_presence_tier_1 } } add_ideas = CHI_BRI_presence_tier_1 }
+		}
+		set_variable = { CHI_bri_presence_tier_applied = CHI_bri_presence_target_tier }
 	}
 }
 
