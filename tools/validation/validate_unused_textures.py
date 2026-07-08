@@ -13,7 +13,8 @@ from typing import Dict, List, Set
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import find_hoi4_install
+from shared_utils import extract_block_from_text, find_hoi4_install
+from validate_gfx_references import _GFX_SPRITE_TYPES
 from validator_common import (
     BaseValidator,
     Colors,
@@ -28,6 +29,13 @@ _TEXTURE_REF_PATTERNS = [
     re.compile(r'"(gfx/[^"]+\.(?:dds|tga|png))"', re.IGNORECASE),
 ]
 _DOUBLE_SLASH = re.compile(r"/{2,}")
+
+# Loc text icons: £stem and £GFX_stem both resolve to spriteType GFX_stem.
+_TEXT_ICON_REF = re.compile(r"£([A-Za-z0-9_.]+)")
+_SPRITE_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
+_SPRITE_TEXTUREFILE_IN_BLOCK = re.compile(
+    r'\btexturefile\s*=\s*"([^"]+)"', re.IGNORECASE
+)
 
 TEXTURE_EXTENSIONS = [".dds", ".tga", ".png"]
 
@@ -122,6 +130,32 @@ def process_gfx_file(filename: str) -> Set[str]:
     return referenced_textures
 
 
+def _sprite_name_to_texture(gfx_files: List[str]) -> Dict[str, str]:
+    """Map spriteType `name` -> its normalized `texturefile` path.
+
+    Used to resolve loc £stem / £GFX_stem text-icon references (which name a
+    sprite, not a file) down to the texture path they render.
+    """
+    mapping: Dict[str, str] = {}
+    for filename in gfx_files:
+        content = FileOpener.open_text_file(
+            filename, lowercase=False, strip_comments_flag=True
+        )
+        for m in _GFX_SPRITE_TYPES.finditer(content):
+            block, end = extract_block_from_text(content, m.end() - 1)
+            if end == -1:
+                continue
+            nm = _SPRITE_NAME_IN_BLOCK.search(block)
+            tf = _SPRITE_TEXTUREFILE_IN_BLOCK.search(block)
+            if not (nm and tf):
+                continue
+            texture_path = tf.group(1).replace("\\", "/").lstrip("/")
+            while "//" in texture_path:
+                texture_path = texture_path.replace("//", "/")
+            mapping[nm.group(1)] = texture_path
+    return mapping
+
+
 def _extract_texture_refs(content: str) -> Set[str]:
     refs: Set[str] = set()
     for pat in _TEXTURE_REF_PATTERNS:
@@ -172,6 +206,7 @@ class Validator(BaseValidator):
         self.referenced_textures = set()
         self.vanilla_referenced_textures = set()
         self.game_file_textures = set()
+        self.text_icon_referenced_textures = set()
         self.unused_count = 0
         self.missing_count = 0
         self.hoi4_path = hoi4_path
@@ -290,6 +325,47 @@ class Validator(BaseValidator):
 
         return matched_textures
 
+    def _get_text_icon_referenced_textures(self) -> Set[str]:
+        """Resolve loc £stem / £GFX_stem text-icon references to texture paths.
+
+        English-only: text icons are a usage signal, not a translation-coverage
+        check, and non-English .yml are allowed to lag behind (AGENTS.md).
+        Scanning all languages would multiply the loc read ~10x for no benefit.
+        """
+        loc_files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
+        stems: Set[str] = set()
+        for filepath in loc_files:
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
+                    stems.update(_TEXT_ICON_REF.findall(f.read()))
+            except Exception:
+                continue
+
+        if not stems:
+            return set()
+
+        name_to_texture = _sprite_name_to_texture(self._find_all_gfx_files())
+
+        referenced: Set[str] = set()
+        for stem in stems:
+            candidates = [f"GFX_{stem}"]
+            if stem.startswith("GFX_"):
+                candidates.append(stem)
+            for name in candidates:
+                texture_path = name_to_texture.get(name)
+                if not texture_path:
+                    continue
+                if texture_path in self.texture_files:
+                    referenced.add(texture_path)
+                else:
+                    for tex_path in self.texture_filename_lookup.get(
+                        os.path.basename(texture_path), ()
+                    ):
+                        referenced.add(tex_path)
+        return referenced
+
     def validate_unused_textures(self):
         self._log_section("Finding all texture files in gfx/...")
 
@@ -328,14 +404,21 @@ class Validator(BaseValidator):
             f"  Found {len(self.game_file_textures)} textures referenced in game files"
         )
 
+        self._log_section("Scanning localisation for £text_icon references...")
+        self.text_icon_referenced_textures = self._get_text_icon_referenced_textures()
+        self.log(
+            f"  Found {len(self.text_icon_referenced_textures)} textures referenced via loc text icons"
+        )
+
         self._log_section("Checking for unused textures...")
 
-        # Find unused textures (not in .gfx files OR game files)
+        # Find unused textures (not in .gfx files, game files, OR loc text icons)
         unused_textures = []
         for texture_path in sorted(self.texture_files):
             if (
                 texture_path not in self.referenced_textures
                 and texture_path not in self.game_file_textures
+                and texture_path not in self.text_icon_referenced_textures
             ):
                 unused_textures.append(texture_path)
 
@@ -386,6 +469,10 @@ class Validator(BaseValidator):
         )
         self.log(
             f"  Texture references in game files: {len(self.game_file_textures)}",
+            "always",
+        )
+        self.log(
+            f"  Texture references via loc text icons: {len(self.text_icon_referenced_textures)}",
             "always",
         )
         if self.hoi4_path:

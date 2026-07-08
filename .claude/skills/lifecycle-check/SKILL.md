@@ -1,3 +1,8 @@
+---
+name: lifecycle-check
+description: 'Audit a country branch against the focus tree lifecycle checklist (focus tree, ideas, decisions, OOB, characters, loc, namelists, AI, game rules, graphics, changelog), reporting done/missing/partial per item. Use when asked if a country''s content is complete or review-ready, e.g. "/lifecycle-check UKR".'
+---
+
 Audit a country's content branch against the focus tree lifecycle checklist and report which phases are done or missing.
 
 **Syntax:** `/lifecycle-check [TAG]`
@@ -36,7 +41,7 @@ Cannot be checked from files. Mark "not verifiable from code" and remind the use
 | National ideas          | `common/ideas/TAG.txt` exists; grep for `idea` blocks                                               |
 | National decisions      | `common/decisions/TAG*.txt` or `common/decisions/categories/TAG*.txt` exists                        |
 | History file updated    | `history/countries/TAG*.txt` modified in branch diff, or exists and is non-trivial                  |
-| OOB file                | `history/units/TAG_*.oob` or `history/units/TAG/*.oob` exists                                       |
+| OOB file                | `history/units/TAG_*.txt` exists                                                                    |
 | Character file          | `common/characters/TAG.txt` exists with at least one `general` or `field_marshal` block             |
 | Party localisation      | `localisation/english/` contains a file with `TAG.` ideology keys                                   |
 | Focus localisation      | `localisation/english/MD_focus_TAG_l_english.yml` exists and is non-empty                           |
@@ -44,7 +49,7 @@ Cannot be checked from files. Mark "not verifiable from code" and remind the use
 | Decisions localisation  | `localisation/english/` contains a file with decision keys for TAG                                  |
 | Unit namelists          | `common/units/names/` or `common/units/names_divisions/` contains a file with TAG name entries      |
 | Investment/Influence AI | `common/ai_strategy/TAG*.txt` exists with investment or influence entries                           |
-| Game rules              | `common/game_rules.txt` or `common/game_rules/` contains a rule referencing TAG                     |
+| Game rules              | `common/game_rules/` contains a rule referencing TAG                                                |
 | Scripted localisation   | `common/scripted_localisation/` contains a file with TAG entries (if the country uses scripted loc) |
 
 #### Graphics Phase
@@ -66,10 +71,10 @@ Cannot be checked from files. Mark "not verifiable from code" and remind the use
 
 #### Completion Phase
 
-| Item                | How to check                                                                                           |
-| ------------------- | ------------------------------------------------------------------------------------------------------ |
-| Changelog entry     | Grep `Changelog.txt` for the TAG or country name                                                       |
-| Authors.txt updated | Grep `Authors.txt` for the developer's name (cannot verify automatically — note as "confirm manually") |
+| Item            | How to check                                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Changelog entry | Grep `Changelog.txt` for the TAG or country name                                                                            |
+| Authors updated | Grep `docs/src/content/misc/authors.md` for the developer's name (cannot verify automatically — note as "confirm manually") |
 
 ### 3. Output
 
@@ -92,7 +97,7 @@ GRAPHICS PHASE
 
 COMPLETION PHASE
   [✓] Changelog entry            Found "TAG" in Changelog.txt
-  [?] Authors.txt                Cannot verify — confirm manually
+  [?] Authors updated            Cannot verify — confirm manually
   ...
 
 Summary: N done, N missing, N partial, N manual-only

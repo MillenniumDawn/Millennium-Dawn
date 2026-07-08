@@ -890,8 +890,17 @@ class BaseValidator:
 
         Also includes vanilla-provided keys that MD decisions/events override
         but reuse the vanilla loc string for (see ``KNOWN_VANILLA_LOC_KEYS``).
+
+        Always scans the full repo: in staged mode the referencing .txt is
+        staged but its loc .yml usually is not, and a staged-only key set
+        makes every unchanged key report as missing.
         """
-        yml_files = self._collect_files(["localisation/english/**/*.yml"])
+        memo = getattr(self, "_loc_keys_memo", None)
+        if memo is not None:
+            return memo
+        yml_files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
         key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
         all_keys: set = set()
         for filepath in yml_files:
@@ -902,7 +911,8 @@ class BaseValidator:
                 continue
             all_keys.update(key_pattern.findall(text))
         all_keys.update(KNOWN_VANILLA_LOC_KEYS)
-        return frozenset(all_keys)
+        self._loc_keys_memo = frozenset(all_keys)
+        return self._loc_keys_memo
 
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")

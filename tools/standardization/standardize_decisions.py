@@ -17,7 +17,12 @@ from common_utils import (
     collapse_blank_runs,
     inject_log_after_brace,
 )
-from shared_utils import compact_block, create_backup, extract_block, log_message
+from shared_utils import (
+    collapse_or_compact,
+    create_backup,
+    extract_block,
+    log_message,
+)
 
 _SINGLE_LINE_PROPS = {"cost", "days_remove", "fire_only_once", "icon"}
 _BLOCK_PROPS = {"allowed", "visible", "available", "complete_effect", "ai_will_do"}
@@ -73,6 +78,15 @@ def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
         depth += opens - closes
 
     return result
+
+
+def _reindent_or_collapse(block_lines: List[str], base_indent: int) -> List[str]:
+    """Single-line collapse a single-leaf block, else reindent at base_indent tabs."""
+    collapsed = collapse_or_compact(block_lines, "\t" * base_indent)
+    multi = reindent_block(block_lines, base_indent)
+    if len(collapsed) == 1 and len(multi) != 1:
+        return collapsed
+    return multi
 
 
 class DecisionCategoryStandardizer(BaseStandardizer):
@@ -145,7 +159,7 @@ class DecisionCategoryStandardizer(BaseStandardizer):
             lines.append("category = {")
 
         for allowed in props["allowed"]:
-            lines.extend(reindent_block(allowed, 1))
+            lines.extend(_reindent_or_collapse(allowed, 1))
             lines.append("")
 
         if props["icon"]:
@@ -156,7 +170,7 @@ class DecisionCategoryStandardizer(BaseStandardizer):
 
         if props["priority"]:
             if isinstance(props["priority"], list):
-                lines.extend(reindent_block(props["priority"], 1))
+                lines.extend(_reindent_or_collapse(props["priority"], 1))
                 lines.append("")
             else:
                 lines.append(f"\t{props['priority']}")
@@ -171,15 +185,15 @@ class DecisionCategoryStandardizer(BaseStandardizer):
             lines.append(f"\t{props['visibility_type']}")
 
         for visible in props["visible"]:
-            lines.extend(reindent_block(visible, 1))
+            lines.extend(_reindent_or_collapse(visible, 1))
             lines.append("")
 
         for target_root_trigger in props["target_root_trigger"]:
-            lines.extend(reindent_block(target_root_trigger, 1))
+            lines.extend(_reindent_or_collapse(target_root_trigger, 1))
             lines.append("")
 
         for on_map_area in props["on_map_area"]:
-            lines.extend(reindent_block(on_map_area, 1))
+            lines.extend(_reindent_or_collapse(on_map_area, 1))
             lines.append("")
 
         if props["other"]:
@@ -256,7 +270,7 @@ class DecisionStandardizer(BaseStandardizer):
 
         # 1. Allowed block (first)
         for allowed in props["allowed"]:
-            lines.extend(compact_block(allowed[:]))
+            lines.extend(collapse_or_compact(allowed[:]))
             lines.append("")
 
         # 2. Icon
@@ -273,12 +287,12 @@ class DecisionStandardizer(BaseStandardizer):
 
         # 4. Visible block
         for visible in props["visible"]:
-            lines.extend(compact_block(visible[:]))
+            lines.extend(collapse_or_compact(visible[:]))
             lines.append("")
 
         # 5. Available block
         for available in props["available"]:
-            lines.extend(compact_block(available[:]))
+            lines.extend(collapse_or_compact(available[:]))
             lines.append("")
 
         # 6. Complete effect (add log if missing)
@@ -290,7 +304,7 @@ class DecisionStandardizer(BaseStandardizer):
                 )
                 complete_effect = inject_log_after_brace(complete_effect, log_line)
 
-            lines.extend(compact_block(complete_effect[:]))
+            lines.extend(collapse_or_compact(complete_effect[:]))
             lines.append("")
 
         # 7. fire_only_once (use sparingly)
@@ -300,7 +314,7 @@ class DecisionStandardizer(BaseStandardizer):
 
         # 8. AI will do (always last)
         for ai_will_do in props["ai_will_do"]:
-            lines.extend(compact_block(ai_will_do[:]))
+            lines.extend(collapse_or_compact(ai_will_do[:]))
             lines.append("")
 
         # 9. Other properties

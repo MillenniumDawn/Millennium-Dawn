@@ -147,7 +147,8 @@ _VALID_AI_TEST_SCOPES: Dict[str, FrozenSet[str]] = {
 }
 
 # Known vanilla HOI4 container windows we cannot verify locally — referenced
-# as parent_window_name in MD scripted GUIs but defined by base game / DLC.
+# as parent_window_name / window_name in MD scripted GUIs but defined by base
+# game / DLC.
 _VANILLA_PARENT_WINDOWS: FrozenSet[str] = frozenset(
     {
         "templatedeploymentwindow",
@@ -164,6 +165,7 @@ _VANILLA_PARENT_WINDOWS: FrozenSet[str] = frozenset(
         "politics_tab",
         "top_bar",
         "characters_tab",
+        "usa_congress_decision_ui_window",
     }
 )
 
@@ -558,17 +560,22 @@ class ScriptedGuiValidator(BaseValidator):
         self._log_section("Checking window_name / parent_window references")
         for block in self._sgui_blocks:
             if block["window_name"]:
-                if block["window_name"] not in self._gui_containers:
-                    self.add_issue(
-                        Severity.WARNING,
-                        "MISSING_WINDOW",
-                        f"Scripted GUI '{block['name']}' references "
-                        f'window_name = "{block["window_name"]}" but no '
-                        f"containerWindowType with that name exists in MD .gui "
-                        f"files (may be a vanilla container)",
-                        file=block["file"],
-                        line=block["line"],
-                    )
+                wn = block["window_name"]
+                if wn in self._gui_containers:
+                    continue
+                # Skip vanilla containers we don't define locally
+                if wn.lower() in _VANILLA_PARENT_WINDOWS:
+                    continue
+                self.add_issue(
+                    Severity.WARNING,
+                    "MISSING_WINDOW",
+                    f"Scripted GUI '{block['name']}' references "
+                    f'window_name = "{block["window_name"]}" but no '
+                    f"containerWindowType with that name exists in MD .gui "
+                    f"files (may be a vanilla container)",
+                    file=block["file"],
+                    line=block["line"],
+                )
             if block["parent_window_name"]:
                 pwn = block["parent_window_name"]
                 if pwn in self._gui_containers:

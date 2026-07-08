@@ -211,51 +211,67 @@ calculate_expected_military_spending = {
 resolve_gdp_c_deltas = {
 	if = {
 		limit = { check_variable = { gdp_per_capita < 5 } }
-		set_temp_variable = { gdp_c_delta = -1.8 }
-		set_temp_variable = { gdp_c_delta_lvl5 = -1.5 }
-		set_temp_variable = { gdp_c_delta_mil = -1.5 }
+		set_temp_variable = { gdp_c_tier = 0 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 10 } }
-		set_temp_variable = { gdp_c_delta = -1.2 }
-		set_temp_variable = { gdp_c_delta_lvl5 = -1 }
-		set_temp_variable = { gdp_c_delta_mil = -1 }
+		set_temp_variable = { gdp_c_tier = 1 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 15 } }
-		set_temp_variable = { gdp_c_delta = -0.6 }
-		set_temp_variable = { gdp_c_delta_lvl5 = -0.5 }
-		set_temp_variable = { gdp_c_delta_mil = -0.5 }
+		set_temp_variable = { gdp_c_tier = 2 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 20 } }
-		set_temp_variable = { gdp_c_delta = -0.1 }
-		set_temp_variable = { gdp_c_delta_lvl5 = 0.1 }
-		set_temp_variable = { gdp_c_delta_mil = 0 }
+		set_temp_variable = { gdp_c_tier = 3 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 30 } }
-		set_temp_variable = { gdp_c_delta = 0.4 }
-		set_temp_variable = { gdp_c_delta_lvl5 = 0.4 }
-		set_temp_variable = { gdp_c_delta_mil = 0.2 }
+		set_temp_variable = { gdp_c_tier = 4 }
 	}
 	else_if = {
 		limit = { check_variable = { gdp_per_capita < 40 } }
-		set_temp_variable = { gdp_c_delta = 0.9 }
-		set_temp_variable = { gdp_c_delta_lvl5 = 0.8 }
-		set_temp_variable = { gdp_c_delta_mil = 0.6 }
+		set_temp_variable = { gdp_c_tier = 5 }
 	}
 	else = {
-		set_temp_variable = { gdp_c_delta = 1.4 }
-		set_temp_variable = { gdp_c_delta_lvl5 = 1.2 }
-		set_temp_variable = { gdp_c_delta_mil = 1 }
+		set_temp_variable = { gdp_c_tier = 6 }
 	}
+	set_temp_variable = { gdp_c_delta = global.gdp_c_delta_table^gdp_c_tier }
+	set_temp_variable = { gdp_c_delta_lvl5 = global.gdp_c_delta_lvl5_table^gdp_c_tier }
+	set_temp_variable = { gdp_c_delta_mil = global.gdp_c_delta_mil_table^gdp_c_tier }
 }
 
 setup_initial_expected_spending_by_party = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: Setup for expected spending started"
 	}
+	clear_array = global.gdp_c_delta_table
+	add_to_array = { global.gdp_c_delta_table = -1.8 }
+	add_to_array = { global.gdp_c_delta_table = -1.2 }
+	add_to_array = { global.gdp_c_delta_table = -0.6 }
+	add_to_array = { global.gdp_c_delta_table = -0.1 }
+	add_to_array = { global.gdp_c_delta_table = 0.4 }
+	add_to_array = { global.gdp_c_delta_table = 0.9 }
+	add_to_array = { global.gdp_c_delta_table = 1.4 }
+
+	clear_array = global.gdp_c_delta_lvl5_table
+	add_to_array = { global.gdp_c_delta_lvl5_table = -1.5 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = -1 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = -0.5 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = 0.1 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = 0.4 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = 0.8 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = 1.2 }
+
+	clear_array = global.gdp_c_delta_mil_table
+	add_to_array = { global.gdp_c_delta_mil_table = -1.5 }
+	add_to_array = { global.gdp_c_delta_mil_table = -1 }
+	add_to_array = { global.gdp_c_delta_mil_table = -0.5 }
+	add_to_array = { global.gdp_c_delta_mil_table = 0 }
+	add_to_array = { global.gdp_c_delta_mil_table = 0.2 }
+	add_to_array = { global.gdp_c_delta_mil_table = 0.6 }
+	add_to_array = { global.gdp_c_delta_mil_table = 1 }
+
 	add_to_array = { global.expected_adm_sp = 2.5 }
 	add_to_array = { global.expected_adm_sp = 2.5 }
 	add_to_array = { global.expected_adm_sp = 1.5 }
@@ -414,11 +430,11 @@ give_in_to_protestors_effect = {
 	set_temp_variable = { pp_loss = 0 }
 	if = {
 		limit = {
-			check_variable = { expected_adm_spending > bureaucracy }
+			check_variable = { expected_adm_spending > bureau_law }
 		}
 
 		set_temp_variable = { buf = expected_adm_spending }
-		subtract_from_temp_variable = { buf = bureaucracy }
+		subtract_from_temp_variable = { buf = bureau_law }
 		set_temp_variable = { diff = buf }
 		multiply_temp_variable = { buf = 50 }
 		add_to_temp_variable = { pp_loss = buf }
@@ -444,11 +460,11 @@ give_in_to_protestors_effect = {
 
 	if = {
 		limit = {
-			check_variable = { expected_police_spending > crime_fighting }
+			check_variable = { expected_police_spending > police_law }
 		}
 
 		set_temp_variable = { buf = expected_police_spending }
-		subtract_from_temp_variable = { buf = crime_fighting }
+		subtract_from_temp_variable = { buf = police_law }
 		set_temp_variable = { diff = buf }
 		multiply_temp_variable = { buf = 50 }
 		add_to_temp_variable = { pp_loss = buf }
@@ -474,11 +490,11 @@ give_in_to_protestors_effect = {
 
 	if = {
 		limit = {
-			check_variable = { expected_edu_spending > education_budget }
+			check_variable = { expected_edu_spending > education_law }
 		}
 
 		set_temp_variable = { buf = expected_edu_spending }
-		subtract_from_temp_variable = { buf = education_budget }
+		subtract_from_temp_variable = { buf = education_law }
 		set_temp_variable = { diff = buf }
 		multiply_temp_variable = { buf = 50 }
 		add_to_temp_variable = { pp_loss = buf }
@@ -504,11 +520,11 @@ give_in_to_protestors_effect = {
 
 	if = {
 		limit = {
-			check_variable = { expected_health_spending > health_budget }
+			check_variable = { expected_health_spending > health_law }
 		}
 
 		set_temp_variable = { buf = expected_health_spending }
-		subtract_from_temp_variable = { buf = health_budget }
+		subtract_from_temp_variable = { buf = health_law }
 		set_temp_variable = { diff = buf }
 		multiply_temp_variable = { buf = 50 }
 		add_to_temp_variable = { pp_loss = buf }
@@ -534,11 +550,11 @@ give_in_to_protestors_effect = {
 
 	if = {
 		limit = {
-			check_variable = { expected_welfare_spending > social_budget }
+			check_variable = { expected_welfare_spending > social_law }
 		}
 
 		set_temp_variable = { buf = expected_welfare_spending }
-		subtract_from_temp_variable = { buf = social_budget }
+		subtract_from_temp_variable = { buf = social_law }
 		set_temp_variable = { diff = buf }
 		multiply_temp_variable = { buf = 50 }
 		add_to_temp_variable = { pp_loss = buf }
@@ -564,11 +580,11 @@ give_in_to_protestors_effect = {
 
 	if = {
 		limit = {
-			check_variable = { expected_military_sp > military_spending }
+			check_variable = { expected_military_sp > military_law }
 		}
 
 		set_temp_variable = { buf = expected_military_sp }
-		subtract_from_temp_variable = { buf = military_spending }
+		subtract_from_temp_variable = { buf = military_law }
 		set_temp_variable = { diff = buf }
 		multiply_temp_variable = { buf = 50 }
 		add_to_temp_variable = { pp_loss = buf }
@@ -605,22 +621,22 @@ give_in_to_protestors_effect = {
 	# AI helper to not overspend
 	if = {
 		limit = { is_ai = yes }
-		if = { limit = { check_variable = { expected_adm_spending < bureaucracy } }
+		if = { limit = { check_variable = { expected_adm_spending < bureau_law } }
 			decrease_centralization = yes
 		}
-		if = { limit = { check_variable = { expected_police_spending < crime_fighting } }
+		if = { limit = { check_variable = { expected_police_spending < police_law } }
 			decrease_policing_budget = yes
 		}
-		if = { limit = { check_variable = { expected_edu_spending < education_budget } }
+		if = { limit = { check_variable = { expected_edu_spending < education_law } }
 			decrease_education_budget = yes
 		}
-		if = { limit = { check_variable = { expected_health_spending < health_budget } }
+		if = { limit = { check_variable = { expected_health_spending < health_law } }
 			decrease_healthcare_budget = yes
 		}
-		if = { limit = { check_variable = { expected_welfare_spending < social_budget } }
+		if = { limit = { check_variable = { expected_welfare_spending < social_law } }
 			decrease_social_spending = yes
 		}
-		if = { limit = { check_variable = { expected_military_sp < military_spending } }
+		if = { limit = { check_variable = { expected_military_sp < military_law } }
 			decrease_military_spending = yes
 		}
 	}

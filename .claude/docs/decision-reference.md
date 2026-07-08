@@ -1,6 +1,6 @@
 # Decision Reference
 
-On-demand reference for decision structure and examples. For best practices, see CLAUDE.md.
+On-demand reference for decision structure and examples. For best practices, see AGENTS.md.
 
 Full HOI4 wiki reference: https://hoi4.paradoxwikis.com/Decision_modding
 
@@ -135,7 +135,7 @@ URA_world_opr = {
 		OPR = { country_event = { id = subject_rus.121 days = 1 } }
 	}
 
-	ai_will_do = { factor = 10 }
+	ai_will_do = { base = 10 }
 }
 ```
 
@@ -233,9 +233,8 @@ unban_party_scripted_call = yes
 set_temp_variable = { percent_change = 10 }
 change_domestic_influence_percentage = yes
 
-# Foreign influence (requires target)
+# Foreign influence (requires target; tag_index defaults to ROOT.id)
 set_temp_variable = { percent_change = 5 }
-set_temp_variable = { tag_index = ROOT }
 set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```
