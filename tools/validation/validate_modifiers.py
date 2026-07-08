@@ -450,6 +450,22 @@ def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     return names
 
 
+def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
+    """Return (name, 1-based line number) for each top-level dynamic modifier
+    definition (`name = { ... }` at depth 0) in a common/dynamic_modifiers/*.txt
+    file."""
+    names: List[Tuple[str, int]] = []
+    depth = 0
+    for lineno, raw in enumerate(text.split("\n"), 1):
+        line = raw.strip()
+        if depth == 0:
+            match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", line)
+            if match:
+                names.append((match.group(1), lineno))
+        depth += line.count("{") - line.count("}")
+    return names
+
+
 def _check_file_for_unknown_modifiers(
     args: Tuple[str, FrozenSet[str], str],
 ) -> List[Tuple[str, str, int]]:
@@ -666,9 +682,59 @@ class Validator(BaseValidator):
             category="unknown-modifier",
         )
 
+    def validate_dynamic_modifier_name_loc(self):
+        """Check that dynamic modifiers with a _TT/_desc loc entry also have a
+        bare-name loc key — the in-game modifier header renders the bare key,
+        so a missing one shows the literal token to players."""
+        self._log_section("Checking dynamic modifier name loc references...")
+
+        loc_keys = self._load_localisation_keys()
+        files = self._collect_files(
+            ["common/dynamic_modifiers/**/*.txt"], ignore_staged=True
+        )
+        self.log(f"  Found {len(files)} dynamic modifier files to check")
+
+        results = []
+        for filepath in files:
+            if should_skip_file(filepath):
+                continue
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            names = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "modifiers.dynamic_names",
+                filepath,
+                text,
+                lambda text=text: _extract_dynamic_modifier_names(text),
+            )
+            for name, lineno in names:
+                has_tt_or_desc = f"{name}_TT" in loc_keys or f"{name}_desc" in loc_keys
+                if has_tt_or_desc and name not in loc_keys:
+                    results.append(
+                        (
+                            f"Dynamic modifier '{name}' has a _TT/_desc loc entry but "
+                            f"no bare '{name}' key (in-game header shows the literal token)",
+                            rel,
+                            lineno,
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ All dynamic modifiers with _TT/_desc loc have a bare-name key",
+            "Dynamic modifiers missing a bare-name loc key:",
+            severity=Severity.WARNING,
+            category="dynamic-modifier-name-loc",
+        )
+
     def run_validations(self):
         known_good = self._build_known_good_set()
         self.validate_modifier_names(known_good)
+        self.validate_dynamic_modifier_name_loc()
 
 
 if __name__ == "__main__":

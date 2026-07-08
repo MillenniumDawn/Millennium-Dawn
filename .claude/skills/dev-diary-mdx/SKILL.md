@@ -1,16 +1,11 @@
 ---
 name: dev-diary-mdx
 description: >-
-  Convert a Millennium Dawn dev diary supplied as a .docx Word document (Word,
-  or Google Docs exported via Download -> Microsoft Word) into a publish-ready
-  .mdx file for the docs site's dev-diaries section. Use whenever someone
-  provides a dev-diary .docx (narrative write-ups about focus trees, mechanics,
-  nations, or mod features) and wants it turned into MDX, "formatted for the
-  diary site", or "made ready to publish"; when a .docx named "Dev Diary" is
-  attached; when images need extracting into the assets/images/dev-diaries/<NNN>/
-  folder convention; or when someone references "dev diary 057"-style numbering.
-  Handles frontmatter, section headers, image extraction and in-order placement,
-  while preserving the author's original voice verbatim.
+  Convert a Millennium Dawn dev diary .docx (Word, or Google Docs exported to
+  Word) into a publish-ready .mdx for the docs site's dev-diaries section:
+  frontmatter, headers, images extracted to assets/images/dev-diaries/<NNN>/
+  in reading order, author's voice preserved verbatim. Use when given a
+  dev-diary .docx to format or publish, or "dev diary 057"-style numbering.
 ---
 
 # Dev Diary -> MDX
@@ -36,7 +31,7 @@ likely to be broken is "improving" the prose. Do not.
 ### Anti-AI-tell exceptions (still apply, scoped narrowly)
 
 The repo's no-em-dash / no-ellipsis-abuse style rules also keep the published
-page from *looking* AI-generated, so:
+page from _looking_ AI-generated, so:
 
 - **Text you author** (section headers, image alt text, the seam where you split
   a paragraph): never use an em dash (`—`) or `...` ellipsis abuse, and never
@@ -53,7 +48,7 @@ do it then, and list every change so they can revert.
 If `$ARGUMENTS` (or an attached file) already points to a `.docx`, use it.
 Otherwise **ask the user to attach or give the path to the `.docx`** before
 doing anything else. If they have a Google Doc, tell them to use
-*Download -> Microsoft Word (.docx)* — that export is the same format. Reject
+_Download -> Microsoft Word (.docx)_ — that export is the same format. Reject
 non-`.docx` input.
 
 ## Step 2 — Determine the next diary number
@@ -101,7 +96,7 @@ Prompt for the fields that can't be reliably derived, offering defaults:
   `docs/src/content.config.ts`), or `bun run check` fails.
 - **date** — default today, format `YYYY-MM-DD`.
 
-Derive the **slug** by kebab-casing the title *without* the "Dev Diary #NN:"
+Derive the **slug** by kebab-casing the title _without_ the "Dev Diary #NN:"
 prefix (e.g. `Greenland: Holiday Paradise` -> `greenland-holiday-paradise`).
 Build `permalink: /dev-diaries/<N>-<slug>/` using the **unpadded** diary number
 (`/dev-diaries/58-greenland-holiday-paradise/`, matching the `#NN` in the title).
