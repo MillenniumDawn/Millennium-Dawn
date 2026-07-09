@@ -15,6 +15,19 @@ country_event = {
 				check_variable = { social_conservatism_government < social_conservatism_society }
 			}
 			log = "[GetDateText]: [This.GetName]: radicalization.1 executed (rising)"
+			set_temp_variable = { rad_shift = 0.02 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { social_conservatism_government > social_conservatism_society }
+			}
+			log = "[GetDateText]: [This.GetName]: radicalization.1 executed (falling)"
+			set_temp_variable = { rad_shift = -0.02 }
+		}
+		if = {
+			limit = {
+				NOT = { check_variable = { rad_shift = 0 } }
+			}
 			if = {
 				limit = {
 					OR = {
@@ -29,7 +42,7 @@ country_event = {
 				}
 				add_popularity = {
 					ideology = communism
-					popularity = 0.02
+					popularity = rad_shift
 				}
 				recalculate_party = yes
 			}
@@ -39,7 +52,7 @@ country_event = {
 				}
 				add_popularity = {
 					ideology = neutrality
-					popularity = 0.02
+					popularity = rad_shift
 				}
 				recalculate_party = yes
 			}
@@ -47,7 +60,7 @@ country_event = {
 				limit = { NOT = { has_government = fascism } }
 				add_popularity = {
 					ideology = fascism
-					popularity = 0.02
+					popularity = rad_shift
 				}
 				recalculate_party = yes
 			}
@@ -57,51 +70,8 @@ country_event = {
 					no_jihadist_government = yes
 				}
 				set_temp_variable = { party_index = 11 }
-				set_temp_variable = { party_popularity_increase = 0.01 }
-				set_temp_variable = { temp_outlook_increase = 0.01 }
-				add_relative_party_popularity = yes
-			}
-		}
-		else_if = {
-			limit = {
-				check_variable = { social_conservatism_government > social_conservatism_society }
-			}
-			log = "[GetDateText]: [This.GetName]: radicalization.1 executed (falling)"
-			if = {
-				limit = {
-					OR = {
-						has_idea = large_shia_population
-						has_idea = substantial_shia_population
-						AND = {
-							original_tag = SAU
-							controls_state = 174 #Haasa
-						}
-					}
-					NOT = { has_government = communism }
-				}
-				add_popularity = { ideology = communism popularity = -0.02 }
-				recalculate_party = yes
-			}
-			if = {
-				limit = {
-					NOT = { has_government = neutrality }
-				}
-				add_popularity = { ideology = neutrality popularity = -0.02 }
-				recalculate_party = yes
-			}
-			if = {
-				limit = { NOT = { has_government = fascism } }
-				add_popularity = { ideology = fascism popularity = -0.02 }
-				recalculate_party = yes
-			}
-			if = {
-				limit = {
-					has_government = fascism
-					no_jihadist_government = yes
-				}
-				set_temp_variable = { party_index = 11 }
-				set_temp_variable = { party_popularity_increase = -0.01 }
-				set_temp_variable = { temp_outlook_increase = -0.01 }
+				set_temp_variable = { party_popularity_increase = { value = rad_shift multiply = 0.5 } }
+				set_temp_variable = { temp_outlook_increase = party_popularity_increase }
 				add_relative_party_popularity = yes
 			}
 		}
