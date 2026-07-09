@@ -54,10 +54,192 @@ _REWARD_BLOCK_RE = re.compile(
 _TECH_BONUS_START = re.compile(r"\badd_tech_bonus\s*=\s*\{")
 _NAME_LINE_RE = re.compile(r"\bname\s*=\s*(\S+)")
 
+# ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md
+# convention). Building type -> the scripted trigger
+# (common/scripted_triggers/00_economic_triggers.txt) that an ai_will_do
+# factor = 0 modifier must check before the AI takes a focus building it.
+_STAFFABLE_TRIGGERS = {
+    "arms_factory": "can_staff_an_arms_industry",
+    "industrial_complex": "can_staff_an_industrial_complex",
+    "dockyard": "can_staff_an_dockyard",
+    "offices": "can_staff_an_offices",
+    "microchip_plant": "can_staff_an_microchip_plant",
+    "composite_plant": "can_staff_an_composite_plant",
+    "agriculture_district": "can_staff_an_agriculture_district",
+}
+
+# Bankruptcy-guard cost thresholds: >= 8 generally, >= 5 when the focus is
+# tagged military/economic/research via a generic search filter.
+_BANKRUPTCY_COST_DEFAULT = 8
+_BANKRUPTCY_COST_STRICT = 5
+_MIL_ECON_RESEARCH_FILTERS = frozenset(
+    {
+        "FOCUS_FILTER_INDUSTRY",
+        "FOCUS_FILTER_ECONOMY",
+        "FOCUS_FILTER_EXPENDITURE",
+        "FOCUS_FILTER_RESEARCH",
+        "FOCUS_FILTER_MILITARY_LAWS",
+        "FOCUS_FILTER_ARMY",
+        "FOCUS_FILTER_NAVY",
+        "FOCUS_FILTER_AIRCRAFT",
+        "FOCUS_FILTER_EQUIPMENT",
+    }
+)
+
+_AI_WILL_DO_START = re.compile(r"\bai_will_do\s*=\s*\{")
+_MODIFIER_START = re.compile(r"\bmodifier\s*=\s*\{")
+_FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
+_CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
+_CAN_STAFF_NOT_YES_RE = re.compile(
+    r"\bNOT\s*=\s*\{\s*(can_staff_an_\w+)\s*=\s*yes\s*\}"
+)
+_BANKRUPTCY_GUARD_RE = re.compile(
+    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
+)
+_ADD_BUILDING_START = re.compile(r"\badd_building_construction\s*=\s*\{")
+_TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
+# Value may be numeric or a file-local @constant reference.
+_COST_LINE_RE = re.compile(r"\bcost\s*=\s*(@?[\w.]+)")
+_CONSTANT_DEF_RE = re.compile(r"^@([\w.]+)\s*=\s*(-?\d+(?:\.\d+)?)", re.M)
+_SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^{}]*)\}")
+_REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
+_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
+
+# Cross-country event tooltip check (AGENTS.md "Cross-country event tooltips"):
+# a completion_reward that fires a country_event into another nation's scope
+# should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT so the player sees the
+# acceptance outcome. Foreignness is decided by the fire's nearest enclosing
+# scope-change (see _country_event_target_is_foreign).
+_COUNTRY_EVENT_RE = re.compile(r"\bcountry_event\b")
+_TT_IF_THEY_ACCEPT_RE = re.compile(r"\bTT_IF_THEY_ACCEPT\b")
+# Owner tag(s): `tag = XXX` inside a focus_tree's `country = { }` block.
+_FT_COUNTRY_BLOCK_RE = re.compile(r"\bcountry\s*=\s*\{")
+_OWNER_TAG_RE = re.compile(r"\btag\s*=\s*([A-Z]{3})\b")
+_LITERAL_TAG_RE = re.compile(r"^[A-Z]{3}$")
+# Iterators that step over other countries (every_country, random_other_country,
+# every_neighbor_country, every_puppet, ...).
+_COUNTRY_ITERATOR_RE = re.compile(r"^(?:every|random|all)_\w*(?:country|puppet)")
+# Scope labels that resolve to the current/self scope, never a foreign nation.
+_SELF_SCOPES = frozenset(
+    {"ROOT", "THIS", "PREV", "FROM", "OWNER", "CONTROLLER", "CAPITAL"}
+)
+# Wrapper blocks that don't change scope — walk through them when locating a
+# fire's nearest enclosing scope-change.
+_CONTROL_FLOW_SCOPES = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "random",
+        "hidden_effect",
+        "while_loop_effect",
+        "for_loop_effect",
+    }
+)
+# 3-letter all-caps tokens that are logic keywords, not country tags.
+_NON_TAG_KEYWORDS = frozenset({"AND", "NOT", "NOR"})
+
+
+def _top_level_text(body: str) -> str:
+    """Return only the depth-0 characters of a block body, so focus-level
+    fields (cost) aren't shadowed by same-named keys inside nested blocks
+    (advisor cost, reduce_focus_completion_cost, ...)."""
+    out = []
+    depth = 0
+    for ch in body:
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth = max(0, depth - 1)
+        elif depth == 0:
+            out.append(ch)
+    return "".join(out)
+
+
+def _resolve_cost(token: Optional[str], constants: Dict[str, float]) -> Optional[float]:
+    if token is None:
+        return None
+    if token.startswith("@"):
+        return constants.get(token[1:])
+    try:
+        return float(token)
+    except ValueError:
+        return None
+
 
 def _line_of(text: str, pos: int) -> int:
     """Return the 1-based line number of *pos* in *text*."""
     return text[:pos].count("\n") + 1
+
+
+def _label_before_brace(body: str, brace_idx: int) -> Optional[str]:
+    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
+
+    Returns None for an anonymous block (no `=` before the brace), e.g. a
+    color/array literal.
+    """
+    j = brace_idx - 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    if j < 0 or body[j] != "=":
+        return None
+    j -= 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    end = j + 1
+    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
+        j -= 1
+    return body[j + 1 : end] or None
+
+
+def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
+    """Return (label, open_brace_index) of the innermost block enclosing *pos*.
+
+    (None, -1) when *pos* is at the top level of *body*.
+    """
+    depth = 0
+    i = pos - 1
+    while i >= 0:
+        c = body[i]
+        if c == "}":
+            depth += 1
+        elif c == "{":
+            if depth == 0:
+                return _label_before_brace(body, i), i
+            depth -= 1
+        i -= 1
+    return None, -1
+
+
+def _country_event_target_is_foreign(
+    body: str, ce_pos: int, owner_tags: FrozenSet[str]
+) -> bool:
+    """True if the country_event at *ce_pos* fires into another nation's scope.
+
+    Walks outward from the fire through control-flow wrappers (if/random/
+    hidden_effect/...) until it reaches a scope-changing block. A literal
+    non-owner tag, a country iterator, or an event_target:/var: scope is
+    foreign; a self scope (ROOT/THIS/…), the owner's own tag, or the reward
+    root (bare fire to the focus owner) is not. Unknown scopes are treated as
+    non-foreign to keep this warning quiet.
+    """
+    pos = ce_pos
+    while True:
+        label, opener = _enclosing_block_label(body, pos)
+        if label is None:
+            return False
+        if label in _CONTROL_FLOW_SCOPES:
+            pos = opener
+            continue
+        if label in _SELF_SCOPES:
+            return False
+        if label.startswith("event_target:") or label.startswith("var:"):
+            return True
+        if _COUNTRY_ITERATOR_RE.match(label):
+            return True
+        if _LITERAL_TAG_RE.match(label) and label not in _NON_TAG_KEYWORDS:
+            return label not in owner_tags
+        return False
 
 
 def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[str]]]]:
@@ -214,6 +396,197 @@ def _extract_tech_bonuses(
 
     return disk_cache.per_file_cached_by_content(
         mod_path, "focus_tree.tech_bonus", filepath, text, _compute
+    )
+
+
+def _extract_ai_guard_data(
+    args: Tuple[str, str, Dict[str, FrozenSet[str]]],
+) -> List[Dict]:
+    """Pool worker: per-focus facts for the ai_will_do guard checks.
+
+    Returns one dict per focus: id, line, cost (numeric or resolved from a
+    file-local @constant), search filters, the staffable building types its
+    rewards construct (directly or via a scripted effect from
+    *staffable_map*), and the guard triggers present in factor = 0 ai_will_do
+    modifiers (both the `X = no` and `NOT = { X = yes }` forms; guards hidden
+    behind wrapper scripted triggers are not recognized). The staffable map
+    is folded into the cache tag so entries invalidate when scripted-effect
+    definitions change.
+    """
+    filepath, mod_path, staffable_map = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+    constants = {m.group(1): float(m.group(2)) for m in _CONSTANT_DEF_RE.finditer(text)}
+    fingerprint = ";".join(
+        f"{name}:{','.join(sorted(types))}"
+        for name, types in sorted(staffable_map.items())
+    )
+
+    def _compute() -> List[Dict]:
+        out: List[Dict] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            if not idm:
+                pos = fend
+                continue
+
+            cm = _COST_LINE_RE.search(_top_level_text(fbody))
+            sf = _SEARCH_FILTERS_RE.search(fbody)
+
+            buildings: Set[str] = set()
+            rpos = fm.start()
+            while True:
+                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
+                if not rm:
+                    break
+                rbody, rend = _extract_block(text, rm.start())
+                if not rbody or rend > fend:
+                    rpos = rm.end()
+                    continue
+                for key in set(_REWARD_KEY_RE.findall(rbody)) & staffable_map.keys():
+                    buildings.update(staffable_map[key])
+                bpos = 0
+                while True:
+                    bm = _ADD_BUILDING_START.search(rbody, bpos)
+                    if not bm:
+                        break
+                    bbody, bend = _extract_block(rbody, bm.start())
+                    if not bbody:
+                        bpos = bm.end()
+                        continue
+                    buildings.update(
+                        t
+                        for t in _TYPE_LINE_RE.findall(bbody)
+                        if t in _STAFFABLE_TRIGGERS
+                    )
+                    bpos = bend
+                rpos = rend
+
+            guards: Set[str] = set()
+            am = _AI_WILL_DO_START.search(fbody)
+            if am:
+                abody, _ = _extract_block(fbody, am.start())
+                if abody:
+                    mpos = 0
+                    while True:
+                        mm = _MODIFIER_START.search(abody, mpos)
+                        if not mm:
+                            break
+                        mbody, mend = _extract_block(abody, mm.start())
+                        if not mbody:
+                            mpos = mm.end()
+                            continue
+                        if _FACTOR_ZERO_RE.search(mbody):
+                            guards.update(_CAN_STAFF_NO_RE.findall(mbody))
+                            guards.update(_CAN_STAFF_NOT_YES_RE.findall(mbody))
+                            if _BANKRUPTCY_GUARD_RE.search(mbody):
+                                guards.add("bankruptcy_incoming_collapse")
+                        mpos = mend
+
+            out.append(
+                {
+                    "id": idm.group(1),
+                    "file": filepath,
+                    "line": _line_of(text, fm.start()),
+                    "cost": _resolve_cost(cm.group(1) if cm else None, constants),
+                    "filters": set(sf.group(1).split()) if sf else set(),
+                    "buildings": buildings,
+                    "guards": guards,
+                }
+            )
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "focus_tree.ai_guards.v2",
+        filepath,
+        text + "\x00" + fingerprint,
+        _compute,
+    )
+
+
+def _extract_cross_country_fires(args: Tuple[str, str]) -> List[Dict]:
+    """Pool worker: focuses whose completion_reward fires an event to another
+    nation without a TT_IF_THEY_ACCEPT tooltip.
+
+    Returns one dict (id, file, line) per non-compliant focus.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[Dict]:
+        owner_tags: Set[str] = set()
+        for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
+            cbody, _ = _extract_block(text, cm.start())
+            if cbody:
+                owner_tags.update(_OWNER_TAG_RE.findall(cbody))
+        owner_frozen = frozenset(owner_tags)
+
+        out: List[Dict] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            if not idm:
+                pos = fend
+                continue
+
+            flagged = False
+            rpos = fm.start()
+            while not flagged:
+                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
+                if not rm:
+                    break
+                rbody, rend = _extract_block(text, rm.start())
+                if not rbody or rend > fend:
+                    rpos = rm.end()
+                    continue
+                if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
+                    for ce in _COUNTRY_EVENT_RE.finditer(rbody):
+                        if _country_event_target_is_foreign(
+                            rbody, ce.start(), owner_frozen
+                        ):
+                            flagged = True
+                            break
+                rpos = rend
+
+            if flagged:
+                out.append(
+                    {
+                        "id": idm.group(1),
+                        "file": filepath,
+                        "line": _line_of(text, fm.start()),
+                    }
+                )
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.cross_country_tt.v1", filepath, text, _compute
     )
 
 
@@ -662,6 +1035,244 @@ class Validator(BaseValidator):
         )
 
     # -----------------------------------------------------------------------
+    # Check 5b: ai_will_do staffing / bankruptcy guards
+    # -----------------------------------------------------------------------
+
+    def _staffable_effect_map(self) -> Dict[str, FrozenSet[str]]:
+        """Map scripted-effect name -> staffable building types it constructs.
+
+        Scans every top-level effect in common/scripted_effects/ for
+        add_building_construction of a staffable type, so new builder-effect
+        variants are picked up without a hardcoded list.
+        """
+        fx_files = self._collect_files(
+            ["common/scripted_effects/*.txt"], ignore_staged=True
+        )
+        mapping: Dict[str, FrozenSet[str]] = {}
+        for fp in fx_files:
+            try:
+                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                    text = strip_comments(fh.read())
+            except Exception:
+                continue
+
+            def _compute(text=text) -> Dict[str, FrozenSet[str]]:
+                found: Dict[str, FrozenSet[str]] = {}
+                for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                    body, _ = _extract_block(text, m.start())
+                    if not body:
+                        continue
+                    types: Set[str] = set()
+                    bpos = 0
+                    while True:
+                        bm = _ADD_BUILDING_START.search(body, bpos)
+                        if not bm:
+                            break
+                        bbody, bend = _extract_block(body, bm.start())
+                        if not bbody:
+                            bpos = bm.end()
+                            continue
+                        types.update(
+                            t
+                            for t in _TYPE_LINE_RE.findall(bbody)
+                            if t in _STAFFABLE_TRIGGERS
+                        )
+                        bpos = bend
+                    if types:
+                        found[m.group(1)] = frozenset(types)
+                return found
+
+            mapping.update(
+                disk_cache.per_file_cached_by_content(
+                    self.mod_path, "focus_tree.staffable_fx", fp, text, _compute
+                )
+            )
+
+        # One level of chaining: an effect that calls a direct builder (e.g.
+        # one_random_factory_energy_check -> one_random_industrial_complex)
+        # inherits its building types. Deeper chains are not followed.
+        direct = dict(mapping)
+        fingerprint = ";".join(
+            f"{name}:{','.join(sorted(types))}"
+            for name, types in sorted(direct.items())
+        )
+        for fp in fx_files:
+            try:
+                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                    text = strip_comments(fh.read())
+            except Exception:
+                continue
+
+            def _compute_chain(text=text) -> Dict[str, FrozenSet[str]]:
+                found: Dict[str, FrozenSet[str]] = {}
+                for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                    body, _ = _extract_block(text, m.start())
+                    if not body:
+                        continue
+                    types: Set[str] = set()
+                    for key in set(_REWARD_KEY_RE.findall(body)) & direct.keys():
+                        types.update(direct[key])
+                    if types:
+                        found[m.group(1)] = frozenset(types)
+                return found
+
+            chained = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "focus_tree.staffable_fx_chain",
+                fp,
+                text + "\x00" + fingerprint,
+                _compute_chain,
+            )
+            for name, types in chained.items():
+                mapping[name] = frozenset(mapping.get(name, frozenset()) | types)
+        return mapping
+
+    def validate_ai_will_do_guards(self):
+        """Flag focuses missing the ai_will_do factor = 0 guards the AI needs.
+
+        can_staff (issue #2233): a focus whose reward builds a staffable
+        building — directly or via a scripted effect — needs the matching
+        can_staff_an_* = no modifier so the AI skips it with no free workers.
+        Bankruptcy: high-cost focuses need a
+        has_active_mission = bankruptcy_incoming_collapse modifier; reported
+        as a per-file aggregate so the pre-existing backlog stays readable.
+        Builder effects are resolved one call level deep; guards written via
+        wrapper scripted triggers are not recognized.
+        """
+        self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
+
+        staffable = self._staffable_effect_map()
+        if not staffable:
+            self.log(
+                "  No builder effects found under common/scripted_effects/ — "
+                "can_staff detection limited to direct add_building_construction",
+                "warning",
+            )
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        data_lists = self._pool_map(
+            _extract_ai_guard_data,
+            [(f, self.mod_path, staffable) for f in files],
+            chunksize=10,
+        )
+
+        staff_results = []
+        bankruptcy_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+        for sub in data_lists:
+            for d in sub:
+                if not self._is_reportable(d["file"]):
+                    continue
+                rel = os.path.relpath(d["file"], self.mod_path)
+
+                unguarded = sorted(
+                    b
+                    for b in d["buildings"]
+                    if _STAFFABLE_TRIGGERS[b] not in d["guards"]
+                )
+                if unguarded:
+                    triggers = ", ".join(
+                        f"{_STAFFABLE_TRIGGERS[b]} = no" for b in unguarded
+                    )
+                    staff_results.append(
+                        (
+                            f"Focus '{d['id']}' builds {', '.join(unguarded)} but"
+                            f" its ai_will_do has no factor = 0 modifier with"
+                            f" {triggers}",
+                            rel,
+                            d["line"],
+                        )
+                    )
+
+                if d["cost"] is not None:
+                    threshold = (
+                        _BANKRUPTCY_COST_STRICT
+                        if d["filters"] & _MIL_ECON_RESEARCH_FILTERS
+                        else _BANKRUPTCY_COST_DEFAULT
+                    )
+                    if (
+                        d["cost"] >= threshold
+                        and "bankruptcy_incoming_collapse" not in d["guards"]
+                    ):
+                        bankruptcy_by_file[rel].append((d["id"], d["line"]))
+
+        self._report(
+            staff_results,
+            "All building focuses carry the matching can_staff ai_will_do guard",
+            "Focuses building staffable buildings without a can_staff guard:",
+            Severity.WARNING,
+            category="missing-can-staff-guard",
+        )
+
+        bankruptcy_results = []
+        for rel, hits in sorted(bankruptcy_by_file.items()):
+            examples = ", ".join(f"{fid} (line {line})" for fid, line in hits[:3])
+            more = f" and {len(hits) - 3} more" if len(hits) > 3 else ""
+            bankruptcy_results.append(
+                (
+                    f"{len(hits)} high-cost focus(es) without the"
+                    f" bankruptcy_incoming_collapse ai_will_do guard:"
+                    f" {examples}{more}",
+                    rel,
+                    hits[0][1],
+                )
+            )
+        self._report(
+            bankruptcy_results,
+            "All high-cost focuses carry the bankruptcy ai_will_do guard",
+            "Files with high-cost focuses missing the bankruptcy guard:",
+            Severity.WARNING,
+            category="missing-bankruptcy-guard",
+        )
+
+    def validate_cross_country_event_tooltips(self):
+        """Flag focuses that fire an event to another nation without a
+        TT_IF_THEY_ACCEPT tooltip.
+
+        AGENTS.md "Cross-country event tooltips": when a completion_reward fires
+        a country_event into a foreign scope, the player should see the outcome
+        via custom_effect_tooltip = TT_IF_THEY_ACCEPT. Reported per file as a
+        WARNING — the presence of the tooltip anywhere in the reward clears it,
+        so a reward already carrying one is not flagged.
+        """
+        self._log_section("Checking cross-country event fires for TT_IF_THEY_ACCEPT...")
+
+        files = self._collect_files(["common/national_focus/*.txt"])
+        data_lists = self._pool_map(
+            _extract_cross_country_fires,
+            [(f, self.mod_path) for f in files],
+            chunksize=10,
+        )
+
+        by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+        for sub in data_lists:
+            for d in sub:
+                if not self._is_reportable(d["file"]):
+                    continue
+                rel = os.path.relpath(d["file"], self.mod_path)
+                by_file[rel].append((d["id"], d["line"]))
+
+        results = []
+        for rel, hits in sorted(by_file.items()):
+            hits.sort(key=lambda h: h[1])
+            examples = ", ".join(f"{fid} (line {line})" for fid, line in hits[:3])
+            more = f" and {len(hits) - 3} more" if len(hits) > 3 else ""
+            results.append(
+                (
+                    f"{len(hits)} focus(es) fire an event to another nation without"
+                    f" a TT_IF_THEY_ACCEPT tooltip: {examples}{more}",
+                    rel,
+                    hits[0][1],
+                )
+            )
+
+        self._report(
+            results,
+            "All cross-country event fires carry a TT_IF_THEY_ACCEPT tooltip",
+            "Files with focuses firing an event to another nation without TT_IF_THEY_ACCEPT:",
+            Severity.WARNING,
+            category="missing-cross-country-tooltip",
+        )
+
+    # -----------------------------------------------------------------------
     # Check 6: Dependency cycles
     # -----------------------------------------------------------------------
 
@@ -794,6 +1405,8 @@ class Validator(BaseValidator):
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
         self.validate_tech_bonus_names()
+        self.validate_ai_will_do_guards()
+        self.validate_cross_country_event_tooltips()
 
         if self.missing_icons:
             self.validate_focus_icons()

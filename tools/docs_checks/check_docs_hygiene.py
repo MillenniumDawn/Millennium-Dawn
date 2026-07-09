@@ -41,9 +41,12 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def git_ls_files(repo_root: Path) -> list[str]:
+def git_ls_files(repo_root: Path, pathspec: str | None = None) -> list[str]:
+    cmd = ["git", "-C", str(repo_root), "ls-files"]
+    if pathspec:
+        cmd += ["--", pathspec]
     out = subprocess.check_output(
-        ["git", "-C", str(repo_root), "ls-files"],
+        cmd,
         text=True,
         encoding="utf-8",
         timeout=60,
@@ -80,11 +83,10 @@ def reference_needles_for_web_path(web_path: str) -> list[str]:
     return needles
 
 
-def asset_is_referenced(web_path: str, source_contents: list[str]) -> bool:
+def asset_is_referenced(web_path: str, source_blob: str) -> bool:
     if web_path in ALLOW_UNUSED_ASSETS:
         return True
-    needles = reference_needles_for_web_path(web_path)
-    return any(n in text for text in source_contents for n in needles)
+    return any(n in source_blob for n in reference_needles_for_web_path(web_path))
 
 
 def find_unused_assets(
@@ -111,18 +113,18 @@ def find_unused_assets(
             continue
         source_files.append(repo_root / rel)
 
-    source_contents: list[str] = []
-    for src in source_files:
-        if not src.exists():
-            # File may be deleted in the current change-set but still present in git index.
-            continue
-        source_contents.append(src.read_text(encoding="utf-8", errors="replace"))
+    # File may be deleted in the current change-set but still present in git index.
+    source_blob = "\n".join(
+        src.read_text(encoding="utf-8", errors="replace")
+        for src in source_files
+        if src.exists()
+    )
 
     for rel in tracked_files:
         web_path = tracked_asset_to_web_path(docs_prefix, rel)
         if web_path is None:
             continue
-        if asset_is_referenced(web_path, source_contents):
+        if asset_is_referenced(web_path, source_blob):
             continue
         issues.append(f"Unused docs asset tracked: {rel}")
 
@@ -144,7 +146,7 @@ def run(repo_root: Path, docs_dir: Path = Path("docs")) -> tuple[bool, str]:
             )
     docs_prefix = docs_dir.as_posix().rstrip("/") + "/"
 
-    tracked_files = git_ls_files(repo_root)
+    tracked_files = git_ls_files(repo_root, docs_prefix)
     issues: list[str] = []
 
     for rel in tracked_files:
