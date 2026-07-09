@@ -725,7 +725,7 @@ check_for_global_attacks = {
 						multiply = 0.5
 					}
 					if = {
-						limit = { check_variable = { global.active_terror_org_reach^i = 0 } }
+						limit = { value = global.active_terror_org_reach^i equals = 0 }
 						add = 15
 					}
 					multiply = 0.2
@@ -947,6 +947,7 @@ select_attack_target = {
 		# Local orgs attack their host nation or a neighbor
 		limit = { check_variable = { org_reach = 0 } }
 
+		resize_temp_array = { local_target_pool = 0 }
 		var:hq_state = {
 			every_neighbor_state = {
 				add_to_temp_array = { local_target_pool = controller }
@@ -1004,11 +1005,11 @@ select_attack_target = {
 	}
 }
 
-#Runs in the victim's scope; reads its persistent attacking_org var
+#Runs in the victim's scope; reads the reach snapshot taken at attack resolution
 ct_fire_attack_news = {
 	if = {
 		limit = {
-			check_variable = { global.active_terror_org_reach^attacking_org = 2 }
+			check_variable = { attacking_org_reach = 2 }
 		}
 		every_country = {
 			country_event = MD_terror.3
@@ -1094,6 +1095,8 @@ resolve_terror_attack = {
 			add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 5 }
 			subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 5 }
 			set_variable = { attacking_org = cur_attack_index }
+			# Snapshot reach now — org array indices can shift before the delayed MD_terror.1 fires
+			set_variable = { attacking_org_reach = global.active_terror_org_reach^cur_attack_index }
 			clamp_variable = {
 				var = global.active_terror_org_vis_lvl^cur_attack_index
 				min = 0
