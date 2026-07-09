@@ -40,6 +40,8 @@ _TARGETED_BLOCK_RE = re.compile(
 )
 _DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
+_BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
+_SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
 
 
 def _scan_activations_in_file(filename: str) -> Tuple[set, set]:
@@ -79,6 +81,20 @@ def _scan_external_removals(filename: str) -> set:
     for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
         out.update(_REMOVE_DECISION_NAME_RE.findall(block))
     return out
+
+
+def _load_scripted_localisation_keys(mod_path: str) -> set:
+    keys = set()
+    pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
+    for filename in glob.iglob(pattern):
+        if _should_skip(filename):
+            continue
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=False, strip_comments_flag=True
+        )
+        if "defined_text" in text_file and "name =" in text_file:
+            keys.update(_SCRIPTED_LOC_RE.findall(text_file))
+    return keys
 
 
 _TAG_TOKEN_PATTERN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
@@ -1401,6 +1417,7 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path, lowercase=False)
         loc_keys = self._load_localisation_keys()
+        scripted_loc_keys = _load_scripted_localisation_keys(self.mod_path)
         self.log(
             f"  Found {len(factories)} decisions, {len(loc_keys)} localisation keys"
         )
@@ -1420,8 +1437,13 @@ class Validator(BaseValidator):
                 missing.append(name_key)
             if dec.desc_override and dec.desc_override not in loc_keys:
                 missing.append(dec.desc_override)
-            if dec.custom_cost_text and dec.custom_cost_text not in loc_keys:
-                missing.append(dec.custom_cost_text)
+            if dec.custom_cost_text:
+                scripted_loc = _BRACKETED_LOC_RE.match(dec.custom_cost_text)
+                if scripted_loc:
+                    if scripted_loc.group(1) not in scripted_loc_keys:
+                        missing.append(dec.custom_cost_text)
+                elif dec.custom_cost_text not in loc_keys:
+                    missing.append(dec.custom_cost_text)
             for key in missing:
                 results.append(f"{dec_id} - {filename}: missing loc key '{key}'")
 

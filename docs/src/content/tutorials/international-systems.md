@@ -22,145 +22,18 @@ Millennium Dawn features a range of international organizations, alliances, and 
 
 ## United Nations
 
-The United Nations operates through two main bodies in Millennium Dawn: the Security Council (UNSC) and the General Assembly (UNGA). Both use voting systems to pass resolutions that affect member states. The UN also manages international recognition, aid programs, and a sanctions regime.
+The United Nations runs on two chambers that vote on resolutions affecting member states: the Security Council and the General Assembly. For the full reference (recognition and ascension, exact vote thresholds and cooldowns, all Security Council and General Assembly resolutions, vote swaying, and the aid budget), see the [United Nations Guide](/player-tutorials/united-nations/).
 
-### Membership and Recognition
-
-All internationally recognized nations are UN members. Unrecognized nations and non-state actors face significant penalties:
+Every internationally recognized nation is a UN member and gets a standing bonus to stability, political power, and foreign influence. Unrecognized nations and non-state actors are locked out of the UN and pay for it:
 
 | Status                          | Political Power | Trade Opinion | Other Penalties                           |
 | ------------------------------- | --------------- | ------------- | ----------------------------------------- |
-| Lacks International Recognition | -5%             | -10%          | Cannot participate in UN votes            |
+| Lacks International Recognition | -5%             | -10%          | Barred from every UN vote and program     |
 | Non-State Actor                 | -10%            | -25%          | -20% research, -5% tax, -1000 ally desire |
 
-**UN Ascension Process**: Unrecognized nations can gain full membership through a two-stage voting process:
+Unrecognized nations gain full membership by building recognition from other states, then clearing a two-stage ascension vote: a Security Council recommendation (9+ yes votes, no permanent-member veto), followed by a two-thirds General Assembly admission vote.
 
-1. The Security Council votes to recommend ascension (requires 9+ yes votes, no P5 veto).
-2. The General Assembly votes to confirm (requires two-thirds majority).
-
-On success, the nation gains full UN membership with stability, political power, influence, and investment bonuses.
-
-### Security Council
-
-The UNSC is the most powerful body in the UN. It has 15 members: 5 permanent (P5) and 10 elected.
-
-**Permanent Members (P5):** China, France, Russia, United States, United Kingdom.
-
-**Elected Members:** 10 seats distributed by region. Elected members rotate through General Assembly votes, with regional allocation ensuring representation from the Americas, Europe, Africa, and Asia.
-
-**Key Rules:**
-
-- Votes resolve after 5 days.
-- 45-day cooldown between Security Council votes.
-- Requires 9+ yes votes (out of 15) to pass.
-- **Any P5 member voting "No" vetoes the entire resolution**, regardless of other votes.
-- Votes can be queued if multiple are pending.
-- Players can spend political power and influence to sway other members' votes.
-
-### Security Council Resolutions
-
-The Security Council can pass five types of binding resolutions:
-
-| Resolution                    | Effect                                                                                                                                                      |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pressure to End War**       | Target nation receives a 210-day mission to end all offensive wars. Failure triggers automatic sanctions.                                                   |
-| **Establish Sanctions**       | Applies binding UNSC sanctions with trade and research penalties that scale with the number of UN members (up to -100% trade opinion, -50% research speed). |
-| **Restrict Volunteer Forces** | Target nation is blocked from sending volunteer units to other countries.                                                                                   |
-| **Arms Embargo**              | Target nation cannot buy or sell weapons on the international market and cannot send or receive lend-lease.                                                 |
-| **Recommend UN Ascension**    | Forwards a recognition vote to the General Assembly for an unrecognized nation.                                                                             |
-
-UNSC sanctions are binding on all nations and remain in effect until the Security Council votes to lift them or the target nation's world tension drops sufficiently.
-
-### General Assembly
-
-The General Assembly includes all recognized UN member states. It handles a wider range of topics than the Security Council but its resolutions are non-binding (except for membership and budget votes).
-
-**Key Rules:**
-
-- Most resolutions require a simple majority to pass.
-- Membership confirmation and budget changes require a two-thirds majority.
-- No veto power.
-- Players can set their vote stance to auto-accept or auto-reject all GA votes.
-- Players can spend political power and influence to sway votes.
-
-### General Assembly Resolutions
-
-The General Assembly votes on the following:
-
-**Membership and Governance:**
-
-| Resolution                    | Majority Required | Effect                                                                          |
-| ----------------------------- | ----------------- | ------------------------------------------------------------------------------- |
-| Confirm UN Ascension          | Two-thirds        | Admits unrecognized nation as full UN member                                    |
-| Confirm Security Council Seat | Two-thirds        | Confirms elected SC member; failed votes trigger a re-roll from the same region |
-| Increase UN Budget            | Two-thirds        | Increases member contribution percentage                                        |
-| Decrease UN Budget            | Two-thirds        | Decreases member contribution percentage                                        |
-
-**Non-Binding Sanctions:**
-
-The GA can vote to impose non-binding sanctions, applying trade opinion and research speed penalties that scale with the number of UN members. These are weaker than UNSC sanctions and only apply to nations that voted in favor.
-
-**Non-Binding Resolutions (1-year duration):**
-
-The GA can pass thematic resolutions that grant temporary bonuses to all nations that voted in favor:
-
-| Resolution           | Theme                     |
-| -------------------- | ------------------------- |
-| Poverty Reduction    | Welfare and development   |
-| Food Security        | Agricultural support      |
-| Global Health        | Public health initiatives |
-| Education Initiative | Literacy and research     |
-| Clean Energy         | Renewable energy          |
-| Economic Growth      | GDP and construction      |
-| Infrastructure       | Building and connectivity |
-| Reduced Inequality   | Social equity             |
-| Climate Action       | Environmental policy      |
-| Peace & Institutions | Governance and stability  |
-| Trade Partnerships   | Commerce and trade        |
-| Digital Development  | Internet and technology   |
-
-These resolutions last one year and provide passive bonuses related to their theme. Voting in favor of a resolution grants your nation the associated bonus for the duration.
-
-### Voting Mechanics
-
-**How Votes Work:**
-
-1. A vote is queued (triggered by events, decisions, or diplomatic actions).
-2. All eligible members receive a voting event with Yes, No, and Abstain options.
-3. The vote resolves after 5 days.
-4. Results are tallied and the resolution passes or fails based on the required majority.
-5. Effects are applied immediately to affected nations.
-
-**Influencing Votes:**
-
-Players can spend political power and influence to sway other nations' votes before they resolve. This is particularly important for Security Council votes where a single P5 veto can block a resolution. You can also reorder the vote queue to prioritize or delay specific resolutions.
-
-### UN Aid Programs
-
-UN membership provides access to several aid and development programs through a dynamic modifier:
-
-| Program | Benefit                                                                                            |
-| ------- | -------------------------------------------------------------------------------------------------- |
-| UNESCO  | Political power and research speed bonuses                                                         |
-| UNIDO   | Construction speed and investment cost bonuses; can lease civilian factories to developing nations |
-| UNCDF   | Productivity growth bonuses; reduced internet station and office construction costs                |
-
-The strength of these benefits scales with your participation and the overall UN budget.
-
-### Sanctions
-
-**UNSC Sanctions (Binding):**
-
-- Apply to ALL UN members' trade with the target.
-- Trade penalty: -0.5% per UN member (capped at -100%).
-- Research penalty: -0.3% per UN member (capped at -50%).
-- Remain until the Security Council votes to lift them.
-
-**UNGA Non-Binding Sanctions:**
-
-- Apply only to nations that voted in favor.
-- Same penalty formula as UNSC sanctions but narrower scope.
-- Can also be applied in response to raid/counter-terror operations.
+The Security Council (5 permanent members plus 10 elected seats, elected on a yearly cycle) passes binding resolutions: pressuring a nation to end its wars, sanctions, volunteer restrictions, and arms embargoes. The General Assembly (every recognized member) confirms ascensions and Security Council seats, adjusts the UN's operating budget, sanctions raid perpetrators, and passes a rotating slate of non-binding development resolutions that grant a year of bonuses to nations that back them. Both chambers queue votes with cooldowns between them, and you can spend political power and influence to sway another nation's cast vote before it resolves.
 
 ---
 
@@ -261,7 +134,7 @@ For full details on monetary policy (Expand Money Supply, Austerity Measures, ce
 
 Sanctions appear throughout the mod at multiple levels:
 
-**UN Security Council Sanctions (Binding):** Applied to all UN members' trade with the target. Trade and research penalties scale with the number of UN members. See [UN Sanctions](#sanctions-1) above.
+**UN Security Council Sanctions (Binding):** Applied to all UN members' trade with the target. Trade and research penalties scale with the number of UN members. See the [United Nations Guide](/player-tutorials/united-nations/) for the full breakdown.
 
 **UN General Assembly Sanctions (Non-Binding):** Only affect nations that voted in favor. Same scaling formula but narrower scope.
 
@@ -296,6 +169,7 @@ Sanctions can be increased or decreased through diplomatic events, focus trees, 
 
 ## Related Documentation
 
+- [United Nations Guide](/player-tutorials/united-nations/) -- membership, recognition, ascension, voting, and the aid budget.
 - [Cyberwarfare Guide](/player-tutorials/cyberwarfare/) -- offensive and defensive cyber operations.
 - [Private Military Companies Guide](/player-tutorials/private-military-companies/) -- hiring and managing PMC units.
 - [Economy Guide](/player-tutorials/economy-guide/) -- for details on economic mechanics including treasury and debt.
