@@ -180,3 +180,58 @@ mio_catalog_entry_unlock_yes = {
 		ORG = "[?global.mio_catalog_all_tokens^v.GetTokenKey]"
 	}
 }
+
+ITA_mio_accumulate_merge_sums = {
+	set_variable = { ITA_mio_merge_counter = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { ITA_mio_merge_counter < 100 }
+			has_mio_number_of_completed_traits > var:ITA_mio_merge_counter
+		}
+		add_to_variable = { ITA_mio_merge_counter = 1 }
+	}
+	ROOT = {
+		add_to_variable = { ITA_mio_merge_trait_sum = PREV.ITA_mio_merge_counter }
+		add_to_variable = { ITA_mio_merge_picks_sum = PREV.ITA_mio_merge_counter }
+	}
+	if = {
+		limit = { check_variable = { free_trait_picks > 0 } }
+		ROOT = { add_to_variable = { ITA_mio_merge_picks_sum = PREV.free_trait_picks } }
+	}
+	clear_variable = ITA_mio_merge_counter
+}
+
+ITA_alenia_aermacchi_merger_carry_traits = {
+	set_variable = { ITA_mio_merge_trait_sum = 0 }
+	set_variable = { ITA_mio_merge_picks_sum = 0 }
+	mio:ITA_alenia_aeronautica = { ITA_mio_accumulate_merge_sums = yes }
+	mio:ITA_aermacchi_manufacturer = { ITA_mio_accumulate_merge_sums = yes }
+	if = {
+		limit = { check_variable = { ITA_mio_merge_trait_sum > 0 } }
+		mio:ITA_alenia_aermacchi = { add_mio_size = ROOT.ITA_mio_merge_trait_sum }
+	}
+	if = {
+		limit = { check_variable = { ITA_mio_merge_picks_sum > 0 } }
+		mio:ITA_alenia_aermacchi = { add_to_variable = { free_trait_picks = ROOT.ITA_mio_merge_picks_sum } }
+	}
+	clear_variable = ITA_mio_merge_trait_sum
+	clear_variable = ITA_mio_merge_picks_sum
+}
+
+ITA_finmeccanica_restructuring_carry_traits = {
+	set_variable = { ITA_mio_merge_trait_sum = 0 }
+	set_variable = { ITA_mio_merge_picks_sum = 0 }
+	mio:ITA_alenia_aermacchi = { ITA_mio_accumulate_merge_sums = yes }
+	mio:ITA_finmeccanica = { ITA_mio_accumulate_merge_sums = yes }
+	mio:ITA_agusta_westland = { ITA_mio_accumulate_merge_sums = yes }
+	if = {
+		limit = { check_variable = { ITA_mio_merge_trait_sum > 0 } }
+		mio:ITA_leonardo = { add_mio_size = ROOT.ITA_mio_merge_trait_sum }
+	}
+	if = {
+		limit = { check_variable = { ITA_mio_merge_picks_sum > 0 } }
+		mio:ITA_leonardo = { add_to_variable = { free_trait_picks = ROOT.ITA_mio_merge_picks_sum } }
+	}
+	clear_variable = ITA_mio_merge_trait_sum
+	clear_variable = ITA_mio_merge_picks_sum
+}

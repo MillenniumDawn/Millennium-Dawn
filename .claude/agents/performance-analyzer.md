@@ -4,6 +4,7 @@ description: "Scan HOI4 scripted code for performance anti-patterns: unbounded l
 model: sonnet
 color: red
 memory: project
+tools: Read, Grep, Glob, Bash
 ---
 
 # Performance Analyzer
@@ -41,14 +42,11 @@ Caller passes a file path, a directory, or `git diff main...HEAD`. Optionally a 
 - **Medium** — repeated trigger evaluations in loops; division without clamp; identical scope opens that could be flattened (e.g. `TAG = { exists = yes }` → `country_exists = TAG`).
 - **Low** — redundant variable reads; `factor` instead of `base` at root of `ai_will_do`; MTTH on `is_triggered_only` events (dead code).
 
-**Common patterns to flag**:
+**Patterns** — full catalog in `.claude/docs/performance-patterns.md`; apply it per context and cite it in findings. Least-obvious entries worth active hunting:
 
-- MTTH event without `is_triggered_only = yes`.
-- Global `on_actions` block where a `on_daily_TAG` variant exists.
 - `force_update_dynamic_modifier` invoked on a poll instead of on the trigger that changed the modifier input.
-- `allowed = { always = no }` / `cancel = { always = no }` on ideas (default categories only — keep them in `AA_law_budget` etc.).
-- `/ 100` instead of `* 0.01` (cheap but adds up in hot loops).
 - Unhoisted country-scope lookups inside per-state loops (read once into a temp var, then index).
+- `allowed = { always = no }` / `cancel = { always = no }` on ideas — evaluated continuously for every idea; removable in `country` / `hidden_ideas` categories only, load-bearing everywhere else.
 
 ## Output format
 
