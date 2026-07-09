@@ -87,8 +87,8 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 ## MIOs
 
 - ID: `TAG_organization_name`; always `allowed = { original_tag = TAG }`
-- `task_capacity` proportional to nation size (10-25)
-- Trait grid `y = 0..9`; add `initial_trait` for defining bonus
+- `task_capacity` = 5 × equipment categories covered (omit for a single category — 5 is the game default)
+- Trait grid `x = 0..9`; `y` is unlimited. Add `initial_trait` for the defining bonus
 - Ref: `.claude/docs/mio-reference.md`
 
 ## Intelligence Agency Upgrades
