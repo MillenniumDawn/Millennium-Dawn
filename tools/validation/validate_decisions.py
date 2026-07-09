@@ -41,7 +41,7 @@ _TARGETED_BLOCK_RE = re.compile(
 _DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
 _BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
-_SCRIPTED_LOC_RE = re.compile(r"\bdefined_text\s*=\s*\{\s*name\s*=\s*([A-Za-z0-9_]+)")
+_SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
 
 
 def _scan_activations_in_file(filename: str) -> Tuple[set, set]:
@@ -92,7 +92,8 @@ def _load_scripted_localisation_keys(mod_path: str) -> set:
         text_file = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
         )
-        keys.update(_SCRIPTED_LOC_RE.findall(text_file))
+        if "defined_text" in text_file and "name =" in text_file:
+            keys.update(_SCRIPTED_LOC_RE.findall(text_file))
     return keys
 
 
