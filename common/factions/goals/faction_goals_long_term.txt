@@ -344,15 +344,24 @@ faction_goal_strategic_bombing_campaign = {
 	category = long_term
 	group = FOCUS_FILTER_AIR_XP
 	available = {
-		OR = {
-			count_in_collection = {
-				collection = {
-					input = game:scope
-					operators = { faction_members }
-					name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_strategic_bombers_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_deployed_planes_with_type@large_plane_airframe
+					}
 				}
-				unit = strategic_bomber
-				size < 200
+			}
+		}
+		OR = {
+			check_variable = {
+				var = num_strategic_bombers_faction
+				value = 200
+				compare = less_than
+				tooltip = faction_goal_strat_bombers_below_tt
 			}
 			collection_size = {
 				input = {
@@ -373,14 +382,23 @@ faction_goal_strategic_bombing_campaign = {
 		}
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_strategic_bombers_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_deployed_planes_with_type@large_plane_airframe
+					}
+				}
 			}
-			unit = strategic_bomber
-			size > 199
+		}
+		check_variable = {
+			var = num_strategic_bombers_faction
+			value = 200
+			compare = greater_than_or_equals
+			tooltip = faction_goal_strat_bombers_at_least_tt
 		}
 		collection_size = {
 			input = {
@@ -433,14 +451,13 @@ faction_goal_strategic_bombing_campaign = {
 		}
 		modifier = {
 			add = 1 # Factions with decent number of military factories should probably start caring more about strat bombing - because they can
-			count_in_collection = {
-				collection = {
-					input = game:scope
-					operators = { faction_members }
-					name = FACTION_NAME
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_of_military_factories
 				}
-				buildings = { arms_factory }
-				size > 149
+				greater_than = 149
 			}
 		}
 	}
