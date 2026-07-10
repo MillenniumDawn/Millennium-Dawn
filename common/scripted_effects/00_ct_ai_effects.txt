@@ -116,13 +116,15 @@ ct_ai_select_target_org = {
 			}
 		}
 
+		#Attack flags are keyed by org id, not array index — indices shift when orgs die
+		set_temp_variable = { cur_org_id = global.active_terror_orgs^i }
 		if = {
 			limit = {
 				meta_trigger = {
 					text = {
 						has_country_flag = ct_attacked_by_org_[ORG]
 					}
-					ORG = "[?i]"
+					ORG = "[?cur_org_id]"
 				}
 			}
 			add_to_temp_variable = { ct_ai_org_score = 40 }
@@ -197,6 +199,13 @@ ct_ai_execute_action = {
 	else_if = {
 		limit = {
 			has_political_power > 150
+			check_variable = { ct_home_defense_var < 2 }
+		}
+		ct_ai_increase_funding = yes
+	}
+	else_if = {
+		limit = {
+			has_political_power > 150
 			NOT = { has_country_flag = recent_ct_intel_op }
 		}
 		ct_ai_mass_gathering = yes
@@ -230,13 +239,6 @@ ct_ai_execute_action = {
 		}
 		ct_ai_analyst_focus = yes
 	}
-	else_if = {
-		limit = {
-			has_political_power > 250
-			check_variable = { ct_home_defense_var < 2 }
-		}
-		ct_ai_increase_funding = yes
-	}
 	else = {
 		set_temp_variable = { ct_ai_acted = 0 }
 	}
@@ -248,8 +250,8 @@ ct_ai_execute_action = {
 		set_country_flag = { flag = ct_ai_action_cooldown days = 45 value = 1 }
 	}
 	else = {
-		#Nothing affordable this cycle — retry sooner than the post-action cooldown
-		set_country_flag = { flag = ct_ai_action_cooldown days = 30 value = 1 }
+		#Must stay under one CT bucket (4 ticks) or a broke AI loses a whole cycle
+		set_country_flag = { flag = ct_ai_action_cooldown days = 14 value = 1 }
 	}
 }
 
@@ -279,6 +281,7 @@ ct_ai_arrest_sympathizers = {
 	add_to_variable = { international_terror_org_temp_specific_intel^selected_org = threat_reducer }
 
 	set_temp_variable = { random_bad_luck = { value = 100 subtract = international_terror_org_intel^selected_org subtract = ct_intel_agency_value } }
+	clamp_temp_variable = { var = random_bad_luck min = 0 max = 100 }
 	random = {
 		chance = random_bad_luck
 		country_event = MD_terror.6
@@ -416,7 +419,7 @@ ct_ai_analyst_focus = {
 }
 
 ct_ai_increase_funding = {
-	add_political_power = -100
+	add_political_power = -50
 
 	add_to_variable = { ct_home_defense_var = 0.5 }
 	add_to_variable = { ct_global_base_detect_var = 0.5 }
