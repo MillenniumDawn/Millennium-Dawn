@@ -54,6 +54,13 @@ _REWARD_BLOCK_RE = re.compile(
 _TECH_BONUS_START = re.compile(r"\badd_tech_bonus\s*=\s*\{")
 _NAME_LINE_RE = re.compile(r"\bname\s*=\s*(\S+)")
 
+# PP malus in completion_reward (focus time is the cost — AGENTS.md).
+# Occurrences inside an effect_tooltip = { } subtree preview a PP change
+# applied elsewhere (e.g. a select_effect) rather than executing it, so
+# they are not flagged.
+_EFFECT_TOOLTIP_START = re.compile(r"\beffect_tooltip\s*=\s*\{")
+_PP_MALUS_RE = re.compile(r"\badd_political_power\s*=\s*(-\d+(?:\.\d+)?)\b")
+
 # ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md
 # convention). Building type -> the scripted trigger
 # (common/scripted_triggers/00_economic_triggers.txt) that an ai_will_do
@@ -587,6 +594,73 @@ def _extract_cross_country_fires(args: Tuple[str, str]) -> List[Dict]:
 
     return disk_cache.per_file_cached_by_content(
         mod_path, "focus_tree.cross_country_tt.v1", filepath, text, _compute
+    )
+
+
+def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    """Pool worker: return (focus_id, filepath, line) for each negative,
+    literal add_political_power inside a focus's completion_reward.
+
+    Occurrences inside an effect_tooltip = { } subtree are skipped — those
+    preview a PP change applied elsewhere (e.g. a select_effect) rather
+    than executing the malus.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[Tuple[str, str, int]]:
+        out: List[Tuple[str, str, int]] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            focus_id = idm.group(1) if idm else "?"
+
+            rpos = fm.start()
+            while True:
+                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
+                if not rm:
+                    break
+                rbody, rend = _extract_block(text, rm.start())
+                if not rbody or rend > fend:
+                    rpos = rm.end()
+                    continue
+
+                tooltip_spans: List[Tuple[int, int]] = []
+                tpos = rm.start()
+                while True:
+                    tm = _EFFECT_TOOLTIP_START.search(text, tpos, rend)
+                    if not tm:
+                        break
+                    tbody, tend = _extract_block(text, tm.start())
+                    if not tbody or tend > rend:
+                        tpos = tm.end()
+                        continue
+                    tooltip_spans.append((tm.start(), tend))
+                    tpos = tend
+
+                for pm in _PP_MALUS_RE.finditer(text, rm.start(), rend):
+                    if any(s <= pm.start() < e for s, e in tooltip_spans):
+                        continue
+                    out.append((focus_id, filepath, _line_of(text, pm.start())))
+
+                rpos = rend
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.pp_malus", filepath, text, _compute
     )
 
 
@@ -1272,6 +1346,47 @@ class Validator(BaseValidator):
             category="missing-cross-country-tooltip",
         )
 
+    def validate_pp_malus_in_rewards(self):
+        """Flag a literal PP loss (add_political_power = -N) inside a focus's
+        completion_reward.
+
+        Focus time is the cost (AGENTS.md) — a PP malus on completion is a
+        balance choice needing per-site judgment, so this reports at WARNING
+        only. Scope is the literal-negative-number pattern: variable forms
+        and timed lose-PP ideas are not detected. effect_tooltip previews of
+        a PP change applied elsewhere (e.g. via select_effect) are skipped.
+        """
+        self._log_section("Checking for PP malus in focus completion_reward...")
+
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        data_lists = self._pool_map(
+            _extract_pp_malus, [(f, self.mod_path) for f in files], chunksize=10
+        )
+
+        results = []
+        for sub in data_lists:
+            for focus_id, fp, line in sub:
+                if not self._is_reportable(fp):
+                    continue
+                rel = os.path.relpath(fp, self.mod_path)
+                results.append(
+                    (
+                        f"Focus '{focus_id}' completion_reward applies a PP"
+                        " malus (negative add_political_power) — focus time"
+                        " is the cost; verify this is intended",
+                        rel,
+                        line,
+                    )
+                )
+
+        self._report(
+            results,
+            "No PP malus found in focus completion_reward blocks",
+            "Focuses applying a PP malus in completion_reward (balance-sensitive — verify intent):",
+            Severity.WARNING,
+            category="pp-malus-completion-reward",
+        )
+
     # -----------------------------------------------------------------------
     # Check 6: Dependency cycles
     # -----------------------------------------------------------------------
@@ -1407,6 +1522,7 @@ class Validator(BaseValidator):
         self.validate_tech_bonus_names()
         self.validate_ai_will_do_guards()
         self.validate_cross_country_event_tooltips()
+        self.validate_pp_malus_in_rewards()
 
         if self.missing_icons:
             self.validate_focus_icons()

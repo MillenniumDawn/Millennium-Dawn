@@ -34,7 +34,7 @@ Default to no comments. Add one only when the WHY is non-obvious: a hidden const
 
 ## NOT blocks and "NOR"
 
-`NOT = { A B }` means NOT(A AND B) — "not both at once", almost never intended. For "neither" write separate `NOT` blocks or `NOT = { OR = { A B } }`. `NOR` is not a HOI4 trigger keyword.
+`NOT = { A B }` means NOT(A AND B) — "not both at once", almost never intended. For "neither" write separate `NOT` blocks or `NOT = { OR = { A B } }`. `NOR` is not a HOI4 trigger keyword. Bare multi-child NOTs are flagged (warning) by `validate_simplifications.py`.
 
 ## random over two-bucket random_list
 
@@ -128,4 +128,4 @@ When a reward/option fires an event at another country: follow the fire with `cu
 
 ## Log message option IDs
 
-`log =` strings inside an event option must cite the option's own ID (`foo.1.b` in option `.b` — not a copy-pasted `.a`).
+`log =` strings inside an event option must cite the option's own ID (`foo.1.b` in option `.b` — not a copy-pasted `.a`). Log-ID mismatches in focuses, decisions, and event options are caught by `check_common_mistakes.py`; `tools/linting/fix_log_ids.py` auto-fixes them.
