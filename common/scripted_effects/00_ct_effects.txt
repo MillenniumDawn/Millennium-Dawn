@@ -103,6 +103,7 @@ add_new_org = {
 		var = random_pull
 		min = 0
 		max = maxer
+		integer = yes
 	}
 
 	add_to_array = { global.active_terror_orgs = global.inactive_terror_orgs^random_pull }
@@ -212,19 +213,19 @@ set_starting_org_values = {
 	}
 }
 
-#North African nations carry both middle_east_nation_flag and african_nation_flag; check Middle East first
+#Flag priority must match register_in_power_ranking_array so dual-flag nations map to the pool they registered in
 ct_set_region_idx_from_flags = {
 	if = {
 		limit = { has_country_flag = european_nation_flag }
 		set_temp_variable = { region_idx = 0 }
 	}
 	else_if = {
-		limit = { has_country_flag = middle_east_nation_flag }
-		set_temp_variable = { region_idx = 2 }
-	}
-	else_if = {
 		limit = { has_country_flag = african_nation_flag }
 		set_temp_variable = { region_idx = 1 }
+	}
+	else_if = {
+		limit = { has_country_flag = middle_east_nation_flag }
+		set_temp_variable = { region_idx = 2 }
 	}
 	else_if = {
 		limit = { has_country_flag = asian_nation_flag }
@@ -785,6 +786,7 @@ check_for_global_attacks = {
 }
 
 relocate_terror_org = {
+	set_temp_variable = { targeted_org = -1 }
 	for_each_loop = {
 		array = global.active_terror_hq
 		value = v
@@ -798,67 +800,75 @@ relocate_terror_org = {
 		}
 	}
 
-	clr_state_flag = is_regional_terror_base
-
+	resize_temp_array = { move_state_list = 0 }
 	every_neighbor_state = {
 		add_to_temp_array = { move_state_list = THIS }
 	}
 
-	set_temp_variable = { max_stop = { value = move_state_list^num subtract = 1 } }
+	#No-op for a state that is not a tracked HQ, or an island HQ with no neighbors
+	if = {
+		limit = {
+			check_variable = { targeted_org > -1 }
+			check_variable = { move_state_list^num > 0 }
+		}
+		clr_state_flag = is_regional_terror_base
 
-	set_temp_variable_to_random = {
-		var = new_state
-		min = 0
-		max = max_stop
-		integer = yes
-	}
+		set_temp_variable = { max_stop = { value = move_state_list^num subtract = 1 } }
 
-	set_temp_variable = { new_state_open = move_state_list^new_state }
+		set_temp_variable_to_random = {
+			var = new_state
+			min = 0
+			max = max_stop
+			integer = yes
+		}
 
-	var:new_state_open = {
-		set_state_flag = is_regional_terror_base
-	}
+		set_temp_variable = { new_state_open = move_state_list^new_state }
 
-	remove_from_array = {
-		array = global.active_terror_hq
-		index = targeted_org
-	}
+		var:new_state_open = {
+			set_state_flag = is_regional_terror_base
+		}
 
-	add_to_array = {
-		array = global.active_terror_hq
-		value = new_state_open
-		index = targeted_org
-	}
+		remove_from_array = {
+			array = global.active_terror_hq
+			index = targeted_org
+		}
 
-	var:new_state_open = {
-		set_temp_variable = { new_hq_country = controller }
-	}
+		add_to_array = {
+			array = global.active_terror_hq
+			value = new_state_open
+			index = targeted_org
+		}
 
-	remove_from_array = {
-		array = global.active_terror_hq_country
-		index = targeted_org
-	}
+		var:new_state_open = {
+			set_temp_variable = { new_hq_country = controller }
+		}
 
-	add_to_array = {
-		array = global.active_terror_hq_country
-		value = new_hq_country
-		index = targeted_org
-	}
+		remove_from_array = {
+			array = global.active_terror_hq_country
+			index = targeted_org
+		}
 
-	# Re-evaluate region index if the HQ crossed into a different region
-	var:new_hq_country = {
-		ct_set_region_idx_from_flags = yes
-	}
+		add_to_array = {
+			array = global.active_terror_hq_country
+			value = new_hq_country
+			index = targeted_org
+		}
 
-	remove_from_array = {
-		array = global.active_terror_org_region
-		index = targeted_org
-	}
+		# Re-evaluate region index if the HQ crossed into a different region
+		var:new_hq_country = {
+			ct_set_region_idx_from_flags = yes
+		}
 
-	add_to_array = {
-		array = global.active_terror_org_region
-		value = region_idx
-		index = targeted_org
+		remove_from_array = {
+			array = global.active_terror_org_region
+			index = targeted_org
+		}
+
+		add_to_array = {
+			array = global.active_terror_org_region
+			value = region_idx
+			index = targeted_org
+		}
 	}
 }
 
@@ -1104,8 +1114,8 @@ resolve_terror_attack = {
 			log = "[GetDateText]: [THIS.GetName] Was hit by an international terror attack"
 			add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 5 }
 			subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 5 }
-			set_variable = { attacking_org = cur_attack_index }
-			# Snapshot reach now — org array indices can shift before the delayed MD_terror.1 fires
+			# Snapshot org id and reach now — org array indices can shift before the delayed MD_terror.1 fires
+			set_variable = { attacking_org = global.active_terror_orgs^cur_attack_index }
 			set_variable = { attacking_org_reach = global.active_terror_org_reach^cur_attack_index }
 			clamp_variable = {
 				var = global.active_terror_org_vis_lvl^cur_attack_index
@@ -1132,7 +1142,7 @@ resolve_terror_attack = {
 			add_to_variable = { international_terror_org_temp_specific_intel^cur_attack_index = 5 }
 			add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 8 }
 			subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 10 }
-			set_variable = { attacking_org = cur_attack_index }
+			set_variable = { attacking_org = global.active_terror_orgs^cur_attack_index }
 			clamp_variable = {
 				var = global.active_terror_org_vis_lvl^cur_attack_index
 				min = 0
