@@ -1,6 +1,6 @@
 # Decision Reference
 
-On-demand reference for decision structure and examples. For best practices, see CLAUDE.md.
+On-demand reference for decision structure and examples. For best practices, see AGENTS.md.
 
 Full HOI4 wiki reference: https://hoi4.paradoxwikis.com/Decision_modding
 
@@ -135,7 +135,7 @@ URA_world_opr = {
 		OPR = { country_event = { id = subject_rus.121 days = 1 } }
 	}
 
-	ai_will_do = { factor = 10 }
+	ai_will_do = { base = 10 }
 }
 ```
 
@@ -211,13 +211,14 @@ increase_military_spending = yes / decrease_military_spending = yes
 ### Political Effects
 
 ```
-# Party popularity (index 0-23)
-set_temp_variable = { party_index = 2 }
+# Party popularity — defaults to the ruling party when party_index is unset
 set_temp_variable = { party_popularity_increase = 0.10 }
 add_relative_party_popularity = yes
 
-# Or set to ruling party automatically
-set_party_index_to_ruling_party = yes
+# Or target a specific party by index (0-23)
+set_temp_variable = { party_index = 2 }
+set_temp_variable = { party_popularity_increase = 0.10 }
+add_relative_party_popularity = yes
 
 # Ban/unban party
 set_temp_variable = { party_index = 1 }
@@ -232,11 +233,10 @@ unban_party_scripted_call = yes
 set_temp_variable = { percent_change = 10 }
 change_domestic_influence_percentage = yes
 
-# Foreign influence (requires target)
+# Foreign influence (requires target; tag_index defaults to ROOT.id)
 set_temp_variable = { percent_change = 5 }
-set_temp_variable = { tag_index = ROOT }
 set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```
 
-For the full scripted effects library, see `docs/src/content/resources/code-resource.md`.
+For the full scripted effects library, see `docs/src/content/resources/scripted-effects-reference.md`.
