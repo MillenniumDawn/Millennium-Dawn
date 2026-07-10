@@ -32,9 +32,7 @@ DEN_colonial_separatism_category = {
 		cost = 25
 		days_remove = 30
 		available = {
-			1162 = { infrastructure < 5 }
 			has_manpower > 199
-			controls_state = 1162
 		}
 
 		visible = {
@@ -43,10 +41,11 @@ DEN_colonial_separatism_category = {
 		}
 		complete_effect = {
 			1162 = {
-				 add_building_construction = {
-					 type = infrastructure
-					 level = 1
-					 instant_build = yes }
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
 			}
 			add_manpower = -200
 			set_temp_variable = { treasury_change = -4 }
@@ -352,7 +351,7 @@ DEN_urban_development_fund_category = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision influence_for_autonomy_decision executed"
+			log = "[GetDateText]: [Root.GetName]: Decision DEN_local_construction_initiatives_decision"
 			set_temp_variable = { temp_change = -5 }
 			modify_urban_development_fund_effect = yes
 			FROM = {
@@ -397,7 +396,7 @@ DEN_urban_development_fund_category = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision influence_for_autonomy_decision executed"
+			log = "[GetDateText]: [Root.GetName]: Decision DEN_local_renewable_investment_decision"
 			set_temp_variable = { temp_change = -5 }
 			modify_urban_development_fund_effect = yes
 			FROM = {
@@ -522,9 +521,11 @@ DEN_Danish_Defence_Force = {
 
 		visible = {
 			NOT = {
-				has_country_flag = DEN_Increase_Soldiers_Pay
-				has_country_flag = DEN_Increase_Soldiers_Pay2
-				has_country_flag = DEN_Increase_Soldiers_Pay3
+				OR = {
+					has_country_flag = DEN_Increase_Soldiers_Pay
+					has_country_flag = DEN_Increase_Soldiers_Pay2
+					has_country_flag = DEN_Increase_Soldiers_Pay3
+				}
 			}
 		}
 		complete_effect = {
@@ -534,7 +535,7 @@ DEN_Danish_Defence_Force = {
 			add_to_variable = { DEN_army_winter_attrition_factor = -0.15 tooltip = winter_attrition_factor_tt }
 			add_to_variable = { DEN_army_org_factor = -0.05 tooltip = army_org_factor_tt }
 			add_to_variable = { DEN_army_army_speed_factor = 0.8 tooltip = army_speed_factor_tt }
-			log = "[GetDateText]: [Root.GetName]: Decisions DEN_Increase_Soldiers_Pay "
+			log = "[GetDateText]: [Root.GetName]: Decision DEN_Increase_Soldiers_Pay"
 		}
 		ai_will_do = {
 			base = 1
@@ -723,7 +724,7 @@ DEN_Danish_Defence_Force = {
 			add_to_variable = { DEN_army_winter_attrition_factor = 0.15 tooltip = winter_attrition_factor_tt }
 			add_to_variable = { DEN_army_org_factor = 0.05 tooltip = army_org_factor_tt }
 			add_to_variable = { DEN_army_army_speed_factor = -0.8 tooltip = army_speed_factor_tt }
-			log = "[GetDateText]: [Root.GetName]: Decisions DEN_Increase_Soldiers_Pay "
+			log = "[GetDateText]: [Root.GetName]: Decision DEN_Increase_Soldiers_Pay_Removal"
 		}
 		ai_will_do = {
 			base = 1
@@ -827,13 +828,14 @@ DEN_visitdenmark_category = {
 	DEN_TV_campaign = {
 		icon = decision
 		available = {
-			tag = DEN
-				NOT = {
+			NOT = {
+				OR = {
 					has_decision = DEN_controversal_campaign
 					has_decision = DEN_Print_campaign
 					has_decision = DEN_socialmedia_campaign
 				}
 			}
+		}
 
 		fire_only_once = no
 		cost = 15
@@ -881,13 +883,14 @@ DEN_visitdenmark_category = {
 	DEN_Print_campaign = {
 		icon = decision
 		available = {
-			tag = DEN
-				NOT = {
+			NOT = {
+				OR = {
 					has_decision = DEN_TV_campaign
 					has_decision = DEN_controversal_campaign
 					has_decision = DEN_socialmedia_campaign
 				}
 			}
+		}
 
 		fire_only_once = no
 		cost = 15
@@ -939,13 +942,14 @@ DEN_visitdenmark_category = {
 	DEN_socialmedia_campaign = {
 		icon = decision
 		available = {
-			tag = DEN
-				NOT = {
+			NOT = {
+				OR = {
 					has_decision = DEN_TV_campaign
 					has_decision = DEN_controversal_campaign
 					has_decision = DEN_Print_campaign
 				}
 			}
+		}
 
 		fire_only_once = no
 		cost = 15
@@ -993,13 +997,14 @@ DEN_visitdenmark_category = {
 	DEN_controversal_campaign = {
 		icon = decision
 		available = {
-			tag = DEN
-				NOT = {
+			NOT = {
+				OR = {
 					has_decision = DEN_TV_campaign
 					has_decision = DEN_Print_campaign
 					has_decision = DEN_socialmedia_campaign
 				}
 			}
+		}
 
 		fire_only_once = no
 		cost = 15
@@ -1151,23 +1156,24 @@ DEN_decision_Investments_Global = {
 		}
 
 		target_trigger = {
-			NOT = { has_war_with = ROOT }
-			check_variable = { num_of_naval_factories > 2 }
-			check_variable = { gdp_per_capita > 5.500 }
-			check_variable = { gdp_total > 100.00 }
-		}
-
-		visible = {
-			ROOT = {
-				has_opinion = {
-					target = FROM
-					value > 5
-				}
-			}
 			FROM = {
 				NOT = { has_war_with = ROOT }
 				NOT = { has_country_flag = DEN_Investments }
 				has_stability > 0.15
+				check_variable = { num_of_naval_factories > 2 }
+				check_variable = { gdp_per_capita > 5.500 }
+				check_variable = { gdp_total > 100.00 }
+				custom_trigger_tooltip = {
+					tooltip = DEN_INVEST_TRADE_LINK_TT
+					OR = {
+						has_country_flag = trade_agreement@ROOT
+						has_country_flag = mutual_investment_treaty_@ROOT
+					}
+				}
+			}
+			has_opinion = {
+				target = FROM
+				value > 5
 			}
 		}
 
@@ -1176,7 +1182,7 @@ DEN_decision_Investments_Global = {
 		days_re_enable = 365
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision DEN_Invest"
+			log = "[GetDateText]: [Root.GetName]: Decision DEN_Maersk_Invest"
 			FROM = {
 				set_country_flag = DEN_Investments
 				set_temp_variable = { percent_change = 2.1 }
@@ -1184,71 +1190,45 @@ DEN_decision_Investments_Global = {
 				set_temp_variable = { treasury_change = FROM.gdp_per_capita }
 				multiply_temp_variable = { treasury_change = 0.28 }
 				modify_treasury_effect = yes
-				if = {
-					limit = {
-						NOT = {
+				custom_effect_tooltip = DEN_Maersk_TT
+				hidden_effect = {
+					if = {
+						limit = {
+							NOT = {
+								any_owned_state = {
+									dockyard > 0
+									free_building_slots = {
+										building = dockyard
+										size > 2
+										include_locked = yes
+									}
+								}
+							}
 							any_owned_state = {
-								dockyard > 0
+								is_coastal = yes
+							}
+						}
+						random_owned_controlled_state = {
+							limit = {
+								is_coastal = yes
 								free_building_slots = {
 									building = dockyard
 									size > 2
 									include_locked = yes
 								}
 							}
-						}
-						any_owned_state = {
-							is_coastal = yes
+							add_extra_state_shared_building_slots = 1
+							add_building_construction = {
+								type = dockyard
+								level = 1
+								instant_build = yes
+							}
 						}
 					}
-					random_owned_controlled_state = {
+					else_if = {
 						limit = {
-							is_coastal = yes
-							free_building_slots = {
-								building = dockyard
-								size > 2
-								include_locked = yes
-							}
-						}
-						add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-							type = dockyard
-							level = 1
-							instant_build = yes
-						}
-					}
-				}
-				if = {
-					limit = {
-						any_owned_state = {
-							dockyard > 0
-							free_building_slots = {
-								building = dockyard
-								size > 1
-								include_locked = yes
-							}
-						}
-					}
-					random_owned_controlled_state = {
-						limit = {
-							dockyard > 0
-							free_building_slots = {
-								building = dockyard
-								size > 1
-								include_locked = yes
-							}
-						}
-						add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-							type = dockyard
-							level = 1
-							instant_build = yes
-						}
-					}
-				}
-				if = {
-					limit = {
-						NOT = {
 							any_owned_state = {
+								dockyard > 0
 								free_building_slots = {
 									building = dockyard
 									size > 1
@@ -1256,21 +1236,50 @@ DEN_decision_Investments_Global = {
 								}
 							}
 						}
-					}
-					random_state = {
-						limit = {
-							controller = { tag = FROM }
-							free_building_slots = {
-								building = dockyard
-								size > 1
-								include_locked = yes
+						random_owned_controlled_state = {
+							limit = {
+								dockyard > 0
+								free_building_slots = {
+									building = dockyard
+									size > 1
+									include_locked = yes
+								}
+							}
+							add_extra_state_shared_building_slots = 1
+							add_building_construction = {
+								type = dockyard
+								level = 1
+								instant_build = yes
 							}
 						}
-						add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-							type = dockyard
-							level = 1
-							instant_build = yes
+					}
+					else_if = {
+						limit = {
+							NOT = {
+								any_owned_state = {
+									free_building_slots = {
+										building = dockyard
+										size > 1
+										include_locked = yes
+									}
+								}
+							}
+						}
+						random_state = {
+							limit = {
+								controller = { tag = FROM }
+								free_building_slots = {
+									building = dockyard
+									size > 1
+									include_locked = yes
+								}
+							}
+							add_extra_state_shared_building_slots = 1
+							add_building_construction = {
+								type = dockyard
+								level = 1
+								instant_build = yes
+							}
 						}
 					}
 				}
@@ -1302,24 +1311,24 @@ DEN_decision_Investments_Global_II = {
 		}
 
 		target_trigger = {
-			NOT = { has_war_with = ROOT }
-			check_variable = { gdp_total > 100.00 }
-			check_variable = { gdp_per_capita > 20.500 }
-			check_variable = { num_of_civilian_factories > 5 }
-		}
-
-		visible = {
-			ROOT = {
-				has_opinion = {
-					target = FROM
-					value > 5
-				}
-			}
 			FROM = {
 				NOT = { has_war_with = ROOT }
 				NOT = { has_country_flag = DEN_Investments }
 				has_stability > 0.15
 				check_variable = { gdp_total > 100.00 }
+				check_variable = { gdp_per_capita > 20.500 }
+				check_variable = { num_of_civilian_factories > 5 }
+				custom_trigger_tooltip = {
+					tooltip = DEN_INVEST_TRADE_LINK_TT
+					OR = {
+						has_country_flag = trade_agreement@ROOT
+						has_country_flag = mutual_investment_treaty_@ROOT
+					}
+				}
+			}
+			has_opinion = {
+				target = FROM
+				value > 5
 			}
 		}
 
@@ -1329,7 +1338,7 @@ DEN_decision_Investments_Global_II = {
 		fixed_random_seed = yes
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision DEN_Invest"
+			log = "[GetDateText]: [Root.GetName]: Decision DEN_DSV_Invest"
 			FROM = {
 				set_country_flag = DEN_Investments
 				set_temp_variable = { percent_change = 1.9 }
@@ -1371,7 +1380,7 @@ DEN_decision_Investments_Global_II = {
 									}
 								}
 							}
-							if = {
+							else_if = {
 								limit = {
 									any_owned_state = {
 										air_base > 0
@@ -1397,7 +1406,7 @@ DEN_decision_Investments_Global_II = {
 									}
 								}
 							}
-							if = {
+							else_if = {
 								limit = {
 									NOT = {
 										any_owned_state = {
@@ -1456,7 +1465,7 @@ DEN_decision_Investments_Global_II = {
 									}
 								}
 							}
-							if = {
+							else_if = {
 								limit = {
 									any_owned_state = {
 										infrastructure > 0
@@ -1482,7 +1491,7 @@ DEN_decision_Investments_Global_II = {
 									}
 								}
 							}
-							if = {
+							else_if = {
 								limit = {
 									NOT = {
 										any_owned_state = {
@@ -1541,7 +1550,7 @@ DEN_decision_Investments_Global_II = {
 									}
 								}
 							}
-							if = {
+							else_if = {
 								limit = {
 									any_owned_state = {
 										renewable_energy_infra > 0
@@ -1567,7 +1576,7 @@ DEN_decision_Investments_Global_II = {
 									}
 								}
 							}
-							if = {
+							else_if = {
 								limit = {
 									NOT = {
 										any_owned_state = {
@@ -1622,15 +1631,7 @@ DEN_decision_Agriculture = {
 		days_re_enable = 90
 		fixed_random_seed = yes
 		available = {
-			NOT = {
-				has_decision = DEN_Subventions_for_Fishing_decision
-				has_decision = DEN_Subventions_for_Pigs_decision
-				has_decision = DEN_Subventions_for_Beef_decision
-				has_decision = DEN_marine_conservation_decision
-				has_decision = DEN_water_conservation_decision
-				has_decision = DEN_wildlife_conservation_decision
-				has_decision = DEN_Reforestation_decision
-			}
+			DEN_no_active_agri_policy = yes
 		}
 
 		complete_effect = {
@@ -1683,15 +1684,7 @@ DEN_decision_Agriculture = {
 		days_re_enable = 90
 		fixed_random_seed = yes
 		available = {
-			NOT = {
-				has_decision = DEN_Subventions_for_Fishing_decision
-				has_decision = DEN_Subventions_for_Grain_decision
-				has_decision = DEN_Subventions_for_Beef_decision
-				has_decision = DEN_marine_conservation_decision
-				has_decision = DEN_water_conservation_decision
-				has_decision = DEN_wildlife_conservation_decision
-				has_decision = DEN_Reforestation_decision
-			}
+			DEN_no_active_agri_policy = yes
 		}
 
 		complete_effect = {
@@ -1743,15 +1736,7 @@ DEN_decision_Agriculture = {
 		days_re_enable = 90
 		fixed_random_seed = yes
 		available = {
-			NOT = {
-				has_decision = DEN_Subventions_for_Fishing_decision
-				has_decision = DEN_Subventions_for_Grain_decision
-				has_decision = DEN_Subventions_for_Beef_decision
-				has_decision = DEN_marine_conservation_decision
-				has_decision = DEN_water_conservation_decision
-				has_decision = DEN_wildlife_conservation_decision
-				has_decision = DEN_Reforestation_decision
-			}
+			DEN_no_active_agri_policy = yes
 		}
 
 		complete_effect = {
@@ -1806,15 +1791,7 @@ DEN_decision_Agriculture = {
 		days_remove = 365
 		days_re_enable = 90
 		available = {
-			NOT = {
-				has_decision = DEN_Subventions_for_Pigs_decision
-				has_decision = DEN_Subventions_for_Grain_decision
-				has_decision = DEN_Subventions_for_Beef_decision
-				has_decision = DEN_marine_conservation_decision
-				has_decision = DEN_water_conservation_decision
-				has_decision = DEN_wildlife_conservation_decision
-				has_decision = DEN_Reforestation_decision
-			}
+			DEN_no_active_agri_policy = yes
 		}
 
 		complete_effect = {
@@ -1927,15 +1904,7 @@ DEN_decision_Agriculture = {
 		days_re_enable = 90
 		fixed_random_seed = yes
 		available = {
-			NOT = {
-				has_decision = DEN_Subventions_for_Pigs_decision
-				has_decision = DEN_Subventions_for_Grain_decision
-				has_decision = DEN_Subventions_for_Beef_decision
-				has_decision = DEN_marine_conservation_decision
-				has_decision = DEN_water_conservation_decision
-				has_decision = DEN_wildlife_conservation_decision
-				has_decision = DEN_Subventions_for_Fishing_decision
-			}
+			DEN_no_active_agri_policy = yes
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision DEN_Reforestation_decision"
@@ -2005,15 +1974,7 @@ DEN_decision_Agriculture = {
 		days_re_enable = 90
 		fixed_random_seed = yes
 		available = {
-			NOT = {
-				has_decision = DEN_Subventions_for_Pigs_decision
-				has_decision = DEN_Subventions_for_Grain_decision
-				has_decision = DEN_Subventions_for_Beef_decision
-				has_decision = DEN_marine_conservation_decision
-				has_decision = DEN_water_conservation_decision
-				has_decision = DEN_Reforestation_decision
-				has_decision = DEN_Subventions_for_Fishing_decision
-			}
+			DEN_no_active_agri_policy = yes
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision DEN_wildlife_conservation_decision"
@@ -2069,15 +2030,7 @@ DEN_decision_Agriculture = {
 		fixed_random_seed = yes
 
 		available = {
-			NOT = {
-				has_decision = DEN_Subventions_for_Pigs_decision
-				has_decision = DEN_Subventions_for_Grain_decision
-				has_decision = DEN_Subventions_for_Beef_decision
-				has_decision = DEN_marine_conservation_decision
-				has_decision = DEN_wildlife_conservation_decision
-				has_decision = DEN_Reforestation_decision
-				has_decision = DEN_Subventions_for_Fishing_decision
-			}
+			DEN_no_active_agri_policy = yes
 		}
 
 		complete_effect = {
@@ -2133,15 +2086,7 @@ DEN_decision_Agriculture = {
 		days_re_enable = 90
 		fixed_random_seed = yes
 		available = {
-			NOT = {
-				has_decision = DEN_Subventions_for_Pigs_decision
-				has_decision = DEN_Subventions_for_Grain_decision
-				has_decision = DEN_Subventions_for_Beef_decision
-				has_decision = DEN_water_conservation_decision
-				has_decision = DEN_wildlife_conservation_decision
-				has_decision = DEN_Reforestation_decision
-				has_decision = DEN_Subventions_for_Fishing_decision
-			}
+			DEN_no_active_agri_policy = yes
 		}
 
 		complete_effect = {
