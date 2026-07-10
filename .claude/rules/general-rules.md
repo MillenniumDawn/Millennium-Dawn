@@ -66,6 +66,10 @@ No results = wrong name. Copy the exact spelling from an existing use, or check 
 
 Inline accepts only `=`, `>`, `<`; `>=`/`<=` parse silently and never match. Use `compare = greater_than_or_equals` (valid: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`).
 
+## Math expressions parse to 0 on failure
+
+Inside a math expression (`set_variable = { X = { value = ... } }`) a malformed statement evaluates to `0.0` and the game plays on with a dead mechanic. It only shows up as `script_math.cpp: Errors occurred while reading math expression defaulting to 0` in `error.log`, and one failure desyncs the parser for the rest of the file. `check_variable`'s comparator list does **not** carry over: inside an expression's `if`/`limit` only `greater_than` and `less_than` are safe (`equals` broke the counter-terror attack roll). Keep branches at effect level with `check_variable`, and grep MD plus vanilla for precedent before using an unfamiliar construct. Details: `.claude/docs/hoi4-data-structures.md` (Math Expressions).
+
 ## Variable and array operations do not auto-tooltip
 
 `check_variable`, `is_in_array`, `set/add_to/subtract_from/multiply/divide/clamp_variable`, `add_to/remove_from_array` produce no tooltip — bare in `available`/`visible` the player sees nothing (triggers) or a blank line (effects). Wrap triggers in `custom_trigger_tooltip = { tooltip = key ... }` and effects with `custom_effect_tooltip`. Named scripted triggers DO auto-tooltip via their name's loc key — prefer them over raw variable checks in player-facing blocks.
