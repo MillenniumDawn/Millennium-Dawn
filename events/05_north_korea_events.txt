@@ -1599,43 +1599,11 @@ country_event = {
 		original_tag = NKO
 		has_idea = NKO_spa_umbrella
 		NOT = { has_civil_war = yes }
-		NOT = { has_country_flag = NKO_spa_recent_session }
 	}
 
 	option = {
 		name = NKO_spa.0.a
 		log = "[GetDateText]: [Root.GetName]: NKO_spa.0.a executed"
-		NKO_spa_open_session = yes
-		set_country_flag = { flag = NKO_spa_recent_session days = 100 value = 1 }
-		country_event = { id = NKO_spa.10 days = 365 }
-	}
-}
-
-# NKO_spa.1 — Session-open alert (fired by .10 cycle).
-country_event = {
-	id = NKO_spa.1
-	title = NKO_spa.1.t
-	desc = NKO_spa.1.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = NKO_spa.1.a
-		log = "[GetDateText]: [Root.GetName]: NKO_spa.1.a executed"
-	}
-}
-
-# NKO_spa.5 — Force-pick alert.
-country_event = {
-	id = NKO_spa.5
-	title = NKO_spa.5.t
-	desc = NKO_spa.5.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = NKO_spa.5.a
-		log = "[GetDateText]: [Root.GetName]: NKO_spa.5.a executed"
 	}
 }
 
@@ -1649,31 +1617,6 @@ country_event = {
 	immediate = {
 		NKO_spa_suppress_for_collapse = yes
 		log = "[GetDateText]: [Root.GetName]: NKO_spa.6 executed"
-	}
-}
-
-country_event = {
-	id = NKO_spa.10
-
-	is_triggered_only = yes
-	hidden = yes
-
-	immediate = {
-		log = "[GetDateText]: [Root.GetName]: NKO_spa.10 executed"
-		hidden_effect = {
-			if = {
-				limit = {
-					original_tag = NKO
-					has_idea = NKO_spa_umbrella
-					NOT = { has_civil_war = yes }
-					NOT = { has_country_flag = NKO_spa_recent_session }
-				}
-				NKO_spa_open_session = yes
-				country_event = { id = NKO_spa.1 hours = 6 }
-				set_country_flag = { flag = NKO_spa_recent_session days = 100 value = 1 }
-			}
-			country_event = { id = NKO_spa.10 days = 365 }
-		}
 	}
 }
 
@@ -3125,7 +3068,6 @@ country_event = {
 				20 = { country_event = { id = nko_naval_buildup.52 days = 0 } }
 				20 = { country_event = { id = nko_naval_buildup.53 days = 0 } }
 				15 = { country_event = { id = nko_naval_buildup.54 days = 0 } }
-				15 = { country_event = { id = nko_naval_buildup.55 days = 0 } }
 				10 = { country_event = { id = nko_naval_buildup.56 days = 0 } }
 			}
 		}
@@ -3147,13 +3089,14 @@ country_event = {
 	picture = GFX_submarine
 
 	is_triggered_only = yes
+	fire_only_once = yes
 
 	option = {
 		name = nko_naval_buildup.51.a
 		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.51.a executed"
 		add_to_variable = { var = NKO_naval_points value = 2 }
-		add_stability = -0.01
-		add_war_support = 0.01
+		add_war_support = 0.05
+		add_political_power = 100
 	}
 	option = {
 		name = nko_naval_buildup.51.b
@@ -3202,6 +3145,24 @@ country_event = {
 	picture = GFX_submarine
 
 	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		OR = {
+			has_idea = corruption_level_06
+			has_idea = corruption_level_07
+			has_idea = corruption_level_08
+			has_idea = corruption_level_09
+			has_idea = corruption_level_10
+		}
+	}
+
+	immediate = {
+		destroy_ships = {
+			type = attack_submarine
+			count = 1
+		}
+	}
 
 	option = {
 		name = nko_naval_buildup.53.a
@@ -3242,34 +3203,6 @@ country_event = {
 		name = nko_naval_buildup.54.b
 		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.54.b executed"
 		add_to_variable = { var = NKO_naval_points value = 1 }
-	}
-}
-
-# .55 Reconnaissance Bureau Mission Brief (SF theme)
-country_event = {
-	id = nko_naval_buildup.55
-	title = nko_naval_buildup.55.t
-	desc = nko_naval_buildup.55.d
-	picture = GFX_submarine
-
-	is_triggered_only = yes
-
-	option = {
-		name = nko_naval_buildup.55.a
-		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.a executed"
-		add_to_variable = { var = NKO_naval_points value = 2 }
-		add_war_support = 0.01
-		add_stability = -0.01
-	}
-	option = {
-		name = nko_naval_buildup.55.b
-		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.b executed"
-		add_to_variable = { var = NKO_naval_points value = 1 }
-	}
-	option = {
-		name = nko_naval_buildup.55.c
-		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.c executed"
-		add_political_power = 15
 	}
 }
 
@@ -3580,11 +3513,64 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = NKO_export.10.a # Accept the shipment
+		name = NKO_export.10.a # Request a Light Infantry package
 		log = "[GetDateText]: [This.GetName]: NKO_export.10.a executed from [FROM.GetTag]"
+		trigger = {
+			OR = {
+				has_template_containing_unit = L_Inf_Bat
+				has_template_containing_unit = Mot_Inf_Bat
+				has_template_containing_unit = Mech_Inf_Bat
+			}
+		}
+		custom_effect_tooltip = NKO_export.10.a.tt
+		set_variable = { NKO_arms_request_type = 1 }
 		FROM = { country_event = { id = NKO_export.11 days = 1 } }
 		ai_chance = {
-			factor = 80
+			factor = 30
+			modifier = { factor = 3  surrender_progress > 0.5 }
+		}
+	}
+
+	option = {
+		name = NKO_export.10.c # Request a Motorized Infantry package
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.c executed from [FROM.GetTag]"
+		trigger = { has_template_containing_unit = Mot_Inf_Bat }
+		custom_effect_tooltip = NKO_export.10.c.tt
+		set_variable = { NKO_arms_request_type = 2 }
+		FROM = { country_event = { id = NKO_export.11 days = 1 } }
+		ai_chance = {
+			factor = 30
+			modifier = { factor = 3  surrender_progress > 0.5 }
+		}
+	}
+
+	option = {
+		name = NKO_export.10.e # Request an Armored package
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.e executed from [FROM.GetTag]"
+		trigger = {
+			OR = {
+				has_template_containing_unit = armor_Bat
+				has_template_containing_unit = L_arm_Bat
+			}
+		}
+		custom_effect_tooltip = NKO_export.10.e.tt
+		set_variable = { NKO_arms_request_type = 3 }
+		FROM = { country_event = { id = NKO_export.11 days = 1 } }
+		ai_chance = {
+			factor = 60
+			modifier = { factor = 3  surrender_progress > 0.5 }
+		}
+	}
+
+	option = {
+		name = NKO_export.10.f # Request a Mechanized Infantry package
+		log = "[GetDateText]: [This.GetName]: NKO_export.10.f executed from [FROM.GetTag]"
+		trigger = { has_template_containing_unit = Mech_Inf_Bat }
+		custom_effect_tooltip = NKO_export.10.f.tt
+		set_variable = { NKO_arms_request_type = 4 }
+		FROM = { country_event = { id = NKO_export.11 days = 1 } }
+		ai_chance = {
+			factor = 50
 			modifier = { factor = 3  surrender_progress > 0.5 }
 		}
 	}

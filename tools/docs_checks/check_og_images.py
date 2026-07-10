@@ -100,8 +100,11 @@ def asset_exists(site_dir: Path, normalized_path: str) -> bool:
 
 def check_html_file(site_dir: Path, html_path: Path, baseurl: str) -> list[str]:
     text = html_path.read_text(encoding="utf-8", errors="replace")
+    head_end = text.find("</head>")
+    # All OG/Twitter meta lives in <head>; parsing just that slice skips the body.
+    head = text[: head_end + len("</head>")] if head_end != -1 else text
     parser = MetaCollector()
-    parser.feed(text)
+    parser.feed(head)
     meta = parser.meta
 
     if not has_seo_meta(meta):
