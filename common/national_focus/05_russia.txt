@@ -3288,6 +3288,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_annexation_of_crimea"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				transfer_state = 669
+				669 = { add_core_of = SOV }
+			}
 			if = {
 				limit = { UKR = { owns_state = 669 } }
 				UKR = {
@@ -3310,21 +3315,16 @@ focus_tree = {
 					}
 					country_event = { id = russia.7 days = 1 }
 				}
+				custom_effect_tooltip = TT_IF_THEY_REJECT
+				effect_tooltip = {
+					declare_war_on = { target = UKR type = take_state_focus generator = { 669 } }
+				}
 			}
 			else = {
 				random_country = {
 					limit = { owns_state = 669 }
 					country_event = { id = russia.7 days = 1 }
 				}
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				transfer_state = 669
-				669 = { add_core_of = SOV }
-			}
-			custom_effect_tooltip = TT_IF_THEY_REJECT
-			effect_tooltip = {
-				declare_war_on = { target = UKR type = take_state_focus generator = { 669 } }
 			}
 		}
 
@@ -8273,7 +8273,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_strengthen_union_state"
 			BLR = { country_event = { id = russia_governorate.16 days = 1 } }
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { custom_effect_tooltip = SOV_strengthen_union_state_accept_tt }
+			effect_tooltip = {
+				set_autonomy = { target = BLR autonomy_state = autonomy_governorate_rf }
+				BLR = { every_core_state = { add_core_of = SOV } }
+			}
 			custom_effect_tooltip = TT_IF_THEY_REJECT
 			effect_tooltip = {
 				create_wargoal = { type = annex_everything target = BLR }
@@ -8661,7 +8664,9 @@ focus_tree = {
 				ARM = { country_event = russia_governorate.20 }
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { custom_effect_tooltip = SOV_help_armenia_accept_tt }
+			effect_tooltip = {
+				set_autonomy = { target = ARM autonomy_state = autonomy_governorate_rf }
+			}
 			custom_effect_tooltip = TT_IF_THEY_REJECT
 			effect_tooltip = {
 				create_wargoal = { type = annex_everything target = ARM }
@@ -9167,6 +9172,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zhirinovsky_take_trans"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				if = {
+					limit = {
+						PMR = { is_subject = no }
+						country_exists = PMR
+					}
+					set_autonomy = { target = PMR autonomy_state = autonomy_republic_rf }
+				}
+				if = {
+					limit = {
+						country_exists = MLV
+						MLV = { is_subject = no }
+					}
+					set_autonomy = { target = MLV autonomy_state = autonomy_governorate_rf }
+					MLV = { every_core_state = { add_core_of = SOV } }
+				}
+			}
 			if = {
 				limit = {
 					PMR = { is_subject = no }
@@ -9180,12 +9203,11 @@ focus_tree = {
 					MLV = { is_subject = no }
 				}
 				MLV = { country_event = russia_governorate.13 }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { custom_effect_tooltip = SOV_zhirinovsky_take_trans_accept_tt }
-			custom_effect_tooltip = TT_IF_THEY_REJECT
-			effect_tooltip = {
-				create_wargoal = { type = annex_everything target = MLV }
+				custom_effect_tooltip = TT_IF_THEY_REJECT
+				effect_tooltip = {
+					MLV = { every_controlled_state = { add_core_of = SOV } }
+					create_wargoal = { type = annex_everything target = MLV }
+				}
 			}
 			hidden_effect = {
 				news_event = {
@@ -17539,7 +17561,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_multi_party_encouragement"
 			UKR = { country_event = sov_other.13 }
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { custom_effect_tooltip = SOV_multi_party_encouragement_accept_tt }
+			effect_tooltip = {
+				set_temp_variable = { percent_change = 20 }
+				set_temp_variable = { influence_target = UKR }
+				change_influence_percentage = yes
+			}
 		}
 
 		ai_will_do = {
@@ -32070,7 +32096,9 @@ focus_tree = {
 				country_event = russia.52
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { custom_effect_tooltip = SOV_buy_out_taiwan_microchip_accept_tt }
+			effect_tooltip = {
+				add_ideas = SOV_i_blin_idea
+			}
 		}
 
 		ai_will_do = {
@@ -35835,7 +35863,30 @@ focus_tree = {
 				JAP = { country_event = sov_economic.13 }
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { custom_effect_tooltip = SOV_economic_rubber_foreign_accept_tt }
+			effect_tooltip = {
+				set_temp_variable = { treasury_change = -2.8 }
+				modify_treasury_effect = yes
+				if = {
+					limit = { NOT = { has_war_with = FRA } }
+					add_ideas = SOV_michelin_idea
+				}
+				if = {
+					limit = { NOT = { has_war_with = GER } }
+					add_ideas = SOV_continental_idea
+				}
+				if = {
+					limit = { NOT = { has_war_with = ITA } }
+					add_ideas = SOV_pirelly_idea
+				}
+				if = {
+					limit = { NOT = { has_war_with = FIN } }
+					add_ideas = SOV_nokian_idea
+				}
+				if = {
+					limit = { NOT = { has_war_with = JAP } }
+					add_ideas = SOV_yokohama_idea
+				}
+			}
 		}
 
 		ai_will_do = {
