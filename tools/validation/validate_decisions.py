@@ -128,12 +128,15 @@ _BARE_TRIGGER_RE = re.compile(
 )
 
 
-def _flat_tag_pins(block: str) -> set:
-    """Return the set of tags pinned by flat (non-nested) tag/original_tag tokens.
+def _flat_tag_pins_with_kind(block: str) -> set:
+    """Return {(keyword, tag), ...} for flat (non-nested), depth-0 tag/original_tag tokens.
 
-    Tokens nested inside OR/NOT/AND/if subblocks are skipped because they are
-    conditional, not hard pins. Handles both multi-line and single-line block
-    formats.
+    Dim-aware sibling of ``_flat_tag_pins``: keeps the keyword ('tag' or
+    'original_tag') alongside each pinned tag so callers can tell a
+    ``tag = X`` lock (excludes civil-war split-offs) apart from
+    ``original_tag = X`` (admits them). Tokens nested inside OR/NOT/AND/if/
+    FROM/any_country/TAG={} subblocks are skipped because they are
+    conditional or scoped, not flat hard pins.
     """
     if not block:
         return set()
@@ -142,7 +145,7 @@ def _flat_tag_pins(block: str) -> set:
         inner = inner[1:]
     if inner.endswith("}"):
         inner = inner[:-1]
-    tags = set()
+    pins = set()
     depth = 0
     i = 0
     n = len(inner)
@@ -163,11 +166,220 @@ def _flat_tag_pins(block: str) -> set:
         if depth == 0:
             m = _TAG_TOKEN_PATTERN.match(inner, i)
             if m:
-                tags.add(m.group(2))
+                pins.add((m.group(1), m.group(2)))
                 i = m.end()
                 continue
         i += 1
-    return tags
+    return pins
+
+
+def _flat_tag_pins(block: str) -> set:
+    """Return the set of tags pinned by flat (non-nested) tag/original_tag tokens.
+
+    Tokens nested inside OR/NOT/AND/if subblocks are skipped because they are
+    conditional, not hard pins. Handles both multi-line and single-line block
+    formats.
+    """
+    return {tag for _, tag in _flat_tag_pins_with_kind(block)}
+
+
+def _is_sole_flat_pin(block: str, tag: str) -> bool:
+    """True if ``block``'s only content (after comment-stripping) is a single
+    flat ``tag = X`` / ``original_tag = X`` pin equal to ``tag``.
+
+    Mirrors the sole-pin shape validate_allowed_redundant_with_category
+    already reports, so callers can skip re-flagging it.
+    """
+    if not block:
+        return False
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+    cleaned = re.sub(r"#[^\n]*", "", inner).strip()
+    pat = re.compile(r"^\s*(?:original_tag|tag)\s*=\s*" + re.escape(tag) + r"\s*$")
+    return bool(pat.match(cleaned))
+
+
+def _category_allowed_pins(categories: Dict[str, str]) -> Dict[str, set]:
+    """Return category name -> {(keyword, tag), ...} pinned by its flat,
+    depth-0 ``allowed`` block.
+
+    Categories with no ``allowed`` block are omitted; categories whose
+    ``allowed`` has no flat tag pin at all (e.g. a scripted trigger) map to
+    an empty set — both read as "no lock" to callers.
+    """
+    cat_pins: Dict[str, set] = {}
+    for cat_name, cat_code in categories.items():
+        am = re.search(r"\ballowed\s*=\s*\{", cat_code)
+        if not am:
+            continue
+        a_start = cat_code.find("{", am.start())
+        depth = 1
+        i = a_start + 1
+        while i < len(cat_code) and depth > 0:
+            if cat_code[i] == "{":
+                depth += 1
+            elif cat_code[i] == "}":
+                depth -= 1
+            i += 1
+        cat_pins[cat_name] = _flat_tag_pins_with_kind(cat_code[a_start:i])
+    return cat_pins
+
+
+def _scan_top_level(block: str):
+    """Iterate top-level tokens inside a block.
+
+    Yields (kind, payload) pairs where kind is 'tag' or 'scope' and payload
+    is the tag string. Tokens nested inside subblocks (OR/AND/NOT/if/
+    custom_trigger_tooltip/etc.) are skipped — those are conditional
+    context, not unconditional pins.
+    """
+    if not block:
+        return
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+
+    depth = 0
+    i = 0
+    n = len(inner)
+    while i < n:
+        ch = inner[i]
+        if ch == "{":
+            depth += 1
+            i += 1
+            continue
+        if ch == "}":
+            depth -= 1
+            i += 1
+            continue
+        if ch == "#":
+            while i < n and inner[i] != "\n":
+                i += 1
+            continue
+        if depth == 0:
+            # An identifier-start char only counts if it begins on a
+            # word boundary (preceded by start-of-block or whitespace),
+            # otherwise we'd misread `has_cosmetic_tag = MAU` as a
+            # `tag = MAU` token.
+            if ch.isalpha() or ch == "_":
+                prev = inner[i - 1] if i > 0 else "\n"
+                if prev.isalnum() or prev == "_":
+                    i += 1
+                    continue
+                m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*", inner[i:])
+                if m:
+                    ident = m.group(1)
+                    after = i + m.end()
+                    # `tag = X` / `original_tag = X` token
+                    if ident in ("tag", "original_tag"):
+                        tm = re.match(r"([A-Z][A-Z0-9_]{1,7})\b", inner[after:])
+                        if tm:
+                            yield ("tag", tm.group(1))
+                            i = after + tm.end()
+                            continue
+                    # `TAG = { ... }` self-scope (3-letter caps tag)
+                    if (
+                        re.match(r"^[A-Z][A-Z0-9_]{1,7}$", ident)
+                        and after < n
+                        and inner[after] == "{"
+                    ):
+                        yield ("scope", ident)
+                        # Don't consume the brace, let the outer loop dive in
+                        i = after
+                        continue
+                    # Skip past the entire identifier so we don't
+                    # re-scan its tail and falsely match nested tokens.
+                    i = after
+                    continue
+        i += 1
+
+
+def _find_category_redundant_rows(
+    factories: List["DecisionFactory"],
+    cat_pins: Dict[str, set],
+    cats_with_decs: Dict[str, List[str]],
+) -> List[str]:
+    """Pure detection: decision-level tag/original_tag re-checks already
+    covered by the parent category's single-tag lock.
+
+    Fills the gap between ``validate_redundant_tag_checks`` (decision's own
+    ``allowed`` pin vs its own ``visible``/``available``) and
+    ``validate_allowed_redundant_with_category`` (sole-content ``allowed``
+    duplicating the category pin): neither compares the *category* lock
+    against a decision's ``visible``/``available``, or against a partial
+    (multi-condition) ``allowed`` block.
+
+    Rules:
+    - Only single-tag category locks count: the category's ``allowed`` must
+      pin exactly one tag value at depth 0. A scripted-trigger ``allowed``
+      (no flat tag/original_tag token) or one pinning several different tags
+      yields no lock and is skipped.
+    - A category locked via ``original_tag = X`` only flags decision-level
+      ``original_tag = X`` re-checks. ``tag = X`` is a real narrowing (it
+      excludes civil-war split-offs the ``original_tag`` lock admits), so
+      it's left alone.
+    - A category locked via ``tag = X`` (with or without an accompanying
+      ``original_tag = X`` for the same tag) flags both ``tag = X`` and
+      ``original_tag = X`` re-checks — the category is already at least as
+      restrictive as either.
+    - ``allowed`` is skipped when its only content is the pin itself; that
+      exact shape is already reported by
+      ``validate_allowed_redundant_with_category``.
+    - Depth-0 only, via ``_flat_tag_pins_with_kind``: negations
+      (``NOT = {...}``), ``FROM``/``any_country``/``TAG = {}`` scopes are
+      auto-excluded. ``target_trigger``/``target_root_trigger`` are separate
+      factory fields and are not scanned.
+    """
+    token_to_cat: Dict[str, str] = {}
+    for cat, dec_tokens in cats_with_decs.items():
+        for tok in dec_tokens:
+            token_to_cat.setdefault(tok, cat)
+
+    results: List[str] = []
+    for d in factories:
+        cat_name = token_to_cat.get(d.token)
+        if cat_name is None:
+            continue
+        pins = cat_pins.get(cat_name)
+        if not pins:
+            continue
+        tag_values = {tg for _, tg in pins}
+        if len(tag_values) != 1:
+            continue
+        lock_tag = next(iter(tag_values))
+        keywords_used = {kw for kw, tg in pins if tg == lock_tag}
+        lock_kind = "tag" if "tag" in keywords_used else "original_tag"
+        flagged_kinds = (
+            {"tag", "original_tag"} if lock_kind == "tag" else {"original_tag"}
+        )
+
+        issues = []
+        for field_name, block in (
+            ("allowed", d.allowed),
+            ("available", d.available),
+            ("visible", d.visible),
+        ):
+            if not block:
+                continue
+            if field_name == "allowed" and _is_sole_flat_pin(block, lock_tag):
+                continue
+            hits = _flat_tag_pins_with_kind(block)
+            for kw in ("original_tag", "tag"):
+                if kw in flagged_kinds and (kw, lock_tag) in hits:
+                    issues.append(f"{field_name} re-checks {kw}")
+
+        if issues:
+            results.append(
+                f"{d.token:<55}{d.source_basename} "
+                f"(category locked to {lock_kind} = {lock_tag}: {', '.join(issues)})"
+            )
+
+    return results
 
 
 def extract_value_single_line(obj: str, s: str) -> str:
@@ -952,76 +1164,6 @@ class Validator(BaseValidator):
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
-        def _scan_top_level(block: str):
-            """Iterate top-level tokens inside a block.
-
-            Yields (kind, payload) pairs where kind is 'tag' or 'scope' and
-            payload is the tag string. Tokens nested inside subblocks
-            (OR/AND/NOT/if/custom_trigger_tooltip/etc.) are skipped — those are
-            conditional context, not unconditional pins.
-            """
-            if not block:
-                return
-            inner = block.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-
-            depth = 0
-            i = 0
-            n = len(inner)
-            while i < n:
-                ch = inner[i]
-                if ch == "{":
-                    depth += 1
-                    i += 1
-                    continue
-                if ch == "}":
-                    depth -= 1
-                    i += 1
-                    continue
-                if ch == "#":
-                    while i < n and inner[i] != "\n":
-                        i += 1
-                    continue
-                if depth == 0:
-                    # An identifier-start char only counts if it begins on a
-                    # word boundary (preceded by start-of-block or whitespace),
-                    # otherwise we'd misread `has_cosmetic_tag = MAU` as a
-                    # `tag = MAU` token.
-                    if ch.isalpha() or ch == "_":
-                        prev = inner[i - 1] if i > 0 else "\n"
-                        if prev.isalnum() or prev == "_":
-                            i += 1
-                            continue
-                        m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*", inner[i:])
-                        if m:
-                            ident = m.group(1)
-                            after = i + m.end()
-                            # `tag = X` / `original_tag = X` token
-                            if ident in ("tag", "original_tag"):
-                                tm = re.match(r"([A-Z][A-Z0-9_]{1,7})\b", inner[after:])
-                                if tm:
-                                    yield ("tag", tm.group(1))
-                                    i = after + tm.end()
-                                    continue
-                            # `TAG = { ... }` self-scope (3-letter caps tag)
-                            if (
-                                re.match(r"^[A-Z][A-Z0-9_]{1,7}$", ident)
-                                and after < n
-                                and inner[after] == "{"
-                            ):
-                                yield ("scope", ident)
-                                # Don't consume the brace, let the outer loop dive in
-                                i = after
-                                continue
-                            # Skip past the entire identifier so we don't
-                            # re-scan its tail and falsely match nested tokens.
-                            i = after
-                            continue
-                i += 1
-
         def _has_top_level_tag_check(block: str, tag: str) -> bool:
             for kind, payload in _scan_top_level(block):
                 if kind == "tag" and payload == tag:
@@ -1109,23 +1251,7 @@ class Validator(BaseValidator):
         factories = parse_all_decision_factories(self.mod_path)
         categories = parse_decision_categories(self.mod_path)
         cats_with_decs = parse_categories_with_decisions(self.mod_path)
-
-        # Build category -> pinned tags
-        cat_pins = {}
-        for cat_name, cat_code in categories.items():
-            am = re.search(r"\ballowed\s*=\s*\{", cat_code)
-            if not am:
-                continue
-            a_start = cat_code.find("{", am.start())
-            depth = 1
-            i = a_start + 1
-            while i < len(cat_code) and depth > 0:
-                if cat_code[i] == "{":
-                    depth += 1
-                elif cat_code[i] == "}":
-                    depth -= 1
-                i += 1
-            cat_pins[cat_name] = _flat_tag_pins(cat_code[a_start:i])
+        cat_pins = _category_allowed_pins(categories)
 
         results = []
         for d in factories:
@@ -1136,16 +1262,7 @@ class Validator(BaseValidator):
                 continue
             pinned = next(iter(dec_pinned))
             # Verify allowed has ONLY this pin (no extra conditions)
-            inner = d.allowed.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-            cleaned = re.sub(r"#[^\n]*", "", inner).strip()
-            single_pin_pat = re.compile(
-                r"^\s*(?:original_tag|tag)\s*=\s*" + re.escape(pinned) + r"\s*$"
-            )
-            if not single_pin_pat.match(cleaned):
+            if not _is_sole_flat_pin(d.allowed, pinned):
                 continue
 
             # Find parent category
@@ -1156,13 +1273,37 @@ class Validator(BaseValidator):
                     break
             if cat_name not in cat_pins:
                 continue
-            if pinned in cat_pins[cat_name]:
+            cat_tag_values = {tg for _, tg in cat_pins[cat_name]}
+            if pinned in cat_tag_values:
                 results.append(f"{d.token:<55}{d.source_basename} ({pinned})")
 
         self._report(
             results,
             "✓ No decisions with allowed redundant with parent category",
             "Decisions with `allowed` redundant with parent category (remove the decision's allowed):",
+        )
+
+    def validate_tag_redundant_with_category(self):
+        """Flag decision-level tag/original_tag re-checks already covered by
+        the parent category's single-tag lock.
+
+        See ``_find_category_redundant_rows`` for the full rule set.
+        """
+        self._log_section(
+            "Checking decisions for tag re-checks redundant with category lock..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        categories = parse_decision_categories(self.mod_path)
+        cats_with_decs = parse_categories_with_decisions(self.mod_path)
+        cat_pins = _category_allowed_pins(categories)
+
+        results = _find_category_redundant_rows(factories, cat_pins, cats_with_decs)
+
+        self._report(
+            results,
+            "✓ No decisions with tag checks redundant with category lock",
+            "Decisions with tag/original_tag re-checks redundant with the parent category's lock (remove the re-check):",
         )
 
     def validate_pp_charge_in_effect(self):
@@ -1800,6 +1941,7 @@ class Validator(BaseValidator):
         self.validate_random_list_seed()
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
+        self.validate_tag_redundant_with_category()
         self.validate_pp_charge_in_effect()
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
