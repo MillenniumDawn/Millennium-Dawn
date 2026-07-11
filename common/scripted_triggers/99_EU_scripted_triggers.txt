@@ -120,13 +120,109 @@ EU_external_sov_influence_15 = {
 		}
 	}
 }
+EU_external_chi_influence_10 = {
+	OR = {
+		AND = {
+			check_variable = { influence_array^0 = CHI }
+			check_variable = { influence_array_val^0 > 9.999 }
+		}
+		AND = {
+			check_variable = { influence_array^1 = CHI }
+			check_variable = { influence_array_val^1 > 9.999 }
+		}
+		AND = {
+			check_variable = { influence_array^2 = CHI }
+			check_variable = { influence_array_val^2 > 9.999 }
+		}
+		AND = {
+			check_variable = { influence_array^3 = CHI }
+			check_variable = { influence_array_val^3 > 9.999 }
+		}
+		AND = {
+			check_variable = { influence_array^4 = CHI }
+			check_variable = { influence_array_val^4 > 9.999 }
+		}
+	}
+}
+EU_external_sov_influence_10 = {
+	OR = {
+		AND = {
+			check_variable = { influence_array^0 = SOV }
+			check_variable = { influence_array_val^0 > 9.999 }
+		}
+		AND = {
+			check_variable = { influence_array^1 = SOV }
+			check_variable = { influence_array_val^1 > 9.999 }
+		}
+		AND = {
+			check_variable = { influence_array^2 = SOV }
+			check_variable = { influence_array_val^2 > 9.999 }
+		}
+		AND = {
+			check_variable = { influence_array^3 = SOV }
+			check_variable = { influence_array_val^3 > 9.999 }
+		}
+		AND = {
+			check_variable = { influence_array^4 = SOV }
+			check_variable = { influence_array_val^4 > 9.999 }
+		}
+	}
+}
+EU_external_chi_influence_5 = {
+	OR = {
+		AND = {
+			check_variable = { influence_array^0 = CHI }
+			check_variable = { influence_array_val^0 > 4.999 }
+		}
+		AND = {
+			check_variable = { influence_array^1 = CHI }
+			check_variable = { influence_array_val^1 > 4.999 }
+		}
+		AND = {
+			check_variable = { influence_array^2 = CHI }
+			check_variable = { influence_array_val^2 > 4.999 }
+		}
+		AND = {
+			check_variable = { influence_array^3 = CHI }
+			check_variable = { influence_array_val^3 > 4.999 }
+		}
+		AND = {
+			check_variable = { influence_array^4 = CHI }
+			check_variable = { influence_array_val^4 > 4.999 }
+		}
+	}
+}
+EU_external_sov_influence_5 = {
+	OR = {
+		AND = {
+			check_variable = { influence_array^0 = SOV }
+			check_variable = { influence_array_val^0 > 4.999 }
+		}
+		AND = {
+			check_variable = { influence_array^1 = SOV }
+			check_variable = { influence_array_val^1 > 4.999 }
+		}
+		AND = {
+			check_variable = { influence_array^2 = SOV }
+			check_variable = { influence_array_val^2 > 4.999 }
+		}
+		AND = {
+			check_variable = { influence_array^3 = SOV }
+			check_variable = { influence_array_val^3 > 4.999 }
+		}
+		AND = {
+			check_variable = { influence_array^4 = SOV }
+			check_variable = { influence_array_val^4 > 4.999 }
+		}
+	}
+}
 EU_external_sov_chi_influence_10 = {
 	custom_trigger_tooltip = {
 		tooltip = EU_external_sov_chi_influence_10_tt
 		OR = {
-			EU_external_chi_influence_15 = yes
+			EU_external_chi_influence_10 = yes
 			AND = {
-				EU_external_sov_influence_15 = yes
+				EU_external_sov_influence_10 = yes
 				NOT = { SOV = { has_idea = EU_member } }
 			}
 		}
@@ -136,9 +232,9 @@ EU_external_sov_chi_influence_5 = {
 	custom_trigger_tooltip = {
 		tooltip = EU_external_sov_chi_influence_5_tt
 		OR = {
-			EU_external_chi_influence_15 = yes
+			EU_external_chi_influence_5 = yes
 			AND = {
-				EU_external_sov_influence_15 = yes
+				EU_external_sov_influence_5 = yes
 				NOT = { SOV = { has_idea = EU_member } }
 			}
 		}
@@ -239,7 +335,7 @@ EU_is_leader_of_foreign_policy = {
 		}
 		AND = {
 			check_variable = { global.euforeignaffairs = EUU.id }
-			check_variable = { global.eucomission = EUU.id }
+			check_variable = { global.eu_commission = EUU.id }
 			has_idea = EU_parliament_president
 		}
 	}
@@ -250,11 +346,11 @@ EU_is_leader_of_trade_policy = {
 	OR = {
 		has_idea = EU_commission_president
 		AND = {
-			check_variable = { global.eucomission = EUU.id }
+			check_variable = { global.eu_commission = EUU.id }
 			has_idea = EU_council_president
 		}
 		AND = {
-			check_variable = { global.eucomission = EUU.id }
+			check_variable = { global.eu_commission = EUU.id }
 			check_variable = { global.eucouncil = EUU.id }
 			has_idea = EU_parliament_president
 		}
@@ -299,9 +395,64 @@ EU_influence_on_leader_of_foreign_policy_25_percent = {
 }
 
 EU_any_nation_holds_council_president = {
-	custom_trigger_tooltip ={
+	custom_trigger_tooltip = {
 		tooltip = EU_any_nation_holds_council_president_TT
 		NOT = { check_variable = { global.eucouncil = EUU.id } }
+	}
+}
+
+# True when the commission presidency is vacant (seat cleared to EUU) and ROOT is the member
+# that should act as caretaker finalizer for a vote concluding during the vacancy. Human players
+# take priority so an AI minor never forms the United States of Europe out from under a player;
+# in an all-AI union any member qualifies. Pair with a self-clearing claim flag so only one acts.
+EU_is_commission_caretaker = {
+	check_variable = { global.eu_commission = EUU.id }
+	OR = {
+		is_ai = no
+		NOT = { any_of_scopes = { array = global.EU_member is_ai = no } }
+	}
+}
+
+# Council enforcement authority (breach determination / voting-rights / subsidies suspension):
+# either the proposer and target hold the top-3-influencer consensus among unsuspended members,
+# or the proposer is the commission president. Shared verbatim by the three enforcement decisions.
+EU_council_has_breach_authority = {
+	OR = {
+		AND = {
+			custom_trigger_tooltip = {
+				tooltip = can_determine_a_breach_of_values_ROOT
+				all_of_scopes = {
+					array = global.EU_member
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							NOT = { tag = FROM }
+							NOT = {
+								has_idea = EUU_voting_rights_suspended
+							}
+						}
+						is_top3_influencer = yes
+					}
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = can_determine_a_breach_of_values_FROM
+				all_of_scopes = {
+					array = global.EU_member
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							NOT = { tag = FROM }
+							NOT = {
+								has_idea = EUU_voting_rights_suspended
+							}
+						}
+						NOT = { FROM_is_top3_influencer = yes }
+					}
+				}
+			}
+		}
+		has_idea = EU_commission_president
 	}
 }
 
@@ -336,7 +487,7 @@ gov_is_eurosceptical = {
 	OR = {
 		custom_trigger_tooltip = {
 			tooltip = tooltip_cons_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.5 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.5 compare = less_than_or_equals }
 			OR = {
 				western_conservatism_are_in_power = yes ### conservatism
 				emerging_reactionaries_are_in_power = yes ### Conservative
@@ -345,7 +496,7 @@ gov_is_eurosceptical = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_libs_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.6 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.4 compare = less_than_or_equals }
 			OR = {
 				western_liberals_are_in_power = yes ### liberalism
 				neutrality_neutral_libertarians_are_in_power = yes ### Neutral_Libertarian
@@ -353,7 +504,7 @@ gov_is_eurosceptical = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_social_green_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.6 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.4 compare = less_than_or_equals }
 			OR = {
 				western_social_democrats_are_in_power = yes ### socialism
 				neutrality_neutral_social_are_in_power = yes ### neutral_Social
@@ -362,7 +513,7 @@ gov_is_eurosceptical = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_comms_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.6 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.4 compare = less_than_or_equals }
 			OR = {
 				emerging_communist_state_are_in_power = yes ### Communist-State
 				emerging_anarchist_communism_are_in_power = yes ### anarchist_communism
@@ -380,7 +531,7 @@ gov_is_eurosceptical = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_other_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.5 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.5 compare = less_than_or_equals }
 			NOT = {
 				OR = {
 					western_conservatism_are_in_power = yes ### conservatism
@@ -409,7 +560,7 @@ gov_is_EUexiteer = {
 	OR = {
 		custom_trigger_tooltip = {
 			tooltip = tooltip_cons_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.6 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.4 compare = less_than_or_equals }
 			OR = {
 				western_conservatism_are_in_power = yes ### conservatism
 				emerging_reactionaries_are_in_power = yes ### Conservative
@@ -418,11 +569,7 @@ gov_is_EUexiteer = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_libs_are_eurosceptical
-			check_variable = {
-					var = eurosceptic
-					value = 0.7
-					compare = greater_than_or_equals
-			}
+			check_variable = { var = THIS.europeanism value = 0.3 compare = less_than_or_equals }
 			OR = {
 				western_liberals_are_in_power = yes ### liberalism
 				neutrality_neutral_libertarians_are_in_power = yes ### Neutral_Libertarian
@@ -430,7 +577,7 @@ gov_is_EUexiteer = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_social_green_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.7 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.3 compare = less_than_or_equals }
 			OR = {
 				western_social_democrats_are_in_power = yes ### socialism
 				neutrality_neutral_social_are_in_power = yes ### neutral_Social
@@ -439,7 +586,7 @@ gov_is_EUexiteer = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_comms_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.7 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.3 compare = less_than_or_equals }
 			OR = {
 				emerging_communist_state_are_in_power = yes ### Communist-State
 				emerging_anarchist_communism_are_in_power = yes ### anarchist_communism
@@ -457,7 +604,7 @@ gov_is_EUexiteer = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_other_are_eurosceptical
-			check_variable = { var = eurosceptic value = 0.6 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.4 compare = less_than_or_equals }
 			NOT = {
 				OR = {
 					western_conservatism_are_in_power = yes ### conservatism
@@ -488,10 +635,10 @@ gov_is_EUexiteer = {
 
 slowdown_european_integration = {
 	OR = {
-		check_variable = { var = global.var_europeanism value = 0.85 compare = less_than }
+		check_variable = { global.var_europeanism < 0.85 }
 		any_of_scopes = {
 			array = global.EU_member
-			check_variable = { THIS.eurosceptic > 0.45 }
+			check_variable = { THIS.europeanism < 0.55 }
 		}
 	}
 }
@@ -505,14 +652,14 @@ stop_pro_european_campaign = {
 		date < 2000.01.15
 		AND = {
 			check_variable = { var = global.var_europeanism value = 0.85 compare = greater_than_or_equals }
-			check_variable = { var = THIS.eurosceptic value = 0.25 compare = less_than }
+			check_variable = { THIS.europeanism > 0.75 }
 		}
 		AND = {
-			check_variable = { var = THIS.eurosceptic value = 0.25 compare = less_than }
+			check_variable = { THIS.europeanism > 0.75 }
 			NOT = {
 				any_of_scopes = {
 					array = global.EU_member
-					check_variable = { THIS.eurosceptic > 0.50 }
+					check_variable = { THIS.europeanism < 0.50 }
 				}
 			}
 		}
@@ -523,15 +670,15 @@ stop_euroscepticism_campaign = {
 	OR = {
 		date < 2000.01.15
 		AND = {
-			check_variable = { var = global.var_europeanism value = 0.40 compare = less_than }
-			check_variable = { var = THIS.eurosceptic value = 0.90 compare = greater_than_or_equals }
+			check_variable = { global.var_europeanism < 0.40 }
+			check_variable = { var = THIS.europeanism value = 0.10 compare = less_than_or_equals }
 		}
 		AND = {
-			check_variable = { var = THIS.eurosceptic value = 0.90 compare = greater_than_or_equals }
+			check_variable = { var = THIS.europeanism value = 0.10 compare = less_than_or_equals }
 			NOT = {
 				any_of_scopes = {
 					array = global.EU_member
-					check_variable = { THIS.eurosceptic < 0.40 }
+					check_variable = { THIS.europeanism > 0.60 }
 				}
 			}
 		}
@@ -725,10 +872,7 @@ EU_has_over_five_percent_pop = {
 USoE_can_ally = {
 	ROOT = {
 		OR = {
-			AND = {
-				is_in_faction = yes
-				is_faction_leader = yes
-			}
+			is_faction_leader = yes
 			NOT = { is_in_faction = yes }
 		}
 	}
@@ -787,20 +931,12 @@ EU_european_union_euro_fiscal_trigger = {
 EU_ongoing_budget_draft_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = EU_ongoing_budget_draft_trigger_tt
-		any_of_scopes = {
-			array = global.EU_member
-			has_country_flag = EU_budget_draft
-			has_active_mission = EU_budget_draft_ongoing
-		}
+		has_global_flag = EU_ongoing_budget_draft
 	}
 }
 
 EU_ongoing_mff_draft_trigger = {
-	any_of_scopes = {
-		array = global.EU_member
-		has_country_flag = EU_mff_draft
-		has_active_mission = EU_mff_draft_ongoing
-	}
+	has_global_flag = EU_ongoing_mff_draft
 }
 
 ### POTEF doctrine triggers

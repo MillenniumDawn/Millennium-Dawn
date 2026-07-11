@@ -37,9 +37,6 @@ CI_EXEMPT = {
     # join the validate-core/validate-targeted matrices: those run full-repo
     # with no diff-list injection, which would resurface the whole backlog.
     "validate_style.py",
-    # Needs vanilla HOI4 00_defines.lua, which isn't checked into the repo, so
-    # it can only run as a contributor's pre-commit hook.
-    "validate_defines.py",
     # ~22k pre-existing unreferenced textures plus a slow full-repo scan make
     # this a periodic mod-size audit, not a per-PR gate. Manual hook only.
     "validate_unused_textures.py",
@@ -172,9 +169,9 @@ def test_every_disk_validator_runs_on_ci(disk, ci):
 def test_every_disk_validator_runs_somewhere(disk, precommit, ci):
     # A validator must run on pre-commit OR in CI, or it is dead code. The
     # expensive cross-reference validators run CI-only (their unused manual
-    # pre-commit hooks were removed); the CI-exempt ones (style, defines,
-    # unused_textures) run pre-commit-only. Neither side is required alone, but
-    # a validator in NEITHER place runs nowhere.
+    # pre-commit hooks were removed); the CI-exempt ones (style,
+    # unused_textures) run pre-commit-only. Neither side is required alone,
+    # but a validator in NEITHER place runs nowhere.
     orphaned = sorted(disk - set(precommit) - set(ci) - PRECOMMIT_EXEMPT)
     assert not orphaned, (
         f"Validators run neither on pre-commit nor in CI: {orphaned}. Wire each "

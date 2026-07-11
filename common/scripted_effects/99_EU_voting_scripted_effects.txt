@@ -19,24 +19,24 @@ EU_update_AI_general_voting_modifiers = {
 	if = { limit = { influence_higher_50 = yes }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = 15 }
 	}
-	# Modifiers for Eurosceptism
-	# The intent is that if you are 10% eurosceptic, you will be more likely to support the EU otherwise it scales upwards
-	if = { limit = { check_variable = { var = THIS.eurosceptic value = 0.199 compare = less_than_or_equals } }
+	# Modifiers for Europeanism
+	# The intent is that strongly pro-European members are more likely to support the EU; support scales down as europeanism falls
+	if = { limit = { check_variable = { var = THIS.europeanism value = 0.801 compare = greater_than_or_equals } }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = 40 }
 	}
-	if = { limit = { check_variable = { var = THIS.eurosceptic value = 0.2 compare = greater_than_or_equals } }
+	if = { limit = { check_variable = { var = THIS.europeanism value = 0.8 compare = less_than_or_equals } }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -5 }
 	}
-	if = { limit = { check_variable = { var = THIS.eurosceptic value = 0.3 compare = greater_than_or_equals } }
+	if = { limit = { check_variable = { var = THIS.europeanism value = 0.7 compare = less_than_or_equals } }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -10 }
 	}
-	if = { limit = { check_variable = { var = THIS.eurosceptic value = 0.4 compare = greater_than_or_equals } }
+	if = { limit = { check_variable = { var = THIS.europeanism value = 0.6 compare = less_than_or_equals } }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -15 }
 	}
-	if = { limit = { check_variable = { var = THIS.eurosceptic value = 0.5 compare = greater_than_or_equals } }
+	if = { limit = { check_variable = { var = THIS.europeanism value = 0.5 compare = less_than_or_equals } }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -20 }
 	}
-	if = { limit = { check_variable = { var = THIS.eurosceptic value = 0.7 compare = greater_than_or_equals } }
+	if = { limit = { check_variable = { var = THIS.europeanism value = 0.3 compare = less_than_or_equals } }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -25 }
 	}
 	# if China or Russia have significant influence, AI will not support measures
@@ -393,89 +393,92 @@ apply_EU_QMV_result = {
 
 ### EU111 - United States of Europe ###
 focus_EU111_QMV_result = {
-	if = { # QMV - yes
-		limit = {
-			always = yes
+	for_each_scope_loop = {
+		array = global.EU_active_vote_rejecters
+		remove_ideas = EU_member
+	}
+
+	hidden_effect = {
+		# Record the vote before annexations — on_annex resets current_active_vote_disp to 0
+		add_to_array = { array = global.EU_passed_votes value = 111 }
+		remove_from_array = { array = global.EU_council_votes value = 111 }
+		set_variable = { global.current_active_vote_disp = 0 }
+
+		# Snapshot members before annexing: annex_country fires on_annex, which removes each
+		# annexed member from global.EU_member. Looping global.EU_member live would mutate it
+		# mid-iteration and skip most members, leaving them independent instead of forming USoE.
+		clear_array = global.USoE_formation_members
+		for_each_scope_loop = {
+			array = global.EU_member
+			add_to_array = { global.USoE_formation_members = THIS }
 		}
 
 		for_each_scope_loop = {
-			array = global.EU_active_vote_rejecters
-			remove_ideas = EU_member
-		}
-
-		hidden_effect = {
-			# Record the vote before annexations — on_annex resets current_active_vote_disp to 0
-			add_to_array = { array = global.EU_passed_votes value = 111 }
-			remove_from_array = { array = global.EU_council_votes value = 111 }
-			set_variable = { global.current_active_vote_disp = 0 }
-
-			for_each_scope_loop = {
-				array = global.EU_member
-				EUU = { inherit_technology = THIS }
-				set_country_flag = USoE_member
-				set_country_flag = USoE
-				every_unit_leader = {
-					set_unit_leader_flag = USoE_unit_leader
-					set_nationality = ROOT
-					add_unit_leader_trait = military_reorganization
-				}
-				every_owned_state = {
-					limit = {
-						OR = {
-							is_on_continent = europe
-							is_core_of = GEO
-							is_core_of = ARM
-							is_core_of = AZE
-							is_core_of = TUR
-							is_core_of = POR
-							is_core_of = SPR
-						}
-						NOT = { is_core_of = ROOT }
-					}
-					add_core_of = ROOT
-				}
-				if = { limit = { NOT = { original_tag = ROOT } }
-					ROOT = {
-						add_to_variable = { treasury = PREV.treasury }
-						add_to_variable = { debt = PREV.debt }
-						add_to_variable = { int_investments = PREV.int_investments }
-						set_variable = { tag_to_grab = PREV.id }
-						update_missile_satellite_inventory = yes
-						annex_country = {
-							target = PREV
-							transfer_troops = yes
-						}
-					}
-				}
-			}
-			apply_USoE_technologies = yes
-		}
-		ROOT = {
-			set_cosmetic_tag = USoE
-			clr_country_flag = dynamic_flag
+			array = global.USoE_formation_members
+			EUU = { inherit_technology = THIS }
+			set_country_flag = USoE_member
 			set_country_flag = USoE
-			set_variable = { global.united_states_of_europe = THIS.id }
-			clr_country_flag = GER_Final_settlement
-			if = {
-				limit = { original_tag = GER }
-				set_country_flag = GER_bavaria_gone
-				clr_country_flag = GER_war_on_terror_started
-				remove_ideas = GER_idea_carbon_neutral
+			every_unit_leader = {
+				set_unit_leader_flag = USoE_unit_leader
+				set_nationality = ROOT
+				add_unit_leader_trait = military_reorganization
 			}
-			add_ideas = multi_ethnic_state_idea
+			every_owned_state = {
+				limit = {
+					OR = {
+						is_on_continent = europe
+						is_core_of = GEO
+						is_core_of = ARM
+						is_core_of = AZE
+						is_core_of = TUR
+						is_core_of = POR
+						is_core_of = SPR
+					}
+					NOT = { is_core_of = ROOT }
+				}
+				add_core_of = ROOT
+			}
+			if = { limit = { NOT = { original_tag = ROOT } }
+				ROOT = {
+					add_to_variable = { treasury = PREV.treasury }
+					add_to_variable = { debt = PREV.debt }
+					add_to_variable = { int_investments = PREV.int_investments }
+					set_variable = { tag_to_grab = PREV.id }
+					update_missile_satellite_inventory = yes
+					annex_country = {
+						target = PREV
+						transfer_troops = yes
+					}
+				}
+			}
 		}
-		custom_effect_tooltip = form_USoE_tt
-		set_temp_variable = { vote_passed = 1 }
-		cleanup_european_union_voting = yes
+		clear_array = global.USoE_formation_members
+		apply_USoE_technologies = yes
 	}
-	else = {
-		set_temp_variable = { vote_passed = 0 }
-		cleanup_european_union_voting = yes
+	ROOT = {
+		set_cosmetic_tag = USoE
+		clr_country_flag = dynamic_flag
+		set_country_flag = USoE
+		set_variable = { global.united_states_of_europe = THIS.id }
+		clr_country_flag = GER_Final_settlement
+		if = {
+			limit = { original_tag = GER }
+			set_country_flag = GER_bavaria_gone
+			clr_country_flag = GER_war_on_terror_started
+			remove_ideas = GER_idea_carbon_neutral
+		}
+		add_ideas = multi_ethnic_state_idea
 	}
+	custom_effect_tooltip = form_USoE_tt
+	set_temp_variable = { vote_passed = 1 }
+	cleanup_european_union_voting = yes
 }
 
 # EU101 - Charter of Fundamental Rights of the European Union
 focus_EU101_QMV_result = {
+	set_temp_variable = { modify_europeanism = 0.02 }
+	EU_europeanism_change = yes
+	newline = yes
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
@@ -485,6 +488,9 @@ focus_EU101_QMV_result = {
 
 # EU102 - European Convention
 focus_EU102_QMV_result = {
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_europeanism_change = yes
+	newline = yes
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
@@ -499,6 +505,9 @@ focus_EU102_QMV_result = {
 
 # EU103 - European Constitution
 focus_EU103_QMV_result = {
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_europeanism_change = yes
+	newline = yes
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
@@ -596,8 +605,7 @@ focus_EU203_QMV_result = {
 		}
 	}
 
-	set_temp_variable = { debt_number = eurobonds_debt_total }
-	multiply_temp_variable = { debt_number = 0.8 }
+	set_temp_variable = { var = debt_number value = { value = eurobonds_debt_total multiply = 0.8 } }
 	clamp_temp_variable = { var = debt_consumer_counter min = 1 }
 	divide_temp_variable = { debt_number = debt_consumer_counter }
 
@@ -831,155 +839,209 @@ focus_EU112_QMV_result = {
 # via the EU_former_member cooldown path instead).
 # EU601 - 2003 EU Enlargement
 focus_EU601_QMV_result = {
-	CYP = { set_country_flag = EU_candidate }
-	CZE = { set_country_flag = EU_candidate }
-	EST = { set_country_flag = EU_candidate }
-	HUN = { set_country_flag = EU_candidate }
-	LAT = { set_country_flag = EU_candidate }
-	LIT = { set_country_flag = EU_candidate }
-	MLT = { set_country_flag = EU_candidate }
-	POL = { set_country_flag = EU_candidate }
-	SLO = { set_country_flag = EU_candidate }
-	SLV = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	CYP = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	CZE = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	EST = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	HUN = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	LAT = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	LIT = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	MLT = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	POL = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SLO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SLV = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU602 - 2007 EU Enlargement
 focus_EU602_QMV_result = {
-	BUL = { set_country_flag = EU_candidate }
-	ROM = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	BUL = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	ROM = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU603 - 2013 EU Enlargement
 focus_EU603_QMV_result = {
-	CRO = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	CRO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU605 - Western Balkans
 focus_EU605_QMV_result = {
-	ALB = { set_country_flag = EU_candidate }
-	SER = { set_country_flag = EU_candidate }
-	MNT = { set_country_flag = EU_candidate }
-	FYR = { set_country_flag = EU_candidate }
-	BOS = { set_country_flag = EU_candidate }
-	RSK = { set_country_flag = EU_candidate }
-	HZG = { set_country_flag = EU_candidate }
-	KOS = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	ALB = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SER = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	MNT = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	FYR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	BOS = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	RSK = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	HZG = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	KOS = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU606 - Turkey
 focus_EU606_QMV_result = {
-	TUR = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	TUR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU607 - Eastern Partnership
 focus_EU607_QMV_result = {
-	MLV = { set_country_flag = EU_candidate }
-	UKR = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	MLV = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	UKR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU608 - Caucasus
 focus_EU608_QMV_result = {
-	ARM = { set_country_flag = EU_candidate }
-	AZE = { set_country_flag = EU_candidate }
-	GEO = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	ARM = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	AZE = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	GEO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU609 - EFTA and Microstates
 focus_EU609_QMV_result = {
-	SWI = { set_country_flag = EU_candidate }
-	NRY = { set_country_flag = EU_candidate }
-	ICE = { set_country_flag = EU_candidate }
-	HLS = { set_country_flag = EU_candidate }
-	SMA = { set_country_flag = EU_candidate }
-	MNC = { set_country_flag = EU_candidate }
-	ADO = { set_country_flag = EU_candidate }
-	LIC = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	SWI = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	NRY = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	ICE = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	HLS = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SMA = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	MNC = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	ADO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	LIC = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU610 - Belarus
 focus_EU610_QMV_result = {
-	BLR = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	BLR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU611 - Regional Aspirants
 focus_EU611_QMV_result = {
-	CAT = { set_country_flag = EU_candidate }
-	CRE = { set_country_flag = EU_candidate }
-	SCL = { set_country_flag = EU_candidate }
-	SCO = { set_country_flag = EU_candidate }
-	WAS = { set_country_flag = EU_candidate }
-	IOM = { set_country_flag = EU_candidate }
-	GAL = { set_country_flag = EU_candidate }
-	SIL = { set_country_flag = EU_candidate }
-	SPA = { set_country_flag = EU_candidate }
-	CNR = { set_country_flag = EU_candidate }
-	NAV = { set_country_flag = EU_candidate }
-	BAY = { set_country_flag = EU_candidate }
-	GRN = { set_country_flag = EU_candidate }
-	FAO = { set_country_flag = EU_candidate }
-	RUS = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	CAT = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	CRE = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SCL = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SCO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	WAS = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	IOM = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	GAL = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SIL = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SPA = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	CNR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	NAV = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	BAY = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	GRN = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	FAO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	RUS = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU653 - EU-Russia Treaty
 focus_EU653_QMV_result = {
-	SOV = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	SOV = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU654 - Barents Sea Enlargement
 focus_EU654_QMV_result = {
-	KAE = { set_country_flag = EU_candidate }
-	KOM = { set_country_flag = EU_candidate }
-	NEE = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	KAE = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	KOM = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	NEE = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU655 - Volga Enlargement
 focus_EU655_QMV_result = {
-	BSH = { set_country_flag = EU_candidate }
-	CHU = { set_country_flag = EU_candidate }
-	MEL = { set_country_flag = EU_candidate }
-	MOV = { set_country_flag = EU_candidate }
-	TAT = { set_country_flag = EU_candidate }
-	UDM = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	BSH = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	CHU = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	MEL = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	MOV = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	TAT = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	UDM = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU656 - Don-Kuban Enlargement
 focus_EU656_QMV_result = {
-	ADY = { set_country_flag = EU_candidate }
-	DON = { set_country_flag = EU_candidate }
-	KLM = { set_country_flag = EU_candidate }
-	KUB = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	ADY = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	DON = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	KLM = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	KUB = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU657 - Northern Caucasus Enlargement
 focus_EU657_QMV_result = {
-	ABK = { set_country_flag = EU_candidate }
-	CHE = { set_country_flag = EU_candidate }
-	DAG = { set_country_flag = EU_candidate }
-	ING = { set_country_flag = EU_candidate }
-	KBK = { set_country_flag = EU_candidate }
-	KCC = { set_country_flag = EU_candidate }
-	SOO = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	ABK = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	CHE = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	DAG = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	ING = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	KBK = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	KCC = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	SOO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU658 - Ruthenia Enlargement
 focus_EU658_QMV_result = {
-	LRP = { set_country_flag = EU_candidate }
-	OPR = { set_country_flag = EU_candidate }
-	PRP = { set_country_flag = EU_candidate }
-	VRP = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	LRP = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	OPR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	PRP = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	VRP = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU659 - Donets Enlargement
 focus_EU659_QMV_result = {
-	DPR = { set_country_flag = EU_candidate }
-	HPR = { set_country_flag = EU_candidate }
-	LPR = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	DPR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	HPR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	LPR = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # EU660 - Dnieper Enlargement
 focus_EU660_QMV_result = {
-	CRM = { set_country_flag = EU_candidate }
-	DRP = { set_country_flag = EU_candidate }
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	CRM = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	DRP = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 }
 
 # Shared finalize for a passed EP agenda (mission complete + timeout-success branch).
@@ -987,7 +1049,7 @@ EU_finalize_passed_agenda = {
 	custom_effect_tooltip = EU_parliament_approve_agenda_tt
 	hidden_effect = {
 		log = "[GetDateText]: [ROOT.GetName]: mission complete_effect EU_parliament_focus_EU[?global.current_active_agenda_disp]_approve"
-		clr_country_flag = EU_active_EP_agenda_holder
+		clr_global_flag = EU_active_EP_agenda_holder
 		clr_global_flag_PG_X_support = yes
 		if = {
 			limit = { is_in_array = { array = global.EU_potential_votes value = global.current_active_agenda_disp } }
@@ -1009,27 +1071,19 @@ EU_finalize_passed_agenda = {
 		set_variable = { global.current_active_agenda_disp = 0 }
 		if = {
 			limit = {
-				has_country_flag = EU_budget_EP_block
+				has_global_flag = EU_budget_EP_block
 				NOT = { has_active_mission = EU_budget_draft_ongoing }
 				NOT = { has_active_mission = EU_budget_draft_preparations }
 			}
-			for_each_scope_loop = {
-				array = global.EU_member
-				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				clr_country_flag = EU_budget_EP_block
-			}
+			clr_global_flag = EU_budget_EP_block
 		}
 		if = {
 			limit = {
-				has_country_flag = EU_mff_EP_block
+				has_global_flag = EU_mff_EP_block
 				NOT = { has_active_mission = EU_mff_draft_ongoing }
 				NOT = { has_active_mission = EU_mff_draft_preparations }
 			}
-			for_each_scope_loop = {
-				array = global.EU_member
-				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				clr_country_flag = EU_mff_EP_block
-			}
+			clr_global_flag = EU_mff_EP_block
 		}
 		set_variable = { global.active_MEP_Support = 0 }
 		set_variable = { global.pass_vote_mission_ender = 0 }
@@ -1045,8 +1099,8 @@ EU_finalize_passed_agenda = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		if = {
-			limit = { has_active_mission = EU_parliament_focus_EUXXX_approve_timer }
-			remove_mission = EU_parliament_focus_EUXXX_approve_timer
+			limit = { has_active_mission = EU_parliament_focus_EUXXX_approve }
+			remove_mission = EU_parliament_focus_EUXXX_approve
 		}
 	}
 }
@@ -1101,6 +1155,8 @@ EU_show_display_effects_for_law = {
 			else = {
 				add_timed_idea = { idea = european_spirit days = 600 }
 			}
+			set_temp_variable = { modify_europeanism = 0.03 }
+			EU_europeanism_change = yes
 		}
 		else_if = {
 			limit = { check_variable = { v = 104 } }
