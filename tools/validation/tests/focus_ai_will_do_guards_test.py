@@ -114,6 +114,65 @@ def test_worker_detects_direct_add_building_construction(tmp_path):
     assert out[0]["guards"] == set()
 
 
+def test_worker_ignores_building_inside_effect_tooltip(tmp_path):
+    """An effect_tooltip previews an outcome that happens elsewhere (here, in
+    the target's event), so the focus does not build the arms_factory."""
+    reward = (
+        "GER = { country_event = x.1 }\n"
+        "			custom_effect_tooltip = TT_IF_THEY_ACCEPT\n"
+        "			effect_tooltip = {\n"
+        "				GER = {\n"
+        "					add_building_construction = {\n"
+        "						type = arms_factory\n"
+        "						level = 1\n"
+        "						instant_build = yes\n"
+        "					}\n"
+        "				}\n"
+        "			}"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    out = _extract_ai_guard_data((str(fpath), str(tmp_path), STAFFABLE_MAP))
+    assert out[0]["buildings"] == set()
+
+
+def test_worker_ignores_builder_effect_inside_effect_tooltip(tmp_path):
+    """Same rule for a scripted builder effect named inside the preview."""
+    reward = (
+        "effect_tooltip = {\n"
+        "				one_random_industrial_complex = yes\n"
+        "			}"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    out = _extract_ai_guard_data((str(fpath), str(tmp_path), STAFFABLE_MAP))
+    assert out[0]["buildings"] == set()
+
+
+def test_worker_still_sees_building_outside_effect_tooltip(tmp_path):
+    """A real construction alongside a preview is still a construction."""
+    reward = (
+        "add_building_construction = {\n"
+        "				type = arms_factory\n"
+        "				level = 1\n"
+        "				instant_build = yes\n"
+        "			}\n"
+        "			effect_tooltip = {\n"
+        "				one_random_industrial_complex = yes\n"
+        "			}"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    out = _extract_ai_guard_data((str(fpath), str(tmp_path), STAFFABLE_MAP))
+    assert out[0]["buildings"] == {"arms_factory"}
+
+
 def test_worker_ignores_nonzero_factor_modifiers(tmp_path):
     modifiers = """modifier = {
 				factor = 0.5

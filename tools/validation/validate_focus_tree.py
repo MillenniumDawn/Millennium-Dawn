@@ -119,9 +119,22 @@ _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 # scope-change (see _country_event_target_is_foreign).
 _COUNTRY_EVENT_RE = re.compile(r"\bcountry_event\b")
 _TT_IF_THEY_ACCEPT_RE = re.compile(r"\bTT_IF_THEY_ACCEPT\b")
-# Owner tag(s): `tag = XXX` inside a focus_tree's `country = { }` block.
+# Target of a fire, in both `country_event = foo.1` and
+# `country_event = { id = foo.1 days = 3 }` form.
+_FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w.]+)")
+# Event definitions, for deciding whether a fire can be accepted at all. Only
+# depth-0 blocks are definitions — `country_event = { id = x days = 1 }` nested
+# inside an option is a fire, and would otherwise index x as optionless.
+_EVENT_BLOCK_RE = re.compile(r"^(country_event|news_event)\s*=\s*\{", re.M)
+_EVENT_ID_RE = re.compile(r"\bid\s*=\s*([\w.]+)")
+_EVENT_OPTION_RE = re.compile(r"\boption\s*=\s*\{")
+_EVENT_HIDDEN_RE = re.compile(r"\bhidden\s*=\s*yes\b")
+_OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
+_NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
+# `tag = XXX` / `original_tag = XXX`, in a focus_tree's `country = { }` block
+# (the owner) and in an event option's `trigger = { }` (the recipient).
 _FT_COUNTRY_BLOCK_RE = re.compile(r"\bcountry\s*=\s*\{")
-_OWNER_TAG_RE = re.compile(r"\btag\s*=\s*([A-Z]{3})\b")
+_TAG_ASSIGN_RE = re.compile(r"\b(?:original_)?tag\s*=\s*([A-Z]{3})\b")
 _LITERAL_TAG_RE = re.compile(r"^[A-Z]{3}$")
 # Iterators that step over other countries (every_country, random_other_country,
 # every_neighbor_country, every_puppet, ...).
@@ -218,10 +231,58 @@ def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
     return None, -1
 
 
+def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, int]]:
+    """Spans of every `effect_tooltip = { }` subtree between *start* and *end*.
+
+    An effect_tooltip renders its body without executing it, so anything inside
+    is a preview of an outcome that happens elsewhere. Checks that reason about
+    what a focus actually *does* must skip these spans.
+    """
+    spans: List[Tuple[int, int]] = []
+    pos = start
+    while True:
+        tm = _EFFECT_TOOLTIP_START.search(text, pos, end)
+        if not tm:
+            return spans
+        tbody, tend = _extract_block(text, tm.start())
+        if not tbody or tend > end:
+            pos = tm.end()
+            continue
+        spans.append((tm.start(), tend))
+        pos = tend
+
+
+def _is_tag_routed(option_bodies: List[str]) -> bool:
+    """True when option-level triggers pin every option to a distinct tag.
+
+    `poland.47` gives `.a` a `trigger = { original_tag = UKR }` and `.b` a
+    `trigger = { original_tag = SOV }`. Ukraine only ever sees `.a`, Russia only
+    `.b` — the event declares two options but hands each recipient exactly one.
+    That is a notification, not an offer, so there is no accept branch to
+    preview. A negated trigger is unanalysable here, so bail and stay noisy.
+    """
+    if len(option_bodies) < 2:
+        return False
+    claimed: Set[str] = set()
+    for body in option_bodies:
+        tm = _OPTION_TRIGGER_RE.search(body)
+        if not tm:
+            return False
+        tbody, tend = _extract_block(body, tm.start())
+        if tend == -1 or _NEGATION_RE.search(tbody):
+            return False
+        tags = set(_TAG_ASSIGN_RE.findall(tbody))
+        if not tags or tags & claimed:
+            return False
+        claimed |= tags
+    return True
+
+
 def _country_event_target_is_foreign(
     body: str, ce_pos: int, owner_tags: FrozenSet[str]
 ) -> bool:
-    """True if the country_event at *ce_pos* fires into another nation's scope.
+    """True if the country_event at *ce_pos* fires into another nation's scope
+    and the player can see it happen.
 
     Walks outward from the fire through control-flow wrappers (if/random/
     hidden_effect/...) until it reaches a scope-changing block. A literal
@@ -229,24 +290,31 @@ def _country_event_target_is_foreign(
     foreign; a self scope (ROOT/THIS/…), the owner's own tag, or the reward
     root (bare fire to the focus owner) is not. Unknown scopes are treated as
     non-foreign to keep this warning quiet.
+
+    The walk carries on past that verdict to the reward root, because a
+    hidden_effect anywhere above the fire swallows every tooltip under it —
+    there is nothing a TT_IF_THEY_ACCEPT could render.
     """
+    foreign: Optional[bool] = None
     pos = ce_pos
     while True:
         label, opener = _enclosing_block_label(body, pos)
         if label is None:
+            return bool(foreign)
+        if label == "hidden_effect":
             return False
-        if label in _CONTROL_FLOW_SCOPES:
-            pos = opener
-            continue
-        if label in _SELF_SCOPES:
-            return False
-        if label.startswith("event_target:") or label.startswith("var:"):
-            return True
-        if _COUNTRY_ITERATOR_RE.match(label):
-            return True
-        if _LITERAL_TAG_RE.match(label) and label not in _NON_TAG_KEYWORDS:
-            return label not in owner_tags
-        return False
+        if foreign is None and label not in _CONTROL_FLOW_SCOPES:
+            if label in _SELF_SCOPES:
+                foreign = False
+            elif label.startswith("event_target:") or label.startswith("var:"):
+                foreign = True
+            elif _COUNTRY_ITERATOR_RE.match(label):
+                foreign = True
+            elif _LITERAL_TAG_RE.match(label) and label not in _NON_TAG_KEYWORDS:
+                foreign = label not in owner_tags
+            else:
+                foreign = False
+        pos = opener
 
 
 def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[str]]]]:
@@ -414,7 +482,8 @@ def _extract_ai_guard_data(
     Returns one dict per focus: id, line, cost (numeric or resolved from a
     file-local @constant), search filters, the staffable building types its
     rewards construct (directly or via a scripted effect from
-    *staffable_map*), and the guard triggers present in factor = 0 ai_will_do
+    *staffable_map*, and never from inside an effect_tooltip, which only
+    previews), and the guard triggers present in factor = 0 ai_will_do
     modifiers (both the `X = no` and `NOT = { X = yes }` forms; guards hidden
     behind wrapper scripted triggers are not recognized). The staffable map
     is folded into the cache tag so entries invalidate when scripted-effect
@@ -462,8 +531,16 @@ def _extract_ai_guard_data(
                 if not rbody or rend > fend:
                     rpos = rm.end()
                     continue
-                for key in set(_REWARD_KEY_RE.findall(rbody)) & staffable_map.keys():
-                    buildings.update(staffable_map[key])
+                # An effect_tooltip previewing someone else's construction is
+                # not this focus building anything.
+                spans = _effect_tooltip_spans(rbody, 0, len(rbody))
+
+                def previewed(i: int, spans=spans) -> bool:
+                    return any(s <= i < e for s, e in spans)
+
+                for km in _REWARD_KEY_RE.finditer(rbody):
+                    if km.group(1) in staffable_map and not previewed(km.start()):
+                        buildings.update(staffable_map[km.group(1)])
                 bpos = 0
                 while True:
                     bm = _ADD_BUILDING_START.search(rbody, bpos)
@@ -473,11 +550,12 @@ def _extract_ai_guard_data(
                     if not bbody:
                         bpos = bm.end()
                         continue
-                    buildings.update(
-                        t
-                        for t in _TYPE_LINE_RE.findall(bbody)
-                        if t in _STAFFABLE_TRIGGERS
-                    )
+                    if not previewed(bm.start()):
+                        buildings.update(
+                            t
+                            for t in _TYPE_LINE_RE.findall(bbody)
+                            if t in _STAFFABLE_TRIGGERS
+                        )
                     bpos = bend
                 rpos = rend
 
@@ -518,33 +596,39 @@ def _extract_ai_guard_data(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.ai_guards.v2",
+        "focus_tree.ai_guards.v3",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
     )
 
 
-def _extract_cross_country_fires(args: Tuple[str, str]) -> List[Dict]:
+def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[Dict]:
     """Pool worker: focuses whose completion_reward fires an event to another
     nation without a TT_IF_THEY_ACCEPT tooltip.
 
+    *notifications* holds the ids of events the target cannot answer — hidden,
+    or a single option — so there is nothing for the player to accept and the
+    tooltip would be a lie. Fires at an unknown id stay flagged: a missing
+    definition can't be proven harmless.
+
     Returns one dict (id, file, line) per non-compliant focus.
     """
-    filepath, mod_path = args
+    filepath, mod_path, notifications = args
     try:
         with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
             raw = fh.read()
     except Exception:
         return []
     text = strip_comments(raw)
+    fingerprint = ";".join(sorted(notifications))
 
     def _compute() -> List[Dict]:
         owner_tags: Set[str] = set()
         for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
             cbody, _ = _extract_block(text, cm.start())
             if cbody:
-                owner_tags.update(_OWNER_TAG_RE.findall(cbody))
+                owner_tags.update(_TAG_ASSIGN_RE.findall(cbody))
         owner_frozen = frozenset(owner_tags)
 
         out: List[Dict] = []
@@ -574,6 +658,9 @@ def _extract_cross_country_fires(args: Tuple[str, str]) -> List[Dict]:
                     continue
                 if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
                     for ce in _COUNTRY_EVENT_RE.finditer(rbody):
+                        tm = _FIRE_TARGET_RE.match(rbody, ce.start())
+                        if tm and tm.group(1) in notifications:
+                            continue
                         if _country_event_target_is_foreign(
                             rbody, ce.start(), owner_frozen
                         ):
@@ -593,7 +680,11 @@ def _extract_cross_country_fires(args: Tuple[str, str]) -> List[Dict]:
         return out
 
     return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.cross_country_tt.v1", filepath, text, _compute
+        mod_path,
+        "focus_tree.cross_country_tt.v3",
+        filepath,
+        text + "\x00" + fingerprint,
+        _compute,
     )
 
 
@@ -637,19 +728,7 @@ def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
                     rpos = rm.end()
                     continue
 
-                tooltip_spans: List[Tuple[int, int]] = []
-                tpos = rm.start()
-                while True:
-                    tm = _EFFECT_TOOLTIP_START.search(text, tpos, rend)
-                    if not tm:
-                        break
-                    tbody, tend = _extract_block(text, tm.start())
-                    if not tbody or tend > rend:
-                        tpos = tm.end()
-                        continue
-                    tooltip_spans.append((tm.start(), tend))
-                    tpos = tend
-
+                tooltip_spans = _effect_tooltip_spans(text, rm.start(), rend)
                 for pm in _PP_MALUS_RE.finditer(text, rm.start(), rend):
                     if any(s <= pm.start() < e for s, e in tooltip_spans):
                         continue
@@ -1297,6 +1376,60 @@ class Validator(BaseValidator):
             category="missing-bankruptcy-guard",
         )
 
+    def _notification_event_ids(self) -> FrozenSet[str]:
+        """Event ids the target cannot answer: hidden, fewer than 2 options, or
+        options tag-routed one per recipient (see _is_tag_routed).
+
+        Firing one of these into a foreign scope is a notification, not an
+        offer, so it never needs a TT_IF_THEY_ACCEPT tooltip.
+        """
+        ids: Set[str] = set()
+        for fp in self._collect_files(["events/*.txt"], ignore_staged=True):
+            try:
+                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                    text = strip_comments(fh.read())
+            except Exception:
+                continue
+
+            def _compute(text=text) -> List[str]:
+                found: List[str] = []
+                for m in _EVENT_BLOCK_RE.finditer(text):
+                    body, end = _extract_block(text, m.start())
+                    if end == -1:
+                        continue
+                    idm = _EVENT_ID_RE.search(body)
+                    if not idm:
+                        continue
+                    options: List[str] = []
+                    opos = 0
+                    while True:
+                        om = _EVENT_OPTION_RE.search(body, opos)
+                        if not om:
+                            break
+                        obody, oend = _extract_block(body, om.start())
+                        if oend == -1:
+                            break
+                        options.append(obody)
+                        opos = oend
+                    if (
+                        len(options) < 2
+                        or _EVENT_HIDDEN_RE.search(body)
+                        or _is_tag_routed(options)
+                    ):
+                        found.append(idm.group(1))
+                return found
+
+            ids.update(
+                disk_cache.per_file_cached_by_content(
+                    self.mod_path,
+                    "focus_tree.notification_events.v3",
+                    fp,
+                    text,
+                    _compute,
+                )
+            )
+        return frozenset(ids)
+
     def validate_cross_country_event_tooltips(self):
         """Flag focuses that fire an event to another nation without a
         TT_IF_THEY_ACCEPT tooltip.
@@ -1305,14 +1438,16 @@ class Validator(BaseValidator):
         a country_event into a foreign scope, the player should see the outcome
         via custom_effect_tooltip = TT_IF_THEY_ACCEPT. Reported per file as a
         WARNING — the presence of the tooltip anywhere in the reward clears it,
-        so a reward already carrying one is not flagged.
+        so a reward already carrying one is not flagged. Fires at an event the
+        target cannot answer are notifications and are skipped.
         """
         self._log_section("Checking cross-country event fires for TT_IF_THEY_ACCEPT...")
 
+        notifications = self._notification_event_ids()
         files = self._collect_files(["common/national_focus/*.txt"])
         data_lists = self._pool_map(
             _extract_cross_country_fires,
-            [(f, self.mod_path) for f in files],
+            [(f, self.mod_path, notifications) for f in files],
             chunksize=10,
         )
 
