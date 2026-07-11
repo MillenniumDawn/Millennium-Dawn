@@ -231,6 +231,25 @@ def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
     return None, -1
 
 
+def _is_conjunctive_guard(body: str, pos: int, *, negated: bool = False) -> bool:
+    """Whether the condition at *pos* makes a factor-zero modifier apply.
+
+    A guard under OR is not a firm veto: an OR can be satisfied by
+    conditions other than the guarded one, so the factor-zero fires when
+    *any* OR branch holds, not specifically when the guard is true. A
+    direct `X = no` guard also cannot sit under NOT; the separate
+    `NOT = { X = yes }` form is recognized through *negated* instead.
+    """
+    labels: List[str] = []
+    while True:
+        label, opener = _enclosing_block_label(body, pos)
+        if label is None:
+            break
+        labels.append(label)
+        pos = opener
+    return "OR" not in labels and (negated or "NOT" not in labels)
+
+
 def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, int]]:
     """Spans of every `effect_tooltip = { }` subtree between *start* and *end*.
 
@@ -496,7 +515,12 @@ def _extract_ai_guard_data(
     except Exception:
         return []
     text = strip_comments(raw)
-    constants = {m.group(1): float(m.group(2)) for m in _CONSTANT_DEF_RE.finditer(text)}
+    constants: Dict[str, float] = {}
+    for m in _CONSTANT_DEF_RE.finditer(text):
+        try:
+            constants[m.group(1)] = float(m.group(2))
+        except ValueError:
+            continue
     fingerprint = ";".join(
         f"{name}:{','.join(sorted(types))}"
         for name, types in sorted(staffable_map.items())
@@ -573,11 +597,22 @@ def _extract_ai_guard_data(
                         if not mbody:
                             mpos = mm.end()
                             continue
-                        if _FACTOR_ZERO_RE.search(mbody):
-                            guards.update(_CAN_STAFF_NO_RE.findall(mbody))
-                            guards.update(_CAN_STAFF_NOT_YES_RE.findall(mbody))
-                            if _BANKRUPTCY_GUARD_RE.search(mbody):
-                                guards.add("bankruptcy_incoming_collapse")
+                        factor_zero = any(
+                            _enclosing_block_label(mbody, fm.start())[0] is None
+                            for fm in _FACTOR_ZERO_RE.finditer(mbody)
+                        )
+                        if factor_zero:
+                            for gm in _CAN_STAFF_NO_RE.finditer(mbody):
+                                if _is_conjunctive_guard(mbody, gm.start(1)):
+                                    guards.add(gm.group(1))
+                            for gm in _CAN_STAFF_NOT_YES_RE.finditer(mbody):
+                                if _is_conjunctive_guard(
+                                    mbody, gm.start(1), negated=True
+                                ):
+                                    guards.add(gm.group(1))
+                            for gm in _BANKRUPTCY_GUARD_RE.finditer(mbody):
+                                if _is_conjunctive_guard(mbody, gm.start()):
+                                    guards.add("bankruptcy_incoming_collapse")
                         mpos = mend
 
             out.append(
@@ -1241,43 +1276,38 @@ class Validator(BaseValidator):
                 )
             )
 
-        # One level of chaining: an effect that calls a direct builder (e.g.
-        # one_random_factory_energy_check -> one_random_industrial_complex)
-        # inherits its building types. Deeper chains are not followed.
+        # Resolve scripted-effect chains to a fixed point so a builder wrapper
+        # remains visible through any number of intermediate effects.
         direct = dict(mapping)
-        fingerprint = ";".join(
-            f"{name}:{','.join(sorted(types))}"
-            for name, types in sorted(direct.items())
-        )
+        effect_bodies: Dict[str, str] = {}
         for fp in fx_files:
             try:
                 with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
                     text = strip_comments(fh.read())
             except Exception:
                 continue
+            for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                body, _ = _extract_block(text, m.start())
+                if body:
+                    effect_bodies[m.group(1)] = body
 
-            def _compute_chain(text=text) -> Dict[str, FrozenSet[str]]:
-                found: Dict[str, FrozenSet[str]] = {}
-                for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
-                    body, _ = _extract_block(text, m.start())
-                    if not body:
-                        continue
-                    types: Set[str] = set()
-                    for key in set(_REWARD_KEY_RE.findall(body)) & direct.keys():
-                        types.update(direct[key])
-                    if types:
-                        found[m.group(1)] = frozenset(types)
-                return found
-
-            chained = disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                "focus_tree.staffable_fx_chain",
-                fp,
-                text + "\x00" + fingerprint,
-                _compute_chain,
-            )
-            for name, types in chained.items():
-                mapping[name] = frozenset(mapping.get(name, frozenset()) | types)
+        known_effects = set(effect_bodies)
+        calls = {
+            name: set(_REWARD_KEY_RE.findall(body)) & known_effects
+            for name, body in effect_bodies.items()
+        }
+        mapping = dict(direct)
+        changed = True
+        while changed:
+            changed = False
+            for name, dependencies in calls.items():
+                types: Set[str] = set(direct.get(name, frozenset()))
+                for dependency in dependencies:
+                    types.update(mapping.get(dependency, frozenset()))
+                resolved = frozenset(types)
+                if resolved and resolved != mapping.get(name):
+                    mapping[name] = resolved
+                    changed = True
         return mapping
 
     def validate_ai_will_do_guards(self):
@@ -1289,8 +1319,9 @@ class Validator(BaseValidator):
         Bankruptcy: high-cost focuses need a
         has_active_mission = bankruptcy_incoming_collapse modifier; reported
         as a per-file aggregate so the pre-existing backlog stays readable.
-        Builder effects are resolved one call level deep; guards written via
-        wrapper scripted triggers are not recognized.
+        Builder-effect chains are resolved to a fixed point so a wrapper of
+        any depth remains visible; guards written via wrapper scripted
+        triggers are not recognized.
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 

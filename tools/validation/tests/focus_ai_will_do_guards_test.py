@@ -79,7 +79,7 @@ def _run_check(tmp_path):
     return v
 
 
-def test_worker_detects_effect_call_and_guards(tmp_path):
+def test_worker_rejects_or_guard_form(tmp_path):
     fpath = _write_focus_file(
         tmp_path,
         FOCUS_TEMPLATE.format(
@@ -93,8 +93,31 @@ def test_worker_detects_effect_call_and_guards(tmp_path):
     assert len(out) == 1
     d = out[0]
     assert d["buildings"] == {"industrial_complex"}
-    assert "can_staff_an_industrial_complex" in d["guards"]
-    assert "bankruptcy_incoming_collapse" in d["guards"]
+    assert d["guards"] == set()
+
+
+def test_worker_credits_and_guard_form(tmp_path):
+    modifiers = """modifier = {
+				factor = 0
+				AND = {
+					has_active_mission = bankruptcy_incoming_collapse
+					can_staff_an_industrial_complex = no
+				}
+			}"""
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(
+            cost=2,
+            extra="",
+            reward="one_random_industrial_complex = yes",
+            modifiers=modifiers,
+        ),
+    )
+    out = _extract_ai_guard_data((str(fpath), str(tmp_path), STAFFABLE_MAP))
+    assert out[0]["guards"] == {
+        "bankruptcy_incoming_collapse",
+        "can_staff_an_industrial_complex",
+    }
 
 
 def test_worker_detects_direct_add_building_construction(tmp_path):
@@ -414,6 +437,9 @@ factory_with_energy_check = {
 		one_random_industrial_complex = yes
 	}
 }
+deep_factory_with_energy_check = {
+	factory_with_energy_check = yes
+}
 """,
         encoding="utf-8",
     )
@@ -422,7 +448,7 @@ factory_with_energy_check = {
         FOCUS_TEMPLATE.format(
             cost=2,
             extra="",
-            reward="factory_with_energy_check = yes",
+            reward="deep_factory_with_energy_check = yes",
             modifiers="",
         ),
     )
