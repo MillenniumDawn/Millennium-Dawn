@@ -234,8 +234,10 @@ def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
 def _is_conjunctive_guard(body: str, pos: int, *, negated: bool = False) -> bool:
     """Whether the condition at *pos* makes a factor-zero modifier apply.
 
-    A guard under OR does not block the AI whenever the guarded condition is
-    true. A direct `X = no` guard also cannot sit under NOT; the separate
+    A guard under OR is not a firm veto: an OR can be satisfied by
+    conditions other than the guarded one, so the factor-zero fires when
+    *any* OR branch holds, not specifically when the guard is true. A
+    direct `X = no` guard also cannot sit under NOT; the separate
     `NOT = { X = yes }` form is recognized through *negated* instead.
     """
     labels: List[str] = []
@@ -1317,8 +1319,9 @@ class Validator(BaseValidator):
         Bankruptcy: high-cost focuses need a
         has_active_mission = bankruptcy_incoming_collapse modifier; reported
         as a per-file aggregate so the pre-existing backlog stays readable.
-        Builder effects are resolved one call level deep; guards written via
-        wrapper scripted triggers are not recognized.
+        Builder-effect chains are resolved to a fixed point so a wrapper of
+        any depth remains visible; guards written via wrapper scripted
+        triggers are not recognized.
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 
