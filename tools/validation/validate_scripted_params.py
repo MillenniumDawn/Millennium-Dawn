@@ -369,8 +369,11 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
         for m in _CALL_RE.finditer(raw):
             line_tokens.append((m.start(), 0, ("call", lineno, m.group(1), "")))
 
-        # Regex matches are collected together so compact scopes retain source order.
-        line_tokens.sort(key=lambda item: (item[0], item[1]))
+        # Sort by source position, not by the category that discovered a token.
+        # The remaining fields make overlapping matches deterministic.
+        line_tokens.sort(
+            key=lambda item: (item[0], item[1], item[2][0], item[2][2], item[2][3])
+        )
         tokens.extend(token for _offset, _priority, token in line_tokens)
 
     return tokens

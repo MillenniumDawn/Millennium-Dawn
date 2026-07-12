@@ -38,11 +38,15 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 # the token shape requires a version bump to avoid stale 3-tuple entries).
 CACHE_VERSION = 7
 
+
 # Cache entries include this fingerprint so parser changes invalidate results
 # even when the source files themselves are unchanged.
 def _validator_code_fingerprint() -> str:
     digest = hashlib.sha256()
-    source_dirs = (Path(__file__).parent, Path(__file__).parent.parent / "shared_utils.py")
+    source_dirs = (
+        Path(__file__).parent,
+        Path(__file__).parent.parent / "shared_utils.py",
+    )
     paths = []
     for source in source_dirs:
         if source.is_dir():
@@ -224,7 +228,12 @@ def _stats_tag(stats: Dict[str, Optional[Tuple[int, int]]]) -> str:
     for p in sorted(stats):
         v = stats[p]
         parts.append(f"{p}={v[0]}:{v[1]}" if v else f"{p}=x")
-    return "a:" + _CODE_FINGERPRINT + ":" + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+    return (
+        "a:"
+        + _CODE_FINGERPRINT
+        + ":"
+        + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+    )
 
 
 def aggregate_cached(

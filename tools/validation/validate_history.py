@@ -469,8 +469,13 @@ def parse_state_building_owners(
 
             if depth == 1:
                 bm = _BUILDING_LEVEL_RE.match(stripped)
-                if bm and bm.group(1) in buildings and int(bm.group(2)) >= 1:
-                    found.add(bm.group(1))
+                if bm and bm.group(1) in buildings:
+                    try:
+                        level = int(bm.group(2))
+                    except ValueError:
+                        level = 0
+                    if level >= 1:
+                        found.add(bm.group(1))
 
             depth += stripped.count("{") - stripped.count("}")
             if depth <= 0:
@@ -893,7 +898,7 @@ def _handle_history_assignment(stack, key, value, techs, sps, current_guard):
             sps.append((m.group(1), current_guard()))
         return
 
-    if stack[-1]["name"] == "set_technology" and _INT_VALUE_RE.match(value):
+    if stack[-1]["name"] == "set_technology" and value == "1":
         techs.append((key, current_guard()))
 
 

@@ -42,11 +42,36 @@ def test_per_file_cached_recomputes_when_file_changes(tmp_path):
     # Mutate the file — write_text refreshes mtime.
     src.write_text("world!")
     # Ensure mtime actually moves on filesystems with coarse resolution.
-    os.utime(str(src), (os.stat(str(src)).st_atime + 1, os.stat(str(src)).st_mtime + 1))
+    try:
+        stat = os.stat(src)
+        os.utime(src, (stat.st_atime + 1, stat.st_mtime + 1))
+    except OSError as exc:
+        pytest.fail(f"Could not update test file timestamp: {exc}")
     result = disk_cache.per_file_cached(str(tmp_path), "ns", str(src), compute)
 
     assert result == "WORLD!"
     assert len(calls) == 2, "Cache must invalidate after file change"
+
+
+def test_per_file_content_cache_recomputes_after_code_change(tmp_path, monkeypatch):
+    src = tmp_path / "data.txt"
+    src.write_text("hello")
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return len(calls)
+
+    disk_cache.per_file_cached_by_content(
+        str(tmp_path), "parse", str(src), "hello", compute
+    )
+    monkeypatch.setattr(disk_cache, "_CODE_FINGERPRINT", "changed-validator-source")
+    result = disk_cache.per_file_cached_by_content(
+        str(tmp_path), "parse", str(src), "hello", compute
+    )
+
+    assert result == 2
+    assert len(calls) == 2, "Parser results must not survive validator source changes"
 
 
 def test_no_cache_env_bypasses_per_file(tmp_path, monkeypatch):

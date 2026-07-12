@@ -60,20 +60,38 @@ _LOC_REFERENCE_RE = re.compile(
     r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
     r"localization_key)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)"
 )
+_BRACKET_LOC_RE = re.compile(r"\[([A-Za-z_][A-Za-z0-9_]*)\]")
+_BUILTIN_GETTERS = {
+    "getname",
+    "getnamewithflag",
+    "getnamewithflagcolorcode",
+    "getnamedef",
+    "getadjective",
+    "getflag",
+    "getleader",
+    "getleaderdescription",
+    "getdatetext",
+    "getyear",
+    "getmonth",
+    "getday",
+    "gettag",
+}
 
 
 def _scan_loc_tokens(text: str, is_scripted_loc_file: bool) -> Set[str]:
+    # Bracketed values are the scripted-localisation invocation syntax.  Do not
+    # treat arbitrary assignments as calls: custom_effect_tooltip and
+    # localization_key also commonly name ordinary localisation keys.
+    tokens = {
+        token
+        for token in _BRACKET_LOC_RE.findall(text)
+        if token.lower() not in _BUILTIN_GETTERS
+    }
     if is_scripted_loc_file:
-        # Only bracket tokens — full tokenisation would treat `name = X` as a usage.
-        tokens: Set[str] = set(re.findall(r"\[(\w+)\]", text))
-        tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text))
         return tokens
-    # Restrict non-scripted-localisation files to syntax that names a loc key.
-    # Scanning every identifier would treat ordinary effect and trigger names as
-    # missing scripted localisations.
-    tokens = set(_LOC_REFERENCE_RE.findall(text))
-    tokens |= set(re.findall(r"\[(\w+)\]", text))
-    tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text))
+    # Keep the legacy explicit-reference scan for defined/unused accounting.
+    # Undefined names from this ambiguous syntax are intentionally not reported.
+    tokens |= set(_LOC_REFERENCE_RE.findall(text))
     return tokens
 
 
@@ -102,11 +120,17 @@ def process_file_for_used_localisations(
         lambda: _scan_loc_tokens(text_file, is_sl),
     )
 
-    # Case-insensitive intersection — recover original casing for downstream matching.
-    search_lower = {n.lower(): n for n in search_names}
-    found_original = {
-        search_lower[t.lower()] for t in tokens if t.lower() in search_lower
-    }
+    # Scripted-localisation files use bracket syntax for nested scripted loc
+    # calls. Keep those candidates even when undefined so the missing check can
+    # report them. Other files retain the definition intersection because their
+    # bracketed values are often ordinary localisation keys.
+    if is_sl:
+        found_original = tokens
+    else:
+        search_lower = {n.lower(): n for n in search_names}
+        found_original = {
+            search_lower[t.lower()] for t in tokens if t.lower() in search_lower
+        }
 
     if not found_original:
         return ([], {})
@@ -242,8 +266,11 @@ class Validator(BaseValidator):
         used_locs_lower_raw = [loc.lower() for loc in used_locs]
         used_lower_to_original = {loc.lower(): loc for loc in used_locs}
 
-        used_locs_lower = DataCleaner.clear_false_positives_partial_match(
-            used_locs_lower_raw, tuple(false_positives)
+        used_locs_lower = (
+            DataCleaner.clear_false_positives_partial_match(
+                used_locs_lower_raw, tuple(false_positives)
+            )
+            or []
         )
 
         results = []
@@ -251,7 +278,9 @@ class Validator(BaseValidator):
         for loc in used_locs_lower:
             if loc not in defined_locs_lower and loc not in reported:
                 original_loc = used_lower_to_original.get(loc, loc)
-                basename = used_paths.get(original_loc, used_paths.get(loc, "unknown"))
+                basename = used_paths.get(
+                    original_loc or loc, used_paths.get(loc, "unknown")
+                )
                 full_path = self.get_full_path(
                     basename, loc, file_patterns=["**/*.txt", "**/*.gui"]
                 )
@@ -294,9 +323,12 @@ class Validator(BaseValidator):
         defined_locs_lower = [loc.lower() for loc in defined_locs]
         used_locs_lower = [loc.lower() for loc in used_locs]
 
-        defined_locs_lower = DataCleaner.clear_false_positives_partial_match(
-            defined_locs_lower,
-            tuple(false_positives) + tuple(UNUSED_ONLY_FALSE_POSITIVES),
+        defined_locs_lower = (
+            DataCleaner.clear_false_positives_partial_match(
+                defined_locs_lower,
+                tuple(false_positives) + tuple(UNUSED_ONLY_FALSE_POSITIVES),
+            )
+            or []
         )
 
         results = []
@@ -305,7 +337,7 @@ class Validator(BaseValidator):
             if loc not in used_locs_lower and loc not in reported:
                 original_loc = defined_lower_to_original.get(loc, loc)
                 basename = defined_paths.get(
-                    original_loc, defined_paths.get(loc, "unknown")
+                    original_loc or loc, defined_paths.get(loc, "unknown")
                 )
 
                 full_path = None
