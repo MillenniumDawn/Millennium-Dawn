@@ -7,6 +7,7 @@ under OR / random_list / count_triggers, and never for non-deterministic
 """
 
 from validate_simplifications import (
+    _find_bare_not,
     _find_count_collapsible,
     _find_empty_trigger_blocks,
     _find_government_match,
@@ -39,6 +40,10 @@ def _empty(text):
 
 def _gov(text):
     return [rep for _, rep in _find_government_match(strip_comments(text))]
+
+
+def _not(text):
+    return [(line, n) for line, n in _find_bare_not(strip_comments(text))]
 
 
 def _all_five(target, scoped_tmpl):
@@ -453,3 +458,37 @@ def test_mixed_sense_not_flagged():
         "}\n"
     )
     assert _gov(text) == []
+
+
+# --- bare multi-child NOT ----------------------------------------------------
+
+
+def test_two_child_not_flagged():
+    assert _not("NOT = { tag = USA tag = CHI }\n") == [(1, 2)]
+
+
+def test_not_or_wrapper_clean():
+    assert _not("NOT = { OR = { tag = USA tag = CHI } }\n") == []
+
+
+def test_not_and_wrapper_clean():
+    assert _not("NOT = { AND = { tag = USA has_war = yes } }\n") == []
+
+
+def test_single_trigger_not_clean():
+    assert _not("NOT = { has_capitulated = yes }\n") == []
+
+
+def test_nested_not_inside_or_still_detected():
+    text = "OR = {\n  tag = USA\n  NOT = { tag = GER tag = ITA }\n}\n"
+    assert _not(text) == [(3, 2)]
+
+
+def test_single_child_multiline_clean():
+    text = "NOT = {\n\thas_country_flag = some_flag\n}\n"
+    assert _not(text) == []
+
+
+def test_block_child_beside_scalar_flagged():
+    # An OR wrapper plus a trailing bare trigger is still two children.
+    assert _not("NOT = { OR = { tag = USA tag = CHI } has_war = yes }\n") == [(1, 2)]

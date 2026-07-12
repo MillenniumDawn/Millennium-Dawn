@@ -34,7 +34,7 @@ Default to no comments. Add one only when the WHY is non-obvious: a hidden const
 
 ## NOT blocks and "NOR"
 
-`NOT = { A B }` means NOT(A AND B) — "not both at once", almost never intended. For "neither" write separate `NOT` blocks or `NOT = { OR = { A B } }`. `NOR` is not a HOI4 trigger keyword.
+`NOT = { A B }` means NOT(A AND B) — "not both at once", almost never intended. For "neither" write separate `NOT` blocks or `NOT = { OR = { A B } }`. `NOR` is not a HOI4 trigger keyword. Bare multi-child NOTs are flagged (warning) by `validate_simplifications.py`.
 
 ## random over two-bucket random_list
 
@@ -65,6 +65,10 @@ No results = wrong name. Copy the exact spelling from an existing use, or check 
 ## check_variable comparisons
 
 Inline accepts only `=`, `>`, `<`; `>=`/`<=` parse silently and never match. Use `compare = greater_than_or_equals` (valid: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`).
+
+## Math expressions parse to 0 on failure
+
+Inside a math expression (`set_variable = { X = { value = ... } }`) a malformed statement evaluates to `0.0` and the game plays on with a dead mechanic. It only shows up as `script_math.cpp: Errors occurred while reading math expression defaulting to 0` in `error.log`, and one failure desyncs the parser for the rest of the file. `check_variable`'s comparator list does **not** carry over: inside an expression's `if`/`limit` only `greater_than` and `less_than` are safe (`equals` broke the counter-terror attack roll). Keep branches at effect level with `check_variable`, and grep MD plus vanilla for precedent before using an unfamiliar construct. Details: `.claude/docs/hoi4-data-structures.md` (Math Expressions).
 
 ## Variable and array operations do not auto-tooltip
 
@@ -128,4 +132,4 @@ When a reward/option fires an event at another country: follow the fire with `cu
 
 ## Log message option IDs
 
-`log =` strings inside an event option must cite the option's own ID (`foo.1.b` in option `.b` — not a copy-pasted `.a`).
+`log =` strings inside an event option must cite the option's own ID (`foo.1.b` in option `.b` — not a copy-pasted `.a`). Log-ID mismatches in focuses, decisions, and event options are caught by `check_common_mistakes.py`; `tools/linting/fix_log_ids.py` auto-fixes them.

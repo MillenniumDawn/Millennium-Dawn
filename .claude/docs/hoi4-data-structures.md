@@ -148,25 +148,56 @@ the pre-write value, since the full RHS evaluates before assignment.
 
 - **Fixed-point arithmetic** throughout (same as HOI4 variables).
 - **Booleans:** `0.0` is false, any other value is true. Comparison/boolean operators return `1.0` (true) or `0.0` (false).
-- **Parse failure → `0.0`.** A malformed expression silently evaluates to zero at runtime, not an error. Watch for this when a calculation mysteriously reads 0.
+- **Parse failure → `0.0`.** A malformed expression evaluates to zero. It is silent in-game (no tooltip, no crash, the calculation just reads 0), but it **does** log at load: `script_math.cpp:350: Errors occurred while reading math expression defaulting to 0`. Watch for this when a calculation mysteriously reads 0.
+- **One bad expression cascades through the rest of the file.** The parser mis-consumes a brace and reads everything after it one level off, so later `set_variable` blocks in unrelated effects report bogus errors (`invalid left side variable: {`, `Math program must start with value =: <token>`). Always fix the **first** `script_math` error in a file and re-run before chasing the others. Brace counts still balance, so a text-level check will not catch it.
 
 ### Operators
 
-| Statement                                                                                            | Effect                                                |
-| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `add`, `subtract`, `multiply`, `divide`                                                              | Arithmetic on the accumulator                         |
-| `min`, `max`                                                                                         | Accumulator becomes min/max of itself and value       |
-| `clamp = { min = X max = Y }`                                                                        | Bound the accumulator (argument order matters)        |
-| `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `equals`, `not_equals` | Return `1.0`/`0.0`                                    |
-| `round = yes`                                                                                        | Round to nearest integer                              |
-| `if = { limit = { ... } ... } else = { ... }`                                                        | `limit` is itself an expression; true if non-zero     |
-| `every_collection = { named_collection = X  ... }`                                                   | Iterate a collection, applying statements per element |
+| Statement                                          | Effect                                                |
+| -------------------------------------------------- | ----------------------------------------------------- |
+| `add`, `subtract`, `multiply`, `divide`            | Arithmetic on the accumulator                         |
+| `min`, `max`                                       | Accumulator becomes min/max of itself and value       |
+| `clamp = { min = X max = Y }`                      | Bound the accumulator (argument order matters)        |
+| `greater_than`, `less_than`                        | Return `1.0`/`0.0`                                    |
+| `round = yes`                                      | Round to nearest integer                              |
+| `if = { limit = { ... } ... } else = { ... }`      | `limit` is itself an expression; true if non-zero     |
+| `every_collection = { named_collection = X  ... }` | Iterate a collection, applying statements per element |
 
 Each operator's argument is itself a full expression, so they nest:
 
 ```
 greater_than = { value = num_units  multiply = 0.4 }   # accumulator > (num_units * 0.4)
 ```
+
+**Only `greater_than` and `less_than` are safe comparators.** `equals`, `not_equals`, `greater_than_or_equals`, and `less_than_or_equals` appear in Paradox-adjacent references, but the mod's one use of `equals` inside an `if`'s `limit` (`00_ct_effects.txt`, counter-terror `ambition_chance`) threw a load-time `script_math` error and zeroed the expression, killing every terror-org attack roll. Vanilla never uses anything but `less_than` here (10 uses, zero `equals`), and MD has 29 `greater_than` / 7 `less_than`.
+
+For an equality test, either rewrite as a strict inequality on an integer variable (`equals = 0` on a 0/1/2 value becomes `less_than = 1`), or hoist the branch out of the expression entirely and use a normal effect-level `if` with `check_variable`:
+
+```
+# Inside the expression: works, but only with < and >
+if = { limit = { value = global.active_terror_org_reach^i  less_than = 1 }  add = 15 }
+
+# Hoisted out: unambiguous, and what to reach for when in doubt
+set_temp_variable = { ambition_chance = { value = v  subtract = { ... } } }
+if = {
+    limit = { check_variable = { global.active_terror_org_reach^i = 0 } }
+    add_to_temp_variable = { ambition_chance = 15 }
+}
+set_temp_variable = { ambition_chance = { value = ambition_chance  multiply = 0.2  round = yes } }
+```
+
+Re-assigning a variable from itself (`value = ambition_chance` above) is the standard way to continue an expression after a hoisted branch.
+
+### Verifying a new construct
+
+The engine accepts a construct or silently zeroes it, so **grep for precedent before using anything unfamiliar** in a math expression:
+
+```bash
+grep -rn "your_construct" common/ | head        # does MD already ship it?
+grep -rn "your_construct" "$HOI4/common/" | head # does vanilla?
+```
+
+No hits in either means no evidence it parses. Confirmed working in MD: `^num` as an operand (`01_BRICS_effects.txt:104`), nested operand blocks (`!_energy_effects.txt:254`, `00_influence_scripted_effects.txt:258`), `round = yes` (`bankruptcy_decisions.txt:139`), `clamp = { min max }` (`00_scripted_triggers.txt:494`), dynamic array indices (`array^i`), and `if` inside an expression (vanilla `factions/goals/faction_goals_short_term.txt:266`).
 
 ## Loop Effects
 

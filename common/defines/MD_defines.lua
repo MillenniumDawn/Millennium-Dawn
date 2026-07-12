@@ -968,7 +968,7 @@
 	NDefines.NAI.STR_BOMB_AIR_SUPERIORITY_IMPORTANCE = 0.7 -- 0.10; AI actually escorts its strategic bomber fleets
 	NDefines.NAI.LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 2 -- 5; even small nations value air defense
 	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
-	NDefines.NAir.ACE_WING_SIZE = 25 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
+	NDefines.NAir.ACE_WING_SIZE = 24 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
 	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 20 -- 10; AI can restart more focuses after interruption
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
