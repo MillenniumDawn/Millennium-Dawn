@@ -56,15 +56,22 @@ def process_file_for_defined_localisations(
     )
 
 
+_LOC_REFERENCE_RE = re.compile(
+    r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
+    r"localization_key)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)"
+)
+
+
 def _scan_loc_tokens(text: str, is_scripted_loc_file: bool) -> Set[str]:
     if is_scripted_loc_file:
         # Only bracket tokens — full tokenisation would treat `name = X` as a usage.
         tokens: Set[str] = set(re.findall(r"\[(\w+)\]", text))
         tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text))
         return tokens
-    # Tokenise once; also extract [name] and [Scope.name] bracket calls
-    # (\w catches digit-prefixed names missed by [A-Za-z_][A-Za-z0-9_]*).
-    tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text))
+    # Restrict non-scripted-localisation files to syntax that names a loc key.
+    # Scanning every identifier would treat ordinary effect and trigger names as
+    # missing scripted localisations.
+    tokens = set(_LOC_REFERENCE_RE.findall(text))
     tokens |= set(re.findall(r"\[(\w+)\]", text))
     tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text))
     return tokens
