@@ -32,6 +32,9 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     a check_variable-style leftover; block form or a bare scalar are both valid
   - every_owned_controlled_state (does not exist; use every_controlled_state)
   - random_select_amount set to a variable/decimal instead of an integer literal
+  - log = "...Focus X" / "...Decision X" / "...Event X" where X doesn't match the
+    enclosing focus/decision/event id (copy-paste bug from duplicating a neighbor)
+  - hidden_trigger = { } directly inside custom_trigger_tooltip (redundant nesting)
 """
 
 import os
@@ -96,6 +99,44 @@ _RE_FOCUS_ID_IN_BLOCK = re.compile(r"\bid\s*=\s*(\w+)")
 _RE_COMPLETE_FOCUS = re.compile(r"\bcomplete_national_focus\s*=\s*(\w+)")
 _RE_UNLOCK_FOCUS = re.compile(r"\bunlock_national_focus\s*=\s*(\w+)")
 _RE_ACTIVATE_DECISION = re.compile(r"\bactivate_decision\s*=\s*(\w+)")
+_RE_FOCUS_ANY_BLOCK_OPEN = re.compile(
+    r"^\s*(?:focus|shared_focus|joint_focus)\s*=\s*\{"
+)
+_RE_LOG_FOCUS_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bFocus\s+(\w+)', re.IGNORECASE)
+# "Decision <keyword...> <id>" tolerates a chain of filler words before the real
+# id: the block-name keywords (remove/complete/completed/timeout/cancel/add,
+# describing which effect block logged the line) and, in a couple of legacy
+# logs, a spelled-out "effect" after the keyword ("Decision cancel effect X"
+# for a cancel_effect block). Strip all leading filler tokens, then compare
+# whatever's left to the decision's own id.
+_DECISION_LOG_FILLER_WORDS = {
+    "remove",
+    "complete",
+    "completed",
+    "timeout",
+    "cancel",
+    "add",
+    "effect",
+}
+_RE_LOG_DECISION_MARKER = re.compile(r'log\s*=\s*"[^"]*\bDecision\b', re.IGNORECASE)
+_RE_NEXT_WORD = re.compile(r"\s+(\w+)")
+# Event ids are namespace.number (dots), unlike focus/decision ids -- \w+ alone
+# would truncate at the dot.
+_RE_EVENT_DEF_OPEN = re.compile(
+    r"^(?:country_event|news_event|operative_leader_event|unit_leader_event)\s*=\s*\{"
+)
+_RE_EVENT_ID_IN_BLOCK = re.compile(r"^\s*id\s*=\s*([\w.]+)")
+_RE_OPTION_NAME_IN_BLOCK = re.compile(r"^\s*name\s*=\s*([\w.]+)")
+# Two log conventions coexist: the bare event id followed by a separate
+# "Option <letter>" phrase ("Event HKG_contract.1 Option a"), and the option's
+# own full dotted name standing in for the id ("event satellites.2.a" ==
+# namespace.number.letter). [\w.]+ is greedy, so on the second style it
+# swallows the trailing ".<letter>" into the token -- checked against both
+# forms below rather than assuming the bare id alone.
+_RE_LOG_EVENT_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bEvent\s+([\w.]+)', re.IGNORECASE)
+_RE_LOG_EVENT_OPTION_SUFFIX = re.compile(r"\s+Option\s+([a-zA-Z])\b", re.IGNORECASE)
+_RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
+_RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
 _RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
 _RE_NOT_BLOCK_OPEN = re.compile(r"^\s*NOT\s*=\s*\{")
 _RE_TRIGGER_ASSIGN = re.compile(r"^(\w+)\s*=\s*([\w.]+)$")
@@ -282,6 +323,15 @@ def _get_block(lines, start):
         depth += code.count("{") - code.count("}")
         j += 1
     return lines[start:j], j
+
+
+def _code_for_depth(line):
+    """Like strip_inline_comment, but also blanks quoted strings before brace
+    counting. A log string can contain a stray brace (e.g. a formatted-loc
+    placeholder); left unblanked it would drift the depth count for whatever
+    manual brace-tracking scans past it.
+    """
+    return _RE_QUOTED_STRING.sub('""', strip_inline_comment(line))
 
 
 def _check_focus_available_always_no(lines):
@@ -1525,6 +1575,280 @@ def _check_tautological_or(lines):
     return issues
 
 
+def _find_focus_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, focus_id, bad_token) for each
+    log = "...Focus <token>" line inside a focus/shared_focus/joint_focus block
+    where token doesn't match the block's own id.
+
+    Suppressed when the mismatched token is completed/unlocked elsewhere in the
+    same block via complete_national_focus / unlock_national_focus -- that's a
+    focus intentionally completing or unlocking a sibling and logging the
+    sibling's id, not a copy-paste bug. Shared by _check_focus_log_id and
+    fix_log_ids.py so both use the same detection.
+    """
+    results = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if _RE_FOCUS_ANY_BLOCK_OPEN.match(lines[i]):
+            start = i
+            block, i = _get_block(lines, start)
+            code_lines = [strip_inline_comment(bl) for bl in block]
+            text = "".join(code_lines)
+            id_match = _RE_FOCUS_ID_IN_BLOCK.search(text)
+            if not id_match:
+                continue
+            focus_id = id_match.group(1)
+            suppressed = set(_RE_COMPLETE_FOCUS.findall(text)) | set(
+                _RE_UNLOCK_FOCUS.findall(text)
+            )
+            for k, cl in enumerate(code_lines):
+                m = _RE_LOG_FOCUS_TOKEN.search(cl)
+                if m:
+                    token = m.group(1)
+                    if token != focus_id and token not in suppressed:
+                        results.append(
+                            (start + k, m.start(1), m.end(1), focus_id, token)
+                        )
+        else:
+            i += 1
+    return results
+
+
+def _check_focus_log_id(lines):
+    """Flag log = "...Focus <token>" lines whose token doesn't match the
+    enclosing focus/shared_focus/joint_focus block's own id -- almost always a
+    copy-paste leftover from duplicating a neighboring focus.
+    """
+    issues = []
+    for line_idx, _s, _e, focus_id, token in _find_focus_log_mismatches(lines):
+        issues.append(
+            (
+                line_idx + 1,
+                f"log references Focus {token}, but the enclosing focus is "
+                f"{focus_id} -- likely copy-paste; fix the log id",
+            )
+        )
+    return issues
+
+
+def _decision_log_token_span(line):
+    """Return (token, start, end) for the id referenced by a
+    `log = "...Decision ..."` line, skipping leading filler words
+    (_DECISION_LOG_FILLER_WORDS), or None if the line has no such log
+    statement (or nothing substantive follows the filler words).
+    """
+    marker = _RE_LOG_DECISION_MARKER.search(line)
+    if not marker:
+        return None
+    pos = marker.end()
+    while True:
+        m = _RE_NEXT_WORD.match(line, pos)
+        if not m:
+            return None
+        token = m.group(1)
+        if token.lower() in _DECISION_LOG_FILLER_WORDS:
+            pos = m.end()
+            continue
+        return token, m.start(1), m.end(1)
+
+
+def _find_decision_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, decision_id, bad_token) for each
+    log = "...Decision ..." line inside a decision block whose referenced id
+    doesn't match the enclosing decision's own key.
+
+    Enclosing decision = the block key at depth 1 (the category is depth 0),
+    same category/decision traversal as _check_decision_allowed_dynamic.
+    Shared by _check_decision_log_id and fix_log_ids.py.
+    """
+    results = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        code = strip_inline_comment(lines[i])
+        if (
+            _RE_TOPLEVEL_WORD.match(lines[i])
+            and "{" in code
+            and not lines[i].lstrip().startswith("#")
+        ):
+            cat_start = i
+            cat_block, i = _get_block(lines, cat_start)
+            k = 1
+            while k < len(cat_block) - 1:
+                bl = cat_block[k]
+                bl_code = strip_inline_comment(bl)
+                if _RE_INDENTED_WORD.match(bl) and "{" in bl_code:
+                    dec_block, next_k = _get_block(cat_block, k)
+                    dec_id_match = _RE_BLOCK_ID.match(cat_block[k])
+                    dec_id = dec_id_match.group(1) if dec_id_match else None
+                    if dec_id:
+                        for p, dbl in enumerate(dec_block):
+                            dbl_code = strip_inline_comment(dbl)
+                            token_span = _decision_log_token_span(dbl_code)
+                            if token_span:
+                                token, tstart, tend = token_span
+                                if token != dec_id:
+                                    results.append(
+                                        (
+                                            cat_start + k + p,
+                                            tstart,
+                                            tend,
+                                            dec_id,
+                                            token,
+                                        )
+                                    )
+                    k = next_k
+                else:
+                    k += 1
+        else:
+            i += 1
+    return results
+
+
+def _check_decision_log_id(lines):
+    """Flag log = "...Decision ..." lines whose referenced id doesn't match
+    the enclosing decision (tolerating remove/complete/completed/timeout/
+    cancel/effect filler words: "Decision remove X", "Decision cancel effect
+    X") -- almost always a copy-paste leftover from duplicating a neighboring
+    decision.
+    """
+    issues = []
+    for line_idx, _s, _e, dec_id, token in _find_decision_log_mismatches(lines):
+        issues.append(
+            (
+                line_idx + 1,
+                f"log references Decision {token}, but the enclosing decision "
+                f"is {dec_id} -- likely copy-paste; fix the log id",
+            )
+        )
+    return issues
+
+
+def _check_event_log_id(lines):
+    """Flag log = "...Event <token>..." lines inside a country_event /
+    news_event / operative_leader_event / unit_leader_event block where token
+    matches neither the block's own id nor the enclosing option's own declared
+    `name = ` (its real identity), or -- for the bare-id form -- where a
+    separate "Option <x>" phrase names a letter that doesn't match the suffix
+    of that same `name = `.
+
+    Ground-truthed against the option's own `name = ` line rather than a
+    computed sequential letter: option lettering isn't always contiguous
+    (e.g. singapore.101 skips from .c straight to .e), so a position-based
+    a/b/c/... expectation would false-positive on those.
+
+    Only top-level event definitions count (column 0); a nested
+    `country_event = { id = X days = N }` is a scheduling effect call, not a
+    definition, and is skipped since it never starts at column 0.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if _RE_EVENT_DEF_OPEN.match(lines[i]):
+            start = i
+            block, i = _get_block(lines, start)
+            event_id = None
+            for bl in block:
+                m = _RE_EVENT_ID_IN_BLOCK.match(strip_inline_comment(bl))
+                if m:
+                    event_id = m.group(1)
+                    break
+            if not event_id:
+                continue
+            j = 1
+            block_n = len(block)
+            while j < block_n - 1:
+                bl_code = strip_inline_comment(block[j])
+                if _RE_OPTION_BLOCK_OPEN.search(bl_code):
+                    opt_block, next_j = _get_block(block, j)
+                    own_name = None
+                    for obl in opt_block:
+                        nm = _RE_OPTION_NAME_IN_BLOCK.match(strip_inline_comment(obl))
+                        if nm:
+                            own_name = nm.group(1)
+                            break
+                    own_suffix = None
+                    if own_name and own_name.startswith(event_id + "."):
+                        own_suffix = own_name[len(event_id) + 1 :]
+                    for p, obl in enumerate(opt_block):
+                        obl_code = strip_inline_comment(obl)
+                        m = _RE_LOG_EVENT_TOKEN.search(obl_code)
+                        if not m:
+                            continue
+                        token = m.group(1)
+                        if own_name and token == own_name:
+                            continue
+                        if token == event_id:
+                            om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
+                            if (
+                                om
+                                and own_suffix
+                                and om.group(1).lower() != own_suffix.lower()
+                            ):
+                                issues.append(
+                                    (
+                                        start + j + p + 1,
+                                        f"log says Option {om.group(1)} but "
+                                        f"this option's own name is "
+                                        f"{own_name} -- fix the option "
+                                        f"letter",
+                                    )
+                                )
+                            continue
+                        if own_name:
+                            issues.append(
+                                (
+                                    start + j + p + 1,
+                                    f"log references Event {token}, but this "
+                                    f"option's own name is {own_name} -- "
+                                    f"likely copy-paste; fix the log id",
+                                )
+                            )
+                    j = next_j
+                else:
+                    j += 1
+        else:
+            i += 1
+    return issues
+
+
+def _check_hidden_trigger_in_ctt(lines):
+    """Flag hidden_trigger = { } at relative depth 1 inside
+    custom_trigger_tooltip.
+
+    Everything inside custom_trigger_tooltip besides the tooltip line is
+    already the hidden trigger the tooltip describes -- wrapping it in
+    hidden_trigger adds a redundant nesting level with no effect.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        code = _code_for_depth(lines[i])
+        if _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN.search(code):
+            depth = code.count("{") - code.count("}")
+            j = i + 1
+            while depth > 0 and j < n:
+                c2 = _code_for_depth(lines[j])
+                if depth == 1 and _RE_HIDDEN_TRIGGER_OPEN.search(c2):
+                    issues.append(
+                        (
+                            j + 1,
+                            "hidden_trigger = { } directly inside "
+                            "custom_trigger_tooltip is redundant -- unwrap its "
+                            "children to the tooltip's own depth",
+                        )
+                    )
+                depth += c2.count("{") - c2.count("}")
+                j += 1
+            i = j
+        else:
+            i += 1
+    return issues
+
+
 def check_file(filepath):
     """Check a single file for common mistakes. Returns list of (filepath, line_num, message) tuples."""
     issues = []
@@ -1547,6 +1871,7 @@ def check_file(filepath):
     is_common_or_events_file = (
         "common/" in normalized_filepath or "events/" in normalized_filepath
     )
+    is_event_file = "events/" in normalized_filepath
 
     # Only track idea categories for idea files (non-selectable vs selectable)
     # Dynamically parsed from common/idea_tags/*.txt
@@ -1719,10 +2044,15 @@ def check_file(filepath):
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))
         issues.extend(_check_focus_missing_war_hint(lines))
+        issues.extend(_check_focus_log_id(lines))
     if is_decision_file:
         issues.extend(_check_decision_available_always_no(lines))
         issues.extend(_check_decision_allowed_dynamic(lines))
+        issues.extend(_check_decision_log_id(lines))
+    if is_event_file:
+        issues.extend(_check_event_log_id(lines))
 
+    issues.extend(_check_hidden_trigger_in_ctt(lines))
     issues.extend(_check_consecutive_scope_blocks(lines))
     issues.extend(_check_embargo_dlc_guard(lines))
     issues.extend(_check_divide_variable_zero_guard(lines))

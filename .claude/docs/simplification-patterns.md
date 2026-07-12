@@ -428,6 +428,10 @@ add_to_variable = {
 
 **Caveat:** Accumulate-with-math-expression is rare (vanilla and MD historically used a temp), but confirmed working in-engine. A self-referencing accumulate can also be written `set_variable = { X = { value = X  add = { ...expr... } } }`, which reads the pre-write value of `X`. See `.claude/docs/hoi4-data-structures.md` (Math Expressions).
 
+**Do not fold a branch into the expression.** Folding straight-line arithmetic is safe. Folding an `if` in is where this pattern bites: a malformed expression does not fail loudly, it evaluates to `0.0` and the game plays on with a dead mechanic. A counter-terror fold that moved `if = { limit = { check_variable = { X = 0 } } add_to_temp_variable = { Y = 15 } }` into the expression as `if = { limit = { value = X equals = 0 } add = 15 }` zeroed the whole attack-chance roll, so no terror organization ever attacked, and it desynced the parser for four unrelated effects further down the file. Only `greater_than` and `less_than` are safe comparators inside an expression. Keep the `if` at effect level with `check_variable` unless you have grepped precedent for the exact form you are writing.
+
+**Verify folds by loading the game and reading `error.log`.** Neither pre-commit nor CI catches a math expression that parses to zero. Fix the first `script_math.cpp` error in a file, then re-run: the rest are usually cascade from that one.
+
 ## Prefer `random` Over Two-Bucket `random_list` With an Empty Side
 
 When a `random_list` has exactly two buckets and one is empty (a "do nothing" placeholder for the "miss" case), collapse it to `random = { chance = N effect }`. Same semantics, lighter engine path, less script.
