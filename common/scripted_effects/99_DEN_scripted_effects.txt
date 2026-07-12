@@ -35,7 +35,13 @@ DEN_agrar_resolve_generic = {
 	set_temp_variable = { DEN_agrar_offset = 0 }
 	# Polled monthly, so each band needs a no-protest bucket — without one the event is guaranteed every month.
 	if = {
-		limit = { check_variable = { DEN_agrar_anger_input < 10 } }
+		limit = {
+			check_variable = { DEN_agrar_anger_input < 10 }
+			OR = {
+				check_variable = { DEN_agrar_anger_input > 1 }
+				NOT = { DEN_no_active_agri_policy = yes }
+			}
+		}
 		random = {
 			chance = 10
 			set_temp_variable = { DEN_agrar_fire = 1 }
@@ -141,11 +147,19 @@ DEN_agrar_resolve_generic = {
 			limit = { check_variable = { DEN_agrar_variant = 1 } }
 			set_variable = { DEN_agrar_event_tier = 10 }
 			add_to_variable = { DEN_agrar_event_tier = DEN_agrar_offset }
+			set_country_flag = {
+				flag = DEN_agrar_event_pending
+				days = 60 value = 1
+			}
 			country_event = { id = denmark_agrar_event.10 days = 1 }
 		}
 		else = {
 			set_variable = { DEN_agrar_event_tier_II = 15 }
 			add_to_variable = { DEN_agrar_event_tier_II = DEN_agrar_offset }
+			set_country_flag = {
+				flag = DEN_agrar_event_pending_II
+				days = 60 value = 1
+			}
 			country_event = { id = denmark_agrar_event.15 days = 1 }
 		}
 	}
