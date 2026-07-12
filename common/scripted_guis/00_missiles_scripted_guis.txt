@@ -51,6 +51,9 @@ scripted_gui = {
 					}
 				}
 			 }
+			ct_gui_ledger_button_click_enabled = {
+				no_jihadist_government = yes
+			}
 		}
 
 		effects = {
@@ -2719,6 +2722,8 @@ scripted_gui = {
 		visible = {
 			check_variable = { var_open_MD_CT_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
+			NOT = { salafist_caliphate_are_in_power = yes }
+			NOT = { salafist_caliphate_are_in_coalition = yes }
 		}
 
 		triggers = {
@@ -2810,11 +2815,18 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = is_ct_does_not_have_advisors
 					var:selected_ct_nation = {
-						NOT = {
-							has_country_flag = has_ct_advisor_from@ROOT
-							tag = ROOT
-						}
+						NOT = { has_country_flag = has_ct_advisor_from@ROOT }
+						NOT = { tag = ROOT }
 					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = is_ct_advisors_not_refused_tt
+					var:selected_ct_nation = {
+						NOT = { has_country_flag = refused_ct_advisors_from@ROOT }
+					}
+				}
+				var:selected_ct_nation = {
+					no_jihadist_government = yes
 				}
 			}
 
@@ -2824,7 +2836,6 @@ scripted_gui = {
 					tooltip = is_ct_does_have_advisors
 					var:selected_ct_nation = {
 						has_country_flag = has_ct_advisor_from@ROOT
-						tag = ROOT
 					}
 				}
 			}
@@ -3061,6 +3072,7 @@ scripted_gui = {
 				set_temp_variable = { random_bad_luck = 100 }
 				subtract_from_temp_variable = { random_bad_luck = international_terror_org_intel^selected_org }
 				subtract_from_temp_variable = { random_bad_luck = ct_intel_agency_value }
+				clamp_temp_variable = { var = random_bad_luck min = 0 max = 100 }
 				random = {
 					chance = random_bad_luck
 					country_event = MD_terror.6
@@ -3640,13 +3652,6 @@ scripted_gui = {
 								tooltip = TT_ALL_UN_MEMBERS
 								if = {
 									limit = {
-										has_country_flag = original_owner_[stname]
-										NOT = { has_country_flag = Recognised_[stname] }
-									}
-									add_opinion_modifier = { target = ROOT modifier = recognises_them }
-									country_event = recognition.1
-								} else_if = {
-									limit = {
 										has_country_flag = supports_original_owner_[stname]
 										NOT = { has_country_flag = Recognised_[stname] }
 									}
@@ -3655,6 +3660,15 @@ scripted_gui = {
 									limit = { has_country_flag = Recognised_[stname] }
 									add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
 								}
+							}
+
+							random_country = {
+								limit = {
+									has_country_flag = original_owner_[stname]
+									NOT = { has_country_flag = Recognised_[stname] }
+								}
+								add_opinion_modifier = { target = ROOT modifier = recognises_them }
+								country_event = recognition.1
 							}
 						}
 					}
@@ -4278,14 +4292,8 @@ scripted_gui = {
 				}
 			}
 			is_un_aid_request_subsidies_cdf_button_click_enabled = {
-				custom_trigger_tooltip = {
-					tooltip = is_producitivty_less_than_global_target
-					check_variable = { overall_productivity < global.world_productivity_target }
-				}
-				custom_trigger_tooltip = {
-					tooltip = is_can_gain_from_financial_aid
-					check_variable = { gdp_total < 1000 }
-				}
+				is_overall_productivity_less_than_global_target = yes
+				gdp_total_lower_than_1000 = yes
 				custom_trigger_tooltip = {
 					tooltip = is_un_is_already_receiving_subsidiy
 					NOT = {
@@ -8705,6 +8713,7 @@ scripted_gui = {
 				NOT = { is_in_array = { global.p5_sc_members = v } }
 			}
 			is_un_sc_vote_yes_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_not_abstaining_tt
 					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
@@ -8724,6 +8733,7 @@ scripted_gui = {
 				}
 			}
 			is_un_sc_vote_no_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_not_abstaining_tt
 					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
@@ -8743,6 +8753,7 @@ scripted_gui = {
 				}
 			}
 			is_un_sc_vote_abstain_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_nation_not_in_array_tt
 					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
@@ -8776,8 +8787,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 2 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 				change_influence_percentage = yes
@@ -8791,8 +8800,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 3 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 
@@ -8807,8 +8814,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 1 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 				change_influence_percentage = yes
@@ -8822,8 +8827,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 3 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 
@@ -8838,8 +8841,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 1 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 
@@ -8854,8 +8855,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 2 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 
@@ -8910,6 +8909,7 @@ scripted_gui = {
 		triggers = {
 			is_un_sc_propose_action_button_click_enabled = {
 				ROOT = {
+					check_variable = { sc_selected_action > 0 }
 					has_political_power > 250
 					has_offensive_war = no
 					NOT = {
@@ -9058,7 +9058,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 
-			is_un_sc_manipulate_vote_button_right_click = {
+			is_un_ga_manipulate_vote_button_right_click = {
 				custom_effect_tooltip = un_ga_manipulate_vote_tt
 
 				set_temp_variable = { nation_hold = global.ga_vote_nation_tracker^i }
@@ -9098,6 +9098,7 @@ scripted_gui = {
 
 		triggers = {
 			is_un_ga_vote_yes_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_not_abstaining_tt
 					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
@@ -9120,8 +9121,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 2 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 				change_influence_percentage = yes
@@ -9135,8 +9134,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 3 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 
@@ -9171,6 +9168,7 @@ scripted_gui = {
 
 		triggers = {
 			is_un_ga_vote_no_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_not_abstaining_tt
 					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
@@ -9193,8 +9191,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 1 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 				change_influence_percentage = yes
@@ -9208,8 +9204,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 3 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 
@@ -9252,6 +9246,7 @@ scripted_gui = {
 
 		triggers = {
 			is_un_ga_vote_abstain_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_nation_not_in_array_tt
 					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
@@ -9270,8 +9265,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 1 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 				change_influence_percentage = yes
@@ -9285,8 +9278,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 2 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 
@@ -9353,7 +9344,7 @@ scripted_gui = {
 		triggers = {
 			un_ga_propose_poverty_reduction_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_10 }
@@ -9361,7 +9352,7 @@ scripted_gui = {
 			}
 			un_ga_propose_food_security_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_11 }
@@ -9369,7 +9360,7 @@ scripted_gui = {
 			}
 			un_ga_propose_global_health_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_12 }
@@ -9377,7 +9368,7 @@ scripted_gui = {
 			}
 			un_ga_propose_education_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_13 }
@@ -9385,7 +9376,7 @@ scripted_gui = {
 			}
 			un_ga_propose_clean_energy_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_14 }
@@ -9393,7 +9384,7 @@ scripted_gui = {
 			}
 			un_ga_propose_economic_growth_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_15 }
@@ -9401,7 +9392,7 @@ scripted_gui = {
 			}
 			un_ga_propose_infrastructure_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_16 }
@@ -9409,7 +9400,7 @@ scripted_gui = {
 			}
 			un_ga_propose_reduced_inequality_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_17 }
@@ -9417,7 +9408,7 @@ scripted_gui = {
 			}
 			un_ga_propose_climate_action_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_18 }
@@ -9425,7 +9416,7 @@ scripted_gui = {
 			}
 			un_ga_propose_peace_institutions_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_19 }
@@ -9433,7 +9424,7 @@ scripted_gui = {
 			}
 			un_ga_propose_trade_partnerships_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_20 }
@@ -9441,7 +9432,7 @@ scripted_gui = {
 			}
 			un_ga_propose_digital_development_button_click_enabled = {
 				is_in_array = { global.UN_general_assembly = THIS }
-				has_political_power > 200
+				has_political_power > 150
 				custom_trigger_tooltip = {
 					tooltip = no_active_resolution_of_this_type_tt
 					NOT = { has_global_flag = proposed_ga_resolution_21 }
@@ -9458,7 +9449,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 10 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_10 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9470,7 +9461,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 11 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_11 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9482,7 +9473,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 12 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_12 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9494,7 +9485,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 13 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_13 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9506,7 +9497,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 14 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_14 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9518,7 +9509,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 15 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_15 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9530,7 +9521,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 16 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_16 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9542,7 +9533,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 17 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_17 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9554,7 +9545,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 18 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_18 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9566,7 +9557,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 19 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_19 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9578,7 +9569,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 20 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_20 days = 365 value = 1 }
 				international_systems_update = yes
 			}
@@ -9590,7 +9581,7 @@ scripted_gui = {
 				set_temp_variable = { ga_new_vote_type = 21 }
 				set_temp_variable = { ga_new_vote_nation = THIS }
 				update_ga_vote = yes
-				add_political_power = -200
+				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_21 days = 365 value = 1 }
 				international_systems_update = yes
 			}

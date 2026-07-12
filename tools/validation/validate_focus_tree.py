@@ -54,6 +54,13 @@ _REWARD_BLOCK_RE = re.compile(
 _TECH_BONUS_START = re.compile(r"\badd_tech_bonus\s*=\s*\{")
 _NAME_LINE_RE = re.compile(r"\bname\s*=\s*(\S+)")
 
+# PP malus in completion_reward (focus time is the cost — AGENTS.md).
+# Occurrences inside an effect_tooltip = { } subtree preview a PP change
+# applied elsewhere (e.g. a select_effect) rather than executing it, so
+# they are not flagged.
+_EFFECT_TOOLTIP_START = re.compile(r"\beffect_tooltip\s*=\s*\{")
+_PP_MALUS_RE = re.compile(r"\badd_political_power\s*=\s*(-\d+(?:\.\d+)?)\b")
+
 # ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md
 # convention). Building type -> the scripted trigger
 # (common/scripted_triggers/00_economic_triggers.txt) that an ai_will_do
@@ -105,6 +112,53 @@ _SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^{}]*)\}")
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 
+# Cross-country event tooltip check (AGENTS.md "Cross-country event tooltips"):
+# a completion_reward that fires a country_event into another nation's scope
+# should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT so the player sees the
+# acceptance outcome. Foreignness is decided by the fire's nearest enclosing
+# scope-change (see _country_event_target_is_foreign).
+_COUNTRY_EVENT_RE = re.compile(r"\bcountry_event\b")
+_TT_IF_THEY_ACCEPT_RE = re.compile(r"\bTT_IF_THEY_ACCEPT\b")
+# Target of a fire, in both `country_event = foo.1` and
+# `country_event = { id = foo.1 days = 3 }` form.
+_FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w.]+)")
+# Event definitions, for deciding whether a fire can be accepted at all. Only
+# depth-0 blocks are definitions — `country_event = { id = x days = 1 }` nested
+# inside an option is a fire, and would otherwise index x as optionless.
+_EVENT_BLOCK_RE = re.compile(r"^(country_event|news_event)\s*=\s*\{", re.M)
+_EVENT_ID_RE = re.compile(r"\bid\s*=\s*([\w.]+)")
+_EVENT_OPTION_RE = re.compile(r"\boption\s*=\s*\{")
+_EVENT_HIDDEN_RE = re.compile(r"\bhidden\s*=\s*yes\b")
+_OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
+_NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
+# `tag = XXX` / `original_tag = XXX`, in a focus_tree's `country = { }` block
+# (the owner) and in an event option's `trigger = { }` (the recipient).
+_FT_COUNTRY_BLOCK_RE = re.compile(r"\bcountry\s*=\s*\{")
+_TAG_ASSIGN_RE = re.compile(r"\b(?:original_)?tag\s*=\s*([A-Z]{3})\b")
+_LITERAL_TAG_RE = re.compile(r"^[A-Z]{3}$")
+# Iterators that step over other countries (every_country, random_other_country,
+# every_neighbor_country, every_puppet, ...).
+_COUNTRY_ITERATOR_RE = re.compile(r"^(?:every|random|all)_\w*(?:country|puppet)")
+# Scope labels that resolve to the current/self scope, never a foreign nation.
+_SELF_SCOPES = frozenset(
+    {"ROOT", "THIS", "PREV", "FROM", "OWNER", "CONTROLLER", "CAPITAL"}
+)
+# Wrapper blocks that don't change scope — walk through them when locating a
+# fire's nearest enclosing scope-change.
+_CONTROL_FLOW_SCOPES = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "random",
+        "hidden_effect",
+        "while_loop_effect",
+        "for_loop_effect",
+    }
+)
+# 3-letter all-caps tokens that are logic keywords, not country tags.
+_NON_TAG_KEYWORDS = frozenset({"AND", "NOT", "NOR"})
+
 
 def _top_level_text(body: str) -> str:
     """Return only the depth-0 characters of a block body, so focus-level
@@ -136,6 +190,150 @@ def _resolve_cost(token: Optional[str], constants: Dict[str, float]) -> Optional
 def _line_of(text: str, pos: int) -> int:
     """Return the 1-based line number of *pos* in *text*."""
     return text[:pos].count("\n") + 1
+
+
+def _label_before_brace(body: str, brace_idx: int) -> Optional[str]:
+    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
+
+    Returns None for an anonymous block (no `=` before the brace), e.g. a
+    color/array literal.
+    """
+    j = brace_idx - 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    if j < 0 or body[j] != "=":
+        return None
+    j -= 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    end = j + 1
+    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
+        j -= 1
+    return body[j + 1 : end] or None
+
+
+def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
+    """Return (label, open_brace_index) of the innermost block enclosing *pos*.
+
+    (None, -1) when *pos* is at the top level of *body*.
+    """
+    depth = 0
+    i = pos - 1
+    while i >= 0:
+        c = body[i]
+        if c == "}":
+            depth += 1
+        elif c == "{":
+            if depth == 0:
+                return _label_before_brace(body, i), i
+            depth -= 1
+        i -= 1
+    return None, -1
+
+
+def _is_conjunctive_guard(body: str, pos: int, *, negated: bool = False) -> bool:
+    """Whether the condition at *pos* makes a factor-zero modifier apply.
+
+    A guard under OR is not a firm veto: an OR can be satisfied by
+    conditions other than the guarded one, so the factor-zero fires when
+    *any* OR branch holds, not specifically when the guard is true. A
+    direct `X = no` guard also cannot sit under NOT; the separate
+    `NOT = { X = yes }` form is recognized through *negated* instead.
+    """
+    labels: List[str] = []
+    while True:
+        label, opener = _enclosing_block_label(body, pos)
+        if label is None:
+            break
+        labels.append(label)
+        pos = opener
+    return "OR" not in labels and (negated or "NOT" not in labels)
+
+
+def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, int]]:
+    """Spans of every `effect_tooltip = { }` subtree between *start* and *end*.
+
+    An effect_tooltip renders its body without executing it, so anything inside
+    is a preview of an outcome that happens elsewhere. Checks that reason about
+    what a focus actually *does* must skip these spans.
+    """
+    spans: List[Tuple[int, int]] = []
+    pos = start
+    while True:
+        tm = _EFFECT_TOOLTIP_START.search(text, pos, end)
+        if not tm:
+            return spans
+        tbody, tend = _extract_block(text, tm.start())
+        if not tbody or tend > end:
+            pos = tm.end()
+            continue
+        spans.append((tm.start(), tend))
+        pos = tend
+
+
+def _is_tag_routed(option_bodies: List[str]) -> bool:
+    """True when option-level triggers pin every option to a distinct tag.
+
+    `poland.47` gives `.a` a `trigger = { original_tag = UKR }` and `.b` a
+    `trigger = { original_tag = SOV }`. Ukraine only ever sees `.a`, Russia only
+    `.b` — the event declares two options but hands each recipient exactly one.
+    That is a notification, not an offer, so there is no accept branch to
+    preview. A negated trigger is unanalysable here, so bail and stay noisy.
+    """
+    if len(option_bodies) < 2:
+        return False
+    claimed: Set[str] = set()
+    for body in option_bodies:
+        tm = _OPTION_TRIGGER_RE.search(body)
+        if not tm:
+            return False
+        tbody, tend = _extract_block(body, tm.start())
+        if tend == -1 or _NEGATION_RE.search(tbody):
+            return False
+        tags = set(_TAG_ASSIGN_RE.findall(tbody))
+        if not tags or tags & claimed:
+            return False
+        claimed |= tags
+    return True
+
+
+def _country_event_target_is_foreign(
+    body: str, ce_pos: int, owner_tags: FrozenSet[str]
+) -> bool:
+    """True if the country_event at *ce_pos* fires into another nation's scope
+    and the player can see it happen.
+
+    Walks outward from the fire through control-flow wrappers (if/random/
+    hidden_effect/...) until it reaches a scope-changing block. A literal
+    non-owner tag, a country iterator, or an event_target:/var: scope is
+    foreign; a self scope (ROOT/THIS/…), the owner's own tag, or the reward
+    root (bare fire to the focus owner) is not. Unknown scopes are treated as
+    non-foreign to keep this warning quiet.
+
+    The walk carries on past that verdict to the reward root, because a
+    hidden_effect anywhere above the fire swallows every tooltip under it —
+    there is nothing a TT_IF_THEY_ACCEPT could render.
+    """
+    foreign: Optional[bool] = None
+    pos = ce_pos
+    while True:
+        label, opener = _enclosing_block_label(body, pos)
+        if label is None:
+            return bool(foreign)
+        if label == "hidden_effect":
+            return False
+        if foreign is None and label not in _CONTROL_FLOW_SCOPES:
+            if label in _SELF_SCOPES:
+                foreign = False
+            elif label.startswith("event_target:") or label.startswith("var:"):
+                foreign = True
+            elif _COUNTRY_ITERATOR_RE.match(label):
+                foreign = True
+            elif _LITERAL_TAG_RE.match(label) and label not in _NON_TAG_KEYWORDS:
+                foreign = label not in owner_tags
+            else:
+                foreign = False
+        pos = opener
 
 
 def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[str]]]]:
@@ -303,7 +501,8 @@ def _extract_ai_guard_data(
     Returns one dict per focus: id, line, cost (numeric or resolved from a
     file-local @constant), search filters, the staffable building types its
     rewards construct (directly or via a scripted effect from
-    *staffable_map*), and the guard triggers present in factor = 0 ai_will_do
+    *staffable_map*, and never from inside an effect_tooltip, which only
+    previews), and the guard triggers present in factor = 0 ai_will_do
     modifiers (both the `X = no` and `NOT = { X = yes }` forms; guards hidden
     behind wrapper scripted triggers are not recognized). The staffable map
     is folded into the cache tag so entries invalidate when scripted-effect
@@ -316,7 +515,12 @@ def _extract_ai_guard_data(
     except Exception:
         return []
     text = strip_comments(raw)
-    constants = {m.group(1): float(m.group(2)) for m in _CONSTANT_DEF_RE.finditer(text)}
+    constants: Dict[str, float] = {}
+    for m in _CONSTANT_DEF_RE.finditer(text):
+        try:
+            constants[m.group(1)] = float(m.group(2))
+        except ValueError:
+            continue
     fingerprint = ";".join(
         f"{name}:{','.join(sorted(types))}"
         for name, types in sorted(staffable_map.items())
@@ -351,8 +555,16 @@ def _extract_ai_guard_data(
                 if not rbody or rend > fend:
                     rpos = rm.end()
                     continue
-                for key in set(_REWARD_KEY_RE.findall(rbody)) & staffable_map.keys():
-                    buildings.update(staffable_map[key])
+                # An effect_tooltip previewing someone else's construction is
+                # not this focus building anything.
+                spans = _effect_tooltip_spans(rbody, 0, len(rbody))
+
+                def previewed(i: int, spans=spans) -> bool:
+                    return any(s <= i < e for s, e in spans)
+
+                for km in _REWARD_KEY_RE.finditer(rbody):
+                    if km.group(1) in staffable_map and not previewed(km.start()):
+                        buildings.update(staffable_map[km.group(1)])
                 bpos = 0
                 while True:
                     bm = _ADD_BUILDING_START.search(rbody, bpos)
@@ -362,11 +574,12 @@ def _extract_ai_guard_data(
                     if not bbody:
                         bpos = bm.end()
                         continue
-                    buildings.update(
-                        t
-                        for t in _TYPE_LINE_RE.findall(bbody)
-                        if t in _STAFFABLE_TRIGGERS
-                    )
+                    if not previewed(bm.start()):
+                        buildings.update(
+                            t
+                            for t in _TYPE_LINE_RE.findall(bbody)
+                            if t in _STAFFABLE_TRIGGERS
+                        )
                     bpos = bend
                 rpos = rend
 
@@ -384,11 +597,22 @@ def _extract_ai_guard_data(
                         if not mbody:
                             mpos = mm.end()
                             continue
-                        if _FACTOR_ZERO_RE.search(mbody):
-                            guards.update(_CAN_STAFF_NO_RE.findall(mbody))
-                            guards.update(_CAN_STAFF_NOT_YES_RE.findall(mbody))
-                            if _BANKRUPTCY_GUARD_RE.search(mbody):
-                                guards.add("bankruptcy_incoming_collapse")
+                        factor_zero = any(
+                            _enclosing_block_label(mbody, fm.start())[0] is None
+                            for fm in _FACTOR_ZERO_RE.finditer(mbody)
+                        )
+                        if factor_zero:
+                            for gm in _CAN_STAFF_NO_RE.finditer(mbody):
+                                if _is_conjunctive_guard(mbody, gm.start(1)):
+                                    guards.add(gm.group(1))
+                            for gm in _CAN_STAFF_NOT_YES_RE.finditer(mbody):
+                                if _is_conjunctive_guard(
+                                    mbody, gm.start(1), negated=True
+                                ):
+                                    guards.add(gm.group(1))
+                            for gm in _BANKRUPTCY_GUARD_RE.finditer(mbody):
+                                if _is_conjunctive_guard(mbody, gm.start()):
+                                    guards.add("bankruptcy_incoming_collapse")
                         mpos = mend
 
             out.append(
@@ -407,10 +631,150 @@ def _extract_ai_guard_data(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.ai_guards.v2",
+        "focus_tree.ai_guards.v3",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
+    )
+
+
+def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[Dict]:
+    """Pool worker: focuses whose completion_reward fires an event to another
+    nation without a TT_IF_THEY_ACCEPT tooltip.
+
+    *notifications* holds the ids of events the target cannot answer — hidden,
+    or a single option — so there is nothing for the player to accept and the
+    tooltip would be a lie. Fires at an unknown id stay flagged: a missing
+    definition can't be proven harmless.
+
+    Returns one dict (id, file, line) per non-compliant focus.
+    """
+    filepath, mod_path, notifications = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+    fingerprint = ";".join(sorted(notifications))
+
+    def _compute() -> List[Dict]:
+        owner_tags: Set[str] = set()
+        for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
+            cbody, _ = _extract_block(text, cm.start())
+            if cbody:
+                owner_tags.update(_TAG_ASSIGN_RE.findall(cbody))
+        owner_frozen = frozenset(owner_tags)
+
+        out: List[Dict] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            if not idm:
+                pos = fend
+                continue
+
+            flagged = False
+            rpos = fm.start()
+            while not flagged:
+                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
+                if not rm:
+                    break
+                rbody, rend = _extract_block(text, rm.start())
+                if not rbody or rend > fend:
+                    rpos = rm.end()
+                    continue
+                if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
+                    for ce in _COUNTRY_EVENT_RE.finditer(rbody):
+                        tm = _FIRE_TARGET_RE.match(rbody, ce.start())
+                        if tm and tm.group(1) in notifications:
+                            continue
+                        if _country_event_target_is_foreign(
+                            rbody, ce.start(), owner_frozen
+                        ):
+                            flagged = True
+                            break
+                rpos = rend
+
+            if flagged:
+                out.append(
+                    {
+                        "id": idm.group(1),
+                        "file": filepath,
+                        "line": _line_of(text, fm.start()),
+                    }
+                )
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "focus_tree.cross_country_tt.v3",
+        filepath,
+        text + "\x00" + fingerprint,
+        _compute,
+    )
+
+
+def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    """Pool worker: return (focus_id, filepath, line) for each negative,
+    literal add_political_power inside a focus's completion_reward.
+
+    Occurrences inside an effect_tooltip = { } subtree are skipped — those
+    preview a PP change applied elsewhere (e.g. a select_effect) rather
+    than executing the malus.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[Tuple[str, str, int]]:
+        out: List[Tuple[str, str, int]] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            focus_id = idm.group(1) if idm else "?"
+
+            rpos = fm.start()
+            while True:
+                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
+                if not rm:
+                    break
+                rbody, rend = _extract_block(text, rm.start())
+                if not rbody or rend > fend:
+                    rpos = rm.end()
+                    continue
+
+                tooltip_spans = _effect_tooltip_spans(text, rm.start(), rend)
+                for pm in _PP_MALUS_RE.finditer(text, rm.start(), rend):
+                    if any(s <= pm.start() < e for s, e in tooltip_spans):
+                        continue
+                    out.append((focus_id, filepath, _line_of(text, pm.start())))
+
+                rpos = rend
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.pp_malus", filepath, text, _compute
     )
 
 
@@ -912,43 +1276,38 @@ class Validator(BaseValidator):
                 )
             )
 
-        # One level of chaining: an effect that calls a direct builder (e.g.
-        # one_random_factory_energy_check -> one_random_industrial_complex)
-        # inherits its building types. Deeper chains are not followed.
+        # Resolve scripted-effect chains to a fixed point so a builder wrapper
+        # remains visible through any number of intermediate effects.
         direct = dict(mapping)
-        fingerprint = ";".join(
-            f"{name}:{','.join(sorted(types))}"
-            for name, types in sorted(direct.items())
-        )
+        effect_bodies: Dict[str, str] = {}
         for fp in fx_files:
             try:
                 with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
                     text = strip_comments(fh.read())
             except Exception:
                 continue
+            for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                body, _ = _extract_block(text, m.start())
+                if body:
+                    effect_bodies[m.group(1)] = body
 
-            def _compute_chain(text=text) -> Dict[str, FrozenSet[str]]:
-                found: Dict[str, FrozenSet[str]] = {}
-                for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
-                    body, _ = _extract_block(text, m.start())
-                    if not body:
-                        continue
-                    types: Set[str] = set()
-                    for key in set(_REWARD_KEY_RE.findall(body)) & direct.keys():
-                        types.update(direct[key])
-                    if types:
-                        found[m.group(1)] = frozenset(types)
-                return found
-
-            chained = disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                "focus_tree.staffable_fx_chain",
-                fp,
-                text + "\x00" + fingerprint,
-                _compute_chain,
-            )
-            for name, types in chained.items():
-                mapping[name] = frozenset(mapping.get(name, frozenset()) | types)
+        known_effects = set(effect_bodies)
+        calls = {
+            name: set(_REWARD_KEY_RE.findall(body)) & known_effects
+            for name, body in effect_bodies.items()
+        }
+        mapping = dict(direct)
+        changed = True
+        while changed:
+            changed = False
+            for name, dependencies in calls.items():
+                types: Set[str] = set(direct.get(name, frozenset()))
+                for dependency in dependencies:
+                    types.update(mapping.get(dependency, frozenset()))
+                resolved = frozenset(types)
+                if resolved and resolved != mapping.get(name):
+                    mapping[name] = resolved
+                    changed = True
         return mapping
 
     def validate_ai_will_do_guards(self):
@@ -960,8 +1319,9 @@ class Validator(BaseValidator):
         Bankruptcy: high-cost focuses need a
         has_active_mission = bankruptcy_incoming_collapse modifier; reported
         as a per-file aggregate so the pre-existing backlog stays readable.
-        Builder effects are resolved one call level deep; guards written via
-        wrapper scripted triggers are not recognized.
+        Builder-effect chains are resolved to a fixed point so a wrapper of
+        any depth remains visible; guards written via wrapper scripted
+        triggers are not recognized.
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 
@@ -1045,6 +1405,152 @@ class Validator(BaseValidator):
             "Files with high-cost focuses missing the bankruptcy guard:",
             Severity.WARNING,
             category="missing-bankruptcy-guard",
+        )
+
+    def _notification_event_ids(self) -> FrozenSet[str]:
+        """Event ids the target cannot answer: hidden, fewer than 2 options, or
+        options tag-routed one per recipient (see _is_tag_routed).
+
+        Firing one of these into a foreign scope is a notification, not an
+        offer, so it never needs a TT_IF_THEY_ACCEPT tooltip.
+        """
+        ids: Set[str] = set()
+        for fp in self._collect_files(["events/*.txt"], ignore_staged=True):
+            try:
+                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                    text = strip_comments(fh.read())
+            except Exception:
+                continue
+
+            def _compute(text=text) -> List[str]:
+                found: List[str] = []
+                for m in _EVENT_BLOCK_RE.finditer(text):
+                    body, end = _extract_block(text, m.start())
+                    if end == -1:
+                        continue
+                    idm = _EVENT_ID_RE.search(body)
+                    if not idm:
+                        continue
+                    options: List[str] = []
+                    opos = 0
+                    while True:
+                        om = _EVENT_OPTION_RE.search(body, opos)
+                        if not om:
+                            break
+                        obody, oend = _extract_block(body, om.start())
+                        if oend == -1:
+                            break
+                        options.append(obody)
+                        opos = oend
+                    if (
+                        len(options) < 2
+                        or _EVENT_HIDDEN_RE.search(body)
+                        or _is_tag_routed(options)
+                    ):
+                        found.append(idm.group(1))
+                return found
+
+            ids.update(
+                disk_cache.per_file_cached_by_content(
+                    self.mod_path,
+                    "focus_tree.notification_events.v3",
+                    fp,
+                    text,
+                    _compute,
+                )
+            )
+        return frozenset(ids)
+
+    def validate_cross_country_event_tooltips(self):
+        """Flag focuses that fire an event to another nation without a
+        TT_IF_THEY_ACCEPT tooltip.
+
+        AGENTS.md "Cross-country event tooltips": when a completion_reward fires
+        a country_event into a foreign scope, the player should see the outcome
+        via custom_effect_tooltip = TT_IF_THEY_ACCEPT. Reported per file as a
+        WARNING — the presence of the tooltip anywhere in the reward clears it,
+        so a reward already carrying one is not flagged. Fires at an event the
+        target cannot answer are notifications and are skipped.
+        """
+        self._log_section("Checking cross-country event fires for TT_IF_THEY_ACCEPT...")
+
+        notifications = self._notification_event_ids()
+        files = self._collect_files(["common/national_focus/*.txt"])
+        data_lists = self._pool_map(
+            _extract_cross_country_fires,
+            [(f, self.mod_path, notifications) for f in files],
+            chunksize=10,
+        )
+
+        by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+        for sub in data_lists:
+            for d in sub:
+                if not self._is_reportable(d["file"]):
+                    continue
+                rel = os.path.relpath(d["file"], self.mod_path)
+                by_file[rel].append((d["id"], d["line"]))
+
+        results = []
+        for rel, hits in sorted(by_file.items()):
+            hits.sort(key=lambda h: h[1])
+            examples = ", ".join(f"{fid} (line {line})" for fid, line in hits[:3])
+            more = f" and {len(hits) - 3} more" if len(hits) > 3 else ""
+            results.append(
+                (
+                    f"{len(hits)} focus(es) fire an event to another nation without"
+                    f" a TT_IF_THEY_ACCEPT tooltip: {examples}{more}",
+                    rel,
+                    hits[0][1],
+                )
+            )
+
+        self._report(
+            results,
+            "All cross-country event fires carry a TT_IF_THEY_ACCEPT tooltip",
+            "Files with focuses firing an event to another nation without TT_IF_THEY_ACCEPT:",
+            Severity.WARNING,
+            category="missing-cross-country-tooltip",
+        )
+
+    def validate_pp_malus_in_rewards(self):
+        """Flag a literal PP loss (add_political_power = -N) inside a focus's
+        completion_reward.
+
+        Focus time is the cost (AGENTS.md) — a PP malus on completion is a
+        balance choice needing per-site judgment, so this reports at WARNING
+        only. Scope is the literal-negative-number pattern: variable forms
+        and timed lose-PP ideas are not detected. effect_tooltip previews of
+        a PP change applied elsewhere (e.g. via select_effect) are skipped.
+        """
+        self._log_section("Checking for PP malus in focus completion_reward...")
+
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        data_lists = self._pool_map(
+            _extract_pp_malus, [(f, self.mod_path) for f in files], chunksize=10
+        )
+
+        results = []
+        for sub in data_lists:
+            for focus_id, fp, line in sub:
+                if not self._is_reportable(fp):
+                    continue
+                rel = os.path.relpath(fp, self.mod_path)
+                results.append(
+                    (
+                        f"Focus '{focus_id}' completion_reward applies a PP"
+                        " malus (negative add_political_power) — focus time"
+                        " is the cost; verify this is intended",
+                        rel,
+                        line,
+                    )
+                )
+
+        self._report(
+            results,
+            "No PP malus found in focus completion_reward blocks",
+            "Focuses applying a PP malus in completion_reward (balance-sensitive — verify intent):",
+            Severity.WARNING,
+            category="pp-malus-completion-reward",
         )
 
     # -----------------------------------------------------------------------
@@ -1181,6 +1687,8 @@ class Validator(BaseValidator):
         self.validate_missing_loc_keys()
         self.validate_tech_bonus_names()
         self.validate_ai_will_do_guards()
+        self.validate_cross_country_event_tooltips()
+        self.validate_pp_malus_in_rewards()
 
         if self.missing_icons:
             self.validate_focus_icons()
