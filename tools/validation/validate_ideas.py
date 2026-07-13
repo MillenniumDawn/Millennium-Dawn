@@ -38,6 +38,9 @@ _IDEA_REF_SWAP = re.compile(r"\b(?:add_idea|remove_idea)\s*=\s*([A-Za-z0-9_:\[\]
 
 # Matches swap_ideas = { ... } blocks (brace-balanced by hand after this finds the opener)
 _SWAP_BLOCK_START = re.compile(r"\bswap_ideas\s*=\s*\{")
+_IDEA_REF_BLOCK_START = re.compile(
+    r"\b(?:add_ideas|remove_ideas)\s*=\s*\{", re.IGNORECASE
+)
 
 # Matches an idea definition line at brace depth 2 inside `ideas = { CATEGORY = { IDEA = { `
 # We track depth manually; this just recognises `WORD = {` at the right level.
@@ -369,10 +372,55 @@ def _parse_ideas_from_text(
     return defined, issues
 
 
+def _extract_idea_refs_from_blocks(text: str) -> List[str]:
+    """Return bare idea names from brace-form add/remove_ideas effects."""
+    refs: List[str] = []
+    for match in _IDEA_REF_BLOCK_START.finditer(text):
+        body, _ = extract_block_from_text(text, match.end() - 1)
+        if not body:
+            continue
+        depth = 0
+        in_string = False
+        i = 0
+        while i < len(body):
+            char = body[i]
+            if char == '"':
+                in_string = not in_string
+                i += 1
+                continue
+            if in_string:
+                i += 1
+                continue
+            if char == "{":
+                depth += 1
+                i += 1
+                continue
+            if char == "}":
+                depth = max(0, depth - 1)
+                i += 1
+                continue
+            if depth == 0 and (char.isalnum() or char in "_:-[]."):
+                start = i
+                while i < len(body) and (
+                    body[i].isalnum() or body[i] in "_:-[]."
+                ):
+                    i += 1
+                token = body[start:i]
+                lookahead = i
+                while lookahead < len(body) and body[lookahead].isspace():
+                    lookahead += 1
+                if lookahead >= len(body) or body[lookahead] != "=":
+                    refs.append(token)
+                continue
+            i += 1
+    return refs
+
+
 def _scan_idea_refs(text: str) -> List[str]:
     """Return every raw idea reference token in the text (unfiltered)."""
     refs: List[str] = []
     refs.extend(_IDEA_REF_SIMPLE.findall(text))
+    refs.extend(_extract_idea_refs_from_blocks(text))
     refs.extend(_extract_swap_idea_refs(text))
     return refs
 
@@ -580,7 +628,10 @@ class Validator(BaseValidator):
                 "common/national_focus/**/*.txt",
                 "common/decisions/**/*.txt",
                 "events/**/*.txt",
+                "history/**/*.txt",
+                "common/on_actions/**/*.txt",
                 "common/scripted_effects/**/*.txt",
+                "common/scripted_triggers/**/*.txt",
                 "common/ideas/**/*.txt",
             ]
         )

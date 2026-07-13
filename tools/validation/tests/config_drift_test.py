@@ -311,7 +311,33 @@ def test_validator_cache_restore_is_source_hash_scoped():
 
 def test_tools_validation_triggers_for_consumed_configuration():
     paths = _pull_request_paths(TOOLS_WORKFLOW)
-    assert {".pre-commit-config.yaml", ".github/workflows/coding-pipeline.yml"} <= paths
+    assert {
+        ".pre-commit-config.yaml",
+        ".github/workflows/coding-pipeline.yml",
+        ".github/workflows/validator-cache.yml",
+    } <= paths
+
+
+def test_tools_tests_checkout_consumed_workflows():
+    workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
+    checkout = next(
+        step
+        for step in workflow["jobs"]["report-lib-tests"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    )
+    sparse_paths = set(checkout["with"]["sparse-checkout"].splitlines())
+    assert ".github/workflows/validator-cache.yml" in sparse_paths
+
+
+def test_scripted_localisation_core_runs_for_interface_changes():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    core = workflow["jobs"]["validate-core"]
+    assert "needs.detect-changes.outputs.interface == 'true'" in core["if"]
+    scripts = {
+        entry["script"]
+        for entry in core["strategy"]["matrix"]["validator"]
+    }
+    assert "validate_scripted_localisation.py" in scripts
 
 
 def test_mod_changes_reach_structural_lint():

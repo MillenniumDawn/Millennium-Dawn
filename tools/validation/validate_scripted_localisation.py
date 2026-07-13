@@ -49,7 +49,7 @@ def process_file_for_defined_localisations(
     basename = os.path.basename(filename)
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.defined.lc={int(lowercase)}",
+        f"scripted_loc.defined.lc={1 if lowercase else 0}",
         filename,
         text_file,
         lambda: _scan_defined_locs(text_file, basename),
@@ -60,7 +60,9 @@ _LOC_REFERENCE_RE = re.compile(
     r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
     r"localization_key)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)"
 )
-_BRACKET_LOC_RE = re.compile(r"\[([A-Za-z_][A-Za-z0-9_]*)\]")
+_BRACKET_LOC_RE = re.compile(
+    r"\[(?:[A-Za-z_][A-Za-z0-9_]*\.)?([A-Za-z_][A-Za-z0-9_]*)\]"
+)
 _BUILTIN_GETTERS = {
     "getname",
     "getnamewithflag",
@@ -114,17 +116,20 @@ def process_file_for_used_localisations(
     is_sl = "scripted_localisation" in filename
     tokens = disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.tokens.lc={int(lowercase)}.{'b' if is_sl else 't'}",
+        f"scripted_loc.tokens.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
         filename,
         text_file,
         lambda: _scan_loc_tokens(text_file, is_sl),
     )
 
-    # Scripted-localisation files use bracket syntax for nested scripted loc
-    # calls. Keep those candidates even when undefined so the missing check can
-    # report them. Other files retain the definition intersection because their
-    # bracketed values are often ordinary localisation keys.
-    if is_sl:
+    # Scripted-localisation, GUI, and English localisation files use bracket
+    # syntax for scripted loc calls. Keep candidates even when undefined so
+    # the missing check can report them.
+    normalized_filename = filename.replace("\\", "/").lstrip("/")
+    is_english_yml = "localisation/english/" in normalized_filename
+    if is_sl or filename.endswith(".gui") or (
+        filename.endswith(".yml") and is_english_yml
+    ):
         found_original = tokens
     else:
         search_lower = {n.lower(): n for n in search_names}
@@ -277,12 +282,16 @@ class Validator(BaseValidator):
         reported = set()
         for loc in used_locs_lower:
             if loc not in defined_locs_lower and loc not in reported:
-                original_loc = used_lower_to_original.get(loc, loc)
-                basename = used_paths.get(
-                    original_loc or loc, used_paths.get(loc, "unknown")
-                )
+                original_loc = used_lower_to_original.get(loc) or loc
+                basename = used_paths.get(original_loc, used_paths.get(loc, "unknown"))
                 full_path = self.get_full_path(
-                    basename, loc, file_patterns=["**/*.txt", "**/*.gui"]
+                    basename,
+                    original_loc,
+                    file_patterns=[
+                        "**/*.txt",
+                        "**/*.gui",
+                        "localisation/english/**/*.yml",
+                    ],
                 )
                 if full_path:
                     rel_path = os.path.relpath(full_path, self.mod_path)
@@ -462,26 +471,19 @@ class Validator(BaseValidator):
             "[",
         ]
 
-        # Build defined/used lists once and share between both checks — avoids
-        # scanning the entire mod twice (once per validator call).
-        defined_locs, defined_paths = (
+        all_defined_locs, all_defined_paths = (
             ScriptedLocalisation.get_all_defined_localisations(
                 mod_path=self.mod_path,
                 lowercase=False,
                 return_paths=True,
-                staged_files=self.staged_files,
+                staged_files=None,
                 workers=self.workers,
                 pool=self._get_pool(),
             )
         )
-        # Usage scan ALWAYS goes full-repo — even in staged mode. Restricting
-        # the usage scan to staged files only would falsely flag any defined-
-        # text whose only consumer lives in a non-staged file (e.g. editing
-        # 99_PER_scripted_localisation.txt would report every loc as unused
-        # if the matching 99_PER_scripted_guis.txt isn't also staged).
-        used_locs, used_paths = ScriptedLocalisation.get_all_used_localisations(
+        all_used_locs, all_used_paths = ScriptedLocalisation.get_all_used_localisations(
             mod_path=self.mod_path,
-            defined_names=set(defined_locs),
+            defined_names=set(all_defined_locs),
             lowercase=False,
             return_paths=True,
             staged_files=None,
@@ -489,11 +491,38 @@ class Validator(BaseValidator):
             pool=self._get_pool(),
         )
 
+        # Missing refs are staged-scope; unused checks need full-repo consumers.
+        if self.staged_only:
+            defined_locs, defined_paths = (
+                ScriptedLocalisation.get_all_defined_localisations(
+                    mod_path=self.mod_path,
+                    lowercase=False,
+                    return_paths=True,
+                    staged_files=self.staged_files,
+                    workers=self.workers,
+                    pool=self._get_pool(),
+                )
+            )
+            missing_locs, missing_paths = (
+                ScriptedLocalisation.get_all_used_localisations(
+                    mod_path=self.mod_path,
+                    defined_names=set(all_defined_locs),
+                    lowercase=False,
+                    return_paths=True,
+                    staged_files=self.staged_files,
+                    workers=self.workers,
+                    pool=self._get_pool(),
+                )
+            )
+        else:
+            defined_locs, defined_paths = all_defined_locs, all_defined_paths
+            missing_locs, missing_paths = all_used_locs, all_used_paths
+
         self.validate_missing_scripted_localisations(
-            FALSE_POSITIVES, defined_locs, used_locs, used_paths
+            FALSE_POSITIVES, all_defined_locs, missing_locs, missing_paths
         )
         self.validate_unused_scripted_localisations(
-            FALSE_POSITIVES, defined_locs, defined_paths, used_locs
+            FALSE_POSITIVES, defined_locs, defined_paths, all_used_locs
         )
 
         # GFX icon check scans all interface/*.gfx files — skip in staged mode

@@ -1,0 +1,106 @@
+"""Focused regressions for scripted-localisation invocation scanning."""
+
+import validate_scripted_localisation as V
+
+
+def test_scripted_loc_keeps_and_reports_undefined_bracketed_invocation(tmp_path):
+    loc_dir = tmp_path / "common" / "scripted_localisation"
+    loc_dir.mkdir(parents=True)
+    path = loc_dir / "test.txt"
+    path.write_text(
+        "defined_text = { name = Wrapper text = { localization_key = [MissingNestedLoc] } }\n"
+    )
+
+    used, paths = V.process_file_for_used_localisations(
+        (str(path), {"Wrapper"}, False, str(tmp_path))
+    )
+    assert used == ["MissingNestedLoc"]
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_missing_scripted_localisations([], ["Wrapper"], used, paths)
+    assert len(validator._issues) == 1
+    assert validator._issues[0].category == "missing-scripted-loc"
+    assert "missingnestedloc" in validator._issues[0].message.lower()
+
+
+def test_defined_bracketed_invocation_is_tracked(tmp_path):
+    path = tmp_path / "consumer.txt"
+    path.write_text("custom_effect_tooltip = [DefinedNestedLoc]\n")
+
+    used, paths = V.process_file_for_used_localisations(
+        (str(path), {"DefinedNestedLoc"}, False, str(tmp_path))
+    )
+    assert used == ["DefinedNestedLoc"]
+    assert paths == {"DefinedNestedLoc": "consumer.txt"}
+
+
+def test_english_yml_keeps_undefined_bracketed_invocation(tmp_path):
+    path = tmp_path / "localisation" / "english" / "consumer_l_english.yml"
+    path.parent.mkdir(parents=True)
+    path.write_text('l_english:\n  text: "[MissingYmlLoc] [GetYear]"\n')
+    translated = tmp_path / "localisation" / "braz_por" / path.name
+    translated.parent.mkdir(parents=True)
+    translated.write_text('l_braz_por:\n  text: "[MissingYmlLoc]"\n')
+
+    used, paths = V.process_file_for_used_localisations(
+        (str(path), set(), False, str(tmp_path))
+    )
+    assert used == ["MissingYmlLoc"]
+    assert paths == {"MissingYmlLoc": "consumer_l_english.yml"}
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_missing_scripted_localisations([], [], used, paths)
+    assert validator._issues[0].file == "localisation/english/consumer_l_english.yml"
+
+
+def test_gui_keeps_undefined_bracketed_invocation(tmp_path):
+    path = tmp_path / "consumer.gui"
+    path.write_text('text = "[MissingGuiLoc]"\n')
+
+    used, paths = V.process_file_for_used_localisations(
+        (str(path), set(), False, str(tmp_path))
+    )
+    assert used == ["MissingGuiLoc"]
+    assert paths == {"MissingGuiLoc": "consumer.gui"}
+
+
+def test_scoped_bracketed_invocation_tracks_member_name():
+    assert V._scan_loc_tokens("[THIS.MD_auto_agency_status]", False) == {
+        "MD_auto_agency_status"
+    }
+
+
+def test_staged_gui_uses_full_definition_set(tmp_path):
+    loc_dir = tmp_path / "common" / "scripted_localisation"
+    loc_dir.mkdir(parents=True)
+    (loc_dir / "definitions.txt").write_text(
+        "defined_text = { name = ExistingGuiLoc text = { localization_key = KEY } }\n"
+    )
+    gui_dir = tmp_path / "interface"
+    gui_dir.mkdir()
+    gui = gui_dir / "consumer.gui"
+    gui.write_text('text = "[ExistingGuiLoc] [MissingGuiLoc]"\n')
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.staged_only = True
+    validator.staged_files = [str(gui)]
+    validator.run_validations()
+
+    missing = [
+        issue.message
+        for issue in validator._issues
+        if issue.category == "missing-scripted-loc"
+    ]
+    assert len(missing) == 1
+    assert "missingguiloc" in missing[0].lower()
+
+
+def test_builtin_and_ordinary_syntax_do_not_create_candidates():
+    text = (
+        "localization_key = ORDINARY_LOC_KEY\n"
+        "text = [GetDateText]\n"
+        "text = [ROOT.GetName]\n"
+        "text = [?country_var]\n"
+        "text = $ORDINARY_LOC_KEY$\n"
+    )
+    assert V._scan_loc_tokens(text, is_scripted_loc_file=True) == set()

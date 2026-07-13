@@ -469,13 +469,8 @@ def parse_state_building_owners(
 
             if depth == 1:
                 bm = _BUILDING_LEVEL_RE.match(stripped)
-                if bm and bm.group(1) in buildings:
-                    try:
-                        level = int(bm.group(2))
-                    except ValueError:
-                        level = 0
-                    if level >= 1:
-                        found.add(bm.group(1))
+                if bm and bm.group(1) in buildings and int(bm.group(2)) >= 1:
+                    found.add(bm.group(1))
 
             depth += stripped.count("{") - stripped.count("}")
             if depth <= 0:
@@ -799,7 +794,6 @@ def parse_history_file(
 # already stripped before this runs.
 _HISTORY_TOKEN_RE = re.compile(r'"[^"]*"|[{}=]|[^\s{}=]+')
 _SP_VALUE_RE = re.compile(r"^sp:([a-zA-Z0-9_]+)$")
-_INT_VALUE_RE = re.compile(r"^\d+$")
 
 # A DLC guard maps each constraining DLC to whether it must be present (True) or
 # absent (False) for the tagged tech/SP to apply.

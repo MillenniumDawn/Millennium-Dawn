@@ -82,6 +82,53 @@ def test_parametric_modifier_families_exempt():
     assert not _is_parametric_modifier("completely_fake_modifier_field")
 
 
+def test_repeated_unknown_modifier_is_not_known_or_reported_repeatedly(tmp_path):
+    for index in range(3):
+        path = _write_idea_file(
+            tmp_path,
+            "\t\t\t\trepeated_fake_modifier = 0.1\n",
+        )
+        path.rename(path.with_name(f"test_ideas_{index}.txt"))
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    known_good = validator._build_known_good_set()
+    assert "repeated_fake_modifier" not in known_good
+
+    validator.validate_modifier_names(known_good)
+    assert validator.warnings_found == 1
+    assert len(validator._issues) == 1
+    assert "repeated_fake_modifier" in validator._issues[0].message
+
+
+def test_dynamic_modifier_nested_typo_is_not_self_whitelisted(tmp_path):
+    definition_dir = tmp_path / "common" / "modifier_definitions"
+    definition_dir.mkdir(parents=True)
+    (definition_dir / "test.txt").write_text(
+        "known_dynamic_modifier_key = { value_type = number }\n",
+        encoding="utf-8",
+    )
+    dynamic_dir = tmp_path / "common" / "dynamic_modifiers"
+    dynamic_dir.mkdir(parents=True)
+    (dynamic_dir / "test.txt").write_text(
+        "test_dynamic_modifier = {\n"
+        "\tenable = { always = yes }\n"
+        "\tknown_dynamic_modifier_key = 0.1\n"
+        "\tnested_dynamic_modifier_typo = 0.2\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    known_good = validator._build_known_good_set()
+    assert "known_dynamic_modifier_key" in known_good
+    assert "nested_dynamic_modifier_typo" not in known_good
+
+    validator.validate_modifier_names(known_good)
+    assert validator.warnings_found == 1
+    assert len(validator._issues) == 1
+    assert "nested_dynamic_modifier_typo" in validator._issues[0].message
+
+
 def test_full_run_flags_only_undefined_modifier(tmp_path):
     """A name defined in common/modifier_definitions/ enters the known-good
     set regardless of usage frequency; a made-up name in the same block warns."""
