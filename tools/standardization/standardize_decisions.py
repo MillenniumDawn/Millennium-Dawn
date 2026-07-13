@@ -328,7 +328,7 @@ class DecisionStandardizer(BaseStandardizer):
         if props["other"]:
             for line in props["other"]:
                 if line.strip():
-                    lines.append(line.rstrip("\n"))
+                    lines.append(line.rstrip())
             lines.append("")
 
         lines.append("\t}")
