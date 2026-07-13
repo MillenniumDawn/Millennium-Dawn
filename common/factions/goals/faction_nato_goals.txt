@@ -7,23 +7,45 @@ faction_goal_transform_nato_forces = {
 		has_faction_template = faction_template_nato
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_mechanized_battalions_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_battalions_with_type@Mech_Inf_Bat
+						add = num_battalions_with_type@Arm_Inf_Bat
+						add = num_battalions_with_type@Mech_Air_Inf_Bat
+						add = num_battalions_with_type@Arm_Air_Inf_Bat
+						add = num_battalions_with_type@Mech_Marine_Bat
+						add = num_battalions_with_type@Arm_Marine_Bat
+					}
+				}
 			}
-			unit = mechanized
-			size > 999
+			set_temp_variable = {
+				num_tank_battalions_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_battalions_with_type@armor_Bat
+						add = num_battalions_with_type@L_arm_Bat
+						add = num_battalions_with_type@A_L_arm_Bat
+					}
+				}
+			}
 		}
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
-			}
-			unit = armor
-			size > 4499
+		check_variable = {
+			var = num_mechanized_battalions_faction
+			value = 1000
+			compare = greater_than_or_equals
+			tooltip = faction_goal_mechanized_bats_at_least_tt
+		}
+		check_variable = {
+			var = num_tank_battalions_faction
+			value = 4500
+			compare = greater_than_or_equals
+			tooltip = faction_goal_tank_bats_at_least_tt
 		}
 	}
 	complete_effect = {

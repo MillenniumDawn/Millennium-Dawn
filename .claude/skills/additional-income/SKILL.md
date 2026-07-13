@@ -1,3 +1,8 @@
+---
+name: additional-income
+description: 'Wire a country-specific income or expense stream into the MD money system: calculation block, hidden tooltip idea, loc key, and granting effect. Use when asked to add an income or expense stream, e.g. "/additional-income GRE golden_visa income".'
+---
+
 Add an additional income or expense stream for a country in Millennium Dawn.
 
 Arguments: $ARGUMENTS (expected format: `TAG stream_name [income|expense]`, e.g. `GRE golden_visa income` or `IRQ war_compensation expense`)
@@ -167,18 +172,4 @@ If the stream should stop at some point, add `remove_ideas = TAG_stream_name_mon
 
 ## Existing Examples
 
-### Incomes
-
-| Country | Stream                 | Variable                            | Condition                                     | Location                           |
-| ------- | ---------------------- | ----------------------------------- | --------------------------------------------- | ---------------------------------- |
-| GRE     | Golden Visa Programme  | `GRE_golden_visa_income`            | `has_completed_focus = GRE_golden_visa_deals` | `calculate_additional_income_rate` |
-| ENG     | Aston Martin           | (flat)                              | `has_idea = ENG_aston_martin_money`           | `calculate_additional_income_rate` |
-| ENG     | Visit Britain Tourism  | (flat)                              | `has_idea = ENG_visit_britain_idea`           | `calculate_additional_income_rate` |
-| HEZ     | South American Cartels | `HEZ_south_american_cartels_income` | `has_idea = HEZ_our_cartels_in_south_america` | `calculate_additional_income_rate` |
-
-### Expenses
-
-| Country | Stream                   | Variable                                   | Condition                                                             | Location                            |
-| ------- | ------------------------ | ------------------------------------------ | --------------------------------------------------------------------- | ----------------------------------- |
-| Generic | Pro-Western Propaganda   | `promote_outlook_western_costs`            | `has_decision = promote_outlook_decision_support_pro_western_parties` | `calculate_additional_expense_rate` |
-| IRQ     | War Compensation to Iran | `additional_expense_iraq_war_compensation` | (country-specific)                                                    | `calculate_additional_expense_rate` |
+For working examples, grep `calculate_additional_income_rate` in common/scripted_effects/.
