@@ -160,3 +160,32 @@ def test_builtin_and_ordinary_syntax_do_not_create_candidates():
         "text = $ORDINARY_LOC_KEY$\n"
     )
     assert V._scan_loc_tokens(text, is_scripted_loc_file=True) == set()
+
+
+def test_hyphenated_scripted_loc_is_defined_and_used():
+    # MD sub-ideology names carry hyphens (Communist-State_valid); a name class without
+    # `-` truncates them to `Communist` on both sides and invents unused findings.
+    defined, _ = V._scan_defined_locs(
+        "defined_text = { name = Communist-State_valid }", "ideologies.txt"
+    )
+    assert defined == ["Communist-State_valid"]
+    assert V._scan_loc_tokens("[Communist-State_valid]", False) == {
+        "Communist-State_valid"
+    }
+
+
+def test_reference_line_skips_substring_match(tmp_path):
+    path = tmp_path / "loc_l_english.yml"
+    path.write_text(
+        'l_english:\n a: "[SAF.GetAdjective]"\n b: "filler"\n c: "[SAF.Adjective]"\n'
+    )
+    assert V._find_reference_line(str(path), "adjective") == 4
+
+
+def test_definition_line_skips_longer_name_prefix(tmp_path):
+    path = tmp_path / "defs.txt"
+    path.write_text(
+        "defined_text = {\n\tname = Communist-State_valid\n}\n"
+        "defined_text = {\n\tname = communist\n}\n"
+    )
+    assert V._find_definition_line(str(path), "communist") == 5

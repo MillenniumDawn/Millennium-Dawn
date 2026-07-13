@@ -26,7 +26,7 @@ def _scan_defined_locs(text: str, basename: str) -> Tuple[List[str], Dict[str, s
     localisations: List[str] = []
     paths: Dict[str, str] = {}
     if "defined_text" in text and "name =" in text:
-        for match in re.findall(r"name\s*=\s*([a-zA-Z_0-9]+)", text):
+        for match in re.findall(r"name\s*=\s*(\w[\w-]*)", text):
             localisations.append(match)
             paths[match] = basename
     return (localisations, paths)
@@ -49,18 +49,58 @@ def process_file_for_defined_localisations(
     basename = os.path.basename(filename)
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.defined.lc={1 if lowercase else 0}",
+        f"scripted_loc.defined.v3.lc={1 if lowercase else 0}",
         filename,
         text_file,
         lambda: _scan_defined_locs(text_file, basename),
     )
 
 
+# Scripted loc names may contain hyphens (Communist-State_valid) and non-ASCII letters
+# (additional_income_GER_Ökosteuer); an ASCII-only class truncates both and invents findings.
 _LOC_REFERENCE_RE = re.compile(
     r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
-    r"localization_key)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)"
+    r"localization_key)\s*=\s*(\w[\w-]*)"
 )
-_BRACKET_LOC_RE = re.compile(r"\[(?:([A-Za-z_][A-Za-z0-9_]*)\.)?([A-Za-z0-9_]+)\]")
+_BRACKET_LOC_RE = re.compile(r"\[(?:([A-Za-z_][A-Za-z0-9_]*)\.)?(\w[\w-]*)\]")
+
+
+def _find_reference_line(path: str, name: str) -> int:
+    # A bare substring search lands on the wrong line: looking for `adjective` matches
+    # inside `GetAdjective`. Anchor on the call syntax instead.
+    try:
+        text = FileOpener.open_text_file(
+            path, lowercase=False, strip_comments_flag=False
+        )
+    except OSError:
+        return 0
+
+    target = name.lower()
+    for match in _BRACKET_LOC_RE.finditer(text):
+        if match.group(2).lower() == target:
+            return text.count("\n", 0, match.start()) + 1
+    for match in _LOC_REFERENCE_RE.finditer(text):
+        if match.group(1).lower() == target:
+            return text.count("\n", 0, match.start()) + 1
+    return find_line_number(path, name, lowercase=True)
+
+
+def _find_definition_line(path: str, name: str) -> int:
+    # `name = communist` as a substring also matches `name = Communist-State_valid`.
+    try:
+        text = FileOpener.open_text_file(
+            path, lowercase=False, strip_comments_flag=False
+        )
+    except OSError:
+        return 0
+
+    pattern = re.compile(
+        r"name\s*=\s*" + re.escape(name) + r"(?![A-Za-z0-9_-])", re.IGNORECASE
+    )
+    match = pattern.search(text)
+    if match:
+        return text.count("\n", 0, match.start()) + 1
+    return find_line_number(path, f"name = {name}", lowercase=True)
 
 
 def _filter_bracket_loc_candidates(
@@ -110,7 +150,7 @@ def process_file_for_used_localisations(
     is_sl = "scripted_localisation" in filename
     bracketed, explicit = disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.tokens.v3.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
+        f"scripted_loc.tokens.v5.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
         filename,
         text_file,
         lambda: _scan_loc_token_candidates(text_file, is_sl),
@@ -292,7 +332,7 @@ class Validator(BaseValidator):
                 )
                 if full_path:
                     rel_path = os.path.relpath(full_path, self.mod_path)
-                    line_num = find_line_number(full_path, loc, lowercase=True)
+                    line_num = _find_reference_line(full_path, loc)
                     results.append((loc, rel_path, line_num))
                     reported.add(loc)
 
@@ -364,9 +404,7 @@ class Validator(BaseValidator):
 
                 if full_path:
                     rel_path = os.path.relpath(full_path, self.mod_path)
-                    line_num = find_line_number(
-                        full_path, f"name = {loc}", lowercase=True
-                    )
+                    line_num = _find_definition_line(full_path, loc)
                     results.append((loc, rel_path, line_num))
                     reported.add(loc)
 
@@ -449,12 +487,9 @@ class Validator(BaseValidator):
             "getyear",
             "getmonth",
             "getday",
-            "tt",
-            "_tt",
-            "_desc",
-            "_title",
-            "button",
-            "tooltip",
+            # These are matched as substrings, so suffix entries like "tt"/"_desc" used to
+            # swallow real names (party_name_by_index_delayed_tt, opposition_party_desc,
+            # sat_N_det_tt_loc) — engine getters are already filtered by the get* prefix rule.
             "euxxx_ep_agenda",
             # Plain loc keys used as $KEY$ nested substitution wrappers in formable
             # state integration tooltips \u2014 not scripted localisations

@@ -93,6 +93,33 @@ def test_no_cache_env_bypasses_per_file(tmp_path, monkeypatch):
     assert not cache_dir.exists() or not any(cache_dir.rglob("*.pickle"))
 
 
+def test_validator_no_cache_flag_reaches_pool_workers(tmp_path, monkeypatch):
+    # --no-cache was a silent no-op: BaseValidator stored self.no_cache, but the
+    # per-file caches run in Pool workers that never see `self`. MD_NO_CACHE is the
+    # only channel that reaches them, so the constructor has to set it.
+    from validator_common import BaseValidator
+
+    class _V(BaseValidator):
+        TITLE = "T"
+
+        def run_validations(self):
+            pass
+
+    _V(mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True)
+    assert os.environ.get("MD_NO_CACHE") == "1"
+    assert disk_cache._cache_disabled() is True
+
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return "ok"
+
+    disk_cache.per_file_cached_by_content(str(tmp_path), "ns", "f.txt", "body", compute)
+    disk_cache.per_file_cached_by_content(str(tmp_path), "ns", "f.txt", "body", compute)
+    assert len(calls) == 2, "--no-cache must bypass the cache the workers actually use"
+
+
 def test_no_cache_env_bypasses_aggregate(tmp_path, monkeypatch):
     a = tmp_path / "a.txt"
     b = tmp_path / "b.txt"
