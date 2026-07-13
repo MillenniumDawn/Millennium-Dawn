@@ -11,6 +11,7 @@ on:
       - "localisation/**"
       - "interface/**"
       - "gfx/**"
+      - "*.mod"
       # Tooling paths are intentionally absent: the validator jobs gate on
       # detect-changes (content groups), so a tooling-only PR would trigger the
       # workflow but skip every validator, posting an empty report. Changes under
@@ -79,6 +80,7 @@ jobs:
       scripted-effects: ${{ steps.filter.outputs.scripted-effects }}
       style: ${{ steps.filter.outputs.style }}
       style-files: ${{ steps.filter.outputs.style_files }}
+      mod: ${{ steps.filter.outputs.mod }}
       content: ${{ steps.filter.outputs.content }}
     steps:
       # No checkout — on pull_request events dorny/paths-filter fetches the
@@ -135,6 +137,8 @@ jobs:
               - 'common/**/*.txt'
               - 'events/**/*.txt'
               - 'history/**/*.txt'
+            mod:
+              - '*.mod'
             # Union of everything any validator job consumes — gates
             # prepare-workspace so a gfx-only or workflow-only PR doesn't
             # build a ~200MB bundle no job will restore.
@@ -144,6 +148,7 @@ jobs:
               - 'history/**'
               - 'localisation/**'
               - 'interface/**'
+              - '*.mod'
 
   # ───────────────────────────────────────────────────────────────
   # Prepare workspace — the run's single checkout. Bundles the validated
@@ -179,19 +184,20 @@ jobs:
             .claude
 
       # Shared validator disk cache, built on main by validator-cache.yml.
-      # Content-hash validity tags make a stale cache safe: changed files
-      # miss and re-parse; unchanged files skip the expensive scan. The
-      # primary key never exact-matches (saved keys carry a run_id suffix);
-      # the restore-keys prefixes do the real matching, newest entry first.
+      # The source hash is a cache-generation boundary: a changed validator
+      # or parser can only restore a cache from the same generation.
+      - name: Compute validator code hash
+        id: toolshash
+        run: echo "hash=${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore shared validator disk cache
         id: valcache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .validation_cache
-          key: md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-${{ github.event.pull_request.base.sha }}
+          key: md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.event.pull_request.base.sha }}
           restore-keys: |
-            md-valcache-v1-${{ runner.os }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}-
-            md-valcache-v1-${{ runner.os }}-
+            md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
       # mkdir guarantees the .validation_cache path exists on a cold restore
       # (a missing path would degrade the bundle for every consumer).
@@ -289,7 +295,8 @@ jobs:
       needs.detect-changes.outputs.common == 'true' ||
       needs.detect-changes.outputs.events == 'true' ||
       needs.detect-changes.outputs.history == 'true' ||
-      needs.detect-changes.outputs.localisation == 'true'
+      needs.detect-changes.outputs.localisation == 'true' ||
+      needs.detect-changes.outputs.mod == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Restore prepared workspace
@@ -326,7 +333,8 @@ jobs:
       needs.detect-changes.outputs.common == 'true' ||
       needs.detect-changes.outputs.events == 'true' ||
       needs.detect-changes.outputs.history == 'true' ||
-      needs.detect-changes.outputs.localisation == 'true'
+      needs.detect-changes.outputs.localisation == 'true' ||
+      needs.detect-changes.outputs.interface == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -338,6 +346,11 @@ jobs:
           - script: validate_scripted_localisation.py
             name: scripted-localisation
             title: "Scripted Localisation"
+            # informational: 2 findings left, both ASAT_name_loc / ASAT_name_selected_loc.
+            # The ASAT missile family was never built — set_ASAT_display_array adds no model
+            # IDs, so there is nothing for the name lookups to resolve. Switch to --strict
+            # once ASAT models exist (or the ASAT UI is dropped).
+            strict: false
           - script: validate_cosmetic_tags.py
             name: cosmetic-tags
             title: "Cosmetic Tags"
@@ -433,7 +446,9 @@ jobs:
       needs.detect-changes.outputs.interface == 'true' ||
       needs.detect-changes.outputs.national-focus == 'true' ||
       needs.detect-changes.outputs.on-actions == 'true' ||
-      needs.detect-changes.outputs.scripted-effects == 'true'
+      needs.detect-changes.outputs.scripted-effects == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.common == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

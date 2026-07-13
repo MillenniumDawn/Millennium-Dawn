@@ -411,6 +411,10 @@ class BaseValidator:
         self.staged_only = staged_only
         self.workers = workers if workers else max(1, cpu_count() // 2)
         self.no_cache = no_cache
+        # Pool workers call disk_cache at module level and never see `self`, so the
+        # env var is the only channel that reaches them (fork inherits it).
+        if no_cache:
+            os.environ["MD_NO_CACHE"] = "1"
         self.staged_files = None
         self.output_lines = []
         self._pool: Optional[Pool] = None
