@@ -54,6 +54,16 @@ _SP_REQUIRED_RE = re.compile(r"is_special_project_completed\s*=\s*sp:([a-zA-Z0-9
 _CUSTOM_TOOLTIP_RE = re.compile(r"\bcustom_effect_tooltip\s*=\s*\{")
 _SP_UNLOCK_TECH_KEY_RE = re.compile(r"localization_key\s*=\s*SP_UNLOCK_TECH\b")
 _TECH_PARAM_RE = re.compile(r"\bTECH\s*=\s*([a-zA-Z0-9_]+)")
+# Direct scalar building entries inside a state's `buildings = { ... }` block
+# (e.g. `nuclear_reactor = 2`). Province-keyed sub-blocks like
+# `6050 = { naval_base = 5 }` are excluded by brace depth in the caller.
+_BUILDINGS_BLOCK_RE = re.compile(r"^buildings\s*=\s*\{")
+_BUILDING_LEVEL_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(\d+)\s*$")
+# `nuclear_status = { ... }` idea-group wrapper (nested under `ideas = { }`),
+# and a project's `set_building_level = { type = X ... }` reward grant.
+_NUCLEAR_STATUS_GROUP_RE = re.compile(r"(?m)^\s*nuclear_status\s*=\s*\{")
+_SET_BUILDING_LEVEL_RE = re.compile(r"set_building_level\s*=\s*\{")
+_BUILDING_TYPE_RE = re.compile(r"\btype\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)")
 
 
 def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict, Dict]:
@@ -347,6 +357,266 @@ def parse_sp_output_claims(mod_path: str) -> Dict[str, List[str]]:
                     claims[name].append(tp.group(1))
 
     return dict(claims)
+
+
+def parse_nuclear_status_ideas(mod_path: str) -> Set[str]:
+    """Derive the non-default member ideas of the `nuclear_status` idea group
+    from common/ideas/*.txt.
+
+    Finds the `nuclear_status = { ... }` group (nested under the outer
+    `ideas = { ... }` wrapper) and brace-matches its body, walking it one
+    nesting level at a time (mirrors the tech-block walk in
+    `parse_tech_sp_requirements`) so only direct-child ideas are collected,
+    not nested `available`/`modifier` sub-blocks. Ideas marked `default = yes`
+    are excluded — the default state is granted to every country and is never
+    a signal that one has gone nuclear. Returns an empty set when the group is
+    not found; callers must skip the check then, not treat every country as
+    non-compliant.
+    """
+    ideas_dir = os.path.join(mod_path, "common", "ideas")
+    for filepath in glob.iglob(os.path.join(ideas_dir, "*.txt")):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+        except Exception:
+            continue
+        content = strip_comments(content)
+
+        m = _NUCLEAR_STATUS_GROUP_RE.search(content)
+        if not m:
+            continue
+        end = _match_brace_end(content, m.end())
+        body = content[m.end() : end - 1]
+
+        members: Set[str] = set()
+        i, n = 0, len(body)
+        depth = 0
+        while i < n:
+            ch = body[i]
+            if ch == "{":
+                depth += 1
+                i += 1
+                continue
+            if ch == "}":
+                depth -= 1
+                i += 1
+                continue
+            if ch in " \t\n":
+                i += 1
+                continue
+            line_end = body.find("\n", i)
+            if line_end < 0:
+                line_end = n
+            line = body[i:line_end].strip()
+            member_m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", line)
+            if member_m and depth == 0:
+                name = member_m.group(1)
+                block_start = i + member_m.end()
+                block_end = _match_brace_end(body, block_start)
+                block_body = body[block_start : block_end - 1]
+                if not re.search(r"\bdefault\s*=\s*yes\b", block_body):
+                    members.add(name)
+                i = block_end
+                continue
+            i = line_end + 1 if line_end < n else n
+        return members
+
+    return set()
+
+
+def parse_state_building_owners(
+    mod_path: str, buildings: Set[str]
+) -> Dict[str, Set[str]]:
+    """One pass over history/states/*.txt mapping each building in *buildings*
+    to the set of tags that start a state with it at level >= 1.
+
+    Owner is the first `owner = TAG` line in the file. Buildings are only
+    recognized in scalar form (`nuclear_reactor = 2`) at the top level of the
+    `buildings = { ... }` block; province-keyed sub-blocks (`6050 = {
+    naval_base = 5 }`) are skipped by brace depth so a same-named building
+    nested under a province is never attributed to the state's owner. Shared
+    by the reactor/nuclear_status check and the project-granted-building
+    check — the state-file tree is parsed once, not once per check.
+    """
+    owners: Dict[str, Set[str]] = defaultdict(set)
+    states_dir = os.path.join(mod_path, "history", "states")
+
+    for filepath in glob.iglob(os.path.join(states_dir, "*.txt")):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+        except Exception:
+            continue
+        content = strip_comments(content)
+
+        owner: Optional[str] = None
+        in_buildings = False
+        depth = 0
+        found: Set[str] = set()
+
+        for line in content.split("\n"):
+            stripped = line.strip()
+            if owner is None:
+                om = _STATE_OWNER_RE.match(line)
+                if om:
+                    owner = om.group(1)
+
+            if not in_buildings:
+                if _BUILDINGS_BLOCK_RE.match(stripped):
+                    in_buildings = True
+                    depth = 1
+                continue
+
+            if depth == 1:
+                bm = _BUILDING_LEVEL_RE.match(stripped)
+                if bm and bm.group(1) in buildings and int(bm.group(2)) >= 1:
+                    found.add(bm.group(1))
+
+            depth += stripped.count("{") - stripped.count("}")
+            if depth <= 0:
+                in_buildings = False
+
+        if owner:
+            for b in found:
+                owners[b].add(owner)
+
+    return dict(owners)
+
+
+def parse_project_granted_buildings(mod_path: str) -> Dict[str, Set[str]]:
+    """Map each building type to the special project(s) whose reward grants it.
+
+    Scans common/special_projects/projects/*.txt for top-level project
+    definitions containing `set_building_level = { type = X ... }` anywhere in
+    the body (typically inside `project_output.facility_state_effects`).
+    Returned map is building -> {granting project name, ...}; a building can
+    be granted by more than one project, and completing any one satisfies the
+    history check.
+    """
+    projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
+    granted: Dict[str, Set[str]] = defaultdict(set)
+
+    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+        except Exception:
+            continue
+        content = strip_comments(content)
+
+        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
+            name = m.group(1)
+            end = _match_brace_end(content, m.end())
+            block = content[m.end() : end]
+            for sbl in _SET_BUILDING_LEVEL_RE.finditer(block):
+                sbl_end = _match_brace_end(block, sbl.end())
+                body = block[sbl.end() : sbl_end - 1]
+                tm = _BUILDING_TYPE_RE.search(body)
+                if tm:
+                    granted[tm.group(1)].add(name)
+
+    return dict(granted)
+
+
+def _tag_country_file_map(mod_path: str) -> Dict[str, str]:
+    """Map each country tag to its history/countries/ file path, derived from
+    the `TAG - Name.txt` filename convention (same convention used inline in
+    `validate_oob_references`)."""
+    countries_dir = os.path.join(mod_path, "history", "countries")
+    mapping: Dict[str, str] = {}
+    for filepath in glob.iglob(os.path.join(countries_dir, "*.txt")):
+        filename = os.path.basename(filepath)
+        tag = (
+            filename.split(" - ")[0]
+            if " - " in filename
+            else os.path.splitext(filename)[0]
+        )
+        mapping[tag] = filepath
+    return mapping
+
+
+def _load_country_contents(tag_files: Dict[str, str], tags: Set[str]) -> Dict[str, str]:
+    """Read and comment-strip each tag's history/countries/ file, for exactly
+    the tags that need checking. Shared by both building-ownership checks so a
+    tag relevant to both is only read once."""
+    content: Dict[str, str] = {}
+    for tag in tags:
+        filepath = tag_files.get(tag)
+        if not filepath:
+            continue
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content[tag] = strip_comments(f.read())
+        except Exception:
+            continue
+    return content
+
+
+def _find_reactor_owners_without_nuclear_status(
+    reactor_owners: Set[str],
+    nuclear_status_ideas: Set[str],
+    tag_country_content: Dict[str, str],
+) -> List[str]:
+    """Validate that each tag owning a state with `nuclear_reactor >= 1` at
+    game start grants at least one non-default nuclear_status idea in its
+    country file (word-boundary token match on comment-stripped content).
+    Returns error strings. A tag absent from `tag_country_content` has no
+    country file.
+    """
+    results = []
+    for tag in sorted(reactor_owners):
+        content = tag_country_content.get(tag)
+        if content is None:
+            results.append(
+                f"{tag}: owns a state with a nuclear_reactor at game start "
+                f"but has no history/countries/ file"
+            )
+            continue
+        if not any(
+            re.search(rf"\b{re.escape(idea)}\b", content)
+            for idea in nuclear_status_ideas
+        ):
+            ideas_str = ", ".join(sorted(nuclear_status_ideas))
+            results.append(
+                f"{tag}: owns a state with a nuclear_reactor at game start "
+                f"but grants no nuclear_status idea ({ideas_str})"
+            )
+    return results
+
+
+def _find_buildings_without_granting_project(
+    building_owners: Dict[str, Set[str]],
+    project_granted_buildings: Dict[str, Set[str]],
+    tag_country_content: Dict[str, str],
+) -> List[str]:
+    """Validate that each tag owning a project-granted building at game start
+    completes at least one granting project in its country file. Returns error
+    strings. A tag absent from `tag_country_content` has no country file.
+    """
+    results = []
+    for building in sorted(project_granted_buildings):
+        owners = building_owners.get(building, set())
+        granting_projects = project_granted_buildings[building]
+        for tag in sorted(owners):
+            content = tag_country_content.get(tag)
+            if content is None:
+                results.append(
+                    f"{tag}: owns a state starting with {building} but has "
+                    f"no history/countries/ file"
+                )
+                continue
+            if not any(
+                re.search(
+                    rf"complete_special_project\s*=\s*sp:{re.escape(p)}\b", content
+                )
+                for p in granting_projects
+            ):
+                projects_str = ", ".join(f"sp:{p}" for p in sorted(granting_projects))
+                results.append(
+                    f"{tag}: owns a state starting with {building} but never "
+                    f"completes the granting special project ({projects_str})"
+                )
+    return results
 
 
 def validate_sp_output_consistency(
@@ -1140,6 +1410,10 @@ class Validator(BaseValidator):
         self.sp_allowed_dlc = {}
         self.sp_always_yes = set()
         self.sp_output_claims = {}
+        self.project_granted_buildings = {}
+        self.nuclear_status_ideas = set()
+        self.building_owners = {}
+        self.tag_country_contents = {}
 
     def _build_tech_graph(self):
         """Build the technology dependency graph from tech definition files."""
@@ -1173,6 +1447,38 @@ class Validator(BaseValidator):
         self.log(
             f"  Found {len(self.tech_sp_reqs)} technologies requiring special projects"
         )
+
+    def _build_building_ownership(self):
+        """Parse the special-project building-grant map and the nuclear_status
+        idea group, then do the single state-file building-ownership pass
+        shared by the two building checks."""
+        self._log_section("Building state building-ownership maps...")
+
+        self.project_granted_buildings = parse_project_granted_buildings(self.mod_path)
+        self.nuclear_status_ideas = parse_nuclear_status_ideas(self.mod_path)
+        tag_country_files = _tag_country_file_map(self.mod_path)
+
+        buildings_of_interest = {"nuclear_reactor"} | set(
+            self.project_granted_buildings
+        )
+        self.building_owners = parse_state_building_owners(
+            self.mod_path, buildings_of_interest
+        )
+
+        owner_tags: Set[str] = set()
+        for building in buildings_of_interest:
+            owner_tags |= self.building_owners.get(building, set())
+        self.tag_country_contents = _load_country_contents(
+            tag_country_files, owner_tags
+        )
+
+        self.log(
+            f"  Found {len(self.project_granted_buildings)} project-granted building types"
+        )
+        self.log(
+            f"  Found {len(self.nuclear_status_ideas)} non-default nuclear_status ideas"
+        )
+        self.log(f"  Found {len(owner_tags)} tags owning a tracked building")
 
     def _get_history_files(self) -> List[str]:
         """Get list of history country files to validate."""
@@ -1333,6 +1639,53 @@ class Validator(BaseValidator):
             "History files missing a capital definition:",
         )
 
+    def validate_reactor_nuclear_status(self):
+        """Validate that every tag owning a nuclear_reactor at game start
+        grants a non-default nuclear_status idea in its country file."""
+        self._log_section(
+            "Checking nuclear-reactor owners for a nuclear_status idea..."
+        )
+        if not self.nuclear_status_ideas:
+            self.log(
+                "  Note: no non-default nuclear_status idea found in "
+                "common/ideas/*.txt; skipping check"
+            )
+            return
+
+        reactor_owners = self.building_owners.get("nuclear_reactor", set())
+        results = _find_reactor_owners_without_nuclear_status(
+            reactor_owners, self.nuclear_status_ideas, self.tag_country_contents
+        )
+        self._report(
+            results,
+            "✓ All nuclear-reactor owners grant a nuclear_status idea",
+            "Nuclear-reactor owners missing a nuclear_status idea:",
+        )
+
+    def validate_project_granted_buildings(self):
+        """Validate that every tag owning a project-granted building at game
+        start completes the granting special project in its country file."""
+        self._log_section(
+            "Checking project-granted buildings for the granting special project..."
+        )
+        if not self.project_granted_buildings:
+            self.log(
+                "  Note: no set_building_level grants found in "
+                "common/special_projects/projects/*.txt; skipping check"
+            )
+            return
+
+        results = _find_buildings_without_granting_project(
+            self.building_owners,
+            self.project_granted_buildings,
+            self.tag_country_contents,
+        )
+        self._report(
+            results,
+            "✓ All project-granted buildings are paired with the granting special project",
+            "States starting with a project-granted building whose owner never completes the project:",
+        )
+
     def run_validations(self):
         self._build_tech_graph()
         self.validate_tech_dependencies()
@@ -1343,6 +1696,9 @@ class Validator(BaseValidator):
         self.validate_sp_output_consistency()
         self.validate_oob_references()
         self.validate_capital_defined()
+        self._build_building_ownership()
+        self.validate_reactor_nuclear_status()
+        self.validate_project_granted_buildings()
 
 
 if __name__ == "__main__":
