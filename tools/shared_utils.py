@@ -290,6 +290,46 @@ def collapse_or_compact(
     return [f"{indent}{_normalize_oneline_braces(text)}"]
 
 
+_FACTOR_TOKEN_RE = re.compile(r"\bfactor\b")
+_BASE_TOKEN_RE = re.compile(r"\bbase\b")
+
+
+def convert_root_factor_to_base(block_lines: List[str]) -> List[str]:
+    """Rename ``factor`` to ``base`` at the root of an ``ai_will_do`` block.
+
+    MD convention (enforced by check_common_mistakes) is ``base`` at the root;
+    ``factor`` belongs only inside ``modifier`` children, which are left
+    untouched. No-op when the root already has a ``base`` — converting there
+    would emit a duplicate key.
+    """
+
+    def _root_spans(pattern) -> List[Tuple[int, int, int]]:
+        spans = []
+        depth = 0
+        for idx, line in enumerate(block_lines):
+            code = strip_inline_comment(line)
+            pos = 0
+            for m in pattern.finditer(code):
+                depth += code.count("{", pos, m.start()) - code.count(
+                    "}", pos, m.start()
+                )
+                pos = m.start()
+                if depth == 1:
+                    spans.append((idx, m.start(), m.end()))
+            depth += code.count("{", pos) - code.count("}", pos)
+        return spans
+
+    if not block_lines or _root_spans(_BASE_TOKEN_RE):
+        return block_lines
+    spans = _root_spans(_FACTOR_TOKEN_RE)
+    if not spans:
+        return block_lines
+    out = list(block_lines)
+    for idx, start, end in reversed(spans):
+        out[idx] = out[idx][:start] + "base" + out[idx][end:]
+    return out
+
+
 def create_backup(filename: str) -> str:
     """Create a backup of the input file"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
