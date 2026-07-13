@@ -234,6 +234,13 @@ class DecisionStandardizer(BaseStandardizer):
             "other": [],
         }
 
+        if block_lines:
+            first_line = block_lines[0].strip()
+            if first_line and not first_line.startswith("#"):
+                id_match = PROP_NAME_RE.match(first_line)
+                if id_match:
+                    props["id"] = id_match.group(1)
+
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
@@ -248,9 +255,6 @@ class DecisionStandardizer(BaseStandardizer):
                 i = next_i
                 continue
             else:
-                # The decision ID is the first word of the first non-comment line.
-                if not props["id"] and line and not line.startswith("#"):
-                    props["id"] = line.split()[0] if line.split() else ""
                 props["other"].append(block_lines[i])
 
             i += 1
@@ -324,7 +328,7 @@ class DecisionStandardizer(BaseStandardizer):
         if props["other"]:
             for line in props["other"]:
                 if line.strip():
-                    lines.append(line)
+                    lines.append(line.rstrip("\n"))
             lines.append("")
 
         lines.append("\t}")
