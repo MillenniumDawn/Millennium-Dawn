@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """Validate modifier names inside modifier = {} blocks in Millennium Dawn.
 
-Builds a known-good set from codebase frequency (3+ uses = valid). Custom MD
-modifiers in common/modifiers/ and common/dynamic_modifiers/ are always valid.
-Targeted modifiers (XXX_opinion, XXX_autonomy_gain) are skipped.
+Builds a known-good set from authoritative documentation and explicit modifier
+definitions. Targeted modifiers (XXX_opinion, XXX_autonomy_gain) are skipped.
 """
 
 import os
 import re
 import sys
-from collections import Counter
-from typing import FrozenSet, List, Set, Tuple
+from typing import Dict, FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import compute_line_offsets, line_for_offset
+from shared_utils import compute_line_offsets, extract_block_from_text, line_for_offset
 from validator_common import (
     BaseValidator,
     FileOpener,
@@ -40,6 +38,10 @@ _NON_MODIFIER_KEYS: FrozenSet[str] = frozenset(
         "icon",
         "enable",
         "remove_trigger",
+        # Vanilla dynamic-modifier flag: "if yes this modifier will also be
+        # read in combat" (documented in vanilla 0_dynamic_modifiers.txt).
+        "attacker_modifier",
+        "custom_modifier_tooltip",
         "var",
         "compare",
         # HOI4 logic blocks (can nest inside modifier)
@@ -75,13 +77,10 @@ _TARGETED_MODIFIER_RE = re.compile(r"^[A-Z]{2,3}_[a-z]")
 # Some MD custom modifiers use mixed case (e.g. MD_something) — allow those.
 _MODIFIER_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$|^[A-Z][A-Za-z0-9_]*$")
 
-_FREQUENCY_THRESHOLD = 3
-
 # Parametric modifier families. HOI4 generates one concrete modifier per game
-# entity for each of these — e.g. the building infrastructure yields
-# state_repair_speed_infrastructure_factor, the trait superior_tactician yields
-# trait_superior_tactician_xp_gain_factor. They are valid but appear too rarely,
-# or only in decision files, to clear the frequency threshold.
+# entity for each of these, e.g. the building infrastructure yields
+# state_repair_speed_infrastructure_factor and the trait superior_tactician yields
+# trait_superior_tactician_xp_gain_factor.
 #
 # Sourced from resources/documentation/modifiers_documentation.md. Families with
 # an over-broad generic suffix (<ModifierStat>_factor, <Technology>_cost_factor,
@@ -255,8 +254,8 @@ def _is_ai_weight_block(body: str) -> bool:
     return False
 
 
-def _extract_modifier_names_from_body(body: str) -> List[str]:
-    """Extract modifier key names from a modifier block body.
+def _extract_modifier_entries_from_body(body: str) -> List[Tuple[str, int]]:
+    """Extract (modifier key name, 0-based line offset within body) pairs.
 
     Skips:
     - Lines that open sub-blocks (key = { ... })
@@ -264,11 +263,11 @@ def _extract_modifier_names_from_body(body: str) -> List[str]:
     - Targeted modifier entries (XXX_opinion where XXX is a country tag)
     - Anything that doesn't look like a valid modifier name
     """
-    names: List[str] = []
+    entries: List[Tuple[str, int]] = []
     # Only look at top-level keys in the body (depth 0)
     depth = 0
     lines = body.split("\n")
-    for line in lines:
+    for offset, line in enumerate(lines):
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
@@ -297,82 +296,21 @@ def _extract_modifier_names_from_body(body: str) -> List[str]:
         if not _MODIFIER_NAME_RE.match(key):
             continue
 
-        names.append(key)
-    return names
+        entries.append((key, offset))
+    return entries
 
 
-def _harvest_modifiers_from_file(args: Tuple[str, str]) -> List[str]:
-    """Pool worker: extract all modifier names from a single file."""
-    filepath, mod_path = args
-    if should_skip_file(filepath):
-        return []
-    text = FileOpener.open_text_file(
-        filepath, lowercase=False, strip_comments_flag=True
-    )
-    if not text or "modifier" not in text:
-        return []
-
-    def _compute():
-        names: List[str] = []
-        for _lineno, body in _extract_modifier_blocks(text):
-            if _is_ai_weight_block(body):
-                continue
-            names.extend(_extract_modifier_names_from_body(body))
-        return names
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "modifiers.harvest", filepath, text, _compute
-    )
-
-
-def _harvest_flat_modifiers_from_traits_file(args: Tuple[str, str]) -> List[str]:
-    """Pool worker: extract top-level modifier keys from traits files.
-
-    Traits files (common/country_leader/*.txt, common/characters/*.txt) often
-    place modifier keys directly at the trait body level (not in modifier = {}).
-    We harvest these to supplement the known-good set.
-    """
-    filepath, mod_path = args
-    if should_skip_file(filepath):
-        return []
-    text = FileOpener.open_text_file(
-        filepath, lowercase=False, strip_comments_flag=True
-    )
-    if not text:
-        return []
-
-    def _compute():
-        # Collect keys that appear at depth 2 (inside leader_traits = { trait = { KEY = VAL } })
-        # We do a simple heuristic: any `[a-z_]+ = <number>` at exactly 2 braces deep.
-        names: List[str] = []
-        depth = 0
-        for line in text.split("\n"):
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
-            opens = stripped.count("{")
-            closes = stripped.count("}")
-            new_depth = depth + opens - closes
-            # At depth 2 we're inside a trait body
-            if depth == 2 and opens == 0 and closes == 0:
-                m = re.match(r"^([a-z][a-z0-9_]*)\s*=\s*(-?[0-9])", stripped)
-                if m:
-                    key = m.group(1)
-                    if key not in _NON_MODIFIER_KEYS and _MODIFIER_NAME_RE.match(key):
-                        names.append(key)
-            depth = new_depth
-        return names
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "modifiers.traits", filepath, text, _compute
-    )
+def _extract_modifier_names_from_body(body: str) -> List[str]:
+    """Extract modifier key names from a modifier block body. See
+    _extract_modifier_entries_from_body for the skip rules."""
+    return [name for name, _offset in _extract_modifier_entries_from_body(body)]
 
 
 def _is_parametric_modifier(name: str) -> bool:
     """True if ``name`` matches a parametric HOI4 modifier family.
 
-    See _PARAMETRIC_MODIFIER_PATTERNS — these are engine-generated per-entity
-    modifiers that are valid but too rare to clear the frequency threshold.
+    See _PARAMETRIC_MODIFIER_PATTERNS. These are engine-generated per-entity
+    modifiers documented by the vanilla modifier reference.
     """
     return any(pattern.match(name) for pattern in _PARAMETRIC_MODIFIER_PATTERNS)
 
@@ -384,32 +322,55 @@ def _is_parametric_modifier(name: str) -> bool:
 _DOC_REL_PATH = os.path.join("resources", "documentation", "modifiers_documentation.md")
 _DOC_CONCRETE_RE = re.compile(r"^## ([a-z][a-z0-9_]*)\s*$", re.MULTILINE)
 _DOC_MODIFIED_TYPES_RE = re.compile(r"\*\*Modified types\*\*:\s*(.+)")
+_DOC_SPAN_PLACEHOLDER_RE = re.compile(r"-([a-z0-9]+)-")
+
+# modifier_army_sub_unit_<Unit>_attack/defence_factor is only documented as a
+# concrete per-vanilla-unit listing (no <span> template — every vanilla sub-unit
+# type gets its own header), but the engine generates the same pair for any
+# sub_units entry, including MD's own. Expand these against harvested MD names
+# the same way as the doc's genuine unit-keyed templates.
+_EXTRA_UNIT_TEMPLATES: Tuple[str, ...] = (
+    "modifier_army_sub_unit_{}_attack_factor",
+    "modifier_army_sub_unit_{}_defence_factor",
+)
 
 
-def _load_documented_modifiers(doc_path: str) -> Set[str]:
-    """Build a known-good set from the vanilla modifier documentation.
+def _load_documented_modifiers(
+    doc_path: str,
+) -> Tuple[Set[str], Dict[str, List[str]]]:
+    """Build a known-good set + parametric templates from the vanilla modifier documentation.
 
     Adds every concrete `## name` header, then expands each parametric family
     (`## <span id="-building-_max_level_terrain_limit">…`) against its
     documented **Modified types** list. Expansion is exact — only entities the
     doc actually lists pass — so it never whitelists a typo the way a broad
-    `<anything>_factor` regex would. Returns an empty set if the doc is missing.
+    `<anything>_factor` regex would.
+
+    Also returns every single-placeholder template grouped by its placeholder
+    word (e.g. "unit" -> ["experience_gain_{}_training_factor", ...]) so callers
+    can expand a family against a name list not documented in the vanilla doc
+    (MD's own sub-units). Returns ({}, {}) if the doc is missing.
     """
     try:
         with open(doc_path, encoding="utf-8") as fh:
             text = fh.read()
     except OSError:
-        return set()
+        return set(), {}
 
     names: Set[str] = set(_DOC_CONCRETE_RE.findall(text))
+    templates_by_word: Dict[str, List[str]] = {}
 
     for section in re.split(r"^## ", text, flags=re.MULTILINE):
         m = re.match(r'<span id="([^"]+)">', section)
         if not m:
             continue
-        template = re.sub(r"-[a-z0-9]+-", "{}", m.group(1))
+        anchor = m.group(1)
+        template = re.sub(r"-[a-z0-9]+-", "{}", anchor)
         if "{}" not in template:
             continue
+        words = _DOC_SPAN_PLACEHOLDER_RE.findall(anchor)
+        if len(words) == 1:
+            templates_by_word.setdefault(words[0], []).append(template)
         types_line = _DOC_MODIFIED_TYPES_RE.search(section)
         if not types_line:
             continue
@@ -423,7 +384,8 @@ def _load_documented_modifiers(doc_path: str) -> Set[str]:
                 continue
             if _MODIFIER_NAME_RE.match(concrete):
                 names.add(concrete)
-    return names
+
+    return names, templates_by_word
 
 
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
@@ -432,9 +394,8 @@ _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]
 def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     """Every idea slot auto-generates a `<slot>_cost_factor` modifier.
 
-    These are valid but live only in idea/decision files and rarely clear the
-    frequency threshold, so harvest the slot names from common/idea_tags and
-    register the generated modifier directly. Case is preserved to match usage.
+    Harvest the slot names from common/idea_tags and register the generated
+    modifier directly. Case is preserved to match usage.
     """
     names: Set[str] = set()
     for filepath in idea_tags_files:
@@ -450,20 +411,97 @@ def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     return names
 
 
-def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
-    """Return (name, 1-based line number) for each top-level dynamic modifier
-    definition (`name = { ... }` at depth 0) in a common/dynamic_modifiers/*.txt
-    file."""
-    names: List[Tuple[str, int]] = []
-    depth = 0
-    for lineno, raw in enumerate(text.split("\n"), 1):
-        line = raw.strip()
-        if depth == 0:
-            match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", line)
-            if match:
-                names.append((match.group(1), lineno))
-        depth += line.count("{") - line.count("}")
+def _extract_top_level_definition_blocks(text: str) -> List[Tuple[str, int, str]]:
+    """Return (name, line, body) for blocks assigned at file scope."""
+    blocks: List[Tuple[str, int, str]] = []
+    cursor = 0
+    in_string = False
+    while cursor < len(text):
+        char = text[cursor]
+        if char == '"':
+            in_string = not in_string
+            cursor += 1
+            continue
+        if in_string or not (char.isalpha() or char == "_"):
+            cursor += 1
+            continue
+
+        end_name = cursor + 1
+        while end_name < len(text) and (
+            text[end_name].isalnum() or text[end_name] == "_"
+        ):
+            end_name += 1
+        equals = end_name
+        while equals < len(text) and text[equals].isspace():
+            equals += 1
+        if equals >= len(text) or text[equals] != "=":
+            cursor = end_name
+            continue
+        opener = equals + 1
+        while opener < len(text) and text[opener].isspace():
+            opener += 1
+        if opener >= len(text) or text[opener] != "{":
+            cursor = end_name
+            continue
+
+        body, end = extract_block_from_text(text, opener)
+        if end == -1:
+            break
+        line = text.count("\n", 0, cursor) + 1
+        blocks.append((text[cursor:end_name], line, body))
+        cursor = end
+    return blocks
+
+
+def _extract_top_level_definition_names(text: str) -> Set[str]:
+    """Return valid names assigned to blocks at the file's top level."""
+    return {
+        name
+        for name, _line, _body in _extract_top_level_definition_blocks(text)
+        if _MODIFIER_NAME_RE.match(name) and name not in _NON_MODIFIER_KEYS
+    }
+
+
+def _harvest_md_sub_unit_names(unit_files: List[str]) -> Set[str]:
+    """Sub-unit type names defined under top-level ``sub_units = { ... }`` blocks.
+
+    Unit files can carry other top-level blocks (equipment filters, etc.), so
+    only the sub_units block's own top-level keys are harvested.
+    """
+    names: Set[str] = set()
+    for filepath in unit_files:
+        text = FileOpener.open_text_file(
+            filepath, lowercase=False, strip_comments_flag=True
+        )
+        if not text or "sub_units" not in text:
+            continue
+        for name, _line, body in _extract_top_level_definition_blocks(text):
+            if name != "sub_units":
+                continue
+            for sub_name, _l, _b in _extract_top_level_definition_blocks(body):
+                names.add(sub_name)
     return names
+
+
+def _harvest_md_operation_names(operation_files: List[str]) -> Set[str]:
+    """Operation names — every top-level block in common/operations files."""
+    names: Set[str] = set()
+    for filepath in operation_files:
+        text = FileOpener.open_text_file(
+            filepath, lowercase=False, strip_comments_flag=True
+        )
+        if not text:
+            continue
+        for name, _line, _body in _extract_top_level_definition_blocks(text):
+            names.add(name)
+    return names
+
+
+def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
+    """Return names and lines of top-level dynamic modifier definitions."""
+    return [
+        (name, line) for name, line, _body in _extract_top_level_definition_blocks(text)
+    ]
 
 
 def _check_file_for_unknown_modifiers(
@@ -479,25 +517,32 @@ def _check_file_for_unknown_modifiers(
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
     )
-    if not text or "modifier" not in text:
-        return []
-
     rel = os.path.relpath(filepath, mod_path)
+    is_dynamic = rel.replace("\\", "/").startswith("common/dynamic_modifiers/")
+    if not text or ("modifier" not in text and not is_dynamic):
+        return []
 
     def _compute():
         # Parse all modifier names in the file (independent of known_good so the
         # cached value is a pure function of file content); the known_good filter
         # is applied below on the cached result.
         parsed: List[Tuple[str, str, int]] = []
-        for lineno, body in _extract_modifier_blocks(text):
-            if _is_ai_weight_block(body):
-                continue
-            for name in _extract_modifier_names_from_body(body):
-                parsed.append((name, rel, lineno))
+        if is_dynamic:
+            # Dynamic modifier blocks can run to dozens of keys — report each
+            # key's own line instead of the enclosing block's header line.
+            for _name, block_line, body in _extract_top_level_definition_blocks(text):
+                for name, offset in _extract_modifier_entries_from_body(body):
+                    parsed.append((name, rel, block_line + offset))
+        else:
+            for lineno, body in _extract_modifier_blocks(text):
+                if _is_ai_weight_block(body):
+                    continue
+                for name in _extract_modifier_names_from_body(body):
+                    parsed.append((name, rel, lineno))
         return parsed
 
     parsed = disk_cache.per_file_cached_by_content(
-        mod_path, "modifiers.check", filepath, text, _compute
+        mod_path, "modifiers.check.v2", filepath, text, _compute
     )
 
     return [
@@ -509,25 +554,9 @@ class Validator(BaseValidator):
     TITLE = "MODIFIER NAME VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    # Source directories for harvesting the known-good modifier set.
-    # Always scanned in full regardless of staged mode.
-    _HARVEST_PATTERNS: List[str] = [
-        "common/ideas/**/*.txt",
-        "common/national_focus/**/*.txt",
-        "common/country_leader/**/*.txt",
-        "common/characters/**/*.txt",
-        "common/dynamic_modifiers/**/*.txt",
-        "common/modifiers/**/*.txt",
-        "common/opinion_modifiers/**/*.txt",
-    ]
-
-    # Explicit modifier definition directories — every top-level key is a valid
-    # modifier name regardless of usage frequency.
-    _DEFINITION_PATTERNS: List[str] = [
-        "common/modifiers/**/*.txt",
-        "common/dynamic_modifiers/**/*.txt",
-        "common/modifier_definitions/**/*.txt",
-    ]
+    # Explicit modifier definitions. Static and dynamic modifier files consume
+    # modifier keys inside their top-level blocks; they do not define those keys.
+    _DEFINITION_PATTERNS: List[str] = ["common/modifier_definitions/**/*.txt"]
 
     # Source patterns for validation targets
     _VALIDATE_PATTERNS: List[str] = [
@@ -541,80 +570,28 @@ class Validator(BaseValidator):
         super().__init__(mod_path, **kwargs)
 
     def _build_known_good_set(self) -> FrozenSet[str]:
-        """Scan the codebase to build a frequency table of modifier names.
+        """Build the known-good set from authoritative modifier sources."""
+        self.log("  Building known-good modifier set...")
 
-        Names that appear 3+ times across all source files are considered
-        "known good". Names from custom MD modifier definition files are
-        always added regardless of frequency.
+        known_good: Set[str] = set()
 
-        Returns a frozenset of known-good modifier names.
-        """
-        self.log("  Building known-good modifier set from codebase...")
-
-        # Always scan the full codebase for the reference set
-        saved = self.staged_only
-        self.staged_only = False
-        harvest_files = self._collect_files(self._HARVEST_PATTERNS)
-        self.staged_only = saved
-
-        self.log(f"  Harvesting from {len(harvest_files)} files...")
-
-        # Traits files use flat modifier keys, not modifier = {} blocks
-        traits_files = [
-            f for f in harvest_files if "country_leader" in f or "characters" in f
-        ]
-        other_files = [f for f in harvest_files if f not in set(traits_files)]
-
-        all_names: List[str] = []
-
-        # Harvest modifier = {} blocks from main files
-        block_results = self._pool_map(
-            _harvest_modifiers_from_file,
-            [(f, self.mod_path) for f in other_files],
-            chunksize=50,
-        )
-        for batch in block_results:
-            all_names.extend(batch)
-
-        # Harvest flat keys from traits files
-        trait_results = self._pool_map(
-            _harvest_flat_modifiers_from_traits_file,
-            [(f, self.mod_path) for f in traits_files],
-            chunksize=50,
-        )
-        for batch in trait_results:
-            all_names.extend(batch)
-
-        freq = Counter(all_names)
-        known_good: Set[str] = {
-            name for name, count in freq.items() if count >= _FREQUENCY_THRESHOLD
-        }
-
-        # Also collect names explicitly defined in modifier definition files
-        # (common/modifiers/, common/dynamic_modifiers/, common/modifier_definitions/).
-        # These are always valid regardless of frequency.
+        # Collect names explicitly defined in modifier definition files.
         definition_files = self._collect_files(
             self._DEFINITION_PATTERNS,
             ignore_staged=True,
         )
-        def_name_re = re.compile(r"^\s*([a-z][a-z0-9_]*)\s*=\s*", re.MULTILINE)
         for filepath in definition_files:
-            try:
-                with open(filepath, encoding="utf-8-sig") as fh:
-                    content = fh.read()
-            except Exception:
+            content = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not content:
                 continue
-            # In modifier definition files, top-level keys ARE modifier names
-            # (they appear inside a named block like weather_rain = { KEY = val })
-            for m in def_name_re.finditer(content):
-                key = m.group(1)
-                if key not in _NON_MODIFIER_KEYS and _MODIFIER_NAME_RE.match(key):
-                    known_good.add(key)
+            known_good.update(_extract_top_level_definition_names(content))
 
         # Authoritative vanilla reference — concrete modifiers plus parametric
         # families expanded against their documented Modified types.
         doc_path = os.path.join(self.mod_path, _DOC_REL_PATH)
-        documented = _load_documented_modifiers(doc_path)
+        documented, templates_by_word = _load_documented_modifiers(doc_path)
         if not documented:
             self.log(
                 f"  WARNING: {_DOC_REL_PATH} missing or empty — known-good set is "
@@ -630,10 +607,40 @@ class Validator(BaseValidator):
         slot_factors = _harvest_idea_slot_cost_factors(idea_tag_files)
         known_good |= slot_factors
 
+        # Engine-generated per-sub-unit modifiers (unit-keyed doc templates plus
+        # modifier_army_sub_unit_*, doc-concrete for vanilla only) for MD's own
+        # sub_units entries — the vanilla doc has no MD unit names to expand against.
+        unit_files = self._collect_files(["common/units/**/*.txt"], ignore_staged=True)
+        md_sub_units = _harvest_md_sub_unit_names(unit_files)
+        unit_templates = list(templates_by_word.get("unit", [])) + list(
+            _EXTRA_UNIT_TEMPLATES
+        )
+        sub_unit_modifiers = {
+            template.format(name)
+            for template in unit_templates
+            for name in md_sub_units
+        }
+        known_good |= sub_unit_modifiers
+
+        # Same for operation-keyed families (<Operation>_cost/_outcome/_risk):
+        # the doc's Modified types only list vanilla operations, so expand the
+        # templates against MD's own common/operations definitions too.
+        operation_files = self._collect_files(
+            ["common/operations/**/*.txt"], ignore_staged=True
+        )
+        md_operations = _harvest_md_operation_names(operation_files)
+        operation_modifiers = {
+            template.format(name)
+            for template in templates_by_word.get("operation", [])
+            for name in md_operations
+        }
+        known_good |= operation_modifiers
+
         self.log(
             f"  Known-good modifier set: {len(known_good)} names "
-            f"(from {len(freq)} harvested, {len(documented)} documented, "
-            f"{len(slot_factors)} slot cost factors, threshold={_FREQUENCY_THRESHOLD})"
+            f"({len(documented)} documented, {len(slot_factors)} slot cost factors, "
+            f"{len(sub_unit_modifiers)} MD sub-unit modifiers, "
+            f"{len(operation_modifiers)} MD operation modifiers)"
         )
         return frozenset(known_good)
 
@@ -649,16 +656,12 @@ class Validator(BaseValidator):
             _check_file_for_unknown_modifiers, args_list, chunksize=30
         )
 
-        # Collect and deduplicate
-        seen: Set[Tuple[str, str, int]] = set()
-        unknown_errors: List[Tuple[str, str, int]] = []
+        # Report each unknown name once. Repeated use is not proof of validity and
+        # should not produce hundreds of identical findings either.
+        unknown_errors: Dict[str, Tuple[str, int]] = {}
 
         for batch in raw_results:
             for name, rel, lineno in batch:
-                key = (name, rel, lineno)
-                if key in seen:
-                    continue
-                seen.add(key)
                 # Modifiers prefixed with MD_ or md_ are always valid (custom MD)
                 if name.startswith("MD_") or name.startswith("md_"):
                     continue
@@ -666,12 +669,14 @@ class Validator(BaseValidator):
                 # trait, unit, doctrine, resource, etc.)
                 if _is_parametric_modifier(name):
                     continue
-                unknown_errors.append((name, rel, lineno))
+                unknown_errors.setdefault(name, (rel, lineno))
 
         # Format for _report: (message, file, line)
         formatted = [
             (f"Unknown modifier '{name}'", rel, lineno)
-            for name, rel, lineno in sorted(unknown_errors, key=lambda x: (x[1], x[2]))
+            for name, (rel, lineno) in sorted(
+                unknown_errors.items(), key=lambda item: (item[1][0], item[1][1])
+            )
         ]
 
         self._report(
