@@ -13,7 +13,13 @@ import time
 from datetime import datetime
 
 from common_utils import compact_icon, compact_search_filters
-from shared_utils import collapse_or_compact, extract_block, log_message
+from shared_utils import (
+    collapse_or_compact,
+    convert_root_factor_to_base,
+    extract_block,
+    log_message,
+    strip_inline_comment,
+)
 
 
 def is_empty_block(block_lines):
@@ -82,8 +88,39 @@ _COMMENTED_EMPTY_BLOCK_RE = re.compile(
 # Matches an existing log line so we can correct a wrong focus ID or missing prefix.
 # Handles [Root.GetName] / [This.GetName] (any capitalisation) and an optional "Focus " prefix.
 _LOG_FOCUS_RE = re.compile(
-    r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:Focus\s+)?(\w+)(")'
+    r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:[Ff]ocus\s+)?([\w-]+)(")'
 )
+
+
+def _split_block(block_lines):
+    """Split an extracted block into (header, inner_lines, close_line).
+    Returns None when the shape isn't a recognizable block."""
+    first = block_lines[0]
+    if len(block_lines) == 1:
+        code = strip_inline_comment(first)
+        if "{" not in code or code.count("{") != code.count("}"):
+            return None
+        open_idx = first.index("{")
+        close_idx = first.rindex("}")
+        indent = first[: len(first) - len(first.lstrip())]
+        inner = first[open_idx + 1 : close_idx].strip()
+        inner_lines = [f"{indent}\t{inner}"] if inner else []
+        return first[: open_idx + 1], inner_lines, f"{indent}}}"
+    if block_lines[-1].strip() != "}":
+        return None
+    return first, block_lines[1:-1], block_lines[-1]
+
+
+def _merge_duplicate_blocks(first, second):
+    """The engine ANDs duplicate trigger blocks and runs duplicate effect
+    blocks in order, so concatenating inner lines under one header preserves
+    semantics. Falls back to emitting both blocks when a shape is opaque."""
+    a = _split_block(first)
+    b = _split_block(second)
+    if a is None or b is None:
+        return first + second
+    header, inner_a, close = a
+    return [header] + inner_a + b[1] + [close]
 
 
 def extract_focus_properties(focus_lines):
@@ -160,6 +197,8 @@ def extract_focus_properties(focus_lines):
             if not skip_empty or not is_empty_block(block_lines):
                 if style.endswith("list"):
                     props[key].append(block_lines)
+                elif props[key]:
+                    props[key] = _merge_duplicate_blocks(props[key], block_lines)
                 else:
                     props[key] = block_lines
             i = next_i
@@ -415,7 +454,8 @@ def format_focus_block(props, block_type="focus"):
         if props["other"]:
             lines.append("")
 
-    focus_id = props["id"].split("=")[1].strip() if props["id"] else ""
+    # id lines may carry a trailing comment — keep it out of the log string
+    focus_id = props["id"].split("=")[1].split("#")[0].strip() if props["id"] else ""
 
     # 14. Completion reward (add log if missing)
     emit_effect_block_with_log(lines, props["completion_reward"], focus_id)
@@ -440,30 +480,15 @@ def format_focus_block(props, block_type="focus"):
     # 18. Bypass effect (add log if missing)
     emit_effect_block_with_log(lines, props["bypass_effect"], focus_id)
 
-    # 17. AI will do (always last, always multi-line)
+    # 17. AI will do (always last)
     if props["ai_will_do"]:
-        ai_lines = props["ai_will_do"]
-        if len(ai_lines) == 1 and "ai_will_do = {" in ai_lines[0]:
-            line = ai_lines[0]
-            factor_match = re.search(r"factor\s*=\s*(\d+)", line)
-            if factor_match:
-                factor_value = factor_match.group(1)
-                lines.append("\t\tai_will_do = {")
-                lines.append(f"\t\t\tfactor = {factor_value}")
-                lines.append("\t\t}")
-            else:
-                # Fallback to original if no factor found
-                compacted_ai = collapse_or_compact(ai_lines[:])
-                for line in compacted_ai:
-                    lines.append(line)
-        else:
-            compacted_ai = collapse_or_compact(ai_lines[:])
-            for line in compacted_ai:
-                lines.append(line)
+        compacted_ai = collapse_or_compact(
+            convert_root_factor_to_base(props["ai_will_do"][:])
+        )
+        for line in compacted_ai:
+            lines.append(line)
     else:
-        lines.append("\t\tai_will_do = {")
-        lines.append("\t\t\tfactor = 1")
-        lines.append("\t\t}")
+        lines.append("\t\tai_will_do = { base = 1 }")
 
     lines.append("\t}")
 
