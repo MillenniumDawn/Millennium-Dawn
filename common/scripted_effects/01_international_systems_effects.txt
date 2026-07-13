@@ -295,10 +295,15 @@ on_startup_international = {
 }
 
 international_systems_update = {
-	# Only player-initiated paths bump the GUI dirty counter; AI voters/grants would
-	# wake every open GUI ~190 times per GA cycle for no visible benefit.
+	# Bump the GUI dirty counter for player paths, or for any path while a GA/SC vote is live so open vote screens refresh; AI idle paths skip it to avoid ~190 wakes per GA cycle.
 	if = {
-		limit = { is_ai = no }
+		limit = {
+			OR = {
+				is_ai = no
+				has_global_flag = current_ongoing_ga_vote
+				has_global_flag = current_ongoing_sc_vote
+			}
+		}
 		if = { limit = { check_variable = { global.international_systems_updated > 1000000 } }
 			set_variable = { global.international_systems_updated = 1 }
 		}
@@ -350,10 +355,6 @@ set_sel_pmc_units = {
 		set_variable = { comp_check = 4 }
 	}
 }
-#TODO: im lazy. if someone wants to fix this so nations just get added in histories, feel free
-#I'm not opening our 8 bajillion history files to add one line of code for the proper array
-#Plus, we can cheat and use this for civil war tags, ect
-#TODO: build observer states as an option?
 un_recog_setup_check = {
 	if = {
 		limit = {
@@ -422,7 +423,6 @@ un_recog_setup_check = {
 }
 
 un_check_if_valid_for_sanctions = {
-	clear_array = global.can_be_sc_sanctioned
 	if = {
 		limit = {
 			check_variable = { has_added_tension_amount > 0 }
@@ -479,6 +479,9 @@ update_sc_vote = {
 			}
 		}
 		custom_effect_tooltip = start_new_vote_tt
+
+		recompute_un_2_3_number = yes
+		international_systems_update = yes
 	}
 }
 
@@ -561,6 +564,8 @@ manipulate_ga_vote_front = {
 		index = index_track
 	}
 
+	set_temp_variable = { move_index = global.ga_vote_type_tracker^num }
+
 	for_each_loop = {
 		array = global.ga_vote_type_tracker
 		value = v
@@ -634,26 +639,30 @@ update_ga_vote = {
 			}
 		}
 		custom_effect_tooltip = start_new_vote_tt
+
+		recompute_un_2_3_number = yes
+		international_systems_update = yes
 	}
 }
 
 start_unsc_next_term_voting = {
-	set_global_flag = electing_new_unsc_members
+	set_global_flag = { flag = electing_new_unsc_members days = 200 value = 1 }
+	clear_variable = global.unsc_reroll_count
+	clear_array = global.new_council_members
 
 	set_temp_variable = { even_year_checker = global.year }
 	modulo_temp_variable = { even_year_checker = 2 }
 
+	set_temp_variable = { south_america_seat_tracker = 1 }
 	if = {
 		limit = {
 			check_variable = { even_year_checker = 0 }
 		}
 		set_temp_variable = { aa_seat_tracker = 2 }
 		set_temp_variable = { euro_others_seat_tracker = 2 }
-		set_temp_variable = { south_america_seat_tracker = 1 }
 	} else = {
 		set_temp_variable = { aa_seat_tracker = 3 }
 		set_temp_variable = { euro_others_seat_tracker = 1 }
-		set_temp_variable = { south_america_seat_tracker = 1 }
 	}
 
 	for_loop_effect = {
@@ -753,6 +762,16 @@ start_unsc_next_term_voting = {
 }
 
 update_security_council_peeps = {
+	# Stash the departing cohort: unfilled tail seats are backfilled from it, otherwise
+	# a short confirmed list leaves the shifted members duplicated in both array halves.
+	clear_array = md_departing_sc_members
+	set_temp_variable = { set = 0 }
+	for_loop_effect = {
+		end = 5
+		add_to_array = { md_departing_sc_members = global.security_council_members^set }
+		add_to_temp_variable = { set = 1 }
+	}
+
 	set_temp_variable = { set = 5 }
 	set_temp_variable = { set_index = 0 }
 
@@ -771,6 +790,10 @@ update_security_council_peeps = {
 	set_temp_variable = { set = 0 }
 	set_temp_variable = { set_index = 5 }
 	set_temp_variable = { confirmed_count = global.confirmed_new_council_members^num }
+	if = {
+		limit = { check_variable = { confirmed_count > 5 } }
+		set_temp_variable = { confirmed_count = 5 }
+	}
 	for_loop_effect = {
 		end = confirmed_count
 		set_variable = { global.security_council_members^set_index = global.confirmed_new_council_members^set }
@@ -778,14 +801,142 @@ update_security_council_peeps = {
 		add_to_temp_variable = { set_index = 1 }
 	}
 
+	# Seats without a confirmed replacement: departing members serve another term.
+	set_temp_variable = { remaining_seats = 10 }
+	subtract_from_temp_variable = { remaining_seats = set_index }
+	set_temp_variable = { set = 0 }
+	for_loop_effect = {
+		end = remaining_seats
+		set_variable = { global.security_council_members^set_index = md_departing_sc_members^set }
+		add_to_temp_variable = { set = 1 }
+		add_to_temp_variable = { set_index = 1 }
+	}
+
+	clear_array = md_departing_sc_members
 	clear_array = global.confirmed_new_council_members
 
 	international_systems_update = yes
 }
 
 un_sc_new_members_step_next = {
-	add_to_array = { global.confirmed_new_council_members = global.current_ga_vote_nation }
+	set_temp_variable = { md_was_election_candidate = 0 }
+	if = {
+		limit = {
+			has_global_flag = electing_new_unsc_members
+			check_variable = { global.new_council_members^0 = global.current_ga_vote_nation }
+		}
+		set_temp_variable = { md_was_election_candidate = 1 }
+	}
+
+	if = {
+		limit = {
+			NOT = { is_in_array = { global.confirmed_new_council_members = global.current_ga_vote_nation } }
+		}
+		add_to_array = { global.confirmed_new_council_members = global.current_ga_vote_nation }
+	}
 	remove_from_array = { global.new_council_members = global.current_ga_vote_nation }
+
+	# Standalone type-6 wins (focus rewards) only confirm the seat; the election
+	# chain advances only when its own front candidate was the vote subject.
+	if = {
+		limit = { check_variable = { md_was_election_candidate = 1 } }
+		if = {
+			limit = {
+				check_variable = { global.new_council_members^num > 0 }
+			}
+			set_temp_variable = { ga_new_vote_type = 6 }
+			set_temp_variable = { ga_new_vote_nation = global.new_council_members^0 }
+			update_ga_vote = yes
+		} else = {
+			clr_global_flag = electing_new_unsc_members
+			clear_variable = global.unsc_reroll_count
+		}
+	}
+}
+
+un_sc_new_members_re_roll = {
+	add_to_variable = { global.unsc_reroll_count = 1 }
+
+	# Drop the candidate that just failed its seat vote so it isn't re-voted forever.
+	remove_from_array = { array = global.new_council_members index = 0 }
+
+	if = {
+		limit = {
+			check_variable = { global.unsc_reroll_count < 16 }
+		}
+		set_temp_variable = { pre_roll_num = global.new_council_members^num }
+
+		var:global.current_ga_vote_nation = {
+			if = {
+				limit = {
+					capital_scope = {
+						is_on_continent = south_america
+					}
+				}
+				random_scope_in_array = {
+					array = global.american_nations
+					limit = {
+						NOT = { is_in_array = { global.security_council_members = THIS } }
+						NOT = { is_in_array = { global.new_council_members = THIS } }
+						NOT = { has_idea = lacks_international_recognition }
+						NOT = { has_idea = non_state_actor }
+						capital_scope = {
+							is_on_continent = south_america
+						}
+					}
+					add_to_array = { global.new_council_members = THIS }
+				}
+			} else_if = {
+				limit = {
+					capital_scope = {
+						OR = {
+							is_on_continent = north_america
+							is_on_continent = europe
+						}
+					}
+				}
+				random_scope_in_array = {
+					array = global.sc_updates_euro_america
+					limit = {
+						NOT = { is_in_array = { global.security_council_members = THIS } }
+						NOT = { is_in_array = { global.new_council_members = THIS } }
+						NOT = { has_idea = lacks_international_recognition }
+						NOT = { has_idea = non_state_actor }
+					}
+					add_to_array = { global.new_council_members = THIS }
+				}
+			} else = {
+				random_scope_in_array = {
+					array = global.sub_saharan_nations
+					limit = {
+						NOT = { is_in_array = { global.security_council_members = THIS } }
+						NOT = { is_in_array = { global.new_council_members = THIS } }
+						NOT = { has_idea = lacks_international_recognition }
+						NOT = { has_idea = non_state_actor }
+					}
+					add_to_array = { global.new_council_members = THIS }
+				}
+			}
+		}
+
+		#Fallback: if the regional re-roll found nobody, try any UN member
+		if = {
+			limit = {
+				check_variable = { global.new_council_members^num = pre_roll_num }
+			}
+			random_scope_in_array = {
+				array = global.UN_general_assembly
+				limit = {
+					NOT = { is_in_array = { global.security_council_members = THIS } }
+					NOT = { is_in_array = { global.new_council_members = THIS } }
+					NOT = { is_in_array = { global.p5_sc_members = THIS } }
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_idea = non_state_actor }
+				}
+				add_to_array = { global.new_council_members = THIS }
+			}
+		}
+	}
 
 	if = {
 		limit = {
@@ -794,89 +945,21 @@ un_sc_new_members_step_next = {
 		set_temp_variable = { ga_new_vote_type = 6 }
 		set_temp_variable = { ga_new_vote_nation = global.new_council_members^0 }
 		update_ga_vote = yes
-
 	} else = {
 		clr_global_flag = electing_new_unsc_members
+		clear_variable = global.unsc_reroll_count
 	}
 }
 
-un_sc_new_members_re_roll = {
-	var:global.current_ga_vote_nation = {
-		if = {
-			limit = {
-				capital_scope = {
-					is_on_continent = south_america
-				}
-			}
-			random_scope_in_array = {
-				array = global.american_nations
-				limit = {
-					NOT = {
-						is_in_array = { global.security_council_members = THIS }
-					}
-					NOT = { has_idea = lacks_international_recognition }
-					NOT = { has_idea = non_state_actor }
-					capital_scope = {
-						is_on_continent = south_america
-					}
-				}
-				set_variable = { global.new_council_members^0 = THIS }
-			}
-		} else_if = {
-			limit = {
-				capital_scope = {
-					OR = {
-						is_on_continent = north_america
-						is_on_continent = europe
-					}
-				}
-			}
-			random_scope_in_array = {
-				array = global.sc_updates_euro_america
-				limit = {
-					NOT = {
-						is_in_array = { global.security_council_members = THIS }
-					}
-					NOT = { has_idea = lacks_international_recognition }
-					NOT = { has_idea = non_state_actor }
-				}
-				set_variable = { global.new_council_members^0 = THIS }
-			}
-		} else = {
-			random_scope_in_array = {
-				array = global.sub_saharan_nations
-				limit = {
-					NOT = {
-						is_in_array = { global.security_council_members = THIS }
-					}
-					NOT = { has_idea = lacks_international_recognition }
-					NOT = { has_idea = non_state_actor }
-				}
-				set_variable = { global.new_council_members^0 = THIS }
-			}
+recompute_un_2_3_number = {
+	set_variable = {
+		global.un_2_3_number = {
+			value = global.UN_general_assembly^num
+			multiply = 0.66667
+			add = 0.499
+			round = yes
 		}
 	}
-
-	#Fallback: if the regional re-roll found nobody, try any UN member
-	if = {
-		limit = {
-			check_variable = { global.new_council_members^num < 1 }
-		}
-		random_scope_in_array = {
-			array = global.UN_general_assembly
-			limit = {
-				NOT = { is_in_array = { global.security_council_members = THIS } }
-				NOT = { is_in_array = { global.p5_sc_members = THIS } }
-				NOT = { has_idea = lacks_international_recognition }
-				NOT = { has_idea = non_state_actor }
-			}
-			add_to_array = { global.new_council_members = THIS }
-		}
-	}
-
-	set_temp_variable = { ga_new_vote_type = 6 }
-	set_temp_variable = { ga_new_vote_nation = global.new_council_members^0 }
-	update_ga_vote = yes
 }
 
 un_check_for_next_queued_vote = {
@@ -912,11 +995,33 @@ un_check_for_next_queued_vote = {
 				country_event = UNSC.100
 			}
 		}
+
+		recompute_un_2_3_number = yes
+		international_systems_update = yes
+	}
+
+	# Resume a stalled election: its live seat vote was aborted or its queue entry purged.
+	if = {
+		limit = {
+			has_global_flag = electing_new_unsc_members
+			NOT = { has_global_flag = current_ongoing_ga_vote }
+			NOT = { is_in_array = { global.ga_vote_type_tracker = 6 } }
+		}
+		if = {
+			limit = { check_variable = { global.new_council_members^num > 0 } }
+			set_temp_variable = { ga_new_vote_type = 6 }
+			set_temp_variable = { ga_new_vote_nation = global.new_council_members^0 }
+			update_ga_vote = yes
+		} else = {
+			clr_global_flag = electing_new_unsc_members
+			clear_variable = global.unsc_reroll_count
+		}
 	}
 
 	if = {
 		limit = {
 			has_global_flag = electing_new_unsc_members
+			is_in_array = { global.ga_vote_type_tracker = 6 }
 		}
 		clr_global_flag = un_ga_vote_cooldown
 	}
@@ -953,14 +1058,10 @@ un_check_for_next_queued_vote = {
 				country_event = UN.100
 			}
 		}
+
+		recompute_un_2_3_number = yes
+		international_systems_update = yes
 	}
-
-	set_variable = { global.un_2_3_number = global.UN_general_assembly^num }
-	multiply_variable = { global.un_2_3_number = 0.66 }
-	round_variable = global.un_2_3_number
-	subtract_from_variable = { global.un_2_3_number = 1 }
-
-	international_systems_update = yes
 }
 
 security_council_vote_finished = {
@@ -1028,7 +1129,18 @@ security_council_vote_finished = {
 			}
 		}
 	} else = {
-		news_event = recognition.122
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 5 }
+			}
+			var:global.current_sc_vote_nation = {
+				news_event = recognition.122
+			}
+		} else = {
+			var:global.current_sc_vote_nation = {
+				news_event = UNSC.12
+			}
+		}
 	}
 
 	var:global.current_sc_vote_nation = {
@@ -1043,6 +1155,8 @@ security_council_vote_finished = {
 			clr_country_flag = has_had_current_un_sc_vote_swayed
 		}
 	}
+
+	international_systems_update = yes
 
 	#clear all arrays and variables
 	clear_array = global.security_council_vote_yes
@@ -1059,8 +1173,6 @@ security_council_vote_finished = {
 		days = 20
 		value = 1
 	}
-
-	international_systems_update = yes
 }
 
 general_assembly_vote_finished = {
@@ -1095,8 +1207,52 @@ general_assembly_vote_finished = {
 					un_ga_2_3_required = yes
 				}
 				un_sc_new_members_step_next = yes
-			} else = {
+			} else_if = {
+				# Standalone type-6 losses (focus votes) must not re-roll the election's candidates
+				limit = {
+					has_global_flag = electing_new_unsc_members
+					check_variable = { global.new_council_members^0 = global.current_ga_vote_nation }
+				}
 				un_sc_new_members_re_roll = yes
+			}
+		} else_if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 7 }
+			}
+			var:global.current_ga_vote_nation = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = refused_payment_got_sanctioned_no_raids }
+					}
+					set_country_flag = {
+						flag = refused_payment_got_sanctioned_no_raids
+						days = 365
+						value = 1
+					}
+				} else = {
+					clr_country_flag = refused_payment_got_sanctioned_no_raids
+					set_country_flag = {
+						flag = refused_payment_got_sanctioned_no_raids
+						days = 450
+						value = 1
+					}
+				}
+
+				set_variable = {
+					international_trade_sanctions = {
+						value = global.general_assembly_vote_yes^num
+						multiply = -0.005
+						clamp = { min = -1.00 max = 0 }
+					}
+				}
+				set_variable = {
+					international_research_sanctions = {
+						value = global.general_assembly_vote_yes^num
+						multiply = -0.001
+						clamp = { min = -0.50 max = 0 }
+					}
+				}
+				add_dynamic_modifier = { modifier = united_nations_non_binding_sanctions }
 			}
 		} else_if = {
 			limit = {
@@ -1107,6 +1263,7 @@ general_assembly_vote_finished = {
 					un_ga_2_3_required = yes
 				}
 				add_to_variable = { global.general_operating_budget_contribute_percent = -0.0001 }
+				clamp_variable = { var = global.general_operating_budget_contribute_percent min = 0.0001 max = 0.001 }
 			}
 		} else_if = {
 			limit = {
@@ -1117,6 +1274,7 @@ general_assembly_vote_finished = {
 					un_ga_2_3_required = yes
 				}
 				add_to_variable = { global.general_operating_budget_contribute_percent = 0.0001 }
+				clamp_variable = { var = global.general_operating_budget_contribute_percent min = 0.0001 max = 0.001 }
 			}
 		} else_if = {
 			limit = {
@@ -1174,12 +1332,7 @@ general_assembly_vote_finished = {
 				value = v
 
 				var:v = {
-					meta_effect = {
-						text = {
-							country_event = { id = UN.4[ID] days = 1 }
-						}
-						ID = "[?global.current_ga_vote_type]"
-					}
+					fire_ga_resolution_result_event = yes
 				}
 			}
 			#Fire accept/reject event to nations that abstained
@@ -1188,12 +1341,7 @@ general_assembly_vote_finished = {
 				value = v
 
 				var:v = {
-					meta_effect = {
-						text = {
-							country_event = { id = UN.4[ID] days = 1 }
-						}
-						ID = "[?global.current_ga_vote_type]"
-					}
+					fire_ga_resolution_result_event = yes
 				}
 			}
 		}
@@ -1207,45 +1355,23 @@ general_assembly_vote_finished = {
 		} else_if = {
 			limit = {
 				check_variable = { global.current_ga_vote_type = 6 }
+				has_global_flag = electing_new_unsc_members
+				check_variable = { global.new_council_members^0 = global.current_ga_vote_nation }
 			}
 			un_sc_new_members_re_roll = yes
 		}
 	}
 
-	if = {
-		limit = {
-			check_variable = { global.current_ga_vote_type = 7 }
-		}
-		var:global.current_ga_vote_nation = {
-			if = {
-				limit = {
-					NOT = { has_country_flag = refused_payment_got_sanctioned_no_raids }
-				}
-				set_country_flag = {
-					flag = refused_payment_got_sanctioned_no_raids
-					days = 365
-					value = 1
-				}
-			} else = {
-				clr_country_flag = refused_payment_got_sanctioned_no_raids
-				set_country_flag = {
-					flag = refused_payment_got_sanctioned_no_raids
-					days = 450
-					value = 1
-				}
-			}
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
 
-			set_variable = { international_trade_sanctions = global.general_assembly_vote_yes }
-			set_variable = { international_research_sanctions = global.general_assembly_vote_yes }
-			multiply_variable = { international_trade_sanctions = -0.005 }
-			multiply_variable = { international_research_sanctions = -0.001 }
-			clamp_variable = { var = international_trade_sanctions min = -1.00 }
-			clamp_variable = { var = international_research_sanctions min = -0.50 }
-			add_dynamic_modifier = { modifier = united_nations_non_binding_sanctions }
+		var:v = {
+			clr_country_flag = has_had_current_un_sc_vote_swayed
 		}
 	}
 
-	clr_country_flag = has_had_current_un_sc_vote_swayed
+	international_systems_update = yes
 
 	#clear all arrays and variables
 	clear_array = global.general_assembly_vote_yes
@@ -1260,7 +1386,19 @@ general_assembly_vote_finished = {
 		days = 50
 		value = 1
 	}
-	international_systems_update = yes
+}
+
+# Stores proposer and vote type on the recipient; the global vote state is cleared before UN.410 displays.
+# Skips recipients still holding an unanswered UN.410 — a second fire would relabel the open window.
+fire_ga_resolution_result_event = {
+	if = {
+		limit = {
+			NOT = { check_variable = { ga_resolution_vote_type > 0 } }
+		}
+		set_variable = { ga_resolution_proposer = global.current_ga_vote_nation }
+		set_variable = { ga_resolution_vote_type = global.current_ga_vote_type }
+		country_event = { id = UN.410 days = 1 }
+	}
 }
 
 full_satellite_system_access = {
@@ -1367,10 +1505,13 @@ calculate_final_un_benefits = {
 	add_to_temp_variable = { current_receiving_budget_tracker = un_esco_research_speed_var }
 	add_to_temp_variable = { current_receiving_budget_tracker = un_ido_construction_speed_var }
 
-	set_temp_variable = { current_factory_lease_money = un_ido_current_building_count }
-	multiply_temp_variable = { current_factory_lease_money = 0.14 }
-
-	add_to_temp_variable = { current_receiving_budget_tracker = current_factory_lease_money }
+	add_to_temp_variable = {
+		var = current_receiving_budget_tracker
+		value = {
+			value = un_ido_current_building_count
+			multiply = 0.14
+		}
+	}
 	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_productivity_var }
 	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_construction_cost_var }
 
@@ -1603,14 +1744,6 @@ un_ai_sc_consider_action = {
 					}
 					ROOT = { set_temp_variable = { sc_ai_action_type = 4 } }
 				}
-				# Priority 4: Restrict volunteers (type 3)
-				# else_if = {
-				# 	limit = {
-				# 		has_volunteers_amount_from_non_subject > 0
-				# 		NOT = { has_idea = unsc_restricted_volunteers_too }
-				# 	}
-				# 	ROOT = { set_temp_variable = { sc_ai_action_type = 3 } }
-				# }
 			}
 
 			# Weighted random - don't always propose
@@ -1810,35 +1943,75 @@ un_ai_ga_consider_resolution = {
 
 # Sanctions Effects
 apply_united_nations_sanctions = {
-	set_variable = { security_council_trade_sanctions_var = global.UN_general_assembly^num }
-	set_variable = { security_council_research_sanctions_var = global.UN_general_assembly^num }
-
-	multiply_variable = { security_council_trade_sanctions_var = -0.005 }
-	multiply_variable = { security_council_research_sanctions_var = -0.003 }
-	clamp_variable = { var = security_council_trade_sanctions_var min = -1.00 }
-	clamp_variable = { var = security_council_research_sanctions_var min = -0.50 }
+	set_variable = {
+		security_council_trade_sanctions_var = {
+			value = global.UN_general_assembly^num
+			multiply = -0.005
+			clamp = { min = -1.00 max = 0 }
+		}
+	}
+	set_variable = {
+		security_council_research_sanctions_var = {
+			value = global.UN_general_assembly^num
+			multiply = -0.003
+			clamp = { min = -0.50 max = 0 }
+		}
+	}
 	add_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
 }
 
 un_sway_direction_effect = {
+	# A pending sway accepted after the vote ended would write into the cleared tallies.
 	if = {
-		limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
-		remove_from_array = { global.general_assembly_vote_yes = THIS }
-	} else_if = {
-		limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
-		remove_from_array = { global.general_assembly_vote_no = THIS }
-	} else = {
-		remove_from_array = { global.general_assembly_vote_abstain = THIS }
-	}
+		limit = { has_global_flag = current_ongoing_ga_vote }
+		set_country_flag = has_had_current_un_sc_vote_swayed
 
+		if = {
+			limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
+			remove_from_array = { global.general_assembly_vote_yes = THIS }
+		} else_if = {
+			limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
+			remove_from_array = { global.general_assembly_vote_no = THIS }
+		} else = {
+			remove_from_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		} else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		} else = {
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
+	}
+}
+
+sc_sway_direction_effect = {
 	if = {
-		limit = { check_variable = { current_sway_direction = 1 } }
-		add_to_array = { global.general_assembly_vote_yes = THIS }
-	} else_if = {
-		limit = { check_variable = { current_sway_direction = 2 } }
-		add_to_array = { global.general_assembly_vote_no = THIS }
-	} else = {
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		limit = { has_global_flag = current_ongoing_sc_vote }
+		set_country_flag = has_had_current_un_sc_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
+			remove_from_array = { global.security_council_vote_yes = THIS }
+		} else_if = {
+			limit = { is_in_array = { global.security_council_vote_no = THIS } }
+			remove_from_array = { global.security_council_vote_no = THIS }
+		} else = {
+			remove_from_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		} else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.security_council_vote_no = THIS }
+		} else = {
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
 	}
 }
 
@@ -1882,10 +2055,249 @@ recognition_grant_increment = {
 	international_systems_update = yes
 }
 
+un_abort_ga_vote = {
+	# Disarm any surviving mission holder or its stale mission finishes the next live vote early.
+	random_scope_in_array = {
+		array = global.UN_general_assembly
+		limit = { has_country_flag = has_ga_mission }
+		clr_country_flag = has_ga_mission
+	}
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		var:v = {
+			clr_country_flag = has_had_current_un_sc_vote_swayed
+		}
+	}
+	clear_array = global.general_assembly_vote_yes
+	clear_array = global.general_assembly_vote_no
+	clear_array = global.general_assembly_vote_abstain
+	clear_variable = global.current_ga_vote_type
+	clear_variable = global.current_ga_vote_nation
+	international_systems_update = yes
+	clr_global_flag = current_ongoing_ga_vote
+}
+
+un_abort_sc_vote = {
+	random_scope_in_array = {
+		array = global.security_council_members
+		limit = { has_country_flag = has_sc_mission }
+		clr_country_flag = has_sc_mission
+	}
+	for_each_loop = {
+		array = global.security_council_members
+		value = v
+
+		var:v = {
+			clr_country_flag = has_had_current_un_sc_vote_swayed
+		}
+	}
+	clear_array = global.security_council_vote_yes
+	clear_array = global.security_council_vote_no
+	clear_array = global.security_council_vote_abstain
+	clear_variable = global.current_sc_vote_type
+	clear_variable = global.current_sc_vote_nation
+	international_systems_update = yes
+	clr_global_flag = current_ongoing_sc_vote
+	clr_global_flag = security_council_veto
+}
+
+# In-place removal would desync the parallel type/nation queue arrays, so rebuild via scratch arrays.
+un_remove_dying_nation_queued_votes = {
+	clear_array = md_rebuild_vote_type
+	clear_array = md_rebuild_vote_nation
+	for_each_loop = {
+		array = global.ga_vote_nation_tracker
+		value = v
+		index = i
+		if = {
+			limit = { NOT = { check_variable = { v = THIS } } }
+			add_to_array = { md_rebuild_vote_type = global.ga_vote_type_tracker^i }
+			add_to_array = { md_rebuild_vote_nation = v }
+		}
+	}
+	clear_array = global.ga_vote_type_tracker
+	clear_array = global.ga_vote_nation_tracker
+	for_each_loop = {
+		array = md_rebuild_vote_nation
+		value = v
+		index = i
+		add_to_array = { global.ga_vote_type_tracker = md_rebuild_vote_type^i }
+		add_to_array = { global.ga_vote_nation_tracker = v }
+	}
+
+	clear_array = md_rebuild_vote_type
+	clear_array = md_rebuild_vote_nation
+	for_each_loop = {
+		array = global.sc_vote_nation_tracker
+		value = v
+		index = i
+		if = {
+			limit = { NOT = { check_variable = { v = THIS } } }
+			add_to_array = { md_rebuild_vote_type = global.sc_vote_type_tracker^i }
+			add_to_array = { md_rebuild_vote_nation = v }
+		}
+	}
+	clear_array = global.sc_vote_type_tracker
+	clear_array = global.sc_vote_nation_tracker
+	for_each_loop = {
+		array = md_rebuild_vote_nation
+		value = v
+		index = i
+		add_to_array = { global.sc_vote_type_tracker = md_rebuild_vote_type^i }
+		add_to_array = { global.sc_vote_nation_tracker = v }
+	}
+
+	clear_array = md_rebuild_vote_type
+	clear_array = md_rebuild_vote_nation
+}
+
+# Drops queued type-5 admission votes about THIS so a nation that just joined isn't voted on again.
+remove_stale_ga_membership_votes_for_this = {
+	clear_array = md_rebuild_vote_type
+	clear_array = md_rebuild_vote_nation
+	for_each_loop = {
+		array = global.ga_vote_nation_tracker
+		value = v
+		index = i
+		if = {
+			limit = {
+				OR = {
+					NOT = { check_variable = { v = THIS } }
+					NOT = { check_variable = { global.ga_vote_type_tracker^i = 5 } }
+				}
+			}
+			add_to_array = { md_rebuild_vote_type = global.ga_vote_type_tracker^i }
+			add_to_array = { md_rebuild_vote_nation = v }
+		}
+	}
+	clear_array = global.ga_vote_type_tracker
+	clear_array = global.ga_vote_nation_tracker
+	for_each_loop = {
+		array = md_rebuild_vote_nation
+		value = v
+		index = i
+		add_to_array = { global.ga_vote_type_tracker = md_rebuild_vote_type^i }
+		add_to_array = { global.ga_vote_nation_tracker = v }
+	}
+
+	clear_array = md_rebuild_vote_type
+	clear_array = md_rebuild_vote_nation
+	for_each_loop = {
+		array = global.sc_vote_nation_tracker
+		value = v
+		index = i
+		if = {
+			limit = {
+				OR = {
+					NOT = { check_variable = { v = THIS } }
+					NOT = { check_variable = { global.sc_vote_type_tracker^i = 5 } }
+				}
+			}
+			add_to_array = { md_rebuild_vote_type = global.sc_vote_type_tracker^i }
+			add_to_array = { md_rebuild_vote_nation = v }
+		}
+	}
+	clear_array = global.sc_vote_type_tracker
+	clear_array = global.sc_vote_nation_tracker
+	for_each_loop = {
+		array = md_rebuild_vote_nation
+		value = v
+		index = i
+		add_to_array = { global.sc_vote_type_tracker = md_rebuild_vote_type^i }
+		add_to_array = { global.sc_vote_nation_tracker = v }
+	}
+
+	clear_array = md_rebuild_vote_type
+	clear_array = md_rebuild_vote_nation
+}
+
 clear_united_nations_member_state = {
+	# GA voting-mission holder is dying: hand the mission to another member, else abort the vote.
+	if = {
+		limit = { has_country_flag = has_ga_mission }
+		clr_country_flag = has_ga_mission
+		set_temp_variable = { md_vote_mission_reassigned = 0 }
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			limit = { NOT = { tag = PREV } }
+			set_country_flag = has_ga_mission
+			activate_mission = UN_GA_voting_mission
+			PREV = { set_temp_variable = { md_vote_mission_reassigned = 1 } }
+		}
+		if = {
+			limit = { check_variable = { md_vote_mission_reassigned = 0 } }
+			un_abort_ga_vote = yes
+		}
+	}
+	if = {
+		limit = { has_country_flag = has_sc_mission }
+		clr_country_flag = has_sc_mission
+		set_temp_variable = { md_vote_mission_reassigned = 0 }
+		random_scope_in_array = {
+			array = global.security_council_members
+			limit = { NOT = { tag = PREV } }
+			set_country_flag = has_sc_mission
+			activate_mission = UN_SC_voting_mission
+			PREV = { set_temp_variable = { md_vote_mission_reassigned = 1 } }
+		}
+		if = {
+			limit = { check_variable = { md_vote_mission_reassigned = 0 } }
+			un_abort_sc_vote = yes
+		}
+	}
+
+	# The nation the live vote is about is dying: no vote can resolve, so abort and idle the queue.
+	if = {
+		limit = { check_variable = { global.current_ga_vote_nation = THIS.id } }
+		un_abort_ga_vote = yes
+		set_global_flag = { flag = un_ga_vote_cooldown days = 50 value = 1 }
+	}
+	if = {
+		limit = { check_variable = { global.current_sc_vote_nation = THIS.id } }
+		un_abort_sc_vote = yes
+		set_global_flag = { flag = un_sc_vote_cooldown days = 20 value = 1 }
+	}
+
+	un_remove_dying_nation_queued_votes = yes
+	clr_global_flag = sc_action_against@THIS
+
 	if = {
 		limit = { is_in_array = { global.security_council_members = THIS } }
-		remove_from_array = { global.security_council_members = THIS }
+		# The council array is positional (elected seats 0-9, P5 from 10); removing by value
+		# shifts every later seat and desyncs the January rotation, so fill the slot instead.
+		for_each_loop = {
+			array = global.security_council_members
+			value = v
+			index = i
+
+			if = {
+				limit = { check_variable = { v = THIS } }
+				set_temp_variable = { md_dead_sc_seat = i }
+			}
+		}
+		set_temp_variable = { md_sc_seat_filled = 0 }
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			limit = {
+				NOT = { tag = PREV }
+				NOT = { is_in_array = { global.security_council_members = THIS } }
+				NOT = { is_in_array = { global.p5_sc_members = THIS } }
+				NOT = { has_idea = lacks_international_recognition }
+				NOT = { has_idea = non_state_actor }
+			}
+			PREV = {
+				set_temp_variable = { md_sc_replacement = PREV }
+				set_temp_variable = { md_sc_seat_filled = 1 }
+			}
+		}
+		if = {
+			limit = { check_variable = { md_sc_seat_filled = 1 } }
+			set_variable = { global.security_council_members^md_dead_sc_seat = md_sc_replacement }
+		} else = {
+			remove_from_array = { global.security_council_members = THIS }
+		}
 	}
 	if = {
 		limit = { is_in_array = { global.confirmed_new_council_members = THIS } }
@@ -1898,6 +2310,30 @@ clear_united_nations_member_state = {
 	if = {
 		limit = { is_in_array = { global.UN_general_assembly = THIS } }
 		remove_from_array = { global.UN_general_assembly = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
+		remove_from_array = { global.general_assembly_vote_yes = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
+		remove_from_array = { global.general_assembly_vote_no = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.general_assembly_vote_abstain = THIS } }
+		remove_from_array = { global.general_assembly_vote_abstain = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.security_council_vote_yes = THIS } }
+		remove_from_array = { global.security_council_vote_yes = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.security_council_vote_no = THIS } }
+		remove_from_array = { global.security_council_vote_no = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.security_council_vote_abstain = THIS } }
+		remove_from_array = { global.security_council_vote_abstain = THIS }
 	}
 	if = {
 		limit = { has_dynamic_modifier = { modifier = united_nations_member } }

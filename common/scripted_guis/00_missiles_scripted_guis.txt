@@ -51,6 +51,9 @@ scripted_gui = {
 					}
 				}
 			 }
+			ct_gui_ledger_button_click_enabled = {
+				no_jihadist_government = yes
+			}
 		}
 
 		effects = {
@@ -2719,6 +2722,8 @@ scripted_gui = {
 		visible = {
 			check_variable = { var_open_MD_CT_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
+			NOT = { salafist_caliphate_are_in_power = yes }
+			NOT = { salafist_caliphate_are_in_coalition = yes }
 		}
 
 		triggers = {
@@ -2810,11 +2815,18 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = is_ct_does_not_have_advisors
 					var:selected_ct_nation = {
-						NOT = {
-							has_country_flag = has_ct_advisor_from@ROOT
-							tag = ROOT
-						}
+						NOT = { has_country_flag = has_ct_advisor_from@ROOT }
+						NOT = { tag = ROOT }
 					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = is_ct_advisors_not_refused_tt
+					var:selected_ct_nation = {
+						NOT = { has_country_flag = refused_ct_advisors_from@ROOT }
+					}
+				}
+				var:selected_ct_nation = {
+					no_jihadist_government = yes
 				}
 			}
 
@@ -2824,7 +2836,6 @@ scripted_gui = {
 					tooltip = is_ct_does_have_advisors
 					var:selected_ct_nation = {
 						has_country_flag = has_ct_advisor_from@ROOT
-						tag = ROOT
 					}
 				}
 			}
@@ -3061,6 +3072,7 @@ scripted_gui = {
 				set_temp_variable = { random_bad_luck = 100 }
 				subtract_from_temp_variable = { random_bad_luck = international_terror_org_intel^selected_org }
 				subtract_from_temp_variable = { random_bad_luck = ct_intel_agency_value }
+				clamp_temp_variable = { var = random_bad_luck min = 0 max = 100 }
 				random = {
 					chance = random_bad_luck
 					country_event = MD_terror.6
@@ -3640,13 +3652,6 @@ scripted_gui = {
 								tooltip = TT_ALL_UN_MEMBERS
 								if = {
 									limit = {
-										has_country_flag = original_owner_[stname]
-										NOT = { has_country_flag = Recognised_[stname] }
-									}
-									add_opinion_modifier = { target = ROOT modifier = recognises_them }
-									country_event = recognition.1
-								} else_if = {
-									limit = {
 										has_country_flag = supports_original_owner_[stname]
 										NOT = { has_country_flag = Recognised_[stname] }
 									}
@@ -3655,6 +3660,15 @@ scripted_gui = {
 									limit = { has_country_flag = Recognised_[stname] }
 									add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
 								}
+							}
+
+							random_country = {
+								limit = {
+									has_country_flag = original_owner_[stname]
+									NOT = { has_country_flag = Recognised_[stname] }
+								}
+								add_opinion_modifier = { target = ROOT modifier = recognises_them }
+								country_event = recognition.1
 							}
 						}
 					}
@@ -4672,6 +4686,10 @@ scripted_gui = {
 			# Investment buttons
 			cyber_invest_offense_button_click_enabled = {
 				command_power > 25
+				custom_trigger_tooltip = {
+					tooltip = cyber_can_expand_offensive_tt
+					check_variable = { cyber_offense_investment < 99 }
+				}
 			}
 
 			cyber_invest_offense_button_right_click_enabled = {
@@ -4684,6 +4702,10 @@ scripted_gui = {
 
 			cyber_invest_defense_button_click_enabled = {
 				command_power > 25
+				custom_trigger_tooltip = {
+					tooltip = cyber_can_expand_offensive_tt
+					check_variable = { cyber_defense_investment < 99 }
+				}
 			}
 
 			cyber_invest_defense_button_right_click_enabled = {
@@ -4872,6 +4894,7 @@ scripted_gui = {
 				log = "[GetDateText]: [Root.GetName]: cyber_invest_offense GUI"
 				add_command_power = -25
 				add_to_variable = { cyber_offense_investment = 2 }
+				clamp_variable = { var = cyber_offense_investment min = 0 max = 100 }
 				calculate_cyber_capability = yes
 				custom_effect_tooltip = cyber_gui_invest_offense_tt
 				international_systems_update = yes
@@ -4891,6 +4914,7 @@ scripted_gui = {
 				log = "[GetDateText]: [Root.GetName]: cyber_invest_defense GUI"
 				add_command_power = -25
 				add_to_variable = { cyber_defense_investment = 2 }
+				clamp_variable = { var = cyber_offense_investment min = 0 max = 100 }
 				calculate_cyber_capability = yes
 				custom_effect_tooltip = cyber_gui_invest_defense_tt
 				international_systems_update = yes
@@ -8699,6 +8723,7 @@ scripted_gui = {
 				NOT = { is_in_array = { global.p5_sc_members = v } }
 			}
 			is_un_sc_vote_yes_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_not_abstaining_tt
 					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
@@ -8718,6 +8743,7 @@ scripted_gui = {
 				}
 			}
 			is_un_sc_vote_no_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_not_abstaining_tt
 					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
@@ -8737,6 +8763,7 @@ scripted_gui = {
 				}
 			}
 			is_un_sc_vote_abstain_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_nation_not_in_array_tt
 					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
@@ -8770,8 +8797,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 2 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 				change_influence_percentage = yes
@@ -8785,8 +8810,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 3 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 
@@ -8801,8 +8824,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 1 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 				change_influence_percentage = yes
@@ -8816,8 +8837,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 3 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 
@@ -8832,8 +8851,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 1 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 
@@ -8848,8 +8865,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 2 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UNSC.200
 				}
 
@@ -8904,6 +8919,7 @@ scripted_gui = {
 		triggers = {
 			is_un_sc_propose_action_button_click_enabled = {
 				ROOT = {
+					check_variable = { sc_selected_action > 0 }
 					has_political_power > 250
 					has_offensive_war = no
 					NOT = {
@@ -9052,7 +9068,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 
-			is_un_sc_manipulate_vote_button_right_click = {
+			is_un_ga_manipulate_vote_button_right_click = {
 				custom_effect_tooltip = un_ga_manipulate_vote_tt
 
 				set_temp_variable = { nation_hold = global.ga_vote_nation_tracker^i }
@@ -9092,6 +9108,7 @@ scripted_gui = {
 
 		triggers = {
 			is_un_ga_vote_yes_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_not_abstaining_tt
 					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
@@ -9114,8 +9131,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 2 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 				change_influence_percentage = yes
@@ -9129,8 +9144,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 3 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 
@@ -9165,6 +9178,7 @@ scripted_gui = {
 
 		triggers = {
 			is_un_ga_vote_no_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_not_abstaining_tt
 					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
@@ -9187,8 +9201,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 1 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 				change_influence_percentage = yes
@@ -9202,8 +9214,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 3 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 
@@ -9246,6 +9256,7 @@ scripted_gui = {
 
 		triggers = {
 			is_un_ga_vote_abstain_button_click_enabled = {
+				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
 					tooltip = un_sc_nation_not_in_array_tt
 					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
@@ -9264,8 +9275,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 1 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 				change_influence_percentage = yes
@@ -9279,8 +9288,6 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { sway_target = PREV }
 					set_variable = { current_vote_sway = 2 }
-					set_temp_variable = { tag_index = THIS.id }
-					set_temp_variable = { influence_target = PREV.id }
 					country_event = UN.200
 				}
 
