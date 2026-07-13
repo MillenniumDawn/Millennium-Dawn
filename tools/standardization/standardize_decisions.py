@@ -19,6 +19,7 @@ from common_utils import (
 )
 from shared_utils import (
     collapse_or_compact,
+    convert_root_factor_to_base,
     create_backup,
     extract_block,
     log_message,
@@ -314,7 +315,9 @@ class DecisionStandardizer(BaseStandardizer):
 
         # 8. AI will do (always last)
         for ai_will_do in props["ai_will_do"]:
-            lines.extend(collapse_or_compact(ai_will_do[:]))
+            lines.extend(
+                collapse_or_compact(convert_root_factor_to_base(ai_will_do[:]))
+            )
             lines.append("")
 
         # 9. Other properties

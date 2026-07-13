@@ -13,7 +13,12 @@ import time
 from datetime import datetime
 
 from common_utils import compact_icon, compact_search_filters
-from shared_utils import collapse_or_compact, extract_block, log_message
+from shared_utils import (
+    collapse_or_compact,
+    convert_root_factor_to_base,
+    extract_block,
+    log_message,
+)
 
 
 def is_empty_block(block_lines):
@@ -442,7 +447,9 @@ def format_focus_block(props, block_type="focus"):
 
     # 17. AI will do (always last)
     if props["ai_will_do"]:
-        compacted_ai = collapse_or_compact(props["ai_will_do"][:])
+        compacted_ai = collapse_or_compact(
+            convert_root_factor_to_base(props["ai_will_do"][:])
+        )
         for line in compacted_ai:
             lines.append(line)
     else:
