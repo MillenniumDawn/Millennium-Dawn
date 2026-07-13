@@ -36,7 +36,33 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 # scripted_params token cache after the 3-tuple → 4-tuple token format change
 # (the cache keys on file content, not validator source, so a format change in
 # the token shape requires a version bump to avoid stale 3-tuple entries).
-CACHE_VERSION = 6
+CACHE_VERSION = 7
+
+
+# Cache entries include this fingerprint so parser changes invalidate results
+# even when the source files themselves are unchanged.
+def _validator_code_fingerprint() -> str:
+    digest = hashlib.sha256()
+    source_dirs = (
+        Path(__file__).parent,
+        Path(__file__).parent.parent / "shared_utils.py",
+    )
+    paths = []
+    for source in source_dirs:
+        if source.is_dir():
+            paths.extend(source.glob("*.py"))
+        elif source.is_file():
+            paths.append(source)
+    for path in sorted(paths):
+        try:
+            digest.update(path.name.encode("utf-8"))
+            digest.update(path.read_bytes())
+        except OSError:
+            continue
+    return digest.hexdigest()
+
+
+_CODE_FINGERPRINT = _validator_code_fingerprint()
 
 _CACHE_DIR_NAME = ".validation_cache"
 # Records when the cache was created / last cleared (one unix timestamp), so the
@@ -161,7 +187,7 @@ def per_file_cached(
     current_stat = _file_stat(source_path)
     if current_stat is None:
         return compute_fn()
-    tag = f"s:{current_stat[0]}:{current_stat[1]}"
+    tag = f"s:{_CODE_FINGERPRINT}:{current_stat[0]}:{current_stat[1]}"
     hit, result = _get(mod_path, namespace, source_path, tag)
     if hit:
         return result
@@ -188,7 +214,7 @@ def per_file_cached_by_content(
     """
     if _cache_disabled():
         return compute_fn()
-    tag = f"c:{len(content)}:{hashlib.sha1(content.encode('utf-8')).hexdigest()}"
+    tag = f"c:{_CODE_FINGERPRINT}:{len(content)}:{hashlib.sha256(content.encode('utf-8')).hexdigest()}"
     hit, result = _get(mod_path, namespace, source_path, tag)
     if hit:
         return result
@@ -202,7 +228,12 @@ def _stats_tag(stats: Dict[str, Optional[Tuple[int, int]]]) -> str:
     for p in sorted(stats):
         v = stats[p]
         parts.append(f"{p}={v[0]}:{v[1]}" if v else f"{p}=x")
-    return "a:" + hashlib.sha1("\n".join(parts).encode("utf-8")).hexdigest()
+    return (
+        "a:"
+        + _CODE_FINGERPRINT
+        + ":"
+        + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+    )
 
 
 def aggregate_cached(

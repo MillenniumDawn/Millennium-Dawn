@@ -95,14 +95,14 @@ _RE_BYPASS_TRIVIAL = re.compile(r"\bbypass\s*=\s*\{\s*always\s*=\s*(?:yes|no)\s*
 _RE_DECISION_MARKER = re.compile(
     r"\bcomplete_effect\s*=\s*\{|\bfire_only_once\s*=|\bactivation\s*=\s*\{|\bdays_mission_timeout\s*="
 )
-_RE_FOCUS_ID_IN_BLOCK = re.compile(r"\bid\s*=\s*(\w+)")
-_RE_COMPLETE_FOCUS = re.compile(r"\bcomplete_national_focus\s*=\s*(\w+)")
-_RE_UNLOCK_FOCUS = re.compile(r"\bunlock_national_focus\s*=\s*(\w+)")
-_RE_ACTIVATE_DECISION = re.compile(r"\bactivate_decision\s*=\s*(\w+)")
+_RE_FOCUS_ID_IN_BLOCK = re.compile(r"\bid\s*=\s*([\w-]+)")
+_RE_COMPLETE_FOCUS = re.compile(r"\bcomplete_national_focus\s*=\s*([\w-]+)")
+_RE_UNLOCK_FOCUS = re.compile(r"\bunlock_national_focus\s*=\s*([\w-]+)")
+_RE_ACTIVATE_DECISION = re.compile(r"\bactivate_decision\s*=\s*([\w-]+)")
 _RE_FOCUS_ANY_BLOCK_OPEN = re.compile(
     r"^\s*(?:focus|shared_focus|joint_focus)\s*=\s*\{"
 )
-_RE_LOG_FOCUS_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bFocus\s+(\w+)', re.IGNORECASE)
+_RE_LOG_FOCUS_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bFocus\s+([\w-]+)', re.IGNORECASE)
 # "Decision <keyword...> <id>" tolerates a chain of filler words before the real
 # id: the block-name keywords (remove/complete/completed/timeout/cancel/add,
 # describing which effect block logged the line) and, in a couple of legacy
@@ -119,7 +119,7 @@ _DECISION_LOG_FILLER_WORDS = {
     "effect",
 }
 _RE_LOG_DECISION_MARKER = re.compile(r'log\s*=\s*"[^"]*\bDecision\b', re.IGNORECASE)
-_RE_NEXT_WORD = re.compile(r"\s+(\w+)")
+_RE_NEXT_WORD = re.compile(r"\s+([\w-]+)")
 # Event ids are namespace.number (dots), unlike focus/decision ids -- \w+ alone
 # would truncate at the dot.
 _RE_EVENT_DEF_OPEN = re.compile(
@@ -169,7 +169,7 @@ _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 _RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
 _RE_TOPLEVEL_WORD = re.compile(r"^\w")
 _RE_INDENTED_WORD = re.compile(r"^\s+\w")
-_RE_BLOCK_ID = re.compile(r"\s*(\w+)\s*=\s*\{")
+_RE_BLOCK_ID = re.compile(r"\s*([\w-]+)\s*=\s*\{")
 _RE_LOGIC_SCOPE = re.compile(r"^\s*(NOT|OR|AND)\s*=\s*\{")
 _RE_CLOSE_BRACE_LINE = re.compile(r"^(\s*)\}\s*$")
 _RE_LEADING_INDENT = re.compile(r"^(\s*)")
