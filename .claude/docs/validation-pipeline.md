@@ -11,6 +11,7 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 - `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`strict: false`, informational) until the ~30 pre-existing undefined-idea references on main are triaged. Once cleared, flip the CI entry to strict.
 - `validate_unused_textures.py` is wired into pre-commit as `stages: [manual]` only. CI cannot run it, so invoke the manual hook when a texture audit is needed.
 - `validate_set_variables.py` runs **CI-only** (informational). Its false-positive volume at repo scale makes it too noisy for a commit gate, so it has no pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) against a specific variable when needed.
+- `validate_scripted_localisation.py` runs **CI-only**, `strict: false` (informational) until the ~100 pre-existing missing/unused scripted-loc findings in `localisation/english` and `common/scripted_localisation` are triaged. Flip the CI entry to strict once cleared.
 
 ## Tooling deprecation watch
 

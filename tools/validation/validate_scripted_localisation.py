@@ -60,9 +60,7 @@ _LOC_REFERENCE_RE = re.compile(
     r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
     r"localization_key)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)"
 )
-_BRACKET_LOC_RE = re.compile(
-    r"\[(?:([A-Za-z_][A-Za-z0-9_]*)\.)?([A-Za-z_][A-Za-z0-9_]*)\]"
-)
+_BRACKET_LOC_RE = re.compile(r"\[(?:([A-Za-z_][A-Za-z0-9_]*)\.)?([A-Za-z0-9_]+)\]")
 
 
 def _filter_bracket_loc_candidates(
@@ -112,7 +110,7 @@ def process_file_for_used_localisations(
     is_sl = "scripted_localisation" in filename
     bracketed, explicit = disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.tokens.v2.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
+        f"scripted_loc.tokens.v3.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
         filename,
         text_file,
         lambda: _scan_loc_token_candidates(text_file, is_sl),

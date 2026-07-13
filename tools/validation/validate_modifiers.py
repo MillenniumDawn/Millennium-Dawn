@@ -38,6 +38,9 @@ _NON_MODIFIER_KEYS: FrozenSet[str] = frozenset(
         "icon",
         "enable",
         "remove_trigger",
+        # Vanilla dynamic-modifier flag: "if yes this modifier will also be
+        # read in combat" (documented in vanilla 0_dynamic_modifiers.txt).
+        "attacker_modifier",
         "custom_modifier_tooltip",
         "var",
         "compare",
@@ -251,8 +254,8 @@ def _is_ai_weight_block(body: str) -> bool:
     return False
 
 
-def _extract_modifier_names_from_body(body: str) -> List[str]:
-    """Extract modifier key names from a modifier block body.
+def _extract_modifier_entries_from_body(body: str) -> List[Tuple[str, int]]:
+    """Extract (modifier key name, 0-based line offset within body) pairs.
 
     Skips:
     - Lines that open sub-blocks (key = { ... })
@@ -260,11 +263,11 @@ def _extract_modifier_names_from_body(body: str) -> List[str]:
     - Targeted modifier entries (XXX_opinion where XXX is a country tag)
     - Anything that doesn't look like a valid modifier name
     """
-    names: List[str] = []
+    entries: List[Tuple[str, int]] = []
     # Only look at top-level keys in the body (depth 0)
     depth = 0
     lines = body.split("\n")
-    for line in lines:
+    for offset, line in enumerate(lines):
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
@@ -293,8 +296,14 @@ def _extract_modifier_names_from_body(body: str) -> List[str]:
         if not _MODIFIER_NAME_RE.match(key):
             continue
 
-        names.append(key)
-    return names
+        entries.append((key, offset))
+    return entries
+
+
+def _extract_modifier_names_from_body(body: str) -> List[str]:
+    """Extract modifier key names from a modifier block body. See
+    _extract_modifier_entries_from_body for the skip rules."""
+    return [name for name, _offset in _extract_modifier_entries_from_body(body)]
 
 
 def _is_parametric_modifier(name: str) -> bool:
@@ -313,32 +322,55 @@ def _is_parametric_modifier(name: str) -> bool:
 _DOC_REL_PATH = os.path.join("resources", "documentation", "modifiers_documentation.md")
 _DOC_CONCRETE_RE = re.compile(r"^## ([a-z][a-z0-9_]*)\s*$", re.MULTILINE)
 _DOC_MODIFIED_TYPES_RE = re.compile(r"\*\*Modified types\*\*:\s*(.+)")
+_DOC_SPAN_PLACEHOLDER_RE = re.compile(r"-([a-z0-9]+)-")
+
+# modifier_army_sub_unit_<Unit>_attack/defence_factor is only documented as a
+# concrete per-vanilla-unit listing (no <span> template — every vanilla sub-unit
+# type gets its own header), but the engine generates the same pair for any
+# sub_units entry, including MD's own. Expand these against harvested MD names
+# the same way as the doc's genuine unit-keyed templates.
+_EXTRA_UNIT_TEMPLATES: Tuple[str, ...] = (
+    "modifier_army_sub_unit_{}_attack_factor",
+    "modifier_army_sub_unit_{}_defence_factor",
+)
 
 
-def _load_documented_modifiers(doc_path: str) -> Set[str]:
-    """Build a known-good set from the vanilla modifier documentation.
+def _load_documented_modifiers(
+    doc_path: str,
+) -> Tuple[Set[str], Dict[str, List[str]]]:
+    """Build a known-good set + parametric templates from the vanilla modifier documentation.
 
     Adds every concrete `## name` header, then expands each parametric family
     (`## <span id="-building-_max_level_terrain_limit">…`) against its
     documented **Modified types** list. Expansion is exact — only entities the
     doc actually lists pass — so it never whitelists a typo the way a broad
-    `<anything>_factor` regex would. Returns an empty set if the doc is missing.
+    `<anything>_factor` regex would.
+
+    Also returns every single-placeholder template grouped by its placeholder
+    word (e.g. "unit" -> ["experience_gain_{}_training_factor", ...]) so callers
+    can expand a family against a name list not documented in the vanilla doc
+    (MD's own sub-units). Returns ({}, {}) if the doc is missing.
     """
     try:
         with open(doc_path, encoding="utf-8") as fh:
             text = fh.read()
     except OSError:
-        return set()
+        return set(), {}
 
     names: Set[str] = set(_DOC_CONCRETE_RE.findall(text))
+    templates_by_word: Dict[str, List[str]] = {}
 
     for section in re.split(r"^## ", text, flags=re.MULTILINE):
         m = re.match(r'<span id="([^"]+)">', section)
         if not m:
             continue
-        template = re.sub(r"-[a-z0-9]+-", "{}", m.group(1))
+        anchor = m.group(1)
+        template = re.sub(r"-[a-z0-9]+-", "{}", anchor)
         if "{}" not in template:
             continue
+        words = _DOC_SPAN_PLACEHOLDER_RE.findall(anchor)
+        if len(words) == 1:
+            templates_by_word.setdefault(words[0], []).append(template)
         types_line = _DOC_MODIFIED_TYPES_RE.search(section)
         if not types_line:
             continue
@@ -352,7 +384,8 @@ def _load_documented_modifiers(doc_path: str) -> Set[str]:
                 continue
             if _MODIFIER_NAME_RE.match(concrete):
                 names.add(concrete)
-    return names
+
+    return names, templates_by_word
 
 
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
@@ -429,11 +462,45 @@ def _extract_top_level_definition_names(text: str) -> Set[str]:
     }
 
 
+def _harvest_md_sub_unit_names(unit_files: List[str]) -> Set[str]:
+    """Sub-unit type names defined under top-level ``sub_units = { ... }`` blocks.
+
+    Unit files can carry other top-level blocks (equipment filters, etc.), so
+    only the sub_units block's own top-level keys are harvested.
+    """
+    names: Set[str] = set()
+    for filepath in unit_files:
+        text = FileOpener.open_text_file(
+            filepath, lowercase=False, strip_comments_flag=True
+        )
+        if not text or "sub_units" not in text:
+            continue
+        for name, _line, body in _extract_top_level_definition_blocks(text):
+            if name != "sub_units":
+                continue
+            for sub_name, _l, _b in _extract_top_level_definition_blocks(body):
+                names.add(sub_name)
+    return names
+
+
+def _harvest_md_operation_names(operation_files: List[str]) -> Set[str]:
+    """Operation names — every top-level block in common/operations files."""
+    names: Set[str] = set()
+    for filepath in operation_files:
+        text = FileOpener.open_text_file(
+            filepath, lowercase=False, strip_comments_flag=True
+        )
+        if not text:
+            continue
+        for name, _line, _body in _extract_top_level_definition_blocks(text):
+            names.add(name)
+    return names
+
+
 def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
     """Return names and lines of top-level dynamic modifier definitions."""
     return [
-        (name, line)
-        for name, line, _body in _extract_top_level_definition_blocks(text)
+        (name, line) for name, line, _body in _extract_top_level_definition_blocks(text)
     ]
 
 
@@ -461,21 +528,21 @@ def _check_file_for_unknown_modifiers(
         # is applied below on the cached result.
         parsed: List[Tuple[str, str, int]] = []
         if is_dynamic:
-            blocks = [
-                (line, body)
-                for _name, line, body in _extract_top_level_definition_blocks(text)
-            ]
+            # Dynamic modifier blocks can run to dozens of keys — report each
+            # key's own line instead of the enclosing block's header line.
+            for _name, block_line, body in _extract_top_level_definition_blocks(text):
+                for name, offset in _extract_modifier_entries_from_body(body):
+                    parsed.append((name, rel, block_line + offset))
         else:
-            blocks = _extract_modifier_blocks(text)
-        for lineno, body in blocks:
-            if not is_dynamic and _is_ai_weight_block(body):
-                continue
-            for name in _extract_modifier_names_from_body(body):
-                parsed.append((name, rel, lineno))
+            for lineno, body in _extract_modifier_blocks(text):
+                if _is_ai_weight_block(body):
+                    continue
+                for name in _extract_modifier_names_from_body(body):
+                    parsed.append((name, rel, lineno))
         return parsed
 
     parsed = disk_cache.per_file_cached_by_content(
-        mod_path, "modifiers.check", filepath, text, _compute
+        mod_path, "modifiers.check.v2", filepath, text, _compute
     )
 
     return [
@@ -524,7 +591,7 @@ class Validator(BaseValidator):
         # Authoritative vanilla reference — concrete modifiers plus parametric
         # families expanded against their documented Modified types.
         doc_path = os.path.join(self.mod_path, _DOC_REL_PATH)
-        documented = _load_documented_modifiers(doc_path)
+        documented, templates_by_word = _load_documented_modifiers(doc_path)
         if not documented:
             self.log(
                 f"  WARNING: {_DOC_REL_PATH} missing or empty — known-good set is "
@@ -540,9 +607,40 @@ class Validator(BaseValidator):
         slot_factors = _harvest_idea_slot_cost_factors(idea_tag_files)
         known_good |= slot_factors
 
+        # Engine-generated per-sub-unit modifiers (unit-keyed doc templates plus
+        # modifier_army_sub_unit_*, doc-concrete for vanilla only) for MD's own
+        # sub_units entries — the vanilla doc has no MD unit names to expand against.
+        unit_files = self._collect_files(["common/units/**/*.txt"], ignore_staged=True)
+        md_sub_units = _harvest_md_sub_unit_names(unit_files)
+        unit_templates = list(templates_by_word.get("unit", [])) + list(
+            _EXTRA_UNIT_TEMPLATES
+        )
+        sub_unit_modifiers = {
+            template.format(name)
+            for template in unit_templates
+            for name in md_sub_units
+        }
+        known_good |= sub_unit_modifiers
+
+        # Same for operation-keyed families (<Operation>_cost/_outcome/_risk):
+        # the doc's Modified types only list vanilla operations, so expand the
+        # templates against MD's own common/operations definitions too.
+        operation_files = self._collect_files(
+            ["common/operations/**/*.txt"], ignore_staged=True
+        )
+        md_operations = _harvest_md_operation_names(operation_files)
+        operation_modifiers = {
+            template.format(name)
+            for template in templates_by_word.get("operation", [])
+            for name in md_operations
+        }
+        known_good |= operation_modifiers
+
         self.log(
             f"  Known-good modifier set: {len(known_good)} names "
-            f"({len(documented)} documented, {len(slot_factors)} slot cost factors)"
+            f"({len(documented)} documented, {len(slot_factors)} slot cost factors, "
+            f"{len(sub_unit_modifiers)} MD sub-unit modifiers, "
+            f"{len(operation_modifiers)} MD operation modifiers)"
         )
         return frozenset(known_good)
 

@@ -23,6 +23,22 @@ def test_scripted_loc_keeps_and_reports_undefined_bracketed_invocation(tmp_path)
     assert "missingnestedloc" in validator._issues[0].message.lower()
 
 
+def test_digit_prefixed_defined_loc_is_tracked_via_gui(tmp_path):
+    gui_dir = tmp_path / "interface"
+    gui_dir.mkdir()
+    gui = gui_dir / "consumer.gui"
+    gui.write_text('image = "[991_maoist_influence]"\n')
+
+    used, paths = V.process_file_for_used_localisations(
+        (str(gui), {"991_maoist_influence"}, False, str(tmp_path))
+    )
+    assert used == ["991_maoist_influence"]
+    assert paths == {"991_maoist_influence": "consumer.gui"}
+    assert V._scan_loc_tokens("[991_maoist_influence]", False) == {
+        "991_maoist_influence"
+    }
+
+
 def test_defined_bracketed_invocation_is_tracked(tmp_path):
     path = tmp_path / "consumer.txt"
     path.write_text("custom_effect_tooltip = [DefinedNestedLoc]\n")
