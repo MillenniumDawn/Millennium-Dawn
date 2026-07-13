@@ -2126,6 +2126,12 @@ focus_tree = {
 					remove_idea = ARM_crossroad_diplomacy_idea
 					add_idea = ARM_crossroad_diplomacy_idea_1
 				}
+				set_temp_variable = { receiver_nation = ARM.id }
+				set_temp_variable = { sender_nation = FRA.id }
+				set_improved_trade_agreement = yes
+				FRA = {
+					diplomatic_relation = { country = ARM relation = non_aggression_pact active = yes }
+				}
 			}
 		}
 
@@ -3096,8 +3102,8 @@ focus_tree = {
 				set_temp_variable = { tag_index = ARM }
 				set_temp_variable = { influence_target = KUR }
 				change_influence_percentage = yes
-				add_opinion_modifier = { target = KUR modifier = declaration_of_friendship }
 				reverse_add_opinion_modifier = { target = KUR modifier = declaration_of_friendship }
+				935 = { remove_core_of = KUR }
 			}
 		}
 
@@ -3384,7 +3390,6 @@ focus_tree = {
 				set_temp_variable = { tag_index = SOV }
 				set_temp_variable = { influence_target = ARM }
 				change_influence_percentage = yes
-				add_opinion_modifier = { target = SOV modifier = new_diplomatic_missions }
 				reverse_add_opinion_modifier = { target = SOV modifier = new_diplomatic_missions }
 			}
 		}
@@ -5090,6 +5095,8 @@ focus_tree = {
 			focus = ARM_seize_oligs_stuff
 		}
 
+		will_lead_to_war_with = PKK
+
 		search_filters = { FOCUS_FILTER_ARMENIA_POLITIC }
 
 		available = { emerging_anarchist_communism_are_in_power = yes }
@@ -5103,6 +5110,14 @@ focus_tree = {
 				PKK = {
 					country_event = { id = md4.14 days = 2 }
 				}
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				effect_tooltip = {
+					puppet = PKK
+				}
+				custom_effect_tooltip = TT_IF_THEY_REJECT
+				effect_tooltip = {
+					create_wargoal = { target = PKK type = puppet_wargoal_focus }
+				}
 			}
 			if = {
 				limit = {
@@ -5115,14 +5130,6 @@ focus_tree = {
 					DECISION = ARM_pkk_revoult
 					DECISION_CATEGORY = ARM_special_services_category
 				}
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				puppet = PKK
-			}
-			custom_effect_tooltip = TT_IF_THEY_REJECT
-			effect_tooltip = {
-				will_lead_to_war_with = PKK
 			}
 		}
 
@@ -8308,10 +8315,13 @@ focus_tree = {
 				change_influence_percentage = yes
 				add_opinion_modifier = { target = SOV modifier = recent_actions_negative }
 				reverse_add_opinion_modifier = { target = SOV modifier = recent_actions_negative }
+				add_stability = -0.1
 			}
 			custom_effect_tooltip = TT_IF_THEY_REJECT
 			effect_tooltip = {
-				will_lead_to_war_with = SOV
+				SOV = {
+					declare_war_on = { target = ARM type = annex_everything }
+				}
 			}
 		}
 
@@ -13009,6 +13019,10 @@ focus_tree = {
 					set_temp_variable = { modify_europeanism = 0.06 }
 					set_temp_variable = { modify_europeanism_target = ARM }
 					europeanism_change = yes
+					set_temp_variable = { percent_change = 4 }
+					set_temp_variable = { tag_index = global.eucouncil }
+					set_temp_variable = { influence_target = ARM }
+					change_influence_percentage = yes
 					add_ideas = ARM_eu_coop_agreement
 				}
 			}
@@ -13224,6 +13238,10 @@ focus_tree = {
 					set_temp_variable = { modify_europeanism = 0.07 }
 					set_temp_variable = { modify_europeanism_target = ARM }
 					europeanism_change = yes
+					set_temp_variable = { percent_change = 5 }
+					set_temp_variable = { tag_index = global.eucouncil }
+					set_temp_variable = { influence_target = ARM }
+					change_influence_percentage = yes
 					ARM_eu_cooperation_script = yes
 				}
 			}
@@ -14846,6 +14864,10 @@ focus_tree = {
 					set_temp_variable = { tag_index = USA }
 					set_temp_variable = { influence_target = ARM }
 					change_influence_percentage = yes
+					if = {
+						limit = { has_idea = ARM_national_guard_idea }
+						swap_ideas = { remove_idea = ARM_national_guard_idea add_idea = ARM_national_guard_idea1 }
+					}
 					swap_ideas = { remove_idea = ARM_inner_army_idea add_idea = ARM_inner_army_idea1 }
 					add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 					reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
@@ -15145,9 +15167,15 @@ focus_tree = {
 					set_temp_variable = { tag_index = USA }
 					set_temp_variable = { influence_target = ARM }
 					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = TUR }
+					change_influence_percentage = yes
 					add_political_power = 75
-					add_opinion_modifier = { target = TUR modifier = drama }
-					reverse_add_opinion_modifier = { target = TUR modifier = drama }
+					USA = {
+						add_opinion_modifier = { target = TUR modifier = drama }
+						reverse_add_opinion_modifier = { target = TUR modifier = drama }
+					}
 					add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 					reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 				}
@@ -17548,7 +17576,12 @@ focus_tree = {
 				}
 				custom_effect_tooltip = TT_IF_THEY_ACCEPT
 				effect_tooltip = {
-					declare_war_on = { target = GEO type = annex_everything }
+					SOO = {
+						declare_war_on = { target = GEO type = annex_everything }
+					}
+					ABK = {
+						declare_war_on = { target = GEO type = annex_everything }
+					}
 				}
 			}
 
@@ -17611,8 +17644,28 @@ focus_tree = {
 				}
 				custom_effect_tooltip = TT_IF_THEY_ACCEPT
 				effect_tooltip = {
-					add_opinion_modifier = { target = GEO modifier = diplomatic_support }
-					reverse_add_opinion_modifier = { target = GEO modifier = diplomatic_support }
+					GEO = {
+						set_autonomy = {
+							target = SOO
+							autonomous_state = autonomy_autonomous_state
+							end_wars = no
+							end_civil_wars = no
+						}
+						set_autonomy = {
+							target = ABK
+							autonomous_state = autonomy_autonomous_state
+							end_wars = no
+							end_civil_wars = no
+						}
+					}
+					SOO = {
+						add_opinion_modifier = { target = GEO modifier = diplomatic_support }
+						reverse_add_opinion_modifier = { target = GEO modifier = diplomatic_support }
+					}
+					ABK = {
+						add_opinion_modifier = { target = GEO modifier = diplomatic_support }
+						reverse_add_opinion_modifier = { target = GEO modifier = diplomatic_support }
+					}
 					set_temp_variable = { percent_change = 10 }
 					set_temp_variable = { tag_index = ARM }
 					set_temp_variable = { influence_target = GEO }
@@ -17829,6 +17882,10 @@ focus_tree = {
 					change_influence_percentage = yes
 					add_opinion_modifier = { target = SYR modifier = recent_actions_positive }
 					reverse_add_opinion_modifier = { target = SYR modifier = recent_actions_positive }
+					set_temp_variable = { percent_change = 1 }
+					set_temp_variable = { tag_index = SYR }
+					set_temp_variable = { influence_target = ARM }
+					change_influence_percentage = yes
 				}
 			}
 
@@ -18829,6 +18886,10 @@ focus_tree = {
 				}
 				custom_effect_tooltip = TT_IF_THEY_ACCEPT
 				effect_tooltip = {
+					set_temp_variable = { percent_change = 7 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = ARM }
+					change_influence_percentage = yes
 					set_temp_variable = { treasury_change = 5.5 }
 					modify_treasury_effect = yes
 					random_core_state = {
@@ -19036,7 +19097,9 @@ focus_tree = {
 				custom_effect_tooltip = TT_IF_THEY_ACCEPT
 				effect_tooltip = {
 					1035 = { set_demilitarized_zone = yes }
-					diplomatic_relation = { country = AZE relation = military_access active = yes }
+					AZE = {
+						diplomatic_relation = { country = ARM relation = military_access active = yes }
+					}
 				}
 			}
 
@@ -19058,6 +19121,8 @@ focus_tree = {
 				focus = ARM_negotiate_kurds
 				focus = ARM_negotiate_syria
 			}
+
+		will_lead_to_war_with = TUR
 
 		search_filters = { FOCUS_FILTER_ARMENIA_DIPLOMACY }
 
@@ -19089,10 +19154,20 @@ focus_tree = {
 						1032 = { transfer_state_to = ARM }
 						161 = { transfer_state_to = ARM }
 					}
+					if = {
+						limit = { SYR = { NOT = { is_in_faction_with = ARM } } }
+						transfer_state = 992
+						transfer_state = 1205
+						transfer_state = 158
+					}
+					if = {
+						limit = { KUR = { NOT = { is_in_faction_with = ARM } } }
+						transfer_state = 162
+					}
 				}
 				custom_effect_tooltip = TT_IF_THEY_REJECT
 				effect_tooltip = {
-					will_lead_to_war_with = TUR
+					create_wargoal = { target = TUR type = take_claimed_state }
 				}
 			}
 
