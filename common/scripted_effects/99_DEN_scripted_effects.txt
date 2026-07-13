@@ -18,142 +18,234 @@ DEN_modify_environmentalist_anger = {
 }
 
 DEN_Agrar_resolve = {
+	set_temp_variable = { DEN_agrar_anger_input = DEN_environmentalist_anger }
+	set_temp_variable = { DEN_agrar_variant = 1 }
+	DEN_agrar_resolve_generic = yes
+}
+
+DEN_Agrar_resolve_II = {
+	set_temp_variable = { DEN_agrar_anger_input = DEN_farmer_anger }
+	set_temp_variable = { DEN_agrar_variant = 2 }
+	DEN_agrar_resolve_generic = yes
+}
+
+# Inputs (temp): DEN_agrar_anger_input, DEN_agrar_variant (1 = environmentalist/.10, 2 = farmer/.15)
+DEN_agrar_resolve_generic = {
+	set_temp_variable = { DEN_agrar_fire = 0 }
+	set_temp_variable = { DEN_agrar_offset = 0 }
+	# Polled monthly, so each band needs a no-protest bucket — without one the event is guaranteed every month.
 	if = {
 		limit = {
-			check_variable = { var = DEN_farmer_anger value = 0 compare = greater_than_or_equals }
-			check_variable = { DEN_farmer_anger < 10 }
+			check_variable = { DEN_agrar_anger_input < 10 }
+			OR = {
+				check_variable = { DEN_agrar_anger_input > 1 }
+				NOT = { DEN_no_active_agri_policy = yes }
+			}
 		}
 		random = {
-			chance = 50
+			chance = 10
+			set_temp_variable = { DEN_agrar_fire = 1 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { DEN_agrar_anger_input < 20 } }
+		random_list = {
+			80 = { }
+			15 = { set_temp_variable = { DEN_agrar_fire = 1 } }
+			5 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 1 }
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { DEN_agrar_anger_input < 30 } }
+		random_list = {
+			70 = { }
+			15 = { set_temp_variable = { DEN_agrar_fire = 1 } }
+			10 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 1 }
+			}
+			5 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 2 }
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { DEN_agrar_anger_input < 40 } }
+		random_list = {
+			60 = { }
+			15 = { set_temp_variable = { DEN_agrar_fire = 1 } }
+			15 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 1 }
+			}
+			10 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 2 }
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { DEN_agrar_anger_input < 50 } }
+		random_list = {
+			45 = { }
+			20 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 1 }
+			}
+			30 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 2 }
+			}
+			5 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 3 }
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { DEN_agrar_anger_input < 60 } }
+		random_list = {
+			30 = { }
+			50 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 2 }
+			}
+			12 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 3 }
+			}
+			8 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 4 }
+			}
+		}
+	}
+	else = {
+		random_list = {
+			15 = { }
+			45 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 2 }
+			}
+			25 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 3 }
+			}
+			15 = {
+				set_temp_variable = { DEN_agrar_fire = 1 }
+				set_temp_variable = { DEN_agrar_offset = 4 }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { DEN_agrar_fire = 1 } }
+		if = {
+			limit = { check_variable = { DEN_agrar_variant = 1 } }
+			set_variable = { DEN_agrar_event_tier = 10 }
+			add_to_variable = { DEN_agrar_event_tier = DEN_agrar_offset }
+			# 365d backstop: heals a stuck flag if DEN is annexed before the event delivers
+			set_country_flag = {
+				flag = DEN_agrar_event_pending
+				days = 365 value = 1
+			}
+			set_country_flag = {
+				flag = DEN_agrar_event_cooldown
+				days = 60 value = 1
+			}
 			country_event = { id = denmark_agrar_event.10 days = 1 }
 		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { var = DEN_farmer_anger value = 10 compare = greater_than_or_equals }
-			check_variable = { DEN_farmer_anger < 20 }
-		}
-		random_list = {
-			50 = { country_event = { id = denmark_agrar_event.10 days = 1 } }
-			25 = { country_event = { id = denmark_agrar_event.11 days = 1 } }
-			25 = { }
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { var = DEN_farmer_anger value = 20 compare = greater_than_or_equals }
-			check_variable = { DEN_farmer_anger < 30 }
-		}
-		random_list = {
-			50 = { country_event = { id = denmark_agrar_event.10 days = 1 } }
-			25 = { country_event = { id = denmark_agrar_event.11 days = 1 } }
-			25 = { country_event = { id = denmark_agrar_event.12 days = 1 } }
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { var = DEN_farmer_anger value = 30 compare = greater_than_or_equals }
-			check_variable = { DEN_farmer_anger < 40 }
-		}
-		random_list = {
-			35 = { country_event = { id = denmark_agrar_event.10 days = 1 } }
-			35 = { country_event = { id = denmark_agrar_event.11 days = 1 } }
-			30 = { country_event = { id = denmark_agrar_event.12 days = 1 } }
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { var = DEN_farmer_anger value = 40 compare = greater_than_or_equals }
-			check_variable = { DEN_farmer_anger < 50 }
-		}
-		random_list = {
-			35 = { country_event = { id = denmark_agrar_event.11 days = 1 } }
-			55 = { country_event = { id = denmark_agrar_event.12 days = 1 } }
-			10 = { country_event = { id = denmark_agrar_event.13 days = 1 } }
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { var = DEN_farmer_anger value = 50 compare = greater_than_or_equals }
-			check_variable = { DEN_farmer_anger < 60 }
-		}
-		random_list = {
-			75 = { country_event = { id = denmark_agrar_event.12 days = 1 } }
-			15 = { country_event = { id = denmark_agrar_event.13 days = 1 } }
-			10 = { country_event = { id = denmark_agrar_event.14 days = 1 } }
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { var = DEN_farmer_anger value = 60 compare = greater_than_or_equals }
-		}
-		random_list = {
-			50 = { country_event = { id = denmark_agrar_event.12 days = 1 } }
-			25 = { country_event = { id = denmark_agrar_event.13 days = 1 } }
-			25 = { country_event = { id = denmark_agrar_event.14 days = 1 } }
+		else = {
+			set_variable = { DEN_agrar_event_tier_II = 15 }
+			add_to_variable = { DEN_agrar_event_tier_II = DEN_agrar_offset }
+			set_country_flag = {
+				flag = DEN_agrar_event_pending_II
+				days = 365 value = 1
+			}
+			set_country_flag = {
+				flag = DEN_agrar_event_cooldown_II
+				days = 60 value = 1
+			}
+			country_event = { id = denmark_agrar_event.15 days = 1 }
 		}
 	}
 }
-DEN_Agrar_resolve_II = {
-	if = {
-		limit = {
-			check_variable = { var = DEN_environmentalist_anger value = 0 compare = greater_than_or_equals }
-		}
 
-		if = {
-			limit = { check_variable = { DEN_environmentalist_anger < 10 } }
-			random = {
-				chance = 50
-				country_event = { id = denmark_agrar_event.15 days = 1 }
-			}
+DEN_agrar_damage_buildings = {
+	3 = {
+		damage_building = {
+			type = infrastructure
+			damage = 0.2
 		}
-		else_if = {
-			limit = { check_variable = { DEN_environmentalist_anger < 20 } }
-			random_list = {
-				50 = { country_event = { id = denmark_agrar_event.15 days = 1 } }
-				25 = { country_event = { id = denmark_agrar_event.16 days = 1 } }
-				25 = { }
-			}
+		damage_building = {
+			type = offices
+			damage = 0.2
 		}
-		else_if = {
-			limit = { check_variable = { DEN_environmentalist_anger < 30 } }
-			random_list = {
-				50 = { country_event = { id = denmark_agrar_event.15 days = 1 } }
-				25 = { country_event = { id = denmark_agrar_event.16 days = 1 } }
-				25 = { country_event = { id = denmark_agrar_event.17 days = 1 } }
-			}
-		}
-		else_if = {
-			limit = { check_variable = { DEN_environmentalist_anger < 40 } }
-			random_list = {
-				35 = { country_event = { id = denmark_agrar_event.15 days = 1 } }
-				35 = { country_event = { id = denmark_agrar_event.16 days = 1 } }
-				30 = { country_event = { id = denmark_agrar_event.17 days = 1 } }
-			}
-		}
-		else_if = {
-			limit = { check_variable = { DEN_environmentalist_anger < 50 } }
-			random_list = {
-				35 = { country_event = { id = denmark_agrar_event.16 days = 1 } }
-				55 = { country_event = { id = denmark_agrar_event.17 days = 1 } }
-				10 = { country_event = { id = denmark_agrar_event.18 days = 1 } }
-			}
-		}
-		else_if = {
-			limit = { check_variable = { DEN_environmentalist_anger < 60 } }
-			random_list = {
-				75 = { country_event = { id = denmark_agrar_event.17 days = 1 } }
-				15 = { country_event = { id = denmark_agrar_event.18 days = 1 } }
-				10 = { country_event = { id = denmark_agrar_event.19 days = 1 } }
-			}
-		}
-		else = {
-			# 60 or greater
-			random_list = {
-				50 = { country_event = { id = denmark_agrar_event.17 days = 1 } }
-				25 = { country_event = { id = denmark_agrar_event.18 days = 1 } }
-				25 = { country_event = { id = denmark_agrar_event.19 days = 1 } }
-			}
+		damage_building = {
+			type = industrial_complex
+			damage = 0.2
 		}
 	}
+}
+
+DEN_spread_nordic_communism = {
+	set_temp_variable = { party_index = 4 }
+	set_temp_variable = { party_popularity_increase = 0.05 }
+	set_temp_variable = { temp_outlook_increase = 0.05 }
+	add_relative_party_popularity = yes
+}
+
+DEN_soldiers_pay_bonus = {
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = DEN_army_dynamic_modifier }
+	add_to_variable = { DEN_army_personnel_cost_multiplier_modifier = 0.02 tooltip = army_personnel_cost_multiplier_modifier_tt }
+	add_to_variable = { DEN_army_winter_attrition_factor = -0.15 tooltip = winter_attrition_factor_tt }
+	add_to_variable = { DEN_army_org_factor = -0.05 tooltip = army_org_factor_tt }
+	add_to_variable = { DEN_army_army_speed_factor = 0.08 tooltip = army_speed_factor_tt }
+}
+
+DEN_soldiers_pay_removal = {
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = DEN_army_dynamic_modifier }
+	add_to_variable = { DEN_army_personnel_cost_multiplier_modifier = -0.02 tooltip = army_personnel_cost_multiplier_modifier_tt }
+	add_to_variable = { DEN_army_winter_attrition_factor = 0.15 tooltip = winter_attrition_factor_tt }
+	add_to_variable = { DEN_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+	add_to_variable = { DEN_army_army_speed_factor = -0.08 tooltip = army_speed_factor_tt }
+}
+
+DEN_agri_subvention_anger = {
+	set_temp_variable = { modify_farmer_anger = -5 }
+	DEN_modify_farmer_anger = yes
+	set_temp_variable = { modify_environmentalist_anger = 5 }
+	DEN_modify_environmentalist_anger = yes
+}
+
+DEN_green_policy_anger = {
+	set_temp_variable = { modify_farmer_anger = 5 }
+	DEN_modify_farmer_anger = yes
+	set_temp_variable = { modify_environmentalist_anger = -5 }
+	DEN_modify_environmentalist_anger = yes
+}
+
+DEN_conservation_policy_payout = {
+	random_list = {
+		40 = {
+			add_stability = 0.03
+			add_popularity = { ideology = neutrality popularity = 0.04 }
+		}
+		15 = {
+			add_stability = 0.03
+			add_popularity = { ideology = communism popularity = 0.04 }
+		}
+		15 = {
+			add_stability = 0.05
+			add_popularity = { ideology = neutrality popularity = 0.06 }
+		}
+		30 = {
+			add_stability = 0.03
+			add_popularity = { ideology = democratic popularity = 0.02 }
+		}
+	}
+	recalculate_party = yes
 }
