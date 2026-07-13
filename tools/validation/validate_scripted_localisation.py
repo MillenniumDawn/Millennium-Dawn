@@ -61,40 +61,36 @@ _LOC_REFERENCE_RE = re.compile(
     r"localization_key)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)"
 )
 _BRACKET_LOC_RE = re.compile(
-    r"\[(?:[A-Za-z_][A-Za-z0-9_]*\.)?([A-Za-z_][A-Za-z0-9_]*)\]"
+    r"\[(?:([A-Za-z_][A-Za-z0-9_]*)\.)?([A-Za-z_][A-Za-z0-9_]*)\]"
 )
-_BUILTIN_GETTERS = {
-    "getname",
-    "getnamewithflag",
-    "getnamewithflagcolorcode",
-    "getnamedef",
-    "getadjective",
-    "getflag",
-    "getleader",
-    "getleaderdescription",
-    "getdatetext",
-    "getyear",
-    "getmonth",
-    "getday",
-    "gettag",
-}
 
 
-def _scan_loc_tokens(text: str, is_scripted_loc_file: bool) -> Set[str]:
-    # Bracketed values are the scripted-localisation invocation syntax.  Do not
-    # treat arbitrary assignments as calls: custom_effect_tooltip and
-    # localization_key also commonly name ordinary localisation keys.
-    tokens = {
-        token
-        for token in _BRACKET_LOC_RE.findall(text)
-        if token.lower() not in _BUILTIN_GETTERS
+def _filter_bracket_loc_candidates(
+    candidates: Set[Tuple[str, bool]], defined_names: Set[str]
+) -> Set[str]:
+    defined_lower = {name.lower() for name in defined_names}
+    return {
+        name
+        for name, _scoped in candidates
+        if name.lower() in defined_lower or not name.lower().startswith("get")
     }
-    if is_scripted_loc_file:
-        return tokens
-    # Keep the legacy explicit-reference scan for defined/unused accounting.
-    # Undefined names from this ambiguous syntax are intentionally not reported.
-    tokens |= set(_LOC_REFERENCE_RE.findall(text))
-    return tokens
+
+
+def _scan_loc_token_candidates(
+    text: str, is_scripted_loc_file: bool
+) -> Tuple[Set[Tuple[str, bool]], Set[str]]:
+    bracketed = {
+        (member, bool(scope)) for scope, member in _BRACKET_LOC_RE.findall(text)
+    }
+    explicit = set() if is_scripted_loc_file else set(_LOC_REFERENCE_RE.findall(text))
+    return bracketed, explicit
+
+
+def _scan_loc_tokens(
+    text: str, is_scripted_loc_file: bool, defined_names: Set[str] | None = None
+) -> Set[str]:
+    bracketed, explicit = _scan_loc_token_candidates(text, is_scripted_loc_file)
+    return _filter_bracket_loc_candidates(bracketed, defined_names or set()) | explicit
 
 
 def process_file_for_used_localisations(
@@ -111,24 +107,27 @@ def process_file_for_used_localisations(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
 
-    # Cache the file's token set (independent of search_names); intersect after
-    # the cache hit so a changing defined-set never invalidates the entry.
+    # Cache raw candidates (independent of search_names); filter after the cache
+    # hit so a changing defined set never invalidates the entry.
     is_sl = "scripted_localisation" in filename
-    tokens = disk_cache.per_file_cached_by_content(
+    bracketed, explicit = disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.tokens.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
+        f"scripted_loc.tokens.v2.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
         filename,
         text_file,
-        lambda: _scan_loc_tokens(text_file, is_sl),
+        lambda: _scan_loc_token_candidates(text_file, is_sl),
     )
+    tokens = _filter_bracket_loc_candidates(bracketed, search_names) | explicit
 
     # Scripted-localisation, GUI, and English localisation files use bracket
     # syntax for scripted loc calls. Keep candidates even when undefined so
     # the missing check can report them.
     normalized_filename = filename.replace("\\", "/").lstrip("/")
     is_english_yml = "localisation/english/" in normalized_filename
-    if is_sl or filename.endswith(".gui") or (
-        filename.endswith(".yml") and is_english_yml
+    if (
+        is_sl
+        or filename.endswith(".gui")
+        or (filename.endswith(".yml") and is_english_yml)
     ):
         found_original = tokens
     else:

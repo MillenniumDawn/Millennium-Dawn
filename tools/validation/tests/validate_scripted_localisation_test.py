@@ -70,6 +70,46 @@ def test_scoped_bracketed_invocation_tracks_member_name():
     }
 
 
+def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
+    assert V._scan_loc_tokens("[status] [USA_STATUS]", False) == {
+        "status",
+        "USA_STATUS",
+    }
+
+
+def test_engine_getters_are_not_scripted_loc_candidates(tmp_path):
+    getters = " ".join(
+        f"[{value}] [ROOT.{value}]"
+        for value in (
+            "GetFullName",
+            "GetRank",
+            "GetRulingParty",
+            "GetCountryContinent",
+        )
+    )
+    gui = tmp_path / "consumer.gui"
+    gui.write_text(f'text = "{getters} [MissingGuiLoc]"\n')
+    yml = tmp_path / "localisation" / "english" / "consumer_l_english.yml"
+    yml.parent.mkdir(parents=True)
+    yml.write_text(f'l_english:\n  text: "{getters} [MissingYmlLoc]"\n')
+
+    gui_used, _ = V.process_file_for_used_localisations(
+        (str(gui), set(), False, str(tmp_path))
+    )
+    yml_used, _ = V.process_file_for_used_localisations(
+        (str(yml), set(), False, str(tmp_path))
+    )
+
+    assert gui_used == ["MissingGuiLoc"]
+    assert yml_used == ["MissingYmlLoc"]
+
+
+def test_defined_get_prefixed_scripted_loc_is_retained():
+    assert V._scan_loc_tokens("[GetProjectStatus]", False, {"GetProjectStatus"}) == {
+        "GetProjectStatus"
+    }
+
+
 def test_staged_gui_uses_full_definition_set(tmp_path):
     loc_dir = tmp_path / "common" / "scripted_localisation"
     loc_dir.mkdir(parents=True)

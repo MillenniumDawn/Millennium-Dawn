@@ -20,6 +20,45 @@ def test_scan_idea_refs_supports_multiline_add_remove_blocks():
     }
 
 
+def test_scan_idea_refs_skips_top_level_assignments_and_comments():
+    text = """
+    add_ideas = {
+        first_block_idea
+        idea = yes
+        if = {
+            limit = { has_country_flag = enabled }
+            add_ideas = nested_idea
+        }
+        # commented_out_idea
+        second_block_idea
+    }
+    remove_ideas = {
+        modifier = { factor = 2 }
+        third_block_idea fourth_block_idea
+    }
+    """
+    refs = set(_scan_idea_refs(text))
+
+    assert refs >= {
+        "first_block_idea",
+        "second_block_idea",
+        "third_block_idea",
+        "fourth_block_idea",
+        "nested_idea",
+    }
+    assert refs.isdisjoint(
+        {
+            "idea",
+            "yes",
+            "if",
+            "limit",
+            "enabled",
+            "commented_out_idea",
+            "modifier",
+            "factor",
+            "2",
+        }
+    )
 
 
 @pytest.mark.parametrize(

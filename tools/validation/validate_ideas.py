@@ -375,44 +375,57 @@ def _parse_ideas_from_text(
 def _extract_idea_refs_from_blocks(text: str) -> List[str]:
     """Return bare idea names from brace-form add/remove_ideas effects."""
     refs: List[str] = []
+    token_chars = "_:-[]."
     for match in _IDEA_REF_BLOCK_START.finditer(text):
         body, _ = extract_block_from_text(text, match.end() - 1)
         if not body:
             continue
-        depth = 0
-        in_string = False
         i = 0
         while i < len(body):
-            char = body[i]
-            if char == '"':
-                in_string = not in_string
+            if body[i].isspace():
                 i += 1
                 continue
-            if in_string:
+            if body[i] == "#":
+                newline = body.find("\n", i)
+                i = len(body) if newline < 0 else newline + 1
+                continue
+            if not (body[i].isalnum() or body[i] in token_chars):
                 i += 1
                 continue
-            if char == "{":
-                depth += 1
+
+            start = i
+            while i < len(body) and (body[i].isalnum() or body[i] in token_chars):
                 i += 1
+            token = body[start:i]
+            lookahead = i
+            while lookahead < len(body) and body[lookahead] in " \t\r":
+                lookahead += 1
+            if lookahead >= len(body) or body[lookahead] != "=":
+                refs.append(token)
                 continue
-            if char == "}":
-                depth = max(0, depth - 1)
+
+            i = lookahead + 1
+            while i < len(body) and body[i] in " \t\r":
                 i += 1
-                continue
-            if depth == 0 and (char.isalnum() or char in "_:-[]."):
-                start = i
-                while i < len(body) and (
-                    body[i].isalnum() or body[i] in "_:-[]."
-                ):
+            if i < len(body) and body[i] == "{":
+                depth = 1
+                i += 1
+                in_string = False
+                while i < len(body) and depth:
+                    if body[i] == '"' and body[i - 1] != "\\":
+                        in_string = not in_string
+                    elif not in_string and body[i] == "#":
+                        newline = body.find("\n", i)
+                        i = len(body) if newline < 0 else newline
+                        continue
+                    elif not in_string and body[i] == "{":
+                        depth += 1
+                    elif not in_string and body[i] == "}":
+                        depth -= 1
                     i += 1
-                token = body[start:i]
-                lookahead = i
-                while lookahead < len(body) and body[lookahead].isspace():
-                    lookahead += 1
-                if lookahead >= len(body) or body[lookahead] != "=":
-                    refs.append(token)
-                continue
-            i += 1
+            else:
+                newline = body.find("\n", i)
+                i = len(body) if newline < 0 else newline + 1
     return refs
 
 
