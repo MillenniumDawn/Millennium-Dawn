@@ -440,30 +440,13 @@ def format_focus_block(props, block_type="focus"):
     # 18. Bypass effect (add log if missing)
     emit_effect_block_with_log(lines, props["bypass_effect"], focus_id)
 
-    # 17. AI will do (always last, always multi-line)
+    # 17. AI will do (always last)
     if props["ai_will_do"]:
-        ai_lines = props["ai_will_do"]
-        if len(ai_lines) == 1 and "ai_will_do = {" in ai_lines[0]:
-            line = ai_lines[0]
-            factor_match = re.search(r"factor\s*=\s*(\d+)", line)
-            if factor_match:
-                factor_value = factor_match.group(1)
-                lines.append("\t\tai_will_do = {")
-                lines.append(f"\t\t\tfactor = {factor_value}")
-                lines.append("\t\t}")
-            else:
-                # Fallback to original if no factor found
-                compacted_ai = collapse_or_compact(ai_lines[:])
-                for line in compacted_ai:
-                    lines.append(line)
-        else:
-            compacted_ai = collapse_or_compact(ai_lines[:])
-            for line in compacted_ai:
-                lines.append(line)
+        compacted_ai = collapse_or_compact(props["ai_will_do"][:])
+        for line in compacted_ai:
+            lines.append(line)
     else:
-        lines.append("\t\tai_will_do = {")
-        lines.append("\t\t\tfactor = 1")
-        lines.append("\t\t}")
+        lines.append("\t\tai_will_do = { base = 1 }")
 
     lines.append("\t}")
 
