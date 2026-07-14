@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -133,6 +133,21 @@ def check_perf() -> CheckResult:
     return _dist_check("perf", lambda: _perf.run(DIST_DIR))
 
 
+# Name-keyed so the dist-phase process pool only has to pickle a check name
+# (a plain str) across the process boundary, not a bound function/closure.
+_DIST_CHECK_FNS: dict[str, Callable[[], CheckResult]] = {
+    "links": check_links,
+    "og": check_og,
+    "a11y": check_a11y,
+    "perf": check_perf,
+}
+
+
+def _run_dist_check(name: str) -> CheckResult:
+    """Top-level picklable entry point so dist checks can run in worker processes."""
+    return _DIST_CHECK_FNS[name]()
+
+
 @dataclass
 class Check:
     name: str
@@ -174,6 +189,21 @@ def _run_parallel(checks: list[Check], max_workers: int) -> list[CheckResult]:
     return results
 
 
+def _run_dist_parallel(checks: list[Check], max_workers: int) -> list[CheckResult]:
+    # Dist checks parse ~163 HTML files each via html.parser, which holds the GIL,
+    # so threads serialize instead of overlapping. Processes give real parallelism.
+    results: list[CheckResult] = []
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_run_dist_check, c.name): c for c in checks}
+        for future in as_completed(futures):
+            check = futures[future]
+            try:
+                results.append(future.result())
+            except Exception as exc:  # noqa: BLE001 - surface as a failed check
+                results.append(CheckResult(check.name, False, f"Exception: {exc}", 0.0))
+    return results
+
+
 def run_checks(
     checks: list[Check],
     skip_build: bool = False,
@@ -204,6 +234,8 @@ def run_checks(
                 results.append(
                     CheckResult(check.name, False, "skipped: build failed", 0.0)
                 )
+        elif phase == "dist":
+            results.extend(_run_dist_parallel(phase_checks, max_workers))
         else:
             results.extend(_run_parallel(phase_checks, max_workers))
 
