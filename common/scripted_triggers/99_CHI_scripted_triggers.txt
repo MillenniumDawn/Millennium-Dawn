@@ -3,67 +3,40 @@
 
 is_sco = {
 	OR = {
-		has_idea = sco_member
-		has_idea = sco_member_econ
-		has_idea = sco_member_pol
-		has_idea = sco_member_mil
+		has_idea = CHI_sco_member
+		has_idea = CHI_sco_member_econ
+		has_idea = CHI_sco_member_pol
+		has_idea = CHI_sco_member_mil
 	}
 }
 
-CHI_the_bears_backyard_nation_trigger = {
+CHI_sco_is_dialogue_partner = {
+	has_idea = CHI_sco_dialogue_partner
+}
+
+CHI_sco_is_observer = {
+	has_idea = CHI_sco_observer
+}
+
+CHI_sco_is_any = {
 	OR = {
-		AND = {
-			check_variable = { influence_array^0 = SOV }
-			check_variable = { influence_array^1 = ROOT }
-		}
-		AND = {
-			OR = {
-				check_variable = { influence_array^0 = SOV }
-				check_variable = { influence_array^1 = SOV }
-			}
-			check_variable = { influence_array^2 = ROOT }
-		}
-		AND = {
-			OR = {
-				check_variable = { influence_array^0 = SOV }
-				check_variable = { influence_array^1 = SOV }
-				check_variable = { influence_array^2 = SOV }
-			}
-			check_variable = { influence_array^3 = ROOT }
-		}
-		AND = {
-			OR = {
-				check_variable = { influence_array^0 = SOV }
-				check_variable = { influence_array^1 = SOV }
-				check_variable = { influence_array^2 = SOV }
-				check_variable = { influence_array^3 = SOV }
-			}
-			check_variable = { influence_array^4 = ROOT }
-		}
-		AND = {
-			OR = {
-				check_variable = { influence_array^0 = SOV }
-				check_variable = { influence_array^1 = SOV }
-				check_variable = { influence_array^2 = SOV }
-				check_variable = { influence_array^3 = SOV }
-				check_variable = { influence_array^4 = SOV }
-			}
-			check_variable = { influence_array^5 = ROOT }
-		}
-		AND = {
-			OR = {
-				check_variable = { influence_array^0 = SOV }
-				check_variable = { influence_array^1 = SOV }
-				check_variable = { influence_array^2 = SOV }
-				check_variable = { influence_array^3 = SOV }
-				check_variable = { influence_array^4 = SOV }
-				check_variable = { influence_array^5 = SOV }
-			}
-			check_variable = { influence_array^6 = ROOT }
-		}
+		has_idea = CHI_sco_dialogue_partner
+		has_idea = CHI_sco_observer
+		has_idea = CHI_sco_member
+		has_idea = CHI_sco_member_econ
+		has_idea = CHI_sco_member_pol
+		has_idea = CHI_sco_member_mil
 	}
 }
 
+CHI_sco_can_apply_to_join = {
+	CHI = { has_completed_focus = CHI_Form_the_SCO }
+	NOT = { CHI_sco_is_any = yes }
+	NOT = { is_in_faction_with = USA }
+	NOT = { is_in_faction_with = ENG }
+	CHI = { has_war = no }
+	NOT = { has_war_with = CHI }
+}
 
 all_sco_members_are_china_ruling_party = {
 	if = {
@@ -79,7 +52,7 @@ all_sco_members_are_china_ruling_party = {
 			}
 		}
 	}
-	if = {
+	else_if = {
 		limit = { has_government = democratic }
 		custom_trigger_tooltip = {
 			tooltip = SCO_all_democratic_tt
@@ -92,4 +65,387 @@ all_sco_members_are_china_ruling_party = {
 			}
 		}
 	}
+	else = { always = no }
+}
+### SCO Observer Eligibility — Per-Region ###
+
+CHI_sco_can_apply_observer = {
+	NOT = { is_sco = yes }
+	NOT = { has_idea = CHI_sco_observer }
+	NOT = { has_country_flag = CHI_sco_observer_status_rejected }
+}
+
+CHI_sco_observer_eligible_special = {
+	OR = {
+		AND = { #Italy
+			original_tag = ITA
+			is_subject = no
+			has_completed_focus = ITA_attempt_join_sco
+			CHI = { has_country_flag = accepted_italy_as_sco_candidate }
+			CHI_sco_can_apply_observer = yes
+		}
+		AND = { #Sweden
+			original_tag = SWE
+			has_completed_focus = SWE_SCO_observer_status
+			CHI_sco_can_apply_observer = yes
+		}
+		AND = { #Ukraine
+			original_tag = UKR
+			is_subject = no
+			CHI = { has_completed_focus = CHI_Form_the_SCO }
+			OR = {
+				AND = {
+					emerging_communist_state_are_in_power = yes
+					has_completed_focus = UKR_commie_china_trade
+				}
+				AND = {
+					emerging_reactionaries_are_in_power = yes
+					has_completed_focus = UKR_party_regions_inaguration
+				}
+			}
+			CHI_sco_can_apply_observer = yes
+		}
+		AND = { #Libya
+			original_tag = LBA
+			is_subject = no
+			CHI = {
+				has_completed_focus = CHI_Form_the_SCO
+				has_completed_focus = CHI_China_Africa_Development_Fund
+			}
+			CHI_sco_can_apply_observer = yes
+			LBA = {
+				OR = {
+					NOT = {
+						OR = {
+							has_completed_focus = LBA_strive_for_african_union
+							has_completed_focus = LBA_approach_nato
+						}
+					}
+					NOT = { salafist_caliphate_are_in_power = yes }
+				}
+			}
+		}
+	}
+}
+
+CHI_sco_observer_eligible_asia_me_africa = {
+	is_subject = no
+	CHI = { has_completed_focus = CHI_Form_the_SCO }
+	CHI_sco_can_apply_observer = yes
+	NOT = {
+		OR = {
+			original_tag = ITA
+			original_tag = SWE
+			original_tag = UKR
+			original_tag = LBA
+			original_tag = BRA
+			original_tag = CUB
+			original_tag = VEN
+		}
+	}
+	if = { #ASEAN
+		limit = { has_idea = ASEAN_Member }
+		CHI = { has_completed_focus = CHI_SCO_Exclusive_Core }
+	}
+	if = { #Indian Subcontinent
+		limit = {
+			OR = {
+				original_tag = RAJ
+				original_tag = PAK
+			}
+		}
+		NOT = {
+			RAJ = { has_war_with = PAK }
+			PAK = { has_war_with = RAJ }
+		}
+	}
+	if = { #Korean Peninsula (North)
+		limit = { original_tag = NKO }
+		NOT = { has_war_with = KOR }
+	}
+	if = { #Korean Peninsula (South)
+		limit = { original_tag = KOR }
+		NOT = { has_war_with = NKO }
+		OR = {
+			KOR_has_progressive_government = yes
+			KOR_has_liberal_government = yes
+		}
+	}
+	if = { #Middle East
+		limit = {
+			OR = {
+				original_tag = ALA
+				original_tag = AQY
+				original_tag = BHR
+				original_tag = DRU
+				original_tag = FSA
+				original_tag = HAM
+				original_tag = HEZ
+				original_tag = HOU
+				original_tag = IRQ
+				original_tag = ISI
+				original_tag = JOR
+				original_tag = KUR
+				original_tag = PUK
+				original_tag = KUW
+				original_tag = LEB
+				original_tag = NUS
+				original_tag = OMA
+				original_tag = PKK
+				original_tag = QAT
+				original_tag = ROJ
+				original_tag = SAU
+				original_tag = SYR
+				original_tag = UAE
+				original_tag = YEM
+			}
+		}
+		OR = {
+			PER = { is_sco = yes }
+			TUR = { is_sco = yes }
+			AND = {
+				ISI = { exists = no }
+				if = {
+					limit = { original_tag = SYR }
+					has_completed_focus = SYR_russian_military_cooperation
+				}
+			}
+		}
+	}
+	if = { #Nigeria
+		limit = { original_tag = NIG }
+		CHI = { has_completed_focus = CHI_China_Africa_Development_Fund }
+		OR = {
+			AND = {
+				check_variable = { influence_array^0 = USA }
+				check_variable = { influence_array^1 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+				}
+				check_variable = { influence_array^2 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+					check_variable = { influence_array^2 = USA }
+				}
+				check_variable = { influence_array^3 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+					check_variable = { influence_array^2 = USA }
+					check_variable = { influence_array^3 = USA }
+				}
+				check_variable = { influence_array^4 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+					check_variable = { influence_array^2 = USA }
+					check_variable = { influence_array^3 = USA }
+					check_variable = { influence_array^4 = USA }
+				}
+				check_variable = { influence_array^5 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+					check_variable = { influence_array^2 = USA }
+					check_variable = { influence_array^3 = USA }
+					check_variable = { influence_array^4 = USA }
+					check_variable = { influence_array^5 = USA }
+				}
+				check_variable = { influence_array^6 = ROOT }
+			}
+			is_influencer = no
+		}
+	}
+	if = { #Cameroon
+		limit = { original_tag = CAM }
+		OR = {
+			AND = {
+				check_variable = { influence_array^0 = USA }
+				check_variable = { influence_array^1 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+				}
+				check_variable = { influence_array^2 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+					check_variable = { influence_array^2 = USA }
+				}
+				check_variable = { influence_array^3 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+					check_variable = { influence_array^2 = USA }
+					check_variable = { influence_array^3 = USA }
+				}
+				check_variable = { influence_array^4 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+					check_variable = { influence_array^2 = USA }
+					check_variable = { influence_array^3 = USA }
+					check_variable = { influence_array^4 = USA }
+				}
+				check_variable = { influence_array^5 = ROOT }
+			}
+			AND = {
+				OR = {
+					check_variable = { influence_array^0 = USA }
+					check_variable = { influence_array^1 = USA }
+					check_variable = { influence_array^2 = USA }
+					check_variable = { influence_array^3 = USA }
+					check_variable = { influence_array^4 = USA }
+					check_variable = { influence_array^5 = USA }
+				}
+				check_variable = { influence_array^6 = ROOT }
+			}
+			is_influencer = no
+		}
+	}
+	if = { #Other African Countries
+		limit = {
+			OR = {
+				original_tag = DRC
+				original_tag = EGY
+				original_tag = ETH
+				original_tag = SAF
+				original_tag = SUD
+			}
+		}
+		CHI = { has_completed_focus = CHI_China_Africa_Development_Fund }
+	}
+}
+
+CHI_sco_observer_eligible_americas = {
+	is_subject = no
+	CHI = { has_completed_focus = CHI_Form_the_SCO }
+	CHI_sco_can_apply_observer = yes
+	OR = {
+		original_tag = BRA
+		original_tag = CUB
+		original_tag = VEN
+	}
+	if = { #Brazil
+		limit = { original_tag = BRA }
+		has_opinion = {
+			target = CHI
+			value > 74
+		}
+	}
+	if = { #Venezuela
+		limit = { original_tag = VEN }
+		has_opinion = {
+			target = CHI
+			value > 99
+		}
+	}
+	if = { #Cuba
+		limit = { original_tag = CUB }
+		has_opinion = {
+			target = CHI
+			value > 49
+		}
+	}
+}
+
+### CHI-NKO ###
+
+CHI_NKO_joint_focus_available = {
+	CHI = {
+		exists = yes
+		NOT  = { has_war_with = NKO }
+		has_opinion = {
+			target = NKO
+			value > 24
+		}
+	}
+	NKO = {
+		exists = yes
+		has_opinion = {
+			target = CHI
+			value > 24
+		}
+	}
+}
+
+CHI_NKO_idea_cancel = {
+	OR = {
+		NOT = { country_exists = CHI }
+		NOT = { country_exists = NKO }
+		AND = { original_tag = CHI  has_war_with = NKO }
+		AND = { original_tag = NKO  has_war_with = CHI }
+	}
+}
+### CHI-SOV ###
+
+CHI_SOV_joint_focus_available = {
+	CHI = {
+		exists = yes
+		NOT = { has_war_with = SOV }
+		has_opinion = {
+			target = SOV
+			value > 24
+		}
+	}
+	SOV = {
+		exists = yes
+		has_opinion = {
+			target = CHI
+			value > 24
+		}
+	}
+}
+
+CHI_SOV_idea_cancel = {
+	OR = {
+		NOT = { country_exists = CHI }
+		NOT = { country_exists = SOV }
+		AND = { original_tag = CHI  has_war_with = SOV }
+		AND = { original_tag = SOV  has_war_with = CHI }
+	}
+}
+
+### SAR
+CHI_TAI_both_at_peace = {
+	country_exists = CHI
+	country_exists = TAI
+	NOT = { has_war_with = CHI }
+	NOT = { has_war_with = TAI }
+}
+
+### Belt and Road Initiative ###
+
+CHI_bri_eligible_applicant = {
+	NOT = { original_tag = CHI }
+	NOT = { original_tag = RAJ }
+	NOT = { has_war_with = CHI }
+}
+
+CHI_corruption_under_control = {
+	NOT = { has_idea = corruption_level_06 }
+	NOT = { has_idea = corruption_level_07 }
+	NOT = { has_idea = corruption_level_08 }
+	NOT = { has_idea = corruption_level_09 }
+	NOT = { has_idea = corruption_level_10 }
 }
