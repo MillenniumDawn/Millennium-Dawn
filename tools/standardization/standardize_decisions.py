@@ -18,6 +18,7 @@ from common_utils import (
 )
 from shared_utils import (
     collapse_or_compact,
+    convert_root_factor_to_base,
     create_backup,
     extract_block,
     log_message,
@@ -263,6 +264,8 @@ def format_decision(block_lines: List[str]) -> List[str]:
                     f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision {did}"'
                 )
                 block = inject_log_after_brace(block, log_line)
+            elif prop_name == "ai_will_do":
+                block = convert_root_factor_to_base(block)
             lines.extend(_reindent_or_collapse(block, 2))
             lines.append("")
             i = next_i

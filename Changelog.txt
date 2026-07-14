@@ -2,7 +2,7 @@ v2.0.0
 
  Content:
   - NEW TREES: United Kingdom, Algeria, Benelux, Greenland, Japan, Hong Kong
-  - IMPROVED TREE: Greece, North Korea, South Korea, Netherlands, Unified Korea
+  - IMPROVED TREE: Greece, North Korea, South Korea, Netherlands, Unified Korea, Bulgaria, Serbia, Romania, Montenegro, Kosovo, Denmark, Sweden, Norway
   - NEW MIO TREES: United States of America, Italy, France, Greece, Belgium, The Netherlands and Russia
     - Includes a complete rework of Generic MIOs and defense companies for both AAT and non-AAT owners
   - NEW SYSTEMS: United Nations, International UN Aid, International Recognition, Antarctica, Resource Storage, Expanded Economic Features
@@ -169,6 +169,11 @@ v2.0.0
   - [SER] Applied staffing triggers to 17 construction focuses (10 civilian, 5 military, 3 offices)
   - [FIJ] Applied staffing triggers to 26 construction focuses (15 civilian, 5 dockyards, 3 military, 3 offices)
   - [GEO] Applied staffing triggers to 18 construction focuses (10 civilian, 3 military, 3 offices, 2 dockyards)
+  - Applied can_staff and bankruptcy AI guards, plus cross-country event outcome tooltips, across 8 focus trees (Ukraine, South Ossetia, Tatarstan, Kosovo, Kuban, Bolivia, Kharkiv, Bashkiriya)
+  - [BLR/CHE] Applied the bankruptcy AI guard to 101 focuses that spend the treasury or construct buildings, so a bankrupt AI stops digging deeper into debt
+  - [BOL] Re-tagged all 256 focuses with correct search filters; the whole tree was previously tagged Political, so economic and military focuses were undiscoverable and escaped the AI bankruptcy guard rule
+  - [UKR] Added the missing generic search filter layer to 9 focuses that only carried party filters
+  - Applied can_staff and bankruptcy AI guards, plus cross-country event outcome tooltips, across 8 more focus trees (Italy, Czech Republic, Russia, Poland, Republic of Lakota, USA, Armenia, Syria)
   - [MNT] Standardized dynamic modifier tooltips for the Port of Bar modifier across 6 focuses
   - [MNT] Added per-variable tooltips to all add_to_variable calls for the MNT_port_bar dynamic modifier
   - [SMA] Added treasury > 30 check to all equipment purchase focus AI weights to prevent AI from buying equipment it cannot afford
@@ -407,6 +412,29 @@ v2.0.0
   - Reduced political power cost for Korwin's balance of power decisions from 55 to 35, after he wins with Wałęsa
 
  Bugfix:
+  - [TAT/BSH/BLR/CHE] Fixed the erase_nationalist focuses never applying their party popularity boost: the temp variables were set then overwritten before add_relative_party_popularity ever consumed them, silently dropping a +7% outlook bonus in all four trees
+  - [TAT/BSH/BLR/CHE] Fixed erase_nationalist leaking its outlook bonus into the follow-up calls, which handed nationalists +21% popularity from a focus that jails them
+  - [KUB] Fixed kuban.43 granting three state cores to the wrong, unrelated state instead of the one just transferred
+  - [KUB] Fixed the NATO membership focus routing through Belarus's own NATO-join event, which tried to remove a Belarus-only idea, instead of Kuban's own copy of that event
+  - [KUB] Fixed the Donbass referendum checking whether Ukraine owned six southern-Russian states, so the referendum could never fire
+  - [KUB] Fixed the NATO join event never letting Kuban leave its current faction
+  - [BSH] Fixed the USAID request event's decline option sharing its button label with the accept option
+  - [BSH] Fixed the Chinese investment focus giving nothing on acceptance: China's approval fired the rejection event, and the acceptance event was unreachable
+  - [SOO] Fixed the join-Russia referendum applying its loyalty opinion bonus to Russia itself instead of South Ossetia
+  - [BOL] Fixed the Expand Anti-Cartel Operations and Bring In Military Support focuses never weakening the cartels: the strength change was set but never applied
+  - [KUB] Fixed the two revolt focuses letting a Russian puppet annex six Russian states with cores while still at peace, since a subject's declaration of war on its overlord is silently dropped
+  - [KUB] Fixed the South Russia and Donbass referendums being a coin flip, so the AI gave away six cored states on a 50/50 roll; acceptance is now weighted on opinion
+  - [KUB] Fixed Port Security building nothing: coastal bunkers are province buildings and were being placed in a state with no province specified
+  - [KUB] Fixed three focuses having no AI base weight, leaving them at a default of 1 against siblings at 355
+  - [SOO] Fixed the Armenian coup handing South Ossetia a Russian state on Armenia's say-so; the transfer now requires the accepting country to actually own it
+  - [SOO] Fixed the referendum acceptance event reusing Russia's button label instead of its own
+  - [CHE] Fixed Erase the Nationalists leaving nationalists more popular than before, since the democratic popularity cut was redistributed back to them
+  - [KUB/HPR] Added the missing generic search filter layer so economic and military focuses are discoverable through the global filter buttons
+  - Removed 87 political power costs from focus completion rewards across the Italian, Czech, Republic of Lakota, and Armenian focus trees that double-charged an effect already priced elsewhere, including Czech's post-2004 else-branch PP tax and 23 Italian doctrine-reformer focuses
+  - [ITA] Added missing will_lead_to_war_with hints to the territorial claim and subjugation focuses (France, Greece, Monaco, Malta, San Marino, the Holy See, Albania, Slovenia, Croatia, Switzerland) so the AI prepares for war before declaring it
+  - [ITA/CZE] Added will_lead_to_war_with hints to the oil-deal focuses and the Zaolzie ultimatum, whose event chains grant wargoals when the target refuses
+  - Fixed 41 always-true NOT government checks in French chaos-path decisions and Central Asian focuses that never filtered anything
+  - [INS] Fixed an Indonesian event option (indonesia.888.a) referencing the wrong localisation key
   - [BRA] Fixed the Pro-Workers and Support the Unions communist focuses showing "This focus currently has no effect"; Pro-Workers now switches the industrial conglomerates faction back to labour unions so its opinion boost applies, and Support the Unions grants the Pro-Unions national spirit (Issue #2240)
   - [HEZ] Fixed the "Hezbollah has attacked our bases!" event (international_hezbollah.5) showing an "Influencer and Influencee are the same" error toast; the influence penalty now reads the attacked country off the sender scope, and both target-routing branches in international_hezbollah.4 use the correct attack-mission variable (Issue #2297)
   - [SPR] Fixed the helicopter procurement focuses (A Deal for the Apaches, Eurocopter Tigre, Eurocopter Cougar, A Deal for the Chinooks) granting production licenses that never appeared in inventory; each focus now requires the granting nation to hold the relevant helicopter technology (Issue #2290)
@@ -785,6 +813,34 @@ v2.0.0
   - [CZE] Fixed unite Czechoslovakia decision disappearing prematurely during peaceful unification
   - [HEZ] Fixed the 33 Days War event not being triggered for Israel.
   - Fixed special project duplication/unification and history file grant bugs
+  - [LBA] Fixed a crash when NATO evaluated its civil-war intervention strategy before the Libyan rebels existed; European NATO members now back whichever side actually revolts (Issue #2374)
+  - Fixed impassable states being targetable by investment projects and receiving SAM sites from the air-incursion event (Issue #2361)
+  - Fixed the Guerrilla Leader commander trait never gaining XP; it now progresses when commanding majority-militia divisions (Issue #2369)
+  - [PER] Fixed the 2005 election event erroring when the departing party was never in the government coalition (Issue #2346)
+  - Fixed the Incoming Revolt mission never completing for countries controlling any non-core state, causing a civil war despite zero resistance (Issue #2384)
+  - [IRQ/PER] Fixed Iran's Oppress the Shiite Population opinion penalty on Iraq persisting after Iraq's government becomes Shiite (Issue #2386)
+  - Fixed cyber attacks ignoring the target's cybersecurity rating entirely and the target info panel showing the wrong defense stat (Issue #2314)
+  - [HOL] Fixed the Gripen purchase granting blank airframes instead of the JAS 39 Gripen A/B (Issue #2347)
+  - Formable nation purchase offers now wait a year before being re-sent after a decline (Issue #2357)
+  - [TUR/AFG/SOS] Fixed 16 focus and event rewards calling internal faction opinion effects with the wrong capitalisation, so the Ulema, Oligarch and Military opinion shifts never applied
+  - [SAU/BHR] Fixed Iran's Oppress the Shiite Population penalty persisting after the Gulf Shia representation focuses end the oppression
+  - [IRQ] Fixed an error and a dead branch when the General Military Council won the Iraqi civil war; Izzat Ibrahim al-Douri can now carry over as Iraq's leader instead of always being replaced at random
+  - Focus, decision and event previews now show the effects applied to every member of a bloc (EU, NATO, ASEAN, Arab League, Mercosur, Antarctic Treaty and others), which were previously invisible in 35 places
+  - Fixed the Monthly Auto-Influencer report listing your own nation as one of the countries you are influencing, and auto-influence silently stopping for every remaining target once the first one you added was removed (Issue #2413)
+  - Fixed satellite access buffs vanishing a few days after being granted; the monthly recalculation zeroed every other country's satellite bonuses and dumped them on an unrelated nation, and ASAT strikes did the same in reverse, handing the victim's bonuses to the attacker (Issue #2344)
+  - Fixed the African Union's Create a Common Oil Fund focus giving the completing nation the doubled export-revenue penalty and half the fuel-consumption saving, leaving it worse off than the members it granted the focus to (Issue #2371)
+  - [IRQ] Fixed Iraq's leader rotation dead-ending, so regime-change events announced a new leader without ever installing one; Ahmed Chalabi sat in an unreachable duplicate branch (Issue #2400)
+  - [BAN/CZE/DEN/ELS/FYR/LUX/MLR/MLV/SLV/SWE/UKR] Fixed the same unreachable duplicate leader branch in eleven further countries; the dead code also hid invalid sub-ideology names, a leader given the wrong ideology in Ukraine, and a Slovenian leader decrementing another branch's counter
+  - [UKR] Fixed Ukraine's Slava class cruiser drawing its name from Russia's pool and launching as the Chapayev; it is now named Ukrayina
+  - Fixed 30 focus completion logs naming the wrong focus, two of them focuses that do not exist; the missing Focus keyword had also hidden all 56 of these lines from the log ID validator
+  - [AZE/CAR/EST/GEO/GER/GUA/IRE/PKK/SLV/SOV/TUR/USA] Fixed leader rotations skipping a number in their succession order, which stranded the leaders past the gap and handed the country a randomly generated leader instead; for Azerbaijan, the Central African Republic, Estonia, Georgia, Germany and the PKK the single authored leader for that ideology could never appear at all
+  - African Union focuses now reserve their branch the moment the mandate is spent rather than on completion, so a second nation can no longer spend a later mandate on a rival focus while the first is still being worked on and end up with two AU headquarters, two stock exchanges or two currencies; the reservation is released if the nation holding it is annexed or leaves the Union (Issue #2375)
+  - Fixed Nigeria and Ethiopia being able to take the African Union's "headquarters in our country" focus, and South Africa and Egypt its "stock exchange in our country" focus, bypassing the dedicated focus each of them already has
+  - [GUA/SLV] Fixed socialist, communist and conservative leader rotations running through the entire roster in a single election and then falling back to a randomly generated leader
+  - [SWE/UKR] Fixed leader rotations counting past a slot, which stranded Sweden's fourth Left Party leader and Ukraine's Yuriy Boyko where neither could ever take office
+  - [ALB] Fixed Edi Rama never being able to take office, leaving Albania with a randomly generated leader whenever the socialists came to power
+  - [ANT/NIG/SER/SIN/SLV/SOV/WAG] Fixed the remaining leader rotations that counted past a slot, never counted at all, or drove another ideology's counter, stranding leaders and handing countries randomly generated ones; Russia's nationalist line was entirely dead, Serbia's Aleksandar Vucic block was gating nine unrelated ideologies, and holding Lee Hsien Loong in office put Goh Chok Tong back in at the next Singaporean election
+  - [IRQ] Fixed Ahmed Chalabi being installed as leader from 2016 onwards despite dying in November 2015, and named the 2000-start socialist leader, who was called "John" while wearing Jalal Talabani's portrait
 
  Database:
   - [FRA] Added Tripartite, Flamant, Lapérouse and P400 class ships to start date, given to their operating countries FRA, BEL, HOL with historical vessel names.
@@ -887,6 +943,8 @@ v2.0.0
   - Removed the Volkshalle landmark (doesn't fit a 2000s setting)
   - Fixed the Trade Agreement diplomatic request icon clipping with a white line on the right side (Issue #458)
   - Added ~834 new terrain photo province modifiers across ~90 nations
+  - Fixed missing leader portraits for Liechtenstein (Pepo Frick) and Ethiopia (Mohaemed Rashid Ilsak) (Issue #2345)
+  - [EST] Fixed the European Federation formed by Estonia keeping the Estonian tricolor instead of the European Federation flag (Issue #2326)
 
  Game Rules:
   - Added "Allow AI Conditional Peace Offers" game rule (default: off) to toggle whether AI nations can initiate monthly Conditional Peace Deals; requires the parent "Allow Conditional Peace Deals" rule to be enabled
@@ -949,6 +1007,17 @@ v2.0.0
   - Fixed nine broken dynamic-modifier tooltip substitutions in MD_dm_modifiers (mobilization_laws, trade_laws, economy, political_advisor, tank/naval/aircraft/materiel manufacturer, and industrial concern cost factors) that referenced non-existent loc tokens and spammed the error log (Issue #1504)
   - Added display strings and tooltip helpers for the elite_forces_doctrine_cost_factor and equipment_doctrine_cost_factor modifiers so they render with the army doctrine cost icon in idea and dynamic_modifier tooltips, and removed the orphan special_forces_doctrine_cost_factor_tt entry that pointed at a non-existent modifier (Issue #662)
   - Removed "NATO" word from Polish UPR path which gets Ukraine closer to Poland OR NATO. It looked weird when NATO didn't exist or Poland wasn't part of it.
+  - Fixed broken bracket loc references that rendered as empty text: [FROM.GeAdjective]/[FROM.Adjective] (LBA), [SAF.Adjective] x2 (African Union), [NGR.GeNameDef] (TIE), and [HOLGetNameWithFlag] missing its scope dot (HOL)
+  - [JAP] Fixed the Sakhalin raid tooltip pointing at a dead [Getname.691] token instead of $STATE_691$, which rendered as empty text
+  - [PMR] Fixed a typo'd loc name (PMR_LA_loc1 instead of PMR_LA_loc) that kept the Lender-Agroprim income line from ever showing in the economy tooltip
+  - [ITA] Added the missing specialized_semovente_loc entry to the vehicle customization spirit family; the other 10 variants already had one
+  - Added the missing OLV production GUI loc for ENG/ISR/NKO missiles, which showed a blank missile model name, plus the KILLSAT tooltip name; removed the dead prod_15 tier and the legacy missile_type_selected/stat bridge keys with no consumer since v1.11
+  - Wired 4 income and expense streams into the money tooltips that were granted but never shown to the player, including HOL's VAT income which affects every Netherlands game; removed a dead duplicate BLR income definition
+  - Added party_name_by_index_delayed_tt, opposition_party_desc, and desc_partypos_9 through 24, fixing empty hover tooltips in the politics view
+  - Fixed the topbar casualties counter rendering blank ([?ROOT.GetCasualtiesAmount] used the variable-accessor "?" on a scope call instead of a plain reference)
+  - Removed dead localisation with no remaining consumers: post_balkan_war_categories/_desc (GER), nation_pending_holder (international), legco_motion_effect and two legco_HKG_* tokens (HKG)
+  - [PER] Trimmed PER_majlis_24 through 33 from the Majles tooltip; the party array is hard-capped at 24 parties and those slots were unreachable
+  - [EU] Dropped 11 leftover office tokens, and their now-dangling "major offices" lead-in, from EU_office_category_desc left behind when the EU GUI Rework deleted the office definitions
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
@@ -993,7 +1062,6 @@ v2.0.0
   - Streamlined the AI budget law system to reduce monthly processing overhead per country
   - [SOV] [SUB] [UKR] Consolidated repetitive per-country triggers into compact loops and removed unused triggers
   - Moved a check for the social conservatism and optimized a check for the Gulf Countries
-  - Moved some more checks for the counter terror to monthly for more performance
   - Refactored a number of history files so they reduce their number of "Has DLC Checks" on loadup for more performant load times
   - Made the Space System update on response only rather then every week since nothing happens on every week
   - Shifted the renewable energy calculation to the monthly tick for better performance
@@ -1035,6 +1103,7 @@ v2.0.0
   - [SOV] Consolidated three Gazprom/Rosneft capitalisation_*_calculate clusters into single init-add-apply units (5 gas-stream blocks, 7 Gazprom oil-province blocks, 8 Rosneft oil-province blocks): drops ~120 lines from 99_SOV_scripted_effects.txt and 20 redundant _support helper calls per monthly tick (Issue #1452)
 
  Quality of Life:
+  - [LIC] The Path of Conquest and Claim the HRE focuses now list the nations they will lead to war with
   - [GER] BFV GUI now updates immediately on button clicks instead of waiting for the next daily tick
   - Widened technology name text fields in the research screen to prevent text clipping
   - You can now push your Election Threshold to 0% instead of the minimum 1% in the Subideology screen

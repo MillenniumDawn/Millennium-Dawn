@@ -58,6 +58,19 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 
 A real pair from the codebase: the CFA franc continuation idea (`cfa_franc_2`) offers peak political power (+0.25) and construction speed (+0.25) at the cost of a heavy tax penalty (−0.10). The ECO transition idea (`the_eco`) trades some peak performance for stability (+0.05), lower consumer goods (−0.03), and a positive tax modifier (+0.05). Neither is strictly better; each supports a different playstyle. **Use this as the test:** if a player could pick the same option every campaign without trade-off, the pair is not yet a real choice.
 
+## Variety & Anti-Formulaic Content
+
+Reward _shape_ diversity, distinct from balance — a tree can be balanced and still formulaic (every focus a same-shaped stat bump). This is the dimension the balance checks miss. Cross-check a new or modernized tree against a reference tree known for variety (Iran `05_iran.txt`, Spain `05_spain.txt`) rather than judging it alone. Full checklist + Iran/Spain/Balkan worked comparison: `docs/src/content/resources/content-review-guide.md` → Variety Guidelines.
+
+- A variable / dynamic-modifier bump is fine at any frequency **as seasoning** on a substantive reward — formulaic only when it _is_ the whole `completion_reward`. Flag focuses whose reward is only `log` + `custom_effect_tooltip` + `add_to_variable`(s); if >~20% of the tree is bump-only, it's too thin. (Iran layers an economy bump into 61% of focuses and never feels formulaic; Spain uses the shape 0 times.)
+- No `completion_reward` or `ai_will_do` block should repeat verbatim more than ~3 times — the same `variable = number` line 10+ times with only the name changed is copy-paste, not design.
+- Every `mutually_exclusive` fork must differ in reward **kind**, not just magnitude. Sibling A +0.02 / sibling B +0.01 of the same variable is a fake choice; real forks trade a building for a resource, an idea swap for an event.
+- At least 4 distinct reward categories across the tree — dynamic modifier, timed idea + `swap_ideas`, treasury/expenditure, building/resource spawn, interest-group opinion, event-with-choice, country flag / bespoke mechanic, decision-category unlock, army/tech unlock. Only 2-3 = formulaic regardless of size.
+- At least one bespoke mechanic / idea family the tree alone owns (its national identity). "Increment the shared economy modifier" is not an identity.
+- Capstone / terminal focuses deliver a **new** reward kind (unlock a decision category, release a subject, fire a defining event), not a bigger number of a variable the branch already used.
+- Political forks differ mechanically (own ideas / mechanics / events), not just which popularity ticks up. `generic`-named political focus IDs are a red flag for the shared minor-nation scaffold.
+- Event tie-in density ~1 per 8 focuses for narrative trees; exempt deliberately-lean utility trees (recognition, independence).
+
 ## Miscellaneous
 
 - Do not add nations to the bookmarks screen — bookmarks are added post-merge by leads

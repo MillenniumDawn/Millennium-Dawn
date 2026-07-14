@@ -244,3 +244,39 @@ def test_two_eq_children_stay_multi_line():
         "}\n",
     ]
     assert len(collapse_or_compact(block)) > 1
+
+
+def test_root_factor_converted_to_base_in_ai_will_do():
+    block = _decision(
+        [
+            "\tTST_weighted_decision = {",
+            "\t\tcost = 10",
+            "\t\tai_will_do = {",
+            "\t\t\tfactor = 5",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    text = "\n".join(format_decision(block))
+    assert "ai_will_do = { base = 5 }" in text
+    assert "factor" not in text
+
+
+def test_modifier_factor_untouched_in_ai_will_do():
+    block = _decision(
+        [
+            "\tTST_guarded_decision = {",
+            "\t\tcost = 10",
+            "\t\tai_will_do = {",
+            "\t\t\tbase = 5",
+            "\t\t\tmodifier = {",
+            "\t\t\t\tfactor = 0",
+            "\t\t\t\thas_war = yes",
+            "\t\t\t}",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    text = "\n".join(format_decision(block))
+    assert "base = 5" in text
+    assert "factor = 0" in text
