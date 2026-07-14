@@ -230,7 +230,11 @@ CHI_build_cnc_equipment_type = {
 
 CHI_default_naval_breakdown = {
 	allowed = { original_tag = CHI }
-	enable = { original_tag = CHI }
+	enable = {
+		original_tag = CHI
+		NOT = { has_completed_focus = CHI_the_surface_capital_fleet }
+		NOT = { has_completed_focus = CHI_undersea_supremacy }
+	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = naval_corvettes value = 12 }
@@ -242,6 +246,44 @@ CHI_default_naval_breakdown = {
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 8 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 5 }
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 8 }
+}
+
+CHI_surface_capital_naval_breakdown = {
+	allowed = { original_tag = CHI }
+	enable = {
+		original_tag = CHI
+		has_completed_focus = CHI_the_surface_capital_fleet
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = naval_corvettes value = 10 }
+	ai_strategy = { type = role_ratio id = naval_frigate value = 12 }
+	ai_strategy = { type = role_ratio id = naval_destroyer value = 28 }
+	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = 5 }
+	ai_strategy = { type = role_ratio id = naval_attack_submarine value = 12 }
+	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 4 }
+	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 8 }
+	ai_strategy = { type = role_ratio id = naval_carrier value = 9 }
+	ai_strategy = { type = role_ratio id = naval_cruiser value = 12 }
+}
+
+CHI_undersea_supremacy_naval_breakdown = {
+	allowed = { original_tag = CHI }
+	enable = {
+		original_tag = CHI
+		has_completed_focus = CHI_undersea_supremacy
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = naval_corvettes value = 14 }
+	ai_strategy = { type = role_ratio id = naval_frigate value = 12 }
+	ai_strategy = { type = role_ratio id = naval_destroyer value = 18 }
+	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = 4 }
+	ai_strategy = { type = role_ratio id = naval_attack_submarine value = 30 }
+	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 12 }
+	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 4 }
+	ai_strategy = { type = role_ratio id = naval_carrier value = 2 }
+	ai_strategy = { type = role_ratio id = naval_cruiser value = 4 }
 }
 
 CHI_area_priority = {
@@ -281,7 +323,7 @@ CHI_spy_on_TAI = {
 		country_exists = TAI
 		CHI = { has_government = communism }
 		NOT = { TAI = { is_subject_of = CHI } }
-		NOT = { has_completed_focus = CHI_Peaceful_Co_Existence }
+		NOT = { has_completed_focus = CHI_TAI_cross_strait_policy }
 	}
 	abort_when_not_enabled = yes
 
@@ -409,38 +451,6 @@ CHI_the_great_goliath = {
 	ai_strategy = { type = support id = "USA" value = -200 }
 }
 
-CHI_friendly_relations_with_pakistan = {
-	allowed = { original_tag = CHI }
-	enable = {
-		NOT = {
-			has_war_with = PAK
-			has_completed_focus = CHI_Strategic_Realignment
-		}
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = antagonize id = "PAK" value = -50 }
-	ai_strategy = { type = alliance id = "PAK" value = 100 }
-	ai_strategy = { type = befriend id = "PAK" value = 200 }
-	ai_strategy = { type = protect id = "PAK" value = 200 }
-	ai_strategy = { type = support id = "PAK" value = 200 }
-	ai_strategy = { type = send_volunteers_desire id = "PAK" value = 200 }
-}
-
-CHI_support_north_korea = {
-	allowed = { original_tag = CHI }
-	enable = {
-		country_exists = NKO
-		NOT = { has_completed_focus = CHI_End_the_Kim_Dynasty }
-		NOT = { KOR = { has_completed_focus = KOR_china_supports_the_south } }
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = protect id = "NKO" value = 25 }
-	ai_strategy = { type = befriend id = "NKO" value = 25 }
-	ai_strategy = { type = antagonize id = "KOR" value = 25 }
-	ai_strategy = { type = contain id = "KOR" value = 25 }
-}
 
 CHI_help_korea_junta = {
 	allowed = { original_tag = CHI }
@@ -642,6 +652,39 @@ CHI_major_production_of_dockyard = {
 	}
 }
 
+CHI_naval_regional_deterrent = {
+	allowed = { original_tag = CHI }
+	enable = {
+		OR = {
+			AND = { country_exists = JAP naval_strength_ratio = { tag = JAP ratio < 1.1 } }
+			AND = { country_exists = TAI naval_strength_ratio = { tag = TAI ratio < 1.1 } }
+			AND = { country_exists = VIE naval_strength_ratio = { tag = VIE ratio < 1.1 } }
+			AND = { country_exists = PHI naval_strength_ratio = { tag = PHI ratio < 1.1 } }
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_building id = dockyard value = 60 }
+	ai_strategy = { type = building_target id = dockyard value = 15 }
+}
+
+CHI_naval_arms_race_vs_USA = {
+	allowed = { original_tag = CHI }
+	enable = {
+		country_exists = USA
+		OR = {
+			has_completed_focus = CHI_Wolf_Warrior_Diplomacy
+			has_completed_focus = CHI_the_surface_capital_fleet
+			has_completed_focus = CHI_undersea_supremacy
+		}
+		naval_strength_ratio = { tag = USA ratio < 1.5 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_building id = dockyard value = 100 }
+	ai_strategy = { type = building_target id = dockyard value = 25 }
+}
+
 CHI_invest_in_infrastructure_2000 = {
 	allowed = { original_tag = CHI }
 	enable = {
@@ -710,18 +753,6 @@ CHI_cancel_new_war = {
 	ai_strategy = { type = declare_war id = "JAP" value = -4000 }
 }
 
-# China supplied most of Sudan's weapons
-CHI_support_sudan = {
-	allowed = { original_tag = CHI }
-	enable = {
-		has_completed_focus = CHI_Global_Influence
-		NOT = { has_war_with = SUD }
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = support id = "SUD" value = 100 }
-}
-
 # CIVIL WAR IN AMERICA
 #Moved to MD_combat_ai_strategies.txt: us_civil_war_international_support
 
@@ -775,4 +806,37 @@ CHI_comoros_guarantee = {
 	ai_strategy = { type = befriend id = "COM" value = 50 }
 	ai_strategy = { type = support id = "COM" value = 50 }
 	ai_strategy = { type = diplo_action_desire id = "COM" value = 50 target = guarantee }
+}
+CHI_friendly_relations_with_pakistan = {
+	allowed = { original_tag = CHI }
+	enable = {
+		NOT = {
+			has_war_with = PAK
+			has_completed_focus = CHI_Strategic_Realignment
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "PAK" value = -50 }
+	ai_strategy = { type = alliance id = "PAK" value = 100 }
+	ai_strategy = { type = befriend id = "PAK" value = 200 }
+	ai_strategy = { type = protect id = "PAK" value = 200 }
+	ai_strategy = { type = support id = "PAK" value = 200 }
+	ai_strategy = { type = send_volunteers_desire id = "PAK" value = 200 }
+}
+
+CHI_support_north_korea = {
+	allowed = { original_tag = CHI }
+	enable = {
+		country_exists = NKO
+		NOT = { has_completed_focus = CHI_The_Chinese_Correction }
+		NOT = { has_completed_focus = CHI_The_Seoul_Gambit }
+		NOT = { KOR = { has_completed_focus = KOR_china_supports_the_south } }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = protect id = "NKO" value = 25 }
+	ai_strategy = { type = befriend id = "NKO" value = 25 }
+	ai_strategy = { type = antagonize id = "KOR" value = 25 }
+	ai_strategy = { type = contain id = "KOR" value = 25 }
 }
