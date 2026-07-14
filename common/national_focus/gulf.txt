@@ -4319,8 +4319,9 @@ focus_tree = {
 					joint_gcc_ventures
 				}
 				remove_from_faction = THIS
-				every_country = {
-					limit = { has_idea = idea_gcc_member_state }
+				for_each_scope_loop = {
+					array = global.gcc_member_state
+					tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
 					remove_opinion_modifier = {
 						target = ROOT
 						modifier = Gulf_Cooperation_Council_Relations
@@ -6663,17 +6664,18 @@ focus_tree = {
 					modifier = recognises_us
 				}
 			}
-			every_country = {
-				limit = {
-					has_idea = LoAS_member
-					NOT = { has_completed_focus = GCC_grant_recognition }
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { has_completed_focus = GCC_grant_recognition } }
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = recognises_israel
+					}
+					custom_effect_tooltip = strategic_reasons_antagonize_tt
+					add_ai_strategy = { type = antagonize id = ROOT value = 20 }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = recognises_israel
-				}
-				custom_effect_tooltip = strategic_reasons_antagonize_tt
-				add_ai_strategy = { type = antagonize id = ROOT value = 20 }
 			}
 			if = {
 				limit = { ISR = { has_idea = palestinian_resistance } }
@@ -7639,21 +7641,28 @@ focus_tree = {
 		available = { has_government = communism }
 
 		completion_reward = {
-			every_other_country = {
-				limit = { has_idea = idea_gcc_member_state NOT = { has_government = communism } }
+			for_each_scope_loop = {
+				array = global.gcc_member_state
+				tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
 				if = {
 					limit = {
-						check_variable = { shia_population > 0 }
-						NOT = { has_completed_focus = GCC_comprehensive_crackdown }
+						NOT = { tag = ROOT }
+						NOT = { has_government = communism }
 					}
-					shia_resistance_level_up = yes
+					if = {
+						limit = {
+							check_variable = { shia_population > 0 }
+							NOT = { has_completed_focus = GCC_comprehensive_crackdown }
+						}
+						shia_resistance_level_up = yes
+					}
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = supported_opposition
+					}
+					custom_effect_tooltip = strategic_reasons_contain_tt
+					add_ai_strategy = { type = contain id = ROOT value = 20 }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = supported_opposition
-				}
-				custom_effect_tooltip = strategic_reasons_contain_tt
-				add_ai_strategy = { type = contain id = ROOT value = 20 }
 			}
 			if = {
 				limit = {
@@ -11590,6 +11599,12 @@ focus_tree = {
 					remove_idea = sunni
 					add_idea = shia
 				}
+				PER = {
+					remove_opinion_modifier = {
+						target = ROOT
+						modifier = oppresses_shiites
+					}
+				}
 			}
 			if = {
 				limit = {
@@ -11644,6 +11659,12 @@ focus_tree = {
 				swap_ideas = {
 					remove_idea = sunni
 					add_idea = shia
+				}
+				PER = {
+					remove_opinion_modifier = {
+						target = ROOT
+						modifier = oppresses_shiites
+					}
 				}
 			}
 			if = {

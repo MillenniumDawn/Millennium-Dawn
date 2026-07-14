@@ -35,6 +35,14 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - log = "...Focus X" / "...Decision X" / "...Event X" where X doesn't match the
     enclosing focus/decision/event id (copy-paste bug from duplicating a neighbor)
   - hidden_trigger = { } directly inside custom_trigger_tooltip (redundant nesting)
+  - Malformed leader rotations in common/scripted_effects/*_political_leaders.txt:
+    a tier that advances its counter by anything but 1, a do_not_retire guard that
+    doesn't undo its own tier's increment, a gap or an undiscriminated duplicate in a
+    branch's tier numbers, a second if/else_if branch on an already-handled set_
+    ideology flag, an always-false NOT = { check_variable = { b = 0 } }, and a branch
+    counting with another ideology's leader counter. set_leader kills the country
+    leader before dispatching, so every one of these hands the country a randomly
+    generated leader.
 """
 
 import os
@@ -150,6 +158,15 @@ _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
 _RE_WILL_LEAD_TO_WAR = re.compile(r"\bwill_lead_to_war_with\b")
 _RE_SCRIPT_TOKEN = re.compile(r"[{}=]|[A-Za-z_][\w:.@]*")
 _RE_QUOTED_STRING = re.compile(r'"[^"]*"')
+# Tokens for the leader-rotation tree parser: braces, the comparison operators a
+# limit can use, and everything else as one word (ideology names carry '-').
+_RE_SCRIPT_NODE = re.compile(r"[{}]|[<>]=?|=|[^\s{}=<>]+")
+_NODE_OPERATORS = {"=", "<", ">", "<=", ">="}
+_TIER_KEYWORDS = {"if", "else_if"}
+_LEADER_EFFECT_PREFIX = "set_leader_"
+_LEADER_COUNTER_SUFFIX = "_leader"
+_SET_IDEOLOGY_PREFIX = "set_"
+_DO_NOT_RETIRE_FLAG = "do_not_retire"
 _RE_TAG_SCOPE = re.compile(r"^[A-Z]{2,3}$")
 _LOGIC_SCOPE_TOKENS = {"AND", "OR", "NOT"}
 _OWNER_RESET_SCOPE_TOKENS = {"ROOT", "THIS"}
@@ -1849,6 +1866,348 @@ def _check_hidden_trigger_in_ctt(lines):
     return issues
 
 
+class _Node:
+    """One `key = value` or `key = { ... }` statement, with its 1-based line."""
+
+    __slots__ = ("key", "op", "value", "line", "children")
+
+    def __init__(self, key, op, value, line, children):
+        self.key = key
+        self.op = op
+        self.value = value
+        self.line = line
+        self.children = children
+
+
+def _parse_script_nodes(tokens, i):
+    """Recursive-descent parse of (token, line) pairs into a _Node tree.
+    Returns (children, index_after_the_closing_brace).
+    """
+    children = []
+    n = len(tokens)
+    while i < n:
+        tok, line = tokens[i]
+        if tok == "}":
+            return children, i + 1
+        if i + 2 < n and tokens[i + 1][0] in _NODE_OPERATORS:
+            op = tokens[i + 1][0]
+            if tokens[i + 2][0] == "{":
+                sub, i = _parse_script_nodes(tokens, i + 3)
+                children.append(_Node(tok, op, None, line, sub))
+            else:
+                children.append(_Node(tok, op, tokens[i + 2][0], line, []))
+                i += 3
+            continue
+        i += 1
+    return children, i
+
+
+def _parse_script_tree(lines):
+    tokens = [
+        (m.group(0), line_num)
+        for line_num, line in enumerate(lines, 1)
+        for m in _RE_SCRIPT_NODE.finditer(_code_for_depth(line))
+    ]
+    return _parse_script_nodes(tokens, 0)[0]
+
+
+def _first_child(node, key):
+    for child in node.children:
+        if child.key == key:
+            return child
+    return None
+
+
+def _is_b_guard(node):
+    """NOT = { check_variable = { b = N } } -- the cascade guard every tier past the
+    first carries, not a discriminating condition."""
+    if node.key != "NOT" or len(node.children) != 1:
+        return False
+    check = node.children[0]
+    return (
+        check.key == "check_variable"
+        and len(check.children) == 1
+        and check.children[0].key == "b"
+    )
+
+
+def _leader_tier_check(limit):
+    """(counter_name, tier_number) for a limit's `check_variable = { X_leader = N }`."""
+    for child in limit.children:
+        if child.key != "check_variable" or len(child.children) != 1:
+            continue
+        var = child.children[0]
+        if (
+            var.key.endswith(_LEADER_COUNTER_SUFFIX)
+            and var.op == "="
+            and var.value
+            and _RE_BARE_INT.match(var.value)
+        ):
+            return var.key, int(var.value)
+    return None
+
+
+def _tier_discriminates(limit, counter):
+    """True when a tier gates on anything beyond its counter check and the b-guard.
+
+    Duplicate tier numbers are legitimate when a second condition picks between them
+    (ERI splits on an ETH flag, ISR on party flags, CZE on a date), so a discriminated
+    tier is never reported as a duplicate.
+    """
+    for child in limit.children:
+        if (
+            child.key == "check_variable"
+            and len(child.children) == 1
+            and child.children[0].key == counter
+        ):
+            continue
+        if _is_b_guard(child):
+            continue
+        return True
+    return False
+
+
+def _branch_flag(node):
+    """The set_<ideology> flag an if/else_if branch gates on, or None."""
+    limit = _first_child(node, "limit")
+    if limit is None:
+        return None
+    for child in limit.children:
+        if (
+            child.key == "has_country_flag"
+            and child.value
+            and child.value.startswith(_SET_IDEOLOGY_PREFIX)
+        ):
+            return child.value
+    return None
+
+
+def _branch_discriminates(node, flag):
+    limit = _first_child(node, "limit")
+    return any(
+        not (child.key == "has_country_flag" and child.value == flag)
+        for child in limit.children
+    )
+
+
+def _collect_leader_tiers(node, guarded, tiers):
+    """Gather the tier if/else_if blocks under one ideology branch.
+
+    Tiers may sit directly under the branch or inside a nested container (JAP wraps
+    them in date blocks) -- a container's own limit discriminates every tier below it,
+    so the same tier number appearing under two containers is not a duplicate.
+    """
+    for child in node.children:
+        if child.key not in _TIER_KEYWORDS or _branch_flag(child):
+            continue
+        limit = _first_child(child, "limit")
+        if limit is None:
+            continue
+        tier = _leader_tier_check(limit)
+        if tier:
+            counter, number = tier
+            tiers.append(
+                (child, counter, number, guarded or _tier_discriminates(limit, counter))
+            )
+        else:
+            _collect_leader_tiers(child, True, tiers)
+
+
+def _counter_delta(node, effect_key):
+    """The variable leaf of a `<effect_key> = { <var> = N }` directly under node."""
+    for child in node.children:
+        if child.key != effect_key or len(child.children) != 1:
+            continue
+        var = child.children[0]
+        if var.value and _RE_BARE_INT.match(var.value):
+            return var
+    return None
+
+
+def _do_not_retire_subtract(tier):
+    for child in tier.children:
+        if child.key not in _TIER_KEYWORDS:
+            continue
+        limit = _first_child(child, "limit")
+        if limit is None:
+            continue
+        flag = _first_child(limit, "has_country_flag")
+        if flag is None or flag.value != _DO_NOT_RETIRE_FLAG:
+            continue
+        return _counter_delta(child, "subtract_from_variable")
+    return None
+
+
+def _check_leader_tier(tier, counter, number, issues):
+    """Increment and do_not_retire rollback for one tier."""
+    add = _counter_delta(tier, "add_to_variable")
+    step = None
+    if add and add.key == counter:
+        step = int(add.value)
+        if step != 1:
+            issues.append(
+                (
+                    add.line,
+                    f"tier {counter} = {number} advances the counter by {step} -- every "
+                    f"tier must advance it by exactly 1 (the tier index is not the step); "
+                    f"{step} leaves later leaders unreachable",
+                )
+            )
+
+    subtract = _do_not_retire_subtract(tier)
+    if subtract is None:
+        return
+    if subtract.key != counter:
+        issues.append(
+            (
+                subtract.line,
+                f"do_not_retire subtracts from {subtract.key}, but this tier advances "
+                f"{counter} -- the leader retires anyway and {subtract.key} is driven "
+                f"below its own tier 0",
+            )
+        )
+    elif step is not None and int(subtract.value) != step:
+        issues.append(
+            (
+                subtract.line,
+                f"do_not_retire subtracts {subtract.value} from {counter} but the tier "
+                f"added {step} -- they must cancel out or do_not_retire does not keep "
+                f"the leader",
+            )
+        )
+
+
+def _check_leader_branch(branch, flag, tiers, counter_owners, issues):
+    groups = {}
+    for tier, counter, number, discriminated in tiers:
+        groups.setdefault(counter, []).append((tier, number, discriminated))
+
+    own_counter = flag[len(_SET_IDEOLOGY_PREFIX) :] + _LEADER_COUNTER_SUFFIX
+    for counter, entries in groups.items():
+        # An off-name counter used nowhere else is just an odd name (socalism_leader);
+        # one that another ideology also drives, or that sits next to this branch's own
+        # counter, is a copy-paste -- the two rotations then share one index.
+        borrowed = counter != own_counter and (
+            own_counter in groups or len(counter_owners[counter]) > 1
+        )
+        if borrowed:
+            issues.append(
+                (
+                    entries[0][0].line,
+                    f"tiers under {flag} count with {counter}, not {own_counter} -- the "
+                    f"two ideologies share one counter, so each election skips leaders in "
+                    f"the other's rotation",
+                )
+            )
+
+        increments = False
+        plain_tiers = {}
+        for tier, number, discriminated in entries:
+            add = _counter_delta(tier, "add_to_variable")
+            increments = increments or (add is not None and add.key == counter)
+            _check_leader_tier(tier, counter, number, issues)
+            if discriminated:
+                continue
+            if number in plain_tiers:
+                issues.append(
+                    (
+                        tier.line,
+                        f"duplicate tier {counter} = {number} (already handled at line "
+                        f"{plain_tiers[number]}) with no further condition to tell the two "
+                        f"apart -- one of the leaders is unreachable",
+                    )
+                )
+            else:
+                plain_tiers[number] = tier.line
+
+        # A lookup-table branch sets its counter elsewhere and never advances it, so its
+        # tier numbers carry no ordering to check. A borrowed counter is numbered against
+        # the branch it was copied from.
+        if not increments or borrowed:
+            continue
+        numbers = sorted({number for _t, number, _d in entries})
+        missing = [n for n in range(numbers[-1]) if n not in numbers]
+        if missing:
+            gap = missing[0]
+            stranded = next(tier for tier, number, _d in entries if number > gap)
+            issues.append(
+                (
+                    stranded.line,
+                    f"no tier for {counter} = {gap} under {flag} -- the counter never "
+                    f"reaches {gap + 1}, so this leader and every later one can never fire",
+                )
+            )
+
+
+def _collect_leader_branches(container, branches, issues):
+    """Gather the ideology branches under a set_leader_TAG body, flagging any that a
+    same-flag branch earlier in its if/else_if chain already shadows."""
+    plain_branches = {}
+    for child in container.children:
+        if not child.children:
+            continue
+        if child.key == "if":
+            plain_branches = {}
+        flag = _branch_flag(child) if child.key in _TIER_KEYWORDS else None
+        if flag is None:
+            _collect_leader_branches(child, branches, issues)
+            continue
+        if flag in plain_branches:
+            issues.append(
+                (
+                    child.line,
+                    f"duplicate {flag} branch (already handled at line "
+                    f"{plain_branches[flag]}) -- if/else_if stops at the first match, so "
+                    f"this branch never runs",
+                )
+            )
+        elif not _branch_discriminates(child, flag):
+            plain_branches[flag] = child.line
+        branches.append((child, flag))
+
+
+def _check_impossible_b_guards(node, issues):
+    for child in node.children:
+        if _is_b_guard(child) and child.children[0].children[0].value == "0":
+            issues.append(
+                (
+                    child.line,
+                    "NOT = { check_variable = { b = 0 } } is always false -- b reads 0 "
+                    "when unset, so this tier can never fire (the guard counts from 1)",
+                )
+            )
+        _check_impossible_b_guards(child, issues)
+
+
+def _check_leader_rotation(lines):
+    """Flag malformed leader rotations in common/scripted_effects/*_political_leaders.txt.
+
+    set_leader kills the country leader before dispatching to set_leader_TAG, so a tier
+    that can never fire hands the country a randomly generated leader instead of the
+    authored one.
+    """
+    issues = []
+    for root in _parse_script_tree(lines):
+        if not root.key.startswith(_LEADER_EFFECT_PREFIX):
+            continue
+        branches = []
+        _collect_leader_branches(root, branches, issues)
+
+        branch_tiers = []
+        counter_owners = {}
+        for branch, flag in branches:
+            tiers = []
+            _collect_leader_tiers(branch, False, tiers)
+            branch_tiers.append((branch, flag, tiers))
+            for _tier, counter, _number, _discriminated in tiers:
+                counter_owners.setdefault(counter, set()).add(flag)
+
+        for branch, flag, tiers in branch_tiers:
+            _check_leader_branch(branch, flag, tiers, counter_owners, issues)
+        _check_impossible_b_guards(root, issues)
+    return sorted(issues)
+
+
 def check_file(filepath):
     """Check a single file for common mistakes. Returns list of (filepath, line_num, message) tuples."""
     issues = []
@@ -1872,6 +2231,7 @@ def check_file(filepath):
         "common/" in normalized_filepath or "events/" in normalized_filepath
     )
     is_event_file = "events/" in normalized_filepath
+    is_political_leaders_file = normalized_filepath.endswith("_political_leaders.txt")
 
     # Only track idea categories for idea files (non-selectable vs selectable)
     # Dynamically parsed from common/idea_tags/*.txt
@@ -2051,6 +2411,8 @@ def check_file(filepath):
         issues.extend(_check_decision_log_id(lines))
     if is_event_file:
         issues.extend(_check_event_log_id(lines))
+    if is_political_leaders_file:
+        issues.extend(_check_leader_rotation(lines))
 
     issues.extend(_check_hidden_trigger_in_ctt(lines))
     issues.extend(_check_consecutive_scope_blocks(lines))

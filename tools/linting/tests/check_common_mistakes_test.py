@@ -17,6 +17,7 @@ Unit tests for the checks added to check_common_mistakes.py:
   14. on_add adds to a global array the sibling on_remove never removes from
   15. focus/decision/event log = "..." referencing the wrong id (Check C)
   16. hidden_trigger = { } directly inside custom_trigger_tooltip (Check E1)
+  17. malformed country leader rotations in *_political_leaders.txt
 """
 
 import os
@@ -41,6 +42,7 @@ from check_common_mistakes import (
     _check_has_idea_mutex_in_not_block,
     _check_hidden_trigger_in_ctt,
     _check_influence_setter_scope,
+    _check_leader_rotation,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
     _check_tautological_or,
@@ -2007,6 +2009,251 @@ assert_finds(
 )
 
 
+# 17. Malformed country leader rotations (set_leader_TAG)
+
+print("\n── Leader rotation (political_leaders) ──")
+
+
+def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail=""):
+    """One rotation tier: counter check, increment, kill, create, do_not_retire undo."""
+    retire = counter if retire is None else retire
+    undo = increment if undo is None else undo
+    return [
+        f"\t\tif = {{ limit = {{ check_variable = {{ {counter} = {number} }} {guard}}}\n",
+        f"\t\t\tadd_to_variable = {{ {counter} = {increment} }}\n",
+        "\t\t\thidden_effect = { kill_country_leader = yes }\n",
+        "\t\t\tcreate_country_leader = {\n",
+        f'\t\t\t\tname = "Leader {number}"\n',
+        "\t\t\t\tideology = conservatism\n",
+        "\t\t\t}\n",
+        f"\t\t\tif = {{ limit = {{ has_country_flag = do_not_retire }} subtract_from_variable = {{ {retire} = {undo} }} }}\n",
+        *tail,
+        "\t\t}\n",
+    ]
+
+
+def _rotation(*tiers, flag="set_conservatism"):
+    return [
+        "set_leader_TST = {\n",
+        f"\tif = {{ limit = {{ has_country_flag = {flag} }}\n",
+        *[line for tier in tiers for line in tier],
+        "\t}\n",
+        "}\n",
+    ]
+
+
+_B_GUARD = "NOT = { check_variable = { b = 1 } } "
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 1, guard=_B_GUARD),
+        _tier("conservatism_leader", 2, guard=_B_GUARD),
+    ),
+    0,
+    "well-formed 3-tier rotation",
+)
+
+# Descending tiers self-guard (only one can match top-down) -- CAS/CSA/FIJ/USB idiom
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 2),
+        _tier("conservatism_leader", 1),
+        _tier("conservatism_leader", 0),
+    ),
+    0,
+    "descending tier order not flagged",
+)
+
+# b = 2 / b = 3 cascade past a terminal b = 1 -- SWE/UKR/ANT/SIN, deliberate
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier(
+            "conservatism_leader",
+            0,
+            tail=[
+                "\t\t\tif = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } }\n"
+            ],
+        ),
+        _tier(
+            "conservatism_leader",
+            1,
+            guard="NOT = { check_variable = { b = 2 } } ",
+            tail=["\t\t\tset_temp_variable = { b = 2 }\n"],
+        ),
+    ),
+    0,
+    "b = 2 cascade guard not flagged",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 1, guard=_B_GUARD, increment=2),
+    ),
+    1,
+    "add_to_variable = 2 flagged (tier index used as the step)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(_tier("conservatism_leader", 0, increment=0)),
+    1,
+    "add_to_variable = 0 flagged (counter never advances)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(_tier("conservatism_leader", 0, undo=0)),
+    1,
+    "do_not_retire subtracting 0 flagged (no-op guard)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(_tier("conservatism_leader", 0, retire="socialism_leader")),
+    1,
+    "do_not_retire subtracting another ideology's counter flagged",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 2, guard=_B_GUARD),
+    ),
+    1,
+    "tier gap flagged (no tier 1)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 1),
+        _tier("conservatism_leader", 2, guard=_B_GUARD),
+    ),
+    1,
+    "rotation not starting at tier 0 flagged",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 0, guard=_B_GUARD),
+    ),
+    1,
+    "duplicate tier number flagged",
+)
+
+# ERI/ISR/CZE split a tier number on a second condition -- both stay reachable
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0, guard="has_country_flag = TST_coup "),
+        _tier("conservatism_leader", 0, guard="NOT = { has_country_flag = TST_coup } "),
+    ),
+    0,
+    "duplicate tier discriminated by a flag not flagged",
+)
+
+# JAP wraps its tiers in date containers; the same tier number under each is fine
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\t\tif = { limit = { date < 2002.12.10 }\n",
+        *_tier("conservatism_leader", 0),
+        "\t\t}\n",
+        "\t\tif = { limit = { date > 2002.12.10 }\n",
+        *_tier("conservatism_leader", 0),
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "same tier number under two date containers not flagged",
+)
+
+# ITA-style lookup table: the counter is set elsewhere, tiers never advance it
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_liberalism }\n",
+        "\t\tif = { limit = { check_variable = { liberalism_leader = 1 } }\n",
+        '\t\t\tcreate_country_leader = { name = "A" ideology = liberalism }\n',
+        "\t\t}\n",
+        "\t\tif = { limit = { check_variable = { liberalism_leader = 3 } }\n",
+        '\t\t\tcreate_country_leader = { name = "B" ideology = liberalism }\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "lookup-table branch with no increment not gap-checked",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "\telse_if = { limit = { has_country_flag = set_conservatism }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "duplicate set_conservatism branch flagged",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 1, guard="NOT = { check_variable = { b = 0 } } "),
+    ),
+    1,
+    "NOT = { check_variable = { b = 0 } } flagged (always false)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "\telse_if = { limit = { has_country_flag = set_Monarchist }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "branch counting with another ideology's counter flagged",
+)
+
+# CAS/PHI carry off-name counters (socalism_leader) that nothing else drives -- harmless
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("socalism_leader", 0),
+        _tier("socalism_leader", 1, guard=_B_GUARD),
+        flag="set_socialism",
+    ),
+    0,
+    "off-name counter owned by a single branch not flagged",
+)
+
+
 # Guardrails: confirm the three new checks stay silent on known-valid patterns
 
 print("\n── Guardrails: no new-check false positives ──")
@@ -2069,8 +2316,12 @@ _HYPHEN_FOCUS_BAD = [
     "\t\t}\n",
     "\t}\n",
 ]
-assert_finds(_check_focus_log_id, _HYPHEN_FOCUS_OK, 0, "hyphenated focus id, log matches")
-assert_finds(_check_focus_log_id, _HYPHEN_FOCUS_BAD, 1, "hyphenated focus id, log mismatch")
+assert_finds(
+    _check_focus_log_id, _HYPHEN_FOCUS_OK, 0, "hyphenated focus id, log matches"
+)
+assert_finds(
+    _check_focus_log_id, _HYPHEN_FOCUS_BAD, 1, "hyphenated focus id, log mismatch"
+)
 
 _HYPHEN_DECISION_OK = [
     "category_test = {\n",
@@ -2090,8 +2341,18 @@ _HYPHEN_DECISION_BAD = [
     "\t}\n",
     "}\n",
 ]
-assert_finds(_check_decision_log_id, _HYPHEN_DECISION_OK, 0, "hyphenated decision id, log matches")
-assert_finds(_check_decision_log_id, _HYPHEN_DECISION_BAD, 1, "hyphenated decision id, log mismatch")
+assert_finds(
+    _check_decision_log_id,
+    _HYPHEN_DECISION_OK,
+    0,
+    "hyphenated decision id, log matches",
+)
+assert_finds(
+    _check_decision_log_id,
+    _HYPHEN_DECISION_BAD,
+    1,
+    "hyphenated decision id, log mismatch",
+)
 
 # AND directly under NOT is the sanctioned NAND disambiguation -- never redundant
 
