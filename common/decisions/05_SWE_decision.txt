@@ -1,50 +1,40 @@
 # Author(s): Borgers
 SWE_decision_Forsvarsmarkten_category = {
 	SWE_Home_Guard = {
-		fire_only_once = no
-		days_remove = 180
+		fire_only_once = yes
+		cost = 75
+
 		available = {
-			OR = {
-				has_defensive_war = yes
-				threat > 0.6
-				any_of_scopes = {
-					array = SWE.potential_and_current_enemies
-					tooltip = TT_IS_BEING_JUSTIFIED_AGAINST
-					is_justifying_wargoal_against = SWE
-				}
-			}
+			NOT = { has_country_flag = SWE_notice_pending }
 		}
 
 		visible = {
 			NOT = { has_idea = SWE_idea_total_defence_duty }
-			OR = {
-				has_defensive_war = yes
-				threat > 0.6
-				any_of_scopes = {
-					array = SWE.potential_and_current_enemies
-					tooltip = TT_IS_BEING_JUSTIFIED_AGAINST
-					is_justifying_wargoal_against = SWE
-				}
-			}
+			SWE_under_military_threat = yes
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SWE_Home_Guard "
+			log = "[GetDateText]: [Root.GetName]: Decision SWE_Home_Guard"
+			set_temp_variable = { treasury_change = -8.00 }
+			modify_treasury_effect = yes
 			SWE = {
-				division_template = {
-					name = "Hemvärnet"
-					is_locked = yes
+				if = {
+					limit = { NOT = { has_template = "Hemvärnet" } }
+					division_template = {
+						name = "Hemvärnet"
+						is_locked = yes
 
-					regiments = {
-						Mot_Militia_Bat = { x = 0 y = 0 }
-						Mot_Militia_Bat = { x = 0 y = 1 }
-						mech_Inf_Bat = { x = 1 y = 1 }
+						regiments = {
+							Mot_Militia_Bat = { x = 0 y = 0 }
+							Mot_Militia_Bat = { x = 0 y = 1 }
+							mech_Inf_Bat = { x = 1 y = 1 }
+						}
+						support = {
+							L_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 1 }
+						}
+						priority = 0
 					}
-					support = {
-						L_Engi_Comp = { x = 0 y = 0 }
-						L_Recce_Comp = { x = 0 y = 1 }
-					}
-					priority = 0
 				}
 			}
 			capital_scope = {
@@ -95,37 +85,44 @@ SWE_decision_Forsvarsmarkten_category = {
 				}
 			}
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.9 days = 1 } }
+				SWE = { set_variable = { SWE_notice_type = 9 } set_country_flag = { flag = SWE_notice_pending days = 15 value = 1 } news_event = { id = Sweden_news.4 days = 1 } }
 			}
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				NOT = {
+					OR = {
+						has_defensive_war = yes
+						any_of_scopes = {
+							array = SWE.potential_and_current_enemies
+							tooltip = TT_IS_BEING_JUSTIFIED_AGAINST
+							is_justifying_wargoal_against = SWE
+						}
+					}
+				}
+			}
+		}
 	}
 	SWE_fortifications = {
 		fire_only_once = yes
 		days_remove = 45
+		cost = 50
+
 		available = {
-			OR = {
-				has_defensive_war = yes
-				threat > 0.6
-				any_of_scopes = {
-					array = SWE.potential_and_current_enemies
-					tooltip = TT_IS_BEING_JUSTIFIED_AGAINST
-					is_justifying_wargoal_against = SWE
-				}
-			}
+			NOT = { has_country_flag = SWE_notice_pending }
 		}
 
 		visible = {
-			OR = {
-				has_defensive_war = yes
-				threat > 0.6
-				any_of_scopes = {
-					array = SWE.potential_and_current_enemies
-					is_justifying_wargoal_against = SWE
-				}
-			}
+			SWE_under_military_threat = yes
 		}
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SWE_fortifications"
+			set_temp_variable = { treasury_change = -12.00 }
+			modify_treasury_effect = yes
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_fortifications"
@@ -184,24 +181,24 @@ SWE_decision_Forsvarsmarkten_category = {
 			}
 
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.5 days = 1 } }
+				if = {
+					limit = { SWE = { NOT = { has_country_flag = SWE_notice_pending } } }
+					SWE = {
+						set_variable = { SWE_notice_type = 5 }
+						set_country_flag = { flag = SWE_notice_pending days = 15 value = 1 }
+						news_event = { id = Sweden_news.4 days = 1 }
+					}
+				}
 			}
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = { base = 10 }
 	}
 	SWE_open_weapons_depots = {
 		fire_only_once = yes
 		days_remove = 45
 		available = {
-			OR = {
-				has_defensive_war = yes
-				threat > 0.6
-				any_of_scopes = {
-					array = SWE.potential_and_current_enemies
-					tooltip = TT_IS_BEING_JUSTIFIED_AGAINST
-					is_justifying_wargoal_against = SWE
-				}
-			}
+			SWE_under_military_threat = yes
+			NOT = { has_country_flag = SWE_bop_news_pending }
 		}
 
 		visible = {
@@ -233,10 +230,17 @@ SWE_decision_Forsvarsmarkten_category = {
 			}
 
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.31 days = 1 } }
+				if = {
+					limit = { SWE = { NOT = { has_country_flag = SWE_bop_news_pending } } }
+					SWE = {
+						set_variable = { SWE_bop_news_type = 31 }
+						set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 }
+						news_event = { id = Sweden_news.20 days = 1 }
+					}
+				}
 			}
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = { base = 10 }
 	}
 	SWE_Officer_education_course = {
 		fixed_random_seed = no
@@ -245,6 +249,10 @@ SWE_decision_Forsvarsmarkten_category = {
 		cost = 100
 		days_re_enable = 365
 		fire_only_once = no
+
+		available = {
+			NOT = { has_country_flag = SWE_notice_pending }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_Officer_education_course"
@@ -293,7 +301,14 @@ SWE_decision_Forsvarsmarkten_category = {
 				}
 			}
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.6 days = 3 } }
+				if = {
+					limit = { SWE = { NOT = { has_country_flag = SWE_notice_pending } } }
+					SWE = {
+						set_variable = { SWE_notice_type = 6 }
+						set_country_flag = { flag = SWE_notice_pending days = 15 value = 1 }
+						news_event = { id = Sweden_news.4 days = 3 }
+					}
+				}
 			}
 		}
 		ai_will_do = {
@@ -307,6 +322,10 @@ SWE_decision_Forsvarsmarkten_category = {
 		days_re_enable = 365
 		fire_only_once = no
 
+		available = {
+			NOT = { has_country_flag = SWE_notice_pending }
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_only_active_Personal_Trainings_exercise"
 			SWE = {
@@ -317,7 +336,14 @@ SWE_decision_Forsvarsmarkten_category = {
 				days = 180
 				}
 				hidden_effect = {
-					SWE = { news_event = { id = Sweden_news.4 days = 1 } }
+					if = {
+						limit = { SWE = { NOT = { has_country_flag = SWE_notice_pending } } }
+						SWE = {
+							set_variable = { SWE_notice_type = 4 }
+							set_country_flag = { flag = SWE_notice_pending days = 15 value = 1 }
+							news_event = { id = Sweden_news.4 days = 1 }
+						}
+					}
 				}
 			}
 		}
@@ -332,6 +358,10 @@ SWE_decision_Forsvarsmarkten_category = {
 		days_re_enable = 365
 		fire_only_once = no
 
+		available = {
+			NOT = { has_country_flag = SWE_notice_pending }
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_Home_defence_Trainings_exercise"
 			SWE = {
@@ -345,7 +375,14 @@ SWE_decision_Forsvarsmarkten_category = {
 				}
 			}
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.7 days = 1 } }
+				if = {
+					limit = { SWE = { NOT = { has_country_flag = SWE_notice_pending } } }
+					SWE = {
+						set_variable = { SWE_notice_type = 7 }
+						set_country_flag = { flag = SWE_notice_pending days = 15 value = 1 }
+						news_event = { id = Sweden_news.4 days = 1 }
+					}
+				}
 			}
 		}
 		ai_will_do = {
@@ -358,15 +395,7 @@ SWE_decision_Forsvarsmarkten_category = {
 		fire_only_once = no
 
 		visible = {
-			OR = {
-				has_defensive_war = yes
-				threat > 0.6
-				any_of_scopes = {
-					array = SWE.potential_and_current_enemies
-					tooltip = TT_IS_BEING_JUSTIFIED_AGAINST
-					is_justifying_wargoal_against = SWE
-				}
-			}
+			SWE_under_military_threat = yes
 		}
 
 		complete_effect = {
@@ -408,6 +437,7 @@ SWE_decision_Forsvarsmarkten_category = {
 		cost = 100
 		available = {
 			has_idea = SWE_idea_total_defence_duty
+			NOT = { has_country_flag = SWE_notice_pending }
 		}
 
 		complete_effect = {
@@ -432,7 +462,7 @@ SWE_decision_Forsvarsmarkten_category = {
 			decrease_policing_budget = yes
 			decrease_conscription_effect = yes
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.7 days = 1 } }
+				SWE = { set_variable = { SWE_notice_type = 8 } set_country_flag = { flag = SWE_notice_pending days = 15 value = 1 } news_event = { id = Sweden_news.4 days = 1 } }
 			}
 		}
 		ai_will_do = {
@@ -450,16 +480,7 @@ SWE_decision_Royal_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					#has_decision = SWE_king_speak_to_the_nation
-					has_decision = SWE_science_patronage
-					has_decision = SWE_military_review
-					has_decision = SWE_economy_review
-					has_decision = SWE_send_to_UN
-					has_decision = SWE_visit_asia
-					has_decision = SWE_visit_EU
-					has_decision = SWE_governmental_office
-				}
+				SWE_royal_decision_group_free = yes
 			}
 		}
 
@@ -489,16 +510,7 @@ SWE_decision_Royal_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_king_speak_to_the_nation
-					#has_decision = SWE_science_patronage
-					has_decision = SWE_military_review
-					has_decision = SWE_economy_review
-					has_decision = SWE_send_to_UN
-					has_decision = SWE_visit_asia
-					has_decision = SWE_visit_EU
-					has_decision = SWE_governmental_office
-				}
+				SWE_royal_decision_group_free = yes
 			}
 		}
 
@@ -550,16 +562,7 @@ SWE_decision_Royal_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_king_speak_to_the_nation
-					has_decision = SWE_science_patronage
-					#has_decision = SWE_military_review
-					has_decision = SWE_economy_review
-					has_decision = SWE_send_to_UN
-					has_decision = SWE_visit_asia
-					has_decision = SWE_visit_EU
-					has_decision = SWE_governmental_office
-				}
+				SWE_royal_decision_group_free = yes
 			}
 		}
 
@@ -600,16 +603,7 @@ SWE_decision_Royal_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_king_speak_to_the_nation
-					has_decision = SWE_science_patronage
-					has_decision = SWE_military_review
-					#has_decision = SWE_economy_review
-					has_decision = SWE_send_to_UN
-					has_decision = SWE_visit_asia
-					has_decision = SWE_visit_EU
-					has_decision = SWE_governmental_office
-				}
+				SWE_royal_decision_group_free = yes
 			}
 		}
 
@@ -657,42 +651,36 @@ SWE_decision_Royal_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_king_speak_to_the_nation
-					has_decision = SWE_science_patronage
-					has_decision = SWE_military_review
-					has_decision = SWE_economy_review
-					#has_decision = SWE_send_to_UN
-					has_decision = SWE_visit_asia
-					has_decision = SWE_visit_EU
-					has_decision = SWE_governmental_office
-				}
+				SWE_royal_decision_group_free = yes
 			}
 		}
 
 		visible = {
 			OR = {
-				country_exists = USA
-				country_exists = SOV
-				country_exists = CHI
-				country_exists = ENG
-				country_exists = FRA
-			}
-			NOT = {
-				USA = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = USA
+					NOT = { has_war_with = USA }
+					NOT = { USA = { has_country_flag = SWE_stinky_melon } }
 				}
-				SOV = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = SOV
+					NOT = { has_war_with = SOV }
+					NOT = { SOV = { has_country_flag = SWE_stinky_melon } }
 				}
-				CHI = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = CHI
+					NOT = { has_war_with = CHI }
+					NOT = { CHI = { has_country_flag = SWE_stinky_melon } }
 				}
-				ENG = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = ENG
+					NOT = { has_war_with = ENG }
+					NOT = { ENG = { has_country_flag = SWE_stinky_melon } }
 				}
-				FRA = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = FRA
+					NOT = { has_war_with = FRA }
+					NOT = { FRA = { has_country_flag = SWE_stinky_melon } }
 				}
 			}
 		}
@@ -712,11 +700,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = USA }
 				}
 				USA = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 			newline = yes
@@ -726,11 +710,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = ENG }
 				}
 				ENG = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 			newline = yes
@@ -740,11 +720,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = FRA }
 				}
 				FRA = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 			newline = yes
@@ -754,11 +730,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = SOV }
 				}
 				SOV = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 			newline = yes
@@ -768,11 +740,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = CHI }
 				}
 				CHI = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 		}
@@ -789,34 +757,26 @@ SWE_decision_Royal_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_king_speak_to_the_nation
-					has_decision = SWE_science_patronage
-					has_decision = SWE_military_review
-					has_decision = SWE_economy_review
-					has_decision = SWE_send_to_UN
-					#has_decision = SWE_visit_asia
-					has_decision = SWE_visit_EU
-					has_decision = SWE_governmental_office
-				}
+				SWE_royal_decision_group_free = yes
 			}
 		}
 
 		visible = {
 			OR = {
-				country_exists = JAP
-				country_exists = IND
-				country_exists = RAJ
-			}
-			NOT = {
-				JAP = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = JAP
+					NOT = { has_war_with = JAP }
+					NOT = { JAP = { has_country_flag = SWE_stinky_melon } }
 				}
-				IND = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = IND
+					NOT = { has_war_with = IND }
+					NOT = { IND = { has_country_flag = SWE_stinky_melon } }
 				}
-				RAJ = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = RAJ
+					NOT = { has_war_with = RAJ }
+					NOT = { RAJ = { has_country_flag = SWE_stinky_melon } }
 				}
 			}
 		}
@@ -836,11 +796,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = JAP }
 				}
 				JAP = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 			newline = yes
@@ -850,11 +806,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = IND }
 				}
 				IND = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 			newline = yes
@@ -864,11 +816,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = RAJ }
 				}
 				RAJ = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 		}
@@ -885,34 +833,26 @@ SWE_decision_Royal_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_king_speak_to_the_nation
-					has_decision = SWE_science_patronage
-					has_decision = SWE_military_review
-					has_decision = SWE_economy_review
-					has_decision = SWE_send_to_UN
-					has_decision = SWE_visit_asia
-					#has_decision = SWE_visit_EU
-					has_decision = SWE_governmental_office
-				}
+				SWE_royal_decision_group_free = yes
 			}
 		}
 
 		visible = {
 			OR = {
-				country_exists = GER
-				country_exists = SPR
-				country_exists = ITA
-			}
-			NOT = {
-				GER = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = GER
+					NOT = { has_war_with = GER }
+					NOT = { GER = { has_country_flag = SWE_stinky_melon } }
 				}
-				SPR = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = SPR
+					NOT = { has_war_with = SPR }
+					NOT = { SPR = { has_country_flag = SWE_stinky_melon } }
 				}
-				ITA = {
-					has_country_flag = SWE_stinky_melon
+				AND = {
+					country_exists = ITA
+					NOT = { has_war_with = ITA }
+					NOT = { ITA = { has_country_flag = SWE_stinky_melon } }
 				}
 			}
 		}
@@ -932,11 +872,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = GER }
 				}
 				GER = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 			newline = yes
@@ -946,11 +882,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = SPR }
 				}
 				SPR = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 			newline = yes
@@ -960,11 +892,7 @@ SWE_decision_Royal_category = {
 					NOT = { has_war_with = ITA }
 				}
 				ITA = {
-					add_opinion_modifier = {
-						target = SWE
-						modifier = medium_increase
-					}
-					set_country_flag = SWE_stinky_melon
+					SWE_royal_visit_bump = yes
 				}
 			}
 		}
@@ -981,16 +909,7 @@ SWE_decision_Royal_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_king_speak_to_the_nation
-					has_decision = SWE_science_patronage
-					has_decision = SWE_military_review
-					has_decision = SWE_economy_review
-					has_decision = SWE_send_to_UN
-					has_decision = SWE_visit_asia
-					has_decision = SWE_visit_EU
-					#has_decision = SWE_governmental_office
-				}
+				SWE_royal_decision_group_free = yes
 			}
 		}
 
@@ -1103,28 +1022,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					#has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_the_price_of_neutrality"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.20 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 20 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1155,28 +1063,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					#has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_ask_the_minister_of_defence_dialog"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.21 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 21 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1208,28 +1105,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					#has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_security_information_campain"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.22 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 22 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1261,28 +1147,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					#has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_symbolic_campain_to_make_citizens_familiar"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.23 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 23 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1315,28 +1190,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					#has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_the_swedish_way"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.24 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 24 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1345,25 +1209,25 @@ SWE_balance_of_power_category = {
 			if = {
 				limit = {
 					power_balance_value = {
-					id = SWE_balance_of_power
-					value > 0.02
+						id = SWE_balance_of_power
+						value > 0.02
 					}
 				}
 				add_power_balance_value = {
-				id = SWE_balance_of_power
-				value = -0.075
+					id = SWE_balance_of_power
+					value = -0.075
 				}
 			}
 			else_if = {
 				limit = {
 					power_balance_value = {
-					id = SWE_balance_of_power
-					value < -0.02
+						id = SWE_balance_of_power
+						value < -0.02
 					}
 				}
 				add_power_balance_value = {
-				id = SWE_balance_of_power
-				value = 0.075
+					id = SWE_balance_of_power
+					value = 0.075
 				}
 			}
 			else = {
@@ -1392,28 +1256,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					#has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_what_means_neutrality_to_us"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.25 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 25 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1422,25 +1275,25 @@ SWE_balance_of_power_category = {
 			if = {
 				limit = {
 					power_balance_value = {
-					id = SWE_balance_of_power
-					value > 0.02
+						id = SWE_balance_of_power
+						value > 0.02
 					}
 				}
 				add_power_balance_value = {
-				id = SWE_balance_of_power
-				value = -0.05
+					id = SWE_balance_of_power
+					value = -0.05
 				}
 			}
 			else_if = {
 				limit = {
 					power_balance_value = {
-					id = SWE_balance_of_power
-					value < -0.02
+						id = SWE_balance_of_power
+						value < -0.02
 					}
 				}
 				add_power_balance_value = {
-				id = SWE_balance_of_power
-				value = 0.05
+					id = SWE_balance_of_power
+					value = 0.05
 				}
 			}
 			else = {
@@ -1469,28 +1322,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					#has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_build_up_swedish_think_tank"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.30 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 30 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1499,25 +1341,25 @@ SWE_balance_of_power_category = {
 			if = {
 				limit = {
 					power_balance_value = {
-					id = SWE_balance_of_power
-					value > 0.02
+						id = SWE_balance_of_power
+						value > 0.02
 					}
 				}
 				add_power_balance_value = {
-				id = SWE_balance_of_power
-				value = -0.025
+					id = SWE_balance_of_power
+					value = -0.025
 				}
 			}
 			else_if = {
 				limit = {
 					power_balance_value = {
-					id = SWE_balance_of_power
-					value < -0.02
+						id = SWE_balance_of_power
+						value < -0.02
 					}
 				}
 				add_power_balance_value = {
-				id = SWE_balance_of_power
-				value = 0.025
+					id = SWE_balance_of_power
+					value = 0.025
 				}
 			}
 			else = {
@@ -1543,28 +1385,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					#has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_multipolar_world"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.26 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 26 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1596,28 +1427,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					#has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_det_andra_europa"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.27 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 27 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1648,28 +1468,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					#has_decision = SWE_do_ostkontact
-					has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_do_ostkontact"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.29 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 29 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
@@ -1697,28 +1506,17 @@ SWE_balance_of_power_category = {
 
 
 		available = {
+			NOT = { has_country_flag = SWE_bop_news_pending }
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
-				NOT = {
-					has_decision = SWE_the_price_of_neutrality
-					has_decision = SWE_ask_the_minister_of_defence_dialog
-					has_decision = SWE_security_information_campain
-					has_decision = SWE_symbolic_campain_to_make_citizens_familiar
-					has_decision = SWE_the_swedish_way
-					has_decision = SWE_what_means_neutrality_to_us
-					has_decision = SWE_build_up_swedish_think_tank
-					has_decision = SWE_multipolar_world
-					has_decision = SWE_det_andra_europa
-					has_decision = SWE_do_ostkontact
-					#has_decision = SWE_blame_the_arrogant_west
-				}
+				SWE_bop_decision_group_free = yes
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_blame_the_arrogant_west"
 			hidden_effect = {
-				SWE = { news_event = { id = Sweden_news.28 days = 3 } }
+				SWE = { set_variable = { SWE_bop_news_type = 28 } set_country_flag = { flag = SWE_bop_news_pending days = 10 value = 1 } news_event = { id = Sweden_news.20 days = 3 } }
 			}
 		}
 
