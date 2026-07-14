@@ -443,7 +443,7 @@ on_actions = {
 
 			if = {
 				limit = {
-					NOT = { has_global_flag = AFG_cleanup }
+					NOT = { has_global_flag = GLOBAL_afghanistan_cores_cleaned_up }
 					NOT = {
 						country_exists = AFG
 						country_exists = TAL
@@ -485,7 +485,7 @@ on_actions = {
 					set_capital = { state = 414 }
 				}
 
-				set_global_flag = AFG_cleanup
+				set_global_flag = GLOBAL_afghanistan_cores_cleaned_up
 			}
 			if = {
 				limit = {
@@ -876,7 +876,7 @@ on_actions = {
 						has_idea = anti_taliban_guerrillas
 					}
 					USA = {
-						has_country_flag = Operation_enduring_freedom
+						has_country_flag = USA_wot_enduring_freedom
 					}
 					OR = {
 						has_volunteers_amount_from = {
@@ -896,14 +896,14 @@ on_actions = {
 			}
 			if = {
 				limit = {
-					NOT = { has_global_flag = AFG_south_korean_hostage_crisis }
+					NOT = { has_global_flag = GLOBAL_south_korean_hostage_crisis_happened }
 					date > 2007.6.20
 					check_variable = { var = taliban_strength value = 5 compare = greater_than_or_equals }
-					has_country_flag = afg_active_taliban_insurgency
+					has_country_flag = AFG_active_taliban_insurgency
 					gives_military_access_to = KOR
 					gives_military_access_to = USA
 				}
-				set_global_flag = AFG_south_korean_hostage_crisis
+				set_global_flag = GLOBAL_south_korean_hostage_crisis_happened
 				country_event = { id = AfghanistanHostageCrisis.1 days = 4 random_days = 14 }
 			}
 		}
@@ -913,10 +913,10 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = { country_exists = TAL }
-					NOT = { has_global_flag = Afghanistan_Civil_War_Over }
+					NOT = { has_global_flag = GLOBAL_afghanistan_civil_war_over }
 				}
 				#Civil war is over
-				set_global_flag = Afghanistan_Civil_War_Over
+				set_global_flag = GLOBAL_afghanistan_civil_war_over
 
 				#Clear core status
 				409 = {
@@ -966,8 +966,6 @@ on_actions = {
 					}
 					set_temp_variable = { taliban_strength_increase = 35 }
 					increase_taliban_strength = yes
-					add_to_variable = { var = taliban_attack_strength value = 0.35 }
-					clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 					country_event = {
 						id = TalibanInsurgency.0
 						days = 1
@@ -977,107 +975,66 @@ on_actions = {
 				AFG = { news_event = { id = AfghanistanNews.1 hours = 6 } }
 			}
 			if = {
-				limit = {
-					jihadist_government = yes
-					has_country_flag = afg_active_taliban_insurgency
-				}
+				limit = { has_country_flag = AFG_active_taliban_insurgency }
+				AFG_refresh_insurgency_arrays = yes
 
-				AFG = { country_event = TalibanInsurgency.12 }
-			}
-			if = {
-				limit = {
-					no_jihadist_government = yes
-					has_country_flag = afg_active_taliban_insurgency
+				if = {
+					limit = { jihadist_government = yes }
+					country_event = TalibanInsurgency.12
 				}
-
-				AFG = { country_event = TalibanInsurgency.20 }
+				else = {
+					country_event = TalibanInsurgency.20
+				}
 			}
 
 			if = {
 				limit = {
+					has_country_flag = AFG_active_taliban_insurgency
 					OR = {
 						check_variable = { global.month = 3 }
 						check_variable = { global.month = 6 }
 						check_variable = { global.month = 9 }
 						check_variable = { global.month = 12 }
 					}
-					original_tag = AFG
-					AFG = {
-						check_variable = {
-							var = taliban_strength
-							value = 0
-							compare = greater_than_or_equals
-						}
-						has_country_flag = afg_active_taliban_insurgency
-					}
 				}
 				random_list = {
 					20 = {
-						modifier = {
-							factor = 0
-							NOT = {
-								original_tag = AFG
-								AFG = {
-									check_variable = {
-										var = taliban_strength
-										value = 0
-										compare = greater_than_or_equals
-									}
-									has_country_flag = afg_active_taliban_insurgency
-								}
-							}
-						}
-
-						AFG = { country_event = { id = TalibanAttack.0 random_days = 20 } }
+						country_event = { id = TalibanAttack.0 random_days = 20 }
 					}
 					15 = {
 						modifier = {
 							factor = 0
-							NOT = {
-								original_tag = AFG
-								AFG = {
-									check_variable = {
-										var = taliban_strength
-										value = 25
-										compare = greater_than_or_equals
-									}
-									has_country_flag = afg_active_taliban_insurgency
-								}
-							}
+							check_variable = { taliban_strength < 25 }
 						}
-						AFG = { country_event = { id = TalibanAttack.2 random_days = 20 } }
+						country_event = { id = TalibanAttack.2 random_days = 20 }
 					}
 					20 = {
 						modifier = {
 							factor = 0
-							NOT = {
-								original_tag = AFG
-								AFG = {
-									check_variable = {
-										var = taliban_strength
-										value = 10
-										compare = greater_than_or_equals
-									}
-									any_owned_state = {
-										infrastructure > 0
-									}
-									has_country_flag = afg_active_taliban_insurgency
-								}
+							OR = {
+								check_variable = { taliban_strength < 10 }
+								NOT = { any_owned_state = { infrastructure > 0 } }
 							}
 						}
-
-						AFG = { country_event = { id = TalibanAttack.5 random_days = 20 } }
+						country_event = { id = TalibanAttack.5 random_days = 20 }
 					}
 					15 = {
 						modifier = {
 							factor = 0
-							NOT = {
-								AFG = {
-									check_variable = {
-										var = taliban_strength
-										value = 45
-										compare = greater_than_or_equals
-									}
+							OR = {
+								check_variable = { taliban_strength < 25 }
+								num_divisions < 5
+							}
+						}
+						country_event = { id = TalibanAttack.7 random_days = 20 }
+					}
+					15 = {
+						modifier = {
+							factor = 0
+							OR = {
+								check_variable = { taliban_strength < 45 }
+								check_variable = { influence_array^num = 0 }
+								NOT = {
 									any_owned_state = {
 										OR = {
 											industrial_complex > 0
@@ -1085,107 +1042,58 @@ on_actions = {
 										}
 									}
 								}
-								any_country = {
-									is_in_array = { FROM.influence_array = THIS.id }
-								}
 							}
 						}
-
-						AFG = { country_event = { id = TalibanAttack.7 random_days = 20 } }
+						country_event = { id = TalibanAttack.12 random_days = 20 }
 					}
 					15 = {
 						modifier = {
 							factor = 0
-							NOT = {
-								original_tag = AFG
-								AFG = {
-									check_variable = {
-										var = taliban_strength
-										value = 45
-										compare = greater_than_or_equals
-									}
-									has_country_flag = afg_active_taliban_insurgency
-								}
-								any_country = {
-									OR = {
-										has_military_access_to = AFG
-										has_country_flag = military_advisors_@FROM
-									}
-								}
+							OR = {
+								check_variable = { taliban_strength < 45 }
+								check_variable = { AFG_coalition_array^num = 0 }
 							}
 						}
-
-						AFG = { country_event = { id = TalibanAttack.9 random_days = 20 } }
+						country_event = { id = TalibanAttack.9 random_days = 20 }
 					}
 					10 = {
 						modifier = {
 							factor = 0
-							NOT = {
-								original_tag = AFG
-								AFG = {
-									check_variable = {
-										var = taliban_strength
-										value = 55
-										compare = greater_than_or_equals
-									}
-									any_owned_state = {
-										air_base > 0
-									}
-									has_country_flag = afg_active_taliban_insurgency
-								}
+							OR = {
+								check_variable = { taliban_strength < 55 }
+								NOT = { any_owned_state = { air_base > 0 } }
 							}
 						}
-
-						AFG = { country_event = { id = TalibanAttack.15 random_days = 20 } }
+						country_event = { id = TalibanAttack.15 random_days = 20 }
 					}
 				}
 			}
 
-
-			if = { limit = { check_variable = { taliban_strength = 100 } }
+			if = {
+				limit = { check_variable = { taliban_strength = 100 } }
 				country_event = TalibanInsurgency.9
 			}
 
 			if = {
 				limit = {
-					AFG = {
-						no_jihadist_government = yes
-						has_country_flag = afg_active_taliban_insurgency
+					no_jihadist_government = yes
+					has_country_flag = AFG_active_taliban_insurgency
+				}
+				if = {
+					limit = {
+						check_variable = { AFG_coalition_array^num > 0 }
 						check_variable = {
 							var = taliban_strength
 							value = 45
 							compare = greater_than_or_equals
 						}
 					}
-					any_country = {
-						no_jihadist_government = yes
-						is_full_state = yes
-						NOT = {
-							has_country_flag = afg_support_counter_insurgency
-						}
-						has_military_access_to = AFG
-					}
+					country_event = TalibanInsurgency.13
 				}
-				country_event = TalibanInsurgency.13
-			}
-
-			if = {
-				limit = {
-					AFG = {
-						no_jihadist_government = yes
-						has_country_flag = afg_active_taliban_insurgency
-					}
-					any_country = {
-						no_jihadist_government = yes
-						is_full_state = yes
-						has_country_flag = afg_support_counter_insurgency
-						NOT = {
-							has_military_access_to = AFG
-						}
-					}
+				if = {
+					limit = { check_variable = { AFG_ci_array^num > 0 } }
+					country_event = TalibanInsurgency.19
 				}
-
-				country_event = TalibanInsurgency.19
 			}
 		}
 	}
@@ -1196,10 +1104,10 @@ on_actions = {
 				limit = {
 					tag = TAL
 					NOT = { country_exists = AFG }
-					NOT = { has_global_flag = Afghanistan_Civil_War_Over }
+					NOT = { has_global_flag = GLOBAL_afghanistan_civil_war_over }
 				}
 				#Civil war is over
-				set_global_flag = Afghanistan_Civil_War_Over
+				set_global_flag = GLOBAL_afghanistan_civil_war_over
 
 				#Clear core status
 				409 = {

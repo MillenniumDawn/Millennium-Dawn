@@ -5,7 +5,9 @@ war_on_terror_category = {
 	usa_increase_intelligence_spending = {
 
 		visible = {
-			NOT = { has_country_flag = USA_911_happened }
+			date > 2001.1.1
+			NOT = { has_country_flag = USA_wot_attack_occurred }
+			NOT = { has_country_flag = USA_wot_intelligence_surge }
 			NOT = { has_country_flag = collapsed_nation }
 		}
 
@@ -26,7 +28,7 @@ war_on_terror_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_increase_intelligence_spending"
 			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = TT_REDUCE_RULING_COALITION_POPULARITY_10_PERCENT
+			custom_effect_tooltip = TT_REDUCE_RULING_COALITION_POPULARITY_20_PERCENT
 			for_each_loop = {
 				array = ruling_party
 				value = v
@@ -40,8 +42,10 @@ war_on_terror_category = {
 			hidden_effect = {
 				recalculate_party = yes
 			}
-			set_country_flag = USA_increased_intelligence_efforts
+			set_country_flag = USA_wot_intelligence_surge
 			custom_effect_tooltip = TT_OEF_INCREASED_CHANCE_OF_DETECTING_TERRORISTS
+			set_temp_variable = { wot_aq_intel_change = 15 }
+			wot_al_qaeda_intel_gain = yes
 			USA_congress_medium_opposition = yes
 			set_temp_variable = { temp_opinion = 8 }
 			change_intelligence_community_opinion = yes
@@ -60,9 +64,11 @@ war_on_terror_category = {
 	usa_demand_extradition_of_bin_laden = {
 
 		visible = {
-			has_country_flag = USA_911_happened
-			AFG = {
-				has_war_with = TAL
+			has_country_flag = USA_wot_attack_occurred
+			country_exists = TAL
+			OR = {
+				AFG = { has_war_with = TAL }
+				NOT = { country_exists = AFG }
 			}
 			NOT = { has_country_flag = collapsed_nation }
 		}
@@ -70,7 +76,11 @@ war_on_terror_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
-				has_country_flag = war_on_terror_speech
+				has_country_flag = USA_wot_speech_given
+			}
+			custom_trigger_tooltip = {
+				tooltip = TT_UNSC_NO_PENDING_SUBJECT_VOTE
+				NOT = { has_global_flag = sc_action_against@TAL }
 			}
 		}
 
@@ -79,11 +89,23 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_demand_extradition_of_bin_laden"
+			custom_effect_tooltip = TT_EXTRADITION_TALIBAN_WILL_ANSWER
 			TAL = { country_event = { id = wot.9 days = 3 } }
 		}
 
 		ai_will_do = {
 			base = 1000
+			#A bare demand is refused 19 times in 20. Go to the Council first while that route is open --
+			#only an arms-dealer White House skips straight to the ultimatum.
+			modifier = {
+				factor = 0.01
+				is_on_un_sec_council = yes
+				NOT = { has_country_flag = USA_country_flag_arms_dealer }
+				TAL = {
+					NOT = { has_country_flag = unsc_extradition_demanded }
+					NOT = { has_country_flag = unsc_extradition_rejected }
+				}
+			}
 			modifier = {
 				factor = 5
 				date > 2001.1.1
@@ -98,12 +120,130 @@ war_on_terror_category = {
 			}
 		}
 	}
+	#The Taliban handed him over. Now end the war they are still fighting, without American troops in it.
+	usa_broker_afghan_settlement = {
+
+		icon = GFX_decision_generic_civil_support
+
+		visible = {
+			has_country_flag = USA_wot_extradition_accepted
+			NOT = { has_country_flag = USA_wot_enduring_freedom }
+			NOT = { has_country_flag = USA_wot_afghan_settlement }
+			NOT = { has_country_flag = collapsed_nation }
+			country_exists = TAL
+			country_exists = AFG
+		}
+
+		available = {
+			treasury_higher_than_3 = yes
+			AFG = { has_war_with = TAL }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { AFG = { has_war_with = TAL } }
+				has_country_flag = USA_wot_enduring_freedom
+			}
+		}
+
+		cost = 150
+		days_remove = 60
+		fire_only_once = yes
+
+		#Terms are offered, not imposed: Kabul and the Taliban each get to answer, and either can refuse.
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision usa_broker_afghan_settlement"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			save_global_event_target_as = GLOBAL_wot_settlement_broker
+			set_country_flag = USA_wot_settlement_pending
+
+			custom_effect_tooltip = TT_AFGHAN_SETTLEMENT_OFFERED
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				AFG = { white_peace = TAL }
+				TAL = { add_ideas = TAL_pariah_settlement }
+				add_political_power = 100
+			}
+			TAL = { country_event = { id = wot.26 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 200
+			modifier = {
+				factor = 2
+				has_country_flag = USA_country_flag_legal_interventionism
+			}
+		}
+	}
+
+	#Take the demand to the Security Council before reaching for the rifle
+	usa_seek_unsc_extradition_mandate = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			has_country_flag = USA_wot_attack_occurred
+			country_exists = TAL
+			NOT = { has_country_flag = USA_wot_enduring_freedom }
+			NOT = { has_country_flag = USA_wot_extradition_accepted }
+			NOT = { has_country_flag = USA_wot_extradition_refused }
+			NOT = { has_country_flag = collapsed_nation }
+			TAL = {
+				NOT = { has_country_flag = unsc_extradition_demanded }
+				NOT = { has_country_flag = unsc_extradition_rejected }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+				has_country_flag = USA_wot_speech_given
+			}
+			custom_trigger_tooltip = {
+				tooltip = TT_UNSC_NO_PENDING_SUBJECT_VOTE
+				NOT = { has_global_flag = sc_action_against@TAL }
+			}
+			is_on_un_sec_council = yes
+		}
+
+		cost = 75
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision usa_seek_unsc_extradition_mandate"
+			custom_effect_tooltip = TT_EXTRADITION_UNSC_MANDATE
+			set_temp_variable = { sc_new_vote_type = 7 }
+			set_temp_variable = { sc_new_vote_nation = TAL.id }
+			#update_sc_vote does not set this; the GUI and AI proposer paths set it themselves
+			TAL = { set_global_flag = sc_action_against@THIS }
+			update_sc_vote = yes
+		}
+
+		ai_will_do = {
+			base = 1000
+			modifier = {
+				factor = 3
+				has_country_flag = USA_country_flag_legal_interventionism
+			}
+			modifier = {
+				factor = 0
+				has_country_flag = USA_country_flag_arms_dealer
+			}
+		}
+	}
+
 	usa_operation_enduring_freedom = {
 		visible = {
-			has_country_flag = bin_Laden_stays_home
+			OR = {
+				has_country_flag = USA_wot_extradition_refused
+				has_country_flag = USA_wot_extradition_accepted
+			}
 			NOT = { has_country_flag = collapsed_nation }
 		}
-		available = { always = yes }
+		available = {
+			treasury_higher_than_10 = yes
+		}
 
 		cost = 200
 
@@ -115,7 +255,41 @@ war_on_terror_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove usa_operation_enduring_freedom"
-			set_country_flag = Operation_enduring_freedom
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_country_flag = USA_wot_enduring_freedom
+
+			#Invading a regime that gave us what we asked for. The world notices.
+			if = {
+				limit = { has_country_flag = USA_wot_extradition_accepted }
+				custom_effect_tooltip = TT_WOT_INVADE_AFTER_COMPLIANCE
+				remove_ideas = USA_wot_diplomatic_victory
+				add_named_threat = {
+					threat = 5
+					name = USA_wot_unprovoked_invasion
+				}
+				add_war_support = -0.10
+				unsc_members_condemn_us = yes
+
+				#We wrote this peace, we made Kabul sign it, and now we are tearing it up ourselves
+				if = {
+					limit = {
+						has_country_flag = USA_wot_afghan_settlement
+						country_exists = AFG
+					}
+					custom_effect_tooltip = TT_WOT_TORE_UP_OUR_OWN_TREATY
+					add_named_threat = {
+						threat = 5
+						name = USA_wot_broken_settlement
+					}
+					AFG = {
+						add_opinion_modifier = { target = ROOT modifier = betrayed_guarantee }
+					}
+					set_temp_variable = { percent_change = -40 }
+					set_temp_variable = { influence_target = AFG.id }
+					change_influence_percentage = yes
+				}
+			}
 			#Add threat to allow volunteers to be sent
 			add_named_threat = {
 				threat = 12
@@ -139,7 +313,7 @@ war_on_terror_category = {
 			#If Northern Alliance has been defeated, start a weaker new civil war
 			if = {
 				limit = { NOT = { country_exists = AFG } }
-				clr_global_flag = Afghanistan_Civil_War_Over
+				clr_global_flag = GLOBAL_afghanistan_civil_war_over
 				TAL = {
 					every_owned_state = {
 						limit = { is_core_of = TAL }
@@ -162,71 +336,42 @@ war_on_terror_category = {
 					id = wotnews.7
 					hours = 6
 				}
-				#Bin Laden escapes
-				##If there is a salafist country, bin Laden goes there
+				#The Afghan sanctuary is gone. The network scatters, weaker and easier to see.
+				set_temp_variable = { wot_aq_threat_change = -15 }
+				set_temp_variable = { wot_aq_visibility_change = 10 }
+				wot_al_qaeda_shift = yes
+				set_temp_variable = { wot_aq_intel_change = 20 }
+				wot_al_qaeda_intel_gain = yes
+			}
+			#Only if he is still in Afghanistan: an earlier escape (wot.20) already moved and announced him
+			if = {
+				limit = { NOT = { has_global_flag = GLOBAL_bin_laden_at_large } }
+				hidden_effect = { bin_laden_relocate_hideout = yes }
 				if = {
-					limit = {
-						any_country = {
-							NOT = { original_tag = TAL }
-							NOT = { original_tag = AFG }
-							NOT = { original_tag = SAU }
-							has_government = fascism
-						}
-					}
-					random_country = {
-						limit = {
-							NOT = { original_tag = TAL }
-							NOT = { original_tag = AFG }
-							NOT = { original_tag = SAU }
-							has_government = fascism
-							has_idea = sunni
-						}
-						save_global_event_target_as = hideout_of_bin_laden
-						set_country_flag = hideout_of_bin_laden
-					}
-				}
-				##If no Salafist countries, go to a random_hours Sunni country, with priority on Pakistan
-				else_if = {
-					limit = { country_exists = PAK }
-					random_list = {
-						70 = {
-							PAK = {
-								save_global_event_target_as = hideout_of_bin_laden
-								set_country_flag = hideout_of_bin_laden
-							}
-						}
-						30 = {
-							random_country = {
-								limit = {
-									NOT = { original_tag = TAL }
-									NOT = { original_tag = AFG }
-									NOT = { original_tag = PAK }
-									has_idea = sunni
-								}
-								save_global_event_target_as = hideout_of_bin_laden
-								set_country_flag = hideout_of_bin_laden
-							}
-						}
-					}
-				}
-				##If Pakistan doesn't exist, just go to a random_hours Sunni country
-				else_if = {
-					limit = { NOT = { country_exists = PAK } }
-					random_country = {
-						limit = {
-							NOT = { original_tag = TAL }
-							NOT = { original_tag = AFG }
-							has_idea = sunni
-						}
-						save_global_event_target_as = hideout_of_bin_laden
-						set_country_flag = hideout_of_bin_laden
-					}
+					limit = { has_global_flag = GLOBAL_bin_laden_at_large }
+					news_event = { id = wotnews.17 hours = 12 }
 				}
 			}
 		}
 
 		ai_will_do = {
 			base = 1000
+			#They handed him over. Invading anyway is an option, and it should almost never be taken --
+			#but a hawk in the White House will still reach for it.
+			modifier = {
+				factor = 0.01
+				has_country_flag = USA_wot_extradition_accepted
+			}
+			modifier = {
+				factor = 5
+				has_country_flag = USA_wot_extradition_accepted
+				has_country_flag = USA_country_flag_war_on_terror
+			}
+			#Kabul or the Taliban walked away from the table. The rifle is what is left.
+			modifier = {
+				factor = 5
+				has_country_flag = USA_wot_settlement_refused
+			}
 			modifier = {
 				factor = 2
 				is_historical_focus_on = yes
@@ -238,12 +383,13 @@ war_on_terror_category = {
 	usa_homeland_security_act = {
 
 		visible = {
-			has_country_flag = USA_911_happened
+			has_country_flag = USA_wot_attack_occurred
 			NOT = { has_idea = USA_homeland_security }
 			NOT = { has_country_flag = collapsed_nation }
 		}
 
 		available = {
+			treasury_higher_than_5 = yes
 			NOT = {
 				AFG = {
 					has_war_with = TAL
@@ -258,6 +404,8 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_homeland_security_act"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 			swap_ideas = {
 				remove_idea = USA_patriot_act_idea
 				add_idea = USA_homeland_security
@@ -274,12 +422,13 @@ war_on_terror_category = {
 
 		visible = {
 			NOT = { has_country_flag = USA_failed_to_win_in_iraq }
-			has_country_flag = Operation_enduring_freedom
+			has_country_flag = USA_wot_enduring_freedom
 			NOT = { has_country_flag = collapsed_nation }
 			country_exists = AFG
 		}
 
 		available = {
+			treasury_higher_than_3 = yes
 			AFG = {
 				is_subject = no
 				if = {
@@ -296,6 +445,8 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_setup_new_administration_in_afghanistan"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
 			hidden_effect = {
 				USA = {
 					set_autonomy = {
@@ -325,13 +476,17 @@ war_on_terror_category = {
 	usa_create_guantanamo_bay = {
 
 		visible = {
-			has_country_flag = Operation_enduring_freedom
+			OR = {
+				has_country_flag = USA_wot_enduring_freedom
+				has_country_flag = USA_wot_extradition_accepted
+			}
 			NOT = { has_idea = USA_guantanamo_bay }
 			owns_state = 424
 			NOT = { has_country_flag = collapsed_nation }
 		}
 
 		available = {
+			treasury_higher_than_0_5 = yes
 			OR = {
 				NOT = { AFG = { has_war_with = TAL } }
 				AFG = { has_volunteers_amount_from = { tag = USA count > 0 } }
@@ -344,6 +499,8 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_create_guantanamo_bay"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
 			add_ideas = USA_guantanamo_bay
 			CUB = {
 				add_opinion_modifier = { target = USA modifier = territorial_integrity_violation }
@@ -363,20 +520,25 @@ war_on_terror_category = {
 
 		visible = {
 			OR = {
-				has_country_flag = Operation_enduring_freedom
-				has_country_flag = Cooperation_with_taliban
+				has_country_flag = USA_wot_enduring_freedom
+				has_country_flag = USA_wot_extradition_accepted
 			}
 			IRQ = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
 			NOT = { has_country_flag = collapsed_nation }
-			NOT = { has_country_flag = IRQ_did_a_retard }
+			NOT = { has_country_flag = USA_wot_iraq_gave_us_cause }
 		}
 
 		available = {
 			OR = {
 				NOT = { AFG = { has_war_with = TAL } }
 				TAL = { NOT = { has_government = fascism } }
-				has_country_flag = Cooperation_with_taliban
+				has_country_flag = USA_wot_extradition_accepted
 			}
+			custom_trigger_tooltip = {
+				tooltip = TT_UNSC_NO_PENDING_SUBJECT_VOTE
+				NOT = { has_global_flag = sc_action_against@IRQ }
+			}
+			is_on_un_sec_council = yes
 		}
 
 		cost = 200
@@ -385,11 +547,13 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_petition_invasion_of_iraq"
-			ENG = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
-			CHI = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
-			SOV = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
-			FRA = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
-			set_country_flag = US_UN_vote_on_iraq
+			custom_effect_tooltip = TT_IRAQ_DISARMAMENT_UNSC_PETITION
+			set_country_flag = USA_wot_iraq_petition_pending
+			set_temp_variable = { sc_new_vote_type = 6 }
+			set_temp_variable = { sc_new_vote_nation = IRQ.id }
+			#update_sc_vote does not set this; the GUI and AI proposer paths set it themselves
+			IRQ = { set_global_flag = sc_action_against@THIS }
+			update_sc_vote = yes
 		}
 
 		ai_will_do = {
@@ -409,18 +573,25 @@ war_on_terror_category = {
 	usa_run_war_support_campaign_against_iraq = {
 
 		visible = {
-			has_country_flag = US_UN_vote_on_iraq
-			NOT = { has_country_flag = Operation_iraqi_freedom }
+			has_country_flag = USA_wot_iraq_petition_pending
+			NOT = { has_country_flag = USA_wot_iraqi_freedom }
 			NOT = { has_country_flag = collapsed_nation }
-			NOT = { has_country_flag = IRQ_did_a_retard }
+			NOT = { has_country_flag = USA_wot_iraq_gave_us_cause }
 		}
 
 		available = {
+			treasury_higher_than_0_5 = yes
 			has_war = no
 		}
 
 		cost = 200
 		days_remove = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision usa_run_war_support_campaign_against_iraq"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
 
 		modifier = {
 			political_power_gain = -2
@@ -436,16 +607,17 @@ war_on_terror_category = {
 	usa_operation_iraqi_freedom = {
 
 		visible = {
-			has_country_flag = us_prepare_for_iraq_invasion
+			has_country_flag = USA_wot_iraq_invasion_prepared
 			NOT = { has_country_flag = collapsed_nation }
-			NOT = { has_country_flag = IRQ_did_a_retard }
+			NOT = { has_country_flag = USA_wot_iraq_gave_us_cause }
 		}
 
 		available = {
+			treasury_higher_than_25 = yes
 			if = {
 				limit = {
 					NOT = {
-						has_country_flag = IRQ_did_a_retard
+						has_country_flag = USA_wot_iraq_gave_us_cause
 					}
 				}
 				has_war_support > 0.6
@@ -459,6 +631,8 @@ war_on_terror_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove usa_operation_iraqi_freedom"
+			set_temp_variable = { treasury_change = -25 }
+			modify_treasury_effect = yes
 			USA = {
 				country_event = iraq_war.2
 			}
@@ -466,7 +640,7 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_operation_iraqi_freedom"
-			set_country_flag = us_prepare_for_iraq_invasion
+			set_country_flag = USA_wot_iraq_invasion_prepared
 			IRQ = {
 				set_country_flag = IRQ_war_with_america
 			}
@@ -506,7 +680,7 @@ war_on_terror_category = {
 		visible = {
 			date > 2009.1.1
 			IRQ = { is_subject_of = USA }
-			has_global_flag = success_of_operation_iraqi_freedom
+			has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded
 			NOT = { has_country_flag = collapsed_nation }
 		}
 
@@ -532,7 +706,7 @@ war_on_terror_category = {
 
 	USA_invasion_in_iraq_mission = {
 		available = {
-			NOT = { has_country_flag = USA_failed_to_invade_iraq }
+			NOT = { has_country_flag = USA_wot_iraq_invasion_failed }
 			has_war_with = IRQ
 		}
 		activation = { always = no }
@@ -544,7 +718,7 @@ war_on_terror_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_invasion_in_iraq_mission"
-			set_country_flag = USA_failed_to_invade_iraq
+			set_country_flag = USA_wot_iraq_invasion_failed
 			add_war_support = -0.10
 			add_stability = -0.05
 			add_timed_idea = {
