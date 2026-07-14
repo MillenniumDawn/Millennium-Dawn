@@ -1,6 +1,50 @@
 add_namespace = wot
 add_namespace = wotnews
 
+#"Bin Ladin Determined To Strike in US" - the August 6 2001 Presidential Daily Brief.
+#Telegraphs the attack. It cannot stop it, and it does not tell you when.
+country_event = {
+	id = wot.0
+	title = wot.0.t
+	desc = wot.0.d
+	picture = GFX_bin_laden
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = USA_wot_attack_occurred }
+	}
+
+	option = {	#Act on it
+		name = wot.0.a
+		log = "[GetDateText]: [This.GetName]: wot.0.a executed"
+		custom_effect_tooltip = TT_WOT_PDB_ACT
+		set_temp_variable = { wot_aq_intel_change = 10 }
+		wot_al_qaeda_intel_gain = yes
+		add_political_power = -25
+
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 2
+				has_country_leader_with_trait = war_on_terror_leader
+			}
+		}
+	}
+
+	option = {	#It is one memo among hundreds
+		name = wot.0.b
+		log = "[GetDateText]: [This.GetName]: wot.0.b executed"
+		add_political_power = 25
+
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
 #Major Terrorist attacks timetable
 country_event = {
 	id = wot.1
@@ -19,7 +63,7 @@ country_event = {
 			5 = {
 				modifier = {
 					add = 10
-					has_country_flag = USA_increased_intelligence_efforts
+					has_country_flag = USA_wot_intelligence_surge
 				}
 				modifier = {
 					add = 10
@@ -33,21 +77,21 @@ country_event = {
 					add = 20
 					check_variable = { international_terror_org_intel^0 > 80 }
 				}
-				set_country_flag = major_terrorist_attacks_discovered
+				set_country_flag = USA_wot_plot_disrupted
 			}
 			80 = {
 				modifier = {
 					factor = 0.9
-					has_country_flag = USA_increased_intelligence_efforts
+					has_country_flag = USA_wot_intelligence_surge
 				}
-				set_country_flag = terrorist_attacks_succeed_no_fourth_plane
+				set_country_flag = USA_wot_attack_three_planes
 			}
 			15 = {
 				modifier = {
 					factor = 0.7
-					has_country_flag = USA_increased_intelligence_efforts
+					has_country_flag = USA_wot_intelligence_surge
 				}
-				set_country_flag = terrorist_attacks_succeed_fourth_plane
+				set_country_flag = USA_wot_attack_four_planes
 			}
 		}
 	}
@@ -59,15 +103,15 @@ country_event = {
 	title = wot.2.t
 	desc = {
 		text = wot.2.da
-		trigger = { has_country_flag = major_terrorist_attacks_discovered }
+		trigger = { has_country_flag = USA_wot_plot_disrupted }
 	}
 	desc = {
 		text = wot.2.db
-		trigger = { has_country_flag = terrorist_attacks_succeed_no_fourth_plane }
+		trigger = { has_country_flag = USA_wot_attack_three_planes }
 	}
 	desc = {
 		text = wot.2.dc
-		trigger = { has_country_flag = terrorist_attacks_succeed_fourth_plane }
+		trigger = { has_country_flag = USA_wot_attack_four_planes }
 	}
 	picture = GFX_nine_eleven
 
@@ -76,7 +120,7 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
-			set_country_flag = USA_911_happened
+			set_country_flag = USA_wot_attack_occurred
 			mark_focus_tree_layout_dirty = yes
 			#The attack announces Al-Qaeda to the world: far more dangerous, and far more visible.
 			set_temp_variable = { wot_aq_threat_change = 25 }
@@ -110,7 +154,7 @@ country_event = {
 
 	option = {
 		name = wot.2.a
-		trigger = { has_country_flag = major_terrorist_attacks_discovered }
+		trigger = { has_country_flag = USA_wot_plot_disrupted }
 		log = "[GetDateText]: [This.GetName]: wot.2.a executed"
 		ai_chance = { factor = 100 }
 		add_stability = -0.05
@@ -118,7 +162,7 @@ country_event = {
 
 	option = {
 		name = wot.2.b
-		trigger = { has_country_flag = terrorist_attacks_succeed_no_fourth_plane }
+		trigger = { has_country_flag = USA_wot_attack_three_planes }
 		log = "[GetDateText]: [This.GetName]: wot.2.b executed"
 		ai_chance = { factor = 100 }
 		add_stability = -0.10
@@ -126,7 +170,7 @@ country_event = {
 
 	option = {
 		name = wot.2.c
-		trigger = { has_country_flag = terrorist_attacks_succeed_fourth_plane }
+		trigger = { has_country_flag = USA_wot_attack_four_planes }
 		log = "[GetDateText]: [This.GetName]: wot.2.c executed"
 		ai_chance = { factor = 100 }
 		add_stability = -0.15
@@ -165,7 +209,7 @@ country_event = {
 		add_political_power = -20
 		add_stability = -0.01
 		hidden_effect = {
-			set_country_flag = fully_supported_us_nine_eleven
+			set_country_flag = wot_support_full
 		}
 	}
 	option = {
@@ -187,7 +231,7 @@ country_event = {
 		}
 		add_stability = 0.01
 		hidden_effect = {
-			set_country_flag = partially_supported_us_nine_eleven
+			set_country_flag = wot_support_partial
 		}
 	}
 	option = {
@@ -213,7 +257,7 @@ country_event = {
 		}
 		add_popularity = { ideology = nationalist popularity = 0.05 }
 		hidden_effect = {
-			set_country_flag = not_supported_us_nine_eleven
+			set_country_flag = wot_support_none
 		}
 		recalculate_party = yes
 	}
@@ -445,7 +489,7 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		set_country_flag = war_on_terror_speech
+		set_country_flag = USA_wot_speech_given
 		hidden_effect = {
 			LBA = { country_event = { id = LibyaFocus.94 days = 360 random_days = 360 } }	#Libyan Islamic Fighting Group put on terrorist list
 		}
@@ -569,7 +613,7 @@ country_event = {
 		name = wot.10.a
 		log = "[GetDateText]: [This.GetName]: wot.10.a executed"
 		ai_chance = { factor = 100 }
-		set_country_flag = bin_Laden_stays_home
+		set_country_flag = USA_wot_extradition_refused
 		if = {
 			limit = { USA = { is_ai = yes } }
 			add_political_power = 500 #Failsafe to try and encourage the AI to do enduring freedom
@@ -591,13 +635,27 @@ country_event = {
 		name = wot.11.a
 		log = "[GetDateText]: [This.GetName]: wot.11.a executed"
 		ai_chance = { factor = 100 }
-		set_country_flag = Cooperation_with_taliban
+		set_country_flag = USA_wot_extradition_accepted
+		custom_effect_tooltip = TT_WOT_DIPLOMATIC_VICTORY
+		add_ideas = USA_wot_diplomatic_victory
 		hidden_effect = {
 			random_list = {
 				90 = {
+					modifier = {
+						factor = 0.4
+						TAL = { has_country_flag = unsc_extradition_demanded }
+					}
+					modifier = {
+						factor = 0.6
+						TAL = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
+					}
 					country_event = { id = wot.20 days = 7 }	#bin Laden escapes
 				}
 				10 = {
+					modifier = {
+						factor = 3
+						TAL = { has_country_flag = unsc_extradition_demanded }
+					}
 					country_event = { id = wot.21 days = 7 }	#bin Laden captured
 				}
 			}
@@ -821,11 +879,11 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 	immediate = {
-		set_country_flag = US_petition_denied_event
+		set_country_flag = USA_wot_iraq_vote_concluded
 	}
 	trigger = {
-		NOT = { has_country_flag = US_petition_denied_event }
-		has_country_flag = US_UN_vote_on_iraq
+		NOT = { has_country_flag = USA_wot_iraq_vote_concluded }
+		has_country_flag = USA_wot_iraq_petition_pending
 		OR = {
 			IRQ = { has_country_flag = unsc_material_breach }
 			IRQ = { has_country_flag = unsc_disarmament_rejected }
@@ -837,7 +895,7 @@ country_event = {
 		name = wot.15.a
 		log = "[GetDateText]: [This.GetName]: wot.15.a"
 		ai_chance = { base = 95 }
-		set_country_flag = us_prepare_for_iraq_invasion
+		set_country_flag = USA_wot_iraq_invasion_prepared
 		activate_mission = USA_invasion_in_iraq_mission
 		if = {
 			limit = { IRQ = { has_country_flag = unsc_material_breach } }
@@ -965,7 +1023,7 @@ country_event = {
 
 		bin_laden_relocate_hideout = yes
 		if = {
-			limit = { has_global_flag = bin_laden_at_large }
+			limit = { has_global_flag = wot_bin_laden_at_large }
 			news_event = { id = wotnews.17 hours = 12 }
 		}
 	}
@@ -992,7 +1050,7 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.10 }
 		add_relative_party_popularity = yes
 		hidden_effect = { news_event = { id = wotnews.15 hours = 6 } }
-		set_global_flag = bin_laden_out_of_the_game
+		set_global_flag = wot_bin_laden_neutralised
 	}
 
 }
@@ -1006,16 +1064,16 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		has_global_flag = bin_laden_at_large
-		NOT = { has_country_flag = USA_bin_laden_hunt_cooldown }
+		has_global_flag = wot_bin_laden_at_large
+		NOT = { has_country_flag = USA_wot_manhunt_cooldown }
 	}
 
 	option = {
 		name = wot.22.a
 		log = "[GetDateText]: [This.GetName]: wot.22.a"
 		ai_chance = { base = 90 }
-		set_country_flag = { flag = USA_bin_laden_hunt_cooldown days = 180 value = 1 }
-		event_target:hideout_of_bin_laden = { country_event = { id = wot.23 days = 1 } }
+		set_country_flag = { flag = USA_wot_manhunt_cooldown days = 180 value = 1 }
+		event_target:wot_bin_laden_hideout = { country_event = { id = wot.23 days = 1 } }
 	}
 
 	option = {
@@ -1023,7 +1081,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: wot.22.b"
 		ai_chance = { base = 10 }
 		custom_effect_tooltip = TT_BIN_LADEN_HUNT_DEFERRED
-		set_country_flag = { flag = USA_bin_laden_hunt_cooldown days = 180 value = 1 }
+		set_country_flag = { flag = USA_wot_manhunt_cooldown days = 180 value = 1 }
 	}
 
 }
@@ -1189,15 +1247,15 @@ news_event = {
 	title = wotnews.1.t
 	desc = {
 		text = wotnews.1.da
-		trigger = { FROM = { has_country_flag = major_terrorist_attacks_discovered } }
+		trigger = { FROM = { has_country_flag = USA_wot_plot_disrupted } }
 	}
 	desc = {
 		text = wotnews.1.db
-		trigger = { FROM = { has_country_flag = terrorist_attacks_succeed_no_fourth_plane } }
+		trigger = { FROM = { has_country_flag = USA_wot_attack_three_planes } }
 	}
 	desc = {
 		text = wotnews.1.dc
-		trigger = { FROM = { has_country_flag = terrorist_attacks_succeed_fourth_plane } }
+		trigger = { FROM = { has_country_flag = USA_wot_attack_four_planes } }
 	}
 	picture = GFX_news_nine_eleven
 
@@ -1458,7 +1516,7 @@ news_event = {
 	option = {
 		name = wotnews.16.a
 		if = {
-			limit = { has_country_flag = hideout_of_bin_laden }
+			limit = { has_country_flag = wot_bin_laden_hideout }
 			custom_effect_tooltip = TT_BIN_LADEN_RAID_ON_OUR_SOIL
 			add_popularity = { ideology = democratic popularity = -0.10 }
 		}
@@ -1477,6 +1535,25 @@ news_event = {
 
 	option = {
 		name = wotnews.17.a
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#The Afghan war ends at a table instead of in the Panjshir
+news_event = {
+	id = wotnews.18
+	title = wotnews.18.t
+	desc = wotnews.18.d
+	picture = GFX_bonn_agreement
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = wotnews.18.a
 
 		ai_chance = {
 			base = 1
