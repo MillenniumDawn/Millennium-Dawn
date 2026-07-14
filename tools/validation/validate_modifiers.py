@@ -334,6 +334,17 @@ _EXTRA_UNIT_TEMPLATES: Tuple[str, ...] = (
     "modifier_army_sub_unit_{}_defence_factor",
 )
 
+# Engine modifiers the doc dump predates. Each one is used by vanilla itself, so
+# it is known-good despite having no `## name` section to harvest.
+# local_resource_gain_efficiency_per_infrastructure: vanilla
+# common/buildings/00_buildings.txt (infrastructure state_modifiers) + TAOG focus
+# and dynamic-modifier files.
+_UNDOCUMENTED_VANILLA_MODIFIERS: FrozenSet[str] = frozenset(
+    {
+        "local_resource_gain_efficiency_per_infrastructure",
+    }
+)
+
 
 def _load_documented_modifiers(
     doc_path: str,
@@ -599,6 +610,7 @@ class Validator(BaseValidator):
                 "resources/documentation is checked out (CI sparse-checkout)."
             )
         known_good |= documented
+        known_good |= _UNDOCUMENTED_VANILLA_MODIFIERS
 
         # Engine-generated <slot>_cost_factor modifiers from every idea slot.
         idea_tag_files = self._collect_files(
