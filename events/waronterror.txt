@@ -14,20 +14,40 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: wot.1.a executed"
 		news_event = { hours = 18 id = wotnews.1 }
 		country_event = { id = wot.2 hours = 12 }
-		if = {
-			limit = { NOT = { has_country_flag = USA_increased_intelligence_efforts } }
-			random_list = {
-				5 = { set_country_flag = major_terrorist_attacks_discovered }
-				80 = { set_country_flag = terrorist_attacks_succeed_no_fourth_plane }
-				15 = { set_country_flag = terrorist_attacks_succeed_fourth_plane }
+		#Al-Qaeda is terror org slot 0. What the CIA actually knows about them decides whether the plot is caught.
+		random_list = {
+			5 = {
+				modifier = {
+					add = 10
+					has_country_flag = USA_increased_intelligence_efforts
+				}
+				modifier = {
+					add = 10
+					check_variable = { international_terror_org_intel^0 > 40 }
+				}
+				modifier = {
+					add = 15
+					check_variable = { international_terror_org_intel^0 > 60 }
+				}
+				modifier = {
+					add = 20
+					check_variable = { international_terror_org_intel^0 > 80 }
+				}
+				set_country_flag = major_terrorist_attacks_discovered
 			}
-		}
-		if = {
-			limit = { has_country_flag = USA_increased_intelligence_efforts }
-			random_list = {
-				15 = { set_country_flag = major_terrorist_attacks_discovered }
-				75 = { set_country_flag = terrorist_attacks_succeed_no_fourth_plane }
-				10 = { set_country_flag = terrorist_attacks_succeed_fourth_plane }
+			80 = {
+				modifier = {
+					factor = 0.9
+					has_country_flag = USA_increased_intelligence_efforts
+				}
+				set_country_flag = terrorist_attacks_succeed_no_fourth_plane
+			}
+			15 = {
+				modifier = {
+					factor = 0.7
+					has_country_flag = USA_increased_intelligence_efforts
+				}
+				set_country_flag = terrorist_attacks_succeed_fourth_plane
 			}
 		}
 	}
@@ -58,6 +78,12 @@ country_event = {
 		hidden_effect = {
 			set_country_flag = USA_911_happened
 			mark_focus_tree_layout_dirty = yes
+			#The attack announces Al-Qaeda to the world: far more dangerous, and far more visible.
+			set_temp_variable = { wot_aq_threat_change = 25 }
+			set_temp_variable = { wot_aq_visibility_change = 30 }
+			wot_al_qaeda_shift = yes
+			set_temp_variable = { wot_aq_intel_change = 20 }
+			wot_al_qaeda_intel_gain = yes
 			every_other_country = {							#September 12th: International Reactions
 				limit = {
 					OR = {

@@ -87,4 +87,62 @@ bin_laden_clear_hideout = {
 		clr_global_flag = bin_laden_at_large
 	}
 	set_global_flag = bin_laden_out_of_the_game
+
+	#Decapitation. The network survives him, but it is badly degraded and far more exposed.
+	set_temp_variable = { wot_aq_threat_change = -30 }
+	set_temp_variable = { wot_aq_visibility_change = 20 }
+	wot_al_qaeda_shift = yes
+}
+
+#--- Counter-terror system bridge ---
+#Al-Qaeda is terror org VALUE 0 (00_ct_effects.txt: setup_all_orgs). The parallel org arrays
+#(threat/vis/reach, and each country's international_terror_org_intel) are indexed by SLOT, not by org id.
+#Nothing ever removes an org, so in practice Al-Qaeda sits at slot 0 forever, but resolve it by value
+#anyway so inserting a starting org above it cannot silently retarget every effect below.
+wot_resolve_al_qaeda_slot = {
+	set_temp_variable = { aq_slot = -1 }
+	for_each_loop = {
+		array = global.active_terror_orgs
+		value = v
+		index = i
+
+		if = {
+			limit = { check_variable = { v = 0 } }
+			set_temp_variable = { aq_slot = i }
+		}
+	}
+}
+
+#Callers set wot_aq_threat_change and wot_aq_visibility_change first
+wot_al_qaeda_shift = {
+	wot_resolve_al_qaeda_slot = yes
+	if = {
+		limit = { check_variable = { aq_slot > -1 } }
+		add_to_variable = { global.active_terror_org_threat_lvl^aq_slot = wot_aq_threat_change }
+		clamp_variable = {
+			var = global.active_terror_org_threat_lvl^aq_slot
+			min = 0
+			max = 100
+		}
+		add_to_variable = { global.active_terror_org_vis_lvl^aq_slot = wot_aq_visibility_change }
+		clamp_variable = {
+			var = global.active_terror_org_vis_lvl^aq_slot
+			min = 0
+			max = 100
+		}
+	}
+}
+
+#Callers set wot_aq_intel_change first. Runs on the country gaining the intelligence.
+wot_al_qaeda_intel_gain = {
+	wot_resolve_al_qaeda_slot = yes
+	if = {
+		limit = { check_variable = { aq_slot > -1 } }
+		add_to_variable = { international_terror_org_intel^aq_slot = wot_aq_intel_change }
+		clamp_variable = {
+			var = international_terror_org_intel^aq_slot
+			min = 0
+			max = 100
+		}
+	}
 }

@@ -96,7 +96,7 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [AI Strategy](.claude/docs/ai-strategy-reference.md) | [AI Equipment](.claude/docs/ai-equipment-reference.md)
 - [OOB & Equipment Variants](.claude/docs/oob-variants-reference.md) | [Namelists](.claude/docs/namelist-reference.md)
 - [Diplomatic Actions](.claude/docs/diplomatic-action-reference.md) | [Content Guidelines](.claude/docs/content-guidelines.md)
-- [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition)
+- [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition, or adding a Security Council / General Assembly resolution type)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
