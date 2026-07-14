@@ -1,5 +1,15 @@
 #Taliban Insurgency:
 
+#taliban_attack_strength is taliban_strength on a 0-1 scale; the AFG counter-insurgency decisions read it as a combat modifier
+AFG_sync_taliban_attack_strength = {
+	set_variable = {
+		taliban_attack_strength = {
+			value = taliban_strength
+			multiply = 0.01
+		}
+	}
+}
+
 #taliban_strength_increase is a temporary variable from 0 to 100, should be integers
 increase_taliban_strength = {
 	round_temp_variable = taliban_strength_increase
@@ -10,6 +20,7 @@ increase_taliban_strength = {
 		min = 0
 		max = 100
 	}
+	AFG_sync_taliban_attack_strength = yes
 }
 
 #taliban_strength_decrease is a temporary variable from 0 to 100, should be integers
@@ -21,6 +32,67 @@ decrease_taliban_strength = {
 		var = taliban_strength
 		min = 0
 		max = 100
+	}
+	AFG_sync_taliban_attack_strength = yes
+}
+
+reset_taliban_strength = {
+	clear_variable = taliban_strength
+	clear_variable = taliban_attack_strength
+	clear_array = AFG_coalition_array
+	clear_array = AFG_observer_array
+	#Not AFG_ci_array here: AFG_clear_ci_supporters still has to iterate it afterwards to clear the supporter flags
+}
+
+#Every insurgency teardown path must call this, or supporters keep wot_supporting_afghan_counter_insurgency
+#forever and a later insurgency treats them as already enlisted. Scoped through AFG so non-AFG callers work.
+AFG_clear_ci_supporters = {
+	for_each_scope_loop = {
+		array = AFG.AFG_ci_array
+		if = {
+			limit = { exists = yes }
+			clr_country_flag = wot_supporting_afghan_counter_insurgency
+		}
+	}
+	AFG = { clear_array = AFG_ci_array }
+}
+
+#Rebuilt monthly while the insurgency runs. global.UN_general_assembly membership is exactly is_full_state, so the
+#consumers iterate these instead of scanning every country; entries can go stale for up to a month, so loops re-check.
+AFG_refresh_insurgency_arrays = {
+	clear_array = AFG_coalition_array
+	clear_array = AFG_observer_array
+	clear_array = AFG_ci_array
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		if = {
+			limit = { var:v = { has_country_flag = wot_supporting_afghan_counter_insurgency } }
+			add_to_array = { AFG_ci_array = v }
+		}
+		if = {
+			limit = { NOT = { check_variable = { v = THIS.id } } }
+			if = {
+				limit = { var:v = { has_military_access_to = AFG } }
+				add_to_array = { AFG_coalition_array = v }
+				add_to_array = { AFG_observer_array = v }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						is_in_array = { influence_array = v }
+						var:v = {
+							OR = {
+								is_neighbor_of = AFG
+								has_guaranteed = AFG
+							}
+						}
+					}
+				}
+				add_to_array = { AFG_observer_array = v }
+			}
+		}
 	}
 }
 

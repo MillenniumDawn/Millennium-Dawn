@@ -9,4 +9,4 @@ paths:
 
 # UN System
 
-Read `.claude/docs/un-system-reference.md` before editing UN voting, elections, or recognition — it documents the invariants these files must preserve.
+Read `.claude/docs/un-system-reference.md` before editing UN voting, elections, or recognition — it documents the invariants these files must preserve, the SC/GA vote-type catalog, and how to add a new resolution type without making it randomly proposable.
