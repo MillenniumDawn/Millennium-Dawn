@@ -269,31 +269,34 @@ def _parse_scripted_gui_text(text: str, rel: str) -> Tuple[List[Dict], Set[str]]
     blocks: List[Dict] = []
     trigger_names: Set[str] = set()
 
-    outer = re.search(r"\bscripted_gui\s*=\s*\{", text)
-    if not outer:
-        return blocks, trigger_names
-    outer_start = outer.end()
-    outer_body, outer_end = extract_block_from_text(text, outer_start - 1)
-    if outer_end == -1:
-        return blocks, trigger_names
+    outer_opener = re.compile(r"\bscripted_gui\s*=\s*\{")
+    cursor = 0
+    while outer := outer_opener.search(text, cursor):
+        outer_start = outer.end()
+        outer_body, outer_end = extract_block_from_text(text, outer_start - 1)
+        if outer_end == -1:
+            cursor = outer_start
+            continue
 
-    i = 0
-    n = len(outer_body)
-    while i < n:
-        m = _SGUI_BLOCK_OPENER.search(outer_body, i)
-        if not m:
-            break
-        name = m.group(1)
-        inner_start = m.end()
-        body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
-        if inner_end == -1:
-            break
-        line_no = text.count("\n", 0, outer_start + m.start()) + 1
-        block = _parse_one_sgui_block(name, body, rel, line_no)
-        for elem, kind in block["handlers"]:
-            trigger_names.add(f"{elem}_{kind}")
-        blocks.append(block)
-        i = inner_end
+        i = 0
+        n = len(outer_body)
+        while i < n:
+            m = _SGUI_BLOCK_OPENER.search(outer_body, i)
+            if not m:
+                break
+            name = m.group(1)
+            inner_start = m.end()
+            body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
+            if inner_end == -1:
+                break
+            line_no = text.count("\n", 0, outer_start + m.start()) + 1
+            block = _parse_one_sgui_block(name, body, rel, line_no)
+            for elem, kind in block["handlers"]:
+                trigger_names.add(f"{elem}_{kind}")
+            blocks.append(block)
+            i = inner_end
+
+        cursor = outer_end
 
     return blocks, trigger_names
 
@@ -421,7 +424,7 @@ class ScriptedGuiValidator(BaseValidator):
         rel = os.path.relpath(filepath, self.mod_path)
         blocks, trigger_names = disk_cache.per_file_cached_by_content(
             self.mod_path,
-            "sgui.scripted3",
+            "sgui.scripted4",
             filepath,
             text,
             lambda: _parse_scripted_gui_text(text, rel),

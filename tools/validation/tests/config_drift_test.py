@@ -8,6 +8,10 @@ validator gets added to one and forgotten in the other, or `--strict` is set on
 one side only. These tests fail when that happens, so the gap surfaces at PR
 time instead of as a "passed locally, failed CI" surprise.
 
+The workflow checks below also verify that matrix entries are reachable through
+their parent job condition and that tool-test configuration files trigger the
+workflow that reads them.
+
 Scope is `tools/validation/validate_*.py` only. The linting scripts in
 `tools/linting/` (check_common_mistakes, fix_styling) are few, stable, and not
 matrix-driven, so they are out of scope here.
@@ -28,6 +32,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATION_DIR = Path(__file__).resolve().parents[1]
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
+TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"
+VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
 
 # Validators intentionally absent from the CI matrices. Each needs a reason.
 CI_EXEMPT = {
@@ -111,8 +117,26 @@ def _parse_ci():
         matrix = wf["jobs"][job]["strategy"]["matrix"]["validator"]
         for entry in matrix:
             # CI Run step passes --strict unless `strict: false` is set.
-            result[entry["script"]] = {"strict": entry.get("strict", True) is not False}
+            result[entry["script"]] = {"strict": bool(entry.get("strict", True))}
     return result
+
+
+def _workflow_trigger(workflow):
+    config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
+    # PyYAML 1.1 parses the YAML 1.2 `on` key as boolean True.
+    return config.get("on", config.get(True, {}))
+
+
+def _pull_request_paths(workflow):
+    trigger = _workflow_trigger(workflow)
+    return set(trigger.get("pull_request", {}).get("paths", []))
+
+
+def _filter_definitions():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    detect = workflow["jobs"]["detect-changes"]
+    step = next(step for step in detect["steps"] if step.get("id") == "filter")
+    return detect, yaml.safe_load(step["with"]["filters"])
 
 
 def test_should_run_expressions_render_strings():
@@ -226,9 +250,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert not gone, (
-        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
-    )
+    assert (
+        not gone
+    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -238,3 +262,93 @@ def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
         "STRICT_MISMATCH_ALLOWED names validators whose strict settings now "
         f"match — the mismatch is resolved: {resolved}. Remove them."
     )
+
+
+def test_targeted_parent_reaches_every_matrix_entry():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["validate-targeted"]
+    parent = job["if"]
+    matrix = job["strategy"]["matrix"]["validator"]
+    parent_true_outputs = set(
+        re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)\s*==\s*'true'", parent)
+    )
+    missing = {}
+    for entry in matrix:
+        expression = entry.get("should_run", "")
+        outputs = set(
+            re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)", expression)
+        )
+        unreachable = outputs - parent_true_outputs
+        if unreachable:
+            missing[entry["script"]] = sorted(unreachable)
+    assert not missing, (
+        "validate-targeted parent condition cannot reach matrix entries for "
+        f"these detect-changes outputs: {missing}"
+    )
+
+
+def test_validator_cache_restore_is_source_hash_scoped():
+    expected_prefix = (
+        "md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
+    )
+    for workflow in (CI_WORKFLOW, VALIDATOR_CACHE_WORKFLOW):
+        config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
+        restore_steps = []
+        for job in config["jobs"].values():
+            for step in job.get("steps", []):
+                if "actions/cache/restore@" in step.get("uses", ""):
+                    restore_steps.extend(
+                        step.get("with", {}).get("restore-keys", "").splitlines()
+                    )
+        assert (
+            restore_steps
+        ), f"No validator cache restore keys found in {workflow.name}"
+        assert all(key.startswith(expected_prefix) for key in restore_steps), (
+            f"{workflow.name} has a validator cache fallback outside the current "
+            "validator source-hash generation"
+        )
+
+
+def test_tools_validation_triggers_for_consumed_configuration():
+    paths = _pull_request_paths(TOOLS_WORKFLOW)
+    assert {
+        ".pre-commit-config.yaml",
+        ".github/workflows/coding-pipeline.yml",
+        ".github/workflows/validator-cache.yml",
+    } <= paths
+
+
+def test_tools_tests_checkout_consumed_workflows():
+    workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
+    checkout = next(
+        step
+        for step in workflow["jobs"]["report-lib-tests"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    )
+    sparse_paths = set(checkout["with"]["sparse-checkout"].splitlines())
+    assert ".github/workflows/validator-cache.yml" in sparse_paths
+
+
+def test_scripted_localisation_core_runs_for_interface_changes():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    core = workflow["jobs"]["validate-core"]
+    assert "needs.detect-changes.outputs.interface == 'true'" in core["if"]
+    scripts = {
+        entry["script"]
+        for entry in core["strategy"]["matrix"]["validator"]
+    }
+    assert "validate_scripted_localisation.py" in scripts
+
+
+def test_mod_changes_reach_structural_lint():
+    detect, filters = _filter_definitions()
+    workflow_paths = _pull_request_paths(CI_WORKFLOW)
+    assert "*.mod" in workflow_paths
+    assert "mod" in detect["outputs"]
+    assert filters["mod"] == ["*.mod"]
+    assert "*.mod" in filters["content"]
+
+    structural = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))["jobs"][
+        "structural-lint"
+    ]
+    assert "needs.detect-changes.outputs.mod == 'true'" in structural["if"]

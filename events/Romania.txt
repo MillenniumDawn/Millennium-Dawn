@@ -1,6 +1,5 @@
 add_namespace = romania_misc
 add_namespace = romania_elections
-add_namespace = romania_news
 add_namespace = romania_politics
 
 country_event = { #Romanian Elections event
@@ -665,7 +664,7 @@ country_event = { #referendum results
 	option = {
 		name = romania_politics.9.b
 		log = "[GetDateText]: [This.GetName]: romania_politics.9.b executed"
-		trigger = { check_variable = { republican_support > monarchist_support } }
+		trigger = { check_variable = { var = republican_support value = monarchist_support compare = greater_than_or_equals } }
 		set_country_flag = referendum_concluded
 		clr_country_flag = rom_referendum
 		clr_country_flag = ROM_cdr_reformed
@@ -685,12 +684,23 @@ country_event = { #Romania Invites us to the Balkan Economic Union
 	option = { #yes
 		name = romania_politics.10.a
 		log = "[GetDateText]: [This.GetName]: romania_politics.10.a executed"
+		ai_chance = {
+			base = 40
+			modifier = { add = 15 has_opinion = { target = ROM value > 30 } }
+			modifier = { add = 15 has_opinion = { target = ROM value > 80 } }
+			modifier = { factor = 0.5 is_historical_focus_on = yes }
+		}
 		add_ideas = ROM_balkan_economic_union_idea
 		ROM = { country_event = romania_politics.12 }
 	}
 	option = { #no
 		name = romania_politics.10.b
 		log = "[GetDateText]: [This.GetName]: romania_politics.10.b executed"
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_opinion = { target = ROM value < 0 } }
+			modifier = { factor = 0.5 has_opinion = { target = ROM value > 80 } }
+		}
 		ROM = { country_event = romania_politics.11 }
 	}
 }
@@ -704,7 +714,6 @@ country_event = { #country rejects
 
 	option = {
 		name = romania_politics.11.a
-		log = "[GetDateText]: [This.GetName]: romania_politics.11.a executed"
 	}
 }
 country_event = { #country accepts
@@ -717,7 +726,6 @@ country_event = { #country accepts
 
 	option = {
 		name = romania_politics.12.a
-		log = "[GetDateText]: [This.GetName]: romania_politics.12.a executed"
 	}
 }
 country_event = { #Settling the succession issue
@@ -750,6 +758,12 @@ country_event = { #Romania proposes integration (gagauzia)
 	option = { #for a new start
 		name = romania_politics.14.a
 		log = "[GetDateText]: [This.GetName]: romania_politics.14.a executed"
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_opinion = { target = ROM value > 50 } }
+			modifier = { add = 30 has_opinion = { target = ROM value > 100 } }
+			modifier = { factor = 0.5 is_historical_focus_on = yes }
+		}
 		hidden_effect = {
 			ROM = {
 				annex_country = {
@@ -762,6 +776,11 @@ country_event = { #Romania proposes integration (gagauzia)
 	option = { #never
 		name = romania_politics.14.b
 		log = "[GetDateText]: [This.GetName]: romania_politics.14.b executed"
+		ai_chance = {
+			base = 70
+			modifier = { add = 30 has_opinion = { target = ROM value < 0 } }
+			modifier = { factor = 0.5 has_opinion = { target = ROM value > 100 } }
+		}
 		ROM = { country_event = romania_politics.15 }
 	}
 }
@@ -804,6 +823,13 @@ country_event = { #Romania Demands the Return of Budjak and Bucovina
 	option = { #we want no war
 		name = romania_politics.16.a
 		log = "[GetDateText]: [This.GetName]: romania_politics.16.a executed"
+		ai_chance = {
+			base = 0
+			modifier = { add = 5 has_opinion = { target = ROM value > 150 } }
+			modifier = { add = 25 surrender_progress > 0.2 }
+			modifier = { add = 30 surrender_progress > 0.5 }
+			modifier = { factor = 0 is_historical_focus_on = yes }
+		}
 		every_state = {
 			limit = {
 				is_core_of = ROM
@@ -815,6 +841,7 @@ country_event = { #Romania Demands the Return of Budjak and Bucovina
 	option = { #slava ukraini
 		name = romania_politics.16.b
 		log = "[GetDateText]: [This.GetName]: romania_politics.16.b executed"
+		ai_chance = { base = 100 }
 		ROM = { country_event = romania_politics.17 }
 	}
 }
@@ -885,9 +912,11 @@ country_event = { #march on bucharest
 		name = romania_politics.18.b
 		log = "[GetDateText]: [This.GetName]: romania_politics.18.b executed"
 		trigger = {
-			power_balance_value = {
-				id = vadim_people_balance
-				value > -0.6
+			NOT = {
+				power_balance_value = {
+					id = vadim_people_balance
+					value < -0.6
+				}
 			}
 		}
 		add_stability = -0.25
@@ -1248,6 +1277,37 @@ country_event = {
 		}
 	}
 }
+country_event = { #The Hand Against Corruption
+	id = romania_politics.25
+	title = romania_politics.25.t
+	desc = romania_politics.25.d
+	picture = GFX_report_event_Corruption_1
+
+	is_triggered_only = yes
+
+	option = { #Raid without warning
+		name = romania_politics.25.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.25.a executed"
+		ai_chance = {
+			base = 50
+		}
+		add_political_power = -30
+		add_stability = 0.02
+		set_temp_variable = { temp_opinion = -10 }
+		change_international_bankers_opinion = yes
+	}
+	option = { #Build the case first
+		name = romania_politics.25.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.25.b executed"
+		ai_chance = {
+			base = 50
+		}
+		add_political_power = -10
+		add_stability = 0.01
+		set_temp_variable = { temp_opinion = 5 }
+		change_international_bankers_opinion = yes
+	}
+}
 country_event = { #Romania-Bulgaria Union
 	id = romania_politics.50
 	title = romania_politics.50.t
@@ -1441,7 +1501,6 @@ country_event = { #Vadim gets clapped
 
 	option = {
 		name = romania_politics.61.a
-		log = "[GetDateText]: [This.GetName]: romania_politics.61.a executed"
 	}
 }
 
@@ -1456,6 +1515,63 @@ country_event = { #Hohenzollern Reunion
 		log = "[GetDateText]: [This.GetName]: romania_politics.62.a executed"
 		custom_effect_tooltip = ROM_hohre_tt
 		set_country_flag = rom_hohenzollerns
+	}
+}
+
+country_event = { #Romania proposes union (moldova)
+	id = romania_politics.63
+	title = romania_politics.63.t
+	desc = romania_politics.63.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	option = { #union with romania
+		name = romania_politics.63.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.63.a executed"
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_opinion = { target = ROM value > 50 } }
+			modifier = { add = 20 has_opinion = { target = ROM value > 100 } }
+			modifier = { factor = 0.5 is_historical_focus_on = yes }
+		}
+		release = GGZ
+		ROM = {
+			annex_country = {
+				target = MLV
+				transfer_troops = yes
+			}
+		}
+	}
+	option = { #moldova stands alone
+		name = romania_politics.63.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.63.b executed"
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_opinion = { target = ROM value < 0 } }
+			modifier = { factor = 0.5 has_opinion = { target = ROM value > 100 } }
+		}
+		add_opinion_modifier = {
+			target = ROM
+			modifier = supported_opposition
+		}
+		set_temp_variable = { percent_change = -10.00 }
+		set_temp_variable = { tag_index = ROM }
+		change_influence_percentage = yes
+		ROM = { country_event = romania_politics.64 }
+	}
+}
+
+country_event = { #Moldova rejects the union
+	id = romania_politics.64
+	title = romania_politics.64.t
+	desc = romania_politics.64.d
+	picture = GFX_ROM_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.64.a
 	}
 }
 country_event = { #baia mare spill
@@ -1483,7 +1599,6 @@ country_event = { #Ion Gheorghe Maurer dies
 
 	option = {
 		name = romania_misc.2.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.2.a executed"
 	}
 }
 
@@ -1497,7 +1612,6 @@ country_event = { #Dem Radulescu Dies
 
 	option = {
 		name = romania_misc.3.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.3.a executed"
 	}
 }
 
@@ -1513,7 +1627,6 @@ country_event = { #The President of the Constitutional Court (Lucian Mihai) resi
 
 	option = {
 		name = romania_misc.4.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.4.a executed"
 	}
 }
 
@@ -1527,7 +1640,6 @@ country_event = { #The Vulcan Mine Tragedy
 
 	option = {
 		name = romania_misc.5.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.5.a executed"
 	}
 }
 
@@ -1541,7 +1653,6 @@ country_event = { #Vadim is stripped of political immunity
 
 	option = {
 		name = romania_misc.6.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.6.a executed"
 	}
 }
 
@@ -1557,7 +1668,6 @@ country_event = { #Filantropica is released
 
 	option = {
 		name = romania_misc.7.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.7.a executed"
 	}
 }
 
@@ -1573,7 +1683,6 @@ country_event = { #The remains of Carol II are repatriated
 
 	option = {
 		name = romania_misc.8.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.8.a executed"
 	}
 }
 
@@ -1587,7 +1696,6 @@ country_event = { #Elisabeta Rizea dies
 
 	option = {
 		name = romania_misc.9.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.9.a executed"
 	}
 }
 
@@ -1603,7 +1711,6 @@ country_event = { #Mircea Stanescu commits suicide
 
 	option = {
 		name = romania_misc.10.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.10.a executed"
 	}
 }
 
@@ -1617,7 +1724,6 @@ country_event = { #Start of the Avdhela Project
 
 	option = {
 		name = romania_misc.11.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.11.a executed"
 	}
 }
 
@@ -1631,7 +1737,6 @@ country_event = { #Gheorghe Dinica dies
 
 	option = {
 		name = romania_misc.12.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.12.a executed"
 	}
 }
 
@@ -1647,7 +1752,6 @@ country_event = { #Sighet Explosions
 
 	option = {
 		name = romania_misc.13.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.13.a executed"
 	}
 }
 
@@ -1661,7 +1765,6 @@ country_event = { #Bucharest Massacre
 
 	option = {
 		name = romania_misc.14.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.14.a executed"
 	}
 }
 
@@ -1675,7 +1778,6 @@ country_event = { #Devastating Wildfires
 
 	option = {
 		name = romania_misc.15.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.15.a executed"
 	}
 }
 
@@ -1689,7 +1791,6 @@ country_event = { #Pasajul Lujerului Accident
 
 	option = {
 		name = romania_misc.16.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.16.a executed"
 	}
 }
 
@@ -1703,7 +1804,6 @@ country_event = { #Adrian Nastase attempts suicide
 
 	option = {
 		name = romania_misc.17.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.17.a executed"
 	}
 }
 
@@ -1718,7 +1818,6 @@ country_event = { #Pope's visit to Romania
 
 	option = {
 		name = romania_misc.18.a
-		log = "[GetDateText]: [This.GetName]: romania_misc.18.a executed"
 	}
 }
 

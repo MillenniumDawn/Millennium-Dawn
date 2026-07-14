@@ -794,7 +794,6 @@ def parse_history_file(
 # already stripped before this runs.
 _HISTORY_TOKEN_RE = re.compile(r'"[^"]*"|[{}=]|[^\s{}=]+')
 _SP_VALUE_RE = re.compile(r"^sp:([a-zA-Z0-9_]+)$")
-_INT_VALUE_RE = re.compile(r"^\d+$")
 
 # A DLC guard maps each constraining DLC to whether it must be present (True) or
 # absent (False) for the tagged tech/SP to apply.
@@ -893,7 +892,7 @@ def _handle_history_assignment(stack, key, value, techs, sps, current_guard):
             sps.append((m.group(1), current_guard()))
         return
 
-    if stack[-1]["name"] == "set_technology" and _INT_VALUE_RE.match(value):
+    if stack[-1]["name"] == "set_technology" and value == "1":
         techs.append((key, current_guard()))
 
 

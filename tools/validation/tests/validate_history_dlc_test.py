@@ -31,6 +31,13 @@ def test_context_dlcs_splits_present_and_absent():
     assert V._context_dlcs("unconditional") == (set(), set())
 
 
+def test_set_technology_only_includes_enabled_techs():
+    branches = V._parse_history_text(
+        "set_technology = { disabled_tech = 0 enabled_tech = 1 }"
+    )
+    assert branches == [({"enabled_tech"}, set(), "unconditional")]
+
+
 def _parse_tech_reqs(tmp_path, body):
     tech_dir = tmp_path / "common" / "technologies"
     tech_dir.mkdir(parents=True)
