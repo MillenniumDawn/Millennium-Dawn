@@ -19,6 +19,7 @@ from common_utils import (
 )
 from shared_utils import (
     collapse_or_compact,
+    convert_root_factor_to_base,
     create_backup,
     extract_block,
     log_message,
@@ -233,6 +234,13 @@ class DecisionStandardizer(BaseStandardizer):
             "other": [],
         }
 
+        if block_lines:
+            first_line = block_lines[0].strip()
+            if first_line and not first_line.startswith("#"):
+                id_match = PROP_NAME_RE.match(first_line)
+                if id_match:
+                    props["id"] = id_match.group(1)
+
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
@@ -247,9 +255,6 @@ class DecisionStandardizer(BaseStandardizer):
                 i = next_i
                 continue
             else:
-                # The decision ID is the first word of the first non-comment line.
-                if not props["id"] and line and not line.startswith("#"):
-                    props["id"] = line.split()[0] if line.split() else ""
                 props["other"].append(block_lines[i])
 
             i += 1
@@ -314,14 +319,16 @@ class DecisionStandardizer(BaseStandardizer):
 
         # 8. AI will do (always last)
         for ai_will_do in props["ai_will_do"]:
-            lines.extend(collapse_or_compact(ai_will_do[:]))
+            lines.extend(
+                collapse_or_compact(convert_root_factor_to_base(ai_will_do[:]))
+            )
             lines.append("")
 
         # 9. Other properties
         if props["other"]:
             for line in props["other"]:
                 if line.strip():
-                    lines.append(line)
+                    lines.append(line.rstrip())
             lines.append("")
 
         lines.append("\t}")

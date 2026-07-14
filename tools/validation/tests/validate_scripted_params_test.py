@@ -418,6 +418,28 @@ def test_change_influence_percentage_identical_with_distant_set_is_filtered(
     assert not any(c == "identical-influence-params" for c, _ in issues)
 
 
+def test_compact_plain_scope_keeps_set_before_call_visible(tmp_path, cip_contract):
+    body = (
+        "shared_focus = { completion_reward = { "
+        "set_temp_variable = { percent_change = 5 } "
+        "change_influence_percentage = yes } }\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
+def test_compact_scope_boundary_hides_set_after_close(tmp_path, cip_contract):
+    body = (
+        "shared_focus = { completion_reward = { "
+        "ROOT = { set_temp_variable = { percent_change = 5 } } "
+        "change_influence_percentage = yes } }\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(
+        category == "missing-required-param" and "percent_change" in message
+        for category, message in issues
+    )
+
+
 def test_hardcoded_cip_contract_keeps_optional_secondary_params():
     """Guard rail: HARDCODED_CONTRACTS must keep tag_index/influence_target optional.
 
