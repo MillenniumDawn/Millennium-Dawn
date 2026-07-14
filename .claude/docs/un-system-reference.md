@@ -64,6 +64,8 @@ SC and GA type ids live in **separate namespaces** (`global.current_sc_vote_type
 | 6    | Disarmament / material breach   | `unsc_material_breach` (fail: `unsc_disarmament_rejected`)                     | script only   |
 | 7    | Demand surrender of a terrorist | `unsc_extradition_demanded` + UN sanctions (fail: `unsc_extradition_rejected`) | script only   |
 
+Type 7 only calls `apply_united_nations_sanctions` if the subject doesn't already carry `united_nations_security_council_sanctions` (it may predate the demand via a type 2 vote), and records that ownership with `unsc_extradition_sanctions_applied`. The extradition chain (`wot.11.a`) clears `unsc_extradition_demanded` unconditionally but only strips the dynamic modifier when it owns that flag, so it never lifts sanctions a separate type-2 vote applied.
+
 ### General Assembly (`general_assembly_vote_finished`)
 
 | Type  | Resolution                                               |
