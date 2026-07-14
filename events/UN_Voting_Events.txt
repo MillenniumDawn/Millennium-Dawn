@@ -17,6 +17,8 @@ country_event = {
 	immediate = {
 		random_scope_in_array = {
 			array = global.security_council_members
+			# A dead holder never completes the mission, so the ongoing flag leaks and voting stalls forever.
+			limit = { exists = yes }
 			set_global_flag = current_ongoing_sc_vote
 			set_country_flag = has_sc_mission
 			activate_mission = UN_SC_voting_mission
@@ -66,6 +68,14 @@ country_event = {
 		trigger = { check_variable = { global.current_sc_vote_type = 4 } }
 		text = UNSC.4.t
 	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 6 } }
+		text = UNSC.6.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 7 } }
+		text = UNSC.7.t
+	}
 	desc = {
 		trigger = { check_variable = { global.current_sc_vote_type = 1 } }
 		text = UNSC.1.d
@@ -81,6 +91,14 @@ country_event = {
 	desc = {
 		trigger = { check_variable = { global.current_sc_vote_type = 4 } }
 		text = UNSC.4.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 6 } }
+		text = UNSC.6.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 7 } }
+		text = UNSC.7.d
 	}
 
 	#Abstain
@@ -175,6 +193,16 @@ country_event = {
 					target = FROM
 					value < -20
 				}
+			}
+			#Handing over a wanted man and submitting to inspections are easy things to vote for, but not
+			#free ones: a friend of the subject still has to weigh them against the No-side modifiers.
+			modifier = {
+				add = 30
+				check_variable = { global.current_sc_vote_type = 7 }
+			}
+			modifier = {
+				add = 25
+				check_variable = { global.current_sc_vote_type = 6 }
 			}
 		}
 	}
@@ -311,6 +339,8 @@ country_event = {
 	immediate = {
 		random_scope_in_array = {
 			array = global.UN_general_assembly
+			# A dead holder never completes the mission, so the ongoing flag leaks and voting stalls forever.
+			limit = { exists = yes }
 			set_global_flag = current_ongoing_ga_vote
 			set_country_flag = has_ga_mission
 			activate_mission = UN_GA_voting_mission

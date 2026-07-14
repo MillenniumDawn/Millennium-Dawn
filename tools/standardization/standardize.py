@@ -157,6 +157,11 @@ Examples:
 
     if args.command == "focus":
         output_file = args.output if args.output else args.input_file
+        if args.backup:
+            from shared_utils import create_backup
+
+            if not create_backup(args.input_file):
+                sys.exit(1)
         standardize_focus_tree(args.input_file, output_file, args.verbose)
     elif args.command == "event":
         run_standardizer(

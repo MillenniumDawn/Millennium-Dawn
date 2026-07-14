@@ -1314,6 +1314,10 @@ PER_resitance_axis = {
 					add_idea = shia
 				}
 			}
+			remove_opinion_modifier = {
+				target = IRQ
+				modifier = oppresses_shiites
+			}
 		}
 		ai_will_do = { base = 0 }
 	}
@@ -4102,6 +4106,17 @@ PER_domestic_politics = {
 			set_global_flag = HORMUZ_BLOCKED
 			news_event = iranian_events.910
 			add_threat = 10
+			newline = yes
+			#An immediate spike only: recalculate_resources_price rebuilds oil_price from supply/demand at the
+			#next monthly tick. The lasting rise comes from PER_hormuz_blocked_gang's export penalty.
+			set_temp_variable = {
+				new_price = {
+					value = global.oil_price
+					multiply = 1.15
+				}
+				tooltip = oil_new_price_tt
+			}
+			set_variable = { global.oil_price = new_price }
 		}
 
 		ai_will_do = {
@@ -4127,6 +4142,7 @@ PER_domestic_politics = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision PER_reopen_hormuz"
 			clr_global_flag = HORMUZ_BLOCKED
+			#No manual price correction here: the monthly recalculate_resources_price rebuilds oil_price from scratch each month, so once PER_hormuz_blocked_gang's export penalty lapses supply/demand alone renormalizes it
 		}
 
 		ai_will_do = {
@@ -5013,7 +5029,7 @@ PER_Iranian_prime_ministers = {
 			agriculture_tax_modifier = 0.20
 			agriculture_district_income_tax_modifier = 0.15
 			agricolture_productivity_modifier = 0.15
-			MONTHLY_POPULATION = 0.05
+			monthly_population = 0.05
 		}
 		ai_will_do = {
 			base = 10
@@ -5389,7 +5405,7 @@ PER_Iranian_prime_ministers = {
 		}
 		modifier = {
 			tax_gain_multiplier_modifier = 0.05
-			MONTHLY_POPULATION = -0.02
+			monthly_population = -0.02
 			democratic_drift = 0.05
 		}
 		ai_will_do = {
