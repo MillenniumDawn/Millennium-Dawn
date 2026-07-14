@@ -22,6 +22,7 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - Remove unused/commented-out code
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`); **snake_case** for all identifiers
+- Flag naming: `TAG_` for a flag that only ever lands on one nation, `GLOBAL_` for `set_global_flag` and global event targets, a bare domain prefix (e.g. `wot_`) for a flag that can land on any nation. Name the thing, not the mechanic: `wot_refused_to_support_us`, not `wot_support_none`
 
 ## Performance
 
@@ -97,7 +98,7 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [AI Strategy](.claude/docs/ai-strategy-reference.md) | [AI Equipment](.claude/docs/ai-equipment-reference.md)
 - [OOB & Equipment Variants](.claude/docs/oob-variants-reference.md) | [Namelists](.claude/docs/namelist-reference.md)
 - [Diplomatic Actions](.claude/docs/diplomatic-action-reference.md) | [Content Guidelines](.claude/docs/content-guidelines.md)
-- [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition)
+- [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition, or adding a Security Council / General Assembly resolution type)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
