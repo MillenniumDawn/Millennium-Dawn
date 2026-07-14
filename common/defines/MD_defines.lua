@@ -156,8 +156,8 @@
 	NDefines.NAI.RAIDS_CREATE_FREQUENCY_DAYS = 30 -- 7 -- Changed this to monthly to reduce the performance hit, given the number of raids present
 	NDefines.NAI.RAIDS_COMMAND_POWER_CAP_TO_CREATE = 60 -- 60
 	NDefines.NAI.RAIDS_CANCEL_AFTER_DAYS_LAUNCHABLE = 90 -- 60 -- Increased to give the AI more time to try and make a raid happen
-	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_DURATION_DAYS = 180 -- 180
-	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_FACTOR = 0.4 -- 0.4
+	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_DURATION_DAYS = 270 -- 180 -- Longer cooldown so the AI re-scores the same target less often
+	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_FACTOR = 0.2 -- 0.4 -- Stronger score penalty for already-raided targets
 	NDefines.NAI.RAIDS_NUKE_TARGET_CUT_OFF = 10 -- 10
 	NDefines.NAI.RAIDS_UNIT_SCORE_SUCCESS_CHANCE_FACTOR = 500.0 -- 500.0
 	NDefines.NAI.RAIDS_UNIT_SCORE_DISTANCE_KM_FACTOR = 0.1 -- 0.1
@@ -985,11 +985,24 @@
 	NDefines.NAI.DAYS_BETWEEN_CHECK_BEST_EQUIPMENT = 14 -- 7; 2x less frequent equipment re-evaluation
 	NDefines.NAI.DAYS_BETWEEN_AIR_PRIORITIES_UPDATE = 14 -- 4; less frequent than vanilla to reduce CPU load
 
-	-- AI Combat Responsiveness — more frequent than vanilla for smarter wartime AI (trades CPU for quality)
-	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 24 -- 72; 3x faster encirclement detection
-	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 24 -- 48; 2x faster unit role reassignment
-	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 24 -- 52; 2x faster supply motorization response
-	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 48 -- 168; 3.5x faster supply bottleneck response
+	-- AI Combat Responsiveness — slower than vanilla; these hot-path checks cost real CPU per tick for little AI gain on a 200+ nation mod
+	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 96 -- 72; per-army province scan, eased ~1.5x
+	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 72 -- 48
+	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 72 -- 52
+	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 240 -- 168
+
+	-- AI Periodic Recalc — slowed past vanilla; periodic re-evaluation that barely changes between ticks
+	NDefines.NAI.EQUIPMENT_MARKET_UPDATE_FREQUENCY_DAYS = 16 -- 11
+	NDefines.NAI.AIFC_UPDATE_FREQUENCY_DAYS = 8 -- 5; force-concentration logic, perf-sensitive
+	NDefines.NAI.CONVOY_RAIDING_TARGET_RECALC_DAYS = 22 -- 15
+	NDefines.NAI.STRIKE_FORCE_TARGET_RECALC_DAYS = 8 -- 5
+	NDefines.NAI.AI_NAVAL_GOALS_UPDATE_FREQUENCY_DAYS = 10 -- 7
+	NDefines.NAI.AI_OBJECTIVE_DEFAULT_TARGET_RECALC_DAYS = 8 -- 5
+	NDefines.NFactions.AI_DAYS_TO_SELECT_GOAL = 21 -- 14
+
+	-- Raid Interface — throttle per-hour/per-frame raid target evaluation to cut map-icon refresh cost
+	NDefines.NRaids.MAX_STATE_TARGETS_TO_EVALUATE_PER_HOUR = 15 -- 50
+	NDefines.NRaids.MAX_TARGETS_TO_UPDATE_PER_FRAME = 25 -- 100
 
 	-- AI Research Stuff
 	NDefines.NAI.RESEARCH_WEIGHT_TRUNCATION_THRESHOLD = 0.5 -- Reduced this from 0.75
