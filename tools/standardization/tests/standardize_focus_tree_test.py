@@ -51,6 +51,51 @@ def test_round_trip_emits_one_line_per_target():
     ]
 
 
+def _focus_with_offset(trigger_lines):
+    lines = [
+        "\tfocus = {\n",
+        "\t\tid = TST_joint\n",
+        "\n",
+        "\t\tx = 86\n",
+        "\t\ty = 10\n",
+        "\t\toffset = {\n",
+        "\t\t\tx = -70\n",
+        "\t\t\ty = -10\n",
+    ]
+    lines.extend(trigger_lines)
+    lines.append("\t\t}\n")
+    lines.append("\t}\n")
+    return lines
+
+
+def test_offset_single_line_trigger_preserved():
+    # A single-line offset trigger must keep its contents (regression: the old
+    # reindent sliced [1:-1] and emitted an empty `trigger = { }`).
+    props = extract_focus_properties(
+        _focus_with_offset(["\t\t\ttrigger = { original_tag = NKO }\n"])
+    )
+    out = format_focus_block(props)
+    offset_lines = [l.strip() for l in out if "trigger" in l]
+    assert offset_lines == ["trigger = { original_tag = NKO }"]
+
+
+def test_offset_multi_line_trigger_preserved():
+    props = extract_focus_properties(
+        _focus_with_offset(
+            [
+                "\t\t\ttrigger = {\n",
+                "\t\t\t\toriginal_tag = NKO\n",
+                "\t\t\t\thas_war = no\n",
+                "\t\t\t}\n",
+            ]
+        )
+    )
+    out = format_focus_block(props)
+    body = "\n".join(out)
+    assert "original_tag = NKO" in body
+    assert "has_war = no" in body
+
+
 def test_duplicate_available_blocks_merged_not_dropped():
     props = extract_focus_properties(
         [
