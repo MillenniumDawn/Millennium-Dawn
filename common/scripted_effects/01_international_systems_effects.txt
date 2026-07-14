@@ -8,6 +8,12 @@ process_auto_sc_vote = {
 	} else_if = {
 		limit = { has_country_flag = auto_reject_all_sc_votes }
 		add_to_array = { global.security_council_vote_no = THIS }
+		#A veto is a flag, not a tally. The manual no-vote sets it; the auto path must too, or a
+		#permanent member on auto-reject can be outvoted on its own veto.
+		if = {
+			limit = { is_in_array = { global.p5_sc_members = THIS } }
+			set_global_flag = security_council_veto
+		}
 	} else_if = {
 		limit = { has_country_flag = auto_abstain_all_sc_votes }
 		add_to_array = { global.security_council_vote_abstain = THIS }
@@ -1386,7 +1392,9 @@ general_assembly_vote_finished = {
 			limit = {
 				check_variable = { global.current_ga_vote_type = 5 }
 			}
-			news_event = recognition.73
+			var:global.current_ga_vote_nation = {
+				news_event = recognition.73
+			}
 		} else_if = {
 			limit = {
 				check_variable = { global.current_ga_vote_type = 6 }
@@ -1402,7 +1410,7 @@ general_assembly_vote_finished = {
 		value = v
 
 		var:v = {
-			clr_country_flag = has_had_current_un_sc_vote_swayed
+			clr_country_flag = has_had_current_un_ga_vote_swayed
 		}
 	}
 
@@ -1999,7 +2007,7 @@ un_sway_direction_effect = {
 	# A pending sway accepted after the vote ended would write into the cleared tallies.
 	if = {
 		limit = { has_global_flag = current_ongoing_ga_vote }
-		set_country_flag = has_had_current_un_sc_vote_swayed
+		set_country_flag = has_had_current_un_ga_vote_swayed
 
 		if = {
 			limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
@@ -2102,7 +2110,7 @@ un_abort_ga_vote = {
 		value = v
 
 		var:v = {
-			clr_country_flag = has_had_current_un_sc_vote_swayed
+			clr_country_flag = has_had_current_un_ga_vote_swayed
 		}
 	}
 	clear_array = global.general_assembly_vote_yes
@@ -2115,6 +2123,14 @@ un_abort_ga_vote = {
 }
 
 un_abort_sc_vote = {
+	#Must run before current_sc_vote_nation is cleared below, or the subject stays immune to every
+	#future Security Council proposal for the rest of the campaign.
+	if = {
+		limit = { check_variable = { global.current_sc_vote_nation > 0 } }
+		var:global.current_sc_vote_nation = {
+			clr_global_flag = sc_action_against@THIS
+		}
+	}
 	random_scope_in_array = {
 		array = global.security_council_members
 		limit = { has_country_flag = has_sc_mission }
