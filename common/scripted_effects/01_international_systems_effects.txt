@@ -1017,6 +1017,41 @@ recompute_un_2_3_number = {
 }
 
 un_check_for_next_queued_vote = {
+	# Self-heal: an annexation path that skips on_annex leaves a dead nation seated in the GA or
+	# Council; run the canonical cleanup it missed. P5 arrays mirror the p5_member on_remove,
+	# which cannot fire on a dead country.
+	clear_array = md_dead_member_sweep
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+		if = {
+			limit = { NOT = { var:v = { exists = yes } } }
+			add_to_array = { md_dead_member_sweep = v }
+		}
+	}
+	for_each_loop = {
+		array = global.security_council_members
+		value = v
+		if = {
+			limit = {
+				NOT = { var:v = { exists = yes } }
+				NOT = { is_in_array = { md_dead_member_sweep = v } }
+			}
+			add_to_array = { md_dead_member_sweep = v }
+		}
+	}
+	for_each_loop = {
+		array = md_dead_member_sweep
+		value = v
+		if = {
+			limit = { is_in_array = { global.p5_sc_members = v } }
+			remove_from_array = { global.p5_sc_members = v }
+			remove_from_array = { global.security_council_members = v }
+		}
+		var:v = { clear_united_nations_member_state = yes }
+	}
+	clear_array = md_dead_member_sweep
+
 	if = {
 		limit = {
 			NOT = { has_global_flag = current_ongoing_sc_vote }
