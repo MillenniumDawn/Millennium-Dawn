@@ -850,7 +850,8 @@ on_actions = {
 
 					AGRI_plow_the_fields = yes
 					monthly_tick_internal_factions_opinion = yes
-					update_space_system_values = yes
+					# Event fire rebases ROOT per country; the satellite effects are ROOT-relative and recompute onto the wrong country under every_country.
+					country_event = satellites.9
 
 					calculate_expected_spending = yes
 					apply_protest_effects = yes
@@ -878,10 +879,12 @@ on_actions = {
 					# Player only checks
 					if = { limit = { is_ai = no }
 						update_auto_influence_array = yes
-						if = { limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
+						if = { limit = { check_variable = { auto_influence_users > 0 } }
 							set_temp_variable = { percent_change = global.percent_change_value }
 							set_temp_variable = { tag_index = THIS.id }
 							set_variable = { nations_influenced = 0 }
+							# Dense report list: auto_influence_array is sparse (removals zero the slot in place)
+							clear_array = auto_influence_target_array
 
 							for_each_loop = {
 								array = auto_influence_array
@@ -898,6 +901,7 @@ on_actions = {
 									set_temp_variable = { influence_target = v }
 									change_influence_percentage = yes
 									add_to_variable = { nations_influenced = 1 }
+									add_to_array = { auto_influence_target_array = v }
 
 									# Cooldown lives on the influencer keyed by target (shared with the manual-influence GUI);
 									# var:v -> PREV puts the target into PREV so spread_influence@PREV resolves to its tag.

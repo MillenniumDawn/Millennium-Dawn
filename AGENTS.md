@@ -43,6 +43,7 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 
 - Logging in `complete_effect`: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"`
 - `ai_will_do = { base = N }` — `base` not `factor` at root
+- Don't put `allowed` on a decision when it just repeats the parent category's `allowed` (e.g. `original_tag = TAG`) — the category gate already covers every decision inside it. Put nation-restriction on the category; dynamic conditions go in `available`/`visible` (`allowed` is evaluated once at game start)
 - Ref: `.claude/docs/decision-reference.md`
 
 ## Events
