@@ -28,6 +28,13 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - check_variable with inline >= or <= (silently mis-parsed; use compare = ... or a strict inequality)
   - Tautological OR = { X = yes X = no } (always true; remove the OR)
   - percent_change set without a reachable change_influence_percentage = yes (silent no-op / loop-scope bug)
+  - check_expr operand chained with a raw comparator symbol (greater_than > 6),
+    a check_variable-style leftover; block form or a bare scalar are both valid
+  - every_owned_controlled_state (does not exist; use every_controlled_state)
+  - random_select_amount set to a variable/decimal instead of an integer literal
+  - log = "...Focus X" / "...Decision X" / "...Event X" where X doesn't match the
+    enclosing focus/decision/event id (copy-paste bug from duplicating a neighbor)
+  - hidden_trigger = { } directly inside custom_trigger_tooltip (redundant nesting)
 """
 
 import os
@@ -49,6 +56,19 @@ _RE_DIVISION = re.compile(r"/\s*(100|1000|10|50|200|500)\b")
 # check_variable only accepts =, >, < inline; >= and <= are silently mis-parsed
 # (no error.log entry) and the check never matches. Long form needs compare = ...
 _RE_CHECK_VAR_GE_LE = re.compile(r"check_variable\s*=\s*\{[^}]*?(>=|<=)")
+# check_expr operands accept block form (greater_than = { value = X }) or a bare
+# scalar (greater_than = 6) -- both are valid. A raw comparator symbol chained
+# after the operator keyword (greater_than > 6) is a check_variable-style
+# leftover that parses silently wrong. Longest names first so alternation
+# doesn't stop at a prefix.
+_RE_CHECK_EXPR_OPEN = re.compile(r"\bcheck_expr\s*=\s*\{")
+_RE_CHECK_EXPR_BAD_OPERAND = re.compile(
+    r"\b(greater_than_or_equals|less_than_or_equals|greater_than|less_than|"
+    r"not_equals|equals)\s*([><])\s*\S"
+)
+_RE_EVERY_OWNED_CONTROLLED_STATE = re.compile(r"\bevery_owned_controlled_state\b")
+_RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
+_RE_BARE_INT = re.compile(r"^-?\d+$")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
 # always true. Captures both tokens + values; caller checks token match in code.
 _RE_TAUTOLOGICAL_OR = re.compile(
@@ -75,10 +95,48 @@ _RE_BYPASS_TRIVIAL = re.compile(r"\bbypass\s*=\s*\{\s*always\s*=\s*(?:yes|no)\s*
 _RE_DECISION_MARKER = re.compile(
     r"\bcomplete_effect\s*=\s*\{|\bfire_only_once\s*=|\bactivation\s*=\s*\{|\bdays_mission_timeout\s*="
 )
-_RE_FOCUS_ID_IN_BLOCK = re.compile(r"\bid\s*=\s*(\w+)")
-_RE_COMPLETE_FOCUS = re.compile(r"\bcomplete_national_focus\s*=\s*(\w+)")
-_RE_UNLOCK_FOCUS = re.compile(r"\bunlock_national_focus\s*=\s*(\w+)")
-_RE_ACTIVATE_DECISION = re.compile(r"\bactivate_decision\s*=\s*(\w+)")
+_RE_FOCUS_ID_IN_BLOCK = re.compile(r"\bid\s*=\s*([\w-]+)")
+_RE_COMPLETE_FOCUS = re.compile(r"\bcomplete_national_focus\s*=\s*([\w-]+)")
+_RE_UNLOCK_FOCUS = re.compile(r"\bunlock_national_focus\s*=\s*([\w-]+)")
+_RE_ACTIVATE_DECISION = re.compile(r"\bactivate_decision\s*=\s*([\w-]+)")
+_RE_FOCUS_ANY_BLOCK_OPEN = re.compile(
+    r"^\s*(?:focus|shared_focus|joint_focus)\s*=\s*\{"
+)
+_RE_LOG_FOCUS_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bFocus\s+([\w-]+)', re.IGNORECASE)
+# "Decision <keyword...> <id>" tolerates a chain of filler words before the real
+# id: the block-name keywords (remove/complete/completed/timeout/cancel/add,
+# describing which effect block logged the line) and, in a couple of legacy
+# logs, a spelled-out "effect" after the keyword ("Decision cancel effect X"
+# for a cancel_effect block). Strip all leading filler tokens, then compare
+# whatever's left to the decision's own id.
+_DECISION_LOG_FILLER_WORDS = {
+    "remove",
+    "complete",
+    "completed",
+    "timeout",
+    "cancel",
+    "add",
+    "effect",
+}
+_RE_LOG_DECISION_MARKER = re.compile(r'log\s*=\s*"[^"]*\bDecision\b', re.IGNORECASE)
+_RE_NEXT_WORD = re.compile(r"\s+([\w-]+)")
+# Event ids are namespace.number (dots), unlike focus/decision ids -- \w+ alone
+# would truncate at the dot.
+_RE_EVENT_DEF_OPEN = re.compile(
+    r"^(?:country_event|news_event|operative_leader_event|unit_leader_event)\s*=\s*\{"
+)
+_RE_EVENT_ID_IN_BLOCK = re.compile(r"^\s*id\s*=\s*([\w.]+)")
+_RE_OPTION_NAME_IN_BLOCK = re.compile(r"^\s*name\s*=\s*([\w.]+)")
+# Two log conventions coexist: the bare event id followed by a separate
+# "Option <letter>" phrase ("Event HKG_contract.1 Option a"), and the option's
+# own full dotted name standing in for the id ("event satellites.2.a" ==
+# namespace.number.letter). [\w.]+ is greedy, so on the second style it
+# swallows the trailing ".<letter>" into the token -- checked against both
+# forms below rather than assuming the bare id alone.
+_RE_LOG_EVENT_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bEvent\s+([\w.]+)', re.IGNORECASE)
+_RE_LOG_EVENT_OPTION_SUFFIX = re.compile(r"\s+Option\s+([a-zA-Z])\b", re.IGNORECASE)
+_RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
+_RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
 _RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
 _RE_NOT_BLOCK_OPEN = re.compile(r"^\s*NOT\s*=\s*\{")
 _RE_TRIGGER_ASSIGN = re.compile(r"^(\w+)\s*=\s*([\w.]+)$")
@@ -111,7 +169,7 @@ _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 _RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
 _RE_TOPLEVEL_WORD = re.compile(r"^\w")
 _RE_INDENTED_WORD = re.compile(r"^\s+\w")
-_RE_BLOCK_ID = re.compile(r"\s*(\w+)\s*=\s*\{")
+_RE_BLOCK_ID = re.compile(r"\s*([\w-]+)\s*=\s*\{")
 _RE_LOGIC_SCOPE = re.compile(r"^\s*(NOT|OR|AND)\s*=\s*\{")
 _RE_CLOSE_BRACE_LINE = re.compile(r"^(\s*)\}\s*$")
 _RE_LEADING_INDENT = re.compile(r"^(\s*)")
@@ -265,6 +323,15 @@ def _get_block(lines, start):
         depth += code.count("{") - code.count("}")
         j += 1
     return lines[start:j], j
+
+
+def _code_for_depth(line):
+    """Like strip_inline_comment, but also blanks quoted strings before brace
+    counting. A log string can contain a stray brace (e.g. a formatted-loc
+    placeholder); left unblanked it would drift the depth count for whatever
+    manual brace-tracking scans past it.
+    """
+    return _RE_QUOTED_STRING.sub('""', strip_inline_comment(line))
 
 
 def _check_focus_available_always_no(lines):
@@ -569,16 +636,40 @@ _RE_ADD_TO_VAR = re.compile(
     r"^\s*(add_to_variable|add_to_temp_variable)\s*=\s*\{.*\}\s*$"
 )
 _RE_DIVIDE_VAR = re.compile(r"\bdivide_variable\s*=\s*\{\s*(\S+)\s*=\s*(\S+)\s*\}")
-_RE_EVERY_COUNTRY_OPEN = re.compile(r"^\s*every_country\s*=\s*\{")
+
+# Globals that are guaranteed non-zero at game start, so dividing by them
+# never produces NaN. Hand-maintained: add a global here when it represents a
+# count/population/total that the mod initialises to a positive value in
+# scripted_effects or history. The `^num` suffix counts an array's entries.
+_NONZERO_GLOBAL_DIVISORS = frozenset(
+    {
+        "global.UN_general_assembly^num",
+    }
+)
+_RE_EVERY_COUNTRY_OPEN = re.compile(r"^\s*(every_other_country|every_country)\s*=\s*\{")
+_RE_ANY_COUNTRY_OPEN = re.compile(r"^\s*(any_other_country|any_country)\s*=\s*\{")
 # Maps each bloc-membership idea to the global array that should track it.
 # MD-specific; hand-maintained. When a new bloc with a membership idea + backing
 # array is added (see common/ideas/ and the bloc's scripted_effects), add it here
-# or the idea/array consistency check won't cover it.
+# or the idea/array consistency check won't cover it. Array names are
+# inconsistently pluralized in the mod; these are the canonical spellings.
+# LoAS variants: a swap_ideas upgrade means members hold ONE of the two, so a
+# loop over either idea alone undercounts -- the array is the source of truth.
+# Multi-array ideas (p5_member, at_member, RAJ_BRICS) are excluded: one loop
+# over a single array cannot express them.
 _MEMBER_IDEA_TO_ARRAY = {
     "EU_member": "global.EU_member",
     "NATO_member": "global.nato_members",
     "CSTO_member": "global.CSTO_member",
     "AU_member": "global.AU_member",
+    "LoAS_member": "global.arab_league_members",
+    "LoAS_member_upd": "global.arab_league_members",
+    "OAU_member": "global.OAU_member",
+    "ecowas_member_state": "global.ECOWAS_member",
+    "idea_gcc_member_state": "global.gcc_member_state",
+    "faction_warsaw_pact_idea": "global.WARSAW_PACT_member",
+    "RAJ_BRICS_associate": "global.BRICS_associates",
+    "RAJ_BRICS_observer": "global.BRICS_observers",
 }
 _MEMBER_IDEA_PATTERNS = {
     idea: (
@@ -694,15 +785,13 @@ def _check_decision_allowed_dynamic(lines):
                         ):
                             in_allowed = True
                             allowed_depth = dbl_code.count("{") - dbl_code.count("}")
-                        elif in_allowed:
+                        if in_allowed:
                             allowed_depth += dbl_code.count("{") - dbl_code.count("}")
                             if _RE_DECISION_ALLOWED_DYNAMIC.search(dbl_code):
                                 trigger = _RE_DECISION_ALLOWED_DYNAMIC.search(
                                     dbl_code
                                 ).group()
-                                if trigger == "original_tag" or trigger == "tag":
-                                    pass
-                                else:
+                                if trigger not in ("original_tag", "tag"):
                                     issues.append(
                                         (
                                             cat_start + k + p + 1,
@@ -948,7 +1037,10 @@ def _check_divide_variable_zero_guard(lines):
             try:
                 float(divisor)
             except ValueError:
-                if divisor not in guarded_vars:
+                if (
+                    divisor not in guarded_vars
+                    and divisor not in _NONZERO_GLOBAL_DIVISORS
+                ):
                     issues.append(
                         (
                             i + 1,
@@ -1121,23 +1213,100 @@ def _check_is_x_nation_runtime(lines, filepath=""):
     return issues
 
 
-def _check_every_country_member_array(lines):
-    """Flag every_country { limit = { has_idea = X_member } } when a pre-built array exists.
+def _match_member_ideas(text):
+    """Return [(idea, array)] for each array-backed membership idea *text* tests.
 
-    The known member ideas (EU_member, NATO_member, CSTO_member, AU_member) all
-    have corresponding global arrays. Using for_each_scope_loop with the array
-    is cheaper and more correct.
-
-    Suppresses when:
+    Returns [] (suppressed) when:
       - has_idea is inside a NOT block (filtering OUT members, not iterating them)
       - has_idea is nested inside an OVERLORD or other sub-scope check
-      - The limit contains an OR with non-array-backed ideas (too complex to convert)
+      - The text contains an OR with non-array-backed ideas (too complex to convert)
+    """
+    hits = []
+    for idea, array in _MEMBER_IDEA_TO_ARRAY.items():
+        re_has, re_not, re_scope = _MEMBER_IDEA_PATTERNS[idea]
+        if not re_has.search(text):
+            continue
+        if re_not.search(text):
+            continue
+        if re_scope.search(text):
+            continue
+        hits.append((idea, array))
+    if hits:
+        or_match = _RE_OR_CONTENT.search(text)
+        if or_match:
+            other_ideas = _RE_HAS_IDEA.findall(or_match.group(1))
+            if any(x not in _MEMBER_IDEA_TO_ARRAY for x in other_ideas):
+                return []
+    return hits
+
+
+_RE_ON_HOOK_OPEN = re.compile(r"\bon_(add|remove)\s*=\s*\{")
+_RE_ADD_TO_GLOBAL_ARRAY = re.compile(
+    r"add_to_array\s*=\s*\{\s*(?:array\s*=\s*)?(global\.\w+)"
+)
+_RE_REMOVE_FROM_GLOBAL_ARRAY = re.compile(
+    r"remove_from_array\s*=\s*\{\s*(?:array\s*=\s*)?(global\.\w+)"
+)
+
+
+def _check_on_add_array_symmetry(lines):
+    """Flag on_add blocks that add to a global array the sibling on_remove
+    never removes from.
+
+    An idea granted then removed leaves a stale array entry (the Arab League
+    membership bug class). Siblings share the same enclosing block, so hooks
+    are grouped by the innermost open block at their line.
+    """
+    issues = []
+    stack = []
+    groups = {}
+    for i, raw in enumerate(lines):
+        code = strip_inline_comment(raw)
+        m = _RE_ON_HOOK_OPEN.search(code)
+        if m:
+            parent = stack[-1] if stack else -1
+            block, _ = _get_block(lines, i)
+            text = " ".join(strip_inline_comment(b) for b in block)
+            entry = groups.setdefault(parent, {"adds": [], "removes": set()})
+            if m.group(1) == "add":
+                for arr in _RE_ADD_TO_GLOBAL_ARRAY.findall(text):
+                    entry["adds"].append((arr, i + 1))
+            else:
+                entry["removes"].update(_RE_REMOVE_FROM_GLOBAL_ARRAY.findall(text))
+        for ch in code:
+            if ch == "{":
+                stack.append(i)
+            elif ch == "}" and stack:
+                stack.pop()
+    for entry in groups.values():
+        for arr, ln in entry["adds"]:
+            if arr not in entry["removes"]:
+                issues.append(
+                    (
+                        ln,
+                        f"on_add adds to {arr} but the sibling on_remove never"
+                        f" removes from it -- removing the idea leaves a stale"
+                        f" array entry",
+                    )
+                )
+    return issues
+
+
+def _check_every_country_member_array(lines):
+    """Flag every_country/every_other_country over a membership idea when a
+    pre-built array exists.
+
+    The known member ideas (see _MEMBER_IDEA_TO_ARRAY) all have corresponding
+    global arrays. for_each_scope_loop over the array iterates ~30 members
+    instead of 200+ tags. See simplification-patterns.md § "Convert
+    every_country Over Bloc Membership".
     """
     issues = []
     i = 0
     n = len(lines)
     while i < n:
-        if _RE_EVERY_COUNTRY_OPEN.match(lines[i]):
+        open_match = _RE_EVERY_COUNTRY_OPEN.match(lines[i])
+        if open_match:
             open_line = i
             block, next_i = _get_block(lines, i)
             # Only check the first-level limit block, not nested if-limits.
@@ -1168,32 +1337,74 @@ def _check_every_country_member_array(lines):
                 else:
                     depth += bc.count("{") - bc.count("}")
 
-            for idea, array in _MEMBER_IDEA_TO_ARRAY.items():
-                re_has, re_not, re_scope = _MEMBER_IDEA_PATTERNS[idea]
-                if not re_has.search(limit_text):
-                    continue
-                if re_not.search(limit_text):
-                    continue
-                if re_scope.search(limit_text):
-                    continue
-                or_match = _RE_OR_CONTENT.search(limit_text)
-                if or_match:
-                    or_content = or_match.group(1)
-                    other_ideas = _RE_HAS_IDEA.findall(or_content)
-                    non_array_ideas = [
-                        x for x in other_ideas if x not in _MEMBER_IDEA_TO_ARRAY
-                    ]
-                    if non_array_ideas:
-                        continue
+            hits = _match_member_ideas(limit_text)
+            if hits:
+                ideas = ", ".join(idea for idea, _ in hits)
+                arrays = sorted({array for _, array in hits})
+                token = open_match.group(1)
+                guard = (
+                    " and keep the self-exclusion as if = { limit = { NOT = { tag = ROOT } } }"
+                    if token == "every_other_country"
+                    else ""
+                )
+                if len(arrays) == 1:
+                    advice = (
+                        f"use for_each_scope_loop = {{ array = {arrays[0]} }}"
+                        f" instead (narrower iteration, better performance){guard}"
+                    )
+                else:
+                    advice = (
+                        f"split into one for_each_scope_loop per array"
+                        f" ({', '.join(arrays)}) with mutual-exclusion guards"
+                        f" (see simplification-patterns.md){guard}"
+                    )
+                issues.append(
+                    (open_line + 1, f"{token} with has_idea = {ideas} -- {advice}")
+                )
+            i = next_i
+        else:
+            i += 1
+    return issues
+
+
+def _check_any_country_member_array(lines):
+    """Flag any_country/any_other_country testing a membership idea when a
+    pre-built array exists.
+
+    any_of_scopes over the bloc's global array checks ~30 members instead of
+    all 200+ tags. Trigger aggregations do NOT auto-skip dead array entries
+    (annexed tags linger), so negated / all-quantified forms need an
+    OR = { <condition> exists = no } guard.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        open_match = _RE_ANY_COUNTRY_OPEN.match(lines[i])
+        if open_match:
+            open_line = i
+            block, next_i = _get_block(lines, i)
+            body = " ".join(strip_inline_comment(bl).strip() for bl in block[:30])
+            hits = _match_member_ideas(body)
+            if hits:
+                ideas = ", ".join(idea for idea, _ in hits)
+                arrays = sorted({array for _, array in hits})
+                if len(arrays) == 1:
+                    advice = f"use any_of_scopes = {{ array = {arrays[0]} }} instead"
+                else:
+                    advice = (
+                        f"use one any_of_scopes per array"
+                        f" ({', '.join(arrays)}) inside an OR instead"
+                    )
                 issues.append(
                     (
                         open_line + 1,
-                        f"every_country with has_idea = {idea} -- use"
-                        f" for_each_scope_loop = {{ array = {array} }} instead"
-                        f" (narrower iteration, better performance)",
+                        f"{open_match.group(1)} with has_idea = {ideas} -- {advice}"
+                        f" (checks only members; when negating or using"
+                        f" all_of_scopes, add OR = {{ ... exists = no }} --"
+                        f" stale array entries do not auto-skip in triggers)",
                     )
                 )
-                break
             i = next_i
         else:
             i += 1
@@ -1277,6 +1488,69 @@ def _check_check_var_ge_le(lines):
     return issues
 
 
+def _check_check_expr_bad_operand(lines):
+    """Flag check_expr operands chained with a raw >/< comparator symbol
+    (a check_variable-style leftover) instead of block form or a bare scalar."""
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if _RE_CHECK_EXPR_OPEN.search(strip_inline_comment(lines[i])):
+            start = i
+            block, i = _get_block(lines, start)
+            for k, bl in enumerate(block):
+                m = _RE_CHECK_EXPR_BAD_OPERAND.search(strip_inline_comment(bl))
+                if m:
+                    op, sym = m.group(1), m.group(2)
+                    issues.append(
+                        (
+                            start + k + 1,
+                            f"check_expr operand '{op}' chained with a raw '{sym}' -- "
+                            f"use block form {op} = {{ value = X }} or a bare scalar "
+                            f"({op} = X), not '{op} {sym} X'",
+                        )
+                    )
+        else:
+            i += 1
+    return issues
+
+
+def _check_every_owned_controlled_state(lines):
+    """Flag every_owned_controlled_state, which does not exist -- use every_controlled_state."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if line.strip().startswith("#"):
+            continue
+        code_part = strip_inline_comment(line) if "#" in line else line
+        if _RE_EVERY_OWNED_CONTROLLED_STATE.search(code_part):
+            issues.append(
+                (
+                    line_num,
+                    "every_owned_controlled_state does not exist -- use every_controlled_state",
+                )
+            )
+    return issues
+
+
+def _check_random_select_amount_literal(lines):
+    """Flag random_select_amount set to anything but an integer literal."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if line.strip().startswith("#"):
+            continue
+        code_part = strip_inline_comment(line) if "#" in line else line
+        m = _RE_RANDOM_SELECT_AMOUNT.search(code_part)
+        if m and not _RE_BARE_INT.match(m.group(1)):
+            issues.append(
+                (
+                    line_num,
+                    f"random_select_amount = {m.group(1)} is not an integer literal -- "
+                    f"random_select_amount requires a literal int",
+                )
+            )
+    return issues
+
+
 def _check_tautological_or(lines):
     """Flag OR = { X = yes X = no } blocks, which are always true."""
     issues = []
@@ -1301,6 +1575,280 @@ def _check_tautological_or(lines):
     return issues
 
 
+def _find_focus_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, focus_id, bad_token) for each
+    log = "...Focus <token>" line inside a focus/shared_focus/joint_focus block
+    where token doesn't match the block's own id.
+
+    Suppressed when the mismatched token is completed/unlocked elsewhere in the
+    same block via complete_national_focus / unlock_national_focus -- that's a
+    focus intentionally completing or unlocking a sibling and logging the
+    sibling's id, not a copy-paste bug. Shared by _check_focus_log_id and
+    fix_log_ids.py so both use the same detection.
+    """
+    results = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if _RE_FOCUS_ANY_BLOCK_OPEN.match(lines[i]):
+            start = i
+            block, i = _get_block(lines, start)
+            code_lines = [strip_inline_comment(bl) for bl in block]
+            text = "".join(code_lines)
+            id_match = _RE_FOCUS_ID_IN_BLOCK.search(text)
+            if not id_match:
+                continue
+            focus_id = id_match.group(1)
+            suppressed = set(_RE_COMPLETE_FOCUS.findall(text)) | set(
+                _RE_UNLOCK_FOCUS.findall(text)
+            )
+            for k, cl in enumerate(code_lines):
+                m = _RE_LOG_FOCUS_TOKEN.search(cl)
+                if m:
+                    token = m.group(1)
+                    if token != focus_id and token not in suppressed:
+                        results.append(
+                            (start + k, m.start(1), m.end(1), focus_id, token)
+                        )
+        else:
+            i += 1
+    return results
+
+
+def _check_focus_log_id(lines):
+    """Flag log = "...Focus <token>" lines whose token doesn't match the
+    enclosing focus/shared_focus/joint_focus block's own id -- almost always a
+    copy-paste leftover from duplicating a neighboring focus.
+    """
+    issues = []
+    for line_idx, _s, _e, focus_id, token in _find_focus_log_mismatches(lines):
+        issues.append(
+            (
+                line_idx + 1,
+                f"log references Focus {token}, but the enclosing focus is "
+                f"{focus_id} -- likely copy-paste; fix the log id",
+            )
+        )
+    return issues
+
+
+def _decision_log_token_span(line):
+    """Return (token, start, end) for the id referenced by a
+    `log = "...Decision ..."` line, skipping leading filler words
+    (_DECISION_LOG_FILLER_WORDS), or None if the line has no such log
+    statement (or nothing substantive follows the filler words).
+    """
+    marker = _RE_LOG_DECISION_MARKER.search(line)
+    if not marker:
+        return None
+    pos = marker.end()
+    while True:
+        m = _RE_NEXT_WORD.match(line, pos)
+        if not m:
+            return None
+        token = m.group(1)
+        if token.lower() in _DECISION_LOG_FILLER_WORDS:
+            pos = m.end()
+            continue
+        return token, m.start(1), m.end(1)
+
+
+def _find_decision_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, decision_id, bad_token) for each
+    log = "...Decision ..." line inside a decision block whose referenced id
+    doesn't match the enclosing decision's own key.
+
+    Enclosing decision = the block key at depth 1 (the category is depth 0),
+    same category/decision traversal as _check_decision_allowed_dynamic.
+    Shared by _check_decision_log_id and fix_log_ids.py.
+    """
+    results = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        code = strip_inline_comment(lines[i])
+        if (
+            _RE_TOPLEVEL_WORD.match(lines[i])
+            and "{" in code
+            and not lines[i].lstrip().startswith("#")
+        ):
+            cat_start = i
+            cat_block, i = _get_block(lines, cat_start)
+            k = 1
+            while k < len(cat_block) - 1:
+                bl = cat_block[k]
+                bl_code = strip_inline_comment(bl)
+                if _RE_INDENTED_WORD.match(bl) and "{" in bl_code:
+                    dec_block, next_k = _get_block(cat_block, k)
+                    dec_id_match = _RE_BLOCK_ID.match(cat_block[k])
+                    dec_id = dec_id_match.group(1) if dec_id_match else None
+                    if dec_id:
+                        for p, dbl in enumerate(dec_block):
+                            dbl_code = strip_inline_comment(dbl)
+                            token_span = _decision_log_token_span(dbl_code)
+                            if token_span:
+                                token, tstart, tend = token_span
+                                if token != dec_id:
+                                    results.append(
+                                        (
+                                            cat_start + k + p,
+                                            tstart,
+                                            tend,
+                                            dec_id,
+                                            token,
+                                        )
+                                    )
+                    k = next_k
+                else:
+                    k += 1
+        else:
+            i += 1
+    return results
+
+
+def _check_decision_log_id(lines):
+    """Flag log = "...Decision ..." lines whose referenced id doesn't match
+    the enclosing decision (tolerating remove/complete/completed/timeout/
+    cancel/effect filler words: "Decision remove X", "Decision cancel effect
+    X") -- almost always a copy-paste leftover from duplicating a neighboring
+    decision.
+    """
+    issues = []
+    for line_idx, _s, _e, dec_id, token in _find_decision_log_mismatches(lines):
+        issues.append(
+            (
+                line_idx + 1,
+                f"log references Decision {token}, but the enclosing decision "
+                f"is {dec_id} -- likely copy-paste; fix the log id",
+            )
+        )
+    return issues
+
+
+def _check_event_log_id(lines):
+    """Flag log = "...Event <token>..." lines inside a country_event /
+    news_event / operative_leader_event / unit_leader_event block where token
+    matches neither the block's own id nor the enclosing option's own declared
+    `name = ` (its real identity), or -- for the bare-id form -- where a
+    separate "Option <x>" phrase names a letter that doesn't match the suffix
+    of that same `name = `.
+
+    Ground-truthed against the option's own `name = ` line rather than a
+    computed sequential letter: option lettering isn't always contiguous
+    (e.g. singapore.101 skips from .c straight to .e), so a position-based
+    a/b/c/... expectation would false-positive on those.
+
+    Only top-level event definitions count (column 0); a nested
+    `country_event = { id = X days = N }` is a scheduling effect call, not a
+    definition, and is skipped since it never starts at column 0.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if _RE_EVENT_DEF_OPEN.match(lines[i]):
+            start = i
+            block, i = _get_block(lines, start)
+            event_id = None
+            for bl in block:
+                m = _RE_EVENT_ID_IN_BLOCK.match(strip_inline_comment(bl))
+                if m:
+                    event_id = m.group(1)
+                    break
+            if not event_id:
+                continue
+            j = 1
+            block_n = len(block)
+            while j < block_n - 1:
+                bl_code = strip_inline_comment(block[j])
+                if _RE_OPTION_BLOCK_OPEN.search(bl_code):
+                    opt_block, next_j = _get_block(block, j)
+                    own_name = None
+                    for obl in opt_block:
+                        nm = _RE_OPTION_NAME_IN_BLOCK.match(strip_inline_comment(obl))
+                        if nm:
+                            own_name = nm.group(1)
+                            break
+                    own_suffix = None
+                    if own_name and own_name.startswith(event_id + "."):
+                        own_suffix = own_name[len(event_id) + 1 :]
+                    for p, obl in enumerate(opt_block):
+                        obl_code = strip_inline_comment(obl)
+                        m = _RE_LOG_EVENT_TOKEN.search(obl_code)
+                        if not m:
+                            continue
+                        token = m.group(1)
+                        if own_name and token == own_name:
+                            continue
+                        if token == event_id:
+                            om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
+                            if (
+                                om
+                                and own_suffix
+                                and om.group(1).lower() != own_suffix.lower()
+                            ):
+                                issues.append(
+                                    (
+                                        start + j + p + 1,
+                                        f"log says Option {om.group(1)} but "
+                                        f"this option's own name is "
+                                        f"{own_name} -- fix the option "
+                                        f"letter",
+                                    )
+                                )
+                            continue
+                        if own_name:
+                            issues.append(
+                                (
+                                    start + j + p + 1,
+                                    f"log references Event {token}, but this "
+                                    f"option's own name is {own_name} -- "
+                                    f"likely copy-paste; fix the log id",
+                                )
+                            )
+                    j = next_j
+                else:
+                    j += 1
+        else:
+            i += 1
+    return issues
+
+
+def _check_hidden_trigger_in_ctt(lines):
+    """Flag hidden_trigger = { } at relative depth 1 inside
+    custom_trigger_tooltip.
+
+    Everything inside custom_trigger_tooltip besides the tooltip line is
+    already the hidden trigger the tooltip describes -- wrapping it in
+    hidden_trigger adds a redundant nesting level with no effect.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        code = _code_for_depth(lines[i])
+        if _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN.search(code):
+            depth = code.count("{") - code.count("}")
+            j = i + 1
+            while depth > 0 and j < n:
+                c2 = _code_for_depth(lines[j])
+                if depth == 1 and _RE_HIDDEN_TRIGGER_OPEN.search(c2):
+                    issues.append(
+                        (
+                            j + 1,
+                            "hidden_trigger = { } directly inside "
+                            "custom_trigger_tooltip is redundant -- unwrap its "
+                            "children to the tooltip's own depth",
+                        )
+                    )
+                depth += c2.count("{") - c2.count("}")
+                j += 1
+            i = j
+        else:
+            i += 1
+    return issues
+
+
 def check_file(filepath):
     """Check a single file for common mistakes. Returns list of (filepath, line_num, message) tuples."""
     issues = []
@@ -1319,6 +1867,11 @@ def check_file(filepath):
         or is_decision_file
         or "common/military_industrial_organization" in filepath
     )
+    normalized_filepath = filepath.replace("\\", "/")
+    is_common_or_events_file = (
+        "common/" in normalized_filepath or "events/" in normalized_filepath
+    )
+    is_event_file = "events/" in normalized_filepath
 
     # Only track idea categories for idea files (non-selectable vs selectable)
     # Dynamically parsed from common/idea_tags/*.txt
@@ -1491,20 +2044,31 @@ def check_file(filepath):
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))
         issues.extend(_check_focus_missing_war_hint(lines))
+        issues.extend(_check_focus_log_id(lines))
     if is_decision_file:
         issues.extend(_check_decision_available_always_no(lines))
         issues.extend(_check_decision_allowed_dynamic(lines))
+        issues.extend(_check_decision_log_id(lines))
+    if is_event_file:
+        issues.extend(_check_event_log_id(lines))
 
+    issues.extend(_check_hidden_trigger_in_ctt(lines))
     issues.extend(_check_consecutive_scope_blocks(lines))
     issues.extend(_check_embargo_dlc_guard(lines))
     issues.extend(_check_divide_variable_zero_guard(lines))
     issues.extend(_check_duplicate_add_to_variable(lines))
     issues.extend(_check_every_country_member_array(lines))
+    issues.extend(_check_any_country_member_array(lines))
+    issues.extend(_check_on_add_array_symmetry(lines))
     issues.extend(_check_empty_log_only_blocks(lines))
     issues.extend(_check_is_x_nation_runtime(lines, filepath))
     issues.extend(_check_influence_setter_scope(lines))
     issues.extend(_check_check_var_ge_le(lines))
     issues.extend(_check_tautological_or(lines))
+    issues.extend(_check_check_expr_bad_operand(lines))
+    issues.extend(_check_random_select_amount_literal(lines))
+    if is_common_or_events_file:
+        issues.extend(_check_every_owned_controlled_state(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 

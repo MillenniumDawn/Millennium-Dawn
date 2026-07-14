@@ -240,6 +240,22 @@ country_event = {
 	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: News_influence.0 executed"
+		if = {
+			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = five_gift_sum }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = ten_gift_sum }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = fifteen_gift_sum }
+		}
+	}
+
 	# Accept the Aid
 	option = {
 		name = News_influence.0.a
@@ -2995,8 +3011,6 @@ country_event = {
 					check_variable = { aid_size_mult > 4 }
 				}
 			}
-			save_global_event_target_as = aid_recipient
-			FROM = { save_global_event_target_as = aid_donor }
 			# Modern equipment package gets its own (more provocative) news flavor
 			if = {
 				limit = { check_variable = { aid_was_modern = 1 } }
@@ -3154,6 +3168,8 @@ country_event = {
 
 	immediate = {
 		clear_array = auto_influence_target_val
+		clear_array = auto_influence_report_array
+		set_variable = { report_index = 0 }
 		for_loop_effect = {
 			end = auto_influence_array^num
 			value = i
@@ -3177,17 +3193,20 @@ country_event = {
 						set_variable = { ROOT.found_influence_match = 1 }
 					}
 				}
+				set_variable = { auto_influence_report_array^report_index = auto_influence_array^i }
 				if = {
 					limit = { check_variable = { found_influence_match = 1 } }
-					set_variable = { auto_influence_target_val^i = found_influence_val }
+					set_variable = { auto_influence_target_val^report_index = found_influence_val }
 				}
 				else = {
-					set_variable = { auto_influence_target_val^i = 0 }
+					set_variable = { auto_influence_target_val^report_index = 0 }
 				}
+				add_to_variable = { report_index = 1 }
 			}
 		}
 		clear_variable = found_influence_val
 		clear_variable = found_influence_match
+		clear_variable = report_index
 	}
 
 	option = {

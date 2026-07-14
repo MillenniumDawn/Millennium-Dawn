@@ -521,8 +521,6 @@
 	NDefines.NAir.REINFORCEMENT_DISABLING_DURATION_IN_LAND_CARRIER_TRANSFER = 12 -- 48 vanilla; reduced so AI is less reluctant to move planes onto carriers
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50 -- 10 vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10 -- 1 vanilla
 	NDefines.NAir.MAX_QUICK_WING_SELECTION = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
@@ -614,7 +612,7 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_EFFECT = 0.3 -- 0.5
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2 -- 2.0
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
-	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1 -- Reduced to 100% from 200% -- 25% is vanilla
+	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 0.75 -- Reduced to 100% from 200% -- 25% is vanilla
 	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.001 -- HGA / (VAL * 100) = Add to Shore Bombard Mod
 	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.85 -- LGA / (VAL * 100) = Add to Shore Bombard Mod
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
@@ -970,7 +968,7 @@
 	NDefines.NAI.STR_BOMB_AIR_SUPERIORITY_IMPORTANCE = 0.7 -- 0.10; AI actually escorts its strategic bomber fleets
 	NDefines.NAI.LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 2 -- 5; even small nations value air defense
 	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
-	NDefines.NAir.ACE_WING_SIZE = 25 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
+	NDefines.NAir.ACE_WING_SIZE = 24 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
 	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 20 -- 10; AI can restart more focuses after interruption
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
@@ -1012,7 +1010,7 @@
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = true				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = true				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
-	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.3 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
+	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.4 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
 	NDefines.NAI.LAND_COMBAT_MISSILE_IMPORTANCE_FACTOR = 1.75 -- Importance of missiles for regions of strat importance. Higher = more -- 1.5
 	NDefines.NAI.LAND_DEFENSE_AA_IMPORTANCE_FACTOR = 1.0 -- Factor of AA on stat importance
 	NDefines.NAI.ROCKET_ASSIGN_SCORE_REDUCTION_PER_ASSIGNMENT = 2.0 -- 0.5 vanilla; each assigned missile wing reduces region score to prevent overstacking (vanilla 0.5 allowed ~20 wings per region)
