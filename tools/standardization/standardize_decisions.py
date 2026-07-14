@@ -7,7 +7,6 @@ Standardizes HOI4 decision and decision category files according to Millennium D
 
 import argparse
 import os
-import re
 from typing import Any, Dict, List
 
 from common_utils import (
@@ -23,10 +22,8 @@ from shared_utils import (
     create_backup,
     extract_block,
     log_message,
+    strip_inline_comment,
 )
-
-_SINGLE_LINE_PROPS = {"cost", "days_remove", "fire_only_once", "icon"}
-_BLOCK_PROPS = {"allowed", "visible", "available", "complete_effect", "ai_will_do"}
 
 _CATEGORY_SINGLE_LINE_PROPS = {
     "icon",
@@ -42,6 +39,23 @@ _CATEGORY_BLOCK_PROPS = {
     "target_root_trigger",
     "on_map_area",
 }
+
+
+def _count_braces(text: str) -> tuple:
+    """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
+    strings and after an unquoted ``#`` comment."""
+    code = strip_inline_comment(text)
+    opens = closes = 0
+    in_str = False
+    for i, c in enumerate(code):
+        if c == '"' and (i == 0 or code[i - 1] != "\\"):
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                opens += 1
+            elif c == "}":
+                closes += 1
+    return opens, closes
 
 
 def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
@@ -64,8 +78,7 @@ def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
         # Normalise internal whitespace (tabs → single spaces)
         normalized = " ".join(stripped.split())
 
-        opens = normalized.count("{")
-        closes = normalized.count("}")
+        opens, closes = _count_braces(normalized)
 
         if i == 0:
             result.append("\t" * base_indent + normalized)
@@ -211,148 +224,157 @@ class DecisionCategoryStandardizer(BaseStandardizer):
         return collapse_blank_runs(lines)
 
 
+def format_decision(block_lines: List[str]) -> List[str]:
+    """Order-preserving reformat of a single decision block.
+
+    The decision ID is read from the header line (``block_lines[0]``) — the
+    only reliable source. Every body property is preserved in source order:
+    block-valued properties are re-indented (or collapsed when a single leaf),
+    single-line properties are whitespace-normalised, comments are kept verbatim.
+    A ``log`` line is injected into ``complete_effect`` when missing.
+    Header sits at one tab, body at two.
+    """
+    if not block_lines:
+        return block_lines
+
+    header_match = PROP_NAME_RE.match(block_lines[0].strip())
+    did = header_match.group(1) if header_match else "decision"
+
+    lines: List[str] = [f"\t{did} = {{", ""]
+    i = 1  # skip opening header line
+    while i < len(block_lines) - 1:  # skip closing brace
+        stripped = block_lines[i].strip()
+        if not stripped:
+            i += 1
+            continue
+        if stripped.startswith("#"):
+            lines.append(f"\t\t{stripped}")
+            lines.append("")
+            i += 1
+            continue
+
+        opens, closes = _count_braces(stripped)
+        prop_match = PROP_NAME_RE.match(stripped)
+        prop_name = prop_match.group(1) if prop_match else None
+
+        if opens > closes:
+            block, next_i = extract_block(block_lines, i)
+            if prop_name == "complete_effect" and not block_has_log(block):
+                log_line = (
+                    f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision {did}"'
+                )
+                block = inject_log_after_brace(block, log_line)
+            elif prop_name == "ai_will_do":
+                block = convert_root_factor_to_base(block)
+            lines.extend(_reindent_or_collapse(block, 2))
+            lines.append("")
+            i = next_i
+        else:
+            lines.append(f"\t\t{' '.join(stripped.split())}")
+            lines.append("")
+            i += 1
+
+    while lines and lines[-1] == "":
+        lines.pop()
+    lines.append("\t}")
+    return lines
+
+
 class DecisionStandardizer(BaseStandardizer):
-    """Standardizer for HOI4 decisions"""
+    """Standardizer for HOI4 decision files.
+
+    A decisions file is a set of column-0 category blocks, each containing
+    one-tab decision blocks (plus the occasional category-level property or
+    comment). This standardizer matches categories at the top level and, for
+    each, reformats its decisions in place — preserving property order and
+    never dropping or splitting content.
+    """
 
     def get_block_pattern(self) -> str:
-        """Return regex pattern to identify decision blocks"""
-        return r"\s*\w+_decision\s*=\s*{"
+        """Category blocks are the only column-0 (unindented) blocks."""
+        return r"^\w+\s*=\s*{"
 
     def extract_properties(self, block_lines: List[str]) -> Dict[str, Any]:
-        """Extract properties from decision block lines"""
-        props: Dict[str, Any] = {
-            "id": "",
-            "allowed": [],
-            "icon": "",
-            "cost": "",
-            "days_remove": "",
-            "visible": [],
-            "available": [],
-            "complete_effect": [],
-            "ai_will_do": [],
-            "fire_only_once": "",
-            "other": [],
-        }
+        """Split a category into an ordered list of children.
 
-        if block_lines:
-            first_line = block_lines[0].strip()
-            if first_line and not first_line.startswith("#"):
-                id_match = PROP_NAME_RE.match(first_line)
-                if id_match:
-                    props["id"] = id_match.group(1)
+        Each child is tagged: ``cat_single`` / ``cat_block`` for category-level
+        properties, ``decision`` for a nested decision block, ``raw`` for a
+        comment or stray line kept verbatim.
+        """
+        props: Dict[str, Any] = {"id": "", "children": []}
 
-        i = 1  # Skip opening brace
-        while i < len(block_lines) - 1:  # Skip closing brace
-            line = block_lines[i].strip()
-            match = PROP_NAME_RE.match(line)
-            prop_name = match.group(1) if match else None
+        header_match = (
+            PROP_NAME_RE.match(block_lines[0].strip()) if block_lines else None
+        )
+        if header_match:
+            props["id"] = header_match.group(1)
 
-            if prop_name in _SINGLE_LINE_PROPS:
-                props[prop_name] = line
-            elif prop_name in _BLOCK_PROPS:
-                block, next_i = extract_block(block_lines, i)
-                props[prop_name].append(block)
-                i = next_i
+        i = 1  # skip opening header line
+        while i < len(block_lines) - 1:  # skip closing brace
+            raw = block_lines[i]
+            stripped = raw.strip()
+            if not stripped:
+                i += 1
                 continue
-            else:
-                props["other"].append(block_lines[i])
+            if stripped.startswith("#"):
+                props["children"].append(("raw", raw.rstrip()))
+                i += 1
+                continue
 
-            i += 1
+            name_match = PROP_NAME_RE.match(stripped)
+            name = name_match.group(1) if name_match else None
+            opens, closes = _count_braces(stripped)
+            opens_block = opens > closes
+
+            if name in _CATEGORY_SINGLE_LINE_PROPS or (
+                name == "priority" and "{" not in stripped
+            ):
+                props["children"].append(("cat_single", stripped))
+                i += 1
+            elif name in _CATEGORY_BLOCK_PROPS or (
+                name == "priority" and "{" in stripped
+            ):
+                block, next_i = extract_block(block_lines, i)
+                props["children"].append(("cat_block", block))
+                i = next_i
+            elif opens_block:
+                block, next_i = extract_block(block_lines, i)
+                props["children"].append(("decision", block))
+                i = next_i
+            else:
+                props["children"].append(("raw", raw.rstrip()))
+                i += 1
 
         return props
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
-        """Format decision according to Millennium Dawn standard"""
-        lines = []
+        """Emit the category with its children reformatted in source order."""
+        cid = props["id"] or "category"
+        lines: List[str] = [f"{cid} = {{", ""]
 
-        # Decision ID (first line)
-        if props["id"]:
-            lines.append(f"\t{props['id']} = {{")
-        else:
-            lines.append("\tdecision = {")
+        for kind, data in props["children"]:
+            if kind == "cat_single":
+                lines.append(f"\t{data}")
+                lines.append("")
+            elif kind == "cat_block":
+                lines.extend(_reindent_or_collapse(data, 1))
+                lines.append("")
+            elif kind == "decision":
+                lines.extend(format_decision(data))
+                lines.append("")
+            else:  # raw — comment or stray line, hug the following block
+                lines.append(data)
 
-        lines.append("")
-
-        # 1. Allowed block (first)
-        for allowed in props["allowed"]:
-            lines.extend(collapse_or_compact(allowed[:]))
-            lines.append("")
-
-        # 2. Icon
-        if props["icon"]:
-            lines.append(f"\t\t{props['icon']}")
-            lines.append("")
-
-        # 3. Cost and days_remove
-        if props["cost"]:
-            lines.append(f"\t\t{props['cost']}")
-        if props["days_remove"]:
-            lines.append(f"\t\t{props['days_remove']}")
-        lines.append("")
-
-        # 4. Visible block
-        for visible in props["visible"]:
-            lines.extend(collapse_or_compact(visible[:]))
-            lines.append("")
-
-        # 5. Available block
-        for available in props["available"]:
-            lines.extend(collapse_or_compact(available[:]))
-            lines.append("")
-
-        # 6. Complete effect (add log if missing)
-        for complete_effect in props["complete_effect"]:
-            if not block_has_log(complete_effect) and props["id"]:
-                log_line = (
-                    f'\t\t\tlog = "[GetDateText]: [Root.GetName]: '
-                    f'Decision {props["id"]}"'
-                )
-                complete_effect = inject_log_after_brace(complete_effect, log_line)
-
-            lines.extend(collapse_or_compact(complete_effect[:]))
-            lines.append("")
-
-        # 7. fire_only_once (use sparingly)
-        if props["fire_only_once"]:
-            lines.append(f"\t\t{props['fire_only_once']}")
-            lines.append("")
-
-        # 8. AI will do (always last)
-        for ai_will_do in props["ai_will_do"]:
-            lines.extend(
-                collapse_or_compact(convert_root_factor_to_base(ai_will_do[:]))
-            )
-            lines.append("")
-
-        # 9. Other properties
-        if props["other"]:
-            for line in props["other"]:
-                if line.strip():
-                    lines.append(line.rstrip())
-            lines.append("")
-
-        lines.append("\t}")
+        while lines and lines[-1] == "":
+            lines.pop()
+        lines.append("}")
 
         return collapse_blank_runs(lines)
 
 
 def detect_file_type(input_file: str) -> BaseStandardizer:
-    """Detect whether the file contains decision categories or decisions."""
-    try:
-        with open(input_file, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-        category_count = sum(
-            1 for line in lines if re.match(r"\s*\w+_category\s*=\s*\{", line)
-        )
-        decision_count = sum(
-            1 for line in lines if re.match(r"\s*\w+_decision\s*=\s*\{", line)
-        )
-        if category_count > 0 and category_count >= decision_count:
-            return DecisionCategoryStandardizer(verbose=False)
-        return DecisionStandardizer(verbose=False)
-    except Exception as e:
-        log_message("WARNING", f"Failed to detect file type for {input_file}: {e}")
-        return DecisionStandardizer(verbose=False)
+    """Return the unified decision standardizer (handles categories + decisions)."""
+    return DecisionStandardizer(verbose=False)
 
 
 def main():

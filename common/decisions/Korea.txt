@@ -58,6 +58,8 @@ KOR_38th_parallel = {
 				has_idea = KOR_kaesong_industrial_park
 				has_idea = NKO_kaesong_industrial_park
 			}
+			original_tag = CHI
+			CHI = { has_completed_focus = CHI_Peninsula_Strategy }
 		}
 
 		highlight_states = {
@@ -604,6 +606,403 @@ KOR_38th_parallel = {
 
 		ai_will_do = { base = 0 }
 	}
+
+	CHI_track_ii_academic_forum = {
+		fixed_random_seed = no
+
+		icon = GFX_decision_generic_political_actions
+
+		visible = {
+			has_completed_focus = CHI_Strengthen_Relations_with_the_South
+			country_exists = KOR
+		}
+
+		available = {
+			NOT = { has_war_with = KOR }
+		}
+
+		days_re_enable = 180
+
+		cost = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_track_ii_academic_forum executed"
+			KOR = {
+				support_for_reunification_2 = yes
+				add_opinion_modifier = { target = CHI modifier = CHI_track_ii_participant }
+			}
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = CHI_korea_peninsula_modifier
+			}
+			add_to_variable = { var = CHI_kp_intel_network_gain_factor value = 0.02 tooltip = CHI_kp_intel_network_gain_factor_tt }
+			set_temp_variable = { BROKERAGE_AMOUNT = 2 }
+			CHI_add_brokerage = yes
+			random_list = {
+				95 = { }
+				5 = {
+					modifier = {
+						factor = 1
+					}
+					KOR = { remove_opinion_modifier = { target = CHI modifier = CHI_track_ii_participant } }
+					add_political_power = -25
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_war_with = KOR
+			}
+		}
+	}
+
+	CHI_pressure_iaea_access = {
+		fixed_random_seed = no
+
+		icon = GFX_decision_generic_nuclear
+
+		visible = {
+			has_completed_focus = CHI_Maintain_Commitment_to_Denuclearization
+			country_exists = NKO
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+		}
+
+		days_re_enable = 540
+
+		cost = 115
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_pressure_iaea_access executed"
+			NKO = { add_timed_idea = { idea = CHI_nko_energy_aid days = 365 } }
+			random_list = {
+				30 = {
+					modifier = {
+						add = 25
+						NKO = { has_opinion = { target = CHI value > 30 } }
+					}
+					modifier = {
+						add = 15
+						check_variable = { CHI_beijing_brokerage > 40 }
+					}
+					modifier = {
+						add = 10
+						NKO = { has_idea = CHI_nko_energy_aid }
+					}
+					subtract_from_variable = { CHI_korea_peninsula_tension = 10 tooltip = CHI_korea_peninsula_tension_tt }
+					USA = {
+						add_opinion_modifier = { target = CHI modifier = CHI_nuclear_breakthrough }
+						add_opinion_modifier = { target = CHI modifier = responsible_stakeholder }
+					}
+					set_temp_variable = { BROKERAGE_AMOUNT = 5 }
+					CHI_add_brokerage = yes
+					KOR = {
+						support_for_reunification_2 = yes
+						custom_effect_tooltip = KOR_negotiation_success_tt
+						add_to_variable = { reunification_chance = 1 }
+					}
+				}
+				50 = {
+					subtract_from_variable = { CHI_korea_peninsula_tension = 5 tooltip = CHI_korea_peninsula_tension_tt }
+					NKO = { add_opinion_modifier = { target = CHI modifier = CHI_iaea_pressure } }
+					set_temp_variable = { BROKERAGE_AMOUNT = 2 }
+					CHI_add_brokerage = yes
+				}
+				20 = {
+					modifier = {
+						add = 20
+						NKO = { has_opinion = { target = CHI value < 0 } }
+					}
+					NKO = { add_opinion_modifier = { target = CHI modifier = defied_beijing } }
+					add_to_variable = { CHI_korea_peninsula_tension = 5 tooltip = CHI_korea_peninsula_tension_tt }
+					add_political_power = -25
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+		}
+	}
+
+	CHI_trilateral_trade_forum = {
+		fixed_random_seed = no
+
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_completed_focus = CHI_FTA_2015
+			country_exists = KOR
+			country_exists = NKO
+		}
+
+		available = {
+			NOT = { KOR = { has_country_flag = closed_kaesong } }
+			NOT = { has_war_with = KOR }
+			NOT = { has_war_with = NKO }
+		}
+
+		days_re_enable = 540
+
+		cost = 145
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_trilateral_trade_forum executed"
+			add_timed_idea = { idea = CHI_summit_host days = 365 }
+			KOR = {
+				if = {
+					limit = { NOT = { has_idea = CHI_kor_trilateral_opening } }
+					add_timed_idea = { idea = CHI_kor_trilateral_opening days = 180 }
+				}
+				support_for_reunification_2 = yes
+				support_for_reunification_1 = yes
+				add_opinion_modifier = { target = CHI modifier = CHI_trilateral_trade }
+				custom_effect_tooltip = KOR_negotiation_success_tt
+				add_to_variable = { reunification_chance = 1 }
+			}
+			NKO = {
+				add_timed_idea = { idea = CHI_nko_energy_aid days = 365 }
+				add_opinion_modifier = { target = CHI modifier = CHI_trilateral_trade }
+				add_stability = 0.02
+			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = KOR }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { BROKERAGE_AMOUNT = 3 }
+			CHI_add_brokerage = yes
+			random_list = {
+				95 = { }
+				5 = {
+					modifier = {
+						factor = 1
+					}
+					KOR = {
+						support_for_reunification_2_less = yes
+						add_opinion_modifier = { target = CHI modifier = rebuffed_diplomacy }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_war_with = KOR
+			}
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+		}
+	}
+
+	CHI_facilitate_family_reunions = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			has_completed_focus = CHI_The_Roh_Moohyun_Framework
+			country_exists = KOR
+			country_exists = NKO
+		}
+
+		available = {
+			NOT = { has_war_with = KOR }
+			NOT = { has_war_with = NKO }
+		}
+
+		days_re_enable = 180
+
+		cost = 115
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_facilitate_family_reunions executed"
+			add_stability = 0.01
+			subtract_from_variable = { CHI_korea_peninsula_tension = 2 tooltip = CHI_korea_peninsula_tension_tt }
+			if = {
+				limit = { NOT = { has_country_flag = CHI_family_reunions_started } }
+				set_country_flag = CHI_family_reunions_started
+				set_variable = { CHI_family_reunions_held = 0 }
+				add_timed_idea = { idea = CHI_reunion_humanitarian_lead days = 365 }
+				NKO = { add_timed_idea = { idea = CHI_nko_food_package days = 365 } }
+			}
+			add_to_variable = { var = CHI_family_reunions_held value = 1 }
+			KOR = {
+				support_for_reunification_1 = yes
+				add_opinion_modifier = { target = CHI modifier = CHI_family_reunion_facilitator }
+				custom_effect_tooltip = KOR_negotiation_success_tt
+				add_to_variable = { reunification_chance = 1 }
+			}
+			NKO = {
+				add_stability = 0.01
+				add_opinion_modifier = { target = CHI modifier = CHI_family_reunion_facilitator }
+			}
+			set_temp_variable = { BROKERAGE_AMOUNT = 2 }
+			CHI_add_brokerage = yes
+			if = {
+				limit = {
+					check_variable = { var = CHI_family_reunions_held value = 2 compare = greater_than }
+					NOT = { has_country_flag = CHI_family_reunions_global_coverage }
+				}
+				set_country_flag = CHI_family_reunions_global_coverage
+				every_country = {
+					limit = { is_major = yes }
+					add_opinion_modifier = { target = CHI modifier = peace_contributor }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_war_with = KOR
+			}
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+		}
+	}
+
+	CHI_beijing_hosted_talks = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			has_completed_focus = CHI_Sunshine_Policy_Revival
+		}
+
+		available = {
+			OR = {
+				KOR = { has_country_flag = KOR_peace_talks_failed }
+				NKO = { has_country_flag = NKO_peace_talks_failed }
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_beijing_brokerage_above_24_tt
+				check_variable = { CHI_beijing_brokerage > 24 }
+			}
+			NOT = { has_war_with = KOR }
+			NOT = { has_war_with = NKO }
+		}
+
+		fire_only_once = yes
+
+		cost = 250
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_beijing_hosted_talks"
+			add_timed_idea = { idea = CHI_summit_host days = 365 }
+			subtract_from_variable = { CHI_korea_peninsula_tension = 10 tooltip = CHI_korea_peninsula_tension_tt }
+			subtract_from_variable = { CHI_beijing_brokerage = 15 }
+			clamp_variable = { var = CHI_beijing_brokerage min = 0 max = 100 }
+			custom_effect_tooltip = CHI_beijing_brokerage_spend_15_tt
+			KOR = {
+				clr_country_flag = KOR_peace_talks_failed
+				custom_effect_tooltip = KOR_negotiation_success_tt
+				add_to_variable = { reunification_chance = 1 }
+			}
+			NKO = {
+				clr_country_flag = NKO_peace_talks_failed
+				add_timed_idea = { idea = CHI_nko_energy_aid days = 365 }
+			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = KOR }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = -3 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = KOR }
+			change_influence_percentage = yes
+			country_event = { id = CHI_foreign.55 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_war_with = KOR
+			}
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+		}
+	}
+
+	CHI_propose_unity_government = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			has_completed_focus = CHI_The_Panmunjom_Architecture
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = support_for_reunification_more_50_tt
+				KOR = { check_variable = { SFR > 50 } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_beijing_brokerage_above_49_tt
+				check_variable = { CHI_beijing_brokerage > 49 }
+			}
+			NOT = { KOR = { has_war_with = NKO } }
+			NOT = { KOR = { has_country_flag = KOR_proposed_unity_reunification } }
+		}
+
+		fire_only_once = yes
+
+		cost = 350
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_propose_unity_government"
+			subtract_from_variable = { CHI_beijing_brokerage = 30 }
+			clamp_variable = { var = CHI_beijing_brokerage min = 0 max = 100 }
+			custom_effect_tooltip = CHI_beijing_brokerage_spend_30_tt
+			NKO = {
+				add_timed_idea = { idea = CHI_nko_security_assurance days = 730 }
+				add_timed_idea = { idea = CHI_nko_food_package days = 365 }
+			}
+			KOR = {
+				set_country_flag = KOR_proposed_unity_reunification
+				country_event = { id = korea.26 days = 3 }
+				add_opinion_modifier = { target = CHI modifier = CHI_unity_broker }
+			}
+			every_country = {
+				limit = { is_major = yes NOT = { tag = CHI } }
+				add_opinion_modifier = { target = CHI modifier = CHI_beijing_broker }
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_war_with = KOR
+			}
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+		}
+	}
 }
 
 KOR_guerrilla_mobilization = {
@@ -672,6 +1071,1037 @@ KOR_guerrilla_mobilization = {
 			custom_effect_tooltip = juche_arms1_tt
 		}
 		ai_will_do = { base = 0 }
+	}
+	CHI_KPA_Officer_Exchange = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_military
+
+		visible = {
+			has_completed_focus = CHI_Exercise_Paektu_Honor
+			country_exists = NKO
+			NKO = { has_government = communism }
+		}
+
+		available = {
+			has_completed_focus = CHI_Exercise_Paektu_Honor
+			NOT = { has_war_with = NKO }
+			NKO = { has_opinion = { target = CHI value > 20 } }
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_KPA_Officer_Exchange executed"
+			NKO = {
+				add_timed_idea = { idea = CHI_joint_command_consultations days = 1825 }
+			}
+			add_to_variable = { CHI_korea_alignment = -3 }
+			clamp_variable = { var = CHI_korea_alignment min = -100 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_MSS_Pyongyang_Station = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_intelligence
+
+		visible = {
+			has_completed_focus = CHI_Exercise_Paektu_Honor
+			country_exists = NKO
+		}
+
+		available = {
+			has_completed_focus = CHI_Exercise_Paektu_Honor
+			NOT = { has_war_with = NKO }
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_MSS_Pyongyang_Station executed"
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			add_to_variable = { CHI_korea_alignment = -2 }
+			clamp_variable = { var = CHI_korea_alignment min = -100 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_NKO_Rason_SEZ_Investment = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_completed_focus = CHI_Economic_Framework_for_Unity
+			country_exists = NKO
+		}
+
+		available = {
+			has_completed_focus = CHI_Economic_Framework_for_Unity
+			NKO = { has_idea = Socialist_Market_Economy_planned_2 }
+			check_variable = { treasury > 49 }
+			NOT = { has_war_with = NKO }
+		}
+
+		fire_only_once = yes
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_NKO_Rason_SEZ_Investment executed"
+			set_temp_variable = { treasury_change = -50 }
+			modify_treasury_effect = yes
+			NKO = {
+				601 = {
+					add_state_modifier = { modifier = { local_building_slots_factor = 0.25 local_resources_factor = 0.15 } }
+				}
+				add_timed_idea = { idea = CHI_rason_investment_flow days = 3650 }
+			}
+			add_timed_idea = { idea = CHI_rason_port_access days = 3650 }
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			KOR = {
+				add_to_variable = { SFR = 3 }
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	CHI_MSS_Quiet_Removal_Operation = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_intelligence
+
+		visible = {
+			has_completed_focus = CHI_Economic_Framework_for_Unity
+			country_exists = NKO
+		}
+
+		available = {
+			has_completed_focus = CHI_Economic_Framework_for_Unity
+			NOT = { has_war_with = NKO }
+			NKO = { has_opinion = { target = CHI value < 0 } }
+		}
+
+		fire_only_once = yes
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_MSS_Quiet_Removal_Operation executed"
+			NKO = {
+				add_popularity = { ideology = democratic popularity = 0.05 }
+				add_stability = -0.03
+			}
+			add_to_variable = { CHI_korea_alignment = 5 }
+			clamp_variable = { var = CHI_korea_alignment min = -100 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+
+	CHI_Track_II_Diplomacy = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_diplomacy
+
+		visible = {
+			has_completed_focus = CHI_Back_Channel_to_Foggy_Bottom
+			USA = { has_idea = CHI_usa_back_channel_open }
+		}
+
+		available = {
+			has_completed_focus = CHI_Back_Channel_to_Foggy_Bottom
+			USA = { has_idea = CHI_usa_back_channel_open }
+			NOT = { has_war_with = USA }
+			check_variable = { treasury > 49 }
+		}
+
+		cost = 0
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_Track_II_Diplomacy executed"
+			set_temp_variable = { treasury_change = -50 }
+			modify_treasury_effect = yes
+			USA = {
+				add_opinion_modifier = { target = CHI modifier = track_ii }
+			}
+			KOR = {
+				add_to_variable = { SFR = 1 }
+			}
+			add_to_variable = { CHI_track_ii_uses = 1 }
+			if = {
+				limit = { check_variable = { CHI_track_ii_uses > 2 } }
+				country_event = { id = CHI_foreign.014 days = 1 }
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	CHI_Press_NKO_on_Nuclear = {
+		fixed_random_seed = no
+
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_diplomacy
+
+		visible = {
+			has_completed_focus = CHI_Maintain_Commitment_to_Denuclearization
+			country_exists = NKO
+		}
+
+		available = {
+			has_completed_focus = CHI_Maintain_Commitment_to_Denuclearization
+			NKO = { has_opinion = { target = CHI value > 20 } }
+			NOT = { has_war_with = NKO }
+		}
+
+		cost = 170
+		days_re_enable = 540
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_Press_NKO_on_Nuclear executed"
+			NKO = { add_timed_idea = { idea = CHI_nko_security_assurance days = 730 } }
+			random_list = {
+				20 = {
+					modifier = {
+						add = 30
+						NKO = { has_opinion = { target = CHI value > 40 } }
+					}
+					modifier = {
+						add = 10
+						check_variable = { CHI_beijing_brokerage > 60 }
+					}
+					modifier = {
+						add = 15
+						NKO = { has_idea = CHI_nko_energy_aid }
+					}
+					NKO = {
+						add_opinion_modifier = { target = CHI modifier = nuclear_restraint }
+						add_opinion_modifier = { target = KOR modifier = nuclear_restraint }
+					}
+					subtract_from_variable = { CHI_korea_peninsula_tension = 15 tooltip = CHI_korea_peninsula_tension_tt }
+					KOR = {
+						add_to_variable = { SFR = 5 }
+						custom_effect_tooltip = KOR_negotiation_success_tt
+						add_to_variable = { reunification_chance = 1 }
+					}
+					USA = { add_opinion_modifier = { target = CHI modifier = CHI_nuclear_breakthrough } }
+					JAP = { add_opinion_modifier = { target = CHI modifier = CHI_nuclear_breakthrough } }
+					set_temp_variable = { BROKERAGE_AMOUNT = 5 }
+					CHI_add_brokerage = yes
+				}
+				50 = {
+					NKO = { add_war_support = -0.03 }
+					USA = { add_opinion_modifier = { target = CHI modifier = responsible_stakeholder } }
+					set_temp_variable = { BROKERAGE_AMOUNT = 2 }
+					CHI_add_brokerage = yes
+				}
+				30 = {
+					modifier = {
+						add = 20
+						NKO = { has_opinion = { target = CHI value < 10 } }
+					}
+					NKO = {
+						add_opinion_modifier = { target = CHI modifier = defied_beijing }
+						add_stability = -0.02
+					}
+					add_political_power = -25
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+		}
+	}
+
+	# Phase II — Korean Peninsula Decisions
+
+	CHI_boycott_lotte = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_completed_focus = CHI_The_THAAD_Response
+			country_exists = KOR
+		}
+
+		available = {
+			has_completed_focus = CHI_The_THAAD_Response
+			NOT = { has_war_with = KOR }
+		}
+
+		fire_only_once = yes
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_boycott_lotte executed"
+			KOR = {
+				add_stability = -0.03
+				add_opinion_modifier = { target = CHI modifier = CHI_thaad_retaliation }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_kpop_media_ban = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_political_support
+
+		visible = {
+			has_completed_focus = CHI_The_THAAD_Response
+			country_exists = KOR
+		}
+
+		available = {
+			has_completed_focus = CHI_The_THAAD_Response
+			NOT = { has_war_with = KOR }
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_kpop_media_ban executed"
+			KOR = {
+				add_stability = -0.02
+				add_to_variable = { SFR = -2 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				KOR = { check_variable = { SFR < 10 } }
+			}
+		}
+	}
+
+	CHI_tour_group_freeze = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_diplomacy
+
+		visible = {
+			has_completed_focus = CHI_The_THAAD_Response
+			country_exists = KOR
+		}
+
+		available = {
+			has_completed_focus = CHI_The_THAAD_Response
+			NOT = { has_war_with = KOR }
+		}
+
+		fire_only_once = yes
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_tour_group_freeze executed"
+			KOR = {
+				add_stability = -0.03
+				add_to_variable = { SFR = -3 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_lift_thaad_sanctions = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_diplomacy
+
+		visible = {
+			has_completed_focus = CHI_The_THAAD_Response
+			country_exists = KOR
+			KOR = { has_idea = CHI_informal_sanctions }
+		}
+
+		available = {
+			has_completed_focus = CHI_The_THAAD_Response
+			KOR = { has_idea = CHI_informal_sanctions }
+			NOT = { has_war_with = KOR }
+		}
+
+		fire_only_once = yes
+		cost = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_lift_thaad_sanctions executed"
+			KOR = {
+				remove_ideas = CHI_informal_sanctions
+				add_to_variable = { SFR = 8 }
+				add_opinion_modifier = { target = CHI modifier = diplomatic_charm }
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+
+	CHI_locate_jang_loyalists = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_intelligence
+
+		visible = {
+			has_completed_focus = CHI_The_Jang_Faction_Rehabilitation
+			country_exists = NKO
+			NOT = { has_country_flag = CHI_jang_network_located }
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+		}
+
+		fire_only_once = yes
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_locate_jang_loyalists"
+			set_country_flag = CHI_jang_network_located
+			add_to_variable = { CHI_kp_foreign_subversive_activites = 0.05 tooltip = CHI_kp_foreign_subversive_activites_tt }
+			add_to_variable = { CHI_nko_internal_influence = 5 tooltip = CHI_nko_internal_influence_tt }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_establish_dandong_safe_houses = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_intelligence
+
+		visible = {
+			has_completed_focus = CHI_The_Jang_Faction_Rehabilitation
+			has_country_flag = CHI_jang_network_located
+			NOT = { has_country_flag = CHI_jang_safe_houses }
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+		}
+
+		fire_only_once = yes
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_establish_dandong_safe_houses"
+			set_country_flag = CHI_jang_safe_houses
+			add_to_variable = { CHI_kp_foreign_subversive_activites = 0.05 tooltip = CHI_kp_foreign_subversive_activites_tt }
+			add_to_variable = { CHI_nko_internal_influence = 5 tooltip = CHI_nko_internal_influence_tt }
+			NKO = { add_stability = -0.02 }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_insert_jang_assets = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_intelligence
+
+		visible = {
+			has_completed_focus = CHI_The_Jang_Faction_Rehabilitation
+			has_country_flag = CHI_jang_safe_houses
+			NOT = { has_country_flag = CHI_jang_assets_inserted }
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+		}
+
+		fire_only_once = yes
+		cost = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_insert_jang_assets"
+			set_country_flag = CHI_jang_assets_inserted
+			add_to_variable = { CHI_kp_intel_network_gain_factor = 0.05 tooltip = CHI_kp_intel_network_gain_factor_tt }
+			add_to_variable = { CHI_nko_internal_influence = 10 tooltip = CHI_nko_internal_influence_tt }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_identify_beida_alumni = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_intelligence
+
+		visible = {
+			has_completed_focus = CHI_The_Princeling_Network
+			country_exists = NKO
+			NOT = { has_country_flag = CHI_princeling_contacts }
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+		}
+
+		fire_only_once = yes
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_identify_beida_alumni"
+			set_country_flag = CHI_princeling_contacts
+			add_to_variable = { CHI_korea_peninsula_tension = 3 tooltip = CHI_korea_peninsula_tension_tt }
+			add_to_variable = { CHI_nko_internal_influence = 5 tooltip = CHI_nko_internal_influence_tt }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_fund_princeling_ventures = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_completed_focus = CHI_The_Princeling_Network
+			has_country_flag = CHI_princeling_contacts
+			NOT = { has_country_flag = CHI_princeling_funded }
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+		}
+
+		fire_only_once = yes
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_fund_princeling_ventures"
+			set_country_flag = CHI_princeling_funded
+			add_to_variable = { CHI_kp_political_power_gain = 0.02 tooltip = political_power_gain_tt }
+			add_to_variable = { CHI_nko_internal_influence = 10 tooltip = CHI_nko_internal_influence_tt }
+			NKO = { add_timed_idea = { idea = CHI_princeling_economic_leverage days = 1825 } }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_secure_kpa_general_staff = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_army_support_new
+
+		visible = {
+			has_completed_focus = CHI_The_Princeling_Network
+			has_country_flag = CHI_princeling_funded
+			NOT = { has_country_flag = CHI_kpa_loyalty_secured }
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+			NKO = { is_top3_influencer = yes }
+		}
+
+		fire_only_once = yes
+		cost = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_secure_kpa_general_staff"
+			set_country_flag = CHI_kpa_loyalty_secured
+			add_to_variable = { CHI_nko_internal_influence = 15 tooltip = CHI_nko_internal_influence_tt }
+			NKO = {
+				random_unit_leader = {
+					limit = {
+						is_field_marshal = no
+						NOT = { has_trait = chinese_aligned }
+					}
+					add_unit_leader_trait = chinese_aligned
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_activate_princeling_network = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_political_action
+
+		visible = {
+			has_completed_focus = CHI_The_Princeling_Network
+			has_country_flag = CHI_princeling_contacts
+			has_country_flag = CHI_princeling_funded
+			has_country_flag = CHI_kpa_loyalty_secured
+			NOT = { has_country_flag = CHI_princeling_network_active }
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+			NKO = { is_top3_influencer = yes }
+		}
+
+		fire_only_once = yes
+		cost = 200
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_activate_princeling_network"
+			set_country_flag = CHI_princeling_network_active
+			add_to_variable = { CHI_korea_alignment = 15 tooltip = CHI_korea_alignment_tt }
+			add_to_variable = { CHI_nko_internal_influence = 20 tooltip = CHI_nko_internal_influence_tt }
+			NKO = { add_timed_idea = { idea = CHI_kpa_intelligence_penetration days = 3650 } }
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_princeling_intelligence_report = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_intelligence
+
+		visible = {
+			has_country_flag = CHI_princeling_network_active
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+		}
+
+		days_re_enable = 90
+		cost = 25
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_princeling_intelligence_report"
+			add_to_variable = { CHI_korea_alignment = 2 tooltip = CHI_korea_alignment_tt }
+			add_political_power = 25
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	CHI_rcep_deepening = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_completed_focus = CHI_The_Pivot_Reversed
+		}
+
+		available = {
+			has_completed_focus = CHI_The_Pivot_Reversed
+			has_war = no
+		}
+
+		fire_only_once = yes
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_rcep_deepening executed"
+			every_country = {
+				limit = {
+					OR = {
+						tag = KOR
+						tag = JAP
+						tag = ASE
+						tag = AUS
+						tag = NZL
+					}
+					country_exists = yes
+				}
+				add_opinion_modifier = { target = CHI modifier = belt_and_road_initiative }
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	CHI_semiconductor_coop_with_kor = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_completed_focus = CHI_The_Pivot_Reversed
+			country_exists = KOR
+		}
+
+		available = {
+			has_completed_focus = CHI_The_Pivot_Reversed
+			NOT = { has_war_with = KOR }
+			KOR = { has_opinion = { target = CHI value > 10 } }
+		}
+
+		cost = 150
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_semiconductor_coop_with_kor executed"
+			add_tech_bonus = {
+				name = CHI_semiconductor_coop_with_kor
+				bonus = 0.15
+				uses = 1
+				category = CAT_electrical_tech
+			}
+			KOR = { add_to_variable = { SFR = 3 tooltip = SFR_tt } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_us_korea_cost_signaling = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_political_support
+
+		visible = {
+			has_completed_focus = CHI_The_Pivot_Reversed
+			country_exists = USA
+		}
+
+		available = {
+			has_completed_focus = CHI_The_Pivot_Reversed
+			NOT = { has_war_with = USA }
+		}
+
+		cost = 75
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_us_korea_cost_signaling executed"
+			USA = { add_stability = -0.01 }
+			add_stability = -0.01
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_stability < 0.4
+			}
+		}
+	}
+
+	CHI_dandong_military_district = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_military
+
+		visible = { has_completed_focus = CHI_Lips_and_Teeth_Doctrine }
+
+		available = {
+			has_war = no
+			NOT = { has_country_flag = CHI_dandong_max_reached }
+		}
+
+		cost = 50
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_dandong_military_district executed"
+			every_owned_state = {
+				limit = { region = 150 }
+				add_state_modifier = { modifier = { local_building_slots = 1 local_manpower = 0.05 local_resources = 0.05 } }
+			}
+			add_to_variable = { CHI_dandong_district_count = 1 }
+			if = {
+				limit = { check_variable = { CHI_dandong_district_count > 2 } }
+				set_country_flag = CHI_dandong_max_reached
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+
+	CHI_thaad_retaliation_escalate = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_political_pressure
+
+		visible = {
+			has_completed_focus = CHI_The_THAAD_Response
+		}
+
+		available = {
+			KOR = { has_idea = CHI_informal_sanctions }
+			NOT = { has_country_flag = CHI_thaad_escalate_used_3 }
+		}
+
+		fire_only_once = no
+		cost = 100
+		days_re_enable = 1
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_thaad_retaliation_escalate executed"
+			KOR = { add_stability = -0.02 }
+			add_opinion_modifier = { target = USA modifier = CHI_anti_jap_wedge_driver }
+			add_to_variable = { CHI_thaad_escalate_count = 1 tooltip = CHI_thaad_escalate_count_tt }
+			if = {
+				limit = { check_variable = { CHI_thaad_escalate_count > 2 } }
+				set_country_flag = CHI_thaad_escalate_used_3
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_cultivate_pyongyang_contacts = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_intelligence
+
+		visible = {
+			has_completed_focus = CHI_The_Chinese_Correction
+		}
+
+		available = {
+			country_exists = NKO
+			NOT = { has_war_with = NKO }
+		}
+
+		cost = 50
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_cultivate_pyongyang_contacts executed"
+			NKO = { add_stability = -0.05 }
+			if = {
+				limit = { NKO = { has_stability < 0.40 } }
+				NKO = { country_event = { id = CHI_foreign.024 days = 3 } }
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	CHI_seoul_hanbok_exchange = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_diplomatic_talks
+
+		visible = {
+			has_completed_focus = CHI_The_Seoul_Gambit
+		}
+
+		available = {
+			country_exists = KOR
+			NOT = { has_war_with = KOR }
+		}
+
+		cost = 75
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_seoul_hanbok_exchange executed"
+			KOR = { add_to_variable = { SFR = 3 tooltip = SFR_tt } }
+			add_opinion_modifier = { target = KOR modifier = diplomatic_opening }
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	CHI_beijing_washington_consultation = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_diplomatic_talks
+
+		visible = {
+			has_completed_focus = CHI_Back_Channel_to_Foggy_Bottom
+		}
+
+		available = {
+			country_exists = USA
+			country_exists = KOR
+		}
+
+		cost = 100
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_beijing_washington_consultation executed"
+			add_opinion_modifier = { target = KOR modifier = back_channel_open }
+			add_opinion_modifier = { target = USA modifier = back_channel_open }
+			JAP = { add_opinion_modifier = { target = CHI modifier = CHI_anti_jap_wedge_driver } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_cheju_summit_arrangement = {
+		fixed_random_seed = no
+
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_diplomatic_talks
+
+		visible = {
+			has_completed_focus = CHI_The_2022_Reset
+		}
+
+		available = {
+			country_exists = KOR
+			NOT = { has_war_with = KOR }
+		}
+
+		cost = 200
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_cheju_summit_arrangement executed"
+			random_list = {
+				70 = {
+					KOR = { add_to_variable = { SFR = 15 tooltip = SFR_tt } }
+				}
+				30 = {
+					add_opinion_modifier = { target = KOR modifier = rebuffed_diplomacy }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 7
+		}
+	}
+
+	CHI_rare_earth_supply_assurance = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_completed_focus = CHI_Strengthen_Relations_with_the_South
+		}
+
+		available = {
+			country_exists = KOR
+			NOT = { has_war_with = KOR }
+		}
+
+		cost = 120
+		days_re_enable = 540
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_rare_earth_supply_assurance executed"
+			KOR = {
+				if = {
+					limit = { NOT = { has_idea = CHI_kor_trilateral_opening } }
+					add_timed_idea = { idea = CHI_kor_trilateral_opening days = 180 }
+				}
+				support_for_reunification_1 = yes
+				add_opinion_modifier = { target = CHI modifier = CHI_reliable_supplier }
+			}
+			set_temp_variable = { percent_change = -3 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = KOR }
+			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = KOR }
+			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { BROKERAGE_AMOUNT = 2 }
+			CHI_add_brokerage = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war_with = KOR
+			}
+		}
+	}
+
+	CHI_kaesong_expansion = {
+		fixed_random_seed = no
+
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_completed_focus = CHI_Sunshine_Policy_Revival
+		}
+
+		available = {
+			country_exists = NKO
+			country_exists = KOR
+			NOT = { KOR = { has_country_flag = closed_kaesong } }
+			NOT = { has_war_with = NKO }
+			NOT = { has_war_with = KOR }
+			NKO = { NOT = { has_war_with = KOR } }
+		}
+
+		cost = 180
+		days_re_enable = 540
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_kaesong_expansion executed"
+			add_timed_idea = { idea = CHI_kaesong_co_developer days = 730 }
+			newline = yes
+			subtract_from_variable = { CHI_korea_peninsula_tension = 5 tooltip = CHI_korea_peninsula_tension_tt }
+			newline = yes
+			KOR = {
+				add_to_variable = { SFR = 10 tooltip = SFR_tt }
+				newline = yes
+				custom_effect_tooltip = KOR_negotiation_success_tt
+				add_to_variable = { reunification_chance = 1 }
+			}
+			NKO = {
+				add_timed_idea = { idea = CHI_nko_energy_aid days = 365 }
+				newline = yes
+			}
+			newline = yes
+			set_temp_variable = { BROKERAGE_AMOUNT = 5 }
+			CHI_add_brokerage = yes
+			random_list = {
+				95 = { }
+				5 = {
+					modifier = {
+						factor = 1
+					}
+					KOR = {
+						add_to_variable = { SFR = -3 tooltip = SFR_tt }
+						newline = yes
+						add_opinion_modifier = { target = CHI modifier = rebuffed_diplomacy }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = {
+				factor = 0
+				has_war_with = KOR
+			}
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+		}
 	}
 }
 
