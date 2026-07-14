@@ -680,6 +680,8 @@ start_unsc_next_term_voting = {
 			random_scope_in_array = {
 				array = global.asian_nations
 				limit = {
+					exists = yes
+					has_capitulated = no
 					NOT = { is_in_array = { global.security_council_members = THIS } }
 					NOT = { has_idea = lacks_international_recognition }
 					NOT = { has_idea = non_state_actor }
@@ -694,6 +696,8 @@ start_unsc_next_term_voting = {
 				random_scope_in_array = {
 					array = global.sub_saharan_nations
 					limit = {
+						exists = yes
+						has_capitulated = no
 						NOT = { is_in_array = { global.security_council_members = THIS } }
 						NOT = { has_idea = lacks_international_recognition }
 						NOT = { has_idea = non_state_actor }
@@ -704,6 +708,8 @@ start_unsc_next_term_voting = {
 				random_scope_in_array = {
 					array = global.middle_eastern_nations
 					limit = {
+						exists = yes
+						has_capitulated = no
 						NOT = { is_in_array = { global.security_council_members = THIS } }
 						NOT = { has_idea = lacks_international_recognition }
 						NOT = { has_idea = non_state_actor }
@@ -720,6 +726,8 @@ start_unsc_next_term_voting = {
 		random_scope_in_array = {
 			array = global.sc_updates_euro_america
 			limit = {
+				exists = yes
+				has_capitulated = no
 				NOT = { is_in_array = { global.security_council_members = THIS } }
 				NOT = { has_idea = lacks_international_recognition }
 				NOT = { has_idea = non_state_actor }
@@ -733,6 +741,8 @@ start_unsc_next_term_voting = {
 		random_scope_in_array = {
 			array = global.american_nations
 			limit = {
+				exists = yes
+				has_capitulated = no
 				NOT = { is_in_array = { global.security_council_members = THIS } }
 				NOT = { has_idea = lacks_international_recognition }
 				NOT = { has_idea = non_state_actor }
@@ -751,6 +761,8 @@ start_unsc_next_term_voting = {
 		random_scope_in_array = {
 			array = global.UN_general_assembly
 			limit = {
+				exists = yes
+				has_capitulated = no
 				NOT = { is_in_array = { global.security_council_members = THIS } }
 				NOT = { is_in_array = { global.new_council_members = THIS } }
 				NOT = { is_in_array = { global.p5_sc_members = THIS } }
@@ -768,6 +780,29 @@ start_unsc_next_term_voting = {
 }
 
 update_security_council_peeps = {
+	# Confirmed in June but dead or capitulated by January: drop before seating.
+	clear_array = md_valid_confirmed_members
+	for_each_loop = {
+		array = global.confirmed_new_council_members
+		value = v
+		if = {
+			limit = {
+				var:v = {
+					exists = yes
+					has_capitulated = no
+				}
+			}
+			add_to_array = { md_valid_confirmed_members = v }
+		}
+	}
+	clear_array = global.confirmed_new_council_members
+	for_each_loop = {
+		array = md_valid_confirmed_members
+		value = v
+		add_to_array = { global.confirmed_new_council_members = v }
+	}
+	clear_array = md_valid_confirmed_members
+
 	# Stash the departing cohort: unfilled tail seats are backfilled from it, otherwise
 	# a short confirmed list leaves the shifted members duplicated in both array halves.
 	clear_array = md_departing_sc_members
@@ -834,9 +869,14 @@ un_sc_new_members_step_next = {
 		set_temp_variable = { md_was_election_candidate = 1 }
 	}
 
+	# The candidate can die or capitulate between nomination and the vote closing.
 	if = {
 		limit = {
 			NOT = { is_in_array = { global.confirmed_new_council_members = global.current_ga_vote_nation } }
+			var:global.current_ga_vote_nation = {
+				exists = yes
+				has_capitulated = no
+			}
 		}
 		add_to_array = { global.confirmed_new_council_members = global.current_ga_vote_nation }
 	}
@@ -882,6 +922,8 @@ un_sc_new_members_re_roll = {
 				random_scope_in_array = {
 					array = global.american_nations
 					limit = {
+						exists = yes
+						has_capitulated = no
 						NOT = { is_in_array = { global.security_council_members = THIS } }
 						NOT = { is_in_array = { global.new_council_members = THIS } }
 						NOT = { has_idea = lacks_international_recognition }
@@ -904,6 +946,8 @@ un_sc_new_members_re_roll = {
 				random_scope_in_array = {
 					array = global.sc_updates_euro_america
 					limit = {
+						exists = yes
+						has_capitulated = no
 						NOT = { is_in_array = { global.security_council_members = THIS } }
 						NOT = { is_in_array = { global.new_council_members = THIS } }
 						NOT = { has_idea = lacks_international_recognition }
@@ -915,6 +959,8 @@ un_sc_new_members_re_roll = {
 				random_scope_in_array = {
 					array = global.sub_saharan_nations
 					limit = {
+						exists = yes
+						has_capitulated = no
 						NOT = { is_in_array = { global.security_council_members = THIS } }
 						NOT = { is_in_array = { global.new_council_members = THIS } }
 						NOT = { has_idea = lacks_international_recognition }
@@ -933,6 +979,8 @@ un_sc_new_members_re_roll = {
 			random_scope_in_array = {
 				array = global.UN_general_assembly
 				limit = {
+					exists = yes
+					has_capitulated = no
 					NOT = { is_in_array = { global.security_council_members = THIS } }
 					NOT = { is_in_array = { global.new_council_members = THIS } }
 					NOT = { is_in_array = { global.p5_sc_members = THIS } }
@@ -969,6 +1017,41 @@ recompute_un_2_3_number = {
 }
 
 un_check_for_next_queued_vote = {
+	# Self-heal: an annexation path that skips on_annex leaves a dead nation seated in the GA or
+	# Council; run the canonical cleanup it missed. P5 arrays mirror the p5_member on_remove,
+	# which cannot fire on a dead country.
+	clear_array = md_dead_member_sweep
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+		if = {
+			limit = { NOT = { var:v = { exists = yes } } }
+			add_to_array = { md_dead_member_sweep = v }
+		}
+	}
+	for_each_loop = {
+		array = global.security_council_members
+		value = v
+		if = {
+			limit = {
+				NOT = { var:v = { exists = yes } }
+				NOT = { is_in_array = { md_dead_member_sweep = v } }
+			}
+			add_to_array = { md_dead_member_sweep = v }
+		}
+	}
+	for_each_loop = {
+		array = md_dead_member_sweep
+		value = v
+		if = {
+			limit = { is_in_array = { global.p5_sc_members = v } }
+			remove_from_array = { global.p5_sc_members = v }
+			remove_from_array = { global.security_council_members = v }
+		}
+		var:v = { clear_united_nations_member_state = yes }
+	}
+	clear_array = md_dead_member_sweep
+
 	if = {
 		limit = {
 			NOT = { has_global_flag = current_ongoing_sc_vote }
@@ -2277,7 +2360,10 @@ clear_united_nations_member_state = {
 		set_temp_variable = { md_vote_mission_reassigned = 0 }
 		random_scope_in_array = {
 			array = global.UN_general_assembly
-			limit = { NOT = { tag = PREV } }
+			limit = {
+				exists = yes
+				NOT = { tag = PREV }
+			}
 			set_country_flag = has_ga_mission
 			activate_mission = UN_GA_voting_mission
 			PREV = { set_temp_variable = { md_vote_mission_reassigned = 1 } }
@@ -2293,7 +2379,10 @@ clear_united_nations_member_state = {
 		set_temp_variable = { md_vote_mission_reassigned = 0 }
 		random_scope_in_array = {
 			array = global.security_council_members
-			limit = { NOT = { tag = PREV } }
+			limit = {
+				exists = yes
+				NOT = { tag = PREV }
+			}
 			set_country_flag = has_sc_mission
 			activate_mission = UN_SC_voting_mission
 			PREV = { set_temp_variable = { md_vote_mission_reassigned = 1 } }
@@ -2337,6 +2426,8 @@ clear_united_nations_member_state = {
 		random_scope_in_array = {
 			array = global.UN_general_assembly
 			limit = {
+				exists = yes
+				has_capitulated = no
 				NOT = { tag = PREV }
 				NOT = { is_in_array = { global.security_council_members = THIS } }
 				NOT = { is_in_array = { global.p5_sc_members = THIS } }
