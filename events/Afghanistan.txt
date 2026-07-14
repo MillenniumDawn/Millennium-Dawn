@@ -22,7 +22,7 @@ country_event = {
 	trigger = {
 		tag = AFG
 		has_war_with = TAL
-		USA = { NOT = { has_country_flag = Operation_enduring_freedom } }
+		USA = { NOT = { has_country_flag = USA_wot_enduring_freedom } }
 		has_country_leader = { name = "Ahmad Shah Massoud" ruling_only = yes }
 	}
 	is_triggered_only = yes
@@ -39,7 +39,7 @@ country_event = {
 					set_leader = yes
 				}
 				hidden_effect = { news_event = { id = AfghanistanNews.6 hours = 6 } }
-				set_country_flag = Massoud_dead
+				set_country_flag = AFG_massoud_dead
 			}
 			10 = {
 				custom_effect_tooltip = AFG_massoud_survives_assassination_tt
@@ -466,10 +466,13 @@ country_event = {
 		name = TalibanInsurgency.0.a
 		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.0.a executed"
 		add_command_power = 20
-		set_country_flag = afg_active_taliban_insurgency
+		set_country_flag = AFG_active_taliban_insurgency
 		custom_effect_tooltip = AFG_support_afghan_counter_insurgency_tt
 		add_ideas = AFG_afghan_morning_taliban_by_night
 		hidden_effect = {
+			#The monthly refresh is gated on the flag we just set, so without this the coalition and observer
+			#arrays sit empty until the next tick and the first quarter's attacks reach nobody.
+			AFG_refresh_insurgency_arrays = yes
 			TAL = {
 				division_template = {
 					name = "Da Zayi Milisho Lawa Taleban"
@@ -542,8 +545,6 @@ country_event = {
 				}
 				set_temp_variable = { taliban_strength_increase = 10 }
 				increase_taliban_strength = yes
-				add_to_variable = { var = taliban_attack_strength value = 0.1 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 			}
 		}
 
@@ -570,8 +571,6 @@ news_event = {
 		army_experience = 5
 		set_temp_variable = { taliban_strength_decrease = 5 }
 		decrease_taliban_strength = yes
-		add_to_variable = { var = taliban_attack_strength value = -0.05 }
-		clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 
 		ai_chance = {
 			base = 1
@@ -594,8 +593,6 @@ news_event = {
 		add_command_power = -5
 		set_temp_variable = { taliban_strength_increase = 1 }
 		increase_taliban_strength = yes
-		add_to_variable = { var = taliban_attack_strength value = 0.01 }
-		clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 
 		ai_chance = {
 			base = 1
@@ -618,8 +615,6 @@ news_event = {
 		air_experience = 10
 		set_temp_variable = { taliban_strength_decrease = 10 }
 		decrease_taliban_strength = yes
-		add_to_variable = { var = taliban_attack_strength value = -0.1 }
-		clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 
 		ai_chance = {
 			base = 1
@@ -647,8 +642,6 @@ news_event = {
 		add_ruling_outlook_popularity = yes
 		set_temp_variable = { taliban_strength_increase = 5 }
 		increase_taliban_strength = yes
-		add_to_variable = { var = taliban_attack_strength value = 0.05 }
-		clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 
 		ai_chance = {
 			base = 1
@@ -693,8 +686,6 @@ news_event = {
 		}
 		set_temp_variable = { taliban_strength_increase = 1 }
 		increase_taliban_strength = yes
-		add_to_variable = { var = taliban_attack_strength value = 0.01 }
-		clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 
 		ai_chance = {
 			base = 1
@@ -717,8 +708,6 @@ news_event = {
 		add_stability = 0.05
 		set_temp_variable = { taliban_strength_decrease = 10 }
 		decrease_taliban_strength = yes
-		add_to_variable = { var = taliban_attack_strength value = -0.1 }
-		clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 
 		ai_chance = {
 			base = 1
@@ -774,9 +763,9 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		clr_global_flag = Afghanistan_Civil_War_Over
-		clear_variable = taliban_strength
-		clr_country_flag = afg_active_taliban_insurgency
+		clr_global_flag = GLOBAL_afghanistan_civil_war_over
+		reset_taliban_strength = yes
+		clr_country_flag = AFG_active_taliban_insurgency
 		TAL = {
 			transfer_state = 415
 			set_capital = { state = 415 }
@@ -832,12 +821,7 @@ country_event = {
 			# 	disband = yes
 			# }
 		}
-		every_other_country = {
-			limit = {
-				has_country_flag = afg_support_counter_insurgency
-			}
-			clr_country_flag = afg_support_counter_insurgency
-		}
+		AFG_clear_ci_supporters = yes
 	}
 
 }
@@ -894,7 +878,7 @@ country_event = {
 		original_tag = AFG
 		ROOT = {
 			jihadist_government = yes
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
 	is_triggered_only = yes
@@ -902,8 +886,9 @@ country_event = {
 
 	immediate = {
 		log = "[GetDateText]: [Root.GetName]: event TalibanInsurgency.12"
-		clr_country_flag = afg_active_taliban_insurgency
-		clear_variable = taliban_strength
+		clr_country_flag = AFG_active_taliban_insurgency
+		AFG_clear_ci_supporters = yes
+		reset_taliban_strength = yes
 	}
 }
 
@@ -918,36 +903,31 @@ country_event = {
 		tag = AFG
 		AFG = {
 			no_jihadist_government = yes
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 			check_variable = {
 				var = taliban_strength
 				value = 45
 				compare = greater_than_or_equals
 			}
 		}
-		any_country = {
-			no_jihadist_government = yes
-			is_full_state = yes
-			NOT = {
-				has_country_flag = afg_support_counter_insurgency
-			}
-			has_military_access_to = AFG
-		}
 	}
 
 	immediate = {
-		every_other_country = {
-			limit = {
-				no_jihadist_government = yes
-				is_full_state = yes
-				has_military_access_to = AFG
-				NOT = {
-					has_country_flag = afg_support_counter_insurgency
+		for_each_scope_loop = {
+			array = AFG_coalition_array
+			if = {
+				limit = {
+					exists = yes
+					no_jihadist_government = yes
+					has_military_access_to = AFG
+					NOT = {
+						has_country_flag = wot_supporting_afghan_counter_insurgency
+					}
 				}
-			}
-			country_event = {
-				id = TalibanInsurgency.14
-				hours = 1
+				country_event = {
+					id = TalibanInsurgency.14
+					hours = 1
+				}
 			}
 		}
 	}
@@ -966,7 +946,15 @@ country_event = {
 		name = TalibanInsurgency.14.a
 		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.14.a executed"
 		add_command_power = 5
-		set_country_flag = afg_support_counter_insurgency
+		set_country_flag = wot_supporting_afghan_counter_insurgency
+		hidden_effect = {
+			AFG = {
+				if = {
+					limit = { NOT = { is_in_array = { AFG_ci_array = PREV.id } } }
+					add_to_array = { AFG_ci_array = PREV.id }
+				}
+			}
+		}
 		custom_effect_tooltip = AFG_support_afghan_counter_insurgency_tt
 		AFG = {
 			news_event = {
@@ -1117,8 +1105,6 @@ news_event = {
 		AFG = {
 			set_temp_variable = { taliban_strength_decrease = 5 }
 			decrease_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = -0.05 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 
 		ai_chance = {
@@ -1148,8 +1134,6 @@ news_event = {
 		AFG = {
 			set_temp_variable = { taliban_strength_increase = 1 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.01 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 
 		ai_chance = {
@@ -1169,29 +1153,24 @@ country_event = {
 		tag = AFG
 		AFG = {
 			no_jihadist_government = yes
-			has_country_flag = afg_active_taliban_insurgency
-		}
-		any_country = {
-			no_jihadist_government = yes
-			is_full_state = yes
-			has_country_flag = afg_support_counter_insurgency
-			NOT = {
-				has_military_access_to = AFG
-			}
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
 
 	immediate = {
-		every_other_country = {
-			limit = {
-				no_jihadist_government = yes
-				is_full_state = yes
-				has_country_flag = afg_support_counter_insurgency
-				NOT = {
-					has_military_access_to = AFG
+		for_each_scope_loop = {
+			array = AFG_ci_array
+			if = {
+				limit = {
+					exists = yes
+					no_jihadist_government = yes
+					has_country_flag = wot_supporting_afghan_counter_insurgency
+					NOT = {
+						has_military_access_to = AFG
+					}
 				}
+				clr_country_flag = wot_supporting_afghan_counter_insurgency
 			}
-			clr_country_flag = afg_support_counter_insurgency
 		}
 	}
 }
@@ -1205,11 +1184,10 @@ country_event = {
 		original_tag = AFG
 		ROOT = {
 			no_jihadist_government = yes
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
 	is_triggered_only = yes
-	fire_only_once = yes
 
 	immediate = {
 		AFG = {
@@ -1217,8 +1195,6 @@ country_event = {
 				40 = {
 					set_temp_variable = { taliban_strength_increase = 1 }
 					increase_taliban_strength = yes
-					add_to_variable = { var = taliban_attack_strength value = 0.01 }
-					clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 					modifier = {
 						factor = 2
 						has_stability > 0.5
@@ -1351,8 +1327,6 @@ country_event = {
 				40 = {
 					set_temp_variable = { taliban_strength_increase = 2 }
 					increase_taliban_strength = yes
-					add_to_variable = { var = taliban_attack_strength value = 0.02 }
-					clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 					modifier = {
 						factor = 2
 						has_stability < 0.25
@@ -1376,8 +1350,6 @@ country_event = {
 				10 = {
 					set_temp_variable = { taliban_strength_increase = 3 }
 					increase_taliban_strength = yes
-					add_to_variable = { var = taliban_attack_strength value = 0.03 }
-					clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 					modifier = {
 						factor = 2
 						has_stability < 0.1
@@ -1539,8 +1511,6 @@ news_event = {
 		AFG = {
 			set_temp_variable = { taliban_strength_decrease = 7 }
 			decrease_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = -0.07 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 
 		ai_chance = {
@@ -1576,8 +1546,6 @@ news_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 3 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.03 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 
 		ai_chance = {
@@ -1603,8 +1571,6 @@ news_event = {
 		AFG = {
 			set_temp_variable = { taliban_strength_decrease = 12 }
 			decrease_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = -0.12 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 
 		ai_chance = {
@@ -1643,8 +1609,6 @@ news_event = {
 			add_stability = -0.03
 			set_temp_variable = { taliban_strength_increase = 5 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.05 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 
 		ai_chance = {
@@ -1691,7 +1655,7 @@ country_event = {
 				value = 0
 				compare = greater_than_or_equals
 			}
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
 	is_triggered_only = yes
@@ -1725,8 +1689,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 1 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.01 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -1744,8 +1706,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 2 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.02 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -1758,24 +1718,16 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 3 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.03 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		hidden_effect = {
-			every_other_country = {
-				limit = {
-					OR = {
-						is_in_array = { FROM.influence_array = THIS.id }
-						has_military_access_to = AFG
-						is_neighbor_of = AFG
-						has_guaranteed = AFG
-						has_country_flag = military_advisors_@FROM
+			for_each_scope_loop = {
+				array = AFG_observer_array
+				if = {
+					limit = { exists = yes }
+					news_event = {
+						id = TalibanAttack.1
+						hours = 1
 					}
-					is_full_state = yes
-				}
-				news_event = {
-					id = TalibanAttack.1
-					hours = 1
 				}
 			}
 		}
@@ -1818,7 +1770,7 @@ country_event = {
 				value = 25
 				compare = greater_than_or_equals
 			}
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
 	is_triggered_only = yes
@@ -1845,8 +1797,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 1 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.01 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -1864,8 +1814,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 2 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.02 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -1883,8 +1831,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 3 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.03 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -1897,14 +1843,14 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 5 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.05 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
+		#AFG_coalition_array is already "GA members with military access to AFG", so match against it
+		#rather than re-running has_military_access_to on every tag in the world
 		every_country = {
 			limit = {
 				OR = {
 					is_in_array = { FROM.influence_array = THIS.id }
-					has_military_access_to = AFG
+					is_in_array = { FROM.AFG_coalition_array = THIS.id }
 				}
 				is_full_state = yes
 			}
@@ -1915,22 +1861,18 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			every_other_country = {
-				limit = {
-					NOT = {
-						is_in_array = { FROM.influence_array = THIS.id }
-						has_military_access_to = AFG
+			for_each_scope_loop = {
+				array = AFG_observer_array
+				if = {
+					limit = {
+						exists = yes
+						NOT = { is_in_array = { ROOT.AFG_coalition_array = THIS.id } }
+						NOT = { is_in_array = { ROOT.influence_array = THIS.id } }
 					}
-					OR = {
-						is_neighbor_of = AFG
-						has_guaranteed = AFG
-						has_country_flag = military_advisors_@FROM
+					news_event = {
+						id = TalibanAttack.4
+						hours = 1
 					}
-					is_full_state = yes
-				}
-				news_event = {
-					id = TalibanAttack.4
-					hours = 1
 				}
 			}
 		}
@@ -1996,7 +1938,7 @@ country_event = {
 			any_owned_state = {
 				infrastructure > 0
 			}
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
 	is_triggered_only = yes
@@ -2031,8 +1973,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 1 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.01 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2050,8 +1990,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 2 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.02 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2069,8 +2007,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 3 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.03 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2083,24 +2019,16 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 4 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.04 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		hidden_effect = {
-			every_other_country = {
-				limit = {
-					OR = {
-						is_in_array = { FROM.influence_array = THIS.id }
-						has_military_access_to = AFG
-						is_neighbor_of = AFG
-						has_guaranteed = AFG
-						has_country_flag = military_advisors_@FROM
+			for_each_scope_loop = {
+				array = AFG_observer_array
+				if = {
+					limit = { exists = yes }
+					news_event = {
+						id = TalibanAttack.6
+						hours = 1
 					}
-					is_full_state = yes
-				}
-				news_event = {
-					id = TalibanAttack.6
-					hours = 1
 				}
 			}
 		}
@@ -2143,7 +2071,7 @@ country_event = {
 				value = 25
 				compare = greater_than_or_equals
 			}
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 			num_divisions > 4
 		}
 	}
@@ -2174,8 +2102,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 2 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.02 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2193,8 +2119,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 3 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.03 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2212,8 +2136,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 4 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.04 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2226,24 +2148,16 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 5 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.05 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		hidden_effect = {
-			every_other_country = {
-				limit = {
-					OR = {
-						is_in_array = { FROM.influence_array = THIS.id }
-						has_military_access_to = AFG
-						is_neighbor_of = AFG
-						has_guaranteed = AFG
-						has_country_flag = military_advisors_@FROM
+			for_each_scope_loop = {
+				array = AFG_observer_array
+				if = {
+					limit = { exists = yes }
+					news_event = {
+						id = TalibanAttack.8
+						hours = 1
 					}
-					is_full_state = yes
-				}
-				news_event = {
-					id = TalibanAttack.8
-					hours = 1
 				}
 			}
 		}
@@ -2280,20 +2194,13 @@ country_event = {
 
 	trigger = {
 		original_tag = AFG
-		AFG = {
-			check_variable = {
-				var = taliban_strength
-				value = 45
-				compare = greater_than_or_equals
-			}
-			has_country_flag = afg_active_taliban_insurgency
+		check_variable = {
+			var = taliban_strength
+			value = 45
+			compare = greater_than_or_equals
 		}
-		any_country = {
-			OR = {
-				has_military_access_to = AFG
-				has_country_flag = military_advisors_@FROM
-			}
-		}
+		has_country_flag = AFG_active_taliban_insurgency
+		check_variable = { AFG_coalition_array^num > 0 }
 	}
 	is_triggered_only = yes
 
@@ -2304,7 +2211,6 @@ country_event = {
 		add_stability = -0.01
 		if = {
 			limit = {
-				original_tag = AFG
 				check_variable = {
 					var = taliban_strength
 					value = 45
@@ -2318,12 +2224,9 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 2 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.02 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
-				original_tag = AFG
 				check_variable = {
 					var = taliban_strength
 					value = 70
@@ -2337,12 +2240,9 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 3 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.03 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
-				original_tag = AFG
 				check_variable = {
 					var = taliban_strength
 					value = 80
@@ -2356,12 +2256,9 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 4 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.04 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
-				original_tag = AFG
 				check_variable = {
 					var = taliban_strength
 					value = 90
@@ -2370,16 +2267,12 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 5 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.05 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
-		random_country = {
+		random_scope_in_array = {
+			array = AFG_coalition_array
 			limit = {
-				OR = {
-					has_military_access_to = AFG
-					has_country_flag = military_advisors_@FROM
-				}
-				is_full_state = yes
+				exists = yes
+				has_military_access_to = AFG
 			}
 			news_event = {
 				id = TalibanAttack.10
@@ -2387,22 +2280,17 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			every_other_country = {
-				limit = {
-					NOT = {
-						has_military_access_to = AFG
-						has_country_flag = military_advisors_@FROM
+			for_each_scope_loop = {
+				array = AFG_observer_array
+				if = {
+					limit = {
+						exists = yes
+						NOT = { is_in_array = { ROOT.AFG_coalition_array = THIS.id } }
 					}
-					OR = {
-						is_in_array = { FROM.influence_array = THIS.id }
-						is_neighbor_of = AFG
-						has_guaranteed = AFG
+					news_event = {
+						id = TalibanAttack.11
+						hours = 1
 					}
-					is_full_state = yes
-				}
-				news_event = {
-					id = TalibanAttack.11
-					hours = 1
 				}
 			}
 		}
@@ -2465,13 +2353,11 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: TalibanAttack.11.a executed"
 		name = TalibanAttack.11.a
 		effect_tooltip = {
-			random_country = {
+			random_scope_in_array = {
+				array = AFG.AFG_coalition_array
 				limit = {
-					OR = {
-						has_military_access_to = AFG
-						has_country_flag = military_advisors_@FROM
-					}
-					is_full_state = yes
+					exists = yes
+					has_military_access_to = AFG
 				}
 				add_manpower = -5
 				add_political_power = -20
@@ -2520,9 +2406,7 @@ country_event = {
 				}
 			}
 		}
-		any_country = {
-			is_in_array = { FROM.influence_array = THIS.id }
-		}
+		check_variable = { influence_array^num > 0 }
 	}
 	is_triggered_only = yes
 
@@ -2581,8 +2465,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 2 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.02 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2600,8 +2482,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 3 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.03 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2619,8 +2499,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 4 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.04 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2633,8 +2511,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 5 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.05 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		every_country = {
 			limit = {
@@ -2648,21 +2524,21 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			every_other_country = {
-				limit = {
-					NOT = {
-						is_in_array = { FROM.influence_array = THIS.id }
+			for_each_scope_loop = {
+				array = AFG_observer_array
+				if = {
+					limit = {
+						exists = yes
+						NOT = { is_in_array = { ROOT.influence_array = THIS.id } }
+						OR = {
+							is_neighbor_of = AFG
+							has_guaranteed = AFG
+						}
 					}
-					OR = {
-						is_neighbor_of = AFG
-						has_guaranteed = AFG
-						has_country_flag = military_advisors_@FROM
+					news_event = {
+						id = TalibanAttack.14
+						hours = 1
 					}
-					is_full_state = yes
-				}
-				news_event = {
-					id = TalibanAttack.14
-					hours = 1
 				}
 			}
 		}
@@ -2728,7 +2604,7 @@ country_event = {
 			any_owned_state = {
 				air_base > 0
 			}
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
 	is_triggered_only = yes
@@ -2763,8 +2639,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 3 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.03 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2782,8 +2656,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 4 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.04 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2801,8 +2673,6 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 5 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.05 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2815,24 +2685,16 @@ country_event = {
 			}
 			set_temp_variable = { taliban_strength_increase = 6 }
 			increase_taliban_strength = yes
-			add_to_variable = { var = taliban_attack_strength value = 0.06 }
-			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
 		hidden_effect = {
-			every_other_country = {
-				limit = {
-					OR = {
-						is_in_array = { FROM.influence_array = THIS.id }
-						has_military_access_to = AFG
-						is_neighbor_of = AFG
-						has_guaranteed = AFG
-						has_country_flag = military_advisors_@FROM
+			for_each_scope_loop = {
+				array = AFG_observer_array
+				if = {
+					limit = { exists = yes }
+					news_event = {
+						id = TalibanAttack.16
+						hours = 1
 					}
-					is_full_state = yes
-				}
-				news_event = {
-					id = TalibanAttack.16
-					hours = 1
 				}
 			}
 		}
@@ -4832,10 +4694,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Afghanistan.27.a executed"
 		ai_chance = { base = 100 }
 		add_ideas = no_women_in_military
-		set_temp_variable = { taliban_strength_decrease = -5 }
+		set_temp_variable = { taliban_strength_decrease = 5 }
 		decrease_taliban_strength = yes
-		add_to_variable = { var = taliban_attack_strength value = -0.05 }
-		clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		set_temp_variable = { temp_opinion = 5 }
 		change_the_ulema_opinion = yes
 	}
@@ -4864,10 +4724,8 @@ country_event = {
 		name = Afghanistan.28.a
 		log = "[GetDateText]: [This.GetName]: Afghanistan.28.a executed"
 		ai_chance = { base = 100 }
-		set_temp_variable = { taliban_strength_decrease = -5 }
+		set_temp_variable = { taliban_strength_decrease = 5 }
 		decrease_taliban_strength = yes
-		add_to_variable = { var = taliban_attack_strength value = -0.05 }
-		clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		set_temp_variable = { temp_opinion = 5 }
 		change_the_ulema_opinion = yes
 	}
@@ -4933,18 +4791,17 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = TAL
-		has_global_flag = Afghanistan_Civil_War_Over
+		has_global_flag = GLOBAL_afghanistan_civil_war_over
 		NOT = {
 			country_exists = AFG
-			has_global_flag = Afghanistan_Civil_War_Over
 		}
 	}
 	immediate = {
 		news_event = AfghanistanNews.17
-		clr_global_flag = Afghanistan_Civil_War_Over
-		clear_variable = taliban_strength
-		clr_country_flag = afg_active_taliban_insurgency
+		clr_global_flag = GLOBAL_afghanistan_civil_war_over
 		AFG = {
+			reset_taliban_strength = yes
+			clr_country_flag = AFG_active_taliban_insurgency
 			set_variable = { var = Neutral_Muslim_Brotherhood_leader value = 0 }
 			set_variable = { var = Neutral_Muslim_Brotherhood_leader value = 12 }
 			hidden_effect = { kill_country_leader = yes }
@@ -5006,12 +4863,7 @@ country_event = {
 			# 	disband = yes
 			# }
 		}
-		every_other_country = {
-			limit = {
-				has_country_flag = afg_support_counter_insurgency
-			}
-			clr_country_flag = afg_support_counter_insurgency
-		}
+		AFG_clear_ci_supporters = yes
 	}
 
 }
@@ -5076,7 +4928,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 40
-				USA = { has_country_flag = Operation_enduring_freedom }
+				USA = { has_country_flag = USA_wot_enduring_freedom }
 			}
 		}
 	}
@@ -5169,7 +5021,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 40
-				USA = { has_country_flag = bin_Laden_stays_home }
+				USA = { has_country_flag = USA_wot_extradition_refused }
 			}
 			modifier = {
 				factor = 10

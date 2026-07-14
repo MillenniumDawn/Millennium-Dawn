@@ -46,10 +46,32 @@ on_actions = {
 			1000 = 0
 
 			2000 = wot.15
-			2000 = wot.16
 			150 = wot.22
 		}
 		effect = {
+			#The shelterer can be annexed with bin Laden still at large; without this the manhunt stalls forever
+			if = {
+				limit = {
+					has_global_flag = GLOBAL_bin_laden_at_large
+					event_target:GLOBAL_bin_laden_hideout = { exists = no }
+				}
+				bin_laden_relocate_hideout = yes
+			}
+			#wot.26/wot.27 only fire while the Afghan war is still running; if it ends (or OEF launches)
+			#mid-relay the settlement chain dies silently. Route the stranded case to wot.28.
+			if = {
+				limit = {
+					has_country_flag = USA_wot_settlement_pending
+					OR = {
+						has_country_flag = USA_wot_enduring_freedom
+						NOT = { country_exists = TAL }
+						NOT = { country_exists = AFG }
+						NOT = { AFG = { has_war_with = TAL } }
+					}
+				}
+				clr_country_flag = USA_wot_settlement_pending
+				country_event = wot.28
+			}
 			if = {
 				limit = {
 					has_full_control_of_state = 787
@@ -162,7 +184,7 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = { has_global_flag = saddam_hussein_captured }
-					has_global_flag = success_of_operation_iraqi_freedom
+					has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded
 					IRQ = { is_subject_of = USA }
 					date > 2003.12.12
 					date < 2006.12.30
@@ -174,7 +196,7 @@ on_actions = {
 					NOT = { has_global_flag = saddam_sentenced_to_death }
 					date > 2006.12.29
 					date < 2015.1.1
-					has_global_flag = success_of_operation_iraqi_freedom
+					has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded
 					IRQ = { is_subject_of = USA }
 				}
 				set_global_flag = saddam_sentenced_to_death
