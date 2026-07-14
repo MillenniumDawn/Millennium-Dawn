@@ -1,0 +1,90 @@
+#War on Terror:
+
+bin_laden_set_hideout = {
+	save_global_event_target_as = hideout_of_bin_laden
+	set_country_flag = hideout_of_bin_laden
+	set_global_flag = bin_laden_at_large
+}
+
+#Each tier only runs if the previous one found nobody, so the candidate set can never diverge from a separate guard.
+bin_laden_relocate_hideout = {
+	if = {
+		limit = { has_global_flag = bin_laden_at_large }
+		clear_global_event_target = hideout_of_bin_laden
+		clr_global_flag = bin_laden_at_large
+	}
+
+	#A Salafist-ruled Sunni state shelters him first. is_full_state matters: every other fascism+sunni tag
+	#in MD is a stateless militia (AIA, ISI, TTP...), and he cannot go to ground in a country with no territory.
+	random_country = {
+		limit = {
+			exists = yes
+			is_full_state = yes
+			NOT = { original_tag = TAL }
+			NOT = { original_tag = AFG }
+			NOT = { original_tag = SAU }
+			has_government = fascism
+			has_idea = sunni
+		}
+		bin_laden_set_hideout = yes
+	}
+
+	#Otherwise the tribal areas of Pakistan, historically his refuge
+	if = {
+		limit = {
+			NOT = { has_global_flag = bin_laden_at_large }
+			country_exists = PAK
+		}
+		random_list = {
+			70 = {
+				PAK = { bin_laden_set_hideout = yes }
+			}
+			30 = {
+				random_country = {
+					limit = {
+						exists = yes
+						is_full_state = yes
+						NOT = { original_tag = TAL }
+						NOT = { original_tag = AFG }
+						NOT = { original_tag = PAK }
+						has_idea = sunni
+					}
+					bin_laden_set_hideout = yes
+				}
+			}
+		}
+	}
+
+	#Failing that, any Sunni state at all
+	if = {
+		limit = { NOT = { has_global_flag = bin_laden_at_large } }
+		random_country = {
+			limit = {
+				exists = yes
+				is_full_state = yes
+				NOT = { original_tag = TAL }
+				NOT = { original_tag = AFG }
+				has_idea = sunni
+			}
+			bin_laden_set_hideout = yes
+		}
+	}
+
+	#Nowhere left to run. Without this the manhunt chain stalls forever with no hideout to find.
+	if = {
+		limit = { NOT = { has_global_flag = bin_laden_at_large } }
+		set_global_flag = bin_laden_out_of_the_game
+	}
+}
+
+bin_laden_clear_hideout = {
+	if = {
+		limit = { has_global_flag = bin_laden_at_large }
+		event_target:hideout_of_bin_laden = {
+			clr_country_flag = hideout_of_bin_laden
+		}
+		clear_global_event_target = hideout_of_bin_laden
+		clr_global_flag = bin_laden_at_large
+	}
+	set_global_flag = bin_laden_out_of_the_game
+}

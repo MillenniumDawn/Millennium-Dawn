@@ -61,8 +61,10 @@ war_on_terror_category = {
 
 		visible = {
 			has_country_flag = USA_911_happened
-			AFG = {
-				has_war_with = TAL
+			country_exists = TAL
+			OR = {
+				AFG = { has_war_with = TAL }
+				NOT = { country_exists = AFG }
 			}
 			NOT = { has_country_flag = collapsed_nation }
 		}
@@ -79,6 +81,7 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_demand_extradition_of_bin_laden"
+			custom_effect_tooltip = TT_EXTRADITION_TALIBAN_WILL_ANSWER
 			TAL = { country_event = { id = wot.9 days = 3 } }
 		}
 
@@ -98,6 +101,54 @@ war_on_terror_category = {
 			}
 		}
 	}
+	#Take the demand to the Security Council before reaching for the rifle
+	usa_seek_unsc_extradition_mandate = {
+
+		icon = GFX_decision_generic_civil_support
+
+		visible = {
+			has_country_flag = USA_911_happened
+			country_exists = TAL
+			NOT = { has_country_flag = Operation_enduring_freedom }
+			NOT = { has_country_flag = collapsed_nation }
+			TAL = {
+				NOT = { has_country_flag = unsc_extradition_demanded }
+				NOT = { has_country_flag = unsc_extradition_rejected }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+				has_country_flag = war_on_terror_speech
+			}
+			is_on_un_sec_council = yes
+		}
+
+		cost = 75
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision usa_seek_unsc_extradition_mandate"
+			custom_effect_tooltip = TT_EXTRADITION_UNSC_MANDATE
+			set_temp_variable = { sc_new_vote_type = 7 }
+			set_temp_variable = { sc_new_vote_nation = TAL.id }
+			update_sc_vote = yes
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 3
+				has_country_flag = USA_country_flag_legal_interventionism
+			}
+			modifier = {
+				factor = 0
+				has_country_flag = USA_country_flag_arms_dealer
+			}
+		}
+	}
+
 	usa_operation_enduring_freedom = {
 		visible = {
 			has_country_flag = bin_Laden_stays_home
@@ -162,66 +213,11 @@ war_on_terror_category = {
 					id = wotnews.7
 					hours = 6
 				}
-				#Bin Laden escapes
-				##If there is a salafist country, bin Laden goes there
-				if = {
-					limit = {
-						any_country = {
-							NOT = { original_tag = TAL }
-							NOT = { original_tag = AFG }
-							NOT = { original_tag = SAU }
-							has_government = fascism
-						}
-					}
-					random_country = {
-						limit = {
-							NOT = { original_tag = TAL }
-							NOT = { original_tag = AFG }
-							NOT = { original_tag = SAU }
-							has_government = fascism
-							has_idea = sunni
-						}
-						save_global_event_target_as = hideout_of_bin_laden
-						set_country_flag = hideout_of_bin_laden
-					}
-				}
-				##If no Salafist countries, go to a random_hours Sunni country, with priority on Pakistan
-				else_if = {
-					limit = { country_exists = PAK }
-					random_list = {
-						70 = {
-							PAK = {
-								save_global_event_target_as = hideout_of_bin_laden
-								set_country_flag = hideout_of_bin_laden
-							}
-						}
-						30 = {
-							random_country = {
-								limit = {
-									NOT = { original_tag = TAL }
-									NOT = { original_tag = AFG }
-									NOT = { original_tag = PAK }
-									has_idea = sunni
-								}
-								save_global_event_target_as = hideout_of_bin_laden
-								set_country_flag = hideout_of_bin_laden
-							}
-						}
-					}
-				}
-				##If Pakistan doesn't exist, just go to a random_hours Sunni country
-				else_if = {
-					limit = { NOT = { country_exists = PAK } }
-					random_country = {
-						limit = {
-							NOT = { original_tag = TAL }
-							NOT = { original_tag = AFG }
-							has_idea = sunni
-						}
-						save_global_event_target_as = hideout_of_bin_laden
-						set_country_flag = hideout_of_bin_laden
-					}
-				}
+				bin_laden_relocate_hideout = yes
+			}
+			if = {
+				limit = { has_global_flag = bin_laden_at_large }
+				news_event = { id = wotnews.17 hours = 12 }
 			}
 		}
 
@@ -385,11 +381,10 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_petition_invasion_of_iraq"
-			ENG = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
-			CHI = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
-			SOV = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
-			FRA = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
 			set_country_flag = US_UN_vote_on_iraq
+			set_temp_variable = { sc_new_vote_type = 6 }
+			set_temp_variable = { sc_new_vote_nation = IRQ.id }
+			update_sc_vote = yes
 		}
 
 		ai_will_do = {

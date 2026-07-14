@@ -465,7 +465,25 @@ country_event = {
 	option = {
 		name = wot.9.a
 		log = "[GetDateText]: [This.GetName]: wot.9.a executed"
-		ai_chance = { factor = 95 }
+		ai_chance = {
+			base = 95
+			modifier = {
+				factor = 0.5
+				has_country_flag = unsc_extradition_demanded
+			}
+			modifier = {
+				factor = 0.6
+				has_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
+			}
+			modifier = {
+				factor = 0.7
+				has_war_support < 0.4
+			}
+			modifier = {
+				factor = 1.3
+				has_country_leader_with_trait = salafist_Caliphate
+			}
+		}
 		FROM = { country_event = { id = wot.10 days = 3 } }
 		USA = {
 			add_opinion_modifier = {
@@ -480,8 +498,26 @@ country_event = {
 	}
 	option = {
 		name = wot.9.b
-		log = "[GetDateText]: [This.GetName]: wot.9.a executed"
-		ai_chance = { factor = 5 }
+		log = "[GetDateText]: [This.GetName]: wot.9.b executed"
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 3
+				has_country_flag = unsc_extradition_demanded
+			}
+			modifier = {
+				factor = 2
+				has_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
+			}
+			modifier = {
+				factor = 2
+				has_war_support < 0.4
+			}
+			modifier = {
+				factor = 0.5
+				has_country_leader_with_trait = salafist_Caliphate
+			}
+		}
 		FROM = { country_event = { id = wot.11 days = 3 } }
 		add_stability = -0.10
 		USA = {
@@ -743,45 +779,6 @@ country_event = {
 	}
 }
 
-#US Petitions invasion of Iraq
-country_event = {
-	id = wot.14
-	title = wot.14.t
-	desc = wot.14.d
-	picture = GFX_iraq_war3
-
-	is_triggered_only = yes
-
-	option = {
-		name = wot.14.a
-		log = "[GetDateText]: [This.GetName]: wot.14.a executed"
-
-		set_country_flag = voted_in_favor_of_iraq_invasion
-		ai_chance = {
-			factor = 5
-			modifier = {
-				factor = 5
-				original_tag = ENG
-			}
-		}
-	}
-
-	option = {
-		name = wot.14.b
-		log = "[GetDateText]: [This.GetName]: wot.14.b executed"
-		set_country_flag = voted_against_of_iraq_invasion
-
-		ai_chance = {
-			factor = 95
-			modifier = {
-				factor = 0.8
-				original_tag = ENG
-			}
-		}
-	}
-
-}
-
 # Petition denied
 country_event = {
 	id = wot.15
@@ -796,12 +793,7 @@ country_event = {
 	trigger = {
 		NOT = { has_country_flag = US_petition_denied_event }
 		has_country_flag = US_UN_vote_on_iraq
-		OR = {
-			ENG = { has_country_flag = voted_against_of_iraq_invasion }
-			CHI = { has_country_flag = voted_against_of_iraq_invasion }
-			SOV = { has_country_flag = voted_against_of_iraq_invasion }
-			FRA = { has_country_flag = voted_against_of_iraq_invasion }
-		}
+		IRQ = { has_country_flag = unsc_force_denied }
 	}
 
 	# Go Forward with the Invasion
@@ -839,10 +831,7 @@ country_event = {
 	trigger = {
 		NOT = { has_country_flag = US_petition_accepted_event }
 		has_country_flag = US_UN_vote_on_iraq
-		ENG = { has_country_flag = voted_in_favor_of_iraq_invasion }
-		CHI = { has_country_flag = voted_in_favor_of_iraq_invasion }
-		SOV = { has_country_flag = voted_in_favor_of_iraq_invasion }
-		FRA = { has_country_flag = voted_in_favor_of_iraq_invasion }
+		IRQ = { has_country_flag = unsc_force_authorized }
 	}
 
 	# Approved the Petition
@@ -948,64 +937,10 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.10 }
 		add_relative_party_popularity = yes
 
-		#If there is a salafist country, bin Laden goes there
+		bin_laden_relocate_hideout = yes
 		if = {
-			limit = {
-				any_country = {
-					NOT = { original_tag = TAL }
-					NOT = { original_tag = AFG }
-					NOT = { original_tag = SAU }
-					has_government = fascism
-				}
-			}
-			random_country = {
-				limit = {
-					NOT = { original_tag = TAL }
-					NOT = { original_tag = AFG }
-					NOT = { original_tag = SAU }
-					has_government = fascism
-					has_idea = sunni
-				}
-				save_global_event_target_as = hideout_of_bin_laden
-				set_country_flag = hideout_of_bin_laden
-			}
-		}
-		#If no Salafist countries, go to a random Sunni country, with priority on Pakistan
-		else_if = {
-			limit = { country_exists = PAK }
-			random_list = {
-				70 = {
-					PAK = {
-						save_global_event_target_as = hideout_of_bin_laden
-						set_country_flag = hideout_of_bin_laden
-					}
-				}
-				30 = {
-					random_country = {
-						limit = {
-							NOT = { original_tag = TAL }
-							NOT = { original_tag = AFG }
-							NOT = { original_tag = PAK }
-							has_idea = sunni
-						}
-						save_global_event_target_as = hideout_of_bin_laden
-						set_country_flag = hideout_of_bin_laden
-					}
-				}
-			}
-		}
-		#If Pakistan doesn't exist, just go to a random Sunni country
-		else_if = {
-			limit = { NOT = { country_exists = PAK } }
-			random_country = {
-				limit = {
-					NOT = { original_tag = TAL }
-					NOT = { original_tag = AFG }
-					has_idea = sunni
-				}
-				save_global_event_target_as = hideout_of_bin_laden
-				set_country_flag = hideout_of_bin_laden
-			}
+			limit = { has_global_flag = bin_laden_at_large }
+			news_event = { id = wotnews.17 hours = 12 }
 		}
 	}
 
@@ -1043,44 +978,26 @@ country_event = {
 	desc = wot.22.d
 	picture = GFX_bin_laden
 	is_triggered_only = yes
-	fire_only_once = yes
-	immediate = {
-		set_country_flag = USA_bin_laden_found_by_security_services
-	}
-	trigger = {
-		NOT = { has_country_flag = USA_bin_laden_found_by_security_services }
-		any_country = {
-			exists = yes
-			has_country_flag = hideout_of_bin_laden
-		}
-	}
 
-	mean_time_to_happen = {
-		modifier = {
-			factor = 1.5
-			date > 2001.1.1
-		}
-		modifier = {
-			factor = 1.5
-			date > 2002.1.1
-		}
-		modifier = {
-			factor = 1.5
-			date > 2003.1.1
-		}
+	trigger = {
+		has_global_flag = bin_laden_at_large
+		NOT = { has_country_flag = USA_bin_laden_hunt_cooldown }
 	}
 
 	option = {
 		name = wot.22.a
 		log = "[GetDateText]: [This.GetName]: wot.22.a"
-		ai_chance = { factor = 90 }
+		ai_chance = { base = 90 }
+		set_country_flag = { flag = USA_bin_laden_hunt_cooldown days = 180 value = 1 }
 		event_target:hideout_of_bin_laden = { country_event = { id = wot.23 days = 1 } }
 	}
 
 	option = {
 		name = wot.22.b
 		log = "[GetDateText]: [This.GetName]: wot.22.b"
-		ai_chance = { factor = 10 }
+		ai_chance = { base = 10 }
+		custom_effect_tooltip = TT_BIN_LADEN_HUNT_DEFERRED
+		set_country_flag = { flag = USA_bin_laden_hunt_cooldown days = 180 value = 1 }
 	}
 
 }
@@ -1156,7 +1073,9 @@ country_event = {
 	option = {
 		name = wot.24.a		#
 		log = "[GetDateText]: [This.GetName]: wot.24.a"
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
+		custom_effect_tooltip = TT_BIN_LADEN_KILLED
+		bin_laden_clear_hideout = yes
 		hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
 	}
 
@@ -1186,7 +1105,7 @@ country_event = {
 	option = {
 		name = wot.25.b		#
 		log = "[GetDateText]: [This.GetName]: wot.25.b"
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 		if = {
 			limit = { has_dlc = "By Blood Alone" }
 			send_embargo = FROM
@@ -1201,6 +1120,37 @@ country_event = {
 			}
 			THIS = { remove_ideas = USA_usaid }
 		}
+	}
+
+	#Abbottabad: go in without permission
+	option = {
+		name = wot.25.c
+		log = "[GetDateText]: [This.GetName]: wot.25.c"
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 3
+				has_country_leader_with_trait = war_on_terror_leader
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+		custom_effect_tooltip = TT_BIN_LADEN_KILLED
+		bin_laden_clear_hideout = yes
+		add_war_support = 0.05
+		FROM = {
+			add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty }
+			reverse_add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty }
+			add_stability = -0.05
+			add_political_power = -50
+		}
+		add_named_threat = {
+			threat = 2
+			name = USA_unilateral_raid_threat
+		}
+		hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
 	}
 
 }
@@ -1481,14 +1431,29 @@ news_event = {
 
 	option = {
 		name = wotnews.16.a
-		if = { limit = { original_tag = USA }
-			set_global_flag = bin_laden_out_of_the_game
-		}
 		if = {
 			limit = { has_country_flag = hideout_of_bin_laden }
-			clear_global_event_target = hideout_of_bin_laden
-			clr_country_flag = hideout_of_bin_laden
+			custom_effect_tooltip = TT_BIN_LADEN_RAID_ON_OUR_SOIL
 			add_popularity = { ideology = democratic popularity = -0.10 }
+		}
+	}
+}
+
+#Osama bin Laden slips out of Afghanistan
+news_event = {
+	id = wotnews.17
+	title = wotnews.17.t
+	desc = wotnews.17.d
+	picture = GFX_bin_laden
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = wotnews.17.a
+
+		ai_chance = {
+			base = 1
 		}
 	}
 }
