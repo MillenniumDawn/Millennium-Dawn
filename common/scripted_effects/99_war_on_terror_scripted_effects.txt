@@ -1,17 +1,20 @@
 #War on Terror:
 
 bin_laden_set_hideout = {
-	save_global_event_target_as = wot_bin_laden_hideout
-	set_country_flag = wot_bin_laden_hideout
-	set_global_flag = wot_bin_laden_at_large
+	save_global_event_target_as = GLOBAL_bin_laden_hideout
+	set_country_flag = wot_sheltering_bin_laden
+	set_global_flag = GLOBAL_bin_laden_at_large
 }
 
 #Each tier only runs if the previous one found nobody, so the candidate set can never diverge from a separate guard.
 bin_laden_relocate_hideout = {
 	if = {
-		limit = { has_global_flag = wot_bin_laden_at_large }
-		clear_global_event_target = wot_bin_laden_hideout
-		clr_global_flag = wot_bin_laden_at_large
+		limit = { has_global_flag = GLOBAL_bin_laden_at_large }
+		event_target:GLOBAL_bin_laden_hideout = {
+			clr_country_flag = wot_sheltering_bin_laden
+		}
+		clear_global_event_target = GLOBAL_bin_laden_hideout
+		clr_global_flag = GLOBAL_bin_laden_at_large
 	}
 
 	#A Salafist-ruled Sunni state shelters him first. is_full_state matters: every other fascism+sunni tag
@@ -32,7 +35,7 @@ bin_laden_relocate_hideout = {
 	#Otherwise the tribal areas of Pakistan, historically his refuge
 	if = {
 		limit = {
-			NOT = { has_global_flag = wot_bin_laden_at_large }
+			NOT = { has_global_flag = GLOBAL_bin_laden_at_large }
 			country_exists = PAK
 		}
 		random_list = {
@@ -57,7 +60,7 @@ bin_laden_relocate_hideout = {
 
 	#Failing that, any Sunni state at all
 	if = {
-		limit = { NOT = { has_global_flag = wot_bin_laden_at_large } }
+		limit = { NOT = { has_global_flag = GLOBAL_bin_laden_at_large } }
 		random_country = {
 			limit = {
 				exists = yes
@@ -72,21 +75,21 @@ bin_laden_relocate_hideout = {
 
 	#Nowhere left to run. Without this the manhunt chain stalls forever with no hideout to find.
 	if = {
-		limit = { NOT = { has_global_flag = wot_bin_laden_at_large } }
-		set_global_flag = wot_bin_laden_neutralised
+		limit = { NOT = { has_global_flag = GLOBAL_bin_laden_at_large } }
+		set_global_flag = GLOBAL_bin_laden_killed_or_captured
 	}
 }
 
 bin_laden_clear_hideout = {
 	if = {
-		limit = { has_global_flag = wot_bin_laden_at_large }
-		event_target:wot_bin_laden_hideout = {
-			clr_country_flag = wot_bin_laden_hideout
+		limit = { has_global_flag = GLOBAL_bin_laden_at_large }
+		event_target:GLOBAL_bin_laden_hideout = {
+			clr_country_flag = wot_sheltering_bin_laden
 		}
-		clear_global_event_target = wot_bin_laden_hideout
-		clr_global_flag = wot_bin_laden_at_large
+		clear_global_event_target = GLOBAL_bin_laden_hideout
+		clr_global_flag = GLOBAL_bin_laden_at_large
 	}
-	set_global_flag = wot_bin_laden_neutralised
+	set_global_flag = GLOBAL_bin_laden_killed_or_captured
 
 	#Decapitation. The network survives him, but it is badly degraded and far more exposed.
 	set_temp_variable = { wot_aq_threat_change = -30 }

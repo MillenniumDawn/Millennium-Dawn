@@ -22,6 +22,7 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - Remove unused/commented-out code
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`); **snake_case** for all identifiers
+- Flag naming: `TAG_` for a flag that only ever lands on one nation, `GLOBAL_` for `set_global_flag` and global event targets, a bare domain prefix (e.g. `wot_`) for a flag that can land on any nation. Name the thing, not the mechanic: `wot_refused_to_support_us`, not `wot_support_none`
 
 ## Performance
 
