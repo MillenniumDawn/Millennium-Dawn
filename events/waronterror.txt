@@ -58,7 +58,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: wot.1.a executed"
 		news_event = { hours = 18 id = wotnews.1 }
 		country_event = { id = wot.2 hours = 12 }
-		#Al-Qaeda is terror org slot 0. What the CIA actually knows about them decides whether the plot is caught.
+		#What the CIA actually knows about Al-Qaeda decides whether the plot is caught.
+		wot_resolve_al_qaeda_slot = yes
 		random_list = {
 			5 = {
 				modifier = {
@@ -67,15 +68,18 @@ country_event = {
 				}
 				modifier = {
 					add = 10
-					check_variable = { international_terror_org_intel^0 > 40 }
+					check_variable = { aq_slot > -1 }
+					check_variable = { international_terror_org_intel^aq_slot > 40 }
 				}
 				modifier = {
 					add = 15
-					check_variable = { international_terror_org_intel^0 > 60 }
+					check_variable = { aq_slot > -1 }
+					check_variable = { international_terror_org_intel^aq_slot > 60 }
 				}
 				modifier = {
 					add = 20
-					check_variable = { international_terror_org_intel^0 > 80 }
+					check_variable = { aq_slot > -1 }
+					check_variable = { international_terror_org_intel^aq_slot > 80 }
 				}
 				set_country_flag = USA_wot_plot_disrupted
 			}
@@ -122,10 +126,19 @@ country_event = {
 		hidden_effect = {
 			set_country_flag = USA_wot_attack_occurred
 			mark_focus_tree_layout_dirty = yes
-			#The attack announces Al-Qaeda to the world: far more dangerous, and far more visible.
-			set_temp_variable = { wot_aq_threat_change = 25 }
-			set_temp_variable = { wot_aq_visibility_change = 30 }
-			wot_al_qaeda_shift = yes
+			if = {
+				limit = { NOT = { has_country_flag = USA_wot_plot_disrupted } }
+				#The attack announces Al-Qaeda to the world: far more dangerous, and far more visible.
+				set_temp_variable = { wot_aq_threat_change = 25 }
+				set_temp_variable = { wot_aq_visibility_change = 30 }
+				wot_al_qaeda_shift = yes
+			}
+			else = {
+				#A foiled plot exposes the network without handing it a propaganda victory
+				set_temp_variable = { wot_aq_threat_change = 0 }
+				set_temp_variable = { wot_aq_visibility_change = 10 }
+				wot_al_qaeda_shift = yes
+			}
 			set_temp_variable = { wot_aq_intel_change = 20 }
 			wot_al_qaeda_intel_gain = yes
 			every_other_country = {							#September 12th: International Reactions
@@ -657,6 +670,14 @@ country_event = {
 						TAL = { has_country_flag = unsc_extradition_demanded }
 					}
 					country_event = { id = wot.21 days = 7 }	#bin Laden captured
+				}
+			}
+			#Demand met: the standing UNSC demand and the sanctions backing it lapse
+			if = {
+				limit = { TAL = { has_country_flag = unsc_extradition_demanded } }
+				TAL = {
+					clr_country_flag = unsc_extradition_demanded
+					remove_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
 				}
 			}
 		}
@@ -1519,6 +1540,8 @@ news_event = {
 			limit = { has_country_flag = wot_sheltering_bin_laden }
 			custom_effect_tooltip = TT_BIN_LADEN_RAID_ON_OUR_SOIL
 			add_popularity = { ideology = democratic popularity = -0.10 }
+			clr_country_flag = wot_sheltering_bin_laden
+			clear_global_event_target = GLOBAL_bin_laden_hideout
 		}
 	}
 }
