@@ -140,7 +140,10 @@ war_on_terror_category = {
 		}
 
 		cancel_trigger = {
-			NOT = { AFG = { has_war_with = TAL } }
+			OR = {
+				NOT = { AFG = { has_war_with = TAL } }
+				has_country_flag = USA_wot_enduring_freedom
+			}
 		}
 
 		cost = 150
@@ -153,6 +156,7 @@ war_on_terror_category = {
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 			save_global_event_target_as = GLOBAL_wot_settlement_broker
+			set_country_flag = USA_wot_settlement_pending
 
 			custom_effect_tooltip = TT_AFGHAN_SETTLEMENT_OFFERED
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
@@ -338,11 +342,15 @@ war_on_terror_category = {
 				wot_al_qaeda_shift = yes
 				set_temp_variable = { wot_aq_intel_change = 20 }
 				wot_al_qaeda_intel_gain = yes
-				bin_laden_relocate_hideout = yes
 			}
+			#Only if he is still in Afghanistan: an earlier escape (wot.20) already moved and announced him
 			if = {
-				limit = { has_global_flag = GLOBAL_bin_laden_at_large }
-				news_event = { id = wotnews.17 hours = 12 }
+				limit = { NOT = { has_global_flag = GLOBAL_bin_laden_at_large } }
+				hidden_effect = { bin_laden_relocate_hideout = yes }
+				if = {
+					limit = { has_global_flag = GLOBAL_bin_laden_at_large }
+					news_event = { id = wotnews.17 hours = 12 }
+				}
 			}
 		}
 
