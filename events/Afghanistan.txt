@@ -470,6 +470,9 @@ country_event = {
 		custom_effect_tooltip = AFG_support_afghan_counter_insurgency_tt
 		add_ideas = AFG_afghan_morning_taliban_by_night
 		hidden_effect = {
+			#The monthly refresh is gated on the flag we just set, so without this the coalition and observer
+			#arrays sit empty until the next tick and the first quarter's attacks reach nobody.
+			AFG_refresh_insurgency_arrays = yes
 			TAL = {
 				division_template = {
 					name = "Da Zayi Milisho Lawa Taleban"
@@ -818,14 +821,7 @@ country_event = {
 			# 	disband = yes
 			# }
 		}
-		for_each_scope_loop = {
-			array = AFG.AFG_ci_array
-			if = {
-				limit = { exists = yes }
-				clr_country_flag = wot_supporting_afghan_counter_insurgency
-			}
-		}
-		AFG = { clear_array = AFG_ci_array }
+		AFG_clear_ci_supporters = yes
 	}
 
 }
@@ -891,6 +887,7 @@ country_event = {
 	immediate = {
 		log = "[GetDateText]: [Root.GetName]: event TalibanInsurgency.12"
 		clr_country_flag = AFG_active_taliban_insurgency
+		AFG_clear_ci_supporters = yes
 		reset_taliban_strength = yes
 	}
 }
@@ -1847,11 +1844,13 @@ country_event = {
 			set_temp_variable = { taliban_strength_increase = 5 }
 			increase_taliban_strength = yes
 		}
+		#AFG_coalition_array is already "GA members with military access to AFG", so match against it
+		#rather than re-running has_military_access_to on every tag in the world
 		every_country = {
 			limit = {
 				OR = {
 					is_in_array = { FROM.influence_array = THIS.id }
-					has_military_access_to = AFG
+					is_in_array = { FROM.AFG_coalition_array = THIS.id }
 				}
 				is_full_state = yes
 			}
@@ -4795,7 +4794,6 @@ country_event = {
 		has_global_flag = GLOBAL_afghanistan_civil_war_over
 		NOT = {
 			country_exists = AFG
-			has_global_flag = GLOBAL_afghanistan_civil_war_over
 		}
 	}
 	immediate = {
@@ -4865,14 +4863,7 @@ country_event = {
 			# 	disband = yes
 			# }
 		}
-		for_each_scope_loop = {
-			array = AFG.AFG_ci_array
-			if = {
-				limit = { exists = yes }
-				clr_country_flag = wot_supporting_afghan_counter_insurgency
-			}
-		}
-		AFG = { clear_array = AFG_ci_array }
+		AFG_clear_ci_supporters = yes
 	}
 
 }

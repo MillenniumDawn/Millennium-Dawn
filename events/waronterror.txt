@@ -126,19 +126,16 @@ country_event = {
 		hidden_effect = {
 			set_country_flag = USA_wot_attack_occurred
 			mark_focus_tree_layout_dirty = yes
+			#The attack announces Al-Qaeda to the world: far more dangerous, and far more visible.
+			set_temp_variable = { wot_aq_threat_change = 25 }
+			set_temp_variable = { wot_aq_visibility_change = 30 }
 			if = {
-				limit = { NOT = { has_country_flag = USA_wot_plot_disrupted } }
-				#The attack announces Al-Qaeda to the world: far more dangerous, and far more visible.
-				set_temp_variable = { wot_aq_threat_change = 25 }
-				set_temp_variable = { wot_aq_visibility_change = 30 }
-				wot_al_qaeda_shift = yes
-			}
-			else = {
+				limit = { has_country_flag = USA_wot_plot_disrupted }
 				#A foiled plot exposes the network without handing it a propaganda victory
 				set_temp_variable = { wot_aq_threat_change = 0 }
 				set_temp_variable = { wot_aq_visibility_change = 10 }
-				wot_al_qaeda_shift = yes
 			}
+			wot_al_qaeda_shift = yes
 			set_temp_variable = { wot_aq_intel_change = 20 }
 			wot_al_qaeda_intel_gain = yes
 			every_other_country = {							#September 12th: International Reactions
@@ -909,9 +906,11 @@ country_event = {
 	trigger = {
 		NOT = { has_country_flag = USA_wot_iraq_vote_concluded }
 		has_country_flag = USA_wot_iraq_petition_pending
-		OR = {
-			IRQ = { has_country_flag = unsc_material_breach }
-			IRQ = { has_country_flag = unsc_disarmament_rejected }
+		IRQ = {
+			OR = {
+				has_country_flag = unsc_material_breach
+				has_country_flag = unsc_disarmament_rejected
+			}
 		}
 	}
 
@@ -937,16 +936,7 @@ country_event = {
 				name = USA_iraq_invasion_threat
 			}
 			add_war_support = -0.05
-			for_each_scope_loop = {
-				array = global.security_council_members
-				if = {
-					limit = {
-						exists = yes
-						NOT = { tag = ROOT }
-					}
-					add_opinion_modifier = { target = ROOT modifier = territorial_integrity_violation }
-				}
-			}
+			unsc_members_condemn_us = yes
 		}
 	}
 
@@ -1090,14 +1080,20 @@ country_event = {
 
 	trigger = {
 		has_global_flag = GLOBAL_bin_laden_at_large
+		event_target:GLOBAL_bin_laden_hideout = { exists = yes }
 		NOT = { has_country_flag = USA_wot_manhunt_cooldown }
+	}
+
+	#Cooldown here, not in the options: the weekly roll would otherwise re-fire this while the first popup
+	#is still sitting unanswered in the player's queue.
+	immediate = {
+		set_country_flag = { flag = USA_wot_manhunt_cooldown days = 180 value = 1 }
 	}
 
 	option = {
 		name = wot.22.a
 		log = "[GetDateText]: [This.GetName]: wot.22.a"
 		ai_chance = { base = 90 }
-		set_country_flag = { flag = USA_wot_manhunt_cooldown days = 180 value = 1 }
 		event_target:GLOBAL_bin_laden_hideout = { country_event = { id = wot.23 days = 1 } }
 	}
 
@@ -1106,7 +1102,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: wot.22.b"
 		ai_chance = { base = 10 }
 		custom_effect_tooltip = TT_BIN_LADEN_HUNT_DEFERRED
-		set_country_flag = { flag = USA_wot_manhunt_cooldown days = 180 value = 1 }
 	}
 
 }
@@ -1199,6 +1194,7 @@ country_event = {
 
 	is_triggered_only = yes
 
+	#Back off. The relationship is worth more than the man, and they talk to us because of it.
 	option = {
 		name = wot.25.a		#
 		log = "[GetDateText]: [This.GetName]: wot.25.a"
@@ -1210,7 +1206,14 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
 		add_relative_party_popularity = yes
+
+		custom_effect_tooltip = TT_WOT_INTEL_COOPERATION
+		set_temp_variable = { wot_aq_intel_change = 15 }
+		wot_al_qaeda_intel_gain = yes
+		FROM = { reverse_add_opinion_modifier = { target = ROOT modifier = medium_increase } }
 	}
+
+	#Squeeze them. They keep him, but the sanctuary gets expensive and loud.
 	option = {
 		name = wot.25.b		#
 		log = "[GetDateText]: [This.GetName]: wot.25.b"
@@ -1229,9 +1232,20 @@ country_event = {
 			}
 			FROM = { remove_ideas = USA_usaid }
 		}
+
+		custom_effect_tooltip = TT_WOT_INTEL_PRESSURE
+		set_temp_variable = { wot_aq_intel_change = 5 }
+		wot_al_qaeda_intel_gain = yes
+		set_temp_variable = { wot_aq_threat_change = -5 }
+		set_temp_variable = { wot_aq_visibility_change = 10 }
+		wot_al_qaeda_shift = yes
+		FROM = {
+			add_stability = -0.05
+			add_political_power = -50
+		}
 	}
 
-	#Abbottabad: go in without permission
+	#Abbottabad: go in without permission. The helicopters do not always come back.
 	option = {
 		name = wot.25.c
 		log = "[GetDateText]: [This.GetName]: wot.25.c"
@@ -1246,12 +1260,12 @@ country_event = {
 				has_war_with = FROM
 			}
 		}
-		custom_effect_tooltip = TT_BIN_LADEN_KILLED
-		bin_laden_clear_hideout = yes
-		add_war_support = 0.05
+		add_political_power = -75
+		custom_effect_tooltip = TT_BIN_LADEN_RAID_UNILATERAL
 		FROM = {
+			#They see a violated border; we see the people who hid him and turned us away
 			add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty }
-			reverse_add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty }
+			reverse_add_opinion_modifier = { target = ROOT modifier = accused_of_terrorism_support }
 			add_stability = -0.05
 			add_political_power = -50
 		}
@@ -1259,9 +1273,170 @@ country_event = {
 			threat = 2
 			name = USA_unilateral_raid_threat
 		}
-		hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
+		#Going in blind, over a border, without the host's help. It usually works. Usually.
+		random_list = {
+			75 = {
+				add_war_support = 0.05
+				bin_laden_clear_hideout = yes
+				hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
+			}
+			25 = {
+				add_war_support = -0.10
+				add_stability = -0.05
+				unsc_members_condemn_us = yes
+				bin_laden_relocate_hideout = yes
+				hidden_effect = { news_event = { id = wotnews.20 days = 4 } }
+			}
+		}
 	}
 
+}
+
+#Washington offers the Taliban terms: hand over the war, keep the country, wear the sanctions
+country_event = {
+	id = wot.26
+	title = wot.26.t
+	desc = wot.26.d
+	picture = GFX_bonn_agreement
+
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = AFG
+		has_war_with = AFG
+	}
+
+	option = {	#Take the terms to Kabul
+		name = wot.26.a
+		log = "[GetDateText]: [This.GetName]: wot.26.a"
+
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 4
+				surrender_progress > 0.3
+			}
+			modifier = {
+				factor = 0.2
+				AFG = { surrender_progress > 0.3 }
+			}
+		}
+
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		effect_tooltip = {
+			add_ideas = TAL_pariah_settlement
+		}
+		AFG = { country_event = { id = wot.27 days = 2 } }
+	}
+
+	option = {	#We did not fight the Soviets to be sanctioned by Washington
+		name = wot.26.b
+		log = "[GetDateText]: [This.GetName]: wot.26.b"
+
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 4
+				AFG = { surrender_progress > 0.3 }
+			}
+			modifier = {
+				factor = 0.25
+				surrender_progress > 0.3
+			}
+		}
+
+		add_war_support = 0.05
+		event_target:GLOBAL_wot_settlement_broker = { country_event = { id = wot.28 days = 2 } }
+	}
+}
+
+#Kabul is handed a peace it did not ask for
+country_event = {
+	id = wot.27
+	title = wot.27.t
+	desc = wot.27.d
+	picture = GFX_bonn_agreement
+
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = TAL
+		has_war_with = TAL
+	}
+
+	option = {	#Sign
+		name = wot.27.a
+		log = "[GetDateText]: [This.GetName]: wot.27.a"
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 4
+				surrender_progress > 0.25
+			}
+			modifier = {
+				factor = 0.2
+				TAL = { surrender_progress > 0.25 }
+			}
+		}
+
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		white_peace = TAL
+		TAL = { add_ideas = TAL_pariah_settlement }
+
+		#Washington bought the peace, and Kabul knows it
+		set_temp_variable = { percent_change = 25 }
+		set_temp_variable = { tag_index = event_target:GLOBAL_wot_settlement_broker.id }
+		change_influence_percentage = yes
+
+		event_target:GLOBAL_wot_settlement_broker = {
+			set_country_flag = USA_wot_afghan_settlement
+			add_political_power = 100
+		}
+		clear_global_event_target = GLOBAL_wot_settlement_broker
+		hidden_effect = { news_event = { id = wotnews.18 hours = 6 } }
+	}
+
+	option = {	#The men who did this do not get to keep Kandahar
+		name = wot.27.b
+		log = "[GetDateText]: [This.GetName]: wot.27.b"
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 4
+				TAL = { surrender_progress > 0.25 }
+			}
+			modifier = {
+				factor = 0.2
+				surrender_progress > 0.25
+			}
+		}
+
+		add_war_support = 0.05
+		add_stability = -0.05
+		event_target:GLOBAL_wot_settlement_broker = { country_event = { id = wot.28 days = 2 } }
+	}
+}
+
+#The settlement collapses. Washington is left holding the bill.
+country_event = {
+	id = wot.28
+	title = wot.28.t
+	desc = wot.28.d
+	picture = GFX_bonn_agreement
+
+	is_triggered_only = yes
+
+	option = {
+		name = wot.28.a
+		log = "[GetDateText]: [This.GetName]: wot.28.a"
+		ai_chance = { base = 1 }
+
+		set_country_flag = USA_wot_settlement_refused
+		add_political_power = -50
+		clear_global_event_target = GLOBAL_wot_settlement_broker
+	}
 }
 
 
@@ -1566,6 +1741,44 @@ news_event = {
 
 	option = {
 		name = wotnews.18.a
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#The trail goes cold. Nowhere left for him to run, and nobody left to ask.
+news_event = {
+	id = wotnews.19
+	title = wotnews.19.t
+	desc = wotnews.19.d
+	picture = GFX_bin_laden
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = wotnews.19.a
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#The raid hits an empty house
+news_event = {
+	id = wotnews.20
+	title = wotnews.20.t
+	desc = wotnews.20.d
+	picture = GFX_bin_laden
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = wotnews.20.a
 
 		ai_chance = {
 			base = 1

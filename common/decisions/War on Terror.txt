@@ -28,7 +28,7 @@ war_on_terror_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_increase_intelligence_spending"
 			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = TT_REDUCE_RULING_COALITION_POPULARITY_10_PERCENT
+			custom_effect_tooltip = TT_REDUCE_RULING_COALITION_POPULARITY_20_PERCENT
 			for_each_loop = {
 				array = ruling_party
 				value = v
@@ -95,6 +95,17 @@ war_on_terror_category = {
 
 		ai_will_do = {
 			base = 1000
+			#A bare demand is refused 19 times in 20. Go to the Council first while that route is open --
+			#only an arms-dealer White House skips straight to the ultimatum.
+			modifier = {
+				factor = 0.01
+				is_on_un_sec_council = yes
+				NOT = { has_country_flag = USA_country_flag_arms_dealer }
+				TAL = {
+					NOT = { has_country_flag = unsc_extradition_demanded }
+					NOT = { has_country_flag = unsc_extradition_rejected }
+				}
+			}
 			modifier = {
 				factor = 5
 				date > 2001.1.1
@@ -136,25 +147,21 @@ war_on_terror_category = {
 		days_remove = 60
 		fire_only_once = yes
 
+		#Terms are offered, not imposed: Kabul and the Taliban each get to answer, and either can refuse.
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_broker_afghan_settlement"
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
-			set_country_flag = USA_wot_afghan_settlement
+			save_global_event_target_as = GLOBAL_wot_settlement_broker
 
-			custom_effect_tooltip = TT_AFGHAN_SETTLEMENT
-			AFG = { white_peace = TAL }
-			TAL = {
-				add_ideas = TAL_pariah_settlement
+			custom_effect_tooltip = TT_AFGHAN_SETTLEMENT_OFFERED
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				AFG = { white_peace = TAL }
+				TAL = { add_ideas = TAL_pariah_settlement }
+				add_political_power = 100
 			}
-
-			#Washington bought the peace, and Kabul knows it
-			set_temp_variable = { percent_change = 25 }
-			set_temp_variable = { influence_target = AFG.id }
-			change_influence_percentage = yes
-
-			add_political_power = 100
-			hidden_effect = { news_event = { id = wotnews.18 hours = 6 } }
+			TAL = { country_event = { id = wot.26 days = 3 } }
 		}
 
 		ai_will_do = {
@@ -169,7 +176,7 @@ war_on_terror_category = {
 	#Take the demand to the Security Council before reaching for the rifle
 	usa_seek_unsc_extradition_mandate = {
 
-		icon = GFX_decision_generic_civil_support
+		icon = GFX_decision_generic_political_discourse
 
 		visible = {
 			has_country_flag = USA_wot_attack_occurred
@@ -210,7 +217,7 @@ war_on_terror_category = {
 		}
 
 		ai_will_do = {
-			base = 100
+			base = 1000
 			modifier = {
 				factor = 3
 				has_country_flag = USA_country_flag_legal_interventionism
@@ -258,15 +265,25 @@ war_on_terror_category = {
 					name = USA_wot_unprovoked_invasion
 				}
 				add_war_support = -0.10
-				for_each_scope_loop = {
-					array = global.security_council_members
-					if = {
-						limit = {
-							exists = yes
-							NOT = { tag = ROOT }
-						}
-						add_opinion_modifier = { target = ROOT modifier = territorial_integrity_violation }
+				unsc_members_condemn_us = yes
+
+				#We wrote this peace, we made Kabul sign it, and now we are tearing it up ourselves
+				if = {
+					limit = {
+						has_country_flag = USA_wot_afghan_settlement
+						country_exists = AFG
 					}
+					custom_effect_tooltip = TT_WOT_TORE_UP_OUR_OWN_TREATY
+					add_named_threat = {
+						threat = 5
+						name = USA_wot_broken_settlement
+					}
+					AFG = {
+						add_opinion_modifier = { target = ROOT modifier = betrayed_guarantee }
+					}
+					set_temp_variable = { percent_change = -40 }
+					set_temp_variable = { influence_target = AFG.id }
+					change_influence_percentage = yes
 				}
 			}
 			#Add threat to allow volunteers to be sent
@@ -341,6 +358,11 @@ war_on_terror_category = {
 				factor = 5
 				has_country_flag = USA_wot_extradition_accepted
 				has_country_flag = USA_country_flag_war_on_terror
+			}
+			#Kabul or the Taliban walked away from the table. The rifle is what is left.
+			modifier = {
+				factor = 5
+				has_country_flag = USA_wot_settlement_refused
 			}
 			modifier = {
 				factor = 2
@@ -508,6 +530,7 @@ war_on_terror_category = {
 				tooltip = TT_UNSC_NO_PENDING_SUBJECT_VOTE
 				NOT = { has_global_flag = sc_action_against@IRQ }
 			}
+			is_on_un_sec_council = yes
 		}
 
 		cost = 200
