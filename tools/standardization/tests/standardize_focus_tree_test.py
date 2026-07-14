@@ -1,7 +1,8 @@
-"""Tests for the focus standardizer's handling of will_lead_to_war_with.
+"""Tests for the focus standardizer's block formatting.
 
 A focus may declare war on several targets, so will_lead_to_war_with can appear
 multiple times. The standardizer must preserve every occurrence, in order.
+Log injection must also survive an id line carrying a trailing comment.
 """
 
 from standardize_focus_tree import extract_focus_properties, format_focus_block
@@ -48,3 +49,57 @@ def test_round_trip_emits_one_line_per_target():
         "will_lead_to_war_with = MOR",
         "will_lead_to_war_with = TUN",
     ]
+
+
+def test_duplicate_available_blocks_merged_not_dropped():
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_gated\n",
+            "\t\tavailable = {\n",
+            "\t\t\tNOT = { has_government = communism }\n",
+            "\t\t}\n",
+            "\t\tavailable = {\n",
+            "\t\t\thas_country_flag = TST_flag\n",
+            "\t\t}\n",
+            "\t}\n",
+        ]
+    )
+    inner = [l.strip() for l in props["available"] if l.strip() not in ("", "}")]
+    assert "NOT = { has_government = communism }" in " ".join(inner)
+    assert "has_country_flag = TST_flag" in " ".join(inner)
+    out = format_focus_block(props)
+    assert sum(1 for l in out if l.strip().startswith("available")) == 1
+
+
+def test_hyphenated_focus_id_log_corrected():
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_austria-este\n",
+            "\t\tcompletion_reward = {\n",
+            '\t\t\tlog = "[GetDateText]: [Root.GetName]: TST_Austria-este"\n',
+            "\t\t}\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    log_lines = [l for l in out if "log =" in l]
+    assert len(log_lines) == 1
+    assert '[Root.GetName]: Focus TST_austria-este"' in log_lines[0]
+
+
+def test_id_line_comment_kept_out_of_log():
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_coup #Infiltrate Lebanon\n",
+            "\t\tcompletion_reward = {\n",
+            "\t\t\tadd_political_power = 50\n",
+            "\t\t}\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    log_lines = [l.strip() for l in out if "log =" in l]
+    assert log_lines == ['log = "[GetDateText]: [Root.GetName]: Focus TST_coup"']
