@@ -86,6 +86,17 @@ def test_scoped_bracketed_invocation_tracks_member_name():
     }
 
 
+def test_variable_scoped_bracketed_invocation_tracks_member_name():
+    assert V._scan_loc_tokens(
+        "[?FROM.GetBRIProjectName]", False, {"GetBRIProjectName"}
+    ) == {"GetBRIProjectName"}
+
+
+def test_variable_scoped_country_variable_is_not_a_scripted_loc_candidate():
+    assert V._scan_loc_tokens("[?FROM.country_var]", False) == set()
+    assert V._scan_loc_tokens("[?FROM.GetName]", False) == set()
+
+
 def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
     assert V._scan_loc_tokens("[status] [USA_STATUS]", False) == {
         "status",
@@ -180,6 +191,12 @@ def test_reference_line_skips_substring_match(tmp_path):
         'l_english:\n a: "[SAF.GetAdjective]"\n b: "filler"\n c: "[SAF.Adjective]"\n'
     )
     assert V._find_reference_line(str(path), "adjective") == 4
+
+
+def test_reference_line_handles_variable_scoped_call(tmp_path):
+    path = tmp_path / "loc_l_english.yml"
+    path.write_text('l_english:\n text: "[?FROM.GetBRIProjectName]"\n')
+    assert V._find_reference_line(str(path), "GetBRIProjectName") == 2
 
 
 def test_definition_line_skips_longer_name_prefix(tmp_path):
