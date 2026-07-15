@@ -6,7 +6,7 @@ import os
 import re
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import disk_cache
 from validator_common import (
@@ -128,7 +128,7 @@ def _scan_loc_token_candidates(
 
 
 def _scan_loc_tokens(
-    text: str, is_scripted_loc_file: bool, defined_names: Set[str] | None = None
+    text: str, is_scripted_loc_file: bool, defined_names: Optional[Set[str]] = None
 ) -> Set[str]:
     bracketed, explicit = _scan_loc_token_candidates(text, is_scripted_loc_file)
     return _filter_bracket_loc_candidates(bracketed, defined_names or set()) | explicit
