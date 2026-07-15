@@ -2051,6 +2051,81 @@ for _label, _snippet in _GUARDRAIL_SNIPPETS:
         assert_finds(_check_fn, _snippet, 0, f"{_check_fn.__name__} on {_label}")
 
 
+# Hyphenated ids: log-id checks must see the full token, not the \w+ prefix
+
+_HYPHEN_FOCUS_OK = [
+    "\tfocus = {\n",
+    "\t\tid = TST_austria-este\n",
+    "\t\tcompletion_reward = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_austria-este"\n',
+    "\t\t}\n",
+    "\t}\n",
+]
+_HYPHEN_FOCUS_BAD = [
+    "\tfocus = {\n",
+    "\t\tid = TST_austria-este\n",
+    "\t\tcompletion_reward = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_austria-lorraine"\n',
+    "\t\t}\n",
+    "\t}\n",
+]
+assert_finds(_check_focus_log_id, _HYPHEN_FOCUS_OK, 0, "hyphenated focus id, log matches")
+assert_finds(_check_focus_log_id, _HYPHEN_FOCUS_BAD, 1, "hyphenated focus id, log mismatch")
+
+_HYPHEN_DECISION_OK = [
+    "category_test = {\n",
+    "\tCommunist-State_invite = {\n",
+    "\t\tcomplete_effect = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision Communist-State_invite"\n',
+    "\t\t}\n",
+    "\t}\n",
+    "}\n",
+]
+_HYPHEN_DECISION_BAD = [
+    "category_test = {\n",
+    "\tCommunist-State_invite = {\n",
+    "\t\tcomplete_effect = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision Communist-State_remove"\n',
+    "\t\t}\n",
+    "\t}\n",
+    "}\n",
+]
+assert_finds(_check_decision_log_id, _HYPHEN_DECISION_OK, 0, "hyphenated decision id, log matches")
+assert_finds(_check_decision_log_id, _HYPHEN_DECISION_BAD, 1, "hyphenated decision id, log mismatch")
+
+# AND directly under NOT is the sanctioned NAND disambiguation -- never redundant
+
+from cleanup_or import find_redundant_and_blocks, simplify_and_block
+
+_AND_UNDER_NOT = [
+    "\ttrigger = {\n",
+    "\t\tNOT = {\n",
+    "\t\t\tAND = {\n",
+    "\t\t\t\toriginal_tag = AUS\n",
+    "\t\t\t\thas_war = yes\n",
+    "\t\t\t}\n",
+    "\t\t}\n",
+    "\t}\n",
+]
+assert_finds(find_redundant_and_blocks, _AND_UNDER_NOT, 0, "AND under NOT not flagged")
+_simplified = simplify_and_block(_AND_UNDER_NOT)
+if _simplified == _AND_UNDER_NOT:
+    passed += 1
+    print("  PASS  simplify_and_block keeps AND under NOT")
+else:
+    failed += 1
+    print("  FAIL  simplify_and_block keeps AND under NOT")
+
+_BARE_AND = [
+    "\ttrigger = {\n",
+    "\t\tAND = {\n",
+    "\t\t\thas_war = yes\n",
+    "\t\t}\n",
+    "\t}\n",
+]
+assert_finds(find_redundant_and_blocks, _BARE_AND, 1, "bare AND still flagged")
+
+
 # Summary
 
 
