@@ -66,6 +66,28 @@ _BRACKET_LOC_RE = re.compile(
     r"\[(?:\?(?=[A-Za-z_][A-Za-z0-9_]*\.Get))?"
     r"(?:([A-Za-z_][A-Za-z0-9_]*)\.)?(\w[\w-]*)\]"
 )
+_UNSCOPED_ENGINE_GETTERS = frozenset(
+    {
+        "getcountrycontinent",
+        "getdatetext",
+        "getday",
+        "getfullname",
+        "getmonth",
+        "getrank",
+        "getrulingparty",
+        "gettokenkey",
+        "gettokenlocalizedkey",
+        "getyear",
+    }
+)
+
+
+def _is_english_localisation_file(filename: str) -> bool:
+    normalized = filename.replace("\\", "/").lstrip("/")
+    return normalized.endswith(".yml") and (
+        normalized.startswith("localisation/english/")
+        or "/localisation/english/" in normalized
+    )
 
 
 def _find_reference_line(path: str, name: str) -> int:
@@ -112,8 +134,10 @@ def _filter_bracket_loc_candidates(
     defined_lower = {name.lower() for name in defined_names}
     return {
         name
-        for name, _scoped in candidates
-        if name.lower() in defined_lower or not name.lower().startswith("get")
+        for name, scoped in candidates
+        if name.lower() in defined_lower
+        or not name.lower().startswith("get")
+        or (not scoped and name.lower() not in _UNSCOPED_ENGINE_GETTERS)
     }
 
 
@@ -163,12 +187,10 @@ def process_file_for_used_localisations(
     # Scripted-localisation, GUI, and English localisation files use bracket
     # syntax for scripted loc calls. Keep candidates even when undefined so
     # the missing check can report them.
-    normalized_filename = filename.replace("\\", "/").lstrip("/")
-    is_english_yml = "localisation/english/" in normalized_filename
     if (
         is_sl
         or filename.endswith(".gui")
-        or (filename.endswith(".yml") and is_english_yml)
+        or _is_english_localisation_file(filename)
     ):
         found_original = tokens
     else:
@@ -183,6 +205,30 @@ def process_file_for_used_localisations(
     localisations = list(found_original)
     paths = {name: basename for name in found_original}
     return (localisations, paths)
+
+
+def _get_usage_scan_files(mod_path: str, staged_files=None) -> List[str]:
+    if staged_files is not None:
+        return [
+            filename
+            for filename in staged_files
+            if filename.endswith((".gui", ".txt"))
+            or _is_english_localisation_file(filename)
+        ]
+
+    gui_files = list(
+        glob.iglob(os.path.join(mod_path, "**", "*.gui"), recursive=True)
+    )
+    yml_files = list(
+        glob.iglob(
+            os.path.join(mod_path, "localisation", "english", "**", "*.yml"),
+            recursive=True,
+        )
+    )
+    txt_files = list(
+        glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+    )
+    return gui_files + yml_files + txt_files
 
 
 class ScriptedLocalisation:
@@ -240,23 +286,7 @@ class ScriptedLocalisation:
             {name.lower() for name in defined_names} if lowercase else defined_names
         )
 
-        if staged_files is not None:
-            files_to_scan = [
-                f
-                for f in staged_files
-                if f.endswith(".gui") or f.endswith(".yml") or f.endswith(".txt")
-            ]
-        else:
-            gui_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.gui"), recursive=True)
-            )
-            yml_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.yml"), recursive=True)
-            )
-            txt_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
-            files_to_scan = gui_files + yml_files + txt_files
+        files_to_scan = _get_usage_scan_files(mod_path, staged_files)
 
         args_list = [(f, search_names, lowercase, mod_path) for f in files_to_scan]
         p = pool if pool else Pool(processes=workers)

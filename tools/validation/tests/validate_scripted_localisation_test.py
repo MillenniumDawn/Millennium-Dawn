@@ -1,5 +1,7 @@
 """Focused regressions for scripted-localisation invocation scanning."""
 
+from pathlib import Path
+
 import validate_scripted_localisation as V
 
 
@@ -66,7 +68,10 @@ def test_english_yml_keeps_undefined_bracketed_invocation(tmp_path):
 
     validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     validator.validate_missing_scripted_localisations([], [], used, paths)
-    assert validator._issues[0].file == "localisation/english/consumer_l_english.yml"
+    assert (
+        validator._issues[0].file.replace("\\", "/")
+        == "localisation/english/consumer_l_english.yml"
+    )
 
 
 def test_gui_keeps_undefined_bracketed_invocation(tmp_path):
@@ -135,6 +140,29 @@ def test_defined_get_prefixed_scripted_loc_is_retained():
     assert V._scan_loc_tokens("[GetProjectStatus]", False, {"GetProjectStatus"}) == {
         "GetProjectStatus"
     }
+
+
+def test_unknown_unscoped_get_prefixed_scripted_loc_is_retained():
+    assert V._scan_loc_tokens("[GetAscendingAdvisorName]", False) == {
+        "GetAscendingAdvisorName"
+    }
+
+
+def test_usage_scan_excludes_non_english_localisation(tmp_path):
+    english = tmp_path / "localisation" / "english" / "consumer_l_english.yml"
+    translated = tmp_path / "localisation" / "braz_por" / "consumer_l_braz_por.yml"
+    english.parent.mkdir(parents=True)
+    translated.parent.mkdir(parents=True)
+    english.write_text("l_english:\n")
+    translated.write_text("l_braz_por:\n")
+
+    assert english in {Path(path) for path in V._get_usage_scan_files(str(tmp_path))}
+    assert translated not in {
+        Path(path) for path in V._get_usage_scan_files(str(tmp_path))
+    }
+    assert V._get_usage_scan_files(
+        str(tmp_path), [str(english), str(translated)]
+    ) == [str(english)]
 
 
 def test_staged_gui_uses_full_definition_set(tmp_path):

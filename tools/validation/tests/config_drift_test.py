@@ -333,8 +333,13 @@ def test_scripted_localisation_core_runs_for_interface_changes():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     core = workflow["jobs"]["validate-core"]
     assert "needs.detect-changes.outputs.interface == 'true'" in core["if"]
-    scripts = {entry["script"] for entry in core["strategy"]["matrix"]["validator"]}
-    assert "validate_scripted_localisation.py" in scripts
+    entries = core["strategy"]["matrix"]["validator"]
+    scripted_localisation = next(
+        entry
+        for entry in entries
+        if entry["script"] == "validate_scripted_localisation.py"
+    )
+    assert scripted_localisation.get("strict", True)
 
 
 def test_mod_changes_reach_structural_lint():
