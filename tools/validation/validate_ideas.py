@@ -1194,6 +1194,8 @@ class Validator(BaseValidator):
 
 
 def _add_extra_args(parser):
+    boolean_optional_action = getattr(argparse, "BooleanOptionalAction", None)
+
     parser.add_argument(
         "--missing-loc",
         action="store_true",
@@ -1206,13 +1208,28 @@ def _add_extra_args(parser):
         dest="missing_icons",
         help="Enable the missing icon check (flags ideas whose picture sprite is undefined)",
     )
-    parser.add_argument(
-        "--unused-ideas",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        dest="unused_ideas",
-        help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced (enabled by default; use --no-unused-ideas to disable)",
-    )
+    if boolean_optional_action is not None:
+        parser.add_argument(
+            "--unused-ideas",
+            action=boolean_optional_action,
+            default=True,
+            dest="unused_ideas",
+            help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced (enabled by default; use --no-unused-ideas to disable)",
+        )
+    else:
+        parser.add_argument(
+            "--unused-ideas",
+            action="store_true",
+            default=True,
+            dest="unused_ideas",
+            help="Flag non-selectable ideas (country spirits, hidden_ideas) defined but never referenced (enabled by default; use --no-unused-ideas to disable)",
+        )
+        parser.add_argument(
+            "--no-unused-ideas",
+            action="store_false",
+            dest="unused_ideas",
+            help=argparse.SUPPRESS,
+        )
     parser.add_argument(
         "--suggest-consolidation",
         action="store_true",
