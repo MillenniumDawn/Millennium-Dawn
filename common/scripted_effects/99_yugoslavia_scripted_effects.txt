@@ -1,109 +1,157 @@
-# Callers set temp_yugo_nost_gain before invoking; values are clamped 0-100.
-add_yugo_nost_serbia_effect = {
-	custom_effect_tooltip = yugo_nost_serbia_rise_tt
-	add_to_variable = { global.yugo_nost_serbia = temp_yugo_nost_gain }
-	clamp_variable = { var = global.yugo_nost_serbia min = 0 max = 100 }
+# Run in the scope of the member whose support rises. Caller sets temp_yugo_nost_gain first.
+add_yugo_nostalgia_effect = {
+	custom_effect_tooltip = yugo_nost_rise_tt
+	add_to_variable = { yugo_nostalgia = temp_yugo_nost_gain }
+	clamp_variable = { var = yugo_nostalgia min = 0 max = 100 }
+	hidden_effect = {
+		if = {
+			limit = {
+				check_variable = { yugo_nostalgia > 74 }
+				NOT = { has_country_flag = yugo_nostalgia_milestone }
+			}
+			set_country_flag = yugo_nostalgia_milestone
+			country_event = { id = yugoslavia.30 days = 1 }
+		}
+	}
 }
 
-add_yugo_nost_croatia_effect = {
-	custom_effect_tooltip = yugo_nost_croatia_rise_tt
-	add_to_variable = { global.yugo_nost_croatia = temp_yugo_nost_gain }
-	clamp_variable = { var = global.yugo_nost_croatia min = 0 max = 100 }
+# Run in ROOT scope. Caller sets temp_yugo_nost_self and temp_yugo_nost_others first.
+add_yugo_nostalgia_all_effect = {
+	set_temp_variable = { temp_yugo_nost_gain = temp_yugo_nost_self }
+	add_yugo_nostalgia_effect = yes
+	set_variable = { global.yugo_nost_gain_buffer = temp_yugo_nost_others }
+	for_each_scope_loop = {
+		array = global.yugo_members
+		if = {
+			limit = {
+				exists = yes
+				NOT = { tag = ROOT }
+			}
+			set_temp_variable = { temp_yugo_nost_gain = global.yugo_nost_gain_buffer }
+			add_yugo_nostalgia_effect = yes
+		}
+	}
 }
 
-add_yugo_nost_slovenia_effect = {
-	custom_effect_tooltip = yugo_nost_slovenia_rise_tt
-	add_to_variable = { global.yugo_nost_slovenia = temp_yugo_nost_gain }
-	clamp_variable = { var = global.yugo_nost_slovenia min = 0 max = 100 }
-}
-
-add_yugo_nost_macedonia_effect = {
-	custom_effect_tooltip = yugo_nost_macedonia_rise_tt
-	add_to_variable = { global.yugo_nost_macedonia = temp_yugo_nost_gain }
-	clamp_variable = { var = global.yugo_nost_macedonia min = 0 max = 100 }
-}
-
-add_yugo_nost_montenegro_effect = {
-	custom_effect_tooltip = yugo_nost_montenegro_rise_tt
-	add_to_variable = { global.yugo_nost_montenegro = temp_yugo_nost_gain }
-	clamp_variable = { var = global.yugo_nost_montenegro min = 0 max = 100 }
-}
-
-add_yugo_nost_kosovo_effect = {
-	custom_effect_tooltip = yugo_nost_kosovo_rise_tt
-	add_to_variable = { global.yugo_nost_kosovo = temp_yugo_nost_gain }
-	clamp_variable = { var = global.yugo_nost_kosovo min = 0 max = 100 }
-}
-
-add_yugo_nost_bosnia_effect = {
-	custom_effect_tooltip = yugo_nost_bosnia_rise_tt
-	add_to_variable = { global.yugo_nost_bosnia = temp_yugo_nost_gain }
-	clamp_variable = { var = global.yugo_nost_bosnia min = 0 max = 100 }
+# Dominance = the member that tops the most other members' influence_array. Ties keep the incumbent.
+recalc_yugo_dominant_effect = {
+	for_each_scope_loop = {
+		array = global.yugo_members
+		set_variable = { yugo_votes = 0 }
+	}
+	for_each_scope_loop = {
+		array = global.yugo_members
+		if = {
+			limit = {
+				exists = yes
+				check_variable = { influence_array^0 > 0 }
+			}
+			set_temp_variable = { yugo_top_inf = influence_array^0 }
+			if = {
+				limit = {
+					NOT = { check_variable = { yugo_top_inf = THIS.id } }
+					is_in_array = { array = global.yugo_members value = yugo_top_inf }
+				}
+				var:yugo_top_inf = { add_to_variable = { yugo_votes = 1 } }
+			}
+		}
+	}
+	set_variable = { global.yugo_best_votes = 0 }
+	for_each_scope_loop = {
+		array = global.yugo_members
+		if = {
+			limit = {
+				exists = yes
+				check_variable = { yugo_votes > global.yugo_best_votes }
+			}
+			set_variable = { global.yugo_best_votes = yugo_votes }
+		}
+	}
+	set_variable = { global.yugo_new_dominant = 0 }
+	if = {
+		limit = { check_variable = { global.yugo_best_votes > 0 } }
+		if = {
+			limit = { check_variable = { global.yugo_dominant > 0 } }
+			var:global.yugo_dominant = {
+				if = {
+					limit = {
+						exists = yes
+						check_variable = { yugo_votes = global.yugo_best_votes }
+					}
+					set_variable = { global.yugo_new_dominant = THIS.id }
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { global.yugo_new_dominant = 0 } }
+			for_each_scope_loop = {
+				array = global.yugo_members
+				if = {
+					limit = {
+						exists = yes
+						check_variable = { global.yugo_new_dominant = 0 }
+						check_variable = { yugo_votes = global.yugo_best_votes }
+					}
+					set_variable = { global.yugo_new_dominant = THIS.id }
+				}
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { check_variable = { global.yugo_new_dominant = global.yugo_dominant } } }
+		if = {
+			limit = {
+				check_variable = { global.yugo_dominant > 0 }
+				var:global.yugo_dominant = { exists = yes }
+			}
+			var:global.yugo_dominant = { remove_ideas = yugo_bloc_dominant }
+		}
+		set_variable = { global.yugo_dominant = global.yugo_new_dominant }
+		if = {
+			limit = {
+				check_variable = { global.yugo_dominant > 0 }
+				var:global.yugo_dominant = { exists = yes }
+			}
+			var:global.yugo_dominant = {
+				add_ideas = yugo_bloc_dominant
+				news_event = { id = yugoslavia_news.20 days = 2 }
+			}
+		}
+	}
 }
 
 form_yugoslavia_effect = {
+	set_cosmetic_tag = yugoslavia_restored
+	add_ideas = formed_yugoslavia
+	add_named_threat = {
+		threat = 1.4
+		name = formed_yugoslavia
+	}
 	custom_effect_tooltip = yugo_sends_invites_tt
 	hidden_effect = {
 		news_event = news.85
-		if = {
-			limit = {
-				country_exists = SER
-				NOT = { original_tag = SER }
-			}
-			SER = { country_event = yugoslavia.1 }
-		}
-		if = {
-			limit = {
-				country_exists = CRO
-				NOT = { original_tag = CRO }
-			}
-			CRO = { country_event = yugoslavia.1 }
-		}
-		if = {
-			limit = {
-				country_exists = SLV
-				NOT = { original_tag = SLV }
-			}
-			SLV = { country_event = yugoslavia.1 }
-		}
-		if = {
-			limit = {
-				country_exists = BOS
-				NOT = { original_tag = BOS }
-			}
-			BOS = { country_event = yugoslavia.1 }
-		}
-		if = {
-			limit = {
-				country_exists = FYR
-				NOT = { original_tag = FYR }
-			}
-			FYR = { country_event = yugoslavia.1 }
-		}
-		if = {
-			limit = {
-				country_exists = MNT
-				NOT = { original_tag = MNT }
-			}
-			MNT = { country_event = yugoslavia.1 }
-		}
-		if = {
-			limit = {
-				country_exists = KOS
-				NOT = { original_tag = KOS }
-			}
-			KOS = { country_event = yugoslavia.1 }
-		}
 		set_global_flag = GLOBAL_yugoslavia_restored
-		add_named_threat = {
-			threat = 1.4
-			name = formed_yugoslavia
+		if = {
+			limit = {
+				check_variable = { global.yugo_dominant > 0 }
+				var:global.yugo_dominant = { exists = yes }
+			}
+			var:global.yugo_dominant = { remove_ideas = yugo_bloc_dominant }
 		}
-		add_ideas = formed_yugoslavia
-		set_cosmetic_tag = yugoslavia_restored
-		set_capital = {
-			state = 131
-			remember_old_capital = no
+		set_variable = { global.yugo_dominant = 0 }
+		if = {
+			limit = { has_idea = BOS_rotating_presidency3 }
+			remove_ideas = BOS_rotating_presidency3
+		}
+		for_each_scope_loop = {
+			array = global.yugo_members
+			if = {
+				limit = {
+					exists = yes
+					NOT = { tag = ROOT }
+				}
+				country_event = yugoslavia.1
+			}
 		}
 		133 = { set_demilitarized_zone = no }
 	}
