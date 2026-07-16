@@ -436,13 +436,70 @@ CHI_TAI_both_at_peace = {
 
 ### Belt and Road Initiative ###
 
-CHI_bri_eligible_applicant = {
-	NOT = { original_tag = CHI }
-	NOT = { original_tag = RAJ }
+# Scope: recipient. The dynamic per-request gate. Array membership, CHI's existence and the
+# BRI focus are gated once on the CHI_BRI_recipient_actions category; country_exists is
+# repeated here because this trigger guards a PP spend — without it a recipient can pay for
+# a request routed to an annexed China, which then strands it on bri_pipeline_busy forever.
+CHI_bri_can_request = {
+	country_exists = CHI
 	NOT = { has_war_with = CHI }
 	NOT = { has_country_flag = bri_pipeline_busy }
 	NOT = { gdp_per_capita_greater_than_30 = yes }
-	CHI = { check_variable = { CHI_bri_committed_projects < CHI_bri_project_slots } }
+	CHI = {
+		check_variable = { CHI_bri_committed_projects < CHI_bri_project_slots }
+		check_variable = { CHI_bri_treasury > CHI_bri_project_cost }
+	}
+}
+
+# Scope: recipient. One definition per project type of "can this country host it", used in the
+# apply decisions' available. Single source of truth: the old design mirrored these limits in
+# both the roll and the resolution and drifted apart. Telecom needs no state and has no gate.
+CHI_bri_can_host_port = {
+	any_owned_controlled_state = { is_coastal = yes }
+}
+
+CHI_bri_can_host_rail = {
+	any_owned_controlled_state = {
+		any_neighbor_state = { CONTROLLER = { original_tag = CHI } }
+	}
+}
+
+CHI_bri_can_host_pipeline = {
+	any_owned_controlled_state = {
+		OR = {
+			has_resources_amount = { resource = oil amount > 0 }
+			has_resources_amount = { resource = steel amount > 0 }
+			has_resources_amount = { resource = chromium amount > 0 }
+		}
+	}
+}
+
+CHI_bri_can_host_sez = {
+	any_owned_controlled_state = {
+		OR = {
+			is_coastal = yes
+			infrastructure > 3
+		}
+	}
+}
+
+CHI_bri_can_host_mine = {
+	any_owned_controlled_state = {
+		OR = {
+			has_resources_amount = { resource = steel amount > 0 }
+			has_resources_amount = { resource = chromium amount > 0 }
+			has_resources_amount = { resource = aluminium amount > 0 }
+			has_resources_amount = { resource = tungsten amount > 0 }
+		}
+	}
+}
+
+CHI_bri_can_host_energy = {
+	any_owned_controlled_state = { industrial_complex > 0 }
+}
+
+CHI_bri_can_host_prestige = {
+	any_owned_controlled_state = { is_capital = yes }
 }
 
 CHI_corruption_under_control = {

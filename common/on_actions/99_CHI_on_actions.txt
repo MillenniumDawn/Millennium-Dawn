@@ -172,11 +172,8 @@ on_actions = {
 			}
 
 			if = {
-				limit = {
-					has_completed_focus = CHI_Belt_and_Road_Initiative
-				}
-				CHI_BRI_monthly_tick = yes
-				CHI_BRI_application_tick = yes
+				limit = { has_completed_focus = CHI_Belt_and_Road_Initiative }
+				CHI_bri_monthly_tick = yes
 			}
 
 			if = {
@@ -339,6 +336,22 @@ on_actions = {
 
 	on_annex = {
 		effect = {
+			# A BRI partner that no longer exists must stop counting toward China's presence and
+			# stop servicing its loan. Without this, China books both forever off a dead tag.
+			if = {
+				limit = {
+					country_exists = CHI
+					FROM = {
+						OR = {
+							check_variable = { bri_partner_rank > 0 }
+							check_variable = { bri_debt_owed_to_china > 0 }
+							has_country_flag = bri_pipeline_busy
+						}
+					}
+				}
+				FROM = { CHI_bri_drop_partner = yes }
+			}
+
 			if = {
 				limit = {
 					ROOT = { original_tag = CHI }
@@ -421,15 +434,6 @@ on_actions = {
 					FROM = { original_tag = CHI }
 				}
 				CHI_general_quote_shout = yes
-			}
-		}
-	}
-
-	on_startup = {
-		effect = {
-			every_country = {
-				limit = { is_in_array = { global.bri_eligible_countries = THIS.id } }
-				BRI_init_named_maxes = yes
 			}
 		}
 	}
