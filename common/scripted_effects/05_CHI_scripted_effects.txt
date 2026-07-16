@@ -422,7 +422,7 @@ CHI_add_brokerage = {
 # Picks one owned-controlled state matching the type, applies the matching state dynamic modifier
 BRI_select_target_state = {
 	if = {
-		limit = { check_variable = { project_type = 1 } }
+		limit = { check_variable = { bri_project_type = 1 } }
 		random_owned_controlled_state = {
 			limit = { is_coastal = yes }
 			add_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
@@ -430,7 +430,7 @@ BRI_select_target_state = {
 		CHI = { add_to_variable = { CHI_bri_ports_built = 1 } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 2 } }
+		limit = { check_variable = { bri_project_type = 2 } }
 		random_owned_controlled_state = {
 			limit = {
 				any_neighbor_state = { CONTROLLER = { original_tag = CHI } }
@@ -440,7 +440,7 @@ BRI_select_target_state = {
 		CHI = { add_to_variable = { CHI_bri_railways_built = 1 } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 3 } }
+		limit = { check_variable = { bri_project_type = 3 } }
 		random_owned_controlled_state = {
 			limit = {
 				OR = {
@@ -454,11 +454,11 @@ BRI_select_target_state = {
 		CHI = { add_to_variable = { CHI_bri_pipelines_built = 1 } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 4 } }
+		limit = { check_variable = { bri_project_type = 4 } }
 		CHI = { add_to_variable = { CHI_bri_telecom_built = 1 } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 5 } }
+		limit = { check_variable = { bri_project_type = 5 } }
 		random_owned_controlled_state = {
 			limit = {
 				OR = {
@@ -471,7 +471,7 @@ BRI_select_target_state = {
 		CHI = { add_to_variable = { CHI_bri_industrial_zones = 1 } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 6 } }
+		limit = { check_variable = { bri_project_type = 6 } }
 		random_owned_controlled_state = {
 			limit = {
 				OR = {
@@ -486,7 +486,7 @@ BRI_select_target_state = {
 		CHI = { add_to_variable = { CHI_bri_mines_secured = 1 } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 7 } }
+		limit = { check_variable = { bri_project_type = 7 } }
 		random_owned_controlled_state = {
 			limit = { industrial_complex > 0 }
 			add_dynamic_modifier = { modifier = CHI_bri_state_industrial }
@@ -494,7 +494,7 @@ BRI_select_target_state = {
 		CHI = { add_to_variable = { CHI_bri_powerplants_built = 1 } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 8 } }
+		limit = { check_variable = { bri_project_type = 8 } }
 		random_owned_controlled_state = {
 			limit = { is_capital = yes }
 			add_dynamic_modifier = { modifier = CHI_bri_state_industrial }
@@ -568,22 +568,383 @@ BRI_resolve_state_change = {
 	}
 }
 
-# project_type and application_terms (1=concessional, 2=commercial, 3=predatory) are set by caller.
-BRI_handle_application = {
-	CHI = {
-		country_event = { id = chi_bri.11 days = 730 random = 365 }
-		add_to_variable = { CHI_bri_active_projects = 1 }
+# Scope: CHI. Also called from the monthly tick so saves that completed the focus
+# before this system existed still get initialised; on_startup does not re-run on load.
+CHI_BRI_init_state = {
+	if = {
+		limit = { NOT = { has_country_flag = CHI_bri_state_initialised } }
+		set_country_flag = CHI_bri_state_initialised
+		set_country_flag = CHI_bri_automation_on
+		set_variable = { CHI_bri_default_terms = 2 }
+		set_variable = { CHI_bri_app_rate = 35 }
+		add_to_variable = { CHI_bri_project_slots = 6 }
+		set_variable = { CHI_bri_returns_bri_pct = 0.5 }
+	}
+}
+
+# Scope: recipient. bri_project_type and bri_project_terms must already be set.
+BRI_start_project = {
+	set_country_flag = bri_pipeline_busy
+	clr_country_flag = bri_pending_application
+	CHI = { add_to_variable = { CHI_bri_active_projects = 1 } }
+
+	set_temp_variable = { bri_speed = CHI.CHI_bri_completion_speed }
+	add_to_temp_variable = { bri_speed = CHI.modifier@CHI_bri_completion_speed }
+
+	# days must be a literal, so completion speed is tiered rather than scaled.
+	if = {
+		limit = { check_variable = { bri_speed > 0.24 } }
+		BRI_schedule_resolution_fast = yes
+	}
+	else_if = {
+		limit = { check_variable = { bri_speed > 0.09 } }
+		BRI_schedule_resolution_medium = yes
+	}
+	else = {
+		BRI_schedule_resolution_slow = yes
+	}
+}
+
+BRI_schedule_resolution_fast = {
+	if = {
+		limit = { CHI = { has_country_flag = CHI_bri_automation_on } }
+		CHI = { country_event = { id = chi_bri.14 days = 550 random = 270 } }
+	}
+	else = {
+		CHI = { country_event = { id = chi_bri.11 days = 550 random = 270 } }
+	}
+}
+
+BRI_schedule_resolution_medium = {
+	if = {
+		limit = { CHI = { has_country_flag = CHI_bri_automation_on } }
+		CHI = { country_event = { id = chi_bri.14 days = 640 random = 320 } }
+	}
+	else = {
+		CHI = { country_event = { id = chi_bri.11 days = 640 random = 320 } }
+	}
+}
+
+BRI_schedule_resolution_slow = {
+	if = {
+		limit = { CHI = { has_country_flag = CHI_bri_automation_on } }
+		CHI = { country_event = { id = chi_bri.14 days = 730 random = 365 } }
+	}
+	else = {
+		CHI = { country_event = { id = chi_bri.11 days = 730 random = 365 } }
+	}
+}
+
+# Scope: recipient. Sets bri_project_outcome to 1 (success) / 2 (partial) / 3 (default).
+# Persistent, not temp: chi_bri.11's option triggers read it after immediate ends.
+BRI_roll_project_outcome = {
+	set_variable = { bri_default_chance = 15 }
+	set_temp_variable = { bri_default_mult = 1 }
+	add_to_temp_variable = { bri_default_mult = CHI.CHI_bri_default_rate }
+	add_to_temp_variable = { bri_default_mult = CHI.modifier@CHI_bri_default_rate }
+	multiply_variable = { var = bri_default_chance value = bri_default_mult }
+
+	if = {
+		limit = { check_variable = { bri_project_terms = 3 } }
+		add_to_variable = { bri_default_chance = 12 }
+	}
+	else_if = {
+		limit = { check_variable = { bri_project_terms = 1 } }
+		add_to_variable = { bri_default_chance = -5 }
+	}
+	clamp_variable = { var = bri_default_chance min = 0 max = 90 }
+
+	set_variable = { bri_project_outcome = 1 }
+	random = {
+		chance = var:bri_default_chance
+		set_variable = { bri_project_outcome = 3 }
+	}
+	if = {
+		limit = { check_variable = { bri_project_outcome = 1 } }
+		random = {
+			chance = 25
+			set_variable = { bri_project_outcome = 2 }
+		}
+	}
+}
+
+BRI_project_success = {
+	FROM = {
+		BRI_advance_named_project = yes
+		BRI_select_target_state = yes
+		BRI_register_and_recalc_partner = yes
+		clr_country_flag = bri_pipeline_busy
+	}
+	add_to_variable = { CHI_bri_active_projects = -1 }
+	add_to_variable = { CHI_bri_completed_projects = 1 }
+
+	set_temp_variable = { bri_yield = 1 }
+	add_to_temp_variable = { bri_yield = CHI_bri_influence_yield }
+	add_to_temp_variable = { bri_yield = modifier@CHI_bri_influence_yield }
+	set_temp_variable = { bri_presence_gain = 5 }
+	multiply_temp_variable = { bri_presence_gain = bri_yield }
+	add_to_variable = { var = CHI_bri_global_presence value = bri_presence_gain }
+
+	if = {
+		limit = { check_variable = { FROM.bri_project_type = 8 } }
+		set_temp_variable = { bri_returns_gain = 3 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { FROM.bri_project_type = 1 }
+				check_variable = { FROM.bri_project_type = 2 }
+				check_variable = { FROM.bri_project_type = 3 }
+				check_variable = { FROM.bri_project_type = 5 }
+				check_variable = { FROM.bri_project_type = 6 }
+			}
+		}
+		set_temp_variable = { bri_returns_gain = 2 }
+	}
+	else = {
+		set_temp_variable = { bri_returns_gain = 1 }
+	}
+
+	set_temp_variable = { bri_ret_mult = 1 }
+	add_to_temp_variable = { bri_ret_mult = CHI_bri_returns_multiplier }
+	add_to_temp_variable = { bri_ret_mult = modifier@CHI_bri_returns_multiplier }
+	multiply_temp_variable = { bri_returns_gain = bri_ret_mult }
+	add_to_variable = { var = CHI_bri_monthly_returns value = bri_returns_gain }
+
+	set_temp_variable = { bri_payout = 50 }
+	if = {
+		limit = { check_variable = { FROM.bri_project_terms = 3 } }
+		set_temp_variable = { bri_payout = 80 }
+	}
+	else_if = {
+		limit = { check_variable = { FROM.bri_project_terms = 1 } }
+		set_temp_variable = { bri_payout = 30 }
+	}
+	add_to_variable = { CHI_bri_treasury = 30 }
+
+	if = {
+		limit = { check_variable = { FROM.bri_project_terms = 3 } }
+		FROM = { add_opinion_modifier = { target = CHI modifier = small_decrease } }
+	}
+
+	set_temp_variable = { treasury_change = bri_payout }
+	modify_treasury_effect = yes
+}
+
+BRI_project_partial = {
+	FROM = {
+		BRI_advance_named_project = yes
+		BRI_select_target_state = yes
+		BRI_register_and_recalc_partner = yes
+		clr_country_flag = bri_pipeline_busy
+	}
+	add_to_variable = { CHI_bri_active_projects = -1 }
+	add_to_variable = { CHI_bri_completed_projects = 1 }
+
+	set_temp_variable = { bri_yield = 1 }
+	add_to_temp_variable = { bri_yield = CHI_bri_influence_yield }
+	add_to_temp_variable = { bri_yield = modifier@CHI_bri_influence_yield }
+	set_temp_variable = { bri_presence_gain = 2 }
+	multiply_temp_variable = { bri_presence_gain = bri_yield }
+	add_to_variable = { var = CHI_bri_global_presence value = bri_presence_gain }
+
+	if = {
+		limit = {
+			OR = {
+				check_variable = { FROM.bri_project_type = 1 }
+				check_variable = { FROM.bri_project_type = 2 }
+				check_variable = { FROM.bri_project_type = 3 }
+				check_variable = { FROM.bri_project_type = 5 }
+				check_variable = { FROM.bri_project_type = 6 }
+				check_variable = { FROM.bri_project_type = 8 }
+			}
+		}
+		set_temp_variable = { bri_returns_gain = 1 }
+		set_temp_variable = { bri_ret_mult = 1 }
+		add_to_temp_variable = { bri_ret_mult = CHI_bri_returns_multiplier }
+		add_to_temp_variable = { bri_ret_mult = modifier@CHI_bri_returns_multiplier }
+		multiply_temp_variable = { bri_returns_gain = bri_ret_mult }
+		add_to_variable = { var = CHI_bri_monthly_returns value = bri_returns_gain }
+	}
+
+	add_to_variable = { CHI_bri_treasury = 10 }
+
+	set_temp_variable = { treasury_change = 20 }
+	modify_treasury_effect = yes
+}
+
+BRI_project_default = {
+	add_to_variable = { CHI_bri_active_projects = -1 }
+	add_to_variable = { CHI_bri_defaulted_projects = 1 }
+	FROM = {
+		clr_country_flag = bri_pipeline_busy
+		set_country_flag = bri_default_THIS
+		country_event = { id = chi_bri.12 days = 1 }
+	}
+}
+
+# Scope: CHI. Structurally bounded: at most one communist enrolment and one
+# application per month. Nothing here can start more than two projects.
+CHI_BRI_application_tick = {
+	CHI_BRI_init_state = yes
+	clamp_variable = { var = CHI_bri_active_projects min = 0 }
+
+	if = {
+		limit = { check_variable = { CHI_bri_active_projects < CHI_bri_project_slots } }
+		random_scope_in_array = {
+			array = global.bri_eligible_countries
+			limit = {
+				exists = yes
+				has_government = communism
+				CHI_bri_eligible_applicant = yes
+			}
+			BRI_init_named_maxes = yes
+			set_variable = { bri_project_terms = 1 }
+			BRI_roll_project_type = yes
+			BRI_start_project = yes
+		}
+	}
+
+	if = {
+		limit = { check_variable = { CHI_bri_active_projects < CHI_bri_project_slots } }
+		set_temp_variable = { bri_app_rate = CHI_bri_app_rate }
+		add_to_temp_variable = { bri_app_rate = modifier@CHI_bri_app_intake }
+		clamp_variable = { var = bri_app_rate min = 0 max = 100 }
+		random = {
+			chance = var:bri_app_rate
+			random_scope_in_array = {
+				array = global.bri_eligible_countries
+				limit = {
+					exists = yes
+					NOT = { has_government = communism }
+					CHI_bri_eligible_applicant = yes
+				}
+				CHI_bri_generate_application = yes
+			}
+		}
+	}
+}
+
+# Scope: recipient picked by the tick.
+CHI_bri_generate_application = {
+	BRI_init_named_maxes = yes
+	BRI_roll_project_type = yes
+	CHI_bri_route_application = yes
+}
+
+# Scope: recipient. bri_project_type must already be set.
+CHI_bri_route_application = {
+	if = {
+		limit = { CHI = { has_country_flag = CHI_bri_automation_on } }
+		set_variable = { bri_project_terms = CHI.CHI_bri_default_terms }
+		BRI_start_project = yes
+	}
+	else = {
+		set_country_flag = bri_pending_application
+		set_country_flag = bri_pipeline_busy
+		CHI = { country_event = { id = chi_bri.10 days = 3 } }
+	}
+}
+
+# Scope: recipient. Rolls a project type, then degrades types this country cannot host.
+BRI_roll_project_type = {
+	random_list = {
+		20 = { set_variable = { bri_project_type = 2 } }
+		15 = { set_variable = { bri_project_type = 1 } }
+		10 = { set_variable = { bri_project_type = 3 } }
+		15 = { set_variable = { bri_project_type = 4 } }
+		15 = { set_variable = { bri_project_type = 5 } }
+		10 = { set_variable = { bri_project_type = 6 } }
+		10 = { set_variable = { bri_project_type = 7 } }
+		5 = { set_variable = { bri_project_type = 8 } }
+	}
+	BRI_degrade_unhostable_project_type = yes
+}
+
+# Scope: recipient. Mirrors BRI_select_target_state's state limits; a type with no
+# hostable state degrades to 4 (telecom), which needs no state.
+BRI_degrade_unhostable_project_type = {
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					check_variable = { bri_project_type = 1 }
+					NOT = {
+						any_owned_controlled_state = { is_coastal = yes }
+					}
+				}
+				AND = {
+					check_variable = { bri_project_type = 2 }
+					NOT = {
+						any_owned_controlled_state = {
+							any_neighbor_state = { CONTROLLER = { original_tag = CHI } }
+						}
+					}
+				}
+				AND = {
+					check_variable = { bri_project_type = 3 }
+					NOT = {
+						any_owned_controlled_state = {
+							OR = {
+								has_resources_amount = { resource = oil amount > 0 }
+								has_resources_amount = { resource = steel amount > 0 }
+								has_resources_amount = { resource = chromium amount > 0 }
+							}
+						}
+					}
+				}
+				AND = {
+					check_variable = { bri_project_type = 5 }
+					NOT = {
+						any_owned_controlled_state = {
+							OR = {
+								is_coastal = yes
+								infrastructure > 3
+							}
+						}
+					}
+				}
+				AND = {
+					check_variable = { bri_project_type = 6 }
+					NOT = {
+						any_owned_controlled_state = {
+							OR = {
+								has_resources_amount = { resource = steel amount > 0 }
+								has_resources_amount = { resource = chromium amount > 0 }
+								has_resources_amount = { resource = aluminium amount > 0 }
+								has_resources_amount = { resource = tungsten amount > 0 }
+							}
+						}
+					}
+				}
+				AND = {
+					check_variable = { bri_project_type = 7 }
+					NOT = {
+						any_owned_controlled_state = { industrial_complex > 0 }
+					}
+				}
+				AND = {
+					check_variable = { bri_project_type = 8 }
+					NOT = {
+						any_owned_controlled_state = { is_capital = yes }
+					}
+				}
+			}
+		}
+		set_variable = { bri_project_type = 4 }
 	}
 }
 
 CHI_BRI_monthly_tick = {
-	set_temp_variable = { treasury_change = CHI_bri_monthly_income }
+	set_temp_variable = { bri_income = CHI_bri_monthly_income }
+	add_to_temp_variable = { bri_income = modifier@CHI_bri_monthly_income }
+	set_temp_variable = { treasury_change = bri_income }
 	add_to_temp_variable = { treasury_change = CHI_bri_monthly_returns }
 	set_temp_variable = { project_bonus = CHI_bri_income_per_project_bonus }
 	multiply_temp_variable = { project_bonus = CHI_bri_active_projects }
 	add_to_temp_variable = { treasury_change = project_bonus }
 	modify_treasury_effect = yes
-	add_to_variable = { CHI_bri_treasury = CHI_bri_monthly_income }
+	add_to_variable = { var = CHI_bri_treasury value = bri_income }
 	add_to_variable = { var = CHI_bri_treasury value = project_bonus }
 	set_temp_variable = { bri_share = CHI_bri_returns_bri_pct }
 	multiply_temp_variable = { bri_share = CHI_bri_monthly_returns }
@@ -713,42 +1074,42 @@ BRI_init_named_maxes = {
 # Called on the recipient after a project completes: advance the named pointer while named
 BRI_advance_named_project = {
 	if = {
-		limit = { check_variable = { project_type = 1 } }
+		limit = { check_variable = { bri_project_type = 1 } }
 		if = { limit = { check_variable = { bri_named_done_PORT < bri_named_max_PORT } } add_to_variable = { bri_named_done_PORT = 1 } }
 		else = { add_to_variable = { bri_generic_done_PORT = 1 } if = { limit = { check_variable = { bri_generic_done_PORT > 4 } } set_variable = { bri_generic_done_PORT = 0 } } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 2 } }
+		limit = { check_variable = { bri_project_type = 2 } }
 		if = { limit = { check_variable = { bri_named_done_RAIL < bri_named_max_RAIL } } add_to_variable = { bri_named_done_RAIL = 1 } }
 		else = { add_to_variable = { bri_generic_done_RAIL = 1 } if = { limit = { check_variable = { bri_generic_done_RAIL > 4 } } set_variable = { bri_generic_done_RAIL = 0 } } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 3 } }
+		limit = { check_variable = { bri_project_type = 3 } }
 		if = { limit = { check_variable = { bri_named_done_PIPELINE < bri_named_max_PIPELINE } } add_to_variable = { bri_named_done_PIPELINE = 1 } }
 		else = { add_to_variable = { bri_generic_done_PIPELINE = 1 } if = { limit = { check_variable = { bri_generic_done_PIPELINE > 4 } } set_variable = { bri_generic_done_PIPELINE = 0 } } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 4 } }
+		limit = { check_variable = { bri_project_type = 4 } }
 		if = { limit = { check_variable = { bri_named_done_TELECOM < bri_named_max_TELECOM } } add_to_variable = { bri_named_done_TELECOM = 1 } }
 		else = { add_to_variable = { bri_generic_done_TELECOM = 1 } if = { limit = { check_variable = { bri_generic_done_TELECOM > 4 } } set_variable = { bri_generic_done_TELECOM = 0 } } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 5 } }
+		limit = { check_variable = { bri_project_type = 5 } }
 		if = { limit = { check_variable = { bri_named_done_SEZ < bri_named_max_SEZ } } add_to_variable = { bri_named_done_SEZ = 1 } }
 		else = { add_to_variable = { bri_generic_done_SEZ = 1 } if = { limit = { check_variable = { bri_generic_done_SEZ > 4 } } set_variable = { bri_generic_done_SEZ = 0 } } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 6 } }
+		limit = { check_variable = { bri_project_type = 6 } }
 		if = { limit = { check_variable = { bri_named_done_MINE < bri_named_max_MINE } } add_to_variable = { bri_named_done_MINE = 1 } }
 		else = { add_to_variable = { bri_generic_done_MINE = 1 } if = { limit = { check_variable = { bri_generic_done_MINE > 4 } } set_variable = { bri_generic_done_MINE = 0 } } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 7 } }
+		limit = { check_variable = { bri_project_type = 7 } }
 		if = { limit = { check_variable = { bri_named_done_ENERGY < bri_named_max_ENERGY } } add_to_variable = { bri_named_done_ENERGY = 1 } }
 		else = { add_to_variable = { bri_generic_done_ENERGY = 1 } if = { limit = { check_variable = { bri_generic_done_ENERGY > 4 } } set_variable = { bri_generic_done_ENERGY = 0 } } }
 	}
 	else_if = {
-		limit = { check_variable = { project_type = 8 } }
+		limit = { check_variable = { bri_project_type = 8 } }
 		if = { limit = { check_variable = { bri_named_done_PRESTIGE < bri_named_max_PRESTIGE } } add_to_variable = { bri_named_done_PRESTIGE = 1 } }
 		else = { add_to_variable = { bri_generic_done_PRESTIGE = 1 } if = { limit = { check_variable = { bri_generic_done_PRESTIGE > 4 } } set_variable = { bri_generic_done_PRESTIGE = 0 } } }
 	}

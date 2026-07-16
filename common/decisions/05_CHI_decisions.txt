@@ -7755,6 +7755,114 @@ CHI_BRI_management = {
 		}
 	}
 
+	CHI_BRI_automation_enable = {
+
+		icon = generic_political_discourse
+
+		visible = {
+			has_completed_focus = CHI_Belt_and_Road_Initiative
+			NOT = { has_country_flag = CHI_bri_automation_on }
+		}
+
+		cost = 0
+
+		fire_only_once = no
+
+		complete_effect = {
+			set_country_flag = CHI_bri_automation_on
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_automation_enable executed"
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	CHI_BRI_automation_disable = {
+
+		icon = generic_political_discourse
+
+		visible = {
+			has_completed_focus = CHI_Belt_and_Road_Initiative
+			has_country_flag = CHI_bri_automation_on
+		}
+
+		cost = 0
+
+		fire_only_once = no
+
+		complete_effect = {
+			clr_country_flag = CHI_bri_automation_on
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_automation_disable executed"
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	CHI_BRI_terms_concessional = {
+
+		icon = generic_fundraising
+
+		visible = {
+			has_completed_focus = CHI_Belt_and_Road_Initiative
+			NOT = { check_variable = { CHI_bri_default_terms = 1 } }
+		}
+
+		cost = 0
+
+		fire_only_once = no
+
+		complete_effect = {
+			set_variable = { CHI_bri_default_terms = 1 }
+			custom_effect_tooltip = CHI_bri_terms_concessional_tt
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_terms_concessional executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	CHI_BRI_terms_commercial = {
+
+		icon = generic_construction
+
+		visible = {
+			has_completed_focus = CHI_Belt_and_Road_Initiative
+			NOT = { check_variable = { CHI_bri_default_terms = 2 } }
+		}
+
+		cost = 0
+
+		fire_only_once = no
+
+		complete_effect = {
+			set_variable = { CHI_bri_default_terms = 2 }
+			custom_effect_tooltip = CHI_bri_terms_commercial_tt
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_terms_commercial executed"
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_BRI_terms_predatory = {
+
+		icon = infiltrate_state
+
+		visible = {
+			has_completed_focus = CHI_Predatory_Lending_Doctrine
+			NOT = { check_variable = { CHI_bri_default_terms = 3 } }
+		}
+
+		cost = 0
+
+		fire_only_once = no
+
+		complete_effect = {
+			set_variable = { CHI_bri_default_terms = 3 }
+			custom_effect_tooltip = CHI_bri_terms_predatory_tt
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_terms_predatory executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
 	CHI_Debt_Restructuring = {
 
 		icon = generic_fundraising
@@ -7770,7 +7878,7 @@ CHI_BRI_management = {
 
 		target_trigger = {
 			FROM = {
-				NOT = { tag = CHI }
+				NOT = { original_tag = CHI }
 				has_country_flag = bri_default_THIS
 			}
 		}
@@ -7808,7 +7916,7 @@ CHI_BRI_management = {
 
 		target_trigger = {
 			FROM = {
-				NOT = { tag = CHI }
+				NOT = { original_tag = CHI }
 				has_country_flag = bri_default_THIS
 			}
 		}
@@ -7851,7 +7959,7 @@ CHI_BRI_management = {
 
 		target_trigger = {
 			FROM = {
-				NOT = { tag = CHI }
+				NOT = { original_tag = CHI }
 				NOT = { has_government = democratic }
 				NOT = { has_idea = chinese_surveillance_systems }
 			}
@@ -8227,6 +8335,7 @@ CHI_BRI_recipient_actions = {
 			has_political_power > 24
 			has_war = no
 			any_owned_state = { is_coastal = yes }
+			CHI_bri_eligible_applicant = yes
 		}
 
 		cost = 30
@@ -8235,11 +8344,8 @@ CHI_BRI_recipient_actions = {
 
 		complete_effect = {
 			BRI_init_named_maxes = yes
-			set_variable = { project_type = 1 }
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.10 days = 1 }
-			}
+			set_variable = { bri_project_type = 1 }
+			CHI_bri_route_application = yes
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_apply_for_port_project executed"
 		}
 
@@ -8280,6 +8386,7 @@ CHI_BRI_recipient_actions = {
 				}
 				CHI = { check_variable = { CHI_chinese_aggression < 35 } }
 			}
+			CHI_bri_eligible_applicant = yes
 		}
 
 		cost = 30
@@ -8288,11 +8395,8 @@ CHI_BRI_recipient_actions = {
 
 		complete_effect = {
 			BRI_init_named_maxes = yes
-			set_variable = { project_type = 2 }
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.10 days = 1 }
-			}
+			set_variable = { bri_project_type = 2 }
+			CHI_bri_route_application = yes
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_apply_for_railway_project executed"
 		}
 
@@ -8323,6 +8427,7 @@ CHI_BRI_recipient_actions = {
 					has_resources_amount = { resource = aluminium amount > 4 }
 				}
 			}
+			CHI_bri_eligible_applicant = yes
 		}
 
 		cost = 35
@@ -8331,11 +8436,8 @@ CHI_BRI_recipient_actions = {
 
 		complete_effect = {
 			BRI_init_named_maxes = yes
-			set_variable = { project_type = 3 }
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.10 days = 1 }
-			}
+			set_variable = { bri_project_type = 3 }
+			CHI_bri_route_application = yes
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_apply_for_pipeline_project executed"
 		}
 
@@ -8372,6 +8474,7 @@ CHI_BRI_recipient_actions = {
 				}
 				CHI = { check_variable = { CHI_chinese_aggression < 35 } }
 			}
+			CHI_bri_eligible_applicant = yes
 		}
 
 		cost = 25
@@ -8380,11 +8483,8 @@ CHI_BRI_recipient_actions = {
 
 		complete_effect = {
 			BRI_init_named_maxes = yes
-			set_variable = { project_type = 4 }
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.10 days = 1 }
-			}
+			set_variable = { bri_project_type = 4 }
+			CHI_bri_route_application = yes
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_apply_for_telecom_project executed"
 		}
 
@@ -8410,6 +8510,7 @@ CHI_BRI_recipient_actions = {
 			has_political_power > 34
 			has_war = no
 			num_of_factories > 4
+			CHI_bri_eligible_applicant = yes
 		}
 
 		cost = 40
@@ -8418,11 +8519,8 @@ CHI_BRI_recipient_actions = {
 
 		complete_effect = {
 			BRI_init_named_maxes = yes
-			set_variable = { project_type = 5 }
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.10 days = 1 }
-			}
+			set_variable = { bri_project_type = 5 }
+			CHI_bri_route_application = yes
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_apply_for_sez_project executed"
 		}
 
@@ -8455,6 +8553,7 @@ CHI_BRI_recipient_actions = {
 					has_resources_amount = { resource = steel amount > 2 }
 				}
 			}
+			CHI_bri_eligible_applicant = yes
 		}
 
 		cost = 30
@@ -8463,11 +8562,8 @@ CHI_BRI_recipient_actions = {
 
 		complete_effect = {
 			BRI_init_named_maxes = yes
-			set_variable = { project_type = 6 }
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.10 days = 1 }
-			}
+			set_variable = { bri_project_type = 6 }
+			CHI_bri_route_application = yes
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_apply_for_mining_project executed"
 		}
 
@@ -8492,6 +8588,7 @@ CHI_BRI_recipient_actions = {
 		available = {
 			has_political_power > 24
 			has_war = no
+			CHI_bri_eligible_applicant = yes
 		}
 
 		cost = 30
@@ -8500,11 +8597,8 @@ CHI_BRI_recipient_actions = {
 
 		complete_effect = {
 			BRI_init_named_maxes = yes
-			set_variable = { project_type = 7 }
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.10 days = 1 }
-			}
+			set_variable = { bri_project_type = 7 }
+			CHI_bri_route_application = yes
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_apply_for_powerplant_project executed"
 		}
 
@@ -8530,6 +8624,7 @@ CHI_BRI_recipient_actions = {
 			has_political_power > 39
 			has_war = no
 			has_stability > 0.4
+			CHI_bri_eligible_applicant = yes
 		}
 
 		cost = 40
@@ -8538,11 +8633,8 @@ CHI_BRI_recipient_actions = {
 
 		complete_effect = {
 			BRI_init_named_maxes = yes
-			set_variable = { project_type = 8 }
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.10 days = 1 }
-			}
+			set_variable = { bri_project_type = 8 }
+			CHI_bri_route_application = yes
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_apply_for_prestige_project executed"
 		}
 
@@ -8572,10 +8664,7 @@ CHI_BRI_recipient_actions = {
 		days_re_enable = 365
 
 		complete_effect = {
-			CHI = {
-				set_temp_variable = { applicant_id = PREV.id }
-				country_event = { id = chi_bri.13 days = 1 }
-			}
+			CHI = { country_event = { id = chi_bri.13 days = 1 } }
 			log = "[GetDateText]: [Root.GetName]: Decision BRI_request_loan_extension executed"
 		}
 

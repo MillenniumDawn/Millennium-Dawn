@@ -7350,8 +7350,8 @@ country_event = {
 		name = chi_bri.10.a
 		log = "[GetDateText]: [This.GetName]: chi_bri.10.a executed"
 		FROM = {
-			set_temp_variable = { application_terms = 1 }
-			BRI_handle_application = yes
+			set_variable = { bri_project_terms = 1 }
+			BRI_start_project = yes
 		}
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		effect_tooltip = {
@@ -7359,7 +7359,6 @@ country_event = {
 				add_ideas = bri_partner_tier_1
 			}
 		}
-		set_temp_variable = { CHI_bri_returns_multiplier_temp = 0.05 }
 		ai_chance = {
 			base = 3
 			modifier = {
@@ -7377,8 +7376,8 @@ country_event = {
 		name = chi_bri.10.b
 		log = "[GetDateText]: [This.GetName]: chi_bri.10.b executed"
 		FROM = {
-			set_temp_variable = { application_terms = 2 }
-			BRI_handle_application = yes
+			set_variable = { bri_project_terms = 2 }
+			BRI_start_project = yes
 		}
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		effect_tooltip = {
@@ -7404,8 +7403,8 @@ country_event = {
 			has_completed_focus = CHI_Predatory_Lending_Doctrine
 		}
 		FROM = {
-			set_temp_variable = { application_terms = 3 }
-			BRI_handle_application = yes
+			set_variable = { bri_project_terms = 3 }
+			BRI_start_project = yes
 		}
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		effect_tooltip = {
@@ -7414,18 +7413,16 @@ country_event = {
 			}
 		}
 		add_to_variable = { CHI_bri_predatory_score = 1 }
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 6
-				has_completed_focus = CHI_Predatory_Lending_Doctrine
-			}
-		}
+		ai_chance = { base = 6 }
 	}
 
 	option = {
 		name = chi_bri.10.d_opt
 		log = "[GetDateText]: [This.GetName]: chi_bri.10.d_opt executed"
+		FROM = {
+			clr_country_flag = bri_pending_application
+			clr_country_flag = bri_pipeline_busy
+		}
 		ai_chance = {
 			base = 2
 			modifier = {
@@ -7451,53 +7448,16 @@ country_event = {
 	trigger = { original_tag = CHI }
 
 	immediate = {
-		random_list = {
-			60 = { set_variable = { chi_bri_outcome = 1 } }
-			25 = { set_variable = { chi_bri_outcome = 2 } }
-			15 = { set_variable = { chi_bri_outcome = 3 } }
-		}
+		FROM = { BRI_roll_project_outcome = yes }
 	}
 
 	option = {
 		name = chi_bri.11.a
 		log = "[GetDateText]: [This.GetName]: chi_bri.11.a executed"
 		trigger = {
-			check_variable = {
-				var = chi_bri_outcome
-				value = 1
-				compare = equals
-			}
+			FROM = { check_variable = { bri_project_outcome = 1 } }
 		}
-		FROM = {
-			BRI_advance_named_project = yes
-			BRI_select_target_state = yes
-			BRI_register_and_recalc_partner = yes
-		}
-		add_to_variable = { CHI_bri_active_projects = -1 }
-		add_to_variable = { CHI_bri_completed_projects = 1 }
-		add_to_variable = { CHI_bri_global_presence = 5 }
-		if = {
-			limit = { check_variable = { FROM.project_type = 8 } }
-			add_to_variable = { CHI_bri_monthly_returns = 3 }
-		}
-		else_if = {
-			limit = {
-				OR = {
-					check_variable = { FROM.project_type = 1 }
-					check_variable = { FROM.project_type = 2 }
-					check_variable = { FROM.project_type = 3 }
-					check_variable = { FROM.project_type = 5 }
-					check_variable = { FROM.project_type = 6 }
-				}
-			}
-			add_to_variable = { CHI_bri_monthly_returns = 2 }
-		}
-		else = {
-			add_to_variable = { CHI_bri_monthly_returns = 1 }
-		}
-		set_temp_variable = { treasury_change = 50 }
-		modify_treasury_effect = yes
-		add_to_variable = { CHI_bri_treasury = 30 }
+		BRI_project_success = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -7505,31 +7465,9 @@ country_event = {
 		name = chi_bri.11.b
 		log = "[GetDateText]: [This.GetName]: chi_bri.11.b executed"
 		trigger = {
-			check_variable = {
-				var = chi_bri_outcome
-				value = 2
-				compare = equals
-			}
+			FROM = { check_variable = { bri_project_outcome = 2 } }
 		}
-		add_to_variable = { CHI_bri_active_projects = -1 }
-		add_to_variable = { CHI_bri_completed_projects = 1 }
-		add_to_variable = { CHI_bri_global_presence = 2 }
-		if = {
-			limit = {
-				OR = {
-					check_variable = { FROM.project_type = 1 }
-					check_variable = { FROM.project_type = 2 }
-					check_variable = { FROM.project_type = 3 }
-					check_variable = { FROM.project_type = 5 }
-					check_variable = { FROM.project_type = 6 }
-					check_variable = { FROM.project_type = 8 }
-				}
-			}
-			add_to_variable = { CHI_bri_monthly_returns = 1 }
-		}
-		set_temp_variable = { treasury_change = 20 }
-		modify_treasury_effect = yes
-		add_to_variable = { CHI_bri_treasury = 10 }
+		BRI_project_partial = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -7537,21 +7475,34 @@ country_event = {
 		name = chi_bri.11.c
 		log = "[GetDateText]: [This.GetName]: chi_bri.11.c executed"
 		trigger = {
-			check_variable = {
-				var = chi_bri_outcome
-				value = 3
-				compare = equals
-			}
+			FROM = { check_variable = { bri_project_outcome = 3 } }
 		}
-		add_to_variable = { CHI_bri_active_projects = -1 }
-		add_to_variable = { CHI_bri_defaulted_projects = 1 }
-		FROM = {
-			set_country_flag = bri_default_THIS
-			country_event = { id = chi_bri.12 days = 1 }
-		}
+		BRI_project_default = yes
 		ai_chance = { base = 1 }
 	}
 
+}
+
+country_event = {
+	id = chi_bri.14
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		FROM = { BRI_roll_project_outcome = yes }
+		if = {
+			limit = { FROM = { check_variable = { bri_project_outcome = 1 } } }
+			BRI_project_success = yes
+		}
+		else_if = {
+			limit = { FROM = { check_variable = { bri_project_outcome = 2 } } }
+			BRI_project_partial = yes
+		}
+		else = {
+			BRI_project_default = yes
+		}
+	}
 }
 
 country_event = {
@@ -7793,7 +7744,7 @@ country_event = {
 		name = chi_bri.15.d_opt
 		log = "[GetDateText]: [This.GetName]: chi_bri.15.d_opt executed"
 		trigger = {
-			FROM = { original_tag = SRL }
+			FROM = { original_tag = SRI }
 		}
 		FROM = {
 			413 = {
@@ -7810,7 +7761,7 @@ country_event = {
 		name = chi_bri.15.e
 		log = "[GetDateText]: [This.GetName]: chi_bri.15.e executed"
 		trigger = {
-			FROM = { original_tag = SRL }
+			FROM = { original_tag = SRI }
 		}
 		FROM = {
 			414 = {
@@ -7847,7 +7798,7 @@ country_event = {
 		trigger = {
 			FROM = {
 				NOT = { original_tag = PAK }
-				NOT = { original_tag = SRL }
+				NOT = { original_tag = SRI }
 				NOT = { original_tag = KEN }
 			}
 		}
@@ -7872,7 +7823,7 @@ country_event = {
 	picture = x
 	is_triggered_only = yes
 
-	trigger = { original_tag = SRL }
+	trigger = { original_tag = SRI }
 
 	option = {
 		name = chi_bri.20.a
@@ -8083,7 +8034,8 @@ country_event = {
 	option = {
 		name = chi_bri.40.b
 		log = "[GetDateText]: [This.GetName]: chi_bri.40.b executed"
-		country_event = { id = chi_bri.41 days = 1 }
+		add_timed_idea = { idea = CHI_bri_forum_surge days = 1095 }
+		country_event = { id = chi_bri.42 days = 2 }
 		ai_chance = { base = 5 }
 	}
 
@@ -8109,37 +8061,6 @@ country_event = {
 				has_completed_focus = CHI_Win_Win_Cooperation
 			}
 		}
-	}
-
-}
-
-country_event = {
-	id = chi_bri.41
-	title = chi_bri.41.t
-	desc = chi_bri.41.d
-	picture = x
-	is_triggered_only = yes
-
-	trigger = { original_tag = CHI }
-
-	option = {
-		name = chi_bri.41.a
-		log = "[GetDateText]: [This.GetName]: chi_bri.41.a executed"
-		every_country = {
-			limit = {
-				NOT = { original_tag = CHI }
-				NOT = { original_tag = RAJ }
-				NOT = { has_war_with = CHI }
-				NOT = { has_country_flag = CHI_bri_pending_application }
-				is_in_array = { array = global.bri_eligible_countries value = THIS }
-			}
-			set_country_flag = CHI_bri_pending_application
-			CHI = { country_event = { id = chi_bri.10 days = 3 } }
-		}
-		add_political_power = 25
-		add_to_variable = { CHI_bri_global_presence = 3 }
-		country_event = { id = chi_bri.42 days = 2 }
-		ai_chance = { base = 1 }
 	}
 
 }
