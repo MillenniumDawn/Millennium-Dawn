@@ -5,10 +5,18 @@
 import glob
 import os
 import re
+import sys
 from multiprocessing import Pool
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+
+# strip_comments is quote-aware: a '#' inside a quoted log string must survive,
+# or the orphaned quote desyncs extract_block_from_text's in-string tracking
+# and container spans are silently lost.
+from shared_utils import extract_block_from_text, strip_comments
 from validator_common import (
     BaseValidator,
     DataCleaner,
@@ -190,7 +198,18 @@ _EFFECT_CONTAINER_RE = re.compile(
     r"effect_tooltip|effect)\s*=\s*\{"
 )
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
-_WRITE_BEFORE_RE = re.compile(r"(?:set_temp_variable|set_variable)\s*=\s*\{\s*$")
+# Value-producing writers only — add_to/multiply etc. read the existing value.
+_WRITE_BEFORE_RE = re.compile(
+    r"(?:set_temp_variable|set_variable)\s*=\s*\{\s*$"
+    r"|set_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*$"
+)
+_MONEY_WRITE_RES = {
+    var: re.compile(
+        r"\b(?:set_temp_variable|set_variable)\s*=\s*\{\s*" + var + r"\s*="
+        r"|\bset_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*" + var + r"\b"
+    )
+    for var in _MONEY_EFFECT_PAIRS
+}
 
 
 def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
@@ -202,11 +221,6 @@ def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
     overwrites the caller's value and cannot consume it. Closed transitively
     so wrappers of wrappers (GRE_pay_or_defer -> modify_debt_effect) count.
     """
-    # strip_comments is quote-aware: a '#' inside a quoted log string must
-    # survive, or the orphaned quote desyncs extract_block_from_text's
-    # in-string tracking and container spans are silently lost.
-    from shared_utils import extract_block_from_text, strip_comments
-
     bodies: Dict[str, str] = {}
     for fp in effect_files:
         try:
@@ -262,10 +276,52 @@ def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
     return {var: frozenset(names) for var, names in consumers.items()}
 
 
+def _has_sequential_rewrite(
+    cleaned: str, start: int, end: int, var: str, write_re: re.Pattern
+) -> bool:
+    """Whether the setter's variable is re-set in [start, end) as a clobber.
+
+    Depth heuristic: only a re-write at the setter's own brace depth counts —
+    branch-gated writes (if/else arms) sit in nested blocks and never clobber.
+    A same-depth re-write that reads the variable in its value expression
+    (``value = X multiply = -1``, events/raids.txt) folds the old value
+    forward and is not a clobber either.
+    """
+    rewrites = [w.start() for w in write_re.finditer(cleaned, start, end)]
+    if not rewrites:
+        return False
+    var_re = re.compile(r"\b" + var + r"\b")
+    ri = 0
+    depth = 1  # start sits inside the setter's own braces
+    in_str = False
+    for i in range(start, end):
+        if ri < len(rewrites) and rewrites[ri] == i:
+            if depth == 0 and not in_str:
+                # First same-depth re-write decides: the sole var occurrence
+                # in its block is the l-value; a second one is a self-read.
+                body, _ = extract_block_from_text(cleaned, i)
+                return len(var_re.findall(body)) <= 1
+            ri += 1
+            if ri == len(rewrites):
+                return False
+        c = cleaned[i]
+        if c == '"' and cleaned[i - 1] != "\\":
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth < 0:
+                    return False
+    return False
+
+
 def process_file_for_orphan_money(
     args: Tuple[str, str, Dict[str, frozenset]],
 ) -> List[Tuple[str, str, int]]:
-    """Pool worker: flag money-variable setters never consumed in their block.
+    """Pool worker: flag money-variable setters that are dead in their block —
+    never consumed, or overwritten at the same depth before the consumer runs.
 
     Returns (message, rel_path, line) tuples. Setters outside any known effect
     container (loose scripted-effect bodies that produce the value for their
@@ -281,10 +337,8 @@ def process_file_for_orphan_money(
     except Exception:
         return []
 
-    from shared_utils import extract_block_from_text, strip_comments
-
-    # Quote-aware strip (see build_money_consumer_map) — the naive regex strip
-    # broke brace tracking in every file with a '#' inside a log string.
+    # Quote-aware strip — the naive regex strip broke brace tracking in every
+    # file with a '#' inside a log string.
     cleaned = strip_comments(text)
     setters = list(_MONEY_SETTER_RE.finditer(cleaned))
     if not setters:
@@ -292,7 +346,7 @@ def process_file_for_orphan_money(
 
     spans = []
     for m in _EFFECT_CONTAINER_RE.finditer(cleaned):
-        brace = cleaned.index("{", m.start())
+        brace = m.end() - 1  # the container regex ends at the opening brace
         body, end = extract_block_from_text(cleaned, brace)
         if body:
             is_tooltip = cleaned.startswith("effect_tooltip", m.start())
@@ -317,16 +371,31 @@ def process_file_for_orphan_money(
             continue
         if holder[2]:
             # Setter previewed in a tooltip: any consumer within it renders.
-            consumed = bool(consumer_res[var].search(cleaned, m.end(), holder[1]))
+            hits = list(consumer_res[var].finditer(cleaned, m.end(), holder[1]))
         else:
             # Runtime setter: consumers that only exist inside a nested
             # effect_tooltip are previews and never execute.
-            consumed = any(
-                not any(ts <= cm.start() < te for ts, te in tooltip_spans)
+            hits = [
+                cm
                 for cm in consumer_res[var].finditer(cleaned, m.end(), holder[1])
+                if not any(ts <= cm.start() < te for ts, te in tooltip_spans)
+            ]
+        if hits and not _has_sequential_rewrite(
+            cleaned, m.end(), hits[0].start(), var, _MONEY_WRITE_RES[var]
+        ):
+            continue
+        line = cleaned[: m.start()].count("\n") + 1
+        if hits:
+            issues.append(
+                (
+                    f"set_temp_variable {var} is overwritten before"
+                    f" {_MONEY_EFFECT_PAIRS[var]} (or wrapper) runs — a later"
+                    f" write to {var} clobbers this value, so this setter is dead",
+                    rel,
+                    line,
+                )
             )
-        if not consumed:
-            line = cleaned[: m.start()].count("\n") + 1
+        else:
             issues.append(
                 (
                     f"set_temp_variable {var} is never consumed — no"
@@ -716,7 +785,9 @@ class Validator(BaseValidator):
         set_temp_variable of treasury_change/debt_change/int_investment_change
         must be followed, within the same effect block, by the matching
         modify_*_effect call or a wrapper that consumes it — otherwise the
-        setter is dead and the transfer silently never happens.
+        setter is dead and the transfer silently never happens. A setter
+        re-written at the same brace depth before the consumer runs is
+        equally dead (clobbered).
         """
         self._log_section("Checking for orphan money-variable setters...")
 
@@ -724,8 +795,8 @@ class Validator(BaseValidator):
             [
                 "common/national_focus/*.txt",
                 "common/decisions/**/*.txt",
-                "common/on_actions/*.txt",
-                "events/*.txt",
+                "common/on_actions/**/*.txt",
+                "events/**/*.txt",
             ]
         )
         if not txt_files:
@@ -733,7 +804,7 @@ class Validator(BaseValidator):
             return
 
         effect_files = self._collect_files(
-            ["common/scripted_effects/*.txt"], ignore_staged=True
+            ["common/scripted_effects/**/*.txt"], ignore_staged=True
         )
         consumer_map = build_money_consumer_map(effect_files)
         args_list = [(f, self.mod_path, consumer_map) for f in txt_files]
@@ -744,7 +815,7 @@ class Validator(BaseValidator):
         self._report(
             issues,
             "✓ No orphan money-variable setters found",
-            "Money-variable setters never consumed in their effect block (dead setter — the money never moves):",
+            "Dead money-variable setters (never consumed, or overwritten before the consumer runs — the money never moves):",
             severity=Severity.WARNING,
             category="orphan-money-setter",
         )
