@@ -81,9 +81,10 @@ ideas = {
 			removal_cost = -1
 		}
 
-		# Belt and Road Initiative — imposed on a debtor when China claims resource rights
-		# instead of reclaiming the structures it built.
-		CHI_bri_resource_concession = {
+		# Belt and Road Initiative — imposed on a debtor when China claims resource rights instead
+		# of reclaiming the structures it built. Named _idea: CHI_bri_resource_concession without
+		# the suffix is an opinion modifier, and a shared loc key would rename that everywhere.
+		CHI_bri_resource_concession_idea = {
 			picture = foreign_capital_influx
 			allowed_civil_war = { always = yes }
 			removal_cost = -1
@@ -247,7 +248,6 @@ ideas = {
 			modifier = {
 				consumer_goods_factor = 0.05
 				productivity_growth_modifier = -0.025
-				custom_modifier_tooltip = CHI_TAI_tourism_ban_idea_tt
 			}
 		}
 		CHI_self_reliant_path_idea = {
@@ -2721,6 +2721,9 @@ ideas = {
 			on_remove = { log = "[GetDateText]: [Root.GetName]: remove idea CHI_bri_forum_momentum" }
 		}
 
+		# The slot grant is what makes this idea more than flavour: applications are gated on
+		# CHI_bri_committed_projects < CHI_bri_project_slots, so widening the cap is what actually
+		# lets more projects run at once. Paired on_add/on_remove — the timed expiry must give it back.
 		CHI_bri_forum_surge = {
 			picture = generic_political_support
 			allowed = { original_tag = CHI }
@@ -2728,7 +2731,15 @@ ideas = {
 			modifier = {
 				trade_opinion_factor = 0.05
 			}
-			on_remove = { log = "[GetDateText]: [Root.GetName]: remove idea CHI_bri_forum_surge" }
+			on_add = {
+				add_to_variable = { CHI_bri_project_slots = 2 }
+				log = "[GetDateText]: [Root.GetName]: add idea CHI_bri_forum_surge"
+			}
+			on_remove = {
+				subtract_from_variable = { CHI_bri_project_slots = 2 }
+				clamp_variable = { var = CHI_bri_project_slots min = 0 }
+				log = "[GetDateText]: [Root.GetName]: remove idea CHI_bri_forum_surge"
+			}
 		}
 
 		CHI_aiib_dividend_member = {

@@ -341,13 +341,7 @@ on_actions = {
 			if = {
 				limit = {
 					country_exists = CHI
-					FROM = {
-						OR = {
-							check_variable = { bri_partner_rank > 0 }
-							check_variable = { bri_debt_owed_to_china > 0 }
-							has_country_flag = bri_pipeline_busy
-						}
-					}
+					FROM = { CHI_bri_is_engaged = yes }
 				}
 				FROM = { CHI_bri_drop_partner = yes }
 			}
@@ -467,6 +461,29 @@ on_actions = {
 					set_country_flag = { flag = CHI_communique_defender_cd days = 30 value = 1 }
 					country_event = { id = chi_bri.134 days = 1 }
 				}
+			}
+
+			# Going to war with China ends the partnership. Either belligerent may be the partner,
+			# so both sides are tested; has_war_with = CHI keeps unrelated wars out of it.
+			if = {
+				limit = {
+					country_exists = CHI
+					NOT = { original_tag = CHI }
+					has_war_with = CHI
+					CHI_bri_is_engaged = yes
+				}
+				CHI_bri_drop_partner = yes
+			}
+			if = {
+				limit = {
+					country_exists = CHI
+					FROM = {
+						NOT = { original_tag = CHI }
+						has_war_with = CHI
+						CHI_bri_is_engaged = yes
+					}
+				}
+				FROM = { CHI_bri_drop_partner = yes }
 			}
 		}
 	}

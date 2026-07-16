@@ -7730,6 +7730,7 @@ CHI_BRI_management = {
 		available = {
 			has_political_power > 199
 			has_war = no
+			check_variable = { CHI_bri_treasury > 149 }
 		}
 
 		cost = 200
@@ -7740,6 +7741,7 @@ CHI_BRI_management = {
 
 		complete_effect = {
 			subtract_from_variable = { CHI_bri_treasury = 150 }
+			clamp_variable = { var = CHI_bri_treasury min = 0 }
 			country_event = { id = chi_bri.40 days = 1 }
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_Forum_Triennial executed"
 			newline = yes
@@ -7770,6 +7772,7 @@ CHI_BRI_management = {
 
 		complete_effect = {
 			set_country_flag = CHI_bri_auto_accept
+			custom_effect_tooltip = CHI_BRI_automation_enable_tt
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_automation_enable executed"
 		}
 
@@ -7791,6 +7794,7 @@ CHI_BRI_management = {
 
 		complete_effect = {
 			clr_country_flag = CHI_bri_auto_accept
+			custom_effect_tooltip = CHI_BRI_automation_disable_tt
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_automation_disable executed"
 		}
 
@@ -7807,7 +7811,7 @@ CHI_BRI_management = {
 
 		available = {
 			has_political_power > 74
-			check_variable = { CHI_bri_monthly_income < 30 }
+			check_variable = { CHI_bri_monthly_income_base < 30 }
 		}
 
 		cost = 75
@@ -7817,8 +7821,7 @@ CHI_BRI_management = {
 		days_re_enable = 365
 
 		complete_effect = {
-			add_to_variable = { CHI_bri_monthly_income = 4 tooltip = CHI_bri_monthly_income_tt }
-			custom_effect_tooltip = CHI_bri_raise_contribution_tt
+			add_to_variable = { CHI_bri_monthly_income_base = 4 tooltip = CHI_bri_monthly_income_tt }
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_bri_raise_contribution executed"
 		}
 
@@ -7831,9 +7834,8 @@ CHI_BRI_management = {
 		}
 	}
 
-	# The three responses to a defaulted Belt and Road loan. All are China's call and act on the
-	# debtor through FROM: the old design routed the choice through chi_bri.12 with an unscoped
-	# country_event, which fired it at China itself.
+	# The responses to a defaulted Belt and Road loan. All are China's call and act on the debtor
+	# through FROM.
 	CHI_Debt_Restructuring = {
 
 		icon = generic_fundraising
@@ -7856,8 +7858,10 @@ CHI_BRI_management = {
 		complete_effect = {
 			FROM = {
 				CHI_bri_clear_loan = yes
+				custom_effect_tooltip = CHI_bri_clear_loan_tt
 				add_opinion_modifier = { target = CHI modifier = medium_increase }
 			}
+			add_to_variable = { CHI_bri_winwin_score = 2 tooltip = CHI_bri_winwin_score_tt }
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_Debt_Restructuring executed"
 		}
 
@@ -7883,6 +7887,7 @@ CHI_BRI_management = {
 			FROM = {
 				NOT = { original_tag = CHI }
 				has_country_flag = bri_defaulted
+				CHI_bri_has_reclaimable_structure = yes
 			}
 		}
 
@@ -7892,9 +7897,21 @@ CHI_BRI_management = {
 			FROM = {
 				CHI_bri_reclaim_structure = yes
 				CHI_bri_clear_loan = yes
+				custom_effect_tooltip = CHI_bri_clear_loan_tt
 				add_opinion_modifier = { target = CHI modifier = large_decrease }
 			}
-			add_to_variable = { CHI_bri_predatory_score = 1 }
+			# Taking the asset is the point: China realises the build cost it fronted and books the
+			# leverage. Guarded on the reclaim actually finding something rather than assumed.
+			if = {
+				limit = { FROM = { check_variable = { bri_structure_reclaimed = 1 } } }
+				custom_effect_tooltip = CHI_Asset_Seizure_tt
+				add_to_variable = { CHI_bri_global_presence = 3 tooltip = CHI_bri_global_presence_tt }
+				CHI_bri_recalc_presence = yes
+				newline = yes
+				set_temp_variable = { treasury_change = 25 }
+				modify_treasury_effect = yes
+			}
+			add_to_variable = { CHI_bri_predatory_score = 1 tooltip = CHI_bri_predatory_score_tt }
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_Asset_Seizure executed"
 		}
 
@@ -7906,6 +7923,8 @@ CHI_BRI_management = {
 		}
 	}
 
+	# Unlike Asset Seizure, this takes something the debtor still has to hand over, so it goes
+	# through an event: a permanent idea imposed on another nation needs the target to answer.
 	CHI_bri_claim_resource_rights = {
 
 		icon = generic_industry
@@ -7920,18 +7939,22 @@ CHI_BRI_management = {
 			FROM = {
 				NOT = { original_tag = CHI }
 				has_country_flag = bri_defaulted
+				NOT = { has_idea = CHI_bri_resource_concession_idea }
 			}
 		}
 
 		cost = 50
 
 		complete_effect = {
-			FROM = {
-				CHI_bri_clear_loan = yes
-				add_ideas = CHI_bri_resource_concession
-				add_opinion_modifier = { target = CHI modifier = medium_decrease }
+			FROM = { country_event = { id = chi_bri.17 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				FROM = {
+					CHI_bri_clear_loan = yes
+					add_ideas = CHI_bri_resource_concession_idea
+				}
 			}
-			add_to_variable = { CHI_bri_predatory_score = 1 }
+			add_to_variable = { CHI_bri_predatory_score = 1 tooltip = CHI_bri_predatory_score_tt }
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_bri_claim_resource_rights executed"
 		}
 
@@ -8335,9 +8358,8 @@ CHI_BRI_recipient_actions = {
 		available = {
 			has_political_power > 24
 			has_war = no
-			any_owned_state = { is_coastal = yes }
-			CHI_bri_can_host_port = yes
 			CHI_bri_can_request = yes
+			CHI_bri_can_host_port = yes
 		}
 
 		cost = 30
@@ -8361,7 +8383,7 @@ CHI_BRI_recipient_actions = {
 			modifier = { factor = 0.25 is_in_faction_with = USA }
 			modifier = { factor = 0.3 gdp_per_capita_greater_than_10 = yes }
 			modifier = { factor = 0.25 is_major = yes }
-			modifier = { factor = 2 is_african_nation = yes }
+			modifier = { factor = 2 has_country_flag = african_nation_flag }
 			modifier = { factor = 2 is_middle_eastern_nation = yes }
 		}
 	}
@@ -8375,24 +8397,24 @@ CHI_BRI_recipient_actions = {
 		available = {
 			has_political_power > 24
 			has_war = no
+			CHI_bri_can_request = yes
 			OR = {
 				is_neighbor_of = CHI
 				has_country_flag = CHI_bri_partner
 			}
 			if = {
-				limit = { is_european_nation = yes }
+				limit = { has_country_flag = european_nation_flag }
 				CHI = { check_variable = { CHI_chinese_aggression < 25 } }
 			}
 			if = {
 				limit = {
-					is_american_nation = yes
+					has_country_flag = american_nation_flag
 					NOT = { original_tag = USA }
 					NOT = { original_tag = CAN }
 				}
 				CHI = { check_variable = { CHI_chinese_aggression < 35 } }
 			}
 			CHI_bri_can_host_rail = yes
-			CHI_bri_can_request = yes
 		}
 
 		cost = 30
@@ -8417,7 +8439,7 @@ CHI_BRI_recipient_actions = {
 			modifier = { factor = 0.3 gdp_per_capita_greater_than_10 = yes }
 			modifier = { factor = 0.25 is_major = yes }
 			modifier = { factor = 3 is_neighbor_of = CHI }
-			modifier = { factor = 2 is_asian_nation = yes }
+			modifier = { factor = 2 has_country_flag = asian_nation_flag }
 		}
 	}
 
@@ -8430,14 +8452,8 @@ CHI_BRI_recipient_actions = {
 		available = {
 			has_political_power > 24
 			has_war = no
-			any_owned_state = {
-				OR = {
-					has_resources_amount = { resource = oil amount > 4 }
-					has_resources_amount = { resource = aluminium amount > 4 }
-				}
-			}
-			CHI_bri_can_host_pipeline = yes
 			CHI_bri_can_request = yes
+			CHI_bri_can_host_pipeline = yes
 		}
 
 		cost = 35
@@ -8475,19 +8491,20 @@ CHI_BRI_recipient_actions = {
 		available = {
 			has_political_power > 24
 			has_war = no
+			CHI_bri_can_request = yes
+			CHI_bri_can_host_telecom = yes
 			if = {
-				limit = { is_european_nation = yes }
+				limit = { has_country_flag = european_nation_flag }
 				CHI = { check_variable = { CHI_chinese_aggression < 25 } }
 			}
 			if = {
 				limit = {
-					is_american_nation = yes
+					has_country_flag = american_nation_flag
 					NOT = { original_tag = USA }
 					NOT = { original_tag = CAN }
 				}
 				CHI = { check_variable = { CHI_chinese_aggression < 35 } }
 			}
-			CHI_bri_can_request = yes
 		}
 
 		cost = 25
@@ -8512,7 +8529,7 @@ CHI_BRI_recipient_actions = {
 			modifier = { factor = 0.3 gdp_per_capita_greater_than_10 = yes }
 			modifier = { factor = 0.25 is_major = yes }
 			modifier = { factor = 2 gdp_per_capita_greater_than_5 = yes }
-			modifier = { factor = 1.5 is_african_nation = yes }
+			modifier = { factor = 1.5 has_country_flag = african_nation_flag }
 		}
 	}
 
@@ -8526,8 +8543,8 @@ CHI_BRI_recipient_actions = {
 			has_political_power > 34
 			has_war = no
 			num_of_factories > 4
-			CHI_bri_can_host_sez = yes
 			CHI_bri_can_request = yes
+			CHI_bri_can_host_sez = yes
 		}
 
 		cost = 40
@@ -8552,7 +8569,7 @@ CHI_BRI_recipient_actions = {
 			modifier = { factor = 0.3 gdp_per_capita_greater_than_10 = yes }
 			modifier = { factor = 0.25 is_major = yes }
 			modifier = { factor = 2 num_of_factories > 9 }
-			modifier = { factor = 2 is_asian_nation = yes }
+			modifier = { factor = 2 has_country_flag = asian_nation_flag }
 		}
 	}
 
@@ -8565,16 +8582,8 @@ CHI_BRI_recipient_actions = {
 		available = {
 			has_political_power > 24
 			has_war = no
-			any_owned_state = {
-				OR = {
-					has_resources_amount = { resource = chromium amount > 2 }
-					has_resources_amount = { resource = tungsten amount > 2 }
-					has_resources_amount = { resource = aluminium amount > 2 }
-					has_resources_amount = { resource = steel amount > 2 }
-				}
-			}
-			CHI_bri_can_host_mine = yes
 			CHI_bri_can_request = yes
+			CHI_bri_can_host_mine = yes
 		}
 
 		cost = 30
@@ -8598,7 +8607,7 @@ CHI_BRI_recipient_actions = {
 			modifier = { factor = 0.25 is_in_faction_with = USA }
 			modifier = { factor = 0.3 gdp_per_capita_greater_than_10 = yes }
 			modifier = { factor = 0.25 is_major = yes }
-			modifier = { factor = 3 is_african_nation = yes }
+			modifier = { factor = 3 has_country_flag = african_nation_flag }
 			modifier = { factor = 2 any_owned_state = { has_resources_amount = { resource = chromium amount > 9 } } }
 		}
 	}
@@ -8612,8 +8621,8 @@ CHI_BRI_recipient_actions = {
 		available = {
 			has_political_power > 24
 			has_war = no
-			CHI_bri_can_host_energy = yes
 			CHI_bri_can_request = yes
+			CHI_bri_can_host_energy = yes
 		}
 
 		cost = 30
@@ -8637,7 +8646,7 @@ CHI_BRI_recipient_actions = {
 			modifier = { factor = 0.25 is_in_faction_with = USA }
 			modifier = { factor = 0.3 gdp_per_capita_greater_than_5 = yes }
 			modifier = { factor = 0.25 is_major = yes }
-			modifier = { factor = 2 is_african_nation = yes }
+			modifier = { factor = 2 has_country_flag = african_nation_flag }
 		}
 	}
 
@@ -8651,8 +8660,8 @@ CHI_BRI_recipient_actions = {
 			has_political_power > 39
 			has_war = no
 			has_stability > 0.4
-			CHI_bri_can_host_prestige = yes
 			CHI_bri_can_request = yes
+			CHI_bri_can_host_prestige = yes
 		}
 
 		cost = 40
@@ -8679,11 +8688,46 @@ CHI_BRI_recipient_actions = {
 		}
 	}
 
+	# The way out of a resource concession. Without this the idea is a permanent, unescapable
+	# penalty for missing a single payment.
+	CHI_bri_buy_back_concession = {
+
+		icon = generic_fundraising
+
+		visible = { has_idea = CHI_bri_resource_concession_idea }
+
+		available = {
+			has_political_power > 74
+			check_variable = { treasury > 74 }
+		}
+
+		cost = 75
+
+		complete_effect = {
+			remove_ideas = CHI_bri_resource_concession_idea
+			add_opinion_modifier = { target = CHI modifier = medium_decrease }
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_bri_buy_back_concession executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -75 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				is_puppet_of = CHI
+			}
+		}
+	}
+
 	BRI_request_loan_extension = {
 
 		icon = generic_decision
-
-		allowed = { NOT = { original_tag = CHI } NOT = { original_tag = IND } }
 
 		visible = { has_country_flag = bri_defaulted }
 
@@ -9007,9 +9051,8 @@ CHI_pacific_pla_training = {
 
 }
 
-# The recipient works the project to completion. A real mission rather than an event scheduled on
-# China: it lives on the recipient, so it dies with the country instead of resolving ~700 days
-# later for a tag that no longer exists.
+# The recipient works the project to completion. A mission rather than a scheduled event so it
+# lives on the recipient and dies with the country.
 CHI_BRI_project_missions = {
 
 	CHI_bri_project_mission = {

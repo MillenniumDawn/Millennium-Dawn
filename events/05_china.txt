@@ -7445,6 +7445,137 @@ country_event = {
 
 }
 
+# Fires at the debtor the month it first misses a payment. The default flag gates the whole
+# predatory branch, so both sides have to be told it happened.
+country_event = {
+	id = chi_bri.16
+	title = chi_bri.16.t
+	desc = chi_bri.16.d
+	picture = x
+	is_triggered_only = yes
+
+	option = {
+		name = chi_bri.16.a
+		log = "[GetDateText]: [This.GetName]: chi_bri.16.a executed"
+		ai_chance = { base = 1 }
+	}
+
+}
+
+# Fires at the debtor when China claims resource rights. China has already decided to demand;
+# this is the debtor's answer, because the concession idea is permanent.
+country_event = {
+	id = chi_bri.17
+	title = chi_bri.17.t
+	desc = chi_bri.17.d
+	picture = x
+	is_triggered_only = yes
+
+	option = {
+		name = chi_bri.17.a
+		log = "[GetDateText]: [This.GetName]: chi_bri.17.a executed"
+		CHI_bri_clear_loan = yes
+		add_ideas = CHI_bri_resource_concession_idea
+		add_opinion_modifier = { target = CHI modifier = medium_decrease }
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 5
+				has_war = yes
+			}
+			modifier = {
+				add = 3
+				OR = {
+					is_puppet_of = CHI
+					is_in_faction_with = CHI
+				}
+			}
+			modifier = {
+				factor = 0.5
+				has_stability > 0.6
+			}
+		}
+	}
+
+	option = {
+		name = chi_bri.17.b
+		log = "[GetDateText]: [This.GetName]: chi_bri.17.b executed"
+		# Refusing keeps the debt and the default flag, which leaves Asset Seizure armed.
+		custom_effect_tooltip = CHI_bri_refuse_concession_tt
+		add_opinion_modifier = { target = CHI modifier = large_decrease }
+		CHI = {
+			add_opinion_modifier = { target = ROOT modifier = large_decrease }
+			country_event = { id = chi_bri.18 days = 2 }
+		}
+		ai_chance = {
+			base = 3
+			modifier = {
+				add = 4
+				has_opinion = { target = CHI value < 0 }
+			}
+			modifier = {
+				factor = 0
+				is_puppet_of = CHI
+			}
+		}
+	}
+
+}
+
+# Notifies China that a debtor refused the concession demand.
+country_event = {
+	id = chi_bri.18
+	title = chi_bri.18.t
+	desc = chi_bri.18.d
+	picture = x
+	is_triggered_only = yes
+
+	trigger = { original_tag = CHI }
+
+	option = {
+		name = chi_bri.18.a
+		log = "[GetDateText]: [This.GetName]: chi_bri.18.a executed"
+		ai_chance = { base = 1 }
+	}
+
+}
+
+# Notifies China that a debtor has defaulted. The default flag is what arms Debt Restructuring,
+# Asset Seizure and Claim Resource Rights, so China has to be told it happened.
+country_event = {
+	id = chi_bri.19
+	title = chi_bri.19.t
+	desc = chi_bri.19.d
+	picture = x
+	is_triggered_only = yes
+
+	trigger = { original_tag = CHI }
+
+	option = {
+		name = chi_bri.19.a
+		log = "[GetDateText]: [This.GetName]: chi_bri.19.a executed"
+		ai_chance = { base = 1 }
+	}
+
+}
+
+# Fires at the recipient when China's money arrives as credit rather than a grant. Without it the
+# recipient spends political power on an apply decision and silently acquires debt.
+country_event = {
+	id = chi_bri.23
+	title = chi_bri.23.t
+	desc = chi_bri.23.d
+	picture = x
+	is_triggered_only = yes
+
+	option = {
+		name = chi_bri.23.a
+		log = "[GetDateText]: [This.GetName]: chi_bri.23.a executed"
+		ai_chance = { base = 1 }
+	}
+
+}
+
 country_event = {
 	id = chi_bri.15
 	title = chi_bri.15.t
@@ -7467,7 +7598,8 @@ country_event = {
 			CHI_bri_apply_partner_rank = yes
 		}
 		add_to_variable = { CHI_bri_ports_built = 1 }
-		add_to_variable = { CHI_bri_global_presence = 15 }
+		set_temp_variable = { bri_presence_amount = 15 }
+		CHI_bri_credit_presence = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -7484,7 +7616,8 @@ country_event = {
 			CHI_bri_apply_partner_rank = yes
 		}
 		add_to_variable = { CHI_bri_industrial_zones = 1 }
-		add_to_variable = { CHI_bri_global_presence = 15 }
+		set_temp_variable = { bri_presence_amount = 15 }
+		CHI_bri_credit_presence = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -7501,7 +7634,8 @@ country_event = {
 			CHI_bri_apply_partner_rank = yes
 		}
 		add_to_variable = { CHI_bri_railways_built = 1 }
-		add_to_variable = { CHI_bri_global_presence = 15 }
+		set_temp_variable = { bri_presence_amount = 15 }
+		CHI_bri_credit_presence = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -7518,7 +7652,8 @@ country_event = {
 			CHI_bri_apply_partner_rank = yes
 		}
 		add_to_variable = { CHI_bri_ports_built = 1 }
-		add_to_variable = { CHI_bri_global_presence = 15 }
+		set_temp_variable = { bri_presence_amount = 15 }
+		CHI_bri_credit_presence = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -7535,7 +7670,8 @@ country_event = {
 			CHI_bri_apply_partner_rank = yes
 		}
 		add_to_variable = { CHI_bri_ports_built = 1 }
-		add_to_variable = { CHI_bri_global_presence = 15 }
+		set_temp_variable = { bri_presence_amount = 15 }
+		CHI_bri_credit_presence = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -7553,7 +7689,8 @@ country_event = {
 			CHI_bri_apply_partner_rank = yes
 		}
 		add_to_variable = { CHI_bri_ports_built = 1 }
-		add_to_variable = { CHI_bri_global_presence = 15 }
+		set_temp_variable = { bri_presence_amount = 15 }
+		CHI_bri_credit_presence = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -7575,7 +7712,8 @@ country_event = {
 			CHI_bri_apply_partner_rank = yes
 		}
 		add_to_variable = { CHI_bri_ports_built = 1 }
-		add_to_variable = { CHI_bri_global_presence = 15 }
+		set_temp_variable = { bri_presence_amount = 15 }
+		CHI_bri_credit_presence = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -8539,7 +8677,8 @@ country_event = {
 				modifier = CHI_celac_forum_member
 			}
 		}
-		add_to_variable = { CHI_bri_global_presence = 15 }
+		set_temp_variable = { bri_presence_amount = 15 }
+		CHI_bri_credit_presence = yes
 		set_temp_variable = { treasury_change = 60 }
 		modify_treasury_effect = yes
 		ai_chance = {

@@ -2282,7 +2282,7 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_GRE_creditor }
 	}
 
-	# Interest on Belt and Road loans (China is the only creditor; ledger in 99_CHI_bri_loan_effects.txt)
+	# Interest on Belt and Road loans (China is the only creditor; ledger at the end of 05_CHI_scripted_effects.txt)
 	if = {
 		limit = {
 			original_tag = CHI
@@ -3289,11 +3289,15 @@ calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
 
 	# Interest owed on a Belt and Road loan (any nation can be a debtor; China is the only
-	# creditor — ledger in 99_CHI_bri_loan_effects.txt)
+	# creditor — ledger at the end of 05_CHI_scripted_effects.txt).
+	# The focus check, not bare country_exists: bri_loan_payment is only ever zeroed by the ledger,
+	# which runs off China's monthly tick behind that focus. If China is annexed and later released,
+	# a bare existence check re-arms this expense on every historical debtor with no tick left to
+	# clear it. check_variable first — it is false for all but a handful of countries.
 	if = {
 		limit = {
-			country_exists = CHI
 			check_variable = { bri_loan_payment > 0 }
+			CHI = { has_completed_focus = CHI_Belt_and_Road_Initiative }
 		}
 		set_variable = { additional_expense_bri_loan = bri_loan_payment }
 		add_to_variable = { additional_expenses_rate = additional_expense_bri_loan }

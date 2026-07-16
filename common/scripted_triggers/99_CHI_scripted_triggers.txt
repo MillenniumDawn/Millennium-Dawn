@@ -451,31 +451,43 @@ CHI_bri_can_request = {
 	}
 }
 
-# Scope: recipient. One definition per project type of "can this country host it", used in the
-# apply decisions' available. Single source of truth: the old design mirrored these limits in
-# both the roll and the resolution and drifted apart. Telecom needs no state and has no gate.
+# Scope: recipient. One definition per project type of "can this country host it", used both in
+# the apply decisions' available and in CHI_bri_grant_project_reward. Each must stay an exact
+# mirror of its random_owned_controlled_state limit in the grant, or a project counts as built
+# while granting nothing: is_controlled_by = PREV is what makes owned-state here mean the same
+# as owned-controlled there.
 CHI_bri_can_host_port = {
-	any_owned_controlled_state = { is_coastal = yes }
+	any_owned_state = {
+		is_controlled_by = PREV
+		is_coastal = yes
+	}
 }
 
 CHI_bri_can_host_rail = {
-	any_owned_controlled_state = {
+	any_owned_state = {
+		is_controlled_by = PREV
 		any_neighbor_state = { CONTROLLER = { original_tag = CHI } }
 	}
 }
 
 CHI_bri_can_host_pipeline = {
-	any_owned_controlled_state = {
+	any_owned_state = {
+		is_controlled_by = PREV
 		OR = {
-			has_resources_amount = { resource = oil amount > 0 }
-			has_resources_amount = { resource = steel amount > 0 }
-			has_resources_amount = { resource = chromium amount > 0 }
+			has_resources_amount = { resource = oil amount > 4 }
+			has_resources_amount = { resource = steel amount > 4 }
+			has_resources_amount = { resource = chromium amount > 4 }
 		}
 	}
 }
 
+CHI_bri_can_host_telecom = {
+	any_owned_state = { is_controlled_by = PREV }
+}
+
 CHI_bri_can_host_sez = {
-	any_owned_controlled_state = {
+	any_owned_state = {
+		is_controlled_by = PREV
 		OR = {
 			is_coastal = yes
 			infrastructure > 3
@@ -484,22 +496,53 @@ CHI_bri_can_host_sez = {
 }
 
 CHI_bri_can_host_mine = {
-	any_owned_controlled_state = {
+	any_owned_state = {
+		is_controlled_by = PREV
 		OR = {
-			has_resources_amount = { resource = steel amount > 0 }
-			has_resources_amount = { resource = chromium amount > 0 }
-			has_resources_amount = { resource = aluminium amount > 0 }
-			has_resources_amount = { resource = tungsten amount > 0 }
+			has_resources_amount = { resource = steel amount > 2 }
+			has_resources_amount = { resource = chromium amount > 2 }
+			has_resources_amount = { resource = aluminium amount > 2 }
+			has_resources_amount = { resource = tungsten amount > 2 }
 		}
 	}
 }
 
 CHI_bri_can_host_energy = {
-	any_owned_controlled_state = { industrial_complex > 0 }
+	any_owned_state = {
+		is_controlled_by = PREV
+		industrial_complex > 0
+	}
 }
 
 CHI_bri_can_host_prestige = {
-	any_owned_controlled_state = { is_capital = yes }
+	any_owned_state = {
+		is_controlled_by = PREV
+		is_capital = yes
+	}
+}
+
+# Scope: any country. True while a country still has BRI state China is booking: a partner rank
+# feeding presence, an outstanding loan, or a project in flight. The exit hooks test this before
+# doing any work.
+CHI_bri_is_engaged = {
+	OR = {
+		check_variable = { bri_partner_rank > 0 }
+		check_variable = { bri_debt_owed_to_china > 0 }
+		has_country_flag = bri_pipeline_busy
+	}
+}
+
+# Scope: a defaulted debtor. Gates CHI_Asset_Seizure so it cannot be taken against a country with
+# nothing left to take. Always order it after has_country_flag = bri_defaulted in a target_trigger
+# so the state scan only runs for the handful of countries actually in default.
+CHI_bri_has_reclaimable_structure = {
+	any_owned_state = {
+		is_controlled_by = PREV
+		OR = {
+			has_dynamic_modifier = { modifier = CHI_bri_state_industrial }
+			has_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
+		}
+	}
 }
 
 CHI_corruption_under_control = {
