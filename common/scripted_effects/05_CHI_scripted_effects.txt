@@ -437,8 +437,8 @@ CHI_bri_recalc_presence = {
 
 	set_variable = { CHI_bri_presence_political_power_factor = { value = bri_presence multiply = 0.00075 } }
 	set_variable = { CHI_bri_presence_trade_opinion_factor = { value = bri_presence multiply = 0.00125 } }
-	set_variable = { CHI_bri_presence_consumer_goods_factor = { value = bri_presence multiply = -0.000375 } }
-	set_variable = { CHI_bri_presence_monthly_population = { value = bri_presence multiply = 0.000015 } }
+	set_variable = { CHI_bri_presence_consumer_goods_factor = { value = bri_presence multiply = -0.0375 } }
+	set_variable = { CHI_bri_presence_monthly_population = { value = bri_presence multiply = 0.0015 } }
 }
 
 CHI_bri_request_project = {
@@ -945,41 +945,25 @@ CHI_evaluate_arms_dependency = {
 	}
 }
 
-# Caller sets a temp var: set_temp_variable = { arms_ss_gain = N } before invoking.
 CHI_add_arms_self_sufficiency = {
 	add_to_variable = { CHI_military_self_sufficiency = arms_ss_gain tooltip = CHI_military_self_sufficiency_tt }
 	CHI_evaluate_arms_dependency = yes
 }
-
-### Military business corruption - monthly scandal check for CHI ###
-# Called from on_monthly when CHI has has_completed_focus = CHI_the_poly_compromise;
-# a scandal can surface once the empire has grown large (capstone taken).
 CHI_military_corruption_monthly_tick = {
 	if = {
 		limit = { has_completed_focus = CHI_warlord_temptation }
 		random = { chance = 3 country_event = CHI_military_event.10 }
 	}
 }
-
-### Uyghur Threat: modifier + clamp ###
-# Caller sets: set_temp_variable = { modify_uighur_threat = N }
-# Tooltip rendered via the uighur_threat_tt loc triplet; no separate custom_effect_tooltip needed.
 CHI_modify_uighur_threat = {
 	add_to_variable = { uighur_threat = modify_uighur_threat tooltip = uighur_threat_tt }
 	clamp_variable = { var = uighur_threat min = 0 max = 100 }
 }
-
-### Uyghur Threat: monthly tick ###
-# Called from on_monthly when CHI controls state 592.
-# Drifts uighur_threat based on state 592 resistance, then rolls for uprising events.
 CHI_uighur_monthly_tick = {
-	# Guard: skip if ETK controls state 592
 	if = {
 		limit = {
 			NOT = { 592 = { is_controlled_by = ETK } }
 		}
-
-		### Drift step: resistance drives uighur_threat up or down ###
 		if = {
 			limit = { 592 = { resistance > 60 } }
 			set_temp_variable = { modify_uighur_threat = 2 }
@@ -995,8 +979,6 @@ CHI_uighur_monthly_tick = {
 			set_temp_variable = { modify_uighur_threat = -1 }
 			CHI_modify_uighur_threat = yes
 		}
-
-		### Secondary push from sinicization ###
 		if = {
 			limit = {
 				check_variable = {
@@ -1019,14 +1001,10 @@ CHI_uighur_monthly_tick = {
 			set_temp_variable = { modify_uighur_threat = -1 }
 			CHI_modify_uighur_threat = yes
 		}
-
-		### Event roll: gated by cooldown flag ###
 		if = {
 			limit = {
 				NOT = { has_country_flag = CHI_uighur_event_cd }
 			}
-
-			# Calm tier: uighur_threat 0..29
 			if = {
 				limit = {
 					check_variable = {
@@ -1041,7 +1019,6 @@ CHI_uighur_monthly_tick = {
 					set_country_flag = { flag = CHI_uighur_event_cd value = 1 days = 60 }
 				}
 			}
-			# Tense tier: uighur_threat 30..59
 			else_if = {
 				limit = {
 					check_variable = {
@@ -1062,7 +1039,6 @@ CHI_uighur_monthly_tick = {
 					}
 				}
 			}
-			# Volatile tier: uighur_threat 60..84
 			else_if = {
 				limit = {
 					check_variable = {
@@ -1087,7 +1063,6 @@ CHI_uighur_monthly_tick = {
 					}
 				}
 			}
-			# Boiling tier: uighur_threat 85..100
 			else = {
 				random_list = {
 					15 = { }
@@ -1531,22 +1506,6 @@ CHI_general_quote_shout = {
 		}
 	}
 }
-
-# Belt and Road Initiative — Chinese loan ledger.
-#
-# Structure mirrors the Greek creditor system (99_GRE_scripted_effects.txt) with the roles
-# inverted: Greece is one debtor with many creditors, so its arrays live on the debtor. China is
-# one creditor with many debtors, so the arrays live on CHI and each debtor keeps a scalar mirror.
-#
-# CHI:       CHI_bri_debtors (country IDs), CHI_bri_loan_principal^i, CHI_bri_loan_rate^i,
-#            CHI_bri_loan_income (weekly interest rate, read by calculate_additional_income_rate)
-# Debtor:    bri_debt_owed_to_china, bri_loan_rate,
-#            bri_loan_payment (weekly interest rate, read by calculate_additional_expense_rate)
-#
-# CHI_bri_debtors and the two parallel arrays must stay index-aligned: every add and every remove
-# has to touch all three.
-
-# Scope: CHI. Caller sets bri_debtor_id first. Sets bri_found_index to the debtor's row, or -1.
 CHI_bri_find_debtor_index = {
 	set_temp_variable = { bri_found_index = -1 }
 	for_each_loop = {
@@ -1557,21 +1516,16 @@ CHI_bri_find_debtor_index = {
 		}
 	}
 }
-
-# Scope: recipient. Called from CHI_bri_start_project when the recipient cannot pay up front.
-# Tops up an existing loan rather than opening a second one, so a country never holds two rows.
 CHI_bri_issue_loan = {
 	set_temp_variable = { bri_principal = CHI.CHI_bri_project_cost }
 	set_variable = { bri_loan_rate = 4 }
 	add_to_variable = { var = bri_debt_owed_to_china value = bri_principal }
 
-	# Interest is a weekly rate, consumed by calculate_additional_expense_rate.
 	set_variable = { bri_loan_payment = bri_debt_owed_to_china }
 	multiply_variable = { bri_loan_payment = 0.00019 }
 	multiply_variable = { bri_loan_payment = bri_loan_rate }
 
 	CHI = {
-		# Resolved once here: PREV inside the nested loop below would not point at the recipient.
 		set_temp_variable = { bri_debtor_id = PREV.id }
 		set_temp_variable = { bri_loan_amount = PREV.bri_principal }
 
@@ -1592,10 +1546,6 @@ CHI_bri_issue_loan = {
 		}
 	}
 }
-
-# Scope: CHI. Monthly. Accrues interest and amortises principal for every outstanding loan.
-# Interest is expressed as a weekly rate because the money system consumes it weekly
-# (same 0.00019 constant as GRE_process_creditor_payments).
 CHI_bri_process_loans = {
 	set_variable = { CHI_bri_loan_income = 0 }
 
@@ -1616,11 +1566,6 @@ CHI_bri_process_loans = {
 
 			var:CHI_bri_debtors^i = {
 				set_variable = { bri_loan_payment = ROOT.bri_interest }
-
-				# Default is fiscal distress, not just an empty account. Gating it on treasury
-				# alone meant a debtor only defaulted below the amortisation itself — a bar so low
-				# that nothing but total collapse cleared it, which left the whole predatory
-				# branch (and CHI_bri_defaulted_projects) permanently dead.
 				if = {
 					limit = {
 						check_variable = { treasury > ROOT.bri_amortisation }
@@ -1634,8 +1579,6 @@ CHI_bri_process_loans = {
 					clr_country_flag = bri_defaulted
 				}
 				else_if = {
-					# Only on the transition into default: the flag persists until the debt is
-					# settled, so an unguarded notification would fire every month.
 					limit = { NOT = { has_country_flag = bri_defaulted } }
 					set_country_flag = bri_defaulted
 					country_event = { id = chi_bri.16 days = 1 }
@@ -1657,9 +1600,6 @@ CHI_bri_process_loans = {
 		CHI_bri_cleanup_loans = yes
 	}
 }
-
-# Scope: CHI. Drops fully repaid loans. Walks the array backwards so a removal never shifts an
-# index the loop has yet to visit — remove_from_array inside a forward for_each_loop does.
 CHI_bri_cleanup_loans = {
 	set_temp_variable = { bri_cleanup_index = CHI_bri_debtors^num }
 	subtract_from_temp_variable = { bri_cleanup_index = 1 }
@@ -1688,9 +1628,6 @@ CHI_bri_cleanup_loans = {
 		set_variable = { CHI_bri_loan_income = 0 }
 	}
 }
-
-# Scope: the departing debtor. Called from CHI_bri_drop_partner on annexation, and from the
-# forgive decision. Removes the row so China stops booking income against a dead country.
 CHI_bri_clear_loan = {
 	set_variable = { bri_debt_owed_to_china = 0 }
 	set_variable = { bri_loan_payment = 0 }
