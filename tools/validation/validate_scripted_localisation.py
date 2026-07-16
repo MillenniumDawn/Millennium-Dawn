@@ -6,7 +6,7 @@ import os
 import re
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import disk_cache
 from validator_common import (
@@ -62,7 +62,10 @@ _LOC_REFERENCE_RE = re.compile(
     r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
     r"localization_key)\s*=\s*(\w[\w-]*)"
 )
-_BRACKET_LOC_RE = re.compile(r"\[(?:([A-Za-z_][A-Za-z0-9_]*)\.)?(\w[\w-]*)\]")
+_BRACKET_LOC_RE = re.compile(
+    r"\[(?:\?(?=[A-Za-z_][A-Za-z0-9_]*\.Get))?"
+    r"(?:([A-Za-z_][A-Za-z0-9_]*)\.)?(\w[\w-]*)\]"
+)
 
 
 def _find_reference_line(path: str, name: str) -> int:
@@ -125,7 +128,7 @@ def _scan_loc_token_candidates(
 
 
 def _scan_loc_tokens(
-    text: str, is_scripted_loc_file: bool, defined_names: Set[str] | None = None
+    text: str, is_scripted_loc_file: bool, defined_names: Optional[Set[str]] = None
 ) -> Set[str]:
     bracketed, explicit = _scan_loc_token_candidates(text, is_scripted_loc_file)
     return _filter_bracket_loc_candidates(bracketed, defined_names or set()) | explicit
@@ -150,7 +153,7 @@ def process_file_for_used_localisations(
     is_sl = "scripted_localisation" in filename
     bracketed, explicit = disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.tokens.v5.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
+        f"scripted_loc.tokens.v6.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
         filename,
         text_file,
         lambda: _scan_loc_token_candidates(text_file, is_sl),
