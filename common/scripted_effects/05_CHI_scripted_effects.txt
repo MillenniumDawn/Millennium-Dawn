@@ -419,11 +419,6 @@ CHI_add_brokerage = {
 
 ### Belt and Road Initiative ###
 # Project types: 1=port 2=railway 3=pipeline 4=telecom 5=SEZ 6=mine 7=powerplant 8=prestige
-
-# Scope: CHI. Called once from the CHI_Belt_and_Road_Initiative focus reward. Deliberately has no
-# re-entry flag: a flag would survive annexation and permanently shut the system down if CHI were
-# ever released. Slots and presence are additive because CHI_astana_speech grants both before this
-# focus is reachable — a set_variable here silently erases what its tooltip already promised.
 CHI_bri_unlock = {
 	add_to_variable = { CHI_bri_monthly_income_base = 8 }
 	add_to_variable = { CHI_bri_project_slots = 6 }
@@ -436,10 +431,6 @@ CHI_bri_unlock = {
 	CHI_bri_recalc_presence = yes
 	add_dynamic_modifier = { modifier = CHI_bri_presence_modifier }
 }
-
-# Scope: CHI. Recomputes the presence modifier's backing variables. Called on rank change and once
-# a month, because summit events also write CHI_bri_global_presence and would leave these stale.
-# The 200 clamp reproduces the ceiling of the five presence tier spirits this replaced.
 CHI_bri_recalc_presence = {
 	set_temp_variable = { bri_presence = CHI_bri_global_presence }
 	clamp_temp_variable = { var = bri_presence min = 0 max = 200 }
@@ -450,10 +441,6 @@ CHI_bri_recalc_presence = {
 	set_variable = { CHI_bri_presence_monthly_population = { value = bri_presence multiply = 0.000015 } }
 }
 
-# Scope: recipient. Entry point from the apply decisions; bri_project_type is already set.
-# The slot and the money are both reserved here, before China has even seen the application: the
-# CHI_bri_can_request gate only proves the treasury can fund ONE project, so without reserving at
-# request time every applicant that passes the gate on the same day debits in full and overdraws it.
 CHI_bri_request_project = {
 	set_country_flag = bri_pipeline_busy
 	CHI = {
@@ -471,12 +458,6 @@ CHI_bri_request_project = {
 		CHI = { country_event = { id = chi_bri.10 days = 3 } }
 	}
 }
-
-# Scope: recipient. The BRI treasury already paid at request time; here the recipient settles the
-# bill with China's national treasury, either in cash or on a loan.
-# Guarded on bri_pipeline_busy: chi_bri.10 is queued to China and fires three days later whatever
-# happened to the applicant, so accepting could otherwise start a project on an annexed tag whose
-# slot on_annex has already released. The flag is the single proof the request is still live.
 CHI_bri_start_project = {
 	if = {
 		limit = {
@@ -494,8 +475,6 @@ CHI_bri_start_project = {
 			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
 			CHI = {
-				# PREV.bri_cost, not bri_cost: temp variables live on the scope that set them, so a
-				# bare read here would resolve against China and come back as 0.
 				set_temp_variable = { treasury_change = PREV.bri_cost }
 				modify_treasury_effect = yes
 			}
@@ -509,8 +488,6 @@ CHI_bri_start_project = {
 	}
 }
 
-# Scope: recipient. Mission timeout. Guarded on bri_pipeline_busy so it owns the slot exactly once:
-# on_annex may already have cancelled this project before the mission resolves.
 CHI_bri_complete_project = {
 	if = {
 		limit = { has_country_flag = bri_pipeline_busy }
@@ -525,8 +502,6 @@ CHI_bri_complete_project = {
 
 		CHI_bri_grant_project_reward = yes
 
-		# The recipient keeps what was built even if China is gone by now; only the partner rank
-		# and China's return depend on China still existing.
 		if = {
 			limit = {
 				check_variable = { bri_project_granted = 1 }
@@ -549,16 +524,9 @@ CHI_bri_complete_project = {
 	}
 }
 
-# Scope: recipient. Frees the slot without granting anything (China declines, or the recipient dies
-# mid-flight). Guarded on bri_pipeline_busy: chi_bri.10 fires at China regardless of the applicant's
-# fate, so an unguarded decline would decrement a slot on_annex already released and drive the
-# counter negative.
 CHI_bri_cancel_project = {
 	if = {
 		limit = { has_country_flag = bri_pipeline_busy }
-		# The reservation only comes back if construction never started. bri_pending_application
-		# still being set is exactly that proof: CHI_bri_start_project clears it. Once the build is
-		# under way the treasury has been spent on it, and a recipient that dies is a sunk cost.
 		if = {
 			limit = {
 				has_country_flag = bri_pending_application
@@ -579,11 +547,6 @@ CHI_bri_cancel_project = {
 		}
 	}
 }
-
-# Scope: recipient. Each branch re-checks hostability because the request was approved up to two
-# years earlier and the qualifying state may be gone. Every CHI_bri_can_host_* must mirror its
-# random_owned_controlled_state limit exactly, or bri_project_granted lies and China pays a
-# return for a project that built nothing.
 CHI_bri_grant_project_reward = {
 	if = {
 		limit = {
@@ -722,20 +685,11 @@ CHI_bri_grant_project_reward = {
 	}
 }
 
-# Scope: CHI, with FROM the partner being credited. Caller sets bri_presence_amount.
-# Every presence credit tied to a specific partner must go through here: CHI_bri_drop_partner
-# refunds bri_presence_given, so a credit recorded only on China's side is orphaned when that
-# partner leaves and inflates presence permanently.
 CHI_bri_credit_presence = {
 	add_to_variable = { var = CHI_bri_global_presence value = bri_presence_amount }
 	CHI_bri_recalc_presence = yes
 	FROM = { add_to_variable = { var = bri_presence_given value = PREV.bri_presence_amount } }
 }
-
-# Scope: recipient. Advances the per-type name pointer so a country's second port is not named
-# after its first. Flavour only. One counter per type: named entries in GetBRINextProject<TYPE>
-# claim the low indices, and any country that runs past its named list falls through to the
-# generic entries keyed on the same counter — which is why no bri_named_max_ table is needed.
 CHI_bri_advance_named_project = {
 	if = {
 		limit = { check_variable = { bri_project_type = 1 } }
@@ -771,8 +725,6 @@ CHI_bri_advance_named_project = {
 	}
 }
 
-# Scope: recipient. Rank only ever moves up one step per completed project, so the ladder is a
-# single swap rather than a remove-everything-else cascade.
 CHI_bri_apply_partner_rank = {
 	if = {
 		limit = { check_variable = { bri_partner_rank < 5 } }
@@ -819,8 +771,6 @@ CHI_bri_apply_partner_rank = {
 	}
 }
 
-# Scope: the defaulting recipient. China takes back one built project. This is why the reward is
-# buildings and state modifiers rather than a lump sum: they are what can be reclaimed.
 CHI_bri_reclaim_structure = {
 	if = {
 		limit = {
@@ -853,10 +803,6 @@ CHI_bri_reclaim_structure = {
 	}
 }
 
-# Scope: the departing partner. Called from on_annex and on_war_relation_added so a partner that
-# is gone or hostile stops counting toward China's presence. Callers must guard country_exists = CHI.
-# Subtracts bri_presence_given rather than a fixed amount: every site that credits presence for this
-# partner records it there, so the two always cancel out.
 CHI_bri_drop_partner = {
 	if = {
 		limit = { check_variable = { bri_partner_rank > 0 } }
@@ -883,12 +829,6 @@ CHI_bri_drop_partner = {
 	}
 	CHI_bri_clear_loan = yes
 }
-
-# Scope: CHI. The treasury is a spending budget China tops up; it is never refilled by returns.
-# The contribution has two sources that cannot be summed by the engine: CHI_bri_monthly_income_base
-# (written by focuses and decisions) and the CHI_bri_monthly_income modifier (granted by ideas).
-# They are deliberately separate names — one token serving as both a variable and a modifier is
-# the dynamic-token OOS hazard the engine warns about.
 CHI_bri_monthly_tick = {
 	set_temp_variable = { bri_contribution = CHI_bri_monthly_income_base }
 	add_to_temp_variable = { bri_contribution = modifier@CHI_bri_monthly_income }
