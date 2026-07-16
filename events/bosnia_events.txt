@@ -1,18 +1,18 @@
-add_namespace = Bosnia
+add_namespace = BOS_events
 add_namespace = BOS_political
 
 # Bosnian Civil War
 country_event = {
-	id = Bosnia.1
-	title = Bosnia.1.t
-	desc = Bosnia.1.d
+	id = BOS_events.1
+	title = BOS_events.1.t
+	desc = BOS_events.1.d
 	picture = GFX_srpska_portests
 	is_triggered_only = yes
 	fire_only_once = yes
 
 	option = {
-		name = Bosnia.1.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.1.a executed"
+		name = BOS_events.1.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.1.a executed"
 		custom_effect_tooltip = bos_civil_war_info_tool_tip
 		hidden_effect = {
 			BOS_begin_srpska_civil_war_effect = yes
@@ -57,8 +57,8 @@ country_event = {
 
 	option = {
 		trigger = { has_country_flag = srpska_flag_bosnia }
-		name = Bosnia.1.b
-		log = "[GetDateText]: [This.GetName]: Bosnia.1.b executed"
+		name = BOS_events.1.b
+		log = "[GetDateText]: [This.GetName]: BOS_events.1.b executed"
 		custom_effect_tooltip = bos_civil_war_srpska_info_tool_tip
 		hidden_effect = {
 			remove_ideas = BOS_SFOR
@@ -126,16 +126,16 @@ country_event = {
 
 # Croats Declare Independence
 country_event = {
-	id = Bosnia.2
-	title = Bosnia.2.t
-	desc = Bosnia.2.d
+	id = BOS_events.2
+	title = BOS_events.2.t
+	desc = BOS_events.2.d
 	picture = GFX_bosnian_fire_building
 	is_triggered_only = yes
 	fire_only_once = yes
 
 	option = {
-		name = Bosnia.2.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.2.a executed"
+		name = BOS_events.2.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.2.a executed"
 		hidden_effect = {
 			set_country_flag = defeat_all_croats
 			BOS_begin_internal_war_effect = yes
@@ -187,7 +187,7 @@ country_event = {
 			}
 			add_state_core = 1052
 			CRO = {
-				add_ideas = bos_sfor_vol_troops
+				add_ideas = BOS_sfor_vol_troops
 			}
 		}
 		ai_chance = {
@@ -197,9 +197,9 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.4
-	title = Bosnia.4.t
-	desc = Bosnia.4.d
+	id = BOS_events.4
+	title = BOS_events.4.t
+	desc = BOS_events.4.d
 	picture = GFX_bosnia_flag_holding
 	is_triggered_only = yes
 
@@ -212,8 +212,8 @@ country_event = {
 	}
 
 	option = {
-		name = Bosnia.4.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.4.a executed"
+		name = BOS_events.4.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.4.a executed"
 		hidden_effect = {
 			if = {
 				limit = {
@@ -244,7 +244,6 @@ country_event = {
 				transfer_state = 1054
 				transfer_state = 128
 				transfer_state = 1053
-				change_tag_from = ROOT
 			}
 		}
 		ai_chance = {
@@ -254,88 +253,67 @@ country_event = {
 
 }
 
-# Turkey Sends Military Equipment
+# Bosnia requests arms (TUR/ALB)
 country_event = {
-	id = Bosnia.9
-	title = Bosnia.9.t
-	desc = Bosnia.9.d
+	id = BOS_events.9
+	title = BOS_events.9.t
+	desc = BOS_events.9.d
 	picture = GFX_weapons_arms1
 	is_triggered_only = yes
 
 	trigger = {
-		original_tag = TUR
+		OR = {
+			original_tag = TUR
+			original_tag = ALB
+		}
 		FROM = { original_tag = BOS }
 	}
 
 	option = {
-		name = Bosnia.9.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.9.a executed"
+		name = BOS_events.9.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.9.a executed"
 		custom_effect_tooltip = TT_IF_WE_ACCEPT
-		effect_tooltip = { custom_effect_tooltip = BOS_turkish_supplies_accept_tt }
-		FROM = { country_event = { id = Bosnia.11 days = 3 } }
-		send_equipment = {
-			equipment = infantry_weapons_2
-			amount = 2500
-			target = FROM
+		if = {
+			limit = { original_tag = TUR }
+			effect_tooltip = { custom_effect_tooltip = BOS_turkish_supplies_accept_tt }
+			FROM = { country_event = { id = BOS_events.11 days = 3 } }
+			send_equipment = {
+				equipment = infantry_weapons_2
+				amount = 2500
+				target = FROM
+			}
 		}
-		ai_chance = {
-			base = 25
-			modifier = { add = 30 has_opinion = { target = FROM value > 25 } }
-			modifier = { add = 20 sender_influence_higher_15 = yes }
-			modifier = { factor = 0.25 has_opinion = { target = FROM value < 0 } }
-			modifier = { factor = 0.5 has_equipment = { infantry_weapons_type < 5000 } }
-		}
-	}
-
-	option = {
-		name = Bosnia.9.b
-		log = "[GetDateText]: [This.GetName]: Bosnia.9.b executed"
-		custom_effect_tooltip = TT_IF_WE_DECLINE
-		effect_tooltip = { custom_effect_tooltip = BOS_military_supplies_decline_tt }
-		FROM = { add_opinion_modifier = { target = ROOT modifier = refused_help } }
-		ai_chance = {
-			base = 30
-			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
-			modifier = { factor = 0.25 sender_influence_higher_30 = yes }
-		}
-	}
-
-}
-country_event = {
-	id = Bosnia.10
-	title = Bosnia.10.t
-	desc = Bosnia.10.d
-	picture = GFX_weapons_arms1
-	is_triggered_only = yes
-
-	trigger = {
-		original_tag = ALB
-		FROM = { original_tag = BOS }
-	}
-
-	option = {
-		name = Bosnia.10.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.10.a executed"
-		custom_effect_tooltip = TT_IF_WE_ACCEPT
-		effect_tooltip = { custom_effect_tooltip = BOS_albanian_supplies_accept_tt }
-		FROM = { country_event = { id = Bosnia.11 days = 5 } }
-		send_equipment = {
-			equipment = infantry_weapons_2
-			amount = 750
-			target = FROM
+		else = {
+			effect_tooltip = { custom_effect_tooltip = BOS_albanian_supplies_accept_tt }
+			FROM = { country_event = { id = BOS_events.11 days = 5 } }
+			send_equipment = {
+				equipment = infantry_weapons_2
+				amount = 750
+				target = FROM
+			}
 		}
 		ai_chance = {
 			base = 20
+			modifier = { add = 5 original_tag = TUR }
 			modifier = { add = 30 has_opinion = { target = FROM value > 25 } }
 			modifier = { add = 20 sender_influence_higher_15 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = FROM value < 0 } }
-			modifier = { factor = 0.5 has_equipment = { infantry_weapons_type < 1500 } }
+			modifier = {
+				factor = 0.5
+				original_tag = TUR
+				has_equipment = { infantry_weapons_type < 5000 }
+			}
+			modifier = {
+				factor = 0.5
+				original_tag = ALB
+				has_equipment = { infantry_weapons_type < 1500 }
+			}
 		}
 	}
 
 	option = {
-		name = Bosnia.10.b
-		log = "[GetDateText]: [This.GetName]: Bosnia.10.b executed"
+		name = BOS_events.9.b
+		log = "[GetDateText]: [This.GetName]: BOS_events.9.b executed"
 		custom_effect_tooltip = TT_IF_WE_DECLINE
 		effect_tooltip = { custom_effect_tooltip = BOS_military_supplies_decline_tt }
 		FROM = { add_opinion_modifier = { target = ROOT modifier = refused_help } }
@@ -348,15 +326,15 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.11
-	title = Bosnia.11.t
-	desc = Bosnia.11.d
+	id = BOS_events.11
+	title = BOS_events.11.t
+	desc = BOS_events.11.d
 	picture = GFX_weapons_arms1
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.11.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.11.a executed"
+		name = BOS_events.11.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.11.a executed"
 		ai_chance = {
 			factor = 100
 		}
@@ -364,15 +342,15 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.12
-	title = Bosnia.12.t
-	desc = Bosnia.12.d
+	id = BOS_events.12
+	title = BOS_events.12.t
+	desc = BOS_events.12.d
 	picture = GFX_bosnian_farmer
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.12.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.12.a executed"
+		name = BOS_events.12.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.12.a executed"
 		hidden_effect = {
 			set_temp_variable = { rul_party_temp = 6 }
 			change_ruling_party_effect = yes
@@ -387,8 +365,8 @@ country_event = {
 	}
 
 	option = {
-		name = Bosnia.12.b
-		log = "[GetDateText]: [This.GetName]: Bosnia.12.b executed"
+		name = BOS_events.12.b
+		log = "[GetDateText]: [This.GetName]: BOS_events.12.b executed"
 		add_political_power = -200
 		ai_chance = {
 			base = 0
@@ -398,15 +376,15 @@ country_event = {
 }
 
 country_event = {
-	id = Bosnia.13
-	title = Bosnia.13.t
-	desc = Bosnia.13.d
+	id = BOS_events.13
+	title = BOS_events.13.t
+	desc = BOS_events.13.d
 	picture = GFX_political_deal
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.13.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.13.a executed"
+		name = BOS_events.13.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.13.a executed"
 		add_political_power = -200
 		ai_chance = {
 			base = 100
@@ -416,15 +394,15 @@ country_event = {
 }
 
 country_event = {
-	id = Bosnia.14
-	title = Bosnia.14.t
-	desc = Bosnia.14.d
+	id = BOS_events.14
+	title = BOS_events.14.t
+	desc = BOS_events.14.d
 	picture = GFX_USA_Berkley_Riot
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.14.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.14.a executed"
+		name = BOS_events.14.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.14.a executed"
 		hidden_effect = {
 			set_temp_variable = { rul_party_temp = 5 }
 			change_ruling_party_effect = yes
@@ -439,8 +417,8 @@ country_event = {
 	}
 
 	option = {
-		name = Bosnia.14.b
-		log = "[GetDateText]: [This.GetName]: Bosnia.14.b executed"
+		name = BOS_events.14.b
+		log = "[GetDateText]: [This.GetName]: BOS_events.14.b executed"
 		add_political_power = -200
 		ai_chance = {
 			base = 0
@@ -449,9 +427,9 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.34
-	title = Bosnia.34.t
-	desc = Bosnia.34.d
+	id = BOS_events.34
+	title = BOS_events.34.t
+	desc = BOS_events.34.d
 	picture = GFX_join_the_csto
 	is_triggered_only = yes
 
@@ -461,12 +439,12 @@ country_event = {
 	}
 
 	option = {
-		name = Bosnia.34.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.34.a executed"
+		name = BOS_events.34.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.34.a executed"
 		custom_effect_tooltip = TT_IF_WE_ACCEPT
 		effect_tooltip = { custom_effect_tooltip = BOS_csto_accept_tt }
 		add_to_faction = FROM
-		FROM = { country_event = { id = Bosnia.35 days = 3 } }
+		FROM = { country_event = { id = BOS_events.35 days = 3 } }
 		ai_chance = {
 			base = 20
 			modifier = { add = 30 has_opinion = { target = FROM value > 25 } }
@@ -477,13 +455,13 @@ country_event = {
 	}
 
 	option = {
-		name = Bosnia.34.b
-		log = "[GetDateText]: [This.GetName]: Bosnia.34.b executed"
+		name = BOS_events.34.b
+		log = "[GetDateText]: [This.GetName]: BOS_events.34.b executed"
 		custom_effect_tooltip = TT_IF_WE_DECLINE
 		effect_tooltip = { custom_effect_tooltip = BOS_csto_reject_tt }
 		FROM = {
 			add_opinion_modifier = { target = ROOT modifier = declined_faction_request }
-			country_event = { id = Bosnia.36 days = 3 }
+			country_event = { id = BOS_events.36 days = 3 }
 		}
 		ai_chance = {
 			base = 30
@@ -494,15 +472,15 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.35
-	title = Bosnia.35.t
-	desc = Bosnia.35.d
+	id = BOS_events.35
+	title = BOS_events.35.t
+	desc = BOS_events.35.d
 	picture = GFX_join_the_csto
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.35.a ###yes
-		log = "[GetDateText]: [This.GetName]: Bosnia.35.a executed"
+		name = BOS_events.35.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.35.a executed"
 		ai_chance = {
 			base = 30
 		}
@@ -510,15 +488,15 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.36
-	title = Bosnia.36.t
-	desc = Bosnia.36.d
+	id = BOS_events.36
+	title = BOS_events.36.t
+	desc = BOS_events.36.d
 	picture = GFX_weapons_arms1
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.36.a ###yes
-		log = "[GetDateText]: [This.GetName]: Bosnia.36.a executed"
+		name = BOS_events.36.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.36.a executed"
 		ai_chance = {
 			base = 30
 		}
@@ -526,15 +504,15 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.45
-	title = Bosnia.45.t
-	desc = Bosnia.45.d
+	id = BOS_events.45
+	title = BOS_events.45.t
+	desc = BOS_events.45.d
 	picture = GFX_2012_protests
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.45.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.45.a executed"
+		name = BOS_events.45.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.45.a executed"
 		ai_chance = {
 			base = 30
 		}
@@ -542,15 +520,15 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.46
-	title = Bosnia.46.t
-	desc = Bosnia.46.d
+	id = BOS_events.46
+	title = BOS_events.46.t
+	desc = BOS_events.46.d
 	picture = GFX_bosnian_protests2
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.46.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.46.a executed"
+		name = BOS_events.46.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.46.a executed"
 		ai_chance = {
 			base = 30
 		}
@@ -558,15 +536,15 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.47
-	title = Bosnia.47.t
-	desc = Bosnia.47.d
+	id = BOS_events.47
+	title = BOS_events.47.t
+	desc = BOS_events.47.d
 	picture = GFX_bosnian_fire_building
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.47.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.47.a executed"
+		name = BOS_events.47.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.47.a executed"
 		ai_chance = {
 			base = 30
 		}
@@ -574,15 +552,15 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.48
-	title = Bosnia.48.t
-	desc = Bosnia.48.d
+	id = BOS_events.48
+	title = BOS_events.48.t
+	desc = BOS_events.48.d
 	picture = GFX_bosnia_gov_building_1
 	is_triggered_only = yes
 
 	option = {
-		name = Bosnia.48.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.48.a executed"
+		name = BOS_events.48.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.48.a executed"
 		set_temp_variable = { rul_party_temp = 4 }
 		change_ruling_party_effect = yes
 		ai_chance = {
@@ -592,9 +570,9 @@ country_event = {
 
 }
 country_event = {
-	id = Bosnia.55
-	title = Bosnia.55.t
-	desc = Bosnia.55.d
+	id = BOS_events.55
+	title = BOS_events.55.t
+	desc = BOS_events.55.d
 	picture = GFX_bosnia_alija_izetbegovic_event
 	is_triggered_only = yes
 
@@ -613,16 +591,16 @@ country_event = {
 	}
 
 	option = {
-		name = Bosnia.55.a
-		log = "[GetDateText]: [This.GetName]: Bosnia.55.a executed"
+		name = BOS_events.55.a
+		log = "[GetDateText]: [This.GetName]: BOS_events.55.a executed"
 		ai_chance = {
 			base = 30
 		}
 	}
 
 	option = {
-		name = Bosnia.55.b
-		log = "[GetDateText]: [This.GetName]: Bosnia.55.b executed"
+		name = BOS_events.55.b
+		log = "[GetDateText]: [This.GetName]: BOS_events.55.b executed"
 		ai_chance = {
 			base = 30
 		}
@@ -847,7 +825,7 @@ country_event = {
 	option = {
 		name = BOS_political.6.a
 		log = "[GetDateText]: [This.GetName]: BOS_political.6.a executed"
-		add_ideas = bos_Milorad_Dodik
+		add_ideas = BOS_milorad_dodik_idea
 		ai_chance = {
 			base = 30
 		}
@@ -1094,19 +1072,19 @@ country_event = {
 				}
 				set_country_flag = BOS_loser
 				unlock_national_focus = BOS_house_of_representatives
-				unlock_national_focus = BOS_elections_polical
+				unlock_national_focus = BOS_elections_political
 				unlock_national_focus = BOS_the_federation
 				unlock_national_focus = BOS_srpska_lead_government
 				unlock_national_focus = BOS_revive_relation_with_serbia_yugoslavia
 				unlock_national_focus = BOS_role_the_dice
 				unlock_national_focus = BOS_srpska_supremacy
-				remove_ideas = bos_rotating_presidency
-				remove_ideas = bos_rotating_presidency2
-				remove_ideas = bos_rotating_presidency3
+				remove_ideas = BOS_rotating_presidency
+				remove_ideas = BOS_rotating_presidency2
+				remove_ideas = BOS_rotating_presidency3
 				set_cosmetic_tag = bos_srpska_colour_change3
 			}
 			BOS_finish_civil_war_recovery_effect = yes
-			add_ideas = BOS_Srpska_Supremacy
+			add_ideas = BOS_srpska_supremacy_idea
 			set_temp_variable = { party_index = 18 }
 			set_temp_variable = { party_popularity_increase = 0.06 }
 			set_temp_variable = { temp_outlook_increase = 0.08 }
