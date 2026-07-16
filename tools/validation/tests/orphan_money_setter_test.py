@@ -119,6 +119,30 @@ def test_tooltip_selfcontained_is_clean(tmp_path):
     assert _lines(tmp_path, reward, cmap) == []
 
 
+def test_hidden_effect_setter_consumed_outside_is_clean(tmp_path):
+    # hidden_effect is the same execution as its parent, not a boundary
+    cmap = _setup(tmp_path)
+    reward = (
+        "hidden_effect = {\n"
+        "\t\t\t\tset_temp_variable = { treasury_change = -10 }\n"
+        "\t\t\t}\n"
+        "\t\t\tmodify_treasury_effect = yes"
+    )
+    assert _lines(tmp_path, reward, cmap) == []
+
+
+def test_tooltip_only_consumer_does_not_clear_runtime_setter(tmp_path):
+    # a consumer that only exists inside an effect_tooltip never executes
+    cmap = _setup(tmp_path)
+    reward = (
+        "set_temp_variable = { treasury_change = -10 }\n"
+        "\t\t\teffect_tooltip = {\n"
+        "\t\t\t\tmodify_treasury_effect = yes\n"
+        "\t\t\t}"
+    )
+    assert len(_lines(tmp_path, reward, cmap)) == 1
+
+
 def test_multiple_vars_tracked_independently(tmp_path):
     cmap = _setup(tmp_path)
     reward = (
@@ -130,3 +154,82 @@ def test_multiple_vars_tracked_independently(tmp_path):
     issues = _lines(tmp_path, reward, cmap)
     assert len(issues) == 1
     assert "debt_change" in issues[0][0]
+
+
+def test_quoted_hash_does_not_break_container_tracking(tmp_path):
+    # a '#' inside a log string must not desync brace tracking; the orphan
+    # right after it must still be found (and at the right line)
+    cmap = _setup(tmp_path)
+    reward = (
+        'log = "focus TAG_focus_a # inline note"\n'
+        "\t\t\tset_temp_variable = { treasury_change = -10 }"
+    )
+    issues = _lines(tmp_path, reward, cmap)
+    assert len(issues) == 1
+    assert issues[0][2] == 10
+
+
+def test_multiline_setter_is_matched(tmp_path):
+    cmap = _setup(tmp_path)
+    reward = "set_temp_variable = {\n\t\t\t\ttreasury_change = -10\n\t\t\t}"
+    assert len(_lines(tmp_path, reward, cmap)) == 1
+
+
+def test_sibling_container_consumer_does_not_clear(tmp_path):
+    # consumer in a different option is a different execution
+    cmap = _setup(tmp_path)
+    nf_dir = tmp_path / "events"
+    nf_dir.mkdir(parents=True, exist_ok=True)
+    fpath = nf_dir / "test.txt"
+    fpath.write_text(
+        "country_event = {\n"
+        "\tid = test.1\n"
+        "\toption = {\n"
+        "\t\tname = test.1.a\n"
+        "\t\tset_temp_variable = { treasury_change = -10 }\n"
+        "\t}\n"
+        "\toption = {\n"
+        "\t\tname = test.1.b\n"
+        "\t\tmodify_treasury_effect = yes\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    issues = process_file_for_orphan_money((str(fpath), str(tmp_path), cmap))
+    assert len(issues) == 1
+
+
+def test_cancel_effect_is_a_container(tmp_path):
+    cmap = _setup(tmp_path)
+    d_dir = tmp_path / "common" / "decisions"
+    d_dir.mkdir(parents=True, exist_ok=True)
+    fpath = d_dir / "test.txt"
+    fpath.write_text(
+        "cat = {\n"
+        "\tdec = {\n"
+        "\t\tcancel_effect = {\n"
+        "\t\t\tset_temp_variable = { treasury_change = -10 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    issues = process_file_for_orphan_money((str(fpath), str(tmp_path), cmap))
+    assert len(issues) == 1
+
+
+def test_validator_reports_warning_not_error(tmp_path):
+    # WARNING severity is what keeps the repo backlog from failing CI --strict
+    from validate_variables import Validator
+
+    _setup(tmp_path)
+    nf_dir = tmp_path / "common" / "national_focus"
+    nf_dir.mkdir(parents=True, exist_ok=True)
+    (nf_dir / "test.txt").write_text(
+        FOCUS_TEMPLATE.format(reward="set_temp_variable = { treasury_change = -10 }"),
+        encoding="utf-8",
+    )
+    v = Validator(str(tmp_path), use_colors=False, workers=1)
+    v.validate_orphan_money_setters()
+    assert v.warnings_found == 1
+    assert v.errors_found == 0

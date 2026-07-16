@@ -179,12 +179,14 @@ _MONEY_EFFECT_PAIRS = {
 _MONEY_SETTER_RE = re.compile(
     r"set_temp_variable\s*=\s*\{\s*(" + "|".join(_MONEY_EFFECT_PAIRS) + r")\s*="
 )
-# Blocks that delimit one effect execution. effect_tooltip is deliberately its
-# own container: a setter previewed there must also be consumed there or the
-# tooltip renders nothing.
+# Blocks that delimit one effect execution. hidden_effect is NOT a boundary —
+# it runs in the same execution as its parent, only hidden from the tooltip.
+# effect_tooltip is deliberately its own container: a setter previewed there
+# must also be consumed there or the tooltip renders nothing, and a consumer
+# that only appears inside a tooltip never runs.
 _EFFECT_CONTAINER_RE = re.compile(
     r"\b(?:completion_reward|select_effect|bypass_effect|option|immediate|"
-    r"complete_effect|remove_effect|timeout_effect|hidden_effect|"
+    r"complete_effect|remove_effect|timeout_effect|cancel_effect|"
     r"effect_tooltip|effect)\s*=\s*\{"
 )
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
@@ -200,17 +202,20 @@ def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
     overwrites the caller's value and cannot consume it. Closed transitively
     so wrappers of wrappers (GRE_pay_or_defer -> modify_debt_effect) count.
     """
-    from shared_utils import extract_block_from_text
+    # strip_comments is quote-aware: a '#' inside a quoted log string must
+    # survive, or the orphaned quote desyncs extract_block_from_text's
+    # in-string tracking and container spans are silently lost.
+    from shared_utils import extract_block_from_text, strip_comments
 
     bodies: Dict[str, str] = {}
     for fp in effect_files:
         try:
             with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                text = re.sub(r"#[^\n]*", "", fh.read())
+                text = strip_comments(fh.read())
         except Exception:
             continue
         for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
-            body, _ = extract_block_from_text(text, text.index("{", m.start()))
+            body, _ = extract_block_from_text(text, m.start())
             if body:
                 bodies[m.group(1)] = body
 
@@ -276,19 +281,23 @@ def process_file_for_orphan_money(
     except Exception:
         return []
 
-    cleaned = re.sub(r"#[^\n]*", "", text)
+    from shared_utils import extract_block_from_text, strip_comments
+
+    # Quote-aware strip (see build_money_consumer_map) — the naive regex strip
+    # broke brace tracking in every file with a '#' inside a log string.
+    cleaned = strip_comments(text)
     setters = list(_MONEY_SETTER_RE.finditer(cleaned))
     if not setters:
         return []
-
-    from shared_utils import extract_block_from_text
 
     spans = []
     for m in _EFFECT_CONTAINER_RE.finditer(cleaned):
         brace = cleaned.index("{", m.start())
         body, end = extract_block_from_text(cleaned, brace)
         if body:
-            spans.append((brace + 1, end))
+            is_tooltip = cleaned.startswith("effect_tooltip", m.start())
+            spans.append((brace + 1, end, is_tooltip))
+    tooltip_spans = [(s, e) for s, e, is_tt in spans if is_tt]
 
     consumer_res = {
         var: re.compile(
@@ -301,12 +310,22 @@ def process_file_for_orphan_money(
     for m in setters:
         var = m.group(1)
         holder = None
-        for start, end in spans:
+        for start, end, is_tt in spans:
             if start <= m.start() < end and (holder is None or start > holder[0]):
-                holder = (start, end)
+                holder = (start, end, is_tt)
         if holder is None:
             continue
-        if not consumer_res[var].search(cleaned, m.end(), holder[1]):
+        if holder[2]:
+            # Setter previewed in a tooltip: any consumer within it renders.
+            consumed = bool(consumer_res[var].search(cleaned, m.end(), holder[1]))
+        else:
+            # Runtime setter: consumers that only exist inside a nested
+            # effect_tooltip are previews and never execute.
+            consumed = any(
+                not any(ts <= cm.start() < te for ts, te in tooltip_spans)
+                for cm in consumer_res[var].finditer(cleaned, m.end(), holder[1])
+            )
+        if not consumed:
             line = cleaned[: m.start()].count("\n") + 1
             issues.append(
                 (
@@ -701,11 +720,6 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for orphan money-variable setters...")
 
-        effect_files = self._collect_files(
-            ["common/scripted_effects/*.txt"], ignore_staged=True
-        )
-        consumer_map = build_money_consumer_map(effect_files)
-
         txt_files = self._collect_files(
             [
                 "common/national_focus/*.txt",
@@ -714,6 +728,14 @@ class Validator(BaseValidator):
                 "events/*.txt",
             ]
         )
+        if not txt_files:
+            self.log("✓ No orphan money-variable setters found")
+            return
+
+        effect_files = self._collect_files(
+            ["common/scripted_effects/*.txt"], ignore_staged=True
+        )
+        consumer_map = build_money_consumer_map(effect_files)
         args_list = [(f, self.mod_path, consumer_map) for f in txt_files]
         all_results = self._pool_map(
             process_file_for_orphan_money, args_list, chunksize=30
