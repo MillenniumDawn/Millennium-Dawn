@@ -168,6 +168,158 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     return issues
 
 
+# Money-system input variables and the scripted effect that consumes each.
+# A set_temp_variable of one of these with no consumer call afterwards in the
+# same effect block is a dead setter — the money never moves (Sweden_foci.57).
+_MONEY_EFFECT_PAIRS = {
+    "treasury_change": "modify_treasury_effect",
+    "debt_change": "modify_debt_effect",
+    "int_investment_change": "modify_international_investment_effect",
+}
+_MONEY_SETTER_RE = re.compile(
+    r"set_temp_variable\s*=\s*\{\s*(" + "|".join(_MONEY_EFFECT_PAIRS) + r")\s*="
+)
+# Blocks that delimit one effect execution. effect_tooltip is deliberately its
+# own container: a setter previewed there must also be consumed there or the
+# tooltip renders nothing.
+_EFFECT_CONTAINER_RE = re.compile(
+    r"\b(?:completion_reward|select_effect|bypass_effect|option|immediate|"
+    r"complete_effect|remove_effect|timeout_effect|hidden_effect|"
+    r"effect_tooltip|effect)\s*=\s*\{"
+)
+_SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
+_WRITE_BEFORE_RE = re.compile(r"(?:set_temp_variable|set_variable)\s*=\s*\{\s*$")
+
+
+def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
+    """Map each money input variable to the scripted effects that consume it.
+
+    An effect consumes a variable when the variable's first appearance in its
+    body is a read (add_to_variable r-value, multiply, check, ...) rather than
+    a set_temp_variable/set_variable write — a wrapper that writes first
+    overwrites the caller's value and cannot consume it. Closed transitively
+    so wrappers of wrappers (GRE_pay_or_defer -> modify_debt_effect) count.
+    """
+    from shared_utils import extract_block_from_text
+
+    bodies: Dict[str, str] = {}
+    for fp in effect_files:
+        try:
+            with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                text = re.sub(r"#[^\n]*", "", fh.read())
+        except Exception:
+            continue
+        for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
+            body, _ = extract_block_from_text(text, text.index("{", m.start()))
+            if body:
+                bodies[m.group(1)] = body
+
+    def first_positions(body: str, var: str):
+        first_read = first_write = None
+        for om in re.finditer(r"\b" + var + r"\b", body):
+            if _WRITE_BEFORE_RE.search(body, 0, om.start()):
+                if first_write is None:
+                    first_write = om.start()
+            elif first_read is None:
+                first_read = om.start()
+            if first_read is not None and first_write is not None:
+                break
+        return first_read, first_write
+
+    consumers = {var: {base} for var, base in _MONEY_EFFECT_PAIRS.items()}
+    for var in _MONEY_EFFECT_PAIRS:
+        for name, body in bodies.items():
+            first_read, first_write = first_positions(body, var)
+            if first_read is not None and (
+                first_write is None or first_read < first_write
+            ):
+                consumers[var].add(name)
+
+    changed = True
+    while changed:
+        changed = False
+        for var, known in consumers.items():
+            call_re = re.compile(
+                r"\b(?:"
+                + "|".join(re.escape(n) for n in sorted(known))
+                + r")\s*=\s*yes\b"
+            )
+            for name, body in bodies.items():
+                if name in known:
+                    continue
+                call = call_re.search(body)
+                if not call:
+                    continue
+                _, first_write = first_positions(body, var)
+                if first_write is None or call.start() < first_write:
+                    known.add(name)
+                    changed = True
+    return {var: frozenset(names) for var, names in consumers.items()}
+
+
+def process_file_for_orphan_money(
+    args: Tuple[str, str, Dict[str, frozenset]],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag money-variable setters never consumed in their block.
+
+    Returns (message, rel_path, line) tuples. Setters outside any known effect
+    container (loose scripted-effect bodies that produce the value for their
+    caller) are skipped.
+    """
+    filename, mod_path, consumer_map = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    setters = list(_MONEY_SETTER_RE.finditer(cleaned))
+    if not setters:
+        return []
+
+    from shared_utils import extract_block_from_text
+
+    spans = []
+    for m in _EFFECT_CONTAINER_RE.finditer(cleaned):
+        brace = cleaned.index("{", m.start())
+        body, end = extract_block_from_text(cleaned, brace)
+        if body:
+            spans.append((brace + 1, end))
+
+    consumer_res = {
+        var: re.compile(
+            r"\b(?:" + "|".join(re.escape(n) for n in sorted(names)) + r")\s*=\s*yes\b"
+        )
+        for var, names in consumer_map.items()
+    }
+    rel = os.path.relpath(filename, mod_path)
+    issues: List[Tuple[str, str, int]] = []
+    for m in setters:
+        var = m.group(1)
+        holder = None
+        for start, end in spans:
+            if start <= m.start() < end and (holder is None or start > holder[0]):
+                holder = (start, end)
+        if holder is None:
+            continue
+        if not consumer_res[var].search(cleaned, m.end(), holder[1]):
+            line = cleaned[: m.start()].count("\n") + 1
+            issues.append(
+                (
+                    f"set_temp_variable {var} is never consumed — no"
+                    f" {_MONEY_EFFECT_PAIRS[var]} (or wrapper) follows in the"
+                    f" same effect block, so the money never moves",
+                    rel,
+                    line,
+                )
+            )
+    return issues
+
+
 def _scan_targets_in_text(
     text_file: str, filename: str
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
@@ -539,6 +691,42 @@ class Validator(BaseValidator):
             category="math-precision",
         )
 
+    def validate_orphan_money_setters(self):
+        """Flag money-variable setters whose value is never consumed (WARNING).
+
+        set_temp_variable of treasury_change/debt_change/int_investment_change
+        must be followed, within the same effect block, by the matching
+        modify_*_effect call or a wrapper that consumes it — otherwise the
+        setter is dead and the transfer silently never happens.
+        """
+        self._log_section("Checking for orphan money-variable setters...")
+
+        effect_files = self._collect_files(
+            ["common/scripted_effects/*.txt"], ignore_staged=True
+        )
+        consumer_map = build_money_consumer_map(effect_files)
+
+        txt_files = self._collect_files(
+            [
+                "common/national_focus/*.txt",
+                "common/decisions/**/*.txt",
+                "common/on_actions/*.txt",
+                "events/*.txt",
+            ]
+        )
+        args_list = [(f, self.mod_path, consumer_map) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_orphan_money, args_list, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No orphan money-variable setters found",
+            "Money-variable setters never consumed in their effect block (dead setter — the money never moves):",
+            severity=Severity.WARNING,
+            category="orphan-money-setter",
+        )
+
     def validate_flag_syntax(self):
         """Combined check for two flag syntax issues in a single pool_map pass:
 
@@ -714,6 +902,7 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         self.validate_math_precision()
+        self.validate_orphan_money_setters()
 
         if self.staged_only:
             # Variable validation cross-references flags across all files
