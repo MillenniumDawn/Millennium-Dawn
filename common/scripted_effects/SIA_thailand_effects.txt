@@ -1,0 +1,748 @@
+## Thailand: shared scripted effects (v0.2)
+
+# Strip whichever barami tier the country currently holds. Called by the reform
+# (amend_112 / a_new_republic) and communist (people_seize_power) paths, which
+# each end the monarchy's identity spirit whatever reign it has reached.
+SIA_remove_barami = {
+	if = { limit = { has_idea = SIA_ninth_reign_zenith } remove_ideas = SIA_ninth_reign_zenith }
+	if = { limit = { has_idea = SIA_ninth_reign_barami } remove_ideas = SIA_ninth_reign_barami }
+	if = { limit = { has_idea = SIA_tenth_reign_barami } remove_ideas = SIA_tenth_reign_barami }
+}
+
+# Strip the Nation-Religion-King creed at either tier (start root or focus spirit).
+SIA_remove_three_pillars = {
+	if = { limit = { has_idea = SIA_three_pillars_start } remove_ideas = SIA_three_pillars_start }
+	if = { limit = { has_idea = SIA_three_pillars_idea } remove_ideas = SIA_three_pillars_idea }
+}
+
+## Deep South insurgency intensity machinery. The variable SIA_insurgency_intensity
+## (0-100) drives the tier of the SIA_deep_south_insurgency idea family and the
+## weekly incident chance in 99_SIA_on_actions.txt.
+
+# Swap the insurgency idea to the tier matching the current intensity.
+# Safe to call every week; does nothing once the conflict is resolved.
+SIA_ds_update_tier = {
+	if = {
+		limit = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+		clamp_variable = {
+			var = SIA_insurgency_intensity
+			min = 0
+			max = 100
+		}
+		if = {
+			limit = { check_variable = { SIA_insurgency_intensity > 59 } }
+			if = {
+				limit = { has_idea = SIA_deep_south_insurgency_1 }
+				remove_ideas = SIA_deep_south_insurgency_1
+			}
+			if = {
+				limit = { has_idea = SIA_deep_south_insurgency_2 }
+				remove_ideas = SIA_deep_south_insurgency_2
+			}
+			if = {
+				limit = { NOT = { has_idea = SIA_deep_south_insurgency_3 } }
+				add_ideas = SIA_deep_south_insurgency_3
+			}
+		}
+		else_if = {
+			limit = { check_variable = { SIA_insurgency_intensity > 29 } }
+			if = {
+				limit = { has_idea = SIA_deep_south_insurgency_1 }
+				remove_ideas = SIA_deep_south_insurgency_1
+			}
+			if = {
+				limit = { has_idea = SIA_deep_south_insurgency_3 }
+				remove_ideas = SIA_deep_south_insurgency_3
+			}
+			if = {
+				limit = { NOT = { has_idea = SIA_deep_south_insurgency_2 } }
+				add_ideas = SIA_deep_south_insurgency_2
+			}
+		}
+		else = {
+			if = {
+				limit = { has_idea = SIA_deep_south_insurgency_2 }
+				remove_ideas = SIA_deep_south_insurgency_2
+			}
+			if = {
+				limit = { has_idea = SIA_deep_south_insurgency_3 }
+				remove_ideas = SIA_deep_south_insurgency_3
+			}
+			if = {
+				limit = { NOT = { has_idea = SIA_deep_south_insurgency_1 } }
+				add_ideas = SIA_deep_south_insurgency_1
+			}
+		}
+	}
+}
+
+# Full cleanup when the conflict ends, by either route. Caller sets the
+# matching SIA_ds_resolved_force / SIA_ds_resolved_peace flag itself.
+SIA_ds_cleanup_effect = {
+	clr_country_flag = SIA_ds_active
+	set_variable = { SIA_insurgency_intensity = 0 }
+	if = {
+		limit = { has_idea = SIA_deep_south_insurgency_1 }
+		remove_ideas = SIA_deep_south_insurgency_1
+	}
+	if = {
+		limit = { has_idea = SIA_deep_south_insurgency_2 }
+		remove_ideas = SIA_deep_south_insurgency_2
+	}
+	if = {
+		limit = { has_idea = SIA_deep_south_insurgency_3 }
+		remove_ideas = SIA_deep_south_insurgency_3
+	}
+	# Story 2.3 — reset the permanent grievance floor and re-arm the crisis
+	# pressure mission so a resolved (or re-escalating smoldering) conflict
+	# can end / re-arm cleanly. v0.8 twin-meter: clear the grievance meter too —
+	# a terminal resolution settles the root cause, not just the violence.
+	set_variable = { SIA_ds_grievance = 0 }
+	set_variable = { SIA_ds_intensity_floor = 0 }
+	clr_country_flag = SIA_ds_crisis_mission_done
+}
+
+# Story 2.3 — floor-aware intensity move with a tooltip (Aceh rule: every
+# intensity transition surfaces a custom_effect_tooltip). The caller sets
+# the signed delta first: set_temp_variable = { ds_delta = N }.
+# The floor (SIA_ds_intensity_floor) is derived from the community-grievance
+# meter (v0.8 twin-meter) — intensity can never fall below the grievance behind
+# it. Recompute the floor first so a freshly-changed grievance binds immediately.
+SIA_ds_set_intensity = {
+	SIA_ds_recompute_floor = yes
+	add_to_variable = { SIA_insurgency_intensity = ds_delta }
+	# Floor-aware lower bound: clamp up to the floor first, then cap at 100.
+	if = {
+		limit = { check_variable = { SIA_insurgency_intensity < SIA_ds_intensity_floor } }
+		set_variable = { SIA_insurgency_intensity = SIA_ds_intensity_floor }
+	}
+	clamp_variable = {
+		var = SIA_insurgency_intensity
+		min = 0
+		max = 100
+	}
+	SIA_ds_update_tier = yes
+	if = {
+		limit = { check_variable = { ds_delta < 0 } }
+		custom_effect_tooltip = SIA_ds_intensity_down
+	}
+	else = {
+		custom_effect_tooltip = SIA_ds_intensity_up
+	}
+}
+
+# Story 2.3 / v0.8 — heavy-handed tactics deepen community grievance. Caller sets
+# set_temp_variable = { ds_floor_delta = N }. Kept as a thin compatibility wrapper
+# so every existing repression call site (Iron-Fist focuses, events 152/356) now
+# feeds the grievance meter; the intensity floor is derived from grievance in
+# SIA_ds_recompute_floor, so it is no longer set directly here.
+SIA_ds_raise_floor = {
+	set_temp_variable = { ds_grievance_delta = ds_floor_delta }
+	SIA_ds_set_grievance = yes
+}
+
+# v0.8 TWIN-METER — community grievance (SIA_ds_grievance, 0-100) is the persistent
+# root cause behind the Deep South conflict, modelled on Millennium Dawn's Xinjiang
+# uighur_threat: repression buys a short-term intensity cut but raises grievance,
+# while development and dialogue ease it. The intensity floor is derived from
+# grievance (SIA_ds_recompute_floor), so the conflict can never be ground below the
+# grievance it leaves behind — and a terminal "end the insurgency" focus is only
+# reachable once grievance itself has been worked down (you cannot simply blitz the
+# focus tree). Grievance does not decay on its own; only concessions bring it down.
+# Caller sets the signed delta: set_temp_variable = { ds_grievance_delta = N }
+# (positive worsens grievance, negative eases it).
+SIA_ds_set_grievance = {
+	add_to_variable = { SIA_ds_grievance = ds_grievance_delta }
+	clamp_variable = {
+		var = SIA_ds_grievance
+		min = 0
+		max = 100
+	}
+	SIA_ds_recompute_floor = yes
+	# v0.8 (code-review P4): pick the tooltip by sign — guard the "eases" tooltip on a
+	# strictly negative delta so a future zero-delta caller never shows green "eases (0)".
+	if = {
+		limit = { check_variable = { ds_grievance_delta > 0 } }
+		custom_effect_tooltip = SIA_ds_grievance_up
+	}
+	else_if = {
+		limit = { check_variable = { ds_grievance_delta < 0 } }
+		custom_effect_tooltip = SIA_ds_grievance_down
+	}
+}
+
+# v0.8 — derive the intensity floor from the grievance meter (0.6x). The floor is
+# the level the conflict can never fall below while the grievance behind it festers;
+# it now scales the full 0-100 grievance range (was a flat cap of 20) so grievance
+# is a meaningful, persistent driver rather than a token modifier.
+SIA_ds_recompute_floor = {
+	set_variable = { SIA_ds_intensity_floor = SIA_ds_grievance }
+	multiply_variable = { SIA_ds_intensity_floor = 0.6 }
+	clamp_variable = {
+		var = SIA_ds_intensity_floor
+		min = 0
+		max = 100
+	}
+	# v0.8 (code-review P1): the floor binds IMMEDIATELY. Repression call-sites cut
+	# intensity first and raise grievance second, which would otherwise leave intensity
+	# stranded below the freshly-raised floor until the next intensity change — making a
+	# terminal "end the insurgency" gate pass or fail by RNG/timing. Pull intensity up to
+	# the floor here so the floor is deterministic. Only while the conflict is live (so a
+	# resolved/never-started state never has its zeroed intensity dragged up).
+	if = {
+		limit = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+			check_variable = { SIA_insurgency_intensity < SIA_ds_intensity_floor }
+		}
+		set_variable = { SIA_insurgency_intensity = SIA_ds_intensity_floor }
+		SIA_ds_update_tier = yes
+	}
+}
+
+# Flat threat bump for the Greater-Thailand and ASEAN war-goal focuses. Deliberately
+# simpler than the generic add_threat_from_wargoal_effect: a fixed named threat rather
+# than one scaled by the target's power status. Callers set temp var wargoal_on and
+# pair this with create_wargoal.
+SIA_add_threat_from_wargoal_effect = {
+	add_named_threat = { threat = 3 name = SIA_expansionism_threat }
+}
+
+## v0.5 — Generational political drift ("Two Thailands")
+## Gives the slow military-buildup years live political stakes by converting the
+## economy + stability into a steady, capped pull on the party system. Two barometers:
+##   SIA_reform_pressure  (0-100) urban / youth / graduate discontent -> Move Forward
+##                                (socialism, party idx 3)
+##   SIA_rural_discontent (0-100) up-country economic pain             -> Pheu Thai populism
+##                                (neutral_Social, party idx 18)
+## Both rise when productivity sags (the MD economy-cycle idea drops toward depression)
+## and stability frays; both decay when growth is strong. When the two barometers are low
+## AND growth is strong the establishment (House of Mahidol, Monarchist idx 23) recovers.
+## Called weekly from on_weekly after 2011. Mirrors the SIA_ds_update_tier idiom;
+## edit the deltas here to retune, the thresholds in 99_SIA_on_actions.txt to retime.
+SIA_political_drift_update = {
+	# --- Productivity proxy: the MD economy-cycle idea (depression .. economic_boom) ---
+	if = {
+		limit = { has_idea = depression }
+		add_to_variable = { SIA_reform_pressure = 0.9 }
+		add_to_variable = { SIA_rural_discontent = 0.7 }
+	}
+	else_if = {
+		limit = { has_idea = recession }
+		add_to_variable = { SIA_reform_pressure = 0.6 }
+		add_to_variable = { SIA_rural_discontent = 0.45 }
+	}
+	else_if = {
+		limit = { has_idea = stagnation }
+		add_to_variable = { SIA_reform_pressure = 0.4 }
+		add_to_variable = { SIA_rural_discontent = 0.3 }
+	}
+	else_if = {
+		limit = { has_idea = stable_growth }
+		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.03 } }
+		subtract_from_variable = { SIA_rural_discontent = 0.03 }
+	}
+	else_if = {
+		limit = { has_idea = fast_growth }
+		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.1 } }
+		subtract_from_variable = { SIA_rural_discontent = 0.1 }
+	}
+	else_if = {
+		limit = { has_idea = economic_boom }
+		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.2 } }
+		subtract_from_variable = { SIA_rural_discontent = 0.2 }
+	}
+	# --- Stability: unrest pushes both; the countryside feels collapse hardest ---
+	if = {
+		limit = { has_stability < 0.35 }
+		add_to_variable = { SIA_reform_pressure = 0.4 }
+		add_to_variable = { SIA_rural_discontent = 0.5 }
+	}
+	else_if = {
+		limit = { has_stability < 0.5 }
+		add_to_variable = { SIA_reform_pressure = 0.2 }
+		add_to_variable = { SIA_rural_discontent = 0.25 }
+	}
+	else_if = {
+		limit = { has_stability > 0.7 }
+		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.05 } }
+		subtract_from_variable = { SIA_rural_discontent = 0.05 }
+	}
+	# --- Generational shift: the cohort that never knew the boom years ---
+	if = { limit = { date > 2014.5.22 } add_to_variable = { SIA_reform_pressure = 0.3 } }   # 2014 coup
+	if = { limit = { date > 2018.3.15 } add_to_variable = { SIA_reform_pressure = 0.5 } }  # Future Forward founded
+	# --- Path structure ---
+	# Royalist "lid": the establishment suppresses open politics, so on this path the
+	# pressure-relief decays above (prosperity + calm) are SKIPPED — good governance no
+	# longer passively bleeds off reform pressure. Combined with this steady accrual, the
+	# barometer only ever climbs, so the otherwise slow-and-stable royalist tree always
+	# builds toward a reckoning. Players relieve it actively via the thailand.363/.364
+	# event choices (concede / stimulus), never by simply running a tidy economy.
+	if = { limit = { has_country_flag = SIA_path_royalist } add_to_variable = { SIA_reform_pressure = 0.4 } }
+	# Populist machine keeps the rice belt mobilised behind Pheu Thai.
+	if = { limit = { has_country_flag = SIA_path_populist } add_to_variable = { SIA_rural_discontent = 0.2 } }
+	# Reform path channels the energy into the ballot box (a faster open drift).
+	if = { limit = { has_country_flag = SIA_path_reform } add_to_variable = { SIA_reform_pressure = 0.35 } }
+
+	clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+	clamp_variable = { var = SIA_rural_discontent min = 0 max = 100 }
+
+	# --- Convert the barometers into a capped weekly party drift ---
+	# Move Forward (socialism, idx 3): scaled by reform pressure, capped at 0.45 so it
+	# pressures the system but never auto-wins. At pressure 50 this is ~+0.008/wk, and a
+	# sustained high pressure now drives Move Forward firmly toward its cap. Gated to the
+	# Future Forward era (2018) — the urban youth vote is a *later* phenomenon, so the
+	# early-window drift belongs to Pheu Thai and the palace network, not Move Forward.
+	if = {
+		limit = {
+			date > 2018.3.15
+			check_variable = { party_pop_array^3 < 0.45 }
+			check_variable = { SIA_reform_pressure > 0 }
+		}
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = SIA_reform_pressure }
+		multiply_temp_variable = { party_popularity_increase = 0.00016 }
+		add_relative_party_popularity = yes
+	}
+	# Pheu Thai populism (neutral_Social, idx 18): the countryside's anti-establishment vote.
+	if = {
+		limit = {
+			check_variable = { party_pop_array^18 < 0.4 }
+			check_variable = { SIA_rural_discontent > 0 }
+		}
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = SIA_rural_discontent }
+		multiply_temp_variable = { party_popularity_increase = 0.00014 }
+		add_relative_party_popularity = yes
+	}
+	# Establishment recovery: calm plus prosperity lets the palace network reclaim ground.
+	if = {
+		limit = {
+			check_variable = { SIA_reform_pressure < 20 }
+			check_variable = { SIA_rural_discontent < 20 }
+			check_variable = { party_pop_array^23 < 0.3 }
+			OR = { has_idea = fast_growth has_idea = economic_boom }
+		}
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.003 }
+		add_relative_party_popularity = yes
+	}
+	recalculate_party = yes
+}
+
+## ─── Opening-year Thaksinite surge (2000 → the 2001 election) ─────────
+## While Chuan Leekpai's Democrats (idx 1) govern before a 2001 path is chosen,
+## Thai Rak Thai's rural machine builds toward the landslide. Pheu Thai (idx 18)
+## and the non-aligned bloc it leads climb ~3%/month, drawn from the establishment
+## vote. Driven monthly by the on_monthly hook in 99_SIA_on_actions.txt and made
+## visible by the SIA_thaksin_ascendant spirit; the window closes after a year, a
+## path commitment, or a change of government, at which point the standing systems
+## (the Branch E tide, the Two Thailands drift) take over.
+SIA_thaksin_rise_update = {
+	# temp_outlook_increase grows the whole neutrality bloc (add_popularity pulls it
+	# from the democratic/nationalist blocs); party_popularity_increase steers that
+	# growth to Pheu Thai so it leads the bloc rather than the incumbent neutral
+	# conservatives (idx 14). Capped at a 0.36 share so the rise plateaus at the
+	# landslide rather than snowballing past it.
+	if = {
+		limit = { check_variable = { party_pop_array^18 < 0.36 } }
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+	}
+	add_to_variable = { SIA_thaksin_rise_months = 1 }
+}
+
+## ─── Coup-risk machinery (Thaksinist / populist path) ───────────────────
+## SIA_coup_risk (0–100) is the army's patience meter — the price of populist
+## overreach. It is made visible by a tiered national spirit (SIA_coup_tier_*,
+## mirrors the Deep South insurgency tiers) and managed through the
+## SIA_coup_watch_category decisions. Crossing 85 arms the defusable
+## SIA_reassure_high_command mission; letting it expire fires thailand.70
+## ("Tanks at Government House").
+
+# Swap the coup-risk tier spirit to match the current SIA_coup_risk.
+# Safe to call every week; only acts on a populist, non-junta government.
+SIA_coup_update_tier = {
+	if = {
+		limit = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+		clamp_variable = { var = SIA_coup_risk min = 0 max = 100 }
+		if = {
+			limit = { check_variable = { SIA_coup_risk > 84 } }
+			if = { limit = { has_idea = SIA_coup_tier_watchful } remove_ideas = SIA_coup_tier_watchful }
+			if = { limit = { has_idea = SIA_coup_tier_restless }  remove_ideas = SIA_coup_tier_restless }
+			if = { limit = { has_idea = SIA_coup_tier_plotting }  remove_ideas = SIA_coup_tier_plotting }
+			if = { limit = { NOT = { has_idea = SIA_coup_tier_tanks } } add_ideas = SIA_coup_tier_tanks }
+		}
+		else_if = {
+			limit = { check_variable = { SIA_coup_risk > 59 } }
+			if = { limit = { has_idea = SIA_coup_tier_watchful } remove_ideas = SIA_coup_tier_watchful }
+			if = { limit = { has_idea = SIA_coup_tier_restless }  remove_ideas = SIA_coup_tier_restless }
+			if = { limit = { has_idea = SIA_coup_tier_tanks } remove_ideas = SIA_coup_tier_tanks }
+			if = { limit = { NOT = { has_idea = SIA_coup_tier_plotting } } add_ideas = SIA_coup_tier_plotting }
+		}
+		else_if = {
+			limit = { check_variable = { SIA_coup_risk > 29 } }
+			if = { limit = { has_idea = SIA_coup_tier_watchful } remove_ideas = SIA_coup_tier_watchful }
+			if = { limit = { has_idea = SIA_coup_tier_plotting }  remove_ideas = SIA_coup_tier_plotting }
+			if = { limit = { has_idea = SIA_coup_tier_tanks } remove_ideas = SIA_coup_tier_tanks }
+			if = { limit = { NOT = { has_idea = SIA_coup_tier_restless } } add_ideas = SIA_coup_tier_restless }
+		}
+		else = {
+			if = { limit = { has_idea = SIA_coup_tier_restless }  remove_ideas = SIA_coup_tier_restless }
+			if = { limit = { has_idea = SIA_coup_tier_plotting }  remove_ideas = SIA_coup_tier_plotting }
+			if = { limit = { has_idea = SIA_coup_tier_tanks } remove_ideas = SIA_coup_tier_tanks }
+			if = { limit = { NOT = { has_idea = SIA_coup_tier_watchful } } add_ideas = SIA_coup_tier_watchful }
+		}
+	}
+}
+
+# Signed coup-risk move with a tooltip (mirrors SIA_ds_set_intensity). The
+# caller sets the delta first: set_temp_variable = { coup_delta = N }.
+SIA_coup_set_risk = {
+	add_to_variable = { SIA_coup_risk = coup_delta }
+	clamp_variable = { var = SIA_coup_risk min = 0 max = 100 }
+	SIA_coup_update_tier = yes
+	if = {
+		limit = { check_variable = { coup_delta < 0 } }
+		custom_effect_tooltip = SIA_coup_risk_decrease_tt
+	}
+	else = {
+		custom_effect_tooltip = SIA_coup_risk_increase_tt
+	}
+}
+
+# Full teardown once the coup question is settled (junta installed, or the
+# government is coup-proofed). Clears every tier spirit and the legacy
+# rumblings idea so nothing lingers.
+SIA_coup_cleanup_effect = {
+	if = { limit = { has_idea = SIA_coup_tier_watchful } remove_ideas = SIA_coup_tier_watchful }
+	if = { limit = { has_idea = SIA_coup_tier_restless }  remove_ideas = SIA_coup_tier_restless }
+	if = { limit = { has_idea = SIA_coup_tier_plotting }  remove_ideas = SIA_coup_tier_plotting }
+	if = { limit = { has_idea = SIA_coup_tier_tanks } remove_ideas = SIA_coup_tier_tanks }
+	if = { limit = { has_idea = SIA_coup_rumblings_idea } remove_ideas = SIA_coup_rumblings_idea }
+}
+
+## ─── General Strike momentum (communist urban road) ──────────────────────
+## SIA_strike_momentum (0-100) is the revolutionary-momentum meter for the
+## SIA_general_strike 180-day push. Raised only by the SIA_general_strike_category
+## decisions (it never bleeds off on its own). At 100 the government capitulates
+## (thailand.250 peaceful road); if the 180-day clock runs out below 100 the
+## generals crush the strike (thailand.259 junta coup). Caller sets the gain first:
+## set_temp_variable = { strike_delta = N }.
+SIA_strike_add_momentum = {
+	add_to_variable = { SIA_strike_momentum = strike_delta }
+	clamp_variable = { var = SIA_strike_momentum min = 0 max = 100 }
+	custom_effect_tooltip = SIA_strike_momentum_tt
+}
+
+# Teardown shared by both strike outcomes: clear the flag, drop the ongoing idea,
+# retire the meter. The caller sets the outcome (peaceful/coup) around this.
+SIA_strike_cleanup_effect = {
+	clr_country_flag = SIA_strike_active
+	if = { limit = { has_idea = SIA_general_strike_idea } remove_ideas = SIA_general_strike_idea }
+	set_variable = { SIA_strike_momentum = 0 }
+}
+
+## ─── Branch E: the populist electoral tide (Democrat-path coup-risk analogue) ─
+## The Democrats' challenge is not the barracks but the ballot box. Thaksin's
+## machine (Pheu Thai, idx 18) is always one rural landslide from returning to
+## power. SIA_pheu_thai_pressure (0-100) tracks how close that is: fuelled weekly
+## by rural discontent while the Democrats (idx 1 on the democrat path) govern,
+## and, when high, it actively lifts idx 18 toward the majority that unseats them
+## at the next MD election. The party-machine decisions are the only way down.
+
+# Swap the visible "tide" tier spirit to match SIA_pheu_thai_pressure. Two tiers:
+# the tide RISING (40-69) and a SURGE (70+) about to sweep the Democrats out.
+SIA_pt_update_tier = {
+	if = {
+		# Tier spirits only attach once the player commits to the Democrat trunk
+		# (SIA_the_democrats_endure -> SIA_path_democrat). The meter is seeded at 0 in
+		# the same beat and only climbs from there, so the dormant band is what the
+		# player sees first.
+		limit = { has_country_flag = SIA_path_democrat }
+		clamp_variable = { var = SIA_pheu_thai_pressure min = 0 max = 100 }
+		# Four bands. The dormant band (0-29) is a penalty-free meter readout so the
+		# tide is visible from focus completion. The three wave stages each carry a
+		# heavier governing drag AND a larger daily Pheu Thai popularity lift (applied
+		# in the on_daily hook via SIA_pt_wave_popularity_boost): stirring 30-49 ->
+		# +0.0005, rising 50-69 -> +0.001, surge 70+ -> +0.002. (Rebalanced down from
+		# 0.002/0.003/0.005 — the Thaksinite tide was lifting Pheu Thai far too quickly.)
+		if = {
+			limit = { check_variable = { SIA_pheu_thai_pressure > 69 } }
+			if = { limit = { has_idea = SIA_pt_tier_dormant } remove_ideas = SIA_pt_tier_dormant }
+			if = { limit = { has_idea = SIA_pt_tier_stirring } remove_ideas = SIA_pt_tier_stirring }
+			if = { limit = { has_idea = SIA_pt_tier_rising } remove_ideas = SIA_pt_tier_rising }
+			if = { limit = { NOT = { has_idea = SIA_pt_tier_surge } } add_ideas = SIA_pt_tier_surge }
+		}
+		else_if = {
+			limit = { check_variable = { SIA_pheu_thai_pressure > 49 } }
+			if = { limit = { has_idea = SIA_pt_tier_dormant } remove_ideas = SIA_pt_tier_dormant }
+			if = { limit = { has_idea = SIA_pt_tier_stirring } remove_ideas = SIA_pt_tier_stirring }
+			if = { limit = { has_idea = SIA_pt_tier_surge } remove_ideas = SIA_pt_tier_surge }
+			if = { limit = { NOT = { has_idea = SIA_pt_tier_rising } } add_ideas = SIA_pt_tier_rising }
+		}
+		else_if = {
+			limit = { check_variable = { SIA_pheu_thai_pressure > 29 } }
+			if = { limit = { has_idea = SIA_pt_tier_dormant } remove_ideas = SIA_pt_tier_dormant }
+			if = { limit = { has_idea = SIA_pt_tier_rising } remove_ideas = SIA_pt_tier_rising }
+			if = { limit = { has_idea = SIA_pt_tier_surge }  remove_ideas = SIA_pt_tier_surge }
+			if = { limit = { NOT = { has_idea = SIA_pt_tier_stirring } } add_ideas = SIA_pt_tier_stirring }
+		}
+		else = {
+			if = { limit = { has_idea = SIA_pt_tier_stirring } remove_ideas = SIA_pt_tier_stirring }
+			if = { limit = { has_idea = SIA_pt_tier_rising } remove_ideas = SIA_pt_tier_rising }
+			if = { limit = { has_idea = SIA_pt_tier_surge }  remove_ideas = SIA_pt_tier_surge }
+			if = { limit = { NOT = { has_idea = SIA_pt_tier_dormant } } add_ideas = SIA_pt_tier_dormant }
+		}
+	}
+}
+
+# Daily idx-18 popularity lift, scaled by the wave tier. The rate is read from the
+# live meter (SIA_pheu_thai_pressure) rather than from the tier spirit, so a mid-week
+# band crossing takes effect the same day (the spirits only refresh on the weekly
+# SIA_pt_update_tier tick) and the effect is correct even if ever called without a
+# spirit attached. Bands match SIA_pt_update_tier: stirring >29 +0.0005, rising >49
+# +0.001, surge >69 +0.002. Caller (the on_daily hook) guarantees: on the Democrat
+# trunk, the Democrats still rule (idx 1), and Pheu Thai below the 0.40 share cap.
+SIA_pt_wave_popularity_boost = {
+	set_temp_variable = { party_index = 18 }
+	if = {
+		limit = { check_variable = { SIA_pheu_thai_pressure > 69 } }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+	}
+	else_if = {
+		limit = { check_variable = { SIA_pheu_thai_pressure > 49 } }
+		set_temp_variable = { party_popularity_increase = 0.001 }
+	}
+	else = {
+		set_temp_variable = { party_popularity_increase = 0.0005 }
+	}
+	add_relative_party_popularity = yes
+	recalculate_party = yes
+}
+
+# Signed pressure move with a tooltip. Caller: set_temp_variable = { pt_delta = N }.
+SIA_pt_pressure_set = {
+	add_to_variable = { SIA_pheu_thai_pressure = pt_delta }
+	clamp_variable = { var = SIA_pheu_thai_pressure min = 0 max = 100 }
+	SIA_pt_update_tier = yes
+	if = {
+		limit = { check_variable = { pt_delta < 0 } }
+		custom_effect_tooltip = SIA_pt_pressure_decrease_tt
+	}
+	else = {
+		custom_effect_tooltip = SIA_pt_pressure_increase_tt
+	}
+}
+
+# Seed the meter the first time the Democrats take government (idempotent).
+SIA_pt_pressure_seed = {
+	if = {
+		limit = { NOT = { has_variable = SIA_pheu_thai_pressure } }
+		set_variable = { SIA_pheu_thai_pressure = 0 }
+	}
+	SIA_pt_update_tier = yes
+}
+
+# Teardown — retire the tide spirits once the Democrats lose power / leave the path.
+SIA_pt_cleanup_effect = {
+	if = { limit = { has_idea = SIA_pt_tier_dormant } remove_ideas = SIA_pt_tier_dormant }
+	if = { limit = { has_idea = SIA_pt_tier_stirring } remove_ideas = SIA_pt_tier_stirring }
+	if = { limit = { has_idea = SIA_pt_tier_rising } remove_ideas = SIA_pt_tier_rising }
+	if = { limit = { has_idea = SIA_pt_tier_surge }  remove_ideas = SIA_pt_tier_surge }
+}
+
+# Full quiet — the royalist / monarchist establishment suppresses the Thaksinite
+# tide outright. Retire the tier spirits AND zero the meter so it neither lingers
+# nor carries over if the Democrats ever return to power.
+SIA_pt_quiet_effect = {
+	SIA_pt_cleanup_effect = yes
+	if = {
+		limit = { has_variable = SIA_pheu_thai_pressure }
+		set_variable = { SIA_pheu_thai_pressure = 0 }
+	}
+}
+
+## ─── Political realignment (switchable focus trunks) ─────────────────────
+## The political trunks (A populist, B royalist/network monarchy, C reform,
+## E Democrat establishment) are no longer engine-mutually-exclusive — they are gated by the SIA_path_*
+## country flags via the SIA_*_trunk_open scripted triggers. When the RULING
+## PARTY changes to one that belongs to a different trunk, the weekly detector in
+## 99_SIA_on_actions.txt calls the matching SIA_realign_to_* effect below. It
+## swaps the path flag (re-opening the new trunk's un-taken focuses and locking
+## the abandoned trunk's un-taken ones — completed focuses persist) and strips
+## the outgoing party's signature ideas, which no longer have a government behind
+## them. Structural/economic legacies (thaksinomics, the 30-baht scheme, the
+## King's moral authority, the sufficiency economy) are deliberately NOT stripped
+## — they outlive the party that built them.
+
+# Strip the populist party-identity ideas (the machine, the cult, the dynasty,
+# the Red Shirt street). Called when leaving the Thaksinist trunk.
+SIA_strip_populist_ideas = {
+	if = { limit = { has_idea = SIA_landslide_mandate } remove_ideas = SIA_landslide_mandate }
+	if = { limit = { has_idea = SIA_cult_of_the_ceo } remove_ideas = SIA_cult_of_the_ceo }
+	if = { limit = { has_idea = SIA_ceo_state } remove_ideas = SIA_ceo_state }
+	if = { limit = { has_idea = SIA_populist_machine } remove_ideas = SIA_populist_machine }
+	if = { limit = { has_idea = SIA_dynasty_politics } remove_ideas = SIA_dynasty_politics }
+	if = { limit = { has_idea = SIA_institutionalized_party }  remove_ideas = SIA_institutionalized_party }
+	if = { limit = { has_idea = SIA_red_shirts_idea } remove_ideas = SIA_red_shirts_idea }
+	if = { limit = { has_idea = SIA_red_shirts_mobilized_idea } remove_ideas = SIA_red_shirts_mobilized_idea }
+}
+
+# Strip the royalist street/network ideas. Called when leaving the Royalist trunk.
+SIA_strip_royalist_ideas = {
+	if = { limit = { has_idea = SIA_network_monarchy_idea } remove_ideas = SIA_network_monarchy_idea }
+	if = { limit = { has_idea = SIA_yellow_shirts_idea } remove_ideas = SIA_yellow_shirts_idea }
+}
+
+# Strip the reform-movement ideas. Called when leaving the Reform trunk.
+SIA_strip_reform_ideas = {
+	if = { limit = { has_idea = SIA_reform_momentum } remove_ideas = SIA_reform_momentum }
+	if = { limit = { has_idea = SIA_youthquake } remove_ideas = SIA_youthquake }
+	if = { limit = { has_idea = SIA_reform_spring }   remove_ideas = SIA_reform_spring }
+}
+
+# Strip the Democrat party-identity spirits + the populist-tide tiers. Called
+# when leaving the Democrat trunk (lost an election, or the PDRC self-coup).
+SIA_strip_democrat_ideas = {
+	if = { limit = { has_country_flag = SIA_democrat_machine_active } clr_country_flag = SIA_democrat_machine_active }
+	if = { limit = { has_idea = SIA_loyal_opposition } remove_ideas = SIA_loyal_opposition }
+	if = { limit = { has_idea = SIA_democratic_institutionalism } remove_ideas = SIA_democratic_institutionalism }
+	SIA_pt_cleanup_effect = yes
+}
+
+# Shared bookkeeping for any realignment: clear the three path flags so exactly
+# one is set by the caller afterwards.
+SIA_clear_path_flags = {
+	if = { limit = { has_country_flag = SIA_path_populist } clr_country_flag = SIA_path_populist }
+	if = { limit = { has_country_flag = SIA_path_royalist } clr_country_flag = SIA_path_royalist }
+	if = { limit = { has_country_flag = SIA_path_reform }   clr_country_flag = SIA_path_reform }
+	if = { limit = { has_country_flag = SIA_path_democrat } clr_country_flag = SIA_path_democrat }
+	# The opening-year Thaksinite surge is a pre-realignment mechanic; retire it the
+	# moment any path is committed so it never runs alongside the standing systems.
+	if = { limit = { has_idea = SIA_thaksin_ascendant } remove_ideas = SIA_thaksin_ascendant }
+}
+
+SIA_realign_to_populist = {
+	log = "[GetDateText]: [Root.GetName]: SIA_realign_to_populist - populist government installed"
+	SIA_clear_path_flags = yes
+	SIA_strip_democrat_ideas = yes
+	set_country_flag = SIA_path_populist
+	SIA_strip_royalist_ideas = yes
+	SIA_strip_reform_ideas = yes
+	# A populist government re-arms the army's patience meter (the generals watch
+	# the new administration warily). Seed it if it was never initialised.
+	if = {
+		limit = { NOT = { has_variable = SIA_coup_risk } }
+		set_variable = { SIA_coup_risk = 20 }
+	}
+}
+
+SIA_realign_to_royalist = {
+	log = "[GetDateText]: [Root.GetName]: SIA_realign_to_royalist - royalist establishment restored"
+	SIA_clear_path_flags = yes
+	SIA_strip_democrat_ideas = yes
+	set_country_flag = SIA_path_royalist
+	SIA_strip_populist_ideas = yes
+	SIA_strip_reform_ideas = yes
+	# The monarchist establishment quiets the Thaksinite tide outright — retire any
+	# tier spirit and zero the meter so it cannot resume or carry over.
+	SIA_pt_quiet_effect = yes
+	# The army/palace now holds the levers — stand the coup-risk machinery down.
+	SIA_coup_cleanup_effect = yes
+}
+
+SIA_realign_to_reform = {
+	log = "[GetDateText]: [Root.GetName]: SIA_realign_to_reform - reformist government installed"
+	SIA_clear_path_flags = yes
+	SIA_strip_democrat_ideas = yes
+	set_country_flag = SIA_path_reform
+	SIA_strip_populist_ideas = yes
+	SIA_strip_royalist_ideas = yes
+	SIA_coup_cleanup_effect = yes
+}
+
+# The Democrats (conservatism, idx 1) return to government — peacefully, via a
+# lost election or the Constitutional Court handing power to the opposition.
+# Mirrors the other realigns: swap the path flag and strip the outgoing party's
+# signature ideas. The Democrats govern as a civilian establishment coalition, so
+# stand the coup machinery down and (re-)arm the populist-tide meter — Thaksin's
+# machine starts gathering strength again the moment they take office.
+SIA_realign_to_democrat = {
+	log = "[GetDateText]: [Root.GetName]: SIA_realign_to_democrat - Democrat government installed"
+	SIA_clear_path_flags = yes
+	set_country_flag = SIA_path_democrat
+	SIA_strip_populist_ideas = yes
+	SIA_strip_royalist_ideas = yes
+	SIA_strip_reform_ideas = yes
+	SIA_coup_cleanup_effect = yes
+	# Open the constituency-machine decisions alongside the (re-)armed tide meter,
+	# so a peacefully-installed Democrat government can fight it from day one.
+	set_country_flag = SIA_democrat_machine_active
+	SIA_pt_pressure_seed = yes
+}
+
+# When a coup succeeds and the NCPO seizes power, the populist parties are
+# discredited and the military's vehicle is elevated — otherwise Pheu Thai's
+# standing popularity simply re-elects them the moment any election is reheld,
+# undoing the coup. Big swing toward Nat_Autocracy (22) and away from the
+# Thaksinist parties (TRT idx 1 / Pheu Thai idx 18). Used only by the coup
+# events, NOT by peaceful realignments.
+SIA_junta_party_shift = {
+	log = "[GetDateText]: [Root.GetName]: SIA_junta_party_shift - NCPO junta elevated, populist parties discredited"
+	set_temp_variable = { party_index = 22 }
+	set_temp_variable = { party_popularity_increase = 0.30 }
+	add_relative_party_popularity = yes
+	set_temp_variable = { party_index = 18 }
+	set_temp_variable = { party_popularity_increase = -0.20 }
+	add_relative_party_popularity = yes
+	set_temp_variable = { party_index = 1 }
+	set_temp_variable = { party_popularity_increase = -0.20 }
+	add_relative_party_popularity = yes
+	recalculate_party = yes
+}
+
+# ============================================================================
+# TRADE DIPLOMACY — trade-agreement-scaled foreign influence
+# ============================================================================
+# Reads the generic MD signed_trade_agreements counter (maintained for every
+# country in 00_economic_effects.txt / 00_scripted_diplomatic_actions.txt when a
+# trade agreement is signed or cancelled) and turns it into SIA_trade_influence_strength,
+# the variable behind the SIA_trade_diplomacy_network dynamic modifier's
+# foreign_influence_modifier line. Called on the granting focus and refreshed
+# monthly in 99_SIA_on_actions.txt.
+#
+# Balance: 0.01 per agreement, clamped to +0.10 (Singapore is 0.02, clamped +0.30).
+SIA_recalculate_trade_diplomacy = {
+	set_variable = { SIA_trade_influence_strength = signed_trade_agreements }
+	multiply_variable = { SIA_trade_influence_strength = 0.01 }
+	clamp_variable = { var = SIA_trade_influence_strength min = 0 max = 0.10 }
+	force_update_dynamic_modifier = yes
+}
+
+# The monthly trade dividend. Pays treasury scaled by the number of signed trade
+# agreements, capped at 6 counted (so the ceiling is a modest +0.9/month, roughly
+# +11/year of construction fuel). Gated by the SIA_trade_income_active flag, which
+# the SIA_regional_trade_network focus sets. Uses modify_treasury_effect (a direct,
+# durable add to the persistent treasury variable) rather than additional_income_rate,
+# which MD rebuilds from zero every economic tick.
+SIA_collect_trade_dividend = {
+	set_temp_variable = { sia_trade_agreements_counted = signed_trade_agreements }
+	clamp_temp_variable = { var = sia_trade_agreements_counted min = 0 max = 6 }
+	set_temp_variable = { treasury_change = sia_trade_agreements_counted }
+	multiply_temp_variable = { treasury_change = 0.15 }
+	modify_treasury_effect = yes
+	custom_effect_tooltip = SIA_trade_dividend_tt
+}
