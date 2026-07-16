@@ -580,6 +580,20 @@ CHI_BRI_init_state = {
 		add_to_variable = { CHI_bri_project_slots = 6 }
 		set_variable = { CHI_bri_returns_bri_pct = 0.5 }
 	}
+
+	# Saves predating slot reservation have live pipelines but no committed count.
+	if = {
+		limit = { NOT = { has_country_flag = CHI_bri_committed_initialised } }
+		set_country_flag = CHI_bri_committed_initialised
+		set_variable = { CHI_bri_committed_projects = 0 }
+		for_each_scope_loop = {
+			array = global.bri_eligible_countries
+			if = {
+				limit = { has_country_flag = bri_pipeline_busy }
+				CHI = { add_to_variable = { CHI_bri_committed_projects = 1 } }
+			}
+		}
+	}
 }
 
 # Scope: recipient. bri_project_type and bri_project_terms must already be set.
@@ -676,6 +690,7 @@ BRI_project_success = {
 		clr_country_flag = bri_pipeline_busy
 	}
 	add_to_variable = { CHI_bri_active_projects = -1 }
+	add_to_variable = { CHI_bri_committed_projects = -1 }
 	add_to_variable = { CHI_bri_completed_projects = 1 }
 
 	set_temp_variable = { bri_yield = 1 }
@@ -739,6 +754,7 @@ BRI_project_partial = {
 		clr_country_flag = bri_pipeline_busy
 	}
 	add_to_variable = { CHI_bri_active_projects = -1 }
+	add_to_variable = { CHI_bri_committed_projects = -1 }
 	add_to_variable = { CHI_bri_completed_projects = 1 }
 
 	set_temp_variable = { bri_yield = 1 }
@@ -775,6 +791,7 @@ BRI_project_partial = {
 
 BRI_project_default = {
 	add_to_variable = { CHI_bri_active_projects = -1 }
+	add_to_variable = { CHI_bri_committed_projects = -1 }
 	add_to_variable = { CHI_bri_defaulted_projects = 1 }
 	FROM = {
 		clr_country_flag = bri_pipeline_busy
@@ -788,9 +805,10 @@ BRI_project_default = {
 CHI_BRI_application_tick = {
 	CHI_BRI_init_state = yes
 	clamp_variable = { var = CHI_bri_active_projects min = 0 }
+	clamp_variable = { var = CHI_bri_committed_projects min = 0 }
 
 	if = {
-		limit = { check_variable = { CHI_bri_active_projects < CHI_bri_project_slots } }
+		limit = { check_variable = { CHI_bri_committed_projects < CHI_bri_project_slots } }
 		random_scope_in_array = {
 			array = global.bri_eligible_countries
 			limit = {
@@ -801,12 +819,13 @@ CHI_BRI_application_tick = {
 			BRI_init_named_maxes = yes
 			set_variable = { bri_project_terms = 1 }
 			BRI_roll_project_type = yes
+			CHI = { add_to_variable = { CHI_bri_committed_projects = 1 } }
 			BRI_start_project = yes
 		}
 	}
 
 	if = {
-		limit = { check_variable = { CHI_bri_active_projects < CHI_bri_project_slots } }
+		limit = { check_variable = { CHI_bri_committed_projects < CHI_bri_project_slots } }
 		set_temp_variable = { bri_app_rate = CHI_bri_app_rate }
 		add_to_temp_variable = { bri_app_rate = modifier@CHI_bri_app_intake }
 		clamp_variable = { var = bri_app_rate min = 0 max = 100 }
@@ -834,6 +853,7 @@ CHI_bri_generate_application = {
 
 # Scope: recipient. bri_project_type must already be set.
 CHI_bri_route_application = {
+	CHI = { add_to_variable = { CHI_bri_committed_projects = 1 } }
 	if = {
 		limit = { CHI = { has_country_flag = CHI_bri_automation_on } }
 		set_variable = { bri_project_terms = CHI.CHI_bri_default_terms }
