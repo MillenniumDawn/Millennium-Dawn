@@ -1,0 +1,6986 @@
+## Thailand: Thailand events
+## Political path events (1-18), flavor & chains (50-71), Greater Thailand (100-110),
+## Deep South (150-156), news (thailand_news.1-5)
+add_namespace = thailand
+add_namespace = thailand_news
+
+# The 2001 General Election
+country_event = {
+	id = thailand.1
+	title = thailand.1.t
+	desc = thailand.1.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	# The three choices only tilt the ballot: each boosts one party's popularity and
+	# its ideology-group outlook. The in-game election then decides who governs, and
+	# only the matching trunk-entry focus (thai_rak_thai / old_order / democrats_endure)
+	# unlocks once that party actually rules. No option forces a government.
+
+	# A - Back Thai Rak Thai (Pheu Thai, neutrality, idx 18)
+	option = {
+		name = thailand.1.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.1.a"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_political_power = 75
+		custom_effect_tooltip = SIA_coup_risk_increase_tt
+		add_to_variable = { SIA_coup_risk = 5 }
+		ai_chance = { base = 5 }
+	}
+
+	# B - Rally the Network Monarchy (NCPO, nationalist, idx 22)
+	option = {
+		name = thailand.1.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.1.b"
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_stability = 0.05
+		ai_chance = { base = 3 }
+	}
+
+	# C - Sustain the Democrats (conservatism, idx 1, the start government)
+	option = {
+		name = thailand.1.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.1.c"
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_political_power = 50
+		add_stability = 0.03
+		ai_chance = { base = 4 }
+	}
+}
+
+# A Government of CEOs - Thai Rak Thai takes power
+country_event = {
+	id = thailand.2
+	title = thailand.2.t
+	desc = thailand.2.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.2.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.2.a"
+		# Pheu Thai (idx 18) already holds power by the time this fires: the focus
+		# is reachable only once they win the vote, and the election installs Thaksin.
+		# So this is a consolidation beat, not a government change. Do NOT call
+		# change_ruling_party_effect / set_leader_SIA here, or the leader succession
+		# advances past Thaksin (see SIA_thai_rak_thai).
+		update_party_name = yes
+		add_stability = 0.03
+	}
+}
+
+# The War on Drugs (Story 2.4 - path-forked; CAP-6)
+# Dual entry preserved: fired by SIA_war_on_drugs (Thaksin Branch-A node OR the
+# Golden Triangle interdiction tail). The two original options are widened and a
+# reform decriminalization option (C) is added. Coup-risk dynamic modifier and the
+# SIA_war_on_drugs focus block are untouched; the hard line now couples to story
+# 2.3's Deep South intensity floor (SIA_ds_set_intensity + SIA_ds_raise_floor).
+country_event = {
+	id = thailand.3
+	title = thailand.3.t
+	desc = thailand.3.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	# A - Hard line (extrajudicial campaign). Historical default, always available.
+	option = {
+		name = thailand.3.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.3.a"
+		add_ideas = SIA_drug_war_stain
+		add_timed_idea = { idea = SIA_war_on_drugs_campaign days = 365 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		# Iron-Fist drug-war coupling: only when the Deep South crisis is
+		# live. The campaign suppresses intensity (-10, floor-aware) but its
+		# brutality permanently raises the grievance floor (+6) - reusing story
+		# 2.3's helpers, not a reimplementation.
+		if = {
+			limit = { has_country_flag = SIA_ds_active }
+			set_temp_variable = { ds_delta = -10 }
+			SIA_ds_set_intensity = yes
+			set_temp_variable = { ds_floor_delta = 6 }
+			SIA_ds_raise_floor = yes
+		}
+		# Populist hard line: coup risk + the 2,800-killings reckoning.
+		if = {
+			limit = { has_country_flag = SIA_path_populist }
+			add_to_variable = { SIA_coup_risk = 5 }
+			random_list = {
+				70 = { }
+				30 = { country_event = { id = thailand.361 days = 7 } }
+			}
+		}
+		hidden_effect = {
+			country_event = { id = thailand.68 days = 150 random_days = 60 }
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 5
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# B - Rule of law / treatment (restrained; royalist & default exit).
+	option = {
+		name = thailand.3.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.3.b"
+		add_stability = 0.02
+		set_country_flag = SIA_drug_war_restrained
+		if = {
+			limit = { has_completed_focus = SIA_golden_triangle_interdiction }
+			set_temp_variable = { treasury_change = 2 }
+			modify_treasury_effect = yes
+			USA = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+			ENG = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# C - Crops not poppies (reform alternative-development). Reform path only.
+	option = {
+		name = thailand.3.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.3.c"
+		# B-1 guard: hide if the Golden Triangle path already fired .362 (A/B remain).
+		trigger = {
+			has_country_flag = SIA_path_reform
+			NOT = { has_country_flag = SIA_362_fired }
+		}
+		set_country_flag = SIA_drug_war_restrained
+		country_event = { id = thailand.362 days = 1 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 3
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+# The September Coup (2006)
+country_event = {
+	id = thailand.4
+	title = thailand.4.t
+	desc = thailand.4.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.4.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.4.a"
+		set_country_flag = SIA_2006_coup_done
+		set_temp_variable = { rul_party_temp = 22 }
+		set_temp_variable = { disable_elections = 1 }
+		change_ruling_party_effect = yes
+		update_party_name = yes
+		set_leader_SIA = yes
+		add_ideas = SIA_junta_government
+		SIA_junta_party_shift = yes
+		add_stability = -0.05
+		add_command_power = 100
+		army_experience = 25
+		if = {
+			limit = { has_idea = SIA_peoples_constitution }
+			remove_ideas = SIA_peoples_constitution
+		}
+		if = {
+			limit = { has_idea = SIA_cobra_gold }
+			remove_ideas = SIA_cobra_gold
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+		}
+		add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+		add_opinion_modifier = { target = ENG modifier = recent_actions_negative }
+		hidden_effect = {
+			news_event = { id = thailand_news.1 days = 1 }
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = thailand.4.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.4.b"
+		set_country_flag = SIA_2006_coup_done
+		set_temp_variable = { rul_party_temp = 22 }
+		change_ruling_party_effect = yes
+		update_party_name = yes
+		set_leader_SIA = yes
+		add_ideas = SIA_junta_government
+		SIA_junta_party_shift = yes
+		add_command_power = 50
+		if = {
+			limit = { has_idea = SIA_peoples_constitution }
+			remove_ideas = SIA_peoples_constitution
+		}
+		add_political_power = -50
+		hidden_effect = {
+			news_event = { id = thailand_news.1 days = 1 }
+		}
+	}
+}
+
+# Judicial Dissolution
+country_event = {
+	id = thailand.5
+	title = thailand.5.t
+	desc = thailand.5.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.5.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.5.a"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = -0.06 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_stability = -0.02
+	}
+
+	option = {
+		name = thailand.5.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.5.b"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_political_power = 50
+	}
+}
+
+# The NCPO Takes Power (2014)
+country_event = {
+	id = thailand.6
+	title = thailand.6.t
+	desc = thailand.6.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.6.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.6.a"
+		set_country_flag = SIA_2014_coup_done
+		set_country_flag = SIA_second_junta
+		set_temp_variable = { rul_party_temp = 22 }
+		set_temp_variable = { disable_elections = 1 }
+		change_ruling_party_effect = yes
+		update_party_name = yes
+		set_leader_SIA = yes
+		if = {
+			limit = { NOT = { has_idea = SIA_junta_government } }
+			add_ideas = SIA_junta_government
+			SIA_junta_party_shift = yes
+		}
+		if = {
+			limit = { has_idea = SIA_peoples_constitution }
+			remove_ideas = SIA_peoples_constitution
+		}
+		508 = {
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
+			}
+		}
+		add_command_power = 50
+		add_stability = 0.03
+		add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+		hidden_effect = {
+			news_event = { id = thailand_news.1 days = 1 }
+		}
+	}
+}
+
+# Red Shirts Take the Square
+country_event = {
+	id = thailand.7
+	title = thailand.7.t
+	desc = thailand.7.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_country_flag = SIA_2006_coup_done
+	}
+
+	option = {
+		name = thailand.7.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.7.a"
+		add_ideas = SIA_red_shirts_idea
+		add_stability = 0.04
+		add_political_power = -50
+		add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+	}
+
+	option = {
+		name = thailand.7.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.7.b"
+		add_ideas = SIA_red_shirts_idea
+		add_stability = -0.02
+		add_political_power = 50
+	}
+}
+
+# The Airport Seizure
+country_event = {
+	id = thailand.8
+	title = thailand.8.t
+	desc = thailand.8.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		NOT = { has_country_flag = SIA_2006_coup_done }
+	}
+
+	option = {
+		name = thailand.8.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.8.a"
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		add_stability = -0.02
+	}
+}
+
+# The Three Demands
+country_event = {
+	id = thailand.9
+	title = thailand.9.t
+	desc = thailand.9.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.9.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.9.a"
+		# Back all three demands. Riding the moment wins the street a small popularity
+		# beat, but confronting the palace and the barracks at once costs order - the
+		# confrontation that later drives the dissolution and coup events.
+		add_stability = -0.04
+		add_political_power = 50
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = { base = 75 }
+	}
+
+	option = {
+		name = thailand.9.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.9.b"
+		# Push only what parliament will pass. No popularity swing, but the measured
+		# course banks political capital and keeps the establishment from mobilising.
+		add_stability = 0.02
+		add_political_power = 75
+		ai_chance = { base = 25 }
+	}
+}
+
+# Section 112 on the Floor
+country_event = {
+	id = thailand.10
+	title = thailand.10.t
+	desc = thailand.10.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.10.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.10.a"
+		random_list = {
+			50 = {
+				set_country_flag = SIA_112_amended
+				add_political_power = 150
+				add_stability = 0.05
+				add_ideas = SIA_open_society
+				# The open-society spirit is the real payoff; the popularity bump is a
+				# modest victory beat, not another headline pump.
+				set_temp_variable = { party_index = 3 }
+				set_temp_variable = { party_popularity_increase = 0.08 }
+				add_relative_party_popularity = yes
+				recalculate_party = yes
+			}
+			30 = {
+				set_country_flag = SIA_112_retry_available
+				add_stability = -0.06
+				set_temp_variable = { party_index = 23 }
+				set_temp_variable = { party_popularity_increase = 0.12 }
+				add_relative_party_popularity = yes
+				hidden_effect = {
+					country_event = { id = thailand.11 days = 5 }
+				}
+			}
+			20 = {
+				set_country_flag = SIA_112_retry_available
+				hidden_effect = {
+					country_event = { id = thailand.12 days = 5 }
+				}
+			}
+		}
+	}
+}
+
+# Dissolution Crisis
+country_event = {
+	id = thailand.11
+	title = thailand.11.t
+	desc = thailand.11.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.11.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.11.a"
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = -0.08 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_stability = -0.03
+		add_political_power = -100
+	}
+}
+
+# The Establishment Strikes Back
+country_event = {
+	id = thailand.12
+	title = thailand.12.t
+	desc = thailand.12.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.12.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.12.a"
+		random_list = {
+			60 = {
+				add_stability = -0.05
+				add_political_power = 100
+				add_war_support = 0.03
+			}
+			40 = {
+				set_temp_variable = { rul_party_temp = 22 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
+				update_party_name = yes
+				set_leader_SIA = yes
+				add_ideas = SIA_junta_government
+				SIA_junta_party_shift = yes
+				add_stability = -0.05
+			}
+		}
+	}
+
+	option = {
+		name = thailand.12.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.12.b"
+		add_stability = 0.02
+		add_political_power = -150
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = -0.04 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+	}
+}
+
+# The Republic Question
+country_event = {
+	id = thailand.13
+	title = thailand.13.t
+	desc = thailand.13.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.13.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.13.a"
+		set_country_flag = SIA_republic_declared
+		add_stability = -0.10
+		add_political_power = -200
+		add_timed_idea = { idea = SIA_republic_turmoil days = 730 }
+		hidden_effect = {
+			country_event = { id = thailand.213 days = 730 }
+			news_event = { id = thailand_news.3 days = 1 }
+		}
+	}
+
+	option = {
+		name = thailand.13.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.13.b"
+		add_political_power = 50
+		add_stability = 0.02
+	}
+}
+
+# A New Reign - handled factually and respectfully
+country_event = {
+	id = thailand.14
+	title = thailand.14.t
+	desc = thailand.14.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.14.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.14.a"
+		if = {
+			limit = { has_idea = SIA_kings_moral_authority }
+			remove_ideas = SIA_kings_moral_authority
+		}
+		add_timed_idea = { idea = SIA_new_reign_mourning days = 365 }
+		set_leader_SIA = yes
+		hidden_effect = {
+			news_event = { id = thailand_news.4 days = 1 }
+		}
+	}
+}
+
+# The Dynasty Continues
+country_event = {
+	id = thailand.15
+	title = thailand.15.t
+	desc = thailand.15.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.15.a
+		trigger = { date > 2011.8.1 }
+		log = "[GetDateText]: [Root.GetName]: event thailand.15.a"
+		set_country_flag = do_not_retire
+		hidden_effect = { kill_country_leader = yes }
+		create_country_leader = {
+			name = "Yingluck Shinawatra"
+			desc = "SIA_yingluck_shinawatra_desc"
+			picture = "Yingluck_Shinawatra.dds"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+			}
+		}
+	}
+
+	option = {
+		name = thailand.15.b
+		trigger = { date > 2023.8.21 }
+		log = "[GetDateText]: [Root.GetName]: event thailand.15.b"
+		set_country_flag = do_not_retire
+		hidden_effect = { kill_country_leader = yes }
+		create_country_leader = {
+			name = "Srettha Thavisin"
+			desc = "SIA_srettha_thavisin_desc"
+			picture = "srettha_thavisin.dds"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+			}
+		}
+	}
+
+	option = {
+		name = thailand.15.c
+		trigger = { date > 2024.8.15 }
+		log = "[GetDateText]: [Root.GetName]: event thailand.15.c"
+		set_country_flag = do_not_retire
+		hidden_effect = { kill_country_leader = yes }
+		create_country_leader = {
+			name = "Paetongtarn Shinawatra"
+			desc = "SIA_paetongtarn_shinawatra_desc"
+			picture = "paetongtarn_shinawatra.dds"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+			}
+		}
+	}
+
+	option = {
+		name = thailand.15.e
+		log = "[GetDateText]: [Root.GetName]: event thailand.15.e"
+		add_political_power = 50
+	}
+}
+
+# Thaksin Forever
+country_event = {
+	id = thailand.16
+	title = thailand.16.t
+	desc = thailand.16.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.16.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.16.a"
+		set_temp_variable = { rul_party_temp = 18 }
+		set_temp_variable = { disable_elections = 1 }
+		change_ruling_party_effect = yes
+		update_party_name = yes
+		set_leader_SIA = yes
+		add_stability = -0.05
+		add_political_power = 150
+		add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+	}
+}
+
+# Restoration of the Throne
+country_event = {
+	id = thailand.17
+	title = thailand.17.t
+	desc = thailand.17.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.17.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.17.a"
+		set_temp_variable = { rul_party_temp = 23 }
+		set_temp_variable = { disable_elections = 1 }
+		change_ruling_party_effect = yes
+		update_party_name = yes
+		set_leader_SIA = yes
+		add_stability = 0.05
+		add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+		add_opinion_modifier = { target = FRA modifier = recent_actions_negative }
+	}
+}
+
+# The 2017 System
+country_event = {
+	id = thailand.18
+	title = thailand.18.t
+	desc = thailand.18.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.18.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.18.a"
+		add_ideas = SIA_guided_democracy
+		set_temp_variable = { rul_party_temp = 22 }
+		change_ruling_party_effect = yes
+		update_party_name = yes
+		set_leader_SIA = yes
+		add_stability = 0.05
+	}
+}
+
+##############################
+# FLAVOR / ECONOMY / DISASTER
+##############################
+
+# Out of the Tom Yum Kung Crisis
+country_event = {
+	id = thailand.50
+	title = thailand.50.t
+	desc = thailand.50.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.50.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.50.a"
+		set_temp_variable = { treasury_change = 8 }
+		modify_treasury_effect = yes
+		add_stability = -0.03
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = thailand.50.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.50.b"
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# The IMF Departs
+country_event = {
+	id = thailand.51
+	title = thailand.51.t
+	desc = thailand.51.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.51.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.51.a"
+		add_war_support = 0.02
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# Boxing Day Tsunami - reworked §10.4
+country_event = {
+	id = thailand.52
+	title = thailand.52.t
+	desc = thailand.52.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.52.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.52.a"
+		# Accept international aid - faster rebuild, opinion gains
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		# Damage infrastructure in state 509 (Southern Thailand / Phuket)
+		509 = {
+			add_building_construction = {
+				type = infrastructure
+				level = -1
+				instant_build = yes
+			}
+		}
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = { target = USA modifier = medium_increase }
+		}
+		if = {
+			limit = { country_exists = JAP }
+			add_opinion_modifier = { target = JAP modifier = medium_increase }
+		}
+		if = {
+			limit = { country_exists = AST }
+			add_opinion_modifier = { target = AST modifier = medium_increase }
+		}
+		# Suspend tourism idea 365d if held, then restore via hidden event
+		if = {
+			limit = { has_idea = SIA_tourism_powerhouse }
+			remove_ideas = SIA_tourism_powerhouse
+			hidden_effect = {
+				country_event = { id = thailand.220 days = 365 }
+			}
+		}
+		# Faster rebuild: restore infra after 180d
+		hidden_effect = {
+			country_event = { id = thailand.221 days = 180 }
+		}
+		ai_chance = {
+			base = 7
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = {
+		name = thailand.52.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.52.b"
+		# National pride - no aid, harder recovery
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		509 = {
+			add_building_construction = {
+				type = infrastructure
+				level = -1
+				instant_build = yes
+			}
+		}
+		if = {
+			limit = { has_idea = SIA_tourism_powerhouse }
+			remove_ideas = SIA_tourism_powerhouse
+			hidden_effect = {
+				country_event = { id = thailand.220 days = 365 }
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+# The Great Flood - reworked §10.4
+country_event = {
+	id = thailand.53
+	title = thailand.53.t
+	desc = thailand.53.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.53.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.53.a"
+		# Full mobilization - treasury cost, infra damage, competence test for populist path
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		508 = {
+			add_building_construction = {
+				type = infrastructure
+				level = -1
+				instant_build = yes
+			}
+		}
+		506 = {
+			add_building_construction = {
+				type = infrastructure
+				level = -1
+				instant_build = yes
+			}
+		}
+		# Populist government competence test
+		if = {
+			limit = { has_country_flag = SIA_path_populist }
+			random_list = {
+				55 = {
+					# Handled well - popularity up
+					set_party_index_to_ruling_party = yes
+					set_temp_variable = { party_popularity_increase = 0.10 }
+					add_relative_party_popularity = yes
+					add_stability = 0.02
+				}
+				45 = {
+					# Competence failure - popularity hit
+					set_party_index_to_ruling_party = yes
+					set_temp_variable = { party_popularity_increase = -0.04 }
+					add_relative_party_popularity = yes
+					add_to_variable = { SIA_coup_risk = 10 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 7
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = {
+		name = thailand.53.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.53.b"
+		# Protect Bangkok only
+		add_stability = -0.04
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		508 = {
+			add_building_construction = {
+				type = infrastructure
+				level = -1
+				instant_build = yes
+			}
+		}
+		if = {
+			limit = { has_country_flag = SIA_path_populist }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			add_to_variable = { SIA_coup_risk = 15 }
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+# The Rice-Pledging Scheme
+country_event = {
+	id = thailand.54
+	title = thailand.54.t
+	desc = thailand.54.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.54.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.54.a"
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		add_relative_party_popularity = yes
+	}
+
+	option = {
+		name = thailand.54.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.54.b"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# Detroit of Asia
+country_event = {
+	id = thailand.55
+	title = thailand.55.t
+	desc = thailand.55.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.55.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.55.a"
+		set_temp_variable = { int_investment_change = 10 }
+		modify_international_investment_effect = yes
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = { target = USA modifier = small_increase }
+		}
+		if = {
+			limit = { country_exists = JAP }
+			add_opinion_modifier = { target = JAP modifier = small_increase }
+		}
+		ai_chance = {
+			base = 6
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = {
+		name = thailand.55.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.55.b"
+		508 = {
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		add_political_power = -50
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# Visit Thailand Year
+country_event = {
+	id = thailand.56
+	title = thailand.56.t
+	desc = thailand.56.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.56.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.56.a"
+		# Commercialize - sell the package hard, take the revenue
+		set_temp_variable = { treasury_change = 4 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		name = thailand.56.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.56.b"
+		# Invest in infrastructure - spend the forecast revenue on the industry itself
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { NOT = { has_idea = SIA_tourism_powerhouse } }
+			add_ideas = SIA_tourism_powerhouse
+		}
+		add_stability = 0.03
+		ai_chance = { base = 4 }
+	}
+}
+
+# The Submarine Question
+country_event = {
+	id = thailand.57
+	title = thailand.57.t
+	desc = thailand.57.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.57.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.57.a"
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		navy_experience = 25
+		add_opinion_modifier = { target = CHI modifier = medium_increase }
+	}
+
+	option = {
+		name = thailand.57.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.57.b"
+		add_political_power = 25
+	}
+}
+
+# The Swamp of Cobras (Suvarnabhumi construction saga)
+country_event = {
+	id = thailand.58
+	title = thailand.58.t
+	desc = thailand.58.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.58.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.58.a"
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		set_country_flag = SIA_suvarnabhumi_on_time
+		hidden_effect = {
+			country_event = { id = thailand.59 days = 180 random_days = 60 }
+		}
+	}
+
+	option = {
+		name = thailand.58.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.58.b"
+		add_stability = -0.01
+		add_political_power = -25
+		hidden_effect = {
+			country_event = { id = thailand.59 days = 365 random_days = 120 }
+		}
+	}
+}
+
+# Gateway to Asia (Suvarnabhumi opens)
+country_event = {
+	id = thailand.59
+	title = thailand.59.t
+	desc = thailand.59.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.59.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.59.a"
+		if = {
+			limit = { has_country_flag = SIA_suvarnabhumi_on_time }
+			set_temp_variable = { treasury_change = 4 }
+			modify_treasury_effect = yes
+			add_stability = 0.02
+			add_political_power = 50
+			add_ideas = SIA_aviation_hub
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+			clr_country_flag = SIA_suvarnabhumi_on_time
+		}
+		else = {
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			add_to_variable = { SIA_coup_risk = 5 }
+			add_stability = -0.01
+		}
+	}
+}
+
+# Groundbreaking in the East (EEC financing)
+country_event = {
+	id = thailand.60
+	title = thailand.60.t
+	desc = thailand.60.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.60.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.60.a"
+		set_temp_variable = { int_investment_change = 10 }
+		modify_international_investment_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		add_opinion_modifier = { target = CHI modifier = medium_increase }
+	}
+
+	option = {
+		name = thailand.60.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.60.b"
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		add_political_power = 50
+	}
+}
+
+# The Rail Link Overruns
+country_event = {
+	id = thailand.61
+	title = thailand.61.t
+	desc = thailand.61.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.61.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.61.a"
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		508 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+	option = {
+		name = thailand.61.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.61.b"
+		add_stability = -0.02
+		add_political_power = 25
+	}
+}
+
+# The Belt and Road Comes Calling
+country_event = {
+	id = thailand.62
+	title = thailand.62.t
+	desc = thailand.62.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.62.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.62.a"
+		set_temp_variable = { int_investment_change = 10 }
+		modify_international_investment_effect = yes
+		506 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		add_opinion_modifier = { target = CHI modifier = medium_increase }
+		add_timed_idea = { idea = SIA_bri_debt days = 1825 }
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = thailand.62.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.62.b"
+		set_temp_variable = { treasury_change = -12 }
+		modify_treasury_effect = yes
+		506 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# The Concession Question (telecom scandal)
+country_event = {
+	id = thailand.63
+	title = thailand.63.t
+	desc = thailand.63.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.63.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.63.a"
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
+		subtract_from_variable = { SIA_coup_risk = 10 }
+		clamp_variable = {
+			var = SIA_coup_risk
+			min = 0
+			max = 100
+		}
+		add_stability = 0.03
+		ai_chance = {
+			base = 4
+		}
+	}
+
+	option = {
+		name = thailand.63.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.63.b"
+		add_to_variable = { SIA_coup_risk = 15 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+# The Household Debt Reckoning
+country_event = {
+	id = thailand.64
+	title = thailand.64.t
+	desc = thailand.64.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_idea = SIA_village_fund_idea
+	}
+
+	option = {
+		name = thailand.64.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.64.a"
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = thailand.64.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.64.b"
+		add_stability = -0.04
+		add_to_variable = { SIA_coup_risk = 5 }
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Offsets and Erieyes (Gripen package)
+country_event = {
+	id = thailand.65
+	title = thailand.65.t
+	desc = thailand.65.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.65.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.65.a"
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = SIA_gripen_deal
+			bonus = 0.5
+			uses = 1
+			category = CAT_air_eqp
+		}
+	}
+
+	option = {
+		name = thailand.65.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.65.b"
+		add_political_power = 25
+	}
+}
+
+# The Engine Problem (S26T) - three-way rework per §9.1
+country_event = {
+	id = thailand.66
+	title = thailand.66.t
+	desc = thailand.66.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.66.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.66.a"
+		# Accept Chinese CHD620 engines: sub delivered late; small navy XP, CHI opinion +
+		navy_experience = 25
+		add_opinion_modifier = { target = CHI modifier = small_increase }
+		hidden_effect = { country_event = { id = thailand.334 days = 540 random_days = 180 } }
+	}
+
+	option = {
+		name = thailand.66.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.66.b"
+		# Demand a frigate swap: one dockyard in state 509 (free hull abstraction)
+		509 = {
+			add_building_construction = {
+				type = dockyard
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+	option = {
+		name = thailand.66.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.66.c"
+		# Cancel contract: +8 treasury back, CHI opinion −20 (medium_decrease)
+		set_temp_variable = { treasury_change = 8 }
+		modify_treasury_effect = yes
+		add_opinion_modifier = { target = CHI modifier = medium_decrease }
+	}
+}
+
+# A Flagship Reborn (UXV carrier)
+country_event = {
+	id = thailand.67
+	title = thailand.67.t
+	desc = thailand.67.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.67.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.67.a"
+		add_stability = 0.03
+		add_political_power = 50
+		navy_experience = 25
+	}
+
+	option = {
+		name = thailand.67.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.67.b"
+		navy_experience = 25
+	}
+}
+
+# Ninety Days of Fear (drug war reckoning)
+country_event = {
+	id = thailand.68
+	title = thailand.68.t
+	desc = thailand.68.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.68.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.68.a"
+		add_war_support = 0.03
+		add_stability = -0.03
+		add_political_power = -50
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		}
+		if = {
+			limit = { has_country_flag = SIA_ds_active }
+			add_to_variable = { SIA_insurgency_intensity = 5 }
+			SIA_ds_update_tier = yes
+		}
+	}
+
+	option = {
+		name = thailand.68.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.68.b"
+		if = {
+			limit = { has_idea = SIA_war_on_drugs_campaign }
+			remove_ideas = SIA_war_on_drugs_campaign
+		}
+		add_political_power = 50
+		add_stability = 0.01
+	}
+}
+
+# Rumblings at the Officers' Club (coup risk)
+country_event = {
+	id = thailand.69
+	title = thailand.69.t
+	desc = thailand.69.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.69.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.69.a"
+		subtract_from_variable = { SIA_coup_risk = 20 }
+		clamp_variable = {
+			var = SIA_coup_risk
+			min = 0
+			max = 100
+		}
+		add_command_power = -50
+		add_stability = -0.02
+	}
+
+	option = {
+		name = thailand.69.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.69.b"
+		subtract_from_variable = { SIA_coup_risk = 15 }
+		clamp_variable = {
+			var = SIA_coup_risk
+			min = 0
+			max = 100
+		}
+		add_political_power = -50
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+	}
+
+	option = {
+		name = thailand.69.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.69.c"
+		add_to_variable = { SIA_coup_risk = 10 }
+		add_war_support = -0.02
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# Tanks at Government House (coup attempt - boss fight rework)
+# LOSE branch (option b): junta installed, all populist ideas stripped, dynamic modifier removed
+# SURVIVE branch (option a): fires resolution event thailand.216 with weighted random outcome
+country_event = {
+	id = thailand.70
+	title = thailand.70.t
+	desc = thailand.70.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.70.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.70.a"
+		# Resist - fire boss-fight resolution event; better odds if landslide_mandate held
+		add_stability = -0.05
+		hidden_effect = {
+			country_event = { id = thailand.216 days = 2 }
+		}
+		ai_chance = {
+			base = 4
+			modifier = {
+				factor = 2
+				NOT = { is_historical_focus_on = yes }
+			}
+		}
+	}
+
+	option = {
+		name = thailand.70.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.70.b"
+		# Concede - junta installed, populist ideas stripped
+		custom_effect_tooltip = SIA_coup_risk_reset_tt
+		set_variable = { SIA_coup_risk = 0 }
+		if = {
+			limit = { has_idea = SIA_coup_rumblings_idea }
+			remove_ideas = SIA_coup_rumblings_idea
+		}
+		# Strip populist ideas
+		if = {
+			limit = { has_idea = SIA_landslide_mandate }
+			remove_ideas = SIA_landslide_mandate
+		}
+		if = {
+			limit = { has_idea = SIA_cult_of_the_ceo }
+			remove_ideas = SIA_cult_of_the_ceo
+		}
+		if = {
+			limit = { has_idea = SIA_ceo_state }
+			remove_ideas = SIA_ceo_state
+		}
+		if = {
+			limit = { has_idea = SIA_populist_machine }
+			remove_ideas = SIA_populist_machine
+		}
+		if = {
+			limit = { has_idea = SIA_dynasty_politics }
+			remove_ideas = SIA_dynasty_politics
+		}
+		if = {
+			limit = { has_idea = SIA_institutionalized_party }
+			remove_ideas = SIA_institutionalized_party
+		}
+		# Retire the coup-risk tier spirit / legacy modifier
+		SIA_coup_cleanup_effect = yes
+		# Install junta
+		set_temp_variable = { rul_party_temp = 22 }
+		set_temp_variable = { disable_elections = 1 }
+		change_ruling_party_effect = yes
+		update_party_name = yes
+		hidden_effect = {
+			set_leader_SIA = yes
+		}
+		add_ideas = SIA_junta_government
+		SIA_junta_party_shift = yes
+		# Move the coup'd populist government onto the Royalist / Network Monarchy
+		# trunk (sets SIA_path_royalist, opening that focus tree); also keeps the
+		# realignment detector from firing a redundant second popup.
+		SIA_realign_to_royalist = yes
+		news_event = { id = thailand_news.1 hours = 12 }
+		ai_chance = {
+			base = 6
+			modifier = {
+				factor = 3
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Story 3.1 (§3 6.3) - NEW Option C: negotiate a national government.
+	# A compromise that installs the military as a coalition partner (party index
+	# 22 = Nat_Autocracy, the same party Option B installs as sole ruler) via the
+	# verified coalition pattern (set_temp_variable add_col_one +
+	# add_coalition_members_effect; md-reference Romania.txt:268). Elections survive
+	# because we never call change_ruling_party_effect (so elections_allowed is
+	# untouched); coup pressure is bought down to 35.
+	option = {
+		name = thailand.70.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.70.c"
+		# Visible/available if the street mandate holds or coup pressure is not yet terminal.
+		trigger = {
+			OR = {
+				has_idea = SIA_landslide_mandate
+				check_variable = { SIA_coup_risk < 85 }
+			}
+		}
+		# The compromise - coup pressure bought down, elections preserved.
+		custom_effect_tooltip = thailand.70.c_tooltip
+		set_variable = { SIA_coup_risk = 35 }
+		add_stability = -0.03
+		add_political_power = -150
+		# Install the military as a coalition partner WITHOUT changing the ruling
+		# party - the democratic government survives, elections continue.
+		hidden_effect = {
+			set_temp_variable = { add_col_one = 22 }
+			add_coalition_members_effect = yes
+		}
+		# Timed strain of an uneasy coalition (180 days).
+		add_timed_idea = { idea = SIA_uneasy_compromise days = 180 }
+		news_event = { id = thailand_news.23 hours = 12 }
+		ai_chance = {
+			base = 2
+		}
+	}
+}
+
+# The Youth in the Streets (2020 protest wave)
+country_event = {
+	id = thailand.71
+	title = thailand.71.t
+	desc = thailand.71.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		NOT = { has_country_flag = SIA_2020_protests_done }
+	}
+
+	immediate = {
+		hidden_effect = {
+			set_country_flag = SIA_2020_protests_done
+		}
+	}
+
+	option = {
+		name = thailand.71.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.71.a"
+		add_stability = -0.08
+		add_to_variable = { SIA_coup_risk = 10 }
+		set_country_flag = SIA_2020_crackdown
+		ai_chance = {
+			base = 4
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = {
+		name = thailand.71.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.71.b"
+		add_political_power = -100
+		add_stability = 0.03
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = {
+		name = thailand.71.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.71.c"
+		hidden_effect = {
+			country_event = { id = thailand.208 days = 120 }
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+# The Boxing Day Tsunami
+country_event = {
+	id = thailand.72
+	title = thailand.72.t
+	desc = thailand.72.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	# Marshal the state - a government-led reconstruction blitz
+	option = {
+		name = thailand.72.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.72.a"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		add_stability = 0.03
+		add_political_power = 50
+		507 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = offices
+				level = 1
+				instant_build = yes
+			}
+			add_extra_state_shared_building_slots = 1
+		}
+		509 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+			add_extra_state_shared_building_slots = 1
+		}
+		# Whoever holds power is seen to act decisively.
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		ai_chance = { base = 5 }
+	}
+
+	# Let the palace lead - royal charities and foreign aid
+	option = {
+		name = thailand.72.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.72.b"
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		add_political_power = 25
+		# Cheaper, but the coast recovers slowly without state money behind it.
+		add_timed_idea = { idea = SIA_scarred_coast days = 730 }
+		add_opinion_modifier = { target = USA modifier = medium_increase }
+		add_opinion_modifier = { target = JAP modifier = medium_increase }
+		# The royalist establishment claims the humanitarian mantle.
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = { base = 5 }
+	}
+
+	# Build a tsunami early-warning system - invest in resilience
+	option = {
+		name = thailand.72.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.72.c"
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		add_war_support = 0.02
+		507 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+		set_country_flag = SIA_tsunami_warning_system
+		add_tech_bonus = {
+			name = SIA_tsunami_warning
+			bonus = 0.5
+			uses = 1
+			category = CAT_computing_tech
+		}
+		ai_chance = { base = 3 }
+	}
+}
+
+##############################
+# GREATER THAILAND (ahistorical)
+##############################
+
+# The Lost Territories
+country_event = {
+	id = thailand.100
+	title = thailand.100.t
+	desc = thailand.100.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.100.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.100.a"
+		add_war_support = 0.05
+		set_temp_variable = { party_index = 21 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+	}
+}
+
+# Brothers Across the Salween - Shan State
+country_event = {
+	id = thailand.101
+	title = thailand.101.t
+	desc = thailand.101.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.101.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.101.a"
+		498 = { add_claim_by = SIA }
+		930 = { add_claim_by = SIA }
+		hidden_effect = {
+			country_event = { id = thailand.110 days = 3 }
+			news_event = { id = thailand_news.2 days = 1 }
+		}
+	}
+}
+
+# The Mekong Is a Thai River - Laos
+country_event = {
+	id = thailand.102
+	title = thailand.102.t
+	desc = thailand.102.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.102.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.102.a"
+		517 = { add_claim_by = SIA }
+		hidden_effect = {
+			country_event = { id = thailand.110 days = 3 }
+			news_event = { id = thailand_news.2 days = 1 }
+		}
+	}
+
+	option = {
+		name = thailand.102.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.102.b"
+		set_country_flag = SIA_all_laos_claimed
+		515 = { add_claim_by = SIA }
+		516 = { add_claim_by = SIA }
+		517 = { add_claim_by = SIA }
+		add_stability = -0.03
+		hidden_effect = {
+			country_event = { id = thailand.110 days = 3 }
+			news_event = { id = thailand_news.2 days = 1 }
+		}
+	}
+}
+
+# Preah Vihear Standoff - Cambodia
+# Note: MD already ships a SIA<->CBD Preah Vihear border-incident system
+# (events/PreahVihear.txt + decisions). This event only adds the irredentist
+# claims and escalation wargoal on top of it; it does not duplicate that system.
+country_event = {
+	id = thailand.103
+	title = thailand.103.t
+	desc = thailand.103.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.103.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.103.a"
+		512 = { add_claim_by = SIA }
+		513 = { add_claim_by = SIA }
+		hidden_effect = {
+			country_event = { id = thailand.110 days = 3 }
+			news_event = { id = thailand_news.2 days = 1 }
+		}
+	}
+
+	option = {
+		name = thailand.103.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.103.b"
+		512 = { add_claim_by = SIA }
+		513 = { add_claim_by = SIA }
+		set_temp_variable = { wargoal_on = CBD }
+		SIA_add_threat_from_wargoal_effect = yes
+		create_wargoal = {
+			type = take_claimed_state
+			target = CBD
+		}
+		hidden_effect = {
+			country_event = { id = thailand.110 days = 3 }
+			news_event = { id = thailand_news.2 days = 1 }
+		}
+	}
+}
+
+# Denouncing 1909 - Northern Malaysia
+country_event = {
+	id = thailand.104
+	title = thailand.104.t
+	desc = thailand.104.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.104.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.104.a"
+		529 = { add_claim_by = SIA }
+		hidden_effect = {
+			country_event = { id = thailand.110 days = 3 }
+			news_event = { id = thailand_news.2 days = 1 }
+		}
+	}
+
+	option = {
+		name = thailand.104.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.104.b"
+		set_country_flag = SIA_full_1909_demand
+		528 = { add_claim_by = SIA }
+		529 = { add_claim_by = SIA }
+		add_stability = -0.03
+		add_opinion_modifier = { target = ENG modifier = large_decrease }
+		hidden_effect = {
+			country_event = { id = thailand.110 days = 3 }
+			news_event = { id = thailand_news.2 days = 1 }
+		}
+	}
+}
+
+# Suwannaphum
+country_event = {
+	id = thailand.105
+	title = thailand.105.t
+	desc = thailand.105.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.105.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.105.a"
+		# Seize the moment - declare Suwannaphum open, take the prestige
+		add_war_support = 0.05
+		add_political_power = 50
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		name = thailand.105.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.105.b"
+		# Pause - divert funds to regional military consolidation before committing
+		add_war_support = 0.10
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		army_experience = 50
+		ai_chance = { base = 4 }
+	}
+}
+
+# Integration complete - Shan
+country_event = {
+	id = thailand.106
+	title = thailand.106.t
+	desc = thailand.106.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.106.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.106.a"
+		set_country_flag = SIA_integrated_shan
+		add_state_core = 498
+		add_state_core = 930
+	}
+}
+
+# Integration complete - Laos
+country_event = {
+	id = thailand.107
+	title = thailand.107.t
+	desc = thailand.107.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.107.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.107.a"
+		set_country_flag = SIA_integrated_laos
+		add_state_core = 517
+		if = {
+			limit = { has_country_flag = SIA_all_laos_claimed }
+			add_state_core = 515
+			add_state_core = 516
+		}
+	}
+}
+
+# Integration complete - Cambodia
+country_event = {
+	id = thailand.108
+	title = thailand.108.t
+	desc = thailand.108.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.108.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.108.a"
+		set_country_flag = SIA_integrated_cambodia
+		add_state_core = 512
+		add_state_core = 513
+	}
+}
+
+# Integration complete - Malaya
+country_event = {
+	id = thailand.109
+	title = thailand.109.t
+	desc = thailand.109.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.109.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.109.a"
+		set_country_flag = SIA_integrated_malaya
+		add_state_core = 529
+		if = {
+			limit = { has_country_flag = SIA_full_1909_demand }
+			add_state_core = 528
+		}
+	}
+}
+
+# The World Reacts
+country_event = {
+	id = thailand.110
+	title = thailand.110.t
+	desc = thailand.110.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		NOT = { has_country_flag = SIA_world_reacted }
+	}
+
+	option = {
+		name = thailand.110.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.110.a"
+		set_country_flag = SIA_world_reacted
+		if = {
+			limit = { country_exists = CBD }
+			CBD = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		}
+		if = {
+			limit = { country_exists = LAO }
+			LAO = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		}
+		if = {
+			limit = { country_exists = MAY }
+			MAY = { add_opinion_modifier = { target = SIA modifier = small_decrease } }
+		}
+		if = {
+			limit = { country_exists = BRM }
+			BRM = { add_opinion_modifier = { target = SIA modifier = small_decrease } }
+		}
+		if = {
+			limit = { country_exists = SIN }
+			SIN = { add_opinion_modifier = { target = SIA modifier = small_decrease } }
+		}
+		if = {
+			limit = { country_exists = IND }
+			IND = { add_opinion_modifier = { target = SIA modifier = small_decrease } }
+		}
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = SIA modifier = small_decrease } }
+		}
+	}
+}
+
+##############################
+# DEEP SOUTH
+##############################
+
+# Fire in the South
+country_event = {
+	id = thailand.150
+	title = thailand.150.t
+	desc = thailand.150.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.150.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.150.a"
+		# Auto-onset fallback: rather than half-seeding the meter, complete the
+		# anchor focus itself. complete_national_focus runs its completion_reward,
+		# which seeds the insurgency (intensity 25, grievance 40, floor, the
+		# SIA_deep_south_insurgency_1 idea) behind its own SIA_ds_active guard and
+		# fires thailand.350. That gives a player who never picked the focus the
+		# full Deep South onset, including the three-track answer, instead of a
+		# meter with no choice attached. Do NOT pre-set SIA_ds_active here or the
+		# focus reward's "if not active" guard would skip the seeding.
+		complete_national_focus = SIA_the_southern_question
+	}
+}
+
+# Incident in the Deep South
+country_event = {
+	id = thailand.151
+	title = thailand.151.t
+	desc = thailand.151.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		# Fires during the active conflict, OR as the smoldering
+		# re-ignition cost of the Iron-Fist terminal (SIA_pacified_but_smoldering,
+		# where SIA_ds_active is cleared but the embers remain).
+		OR = {
+			AND = {
+				has_country_flag = SIA_ds_active
+				NOT = { has_country_flag = SIA_ds_resolved_force }
+				NOT = { has_country_flag = SIA_ds_resolved_peace }
+			}
+			has_idea = SIA_pacified_but_smoldering
+		}
+	}
+
+	option = {
+		name = thailand.151.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.151.a"
+		add_stability = -0.01
+		add_political_power = -25
+		set_temp_variable = { ds_delta = 3 }
+		SIA_ds_set_intensity = yes
+	}
+}
+
+# Heavy-Handed
+country_event = {
+	id = thailand.152
+	title = thailand.152.t
+	desc = thailand.152.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.152.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.152.a"
+		add_stability = 0.02
+		add_political_power = -50
+		set_temp_variable = { ds_delta = 5 }
+		SIA_ds_set_intensity = yes
+		set_temp_variable = { ds_floor_delta = 4 }
+		SIA_ds_raise_floor = yes
+		MAY = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		IND = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+	}
+}
+
+# Talks in Kuala Lumpur
+country_event = {
+	id = thailand.153
+	title = thailand.153.t
+	desc = thailand.153.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_country_flag = SIA_ds_track_dialogue
+	}
+
+	option = {
+		name = thailand.153.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.153.a"
+		set_country_flag = SIA_ds_dialogue
+		add_political_power = -50
+		# Twin-meter: talking eases the grievance behind the conflict.
+		# Grievance (floor) down first, then intensity, so the cut lands.
+		set_temp_variable = { ds_grievance_delta = -8 }
+		SIA_ds_set_grievance = yes
+		set_temp_variable = { ds_delta = -10 }
+		SIA_ds_set_intensity = yes
+		add_opinion_modifier = { target = MAY modifier = medium_increase }
+	}
+}
+
+# The Peace Accord
+country_event = {
+	id = thailand.154
+	title = thailand.154.t
+	desc = thailand.154.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.154.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.154.a"
+		set_country_flag = SIA_ds_resolved_peace
+		SIA_ds_cleanup_effect = yes
+		add_stability = 0.05
+		add_opinion_modifier = { target = MAY modifier = large_increase }
+	}
+}
+
+# A Region Ablaze (insurgency intensity crisis)
+country_event = {
+	id = thailand.155
+	title = thailand.155.t
+	desc = thailand.155.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_country_flag = SIA_ds_active
+	}
+
+	option = {
+		name = thailand.155.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.155.a"
+		add_war_support = 0.03
+		set_temp_variable = { ds_delta = -10 }
+		SIA_ds_set_intensity = yes
+		# Twin-meter: a hard military answer cools the violence but hardens grievance.
+		set_temp_variable = { ds_grievance_delta = 3 }
+		SIA_ds_set_grievance = yes
+		add_to_variable = { SIA_ds_force_track = 1 }
+		hidden_effect = {
+			random_list = {
+				50 = {
+					country_event = { id = thailand.152 days = 30 }
+				}
+				50 = {
+				}
+			}
+		}
+	}
+
+	option = {
+		name = thailand.155.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.155.b"
+		add_political_power = -50
+		# Twin-meter: a measured, restrained response eases the underlying grievance.
+		# Grievance (floor) down first, then intensity, so the cut lands.
+		set_temp_variable = { ds_grievance_delta = -5 }
+		SIA_ds_set_grievance = yes
+		set_temp_variable = { ds_delta = -5 }
+		SIA_ds_set_intensity = yes
+		add_to_variable = { SIA_ds_peace_track = 1 }
+		add_opinion_modifier = { target = MAY modifier = small_increase }
+	}
+}
+
+# Quiet Roads in Pattani (near-peace)
+country_event = {
+	id = thailand.156
+	title = thailand.156.t
+	desc = thailand.156.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_country_flag = SIA_ds_active
+		NOT = { has_country_flag = SIA_ds_resolved_force }
+		NOT = { has_country_flag = SIA_ds_resolved_peace }
+	}
+
+	option = {
+		name = thailand.156.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.156.a"
+		add_political_power = -25
+		if = {
+			limit = { has_country_flag = SIA_ds_track_dialogue }
+			complete_national_focus = SIA_mara_patani_talks
+		}
+		else = {
+			hidden_effect = {
+				country_event = { id = thailand.154 days = 30 }
+			}
+		}
+	}
+
+	option = {
+		name = thailand.156.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.156.b"
+		add_stability = 0.04
+		# The calm lets Pattani's economy breathe again - local development
+		# the Deep South can actually use, not a hollow PP payout.
+		510 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		}
+	}
+}
+
+##############################
+# DEEP SOUTH - Story 2.3 three-track arc (350, 356-360)
+##############################
+
+# The Fire in the South - path-fork briefing (fired by SIA_the_southern_question)
+country_event = {
+	id = thailand.350
+	title = thailand.350.t
+	desc = thailand.350.d
+	picture = GFX_report_event_generic_military_parade
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_country_flag = SIA_ds_active
+	}
+
+	# A - Crush them (Iron Fist)
+	option = {
+		name = thailand.350.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.350.a"
+		trigger = { has_country_flag = SIA_path_populist }
+		complete_national_focus = SIA_iron_fist_doctrine
+		ai_chance = { base = 1 modifier = { factor = 5 is_historical_focus_on = yes } }
+	}
+	# B - The King's peace (Royal Development)
+	option = {
+		name = thailand.350.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.350.b"
+		trigger = { has_country_flag = SIA_path_royalist }
+		complete_national_focus = SIA_royal_development_projects
+		ai_chance = { base = 1 modifier = { factor = 5 is_historical_focus_on = yes } }
+	}
+	# C - Talk to them (Peace Dialogue) - the Democrat establishment's negotiated track.
+	option = {
+		name = thailand.350.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.350.c"
+		trigger = {
+			has_country_flag = SIA_path_democrat
+			has_stability > 0.45
+		}
+		complete_national_focus = SIA_peace_dialogue_initiative
+		ai_chance = { base = 1 modifier = { factor = 5 is_historical_focus_on = yes } }
+	}
+	# D - We have no clear policy (default, trackless). Loc key is .e, not .d:
+	# .d is the event description, so a 4th option keyed .d collides with it
+	# (matches MD convention, e.g. gulf.22 options a/b/c/e/f).
+	# Fix: also surfaces for democrat players below the 0.45
+	# stability gate so option C's trigger failing can never leave zero options
+	# (which would softlock the event). Catches every trunk without a dedicated
+	# Deep South answer (reform, communist, no-path) plus low-stability democrats.
+	option = {
+		name = thailand.350.e
+		log = "[GetDateText]: [Root.GetName]: event thailand.350.e"
+		trigger = {
+			OR = {
+				AND = {
+					NOT = { has_country_flag = SIA_path_populist }
+					NOT = { has_country_flag = SIA_path_royalist }
+					NOT = { has_country_flag = SIA_path_democrat }
+				}
+				AND = {
+					has_country_flag = SIA_path_democrat
+					NOT = { has_stability > 0.45 }
+				}
+			}
+		}
+		add_political_power = -10
+		ai_chance = { base = 1 }
+	}
+}
+
+# Tak Bai - Iron-Fist atrocity (25% from SIA_search_and_destroy)
+country_event = {
+	id = thailand.356
+	title = thailand.356.t
+	desc = thailand.356.d
+	picture = GFX_report_event_generic_military_parade
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.356.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.356.a"
+		add_to_variable = { SIA_insurgency_intensity = 25 }
+		SIA_ds_update_tier = yes
+		# Fix: set ds_delta so the [?ds_delta] interpolation in
+		# SIA_ds_intensity_up shows the real +25 spike (Tak Bai bypasses the
+		# floor-aware helper because this is an upward spike).
+		set_temp_variable = { ds_delta = 25 }
+		custom_effect_tooltip = SIA_ds_intensity_up
+		set_temp_variable = { ds_floor_delta = 12 }
+		SIA_ds_raise_floor = yes
+		add_stability = -0.03
+		MAY = { add_opinion_modifier = { target = SIA modifier = large_decrease } }
+		IND = { add_opinion_modifier = { target = SIA modifier = large_decrease } }
+		TUR = { add_opinion_modifier = { target = SIA modifier = large_decrease } }
+		set_country_flag = SIA_southern_radicalization
+		news_event = { id = thailand_news.24 days = 1 }
+	}
+}
+
+# Pacification Complete - Iron-Fist terminal (from SIA_pacification_complete)
+country_event = {
+	id = thailand.357
+	title = thailand.357.t
+	desc = thailand.357.d
+	picture = GFX_report_event_generic_military_parade
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.357.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.357.a"
+		if = {
+			limit = { has_country_flag = SIA_southern_radicalization }
+			news_event = { id = thailand_news.25 days = 1 }
+		}
+	}
+}
+
+# Southern Calm - Royal terminal (from SIA_southern_calm)
+country_event = {
+	id = thailand.358
+	title = thailand.358.t
+	desc = thailand.358.d
+	picture = GFX_report_event_generic_diplomatic_conversation
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.358.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.358.a"
+		# The King's peace holds - royal development projects leave the south
+		# with real infrastructure, not a one-off PP payout.
+		add_political_power = 25
+		add_stability = 0.02
+		510 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		}
+	}
+}
+
+# The Establishment Pushes Back - Reform backlash (from SIA_autonomy_framework)
+country_event = {
+	id = thailand.359
+	title = thailand.359.t
+	desc = thailand.359.d
+	picture = GFX_report_event_political_summit
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	# A - Hold the line on autonomy
+	option = {
+		name = thailand.359.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.359.a"
+		add_stability = -0.04
+		custom_effect_tooltip = SIA_coup_risk_increase_tt
+		add_to_variable = { SIA_coup_risk = 10 }
+		set_country_flag = SIA_autonomy_held
+		ai_chance = { base = 3 modifier = { factor = 2 is_historical_focus_on = yes } }
+	}
+	# B - Water it down (downgrade fallback)
+	option = {
+		name = thailand.359.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.359.b"
+		add_stability = 0.02
+		set_country_flag = SIA_ds_resolved_peace
+		add_ideas = SIA_limited_devolution
+		ai_chance = { base = 2 }
+	}
+}
+
+# The Pattani Accord - Reform terminal (from SIA_pattani_peace_accord)
+country_event = {
+	id = thailand.360
+	title = thailand.360.t
+	desc = thailand.360.d
+	picture = GFX_report_event_political_summit
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.360.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.360.a"
+		MAY = { add_opinion_modifier = { target = SIA modifier = large_increase } }
+		IND = { add_opinion_modifier = { target = SIA modifier = large_increase } }
+		news_event = { id = thailand_news.25 days = 1 }
+	}
+}
+
+##############################
+# Drug-trade fork events
+##############################
+
+# Bodies by the Roadside - drug-war atrocity (30% from thailand.3 hard line, populist).
+# The 2,800-killings reckoning; distinct from the southern Tak Bai (thailand.356).
+country_event = {
+	id = thailand.361
+	title = thailand.361.t
+	desc = thailand.361.d
+	picture = GFX_report_event_generic_military_parade
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.361.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.361.a"
+		custom_effect_tooltip = SIA_coup_risk_increase_tt
+		add_to_variable = { SIA_coup_risk = 5 }
+		add_stability = -0.02
+		USA = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		ENG = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+	}
+}
+
+# Crops Not Poppies - reform decriminalization branch. Fired by
+# SIA_golden_triangle_interdiction if SIA_path_reform, and via thailand.3 option C.
+# References (does not redesign) SIA_cannabis_decriminalized.
+country_event = {
+	id = thailand.362
+	title = thailand.362.t
+	desc = thailand.362.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	# Fix: .362 has two fire paths (Golden Triangle completion and
+	# thailand.3 Option C). Set the fired-guard the moment it fires so neither path
+	# can re-fire it and double-dip the treasury/opinion/popularity rewards.
+	immediate = {
+		set_country_flag = SIA_362_fired
+	}
+
+	# A - Alternative development (crop substitution, harm reduction).
+	option = {
+		name = thailand.362.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.362.a"
+		set_temp_variable = { treasury_change = 3 }
+		modify_treasury_effect = yes
+		set_country_flag = SIA_drug_war_restrained
+		USA = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+		ENG = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+		# Cannabis economy legitimizes former poppy land (reference only).
+		if = {
+			limit = { has_completed_focus = SIA_cannabis_decriminalized }
+			set_temp_variable = { treasury_change = 3 }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 3
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# B - Keep interdicting (clean opt-out).
+	option = {
+		name = thailand.362.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.362.b"
+		add_stability = 0.04
+		set_temp_variable = { treasury_change = 3 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+##############################
+# NEWS EVENTS
+##############################
+
+news_event = {
+	id = thailand_news.1
+	title = thailand_news.1.t
+	desc = thailand_news.1.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.1.a
+	}
+}
+
+news_event = {
+	id = thailand_news.2
+	title = thailand_news.2.t
+	desc = thailand_news.2.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.2.a
+	}
+}
+
+news_event = {
+	id = thailand_news.3
+	title = thailand_news.3.t
+	desc = thailand_news.3.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.3.a
+	}
+}
+
+news_event = {
+	id = thailand_news.4
+	title = thailand_news.4.t
+	desc = thailand_news.4.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.4.a
+	}
+}
+
+news_event = {
+	id = thailand_news.5
+	title = thailand_news.5.t
+	desc = thailand_news.5.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.5.a
+	}
+}
+
+##############################
+# NEW EVENTS (200-219)
+##############################
+
+# The People's Constitution
+country_event = {
+	id = thailand.200
+	title = thailand.200.t
+	desc = thailand.200.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.200.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.200.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		add_stability = 0.02
+	}
+}
+
+# Records at Don Mueang
+country_event = {
+	id = thailand.201
+	title = thailand.201.t
+	desc = thailand.201.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.201.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.201.a"
+		509 = {
+			add_building_construction = {
+				type = offices
+				level = 1
+				instant_build = yes
+			}
+		}
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = thailand.201.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.201.b"
+		set_temp_variable = { treasury_change = 6 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# A World Hungry for Rice
+country_event = {
+	id = thailand.202
+	title = thailand.202.t
+	desc = thailand.202.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.202.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.202.a"
+		set_temp_variable = { treasury_change = 10 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = thailand.202.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.202.b"
+		add_stability = 0.05
+		# Reinvest the export windfall into the rice belt rather than bank it.
+		506 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		}
+		add_resource = { type = rubber amount = 4 state = 509 }
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# The Basing Request
+country_event = {
+	id = thailand.203
+	title = thailand.203.t
+	desc = thailand.203.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.203.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.203.a"
+		set_temp_variable = { treasury_change = 8 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 6
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = {
+		name = thailand.203.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.203.b"
+		add_stability = 0.02
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = { target = USA modifier = small_decrease }
+		}
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+
+##############################
+# WAVE 1b EVENTS (thailand.205-.208)
+##############################
+
+# Technocrats vs Old Bureaucracy (ceo_premier)
+country_event = {
+	id = thailand.205
+	title = thailand.205.t
+	desc = thailand.205.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.205.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.205.a"
+		# The technocrats win the turf war - a modernized state apparatus
+		# (admin capacity) on top of the political capital.
+		add_political_power = 75
+		508 = {
+			add_building_construction = { type = offices level = 1 instant_build = yes }
+			add_extra_state_shared_building_slots = 1
+		}
+		# Purged permanent secretaries run to their patrons in the barracks.
+		custom_effect_tooltip = SIA_coup_risk_increase_tt
+		add_to_variable = { SIA_coup_risk = 8 }
+		clamp_variable = { var = SIA_coup_risk min = 0 max = 100 }
+		ai_chance = {
+			base = 6
+		}
+	}
+
+	option = {
+		name = thailand.205.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.205.b"
+		add_political_power = 40
+		add_stability = 0.05
+		# The ministries keep running and the establishment is reassured.
+		custom_effect_tooltip = SIA_coup_risk_decrease_tt
+		subtract_from_variable = { SIA_coup_risk = 8 }
+		clamp_variable = { var = SIA_coup_risk min = 0 max = 100 }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 2 check_variable = { SIA_coup_risk > 50 } }
+		}
+	}
+}
+
+# Election Night - The Red Wave (populist_landslide flavor)
+country_event = {
+	id = thailand.206
+	title = thailand.206.t
+	desc = thailand.206.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.206.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.206.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		add_war_support = 0.02
+	}
+}
+
+# Uncle Tu's Fatigue - Prayuth follow-up at year 3
+country_event = {
+	id = thailand.207
+	title = thailand.207.t
+	desc = thailand.207.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.207.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.207.a"
+		add_ideas = SIA_uncle_tu_fatigue
+		add_stability = -0.02
+	}
+}
+
+# Protest Standoff - coin-flip (2020 wait option)
+country_event = {
+	id = thailand.208
+	title = thailand.208.t
+	desc = thailand.208.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.208.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.208.a"
+		add_stability = 0.02
+		add_political_power = 50
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = thailand.208.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.208.b"
+		add_stability = -0.04
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+##############################
+# NEWS EVENTS
+##############################
+
+news_event = {
+	id = thailand_news.6
+	title = thailand_news.6.t
+	desc = thailand_news.6.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.6.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.6.a"
+	}
+}
+
+news_event = {
+	id = thailand_news.7
+	title = thailand_news.7.t
+	desc = thailand_news.7.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.7.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.7.a"
+	}
+}
+
+news_event = {
+	id = thailand_news.8
+	title = thailand_news.8.t
+	desc = thailand_news.8.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.8.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.8.a"
+	}
+}
+
+##############################
+# BRANCH C EVENTS
+##############################
+
+# Youth Wave - future forward flavor (SIA_future_forward)
+country_event = {
+	id = thailand.209
+	title = thailand.209.t
+	desc = thailand.209.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.209.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.209.a"
+		# Champion the movement: rally the governing base for a minor popularity beat,
+		# at the cost of the street tension the old order exploits.
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_stability = -0.02
+		ai_chance = { base = 75 }
+	}
+
+	option = {
+		name = thailand.209.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.209.b"
+		# Govern above the fray: order and political capital now, but the movement
+		# cools - no popularity swing. A real order-versus-momentum trade.
+		add_stability = 0.03
+		add_political_power = 50
+		ai_chance = { base = 25 }
+	}
+}
+
+# Officer Leak - demilitarize_politics 25% trigger (coup plot warning)
+country_event = {
+	id = thailand.210
+	title = thailand.210.t
+	desc = thailand.210.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.210.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.210.a"
+		add_command_power = -50
+		subtract_from_variable = { SIA_coup_risk = 15 }
+		clamp_variable = {
+			var = SIA_coup_risk
+			min = 0
+			max = 100
+		}
+		add_stability = -0.02
+	}
+
+	option = {
+		name = thailand.210.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.210.b"
+		add_political_power = -50
+		add_war_support = -0.02
+	}
+}
+
+# Provincial Upsets - orange wave flavor event
+country_event = {
+	id = thailand.211
+	title = thailand.211.t
+	desc = thailand.211.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.211.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.211.a"
+		# Seize the mandate: press the advantage for a further popularity beat, at the
+		# cost of order as the old guard reads it as over-reach.
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.08 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_stability = -0.03
+		ai_chance = { base = 70 }
+	}
+
+	option = {
+		name = thailand.211.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.211.b"
+		# Govern for everyone: spend the win on clean administration rather than more
+		# votes. No popularity swing, but corruption falls and the country steadies.
+		decrease_corruption = yes
+		add_stability = 0.03
+		ai_chance = { base = 30 }
+	}
+}
+
+# Conglomerates Fight Back - break_the_monopolies consequence
+country_event = {
+	id = thailand.212
+	title = thailand.212.t
+	desc = thailand.212.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.212.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.212.a"
+		add_stability = -0.03
+		add_political_power = -50
+	}
+
+	option = {
+		name = thailand.212.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.212.b"
+		set_temp_variable = { treasury_change = 4 }
+		modify_treasury_effect = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# The Republic's First Year - SIA_a_new_republic post-730d payoff/risk
+country_event = {
+	id = thailand.213
+	title = thailand.213.t
+	desc = thailand.213.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.213.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.213.a"
+		trigger = {
+			has_stability > 0.50
+		}
+		add_ideas = SIA_thai_republic
+		add_stability = 0.05
+		add_political_power = 100
+		set_temp_variable = { rul_party_temp = 3 }
+		set_temp_variable = { disable_elections = 0 }
+		change_ruling_party_effect = yes
+		update_party_name = yes
+		set_leader_SIA = yes
+		ai_chance = {
+			base = 8
+		}
+	}
+
+	option = {
+		name = thailand.213.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.213.b"
+		trigger = {
+			has_war_support > 0.50
+		}
+		add_stability = -0.08
+		add_war_support = 0.05
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 2
+		}
+	}
+
+	option = {
+		name = thailand.213.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.213.c"
+		add_stability = -0.04
+		add_political_power = -50
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Victory Monument Parade - SIA_victory_monument flavor
+country_event = {
+	id = thailand.214
+	title = thailand.214.t
+	desc = thailand.214.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.214.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.214.a"
+		add_war_support = 0.02
+		add_political_power = 25
+	}
+}
+
+##############################
+# BRANCH C / CREATIVE ECONOMY NEWS
+##############################
+
+# Marriage Equality World Reaction
+news_event = {
+	id = thailand_news.9
+	title = thailand_news.9.t
+	desc = thailand_news.9.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.9.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.9.a"
+	}
+}
+
+# The Spring Holds - consolidated_democracy
+news_event = {
+	id = thailand_news.10
+	title = thailand_news.10.t
+	desc = thailand_news.10.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.10.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.10.a"
+	}
+}
+
+# Thai Wave Sweeps Asia - creative_economy
+news_event = {
+	id = thailand_news.11
+	title = thailand_news.11.t
+	desc = thailand_news.11.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.11.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.11.a"
+	}
+}
+
+# The Canal Is Open - two_oceans_one_kingdom
+news_event = {
+	id = thailand_news.12
+	title = thailand_news.12.t
+	desc = thailand_news.12.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.12.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.12.a"
+	}
+}
+
+# Gateway of Asia Declared - gateway_of_asia
+news_event = {
+	id = thailand_news.13
+	title = thailand_news.13.t
+	desc = thailand_news.13.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.13.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.13.a"
+	}
+}
+
+# The Bamboo Curtain Falls - SIA_bamboo_curtain capstone (Wave 5 communist path)
+news_event = {
+	id = thailand_news.14
+	title = thailand_news.14.t
+	desc = thailand_news.14.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.14.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.14.a"
+	}
+}
+
+# The Countryside Surrounds the City - SIA_protracted_peoples_war (Wave 5 fork 1)
+news_event = {
+	id = thailand_news.31
+	title = thailand_news.31.t
+	desc = thailand_news.31.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.31.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.31.a"
+	}
+}
+
+# The Road from Beijing - SIA_the_beijing_road (Wave 5 fork 4a)
+news_event = {
+	id = thailand_news.32
+	title = thailand_news.32.t
+	desc = thailand_news.32.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.32.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.32.a"
+	}
+}
+
+# A Federation of the Three Rivers - SIA_indochina_federation (Wave 5 fork 4b)
+news_event = {
+	id = thailand_news.33
+	title = thailand_news.33.t
+	desc = thailand_news.33.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.33.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.33.a"
+	}
+}
+
+##############################
+# Wave 2 EVENTS (215-222)
+##############################
+
+# Taking Stock of the Kingdom - mandate choice event (SIA_assess_the_kingdom)
+country_event = {
+	id = thailand.215
+	title = thailand.215.t
+	desc = thailand.215.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.215.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.215.a"
+		# Focus on Recovery: −3% CG, +5% civilian construction speed, 730d
+		add_timed_idea = { idea = SIA_mandate_recovery days = 730 }
+		set_country_flag = SIA_mandate_recovery_flag
+		ai_chance = {
+			base = 4
+		}
+	}
+
+	option = {
+		name = thailand.215.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.215.b"
+		# Focus on Order: +5% stab, +10% drift defense, −5% PP, 730d
+		add_timed_idea = { idea = SIA_mandate_order days = 730 }
+		set_country_flag = SIA_mandate_order_flag
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = {
+		name = thailand.215.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.215.c"
+		# Focus on Outreach: +10% trade opinion, +5% PP gain, −2% stab, 730d
+		add_timed_idea = { idea = SIA_mandate_outreach days = 730 }
+		set_country_flag = SIA_mandate_outreach_flag
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+# The Coup Resolution - boss fight outcome (follows thailand.70 option a)
+# Street support proxy: has_idea SIA_landslide_mandate improves survival odds
+country_event = {
+	id = thailand.216
+	title = thailand.216.t
+	desc = thailand.216.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.216.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.216.a"
+		# The outcome is weighted by random_list below; this option is always selectable
+		random_list = {
+			# Better odds with landslide_mandate (street support)
+			40 = {
+				modifier = {
+					factor = 1.5
+					has_idea = SIA_landslide_mandate
+				}
+				# Survived the coup
+				subtract_from_variable = { SIA_coup_risk = 40 }
+				clamp_variable = {
+					var = SIA_coup_risk
+					min = 0
+					max = 100
+				}
+				if = {
+					limit = { has_idea = SIA_coup_rumblings_idea }
+					remove_ideas = SIA_coup_rumblings_idea
+				}
+				add_ideas = SIA_coup_proofed
+				add_stability = 0.05
+				add_political_power = 100
+			}
+			60 = {
+				modifier = {
+					factor = 0.5
+					has_idea = SIA_landslide_mandate
+				}
+				# Failed - junta installed (same as concede)
+				set_variable = { SIA_coup_risk = 0 }
+				if = {
+					limit = { has_idea = SIA_coup_rumblings_idea }
+					remove_ideas = SIA_coup_rumblings_idea
+				}
+				if = {
+					limit = { has_idea = SIA_landslide_mandate }
+					remove_ideas = SIA_landslide_mandate
+				}
+				if = {
+					limit = { has_idea = SIA_cult_of_the_ceo }
+					remove_ideas = SIA_cult_of_the_ceo
+				}
+				if = {
+					limit = { has_idea = SIA_ceo_state }
+					remove_ideas = SIA_ceo_state
+				}
+				if = {
+					limit = { has_idea = SIA_populist_machine }
+					remove_ideas = SIA_populist_machine
+				}
+				if = {
+					limit = { has_idea = SIA_dynasty_politics }
+					remove_ideas = SIA_dynasty_politics
+				}
+				if = {
+					limit = { has_idea = SIA_institutionalized_party }
+					remove_ideas = SIA_institutionalized_party
+				}
+				SIA_coup_cleanup_effect = yes
+				set_temp_variable = { rul_party_temp = 22 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
+				update_party_name = yes
+				hidden_effect = {
+					set_leader_SIA = yes
+				}
+				add_ideas = SIA_junta_government
+				SIA_junta_party_shift = yes
+				# The failed resistance ends in a junta: move onto the Royalist /
+				# Network Monarchy trunk (opens that focus tree).
+				SIA_realign_to_royalist = yes
+				news_event = { id = thailand_news.1 hours = 12 }
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Consequence: China reacts to a Western tilt (spurned power reaction, §10 Rule 4).
+# Fires ~120d after SIA_treaty_ally completes, AND ~30d after the military
+# alignment capstone SIA_the_western_anchor (full-Western procurement) completes.
+country_event = {
+	id = thailand.217
+	title = thailand.217.t
+	desc = thailand.217.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.217.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.217.a"
+		# Alignment flag: Friends Abroad hedging sub-track reads this.
+		set_country_flag = SIA_hedging
+		# China pushes back diplomatically - opinion shift
+		if = {
+			limit = { country_exists = CHI }
+			add_opinion_modifier = { target = CHI modifier = medium_decrease }
+			CHI = {
+				add_opinion_modifier = { target = SIA modifier = medium_decrease }
+			}
+		}
+		set_temp_variable = { percent_change = -20 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = thailand.217.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.217.b"
+		# Alignment flag: Friends Abroad hedging sub-track reads this.
+		set_country_flag = SIA_hedging
+		# Quiet reassurance to Beijing - softer reaction
+		if = {
+			limit = { country_exists = CHI }
+			add_opinion_modifier = { target = CHI modifier = small_decrease }
+		}
+		set_temp_variable = { percent_change = -10 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		add_political_power = -50
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Consequence: the US reacts to a Chinese tilt (spurned power reaction, §10 Rule 4).
+# Fires ~120d after SIA_bamboo_bends_east completes, AND ~30d after the military
+# alignment capstone SIA_the_bamboo_bloc (full-Chinese procurement) completes.
+country_event = {
+	id = thailand.218
+	title = thailand.218.t
+	desc = thailand.218.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.218.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.218.a"
+		# Alignment flag: Friends Abroad US-aligned sub-track reads this.
+		set_country_flag = SIA_us_aligned
+		# Washington signals displeasure
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = { target = USA modifier = medium_decrease }
+			USA = {
+				add_opinion_modifier = { target = SIA modifier = medium_decrease }
+			}
+		}
+		set_temp_variable = { percent_change = -15 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = thailand.218.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.218.b"
+		# Alignment flag: Friends Abroad US-aligned sub-track reads this.
+		set_country_flag = SIA_us_aligned
+		# Private reassurances - smaller penalty
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = { target = USA modifier = small_decrease }
+		}
+		set_temp_variable = { percent_change = -8 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Consequence: Perpetual Guardianship chosen - press and diplomats react (§10 Rule 4)
+country_event = {
+	id = thailand.219
+	title = thailand.219.t
+	desc = thailand.219.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.219.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.219.a"
+		# International press coverage damages trade/investment
+		add_stability = -0.02
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		}
+		if = {
+			limit = { country_exists = ENG }
+			ENG = { add_opinion_modifier = { target = SIA modifier = small_decrease } }
+		}
+		add_to_variable = { SIA_reform_radicalization = 15 }
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = thailand.219.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.219.b"
+		# Dismiss the criticism publicly - domestic boost, more diplomatic damage
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = SIA modifier = large_decrease } }
+		}
+		add_to_variable = { SIA_reform_radicalization = 25 }
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Tourism powerhouse restored after tsunami suspension (hidden, no player choice)
+country_event = {
+	id = thailand.220
+	title = thailand.220.t
+	desc = thailand.220.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.220.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.220.a"
+		add_ideas = SIA_tourism_powerhouse
+	}
+}
+
+# Tsunami infrastructure rebuild - hidden delayed event (aid route, 180d)
+country_event = {
+	id = thailand.221
+	title = thailand.221.t
+	desc = thailand.221.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.221.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.221.a"
+		509 = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+# The Global Financial Crisis - 2008 date-gated, once
+# Fires from on_action at date >= 2008.9.15
+country_event = {
+	id = thailand.222
+	title = thailand.222.t
+	desc = thailand.222.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.222.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.222.a"
+		# Debt-free: Thailand weathers the storm - well-capitalized, it draws the
+		# capital fleeing riskier markets rather than just banking political points.
+		trigger = {
+			has_idea = SIA_debt_free_credibility
+		}
+		add_stability = 0.02
+		set_temp_variable = { int_investment_change = 10 }
+		modify_international_investment_effect = yes
+		508 = {
+			add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = thailand.222.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.222.b"
+		# Headwinds: 730d timed idea
+		trigger = {
+			NOT = { has_idea = SIA_debt_free_credibility }
+		}
+		add_timed_idea = { idea = SIA_gfc_headwinds days = 730 }
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+###############################################################################
+# New Branch Events
+###############################################################################
+
+# thailand.223 - The Network Is Alarmed (flavor after 2005 landslide)
+country_event = {
+	id = thailand.223
+	title = thailand.223.t
+	desc = thailand.223.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.223.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.223.a"
+		# The palace notes the scale of the victory - flavor dread
+		add_stability = 0.03
+		add_political_power = 25
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# thailand.224 - The Rice Reckoning (fires 730d after SIA_rice_pledging_scheme)
+country_event = {
+	id = thailand.224
+	title = thailand.224.t
+	desc = thailand.224.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		# Bailout: absorb the losses
+		name = thailand.224.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.224.a"
+		set_temp_variable = { treasury_change = -12 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		if = {
+			limit = { has_idea = SIA_rice_pledge }
+			remove_ideas = SIA_rice_pledge
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	option = {
+		# Let it collapse: corruption trial chain
+		name = thailand.224.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.224.b"
+		add_stability = -0.06
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { has_idea = SIA_rice_pledge }
+			remove_ideas = SIA_rice_pledge
+		}
+		add_to_variable = { SIA_coup_risk = 15 }
+		clamp_variable = { var = SIA_coup_risk min = 0 max = 100 }
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# thailand.225 - Isaan/Northern development inauguration flavor
+country_event = {
+	id = thailand.225
+	title = thailand.225.t
+	desc = thailand.225.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.225.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.225.a"
+		# Workers and commuters celebrate the opening - the new corridor is
+		# real industrial room in the provinces, not just a ribbon-cutting.
+		add_political_power = 25
+		add_stability = 0.02
+		506 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		}
+		507 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# thailand.226 - The Tenth Reign Settles (restore kings_moral_authority_2 after mourning)
+country_event = {
+	id = thailand.226
+	title = thailand.226.t
+	desc = thailand.226.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.226.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.226.a"
+		# The mourning period ends; the new reign establishes itself
+		if = {
+			limit = { has_idea = SIA_new_reign_mourning }
+			remove_ideas = SIA_new_reign_mourning
+		}
+		add_ideas = SIA_kings_moral_authority_2
+		add_stability = 0.02
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# thailand.227 - Royalist Outrage (after conscription abolished)
+country_event = {
+	id = thailand.227
+	title = thailand.227.t
+	desc = thailand.227.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		# Stand firm - the reform holds
+		name = thailand.227.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.227.a"
+		add_stability = -0.02
+		add_political_power = 50
+		ai_chance = {
+			base = 70
+		}
+	}
+
+	option = {
+		# Offer veterans a ceremony - ease tensions
+		name = thailand.227.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.227.b"
+		add_political_power = -50
+		army_experience = 25
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+# thailand.228 - Tourism Dividend (open_skies bonus when tourism_powerhouse held)
+country_event = {
+	id = thailand.228
+	title = thailand.228.t
+	desc = thailand.228.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_idea = SIA_tourism_powerhouse
+	}
+
+	option = {
+		name = thailand.228.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.228.a"
+		# Arrivals set a new record - the open-skies dividend
+		set_temp_variable = { treasury_change = 4 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+##############################
+# KRA CANAL SAGA (IDs: .230-.249)
+##############################
+
+# thailand.230 - Engineers at Songkhla (SIA_the_southern_question completion)
+country_event = {
+	id = thailand.230
+	title = thailand.230.t
+	desc = thailand.230.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.230.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.230.a"
+		# Canal route - the full megaproject
+		custom_effect_tooltip = thailand.230.a_tooltip
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = thailand.230.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.230.b"
+		# Land bridge - the safe option
+		custom_effect_tooltip = thailand.230.b_tooltip
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# thailand.231 - RETIRED (story 2.5): the old construction-chain stage 1 was
+# fired only by SIA_kra_canal_commission, which is retired. The phased mission
+# loop (SIA_kra_phase_1/2/3 + thailand.381-385) replaces it.
+
+# thailand.232 - Canal Construction: Stage 2 - "Cutting Through Limestone"
+country_event = {
+	id = thailand.232
+	title = thailand.232.t
+	desc = thailand.232.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_idea = SIA_kra_mobilization
+	}
+
+	option = {
+		# Chinese consortium
+		name = thailand.232.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.232.a"
+		add_to_variable = { SIA_kra_progress = 35 }
+		clamp_variable = { var = SIA_kra_progress min = 0 max = 100 }
+		if = {
+			limit = { country_exists = CHI }
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = SIA }
+			change_influence_percentage = yes
+		}
+		hidden_effect = {
+			random_list = {
+				25 = { country_event = { id = thailand.236 days = 90 random_days = 60 } }
+				75 = { }
+			}
+			country_event = { id = thailand.233 days = 270 random_days = 30 }
+		}
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		# Sovereign bonds
+		name = thailand.232.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.232.b"
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
+		add_to_variable = { SIA_kra_progress = 25 }
+		clamp_variable = { var = SIA_kra_progress min = 0 max = 100 }
+		hidden_effect = {
+			random_list = {
+				25 = { country_event = { id = thailand.236 days = 90 random_days = 60 } }
+				75 = { }
+			}
+			country_event = { id = thailand.233 days = 270 random_days = 30 }
+		}
+		ai_chance = { base = 4 }
+	}
+}
+
+# thailand.233 - Canal Construction: Stage 3 - "The Locks Take Shape"
+country_event = {
+	id = thailand.233
+	title = thailand.233.t
+	desc = thailand.233.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_idea = SIA_kra_mobilization
+	}
+
+	option = {
+		# Chinese consortium
+		name = thailand.233.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.233.a"
+		add_to_variable = { SIA_kra_progress = 35 }
+		clamp_variable = { var = SIA_kra_progress min = 0 max = 100 }
+		if = {
+			limit = { country_exists = CHI }
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = SIA }
+			change_influence_percentage = yes
+		}
+		hidden_effect = {
+			random_list = {
+				25 = { country_event = { id = thailand.236 days = 90 random_days = 60 } }
+				75 = { }
+			}
+			country_event = { id = thailand.234 days = 270 random_days = 30 }
+		}
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		# Sovereign bonds
+		name = thailand.233.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.233.b"
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
+		add_to_variable = { SIA_kra_progress = 25 }
+		clamp_variable = { var = SIA_kra_progress min = 0 max = 100 }
+		hidden_effect = {
+			random_list = {
+				25 = { country_event = { id = thailand.236 days = 90 random_days = 60 } }
+				75 = { }
+			}
+			country_event = { id = thailand.234 days = 270 random_days = 30 }
+		}
+		ai_chance = { base = 4 }
+	}
+}
+
+# thailand.234 - Canal Construction: Stage 4 - "First Waters Flow"
+country_event = {
+	id = thailand.234
+	title = thailand.234.t
+	desc = thailand.234.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_idea = SIA_kra_mobilization
+	}
+
+	option = {
+		# Chinese consortium - final push
+		name = thailand.234.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.234.a"
+		add_to_variable = { SIA_kra_progress = 35 }
+		clamp_variable = { var = SIA_kra_progress min = 0 max = 100 }
+		if = {
+			limit = { country_exists = CHI }
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = SIA }
+			change_influence_percentage = yes
+		}
+		hidden_effect = {
+			# After stage 4 check if progress >=100; fire completion notice
+			if = {
+				limit = { check_variable = { SIA_kra_progress > 99 } }
+				country_event = { id = thailand.235 days = 14 }
+			}
+			else = {
+				# Sabotage losses left the works short - remedial final push
+				country_event = { id = thailand.242 days = 30 }
+			}
+		}
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		# Sovereign bonds - final push
+		name = thailand.234.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.234.b"
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
+		add_to_variable = { SIA_kra_progress = 25 }
+		clamp_variable = { var = SIA_kra_progress min = 0 max = 100 }
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { SIA_kra_progress > 99 } }
+				country_event = { id = thailand.235 days = 14 }
+			}
+			else = {
+				# Sabotage losses left the works short - remedial final push
+				country_event = { id = thailand.242 days = 30 }
+			}
+		}
+		ai_chance = { base = 4 }
+	}
+}
+
+# thailand.242 - Canal Construction: The Final Push (remedial stage when sabotage left progress short)
+country_event = {
+	id = thailand.242
+	title = thailand.242.t
+	desc = thailand.242.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_idea = SIA_kra_mobilization
+		check_variable = { SIA_kra_progress < 100 }
+	}
+
+	option = {
+		# Pay for the overruns - the treasury absorbs the final bill
+		name = thailand.242.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.242.a"
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		set_variable = { SIA_kra_progress = 100 }
+		hidden_effect = {
+			country_event = { id = thailand.235 days = 14 }
+		}
+		ai_chance = { base = 7 }
+	}
+
+	option = {
+		# Drive the work gangs harder - the country pays in patience
+		name = thailand.242.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.242.b"
+		add_stability = -0.03
+		set_variable = { SIA_kra_progress = 100 }
+		hidden_effect = {
+			country_event = { id = thailand.235 days = 14 }
+		}
+		ai_chance = { base = 3 }
+	}
+}
+
+# thailand.235 - Canal Completion Notice - "The Canal Is Ready"
+country_event = {
+	id = thailand.235
+	title = thailand.235.t
+	desc = thailand.235.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.235.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.235.a"
+		# The completion focus is now available - the new waterway brings dock
+		# and yard capacity on the southern coast with it.
+		add_political_power = 25
+		509 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = { type = dockyard level = 1 instant_build = yes }
+			add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.236 - Sabotage / Flooding / Cost Overrun (25% chance during construction stages)
+country_event = {
+	id = thailand.236
+	title = thailand.236.t
+	desc = thailand.236.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_idea = SIA_kra_mobilization
+	}
+
+	option = {
+		# Absorb the losses - treasury hit
+		name = thailand.236.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.236.a"
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		ai_chance = { base = 7 }
+	}
+
+	option = {
+		# Emergency workarounds - lose progress
+		name = thailand.236.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.236.b"
+		subtract_from_variable = { SIA_kra_progress = 10 }
+		clamp_variable = { var = SIA_kra_progress min = 0 max = 100 }
+		add_stability = -0.02
+		ai_chance = { base = 3 }
+	}
+}
+
+# thailand.237 - Singapore's Quiet Fury
+country_event = {
+	id = thailand.237
+	title = thailand.237.t
+	desc = thailand.237.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.237.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.237.a"
+		# Singapore's position has fundamentally changed
+		if = {
+			limit = { country_exists = SIN }
+			SIN = { add_opinion_modifier = { target = SIA modifier = large_decrease } }
+		}
+		add_political_power = 25
+		ai_chance = { base = 7 }
+	}
+
+	option = {
+		name = thailand.237.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.237.b"
+		# Offer Singapore transit preferences
+		if = {
+			limit = { country_exists = SIN }
+			SIN = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		}
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		ai_chance = { base = 3 }
+	}
+}
+
+# thailand.238 - Beijing Offers Partnership
+country_event = {
+	id = thailand.238
+	title = thailand.238.t
+	desc = thailand.238.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		# Accept Chinese partnership - influence boost
+		name = thailand.238.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.238.a"
+		if = {
+			limit = { country_exists = CHI }
+			add_opinion_modifier = { target = CHI modifier = large_increase }
+			set_temp_variable = { percent_change = 15 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = SIA }
+			change_influence_percentage = yes
+		}
+		set_temp_variable = { treasury_change = 8 }
+		modify_treasury_effect = yes
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		# Polite but non-committal
+		name = thailand.238.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.238.b"
+		if = {
+			limit = { country_exists = CHI }
+			add_opinion_modifier = { target = CHI modifier = small_increase }
+		}
+		add_stability = 0.02
+		ai_chance = { base = 4 }
+	}
+}
+
+# thailand.239 - New Delhi Eyes the Canal
+country_event = {
+	id = thailand.239
+	title = thailand.239.t
+	desc = thailand.239.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		# Accept Indian engagement - opinion gain
+		name = thailand.239.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.239.a"
+		if = {
+			limit = { country_exists = RAJ }
+			add_opinion_modifier = { target = RAJ modifier = large_increase }
+			set_temp_variable = { int_investment_change = 5 }
+			modify_international_investment_effect = yes
+		}
+		ai_chance = { base = 7 }
+	}
+
+	option = {
+		# Stay balanced
+		name = thailand.239.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.239.b"
+		if = {
+			limit = { country_exists = RAJ }
+			add_opinion_modifier = { target = RAJ modifier = small_increase }
+		}
+		ai_chance = { base = 3 }
+	}
+}
+
+# thailand.240 - RETIRED (story 2.5): fired only by the OLD two_oceans
+# hidden_effect, now replaced by thailand.390 (regional fallout).
+# thailand.241 - RETIRED (story 2.5): the land-bridge payoff was fired only by
+# SIA_kra_land_bridge, which is retired; the land-bridge ideas are retired too.
+
+######################################
+# WAVE 5 - THE FLAME REKINDLED
+# Communist path events: thailand.250-.253
+# Event IDs:
+#   .250 - The Strike Breaks - general_strike resolution (government capitulates vs crackdown)
+#   .251 - The World Recoils - world reactions after people_seize_power (US sanctions, China/Vietnam recognition)
+#   .252 - The Royalists Depart - royalist emigration after land_to_the_tiller
+#   .253 - The Chakri Question - red_chakri_dilemma monarchy question (abolish vs figurehead)
+######################################
+
+# The Strike Breaks - fired 180d after SIA_general_strike completion
+# Two outcomes: government capitulates (peaceful path) or cracks down (armed path)
+country_event = {
+	id = thailand.250
+	title = thailand.250.t
+	desc = thailand.250.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	# The strike momentum reached 100 — the government blinks. Fired from the weekly
+	# on_action the moment SIA_strike_momentum tops out. Peaceful road to power.
+	option = {
+		name = thailand.250.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.250.a"
+		set_country_flag = SIA_communist_peaceful_path
+		SIA_strike_cleanup_effect = yes
+		add_stability = 0.05
+		add_political_power = 100
+		# Grow the emerging (communist) outlook too, else the party share caps out.
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		# The government has capitulated. Sweep the movement straight into power. The
+		# peaceful road hands you The People Seize Power automatically rather than making
+		# you take the focus by hand.
+		complete_national_focus = SIA_people_seize_power
+	}
+}
+
+# The Generals Restore Order - fired 180d after SIA_general_strike if the strike
+# never forced capitulation (SIA_strike_momentum < 100). The military crushes the
+# stoppage and seizes power: the junta coup path. Guarded so a strike that already
+# won peacefully (flag cleared) makes this a no-op.
+country_event = {
+	id = thailand.259
+	title = thailand.259.t
+	desc = thailand.259.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.259.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.259.a"
+		if = {
+			limit = { has_country_flag = SIA_strike_active }
+			SIA_strike_cleanup_effect = yes
+			# The strike collapses and the army takes over — install the junta with
+			# the same protocol as the 2014 coup (NCPO, Nat_Autocracy idx 22).
+			set_country_flag = SIA_second_junta
+			set_temp_variable = { rul_party_temp = 22 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+			update_party_name = yes
+			set_leader_SIA = yes
+			if = {
+				limit = { NOT = { has_idea = SIA_junta_government } }
+				add_ideas = SIA_junta_government
+				SIA_junta_party_shift = yes
+			}
+			# The revolution is broken: strip the communist path and its spirits.
+			clr_country_flag = SIA_path_communist
+			clr_country_flag = SIA_communist_armed_path
+			clr_country_flag = SIA_communist_peaceful_path
+			if = { limit = { has_idea = SIA_red_revival } remove_ideas = SIA_red_revival }
+			add_stability = -0.05
+			add_war_support = 0.05
+			add_command_power = 50
+			hidden_effect = {
+				news_event = { id = thailand_news.1 days = 1 }
+			}
+		}
+	}
+}
+
+# The World Recoils - fired 3d after SIA_people_seize_power completion
+# US imposes sanctions; China and Vietnam send recognition
+country_event = {
+	id = thailand.251
+	title = thailand.251.t
+	desc = thailand.251.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.251.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.251.a"
+		# Accept the realignment - the West turns its back; the East opens its arms
+		add_ideas = SIA_western_sanctions
+		add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+		add_opinion_modifier = { target = ENG modifier = recent_actions_negative }
+		# China and Vietnam recognition events (hidden, staggered)
+		hidden_effect = {
+			if = {
+				limit = { country_exists = CHI }
+				CHI = { add_opinion_modifier = { target = SIA modifier = large_commercial_relations } }
+				add_opinion_modifier = { target = CHI modifier = large_commercial_relations }
+			}
+			if = {
+				limit = { country_exists = VIE }
+				VIE = { add_opinion_modifier = { target = SIA modifier = large_commercial_relations } }
+				add_opinion_modifier = { target = VIE modifier = large_commercial_relations }
+			}
+		}
+	}
+}
+
+# The Royalists Depart - fired 30-60d after SIA_land_to_the_tiller completion
+country_event = {
+	id = thailand.252
+	title = thailand.252.t
+	desc = thailand.252.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.252.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.252.a"
+		# The old establishment leaves - the movement loses their networks but gains clarity
+		add_stability = -0.02
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+	}
+}
+
+# The Chakri Question - fired 1d after SIA_red_chakri_dilemma completion
+# Written factually and clinically, with respect for the institution
+# (guardrail: decision #8 - no invented royal dialogue, no disrespect)
+country_event = {
+	id = thailand.253
+	title = thailand.253.t
+	desc = thailand.253.d
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.253.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.253.a"
+		# Abolish the monarchy - declare a people's republic
+		# The monarchy is dissolved; the institution that anchored the old order ends.
+		set_country_flag = SIA_republic_declared
+		add_stability = -0.10
+		add_war_support = 0.05
+		# Remove all remaining royalist anchors
+		if = {
+			limit = { has_idea = SIA_kings_moral_authority }
+			remove_ideas = SIA_kings_moral_authority
+		}
+		if = {
+			limit = { has_idea = SIA_kings_moral_authority_2 }
+			remove_ideas = SIA_kings_moral_authority_2
+		}
+		if = {
+			limit = { has_idea = SIA_new_reign_mourning }
+			remove_ideas = SIA_new_reign_mourning
+		}
+		# Unrest chain - royalist loyalists and conservatives resist
+		hidden_effect = {
+			add_to_variable = { SIA_insurgency_intensity = 15 }
+			clamp_variable = { var = SIA_insurgency_intensity min = 0 max = 100 }
+		}
+		ai_chance = { base = 4 }
+	}
+
+	option = {
+		name = thailand.253.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.253.b"
+		# Constitutional figurehead compromise - the Lao model adapted
+		# The monarchy continues in a ceremonial capacity; the party governs.
+		# Hardliners within the movement resist the compromise.
+		add_ideas = SIA_red_hardliners
+		add_stability = 0.05
+		ai_chance = { base = 6 }
+	}
+}
+
+########################
+# BHUMJAITHAI EVENTS (thailand.270-.279)
+########################
+
+# thailand.270 - "The Kingmaker": Bhumjaithai coalition offer (post-2019, any non-junta path)
+country_event = {
+	id = thailand.270
+	title = thailand.270.t
+	desc = thailand.270.d
+	picture = GFX_report_event_political_summit
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.270.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.270.a"
+		# Accept coalition with Bhumjaithai
+		set_country_flag = SIA_bhumjaithai_coalition
+		add_political_power = 25
+		ai_chance = { base = 7 }
+	}
+
+	option = {
+		name = thailand.270.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.270.b"
+		# Decline - keep a free hand; a modest stability and capital dividend
+		add_stability = 0.03
+		add_political_power = 25
+		ai_chance = { base = 3 }
+	}
+}
+
+# thailand.271 - Ministry handout flavor (after SIA_kingmaker_coalition)
+country_event = {
+	id = thailand.271
+	title = thailand.271.t
+	desc = thailand.271.d
+	picture = GFX_report_event_generic_parliament
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.271.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.271.a"
+		# The ministries are distributed. A cabinet-level hand-shake seals the alliance.
+		add_political_power = 25
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.272 - Cannabis reversal risk (royalist repeal attempt)
+country_event = {
+	id = thailand.272
+	title = thailand.272.t
+	desc = thailand.272.d
+	picture = GFX_report_event_generic_parliament
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.272.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.272.a"
+		# Repeal decriminalization - appease the conservatives
+		if = {
+			limit = { has_idea = SIA_green_rush }
+			remove_ideas = SIA_green_rush
+		}
+		add_stability = 0.03
+		ai_chance = { base = 4 }
+	}
+
+	option = {
+		name = thailand.272.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.272.b"
+		# Stand firm - the policy stays
+		add_stability = -0.02
+		add_political_power = 30
+		ai_chance = { base = 6 }
+	}
+}
+
+# thailand.273 - Sponsor the Shan State. Mediates the SIA_shan_client_state decision so the
+# Shan side chooses client-state status instead of being puppeted unilaterally.
+# ROOT = SHN (recipient), FROM = SIA (sponsor).
+country_event = {
+	id = thailand.273
+	title = thailand.273.t
+	desc = thailand.273.d
+	picture = GFX_report_event_generic_sign_treaty
+
+	is_triggered_only = yes
+
+	# Accept - align with Bangkok as a client state.
+	option = {
+		name = thailand.273.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.273.a"
+		FROM = {
+			puppet = SHN
+			add_opinion_modifier = { target = BRM modifier = large_decrease }
+		}
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		ai_chance = {
+			base = 75
+			modifier = { factor = 2 has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.4 has_war = yes }
+		}
+	}
+
+	# Decline - keep a free hand.
+	option = {
+		name = thailand.273.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.273.b"
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.5 has_opinion = { target = FROM value > 50 } }
+		}
+	}
+}
+
+########################
+# MILITARY / ARSENAL EVENTS (thailand.280-.299)
+########################
+
+# thailand.280 - Chaiseri ASEAN export deal (after SIA_chaiseri_and_friends)
+country_event = {
+	id = thailand.280
+	title = thailand.280.t
+	desc = thailand.280.d
+	picture = GFX_report_event_generic_trade
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.280.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.280.a"
+		# Sign ASEAN export contracts - First Win MRAPs to regional buyers. The
+		# order book funds a line expansion, so the win is lasting arms capacity.
+		set_temp_variable = { treasury_change = 6 }
+		modify_treasury_effect = yes
+		508 = {
+			add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+		}
+		add_opinion_modifier = { target = IND modifier = small_increase }
+		add_opinion_modifier = { target = MAY modifier = small_increase }
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.281 - Marine flavor event (after SIA_stream_of_the_navy)
+country_event = {
+	id = thailand.281
+	title = thailand.281.t
+	desc = thailand.281.d
+	picture = GFX_report_event_generic_navy
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.281.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.281.a"
+		# The Royal Thai Marine Corps receives new amphibious doctrine and equipment priorities.
+		navy_experience = 25
+		army_experience = 25
+		ai_chance = { base = 10 }
+	}
+}
+
+########################
+# NEWS EVENTS
+########################
+
+# thailand_news.15 - "Thailand: ASEAN's Emerging Arsenal"
+news_event = {
+	id = thailand_news.15
+	title = thailand_news.15.t
+	desc = thailand_news.15.d
+	picture = GFX_report_event_generic_read_write
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.15.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.15.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand_news.16 - "Bangkok Announces Multi-Domain Doctrine"
+news_event = {
+	id = thailand_news.16
+	title = thailand_news.16.t
+	desc = thailand_news.16.d
+	picture = GFX_report_event_generic_factory
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.16.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.16.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+########################
+# NUCLEAR / DIPLOMACY / ECONOMY EVENTS (thailand.310-.325)
+########################
+
+# thailand.310 - First Reactor Commissioned
+country_event = {
+	id = thailand.310
+	title = thailand.310.t
+	desc = thailand.310.d
+	picture = GFX_report_event_generic_factory
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.310.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.310.a"
+		# The reactor goes critical - cheap baseload power the grid can put to
+		# work, so the payoff is industrial capacity, not a one-off PP cheque.
+		add_stability = 0.03
+		508 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+		}
+		506 = {
+			add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.311 - Phnom Penh Responds
+country_event = {
+	id = thailand.311
+	title = thailand.311.t
+	desc = thailand.311.d
+	picture = GFX_report_event_generic_diplomatic_conversation
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.311.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.311.a"
+		# Warm welcome - Cambodia deepens the relationship
+		add_opinion_modifier = { target = CBD modifier = medium_increase }
+		set_temp_variable = { treasury_change = 3 }
+		modify_treasury_effect = yes
+		ai_chance = { base = 7 }
+	}
+
+	option = {
+		name = thailand.311.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.311.b"
+		# Cautious engagement - Cambodia keeps Bangkok at arm's length
+		add_opinion_modifier = { target = CBD modifier = small_increase }
+		add_political_power = 30
+		ai_chance = { base = 3 }
+	}
+}
+
+# thailand.312 - The Jakarta Dialogue
+country_event = {
+	id = thailand.312
+	title = thailand.312.t
+	desc = thailand.312.d
+	picture = GFX_report_event_generic_diplomatic_conversation
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.312.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.312.a"
+		# Partnership track - joint exercises and military cooperation
+		army_experience = 50
+		navy_experience = 50
+		add_opinion_modifier = { target = IND modifier = large_increase }
+		add_ideas = SIA_jakarta_partnership
+		set_country_flag = SIA_jakarta_partner
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		name = thailand.312.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.312.b"
+		# Rivalry track - compete for influence over ASEAN third states, destabilise Jakarta
+		add_opinion_modifier = { target = IND modifier = large_decrease }
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = SIA }
+		set_temp_variable = { influence_target = MAY }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = SIA }
+		set_temp_variable = { influence_target = BRM }
+		change_influence_percentage = yes
+		add_political_power = 50
+		# Destabilise Indonesia: boost nationalist/fascist factions, sour IND-USA ties
+		IND = {
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.04
+			}
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.04
+			}
+			add_opinion_modifier = { target = USA modifier = small_decrease }
+		}
+		set_country_flag = SIA_jakarta_rival
+		ai_chance = { base = 4 }
+	}
+}
+
+# thailand.313 - Chinese Contract Renegotiation
+country_event = {
+	id = thailand.313
+	title = thailand.313.t
+	desc = thailand.313.d
+	picture = GFX_report_event_generic_trade
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.313.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.313.a"
+		# Keep Chinese financing - steady treasury flow, deeper dependence
+		set_temp_variable = { treasury_change = 20 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		ai_chance = { base = 5 }
+	}
+
+	option = {
+		name = thailand.313.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.313.b"
+		# Renegotiate - pay the political price, regain fiscal sovereignty
+		add_political_power = -75
+		add_opinion_modifier = { target = CHI modifier = medium_decrease }
+		if = {
+			limit = { has_idea = SIA_bri_debt }
+			remove_ideas = SIA_bri_debt
+		}
+		add_stability = 0.02
+		ai_chance = { base = 5 }
+	}
+}
+
+# thailand.314 - US Security Review
+country_event = {
+	id = thailand.314
+	title = thailand.314.t
+	desc = thailand.314.d
+	picture = GFX_report_event_generic_sign_treaty2
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.314.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.314.a"
+		# Deepen the alliance - take the training package and the implicit commitment
+		army_experience = 75
+		add_opinion_modifier = { target = USA modifier = large_increase }
+		add_opinion_modifier = { target = CHI modifier = medium_decrease }
+		ai_chance = { base = 5 }
+	}
+
+	option = {
+		name = thailand.314.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.314.b"
+		# Distance - keep the hedge, take the political capital
+		add_political_power = 75
+		add_opinion_modifier = { target = USA modifier = medium_decrease }
+		ai_chance = { base = 5 }
+	}
+}
+
+########################
+# WS-F HISTORY HOOKS (thailand.315-322, thailand_news.18-19)
+########################
+
+# thailand.315 - "Landmine at Ta Muen Thom"
+country_event = {
+	id = thailand.315
+	title = thailand.315.t
+	desc = thailand.315.d
+	picture = GFX_report_event_generic_military_parade
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.315.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.315.a"
+		# Demand answers - nationalist escalation
+		set_country_flag = SIA_border_war_active
+		if = {
+			limit = { has_variable = SIA_preah_vihear_tension }
+			add_to_variable = { SIA_preah_vihear_tension = 10 }
+		}
+		add_ideas = SIA_rally_round_flag
+		country_event = { id = thailand.316 days = 30 }
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = thailand.315.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.315.b"
+		# Request ASEAN mediation
+		country_event = { id = thailand.316 days = 60 }
+		ai_chance = { base = 40 }
+	}
+}
+
+# thailand.316 - "Escalation at the Border"
+country_event = {
+	id = thailand.316
+	title = thailand.316.t
+	desc = thailand.316.d
+	picture = GFX_report_event_generic_military_parade
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.316.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.316.a"
+		# Press the advantage
+		set_country_flag = SIA_border_war_escalated
+		set_country_flag = SIA_border_war_active
+		add_war_support = 0.05
+		add_stability = -0.02
+		country_event = { id = thailand.317 days = 90 }
+		ai_chance = { base = 40 }
+	}
+
+	option = {
+		name = thailand.316.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.316.b"
+		# Accept ASEAN ceasefire - historical
+		clr_country_flag = SIA_border_war_active
+		add_stability = 0.03
+		news_event = { id = thailand_news.18 days = 3 }
+		country_event = { id = thailand.318 days = 365 }
+		ai_chance = { base = 60 }
+	}
+}
+
+# thailand.317 - "The July War"
+country_event = {
+	id = thailand.317
+	title = thailand.317.t
+	desc = thailand.317.d
+	picture = GFX_report_event_generic_military_parade
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_country_flag = SIA_border_war_escalated
+	}
+
+	option = {
+		name = thailand.317.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.317.a"
+		# Accept ASEAN ceasefire after demonstrating strength - historical
+		clr_country_flag = SIA_border_war_escalated
+		set_country_flag = SIA_border_war_ceasefire
+		add_stability = 0.02
+		add_war_support = -0.05
+		country_event = { id = thailand.318 days = 365 }
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = thailand.317.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.317.b"
+		# Dig in - hold the gains
+		add_war_support = 0.08
+		add_opinion_modifier = { target = CBD modifier = medium_decrease }
+		country_event = { id = thailand.318 days = 180 }
+		ai_chance = { base = 40 }
+	}
+}
+
+# thailand.318 - "December Relapse"
+country_event = {
+	id = thailand.318
+	title = thailand.318.t
+	desc = thailand.318.d
+	picture = GFX_report_event_generic_diplomatic_conversation
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.318.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.318.a"
+		# Reaffirm ceasefire
+		add_stability = 0.01
+		CBD = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = thailand.318.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.318.b"
+		# Resume hostilities
+		clr_country_flag = SIA_border_war_ceasefire
+		country_event = { id = thailand.317 days = 7 }
+		ai_chance = { base = 40 }
+	}
+}
+
+# thailand.319 - "Washington Says No to F-35"
+country_event = {
+	id = thailand.319
+	title = thailand.319.t
+	desc = thailand.319.d
+	picture = GFX_report_event_generic_sign_treaty2
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.319.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.319.a"
+		# Pursue Gripen E/F - the focus handles the mechanics
+		add_political_power = 25
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = thailand.319.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.319.b"
+		# Accept F-16V Block 70
+		add_ideas = SIA_f16v_consolation
+		air_experience = 25
+		ai_chance = { base = 30 }
+	}
+
+	option = {
+		name = thailand.319.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.319.c"
+		# Pivot to J-10CE - requires bamboo_bends_east path
+		trigger = {
+			has_completed_focus = SIA_bamboo_bends_east
+		}
+		add_opinion_modifier = { target = USA modifier = large_decrease }
+		add_opinion_modifier = { target = CHI modifier = medium_increase }
+		ai_chance = { base = 20 }
+	}
+}
+
+# thailand.320 - "The Leaked Call Crisis"
+country_event = {
+	id = thailand.320
+	title = thailand.320.t
+	desc = thailand.320.d
+	picture = GFX_report_event_generic_read_write
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.320.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.320.a"
+		# Accept the verdict - historical
+		set_country_flag = SIA_paetongtarn_removed
+		set_country_flag = SIA_anutin_caretaker
+		country_event = { id = thailand.321 days = 30 }
+		ai_chance = { base = 70 }
+	}
+
+	option = {
+		name = thailand.320.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.320.b"
+		# Challenge the ruling - ahistorical
+		add_stability = -0.05
+		add_war_support = -0.02
+		country_event = { id = thailand.321 days = 90 }
+		ai_chance = { base = 30 }
+	}
+}
+
+# thailand.321 - "Caretaker Government"
+country_event = {
+	id = thailand.321
+	title = thailand.321.t
+	desc = thailand.321.d
+	picture = GFX_report_event_generic_read_write
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.321.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.321.a"
+		# Accept caretaker arrangement
+		country_event = { id = thailand.322 days = 120 }
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.322 - "The 8 February Election"
+country_event = {
+	id = thailand.322
+	title = thailand.322.t
+	desc = thailand.322.d
+	picture = GFX_report_event_generic_read_write
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.322.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.322.a"
+		# Bhumjaithai wins - historical (193 seats, enhanced if border war active)
+		set_temp_variable = { party_index = 14 }
+		set_temp_variable = {
+			popularity_change = 8
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = SIA_border_war_active
+					has_country_flag = SIA_border_war_ceasefire
+				}
+			}
+			set_temp_variable = { popularity_change = 12 }
+		}
+		add_relative_party_popularity = yes
+		set_country_flag = SIA_2026_election_bhumjaithai
+		news_event = { id = thailand_news.19 days = 3 }
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = thailand.322.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.322.b"
+		# People's Party coalition
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { popularity_change = 6 }
+		add_relative_party_popularity = yes
+		set_country_flag = SIA_2026_election_pp
+		ai_chance = { base = 40 }
+	}
+}
+
+########################
+# NEWS EVENTS
+########################
+
+# thailand_news.17 - "Thailand Lights Up Its First Nuclear Reactor"
+news_event = {
+	id = thailand_news.17
+	title = thailand_news.17.t
+	desc = thailand_news.17.d
+	picture = GFX_report_event_generic_factory
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.17.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.17.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand_news.18 - "ASEAN Brokers Thai-Cambodian Ceasefire"
+news_event = {
+	id = thailand_news.18
+	title = thailand_news.18.t
+	desc = thailand_news.18.d
+	picture = GFX_report_event_generic_diplomatic_conversation
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.18.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.18.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand_news.19 - "Anutin's Party Dominates Thai Election"
+news_event = {
+	id = thailand_news.19
+	title = thailand_news.19.t
+	desc = thailand_news.19.d
+	picture = GFX_report_event_generic_read_write
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.19.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.19.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+########################
+# DOCTRINE FORK + ARSENAL / TOTAL DEFENSE EVENTS
+########################
+
+# thailand.330 - The Soul of the Officer Corps (fork mirror; fired from SIA_post_cold_war_professionalization)
+country_event = {
+	id = thailand.330
+	title = thailand.330.t
+	desc = thailand.330.d
+	picture = GFX_report_event_generic_military_parade
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = { # nudge toward N1 (professional)
+		name = thailand.330.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.330.a"
+		army_experience = 25
+		ai_chance = { base = 1 modifier = { factor = 5 is_historical_focus_on = yes } }
+	}
+	option = { # nudge toward N2 (prestige)
+		name = thailand.330.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.330.b"
+		add_war_support = 0.03
+		ai_chance = { base = 1 modifier = { factor = 3 has_country_flag = SIA_path_royalist } }
+	}
+}
+
+# thailand.334 - The Submarine Commissioned (S26T delivery follow-up; fired from thailand.66 option a)
+country_event = {
+	id = thailand.334
+	title = thailand.334.t
+	desc = thailand.334.d
+	picture = GFX_report_event_generic_navy
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.334.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.334.a"
+		navy_experience = 25
+	}
+}
+
+# thailand_news.26 - Gripens over Bangkok (fired from SIA_gripen_deal)
+news_event = {
+	id = thailand_news.26
+	title = thailand_news.26.t
+	desc = thailand_news.26.d
+	picture = GFX_report_event_generic_factory
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.26.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.26.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand_news.27 - Thai Arms on the World Market (fired from N4 SIA_defense_export_office)
+news_event = {
+	id = thailand_news.27
+	title = thailand_news.27.t
+	desc = thailand_news.27.d
+	picture = GFX_report_event_generic_factory
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.27.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.27.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand_news.28 - A Nation in Arms (fired from N6 SIA_total_defense_doctrine)
+news_event = {
+	id = thailand_news.28
+	title = thailand_news.28.t
+	desc = thailand_news.28.d
+	picture = GFX_report_event_generic_military_parade
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.28.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.28.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand_news.24 - Massacre at Tak Bai (fired from thailand.356)
+news_event = {
+	id = thailand_news.24
+	title = thailand_news.24.t
+	desc = thailand_news.24.d
+	picture = GFX_report_event_generic_military_parade
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.24.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.24.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand_news.25 - Peace Comes to Pattani (fired from thailand.357/360)
+news_event = {
+	id = thailand_news.25
+	title = thailand_news.25.t
+	desc = thailand_news.25.d
+	picture = GFX_report_event_generic_factory
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.25.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.25.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand_news.23 - A Government of National Unity (v0.7 Story 3.1; §3 6.3)
+# Fired by thailand.70 Option C - the negotiated compromise that keeps the
+# elected government in place while bringing the generals into a coalition.
+news_event = {
+	id = thailand_news.23
+	title = thailand_news.23.t
+	desc = thailand_news.23.d
+	picture = GFX_report_event_political_summit
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.23.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.23.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+##############################
+# KRA MEGAPROJECT
+# IDs: thailand.380 (patron pivot), .381-.385 (phase loop),
+#      .386/.388/.389 (debt/default chain, China-gated),
+#      .390/.391 (capstone fallout + militarize/internationalize fork),
+#      thailand_news.20 (Kra Canal Opens).
+##############################
+
+# thailand.380 - Engineers at the Isthmus (patron pivot). Fired by SIA_kra_gateway.
+# Each option completes ONE hidden patron focus AND sets its patron flag.
+country_event = {
+	id = thailand.380
+	title = thailand.380.t
+	desc = thailand.380.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = { # a - Chinese / BRI financing (cheap, debt trap)
+		name = thailand.380.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.380.a"
+		complete_national_focus = SIA_kra_patron_china
+		set_country_flag = SIA_kra_patron_china
+		set_temp_variable = { percent_change = 15 }
+		set_temp_variable = { tag_index = SIA }
+		set_temp_variable = { influence_target = CHI }
+		change_influence_percentage = yes
+		CHI = { add_opinion_modifier = { target = SIA modifier = large_increase } }
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = SIA modifier = small_decrease } }
+		}
+		ai_chance = { base = 5 }
+	}
+
+	option = { # b - Japan / quality infrastructure
+		name = thailand.380.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.380.b"
+		complete_national_focus = SIA_kra_patron_japan
+		set_country_flag = SIA_kra_patron_japan
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = SIA }
+		set_temp_variable = { influence_target = JAP }
+		change_influence_percentage = yes
+		JAP = { add_opinion_modifier = { target = SIA modifier = medium_increase } }
+		ai_chance = { base = 8 }
+	}
+
+	option = { # c - International consortium (ADB/multilateral); folds the land-bridge flavor
+		name = thailand.380.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.380.c"
+		complete_national_focus = SIA_kra_patron_consortium
+		set_country_flag = SIA_kra_patron_consortium
+		set_temp_variable = { int_investment_change = 15 }
+		modify_international_investment_effect = yes
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+		}
+		if = {
+			limit = { country_exists = JAP }
+			JAP = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+		}
+		ai_chance = { base = 6 }
+	}
+
+	option = { # d - Go it alone (sovereign); loc key .e - .d is the event desc
+		name = thailand.380.e
+		log = "[GetDateText]: [Root.GetName]: event thailand.380.e"
+		complete_national_focus = SIA_kra_patron_solo
+		set_country_flag = SIA_kra_patron_solo
+		add_political_power = 50
+		ai_chance = { base = 2 }
+	}
+}
+
+# thailand.381 - Ground Broken (from the patron focus). The phase decisions
+# self-activate on SIA_kra_phase; this is purely informational.
+country_event = {
+	id = thailand.381
+	title = thailand.381.t
+	desc = thailand.381.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.381.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.381.a"
+		ai_chance = { base = 1 }
+	}
+}
+
+# thailand.382 - Phase Complete (from a phase mission complete_effect).
+country_event = {
+	id = thailand.382
+	title = thailand.382.t
+	desc = thailand.382.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.382.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.382.a"
+		add_political_power = 25
+		ai_chance = { base = 1 }
+	}
+}
+
+# thailand.383 - Cost Overrun (from a phase mission timeout). The phase re-arms
+# automatically because the timeout did NOT change SIA_kra_phase.
+country_event = {
+	id = thailand.383
+	title = thailand.383.t
+	desc = thailand.383.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = { # a - pour money in (no progress lost)
+		name = thailand.383.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.383.a"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { has_idea = SIA_kra_debt_trap }
+			country_event = { id = thailand.386 days = 60 }
+		}
+		ai_chance = { base = 6 }
+	}
+
+	option = { # b - accept the delay
+		name = thailand.383.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.383.b"
+		add_timed_idea = { idea = SIA_kra_delay days = 180 }
+		if = {
+			limit = { has_idea = SIA_kra_debt_trap }
+			country_event = { id = thailand.386 days = 60 }
+		}
+		ai_chance = { base = 4 }
+	}
+}
+
+# thailand.384 - The Canal Is Ready (from phase 3 complete). Its option opens the
+# canal by completing the capstone focus SIA_two_oceans_one_kingdom directly (that
+# focus is available = always no, like the patron and fork nodes), so the player
+# does not have to queue a separate focus after the works are finished.
+country_event = {
+	id = thailand.384
+	title = thailand.384.t
+	desc = thailand.384.d
+	picture = GFX_report_event_generic_navy
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.384.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.384.a"
+		# Cut the ribbon. Guarded so a stray re-fire cannot double-apply the reward.
+		if = {
+			limit = { NOT = { has_completed_focus = SIA_two_oceans_one_kingdom } }
+			complete_national_focus = SIA_two_oceans_one_kingdom
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# thailand.385 - Sabotage at the Cut (Deep South active; from a phase mission).
+country_event = {
+	id = thailand.385
+	title = thailand.385.t
+	desc = thailand.385.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = { # a - reinforce security
+		name = thailand.385.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.385.a"
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		add_war_support = 0.03
+		ai_chance = { base = 6 }
+	}
+
+	option = { # b - negotiate with locals
+		name = thailand.385.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.385.b"
+		add_stability = 0.02
+		if = {
+			limit = { has_country_flag = SIA_ds_active }
+			subtract_from_variable = { SIA_insurgency_intensity = 5 }
+			clamp_variable = { var = SIA_insurgency_intensity min = 0 max = 100 }
+			SIA_ds_update_tier = yes
+		}
+		ai_chance = { base = 4 }
+	}
+}
+
+# thailand.386 - Beijing Calls the Loan (China-only default crisis).
+country_event = {
+	id = thailand.386
+	title = thailand.386.t
+	desc = thailand.386.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+		has_idea = SIA_kra_debt_trap
+	}
+
+	option = { # a - concede the lease (debt-for-equity)
+		name = thailand.386.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.386.a"
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = SIA }
+		set_temp_variable = { influence_target = CHI }
+		change_influence_percentage = yes
+		CHI = { add_opinion_modifier = { target = SIA modifier = medium_increase } }
+		add_timed_idea = { idea = SIA_kra_lease_concession days = 1825 }
+		country_event = { id = thailand.389 days = 10 }
+		ai_chance = { base = 6 }
+	}
+
+	option = { # b - restructure on harsh terms
+		name = thailand.386.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.386.b"
+		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+		swap_ideas = {
+			remove_idea = SIA_kra_debt_trap
+			add_idea = SIA_kra_debt_serviced
+		}
+		ai_chance = { base = 5 }
+	}
+
+	option = { # c - default (sovereign hardball)
+		name = thailand.386.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.386.c"
+		add_named_threat = { threat = 8 name = SIA_kra_default_threat }
+		CHI = { add_opinion_modifier = { target = SIA modifier = large_decrease } }
+		set_temp_variable = { percent_change = -25 }
+		set_temp_variable = { tag_index = SIA }
+		set_temp_variable = { influence_target = CHI }
+		change_influence_percentage = yes
+		add_ideas = SIA_kra_default_pariah
+		country_event = { id = thailand.388 days = 30 }
+		ai_chance = { base = 1 }
+	}
+}
+
+# thailand.388 - Capital Flight (from thailand.386 option c).
+country_event = {
+	id = thailand.388
+	title = thailand.388.t
+	desc = thailand.388.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.388.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.388.a"
+		set_temp_variable = { treasury_change = -15 }
+		modify_treasury_effect = yes
+		add_stability = -0.05
+		add_timed_idea = { idea = SIA_kra_capital_flight days = 365 }
+		ai_chance = { base = 1 }
+	}
+}
+
+# thailand.389 - Washington and Delhi Take Note (from thailand.386 option a).
+# India = RAJ.
+country_event = {
+	id = thailand.389
+	title = thailand.389.t
+	desc = thailand.389.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = { # a - reassure both
+		name = thailand.389.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.389.a"
+		add_political_power = -50
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+		}
+		if = {
+			limit = { country_exists = RAJ }
+			RAJ = { add_opinion_modifier = { target = SIA modifier = small_increase } }
+		}
+		ai_chance = { base = 6 }
+	}
+
+	option = { # b - lean further into Beijing
+		name = thailand.389.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.389.b"
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SIA }
+		set_temp_variable = { influence_target = CHI }
+		change_influence_percentage = yes
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		}
+		ai_chance = { base = 3 }
+	}
+}
+
+# thailand.390 - The Strait Loses Its Monopoly (capstone fallout; from the
+# capstone hidden_effect). No player choice - the world reacts.
+country_event = {
+	id = thailand.390
+	title = thailand.390.t
+	desc = thailand.390.d
+	picture = GFX_report_event_generic_navy
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = {
+		name = thailand.390.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.390.a"
+		if = {
+			limit = { country_exists = SIN }
+			SIN = { add_opinion_modifier = { target = SIA modifier = large_decrease } }
+			add_opinion_modifier = { target = SIN modifier = medium_decrease }
+		}
+		if = {
+			limit = { country_exists = MAY }
+			MAY = { add_opinion_modifier = { target = SIA modifier = medium_decrease } }
+		}
+		add_named_threat = { threat = 5 name = SIA_kra_chokepoint_threat }
+		ai_chance = { base = 1 }
+	}
+}
+
+# thailand.391 - What Kind of Canal? (capstone fork; from the capstone
+# hidden_effect). Completes one of the two hidden ME fork focuses.
+country_event = {
+	id = thailand.391
+	title = thailand.391.t
+	desc = thailand.391.d
+	picture = GFX_report_event_generic_navy
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SIA
+	}
+
+	option = { # a - militarize (fortress canal)
+		name = thailand.391.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.391.a"
+		complete_national_focus = SIA_kra_militarize
+		ai_chance = { base = 4 }
+	}
+
+	option = { # b - internationalize (neutral transit regime)
+		name = thailand.391.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.391.b"
+		complete_national_focus = SIA_kra_internationalize
+		ai_chance = { base = 6 }
+	}
+}
+
+# thailand_news.20 - Two Oceans, One Kingdom (replaces the old news.12 fire at
+# the capstone). Mirrors the news.12 skeleton.
+news_event = {
+	id = thailand_news.20
+	title = thailand_news.20.t
+	desc = thailand_news.20.d
+	picture = GFX_report_event_generic_navy
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = thailand_news.20.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.20.a"
+	}
+}
+
+############################################################
+# STORY 2.6 - ASEAN CROSSROADS
+# thailand.392 pivot (peace/hegemony one-of-two); thailand.393 pariah/downside;
+# thailand.394 US reaction; thailand.395 China courts the aggressor.
+############################################################
+
+# thailand.392 - The Crossroads of ASEAN (fired by SIA_asean_crossroads).
+# Completes EXACTLY ONE of SIA_asean_protector (peace) or SIA_asean_hegemony
+# (hard-gated). When the mastery gate (SIA_asean_hegemony_available) is met the
+# player chooses between partnership (a) and mastery (b); when it is not, the
+# single locked-hegemony option (c) explains why and resolves to partnership.
+# Options a/b and c are exact complements, so there is always one clickable option.
+country_event = {
+	id = thailand.392
+	title = thailand.392.t
+	desc = thailand.392.d
+	picture = GFX_report_event_political_summit
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	# a - Protector / partnership, shown as the deliberate alternative when the
+	# mastery road is actually open (paired with option b).
+	option = {
+		name = thailand.392.a
+		trigger = { SIA_asean_hegemony_available = yes }
+		log = "[GetDateText]: [Root.GetName]: event thailand.392.a"
+		complete_national_focus = SIA_asean_protector
+		set_country_flag = SIA_asean_peace_track
+		add_stability = 0.03
+		ai_chance = {
+			base = 8
+			modifier = {
+				factor = 3
+				OR = {
+					has_country_flag = SIA_path_reform
+					has_country_flag = SIA_path_royalist
+				}
+			}
+		}
+	}
+
+	# b - Hegemony (war; HARD-GATED via option-level trigger)
+	option = {
+		name = thailand.392.b
+		trigger = { SIA_asean_hegemony_available = yes }
+		log = "[GetDateText]: [Root.GetName]: event thailand.392.b"
+		complete_national_focus = SIA_asean_hegemony
+		set_country_flag = SIA_asean_war_track
+		add_war_support = 0.05
+		ai_chance = { base = 0 }
+	}
+
+	# c - Hegemony LOCKED. Shown only when the mastery gate is NOT met (the exact
+	# complement of options a/b), so the war road is never a silent absence: the
+	# player sees the choice exists and why it is barred, and this is the only
+	# option in that case. Resolves to the partnership track.
+	option = {
+		name = thailand.392.c
+		trigger = { NOT = { SIA_asean_hegemony_available = yes } }
+		log = "[GetDateText]: [Root.GetName]: event thailand.392.c"
+		custom_effect_tooltip = SIA_hegemony_locked_tt
+		complete_national_focus = SIA_asean_protector
+		set_country_flag = SIA_asean_peace_track
+		add_stability = 0.03
+		ai_chance = { base = 0 }
+	}
+}
+
+# thailand.393 - Pariah of the Region (fired by SIA_asean_hegemony reward).
+country_event = {
+	id = thailand.393
+	title = thailand.393.t
+	desc = thailand.393.d
+	picture = GFX_report_event_generic_military_parade
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.393.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.393.a"
+		if = {
+			limit = { OR = { has_war_with = PHI has_war_with = IND has_war_with = VIE has_war_with = SIN has_war_with = BRU has_war_with = MAY } }
+			add_ideas = SIA_asean_pariah
+		}
+		if = { limit = { country_exists = PHI } PHI = { add_opinion_modifier = { target = SIA modifier = large_decrease } } }
+		if = { limit = { country_exists = IND } IND = { add_opinion_modifier = { target = SIA modifier = large_decrease } } }
+		if = { limit = { country_exists = VIE } VIE = { add_opinion_modifier = { target = SIA modifier = large_decrease } } }
+		if = { limit = { country_exists = SIN } SIN = { add_opinion_modifier = { target = SIA modifier = large_decrease } } }
+		if = { limit = { country_exists = BRU } BRU = { add_opinion_modifier = { target = SIA modifier = large_decrease } } }
+		if = { limit = { country_exists = MAY } MAY = { add_opinion_modifier = { target = SIA modifier = large_decrease } } }
+		hidden_effect = {
+			country_event = { id = thailand.394 days = 1 }
+			country_event = { id = thailand.395 days = 2 }
+		}
+	}
+}
+
+# thailand.394 - Washington Condemns Bangkok (from thailand.393 hidden_effect).
+country_event = {
+	id = thailand.394
+	title = thailand.394.t
+	desc = thailand.394.d
+	picture = GFX_report_event_generic_diplomatic_conversation
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.394.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.394.a"
+		if = { limit = { country_exists = USA } USA = { add_opinion_modifier = { target = SIA modifier = medium_decrease } } }
+		# US influence in SIA falls (verified change_influence_percentage pattern).
+		set_temp_variable = { percent_change = -15 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		# Targets form a defensive pact (give_guarantee verified; NOT create_faction on AI).
+		if = {
+			limit = { country_exists = PHI country_exists = IND }
+			PHI = { give_guarantee = IND }
+			IND = { give_guarantee = PHI }
+		}
+	}
+}
+
+# thailand.395 - Beijing's Open Hand (from thailand.393 hidden_effect).
+country_event = {
+	id = thailand.395
+	title = thailand.395.t
+	desc = thailand.395.d
+	picture = GFX_report_event_generic_diplomatic_conversation
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.395.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.395.a"
+		if = { limit = { country_exists = CHI } CHI = { add_opinion_modifier = { target = SIA modifier = medium_increase } } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+	}
+}
+
+############################################################
+# ASEAN Defense Community - opt-in invitation (faction balance/MP rework)
+# thailand.431 is sent to each eligible ASEAN state by SIA_invite_mainland /
+# SIA_invite_maritime instead of force-joining it. ROOT = the invited country,
+# FROM = Thailand (the sender / faction leader). The recipient decides for itself,
+# so a human ally picks in MP and the AI weighs the offer via ai_chance. Accepting
+# grants SIA_asean_defense_member, whose hidden ally-desire offset counters MD's
+# ASEAN_Member -1000 ai_get_ally_desire_factor so the member does not immediately
+# bolt from the faction (the root cause of members leaving on the old add_to_faction).
+############################################################
+country_event = {
+	id = thailand.431
+	title = thailand.431.t
+	desc = thailand.431.d
+	picture = GFX_report_event_generic_sign_treaty
+	is_triggered_only = yes
+
+	# Accept - join Thailand's ASEAN Defense Community.
+	option = {
+		name = thailand.431.a
+		trigger = { FROM = { is_faction_leader = yes } }
+		log = "[GetDateText]: [Root.GetName]: event thailand.431.a"
+		FROM = { add_to_faction = ROOT }
+		add_ideas = SIA_asean_defense_member
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		FROM = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		ai_chance = {
+			base = 15
+			modifier = { factor = 3  has_opinion = { target = FROM value > 40 } }
+			modifier = { factor = 2  has_war = yes }
+			modifier = { factor = 0  is_in_faction = yes }
+		}
+	}
+
+	# Decline - remain non-aligned, the historical ASEAN default.
+	option = {
+		name = thailand.431.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.431.b"
+		ai_chance = {
+			base = 40
+			modifier = { factor = 0.4  has_opinion = { target = FROM value > 60 } }
+		}
+	}
+}
+
+########################
+# thailand.433 - Bamboo bends east: Bangkok requests a Chinese guarantee. Fired at
+# CHI from SIA_bamboo_bends_east so China chooses whether to extend protection.
+########################
+country_event = {
+	id = thailand.433
+	title = thailand.433.t
+	desc = thailand.433.d
+	picture = GFX_report_event_generic_sign_treaty
+	is_triggered_only = yes
+
+	# Accept - extend our protection over Bangkok.
+	option = {
+		name = thailand.433.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.433.a"
+		give_guarantee = FROM
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		FROM = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		ai_chance = {
+			base = 20
+			modifier = { factor = 3  has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0.2  has_opinion = { target = FROM value < 0 } }
+			modifier = { factor = 0.4  has_war = yes }
+		}
+	}
+
+	# Decline - Bangkok stands alone.
+	option = {
+		name = thailand.433.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.433.b"
+		FROM = { add_opinion_modifier = { target = ROOT modifier = small_decrease } }
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0.3  has_opinion = { target = FROM value > 50 } }
+		}
+	}
+}
+
+########################
+# Gap-closure events (thailand.410-417, orchestrator reserve)
+# §5.2 gap assignments / CAP-10 (every pivotal moment fires an event) + CAP-12 (thailand.413
+# nuclear consequence). Each event is fired additively from its resolved firing focus's
+# completion_reward in common/national_focus/05_thailand.txt. §5.3 standards applied:
+# is_triggered_only, log per option, custom_effect_tooltip on tracked-variable changes,
+# ai_chance with is_historical_focus_on steering on pivotal choices.
+########################
+
+# thailand.410 - The Map of a Greater Kingdom (from SIA_lost_territories, D-path entry).
+# 2-option irredentism warning choice: sets expectations for the §8 downside mechanics.
+country_event = {
+	id = thailand.410
+	title = thailand.410.t
+	desc = thailand.410.d
+	picture = GFX_report_event_generic_military_parade
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	# Embrace irredentism - the loud, revisionist line.
+	option = {
+		name = thailand.410.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.410.a"
+		add_war_support = 0.05
+		add_political_power = 50
+		set_country_flag = SIA_open_irredentism
+		# Irredentism is alt-history; weight toward non-historical AI.
+		ai_chance = { base = 1 modifier = { factor = 5 is_historical_focus_on = no } }
+	}
+
+	# Quiet revisionism - keep it deniable, build the position.
+	option = {
+		name = thailand.410.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.410.b"
+		add_stability = 0.03
+		add_war_support = 0.02
+		set_country_flag = SIA_quiet_revisionism
+		ai_chance = { base = 4 modifier = { factor = 3 is_historical_focus_on = yes } }
+	}
+}
+
+# thailand.411 - One People, One Destiny (from SIA_pan_thai_movement).
+# Single-option pan-Thai ideology announcement (flavor + small WS).
+country_event = {
+	id = thailand.411
+	title = thailand.411.t
+	desc = thailand.411.d
+	picture = GFX_report_event_political_summit
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.411.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.411.a"
+		add_war_support = 0.03
+		add_political_power = 25
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.412 - Bamboo in the Wind (from SIA_hedge_the_bets).
+# Single-option both-powers hedge outcome: each great power registers the move.
+country_event = {
+	id = thailand.412
+	title = thailand.412.t
+	desc = thailand.412.d
+	picture = GFX_report_event_generic_diplomatic_conversation
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.412.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.412.a"
+		add_political_power = 25
+		# Both powers react - small opinion bump from each (the both-powers hedge).
+		if = { limit = { country_exists = USA } USA = { add_opinion_modifier = { target = SIA modifier = medium_increase } } }
+		if = { limit = { country_exists = CHI } CHI = { add_opinion_modifier = { target = SIA modifier = small_increase } } }
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.413 - The Fuel-Cycle Question (from SIA_nuclear_power_program). CAP-12 nuclear
+# consequence: the sovereign fuel-cycle capability triggers an IAEA/US reaction. There is no
+# nuclear-weapons focus - the civilian capstone's enrichment ambiguity IS the proliferation
+# trigger. 2-option sanctions-risk choice: defy vs reassure.
+country_event = {
+	id = thailand.413
+	title = thailand.413.t
+	desc = thailand.413.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	# Defy - pursue weapons-latent enrichment. Keep autonomy, pay the proliferation price.
+	option = {
+		name = thailand.413.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.413.a"
+		set_country_flag = SIA_nuclear_defiance
+		add_political_power = 50
+		add_stability = -0.03
+		# Sanctions/threat + opinion hit + US influence drop. Tooltipped (tracked threat/influence).
+		custom_effect_tooltip = thailand.413.a_tooltip
+		add_named_threat = { threat = 4 name = SIA_nuclear_defiance_threat }
+		if = { limit = { country_exists = USA } USA = { add_opinion_modifier = { target = SIA modifier = large_decrease } } }
+		if = { limit = { country_exists = RAJ } RAJ = { add_opinion_modifier = { target = SIA modifier = medium_decrease } } }
+		set_temp_variable = { percent_change = -15 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = SIA }
+		change_influence_percentage = yes
+		# Enrichment-driven; weight toward non-historical AI (NPT Thailand stays safeguarded).
+		ai_chance = { base = 1 modifier = { factor = 5 is_historical_focus_on = no } }
+	}
+
+	# Reassure - accept IAEA safeguards. Opinion recovers, lose some program benefit.
+	option = {
+		name = thailand.413.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.413.b"
+		set_country_flag = SIA_nuclear_safeguarded
+		add_political_power = -25
+		add_stability = 0.01
+		if = { limit = { country_exists = USA } USA = { add_opinion_modifier = { target = SIA modifier = medium_increase } } }
+		ai_chance = { base = 5 modifier = { factor = 3 is_historical_focus_on = yes } }
+	}
+}
+
+# thailand.414 - The Guardians' Charter (from SIA_perpetual_guardianship).
+# Direct completion event. The delayed thailand.219 press reaction (on_actions, 90+random_days)
+# stays and is independent of this event.
+country_event = {
+	id = thailand.414
+	title = thailand.414.t
+	desc = thailand.414.d
+	picture = GFX_report_event_generic_parliament
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.414.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.414.a"
+		add_stability = 0.03
+		add_political_power = 50
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+		custom_effect_tooltip = SIA_guardianship_cost_tt
+		if = { limit = { country_exists = USA } USA = { add_opinion_modifier = { target = SIA modifier = large_decrease } } }
+		if = { limit = { country_exists = ENG } ENG = { add_opinion_modifier = { target = SIA modifier = medium_decrease } } }
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.415 - Pax Aseana (from SIA_pax_aseana). Faction-capstone payoff + world reaction:
+# the protector / peace destiny is recognized across the region.
+country_event = {
+	id = thailand.415
+	title = thailand.415.t
+	desc = thailand.415.d
+	picture = GFX_report_event_political_summit
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.415.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.415.a"
+		add_political_power = 75
+		add_stability = 0.03
+		# Neighbours register protector legitimacy (IND = Indonesia).
+		if = { limit = { country_exists = PHI } PHI = { add_opinion_modifier = { target = SIA modifier = medium_increase } } }
+		if = { limit = { country_exists = IND } IND = { add_opinion_modifier = { target = SIA modifier = medium_increase } } }
+		if = { limit = { country_exists = VIE } VIE = { add_opinion_modifier = { target = SIA modifier = small_increase } } }
+		if = { limit = { country_exists = SIN } SIN = { add_opinion_modifier = { target = SIA modifier = small_increase } } }
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.416 - After the General (from SIA_prayuth_premiership). 2-option consolidation choice.
+country_event = {
+	id = thailand.416
+	title = thailand.416.t
+	desc = thailand.416.d
+	picture = GFX_report_event_generic_parliament
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	# Entrench the establishment - the 2019 managed transition (historical).
+	option = {
+		name = thailand.416.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.416.a"
+		add_political_power = 75
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = { base = 5 modifier = { factor = 3 is_historical_focus_on = yes } }
+	}
+
+	# Institutionalize and step back - a civilian-facing consolidation.
+	option = {
+		name = thailand.416.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.416.b"
+		add_stability = 0.04
+		add_political_power = 25
+		ai_chance = { base = 3 modifier = { factor = 2 is_historical_focus_on = no } }
+	}
+}
+
+# thailand.417 - The Eastern Engine Turns Over (from SIA_eec_take_off). Mid-chain EEC milestone.
+# Kept in scope per kickoff-verification.md ruling 2.
+country_event = {
+	id = thailand.417
+	title = thailand.417.t
+	desc = thailand.417.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.417.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.417.a"
+		# The Eastern Engine turns over - the EEC milestone lands as real plant
+		# on the ground rather than a flat political-capital payout.
+		add_stability = 0.02
+		508 = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+############################################################
+# Generational political drift ("Two Thailands")
+# Fired from on_weekly_SIA (SIA_political_drift_update barometers).
+# thailand.363 productivity-trap protests; thailand.364 Bangkok/up-country
+# fault line; thailand.365 crackdown backfire (delayed from 363 option b).
+############################################################
+
+# thailand.363 - The Productivity Trap. The slow-growth years produced a graduate
+# generation with no ladder to climb; reform pressure boils into the streets of Bangkok.
+country_event = {
+	id = thailand.363
+	title = thailand.363.t
+	desc = thailand.363.d
+	picture = GFX_report_event_Protest_ITA_1
+	is_triggered_only = yes
+
+	trigger = { tag = SIA }
+
+	# Open the system - concede reform and let the new politics breathe.
+	option = {
+		name = thailand.363.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.363.a"
+		add_stability = -0.03
+		add_political_power = -50
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_timed_idea = { idea = SIA_youthquake days = 365 }
+		subtract_from_variable = { SIA_reform_pressure = 30 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 has_country_flag = SIA_path_reform }
+			modifier = { factor = 0.3 has_country_flag = SIA_path_royalist }
+		}
+	}
+
+	# Clamp down - order first, nationalist messaging. Buys quiet, fills the cooker.
+	option = {
+		name = thailand.363.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.363.b"
+		add_stability = 0.02
+		add_war_support = 0.02
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_to_variable = { SIA_reform_pressure = 15 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		hidden_effect = { country_event = { id = thailand.365 days = 200 random_days = 120 } }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 3 OR = { has_country_flag = SIA_path_royalist has_idea = SIA_junta_government } }
+		}
+	}
+
+	# Buy time with growth - a stimulus pivot that eases the pressure if we can afford it.
+	option = {
+		name = thailand.363.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.363.c"
+		trigger = { check_variable = { treasury > 2 } }
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		increase_economic_growth = yes
+		subtract_from_variable = { SIA_reform_pressure = 20 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		ai_chance = { base = 4 }
+	}
+}
+
+# thailand.364 - Two Thailands. The Bangkok/up-country fault line: the capital's
+# graduates pull toward Move Forward, the rice belt toward Pheu Thai populism, and
+# the palace casts itself as the one institution above the divide.
+country_event = {
+	id = thailand.364
+	title = thailand.364.t
+	desc = thailand.364.d
+	picture = GFX_report_event_generic_parliament
+	is_triggered_only = yes
+
+	trigger = { tag = SIA }
+
+	# Court the capital and the graduates - the urban future-forward vote.
+	option = {
+		name = thailand.364.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.364.a"
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_to_variable = { SIA_rural_discontent = 12 }
+		clamp_variable = { var = SIA_rural_discontent min = 0 max = 100 }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 3 has_country_flag = SIA_path_reform }
+		}
+	}
+
+	# Court the rice belt - the up-country populist machine.
+	option = {
+		name = thailand.364.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.364.b"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_to_variable = { SIA_reform_pressure = 12 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 3 has_country_flag = SIA_path_populist }
+		}
+	}
+
+	# The palace above the fray - the throne as the one unifying institution.
+	option = {
+		name = thailand.364.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.364.c"
+		add_stability = 0.03
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = {
+			base = 3
+			modifier = { factor = 3 has_country_flag = SIA_path_royalist }
+		}
+	}
+}
+
+# thailand.365 - The Crackdown's Echo. Delayed backfire from thailand.363 option b:
+# the suppressed movement returns, larger and angrier than before.
+country_event = {
+	id = thailand.365
+	title = thailand.365.t
+	desc = thailand.365.d
+	picture = GFX_report_event_Protest_ITA_1
+	is_triggered_only = yes
+
+	trigger = { tag = SIA }
+
+	option = {
+		name = thailand.365.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.365.a"
+		add_stability = -0.04
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_to_variable = { SIA_reform_pressure = 10 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		ai_chance = { base = 10 }
+	}
+}
+
+# thailand.418 - The Jungle Stirs. Prolonged misery (the misery gate) revives the
+# old Communist Party of Thailand networks in the impoverished up-country. An
+# event route into the SIA_ghosts_of_the_jungle focus path - or an NCPO-driven
+# crackdown that gives the junta street its first real foothold. Fired once from
+# on_weekly_SIA when SIA_misery_gate holds and reform pressure is high.
+country_event = {
+	id = thailand.418
+	title = thailand.418.t
+	desc = thailand.418.d
+	picture = GFX_report_event_Protest_ITA_1
+	is_triggered_only = yes
+
+	trigger = { tag = SIA }
+
+	# Let the cells organize - the red underground revives in the rice belt.
+	option = {
+		name = thailand.418.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.418.a"
+		add_stability = -0.03
+		# Grow the emerging (communist) outlook too, else the party share caps out.
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.12 }
+		set_temp_variable = { temp_outlook_increase = 0.12 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		# The radical energy stays in the system, pointing toward Ghosts of the Jungle.
+		add_to_variable = { SIA_reform_pressure = 10 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 3 has_country_flag = SIA_path_reform }
+			modifier = { factor = 0.2 OR = { has_country_flag = SIA_path_royalist has_idea = SIA_junta_government } }
+		}
+	}
+
+	# Crush the underground - a security crackdown the NCPO hardliners ride.
+	option = {
+		name = thailand.418.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.418.b"
+		add_stability = 0.02
+		add_war_support = 0.02
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		# Repression drives more underground - the cooker fills.
+		add_to_variable = { SIA_reform_pressure = 12 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 3 OR = { has_country_flag = SIA_path_royalist has_idea = SIA_junta_government } }
+		}
+	}
+
+	# Address the grievances - a stimulus pivot that drains the radical appeal.
+	option = {
+		name = thailand.418.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.418.c"
+		trigger = { check_variable = { treasury > 2 } }
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		increase_economic_growth = yes
+		subtract_from_variable = { SIA_reform_pressure = 20 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		ai_chance = { base = 3 }
+	}
+}
+
+####################################################################
+# COUP-RISK SCANDAL PULSE (populist path) - historical erosion of
+# trust in the Thaksin governments. Each raises SIA_coup_risk and
+# offers a double-down (more risk, popularity/treasury) or back-down
+# (less risk, costs popularity/PP). Fired as date-gated one-shots by
+# on_weekly_SIA. See 99_SIA_on_actions.txt.
+####################################################################
+
+# The assets-concealment case - the Constitutional Court's 8:7 acquittal (2001).
+country_event = {
+	id = thailand.74
+	title = thailand.74.t
+	desc = thailand.74.d
+	picture = GFX_report_event_political_situation
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.74.a		# Lean on the court - the verdict is bought
+		log = "[GetDateText]: [Root.GetName]: event thailand.74.a"
+		set_temp_variable = { coup_delta = 12 }
+		SIA_coup_set_risk = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = { base = 7 }
+	}
+	option = {
+		name = thailand.74.b		# Submit to the process
+		log = "[GetDateText]: [Root.GetName]: event thailand.74.b"
+		set_temp_variable = { coup_delta = 3 }
+		SIA_coup_set_risk = yes
+		add_political_power = -50
+		add_stability = 0.02
+		ai_chance = { base = 3 }
+	}
+}
+
+# Tak Bai (2004) - 85 protesters die in army custody in the deep south.
+country_event = {
+	id = thailand.75
+	title = thailand.75.t
+	desc = thailand.75.d
+	picture = GFX_report_event_generic_riot
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.75.a		# Back the generals - no inquiry
+		log = "[GetDateText]: [Root.GetName]: event thailand.75.a"
+		set_temp_variable = { coup_delta = 8 }
+		SIA_coup_set_risk = yes
+		add_stability = -0.03
+		if = {
+			limit = { has_country_flag = SIA_ds_active }
+			add_to_variable = { SIA_insurgency_intensity = 6 }
+			clamp_variable = { var = SIA_insurgency_intensity min = 0 max = 100 }
+			SIA_ds_update_tier = yes
+		}
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = thailand.75.b		# Order an inquiry - discipline the army
+		log = "[GetDateText]: [Root.GetName]: event thailand.75.b"
+		set_temp_variable = { coup_delta = 14 }
+		SIA_coup_set_risk = yes
+		add_stability = 0.02
+		add_political_power = -75
+		ai_chance = { base = 5 }
+	}
+}
+
+# CTX scanner procurement (2005) - padded airport-security contracts.
+country_event = {
+	id = thailand.76
+	title = thailand.76.t
+	desc = thailand.76.d
+	picture = GFX_report_event_economic_damage
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.76.a		# Bury the audit, bank the kickback
+		log = "[GetDateText]: [Root.GetName]: event thailand.76.a"
+		set_temp_variable = { coup_delta = 10 }
+		SIA_coup_set_risk = yes
+		set_temp_variable = { treasury_change = 4 }
+		modify_treasury_effect = yes
+		ai_chance = { base = 6 }
+	}
+	option = {
+		name = thailand.76.b		# Cancel the contract
+		log = "[GetDateText]: [Root.GetName]: event thailand.76.b"
+		set_temp_variable = { coup_delta = 2 }
+		SIA_coup_set_risk = yes
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		ai_chance = { base = 4 }
+	}
+}
+
+# Media capture (2005) - iTV pressure and the Sondhi Limthongkul campaign.
+country_event = {
+	id = thailand.77
+	title = thailand.77.t
+	desc = thailand.77.d
+	picture = GFX_report_event_political_situation
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.77.a		# Silence the critics
+		log = "[GetDateText]: [Root.GetName]: event thailand.77.a"
+		set_temp_variable = { coup_delta = 11 }
+		SIA_coup_set_risk = yes
+		add_stability = 0.02
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = { base = 6 }
+	}
+	option = {
+		name = thailand.77.b		# Let the press run
+		log = "[GetDateText]: [Root.GetName]: event thailand.77.b"
+		set_temp_variable = { coup_delta = 4 }
+		SIA_coup_set_risk = yes
+		add_political_power = -50
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = { base = 4 }
+	}
+}
+
+# "Parliamentary dictatorship" - the Feb 2005 single-party landslide.
+country_event = {
+	id = thailand.78
+	title = thailand.78.t
+	desc = thailand.78.d
+	picture = GFX_report_event_political_situation
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.78.a		# Govern unchecked
+		log = "[GetDateText]: [Root.GetName]: event thailand.78.a"
+		set_temp_variable = { coup_delta = 10 }
+		SIA_coup_set_risk = yes
+		add_political_power = 75
+		ai_chance = { base = 6 }
+	}
+	option = {
+		name = thailand.78.b		# Court the opposition - share the table
+		log = "[GetDateText]: [Root.GetName]: event thailand.78.b"
+		set_temp_variable = { coup_delta = 3 }
+		SIA_coup_set_risk = yes
+		add_political_power = -75
+		add_stability = 0.03
+		ai_chance = { base = 4 }
+	}
+}
+
+# Shin Corp / Temasek (Jan 2006) - the tax-free family sale that lit the fuse.
+country_event = {
+	id = thailand.73
+	title = thailand.73.t
+	desc = thailand.73.d
+	picture = GFX_report_event_economic_damage
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.73.a		# Pocket the billions
+		log = "[GetDateText]: [Root.GetName]: event thailand.73.a"
+		set_temp_variable = { coup_delta = 18 }
+		SIA_coup_set_risk = yes
+		set_temp_variable = { treasury_change = 10 }
+		modify_treasury_effect = yes
+		add_stability = -0.04
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.06 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = { base = 7 }
+	}
+	option = {
+		name = thailand.73.b		# Pay the tax, defuse the scandal
+		log = "[GetDateText]: [Root.GetName]: event thailand.73.b"
+		set_temp_variable = { coup_delta = 6 }
+		SIA_coup_set_risk = yes
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		add_political_power = -100
+		ai_chance = { base = 3 }
+	}
+}
+
+####################################################################
+# POLITICAL REALIGNMENT NOTIFICATIONS - fired by SIA_realign_to_*
+# (SIA_thailand_effects.txt) when a ruling-party change moves the
+# player onto a different political trunk. The flag swap + idea strip
+# already happened in the effect; these events tell the story and
+# surface the consequence to the player.
+####################################################################
+
+# Realigned onto the Thaksinist / populist trunk.
+country_event = {
+	id = thailand.420
+	title = thailand.420.t
+	desc = thailand.420.d
+	picture = GFX_report_event_political_situation
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.420.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.420.a"
+		SIA_realign_to_populist = yes
+		add_political_power = 50
+	}
+}
+
+# Realigned onto the Royalist / Network-Monarchy trunk (incl. junta installs).
+country_event = {
+	id = thailand.421
+	title = thailand.421.t
+	desc = thailand.421.d
+	picture = GFX_report_event_political_situation
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.421.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.421.a"
+		SIA_realign_to_royalist = yes
+		add_stability = 0.03
+	}
+}
+
+# Realigned onto the Reform trunk.
+country_event = {
+	id = thailand.422
+	title = thailand.422.t
+	desc = thailand.422.d
+	picture = GFX_report_event_political_situation
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.422.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.422.a"
+		SIA_realign_to_reform = yes
+		# Realign sets SIA_path_reform, so the reform leader line (Thanathorn/Pita/
+		# ...) can now install in place of the generic socialism PM the election seated.
+		set_leader_SIA = yes
+		add_political_power = 50
+	}
+}
+
+# Constitutional Court dissolution (player-driven realignment pivot). Offered by
+# the SIA_face_the_court decision: the court is poised to dissolve the ruling
+# party - accept the verdict (hand power to the largest opposition party and let
+# the realignment detector move you onto their trunk) or defy it (a risky stay).
+country_event = {
+	id = thailand.423
+	title = thailand.423.t
+	desc = thailand.423.d
+	picture = GFX_report_event_political_situation
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.423.a		# Accept the verdict - step aside
+		log = "[GetDateText]: [Root.GetName]: event thailand.423.a"
+		put_the_largest_opposition_party_in_power = yes
+		add_stability = 0.03
+		add_political_power = -50
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = thailand.423.b		# Defy the court
+		log = "[GetDateText]: [Root.GetName]: event thailand.423.b"
+		add_stability = -0.05
+		set_temp_variable = { coup_delta = 15 }
+		if = {
+			limit = { has_country_flag = SIA_path_populist NOT = { has_idea = SIA_junta_government } }
+			SIA_coup_set_risk = yes
+		}
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = { base = 5 }
+	}
+}
+
+# Realigned onto the Democrat / establishment trunk. Fired by the weekly
+# realignment detector when the Democrats (conservatism, idx 1) return to
+# government - a lost election, or the Constitutional Court handing power to the
+# opposition (thailand.423). Completes the set alongside .420/.421/.422.
+country_event = {
+	id = thailand.424
+	title = thailand.424.t
+	desc = thailand.424.d
+	picture = GFX_report_event_political_situation
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.424.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.424.a"
+		SIA_realign_to_democrat = yes
+		add_stability = 0.03
+	}
+}
+
+####################################################################
+# Nuclear deterrent: declaratory-posture choice + world news
+####################################################################
+
+# Player chooses Thailand's nuclear declaratory posture (stance law ladder).
+country_event = {
+	id = thailand.430
+	title = thailand.430.t
+	desc = thailand.430.d
+	picture = GFX_report_event_political_situation
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.430.a		# Strategic retaliation only - a minimal second-strike deterrent
+		log = "[GetDateText]: [Root.GetName]: event thailand.430.a"
+		if = {
+			limit = { has_idea = no_use_case }
+			swap_ideas = {
+				remove_idea = no_use_case
+				add_idea = strategic_retaliation_only
+			}
+		}
+		add_stability = 0.03
+		add_war_support = 0.03
+		ai_chance = { base = 70 }
+	}
+	option = {
+		name = thailand.430.b		# Tactical and strategic retaliation
+		log = "[GetDateText]: [Root.GetName]: event thailand.430.b"
+		if = {
+			limit = { has_idea = no_use_case }
+			swap_ideas = {
+				remove_idea = no_use_case
+				add_idea = tac_and_strat_retaliation
+			}
+		}
+		add_war_support = 0.05
+		ai_chance = { base = 25 }
+	}
+	option = {
+		name = thailand.430.c		# Declared first-use posture
+		log = "[GetDateText]: [Root.GetName]: event thailand.430.c"
+		if = {
+			limit = { has_idea = no_use_case }
+			swap_ideas = {
+				remove_idea = no_use_case
+				add_idea = tac_first_use_strat_retaliation
+			}
+		}
+		add_war_support = 0.05
+		add_named_threat = {
+			threat = 3
+			name = SIA_threat_thai_first_use
+		}
+		ai_chance = { base = 5 }
+	}
+}
+
+# World press reacts to Thailand crossing the nuclear threshold.
+news_event = {
+	id = thailand_news.30
+	title = thailand_news.30.t
+	desc = thailand_news.30.d
+	picture = GFX_report_event_political_situation
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = thailand_news.30.a
+		log = "[GetDateText]: [Root.GetName]: event thailand_news.30.a"
+		ai_chance = { base = 10 }
+	}
+}
+
+# National Strategy backstop (fired from 99_SIA_on_actions.txt when the economic
+# branch stalls past the mid-2010s): the government adopts IGNITE Thailand top-down.
+country_event = {
+	id = thailand.432
+	title = thailand.432.t
+	desc = thailand.432.d
+	picture = GFX_report_event_generic_read_write
+
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.432.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.432.a"
+		add_political_power = 100
+		set_temp_variable = { treasury_change = 10 }
+		modify_treasury_effect = yes
+		complete_national_focus = SIA_ignite_thailand
+		ai_chance = { base = 10 }
+	}
+	option = {
+		name = thailand.432.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.432.b"
+		add_stability = 0.05
+		add_political_power = 50
+		complete_national_focus = SIA_ignite_thailand
+		ai_chance = { base = 10 }
+	}
+}

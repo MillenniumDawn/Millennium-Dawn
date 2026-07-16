@@ -1,0 +1,2718 @@
+## Thailand: Thailand decisions
+## Deep South insurgency management + Greater Thailand militia/integration systems.
+## MD's existing Preah Vihear decisions handle the SIA<->CBD border incidents; nothing here duplicates them.
+
+SIA_deep_south_category = {
+	SIA_ds_security_operations = {
+		icon = GFX_decision_generic_civil_support
+		cost = 25
+		days_remove = 90
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_security_operations"
+			add_stability = 0.01
+			set_temp_variable = { ds_delta = -10 }
+			SIA_ds_set_intensity = yes
+			# Twin-meter: a security sweep cuts the violence but hardens local grievance.
+			set_temp_variable = { ds_grievance_delta = 3 }
+			SIA_ds_set_grievance = yes
+			custom_effect_tooltip = SIA_ds_force_track_increase_tt
+			add_to_variable = { SIA_ds_force_track = 1 }
+			random_list = {
+				70 = {
+					add_political_power = 25
+				}
+				30 = {
+					country_event = { id = thailand.152 days = 3 }
+				}
+			}
+			# A forced resolution only sticks once the grievance behind the revolt
+			# has ALSO been worked down — pure force can no longer silently end (and hide)
+			# the conflict while the South still seethes, which is what used to make the
+			# whole category vanish unexpectedly.
+			if = {
+				limit = {
+					check_variable = { SIA_ds_force_track > 3 }
+					check_variable = { SIA_insurgency_intensity < 30 }
+					check_variable = { SIA_ds_grievance < 30 }
+				}
+				set_country_flag = SIA_ds_resolved_force
+				SIA_ds_cleanup_effect = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_ds_development_fund = {
+		icon = GFX_decision_generic_construction
+		days_remove = 120
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_development_fund"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			# The fund crowds civilian industry onto consumer output — a standing +5%
+			# consumer goods burden for a year while the money flows into the provinces.
+			add_timed_idea = { idea = SIA_southern_development_levy days = 365 }
+		}
+
+		remove_effect = {
+			add_stability = 0.02
+			# Twin-meter: development money is a real concession — it cuts hard at
+			# the grievance behind the insurgency, lowering the floor the violence sits on.
+			# Grievance (floor) down first, then intensity, so the cut lands.
+			set_temp_variable = { ds_grievance_delta = -8 }
+			SIA_ds_set_grievance = yes
+			set_temp_variable = { ds_delta = -8 }
+			SIA_ds_set_intensity = yes
+			510 = {
+				add_extra_state_shared_building_slots = 1
+			}
+			custom_effect_tooltip = SIA_ds_peace_track_increase_tt
+			add_to_variable = { SIA_ds_peace_track = 1 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	# The always-on community-outreach lever (modelled on China's always-available
+	# Xinjiang toggles). Deliberately has NO days_re_enable: after its 45-day run it is
+	# immediately re-selectable, and while running it shows in-progress, so the Deep South
+	# category ALWAYS has at least one visible decision and can never empty out and vanish
+	# the way it used to when every other lever was mid-cooldown. The 50 PP price and the
+	# 45-day work period rate-limit it, and each run strains the schools budget (a temporary
+	# +5% education cost); its grievance relief is small so it eases the root cause only as a
+	# slow grind, never a one-click fix.
+	SIA_ds_hearts_and_minds = {
+		icon = GFX_decision_generic_speech
+		cost = 50
+		days_remove = 45
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_hearts_and_minds"
+			# Malay-language schooling, religious outreach and mediation are run out of the
+			# education budget — a standing +5% education cost while the programme is live.
+			add_timed_idea = { idea = SIA_hearts_minds_education_strain days = 365 }
+		}
+
+		remove_effect = {
+			add_stability = 0.01
+			# Twin-meter: steady outreach slowly eases grievance.
+			# Grievance (floor) down first, then intensity, so the cut lands.
+			set_temp_variable = { ds_grievance_delta = -3 }
+			SIA_ds_set_grievance = yes
+			set_temp_variable = { ds_delta = -5 }
+			SIA_ds_set_intensity = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_ds_emergency_decree = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 50
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_emergency_decree"
+			add_stability = 0.03
+			add_political_power = -50
+			set_temp_variable = { ds_delta = -15 }
+			SIA_ds_set_intensity = yes
+			# Twin-meter: an emergency decree slams the violence down but leaves deep
+			# resentment — the strongest single hit to grievance of any repression lever.
+			set_temp_variable = { ds_grievance_delta = 6 }
+			SIA_ds_set_grievance = yes
+			custom_effect_tooltip = SIA_ds_force_track_increase_tt
+			add_to_variable = { SIA_ds_force_track = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_ds_peace_dialogue = {
+		icon = GFX_decision_generic_speech
+		cost = 50
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+			OR = {
+				has_country_flag = SIA_path_reform
+				check_variable = { SIA_ds_peace_track > 1 }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_peace_dialogue_intensity
+				check_variable = { SIA_insurgency_intensity < 50 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_peace_dialogue"
+			country_event = { id = thailand.153 days = 10 }
+		}
+
+		remove_effect = {
+			country_event = { id = thailand.154 days = 5 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_ds_autonomy_framework = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 50
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = SIA_ds_autonomy_unlocked
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_autonomy_framework"
+			add_stability = 0.02
+			510 = {
+				add_extra_state_shared_building_slots = 1
+			}
+			# Twin-meter: a special-zone autonomy framework is a deep concession that
+			# cuts hard at the grievance behind the insurgency.
+			set_temp_variable = { ds_grievance_delta = -12 }
+			SIA_ds_set_grievance = yes
+			set_country_flag = SIA_ds_autonomy_done
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_isr_persistent_sweep = {
+		icon = GFX_decision_generic_military
+		cost = 25
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_isr_sweep_unlocked
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_isr_persistent_sweep"
+			set_temp_variable = { ds_delta = -3 }
+			SIA_ds_set_intensity = yes
+			# Twin-meter: persistent sweeps grind the violence down but feed grievance.
+			set_temp_variable = { ds_grievance_delta = 2 }
+			SIA_ds_set_grievance = yes
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_isoc_surveillance_sweep = {
+		icon = GFX_decision_generic_military
+		cost = 25
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_isoc_decisions_unlocked
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_isoc_surveillance_sweep"
+			set_temp_variable = { ds_delta = -5 }
+			SIA_ds_set_intensity = yes
+			# Twin-meter: a surveillance net cuts the violence but stokes resentment.
+			set_temp_variable = { ds_grievance_delta = 3 }
+			SIA_ds_set_grievance = yes
+			add_stability = -0.01
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_isoc_grid_disruption = {
+		icon = GFX_decision_generic_military
+		cost = 50
+		days_remove = 120
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_isoc_decisions_unlocked
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_isoc_grid_disruption"
+			set_temp_variable = { ds_delta = -8 }
+			SIA_ds_set_intensity = yes
+			# Twin-meter: a hard kinetic disruption — the biggest grievance cost of the
+			# ISOC levers.
+			set_temp_variable = { ds_grievance_delta = 4 }
+			SIA_ds_set_grievance = yes
+			add_command_power = 25
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	# Extra HEAVY-HANDED lever (China/Xinjiang "raid_militant_hideouts" analogue):
+	# cordon-and-search sweeps of the three provinces. A strong, repeatable intensity cut
+	# bought with command power and PP, but it advances the force track and hardens
+	# grievance — the brute counterpart to the always-on hearts-and-minds.
+	SIA_ds_cordon_and_search = {
+		icon = GFX_decision_generic_military
+		cost = 40
+		days_remove = 30
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		available = {
+			command_power > 25
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_cordon_and_search"
+			add_command_power = -25
+		}
+
+		remove_effect = {
+			set_temp_variable = { ds_delta = -12 }
+			SIA_ds_set_intensity = yes
+			# Heavy-handed: a big intensity cut at a real grievance cost.
+			set_temp_variable = { ds_grievance_delta = 6 }
+			SIA_ds_set_grievance = yes
+			custom_effect_tooltip = SIA_ds_force_track_increase_tt
+			add_to_variable = { SIA_ds_force_track = 1 }
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	# Extra NON-HEAVY-HANDED lever (China/Xinjiang "build_mosques" analogue):
+	# state funding for the pondok religious schools and Malay-Muslim cultural life. A
+	# treasury-bought concession that eases grievance hard and advances the peace track,
+	# with only a modest direct effect on the violence.
+	SIA_ds_fund_religious_schools = {
+		icon = GFX_decision_generic_construction
+		days_remove = 60
+		days_re_enable = 120
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_resolved_force }
+			NOT = { has_country_flag = SIA_ds_resolved_peace }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		custom_cost_text = SIA_cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_fund_religious_schools"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			add_stability = 0.01
+			# Concession: a strong cut to the root grievance.
+			# Grievance (floor) down first, then intensity, so the cut lands.
+			set_temp_variable = { ds_grievance_delta = -8 }
+			SIA_ds_set_grievance = yes
+			set_temp_variable = { ds_delta = -4 }
+			SIA_ds_set_intensity = yes
+			custom_effect_tooltip = SIA_ds_peace_track_increase_tt
+			add_to_variable = { SIA_ds_peace_track = 1 }
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	########################
+	# Deep South pressure missions (Indonesia disaster pattern).
+	# Timed missions that punish neglect of the crisis. The 3 trackless
+	# decisions above stay the player's manual tool; these add a clock.
+	########################
+
+	# Tier-3 timed pressure — fires when intensity blows past 59.
+	SIA_contain_the_crisis = {
+		icon = GFX_decision_generic_operation
+
+		activation = {
+			has_country_flag = SIA_ds_active
+			check_variable = { SIA_insurgency_intensity > 59 }
+			NOT = { has_country_flag = SIA_ds_crisis_mission_done }
+		}
+		is_good = no
+		days_mission_timeout = 180
+
+		available = {
+			check_variable = { SIA_insurgency_intensity < 60 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_contain_the_crisis"
+			set_country_flag = SIA_ds_crisis_mission_done
+			add_stability = 0.03
+			add_political_power = 50
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_contain_the_crisis"
+			set_country_flag = SIA_ds_crisis_mission_done
+			country_event = { id = thailand.155 hours = 6 }
+			set_temp_variable = { ds_delta = 10 }
+			SIA_ds_set_intensity = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	# Force a track within a year once the crisis is active and a politics path is chosen.
+	SIA_choose_a_path = {
+		icon = GFX_decision_generic_operation
+
+		activation = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_country_flag = SIA_ds_track_iron }
+			NOT = { has_country_flag = SIA_ds_track_royal }
+			NOT = { has_country_flag = SIA_ds_track_dialogue }
+			OR = {
+				has_country_flag = SIA_path_populist
+				has_country_flag = SIA_path_royalist
+				has_country_flag = SIA_path_reform
+				has_country_flag = SIA_path_democrat
+			}
+		}
+		is_good = no
+		days_mission_timeout = 365
+
+		available = {
+			OR = {
+				has_country_flag = SIA_ds_track_iron
+				has_country_flag = SIA_ds_track_royal
+				has_country_flag = SIA_ds_track_dialogue
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_choose_a_path"
+			add_stability = 0.02
+			add_political_power = 25
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_choose_a_path"
+			add_stability = -0.03
+			add_political_power = -50
+			country_event = { id = thailand.155 hours = 6 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+}
+
+SIA_asean_diplomacy_category = {
+	SIA_asean_rotating_summit = {
+		icon = GFX_decision_generic_speech
+		cost = 50
+		days_remove = 120
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_idea = SIA_bamboo_diplomacy		# SIA_asean_chair merged → SIA_bamboo_diplomacy
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_asean_rotating_summit"
+			# Hosting the summit is not free — security, venues, the motorcades.
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			add_stability = 0.02
+			add_political_power = 25
+			# 180 days in the regional spotlight: cheaper relations and faster goodwill
+			# while Bangkok holds the gavel.
+			add_timed_idea = { idea = SIA_asean_chair_spotlight days = 180 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_asean_mediate_myanmar = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_remove = 90
+		days_re_enable = 270
+		fire_only_once = no
+
+		visible = {
+			has_idea = SIA_bamboo_diplomacy		# SIA_asean_chair merged → SIA_bamboo_diplomacy
+			country_exists = BRM
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_asean_mediate_myanmar"
+			if = {
+				limit = { country_exists = BRM }
+				add_opinion_modifier = { target = BRM modifier = medium_increase }
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = BRM }
+			set_temp_variable = { influence_target = SIA }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_asean_free_trade_push = {
+		icon = GFX_decision_generic_construction
+		cost = 50
+		days_remove = 180
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_idea = SIA_bamboo_diplomacy		# SIA_asean_chair merged → SIA_bamboo_diplomacy
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_asean_free_trade_push"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			# The receipts no longer arrive as one cheque: a smaller settlement now, then
+			# a 730-day export-led tailwind (trade standing + factory competitiveness)
+			# against a transitional consumer-goods adjustment. Re-runnable to sustain it.
+			set_temp_variable = { treasury_change = 6 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_aec_tailwind days = 730 }
+			add_political_power = 25
+			if = {
+				limit = { country_exists = MAY }
+				add_opinion_modifier = { target = MAY modifier = medium_increase }
+			}
+			if = {
+				limit = { country_exists = IND }
+				add_opinion_modifier = { target = IND modifier = medium_increase }
+			}
+			if = {
+				limit = { country_exists = VIE }
+				add_opinion_modifier = { target = VIE modifier = medium_increase }
+			}
+			if = {
+				limit = { country_exists = PHI }
+				add_opinion_modifier = { target = PHI modifier = medium_increase }
+			}
+			if = {
+				limit = { country_exists = SIN }
+				add_opinion_modifier = { target = SIN modifier = medium_increase }
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+}
+
+SIA_economy_category = {
+	SIA_family_holdings = {
+		icon = GFX_decision_generic_economy
+		days_remove = 120
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_dynasty_holdings_unlocked
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_family_holdings"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			set_temp_variable = { treasury_change = 6 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = SIA_coup_risk_increase_tt
+			add_to_variable = { SIA_coup_risk = 5 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_royal_projects = {
+		icon = GFX_decision_generic_construction
+		days_remove = 90
+		days_re_enable = 270
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_royal_projects_unlocked
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		custom_cost_text = SIA_cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_royal_projects"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			add_relative_party_popularity = yes
+			# Sustained rural development: resource extraction + a steadier countryside
+			# for 540 days, against the consumer-goods draw of the works themselves.
+			add_timed_idea = { idea = SIA_royal_development_lands days = 540 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_medical_tourism_campaign = {
+		icon = GFX_decision_generic_research
+		days_remove = 90
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_idea = SIA_medical_hub_idea
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		custom_cost_text = SIA_cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_medical_tourism_campaign"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			add_stability = 0.01
+		}
+
+		remove_effect = {
+			# A sustained tourism wave rather than a one-off cheque: trade receipts and
+			# inbound patients build over 365 days, with hospital capacity diverted from
+			# locals (consumer goods). Re-runnable to keep the campaign alive.
+			add_timed_idea = { idea = SIA_medical_tourism_boom days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_eec_investment_phase = {
+		icon = GFX_decision_generic_construction
+		days_remove = 120
+		days_re_enable = 360
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_eec_active
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.9 }
+		}
+		custom_cost_text = SIA_cost_4_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_eec_investment_phase"
+			# Bond-financed tranche: £4 cash up front, the balance raised as debt the
+			# kingdom services for years afterward — the lasting cost of moving fast.
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			set_temp_variable = { debt_change = 5 }
+			modify_debt_effect = yes
+		}
+
+		remove_effect = {
+			508 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			506 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			509 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			# Active build phase: faster construction and factory output for a year.
+			add_timed_idea = { idea = SIA_eec_construction_boom days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_canal_tolls = {
+		icon = GFX_decision_generic_economy
+		days_remove = 180
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_kra_canal_tolls_unlocked
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_canal_tolls"
+			# Patron-aware toll yield. Code-review S2: the lease concession
+			# is checked FIRST — while Beijing holds the operating lease it skims the
+			# take (+3) even if a neutral-transit regime is also declared; only without
+			# the lease does the neutral-transit regime draw full traffic (+9).
+			if = {
+				limit = { has_idea = SIA_kra_lease_concession }
+				set_temp_variable = { treasury_change = 3 }
+			}
+			else_if = {
+				limit = { has_idea = SIA_kra_neutral_transit }
+				set_temp_variable = { treasury_change = 9 }
+			}
+			else = {
+				set_temp_variable = { treasury_change = 6 }
+			}
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 15
+		}
+	}
+
+	SIA_asean_arms_export = {
+		icon = GFX_decision_generic_military
+		days_remove = 365
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_arms_export_unlocked
+		}
+
+		available = {
+			has_country_flag = SIA_arms_export_unlocked
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_asean_arms_export remove"
+			# Down-payment on the contract, then a year-long order book: full arms lines
+			# and trade standing, paid for in the diplomatic friction of arming the region.
+			set_temp_variable = { treasury_change = 4 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_arms_export_orders days = 365 }
+		}
+
+		ai_will_do = {
+			base = 15
+		}
+	}
+
+	# §2.5 / CAP-4 — defense-industrial export engine, unlocked by the N4 focus
+	# SIA_defense_export_office (which sets SIA_defense_exports_active). Distinct from the
+	# arms_exporter-path SIA_asean_arms_export above: faster 180-day cycle, costs political
+	# power, pays a flat treasury credit. The Arsenal as the "money is a pillar" engine.
+	SIA_defense_export_contract = {
+		icon = GFX_decision_generic_military
+		days_remove = 180
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_defense_exports_active
+		}
+
+		available = {
+			has_country_flag = SIA_defense_exports_active
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		cost = 75
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_defense_export_contract"
+			# Hard export revenue up front, plus a year-long order book that keeps the
+			# Arsenal's lines running — refreshed (180-day re-enable) each new contract.
+			set_temp_variable = { treasury_change = 3 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_arms_export_orders days = 365 }
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 2
+				check_variable = { political_power > 150 }
+			}
+		}
+	}
+}
+
+SIA_kra_category = {
+	SIA_strait_patrol = {
+		icon = GFX_decision_generic_military
+		cost = 25
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_strait_patrol_unlocked
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strait_patrol remove"
+			navy_experience = 25
+			add_timed_idea = { idea = SIA_strait_patrol_posture days = 90 }
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+}
+
+########################
+# / CAP-7 — phased Kra construction missions (Indonesia disaster
+# pattern). Each phase auto-completes once TWO gates pass: a minimum build time
+# AND the cash to pay the phase. The min-build gate is the timed country flag
+# SIA_kra_phase_timer (set for 180 days whenever a phase begins); the available
+# block blocks completion while it is held, so a temporarily borrowed treasury
+# can no longer rush a phase. On completion a phase pays per-phase upkeep,
+# advances SIA_kra_progress +33, and bumps SIA_kra_phase. A timeout routes to
+# the cost-overrun event thailand.383 WITHOUT touching SIA_kra_phase, so the
+# mission re-arms itself (the 180-day timer has already lapsed by the 270-day
+# timeout, so a re-armed phase is not forced to wait again).
+# Phase 3 is terminal: it bumps SIA_kra_phase to 4 (a value no activation
+# matches) so the mission cannot re-arm and endlessly re-fire thailand.384 /
+# re-drain the treasury once the canal is ready.
+# The Deep-South sabotage hook (thailand.385) fires only when SIA_ds_active.
+########################
+SIA_kra_construction = {
+	SIA_kra_phase_1 = {
+		icon = GFX_decision_generic_construction
+
+		activation = {
+			has_country_flag = SIA_kra_feasibility_open
+			check_variable = { SIA_kra_phase = 1 }
+		}
+		is_good = no
+		# No fire_only_once — on timeout the mission must re-arm
+		# (activation SIA_kra_phase = N stays true). Double-completion is impossible
+		# because complete_effect advances SIA_kra_phase, making activation false.
+		days_mission_timeout = 270
+
+		# A real megaproject price tag. Phase costs escalate 20 -> 30 -> 40 (≈90bn
+		# total across the canal's lifespan, on top of patron upkeep and any cost-overrun
+		# events), and the gate now requires actually being able to afford the phase, not
+		# just holding the small upkeep reserve.
+		available = {
+			# Minimum build time. The phase cannot auto-complete while the
+			# 180-day timer set at phase start is still held, so a temporarily
+			# borrowed treasury can no longer rush the works.
+			NOT = { has_country_flag = SIA_kra_phase_timer }
+			check_variable = { treasury > SIA_kra_upkeep }
+			check_variable = { treasury > 20 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_kra_phase_1"
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_to_variable = { SIA_kra_progress = 33 }
+			set_variable = { SIA_kra_phase = 2 }
+			set_country_flag = { flag = SIA_kra_phase_timer value = 1 days = 180 }
+			country_event = { id = thailand.382 days = 3 }
+			if = {
+				limit = { has_country_flag = SIA_ds_active }
+				country_event = { id = thailand.385 days = 30 }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_kra_phase_1"
+			country_event = { id = thailand.383 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_kra_phase_2 = {
+		icon = GFX_decision_generic_construction
+
+		activation = {
+			has_country_flag = SIA_kra_feasibility_open
+			check_variable = { SIA_kra_phase = 2 }
+		}
+		is_good = no
+		# No fire_only_once — on timeout the mission must re-arm
+		# (activation SIA_kra_phase = N stays true). Double-completion is impossible
+		# because complete_effect advances SIA_kra_phase, making activation false.
+		days_mission_timeout = 270
+
+		available = {
+			NOT = { has_country_flag = SIA_kra_phase_timer }
+			check_variable = { treasury > SIA_kra_upkeep }
+			check_variable = { treasury > 30 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_kra_phase_2"
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+			add_to_variable = { SIA_kra_progress = 33 }
+			set_variable = { SIA_kra_phase = 3 }
+			set_country_flag = { flag = SIA_kra_phase_timer value = 1 days = 180 }
+			country_event = { id = thailand.382 days = 3 }
+			if = {
+				limit = { has_country_flag = SIA_ds_active }
+				country_event = { id = thailand.385 days = 30 }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_kra_phase_2"
+			country_event = { id = thailand.383 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_kra_phase_3 = {
+		icon = GFX_decision_generic_construction
+
+		activation = {
+			has_country_flag = SIA_kra_feasibility_open
+			check_variable = { SIA_kra_phase = 3 }
+		}
+		is_good = no
+		# No fire_only_once — on timeout the mission must re-arm
+		# (activation SIA_kra_phase = N stays true). Double-completion is impossible
+		# because complete_effect advances SIA_kra_phase, making activation false.
+		days_mission_timeout = 270
+
+		available = {
+			NOT = { has_country_flag = SIA_kra_phase_timer }
+			check_variable = { treasury > SIA_kra_upkeep }
+			check_variable = { treasury > 40 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_kra_phase_3"
+			set_temp_variable = { treasury_change = -40 }
+			modify_treasury_effect = yes
+			set_variable = { SIA_kra_progress = 100 }
+			set_country_flag = SIA_kra_ready_to_open
+			# Terminal: phase 4 matches no activation, so this mission cannot
+			# re-arm and re-fire thailand.384 / re-drain the treasury. The capstone
+			# focus SIA_two_oceans_one_kingdom then clears SIA_kra_feasibility_open.
+			set_variable = { SIA_kra_phase = 4 }
+			country_event = { id = thailand.384 days = 3 }
+			if = {
+				limit = { has_country_flag = SIA_ds_active }
+				country_event = { id = thailand.385 days = 30 }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_kra_phase_3"
+			country_event = { id = thailand.383 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+}
+
+SIA_greater_thailand_category = {
+	SIA_arm_shan_militias = {
+		icon = GFX_decision_generic_military
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_thai_yai
+			country_exists = SHN
+			NOT = { check_variable = { SIA_shan_militia_support > 59 } }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.9 }
+		}
+		custom_cost_text = SIA_cost_1_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_arm_shan_militias"
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			add_to_variable = { SIA_shan_militia_support = 20 }
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -2000
+			}
+			add_equipment_to_stockpile = {
+				type = cnc_equipment
+				amount = -200
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_shan_client_state = {
+		icon = GFX_decision_generic_form_nation
+		cost = 100
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_thai_yai
+			country_exists = SHN
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_shan_militia_support
+				check_variable = { SIA_shan_militia_support > 59 }
+			}
+			NOT = { has_war_with = SHN }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_shan_client_state"
+			SHN = { country_event = { id = thailand.273 days = 1 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = SHN
+				add_opinion_modifier = { target = BRM modifier = large_decrease }
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_integrate_shan = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_suwannaphum
+			NOT = { has_country_flag = SIA_integrated_shan }
+		}
+
+		available = {
+			controls_state = 498
+			controls_state = 930
+			has_war = no
+			498 = {
+				compliance > 80
+				resistance < 10
+			}
+			930 = {
+				compliance > 80
+				resistance < 10
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_integrate_shan"
+			country_event = { id = thailand.106 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_integrate_laos = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_suwannaphum
+			NOT = { has_country_flag = SIA_integrated_laos }
+		}
+
+		available = {
+			controls_state = 517
+			if = {
+				limit = { has_country_flag = SIA_all_laos_claimed }
+				controls_state = 515
+				controls_state = 516
+				515 = { compliance > 80 resistance < 10 }
+				516 = { compliance > 80 resistance < 10 }
+			}
+			has_war = no
+			517 = {
+				compliance > 80
+				resistance < 10
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_integrate_laos"
+			country_event = { id = thailand.107 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_integrate_cambodia = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_suwannaphum
+			NOT = { has_country_flag = SIA_integrated_cambodia }
+		}
+
+		available = {
+			controls_state = 512
+			controls_state = 513
+			has_war = no
+			512 = {
+				compliance > 80
+				resistance < 10
+			}
+			513 = {
+				compliance > 80
+				resistance < 10
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_integrate_cambodia"
+			country_event = { id = thailand.108 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_integrate_malaya = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_suwannaphum
+			NOT = { has_country_flag = SIA_integrated_malaya }
+		}
+
+		available = {
+			controls_state = 529
+			if = {
+				limit = { has_country_flag = SIA_full_1909_demand }
+				controls_state = 528
+				528 = { compliance > 80 resistance < 10 }
+			}
+			has_war = no
+			529 = {
+				compliance > 80
+				resistance < 10
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_integrate_malaya"
+			country_event = { id = thailand.109 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+}
+
+SIA_reform_gambits_category = {
+	SIA_retry_section_112 = {
+		icon = GFX_decision_category_generic_political_actions
+		cost = 100
+		days_remove = 60
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = SIA_path_reform
+			has_country_flag = SIA_112_retry_available
+			NOT = { has_country_flag = SIA_112_amended }
+		}
+
+		available = {
+			has_completed_focus = SIA_amend_section_112
+			NOT = { has_country_flag = SIA_112_amended }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_retry_section_112 remove"
+			country_event = { id = thailand.10 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+SIA_political_gambits_category = {
+
+	# (b) Cabinet Reshuffle — any path; −50 PP; removes one negative political idea
+	SIA_cabinet_reshuffle = {
+		icon = GFX_decision_generic_political_actions
+		cost = 50
+		days_remove = 1
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			NOT = { has_idea = SIA_junta_government }
+			OR = {
+				has_country_flag = SIA_path_populist
+				has_country_flag = SIA_path_royalist
+				has_country_flag = SIA_path_reform
+			}
+		}
+
+		available = {
+			OR = {
+				has_idea = SIA_uncle_tu_fatigue
+				has_idea = SIA_judicialization
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_cabinet_reshuffle"
+			add_political_power = -50
+		}
+
+		remove_effect = {
+			if = {
+				limit = { has_idea = SIA_uncle_tu_fatigue }
+				remove_ideas = SIA_uncle_tu_fatigue
+			}
+			else_if = {
+				limit = { has_idea = SIA_judicialization }
+				remove_ideas = SIA_judicialization
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	# (c) Lèse-Majesté Lever — royalist only; −5% opp pop (index 3); +SIA_reform_radicalization; −25 PP
+	SIA_lese_majeste_lever = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 25
+		days_remove = 1
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_royalist
+			NOT = { has_idea = SIA_junta_government }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_lese_majeste_lever"
+			add_political_power = -25
+			# Suppress reform/opposition party (index 3 = Move Forward / reform)
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			# Increment radicalization counter (forward hook for Wave 3)
+			if = {
+				limit = { has_variable = SIA_reform_radicalization }
+				add_to_variable = { SIA_reform_radicalization = 1 }
+			}
+			else = {
+				set_variable = { SIA_reform_radicalization = 1 }
+			}
+			set_country_flag = SIA_reform_radicalized
+			# The lid goes down but the grievance does not vent: a crackdown fills the
+			# reform-pressure cooker (SIA_political_drift_update -> thailand.363).
+			add_to_variable = { SIA_reform_pressure = 10 }
+			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = {
+				factor = 2
+				has_country_flag = SIA_reform_radicalized
+			}
+		}
+	}
+
+	# (e) Engage the Reform Movement — the vent valve: spend political capital to cool the
+	# reform-pressure cooker, but bringing the movement inside the tent legitimises it
+	# (a small Move Forward bump). The deliberate counterpart to the Lèse-Majesté Lever.
+	SIA_engage_reform_movement = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 100
+		days_remove = 1
+		days_re_enable = 200
+		fire_only_once = no
+
+		visible = {
+			NOT = { has_idea = SIA_junta_government }
+			OR = {
+				has_country_flag = SIA_path_populist
+				has_country_flag = SIA_path_royalist
+				has_country_flag = SIA_path_reform
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_reform_pressure
+				check_variable = { SIA_reform_pressure > 20 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_engage_reform_movement"
+			subtract_from_variable = { SIA_reform_pressure = 25 }
+			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+			add_stability = 0.02
+			# Bringing them inside the tent legitimises the party.
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 3 check_variable = { SIA_reform_pressure > 55 } }
+			modifier = { factor = 2 has_country_flag = SIA_path_reform }
+		}
+	}
+
+	# (f) Rural Development Package — village funds (treasury) to cool up-country discontent
+	# and slow the Pheu Thai populist drift.
+	SIA_rural_development_package = {
+		icon = GFX_decision_generic_economy
+		days_remove = 1
+		days_re_enable = 200
+		fire_only_once = no
+
+		visible = {
+			NOT = { has_idea = SIA_junta_government }
+			OR = {
+				has_country_flag = SIA_path_populist
+				has_country_flag = SIA_path_royalist
+				has_country_flag = SIA_path_reform
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_rural_discontent
+				check_variable = { SIA_rural_discontent > 20 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_rural_development_package"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			# Cool the up-country pressure cooker behind the populist drift.
+			subtract_from_variable = { SIA_rural_discontent = 25 }
+			clamp_variable = { var = SIA_rural_discontent min = 0 max = 100 }
+			# And make the money tell: a steadier countryside and a direct dent in the
+			# Pheu Thai populist vote it feeds (neutral_Social, idx 18).
+			add_stability = 0.02
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 3 check_variable = { SIA_rural_discontent > 55 } }
+			modifier = { factor = 2 has_country_flag = SIA_path_populist }
+		}
+	}
+}
+
+## Coup-watch — the army's patience meter (SIA_coup_risk 0-100). Populist
+## quick-wins (telecom favours, padded school contracts, family graft) buy
+## money and popularity now but raise coup risk; the management levers buy it
+## back down at a cost. Cross 85 and the SIA_reassure_high_command mission
+## arms — defuse it or the tanks roll (thailand.70).
+## Branch E (Democrat Establishment) — the constituency machine. A repeatable
+## party-opinion lever: the Democrats convert governing capital (stability) into
+## votes (idx 1 popularity). The "gold standard" interest-group reward.
+SIA_democrat_machine_category = {
+
+	# The grind. Cheap, frequent, tiny - the unglamorous retail politics that just
+	# barely keeps the party's nose above water. On its own it does not hold the
+	# tide; it has to be paired with everything else.
+	SIA_constituency_machine = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 35
+		days_re_enable = 60
+		fire_only_once = no
+
+		visible = { has_country_flag = SIA_democrat_machine_active }
+		available = { has_country_flag = SIA_democrat_machine_active }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_constituency_machine"
+			add_stability = -0.01
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -4 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 6 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	# Out-bid the village fund in one swing province at a time. Small treasury
+	# drain, small dent in Pheu Thai.
+	SIA_match_the_populists = {
+		icon = GFX_decision_generic_economy
+		cost = 25
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = { has_country_flag = SIA_democrat_machine_active }
+		available = { has_country_flag = SIA_democrat_machine_active }
+
+		custom_cost_trigger = { check_variable = { treasury > 2.9 } }
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_match_the_populists"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_stability = 0.01
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.01 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -6 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 5 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	# Fight the narrative: rebut the populist line in the press and the provinces.
+	# Pure PP, small effect.
+	SIA_counter_messaging = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 45
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = { has_country_flag = SIA_democrat_machine_active }
+		available = { has_country_flag = SIA_democrat_machine_active }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_counter_messaging"
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.01 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -6 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 5 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	# The heavy weapon: graft cases and the courts. Bigger hit, longer reload, and
+	# the brawl costs the country stability.
+	SIA_expose_corruption = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 55
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = { has_country_flag = SIA_democrat_machine_active }
+		available = { has_country_flag = SIA_democrat_machine_active }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_expose_corruption"
+			add_stability = -0.02
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -15 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 4 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 55 } } }
+	}
+
+	# Buy a parliamentary firewall. Sizeable one-shot relief, but the coalition's
+	# price is a standing drag (SIA_coalition_price), so it cannot just be spammed.
+	SIA_broaden_the_coalition = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 70
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = { has_country_flag = SIA_democrat_machine_active }
+		available = {
+			has_country_flag = SIA_democrat_machine_active
+			NOT = { has_idea = SIA_broad_coalition_idea }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_broaden_the_coalition"
+			add_timed_idea = { idea = SIA_broad_coalition_idea days = 365 }
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -25 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 3 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 65 } } }
+	}
+
+}
+
+SIA_coup_watch_category = {
+
+	####################################################################
+	# RISK-RAISING — populist quick-wins (instant reward, +coup risk)
+	####################################################################
+
+	# Shin Corp tax holiday — the corrupt telecom favour to family business.
+	SIA_shin_corp_tax_holiday = {
+		icon = GFX_decision_generic_economy
+		cost = 50
+		days_re_enable = 540
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_shin_corp_tax_holiday"
+			set_temp_variable = { treasury_change = 8 }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 10 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	# Padded school-milk contract — popularity in the villages, graft for cronies.
+	SIA_school_milk_contract = {
+		icon = GFX_decision_generic_political_actions
+		cost = 40
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_school_milk_contract"
+			add_stability = 0.03
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 8 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	# One Tablet Per Child — a flashy, popular procurement riddled with kickbacks.
+	SIA_otpc_tablet_procurement = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 45
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_otpc_tablet_procurement"
+			# A flashy, popular modernization drive: it buys real political capital
+			# and a wave of popularity (the kickbacks fund the party machine), at the
+			# price of the generals' suspicion.
+			add_political_power = 75
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 8 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	# Family business favours — crony capitalism: money now, suspicion later.
+	SIA_family_business_favors = {
+		icon = GFX_decision_generic_economy
+		cost = 40
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_family_business_favors"
+			set_temp_variable = { treasury_change = 6 }
+			modify_treasury_effect = yes
+			add_political_power = 50
+			add_stability = -0.02
+			set_temp_variable = { coup_delta = 10 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	####################################################################
+	# RISK-LOWERING — buy the generals' patience back (costly)
+	####################################################################
+
+	# Court the generals — discreet budgets and promotions to keep them sweet.
+	SIA_court_the_generals = {
+		icon = GFX_decision_generic_military
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		custom_cost_text = SIA_cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_court_the_generals"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			add_command_power = 25
+			set_temp_variable = { coup_delta = -15 }
+			SIA_coup_set_risk = yes
+			# Discreet budgets and promotions are graft by another name. There is a 15%
+			# chance the favours backfire, either deepening corruption or padding the
+			# payroll with a year of inflated officer wages.
+			random_list = {
+				85 = { }
+				15 = {
+					random_list = {
+						50 = { increase_corruption = yes }
+						50 = { add_timed_idea = { idea = SIA_army_wage_inflation days = 365 } }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 3
+				check_variable = { SIA_coup_risk > 60 }
+			}
+		}
+	}
+
+	# Military budget boost — a hardware splurge that calms the brass but starves
+	# the civilian economy.
+	SIA_military_budget_boost = {
+		icon = GFX_decision_generic_military
+		days_re_enable = 480
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_military_budget_boost"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_stability = -0.01
+			set_temp_variable = { coup_delta = -12 }
+			SIA_coup_set_risk = yes
+			# A no-questions-asked procurement splurge invites skim and waste. There is a
+			# 15% chance it backfires, either deepening corruption or locking in a year of
+			# inflated military wages.
+			random_list = {
+				85 = { }
+				15 = {
+					random_list = {
+						50 = { increase_corruption = yes }
+						50 = { add_timed_idea = { idea = SIA_army_wage_inflation days = 365 } }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 3
+				check_variable = { SIA_coup_risk > 70 }
+			}
+		}
+	}
+
+	# Anti-corruption gesture — throw a crony to the prosecutors. Costs you the
+	# popularity the graft bought, but reassures the officer corps.
+	SIA_anti_corruption_gesture = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 100
+		days_re_enable = 540
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_anti_corruption_gesture"
+			add_stability = 0.01
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.03 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = -12 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 2
+				check_variable = { SIA_coup_risk > 60 }
+			}
+		}
+	}
+
+	# Promote loyalists — reshuffle the high command toward dependable hands.
+	SIA_promote_loyalists = {
+		icon = GFX_decision_generic_political_actions
+		cost = 125
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_promote_loyalists"
+			add_command_power = 25
+			set_temp_variable = { coup_delta = -10 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 3
+				check_variable = { SIA_coup_risk > 70 }
+			}
+		}
+	}
+
+	####################################################################
+	# THE COUNTDOWN — armed at 85+, defuse below 70 or the tanks roll.
+	####################################################################
+	SIA_reassure_high_command = {
+		icon = GFX_decision_generic_operation
+
+		activation = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+			check_variable = { SIA_coup_risk > 84 }
+		}
+		is_good = no
+		days_mission_timeout = 90
+
+		# Completed the moment coup risk is pulled back below 70.
+		available = {
+			check_variable = { SIA_coup_risk < 70 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_reassure_high_command"
+			add_stability = 0.02
+			add_political_power = 50
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_reassure_high_command"
+			country_event = { id = thailand.70 hours = 6 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+}
+
+## Communist path: village committee decisions
+SIA_red_path_category = {
+
+	# Spread the Flame — Isaan (state 506)
+	SIA_spread_flame_isaan = {
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = { original_tag = SIA }
+
+		visible = {
+			has_country_flag = SIA_village_committees_unlocked
+		}
+
+		available = {
+			has_country_flag = SIA_village_committees_unlocked
+			controls_state = 506
+		}
+
+		days_remove = 90
+		days_re_enable = 90
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision SIA_spread_flame_isaan remove"
+			# Grow the emerging (communist) outlook too, else the party share caps out.
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			add_stability = -0.02
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	# Spread the Flame — North (state 507)
+	SIA_spread_flame_north = {
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = { original_tag = SIA }
+
+		visible = {
+			has_country_flag = SIA_village_committees_unlocked
+		}
+
+		available = {
+			has_country_flag = SIA_village_committees_unlocked
+			controls_state = 507
+		}
+
+		days_remove = 90
+		days_re_enable = 90
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision SIA_spread_flame_north remove"
+			# Grow the emerging (communist) outlook too, else the party share caps out.
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			add_stability = -0.02
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	# Politburo Mass Education Campaign — all SIA states
+	SIA_mass_education_campaign = {
+		icon = GFX_decision_generic_propaganda
+
+		allowed = { original_tag = SIA }
+
+		visible = {
+			has_country_flag = SIA_village_committees_unlocked
+			has_completed_focus = SIA_isaan_soviets
+		}
+
+		available = {
+			has_country_flag = SIA_village_committees_unlocked
+		}
+
+		cost = 50
+
+		days_remove = 180
+		days_re_enable = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision SIA_mass_education_campaign remove"
+			# Grow the emerging (communist) outlook too, else the party share caps out.
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			add_stability = -0.02
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			base = 4
+		}
+	}
+}
+
+SIA_realm_diplomacy_category = {
+	SIA_counter_chinese_influence = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_remove = 180
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_realm_decisions_unlocked
+		}
+
+		available = {
+			has_country_flag = SIA_realm_decisions_unlocked
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_counter_chinese_influence"
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = SIA }
+			set_temp_variable = { percent_change = -10 }
+			change_influence_percentage = yes
+			add_political_power = 25
+			add_opinion_modifier = { target = CHI modifier = medium_decrease }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_counter_indian_influence = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_remove = 180
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_realm_decisions_unlocked
+		}
+
+		available = {
+			has_country_flag = SIA_realm_decisions_unlocked
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_counter_indian_influence"
+			set_temp_variable = { tag_index = RAJ }
+			set_temp_variable = { influence_target = SIA }
+			set_temp_variable = { percent_change = -10 }
+			change_influence_percentage = yes
+			add_political_power = 25
+			add_opinion_modifier = { target = RAJ modifier = medium_decrease }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+## Economy / Energy decisions
+SIA_economy_wave3_category = {
+
+	SIA_renegotiate_china_contracts = {
+		icon = GFX_decision_generic_economy
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_eec_take_off
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_renegotiate_china_contracts"
+			country_event = { id = thailand.313 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_us_security_review = {
+		icon = GFX_decision_generic_military
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_treaty_ally
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_us_security_review"
+			country_event = { id = thailand.314 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_strategic_fuel_reserve = {
+		icon = GFX_decision_generic_construction
+		visible = {
+			date > 2007.1.1
+		}
+
+		days_remove = 365
+		days_re_enable = 365
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strategic_fuel_reserve"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			add_timed_idea = { idea = SIA_fuel_reserves days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_anti_corruption_drive = {
+		icon = GFX_decision_generic_political_discourse
+		visible = {
+			date > 2005.1.1
+		}
+
+		cost = 75
+		days_remove = 365
+		days_re_enable = 365
+		fire_only_once = no
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_anti_corruption_drive"
+			decrease_corruption = yes
+			add_stability = 0.02
+			# The clean-up snarls procurement and rattles patronage networks for 90 days
+			# before the long-run dividend settles in — clean contracting is slower first.
+			add_timed_idea = { idea = SIA_purge_disruption days = 90 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_tax_modernization = {
+		icon = GFX_decision_generic_economy
+		fire_only_once = yes
+		# B-1: the old NOT={has_idea=SIA_clean_revenue} guard was
+		# redirected to SIA_debt_free_credibility by the merge — but that idea is also
+		# granted by the mainstream SIA_repay_the_imf focus, which would permanently lock
+		# IMF-repayment players out of this decision. fire_only_once=yes already prevents
+		# any double-run, so the guard is removed.
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 4.9 }
+		}
+		custom_cost_text = SIA_cost_5_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_tax_modernization"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_ideas = SIA_debt_free_credibility		# SIA_clean_revenue merged → SIA_debt_free_credibility
+			# Tighter collection is a permanent +3 effective corporate-tax rate: lasting
+			# revenue, at a standing law-attitude cost (modify_corporate_tax_rate_effect
+			# fires the tax law-change attitude hit automatically).
+			set_temp_variable = { corp_change = 3 }
+			modify_corporate_tax_rate_effect = yes
+			508 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	## RTAF recapitalization
+	SIA_gripen_ef_upgrade = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+
+		visible = {
+			date > 2025.8.1
+			has_completed_focus = SIA_gripen_ef_program
+		}
+
+		available = {
+			NOT = { has_country_flag = SIA_gripen_ef_contracted }
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_gripen_ef_upgrade"
+			set_country_flag = SIA_gripen_ef_contracted
+			add_tech_bonus = { name = SIA_gripen_ef_upgrade_bonus bonus = 0.5 uses = 1 category = CAT_air_eqp }
+			air_experience = 25
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+}
+
+####################################################################
+# PLAYER-DRIVEN REALIGNMENT — deliberately change the ruling party.
+# These never swap the focus trunk directly; they change who governs,
+# and the weekly realignment detector (99_SIA_on_actions.txt) then
+# moves the player onto the new ruling party's trunk and strips the
+# outgoing party's signature ideas.
+####################################################################
+SIA_realignment_category = {
+
+	# (A snap-election lever is intentionally NOT provided here: the base game's
+	# "Hold new extraordinary elections" decision already covers going to the
+	# polls, and the weekly realignment detector catches whatever party it
+	# returns to power.)
+
+	# Strike a palace bargain: bring the network-monarchy establishment (House of
+	# Mahidol, idx 23) into power as a coalition partner — a negotiated pivot
+	# toward the Royalist trunk without a coup. Visible only when not already
+	# royalist.
+	SIA_palace_bargain = {
+		icon = GFX_decision_generic_political_actions
+		cost = 100
+		days_re_enable = 730
+		fire_only_once = no
+
+		visible = {
+			NOT = { has_country_flag = SIA_path_royalist }
+		}
+
+		available = {
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_palace_bargain_support
+				check_variable = { party_pop_array^23 > 0.15 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_palace_bargain"
+			set_temp_variable = { rul_party_temp = 23 }
+			change_ruling_party_effect = yes
+			update_party_name = yes
+			hidden_effect = { set_leader_SIA = yes }
+			add_stability = 0.03
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	# Face the Constitutional Court: invite the recurring Thai pattern of judicial
+	# dissolution. Fires thailand.423 — accept the verdict (step aside, realign to
+	# the opposition) or defy it (stay, at the cost of stability and coup risk).
+	SIA_face_the_court = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 50
+		days_re_enable = 1095
+		fire_only_once = no
+
+		available = {
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_face_the_court"
+			country_event = { id = thailand.423 days = 2 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+}
+
+####################################################################
+# COUP-WATCH ADDITION — another repeatable risk-raising quick-win.
+# (Second SIA_coup_watch_category block; HOI4 merges decisions sharing
+# a category key.)
+####################################################################
+SIA_coup_watch_category = {
+
+	# Pack the Senate — entrench the ruling party by stuffing the upper house and
+	# the independent agencies. A powerful consolidation that the brass reads as a
+	# naked power grab.
+	SIA_pack_the_senate = {
+		icon = GFX_decision_generic_political_actions
+		cost = 60
+		days_re_enable = 540
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pack_the_senate"
+			add_political_power = 100
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 14 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 4
+		}
+	}
+
+	# The telecom excise switch (2003) — convert telecom concession fees into an
+	# excise tax in a way that quietly shields the family-owned AIS from new
+	# competitors. Money and a grateful corporate base; the brass reads it as the
+	# state being run for one family's balance sheet.
+	SIA_telecom_excise_favor = {
+		icon = GFX_decision_generic_economy
+		cost = 50
+		days_re_enable = 540
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_telecom_excise_favor"
+			set_temp_variable = { treasury_change = 7 }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 20 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	# EXIM loan to Rangoon (2004) — a soft state loan to the Myanmar junta,
+	# earmarked to buy satellite and telecom services from the family's own
+	# Shin Satellite. Foreign-policy reach and a tidy contract for the family
+	# firm; a textbook conflict of interest the generals do not miss.
+	SIA_exim_myanmar_loan = {
+		icon = GFX_decision_generic_economy
+		cost = 40
+		days_re_enable = 730
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_exim_myanmar_loan"
+			set_temp_variable = { int_investment_change = 8 }
+			modify_international_investment_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 15 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 4
+		}
+	}
+
+	# The government lottery (2003) — fold the vast underground numbers game into a
+	# state scheme. A river of off-budget cash for patronage and pet projects, and
+	# popular besides; also exactly the kind of unaccountable slush fund a coup
+	# manifesto loves to cite.
+	SIA_state_lottery_scheme = {
+		icon = GFX_decision_generic_economy
+		cost = 40
+		days_re_enable = 540
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_populist
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_country_flag = SIA_coups_disabled }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_state_lottery_scheme"
+			set_temp_variable = { treasury_change = 5 }
+			modify_treasury_effect = yes
+			add_stability = 0.02
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 12 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+# ─── v0.9 Develop the Recovered Lands (breakaway + hegemony conquest payoff) ───
+# The occupation loop for territory taken on the Western-Frontier or ASEAN-hegemony
+# trees: pacify the held provinces (compliance), develop them (infrastructure), then
+# claim them for the nation outright (broad coring, Russia-style). Operates on every
+# "reclaimed" state (owned + claimed + not-yet-core, see SIA_is_reclaimed_state).
+# Unlocked by SIA_frontier_integration / SIA_the_new_order.
+SIA_reconstruction_category = {
+
+	# Pacify — grind compliance up across all held-but-unintegrated territory.
+	SIA_reconstruction_pacify = {
+		icon = GFX_decision_generic_political_actions
+		cost = 75
+		days_re_enable = 90
+
+		visible = {
+			has_country_flag = SIA_reconstruction_unlocked
+		}
+
+		available = {
+			any_owned_state = {
+				SIA_is_reclaimed_state = yes
+				compliance < 90
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_reconstruction_pacify"
+			every_owned_state = {
+				limit = { SIA_is_reclaimed_state = yes }
+				add_compliance = 8
+			}
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	# Develop — pour reconstruction money into the conquered provinces.
+	SIA_reconstruction_develop = {
+		icon = GFX_decision_generic_construction
+		days_re_enable = 180
+
+		visible = {
+			has_country_flag = SIA_reconstruction_unlocked
+		}
+
+		available = {
+			any_owned_state = { SIA_is_reclaimed_state = yes }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 4.9 }
+		}
+		custom_cost_text = SIA_cost_5_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_reconstruction_develop"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			every_owned_state = {
+				limit = { SIA_is_reclaimed_state = yes }
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	# Integrate — proclaim the pacified provinces part of the nation (broad coring).
+	SIA_reconstruction_integrate = {
+		icon = GFX_decision_generic_form_nation
+		cost = 100
+		days_re_enable = 120
+
+		visible = {
+			has_country_flag = SIA_reconstruction_unlocked
+		}
+
+		available = {
+			has_war = no
+			any_owned_state = {
+				SIA_is_reclaimed_state = yes
+				compliance > 80
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_reconstruction_integrate"
+			every_owned_state = {
+				limit = {
+					SIA_is_reclaimed_state = yes
+					compliance > 80
+				}
+				add_core_of = SIA
+			}
+			add_stability = 0.03
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+# ─── General Strike push (communist urban road, 180-day window) ───
+# Raise SIA_strike_momentum toward 100 to force the government to capitulate
+# (thailand.250, peaceful road). No single lever reaches 100 alone across the
+# window, so the strike must be worked on several fronts. Stability drains at
+# -1%/week from the weekly on_action, not from these decisions.
+SIA_general_strike_category = {
+
+	# Mass pickets — cheap, fast, the day-to-day muscle of the stoppage.
+	SIA_strike_mass_pickets = {
+		icon = GFX_decision_generic_political_actions
+		cost = 40
+		days_re_enable = 15
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_strike_active
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_mass_pickets"
+			set_temp_variable = { strike_delta = 8 }
+			SIA_strike_add_momentum = yes
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	# Paralyse the ports and rails — the heavy blow, funded from the strike fund.
+	SIA_strike_paralyze_transport = {
+		icon = GFX_decision_generic_construction
+		days_re_enable = 30
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_strike_active
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.9 }
+		}
+		custom_cost_text = SIA_cost_4_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_paralyze_transport"
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			set_temp_variable = { strike_delta = 15 }
+			SIA_strike_add_momentum = yes
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	# Win over the conscripts — peel the rank and file off the regime, the surest
+	# way to make the generals' threat of force ring hollow.
+	SIA_strike_win_the_conscripts = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_re_enable = 30
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_strike_active
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_win_the_conscripts"
+			set_temp_variable = { strike_delta = 12 }
+			SIA_strike_add_momentum = yes
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+}
