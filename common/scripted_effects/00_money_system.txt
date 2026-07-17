@@ -2282,6 +2282,16 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_GRE_creditor }
 	}
 
+	# Interest on Belt and Road loans (China is the only creditor; ledger at the end of 05_CHI_scripted_effects.txt)
+	if = {
+		limit = {
+			original_tag = CHI
+			check_variable = { CHI_bri_loan_income > 0 }
+		}
+		set_variable = { additional_income_CHI_bri_loans = CHI_bri_loan_income }
+		add_to_variable = { additional_income_rate = additional_income_CHI_bri_loans }
+	}
+
 	# Energy Load Sharing Income
 	if = { limit = { check_variable = { energy_load_sharing_nations^num > 0 } }
 		set_variable = { energy_load_sharing_income_var = { value = energy_load_sharing_use_var multiply = global.price_per_gw_for_els clamp = { min = 0 max = @math_expressions_max } } }
@@ -3277,6 +3287,17 @@ update_infra_rate = {
 # Purpose: Aggregates special expenses (propaganda campaigns, diplomatic actions, special projects)
 calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
+
+	# Interest owed on a Belt and Road loan
+	if = {
+		limit = {
+			check_variable = { bri_loan_payment > 0 }
+			CHI = { has_completed_focus = CHI_Belt_and_Road_Initiative }
+		}
+		set_variable = { additional_expense_bri_loan = bri_loan_payment }
+		add_to_variable = { additional_expenses_rate = additional_expense_bri_loan }
+	}
+
 	# Additional expenses, set expense amount as a variable (weekly gain)
 	# Generic Propaganda Campaign Decisions
 	# AI do not use the propganda campaigns at all. Wrap them in a check to minimize checking.

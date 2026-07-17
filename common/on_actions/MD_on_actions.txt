@@ -451,14 +451,18 @@ on_actions = {
 
 			# Weighted GDP + Inflation Correction
 			ROOT = {
+				set_temp_variable = { annexed_gdp = FROM.gdp_total }
+				set_temp_variable = { annexed_population = FROM.population_total_m }
+				set_temp_variable = { annexed_inflation = FROM.inflation_rate_var }
+
 				set_variable = {
 					last_quarter_gdpc_total = {
-						value = ROOT.gdp_total
-						add = FROM.gdp_total
+						value = gdp_total
+						add = annexed_gdp
 						clamp = { min = 0.001 max = 100000000 }
 						divide = {
-							value = ROOT.population_total_m
-							add = FROM.population_total_m
+							value = population_total_m
+							add = annexed_population
 							clamp = { min = 0.001 max = 100000000 }
 						}
 					}
@@ -466,8 +470,8 @@ on_actions = {
 
 				set_variable = {
 					last_quarter_gdp_total = {
-						value = ROOT.gdp_total
-						add = FROM.gdp_total
+						value = gdp_total
+						add = annexed_gdp
 						clamp = { min = 0.001 max = 100000000 }
 					}
 				}
@@ -476,16 +480,16 @@ on_actions = {
 					inflation_rate_var = {
 						value = 0
 						add = {
-							value = ROOT.inflation_rate_var
-							multiply = ROOT.gdp_total
+							value = inflation_rate_var
+							multiply = gdp_total
 						}
 						add = {
-							value = FROM.inflation_rate_var
-							multiply = FROM.gdp_total
+							value = annexed_inflation
+							multiply = annexed_gdp
 						}
 						divide = {
-							value = ROOT.gdp_total
-							add = FROM.gdp_total
+							value = gdp_total
+							add = annexed_gdp
 							clamp = { min = 0.001 max = 100000000 }
 						}
 					}
