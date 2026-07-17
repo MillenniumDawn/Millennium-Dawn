@@ -2416,7 +2416,7 @@ focus_tree = {
 		available = {
 			SIA_royalist_trunk_open = yes
 			OR = {
-				date > 2004.1.1
+				date > 2006.9.1
 				AND = {
 					has_country_flag = SIA_yellow_shirts_pressure
 					date > 2004.10.1
@@ -2508,7 +2508,17 @@ focus_tree = {
 
 	focus = {
 		id = SIA_the_2014_coup
-		available = { SIA_royalist_trunk_open = yes }
+		available = {
+			SIA_royalist_trunk_open = yes
+			OR = {
+				date > 2014.5.1
+				custom_trigger_tooltip = {
+					tooltip = SIA_army_patience_exhausted_tt
+					check_variable = { SIA_coup_risk > 59 }
+					date > 2010.1.1
+				}
+			}
+		}
 		icon = strike_at_democracy2
 
 		x = 0
@@ -10102,8 +10112,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_nuclear_power_program"
-			set_temp_variable = { treasury_change = -12 }
-			modify_treasury_effect = yes
 			add_ideas = SIA_nuclear_energy
 			set_country_flag = SIA_nuclear_program_active
 			# Flip the MD nuclear power-status law from non_nuclear_power to
@@ -10111,13 +10119,6 @@ focus_tree = {
 			# reactor1 tech (matching MD's GENERIC nuclear focus) so the law
 			# isn't swapped while still ineligible. Also commission a reactor.
 			one_random_nuclear_reactor = yes
-			508 = {
-				add_building_construction = {
-					type = nuclear_reactor
-					level = 1
-					instant_build = yes
-				}
-			}
 			if = {
 				limit = {
 					has_idea = non_nuclear_power
@@ -10158,7 +10159,6 @@ focus_tree = {
 		prerequisite = { focus = SIA_nuclear_power_program }
 
 		available = {
-			# date > 2010.1.1
 			has_idea = nuclear_energy
 			# Thailand only reaches for the bomb once the world is tense enough
 			# to justify it — at least 25% world tension.
@@ -10169,10 +10169,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_dual_use_threshold"
-			# Capability anchor: stand up a uranium-enrichment fuel cycle via the
-			# MD nuclear system (one facility; the effect charges the treasury).
-			set_temp_variable = { temp_change = 1 }
-			build_enrichment_facilities_effect = yes
+			# Capability anchor: stand up a uranium-enrichment fuel cycle.
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			random_owned_state = { add_building_construction = { type = enrichment_facility level = 1 } }
 			add_tech_bonus = {
 				name = SIA_dual_use_threshold
 				bonus = 1.0
@@ -10185,6 +10185,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 0 is_historical_focus_on = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -10219,8 +10220,9 @@ focus_tree = {
 				uses = 2
 				category = CAT_nuclear_weapons
 			}
-			set_temp_variable = { temp_change = 1 }
-			build_enrichment_facilities_effect = yes
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			random_owned_state = { add_building_construction = { type = enrichment_facility level = 1 } }
 			if = {
 				limit = { has_idea = nuclear_energy }
 				swap_ideas = {
@@ -10244,6 +10246,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
+			modifier = { factor = 0 is_historical_focus_on = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -10361,52 +10364,6 @@ focus_tree = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
-
-	# focus = {
-	# 	id = SIA_regional_trade_network
-	# 	icon = economic_prosperity
-
-	# 	x = 0
-	# 	y = 1
-	# 	relative_position_id = SIA_board_of_investment
-
-	# 	cost = 5
-
-	# 	prerequisite = { focus = SIA_board_of_investment }
-
-	# 	search_filters = { FOCUS_FILTER_DIPLOMACY }
-
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus SIA_regional_trade_network"
-	# 		# Agency unlock: arm the trade-diplomacy system. Initialise the shared MD counter
-	# 		# if it has not been touched, switch on the monthly dividend, and attach the
-	# 		# influence-scaling dynamic modifier so signing FTAs now compounds Thai reach.
-	# 		if = {
-	# 			limit = { NOT = { has_variable = signed_trade_agreements } }
-	# 			set_variable = { signed_trade_agreements = 0 }
-	# 		}
-	# 		# Guard the arming so a second armer (e.g. SIA_fta_decade) can't double-attach the modifier.
-	# 		if = {
-	# 			limit = { NOT = { has_country_flag = SIA_trade_income_active } }
-	# 			set_country_flag = SIA_trade_income_active
-	# 			add_dynamic_modifier = { modifier = SIA_trade_diplomacy_network }
-	# 		}
-	# 		SIA_recalculate_trade_diplomacy = yes
-	# 		custom_effect_tooltip = SIA_regional_trade_network_tt
-	# 		# A first commercial push onto the near neighbourhood.
-	# 		add_opinion_modifier = { target = LAO modifier = medium_increase }
-	# 		add_opinion_modifier = { target = MAY modifier = medium_increase }
-	# 		set_temp_variable = { percent_change = 5 }
-	# 		set_temp_variable = { tag_index = SIA }
-	# 		set_temp_variable = { influence_target = LAO }
-	# 		change_influence_percentage = yes
-	# 		add_political_power = 50
-	# 	}
-
-	# 	ai_will_do = {
-	# 		base = 40
-	# 	}
-	# }
 
 	focus = {
 		id = SIA_mekong_soft_power
@@ -12089,6 +12046,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 0
+			modifier = { add = 10 has_game_rule = { rule = SIA_pan_thai_ai option = SIA_pan_thai_ai_allowed } }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
