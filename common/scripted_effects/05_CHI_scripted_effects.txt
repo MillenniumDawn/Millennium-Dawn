@@ -844,74 +844,58 @@ CHI_bri_monthly_tick = {
 	CHI_bri_process_loans = yes
 }
 
-# Maps CHI_demographic_aging to a dividend tier (0/1/2)
-CHI_apply_demographic_tier = {
+# Applies the demographic dividend and population penalty for the current one-child
+# policy stage (CHI_demographic_policy_stage 1-4). monthly_population is exclusive to
+# this system; the other three factors are shared with focuses, so the previously
+# applied stage is reversed before the current one is added.
+CHI_apply_demographic_policy = {
 	if = {
-		limit = { check_variable = { CHI_demographic_aging < 25 } }
-		set_temp_variable = { CHI_demographic_target_tier = 0 }
+		limit = { check_variable = { CHI_demographic_stage_applied = 1 } }
+		add_to_variable = { CHI_economy_monthly_population = 0.90 }
+		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.08 }
+		add_to_variable = { CHI_economy_consumer_goods_factor = 0.10 }
+		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.12 }
 	}
 	else_if = {
-		limit = { check_variable = { CHI_demographic_aging < 50 } }
-		set_temp_variable = { CHI_demographic_target_tier = 1 }
+		limit = { check_variable = { CHI_demographic_stage_applied = 2 } }
+		add_to_variable = { CHI_economy_monthly_population = 0.45 }
+		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.04 }
+		add_to_variable = { CHI_economy_consumer_goods_factor = 0.05 }
+		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.06 }
 	}
-	else = {
-		set_temp_variable = { CHI_demographic_target_tier = 2 }
+	else_if = {
+		limit = { check_variable = { CHI_demographic_stage_applied = 3 } }
+		add_to_variable = { CHI_economy_monthly_population = 0.15 }
+		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.015 }
+		add_to_variable = { CHI_economy_consumer_goods_factor = 0.02 }
+		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.02 }
 	}
 
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
 	if = {
-		limit = { NOT = { check_variable = { CHI_demographic_tier_applied = CHI_demographic_target_tier } } }
-
-		# Subtract the previously-applied tier's contribution.
-		if = {
-			limit = { check_variable = { CHI_demographic_tier_applied = 0 } }
-			add_to_variable = { CHI_economy_consumer_goods_factor = 0.07 }
-			subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.03 }
-			subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.05 }
-			add_to_variable = { CHI_economy_monthly_population = 0.30 }
-		}
-		else_if = {
-			limit = { check_variable = { CHI_demographic_tier_applied = 1 } }
-			add_to_variable = { CHI_economy_consumer_goods_factor = 0.04 }
-			subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.02 }
-			subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.03 }
-			add_to_variable = { CHI_economy_monthly_population = 0.30 }
-		}
-		else_if = {
-			limit = { check_variable = { CHI_demographic_tier_applied = 2 } }
-			add_to_variable = { CHI_economy_consumer_goods_factor = 0.02 }
-			subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.01 }
-			subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.01 }
-			add_to_variable = { CHI_economy_monthly_population = 0.25 }
-		}
-
-		# Add the new tier's contribution. Sentinel 9 (crash) adds nothing.
-		if = {
-			limit = { check_variable = { CHI_demographic_target_tier = 0 } }
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
-			subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.07 tooltip = consumer_goods_factor_tt }
-			add_to_variable = { CHI_economy_productivity_growth_modifier = 0.03 tooltip = productivity_growth_modifier_tt }
-			add_to_variable = { CHI_economy_total_workforce_modifier = 0.05 tooltip = total_workforce_modifier_tt }
-			subtract_from_variable = { CHI_economy_monthly_population = 0.30 tooltip = monthly_population_tt }
-		}
-		else_if = {
-			limit = { check_variable = { CHI_demographic_target_tier = 1 } }
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
-			subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.04 tooltip = consumer_goods_factor_tt }
-			add_to_variable = { CHI_economy_productivity_growth_modifier = 0.02 tooltip = productivity_growth_modifier_tt }
-			add_to_variable = { CHI_economy_total_workforce_modifier = 0.03 tooltip = total_workforce_modifier_tt }
-			subtract_from_variable = { CHI_economy_monthly_population = 0.30 tooltip = monthly_population_tt }
-		}
-		else_if = {
-			limit = { check_variable = { CHI_demographic_target_tier = 2 } }
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
-			subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
-			add_to_variable = { CHI_economy_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
-			add_to_variable = { CHI_economy_total_workforce_modifier = 0.01 tooltip = total_workforce_modifier_tt }
-			subtract_from_variable = { CHI_economy_monthly_population = 0.25 tooltip = monthly_population_tt }
-		}
-
-		set_variable = { CHI_demographic_tier_applied = CHI_demographic_target_tier }
+		limit = { check_variable = { CHI_demographic_policy_stage = 1 } }
+		subtract_from_variable = { CHI_economy_monthly_population = 0.90 tooltip = monthly_population_tt }
+		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.08 tooltip = productivity_growth_modifier_tt }
+		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.10 tooltip = consumer_goods_factor_tt }
+		add_to_variable = { CHI_economy_total_workforce_modifier = 0.12 tooltip = total_workforce_modifier_tt }
 	}
+	else_if = {
+		limit = { check_variable = { CHI_demographic_policy_stage = 2 } }
+		subtract_from_variable = { CHI_economy_monthly_population = 0.45 tooltip = monthly_population_tt }
+		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.04 tooltip = productivity_growth_modifier_tt }
+		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.05 tooltip = consumer_goods_factor_tt }
+		add_to_variable = { CHI_economy_total_workforce_modifier = 0.06 tooltip = total_workforce_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { CHI_demographic_policy_stage = 3 } }
+		subtract_from_variable = { CHI_economy_monthly_population = 0.15 tooltip = monthly_population_tt }
+		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.015 tooltip = productivity_growth_modifier_tt }
+		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+		add_to_variable = { CHI_economy_total_workforce_modifier = 0.02 tooltip = total_workforce_modifier_tt }
+	}
+	# stage 4 (abolished): penalty and dividend both fully reversed above, nothing applied
+
+	set_variable = { CHI_demographic_stage_applied = CHI_demographic_policy_stage }
 }
 
 ### Russian arms dependency: re-evaluate tier from CHI_military_self_sufficiency. Idempotent, downgrade-only. ###
@@ -1081,74 +1065,6 @@ CHI_uighur_monthly_tick = {
 				}
 			}
 		}
-	}
-}
-
-CHI_add_semiconductor_progress = {
-	add_to_variable = { var = CHI_semiconductor_self_reliance value = CHI_semi_progress_amount }
-	clamp_variable = { var = CHI_semiconductor_self_reliance min = 0 max = 100 }
-	custom_effect_tooltip = CHI_semiconductor_progress_tt
-	CHI_evaluate_semiconductor_boycott = yes
-}
-
-CHI_evaluate_semiconductor_boycott = {
-	if = {
-		limit = {
-			has_idea = CHI_semiconductor_backwardness
-			check_variable = { CHI_semiconductor_self_reliance > 24 }
-		}
-		if = {
-			limit = { check_variable = { CHI_semiconductor_self_reliance > 99 } }
-			remove_ideas = CHI_semiconductor_backwardness
-		}
-		else_if = {
-			limit = { check_variable = { CHI_semiconductor_self_reliance > 74 } }
-			swap_ideas = { remove_idea = CHI_semiconductor_backwardness add_idea = CHI_semiconductor_backwardness_4 }
-		}
-		else_if = {
-			limit = { check_variable = { CHI_semiconductor_self_reliance > 49 } }
-			swap_ideas = { remove_idea = CHI_semiconductor_backwardness add_idea = CHI_semiconductor_backwardness_3 }
-		}
-		else = {
-			swap_ideas = { remove_idea = CHI_semiconductor_backwardness add_idea = CHI_semiconductor_backwardness_2 }
-		}
-	}
-	else_if = {
-		limit = {
-			has_idea = CHI_semiconductor_backwardness_2
-			check_variable = { CHI_semiconductor_self_reliance > 49 }
-		}
-		if = {
-			limit = { check_variable = { CHI_semiconductor_self_reliance > 99 } }
-			remove_ideas = CHI_semiconductor_backwardness_2
-		}
-		else_if = {
-			limit = { check_variable = { CHI_semiconductor_self_reliance > 74 } }
-			swap_ideas = { remove_idea = CHI_semiconductor_backwardness_2 add_idea = CHI_semiconductor_backwardness_4 }
-		}
-		else = {
-			swap_ideas = { remove_idea = CHI_semiconductor_backwardness_2 add_idea = CHI_semiconductor_backwardness_3 }
-		}
-	}
-	else_if = {
-		limit = {
-			has_idea = CHI_semiconductor_backwardness_3
-			check_variable = { CHI_semiconductor_self_reliance > 74 }
-		}
-		if = {
-			limit = { check_variable = { CHI_semiconductor_self_reliance > 99 } }
-			remove_ideas = CHI_semiconductor_backwardness_3
-		}
-		else = {
-			swap_ideas = { remove_idea = CHI_semiconductor_backwardness_3 add_idea = CHI_semiconductor_backwardness_4 }
-		}
-	}
-	else_if = {
-		limit = {
-			has_idea = CHI_semiconductor_backwardness_4
-			check_variable = { CHI_semiconductor_self_reliance > 99 }
-		}
-		remove_ideas = CHI_semiconductor_backwardness_4
 	}
 }
 
@@ -1654,4 +1570,29 @@ CHI_bri_clear_loan = {
 			}
 		}
 	}
+}
+
+CHI_TAI_recompute_isolation = {
+	# iso_index: +15 = fully isolated (0 recognisers), -15 = broadly recognised (30+)
+	set_temp_variable = { CHI_TAI_iso_index = 15 }
+	subtract_from_temp_variable = { CHI_TAI_iso_index = Granted_Recognition }
+	clamp_temp_variable = { var = CHI_TAI_iso_index min = -15 max = 15 }
+
+	set_variable = { CHI_TAI_isolation_trade = CHI_TAI_iso_index }
+	multiply_variable = { CHI_TAI_isolation_trade = -0.02 }
+
+	set_variable = { CHI_TAI_isolation_influence = CHI_TAI_iso_index }
+	multiply_variable = { CHI_TAI_isolation_influence = -0.015 }
+
+	set_variable = { CHI_TAI_isolation_relations = CHI_TAI_iso_index }
+	multiply_variable = { CHI_TAI_isolation_relations = 0.03 }
+}
+
+CHI_TAI_apply_isolation = {
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = CHI_TAI_intl_isolation_modifier } } }
+		hidden_effect = { add_dynamic_modifier = { modifier = CHI_TAI_intl_isolation_modifier } }
+	}
+	hidden_effect = { CHI_TAI_recompute_isolation = yes }
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_TAI_intl_isolation_modifier }
 }
