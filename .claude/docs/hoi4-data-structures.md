@@ -199,6 +199,8 @@ grep -rn "your_construct" "$HOI4/common/" | head # does vanilla?
 
 No hits in either means no evidence it parses. Confirmed working in MD: `^num` as an operand (`01_BRICS_effects.txt:104`), nested operand blocks (`!_energy_effects.txt:254`, `00_influence_scripted_effects.txt:258`), `round = yes` (`bankruptcy_decisions.txt:139`), `clamp = { min max }` (`00_scripted_triggers.txt:494`), dynamic array indices (`array^i`), and `if` inside an expression (vanilla `factions/goals/faction_goals_short_term.txt:266`).
 
+Known broken: reading another country's variable via a scope prefix (`value = FROM.debt_bailout`) inside an event option's math expression. It parses cleanly (no `script_math` error) but reads 0 at runtime, zeroing the whole expression (#2464, bailout donors paid $0 but still gained influence). Vanilla only ever uses scope-prefixed reads in the simple one-operand form. Use the simple form: `set_temp_variable = { x = FROM.var }` then `multiply_temp_variable`.
+
 ## Loop Effects
 
 ### `for_each_loop` — iterate over values
