@@ -365,7 +365,12 @@ def process_file_for_orphan_money(
         var = m.group(1)
         holder = None
         for start, end, is_tt in spans:
-            if start <= m.start() < end and (holder is None or start > holder[0]):
+            if not start <= m.start() < end:
+                continue
+            if holder is None:
+                holder = (start, end, is_tt)
+                continue
+            if start > holder[0]:
                 holder = (start, end, is_tt)
         if holder is None:
             continue
