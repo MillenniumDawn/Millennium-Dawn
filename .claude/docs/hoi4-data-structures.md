@@ -199,6 +199,8 @@ grep -rn "your_construct" "$HOI4/common/" | head # does vanilla?
 
 No hits in either means no evidence it parses. Confirmed working in MD: `^num` as an operand (`01_BRICS_effects.txt:104`), nested operand blocks (`!_energy_effects.txt:254`, `00_influence_scripted_effects.txt:258`), `round = yes` (`bankruptcy_decisions.txt:139`), `clamp = { min max }` (`00_scripted_triggers.txt:494`), dynamic array indices (`array^i`), and `if` inside an expression (vanilla `factions/goals/faction_goals_short_term.txt:266`).
 
+Known broken: reading a variable through the event/on_action `FROM` binding (`value = FROM.debt_bailout`) inside a math expression. It parses cleanly (no `script_math` error) but reads 0 at runtime, zeroing the whole expression (#2464, bailout donors paid $0 but still gained influence); neither vanilla nor MD has a verified working use. `ROOT.`/`THIS.`/`PREV.` reads inside expressions do have working precedent (`00_money_system.txt:920`, `99_eu_scripted_effects.txt:1441`, `00_productivity_effects.txt:33`). Keep the math expression and hoist the FROM read into a plain temp copy it can reference: `set_temp_variable = { bailout_cost = FROM.debt_bailout }` then `set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.75 } }`.
+
 ## Loop Effects
 
 ### `for_each_loop` — iterate over values

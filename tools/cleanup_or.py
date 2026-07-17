@@ -212,7 +212,9 @@ def _fix_inline_or_line(line):
 # ---------------------------------------------------------------------------
 
 _RE_AND_OPEN = re.compile(r"^\s*AND\s*=\s*\{")
-_RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
+# NOT counts as an AND-preserving context too: NOT = { AND = { A B } } is the
+# sanctioned disambiguation of the NAND/NOR-disputed bare multi-child NOT.
+_RE_AND_KEEPER_OPEN = re.compile(r"^\s*(?:OR|NOT)\s*=\s*\{")
 
 
 def _extract_all_inner_lines(inner_text, target_indent):
@@ -280,7 +282,7 @@ def _simplify_and_single_pass(lines):
                 continue
 
         # Track which brace depths are OR blocks
-        is_or = bool(_RE_OR_BLOCK_OPEN.match(line))
+        is_or = bool(_RE_AND_KEEPER_OPEN.match(line))
         opens = code.count("{")
         closes = code.count("}")
         out.append(line)
@@ -386,7 +388,7 @@ def find_redundant_and_blocks(lines):
             i = j
             continue
 
-        is_or = bool(_RE_OR_BLOCK_OPEN.match(line))
+        is_or = bool(_RE_AND_KEEPER_OPEN.match(line))
         opens = code.count("{")
         closes = code.count("}")
         for k in range(opens):
