@@ -698,11 +698,11 @@ SIA_realign_to_democrat = {
 	SIA_pt_pressure_seed = yes
 }
 
-# When a coup succeeds and the NCPO seizes power, the populist parties are
+# When a coup succeeds and the NCPO seizes power, the Thaksinite line is
 # discredited and the military's vehicle is elevated — otherwise Pheu Thai's
 # standing popularity simply re-elects them the moment any election is reheld,
 # undoing the coup. Big swing toward Nat_Autocracy (22) and away from the
-# Thaksinist parties (TRT idx 1 / Pheu Thai idx 18). Used only by the coup
+# Thaksinite line (neutral_Social, idx 18 — TRT/PPP/PTP). Used only by the coup
 # events, NOT by peaceful realignments.
 SIA_junta_party_shift = {
 	log = "[GetDateText]: [Root.GetName]: SIA_junta_party_shift - NCPO junta elevated, populist parties discredited"
@@ -710,9 +710,6 @@ SIA_junta_party_shift = {
 	set_temp_variable = { party_popularity_increase = 0.30 }
 	add_relative_party_popularity = yes
 	set_temp_variable = { party_index = 18 }
-	set_temp_variable = { party_popularity_increase = -0.20 }
-	add_relative_party_popularity = yes
-	set_temp_variable = { party_index = 1 }
 	set_temp_variable = { party_popularity_increase = -0.20 }
 	add_relative_party_popularity = yes
 	recalculate_party = yes
@@ -749,4 +746,54 @@ SIA_collect_trade_dividend = {
 	multiply_temp_variable = { treasury_change = 0.15 }
 	modify_treasury_effect = yes
 	custom_effect_tooltip = SIA_trade_dividend_tt
+}
+
+# ============================================================================
+# HISTORICAL PARTY MERGERS — idx 20 (NAP) and idx 2 (Chart Pattana) fold into
+# idx 18 (Thaksinite line, TRT at this stage). Called once each from the
+# trigger_year_2002_events / trigger_year_2004_events dispatch in
+# 00_yearly_effects.txt. Vanilla add_popularity redistributes a removed share
+# across EVERY other outlook, so each merge follows the drain with a correction
+# call (democratic for NAP, the neutrality destination for Chart Pattana) so
+# only neutrality nets the transfer. Arrays are then moved directly;
+# recalculate_party renormalizes them against the corrected outlook totals
+# (add_up_party_totals treats vanilla popularity as the source of truth).
+# ============================================================================
+SIA_merge_nap_into_trt = {
+	if = {
+		limit = { check_variable = { party_pop_array^20 > 0.01 } }
+		hidden_effect = {
+			set_temp_variable = { merge_amount = party_pop_array^20 }
+			set_temp_variable = { dem_before = party_popularity@democratic }
+			set_temp_variable = { merge_amount_neg = merge_amount }
+			multiply_temp_variable = { merge_amount_neg = -1 }
+			add_popularity = { ideology = nationalist popularity = merge_amount_neg }
+			set_temp_variable = { dem_correction = dem_before }
+			subtract_from_temp_variable = { dem_correction = party_popularity@democratic }
+			add_popularity = { ideology = democratic popularity = dem_correction }
+			add_to_variable = { party_pop_array^18 = merge_amount }
+			set_variable = { party_pop_array^20 = 0 }
+			recalculate_party = yes
+		}
+	}
+}
+
+SIA_merge_chart_pattana_into_trt = {
+	if = {
+		limit = { check_variable = { party_pop_array^2 > 0.01 } }
+		hidden_effect = {
+			set_temp_variable = { merge_amount = party_pop_array^2 }
+			set_temp_variable = { neu_target = party_popularity@neutrality }
+			add_to_temp_variable = { neu_target = merge_amount }
+			set_temp_variable = { merge_amount_neg = merge_amount }
+			multiply_temp_variable = { merge_amount_neg = -1 }
+			add_popularity = { ideology = democratic popularity = merge_amount_neg }
+			set_temp_variable = { neu_correction = neu_target }
+			subtract_from_temp_variable = { neu_correction = party_popularity@neutrality }
+			add_popularity = { ideology = neutrality popularity = neu_correction }
+			add_to_variable = { party_pop_array^18 = merge_amount }
+			set_variable = { party_pop_array^2 = 0 }
+			recalculate_party = yes
+		}
+	}
 }
