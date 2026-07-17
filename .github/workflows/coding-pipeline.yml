@@ -52,6 +52,7 @@ env:
     CLAUDE.md
     *.mod
     .workspace-manifest
+    .style-changed-lines.json
     .validation_cache
 
 jobs:
@@ -171,7 +172,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          fetch-depth: 1
+          fetch-depth: 2
           sparse-checkout: |
             common
             events
@@ -211,6 +212,53 @@ jobs:
             echo "run_id=${{ github.run_id }}"
             echo "valcache_matched=${{ steps.valcache.outputs.cache-matched-key }}"
           } | tee .workspace-manifest
+
+      - name: Record changed style lines
+        env:
+          STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
+          MERGE_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          from tools.validation.validate_style import _changed_lines_from_diff
+
+          files = json.loads(os.environ.get("STYLE_FILES_JSON") or "[]")
+          merge_sha = os.environ["MERGE_SHA"]
+          base_sha = f"{merge_sha}^1"
+          subprocess.run(
+              ["git", "rev-parse", "--verify", f"{base_sha}^{{commit}}"],
+              check=True,
+              capture_output=True,
+              text=True,
+          )
+
+          changed_lines = {}
+          for path in files:
+              if not os.path.isfile(path):
+                  continue
+              result = subprocess.run(
+                  [
+                      "git",
+                      "diff",
+                      "--unified=0",
+                      "--no-color",
+                      base_sha,
+                      merge_sha,
+                      "--",
+                      path,
+                  ],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              )
+              changed_lines[path] = sorted(_changed_lines_from_diff(result.stdout))
+
+          with open(".style-changed-lines.json", "w", encoding="utf-8") as file:
+              json.dump(changed_lines, file, sort_keys=True)
+          PY
 
       # Explicit save (not the combined action's post-job save): the upload
       # completes inside this step, so `needs: prepare-workspace` fully
@@ -271,14 +319,18 @@ jobs:
           # and drop the files the pre-commit md-validate-style hook also excludes.
           printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
             | grep -vE '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
-            > style_files.txt || true
+            | while IFS= read -r path; do
+                [ -f "$path" ] && printf '%s\n' "$path"
+              done > style_files.txt || true
           if [ ! -s style_files.txt ]; then
             echo "No style-relevant files changed"
             exit 0
           fi
           # validate_style.py is a BaseValidator: --staged reads the diff list from
           # MD_STAGED_FILES (newline-separated), so spaces/apostrophes are safe.
-          MD_STAGED_FILES="$(cat style_files.txt)" python3 tools/validation/validate_style.py --staged --strict --no-color
+          MD_STAGED_FILES="$(cat style_files.txt)" \
+          MD_STAGED_CHANGED_LINES_FILE=".style-changed-lines.json" \
+            python3 tools/validation/validate_style.py --staged --strict --no-color
           # check_common_mistakes.py takes the files as positional args; feed them
           # NUL-delimited via xargs so spaces/apostrophes don't word-split.
           tr '\n' '\0' < style_files.txt | xargs -0 -r python3 tools/linting/check_common_mistakes.py

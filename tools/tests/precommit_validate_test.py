@@ -92,7 +92,12 @@ def test_ai_equipment_is_warning_only():
 
 
 def test_strict_validators_are_strict():
-    for script in ("validate_events", "validate_ideas", "validate_oob_units"):
+    for script in (
+        "validate_events",
+        "validate_ideas",
+        "validate_oob_units",
+        "validate_style",
+    ):
         assert _BY_SCRIPT[script].strict
 
 
