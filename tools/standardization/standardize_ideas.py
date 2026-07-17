@@ -11,7 +11,7 @@ import time
 from typing import Any, Dict, List
 
 from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
-from shared_utils import extract_block, log_message
+from shared_utils import collapse_or_compact, extract_block, log_message
 
 _SINGLE_LINE_PROPS = {"name", "picture"}
 
@@ -129,6 +129,8 @@ class IdeaStandardizer(BaseStandardizer):
                 continue
             if stripped.startswith("#"):
                 continue
+            if stripped.endswith("{"):  # block opener, e.g. `on_remove = {`
+                continue
             if 'log = ""' in stripped or "log = ''" in stripped:
                 continue
             return False
@@ -146,6 +148,7 @@ class IdeaStandardizer(BaseStandardizer):
                 stripped in ("{", "}", "")
                 or not stripped
                 or stripped.startswith("#")
+                or stripped.endswith("{")  # block opener, e.g. `on_remove = {`
                 or stripped.startswith("log =")
             ):
                 continue
@@ -269,7 +272,12 @@ class IdeaStandardizer(BaseStandardizer):
             "equipment_bonus",
         ):
             for block in props[key]:
-                lines.extend(self.compact_block(block[:], prop_indent))
+                collapsed = collapse_or_compact(block[:], prop_indent)
+                multi = self.compact_block(block[:], prop_indent)
+                if len(collapsed) == 1 and len(multi) != 1:
+                    lines.extend(collapsed)
+                else:
+                    lines.extend(multi)
 
         # 11. on_add (log only when making changes)
         for block in props["on_add"]:

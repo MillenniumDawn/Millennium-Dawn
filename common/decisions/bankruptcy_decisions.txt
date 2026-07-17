@@ -20,18 +20,14 @@ bankruptcy_decisions = {
 			is_full_state = yes
 			has_added_tension_amount < 5
 			NOT = {
-				has_idea = corruption_level_10
-				has_idea = corruption_level_09
-				has_idea = corruption_level_08
+				OR = {
+					has_idea = corruption_level_10
+					has_idea = corruption_level_09
+					has_idea = corruption_level_08
+				}
 			}
-			custom_trigger_tooltip = {
-				tooltip = 5_per_capita_or_more_tt
-				check_variable = { gdp_per_capita > 5 }
-			}
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_lower_than_15
-				check_variable = { interest_rate < 15 }
-			}
+			gdp_per_capita_greater_than_5 = yes
+			interest_rate_lower_than_15 = yes
 			custom_trigger_tooltip = {
 				tooltip = potential_expenses_higher_than_potential_income_tt
 				check_variable = { potential_expense > potential_income }
@@ -58,20 +54,14 @@ bankruptcy_decisions = {
 	}
 
 	bankruptcy_cheap_loans_from_african_investment_fund = {
+		allowed = { is_african_nation = yes }
 		icon = GFX_decision_bancru_ask_button
-
-		visible = {
-			is_in_array = { global.is_african_nation = THIS.id }
-		}
 
 		available = {
 			is_full_state = yes
 			has_added_tension_amount < 5
 			has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_lower_than_15
-				check_variable = { interest_rate < 15 }
-			}
+			interest_rate_lower_than_15 = yes
 		}
 
 		modifier = {
@@ -119,17 +109,11 @@ bankruptcy_decisions = {
 				tooltip = has_foreign_influence
 				check_variable = { influence_array^0 > 0 }
 			}
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_higher_than_10
-				check_variable = { interest_rate > 10 }
-			}
+			interest_rate_higher_than_10 = yes
 			NOT = { has_war_with = var:influence_array^0 }
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
@@ -185,17 +169,11 @@ bankruptcy_decisions = {
 				tooltip = has_foreign_influence
 				check_variable = { influence_array^1 > 0 }
 			}
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_higher_than_10
-				check_variable = { interest_rate > 10 }
-			}
+			interest_rate_higher_than_10 = yes
 			NOT = { has_war_with = var:influence_array^1 }
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
@@ -262,10 +240,7 @@ bankruptcy_decisions = {
 			}
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
@@ -318,10 +293,7 @@ bankruptcy_decisions = {
 		available = {
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			is_subject = yes
 			NOT = { has_decision = bankruptcy_seek_bailout_from_imf }
@@ -369,10 +341,7 @@ bankruptcy_decisions = {
 			NOT = { has_idea = IMF_debt_relief_rejected }
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			if = { limit = { tag = ETH }
 				NOT = { has_idea = ETH_idea_refactored_debt }
@@ -805,22 +774,18 @@ bankruptcy_decisions = {
 	}
 
 	bankruptcy_seek_bailout_from_african_monetary_fund = {
+		allowed = { is_african_nation = yes }
 		icon = GFX_decision_bancru_ask_button
-		visible = {
-			is_in_array = { global.is_african_nation = THIS.id }
-		}
+
 		available = {
 			is_full_state = yes
 			has_added_tension_amount < 5
 			has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
-			if = { limit = { tag = ETH }
+			if = { limit = { original_tag = ETH }
 				NOT = { has_idea = ETH_idea_refactored_debt }
 			}
 			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
@@ -838,19 +803,18 @@ bankruptcy_decisions = {
 				debt_change = {
 					value = debt
 					multiply = -0.10
-					clamp = { min = 0 max = -100  }
+					clamp = { min = -100 max = 0 }
 				}
 			}
 			modify_debt_effect = yes
 			# Persist absolute amount for display in tooltip (temp vars unreliable in tooltip render)
-			set_variable = { debt_bailout = debt_bailout_temp }
+			set_variable = { debt_bailout = debt_change }
 			multiply_variable = { debt_bailout = -1 }
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_amf_tt
 			clear_variable = debt_bailout
 			random_other_country = {
 				limit = {
-					is_in_array = { global.is_african_nation = THIS.id }
 					has_idea = AU_member
 					OR = {
 						has_idea = regional_power
@@ -933,10 +897,7 @@ bankruptcy_decisions = {
 			check_variable = { interest_rate > 14.999 }
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 		}
 
@@ -983,7 +944,7 @@ bankruptcy_decisions = {
 		icon = GFX_decision_bancru_collapse_button
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = potential_expenses_are_less_than_potential_income_tt
+				tooltip = potential_expenses_lower_than_potential_income_tt
 				check_variable = { potential_expense < potential_income }
 			}
 		}
@@ -1225,10 +1186,7 @@ debt_default_decisions = {
 		}
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = debt_default_pay_from_treasury_trigger_tooltip
-				check_variable = { interest_rate < 5 }
-			}
+			interest_rate_lower_than_5 = yes
 		}
 
 		complete_effect = {
@@ -1256,10 +1214,7 @@ debt_default_decisions = {
 		}
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = debt_default_pay_from_treasury_trigger_tooltip
-				check_variable = { interest_rate < 5 }
-			}
+			interest_rate_lower_than_5 = yes
 		}
 
 		complete_effect = {

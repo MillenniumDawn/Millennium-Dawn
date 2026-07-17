@@ -32,7 +32,13 @@ _GOLDEN = {
     "common/national_focus/france.txt": {"validate_style", "validate_ideas"},
     "events/Syria.txt": {"validate_style", "validate_ideas", "validate_events"},
     "common/decisions/Sudan.txt": {"validate_style", "validate_ideas"},
-    "common/scripted_effects/00_x.txt": {"validate_style", "validate_oob_units"},
+    "common/on_actions/00_on_actions.txt": {"validate_style", "validate_ideas"},
+    "common/scripted_triggers/00_triggers.txt": {"validate_style", "validate_ideas"},
+    "common/scripted_effects/00_x.txt": {
+        "validate_style",
+        "validate_oob_units",
+        "validate_ideas",
+    },
     "common/units/MD_land_units.txt": {
         "validate_style",
         "validate_oob_units",
@@ -51,9 +57,8 @@ _GOLDEN = {
         "validate_agency_upgrades",
     },
     "localisation/english/MD_focus_SER_l_english.yml": {"validate_ideas"},
-    # factories/history are manual-only now, so only the catch-all style runs.
     "common/factions/x.txt": {"validate_style"},
-    "history/countries/x.txt": {"validate_style"},
+    "history/countries/x.txt": {"validate_style", "validate_ideas"},
 }
 
 
@@ -83,12 +88,12 @@ def test_agency_upgrades_exact_file_match():
 
 def test_ai_equipment_is_warning_only():
     # Mirrors the hook: validate_ai_equipment runs without --strict.
-    assert _BY_SCRIPT["validate_ai_equipment"].strict is False
+    assert not _BY_SCRIPT["validate_ai_equipment"].strict
 
 
 def test_strict_validators_are_strict():
     for script in ("validate_events", "validate_ideas", "validate_oob_units"):
-        assert _BY_SCRIPT[script].strict is True
+        assert _BY_SCRIPT[script].strict
 
 
 def test_manual_validators_not_folded():
