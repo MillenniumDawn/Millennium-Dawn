@@ -1642,6 +1642,7 @@ country_event = {
 		45 = {
 				add_dynamic_modifier = { modifier = GER_Berlin_shithole }
 			}
+		set_temp_variable = { treasury_change = -50 }
 		modify_treasury_effect = yes
 		add_stability = 0.02
 
@@ -1653,6 +1654,7 @@ country_event = {
 		name = germany.40.b
 		log = "[GetDateText]: [This.GetName]: germany.40.b executed"
 		set_temp_variable = { treasury_change = -50 }
+		modify_treasury_effect = yes
 		add_political_power = -50
 		add_stability = -0.02
 
@@ -1695,6 +1697,7 @@ country_event = {
 	desc = germany.42.d
 	picture = GFX_powerplant
 	is_triggered_only = yes
+	fire_only_once = yes
 	trigger = {
 		original_tag = GER
 	}
@@ -3578,7 +3581,7 @@ country_event = { #Germany demands war reparations! (SOV)
 
 	option = {	#Okay, we might as well
 		name = germany.200.a
-		log = "[GetDateText]: [This.GetName]: germany.85.a executed"
+		log = "[GetDateText]: [This.GetName]: germany.200.a executed"
 		GER = {
 			country_event = {
 				id = germany.201
@@ -3586,21 +3589,20 @@ country_event = { #Germany demands war reparations! (SOV)
 			}
 		}
 		newline = yes
-		FROM = {
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = -0.015 }
-			modify_treasury_effect = yes
-		}
+		set_temp_variable = { GER_reparations_payment = gdp_total }
+		multiply_temp_variable = { GER_reparations_payment = 0.015 }
+		set_temp_variable = { treasury_change = GER_reparations_payment }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
 		GER = {
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.015 }
+			set_temp_variable = { treasury_change = GER_reparations_payment }
 			modify_treasury_effect = yes
 		}
 	}
 
 	option = {	#Hell no
 		name = germany.200.b
-		log = "[GetDateText]: [This.GetName]: germany.85.b executed"
+		log = "[GetDateText]: [This.GetName]: germany.200.b executed"
 		GER = {
 			country_event = {
 				id = germany.202
@@ -3770,7 +3772,7 @@ country_event = { # Pact with X country
 	}
 	option = {	# No
 		name = germany.205.b
-		log = "[GetDateText]: [This.GetName]: germany.205.a executed"
+		log = "[GetDateText]: [This.GetName]: germany.205.b executed"
 		GER = {
 			country_event = {
 				id = germany.207
@@ -4282,9 +4284,9 @@ country_event = {
 				days = 1
 			}
 		}
-		USA = {
+		ROOT = {
 			diplomatic_relation = {
-				country = ROOT
+				country = USA
 				relation = military_access
 				active = no
 			}
@@ -4369,15 +4371,14 @@ country_event = {
 	option = {
 		name = germany.223.a
 		log = "[GetDateText]: [This.GetName]: germany.223.a executed"
+		every_core_state = { add_core_of = GER }
 		GER = {
 			country_event = germany.224
-
 			annex_country = {
-				target = FROM
+				target = ROOT
 				transfer_troops = yes
 			}
 		}
-		FROM = { every_core_state = { add_core_of = GER } }
 		ai_chance = {
 			base = 5
 			modifier = {
@@ -4389,7 +4390,7 @@ country_event = {
 	# Refuse to join the Union
 	option = {
 		name = germany.223.b
-		log = "[GetDateText]: [This.GetName]: germany.223.a executed"
+		log = "[GetDateText]: [This.GetName]: germany.223.b executed"
 		GER = {
 			country_event = germany.225
 		}
@@ -5424,6 +5425,9 @@ country_event = {
 	#Infrastructure
 	option = {
 		name = germany.408.a
+		trigger = {
+			check_variable = { treasury > 3.5 }
+		}
 		log = "[GetDateText]: [This.GetName]: germany.408.a executed"
 		set_temp_variable = { treasury_change = -3.50 }
 		modify_treasury_effect = yes
@@ -5440,6 +5444,9 @@ country_event = {
 	}
 	option = {
 		name = germany.408.b
+		trigger = {
+			check_variable = { treasury > 7.5 }
+		}
 		log = "[GetDateText]: [This.GetName]: germany.408.b executed"
 		set_temp_variable = { treasury_change = -7.50 }
 		modify_treasury_effect = yes
@@ -5452,6 +5459,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 5
+		}
+	}
+	option = {
+		name = germany.408.c
+		log = "[GetDateText]: [This.GetName]: germany.408.c executed"
+		add_stability = -0.01
+		ai_chance = {
+			base = 1
 		}
 	}
 }
@@ -5511,12 +5526,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: germany.410.a executed"
 		GER = {
 			country_event = germany.411
-
-			diplomatic_relation = {
-				country = ROOT
-				relation = military_access
-				active = yes
-			}
+		}
+		diplomatic_relation = {
+			country = GER
+			relation = military_access
+			active = yes
 		}
 		ai_chance = {
 			base = 5
@@ -13252,7 +13266,8 @@ country_event = {
 		name = germany_foci.1.a #Update Tornardo
 		log = "[GetDateText]: [This.GetName]: germany_foci.1.a executed"
 		set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.15 }
+		multiply_temp_variable = { treasury_change = -0.15 }
+		modify_treasury_effect = yes
 		add_tech_bonus = {
 			name = CAT_air_eqp
 			bonus = 0.4
@@ -20499,7 +20514,7 @@ country_event = { #Key ressources
 				}
 			}
 		}
-		else_If = {
+		else_if = {
 			limit = {
 				original_tag = CAN
 			}
@@ -20512,7 +20527,7 @@ country_event = { #Key ressources
 				}
 			}
 		}
-		else_If = {
+		else_if = {
 			limit = {
 				original_tag = SAF
 			}
@@ -20525,14 +20540,14 @@ country_event = { #Key ressources
 				}
 			}
 		}
-		else_If = {
+		else_if = {
 			limit = {
 				original_tag = NRY
 			}
 			GER = {
 				38 = {
 					add_resource = {
-						type = OIL
+						type = oil
 						amount = 4
 					}
 				}
