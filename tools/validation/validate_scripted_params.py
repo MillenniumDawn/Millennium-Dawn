@@ -352,29 +352,29 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
         if ci >= 0:
             raw = raw[:ci]
 
-        # set_temp_variable = { NAME = RHS }
+        line_tokens = []
         for m in _SET_TEMP_RE.finditer(raw):
-            tokens.append(("set_temp", lineno, m.group(1), m.group(2).strip()))
-
-        # Keyword = { openers — detect before closing braces so order is right
+            line_tokens.append((m.start(), 0, ("set_temp", lineno, m.group(1), m.group(2).strip())))
         for m in _KW_OPEN_RE.finditer(raw):
             kw = m.group(1)
-            tokens.append(
+            line_tokens.append(
                 (
-                    "scope_open" if kw in SCOPE_CHANGING_KEYWORDS else "plain_open",
-                    lineno,
-                    kw,
-                    "",
+                    m.start(),
+                    1,
+                    ("scope_open" if kw in SCOPE_CHANGING_KEYWORDS else "plain_open", lineno, kw, ""),
                 )
             )
-
-        # Closing braces
-        for _ in re.finditer(r"\}", raw):
-            tokens.append(("close", lineno, "", ""))
-
-        # Effect calls: NAME = yes
+        for m in re.finditer(r"\}", raw):
+            line_tokens.append((m.start(), 0, ("close", lineno, "", "")))
         for m in _CALL_RE.finditer(raw):
-            tokens.append(("call", lineno, m.group(1), ""))
+            line_tokens.append((m.start(), 0, ("call", lineno, m.group(1), "")))
+
+        # Sort by source position, not by the category that discovered a token.
+        # The remaining fields make overlapping matches deterministic.
+        line_tokens.sort(
+            key=lambda item: (item[0], item[1], item[2][0], item[2][2], item[2][3])
+        )
+        tokens.extend(token for _offset, _priority, token in line_tokens)
 
     return tokens
 

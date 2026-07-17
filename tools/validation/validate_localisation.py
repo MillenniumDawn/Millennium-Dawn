@@ -291,7 +291,7 @@ def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
     ):
         return []
     simple_pattern = r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)"
-    trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)"
+    trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(?!\{)(\S+)"
     basename = os.path.basename(filename)
     results = []
     for pattern in [simple_pattern, trigger_pattern]:

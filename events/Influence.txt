@@ -240,6 +240,22 @@ country_event = {
 	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: News_influence.0 executed"
+		if = {
+			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = five_gift_sum }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = ten_gift_sum }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = fifteen_gift_sum }
+		}
+	}
+
 	# Accept the Aid
 	option = {
 		name = News_influence.0.a
@@ -3152,40 +3168,28 @@ country_event = {
 
 	immediate = {
 		clear_array = auto_influence_target_val
-		for_loop_effect = {
-			end = auto_influence_array^num
-			value = i
-			if = {
-				limit = { NOT = { check_variable = { auto_influence_array^i = 0 } } }
-				set_variable = { ROOT.found_influence_val = 0 }
-				set_variable = { ROOT.found_influence_match = 0 }
-				var:auto_influence_array^i = {
-					set_temp_variable = { influencer_index = -1 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = { check_variable = { influence_array^v = ROOT } }
-							set_temp_variable = { influencer_index = v }
-						}
-					}
+		for_each_loop = {
+			array = auto_influence_target_array
+			value = report_target
+			set_variable = { ROOT.found_influence_val = 0 }
+			var:report_target = {
+				set_temp_variable = { influencer_index = -1 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
 					if = {
-						limit = { NOT = { check_variable = { influencer_index = -1 } } }
-						set_variable = { ROOT.found_influence_val = influence_array_val^influencer_index }
-						set_variable = { ROOT.found_influence_match = 1 }
+						limit = { check_variable = { influence_array^v = ROOT } }
+						set_temp_variable = { influencer_index = v }
 					}
 				}
 				if = {
-					limit = { check_variable = { found_influence_match = 1 } }
-					set_variable = { auto_influence_target_val^i = found_influence_val }
-				}
-				else = {
-					set_variable = { auto_influence_target_val^i = 0 }
+					limit = { NOT = { check_variable = { influencer_index = -1 } } }
+					set_variable = { ROOT.found_influence_val = influence_array_val^influencer_index }
 				}
 			}
+			add_to_array = { auto_influence_target_val = found_influence_val }
 		}
 		clear_variable = found_influence_val
-		clear_variable = found_influence_match
 	}
 
 	option = {

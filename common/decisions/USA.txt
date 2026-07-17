@@ -69,6 +69,7 @@ USA_american_economic_decisions_category = {
 					amount = 4
 				}
 				add_to_variable = { USA_steel_expansion_count = 1 }
+				clamp_variable = { var = USA_steel_expansion_count min = 0 max = 3 }
 			}
 			USA_scaling_resource_production_cost_effect = yes
 			set_temp_variable = { temp_opinion = 1 }
@@ -144,6 +145,7 @@ USA_american_economic_decisions_category = {
 					amount = 3
 				}
 				add_to_variable = { USA_aluminium_expansion_count = 1 }
+				clamp_variable = { var = USA_aluminium_expansion_count min = 0 max = 3 }
 			}
 			USA_scaling_resource_production_cost_effect = yes
 			set_temp_variable = { temp_opinion = 1 }
@@ -219,6 +221,7 @@ USA_american_economic_decisions_category = {
 					amount = 3
 				}
 				add_to_variable = { USA_tungsten_expansion_count = 1 }
+				clamp_variable = { var = USA_tungsten_expansion_count min = 0 max = 3 }
 			}
 			USA_scaling_resource_production_cost_effect = yes
 			set_temp_variable = { temp_opinion = 1 }
@@ -1305,7 +1308,7 @@ USA_decisions_domestic_policies = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
-				USA = { has_country_flag = war_on_terror_speech }
+				USA = { has_country_flag = USA_wot_speech_given }
 			}
 		}
 		visible = { NOT = { has_country_flag = collapsed_nation } }
@@ -1349,7 +1352,7 @@ USA_decisions_domestic_policies = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
-				USA = { has_country_flag = war_on_terror_speech }
+				USA = { has_country_flag = USA_wot_speech_given }
 			}
 			NOT = {
 				has_decision = USA_decision_post_nine_eleven_response
@@ -1411,7 +1414,7 @@ USA_decisions_domestic_policies = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
-				USA = { has_country_flag = war_on_terror_speech }
+				USA = { has_country_flag = USA_wot_speech_given }
 			}
 			NOT = {
 				has_decision = USA_decision_post_nine_eleven_response
@@ -3096,10 +3099,7 @@ USA_f35_program_decisions = {
 				congress_medium_support_trigger = yes
 			}
 			else = {
-				custom_trigger_tooltip = {
-					tooltip = 20_percent_government_coalition_strength_tt
-					check_variable = { government_coalition_strength > 0.199 }
-				}
+				20_percent_government_popularity = yes
 			}
 			custom_trigger_tooltip = {
 				tooltip = USA_f35_submitted_tech
@@ -4791,7 +4791,7 @@ USA_foreign_policy = {
 			}
 			hidden_effect = {
 				if = {
-					limit = { has_country_flag = war_on_terror_speech }
+					limit = { has_country_flag = USA_wot_speech_given }
 					set_country_flag = JAP_war_on_terror_article_9_done
 				}
 				if = {
@@ -4804,7 +4804,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				has_country_flag = war_on_terror_speech
+				has_country_flag = USA_wot_speech_given
 				NOT = { has_country_flag = JAP_war_on_terror_article_9_done }
 				add = 5
 			}
@@ -5926,6 +5926,7 @@ USA_foreign_policy = {
 			newline = yes
 			for_each_scope_loop = {
 				array = global.EU_member
+				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				add_opinion_modifier = {
 					target = USA
 					modifier = usa_fp_diplomatic_cooperation
@@ -7908,6 +7909,184 @@ USA_foreign_policy = {
 			modifier = {
 				MEX = { has_stability < 0.4 }
 				add = 15
+			}
+		}
+	}
+	USA_TAI_send_carrier = {
+		icon = GFX_decision_generic_naval
+
+		visible = {
+			country_exists = TAI
+			NOT = { has_war_with = TAI }
+			CHI = {
+				has_completed_focus = CHI_TAI_cross_strait_policy
+				OR = {
+					has_country_flag = CHI_amphibious_exercise_active
+					check_variable = { CHI_taiwan_strait_tension > 50 }
+				}
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = USA_TAI_carrier_sent }
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_TAI_send_carrier"
+			set_country_flag = { flag = USA_TAI_carrier_sent days = 180 value = 1 }
+			CHI = {
+				add_to_variable = { CHI_taiwan_us_support = 5 tooltip = CHI_taiwan_us_support_tt }
+				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				add_to_variable = { CHI_taiwan_strait_tension = 5 tooltip = CHI_taiwan_strait_tension_tt }
+				clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 5
+				CHI = { check_variable = { CHI_taiwan_strait_tension > 60 } }
+			}
+		}
+	}
+
+	USA_TAI_recon_flight = {
+		icon = GFX_decision_generic_air
+
+		visible = {
+			country_exists = TAI
+			NOT = { has_war_with = TAI }
+			CHI = {
+				has_completed_focus = CHI_TAI_cross_strait_policy
+				has_country_flag = CHI_adiz_incursion_active
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = USA_TAI_recon_active }
+		}
+
+		cost = 25
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_TAI_recon_flight"
+			set_country_flag = { flag = USA_TAI_recon_active days = 45 value = 1 }
+			CHI = {
+				add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
+				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				add_to_variable = { CHI_taiwan_strait_tension = 4 tooltip = CHI_taiwan_strait_tension_tt }
+				clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	USA_TAI_arm_taiwan = {
+		icon = GFX_decision_generic_military
+
+		visible = {
+			country_exists = TAI
+			NOT = { has_war_with = TAI }
+			CHI = {
+				has_completed_focus = CHI_TAI_cross_strait_policy
+				has_country_flag = CHI_blockade_sim_active
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = USA_TAI_arms_sale_active }
+		}
+
+		cost = 75
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_TAI_arm_taiwan"
+			set_country_flag = { flag = USA_TAI_arms_sale_active days = 180 value = 1 }
+			CHI = {
+				add_to_variable = { CHI_taiwan_us_support = 6 tooltip = CHI_taiwan_us_support_tt }
+				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+			}
+			TAI = {
+				add_timed_idea = {
+					idea = TAI_self_sufficiency
+					days = 365
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	USA_TAI_fon_operation = {
+		icon = GFX_decision_generic_naval
+
+		visible = {
+			country_exists = TAI
+			NOT = { has_war_with = TAI }
+			CHI = { has_country_flag = CHI_TAI_maritime_zone_active }
+		}
+
+		available = {
+			CHI = { has_country_flag = CHI_TAI_maritime_zone_active }
+		}
+
+		cost = 75
+		days_re_enable = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_TAI_fon_operation"
+			CHI = {
+				add_to_variable = { CHI_taiwan_us_support = 5 tooltip = CHI_taiwan_us_support_tt }
+				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				add_to_variable = { CHI_taiwan_strait_tension = 8 tooltip = CHI_taiwan_strait_tension_tt }
+				clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
+				country_event = { id = china_sar.025 days = 3 }
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	USA_TAI_rimpac_exercise = {
+		icon = GFX_decision_generic_naval
+
+		visible = {
+			country_exists = TAI
+			NOT = { has_war_with = TAI }
+			CHI = { has_completed_focus = CHI_TAI_cross_strait_policy }
+		}
+
+		cost = 50
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_TAI_rimpac_exercise"
+			CHI = {
+				add_to_variable = { CHI_taiwan_us_support = 8 tooltip = CHI_taiwan_us_support_tt }
+				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				add_to_variable = { CHI_taiwan_strait_tension = 6 tooltip = CHI_taiwan_strait_tension_tt }
+				clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				add = 5
+				CHI = { check_variable = { CHI_taiwan_strait_tension > 40 } }
 			}
 		}
 	}

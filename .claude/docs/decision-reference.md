@@ -1,6 +1,6 @@
 # Decision Reference
 
-On-demand reference for decision structure and examples. For best practices, see CLAUDE.md.
+On-demand reference for decision structure and examples. For best practices, see AGENTS.md.
 
 Full HOI4 wiki reference: https://hoi4.paradoxwikis.com/Decision_modding
 
@@ -28,6 +28,8 @@ A decision becomes targeted when it includes `targets`, `target_array`, `target_
 | `target_trigger`      | ROOT + FROM | Daily (only if `target_root_trigger` passes) | Per-target daily filter                       |
 | `visible`             | ROOT + FROM | Every tick                                   | UI visibility (most expensive)                |
 | `available`           | ROOT + FROM | Every tick                                   | Clickability gate                             |
+
+**Don't repeat the category's `allowed` on each decision.** A decision's `allowed` is redundant when it just duplicates the parent category's `allowed` (e.g. both are `original_tag = TAG`) — the category gate already applies to every decision inside it. Restrict the nation once on the category; put dynamic conditions in `available`/`visible` (since `allowed` is locked at game start).
 
 ### Performance Optimization
 
@@ -135,7 +137,7 @@ URA_world_opr = {
 		OPR = { country_event = { id = subject_rus.121 days = 1 } }
 	}
 
-	ai_will_do = { factor = 10 }
+	ai_will_do = { base = 10 }
 }
 ```
 
@@ -233,9 +235,8 @@ unban_party_scripted_call = yes
 set_temp_variable = { percent_change = 10 }
 change_domestic_influence_percentage = yes
 
-# Foreign influence (requires target)
+# Foreign influence (requires target; tag_index defaults to ROOT.id)
 set_temp_variable = { percent_change = 5 }
-set_temp_variable = { tag_index = ROOT }
 set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```

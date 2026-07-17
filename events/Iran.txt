@@ -487,7 +487,6 @@ country_event = { # 2005 Election Notification (Between Ahmadinejad and Rafsanja
 		clr_country_flag = reformist_portrait_haghshenas
 		clr_country_flag = principalist_portrait_mashaei
 		clr_country_flag = principalist_portrait_bayadi
-		remove_from_array = { gov_coalition_array = 16 }
 
 		set_country_flag = PER_election_enabled
 		set_country_flag = principalist_portrait_ahmadinejad
@@ -5396,7 +5395,7 @@ country_event = {
 				country_exists = CHI
 				NOT = {
 					has_country_flag = PER_did_moderates_6
-					has_idea = sco_member
+					has_idea = CHI_sco_member
 					has_war_with = CHI
 				}
 			}
@@ -5744,8 +5743,10 @@ country_event = {
 		else_if = {
 			limit = {
 				NOT = {
-					has_country_flag = PER_did_monarch_8
-					check_variable = { gdp_per_capita > 34.99 }
+					OR = {
+						has_country_flag = PER_did_monarch_8
+						check_variable = { gdp_per_capita > 34.99 }
+					}
 				}
 			}
 			activate_mission = PER_prosperity_of_the_people
@@ -5913,7 +5914,7 @@ country_event = {
 			limit = {
 				NOT = {
 					has_country_flag = PER_did_reformists_2
-					has_idea = sco_member
+					has_idea = CHI_sco_member
 				}
 			}
 			activate_mission = PER_friends_from_across
@@ -8251,6 +8252,7 @@ country_event = {
 				target = PER
 			}
 		}
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
 		effect_tooltip = {
 			PER = {
 				set_temp_variable = { treasury_change = -47.00 }
@@ -8273,6 +8275,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				has_opinion = { target = PER value > 20 }
+				add = 20
+			}
 		}
 	}
 	# No
@@ -8287,6 +8293,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 1
+			modifier = {
+				has_opinion = { target = PER value < 20 }
+				add = 20
+			}
 		}
 	}
 }
@@ -8458,7 +8468,7 @@ country_event = {
 	# No
 	option = {
 		name = nuclear_iran.10.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.10.a executed"
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.10.b executed"
 		PER = {
 			country_event = {
 				id = nuclear_iran.12
@@ -12159,6 +12169,11 @@ country_event = {
 	option = {
 		name = iranian_focus.71.a
 		log = "[GetDateText]: [This.GetName]:iranian_focus.71.a executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		effect_tooltip = {
+			PER = { declare_war_on = { target = HEZ type = annex_everything } }
+			declare_war_on = { target = HEZ type = annex_everything }
+		}
 		PER = {
 			country_event = {
 				id = iranian_focus.72
@@ -12167,11 +12182,24 @@ country_event = {
 		}
 		ai_chance = {
 			base = 5
+			modifier = {
+				has_opinion = { target = PER value > 20 }
+				add = 20
+			}
 		}
 	}
 	option = {
 		name = iranian_focus.71.b
 		log = "[GetDateText]: [This.GetName]:iranian_focus.71.b executed"
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		effect_tooltip = {
+			PER = {
+				set_temp_variable = { wargoal_on = HEZ }
+				set_temp_variable = { wargoal_type = 1 }
+				add_threat_from_wargoal_effect = yes
+				create_wargoal = { target = HEZ type = liberate_wargoal }
+			}
+		}
 		PER = {
 			country_event = {
 				id = iranian_focus.73
@@ -12180,6 +12208,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 0
+			modifier = {
+				has_opinion = { target = PER value < 20 }
+				add = 20
+			}
 		}
 	}
 }
@@ -15223,6 +15255,10 @@ country_event = {
 	desc = iranian_focus.160.d
 
 	is_triggered_only = yes
+
+	trigger = {
+		PER = { has_character = PER_qasem_soleimani }
+	}
 
 	option = {
 		name = iranian_focus.160.a
@@ -20778,7 +20814,24 @@ news_event = {
 	option = {
 		name = iranian_events.910.a
 		log = "[GetDateText]: [This.GetName]:iranian_events.910.a executed"
-		add_ideas = PER_hormuz_blocked_gang
+		#Only the exporters who actually ship through the strait. This is a global news event: without the
+		#gate every country on Earth takes the export and fuel penalty.
+		if = {
+			limit = {
+				OR = {
+					original_tag = SAU
+					original_tag = IRQ
+					original_tag = UAE
+					original_tag = KUW
+					original_tag = QAT
+					original_tag = BHR
+					original_tag = OMA
+				}
+			}
+			add_ideas = PER_hormuz_blocked_gang
+		}
+		newline = yes
+		custom_effect_tooltip = oil_current_price_tt
 	}
 }
 
