@@ -750,14 +750,17 @@ on_actions = {
 			
 			########################
 			# Political realignment detector (switchable focus trunks)
-			# Once a political path is chosen, watch the ruling party. When it
-			# CHANGES to a party belonging to a different trunk — via an election,
-			# the junta-install coup (idx 22 -> royalist) or a player-driven
-			# realignment decision — swap the player onto that trunk and strip the
-			# outgoing party's signature ideas. The path flags gate focus
-			# availability (the SIA_*_trunk_open triggers), so the new trunk's
-			# un-taken focuses open while the abandoned trunk's un-taken focuses
-			# lock; completed focuses persist.
+			# Watch the ruling party from game start. When it CHANGES to a party
+			# belonging to a different trunk — via an election (scheduled or the
+			# extraordinary-elections button), the junta-install coup (idx 22 ->
+			# royalist) or a player-driven realignment decision — swap the player
+			# onto that trunk and strip the outgoing party's signature ideas. The
+			# path flags gate focus availability (the SIA_*_trunk_open triggers),
+			# so the new trunk's un-taken focuses open while the abandoned trunk's
+			# un-taken focuses lock; completed focuses persist. Runs pre-commitment
+			# too: an unmapped party winning a snap election before any trunk is
+			# chosen must still be tracked, or the fail-open reset below can never
+			# fire and the political tree soft-locks.
 			# Party->trunk map: 18=populist (Pheu Thai), {22,23}=royalist,
 			# 3=reform, 1=democrat (conservatism). Idx 1 is the Democrats: the
 			# Thaksinite government always rules at idx 18 (Pheu Thai wins the
@@ -766,12 +769,6 @@ on_actions = {
 			########################
 			if = {
 				limit = {
-					OR = {
-						has_country_flag = SIA_path_populist
-						has_country_flag = SIA_path_royalist
-						has_country_flag = SIA_path_reform
-						has_country_flag = SIA_path_democrat
-					}
 					NOT = { has_country_flag = SIA_path_communist }
 					NOT = { has_country_flag = SIA_republic_declared }
 				}
@@ -853,6 +850,11 @@ on_actions = {
 							NOT = { check_variable = { party_index = 1 } }
 						}
 						SIA_clear_path_flags = yes
+						SIA_strip_populist_ideas = yes
+						SIA_strip_royalist_ideas = yes
+						SIA_strip_reform_ideas = yes
+						SIA_strip_democrat_ideas = yes
+						SIA_coup_cleanup_effect = yes
 						SIA_pt_cleanup_effect = yes
 					}
 					set_variable = { SIA_last_ruling_party = party_index }
