@@ -54,8 +54,8 @@ def test_layout_rejects_doubled_token_spacing():
 def test_layout_rejects_child_content_on_multiline_opener():
     text = (
         "root = {\n"
-        "\tavailable = { hidden_trigger = { always = yes }\n"
-        "\t\talways = yes\n"
+        "\tcompletion_reward = { add_political_power = 100\n"
+        "\t\tadd_stability = 0.05\n"
         "\t}\n"
         "}\n"
     )
@@ -66,6 +66,26 @@ def test_layout_rejects_child_content_on_multiline_opener():
         finding.category == "layout-blocks"
         and "opener" in finding.message
         and finding.line == 2
+        for finding in findings
+    )
+
+
+def test_layout_allows_balanced_child_block_on_opener():
+    text = (
+        "root = {\n"
+        "\tif = { limit = { has_country_flag = foo }\n"
+        "\t\tset_temp_variable = { x = 1 }\n"
+        "\t}\n"
+        "\tUSA = { add_opinion_modifier = { target = ROOT modifier = m }\n"
+        "\t\tset_country_flag = bar\n"
+        "\t}\n"
+        "}\n"
+    )
+
+    findings = _errors(text)
+
+    assert not any(
+        finding.category == "layout-blocks" and "opener" in finding.message
         for finding in findings
     )
 
@@ -192,7 +212,7 @@ def test_national_focus_does_not_require_separator_before_tree_close():
 def test_changed_lines_from_diff_includes_added_lines_and_deletion_boundary():
     diff = "@@ -10,2 +10,3 @@\n@@ -30 +31,0 @@\n@@ -40 +41 @@\n"
 
-    assert _changed_lines_from_diff(diff) == {10, 11, 12, 31, 41}
+    assert _changed_lines_from_diff(diff) == {10, 11, 12, 31, 32, 41}
 
 
 def test_full_scan_suppresses_legacy_layout_debt_by_default(tmp_path):
