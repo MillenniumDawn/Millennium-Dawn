@@ -51,6 +51,13 @@ _SCAN_PATTERNS = [
     "events/**/*.txt",
 ]
 
+# The bare multi-child NOT check scans every trigger-bearing script file, not
+# just the effect-heavy dirs above (history/ carries no bare multi-child NOTs).
+_NOT_SCAN_PATTERNS = [
+    "common/**/*.txt",
+    "events/**/*.txt",
+]
+
 # Matches `HEADER = {`. The header charset covers tags, state ids, magic scopes,
 # and variable/target scopes (var:x, event_target:y, global.event_target:z^0).
 _OPEN_RE = re.compile(r"([\w.:^@\[\]-]+)\s*=\s*\{")
@@ -398,6 +405,67 @@ def _find_government_match(text: str):
     return results
 
 
+# Bare multi-child NOT is ambiguous: the project doc reads it as NAND, cwtools
+# as NOR (see AGENTS.md "NOT blocks and NOR"). A single child — one trigger or
+# one explicit AND/OR wrapper — is unambiguous and never flagged.
+_NOT_RE = re.compile(r"\bNOT\s*=\s*\{")
+_CHILD_KEY_RE = re.compile(r"[\w.:^@\[\]-]+\s*(?:>=|<=|=|>|<)\s*")
+_VALUE_RE = re.compile(r"\S+")
+
+
+def _count_children(body: str) -> int:
+    """Count direct depth-1 constructs in a block body: a `key = { ... }`
+    block (however large) and a bare `key = value` scalar each count as one
+    child. Stops counting on anything unparseable, so malformed input
+    undercounts rather than false-flagging."""
+    count = 0
+    pos = 0
+    n = len(body)
+    while pos < n:
+        while pos < n and body[pos].isspace():
+            pos += 1
+        if pos >= n:
+            break
+        m = _CHILD_KEY_RE.match(body, pos)
+        if not m:
+            break
+        count += 1
+        pos = m.end()
+        if pos < n and body[pos] == "{":
+            _, end = extract_block_from_text(body, pos)
+            if end == -1:
+                break
+            pos = end
+        elif pos < n and body[pos] == '"':
+            close = body.find('"', pos + 1)
+            if close == -1:
+                break
+            pos = close + 1
+        else:
+            vm = _VALUE_RE.match(body, pos)
+            if not vm:
+                break
+            pos = vm.end()
+    return count
+
+
+def _find_bare_not(text: str):
+    """Return (line, child_count) for each `NOT = { ... }` with 2+ direct
+    children. A single child — a lone trigger or an explicit AND/OR wrapper —
+    is unambiguous and not flagged. finditer walks the whole file, so a NOT
+    nested inside another block (OR, if, a second NOT) is found independently
+    of its container."""
+    results = []
+    for m in _NOT_RE.finditer(text):
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            continue
+        count = _count_children(body)
+        if count >= 2:
+            results.append((text.count("\n", 0, m.start()) + 1, count))
+    return results
+
+
 def _is_magic_chain(header: str) -> bool:
     return all(part in _MAGIC for part in header.split("."))
 
@@ -503,6 +571,24 @@ def _scan_file(text: str, path: str):
     return findings
 
 
+def _scan_bare_not(text: str, path: str):
+    """Return [(message, line)] for the bare multi-child NOT check. Separate
+    from _scan_file: NOT lives in trigger contexts across all of common/ (the
+    founding bug was in an ai_strategy allowed block), so this check scans
+    wider than the effect-bearing files the other detectors target."""
+    findings = []
+    for line, count in _find_bare_not(text):
+        findings.append(
+            (
+                f"NOT with {count} children is ambiguous (semantics disputed "
+                "NAND vs NOR); write `NOT = { OR = { ... } }` or one NOT "
+                "per trigger",
+                line,
+            )
+        )
+    return findings
+
+
 class Validator(BaseValidator):
     TITLE = "SIMPLIFICATION SUGGESTIONS"
     STAGED_EXTENSIONS = [".txt"]
@@ -516,13 +602,18 @@ class Validator(BaseValidator):
             _SCAN_PATTERNS, "simplifications.scan", _scan_file
         )
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
+        parsed_not = self.parse_files_cached(
+            _NOT_SCAN_PATTERNS, "simplifications.bare_not", _scan_bare_not
+        )
+        self.log(f"Scanned {len(parsed_not)} files for bare multi-child NOT")
 
         self._log_section("Collecting and reporting results...")
         results = []
-        for path, findings in parsed.items():
-            rel = os.path.relpath(path, self.mod_path)
-            for message, line in findings:
-                results.append((message, rel, line))
+        for parsed_map in (parsed, parsed_not):
+            for path, findings in parsed_map.items():
+                rel = os.path.relpath(path, self.mod_path)
+                for message, line in findings:
+                    results.append((message, rel, line))
 
         self._report(
             results,
