@@ -1639,3 +1639,28 @@ CHI_bri_clear_loan = {
 		}
 	}
 }
+
+CHI_TAI_recompute_isolation = {
+	# iso_index: +15 = fully isolated (0 recognisers), -15 = broadly recognised (30+)
+	set_temp_variable = { CHI_TAI_iso_index = 15 }
+	subtract_from_temp_variable = { CHI_TAI_iso_index = Granted_Recognition }
+	clamp_temp_variable = { var = CHI_TAI_iso_index min = -15 max = 15 }
+
+	set_variable = { CHI_TAI_isolation_trade = CHI_TAI_iso_index }
+	multiply_variable = { CHI_TAI_isolation_trade = -0.02 }
+
+	set_variable = { CHI_TAI_isolation_influence = CHI_TAI_iso_index }
+	multiply_variable = { CHI_TAI_isolation_influence = -0.015 }
+
+	set_variable = { CHI_TAI_isolation_relations = CHI_TAI_iso_index }
+	multiply_variable = { CHI_TAI_isolation_relations = 0.03 }
+}
+
+CHI_TAI_apply_isolation = {
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = CHI_TAI_intl_isolation_modifier } } }
+		hidden_effect = { add_dynamic_modifier = { modifier = CHI_TAI_intl_isolation_modifier } }
+	}
+	hidden_effect = { CHI_TAI_recompute_isolation = yes }
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_TAI_intl_isolation_modifier }
+}
