@@ -57,25 +57,25 @@ def main():
     while True:
         try:
             selection_input = input(
-                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_parties_icons.gfx.\n5. Retrieve and generate intelligence agency icons\n6. Retrieve and generate MD_decisions.gfx\n7. Retrieve and generate Focus Title Bars (This also updates the titlebar_styles.txt file)\n8. Retrieve and generate MD_scripted_gui.gfx (scans scripted_gui/countries/<TAG>/)\n9. Retrieve and generate MD_decisions_desc.gfx (text icons from decisions/**/decision_text/)\nPlease enter the number of the option you'd like: "
+                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_parties_icons.gfx.\n5. Retrieve and generate intelligence agency icons\n6. Retrieve and generate MD_decisions.gfx\n7. Retrieve and generate Focus Title Bars (This also updates the titlebar_styles.txt file)\n8. Retrieve and generate MD_scripted_gui.gfx (scans scripted_gui/countries/<TAG>/)\n9. Retrieve and generate MD_decisions_desc.gfx (text icons from decisions/**/decision_text/)\n10. Retrieve and generate modifiericons_texticons.gfx (text icons from gfx/texticons/modifier_icons/)\nPlease enter the number of the option you'd like: "
             ).strip()
 
             if not selection_input:
                 print(
-                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 9.{bcolors.RESET}\n"
+                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 10.{bcolors.RESET}\n"
                 )
                 continue
 
             selection = int(selection_input)
-            if selection < 1 or selection > 9:
+            if selection < 1 or selection > 10:
                 print(
-                    f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 9.\n{bcolors.RESET}"
+                    f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 10.\n{bcolors.RESET}"
                 )
                 continue
             break
         except ValueError:
             print(
-                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 9.{bcolors.RESET}\n"
+                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 10.{bcolors.RESET}\n"
             )
             continue
 
@@ -97,6 +97,8 @@ def main():
         generate_scripted_gui(mod_root)
     elif selection == 9:
         generate_decisions_desc(mod_root)
+    elif selection == 10:
+        generate_modifier_icons(mod_root)
 
 
 # --- Filesystem scanning ----------------------------------------------------
@@ -266,13 +268,18 @@ def merge_gfx_entries(path, entries, render, header="", protected=frozenset()):
     splices = [(ls, se, "") for ls, se in dup_spans]
     for name in sorted(entries, key=lambda n: entries[n].lower()):
         texture_path = entries[name]
-        if name in existing:
+        if name in existing and name not in protected:
             old_texfile, start, end = existing[name]
             if old_texfile != texture_path:
                 block = render(name, texture_path)
                 core = block[1:] if block.startswith("\t") else block
                 splices.append((start, end, core.rstrip("\n")))
                 changed_names.append(name)
+        elif name in existing:
+            # Protected: the existing block points at a non-modifier_icons path
+            # (e.g. a vanilla role icon) and must keep its current texturefile.
+            # The new entry is still added below so the file lives in the .gfx.
+            pass
         else:
             new_names.append(name)
 
@@ -733,6 +740,91 @@ def generate_decisions_desc(mod_root):
     )
     _print_merge_report("MD_decisions_desc.gfx", *result)
     print(f"\nMD_decisions_desc.gfx has been processed for {len(files)} text icons.")
+
+
+# Modifier-texticon files that exist in the .gfx but point at non-modifier_icons
+# paths. These must be protected from the orphan sweep: the role-icon entries
+# (anti_tank, artillery, etc.) are vanilla faction/role references, and a
+# future modifier_icons file with a matching stem (e.g. rocket_texticon.dds)
+# must not be allowed to silently overwrite them.
+MODIFIER_ICONS_EXTERNAL = frozenset(
+    {
+        "GFX_no_order_texticon",
+        "GFX_pops",
+        "GFX_anti_tank_texticon",
+        "GFX_artillery_texticon",
+        "GFX_anti_air_texticon",
+        "GFX_rocket_texticon",
+        "GFX_motorized_texticon",
+        "GFX_amphibious_texticon",
+        "GFX_light_tank_chassis_texticon",
+        "GFX_medium_tank_chassis_texticon",
+        "GFX_heavy_tank_chassis_texticon",
+        "GFX_super_heavy_tank_chassis_texticon",
+        "GFX_modern_tank_chassis_texticon",
+        "GFX_amphibious_tank_chassis_texticon",
+        "GFX_flame_texticon",
+        "GFX_select_headquarters_texticon",
+    }
+)
+
+
+def generate_modifier_icons(mod_root):
+    scan_dir = mod_root / "gfx" / "texticons" / "modifier_icons"
+    print(scan_dir)
+    if not scan_dir.is_dir():
+        print(f"{bcolors.FAIL}Directory does not exist: {scan_dir}{bcolors.RESET}")
+        return
+    files = scan_images(scan_dir)
+    _describe_scan(files)
+
+    out_path = interface_path(mod_root, "modifiericons_texticons.gfx")
+    # Map texturefile -> existing GFX name in the .gfx, so files that are
+    # already wired keep their existing GFX name (preserving any non-standard
+    # suffixes used by older hand-rolled entries).
+    existing_names_by_path = {}
+    if out_path.exists():
+        original = _read_lf(out_path)
+        original = original.replace("\r\n", "\n").replace("\r", "\n")
+        for nm, tx, _s, _e in _parse_named_blocks(original):
+            if nm and tx:
+                existing_names_by_path.setdefault(tx, nm)
+
+    print(f"{bcolors.OK}Generating modifiericons_texticons.gfx...{bcolors.RESET}")
+    seen = set()
+    entries = {}
+    for f in files:
+        texture_path = rel_texture_path(f, mod_root)
+        # Default: GFX_<full_stem>, matching the workshop "Modifier Icons"
+        # submod convention. If a GFX block already exists for this texture
+        # (including hand-rolled entries with a redundant `_texticon` suffix
+        # in the GFX name), reuse its name so existing .gui / localisation
+        # references keep resolving.
+        name = existing_names_by_path.get(texture_path, f"GFX_{f.stem}")
+        if check_duplicate(name, seen, texture_path):
+            continue
+        entries[name] = texture_path
+
+    def render(name, texture_path):
+        return (
+            "\tspriteType = {\n"
+            f'\t\tname = "{name}"\n'
+            f'\t\ttexturefile = "{texture_path}"\n'
+            "\t\tlegacy_lazy_load = no\n"
+            "\t}\n"
+        )
+
+    result = merge_gfx_entries(
+        interface_path(mod_root, "modifiericons_texticons.gfx"),
+        entries,
+        render,
+        header="spriteTypes = {\n",
+        protected=MODIFIER_ICONS_EXTERNAL,
+    )
+    _print_merge_report("modifiericons_texticons.gfx", *result)
+    print(
+        f"\nmodifiericons_texticons.gfx has been processed for {len(files)} text icons."
+    )
 
 
 # --- Scripted-GUI sprite generation ---------------------------------------

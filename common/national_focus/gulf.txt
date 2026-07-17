@@ -1928,6 +1928,8 @@ focus_tree = {
 				subtract_from_variable = { mbs = 1 }
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_empower_the_mutaween executed"
+			unlock_decision_tooltip = GCC_discourage_female_representation
+			unlock_decision_tooltip = GCC_limit_female_employment
 		}
 
 		ai_will_do = {
@@ -1976,6 +1978,8 @@ focus_tree = {
 				add_to_variable = { mbs = 1 }
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_weaken_the_mutaween executed"
+			unlock_decision_tooltip = GCC_encourage_female_representation
+			unlock_decision_tooltip = GCC_expand_female_employment
 		}
 
 		ai_will_do = {
@@ -2040,6 +2044,8 @@ focus_tree = {
 		completion_reward = {
 			custom_effect_tooltip = GCC_women_economy_tt
 			log = "[GetDateText]: [This.GetName]: focus GCC_women_in_the_economy executed"
+			unlock_decision_tooltip = GCC_expand_female_employment
+			unlock_decision_tooltip = GCC_limit_female_employment
 		}
 
 		ai_will_do = { base = 1 }
@@ -2061,6 +2067,8 @@ focus_tree = {
 		completion_reward = {
 			custom_effect_tooltip = GCC_women_politics_tt
 			log = "[GetDateText]: [This.GetName]: focus GCC_women_in_politics executed"
+			unlock_decision_tooltip = GCC_encourage_female_representation
+			unlock_decision_tooltip = GCC_discourage_female_representation
 		}
 
 		ai_will_do = { base = 1 }
@@ -4319,8 +4327,9 @@ focus_tree = {
 					joint_gcc_ventures
 				}
 				remove_from_faction = THIS
-				every_country = {
-					limit = { has_idea = idea_gcc_member_state }
+				for_each_scope_loop = {
+					array = global.gcc_member_state
+					tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
 					remove_opinion_modifier = {
 						target = ROOT
 						modifier = Gulf_Cooperation_Council_Relations
@@ -6663,17 +6672,18 @@ focus_tree = {
 					modifier = recognises_us
 				}
 			}
-			every_country = {
-				limit = {
-					has_idea = LoAS_member
-					NOT = { has_completed_focus = GCC_grant_recognition }
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { has_completed_focus = GCC_grant_recognition } }
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = recognises_israel
+					}
+					custom_effect_tooltip = strategic_reasons_antagonize_tt
+					add_ai_strategy = { type = antagonize id = ROOT value = 20 }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = recognises_israel
-				}
-				custom_effect_tooltip = strategic_reasons_antagonize_tt
-				add_ai_strategy = { type = antagonize id = ROOT value = 20 }
 			}
 			if = {
 				limit = { ISR = { has_idea = palestinian_resistance } }
@@ -7450,6 +7460,7 @@ focus_tree = {
 				modify_gcc_unity = yes
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_improve_relations_with_iran executed"
+			unlock_decision_tooltip = GCC_blockade
 		}
 
 		ai_will_do = { base = 1 }
@@ -7639,21 +7650,28 @@ focus_tree = {
 		available = { has_government = communism }
 
 		completion_reward = {
-			every_other_country = {
-				limit = { has_idea = idea_gcc_member_state NOT = { has_government = communism } }
+			for_each_scope_loop = {
+				array = global.gcc_member_state
+				tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
 				if = {
 					limit = {
-						check_variable = { shia_population > 0 }
-						NOT = { has_completed_focus = GCC_comprehensive_crackdown }
+						NOT = { tag = ROOT }
+						NOT = { has_government = communism }
 					}
-					shia_resistance_level_up = yes
+					if = {
+						limit = {
+							check_variable = { shia_population > 0 }
+							NOT = { has_completed_focus = GCC_comprehensive_crackdown }
+						}
+						shia_resistance_level_up = yes
+					}
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = supported_opposition
+					}
+					custom_effect_tooltip = strategic_reasons_contain_tt
+					add_ai_strategy = { type = contain id = ROOT value = 20 }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = supported_opposition
-				}
-				custom_effect_tooltip = strategic_reasons_contain_tt
-				add_ai_strategy = { type = contain id = ROOT value = 20 }
 			}
 			if = {
 				limit = {
@@ -7934,6 +7952,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus GCC_confront_iranian_partners executed"
+			unlock_decision_tooltip = GCC_blockade
 			custom_effect_tooltip = GCC_confront_iranian_partners_tt
 			if = {
 				limit = {
@@ -8613,7 +8632,6 @@ focus_tree = {
 		completion_reward = {
 			add_ideas = russian_military_advisors
 			hidden_effect = {
-				SOV = { set_country_flag = military_advisors_@ROOT }
 				add_to_variable = { foreign_advisors = 1 }
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_invite_russian_advisors executed"
@@ -9437,6 +9455,7 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 10 }
 			change_saudi_royal_family_opinion = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_back_the_strongman executed"
+			unlock_decision_tooltip = send_support_to_hor
 		}
 
 		ai_will_do = { base = 1 }
@@ -11590,6 +11609,12 @@ focus_tree = {
 					remove_idea = sunni
 					add_idea = shia
 				}
+				PER = {
+					remove_opinion_modifier = {
+						target = ROOT
+						modifier = oppresses_shiites
+					}
+				}
 			}
 			if = {
 				limit = {
@@ -11644,6 +11669,12 @@ focus_tree = {
 				swap_ideas = {
 					remove_idea = sunni
 					add_idea = shia
+				}
+				PER = {
+					remove_opinion_modifier = {
+						target = ROOT
+						modifier = oppresses_shiites
+					}
 				}
 			}
 			if = {

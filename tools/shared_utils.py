@@ -209,6 +209,129 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+def _normalize_oneline_braces(text: str) -> str:
+    """Collapse whitespace and put single spaces around ``{``/``}``, leaving the
+    contents of double-quoted strings untouched."""
+    out: List[str] = []
+    in_str = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+            out.append(c)
+        elif not in_str and c in "{}":
+            out.append(" ")
+            out.append(c)
+            out.append(" ")
+        else:
+            out.append(c)
+    # Collapse runs of whitespace that sit outside string literals.
+    result: List[str] = []
+    in_str = False
+    prev_space = False
+    joined = "".join(out)
+    for i, c in enumerate(joined):
+        if c == '"' and (i == 0 or joined[i - 1] != "\\"):
+            in_str = not in_str
+            result.append(c)
+            prev_space = False
+        elif not in_str and c.isspace():
+            if not prev_space:
+                result.append(" ")
+            prev_space = True
+        else:
+            result.append(c)
+            prev_space = False
+    return "".join(result).strip()
+
+
+def collapse_or_compact(
+    block_lines: List[str], indent: Optional[str] = None
+) -> List[str]:
+    """Render a ``key = { ... }`` block on one line when it reduces to a single
+    leaf assignment (even through nesting), else fall back to ``compact_block``.
+
+    Single-leaf test (evaluated outside string literals and comments):
+    ``leaves = (#"=<>") - (#"{")``; collapse iff ``leaves == 1`` and braces
+    balance. Comparison operators ``<``/``>`` count as leaves alongside ``=`` so a
+    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. Bails to
+    ``compact_block`` if any line carries a ``#`` comment. When *indent* is None
+    the single-line form keeps the block's existing leading whitespace (from
+    ``block_lines[0]``); otherwise *indent* is used as the prefix.
+    """
+    if not block_lines:
+        return compact_block(block_lines)
+
+    for line in block_lines:
+        if strip_inline_comment(line) != line:
+            return compact_block(block_lines)
+
+    if indent is None:
+        first = block_lines[0]
+        indent = first[: len(first) - len(first.lstrip())]
+
+    text = " ".join(line.strip() for line in block_lines if line.strip())
+
+    n_leaf = 0
+    n_open = 0
+    n_close = 0
+    in_str = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+        elif not in_str:
+            if c in "=<>":
+                n_leaf += 1
+            elif c == "{":
+                n_open += 1
+            elif c == "}":
+                n_close += 1
+
+    if n_open != n_close or n_leaf - n_open != 1:
+        return compact_block(block_lines)
+
+    return [f"{indent}{_normalize_oneline_braces(text)}"]
+
+
+_FACTOR_TOKEN_RE = re.compile(r"\bfactor\b")
+_BASE_TOKEN_RE = re.compile(r"\bbase\b")
+
+
+def convert_root_factor_to_base(block_lines: List[str]) -> List[str]:
+    """Rename ``factor`` to ``base`` at the root of an ``ai_will_do`` block.
+
+    MD convention (enforced by check_common_mistakes) is ``base`` at the root;
+    ``factor`` belongs only inside ``modifier`` children, which are left
+    untouched. No-op when the root already has a ``base`` — converting there
+    would emit a duplicate key.
+    """
+
+    def _root_spans(pattern) -> List[Tuple[int, int, int]]:
+        spans = []
+        depth = 0
+        for idx, line in enumerate(block_lines):
+            code = strip_inline_comment(line)
+            pos = 0
+            for m in pattern.finditer(code):
+                depth += code.count("{", pos, m.start()) - code.count(
+                    "}", pos, m.start()
+                )
+                pos = m.start()
+                if depth == 1:
+                    spans.append((idx, m.start(), m.end()))
+            depth += code.count("{", pos) - code.count("}", pos)
+        return spans
+
+    if not block_lines or _root_spans(_BASE_TOKEN_RE):
+        return block_lines
+    spans = _root_spans(_FACTOR_TOKEN_RE)
+    if not spans:
+        return block_lines
+    out = list(block_lines)
+    for idx, start, end in reversed(spans):
+        out[idx] = out[idx][:start] + "base" + out[idx][end:]
+    return out
+
+
 def create_backup(filename: str) -> str:
     """Create a backup of the input file"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

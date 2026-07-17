@@ -16,7 +16,7 @@ from common_utils import (
     inject_log_after_brace,
     run_standardizer,
 )
-from shared_utils import compact_block, extract_block
+from shared_utils import collapse_or_compact, extract_block
 
 _EVENT_TYPES = ("country_event", "province_event", "unit_leader_event", "news_event")
 
@@ -153,12 +153,12 @@ class EventStandardizer(BaseStandardizer):
         # 2. Title and description (may repeat as conditional blocks)
         for title_entry in props["title"]:
             if isinstance(title_entry, list):
-                lines.extend(compact_block(title_entry[:]))
+                lines.extend(collapse_or_compact(title_entry[:]))
             else:
                 lines.append(f"\t{title_entry}")
         for desc_entry in props["desc"]:
             if isinstance(desc_entry, list):
-                lines.extend(compact_block(desc_entry[:]))
+                lines.extend(collapse_or_compact(desc_entry[:]))
             else:
                 lines.append(f"\t{desc_entry}")
 
@@ -190,19 +190,19 @@ class EventStandardizer(BaseStandardizer):
 
         # 8. Mean time to happen
         for mtth in props["mean_time_to_happen"]:
-            lines.extend(compact_block(mtth[:]))
+            lines.extend(collapse_or_compact(mtth[:]))
             lines.append("")
         emit_comments(lines, props["comments_after_mtth"])
 
         # 9. Trigger
         for trigger in props["trigger"]:
-            lines.extend(compact_block(trigger[:]))
+            lines.extend(collapse_or_compact(trigger[:]))
             lines.append("")
         emit_comments(lines, props["comments_after_trigger"])
 
         # 10. Immediate effects
         for immediate in props["immediate"]:
-            lines.extend(compact_block(immediate[:]))
+            lines.extend(collapse_or_compact(immediate[:]))
             lines.append("")
         emit_comments(lines, props["comments_after_immediate"])
 
@@ -216,7 +216,7 @@ class EventStandardizer(BaseStandardizer):
                 log_line = _option_log_line(option)
                 option = inject_log_after_brace(option, log_line)
 
-            lines.extend(compact_block(option[:]))
+            lines.extend(collapse_or_compact(option[:]))
             lines.append("")
 
         emit_comments(lines, props["comments_after_options"])

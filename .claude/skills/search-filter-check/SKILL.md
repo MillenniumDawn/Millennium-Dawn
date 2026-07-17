@@ -1,3 +1,8 @@
+---
+name: search-filter-check
+description: "Validate search_filters on every focus in a file (or all focus files changed on the branch) against the approved filter list and the two-layer custom+generic convention. Use when asked to check or fix search filters on a focus tree."
+---
+
 Validate `search_filters` on every focus in a file against the approved filter list and two-layer convention.
 
 **Syntax:** `/search-filter-check [file_path]`

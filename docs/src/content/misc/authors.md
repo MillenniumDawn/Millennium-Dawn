@@ -203,6 +203,8 @@ The following page is a non-exhaustive list of contributors from over the years 
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1852163517), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2814175841)_
 - **KaiserRedux Team** - For sharing icons
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2076426030)_
+- **Truck Gaming** - "Modifier Icons" submod (101 vanilla-style modifier texticons integrated into `gfx/texticons/modifier_icons/` and wired in `interface/modifiericons_texticons.gfx`)
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2668048070)_
 - **Sinuiju chan** - MD PLA general resetting
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3138331129)_
 - **Doomsday Series: Zombies modern day subnmod**

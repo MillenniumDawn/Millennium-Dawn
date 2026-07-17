@@ -145,6 +145,8 @@ my_effect = {
 
 Matters most for any GUI the AI also interacts with — peace deal builders, investment dialogs, scripted-effect-driven menus.
 
+MD's shared `update_*_dirty_variable` effects deliberately carry no guard — they are reached only from player click paths in the scripted_gui's `effects` block. When an effect can also be invoked from an AI on_action, guard the call site with `is_ai = no`, not the shared dirty effect.
+
 ## AI Configuration
 
 ```

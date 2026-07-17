@@ -1,0 +1,287 @@
+CYP_NCY_diplomatic_category = {
+	CYP_develop_offshore_gas = {
+		allowed = { original_tag = CYP }
+		icon = GFX_decision_generic_construction
+		cost = 75
+		fire_only_once = yes
+
+		visible = {
+			NOT = { has_idea = CYP_offshore_gas }
+		}
+		available = {
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_develop_offshore_gas"
+			add_ideas = CYP_offshore_gas
+			country_event = { id = cyprus.1 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CYP_eu_accession_push = {
+		allowed = { original_tag = CYP }
+		icon = GFX_decision_generic_european_union
+		cost = 50
+		days_remove = 90
+
+		visible = {
+			country_exists = GRE
+		}
+		available = {
+			NOT = { has_country_flag = CYP_eu_accession_push_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_eu_accession_push"
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = GRE.id }
+			set_temp_variable = { influence_target = CYP.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_eu_accession_push removed"
+			set_country_flag = { flag = CYP_eu_accession_push_cooldown days = 90 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = {
+				factor = 2
+				GRE = { influence_higher_50 = yes }
+			}
+		}
+	}
+
+	CYP_bicommunal_talks = {
+		allowed = { original_tag = CYP }
+		icon = GFX_decision_generic_political_discourse
+		cost = 30
+		days_remove = 60
+
+		visible = {
+			country_exists = NCY
+		}
+		available = {
+			NOT = { has_country_flag = CYP_bicommunal_talks_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_bicommunal_talks"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = GRE.id }
+			set_temp_variable = { influence_target = CYP.id }
+			change_influence_percentage = yes
+			country_event = { id = cyprus.2 days = 5 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_bicommunal_talks removed"
+			set_country_flag = { flag = CYP_bicommunal_talks_cooldown days = 90 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				NOT = { country_exists = NCY }
+			}
+		}
+	}
+
+	CYP_court_foreign_investment = {
+		allowed = { original_tag = CYP }
+		icon = GFX_decision_attract_foreign_investor
+		cost = 40
+		days_remove = 180
+
+		available = {
+			NOT = { has_country_flag = CYP_court_foreign_investment_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_court_foreign_investment"
+			set_temp_variable = { treasury_change = -0.3 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = CYP_foreign_investment_wave days = 180 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_court_foreign_investment removed"
+			set_country_flag = { flag = CYP_court_foreign_investment_cooldown days = 180 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+}
+
+GRE_CYP_category = {
+	###########CYPRUS CONFLICT - GREEK-CYPRIOT MOBILISATION###########
+	CYP_mobilize_greek_cypriots = {
+		allowed = { original_tag = CYP }
+		icon = GFX_decision_generic_political_discourse
+		cost = 40
+		days_remove = 60
+
+		visible = {
+			country_exists = NCY
+			country_exists = GRE
+		}
+		available = {
+			NOT = { has_country_flag = CYP_mobilize_greek_cypriots_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_mobilize_greek_cypriots"
+			custom_effect_tooltip = CYP_gain_8_strength_TT
+			hidden_effect = {
+				add_to_variable = { 145.GRE_SUPPORT = 8 }
+				clamp_variable = { var = 145.GRE_SUPPORT min = 0 max = 100 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_mobilize_greek_cypriots removed"
+			set_country_flag = { flag = CYP_mobilize_greek_cypriots_cooldown days = 60 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 2
+				check_variable = { 146.GRE_SUPPORT > 50 }
+			}
+		}
+	}
+
+	###########CYPRUS CONFLICT - GREEK-CYPRIOT OUTREACH NORTH###########
+	CYP_outreach_to_north = {
+		allowed = { original_tag = CYP }
+		icon = GFX_decision_generic_form_nation
+		cost = 35
+		days_remove = 120
+
+		visible = {
+			country_exists = NCY
+			country_exists = GRE
+		}
+		available = {
+			NOT = { has_country_flag = CYP_outreach_to_north_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_outreach_to_north"
+			custom_effect_tooltip = CYP_reduce_north_TT
+			hidden_effect = {
+				add_to_variable = { 146.GRE_SUPPORT = -6 }
+				clamp_variable = { var = 146.GRE_SUPPORT min = 0 max = 100 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CYP_outreach_to_north removed"
+			set_country_flag = { flag = CYP_outreach_to_north_cooldown days = 120 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 2
+				check_variable = { 146.GRE_SUPPORT > 50 }
+			}
+		}
+	}
+
+	###########CYPRUS CONFLICT - TURKISH-CYPRIOT MOBILISATION###########
+	NCY_mobilize_turkish_cypriots = {
+		allowed = { original_tag = NCY }
+		icon = GFX_decision_generic_political_discourse
+		cost = 40
+		days_remove = 60
+
+		visible = {
+			country_exists = CYP
+			country_exists = GRE
+		}
+		available = {
+			NOT = { has_country_flag = NCY_mobilize_turkish_cypriots_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NCY_mobilize_turkish_cypriots"
+			custom_effect_tooltip = NCY_gain_8_strength_TT
+			hidden_effect = {
+				add_to_variable = { 146.GRE_SUPPORT = 8 }
+				clamp_variable = { var = 146.GRE_SUPPORT min = 0 max = 100 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NCY_mobilize_turkish_cypriots removed"
+			set_country_flag = { flag = NCY_mobilize_turkish_cypriots_cooldown days = 60 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 2
+				check_variable = { 145.GRE_SUPPORT > 50 }
+			}
+		}
+	}
+
+	###########CYPRUS CONFLICT - TURKISH-CYPRIOT SETTLEMENT###########
+	NCY_settler_program = {
+		allowed = { original_tag = NCY }
+		icon = GFX_decision_generic_nationalism
+		cost = 50
+		days_remove = 150
+
+		visible = {
+			country_exists = CYP
+			country_exists = GRE
+		}
+		available = {
+			NOT = { has_country_flag = NCY_settler_program_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NCY_settler_program"
+			custom_effect_tooltip = NCY_settler_TT
+			hidden_effect = {
+				add_to_variable = { 146.GRE_SUPPORT = 6 }
+				add_to_variable = { 145.GRE_SUPPORT = -4 }
+				clamp_variable = { var = 146.GRE_SUPPORT min = 0 max = 100 }
+				clamp_variable = { var = 145.GRE_SUPPORT min = 0 max = 100 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NCY_settler_program removed"
+			set_country_flag = { flag = NCY_settler_program_cooldown days = 150 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = {
+				factor = 2
+				check_variable = { 145.GRE_SUPPORT > 50 }
+			}
+		}
+	}
+}

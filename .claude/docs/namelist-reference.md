@@ -157,4 +157,4 @@ Empty `unique = { }` is acceptable on every archetype. The block must still exis
 - [ ] `common/units/names_ships/TAG_ship_names.txt` — frigate + corvette minimum (skip for landlocked)
 - [ ] `common/units/names/00_TAG_names.txt` — relevant hull types (naval sub_units from `MD_naval_units.txt`) + `L_Inf_Bat` block (minimum land fallback; use the MD sub_unit, **never** vanilla's `infantry`) + `air_wing_names_template` + all 27 airframe blocks.
 - [ ] `localisation/english/replace/replaced_from_unit_names_l_english.yml` — `AIR_WING_NAME_TAG_FALLBACK` + `_GENERIC` keys (+ `_CARRIER` if used)
-- [ ] `history/units/TAG_*.oob` — `division_names_group` set on every template
+- [ ] `history/units/TAG_YEAR*.txt` — `division_names_group` set on every template

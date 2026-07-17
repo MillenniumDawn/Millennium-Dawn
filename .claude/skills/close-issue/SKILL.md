@@ -1,3 +1,9 @@
+---
+name: close-issue
+description: 'Close a GitHub issue with a brief comment summarizing the applied fix (inferred from the branch diff if not supplied). Use only on explicit request, e.g. "/close-issue 123".'
+disable-model-invocation: true
+---
+
 Close a GitHub issue with a brief comment summarizing the fix that was applied.
 
 Supported arguments: an issue number (required), and optionally a short description of the fix. If no description is provided, infer the fix from the current branch's diff against main.

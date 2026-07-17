@@ -58,20 +58,6 @@ Every agent must end its turn with a self-contained report the caller can act on
 - If you couldn't complete the task, say so explicitly with the blocker; never claim done on partial work.
 - Be terse (see `AGENTS.md` > Output Style): lead with the conclusion, report facts not process, cut padding confirmations and tool-by-tool narration. Trim words, never information — no dropped path, line, finding, or caveat.
 
-## Cross-cutting HOI4 rules every agent must respect
+## Scripting & encoding rules
 
-Quoted from `general-rules.md` because they cause silent bugs:
-
-- `NOT = { A B }` means `NOT(A AND B)`. For "neither A nor B" use two separate `NOT` blocks.
-- `check_variable = { v >= 0 }` is invalid — `>=` / `<=` are not valid inline. Use `compare = greater_than_or_equals` or rewrite as strict inequality.
-- `threat` is 0.0–1.0, never a percentage. `threat > 10` is always false.
-- `tag = TAG` in `allowed` blocks should be `original_tag = TAG`; `tag` breaks for civil war split-offs.
-- Identifiers are case-sensitive on Linux. `has_idea = The_Military` will not match `the_military`.
-- `is_in_faction = TAG` is wrong — boolean trigger. Use `is_in_faction_with = TAG`.
-- `has_trade_agreement_with` is not a real trigger. MD uses `has_country_flag = trade_agreement@TAG`.
-- Decision `allowed` is evaluated once at game start. Dynamic conditions go in `available` / `visible`.
-
-## File encoding
-
-- `.txt` files: UTF-8 **without** BOM, tab indentation.
-- `.yml` files: UTF-8 **with** BOM, 1-space indentation, header `l_english:` on line 1.
+Scripting-pattern and encoding rules are always in context via `.claude/rules/general-rules.md` — re-read its Scripting Patterns section before flagging; do not restate rules in findings, cite them.

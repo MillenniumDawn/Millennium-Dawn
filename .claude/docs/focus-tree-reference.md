@@ -1,6 +1,6 @@
 # Focus Tree Reference
 
-On-demand reference for focus tree structure, property order, and examples. For best practices, see CLAUDE.md.
+On-demand reference for focus tree structure, property order, and examples. For best practices, see AGENTS.md.
 
 ## File Naming
 
@@ -55,11 +55,11 @@ A **shared focus** lives in one tree file and appears in several countries' tree
 
 `joint_trigger` defines the **joint set** — it is evaluated per country and determines who shares completion and receives the rewards. It is **not** a selection gate; who can actually pick the focus is still governed by `available` / `visible` / `prerequisite` / `allow_branch`, exactly as in a normal focus.
 
-| Reward block                         | Fires on                                          |
-| ------------------------------------ | ------------------------------------------------- |
-| `completion_reward`                  | every joint country                               |
-| `completion_reward_joint_originator` | only the country that directly completed it       |
-| `completion_reward_joint_member`     | every joint country **other than** the completer  |
+| Reward block                         | Fires on                                         |
+| ------------------------------------ | ------------------------------------------------ |
+| `completion_reward`                  | every joint country                              |
+| `completion_reward_joint_originator` | only the country that directly completed it      |
+| `completion_reward_joint_member`     | every joint country **other than** the completer |
 
 ### Conventions
 
@@ -143,33 +143,9 @@ focus = {
 }
 ```
 
-## Example: Cross-Country Event Tooltips
+## Cross-Country Event Tooltips
 
-When a focus fires an event to another country, always show the accept outcome. Include the reject outcome only when rejection triggers real effects (opinion penalty, retaliation, tariff, follow-up chain). Omit reject when it just means "nothing happens" — the accept tooltip already implies the alternative.
-
-Both branches have real outcomes (include both):
-
-```
-completion_reward = {
-	log = "[GetDateText]: [This.GetName]: focus ISR_passover_massacre executed"
-	PAL = { country_event = { id = israel.68 days = 1 } }
-	custom_effect_tooltip = TT_IF_THEY_REJECT
-	effect_tooltip = { custom_effect_tooltip = oper_def_shiel_tt }
-	custom_effect_tooltip = TT_IF_THEY_ACCEPT
-	effect_tooltip = { custom_effect_tooltip = oper_city_wall_tt }
-}
-```
-
-Accept-only (reject is a no-op, omit the reject block):
-
-```
-completion_reward = {
-	log = "[GetDateText]: [This.GetName]: focus TAG_propose_trade_deal executed"
-	OTHER = { country_event = { id = namespace.N days = 1 } }
-	custom_effect_tooltip = TT_IF_THEY_ACCEPT
-	effect_tooltip = { custom_effect_tooltip = TAG_trade_deal_effects_tt }
-}
-```
+When a focus fires an event to another country, add the `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` tooltip pattern — full rules and examples in `.claude/docs/event-reference.md` (Cross-Country Event Tooltips).
 
 ## Example: `country_exists` Guard + Wargoal
 

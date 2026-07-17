@@ -1,6 +1,6 @@
 # Event Reference
 
-On-demand reference for event structure, examples, and patterns. For best practices, see CLAUDE.md.
+On-demand reference for event structure, examples, and patterns. For best practices, see AGENTS.md.
 
 In every example below, replace `TAG`, `tag_ns`, and the namespace number with your event's values. `tag_ns` is whatever the file declared via `add_namespace = ...` at the top.
 
@@ -203,6 +203,33 @@ option = {
 	ai_chance = { base = 80 }
 }
 ```
+
+## Cross-Country Event Tooltips
+
+When a focus `completion_reward` or event option fires an event to another country, add `custom_effect_tooltip = TT_IF_THEY_ACCEPT` immediately after the fire, then `effect_tooltip = { ... }` showing the acceptance outcome:
+
+```
+OTHER = { country_event = { id = tag_ns.N days = 1 } }
+custom_effect_tooltip = TT_IF_THEY_ACCEPT
+effect_tooltip = { custom_effect_tooltip = TAG_deal_signed_tt }
+```
+
+Add `TT_IF_THEY_REJECT` + its own `effect_tooltip` **only** when rejection has real sender-side consequences (opinion penalty, retaliation, tariff, follow-up chain). If rejection just means "nothing happens," omit it — never write an empty reject block. When both branches have real outcomes, include both:
+
+```
+OTHER = { country_event = { id = tag_ns.N days = 1 } }
+custom_effect_tooltip = TT_IF_THEY_ACCEPT
+effect_tooltip = { custom_effect_tooltip = TAG_deal_signed_tt }
+custom_effect_tooltip = TT_IF_THEY_REJECT
+effect_tooltip = { custom_effect_tooltip = TAG_sanctions_response_tt }
+```
+
+Inside the **target's** event options, use `TT_IF_WE_ACCEPT` / `TT_IF_WE_DECLINE` the same way to preview each response's consequences for the responder.
+
+Keys are defined in `localisation/english/MD_tooltips_l_english.yml`:
+
+- `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` — outcomes of YOUR action firing to THEM
+- `TT_IF_WE_ACCEPT` / `TT_IF_WE_DECLINE` — inside the target's event option
 
 ## `random_events` Dispatch (on_actions)
 

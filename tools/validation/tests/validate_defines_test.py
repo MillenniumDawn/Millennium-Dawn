@@ -109,3 +109,53 @@ def test_missing_md_defines_is_setup_error(tmp_path):
     validator.run_validations()
     assert validator.errors_found == 1
     assert validator._issues[0].category == "defines-setup"
+
+
+def test_manifest_fallback_when_no_install(tmp_path, monkeypatch):
+    import validate_defines as vd
+
+    manifest = tmp_path / "vanilla_defines.txt"
+    manifest.write_text(
+        "# header\nNCountry.STARTING_COMMAND_POWER\nNAI.DIVISION_DESIRED_WIDTH\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vd, "_DEFINES_MANIFEST", str(manifest))
+    monkeypatch.setattr(vd, "find_vanilla_defines", lambda: None)
+    _write_md_defines(tmp_path, "NDefines.NAI.DIVISION_DESIRED_WIDTH = 25\n")
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    assert validator.errors_found == 0
+
+
+def test_manifest_fallback_flags_dead_define(tmp_path, monkeypatch):
+    import validate_defines as vd
+
+    manifest = tmp_path / "vanilla_defines.txt"
+    manifest.write_text("NCountry.STARTING_COMMAND_POWER\n", encoding="utf-8")
+    monkeypatch.setattr(vd, "_DEFINES_MANIFEST", str(manifest))
+    monkeypatch.setattr(vd, "find_vanilla_defines", lambda: None)
+    _write_md_defines(tmp_path, "NDefines.NCountry.NOT_A_REAL_DEFINE = 1\n")
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    assert validator.errors_found == 1
+
+
+def test_corrupt_manifest_reads_as_absent(tmp_path, monkeypatch):
+    import validate_defines as vd
+
+    manifest = tmp_path / "vanilla_defines.txt"
+    manifest.write_bytes(b"\xff\xfe\x00 not utf-8 \x80")
+    monkeypatch.setattr(vd, "_DEFINES_MANIFEST", str(manifest))
+    assert vd.load_defines_manifest() == {}
+
+
+def test_explicit_wrong_vanilla_path_is_setup_error(tmp_path):
+    _write_md_defines(tmp_path, "NDefines.NCountry.STARTING_COMMAND_POWER = 5\n")
+    validator = Validator(
+        mod_path=str(tmp_path),
+        use_colors=False,
+        workers=1,
+        vanilla_path=str(tmp_path / "does_not_exist.lua"),
+    )
+    validator.run_validations()
+    assert validator.errors_found == 1

@@ -34,26 +34,9 @@ Caller passes an issue number, an issue URL, a file path, or nothing (idle scan 
 
 ## What to check / produce
 
-Common patterns worth scanning for, in addition to everything in `general-rules.md`:
+Full scan catalog: `.claude/docs/bug-patterns.md` (bug-scan patterns + adversarial checklist). Most individual rules are already loaded via `general-rules.md` / `AGENTS.md` or live in the per-domain refs (`idea-reference.md`, `focus-tree-reference.md`, `event-reference.md`) — apply and cite them, don't restate. Not covered there:
 
-| Pattern                                                                        | Action                                                            |
-| ------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `allowed = { always = no }` in ideas (default categories only)                 | Remove                                                            |
-| `cancel = { always = no }` in ideas                                            | Remove                                                            |
-| `tag = TAG` inside `allowed` blocks                                            | Replace with `original_tag = TAG`                                 |
-| `available = { always = no }` on a focus with `bypass`                         | Replace with bypass condition                                     |
-| `add_building_construction` for `naval_base` without `province = X`            | Add province                                                      |
-| MTTH events missing `is_triggered_only = yes`                                  | Add it; convert MTTH if intentional dispatch                      |
-| `/ 100` instead of `* 0.01`                                                    | Convert                                                           |
-| Empty `mutually_exclusive = { }`, `available = { }`                            | Delete                                                            |
-| Missing `ai_will_do` or `factor` instead of `base` at root                     | Add `base = N`                                                    |
-| Missing `search_filters` on focuses (two-layer pattern)                        | Add per `.claude/docs/search-filters.md`                          |
-| High-cost focus (>= 8, or >= 5 for mil/econ/research) without bankruptcy guard | Add `NOT = { has_active_mission = bankruptcy_incoming_collapse }` |
-| Typos from `.claude/docs/typo-watchlist.md`                                    | Fix                                                               |
-| Loc: trailing `key:0`, mixed indent, missing BOM                               | Fix per loc rules                                                 |
-| Dead define in `common/defines/MD_defines.lua`                                 | Cross-check vs vanilla `00_defines.lua`                           |
-
-File encoding: `.txt` = UTF-8 **no** BOM, tabs. `.yml` = UTF-8 **with** BOM, 1 space indent.
+- Dead defines in `common/defines/MD_defines.lua` — cross-check names against vanilla `00_defines.lua`; wrong or renamed namespaces silently do nothing.
 
 ## Output format
 

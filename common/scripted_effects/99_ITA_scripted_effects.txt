@@ -4,24 +4,27 @@
   #police effectivness in each region is based on the italian baseline that is affected by focuses and laws
   #mafia_strength is used to calculate industrial focus costs and police effectivness and mafia dynamic modifier maluses
 	update_mafia_strength = {
-		set_variable = { mafia_strength = cosa_nostra_strength }
-		add_to_variable = { mafia_strength = camorra_strength }
-		add_to_variable = { mafia_strength = ndrangheta_strength }
-		add_to_variable = { mafia_strength = sacra_corona_unita_strength }
-		multiply_variable = { mafia_strength = 0.25 }
-		set_variable = { mafia_strength_stab_var = mafia_strength }
-		multiply_variable = { mafia_strength_stab_var = -0.0025 }
-		set_variable = { mafia_strength_construction_var = mafia_strength }
-		multiply_variable = { mafia_strength_construction_var = -0.5 }
-		set_variable = { mafia_strength_investment_var = mafia_strength }
-		multiply_variable = { mafia_strength_investment_var = 0.5 }
-		set_variable = { mafia_strength_pp_var = mafia_strength }
-		multiply_variable = { mafia_strength_pp_var = -0.5 }
-		set_variable = { mafia_strength_lega_drift_var = mafia_strength }
-		multiply_variable = { mafia_strength_lega_drift_var = 0.1 }
-		set_variable = { mafia_strength_ai_factor_var = 1 }
-		subtract_from_variable = { mafia_strength_ai_factor_var = mafia_strength }
-		multiply_variable = { mafia_strength_ai_factor_var = mafia_strength_ai_factor_var }
+		set_variable = {
+			mafia_strength = {
+				value = cosa_nostra_strength
+				add = camorra_strength
+				add = ndrangheta_strength
+				add = sacra_corona_unita_strength
+				multiply = 0.25
+			}
+		}
+		set_variable = { mafia_strength_stab_var = { value = mafia_strength multiply = -0.0025 } }
+		set_variable = { mafia_strength_construction_var = { value = mafia_strength multiply = -0.5 } }
+		set_variable = { mafia_strength_investment_var = { value = mafia_strength multiply = 0.5 } }
+		set_variable = { mafia_strength_pp_var = { value = mafia_strength multiply = -0.5 } }
+		set_variable = { mafia_strength_lega_drift_var = { value = mafia_strength multiply = 0.1 } }
+		set_variable = {
+			mafia_strength_ai_factor_var = {
+				value = 1
+				subtract = mafia_strength
+				multiply = { value = 1 subtract = mafia_strength }
+			}
+		}
 	}
 	update_police_effectiveness = {
 		update_mafia_strength = yes
@@ -104,45 +107,45 @@
 			add_to_variable = { police_effectivness = -0.1 }
 		}
 
-		set_variable = { police_effectiveness_sicily = police_effectivness }
-		set_temp_variable = { police_effectiveness_sicily_multiplier = 1 }
-		set_temp_variable = { cosa_nostra_strength_reduced = cosa_nostra_strength }
-		multiply_temp_variable = { cosa_nostra_strength_reduced = 0.5 }
-		subtract_from_temp_variable = { police_effectiveness_sicily_multiplier = cosa_nostra_strength_reduced }
-		multiply_variable = { police_effectiveness_sicily = police_effectiveness_sicily_multiplier }
+		set_variable = {
+			police_effectiveness_sicily = {
+				value = police_effectivness
+				multiply = { value = 1 subtract = { value = cosa_nostra_strength multiply = 0.5 } }
+			}
+		}
 		if = {
 			limit = { has_country_flag = ITA_concentrating_on_cosa_nostra }
 			multiply_variable = { police_effectiveness_sicily = 1.5 }
 		}
 
-		set_variable = { police_effectiveness_campania = police_effectivness }
-		set_temp_variable = { police_effectiveness_campania_multiplier = 1 }
-		set_temp_variable = { camorra_strength_reduced = camorra_strength }
-		multiply_temp_variable = { camorra_strength_reduced = 0.5 }
-		subtract_from_temp_variable = { police_effectiveness_campania_multiplier = camorra_strength_reduced }
-		multiply_variable = { police_effectiveness_campania = police_effectiveness_campania_multiplier }
+		set_variable = {
+			police_effectiveness_campania = {
+				value = police_effectivness
+				multiply = { value = 1 subtract = { value = camorra_strength multiply = 0.5 } }
+			}
+		}
 		if = {
 			limit = { has_country_flag = ITA_concentrating_on_camorra }
 			multiply_variable = { police_effectiveness_campania = 1.5 }
 		}
 
-		set_variable = { police_effectiveness_calabria = police_effectivness }
-		set_temp_variable = { police_effectiveness_calabria_multiplier = 1 }
-		set_temp_variable = { ndrangheta_strength_reduced = ndrangheta_strength }
-		multiply_temp_variable = { ndrangheta_strength_reduced = 0.5 }
-		subtract_from_temp_variable = { police_effectiveness_calabria_multiplier = ndrangheta_strength_reduced }
-		multiply_variable = { police_effectiveness_calabria = police_effectiveness_calabria_multiplier }
+		set_variable = {
+			police_effectiveness_calabria = {
+				value = police_effectivness
+				multiply = { value = 1 subtract = { value = ndrangheta_strength multiply = 0.5 } }
+			}
+		}
 		if = {
 			limit = { has_country_flag = ITA_concentrating_on_ndrangheta }
 			multiply_variable = { police_effectiveness_calabria = 1.5 }
 		}
 
-		set_variable = { police_effectiveness_puglia = police_effectivness }
-		set_temp_variable = { police_effectiveness_puglia_multiplier = 1 }
-		set_temp_variable = { sacra_corona_unita_strength_reduced = sacra_corona_unita_strength }
-		multiply_temp_variable = { sacra_corona_unita_strength_reduced = 0.5 }
-		subtract_from_temp_variable = { police_effectiveness_puglia_multiplier = sacra_corona_unita_strength_reduced }
-		multiply_variable = { police_effectiveness_puglia = police_effectiveness_puglia_multiplier }
+		set_variable = {
+			police_effectiveness_puglia = {
+				value = police_effectivness
+				multiply = { value = 1 subtract = { value = sacra_corona_unita_strength multiply = 0.5 } }
+			}
+		}
 		if = {
 			limit = { has_country_flag = ITA_concentrating_on_sacra_corona_unita }
 			multiply_variable = { police_effectiveness_puglia = 1.5 }
@@ -155,25 +158,22 @@
 		clamp_variable = { var = undercover_agents_sicily min = 0 }
 
 		#each undercover agent increases police effectivness by 5%
-		set_temp_variable = { pol_eff_agents_multiplier_sicily = undercover_agents_sicily }
-		multiply_temp_variable = { pol_eff_agents_multiplier_sicily = 0.025 }
-		add_to_temp_variable = { pol_eff_agents_multiplier_sicily = 1 }
-		multiply_variable = { police_effectiveness_sicily = pol_eff_agents_multiplier_sicily }
-
-		set_temp_variable = { pol_eff_agents_multiplier_campania = undercover_agents_campania }
-		multiply_temp_variable = { pol_eff_agents_multiplier_campania = 0.025 }
-		add_to_temp_variable = { pol_eff_agents_multiplier_campania = 1 }
-		multiply_variable = { police_effectiveness_campania = pol_eff_agents_multiplier_campania }
-
-		set_temp_variable = { pol_eff_agents_multiplier_calabria = undercover_agents_calabria }
-		multiply_temp_variable = { pol_eff_agents_multiplier_calabria = 0.025 }
-		add_to_temp_variable = { pol_eff_agents_multiplier_calabria = 1 }
-		multiply_variable = { police_effectiveness_calabria = pol_eff_agents_multiplier_calabria }
-
-		set_temp_variable = { pol_eff_agents_multiplier_puglia = undercover_agents_puglia }
-		multiply_temp_variable = { pol_eff_agents_multiplier_puglia = 0.025 }
-		add_to_temp_variable = { pol_eff_agents_multiplier_puglia = 1 }
-		multiply_variable = { police_effectiveness_puglia = pol_eff_agents_multiplier_puglia }
+		multiply_variable = {
+			var = police_effectiveness_sicily
+			value = { value = undercover_agents_sicily multiply = 0.025 add = 1 }
+		}
+		multiply_variable = {
+			var = police_effectiveness_campania
+			value = { value = undercover_agents_campania multiply = 0.025 add = 1 }
+		}
+		multiply_variable = {
+			var = police_effectiveness_calabria
+			value = { value = undercover_agents_calabria multiply = 0.025 add = 1 }
+		}
+		multiply_variable = {
+			var = police_effectiveness_puglia
+			value = { value = undercover_agents_puglia multiply = 0.025 add = 1 }
+		}
 	}
 	mafia_monthly_drift = {
 		#monthly drifts in mafia strength, base value plus focus and events effects
@@ -707,9 +707,9 @@
 	}
 	mafia_utilize_extraordinary_funds_effect = {
 		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
-		set_temp_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
-		multiply_temp_variable = { extraordinary_police_funding_cost = -0.25 }
-		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		set_temp_variable = {
+			treasury_change = { value = extraordinary_police_funding_times_taken_var multiply = -0.25 }
+		}
 		modify_treasury_effect = yes
 	}
 	pizzo_decisions_effect = {
@@ -719,36 +719,40 @@
 				has_country_flag = protect_from_pizzo_sicily_flag
 			}
 			multiply_variable = { cosa_nostra_strength = 0.995 }
-			set_temp_variable = { pizzo_required_cp_sicily = cosa_nostra_strength }
-			multiply_temp_variable = { pizzo_required_cp_sicily = -100 }
-			add_to_temp_variable = { pizzo_required_cp = pizzo_required_cp_sicily }
+			add_to_temp_variable = {
+				var = pizzo_required_cp
+				value = { value = cosa_nostra_strength multiply = -100 }
+			}
 		}
 		if = {
 			limit = {
 				has_country_flag = protect_from_pizzo_campania_flag
 			}
 			multiply_variable = { camorra_strength = 0.995 }
-			set_temp_variable = { pizzo_required_cp_campania = camorra_strength }
-			multiply_temp_variable = { pizzo_required_cp_campania = -100 }
-			add_to_temp_variable = { pizzo_required_cp = pizzo_required_cp_campania }
+			add_to_temp_variable = {
+				var = pizzo_required_cp
+				value = { value = camorra_strength multiply = -100 }
+			}
 		}
 		if = {
 			limit = {
 				has_country_flag = protect_from_pizzo_calabria_flag
 			}
 			multiply_variable = { ndrangheta_strength = 0.995 }
-			set_temp_variable = { pizzo_required_cp_calabria = ndrangheta_strength }
-			multiply_temp_variable = { pizzo_required_cp_calabria = -100 }
-			add_to_temp_variable = { pizzo_required_cp = pizzo_required_cp_calabria }
+			add_to_temp_variable = {
+				var = pizzo_required_cp
+				value = { value = ndrangheta_strength multiply = -100 }
+			}
 		}
 		if = {
 			limit = {
 				has_country_flag = protect_from_pizzo_puglia_flag
 			}
 			multiply_variable = { sacra_corona_unita_strength = 0.995 }
-			set_temp_variable = { pizzo_required_cp_puglia = sacra_corona_unita_strength }
-			multiply_temp_variable = { pizzo_required_cp_puglia = -100 }
-			add_to_temp_variable = { pizzo_required_cp = pizzo_required_cp_puglia }
+			add_to_temp_variable = {
+				var = pizzo_required_cp
+				value = { value = sacra_corona_unita_strength multiply = -100 }
+			}
 		}
 		set_variable = { ITA_max_command_power_var = pizzo_required_cp }
 	}
@@ -886,15 +890,22 @@
 			limit = {
 				has_idea = ITA_mafia
 			}
-			set_temp_variable = { mafia_industrial_focus_cost = mafia_industrial_focus_base_cost }
-			set_temp_variable = { mafia_industrial_focus_cost_multiplier = 1 }
-			add_to_temp_variable = { mafia_industrial_focus_cost_multiplier = mafia_strength }
-			multiply_temp_variable = { mafia_industrial_focus_cost = mafia_industrial_focus_cost_multiplier }
+			set_temp_variable = {
+				mafia_industrial_focus_cost = {
+					value = mafia_industrial_focus_base_cost
+					multiply = { value = 1 add = mafia_strength }
+				}
+			}
 			set_temp_variable = { treasury_change = mafia_industrial_focus_cost }
 			modify_treasury_effect = yes
 			custom_effect_tooltip = mafia_infiltrations_focus_TT
-			subtract_from_temp_variable = { mafia_industrial_focus_cost = mafia_industrial_focus_base_cost }
-			multiply_temp_variable = { mafia_industrial_focus_cost = -0.005 }
+			set_temp_variable = {
+				mafia_industrial_focus_cost = {
+					value = mafia_industrial_focus_cost
+					subtract = mafia_industrial_focus_base_cost
+					multiply = -0.005
+				}
+			}
 			add_to_variable = { cosa_nostra_strength = mafia_industrial_focus_cost }
 			add_to_variable = { camorra_strength = mafia_industrial_focus_cost }
 			add_to_variable = { ndrangheta_strength = mafia_industrial_focus_cost }
@@ -913,15 +924,22 @@
 			limit = {
 				has_idea = ITA_mafia
 			}
-			set_temp_variable = { mafia_industrial_focus_cost = mafia_industrial_focus_base_cost }
-			set_temp_variable = { mafia_industrial_focus_cost_multiplier = 1 }
-			add_to_temp_variable = { mafia_industrial_focus_cost_multiplier = mafia_strength }
-			multiply_temp_variable = { mafia_industrial_focus_cost = mafia_industrial_focus_cost_multiplier }
+			set_temp_variable = {
+				mafia_industrial_focus_cost = {
+					value = mafia_industrial_focus_base_cost
+					multiply = { value = 1 add = mafia_strength }
+				}
+			}
 			set_temp_variable = { treasury_change = mafia_industrial_focus_cost }
 			modify_treasury_effect = yes
 			custom_effect_tooltip = mafia_infiltrations_focus_TT
-			subtract_from_temp_variable = { mafia_industrial_focus_cost = mafia_industrial_focus_base_cost }
-			multiply_temp_variable = { mafia_industrial_focus_cost = -0.005 }
+			set_temp_variable = {
+				mafia_industrial_focus_cost = {
+					value = mafia_industrial_focus_cost
+					subtract = mafia_industrial_focus_base_cost
+					multiply = -0.005
+				}
+			}
 			add_to_variable = { cosa_nostra_strength = mafia_industrial_focus_cost }
 			add_to_variable = { camorra_strength = mafia_industrial_focus_cost }
 			add_to_variable = { ndrangheta_strength = mafia_industrial_focus_cost }
@@ -929,10 +947,16 @@
 		}
 	}
 
-#reform expectance
 	modify_reform_expectance_effect = {
 		custom_effect_tooltip = ITA_modify_reform_expectancy_effect_TT
 		add_to_variable = { drift_switch_var_base = drift_switch_change }
+		reforme_expectance_government_change_update = yes
+	}
+
+	#temporary/decaying reform-expectancy channel for one-off populist decisions (item 4e/10)
+	ITA_modify_reform_expectance_temp_effect = {
+		custom_effect_tooltip = ITA_modify_reform_expectancy_temp_effect_TT
+		add_to_variable = { ITA_drift_switch_temp_var = drift_switch_change }
 		reforme_expectance_government_change_update = yes
 	}
 
@@ -1050,8 +1074,7 @@
 			limit = {
 				has_country_leader_with_trait = western_technocrat
 			}
-			set_temp_variable = { coalition_subparty_drift_modified_var = ruling_subparty_drift_store }
-			multiply_temp_variable = { coalition_subparty_drift_modified_var = 0.07 }
+			set_temp_variable = { coalition_subparty_drift_modified_var = { value = ruling_subparty_drift_store multiply = 0.07 } }
 			if = {
 				limit = { check_variable = { gov_coalition_array^num > 0 } }
 				divide_temp_variable = { coalition_subparty_drift_modified_var = gov_coalition_array^num }
@@ -1104,11 +1127,13 @@
 					has_country_leader_with_trait = western_technocrat
 				}
 			}
-			set_temp_variable = { coalition_subparty_drift_modified_var = ruling_subparty_drift_store }
-			multiply_temp_variable = { coalition_subparty_drift_modified_var = 0.07 }
-			set_temp_variable = { number_of_government_parties = gov_coalition_array^num }
-			add_to_temp_variable = { number_of_government_parties = 1 } #the ruling party
-			divide_temp_variable = { coalition_subparty_drift_modified_var = number_of_government_parties }
+			set_temp_variable = {
+				coalition_subparty_drift_modified_var = {
+					value = ruling_subparty_drift_store
+					multiply = 0.07
+					divide = { value = gov_coalition_array^num add = 1 }
+				}
+			}
 			for_each_loop = {
 				array = ruling_party
 				set_temp_variable = { coalition_subparty_drift_modified_multiplied_var = coalition_subparty_drift_modified_var }
@@ -1200,11 +1225,13 @@
 			min = -0.5
 			max = 0.5
 		}
+		#effective reform pressure = persistent level + decaying temporary channel (item 4e)
+		set_temp_variable = { ITA_re_effective = { value = drift_switch_var_base add = ITA_drift_switch_temp_var } }
 		if = {
 			limit = {
 				has_country_leader_with_trait = western_technocrat
 			}
-			set_temp_variable = { coalition_drift_switch_var = drift_switch_var_base }
+			set_temp_variable = { coalition_drift_switch_var = ITA_re_effective }
 			if = {
 				limit = { check_variable = { gov_coalition_array^num > 0 } }
 				divide_temp_variable = { coalition_drift_switch_var = gov_coalition_array^num }
@@ -1363,10 +1390,12 @@
 					has_country_leader_with_trait = western_technocrat
 				}
 			}
-			set_temp_variable = { coalition_drift_switch_var = drift_switch_var_base }
-			set_temp_variable = { number_of_government_parties = gov_coalition_array^num }
-			add_to_temp_variable = { number_of_government_parties = 1 } #the ruling party
-			divide_temp_variable = { coalition_drift_switch_var = number_of_government_parties }
+			set_temp_variable = {
+				coalition_drift_switch_var = {
+					value = ITA_re_effective
+					divide = { value = gov_coalition_array^num add = 1 } #the ruling party
+				}
+			}
 			if = {
 				limit = {
 					is_in_array = { gov_coalition_array = 0 }
@@ -1532,23 +1561,56 @@
 					add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
 			}
 		}
+		#5%/30% popularity taper: reform-expectancy pressure can't drive a party below ~5% (item 4c)
+		if = { limit = { check_variable = { democratic_drift_var < 0 } }
+			multiply_variable = {
+				var = democratic_drift_var
+				value = { value = party_popularity@democratic subtract = 0.05 divide = 0.25 clamp = { min = 0 max = 1 } }
+			}
+		}
+		if = { limit = { check_variable = { communism_drift_var < 0 } }
+			multiply_variable = {
+				var = communism_drift_var
+				value = { value = party_popularity@communism subtract = 0.05 divide = 0.25 clamp = { min = 0 max = 1 } }
+			}
+		}
+		if = { limit = { check_variable = { fascism_drift_var < 0 } }
+			multiply_variable = {
+				var = fascism_drift_var
+				value = { value = party_popularity@fascism subtract = 0.05 divide = 0.25 clamp = { min = 0 max = 1 } }
+			}
+		}
+		if = { limit = { check_variable = { neutrality_drift_var < 0 } }
+			multiply_variable = {
+				var = neutrality_drift_var
+				value = { value = party_popularity@neutrality subtract = 0.05 divide = 0.25 clamp = { min = 0 max = 1 } }
+			}
+		}
+		if = { limit = { check_variable = { nationalist_drift_var < 0 } }
+			multiply_variable = {
+				var = nationalist_drift_var
+				value = { value = party_popularity@nationalist subtract = 0.05 divide = 0.25 clamp = { min = 0 max = 1 } }
+			}
+		}
 	}
 	reform_expectance_from_situation = {
 		# Clamp stability input at 0.3 so a spiral can't compound reform pressure indefinitely
-		set_temp_variable = { reform_stab_clamped = stability }
-		clamp_temp_variable = { var = reform_stab_clamped min = 0.3 max = 1.0 }
-		set_temp_variable = { reform_expectance_from_stability = 0.6 }
-		subtract_from_temp_variable = { reform_expectance_from_stability = reform_stab_clamped }
-		multiply_temp_variable = { reform_expectance_from_stability = 0.1 }
-		#interest rate effect
-		set_temp_variable = { reform_expectance_from_interest_rate = interest_rate }
-		subtract_from_temp_variable = { reform_expectance_from_interest_rate = 3 }
-		clamp_temp_variable = {
-			var = reform_expectance_from_interest_rate
-			min = 0
-			max = 20
+		set_temp_variable = {
+			reform_expectance_from_stability = {
+				value = 0.6
+				subtract = { value = stability clamp = { min = 0.3 max = 1.0 } }
+				multiply = 0.1
+			}
 		}
-		multiply_temp_variable = { reform_expectance_from_interest_rate = 0.005 }
+		#interest rate effect
+		set_temp_variable = {
+			reform_expectance_from_interest_rate = {
+				value = interest_rate
+				subtract = 3
+				clamp = { min = 0 max = 20 }
+				multiply = 0.005
+			}
+		}
 		#laws effect
 		if = {
 			limit = {
@@ -1659,13 +1721,16 @@
 			limit = {
 				has_war = yes
 			}
-			set_temp_variable = { reform_expectance_from_war = 1 }
-			subtract_from_temp_variable = { reform_expectance_from_war = war_support }
-			multiply_temp_variable = { reform_expectance_from_war = 0.1 }
+			set_temp_variable = {
+				reform_expectance_from_war = {
+					value = 1
+					subtract = war_support
+					multiply = 0.1
+				}
+			}
 		}
 		#taxes effect
-		set_temp_variable = { reform_expectance_from_taxes = tax_rate }
-		multiply_temp_variable = { reform_expectance_from_taxes = 0.001 }
+		set_temp_variable = { reform_expectance_from_taxes = { value = tax_rate multiply = 0.001 } }
 
 		#calculate the total change from all sources in a variable that is then displayed in the dynamic modifier
 		set_variable = { reform_expectance_drift_display_var = 0 }
@@ -1680,16 +1745,18 @@
 			add_to_variable = { reform_expectance_drift_display_var = 0.05 }
 		}
 
-		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_stability }
-		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_laws }
-		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_taxes }
-		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_war }
-		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_interest_rate }
-
-		#this correction reduces the absolute value of reform expectance
-		set_temp_variable = { drift_switch_var_correction = drift_switch_var_base }
-		multiply_temp_variable = { drift_switch_var_correction = -0.2 } #very heavy correction to avoid excessive values
-		add_to_variable = { reform_expectance_drift_display_var = drift_switch_var_correction }
+		add_to_variable = {
+			var = reform_expectance_drift_display_var
+			value = {
+				value = reform_expectance_from_stability
+				add = reform_expectance_from_laws
+				add = reform_expectance_from_taxes
+				add = reform_expectance_from_war
+				add = reform_expectance_from_interest_rate
+			}
+		}
+		#reform_expectance_drift_display_var now holds only the situational pressure S;
+		#mean-reversion (k*M) is applied monthly in 07_italy_on_actions.txt (item 4a)
 	}
 
 	remove_gov_crisis_ai_flags = {
@@ -1698,7 +1765,6 @@
 	}
 
 	calculate_abandon_coalition_threshold = {
-		set_temp_variable = { temp_value_threshold = 0 }
 		for_each_loop = {
 			array = abandon_coalition_threshold
 			index = i
@@ -1707,9 +1773,7 @@
 				limit = {
 					is_in_array = { gov_coalition_array = i }
 				}
-				set_temp_variable = { var = temp_value_threshold value = party_pop_array^i }
-				multiply_temp_variable = { temp_value_threshold = 0.5 }
-				set_variable = { abandon_coalition_threshold^i = temp_value_threshold }
+				set_variable = { abandon_coalition_threshold^i = { value = party_pop_array^i multiply = 0.5 } }
 			}
 		}
 	}
@@ -1733,8 +1797,7 @@
 	}
 
 	government_crisis_check = {
-		set_temp_variable = { government_failure_threshold = majority_threshold }
-		multiply_temp_variable = { government_failure_threshold = 0.5 }
+		set_temp_variable = { government_failure_threshold = { value = majority_threshold multiply = 0.5 } }
 		if = {
 			limit = {
 				check_variable = { government_coalition_strength < government_failure_threshold }
@@ -1778,28 +1841,23 @@
 		set_temp_variable = { base_stability = { value = stability subtract = modifier@stability_factor } }
 		if = {
 			limit = { has_government = fascism }
-				set_temp_variable = { party_pop_stab = party_popularity@fascism }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				set_temp_variable = { party_pop_stab = { value = party_popularity@fascism multiply = 0.04 } }
 		}
 		else_if = {
 			limit = { has_government = communism }
-				set_temp_variable = { party_pop_stab = party_popularity@communism }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				set_temp_variable = { party_pop_stab = { value = party_popularity@communism multiply = 0.04 } }
 		}
 		else_if = {
 			limit = { has_government = democratic }
-				set_temp_variable = { party_pop_stab = party_popularity@democratic }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				set_temp_variable = { party_pop_stab = { value = party_popularity@democratic multiply = 0.04 } }
 		}
 		else_if = {
 			limit = { has_government = neutrality }
-				set_temp_variable = { party_pop_stab = party_popularity@neutrality }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				set_temp_variable = { party_pop_stab = { value = party_popularity@neutrality multiply = 0.04 } }
 		}
 		else_if = {
 			limit = { has_government = nationalist }
-				set_temp_variable = { party_pop_stab = party_popularity@nationalist }
-				multiply_temp_variable = { party_pop_stab = 0.08 }
+				set_temp_variable = { party_pop_stab = { value = party_popularity@nationalist multiply = 0.04 } }
 		}
 		subtract_from_temp_variable = { base_stability = party_pop_stab }
 		if = {
@@ -1810,13 +1868,13 @@
 				}
 			}
 			add_to_variable = { var = ITA_stability_factor_var value = modifier@stability_weekly }
-			clamp_variable = { var = ITA_stability_factor_var min = -0.2 max = 0.2 }
+			clamp_variable = { var = ITA_stability_factor_var min = -0.1 max = 0.1 }
 		}
 	}
 
 	low_stability_protests_effect = {
 		set_temp_variable = { stability_protests_gain = stability }
-		add_to_temp_variable = { stability_protests_gain = -0.333 }
+		add_to_temp_variable = { stability_protests_gain = -0.25 }
 		add_to_variable = { stability_protests_counter = stability_protests_gain }
 		if = {
 			limit = {
@@ -1836,38 +1894,53 @@
 			limit = {
 				has_leftwing_populist_government = yes
 			}
-			set_variable = { civil_war_volounteers = party_pop_array^6 }
-			add_to_variable = { civil_war_volounteers = party_pop_array^20 }
-			add_to_variable = { civil_war_volounteers = party_pop_array^21 }
-			multiply_variable = { civil_war_volounteers = 1.25 }
+			set_variable = {
+				civil_war_volounteers = {
+					value = party_pop_array^6
+					add = party_pop_array^20
+					add = party_pop_array^21
+					multiply = 1.25
+				}
+			}
 		}
 		if = {
 			limit = {
 				has_rightwing_populist_government = yes
 			}
-			set_variable = { civil_war_volounteers = party_pop_array^4 }
-			add_to_variable = { civil_war_volounteers = party_pop_array^5 }
-			multiply_variable = { civil_war_volounteers = 1.25 }
+			set_variable = {
+				civil_war_volounteers = {
+					value = party_pop_array^4
+					add = party_pop_array^5
+					multiply = 1.25
+				}
+			}
 		}
 		if = {
 			limit = {
 				NOT = {
-					has_rightwing_populist_government = yes
-					has_leftwing_populist_government = yes
+					OR = {
+						has_rightwing_populist_government = yes
+						has_leftwing_populist_government = yes
+					}
 				}
 			}
-			set_variable = { civil_war_volounteers = party_pop_array^4 }
-			add_to_variable = { civil_war_volounteers = party_pop_array^5 }
-			add_to_variable = { civil_war_volounteers = party_pop_array^6 }
-			add_to_variable = { civil_war_volounteers = party_pop_array^20 }
-			add_to_variable = { civil_war_volounteers = party_pop_array^21 }
+			set_variable = {
+				civil_war_volounteers = {
+					value = party_pop_array^4
+					add = party_pop_array^5
+					add = party_pop_array^6
+					add = party_pop_array^20
+					add = party_pop_array^21
+				}
+			}
 		}
-		multiply_variable = { civil_war_volounteers = 50 }
-		round_variable = civil_war_volounteers
-		clamp_variable = {
-			var = civil_war_volounteers
-			min = 0
-			max = 50
+		set_variable = {
+			civil_war_volounteers = {
+				value = civil_war_volounteers
+				multiply = 50
+				round = yes
+				clamp = { min = 0 max = 50 }
+			}
 		}
 	}
 
@@ -1989,8 +2062,10 @@
 		if = {
 			limit = {
 				NOT = {
-					has_rightwing_populist_government = yes
-					has_leftwing_populist_government = yes
+					OR = {
+						has_rightwing_populist_government = yes
+						has_leftwing_populist_government = yes
+					}
 				}
 			}
 			set_temp_variable = { party_index = 4 }
@@ -2018,15 +2093,19 @@
 	}
 
 	ITA_calculate_civil_war_size = {
-		set_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^0 }
-		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^6 }
-		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^7 }
-		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^13 }
-		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^15 }
-		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^20 }
-		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^21 }
-		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^22 }
-		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^23 }
+		set_temp_variable = {
+			ITA_civil_war_auth_party_strength = {
+				value = party_pop_array^0
+				add = party_pop_array^6
+				add = party_pop_array^7
+				add = party_pop_array^13
+				add = party_pop_array^15
+				add = party_pop_array^20
+				add = party_pop_array^21
+				add = party_pop_array^22
+				add = party_pop_array^23
+			}
+		}
 		if = {
 			limit = {
 				check_variable = { ITA_civil_war_auth_party_strength < 0.1 }
@@ -2057,20 +2136,24 @@
 			}
 			multiply_temp_variable = { ITA_civil_war_auth_party_strength = 1.1 }
 		}
-		set_temp_variable = { ITA_civil_war_size_var = 1 }
-		subtract_from_temp_variable = { ITA_civil_war_size_var = ITA_civil_war_auth_party_strength }
-		set_variable = { ITA_civil_war_auth_party_strength_ai_factor = ITA_civil_war_auth_party_strength }
-		multiply_variable = { ITA_civil_war_auth_party_strength_ai_factor = ITA_civil_war_auth_party_strength_ai_factor }
-		multiply_variable = { ITA_civil_war_auth_party_strength_ai_factor = ITA_civil_war_auth_party_strength_ai_factor }
+		set_temp_variable = { ITA_civil_war_size_var = { value = 1 subtract = ITA_civil_war_auth_party_strength } }
+		set_variable = {
+			ITA_civil_war_auth_party_strength_ai_factor = {
+				value = ITA_civil_war_auth_party_strength
+				multiply = ITA_civil_war_auth_party_strength
+				multiply = ITA_civil_war_auth_party_strength
+				multiply = ITA_civil_war_auth_party_strength
+			}
+		}
 
 		#calculate volounteers amount
-		set_variable = { civil_war_volounteers_2 = ITA_civil_war_size_var }
-		multiply_variable = { civil_war_volounteers_2 = 50 }
-		round_variable = civil_war_volounteers_2
-		clamp_variable = {
-			var = civil_war_volounteers_2
-			min = 0
-			max = 50
+		set_variable = {
+			civil_war_volounteers_2 = {
+				value = ITA_civil_war_size_var
+				multiply = 50
+				round = yes
+				clamp = { min = 0 max = 50 }
+			}
 		}
 	}
 

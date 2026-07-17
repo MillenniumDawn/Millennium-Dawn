@@ -887,7 +887,6 @@ country_event = {
 	title = ENG_military.035.t
 	desc = ENG_military.035.d
 	picture = GFX_ENG_generic
-	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
@@ -899,7 +898,7 @@ country_event = {
 				factor = 0.2
 				has_opinion = {
 					target = ENG
-					value > 50
+					value < 50
 				}
 			}
 		}
@@ -917,27 +916,30 @@ country_event = {
 				factor = 0.2
 				has_opinion = {
 					target = ENG
-					value < 50
+					value > 50
 				}
 			}
 		}
 		ENG = { country_event = ENG_military.037 }
-		}
 	}
+}
 country_event = {
 	id = ENG_military.036
 	title = ENG_military.036.t
 	desc = ENG_military.036.d
 	picture = GFX_ENG_generic
-	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
 		name = ENG_military.036.a
 		log = "[GetDateText]: [This.GetName]: ENG_military.036.a executed"
-		air_experience = 25
-		army_experience = 25
-		navy_experience = 25
+		if = {
+			limit = { NOT = { has_country_flag = ENG_jef_experience_gained } }
+			set_country_flag = ENG_jef_experience_gained
+			air_experience = 25
+			army_experience = 25
+			navy_experience = 25
+		}
 	}
 }
 country_event = {
@@ -945,12 +947,10 @@ country_event = {
 	title = ENG_military.037.t
 	desc = ENG_military.037.d
 	picture = GFX_ENG_generic
-	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
 		name = ENG_military.037.a
-		log = "[GetDateText]: [This.GetName]: ENG_military.037.a executed"
 	}
 }
 country_event = {
@@ -1077,7 +1077,7 @@ country_event = {
 				factor = 0.2
 				has_opinion = {
 					target = ENG
-					value > 50
+					value < 50
 				}
 			}
 		}
@@ -1087,14 +1087,24 @@ country_event = {
 			modify_treasury_effect = yes
 		}
 		ENG = {
-		set_temp_variable = { treasury_change = 15 }
-		modify_treasury_effect = yes
-		country_event = ENG_military.043
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			country_event = ENG_military.043
 		}
 	}
 	option = {
 		name = ENG_military.041.b
 		log = "[GetDateText]: [This.GetName]: ENG_military.041.b executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
 		ENG = { country_event = ENG_military.044 }
 	}
 }
@@ -1115,7 +1125,7 @@ country_event = {
 				factor = 0.2
 				has_opinion = {
 					target = ENG
-					value > 50
+					value < 50
 				}
 			}
 		}
@@ -1125,14 +1135,24 @@ country_event = {
 			modify_treasury_effect = yes
 		}
 		ENG = {
-		set_temp_variable = { treasury_change = 15 }
-		modify_treasury_effect = yes
-		country_event = ENG_military.043
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			country_event = ENG_military.043
 		}
 	}
 	option = {
 		name = ENG_military.042.b
 		log = "[GetDateText]: [This.GetName]: ENG_military.042.b executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
 		ENG = { country_event = ENG_military.044 }
 	}
 }
@@ -1173,7 +1193,10 @@ country_event = {
 	option = {
 		name = ENG_military.045.a # Accept
 		log = "[GetDateText]: [Root.GetName]: ENG_military.045.a executed"
-		HOL = { country_event = { id = HOL_monarchy.38 days = 1 } }
+		ENG = {
+			NATO_major_non_nato_ally_join = yes
+			country_event = ENG_military.046
+		}
 
 		ai_chance = {
 			base = 60
@@ -1190,9 +1213,34 @@ country_event = {
 	option = {
 		name = ENG_military.045.b # Refuse
 		log = "[GetDateText]: [Root.GetName]: ENG_military.045.b executed"
-		HOL = { country_event = { id = HOL_monarchy.39 days = 1 } }
-
+		ENG = { country_event = ENG_military.047 }
 		ai_chance = { base = 40 }
+	}
+}
+
+country_event = {
+	id = ENG_military.046
+	title = ENG_military.046.t
+	desc = ENG_military.046.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.046.a
+	}
+}
+
+country_event = {
+	id = ENG_military.047
+	title = ENG_military.047.t
+	desc = ENG_military.047.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.047.a
 	}
 }
 
@@ -3433,125 +3481,167 @@ country_event = {
 	}
 
 	immediate = {
-		random_list = {
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_charles_charities_network_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_the_prince_trust }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						ENG_decision_charles_charities_amount_taken > ENG_decision_charles_taken
+		# Only roll when at least one Charles decision is still available, otherwise the random_list zeroes out entirely.
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						NOT = { has_country_flag = ENG_charles_charities_network_decision_activated }
+						has_completed_focus = ENG_the_prince_trust
+						NOT = { check_variable = { var = ENG_decision_charles_charities_amount_taken value = ENG_decision_charles_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_charles_harmony_tour_decision_activated }
+						has_completed_focus = ENG_harmony_doctrine
+						NOT = { check_variable = { var = ENG_decision_charles_harmony_amount_taken value = ENG_decision_charles_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_charles_environmental_diplomacy_tour_decision_activated }
+						has_completed_focus = ENG_harmony_doctrine
+						NOT = { check_variable = { var = ENG_decision_charles_diplomacy_tour_amount_taken value = ENG_decision_charles_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_charles_sustainable_urban_planning_decision_activated }
+						has_completed_focus = ENG_harmony_doctrine
+						NOT = { check_variable = { var = ENG_decision_charles_urban_planning_amount_taken value = ENG_decision_charles_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_charles_rainforest_help_decision_activated }
+						has_completed_focus = ENG_climate_alarm_bell
+						NOT = { check_variable = { var = ENG_decision_charles_rainforest_amount_taken value = ENG_decision_charles_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_charles_youth_sustainability_decision_activated }
+						has_completed_focus = ENG_harmony_doctrine
+						NOT = { check_variable = { var = ENG_decision_charles_youth_amount_taken value = ENG_decision_charles_taken compare = greater_than } }
+					}
+					AND = {
+						NOT = { has_country_flag = ENG_charles_organic_agriculture_decision_activated }
+						has_completed_focus = ENG_climate_alarm_bell
+						NOT = { check_variable = { var = ENG_decision_charles_organic_amount_taken value = ENG_decision_charles_taken compare = greater_than } }
 					}
 				}
-				activate_decision = ENG_charles_charities_network_decision
 			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_charles_harmony_tour_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_harmony_doctrine }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						ENG_decision_charles_harmony_amount_taken > ENG_decision_charles_taken
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_charities_network_decision_activated
 					}
-				}
-				activate_decision = ENG_charles_harmony_tour_decision
-			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_charles_environmental_diplomacy_tour_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_harmony_doctrine }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						ENG_decision_charles_diplomacy_tour_amount_taken > ENG_decision_charles_taken
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_the_prince_trust }
 					}
-				}
-				activate_decision = ENG_charles_environmental_diplomacy_tour_decision
-			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_charles_sustainable_urban_planning_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_harmony_doctrine }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						ENG_decision_charles_urban_planning_amount_taken > ENG_decision_charles_taken
+					modifier = {
+						factor = 0
+						check_variable = {
+							ENG_decision_charles_charities_amount_taken > ENG_decision_charles_taken
+						}
 					}
+					activate_decision = ENG_charles_charities_network_decision
 				}
-				activate_decision = ENG_charles_sustainable_urban_planning_decision
-			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_charles_rainforest_help_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_climate_alarm_bell }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						ENG_decision_charles_rainforest_amount_taken > ENG_decision_charles_taken
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_harmony_tour_decision_activated
 					}
-				}
-				activate_decision = ENG_charles_rainforest_help_decision
-			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_charles_youth_sustainability_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_harmony_doctrine }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						ENG_decision_charles_harmony_amount_taken > ENG_decision_charles_taken
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_harmony_doctrine }
 					}
-				}
-				activate_decision = ENG_charles_youth_sustainability_decision
-			}
-			25 = {
-				modifier = {
-					factor = 0
-					has_country_flag = ENG_charles_organic_agriculture_decision_activated
-				}
-				modifier = {
-					factor = 0
-					NOT = { has_completed_focus = ENG_climate_alarm_bell }
-				}
-				modifier = {
-					factor = 0
-					check_variable = {
-						ENG_decision_charles_youth_amount_taken > ENG_decision_charles_taken
+					modifier = {
+						factor = 0
+						check_variable = {
+							ENG_decision_charles_harmony_amount_taken > ENG_decision_charles_taken
+						}
 					}
+					activate_decision = ENG_charles_harmony_tour_decision
 				}
-				activate_decision = ENG_charles_organic_agriculture_decision
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_environmental_diplomacy_tour_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_harmony_doctrine }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							ENG_decision_charles_diplomacy_tour_amount_taken > ENG_decision_charles_taken
+						}
+					}
+					activate_decision = ENG_charles_environmental_diplomacy_tour_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_sustainable_urban_planning_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_harmony_doctrine }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							ENG_decision_charles_urban_planning_amount_taken > ENG_decision_charles_taken
+						}
+					}
+					activate_decision = ENG_charles_sustainable_urban_planning_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_rainforest_help_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_climate_alarm_bell }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							ENG_decision_charles_rainforest_amount_taken > ENG_decision_charles_taken
+						}
+					}
+					activate_decision = ENG_charles_rainforest_help_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_youth_sustainability_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_harmony_doctrine }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							ENG_decision_charles_youth_amount_taken > ENG_decision_charles_taken
+						}
+					}
+					activate_decision = ENG_charles_youth_sustainability_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_organic_agriculture_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_climate_alarm_bell }
+					}
+					modifier = {
+						factor = 0
+						check_variable = {
+							ENG_decision_charles_organic_amount_taken > ENG_decision_charles_taken
+						}
+					}
+					activate_decision = ENG_charles_organic_agriculture_decision
+				}
 			}
 		}
 		country_event = {
@@ -5564,9 +5654,12 @@ country_event = {
 	option = {
 		name = britain_md.36.a
 		log = "[GetDateText]: [This.GetName]: britain_md.36.a executed"
-		set_autonomy = {
-			target = FROM
-			autonomy_state = autonomy_constituent_country_very_low_devolution
+		if = {
+			limit = { FROM = { is_subject = no } }
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_constituent_country_very_low_devolution
+			}
 		}
 		ai_chance = {
 			base = 1
@@ -6012,7 +6105,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: british_flavor.2.a executed"
 		set_temp_variable = { percent_change = 1 }
 		set_temp_variable = { tag_index = ENG }
-		set_temp_variable = { influence_target = CHI }
+		set_temp_variable = { influence_target = CHL }
 		change_influence_percentage = yes
 		ai_chance = {
 			base = 1
