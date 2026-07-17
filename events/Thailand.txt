@@ -601,6 +601,9 @@ country_event = {
 }
 
 # A New Reign - handled factually and respectfully
+# Successor-posture options (Oman Qaboos pattern, events/Gulf.txt oman_royal.1).
+# Guarded on has_completed_focus = SIA_royal_succession_managed so a royalist
+# auto-complete (99_SIA_on_actions.txt) doesn't have its barami/mourning premium overwritten here.
 country_event = {
 	id = thailand.14
 	title = thailand.14.t
@@ -618,10 +621,103 @@ country_event = {
 			limit = { has_idea = SIA_kings_moral_authority }
 			remove_ideas = SIA_kings_moral_authority
 		}
-		add_timed_idea = { idea = SIA_new_reign_mourning days = 365 }
+		if = {
+			limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
+			if = {
+				limit = { has_idea = SIA_ninth_reign_zenith }
+				swap_ideas = { remove_idea = SIA_ninth_reign_zenith add_idea = SIA_tenth_reign_barami }
+			}
+			else_if = {
+				limit = { has_idea = SIA_ninth_reign_barami }
+				swap_ideas = { remove_idea = SIA_ninth_reign_barami add_idea = SIA_tenth_reign_barami }
+			}
+			add_timed_idea = { idea = SIA_new_reign_mourning days = 180 }
+		}
 		set_leader_SIA = yes
+		add_stability = -0.02
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.06 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
 		hidden_effect = {
+			if = {
+				limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
+				country_event = { id = thailand.226 days = 365 }
+			}
 			news_event = { id = thailand_news.4 days = 1 }
+		}
+		ai_chance = {
+			base = 4
+		}
+	}
+
+	option = {
+		name = thailand.14.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.14.b"
+		if = {
+			limit = { has_idea = SIA_kings_moral_authority }
+			remove_ideas = SIA_kings_moral_authority
+		}
+		if = {
+			limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
+			if = {
+				limit = { has_idea = SIA_ninth_reign_zenith }
+				swap_ideas = { remove_idea = SIA_ninth_reign_zenith add_idea = SIA_tenth_reign_barami }
+			}
+			else_if = {
+				limit = { has_idea = SIA_ninth_reign_barami }
+				swap_ideas = { remove_idea = SIA_ninth_reign_barami add_idea = SIA_tenth_reign_barami }
+			}
+			add_timed_idea = { idea = SIA_new_reign_mourning days = 365 }
+		}
+		set_leader_SIA = yes
+		add_stability = 0.02
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
+				country_event = { id = thailand.226 days = 365 }
+			}
+			news_event = { id = thailand_news.4 days = 1 }
+		}
+		ai_chance = {
+			base = 6
+		}
+	}
+
+	option = {
+		name = thailand.14.c
+		log = "[GetDateText]: [Root.GetName]: event thailand.14.c"
+		if = {
+			limit = { has_idea = SIA_kings_moral_authority }
+			remove_ideas = SIA_kings_moral_authority
+		}
+		if = {
+			limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
+			if = {
+				limit = { has_idea = SIA_ninth_reign_zenith }
+				swap_ideas = { remove_idea = SIA_ninth_reign_zenith add_idea = SIA_tenth_reign_barami }
+			}
+			else_if = {
+				limit = { has_idea = SIA_ninth_reign_barami }
+				swap_ideas = { remove_idea = SIA_ninth_reign_barami add_idea = SIA_tenth_reign_barami }
+			}
+			add_timed_idea = { idea = SIA_new_reign_mourning days = 270 }
+		}
+		set_leader_SIA = yes
+		add_political_power = 50
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
+				country_event = { id = thailand.226 days = 365 }
+			}
+			news_event = { id = thailand_news.4 days = 1 }
+		}
+		ai_chance = {
+			base = 5
 		}
 	}
 }
@@ -6992,5 +7088,97 @@ country_event = {
 		add_political_power = 50
 		complete_national_focus = SIA_ignite_thailand
 		ai_chance = { base = 10 }
+	}
+}
+
+############################################################
+# Royalist no-coup path (T-50) — network monarchy managing politics through
+# courts, senate, and coalition-brokering. thailand.434 fires from
+# SIA_judicial_review_route, thailand.435 from SIA_coalition_kingmakers.
+############################################################
+
+# thailand.434 - The Court Rules. The Constitutional Court hands down its
+# verdict on the ruling populist party; the player chooses how far it reaches.
+country_event = {
+	id = thailand.434
+	title = thailand.434.t
+	desc = thailand.434.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = { original_tag = SIA }
+
+	# Broad dissolution - hits the populists hardest, but the overreach is
+	# visible and feeds reform pressure.
+	option = {
+		name = thailand.434.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.434.a"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = -0.15 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_to_variable = { SIA_reform_pressure = 5 }
+		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 2 check_variable = { party_pop_array^18 > 0.30 } }
+		}
+	}
+
+	# Narrow technical ruling - smaller hit, no extra reform-pressure
+	# backlash, and the appearance of restraint steadies the government.
+	option = {
+		name = thailand.434.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.434.b"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = -0.08 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		add_stability = 0.02
+		ai_chance = {
+			base = 5
+			modifier = { factor = 2 is_historical_focus_on = no }
+		}
+	}
+}
+
+# thailand.435 - The Kingmakers' Bargain. Assembling a coalition the network
+# can live with means paying somebody off.
+country_event = {
+	id = thailand.435
+	title = thailand.435.t
+	desc = thailand.435.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = { original_tag = SIA }
+
+	# Buy off the provincial power brokers (idx 14) with treasury.
+	option = {
+		name = thailand.435.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.435.a"
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		set_temp_variable = { party_index = 14 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		recalculate_party = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	# Court the business elite instead - opinion, not cash, and the
+	# cronyism costs a little stability.
+	option = {
+		name = thailand.435.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.435.b"
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		add_stability = -0.02
+		ai_chance = {
+			base = 5
+			modifier = { factor = 2 is_historical_focus_on = no }
+		}
 	}
 }

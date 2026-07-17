@@ -2679,3 +2679,80 @@ SIA_general_strike_category = {
 		}
 	}
 }
+
+## Royalist no-coup path (SIA_the_establishment_consensus capstone) — the
+## day-to-day levers of a network monarchy that manages politics through
+## institutions rather than tanks.
+SIA_establishment_category = {
+
+	# Whip the appointed chamber into line behind a measure the elected
+	# house would never pass. PP-for-stability trade.
+	SIA_senate_procedural_vote = {
+		icon = GFX_decision_generic_political_actions
+		cost = 60
+		days_re_enable = 90
+		fire_only_once = no
+
+		available = { SIA_royalist_trunk_open = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_senate_procedural_vote"
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 2 has_stability < 0.5 }
+		}
+	}
+
+	# Hand the populists' latest maneuver to a sympathetic bench. Targeted
+	# popularity attack on the ruling populist party (idx 18), cooldown-gated
+	# so the tactic can't be spammed.
+	SIA_court_referral = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 60
+		days_re_enable = 180
+		fire_only_once = no
+
+		available = { SIA_royalist_trunk_open = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_court_referral"
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.06 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			add_to_variable = { SIA_reform_pressure = 4 }
+			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 2 check_variable = { party_pop_array^18 > 0.30 } }
+		}
+	}
+
+	# A formal audience keeps the army and the old landed families satisfied
+	# the network still speaks for them.
+	SIA_palace_audience = {
+		icon = GFX_decision_generic_speech
+		cost = 50
+		days_re_enable = 150
+		fire_only_once = no
+
+		available = { SIA_royalist_trunk_open = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_palace_audience"
+			set_temp_variable = { temp_opinion = 3 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 3 }
+			change_landowners_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+}

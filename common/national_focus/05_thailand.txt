@@ -2008,6 +2008,7 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = SIA_yellow_shirts }
+		mutually_exclusive = { focus = SIA_the_quiet_word }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -2286,6 +2287,206 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
+		}
+	}
+
+	########################
+	# BRANCH B — THE QUIET WORD (no-coup royalist path)
+	# Network monarchy managing politics through courts, senate, and
+	# coalition-brokering instead of tanks. Forks off SIA_yellow_shirts,
+	# MX with SIA_the_2006_coup. Historical AI stays on the coup ladder.
+	########################
+
+	focus = {
+		id = SIA_the_quiet_word
+		icon = focus_SIA_the_midnight_meeting
+
+		x = -4
+		y = 1
+		relative_position_id = SIA_yellow_shirts
+
+		cost = 5
+
+		prerequisite = { focus = SIA_yellow_shirts }
+		mutually_exclusive = { focus = SIA_the_2006_coup }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			SIA_royalist_trunk_open = yes
+			has_country_flag = SIA_yellow_shirts_pressure
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_quiet_word"
+			set_country_flag = SIA_royalist_no_coup_path
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			add_stability = 0.02
+			add_political_power = 30
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = SIA_judicial_review_route
+		available = { SIA_royalist_trunk_open = yes }
+		icon = focus_generic_court
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_the_quiet_word
+
+		cost = 6
+
+		prerequisite = { focus = SIA_the_quiet_word }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_judicial_review_route"
+			add_timed_idea = { idea = SIA_judicialization days = 730 }
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+			add_to_variable = { SIA_reform_pressure = 5 }
+			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+			custom_effect_tooltip = SIA_judicial_review_route_choice_tt
+			country_event = thailand.434
+		}
+
+		ai_will_do = {
+			base = 50
+		}
+	}
+
+	focus = {
+		id = SIA_the_appointed_senate
+		available = { SIA_royalist_trunk_open = yes }
+		icon = legislative_palace
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_judicial_review_route
+
+		cost = 5
+
+		prerequisite = { focus = SIA_judicial_review_route }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_appointed_senate"
+			# modify_bureaucracy_effect (docs) has no scripted-effect definition in
+			# common/scripted_effects/ - substituted with the verified real bureaucracy
+			# lever (00_budget_effects.txt) so the reward isn't a silent no-op.
+			increase_centralization = yes
+			add_ideas = SIA_senate_leverage
+		}
+
+		ai_will_do = {
+			base = 50
+		}
+	}
+
+	focus = {
+		id = SIA_coalition_kingmakers
+		available = { SIA_royalist_trunk_open = yes }
+		icon = Generic_Secret_Meeting
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_the_appointed_senate
+
+		cost = 6
+
+		prerequisite = { focus = SIA_the_appointed_senate }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_coalition_kingmakers"
+			# add_coalition_members_effect does not exist anywhere in the codebase -
+			# substituted with a Democrat (idx 1) popularity/PP package per the
+			# design doc's own fallback.
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+			add_political_power = 40
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+			custom_effect_tooltip = SIA_coalition_kingmakers_choice_tt
+			country_event = thailand.435
+		}
+
+		ai_will_do = {
+			base = 50
+		}
+	}
+
+	focus = {
+		id = SIA_constitutional_engineering
+		available = { SIA_royalist_trunk_open = yes }
+		icon = Focus_Parliament_Constitution
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_coalition_kingmakers
+
+		cost = 6
+
+		prerequisite = { focus = SIA_coalition_kingmakers }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_constitutional_engineering"
+			add_stability = 0.03
+			add_to_variable = { SIA_reform_pressure = 10 }
+			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+			add_ideas = SIA_managed_democracy
+		}
+
+		ai_will_do = {
+			base = 50
+		}
+	}
+
+	focus = {
+		id = SIA_the_establishment_consensus
+		available = { SIA_royalist_trunk_open = yes }
+		icon = focus_SIA_defenders_of_constitutional_liberty
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_constitutional_engineering
+
+		cost = 7
+
+		prerequisite = { focus = SIA_constitutional_engineering }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_establishment_consensus"
+			add_ideas = SIA_establishment_consensus_idea
+			add_stability = 0.03
+			unlock_decision_category_tooltip = SIA_establishment_category
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -5596,6 +5797,10 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ECONOMY }
 
+		available = {
+			SIA_populist_trunk_open = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_telecom_empire"
 			increase_economic_growth = yes
@@ -5631,6 +5836,7 @@ focus_tree = {
 
 		available = {
 			date > 2016.1.1
+			SIA_royalist_trunk_open = yes
 		}
 
 		completion_reward = {
@@ -5667,6 +5873,10 @@ focus_tree = {
 		prerequisite = { focus = SIA_the_2017_constitution }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			SIA_royalist_trunk_open = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_senate_of_appointees"
@@ -5706,6 +5916,7 @@ focus_tree = {
 
 		available = {
 			date > 2018.1.1
+			SIA_royalist_trunk_open = yes
 		}
 
 		completion_reward = {
@@ -5740,6 +5951,10 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
+		available = {
+			SIA_reform_trunk_open = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_orange_wave"
 			# Reached only once idx 3 already rules, so this is not a vote-winning pump.
@@ -5768,6 +5983,10 @@ focus_tree = {
 		prerequisite = { focus = SIA_three_demands }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+
+		available = {
+			SIA_reform_trunk_open = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_digital_democracy"
@@ -5807,6 +6026,10 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_DIPLOMACY }
 
+		available = {
+			SIA_reform_trunk_open = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_creative_economy"
 			increase_economic_growth = yes
@@ -5840,6 +6063,10 @@ focus_tree = {
 		prerequisite = { focus = SIA_civilian_control }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			SIA_reform_trunk_open = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_truth_and_reconciliation"
@@ -6151,7 +6378,6 @@ focus_tree = {
 		available = {
 			has_country_flag = SIA_path_royalist
 			date > 2016.10.13
-			NOT = { has_country_flag = SIA_succession_done }
 		}
 
 		completion_reward = {
@@ -6161,17 +6387,16 @@ focus_tree = {
 				limit = { has_idea = SIA_kings_moral_authority }
 				remove_ideas = SIA_kings_moral_authority
 			}
-			# The Ninth Reign ends. Whichever barami tier the palace holds passes
-			# to the weaker Tenth Reign, under a year of national mourning.
+			# Premium over thailand.14's unmanaged path: settles at Ninth Reign, not Tenth.
 			if = {
 				limit = { has_idea = SIA_ninth_reign_zenith }
-				swap_ideas = { remove_idea = SIA_ninth_reign_zenith add_idea = SIA_tenth_reign_barami }
+				swap_ideas = { remove_idea = SIA_ninth_reign_zenith add_idea = SIA_ninth_reign_barami }
 			}
-			else_if = {
-				limit = { has_idea = SIA_ninth_reign_barami }
-				swap_ideas = { remove_idea = SIA_ninth_reign_barami add_idea = SIA_tenth_reign_barami }
-			}
-			add_timed_idea = { idea = SIA_new_reign_mourning days = 365 }
+			add_timed_idea = { idea = SIA_new_reign_mourning days = 180 }
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
 			hidden_effect = {
 				country_event = { id = thailand.226 days = 365 }
 			}
@@ -6201,7 +6426,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_POLITICAL }
 
 		available = {
-			has_country_flag = SIA_path_reform
+			SIA_reform_trunk_open = yes
 		}
 
 		completion_reward = {
@@ -6237,7 +6462,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ECONOMY }
 
 		available = {
-			has_country_flag = SIA_path_reform
+			SIA_reform_trunk_open = yes
 		}
 
 		completion_reward = {
@@ -6274,7 +6499,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
 		available = {
-			has_country_flag = SIA_path_reform
+			SIA_reform_trunk_open = yes
 		}
 
 		completion_reward = {
