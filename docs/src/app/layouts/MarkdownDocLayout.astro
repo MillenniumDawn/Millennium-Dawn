@@ -1,8 +1,10 @@
 ---
 import type { MarkdownHeading } from "astro";
+import type { ArticleSeoMeta } from "@/shared/lib/seo";
 import BaseLayout from "./BaseLayout.astro";
 import { resolveToc } from "@/shared/lib/content/content-helpers";
 import { getEntryBodyClass, getEntryPageId } from "@/shared/lib/routing/content-routes";
+import { PAGE_TITLE_CLASS } from "@/shared/ui/tailwind";
 
 interface RoutedEntryLike {
   id: string;
@@ -22,9 +24,23 @@ interface Props {
   canonicalPath: string;
   headings?: MarkdownHeading[];
   toc?: "auto" | "off";
+  ogType?: "website" | "article";
+  seoArticle?: ArticleSeoMeta;
+  extraJsonLd?: Record<string, unknown>[];
+  /** When true, renders the entry title as the page H1 (plain markdown pages only). */
+  showPageTitle?: boolean;
 }
 
-const { entry, canonicalPath, headings = [], toc }: Props = Astro.props;
+const {
+  entry,
+  canonicalPath,
+  headings = [],
+  toc,
+  ogType,
+  seoArticle,
+  extraJsonLd,
+  showPageTitle = false,
+}: Props = Astro.props;
 ---
 
 <BaseLayout
@@ -37,6 +53,10 @@ const { entry, canonicalPath, headings = [], toc }: Props = Astro.props;
   bodyClass={getEntryBodyClass(entry)}
   pageId={getEntryPageId(entry)}
   headings={headings}
+  ogType={ogType}
+  seoArticle={seoArticle}
+  extraJsonLd={extraJsonLd}
 >
+  {showPageTitle && <h1 class={PAGE_TITLE_CLASS}>{entry.data.title}</h1>}
   <slot />
 </BaseLayout>

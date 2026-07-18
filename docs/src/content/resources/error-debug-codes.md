@@ -24,35 +24,35 @@ This guide helps developers read game.log to debug the mod.
 
 ### Tax Changes
 
-| Code | Description                     | Source                       |
-| ---- | ------------------------------- | ---------------------------- |
-| 1049 | Player/AI Triggered Tax Refresh | `00_money_scripted_guis.txt` |
-| 1050 | AI Population Tax +1            | `00_money_scripted_guis.txt` |
-| 1051 | AI Population Tax +5            | `00_money_scripted_guis.txt` |
-| 1052 | AI Population Tax -1            | `00_money_scripted_guis.txt` |
-| 1053 | AI Population Tax -5            | `00_money_scripted_guis.txt` |
-| 1054 | AI Corporate Tax +1             | `00_money_scripted_guis.txt` |
-| 1055 | AI Corporate Tax +5             | `00_money_scripted_guis.txt` |
-| 1056 | AI Corporate Tax -1             | `00_money_scripted_guis.txt` |
-| 1057 | AI Corporate Tax -5             | `00_money_scripted_guis.txt` |
+| Code | Description                     | Source                                |
+| ---- | ------------------------------- | ------------------------------------- |
+| 1049 | Player/AI Triggered Tax Refresh | `00_MD_economyview_scripted_guis.txt` |
+| 1050 | AI Population Tax +1            | `00_MD_economyview_scripted_guis.txt` |
+| 1051 | AI Population Tax +5            | `00_MD_economyview_scripted_guis.txt` |
+| 1052 | AI Population Tax -1            | `00_MD_economyview_scripted_guis.txt` |
+| 1053 | AI Population Tax -5            | `00_MD_economyview_scripted_guis.txt` |
+| 1054 | AI Corporate Tax +1             | `00_MD_economyview_scripted_guis.txt` |
+| 1055 | AI Corporate Tax +5             | `00_MD_economyview_scripted_guis.txt` |
+| 1056 | AI Corporate Tax -1             | `00_MD_economyview_scripted_guis.txt` |
+| 1057 | AI Corporate Tax -5             | `00_MD_economyview_scripted_guis.txt` |
 
 ### Debt Management (1070-1079)
 
-| Code | Description                          | Source                       |
-| ---- | ------------------------------------ | ---------------------------- |
-| 1070 | 1 Billion Debt Taken                 | `00_money_scripted_guis.txt` |
-| 1071 | 10 Billion Debt Taken                | `00_money_scripted_guis.txt` |
-| 1072 | 100 Billion Debt Taken               | `00_money_scripted_guis.txt` |
-| 1073 | 1 Billion Debt Paid                  | `00_money_scripted_guis.txt` |
-| 1074 | 10 Billion Debt Paid                 | `00_money_scripted_guis.txt` |
-| 1075 | 100 Billion Debt Paid                | `00_money_scripted_guis.txt` |
-| 1076 | Maximum Debt Paid (All Debt Cleared) | `00_money_scripted_guis.txt` |
+| Code | Description                          | Source                                |
+| ---- | ------------------------------------ | ------------------------------------- |
+| 1070 | 1 Billion Debt Taken                 | `00_MD_economyview_scripted_guis.txt` |
+| 1071 | 10 Billion Debt Taken                | `00_MD_economyview_scripted_guis.txt` |
+| 1072 | 100 Billion Debt Taken               | `00_MD_economyview_scripted_guis.txt` |
+| 1073 | 1 Billion Debt Paid                  | `00_MD_economyview_scripted_guis.txt` |
+| 1074 | 10 Billion Debt Paid                 | `00_MD_economyview_scripted_guis.txt` |
+| 1075 | 100 Billion Debt Paid                | `00_MD_economyview_scripted_guis.txt` |
+| 1076 | Maximum Debt Paid (All Debt Cleared) | `00_MD_economyview_scripted_guis.txt` |
 
 ### Money Printing (1080-1089)
 
-| Code | Description   | Source                       |
-| ---- | ------------- | ---------------------------- |
-| 1084 | Money Printed | `00_money_scripted_guis.txt` |
+| Code | Description   | Source                                |
+| ---- | ------------- | ------------------------------------- |
+| 1084 | Money Printed | `00_MD_economyview_scripted_guis.txt` |
 
 ## Energy System (2000-2099)
 
@@ -71,30 +71,11 @@ To see debug messages in game.log, use console commands during gameplay:
 
 ---
 
-# Common Errors
-
-## Script Errors
-
-| Error                    | Solution                               |
-| ------------------------ | -------------------------------------- |
-| `Unknown trigger type`   | Check trigger spelling in triggers.txt |
-| `Expected value`         | Missing equals sign or value           |
-| `Too many nested blocks` | Simplify your logic                    |
-
-## Performance Issues
-
-| Error                    | Solution                        |
-| ------------------------ | ------------------------------- |
-| `Script taking too long` | Optimize MTTH events            |
-| `Too many effects`       | Reduce dynamic modifier updates |
-
----
-
 # Source Files
 
 Debug codes are defined in these common files:
 
-- `common/scripted_guis/00_money_scripted_guis.txt` - Money system debug
+- `common/scripted_guis/00_MD_economyview_scripted_guis.txt` - Money system debug
 - `common/scripted_guis/01_energy_gui.txt` - Energy system debug
 - `common/scripted_effects/00_influence_scripted_effects.txt` - Influence system debug
 
@@ -102,5 +83,5 @@ Debug codes are defined in these common files:
 
 # Related Resources
 
-- [Code Resources](/dev-resources/code-resource) - Modifiers and effects
-- [Code Stylization](/dev-resources/code-stylization-guide) - Best practices
+- [Code Resources](/dev-resources/code-resource/) - Modifiers and effects
+- [Code Stylization](/dev-resources/code-stylization-guide/) - Best practices

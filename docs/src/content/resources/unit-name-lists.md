@@ -46,23 +46,23 @@ TAG_INF_DIV = {
 }
 ```
 
-- **`name`** — English string describing the theme (e.g. `"Infantry Divisions"`, `"Armoured Brigades"`).
-- **`for_countries`** — one or more country tags.
-- **`division_types`** — controls which template type the AI assigns this list to. Only front-line types belong here (infantry, armour, air cavalry, marines, militia, special forces). Do not include support battalions.
-- **`link_numbering_with`** — prevents two groups from issuing the same ordinal simultaneously. Link `INF_DIV` ↔ `INF_BDE` so you never have both a "3rd Infantry Division" and a "3rd Infantry Brigade" at the same time.
-- **`fallback_name`** — used once all `ordered` names are exhausted. `%d` inserts an Arabic numeral; `%s` inserts a Roman numeral.
-- **`ordered`** — named entries (optional but encouraged). Keys are integers assigned in order of unit creation. Gaps are allowed.
+- **`name`**: English string describing the theme (e.g. `"Infantry Divisions"`, `"Armoured Brigades"`).
+- **`for_countries`**: one or more country tags.
+- **`division_types`**: controls which template type the AI assigns this list to. Only front-line types belong here (infantry, armour, air cavalry, marines, militia, special forces). Do not include support battalions.
+- **`link_numbering_with`**: prevents two groups from issuing the same ordinal simultaneously. Link `INF_DIV` ↔ `INF_BDE` so you never have both a "3rd Infantry Division" and a "3rd Infantry Brigade" at the same time.
+- **`fallback_name`**: used once all `ordered` names are exhausted. `%d` inserts an Arabic numeral; `%s` inserts a Roman numeral.
+- **`ordered`**: named entries (optional but encouraged). Keys are integers assigned in order of unit creation. Gaps are allowed.
 
 **Do not add an empty `can_use = { }` block.** An empty `can_use` has a real performance cost; omit the field entirely if you do not need a visibility condition.
 
 ### Language and naming conventions
 
 - Use the country's official language for unit names (French for Francophone Africa, Spanish for Latin America, Portuguese for Lusophone nations, English for Anglophone nations, native Latin-script spelling for Slavic/Balkan countries).
-- HOI4's font supports UTF-8 with standard Latin diacritics (é, à, ü, š, č, ž). **Do not use Arabic, Greek, Cyrillic, or CJK characters** — they will not render correctly.
+- HOI4's font supports UTF-8 with standard Latin diacritics (é, à, ü, š, č, ž). **Do not use Arabic, Greek, Cyrillic, or CJK characters**: they will not render correctly.
 - Name units after real-life formations where possible. For countries with less documented naming traditions, use the local linguistic pattern (e.g. French: "1ère Brigade d'Infanterie", Spanish: "1a Brigada de Infantería").
 - Whether to use "division" or "brigade" depends on the size of the country's starting templates. Most small nations use brigade-sized formations.
 
-### Landlocked nations — MAR substitution
+### Landlocked nations: MAR substitution
 
 Landlocked countries cannot build marine divisions in most playthroughs, but the `TAG_MAR` group must still be present (for AI assignment and modding flexibility). Use contextually appropriate riverine or lake forces instead of sea-based names:
 
@@ -92,7 +92,7 @@ units = {
 }
 ```
 
-`name_order` does not need to correspond to an entry in the `ordered` block — if the key is missing the game uses `fallback_name` with that number.
+`name_order` does not need to correspond to an entry in the `ordered` block, if the key is missing the game uses `fallback_name` with that number.
 
 ---
 
@@ -226,7 +226,7 @@ TAG = {
 
 Keys inside `TAG = { }` must match real sub_unit names from `common/units/MD_naval_units.txt` (for ships) or `common/units/MD_land_units.txt` (for land). A key that does not correspond to a real MD sub_unit compiles silently and never fires.
 
-**Never use `infantry`.** That is vanilla's sub_unit name; MD restructured land units and the canonical land sub_units are `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, and so on (see `MD_land_units.txt`). Every `00_TAG_names.txt` should include at minimum an `L_Inf_Bat = { ... }` block as the light-infantry fallback — localize the `generic` label to the country's language where appropriate (e.g. `"Infanterie-Division"`, `"Strelkovaya Diviziya"`).
+**Never use `infantry`.** That is vanilla's sub_unit name; MD restructured land units and the canonical land sub_units are `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, and so on (see `MD_land_units.txt`). Every `00_TAG_names.txt` should include at minimum an `L_Inf_Bat = { ... }` block as the light-infantry fallback, localize the `generic` label to the country's language where appropriate (e.g. `"Infanterie-Division"`, `"Strelkovaya Diviziya"`).
 
 ### Naming conventions
 
@@ -245,9 +245,9 @@ Keys inside `TAG = { }` must match real sub_unit names from `common/units/MD_nav
 
 For a new country tag, the following files are required:
 
-- [ ] `common/units/names_divisions/TAG_names_divisions.txt` — all 7 division groups covered
-- [ ] `common/units/names_ships/TAG_ship_names.txt` — frigate, corvette, and at least one additional type (submarine or destroyer where relevant)
-- [ ] `common/units/names/00_TAG_names.txt` — ship class names for all relevant hull types (keys must match `MD_naval_units.txt`) + an `L_Inf_Bat` block as the minimum land fallback. Never use vanilla's `infantry` key — it does not match any MD sub_unit.
+- [ ] `common/units/names_divisions/TAG_names_divisions.txt`: all 7 division groups covered
+- [ ] `common/units/names_ships/TAG_ship_names.txt`: frigate, corvette, and at least one additional type (submarine or destroyer where relevant)
+- [ ] `common/units/names/00_TAG_names.txt`: ship class names for all relevant hull types (keys must match `MD_naval_units.txt`) + an `L_Inf_Bat` block as the minimum land fallback. Never use vanilla's `infantry` key, it does not match any MD sub_unit.
 - [ ] OOB units in `history/units/TAG_*.oob` updated with `division_names_group` assignments
 
 For questions, contact Kalkalash.

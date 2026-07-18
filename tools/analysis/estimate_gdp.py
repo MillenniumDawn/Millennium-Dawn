@@ -669,9 +669,9 @@ def main():
         for r in results:
             tag = r["tag"]
             pop_m = r["population"] / 1_000_000
-            print(f"\n{'='*65}")
+            print(f"\n{'=' * 65}")
             print(f"  {tag} - GDP Estimation (with modifier stack)")
-            print(f"{'='*65}")
+            print(f"{'=' * 65}")
             print(f"  States:              {r['num_states']}")
             print(f"  Population:          {pop_m:.2f}M")
             print(f"  Overall Productivity:{r['overall_productivity']:.1f}")
@@ -687,10 +687,10 @@ def main():
             a = r["gdp_from_agriculture_scaled"]
             res = r["gdp_from_resources_scaled"]
             print("  GDP Breakdown:")
-            print(f"    Buildings:         {b:.2f} ({b/gdp*100:.1f}%)")
-            print(f"    Healthcare:        {h:.2f} ({h/gdp*100:.1f}%)")
-            print(f"    Agriculture:       {a:.2f} ({a/gdp*100:.1f}%)")
-            print(f"    Resources:         {res:.2f} ({res/gdp*100:.1f}%)\n")
+            print(f"    Buildings:         {b:.2f} ({b / gdp * 100:.1f}%)")
+            print(f"    Healthcare:        {h:.2f} ({h / gdp * 100:.1f}%)")
+            print(f"    Agriculture:       {a:.2f} ({a / gdp * 100:.1f}%)")
+            print(f"    Resources:         {res:.2f} ({res / gdp * 100:.1f}%)\n")
             if r["buildings"]:
                 print("  Buildings:")
                 for bname, bcount in sorted(

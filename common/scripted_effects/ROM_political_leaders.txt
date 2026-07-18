@@ -265,10 +265,34 @@ set_leader_ROM = {
 		}
 	}
 	else_if = { limit = { has_country_flag = set_Western_Autocracy }
-		if = { limit = { check_variable = { Western_Autocracy_leader = 0 } }
-			add_to_variable = { Western_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		# The monarch persists across elections and only changes through succession events,
+		# which set ROM_current_monarch (unset/0 = Mihai, 1 = Nicholas, 2 = Margareta).
+		hidden_effect = { kill_country_leader = yes }
+		if = { limit = { check_variable = { ROM_current_monarch = 2 } }
+			create_country_leader = {
+				name = "Margareta I"
+				picture = "margareta.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					zealous
+					greedy
+				}
+			}
+		}
+		else_if = { limit = { check_variable = { ROM_current_monarch = 1 } }
+			create_country_leader = {
+				name = "Nicholas I"
+				picture = "prince_nicholas.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					humble
+					likeable
+				}
+			}
+		}
+		else = {
 			create_country_leader = {
 				name = "Mihai I"
 				picture = "Mihai_i.dds"
@@ -279,9 +303,6 @@ set_leader_ROM = {
 					elder
 				}
 			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Western_Autocracy_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
 		}
 	}
 	else_if = { limit = { has_country_flag = set_Communist-State }

@@ -39,6 +39,7 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
   let offsetY = 0;
   let dragPointerId: number | null = null;
   let dragLastPoint: LightboxPoint | null = null;
+  let suppressBackdropClick = false;
   let pinchStartDistance = 0;
   let pinchStartScale = MIN_SCALE;
   let pinchStartOffset = { x: 0, y: 0 };
@@ -86,6 +87,7 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
     pointers.clear();
     dragPointerId = null;
     dragLastPoint = null;
+    suppressBackdropClick = false;
     pinchStartDistance = 0;
     pinchStartMidpoint = null;
   };
@@ -98,6 +100,7 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
   };
 
   const onPointerDown = (event: PointerEvent) => {
+    suppressBackdropClick = false;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     viewport.setPointerCapture(event.pointerId);
 
@@ -130,6 +133,7 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
       const nextScale = pinchStartDistance > 0 ? pinchStartScale * (currentDistance / pinchStartDistance) : scale;
       const nextOffsetX = pinchStartOffset.x + (currentMidpoint.x - pinchStartMidpoint.x);
       const nextOffsetY = pinchStartOffset.y + (currentMidpoint.y - pinchStartMidpoint.y);
+      suppressBackdropClick = true;
       setTransform(nextScale, nextOffsetX, nextOffsetY);
       return;
     }
@@ -138,6 +142,9 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
 
     const deltaX = event.clientX - dragLastPoint.x;
     const deltaY = event.clientY - dragLastPoint.y;
+    if (deltaX !== 0 || deltaY !== 0) {
+      suppressBackdropClick = true;
+    }
     dragLastPoint = { x: event.clientX, y: event.clientY };
     setTransform(scale, offsetX + deltaX, offsetY + deltaY);
   };
@@ -171,6 +178,12 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
   };
 
   const onBackdropClick = (event: MouseEvent) => {
+    if (suppressBackdropClick) {
+      suppressBackdropClick = false;
+      event.preventDefault();
+      return;
+    }
+
     const t = event.target;
     if (!(t instanceof Node)) return;
     if (!viewport.contains(t)) return;

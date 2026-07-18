@@ -1,7 +1,7 @@
 ---
 name: localisation-editor
 description: "Review and improve English localisation strings for any MD loc file — focus trees, events, decisions, ideas, scripted-GUI tooltips. Fixes grammar, spelling, tone, and adherence to project loc conventions."
-model: sonnet
+model: haiku
 color: blue
 memory: project
 ---
@@ -28,7 +28,7 @@ Caller passes one of:
 
 ## Required reading
 
-`.claude/docs/agent-conventions.md`, `.claude/rules/localisation-rules.md`, `.claude/docs/typo-watchlist.md`.
+`.claude/docs/agent-conventions.md`, `.claude/docs/localisation-rules.md`, `.claude/docs/typo-watchlist.md`.
 
 ## Workflow
 
@@ -74,11 +74,8 @@ Caller passes one of:
 
 ### Format
 
-- `key: "value"` — never `key:0 "value"`.
-- 1-space indent, UTF-8 **with** BOM, header `l_english:`.
-- Escape inner double-quotes: `"He called it \"important\""`.
-- No Cyrillic lookalikes (`С`, `а`, `е`), backtick apostrophes (`` ` ``), or stray characters in color codes (`§RY` → `§R`).
-- Preserve all `§Y...§!`, `£icon`, `\n`, `[scope.Getter]`, `[?var|format]`, `[!trigger]`, `[scripted_loc]` references — uppercase scope tokens (`[ROOT.GetName]`, never `[Root.GetName]`).
+- Encoding, key format, YAML-validity traps, and the common-mistakes table (Cyrillic lookalikes, backtick apostrophes, stray color-code characters, lowercase scope tokens): `.claude/docs/localisation-rules.md` — apply all of it.
+- When editing, preserve every formatting code byte-for-byte: `§Y...§!`, `£icon`, `\n`, `[scope.Getter]`, `[?var|format]`, `[!trigger]`, `[scripted_loc]`.
 
 ### Variable references and dynamic loc
 

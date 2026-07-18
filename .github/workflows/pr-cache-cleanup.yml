@@ -1,0 +1,35 @@
+name: PR Cache Cleanup
+
+# Deletes the closed PR's workspace-bundle caches (~150-250MB per pushed
+# head sha) instead of letting them sit against the 10GB repo budget until
+# LRU/7-day eviction. Ref-scoped deletion also sweeps any legacy
+# validators-v4-* entries for that PR.
+
+on:
+  # pull_request_target so the token keeps actions:write for fork PRs. Safe
+  # here only because this job never checks out or executes PR code.
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    name: Delete PR caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete caches scoped to this PR's merge ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+          # --paginate: a long-lived PR can hold >100 entries. The || arm
+          # tolerates a delete/eviction race (404) without failing the job.
+          gh api --paginate "repos/${{ github.repository }}/actions/caches?ref=${ref}&per_page=100" \
+            --jq '.actions_caches[].id' \
+            | while read -r id; do
+                gh api -X DELETE "repos/${{ github.repository }}/actions/caches/${id}" \
+                  && echo "deleted cache ${id}" \
+                  || echo "cache ${id} already gone"
+              done

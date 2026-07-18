@@ -128,7 +128,7 @@ Notable DLC entity packs that overlap with MD assets:
 [pdx_entity.cpp:2172]: Duplicate of ITA_mechanized_vehicle_1_entity added to entity system
 ```
 
-**Cause:** An entity name is defined in both the mod and a vanilla file (base game or DLC). HOI4 merges all `.asset` files at load time — it does not let mod files override vanilla ones.
+**Cause:** An entity name is defined in both the mod and a vanilla file (base game or DLC). HOI4 merges all `.asset` files at load time, it does not let mod files override vanilla ones.
 
 **How to diagnose:**
 
@@ -185,7 +185,7 @@ If no results, the parent was renamed, never defined, or is a typo.
 grep -n 'name = "JAP_MD4_infantry' gfx/entities/JAP_MD_infantryandvehicle.asset
 ```
 
-Example fix — change the nonexistent parent to the correct one:
+Example fix, change the nonexistent parent to the correct one:
 
 ```diff
  entity = {
@@ -204,7 +204,7 @@ Example fix — change the nonexistent parent to the correct one:
 [pdx_particle.cpp:1608]: Particle name is not unique: sparks_file
 ```
 
-**Cause:** The mod defines a particle with the same `name` as a vanilla particle. Like entities, particle files are merged — not overridden.
+**Cause:** The mod defines a particle with the same `name` as a vanilla particle. Like entities, particle files are merged, not overridden.
 
 **How to diagnose:**
 
@@ -250,7 +250,7 @@ Example fix — change the nonexistent parent to the correct one:
 mapbuildings.cpp:679: map/buildings.txt error at line N: map building location is not over the land - ignoring instance.
 ```
 
-**Cause:** A `landmark_spawn` line's `(x, z)` coordinates fall on a sea-province pixel. The trailing `province_id` field on the spawn line is just a binding hint — the engine still validates that the XZ pixel is on a land province via `map/provinces.bmp`.
+**Cause:** A `landmark_spawn` line's `(x, z)` coordinates fall on a sea-province pixel. The trailing `province_id` field on the spawn line is just a binding hint, the engine still validates that the XZ pixel is on a land province via `map/provinces.bmp`.
 
 **Common trigger:** copying a floating-harbor's coordinates as a starting point for a landmark spawn. Floating harbors sit in water, so their XZ is not a valid landmark position.
 
@@ -272,7 +272,7 @@ pid = color_to_pid.get(tuple(arr[py, px].tolist()))
 print(f'XZ ({x},{z}) is in province {pid}')
 ```
 
-If `pid` is a sea province (compare to `map/definition.csv` where the fifth column is `sea`), move the spawn to a land pixel. See [Add Landmarks](/resources/add-landmarks/) for the full workflow including heightmap-calibrated `y`.
+If `pid` is a sea province (compare to `map/definition.csv` where the fifth column is `sea`), move the spawn to a land pixel. See [Add Landmarks](/dev-resources/add-landmarks/) for the full workflow including heightmap-calibrated `y`.
 
 ---
 
@@ -280,13 +280,13 @@ If `pid` is a sea province (compare to `map/definition.csv` where the fifth colu
 
 No error log entry, but the landmark icon appears in the state buildings panel and no 3D model is drawn on the map. Walk through this checklist:
 
-1. `grep "^<state_id>;landmark_spawn" map/buildings.txt` — does a spawn line exist for the state at all? Map reworks have silently deleted spawn lines (commits `89ccbf62cc` and `4da960e3c8`); restore the deleted entry. Use `git log -S "<state_id>;landmark_spawn" -- map/buildings.txt` to confirm.
+1. `grep "^<state_id>;landmark_spawn" map/buildings.txt`: does a spawn line exist for the state at all? Map reworks have silently deleted spawn lines (commits `89ccbf62cc` and `4da960e3c8`); restore the deleted entry. Use `git log -S "<state_id>;landmark_spawn" -- map/buildings.txt` to confirm.
 2. Confirm the spawn's `(x, z)` falls in the same province the state file places the landmark in (see the bitmap snippet above).
-3. Check whether the placement province block in the state file shares with another building, particularly `naval_base = N`. Co-occupancy with naval_base blocks landmark rendering — split into separate province blocks.
+3. Check whether the placement province block in the state file shares with another building, particularly `naval_base = N`. Co-occupancy with naval_base blocks landmark rendering, split into separate province blocks.
 4. Confirm the player has the DLC declared in the building's `dlc_allowed`.
-5. Confirm MD's `gfx/entities/landmarks.asset` and `landmarks.gfx` contain the entity and mesh definitions. MD's copies of those files file-override vanilla — vanilla's entries for new landmarks are not merged in and must be copied across.
+5. Confirm MD's `gfx/entities/landmarks.asset` and `landmarks.gfx` contain the entity and mesh definitions. MD's copies of those files file-override vanilla, vanilla's entries for new landmarks are not merged in and must be copied across.
 
-See [Add Landmarks](/resources/add-landmarks/) for the full file-by-file mapping.
+See [Add Landmarks](/dev-resources/add-landmarks/) for the full file-by-file mapping.
 
 ---
 
@@ -310,7 +310,7 @@ Check that the parent `containerWindowType` or `windowType` exists and that its 
 
 ## General Debugging Tips
 
-- Always check the **vanilla DLC folders** as well as the base game — many entities and particles are added by DLC packs (e.g., `dlc025_axis_armor_pack`, `dlc048_expansion_pass_2_seaplane_tenders`).
+- Always check the **vanilla DLC folders** as well as the base game, many entities and particles are added by DLC packs (e.g., `dlc025_axis_armor_pack`, `dlc048_expansion_pass_2_seaplane_tenders`).
 - Entity names defined in mod files **cannot override** vanilla entities. You must use a unique name.
 - After fixing an entity error, the downstream "Failed to find entity for attachment" errors for the same entity will automatically resolve.
 - Filter the error log to just entity/asset lines for faster triage:

@@ -67,7 +67,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Small & Medium Business Owners
 
-**Available for**: Most nations (not available to WAG, KOR, NKO — those use unique variants)
+**Available for**: Most nations (not available to WAG, KOR, NKO. Those use unique variants)
 
 **Dynamic Bonuses** (scale with opinion):
 
@@ -155,7 +155,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Industrial Conglomerates
 
-**Available for**: Most nations — not available to former Soviet/oligarch states (SOV, UKR, KAZ, BLR, ARM, GEO, UZB, TRK, KYR, MLV, PMR, NOV, SOO, ABK, SYR, EGY), which use Oligarchs instead
+**Available for**: Most nations, not available to former Soviet/oligarch states (SOV, UKR, KAZ, BLR, ARM, GEO, UZB, TRK, KYR, MLV, PMR, NOV, SOO, ABK, SYR, EGY), which use Oligarchs instead
 
 **Static Bonuses**:
 
@@ -605,7 +605,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Iranian Quds Force
 
-**Available for**: Iranian proxies — Iraq, Hamas, Hezbollah, Syria, Houthis, Yemen, Kurdistan, Lebanon, Afghanistan, Taliban, Tajikistan, and Gulf states
+**Available for**: Iranian proxies, Iraq, Hamas, Hezbollah, Syria, Houthis, Yemen, Kurdistan, Lebanon, Afghanistan, Taliban, Tajikistan, and Gulf states
 
 **Availability**: Requires Communism, Neutrality, or Nationalist government
 
@@ -699,7 +699,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 5. **Keep 75–150 PP available**: Faction-related decisions are time-sensitive and appear as events you need to act on.
 
-6. **Conflicting factions**: Labour Unions and business owner factions (SMBO, Industrial Conglomerates) often have opposing interests — choose based on your economic strategy.
+6. **Conflicting factions**: Labour Unions and business owner factions (SMBO, Industrial Conglomerates) often have opposing interests, choose based on your economic strategy.
 
 7. **Religious factions are strong for stability**: The political power and population growth bonuses are among the best in the game for civilian buildup.
 
@@ -727,16 +727,16 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 | ------------------------------ | ---------------- | ------------------------------------ | -------------------------------------- |
 | Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax  | Not WAG, KOR, NKO                      |
 | International Bankers          | Economic         | -1 interest rate, +20% trade op.     | Not USA                                |
-| Fossil Fuel Industry           | Economic         | +25% fuel gain                       | —                                      |
+| Fossil Fuel Industry           | Economic         | +25% fuel gain                       | ,                                      |
 | Industrial Conglomerates       | Economic         | +15% infra construction              | Not oligarch/post-Soviet states        |
 | Oligarchs                      | Economic         | +20% local resources                 | Oligarch/post-Soviet states only       |
 | Maritime Industry              | Militaristic     | +20% dockyard speed and capacity     | Requires coastal state                 |
-| Defense Industry               | Militaristic     | +15% mil factory productivity        | —                                      |
+| Defense Industry               | Militaristic     | +15% mil factory productivity        | ,                                      |
 | The Military                   | Militaristic     | +10% army morale, -25% pers. cost    | Requires military idea                 |
 | Intelligence Community         | Militaristic     | +15% intel factors, +20% crypto      | Not Pakistan                           |
 | Labour Unions                  | Special Interest | +25% political power                 | Not Nationalist or Fascist governments |
-| Landowners                     | Special Interest | +15% local resources                 | —                                      |
-| Farmers                        | Special Interest | +20% population growth               | —                                      |
+| Landowners                     | Special Interest | +15% local resources                 | ,                                      |
+| Farmers                        | Special Interest | +20% population growth               | ,                                      |
 | Communist Cadres               | Special Interest | +25% mobilization speed              | Communist governments only             |
 | The Priesthood                 | Religious        | +30% political power, +25% pop.      | Buddhism, Hinduism, Shinto, Cheondoism |
 | The Ulema                      | Religious        | +30% political power, +25% pop.      | Sunni, Ibadi, Sufi, Shia Islam         |

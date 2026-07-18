@@ -82,23 +82,6 @@ Closes #M
 #### [Other grouping, e.g. "AI", "Content", "Localisation", "Validation"]
 
 - **[Component or focus/event ID].** [What was added or changed and why.]
-
-### Test plan
-
-**Playthrough A: <TAG> <year> (covers #N, #M)**
-
-<phase header, e.g. "Game start, before unpausing:">
-
-- [ ] `tag <TAG>`, <action>, confirm <expected outcome> (#N).
-- [ ] <next checkbox> (#M).
-
-<next phase header, e.g. "Mid-game checks (advance several in-game weeks first):">
-
-- [ ] <action>, confirm <expected outcome> (#N).
-
-**Playthrough B: <TAG> <year> (covers #X)**
-
-- [ ] <action>, confirm <expected outcome> (#X).
 ```
 
 Rules:
@@ -109,43 +92,17 @@ Rules:
 - **Never use em dashes (`—`, U+2014) anywhere: not in the PR title, body, bullet separators, Changelog.txt, or any `.yml` file.** Replace with a colon (introducing the explanation), a period (ending the bolded prefix, new sentence), or a comma (continuing the clause). Standing user rule, no exceptions even when mimicking AngriestBird's example PRs.
 - Bullet structure: bold the issue ref and title together followed by a period (`**Fixes #N: Issue Title.**`), a space, then the description. No `—` separator.
 - Bullet length: **2 sentences, 2-3 lines max** per fix (one for cause, one for resolution). Name the key focus/event/decision ID and the wrong-vs-right value; skip commit hashes, file:line citations, repro chains, and regression notes (those go in the commit and issue). The `Closes #N` lines are always preserved.
-- Test plan: one or more **playthroughs**, like PR #1525. Each block starts with a bold header naming the country tag, start year, and issues it covers, e.g. `**Playthrough A: ENG 2000 (covers #1400, #1515, #1516)**`. Group checks under phase sub-headers when the test needs setup beyond game start (e.g. `Game start, before unpausing:` vs `Mid-game checks (advance several in-game weeks first):`).
-- Every check is a markdown task list item: start with `- [ ]`, never bare `- `. One checkbox per distinct in-game action. End each with the issue ref it covers, `(#N)`.
-- Checkbox structure: console command (if any) in backticks, then the action, then `confirm <expected outcome>`. Separate clauses with commas or periods, not `→` or `—`. Example: ``- [ ] `tag UKR`, hover an internal faction the country does not have, confirm the preview tooltip opens with the shared header (#1516).``
-- Single-issue PRs may use one playthrough block. Skip phase sub-headers if every check happens at game start. The `- [ ]` rule still applies.
+  The test plan is **not** part of the PR body. After creating the PR, run `/test-plan` to generate and attach an approximate playthrough checklist (`.claude/skills/test-plan/SKILL.md`).
 
 ### 6. Check and update `Changelog.txt`
 
-a. Read `Changelog.txt`. Identify the top-most version heading (e.g. `v2.0.0`) and collect all existing category headings (lines matching `^ [A-Za-z].*:$`). Valid categories are whatever is already in the file; do **not** invent new ones.
+Apply the `/changelog` process (`.claude/skills/changelog/SKILL.md`) to add entries for any branch changes not already listed: identify the top-most version heading, reuse only the file's existing categories (never invent one), and insert past-tense `  - [TAG] ...` bullets with no em dashes. Skip changes already present (grep the focus/event/decision ID or `Issue #N`).
 
-b. For each distinct change in the diff, check whether a matching entry already exists by searching for the focus/event/decision ID or issue number (`Issue #N`):
-
-```
-grep -n "focus_id_or_issue" Changelog.txt
-```
-
-c. For changes **not yet listed**: write entries and insert under the correct existing category in the top-most version section. Format:
-
-```
- Category:
-  - [TAG] Past-tense verb. Specific object name. (Issue #N)
-```
-
-- 1 space before the category name; 2 spaces + `- ` before each entry.
-- `[TAG]` prefix for country-specific changes; no prefix for global changes.
-- Past tense, specific, no em dashes anywhere (use `:`, `.`, or `,`).
-- If a change fits no existing category, use the closest match (localisation fix under ` Localization:`, script fix under ` Bugfix:`).
-
-d. If changes were added, stage and commit them separately **before** creating the PR:
+If entries were added, stage and commit them separately **before** creating the PR:
 
 ```
 git add Changelog.txt
-git commit -m "$(cat <<'EOF'
-Update Changelog.txt
-
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
-EOF
-)"
+git commit -m "Update Changelog.txt"
 ```
 
 If `Changelog.txt` is already up to date, skip this step and note "Changelog already up to date."
@@ -177,3 +134,4 @@ Output:
 1. The PR URL.
 2. Whether `Changelog.txt` was updated and which entries were added, or "Changelog already up to date."
 3. If **no** issue numbers were provided: list any `#N` references found in commits and tell the user: "To link these issues, re-run as `/open-pr N M`."
+4. Remind the user the PR body has no test plan by design: "Run `/test-plan` to generate and attach an approximate playthrough checklist."

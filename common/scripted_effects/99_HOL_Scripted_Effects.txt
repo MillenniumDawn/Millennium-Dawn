@@ -53,3 +53,98 @@ HOL_kalimantan_detection_chance_effect = {
 		HOL_kalimantan_detection_chance = HOL_kalimantan_detection_chance_change
 	}
 }
+# Cold-starts the coalition-driven political focus loops (D66/SGP/GL) for whichever party is
+# currently in the coalition. Called from on_startup, on_government_change, and every coalition
+# mutation (update_government_coalition_strength). The per-party
+# *_focus_loop_active flag keeps it idempotent so unrelated coalition changes never spawn a
+# second parallel loop while one is already running.
+HOL_evaluate_coalition_focus_loops = {
+	# --- D66 ---
+	if = {
+		limit = {
+			neutrality_neutral_social_are_in_coalition = yes
+			NOT = { has_country_flag = HOL_D66_focus_loop_active }
+			NOT = {
+				has_completed_focus = HOL_d66_rule_of_law
+				has_completed_focus = HOL_d66_green_energy
+				has_completed_focus = HOL_d66_education_investments
+			}
+		}
+		set_country_flag = HOL_D66_focus_loop_active
+		country_event = { id = HOL_politics.57 days = 5 random_days = 10 }
+	}
+	else_if = {
+		limit = { NOT = { neutrality_neutral_social_are_in_coalition = yes } }
+		clr_country_flag = HOL_D66_focus_loop_active
+	}
+
+	# --- SGP ---
+	if = {
+		limit = {
+			neutrality_neutral_conservatism_are_in_coalition = yes
+			NOT = { has_country_flag = HOL_SGP_focus_loop_active }
+			NOT = {
+				has_completed_focus = HOL_sgp_religious_education_policy
+				has_completed_focus = HOL_sgp_support_christian_unions
+				has_completed_focus = HOL_sgp_secure_rural_communities
+				has_completed_focus = HOL_sgp_strengthen_defense
+				has_completed_focus = HOL_sgp_resist_secularism
+			}
+		}
+		set_country_flag = HOL_SGP_focus_loop_active
+		country_event = { id = HOL_politics.59 days = 5 random_days = 10 }
+	}
+	else_if = {
+		limit = { NOT = { neutrality_neutral_conservatism_are_in_coalition = yes } }
+		clr_country_flag = HOL_SGP_focus_loop_active
+	}
+
+	# --- GL ---
+	if = {
+		limit = {
+			neutrality_neutral_green_are_in_coalition = yes
+			NOT = { has_country_flag = HOL_GL_focus_loop_active }
+			NOT = {
+				has_completed_focus = HOL_gl_diversify_workforce
+				has_completed_focus = HOL_gl_transparent_governance
+				has_completed_focus = HOL_gl_energy_independence
+			}
+		}
+		set_country_flag = HOL_GL_focus_loop_active
+		country_event = { id = HOL_politics.61 days = 5 random_days = 10 }
+	}
+	else_if = {
+		limit = { NOT = { neutrality_neutral_green_are_in_coalition = yes } }
+		clr_country_flag = HOL_GL_focus_loop_active
+	}
+}
+HOL_wilders_split_check = {
+	clamp_variable = { var = HOL_wilders_split_chance min = 0 max = 100 }
+	if = {
+		limit = { check_variable = { HOL_wilders_split_chance > 95 } }
+		random_list = {
+			90 = { country_event = { id = HOL_politics.12 days = 5 } }
+			10 = { country_event = { id = HOL_politics.81 days = 5 } }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { HOL_wilders_split_chance > 65 } }
+		random_list = {
+			65 = { country_event = { id = HOL_politics.12 days = 5 } }
+			35 = { country_event = { id = HOL_politics.81 days = 5 } }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { HOL_wilders_split_chance > 35 } }
+		random_list = {
+			35 = { country_event = { id = HOL_politics.12 days = 5 } }
+			65 = { country_event = { id = HOL_politics.81 days = 5 } }
+		}
+	}
+	else = {
+		random_list = {
+			10 = { country_event = { id = HOL_politics.12 days = 5 } }
+			90 = { country_event = { id = HOL_politics.81 days = 5 } }
+		}
+	}
+}

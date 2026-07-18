@@ -19,6 +19,9 @@ import time
 from codecs import open
 from os import listdir
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from shared_utils import strip_inline_comment
+
 
 def check_triggered(line_number, lines):
     if (
@@ -69,7 +72,7 @@ def focus_add(cpath, dry_run=False):
                 if line.strip().startswith("#"):
                     continue
                 if "#" in line:
-                    line = line.split("#")[0]
+                    line = strip_inline_comment(line)
                 if "focus = {" in line:
                     if "shared_focus" in line:
                         shared_focus = True
@@ -82,7 +85,7 @@ def focus_add(cpath, dry_run=False):
                     find_coml = True
                     focus_id = line.split("=")[1].strip()
                     if "#" in focus_id:
-                        focus_id = focus_id.split("#")[0].strip()
+                        focus_id = strip_inline_comment(focus_id).strip()
                     ids.append(focus_id)
                     if shared_focus:
                         shared_focuseseses.append(focus_id)
@@ -200,7 +203,7 @@ def event_add(cpath, dry_run=False):
                 if line.strip().startswith("#") or "immediate = {log = " in line:
                     continue
                 if "#" in line:
-                    line = line.split("#")[0]
+                    line = strip_inline_comment(line)
                 if (
                     "country_event" in line
                     or "news_event" in line
@@ -314,7 +317,7 @@ def idea_add(cpath, dry_run=False):
                     if line.strip().startswith("#") is True:
                         continue
                     else:
-                        line = line.split("#")[0]
+                        line = strip_inline_comment(line)
                 re.sub(r'".+?"', "", line)
                 if "= {" in line:
                     if level == 2:
@@ -411,7 +414,7 @@ def decision_add(cpath, dry_run=False):
                         if line.strip().startswith("#") is True:
                             continue
                         else:
-                            line = line.split("#")[0]
+                            line = strip_inline_comment(line)
                     if ("= {" in line or "={" in line) and level == 1:
                         latest_found = line_number
                         found_decisions[line_number] = [0, 0, 0, False]
@@ -566,7 +569,7 @@ def tech_add(cpath, dry_run=False):
                     if line.strip().startswith("#") is True:
                         continue
                     else:
-                        line = line.split("#")[0]
+                        line = strip_inline_comment(line)
                 if "= {" in line:
                     if level == 1:
                         if "on_research_complete = { log = " not in lines[line_number]:

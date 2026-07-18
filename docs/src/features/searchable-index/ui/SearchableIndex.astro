@@ -1,5 +1,6 @@
 ---
 import ContentCard from "@/shared/ui/ContentCard.astro";
+import { buildPageTokens } from "@/features/searchable-index/lib/page-tokens";
 import type { CardItem } from "@/shared/lib/content/cards";
 import { slugifyText } from "@/shared/lib/routing/slugs";
 import {
@@ -44,26 +45,6 @@ const filterSeed = slugifyText(ariaLabel ?? indexClass ?? "search-index") || "se
 const filterId = `${filterSeed}-filter`;
 const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
 const hasPagination = totalPages > 1;
-
-type PageToken = number | "ellipsis";
-
-function buildPageTokens(pageCount: number, currentPage: number): PageToken[] {
-  if (pageCount <= 5) return Array.from({ length: pageCount }, (_, index) => index + 1);
-
-  const pages = new Set<number>([1, pageCount, currentPage - 1, currentPage, currentPage + 1]);
-  const sorted = Array.from(pages)
-    .filter((page) => page >= 1 && page <= pageCount)
-    .sort((left, right) => left - right);
-  const tokens: PageToken[] = [];
-
-  sorted.forEach((page, index) => {
-    const previous = sorted[index - 1];
-    if (previous && page - previous > 1) tokens.push("ellipsis");
-    tokens.push(page);
-  });
-
-  return tokens;
-}
 
 const initialPageTokens = buildPageTokens(totalPages, 1);
 ---

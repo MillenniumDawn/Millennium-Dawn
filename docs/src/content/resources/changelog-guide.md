@@ -3,8 +3,6 @@ title: Changelog Guide
 description: Standards for writing changelog entries in Millennium Dawn.
 ---
 
-# Changelog Guide
-
 How to write changelog entries for Millennium Dawn. All contributors and agents must follow these standards.
 
 ## Purpose
@@ -54,12 +52,12 @@ If a change does not fit an existing category, use the closest match. Do not inv
 **Rules:**
 
 - **1 space** before the category name.
-- **2 spaces + `- `** before each entry.
+- Prefix each entry with **two spaces**, a **hyphen**, and one **space**.
 - **`[TAG]` prefix** for country-specific changes; no prefix for global changes.
-- **Past tense** — describe what changed, not what will change.
-- **Specific** — name the exact focus ID, event ID, decision ID, or mechanic.
-- **No em dashes** — use a period to end the sentence.
-- **Issue reference** — include `(Issue #N)` when the change resolves or relates to a GitHub issue.
+- **Past tense**: describe what changed, not what will change.
+- **Specific**: name the exact focus ID, event ID, decision ID, or mechanic.
+- **No em dashes**: use a period to end the sentence.
+- **Issue reference**: include `(Issue #N)` when the change resolves or relates to a GitHub issue.
 
 ## Examples
 
@@ -77,18 +75,18 @@ If a change does not fit an existing category, use the closest match. Do not inv
 
 ## What Makes a Good Entry
 
-1. **Lead with the change** — what was added, fixed, or removed?
-2. **Name the specific object** — focus ID, event ID, decision ID, or mechanic.
-3. **Include the impact** — what does the player notice?
-4. **Use consistent casing** — match the style of surrounding entries.
+1. **Lead with the change**: what was added, fixed, or removed?
+2. **Name the specific object**: focus ID, event ID, decision ID, or mechanic.
+3. **Include the impact**: what does the player notice?
+4. **Use consistent casing**: match the style of surrounding entries.
 
 ## What NOT to Write
 
-- **No padding filler** — "Fixed an issue where the AI would not behave correctly" is not specific enough. Write "Fixed AI sending volunteers to countries it cannot reach."
-- **No internal terminology** — players do not know what "immediate block" or "trigger scope" means.
-- **No em dashes** — em dashes read as soft connectors and do not fit the changelog style.
-- **No future tense** — "Will add" is wrong. "Added" is correct.
-- **No duplicates** — if an entry already covers a change, do not add another for the same change.
+- **No padding filler**: "Fixed an issue where the AI would not behave correctly" is not specific enough. Write "Fixed AI sending volunteers to countries it cannot reach."
+- **No internal terminology**: players do not know what "immediate block" or "trigger scope" means.
+- **No em dashes**: em dashes read as soft connectors and do not fit the changelog style.
+- **No future tense**: "Will add" is wrong. "Added" is correct.
+- **No duplicates**: if an entry already covers a change, do not add another for the same change.
 
 ## Quality Checklist
 
@@ -106,5 +104,5 @@ Before adding an entry, verify:
 
 ## Related Documentation
 
-- [Code Stylization Guide](/resources/code-stylization-guide/) — coding standards
-- [Event Reference](/resources/new-general-guidelines/) — event conventions
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/), coding standards
+- [New General Guidelines](/dev-resources/new-general-guidelines/), event conventions

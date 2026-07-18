@@ -29,7 +29,7 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 | `energy_gain_multiplier`                     | country   |
 | `renewable_energy_gain`                      | country   |
 | `renewable_energy_gain_multiplier`           | country   |
-| `resource_storage_gain`                      | country   |
+| `resource_storage_max_capacity`              | country   |
 | `energy_use`                                 | country   |
 | `energy_use_multiplier`                      | country   |
 | `pop_energy_use_multiplier`                  | country   |
@@ -91,14 +91,21 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 
 ## Missiles & Space (`missile_modifier_definitions.txt`) — country scope
 
-| Modifier                            |
-| ----------------------------------- |
-| `olv_production_speed_modifier`     |
-| `gnss_production_speed_modifier`    |
-| `comsat_production_speed_modifier`  |
-| `spysat_production_speed_modifier`  |
-| `killsat_production_speed_modifier` |
-| `nuclear_reactor_fuel_production`   |
+| Modifier                                 |
+| ---------------------------------------- |
+| `olv_production_speed_modifier`          |
+| `gnss_production_speed_modifier`         |
+| `comsat_production_speed_modifier`       |
+| `spysat_production_speed_modifier`       |
+| `killsat_production_speed_modifier`      |
+| `nuclear_reactor_fuel_production_factor` |
+| `nuclear_reactor_fuel_production`        |
+
+## Army (`modifier_definitions.txt`) — country scope
+
+| Modifier                        | Notes                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `general_death_chance_modifier` | Multiplier delta on general kill chance per battle. Read via `FROM.modifier@general_death_chance_modifier` in `on_army_leader_*` on_actions. Set on officer corps ideas. |
 
 ## Economy — General (`modifier_definitions.txt`) — country scope
 

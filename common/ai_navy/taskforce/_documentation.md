@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Script the amount of ships for a specific taskforce and its possible available missions (Currently only limited to 1)
+Script the ship composition for a specific taskforce and the missions it can perform. A taskforce may list more than one applicable mission; the goal system assigns it to whichever active objective fits best. Use only MD ship types (see `common/units/MD_naval_units.txt`) — vanilla hull types such as `light_cruiser`, `heavy_cruiser`, and the generic `submarine` do not exist in MD and will silently fail.
 
 ## Scripting
 
@@ -18,22 +18,32 @@ generic_taskforce_1 = {
 		# SCOPE = COUNTRY
 		factor = 1
 	}
-	mission = { naval_patrol } # A list of applicable missions this taskforce can perform
-	min_composition = { # The minimum composition needed (Need more clarification here. Is the minimum before the goal system can use the taskforce?)
-		carrier = 1 # Ship types and the amount needed
-		battleship = 1
-		heavy_cruiser = 1
-		light_cruiser = 1
-		destroyer = 1
+	mission = { naval_patrol convoy_escort } # A list of applicable missions this taskforce can perform
+	min_composition = { # The minimum composition before the goal system can form this taskforce
+		frigate = {
+			amount = 1
+		}
 	}
-	
-	optimal_composition = { # The maximum composition this taskforce will have
-		carrier = 2
-		battleship = 2
-		heavy_cruiser = 5
-		light_cruiser = 3
-		destroyer = 6
-		submarine = 2
+
+	optimal_composition = { # The target composition this taskforce will grow toward
+		carrier = {
+			amount = 1
+		}
+		cruiser = {
+			amount = 2
+		}
+		heavy_frigate = {
+			amount = 1
+		}
+		destroyer = {
+			amount = 2
+		}
+		frigate = {
+			amount = 3
+		}
+		attack_submarine = {
+			amount = 2
+		}
 	}
 }
 ```

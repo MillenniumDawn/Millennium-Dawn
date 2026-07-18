@@ -6,14 +6,15 @@ NKO_spa_mechanic_enabled = {
 	NOT = { has_civil_war = yes }
 }
 
-# True while the player still has picks left in the current session. This is
-# robust against the picks_made variable being undefined (e.g., on a save
-# loaded from before NKO_spa_initialise ran) — undefined treats as 0 picks
-# made, so the player isn't locked out of the mechanic.
+# True while fewer than 2 mandates are active — the concurrency cap. Reads the
+# live active-mandate counter (NKO_spa_picks_made), which is incremented on
+# activation and decremented when a bonus expires. Robust against the variable
+# being undefined (pre-init / old save) — undefined treats as 0 active, so the
+# player isn't locked out of the mechanic.
 NKO_spa_picks_remaining = {
 	OR = {
-		NOT = { has_variable = NKO_spa_picks_made }
-		check_variable = { NKO_spa_picks_made < 2 }
+		NOT = { has_variable = NKO_spa_active_mandates }
+		check_variable = { NKO_spa_active_mandates < 2 }
 	}
 }
 

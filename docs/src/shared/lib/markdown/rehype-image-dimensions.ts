@@ -44,6 +44,8 @@ export function rehypeImageDimensions(): (tree: Root) => void {
         ...node.properties,
         width: String(dim.width),
         height: String(dim.height),
+        loading: node.properties?.loading ?? "lazy",
+        decoding: node.properties?.decoding ?? "async",
       };
     });
   };

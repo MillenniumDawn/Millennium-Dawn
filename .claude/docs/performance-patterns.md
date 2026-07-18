@@ -16,8 +16,7 @@ for_each_scope_loop = {
             CONTROLLER = {
                 num_of_available_civilian_factories > 15
                 num_of_military_factories < 10
-                has_war = no
-                has_country_flag = AI_is_threatened
+                ai_is_threatened = yes
             }
         }
         # ... score logic ...
@@ -33,7 +32,7 @@ set_temp_variable = { tgt_num_mils = num_of_military_factories }
 set_temp_variable = { tgt_has_war = 0 }
 if = { limit = { has_war = yes } set_temp_variable = { tgt_has_war = 1 } }
 set_temp_variable = { tgt_AI_threatened = 0 }
-if = { limit = { has_country_flag = AI_is_threatened } set_temp_variable = { tgt_AI_threatened = 1 } }
+if = { limit = { ai_is_threatened = yes } set_temp_variable = { tgt_AI_threatened = 1 } }
 
 for_each_scope_loop = {
     array = controlled_states
@@ -165,6 +164,61 @@ clr_country_flag = TAG_my_decision_visible   # when it ceases to be met
 
 **Note:** This applies to decision `visible` blocks (per-frame). For character `visible` blocks (evaluated only during AI assignment pulses and UI opens), `has_completed_focus` is equivalent to `has_country_flag` — both are hash-table lookups. Do **not** add country flags solely to replace `has_completed_focus` in character `visible` blocks; the extra flag persists in saves and bloats them for no benefit.
 
+## Cache `ai_strategy` enable Math Into a Daily Variable
+
+`ai_strategy` `enable` blocks are re-evaluated by the AI far more often than once a day. Heavy math (a chain of `set_temp_variable` / `multiply_temp_variable` / `round_temp_variable`) inside `enable` runs every evaluation.
+
+### Wrong
+
+```
+division_limiter = {
+    enable = {
+        set_temp_variable = { upper_limit = num_of_factories }
+        # ... a dozen situational multipliers ...
+        round_temp_variable = upper_limit
+        check_variable = { num_divisions > upper_limit }
+    }
+}
+```
+
+### Right
+
+Compute the cap once a day in a scripted effect, store it in a persistent variable, and let `enable` just read it:
+
+```
+# on_daily, AI only:
+daily_division_limiter_calculation = {
+    set_temp_variable = { upper_limit = num_of_factories }
+    # ... multipliers ...
+    round_temp_variable = upper_limit
+    set_variable = { division_limiter_limit = upper_limit }
+}
+
+division_limiter = {
+    enable = { check_variable = { num_divisions > division_limiter_limit } }
+}
+```
+
+**Why:** the math runs once per day instead of once per evaluation. See the division/plane/ship limiters in `common/scripted_effects/00_AI_scripted_effects.txt` and their strategies in `MD_combat_ai_strategies.txt` / `naval.txt`.
+
+## Prefer a Live Trigger Over a Daily-Refreshed Cached Flag
+
+A country flag refreshed on a daily pulse (set the flag when a condition holds, clear it when it stops) costs a daily on_action pass and lags the real game state by up to a day. When the underlying condition is cheap to evaluate (a few O(1) checks), a scripted trigger is both lighter and instantly responsive.
+
+```
+# Instead of a daily effect that sets/clears has_country_flag = AI_is_threatened,
+# and every reader checking the flag:
+ai_is_threatened = {
+    OR = {
+        has_war = yes
+        threat > 0.30
+        check_variable = { potential_and_current_enemies^num > 0 }
+    }
+}
+```
+
+**Why:** drops the daily refresh entirely and reacts the moment game state changes. Only worth it when the condition is genuinely cheap. If readers sit in a hot loop, cache the trigger result as a 0/1 temp variable (see "Use Temp-Variable Booleans in Hot Loops") so the loop still pays O(1) per iteration.
+
 ## Clamp Before Division
 
 Always clamp denominators to a safe minimum before dividing.
@@ -199,23 +253,7 @@ for_each_scope_loop = {
 
 ## Prefer `random` Over Two-Bucket `random_list`
 
-`random_list = { N = { effect } M = {} }` (or empty-first variant) is a weighted-dispatch list with one real outcome — overkill for a Bernoulli trial. Use `random = { chance = N effect }`: same probability, one less dispatch layer, fewer lines.
-
-```
-# Heavier — weighted list with placeholder bucket
-random_list = {
-    50 = { add_to_variable = { my_counter = 1 } }
-    50 = {}
-}
-
-# Lighter — direct probability trial
-random = {
-    chance = 50
-    add_to_variable = { my_counter = 1 }
-}
-```
-
-**Why:** `random_list` constructs and resolves a weighted list every call; `random = { chance = N }` is a single roll. For hot paths (on_weekly counters, AI scoring, GUI dirty triggers) savings compound. See `.claude/docs/simplification-patterns.md` for the full pattern and edge cases.
+`random = { chance = N }` is a single roll; a two-bucket `random_list` with one empty bucket resolves a weighted list for the same result. Full pattern and edge cases: `.claude/docs/simplification-patterns.md`.
 
 ## Avoid `effect_tooltip` + `for_each_scope_loop` Duplication
 

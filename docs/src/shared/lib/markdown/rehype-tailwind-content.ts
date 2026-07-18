@@ -8,13 +8,11 @@ function asClassList(value: unknown): string[] {
   return [];
 }
 
-function addClasses(node: Element, ...classNames: (string | false | null | undefined)[]): void {
+function addClasses(node: Element, ...classNames: (string | string[] | false | null | undefined)[]): void {
   const existing = asClassList(node.properties?.className);
   const next = new Set(existing);
 
-  classNames
-    .flatMap((value) => (typeof value === "string" ? value.split(/\s+/).filter(Boolean) : []))
-    .forEach((className) => next.add(className));
+  classNames.flatMap((value) => asClassList(value)).forEach((className) => next.add(className));
 
   node.properties = {
     ...(node.properties ?? {}),

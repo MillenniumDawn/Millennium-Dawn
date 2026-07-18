@@ -5,7 +5,7 @@ description: Updated guide to the European Union in Millennium Dawn
 
 The following guide is a comprehensive tutorial for the European Union system in Millennium Dawn. It covers the EU's mechanics, institutions, decision categories, focus trees, and strategic tips for players.
 
-# Table of Contents
+## Table of Contents
 
 - [Table of Contents](#table-of-contents)
   - [Chapter 1 - The European Union](#chapter-1---the-european-union)

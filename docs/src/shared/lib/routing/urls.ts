@@ -31,10 +31,7 @@ export function cssUrl(path: string | ImageMetadata): string {
     normalized = withBase(resolved);
   } else {
     const staticDocsPath = getRootRelativeUrlForMetadata(resolved);
-    normalized =
-      staticDocsPath?.startsWith("/assets/images/")
-        ? withBase(staticDocsPath)
-        : withBase(resolved.src);
+    normalized = staticDocsPath?.startsWith("/assets/images/") ? withBase(staticDocsPath) : withBase(resolved.src);
   }
   const escaped = normalized.replace(/['"()\\]/g, "\\$&");
   return `url('${escaped}')`;

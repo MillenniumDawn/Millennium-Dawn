@@ -1,4 +1,5 @@
 export { initMobileNavigation } from "./mobile-nav";
+export { initNavDropdowns } from "./nav-dropdown";
 
 type Cleanup = () => void;
 

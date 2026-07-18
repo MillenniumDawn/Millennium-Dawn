@@ -24,9 +24,8 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 `.claude/docs/agent-conventions.md` (especially pre-commit / CI divergence rules), plus tooling-specific files:
 
-- `tools/shared_utils.py` — `Timer`, `create_linting_parser`, `collect_files_by_mode`, `get_root_dir`, `run_with_pool`, `get_git_diff_files`, `get_all_txt_files`, `print_timing_summary`, `FileOpener`.
+- `tools/shared_utils.py` — `Timer`, `create_linting_parser`, `collect_files_by_mode`, `get_root_dir`, `run_with_pool`, `get_git_diff_files`, `get_all_txt_files`, `print_timing_summary`, `FileOpener`, `clean_filepath`.
 - `tools/validation/validator_common.py` — `BaseValidator`, `_pool_map`, staged-file support.
-- `tools/path_utils.py` — `clean_filepath`.
 - `pyproject.toml` — single source for ruff (lint), pytest (testpaths), black, isort config.
 - `.pre-commit-config.yaml` — which scripts are hooks vs `stages: [manual]` vs unwired; the `ruff` hook and the `tools-pytest` pre-push hook.
 - `.github/workflows/tools-validation.yml` — the `ruff-lint` job, the pytest job (runs all four test dirs), and `validate_tools.py --strict`.
@@ -90,8 +89,8 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 **Style**:
 
-- stdlib-only for **runtime/shipped** tool deps (the validators and linters import only stdlib + the pinned `requests`/`pillow` in `tools/requirements.txt`). This does **not** apply to **dev tooling** — ruff, pytest, black, isort are sanctioned dev dependencies, configured in `pyproject.toml`.
-- Passes `ruff check` (config in `pyproject.toml`: `E`+`F`, with `E402`/`E741`/`E501` ignored). Don't reintroduce unused imports, bare `except:`, or unused variables.
+- stdlib-only for **runtime/shipped** tool deps (the validators and linters import only stdlib + the pinned `requests`/`pillow` in the `runtime` dependency-group in `pyproject.toml`). This does **not** apply to **dev tooling** — ruff and pytest are sanctioned dev dependencies in the `dev` dependency-group. All Python deps live in `pyproject.toml` under `[dependency-groups]` (no `requirements.txt`); ruff handles lint, import order, and formatting (black and isort were retired).
+- Passes `ruff check` (config in `pyproject.toml`: `E`+`F`+`I`, with `E402`/`E741`/`E501` ignored) and `ruff format`. Don't reintroduce unused imports, bare `except:`, or unused variables.
 - No comments that restate what the code does.
 - Pre-compiled regex at module level.
 - f-strings, not `.format()`.

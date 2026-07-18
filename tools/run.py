@@ -8,7 +8,7 @@ Usage:
 
 Examples:
     python3 tools/run.py estimate_gdp --all
-    python3 tools/run.py gfx_entry_generator_linux
+    python3 tools/run.py gfx_entry_generator
     python3 tools/run.py publish_workshop release --full
     python3 tools/run.py find_idea_references common/ideas/Greek.txt
     python3 tools/run.py standardize focus common/national_focus/SER.txt
@@ -37,7 +37,6 @@ SEARCH_DIRS = [
 
 # Internal/library scripts that should not appear in --list.
 HIDDEN = {
-    "path_utils",
     "shared_utils",
     "loc",
     "logging_tool",
