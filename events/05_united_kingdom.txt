@@ -887,7 +887,6 @@ country_event = {
 	title = ENG_military.035.t
 	desc = ENG_military.035.d
 	picture = GFX_ENG_generic
-	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
@@ -899,7 +898,7 @@ country_event = {
 				factor = 0.2
 				has_opinion = {
 					target = ENG
-					value > 50
+					value < 50
 				}
 			}
 		}
@@ -917,27 +916,30 @@ country_event = {
 				factor = 0.2
 				has_opinion = {
 					target = ENG
-					value < 50
+					value > 50
 				}
 			}
 		}
 		ENG = { country_event = ENG_military.037 }
-		}
 	}
+}
 country_event = {
 	id = ENG_military.036
 	title = ENG_military.036.t
 	desc = ENG_military.036.d
 	picture = GFX_ENG_generic
-	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
 		name = ENG_military.036.a
 		log = "[GetDateText]: [This.GetName]: ENG_military.036.a executed"
-		air_experience = 25
-		army_experience = 25
-		navy_experience = 25
+		if = {
+			limit = { NOT = { has_country_flag = ENG_jef_experience_gained } }
+			set_country_flag = ENG_jef_experience_gained
+			air_experience = 25
+			army_experience = 25
+			navy_experience = 25
+		}
 	}
 }
 country_event = {
@@ -945,12 +947,10 @@ country_event = {
 	title = ENG_military.037.t
 	desc = ENG_military.037.d
 	picture = GFX_ENG_generic
-	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
 		name = ENG_military.037.a
-		log = "[GetDateText]: [This.GetName]: ENG_military.037.a executed"
 	}
 }
 country_event = {
@@ -1077,7 +1077,7 @@ country_event = {
 				factor = 0.2
 				has_opinion = {
 					target = ENG
-					value > 50
+					value < 50
 				}
 			}
 		}
@@ -1087,14 +1087,24 @@ country_event = {
 			modify_treasury_effect = yes
 		}
 		ENG = {
-		set_temp_variable = { treasury_change = 15 }
-		modify_treasury_effect = yes
-		country_event = ENG_military.043
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			country_event = ENG_military.043
 		}
 	}
 	option = {
 		name = ENG_military.041.b
 		log = "[GetDateText]: [This.GetName]: ENG_military.041.b executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
 		ENG = { country_event = ENG_military.044 }
 	}
 }
@@ -1115,7 +1125,7 @@ country_event = {
 				factor = 0.2
 				has_opinion = {
 					target = ENG
-					value > 50
+					value < 50
 				}
 			}
 		}
@@ -1125,14 +1135,24 @@ country_event = {
 			modify_treasury_effect = yes
 		}
 		ENG = {
-		set_temp_variable = { treasury_change = 15 }
-		modify_treasury_effect = yes
-		country_event = ENG_military.043
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			country_event = ENG_military.043
 		}
 	}
 	option = {
 		name = ENG_military.042.b
 		log = "[GetDateText]: [This.GetName]: ENG_military.042.b executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
 		ENG = { country_event = ENG_military.044 }
 	}
 }
@@ -1173,7 +1193,10 @@ country_event = {
 	option = {
 		name = ENG_military.045.a # Accept
 		log = "[GetDateText]: [Root.GetName]: ENG_military.045.a executed"
-		HOL = { country_event = { id = HOL_monarchy.38 days = 1 } }
+		ENG = {
+			NATO_major_non_nato_ally_join = yes
+			country_event = ENG_military.046
+		}
 
 		ai_chance = {
 			base = 60
@@ -1190,9 +1213,34 @@ country_event = {
 	option = {
 		name = ENG_military.045.b # Refuse
 		log = "[GetDateText]: [Root.GetName]: ENG_military.045.b executed"
-		HOL = { country_event = { id = HOL_monarchy.39 days = 1 } }
-
+		ENG = { country_event = ENG_military.047 }
 		ai_chance = { base = 40 }
+	}
+}
+
+country_event = {
+	id = ENG_military.046
+	title = ENG_military.046.t
+	desc = ENG_military.046.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.046.a
+	}
+}
+
+country_event = {
+	id = ENG_military.047
+	title = ENG_military.047.t
+	desc = ENG_military.047.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.047.a
 	}
 }
 
@@ -5606,9 +5654,12 @@ country_event = {
 	option = {
 		name = britain_md.36.a
 		log = "[GetDateText]: [This.GetName]: britain_md.36.a executed"
-		set_autonomy = {
-			target = FROM
-			autonomy_state = autonomy_constituent_country_very_low_devolution
+		if = {
+			limit = { FROM = { is_subject = no } }
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_constituent_country_very_low_devolution
+			}
 		}
 		ai_chance = {
 			base = 1
