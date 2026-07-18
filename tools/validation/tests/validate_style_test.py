@@ -36,6 +36,18 @@ def test_layout_rejects_tab_after_indentation():
     assert any(finding.category == "layout-tabs" for finding in findings)
 
 
+@pytest.mark.parametrize("spaces", range(1, 5))
+def test_layout_rejects_spaces_mixed_with_indentation_tabs_once(spaces):
+    findings = _errors(f"root = {{\n{' ' * spaces}\tvalue = yes\n}}\n")
+    indentation_findings = [
+        finding
+        for finding in findings
+        if finding.category == "layout-indentation" and finding.line == 2
+    ]
+
+    assert len(indentation_findings) == 1
+
+
 def test_four_space_indentation_is_changed_line_gated():
     findings = _errors("root = {\n    value = yes\n}\n")
 
@@ -59,6 +71,19 @@ def test_layout_rejects_child_content_on_multiline_opener():
         "\t}\n"
         "}\n"
     )
+
+    findings = _errors(text)
+
+    assert any(
+        finding.category == "layout-blocks"
+        and "opener" in finding.message
+        and finding.line == 2
+        for finding in findings
+    )
+
+
+def test_layout_rejects_unterminated_child_block_on_opener():
+    text = "root = {\n\tif = { limit = { always = yes\n\t\t}\n\t}\n}\n"
 
     findings = _errors(text)
 
