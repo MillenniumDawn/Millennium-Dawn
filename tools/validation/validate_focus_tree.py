@@ -1597,6 +1597,12 @@ class Validator(BaseValidator):
                         advanced = False
                         for neighbor in neighbors:
                             if color[neighbor] == GRAY:
+                                # A GRAY neighbor off the current path is a
+                                # cross-edge into a subtree an earlier cycle
+                                # abort left unfinished — skip it. Only a
+                                # neighbor still on this path is a live back-edge.
+                                if neighbor not in path:
+                                    continue
                                 cycle_start = path.index(neighbor)
                                 return path[cycle_start:] + [neighbor]
                             if color[neighbor] == WHITE:

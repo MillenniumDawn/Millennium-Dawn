@@ -5,6 +5,7 @@ Millennium Dawn Event Standardizer
 Standardizes HOI4 event files according to Millennium Dawn coding standards
 """
 
+import re
 from typing import Any, Dict, List
 
 from common_utils import (
@@ -16,7 +17,7 @@ from common_utils import (
     inject_log_after_brace,
     run_standardizer,
 )
-from shared_utils import collapse_or_compact, extract_block
+from shared_utils import collapse_or_compact, extract_block, strip_inline_comment
 
 _EVENT_TYPES = ("country_event", "province_event", "unit_leader_event", "news_event")
 
@@ -38,9 +39,73 @@ _BLOCK_PROPS = {
 }
 
 
+_OPTION_STATEMENT_RE = re.compile(r"[A-Za-z_]\w*\s*=")
+
+
+def _split_packed_body(body: str) -> List[str]:
+    """Split a packed one-line option body into its top-level ``key = value``
+    statements. Brace- and quote-aware so nested blocks and quoted values that
+    contain spaces or ``=`` are not split mid-statement."""
+    boundaries: List[int] = []
+    depth = 0
+    in_str = False
+    for i, c in enumerate(body):
+        if c == '"' and (i == 0 or body[i - 1] != "\\"):
+            in_str = not in_str
+        elif in_str:
+            continue
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+        elif (
+            depth == 0
+            and (i == 0 or body[i - 1].isspace())
+            and _OPTION_STATEMENT_RE.match(body, i)
+        ):
+            boundaries.append(i)
+    if not boundaries:
+        stripped = body.strip()
+        return [stripped] if stripped else []
+    boundaries.append(len(body))
+    out: List[str] = []
+    for a, b in zip(boundaries, boundaries[1:]):
+        seg = body[a:b].strip()
+        if seg:
+            out.append(seg)
+    return out
+
+
 def _option_body(option_block: List[str]) -> List[str]:
-    """Lines between the option header's opening brace and its matching close."""
-    return option_block[1:-1] if len(option_block) >= 2 else []
+    """Statements between the option header's ``{`` and its matching ``}``.
+    A packed single-line option (`option = { name = x  add_pp = 10 }`) keeps
+    header, body, and closer on one physical line, so its body is split out of
+    that line rather than read as the empty slice between two list elements."""
+    if len(option_block) == 1:
+        code = strip_inline_comment(option_block[0])
+        open_idx = code.find("{")
+        close_idx = code.rfind("}")
+        if open_idx == -1 or close_idx <= open_idx:
+            return []
+        return _split_packed_body(code[open_idx + 1 : close_idx])
+    return option_block[1:-1]
+
+
+def _explode_packed_option(option_block: List[str]) -> List[str]:
+    """Expand a packed single-line option into header / body / closer lines so a
+    log can be injected inside its braces. Multi-line options pass through."""
+    if len(option_block) != 1:
+        return option_block
+    line = option_block[0].rstrip("\n")
+    code = strip_inline_comment(line)
+    comment = line[len(code) :].strip()
+    indent = line[: len(line) - len(line.lstrip("\t"))]
+    closer = f"{indent}}}" + (f" {comment}" if comment else "")
+    return (
+        [f"{indent}option = {{"]
+        + [f"{indent}\t{stmt}" for stmt in _option_body(option_block)]
+        + [closer]
+    )
 
 
 def _option_indent(option_block: List[str]) -> str:
@@ -229,6 +294,9 @@ class EventStandardizer(BaseStandardizer):
                 and not block_has_log(option)
                 and props["id"]
             ):
+                # Explode a packed single-line option first so the log lands
+                # inside its braces, not as a sibling after the close.
+                option = _explode_packed_option(option)
                 log_line = _option_log_line(option)
                 option = inject_log_after_brace(option, log_line)
 

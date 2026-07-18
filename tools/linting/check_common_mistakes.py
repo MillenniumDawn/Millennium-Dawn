@@ -263,10 +263,16 @@ _RE_OR_EQ = re.compile(r"\bOR\s*=\s*$")
 # Token scanner for the single-valued-trigger contradiction check: braces and
 # `trigger = value` for each mutually-exclusive trigger, in source order, so
 # single-line `NOT = { tag = USA tag = CHI }` is caught alongside multi-line.
-# original_tag precedes tag so the longer name wins the alternation.
+# Built from _MUTUALLY_EXCLUSIVE_TRIGGERS (single source of truth) so adding a
+# trigger there extends the check; longest name first so original_tag wins the
+# alternation over tag.
 _RE_MUTEX_TRIGGER_TOKEN = re.compile(
-    r"\{|\}|\b(original_tag|has_country_leader_ideology|has_government|tag)"
-    r"\s*=\s*([\w.]+)"
+    r"\{|\}|\b("
+    + "|".join(
+        re.escape(t)
+        for t in sorted(_MUTUALLY_EXCLUSIVE_TRIGGERS, key=lambda t: (-len(t), t))
+    )
+    + r")\s*=\s*([\w.]+)"
 )
 
 # Populated by main() before spawning Pool workers; propagated via initializer.
@@ -1132,7 +1138,12 @@ def _check_embargo_dlc_guard(lines):
     stack = []
 
     for i, line in enumerate(lines):
-        code = strip_inline_comment(line)
+        # Blank quoted strings so a stray { or } in a log/loc string can't desync
+        # the if/guard stack; keep the BBA guard literal so its token still matches.
+        code = _RE_QUOTED_STRING.sub(
+            lambda mm: mm.group(0) if mm.group(0) == '"By Blood Alone"' else '""',
+            strip_inline_comment(line),
+        )
         last_end = 0
         for m in _RE_DLC_TOKEN.finditer(code):
             tok = m.group(0)

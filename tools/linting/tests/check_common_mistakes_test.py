@@ -2779,6 +2779,58 @@ assert_eq(
 )
 
 
+# 25. mutex-trigger regex is built from _MUTUALLY_EXCLUSIVE_TRIGGERS, so every
+# member of the set (not just tag / has_government) is covered.
+
+print("\n── single-valued trigger regex from set ──")
+
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    [
+        "\tNOT = { has_country_leader_ideology = communism"
+        " has_country_leader_ideology = fascism }\n"
+    ],
+    1,
+    "has_country_leader_ideology contradiction covered by set-driven regex",
+)
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    ["\tNOT = { original_tag = USA tag = CHI }\n"],
+    0,
+    "original_tag and tag are different triggers -- not a single-trigger contradiction",
+)
+
+
+# 26. embargo guard stack is quote-aware: a stray brace in a log/loc string must
+# not desync the if/guard frames (a stray } previously popped the guard frame).
+
+print("\n── embargo guard quote-blanking ──")
+
+assert_finds(
+    _check_embargo_dlc_guard,
+    [
+        "if = {\n",
+        '\tlimit = { has_dlc = "By Blood Alone" }\n',
+        '\tlog = "closing } here"\n',
+        "\tsend_embargo = TAG\n",
+        "}\n",
+    ],
+    0,
+    "stray } in a log string does not pop the BBA guard frame",
+)
+assert_finds(
+    _check_embargo_dlc_guard,
+    [
+        "effect = {\n",
+        '\tlog = "stray { brace"\n',
+        "\tsend_embargo = TAG\n",
+        "}\n",
+    ],
+    1,
+    "stray { in a log string does not hide an ungated embargo",
+)
+
+
 # Summary
 
 

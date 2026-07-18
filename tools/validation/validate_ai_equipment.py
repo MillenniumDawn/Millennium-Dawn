@@ -8,6 +8,7 @@ import os
 import re
 from typing import Dict, List, Set
 
+from shared_utils import strip_inline_comment
 from validator_common import BaseValidator, run_validator_main
 
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
@@ -15,13 +16,6 @@ BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)
 AVAILABLE_FOR_RE = re.compile(r"available_for\s*=\s*\{([^}]*)\}", re.DOTALL)
 CATEGORY_RE = re.compile(r"category\s*=\s*(naval|land|air)")
 TEMPLATE_NAME_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
-
-
-def _strip_line_comment(line: str) -> str:
-    """Return *line* with any `#` comment removed, so an unbalanced brace inside
-    a comment doesn't corrupt block brace-depth counting."""
-    pos = line.find("#")
-    return line if pos < 0 else line[:pos]
 
 
 def parse_tags(text: str) -> Set[str]:
@@ -66,14 +60,14 @@ def parse_equipment_file(
         match = re.match(r"^(\w+)\s*=\s*\{", line)
         if match:
             template_name = match.group(1)
-            code = _strip_line_comment(line)
+            code = strip_inline_comment(line)
             brace_depth = code.count("{") - code.count("}")
             block_lines = [line]
             i += 1
 
             while i < len(lines) and brace_depth > 0:
                 block_lines.append(lines[i])
-                code = _strip_line_comment(lines[i])
+                code = strip_inline_comment(lines[i])
                 brace_depth += code.count("{") - code.count("}")
                 i += 1
 

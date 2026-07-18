@@ -124,3 +124,46 @@ def test_event_idempotent():
     once = _standardize_event(_EVENT)
     twice = _standardize_event(once)
     assert once == twice
+
+
+def test_packed_single_line_option_effect_detected():
+    # A fully packed option (header + body + closer on one physical line) must
+    # still have its effects detected -- previously the empty [1:-1] slice hid them.
+    option = _option(["\toption = { name = test.1.a  add_political_power = 10 }"])
+    assert _option_has_effects(option)
+
+
+def test_packed_effectless_option_not_detected():
+    option = _option(["\toption = { name = test.1.a  ai_chance = { factor = 1 } }"])
+    assert not _option_has_effects(option)
+
+
+_PACKED_EVENT = [
+    "country_event = {",
+    "\tid = test.2",
+    "\ttitle = test.2.t",
+    "\tdesc = test.2.d",
+    "\tis_triggered_only = yes",
+    "",
+    "\toption = { name = test.2.a  add_political_power = 10 }",
+    "}",
+]
+
+
+def test_packed_option_gets_log_inside_block():
+    out = _standardize_event(_PACKED_EVENT)
+    text = "\n".join(out)
+    # Effect preserved and the log lands inside the option's braces, not after it.
+    assert "add_political_power = 10" in text
+    log_idx = next(i for i, ln in enumerate(out) if "test.2.a executed" in ln)
+    open_idx = next(i for i, ln in enumerate(out) if ln.strip() == "option = {")
+    close_idx = next(
+        i for i, ln in enumerate(out) if i > open_idx and ln.strip() == "}"
+    )
+    assert open_idx < log_idx < close_idx
+
+
+def test_packed_option_standardization_idempotent():
+    once = _standardize_event(_PACKED_EVENT)
+    twice = _standardize_event(once)
+    assert once == twice

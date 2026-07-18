@@ -171,11 +171,12 @@ def _run(spec, mod_path, env, no_color, inner_workers):
         )
     except subprocess.TimeoutExpired as exc:
         out = exc.stdout or ""
-        err = (exc.stderr or "") + f"\n{spec.script}: TIMED OUT after 300s"
+        err = exc.stderr or ""
         if isinstance(out, bytes):
             out = out.decode("utf-8", "replace")
         if isinstance(err, bytes):
             err = err.decode("utf-8", "replace")
+        err += f"\n{spec.script}: TIMED OUT after 300s"
         return (spec.script, 124, out, err, time.perf_counter() - start)
     return (
         spec.script,

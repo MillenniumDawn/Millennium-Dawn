@@ -466,8 +466,11 @@ class IdeaStandardizer(BaseStandardizer):
         not by a hardcoded name list: ``root`` -> the ``ideas`` block; ``category``
         -> every direct child of ``ideas`` (country, hidden_ideas, and law/spirit
         categories like ``internal_factions``) is a wrapper; ``idea`` -> children
-        of a category are ideas. Without this, non-wrapper law categories were
-        mistaken for ideas and their child ideas re-nested wrongly.
+        of a category are ideas, unless the child is itself a known wrapper key
+        (``country = { political_advisor = { ADVISOR = {...} } }``), which is
+        recursed into rather than flattened. Without this, non-wrapper law
+        categories were mistaken for ideas and their child ideas re-nested wrongly,
+        and genuine 3-level nestings had their middle wrapper flattened.
         """
         output_lines = []
         i = 0
@@ -485,7 +488,9 @@ class IdeaStandardizer(BaseStandardizer):
                     is_wrapper = True  # every direct child of `ideas` is a category
                     child_mode = "idea"
                 else:  # mode == "idea"
-                    is_wrapper = False
+                    # A genuine wrapper key nested under a category is recursed
+                    # into; a plain idea (not in the set) is formatted as a block.
+                    is_wrapper = block_name in self.WRAPPER_BLOCKS
                     child_mode = "idea"
 
                 if is_wrapper:

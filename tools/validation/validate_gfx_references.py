@@ -67,6 +67,22 @@ def _is_md_gui_file(filepath: str) -> bool:
     return os.path.basename(filepath) not in _VANILLA_GUI_BASENAMES
 
 
+def _vanilla_parent_basename(filepath: str) -> Optional[str]:
+    """Vanilla .gui a nation-variant file copies, or None.
+
+    Country/variant designer GUIs are named ``<vanilla_stem>_<tag>.gui`` (e.g.
+    ``tank_chassis_super_heavy_tank_isr.gui`` copies vanilla
+    ``tank_chassis_super_heavy_tank.gui``). Strip the trailing ``_<tag>`` segment
+    and return it only when the result is a real vanilla basename — used to tie a
+    downgraded sprite ref back to the specific vanilla file it was inherited from.
+    """
+    stem, ext = os.path.splitext(os.path.basename(filepath))
+    if "_" not in stem:
+        return None
+    parent = stem.rsplit("_", 1)[0] + ext
+    return parent if parent in _VANILLA_GUI_BASENAMES else None
+
+
 # .gfx and .gui files use `#`, `//`, and `/* */` comments. The stripper is
 # quote-aware: a `//` inside a quoted texturefile path (e.g. "gfx//interface/…")
 # is NOT a comment. Stripping it blindly leaves an unterminated quote that
@@ -544,11 +560,16 @@ class GfxReferenceValidator(BaseValidator):
         seen: Set[Tuple[str, str, int]] = set()
         ci = mod_defined_ci or {}
         # Vanilla .gui files ship dead sprite refs of their own; an MD-authored
-        # copy (e.g. a nation variant of a designer .gui) inheriting the same
-        # ref is vanilla's bug, not the mod's — downgrade to WARNING.
-        override_refs: Set[str] = set()
+        # nation variant (`<vanilla_stem>_<tag>.gui`) inheriting the same ref is
+        # vanilla's bug, not the mod's — downgrade to WARNING. Keyed per vanilla
+        # file (basename -> its sprite refs) so a variant is only forgiven a ref
+        # its own parent carries, not any dead ref that happens to share a name
+        # somewhere else in the repo.
+        override_refs_by_file: dict = {}
         if gui_mode:
-            override_refs = {s for s, f, _ in refs if not _is_md_gui_file(f)}
+            for s, f, _ in refs:
+                if not _is_md_gui_file(f):
+                    override_refs_by_file.setdefault(os.path.basename(f), set()).add(s)
 
         for sprite, filepath, line in refs:
             if sprite in defined:
@@ -573,7 +594,16 @@ class GfxReferenceValidator(BaseValidator):
             else:
                 msg = f"Undefined sprite '{sprite}'"
             entry = (msg, rel, line)
-            if gui_mode and (not _is_md_gui_file(filepath) or sprite in override_refs):
+            downgrade = False
+            if gui_mode:
+                if not _is_md_gui_file(filepath):
+                    downgrade = True
+                else:
+                    parent = _vanilla_parent_basename(filepath)
+                    downgrade = parent is not None and sprite in (
+                        override_refs_by_file.get(parent, ())
+                    )
+            if downgrade:
                 warnings.append(entry)
             else:
                 errors.append(entry)

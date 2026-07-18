@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text
+from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
 from sprite_index import build_sprite_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -28,8 +28,22 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
+# The five HOI4 event-firing keywords. It is `operative_leader_event`, not
+# `operative_event`, and there is no `character_event`; because `operative` has
+# no word boundary before `_leader_event`, an `operative`/`_event` split never
+# matches the real keyword. Kept in sync with the definition keywords in
+# _EVENT_BLOCK_PATTERN / _EVENT_TYPE_PATTERN.
+_EVENT_CALL_KEYWORDS = (
+    "country_event",
+    "news_event",
+    "state_event",
+    "unit_leader_event",
+    "operative_leader_event",
+)
+_EVENT_CALL_ALT = "|".join(_EVENT_CALL_KEYWORDS)
+
 _LONG_FORM_PATTERN = re.compile(
-    r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
+    r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )
 
 # Event picture: `picture = GFX_xxx` (always GFX_-prefixed, resolves to that
@@ -132,20 +146,16 @@ _RE_FOF_SINGLE_OPEN = re.compile(r"\brandom_\w+\s*=\s*\{")
 # form (`<type>_event = X`). The long-form alternative is tried first so the
 # brace is consumed with the opener (the bare `\{` below never re-matches
 # it).
-_RE_FOF_EVENT_LONG = re.compile(
-    r"\b(?:country|news|state|unit_leader|character|operative)_event\s*=\s*\{"
-)
+_RE_FOF_EVENT_LONG = re.compile(r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*\{")
 _RE_FOF_EVENT_SHORT = re.compile(
-    r"\b(?:country|news|state|unit_leader|character|operative)_event\s*=\s*"
-    r"([A-Za-z0-9_.]+)"
+    r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*([A-Za-z0-9_.]+)"
 )
 _RE_FOF_ID = re.compile(r"\bid\s*=\s*([^\s}]+)")
 _RE_FOF_TOKEN = re.compile(
     r"\{|\}|"
     r"\b(?:every_\w+|for_each_\w+|random_\w+)\s*=\s*\{|"
-    r"\b(?:country|news|state|unit_leader|character|operative)_event\s*=\s*\{|"
-    r"\b(?:country|news|state|unit_leader|character|operative)_event\s*=\s*"
-    r"[A-Za-z0-9_.]+"
+    r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*\{|"
+    r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*[A-Za-z0-9_.]+"
 )
 
 
@@ -158,7 +168,10 @@ def scan_fire_only_once_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
+    # Quote-aware: strip comments, then blank quoted-string interiors so a
+    # literal brace inside a `log = "...{..."` string can't desync the depth
+    # stack and corrupt every finding after it.
+    cleaned = blank_quoted_strings(strip_comments(text))
     findings = []
     # Stack of scope frames: "iter" (every_/for_each_), "single" (random_),
     # or "other" (every other block: limit / if / completion_reward / the

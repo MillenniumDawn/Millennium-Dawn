@@ -99,6 +99,24 @@ def test_top_level_country_scope_is_not_flagged(tmp_path):
     assert _hits(tmp_path, body) == []
 
 
+def test_literal_brace_in_quoted_log_does_not_desync(tmp_path):
+    # A `}` inside a quoted log string must not be counted as a real close brace:
+    # without quote-aware blanking the stray brace popped the state frame early
+    # and the modify_treasury_effect call in state scope was silently missed.
+    body = (
+        "completion_reward = {\n"
+        "\t592 = {\n"
+        '\t\tlog = "spurious brace } in a string"\n'
+        "\t\tset_temp_variable = { treasury_change = -10 }\n"
+        "\t\tmodify_treasury_effect = yes\n"
+        "\t}\n"
+        "}\n"
+    )
+    hits = _hits(tmp_path, body)
+    assert len(hits) == 1
+    assert "592" in hits[0][0]
+
+
 def test_root_opener_is_conservative_not_flagged(tmp_path):
     body = (
         "completion_reward = {\n"

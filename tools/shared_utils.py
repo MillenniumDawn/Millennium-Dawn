@@ -563,6 +563,27 @@ def strip_comments(text: str) -> str:
     return "\n".join(result)
 
 
+def blank_quoted_strings(text: str) -> str:
+    """Replace the interior of double-quoted strings with spaces.
+
+    Quotes, string length, and newlines are preserved so byte offsets and line
+    numbers stay valid; only interior characters are blanked. Neutralizes
+    braces / ``#`` / ``=`` inside a quoted log string that would otherwise
+    desync a brace-depth or token scan. Run AFTER comment stripping — a stray
+    ``"`` in a ``#`` comment would otherwise flip the in-string state.
+    """
+    if '"' not in text:
+        return text
+    out = list(text)
+    in_str = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+        elif in_str and c != "\n":
+            out[i] = " "
+    return "".join(out)
+
+
 class FileOpener:
     # LRU bound sized for common/ (~3600 files) plus localisation, so a broad
     # scan stays cached without evicting on every overflow.

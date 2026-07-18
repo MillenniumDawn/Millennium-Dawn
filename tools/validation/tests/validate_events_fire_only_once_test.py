@@ -77,6 +77,57 @@ def test_id_not_first_arg_still_extracted(tmp_path):
     assert "foo.1" in res[0]
 
 
+def test_operative_leader_event_short_form_flagged(tmp_path):
+    # Regression: the keyword set had `operative_event` (no such keyword) and no
+    # word boundary before `_leader_event`, so operative_leader_event calls were
+    # never scanned for the fire_only_once-in-loop bug.
+    call = tmp_path / "common" / "f.txt"
+    call.parent.mkdir(parents=True)
+    call.write_text(
+        "x = {\n\tevery_country = {\n\t\toperative_leader_event = foo.1\n\t}\n}\n",
+        encoding="utf-8",
+    )
+    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    assert len(res) == 1
+    assert "foo.1" in res[0]
+
+
+def test_operative_leader_event_long_form_flagged(tmp_path):
+    call = tmp_path / "common" / "f.txt"
+    call.parent.mkdir(parents=True)
+    call.write_text(
+        "x = {\n"
+        "\tevery_state = {\n"
+        "\t\toperative_leader_event = { id = foo.1 days = 2 }\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    assert len(res) == 1
+    assert "foo.1" in res[0]
+
+
+def test_literal_brace_in_quoted_log_does_not_desync(tmp_path):
+    # A `}` inside a quoted log string must not pop the iterator frame: without
+    # quote-aware blanking the stray brace closed the every_country scope early
+    # and the following fire_only_once call was silently missed.
+    call = tmp_path / "common" / "f.txt"
+    call.parent.mkdir(parents=True)
+    call.write_text(
+        "x = {\n"
+        "\tevery_country = {\n"
+        '\t\tlog = "unbalanced brace } inside a string"\n'
+        "\t\tcountry_event = foo.1\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    assert len(res) == 1
+    assert "foo.1" in res[0]
+
+
 def test_random_country_single_pick_not_flagged(tmp_path):
     call = tmp_path / "common" / "f.txt"
     call.parent.mkdir(parents=True)

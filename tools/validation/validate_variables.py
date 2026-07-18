@@ -16,7 +16,7 @@ import disk_cache
 # strip_comments is quote-aware: a '#' inside a quoted log string must survive,
 # or the orphaned quote desyncs extract_block_from_text's in-string tracking
 # and container spans are silently lost.
-from shared_utils import extract_block_from_text, strip_comments
+from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
 from validator_common import (
     BaseValidator,
     DataCleaner,
@@ -283,6 +283,10 @@ def process_file_for_treasury_scope(
     cleaned = strip_comments(text)
     if "modify_treasury_effect" not in cleaned:
         return []
+
+    # Blank quoted-string interiors so a literal `}` inside a `log = "...}"`
+    # string can't be counted as a real close brace and desync the scope stack.
+    cleaned = blank_quoted_strings(cleaned)
 
     events = []
     for m in _SCOPE_OPEN_RE.finditer(cleaned):

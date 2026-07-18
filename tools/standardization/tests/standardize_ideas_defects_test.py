@@ -132,3 +132,38 @@ def test_law_category_header_props_preserved():
     assert "law = yes" in text
     assert "use_list_view = yes" in text
     assert "sunni = {" in text
+
+
+def test_nested_wrapper_idea_recursed_not_flattened():
+    # A genuine 3-level nesting (category > wrapper key > idea) must recurse into
+    # the middle wrapper so each child idea is standardized. Treating the wrapper
+    # as one idea instead preserves its children verbatim (no tag rewrite, blocks
+    # collapsed) -- the bug this guards against.
+    src = [
+        "ideas = {",
+        "\tcountry = {",
+        "\t\tpolitical_advisor = {",
+        "\t\t\tTAG_advisor_one = {",
+        "\t\t\t\tallowed = { tag = SOO }",
+        "\t\t\t}",
+        "\t\t\tTAG_advisor_two = {",
+        "\t\t\t\tallowed = { tag = NIG }",
+        "\t\t\t}",
+        "\t\t}",
+        "\t}",
+        "}",
+    ]
+    out = _process(src)
+    text = "\n".join(out)
+    # The middle wrapper survives and both ideas stay distinct blocks.
+    assert "political_advisor = {" in text
+    assert "TAG_advisor_one = {" in text
+    assert "TAG_advisor_two = {" in text
+    assert text.index("TAG_advisor_one") < text.index("TAG_advisor_two")
+    # Recursed and standardized: each child idea's `tag` became `original_tag`.
+    assert "original_tag = SOO" in text
+    assert "original_tag = NIG" in text
+    assert "{ tag = SOO }" not in text
+    assert "{ tag = NIG }" not in text
+    # Re-processing the output is a no-op (round-trips).
+    assert _process(out) == out

@@ -666,11 +666,13 @@ def main():
         if result:
             results.append(result)
 
-    if top_n:
+    if top_n is not None:
         results.sort(key=lambda r: r["gdp_total"], reverse=True)
-        results = results[:top_n]
+        # --top 0 means "all tags, ranked" — sort, but don't slice to nothing.
+        if top_n:
+            results = results[:top_n]
 
-    if show_all or top_n:
+    if show_all or top_n is not None:
         print(
             f"\n{'Rank':>4}  {'TAG':<5} {'GDP Total':>12} {'GDP/C':>8} "
             f"{'Pop (M)':>10} {'Productivity':>12} {'Health':>10} {'States':>6}"
