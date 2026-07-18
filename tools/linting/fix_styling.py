@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Auto-fix styling issues detected by check_basic_style.py."""
+"""Auto-fix styling issues detected by validate_style.py."""
 
 import os
 import re
@@ -7,14 +7,15 @@ import sys
 import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from path_utils import clean_filepath
 from shared_utils import (
     Timer,
+    clean_filepath,
     collect_files_by_mode,
     create_linting_parser,
     get_root_dir,
     print_timing_summary,
     run_with_pool,
+    strip_inline_comment,
 )
 
 __version__ = 2.0
@@ -41,7 +42,6 @@ def fix_line(line):
     original = line
     fixes = 0
 
-    # Step 1: Fix leading indentation (spaces -> tabs) on all lines
     stripped = line.lstrip(" \t")
     leading = line[: len(line) - len(stripped)]
     if " " in leading:
@@ -55,7 +55,6 @@ def fix_line(line):
         if line != original:
             fixes += 1
 
-    # Step 2: Handle comment-only lines
     stripped_content = line.lstrip("\t ")
     if stripped_content.startswith("#"):
         # Fix === separator lines in comments (validators flag these as = issues)
@@ -70,7 +69,6 @@ def fix_line(line):
             fixes += 1
         return line, fixes
 
-    # Step 3: Split into code and comment parts
     comment_pos = line.find("#")
     if comment_pos > 0:
         code_part = line[:comment_pos]
@@ -83,7 +81,6 @@ def fix_line(line):
         code_part = line
         comment_part = ""
 
-    # Step 4: Fix equal sign spacing in code part
     if "=" in code_part:
         # Fix double+ spaces before =
         new_code = _RE_MULTI_SP_BEFORE_EQ.sub(" =", code_part)
@@ -95,7 +92,6 @@ def fix_line(line):
             code_part = new_code
             fixes += 1
 
-    # Step 5: Fix brace spacing in code part
     if "{" in code_part or "}" in code_part:
         new_code = code_part
         # Add space before { if missing (not at line start)
@@ -115,7 +111,6 @@ def fix_line(line):
             code_part = new_code
             fixes += 1
 
-    # Step 6: Collapse multiple spaces to single in code part (not leading indent)
     code_stripped = code_part.lstrip("\t")
     code_indent = code_part[: len(code_part) - len(code_stripped)]
     if "    " in code_stripped:
@@ -124,10 +119,8 @@ def fix_line(line):
             code_part = code_indent + new_stripped
             fixes += 1
 
-    # Reassemble line
     line = code_part + comment_part
 
-    # Step 7: Remove trailing whitespace (preserve newline)
     if line.endswith("\n"):
         rstripped = line.rstrip(" \t\n") + "\n"
     else:
@@ -154,20 +147,17 @@ def fix_file(filepath):
         unfixable = []
 
         for line_num, line in enumerate(lines, 1):
-            # Preserve newlines for processing (add back for fix_line)
             fixed, fixes = fix_line(line)
             total_fixes += fixes
             fixed_lines.append(fixed)
 
-            # Report unfixable: odd number of quotes
             if '"' in line and not line.strip().startswith("#"):
-                code = line.split("#")[0] if "#" in line else line
+                code = strip_inline_comment(line) if "#" in line else line
                 if code.count('"') % 2 == 1:
                     unfixable.append(
                         f"  {clean_filepath(filepath)}:{line_num}: Possible missing quotation mark"
                     )
 
-        # Remove excessive trailing blank lines, ensure single newline at end
         while fixed_lines and fixed_lines[-1] == "":
             fixed_lines.pop()
         fixed_lines.append("")
@@ -201,7 +191,7 @@ def fix_file_dry_run(filepath):
             total_fixes += fixes
 
             if '"' in line and not line.strip().startswith("#"):
-                code = line.split("#")[0] if "#" in line else line
+                code = strip_inline_comment(line) if "#" in line else line
                 if code.count('"') % 2 == 1:
                     unfixable.append(
                         f"  {clean_filepath(filepath)}:{line_num}: Possible missing quotation mark"

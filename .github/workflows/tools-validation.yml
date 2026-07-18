@@ -4,7 +4,10 @@ on:
   pull_request:
     paths:
       - 'tools/**'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/coding-pipeline.yml'
       - '.github/workflows/tools-validation.yml'
+      - '.github/workflows/validator-cache.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -18,11 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 1
           sparse-checkout: |
             tools
+            pyproject.toml
             common
             events
             history
@@ -36,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r tools/requirements.txt
+          pip install --group runtime
       - name: Run tools validation
         run: |
           python tools/validate_tools.py --strict --no-color --output tools_validation.log
@@ -53,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 1
           # config_drift_test reads these two config files to compare the
@@ -64,6 +68,8 @@ jobs:
             pyproject.toml
             .pre-commit-config.yaml
             .github/workflows/coding-pipeline.yml
+            .github/workflows/tools-validation.yml
+            .github/workflows/validator-cache.yml
           sparse-checkout-cone-mode: false
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -72,10 +78,11 @@ jobs:
       - name: Install test deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r tools/report_lib/requirements-dev.txt
+          pip install --group dev
       - name: Run pytest
-        # testpaths in pyproject.toml covers all four test dirs (tools/tests,
-        # report_lib/tests, validation/tests, linting/tests).
+        # testpaths in pyproject.toml covers all six test dirs (tools/tests,
+        # report_lib/tests, validation/tests, linting/tests,
+        # standardization/tests, docs_checks/tests).
         run: |
           python -m pytest -v
 
@@ -84,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -96,6 +103,10 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install ruff
-        run: pip install ruff==0.8.6
+        run: |
+          python -m pip install --upgrade pip
+          pip install --group dev
       - name: Run ruff
         run: ruff check tools --output-format=github
+      - name: Check formatting (ruff format)
+        run: ruff format --check tools

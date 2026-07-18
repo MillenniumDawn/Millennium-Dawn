@@ -7,6 +7,7 @@ every interface/*.gfx in the mod plus the vanilla install (when discoverable)
 and returns the set of defined sprite names so a validator can flag references
 that point at nothing.
 """
+
 import glob
 import os
 import re
