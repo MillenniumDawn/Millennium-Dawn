@@ -3444,16 +3444,23 @@ CHI_national_commitee_decisions_category = {
 			}
 		}
 
-		modifier = { education_cost_multiplier_modifier = 0.05 }
+		modifier = {
+			social_cost_multiplier_modifier = 0.08
+			education_cost_multiplier_modifier = 0.08
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_adopt_two_child_policy"
-			set_variable = { CHI_demographic_policy_stage = 2 }
-			CHI_apply_demographic_tier = yes
 			unlock_decision_tooltip = CHI_adopt_three_child_policy
 			newline = yes
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_adopt_two_child_policy settled"
+			set_variable = { CHI_demographic_policy_stage = 2 }
+			CHI_apply_demographic_policy = yes
 		}
 
 		ai_will_do = { base = 5 }
@@ -3476,16 +3483,23 @@ CHI_national_commitee_decisions_category = {
 			}
 		}
 
-		modifier = { social_cost_multiplier_modifier = 0.08 }
+		modifier = {
+			social_cost_multiplier_modifier = 0.10
+			health_cost_multiplier_modifier = 0.05
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_adopt_three_child_policy"
-			set_variable = { CHI_demographic_policy_stage = 3 }
-			CHI_apply_demographic_tier = yes
 			unlock_decision_tooltip = CHI_abolish_birth_limits
 			newline = yes
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_adopt_three_child_policy settled"
+			set_variable = { CHI_demographic_policy_stage = 3 }
+			CHI_apply_demographic_policy = yes
 		}
 
 		ai_will_do = { base = 5 }
@@ -3506,18 +3520,24 @@ CHI_national_commitee_decisions_category = {
 				tooltip = CHI_demographic_stage_3_tt
 				check_variable = { CHI_demographic_policy_stage = 3 }
 			}
-			date > 2023.1.1
 		}
 
-		modifier = { health_cost_multiplier_modifier = 0.08 }
+		modifier = {
+			health_cost_multiplier_modifier = 0.10
+			social_cost_multiplier_modifier = 0.10
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_abolish_birth_limits"
-			set_variable = { CHI_demographic_policy_stage = 4 }
-			CHI_apply_demographic_tier = yes
 			newline = yes
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_abolish_birth_limits settled"
+			set_variable = { CHI_demographic_policy_stage = 4 }
+			CHI_apply_demographic_policy = yes
 		}
 
 		ai_will_do = { base = 5 }
@@ -3769,6 +3789,48 @@ CHI_SAR_decisions_category = {
 		ai_will_do = { base = 1 }
 	}
 
+	CHI_calm_hong_kong_protests = {
+
+		allowed = { original_tag = CHI }
+
+		icon = generic_nationalism
+
+		visible = {
+			has_idea = CHI_Hong_Kong_Protests_01
+		}
+
+		available = {
+			has_idea = CHI_Hong_Kong_Protests_01
+			divisions_in_state = { size > 0 state = 595 }
+			OR = {
+				NOT = { controls_state = 595 }
+				595 = { resistance < 0.4 }
+			}
+		}
+
+		cost = 100
+
+		days_remove = 100
+
+		fire_only_once = no
+
+		modifier = {
+			political_power_factor = -0.15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_calm_hong_kong_protests remove"
+			remove_ideas = CHI_Hong_Kong_Protests_01
+			add_stability = 0.01
+			if = {
+				limit = { controls_state = 595 }
+				595 = { add_compliance = 5 }
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
 	CHI_han_settlement_small = {
 
 		fixed_random_seed = no
@@ -4001,6 +4063,385 @@ CHI_SAR_decisions_category = {
 					set_variable = { CHI_TAI_trust = 0 }
 				}
 			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_economic_track = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_economic_track
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_economic_track"
+			TAI = { country_event = { id = china_sar.038 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_expand_trade = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_expand_trade
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_expand_trade"
+			TAI = { country_event = { id = china_sar.039 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_peaceful_reunification = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_peaceful_reunification
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_peaceful_reunification"
+			TAI = { country_event = { id = china_sar.047 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_mainland_access = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_mainland_access
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_mainland_access"
+			TAI = { country_event = { id = china_sar.040 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_semiconductor = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_semiconductor
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_semiconductor"
+			TAI = { country_event = { id = china_sar.041 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_business_deleg = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_business_deleg
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_business_deleg"
+			TAI = { country_event = { id = china_sar.042 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_transport = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_transport
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_transport"
+			TAI = { country_event = { id = china_sar.043 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_safeguards = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_safeguards
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_safeguards"
+			TAI = { country_event = { id = china_sar.044 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_joint_planning = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_joint_planning
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_joint_planning"
+			TAI = { country_event = { id = china_sar.045 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_resend_deep_integration = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_country_flag = CHI_TAI_rejected_deep_integration
+			country_exists = TAI
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_resend_deep_integration"
+			TAI = { country_event = { id = china_sar.046 days = 3 } }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_goodwill_gesture = {
+
+		icon = generic_political_discourse
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_completed_focus = CHI_SAR_one_china_framework
+			country_exists = TAI
+		}
+
+		available = {
+			country_exists = TAI
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 50
+
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_goodwill_gesture"
+			add_to_variable = { CHI_TAI_trust = 6 tooltip = CHI_TAI_trust_tt }
+			clamp_variable = { var = CHI_TAI_trust min = 0 max = 100 }
+			add_opinion_modifier = { target = TAI modifier = political_outreach }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CHI_TAI_coercive_signaling = {
+
+		icon = generic_intelligence_operation
+
+		allowed = { original_tag = CHI }
+
+		visible = {
+			has_completed_focus = CHI_SAR_one_china_framework
+			country_exists = TAI
+		}
+
+		available = {
+			country_exists = TAI
+			NOT = { has_war_with = TAI }
+		}
+
+		fire_only_once = no
+
+		cost = 40
+
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_TAI_coercive_signaling"
+			add_to_variable = { CHI_TAI_trust = -6 tooltip = CHI_TAI_trust_tt }
+			clamp_variable = { var = CHI_TAI_trust min = 0 max = 100 }
+			add_opinion_modifier = { target = TAI modifier = recent_actions_negative }
+			TAI = { add_opinion_modifier = { target = CHI modifier = recent_actions_negative } }
 		}
 
 		ai_will_do = {
@@ -10373,8 +10814,6 @@ CHI_industrial_investment_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_mature_node_export_drive_decision executed"
-			set_temp_variable = { CHI_semi_progress_amount = 2 }
-			CHI_add_semiconductor_progress = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
 			add_to_variable = { CHI_economy_trade_opinion_factor = 0.01 tooltip = trade_opinion_factor_tt }
 			add_to_variable = { CHI_mature_node_export_stacks = 1 }
@@ -10420,8 +10859,6 @@ CHI_industrial_investment_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_fabless_provincial_subsidy_decision executed"
-			set_temp_variable = { CHI_semi_progress_amount = 2 }
-			CHI_add_semiconductor_progress = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
 			add_to_variable = { CHI_economy_civilian_factories_productivity = 0.01 tooltip = civilian_factories_productivity_tt }
 			add_to_variable = { CHI_fabless_subsidy_stacks = 1 }
@@ -10457,8 +10894,6 @@ CHI_industrial_investment_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_replace_synopsys_cadence_decision executed"
-			set_temp_variable = { CHI_semi_progress_amount = 6 }
-			CHI_add_semiconductor_progress = yes
 			add_tech_bonus = {
 				name = CHI_replace_synopsys_cadence_decision
 				bonus = 0.15
@@ -10498,8 +10933,6 @@ CHI_industrial_investment_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_duv_breakthrough_decision executed"
-			set_temp_variable = { CHI_semi_progress_amount = 6 }
-			CHI_add_semiconductor_progress = yes
 			random_list = {
 				60 = {
 					add_tech_bonus = {
@@ -10597,8 +11030,6 @@ CHI_industrial_investment_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_cxmt_hbm_qualification_decision executed"
-			set_temp_variable = { CHI_semi_progress_amount = 6 }
-			CHI_add_semiconductor_progress = yes
 			add_tech_bonus = {
 				name = CHI_cxmt_hbm_qualification_decision
 				bonus = 0.10
@@ -10651,8 +11082,6 @@ CHI_industrial_investment_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_big_fund_iii_allocate_tranche_decision executed"
-			set_temp_variable = { CHI_semi_progress_amount = 2 }
-			CHI_add_semiconductor_progress = yes
 			one_random_microchip_plant = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
 			add_to_variable = { CHI_economy_production_factory_max_efficiency_factor = 0.02 tooltip = production_factory_max_efficiency_factor_tt }
