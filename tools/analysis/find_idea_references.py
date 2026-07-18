@@ -15,8 +15,10 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 from _reference_finder import build_parser, run_reference_search  # noqa: E402
+from shared_utils import strip_inline_comment  # noqa: E402
 
 SEARCH_DIRS = [
     "common/events",
@@ -122,7 +124,10 @@ def make_idea_searcher(search_dirs: list[Path]):
                         rel = txt_file.relative_to(REPO_ROOT)
                         refs.append((str(rel), i, line.strip()))
                     if in_block or IDEA_BLOCK_RE.search(line):
-                        block_depth += line.count("{") - line.count("}")
+                        # Count braces on the code portion only: a `#` comment
+                        # may carry an unbalanced brace that would desync depth.
+                        code = strip_inline_comment(line)
+                        block_depth += code.count("{") - code.count("}")
                         if block_depth < 0:
                             block_depth = 0
         return refs

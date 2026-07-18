@@ -68,9 +68,7 @@ def test_cycle_with_fanin_is_reported_without_raising(tmp_path):
     v.validate_dependency_cycles()
 
     assert v.errors_found == 1
-    cycle_issues = [
-        i for i in v._issues if "Dependency cycle detected" in i.message
-    ]
+    cycle_issues = [i for i in v._issues if "Dependency cycle detected" in i.message]
     assert len(cycle_issues) == 1
     message = cycle_issues[0].message
     assert "TAG_focus_a" in message

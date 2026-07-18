@@ -12,7 +12,10 @@ import validate_decisions as V
 
 
 def _names(text):
-    return [V._DECISION_TOKEN_LINE_RE.findall(b)[0] for b in V._DECISIONS_BLOCK_RE.findall(text)]
+    return [
+        V._DECISION_TOKEN_LINE_RE.findall(b)[0]
+        for b in V._DECISIONS_BLOCK_RE.findall(text)
+    ]
 
 
 def test_stray_tab_brace_does_not_jump_into_column_zero_block():

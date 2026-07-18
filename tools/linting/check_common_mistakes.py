@@ -806,7 +806,7 @@ def _check_country_exists_scope_contradiction(lines):
     stack = [[False, False, "", 0, [], []]]
 
     for i, line in enumerate(lines):
-        code = strip_inline_comment(line)
+        code = _code_for_depth(line)
         if not code.strip():
             continue
         last_end = 0

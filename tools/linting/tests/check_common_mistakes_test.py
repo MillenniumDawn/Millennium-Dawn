@@ -2570,6 +2570,23 @@ assert_finds(
     "different tags in AND block not flagged",
 )
 
+# A stray } in a log string inside the scope block must not desync the frame
+# stack and drop the finding (quote-blanking, same as the embargo guard).
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tbypass = {\n",
+        "\t\tCAN = {\n",
+        '\t\t\tlog = "closing } here"\n',
+        "\t\t\tis_subject_of = USA\n",
+        "\t\t}\n",
+        "\t\tNOT = { country_exists = CAN }\n",
+        "\t}\n",
+    ],
+    1,
+    "stray } in a log string inside the scope block still flagged",
+)
+
 
 def assert_eq(actual, expected, label):
     global passed, failed

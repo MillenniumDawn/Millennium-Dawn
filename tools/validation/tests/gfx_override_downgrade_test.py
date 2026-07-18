@@ -36,9 +36,7 @@ def _severity_by_file(v):
 
 
 def test_vanilla_parent_basename_resolves_variant():
-    assert (
-        _vanilla_parent_basename("a/b/" + MD_VARIANT) == VANILLA_BASE
-    )
+    assert _vanilla_parent_basename("a/b/" + MD_VARIANT) == VANILLA_BASE
 
 
 def test_vanilla_parent_basename_none_for_unrelated_md_file():
@@ -54,7 +52,10 @@ def test_inherited_ref_from_parent_is_downgraded(tmp_path):
         (sprite, _iface(tmp_path, MD_VARIANT), 20),
     ]
     v._check_undefined_refs(
-        refs, set(), source_label=".gui files", category="undefined-sprite",
+        refs,
+        set(),
+        source_label=".gui files",
+        category="undefined-sprite",
         gui_mode=True,
     )
     sev = _severity_by_file(v)
@@ -72,7 +73,10 @@ def test_coincidental_ref_in_unrelated_md_file_stays_error(tmp_path):
         (sprite, _iface(tmp_path, "MD_unique_feature.gui"), 20),
     ]
     v._check_undefined_refs(
-        refs, set(), source_label=".gui files", category="undefined-sprite",
+        refs,
+        set(),
+        source_label=".gui files",
+        category="undefined-sprite",
         gui_mode=True,
     )
     sev = _severity_by_file(v)
@@ -88,7 +92,10 @@ def test_variant_ref_not_carried_by_parent_stays_error(tmp_path):
         ("GFX_only_in_variant", _iface(tmp_path, MD_VARIANT), 20),
     ]
     v._check_undefined_refs(
-        refs, set(), source_label=".gui files", category="undefined-sprite",
+        refs,
+        set(),
+        source_label=".gui files",
+        category="undefined-sprite",
         gui_mode=True,
     )
     sev = _severity_by_file(v)
