@@ -608,11 +608,29 @@ def main():
     top_n = None
     if "--top" in args:
         idx = args.index("--top")
-        top_n = int(args[idx + 1])
-        args = [a for a in args if a not in ("--top", args[idx + 1])]
+        if idx + 1 >= len(args):
+            print("error: --top requires an integer value", file=sys.stderr)
+            sys.exit(1)
+        val = args[idx + 1]
+        try:
+            top_n = int(val)
+        except ValueError:
+            print(f"error: --top expects an integer, got '{val}'", file=sys.stderr)
+            sys.exit(1)
+        # Remove exactly the flag and its value (not every matching token).
+        args = args[:idx] + args[idx + 2 :]
 
     verbose = "-v" in args or "--verbose" in args
     args = [a for a in args if a not in ("-v", "--verbose")]
+
+    explicit_tags = [a.upper() for a in args if not a.startswith("--")]
+    if top_n is not None and explicit_tags:
+        print(
+            "error: --top ranks all countries and cannot be combined with "
+            "explicit tags",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     print("Loading idea definitions...", file=sys.stderr)
     idea_db = parse_all_ideas()
@@ -632,10 +650,10 @@ def main():
         file=sys.stderr,
     )
 
-    if show_all or top_n:
+    if show_all or top_n is not None:
         tags = sorted(country_states.keys())
     else:
-        tags = [a.upper() for a in args if not a.startswith("--")]
+        tags = explicit_tags
 
     results = []
     for tag in tags:

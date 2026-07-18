@@ -1582,25 +1582,35 @@ class Validator(BaseValidator):
                             if prereq_id in tree_ids:
                                 adjacency[focus_id].add(prereq_id)
 
-                # DFS cycle detection
+                # DFS cycle detection. Iterative with an explicit work stack:
+                # prerequisite chains can run 1000+ deep, and a recursive DFS
+                # blows the Python recursion limit on those.
                 WHITE, GRAY, BLACK = 0, 1, 2
                 color: Dict[str, int] = {fid: WHITE for fid in tree_ids}
-                stack: List[str] = []
 
-                def dfs(node: str) -> Optional[List[str]]:
-                    color[node] = GRAY
-                    stack.append(node)
-                    for neighbor in adjacency.get(node, set()):
-                        if color[neighbor] == GRAY:
-                            # Found a cycle — extract it from the stack
-                            cycle_start = stack.index(neighbor)
-                            return stack[cycle_start:] + [neighbor]
-                        if color[neighbor] == WHITE:
-                            cycle = dfs(neighbor)
-                            if cycle:
-                                return cycle
-                    stack.pop()
-                    color[node] = BLACK
+                def dfs(start: str) -> Optional[List[str]]:
+                    path: List[str] = [start]
+                    work = [(start, iter(adjacency.get(start, ())))]
+                    color[start] = GRAY
+                    while work:
+                        node, neighbors = work[-1]
+                        advanced = False
+                        for neighbor in neighbors:
+                            if color[neighbor] == GRAY:
+                                cycle_start = path.index(neighbor)
+                                return path[cycle_start:] + [neighbor]
+                            if color[neighbor] == WHITE:
+                                color[neighbor] = GRAY
+                                path.append(neighbor)
+                                work.append(
+                                    (neighbor, iter(adjacency.get(neighbor, ())))
+                                )
+                                advanced = True
+                                break
+                        if not advanced:
+                            color[node] = BLACK
+                            work.pop()
+                            path.pop()
                     return None
 
                 reported_cycles: Set[FrozenSet] = set()

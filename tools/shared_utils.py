@@ -51,8 +51,11 @@ def log_message(
 
     timestamp = datetime.now().strftime("%H:%M:%S")
 
-    color = _LEVEL_COLORS.get(level, "") if use_colors else ""
-    reset = Colors.ENDC if use_colors else ""
+    # Honor the NO_COLOR convention (https://no-color.org) so CI logs stay
+    # escape-free even when a caller left use_colors at its default.
+    colors_on = use_colors and not os.environ.get("NO_COLOR")
+    color = _LEVEL_COLORS.get(level, "") if colors_on else ""
+    reset = Colors.ENDC if colors_on else ""
 
     formatted_message = f"{color}[{timestamp}] {level}: {message}{reset}"
     print(formatted_message, file=sys.stderr)
@@ -144,6 +147,7 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
 
     block_lines = []
     brace_count = 0
+    opened = False
     i = start_index
 
     while i < len(lines):
@@ -151,9 +155,15 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
         block_lines.append(line)
 
         code = strip_inline_comment(line)
+        if "{" in code:
+            opened = True
         brace_count += code.count("{") - code.count("}")
 
-        if brace_count == 0 and "{" in strip_inline_comment(lines[start_index]):
+        # `opened` lets the block terminate once braces balance even when the
+        # opening `{` sits on a later line than the name; without it a next-line
+        # brace never satisfies the old "{ on start line" check and the block
+        # ran to EOF.
+        if opened and brace_count == 0:
             i += 1
             break
         elif brace_count < 0:

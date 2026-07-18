@@ -239,7 +239,7 @@ def event_add(cpath, dry_run=False):
             outputfile = (
                 io.StringIO()
                 if dry_run
-                else open(os.path.join(cpath, "events", filename), "w", "utf-8-sig")
+                else open(os.path.join(cpath, "events", filename), "w", "utf-8")
             )
             outputfile.truncate()
             for line in lines:
@@ -284,7 +284,7 @@ def event_remove(cpath, dry_run=False):
             outputfile = (
                 io.StringIO()
                 if dry_run
-                else open(os.path.join(cpath, "events", filename), "w", "utf-8-sig")
+                else open(os.path.join(cpath, "events", filename), "w", "utf-8")
             )
             outputfile.truncate()
             for line in lines:

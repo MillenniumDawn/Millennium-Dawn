@@ -63,11 +63,7 @@ def check_line(line: str, line_num: int) -> list:
         quote_count = 0
         j = 0
         while j < len(after_colon):
-            if (
-                after_colon[j] == "\\"
-                and j + 1 < len(after_colon)
-                and after_colon[j + 1] == '"'
-            ):
+            if after_colon[j] == "\\":
                 j += 2
                 continue
             if after_colon[j] == '"':
@@ -133,7 +129,7 @@ def fix_line(line: str) -> str:
     # Fix key:0 "value" -> key: "value" (remove version number)
     m = re.match(r'^(\s*\S+):\d+(\s+")', line)
     if m:
-        line = m.group(1) + ":" + m.group(2)
+        line = m.group(1) + ":" + m.group(2) + line[m.end() :]
 
     # Fix key:"value" -> key: "value" (add space after colon)
     m = re.match(r'^(\s*\S+):"', line)

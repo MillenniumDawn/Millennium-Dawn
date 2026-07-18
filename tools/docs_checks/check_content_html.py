@@ -44,6 +44,18 @@ def strip_fenced_code_blocks(text: str) -> str:
     return re.sub(r"~~~[\s\S]*?~~~", "", text)
 
 
+def _blank_keep_newlines(match: re.Match[str]) -> str:
+    return re.sub(r"[^\n]", " ", match.group(0))
+
+
+def mask_code(text: str) -> str:
+    """Blank out fenced and inline code so `<tag>` examples aren't scanned as
+    raw HTML. Newlines are preserved so reported line numbers stay accurate."""
+    text = re.sub(r"```[\s\S]*?```", _blank_keep_newlines, text)
+    text = re.sub(r"~~~[\s\S]*?~~~", _blank_keep_newlines, text)
+    return re.sub(r"`+[^`\n]*`+", lambda m: " " * len(m.group(0)), text)
+
+
 def iter_markdown_files(root: Path) -> list[Path]:
     files: list[Path] = []
     for pattern in MARKDOWN_GLOB:
@@ -107,7 +119,7 @@ def check_duplicate_hero_title(path: Path, text: str) -> list[str]:
 
 def check_file(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8", errors="replace")
-    body = strip_fenced_code_blocks(text)
+    body = mask_code(text)
     issues: list[str] = []
 
     for pattern, label in BLOCKED_PATTERNS:

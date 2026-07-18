@@ -1,0 +1,126 @@
+"""Tests for the event standardizer.
+
+Regression guard for the log-injection bug: `_option_has_effects` scanned the
+option HEADER line and so always returned True, injecting a `log =` line into
+effectless options (violating "log only if the option has effects"). It must scan
+only the option body, and the injected log's indent must follow the body (2-tab
+files get a 2-tab line, not a hardcoded 3-tab one).
+"""
+
+from standardize_events import (
+    EventStandardizer,
+    _option_has_effects,
+    _option_log_line,
+)
+
+
+def _option(lines):
+    return [line + "\n" for line in lines]
+
+
+def _standardize_event(lines):
+    std = EventStandardizer()
+    block = [line + "\n" for line in lines]
+    return std.format_block(std.extract_properties(block))
+
+
+def test_effectless_option_has_no_effects():
+    option = _option(
+        [
+            "\toption = {",
+            "\t\tname = test.1.a",
+            "\t\tai_chance = { factor = 1 }",
+            "\t}",
+        ]
+    )
+    assert not _option_has_effects(option)
+
+
+def test_option_with_effect_detected():
+    option = _option(
+        [
+            "\toption = {",
+            "\t\tname = test.1.b",
+            "\t\tadd_political_power = 10",
+            "\t}",
+        ]
+    )
+    assert _option_has_effects(option)
+
+
+def test_log_line_indent_matches_2tab_body():
+    option = _option(
+        [
+            "\toption = {",
+            "\t\tname = test.1.a",
+            "\t\tadd_political_power = 10",
+            "\t}",
+        ]
+    )
+    assert (
+        _option_log_line(option)
+        == '\t\tlog = "[GetDateText]: [This.GetName]: test.1.a executed"'
+    )
+
+
+def test_log_line_indent_matches_3tab_body():
+    option = _option(
+        [
+            "\t\toption = {",
+            "\t\t\tname = test.1.a",
+            "\t\t\tadd_political_power = 10",
+            "\t\t}",
+        ]
+    )
+    assert (
+        _option_log_line(option)
+        == '\t\t\tlog = "[GetDateText]: [This.GetName]: test.1.a executed"'
+    )
+
+
+_EVENT = [
+    "country_event = {",
+    "\tid = test.1",
+    "\ttitle = test.1.t",
+    "\tdesc = test.1.d",
+    "\tis_triggered_only = yes",
+    "",
+    "\toption = {",
+    "\t\tname = test.1.a",
+    "\t\tadd_political_power = 10",
+    "\t}",
+    "",
+    "\toption = {",
+    "\t\tname = test.1.b",
+    "\t\tai_chance = { factor = 1 }",
+    "\t}",
+    "}",
+]
+
+
+def test_effectless_option_gets_no_log_effectful_does():
+    text = "\n".join(_standardize_event(_EVENT))
+    # Effectful option gets exactly one log, indented at the 2-tab body.
+    assert '\t\tlog = "[GetDateText]: [This.GetName]: test.1.a executed"' in text
+    assert text.count("log =") == 1
+    # Effectless option (name + ai_chance only) gets no log.
+    assert "test.1.b executed" not in text
+
+
+def test_content_preserved():
+    text = "\n".join(_standardize_event(_EVENT))
+    for token in (
+        "id = test.1",
+        "title = test.1.t",
+        "desc = test.1.d",
+        "add_political_power = 10",
+        "name = test.1.b",
+        "ai_chance = { factor = 1 }",
+    ):
+        assert token in text
+
+
+def test_event_idempotent():
+    once = _standardize_event(_EVENT)
+    twice = _standardize_event(once)
+    assert once == twice

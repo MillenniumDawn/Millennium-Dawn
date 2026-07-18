@@ -67,26 +67,47 @@ def _is_md_gui_file(filepath: str) -> bool:
     return os.path.basename(filepath) not in _VANILLA_GUI_BASENAMES
 
 
-# .gfx and .gui files use C-style // and /* */ comments, NOT the # used by .txt scripts.
-# strip_comments() from shared_utils strips # comments; do NOT use it here.
-
-_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
-_LINE_COMMENT_RE = re.compile(r"//.*")
-_HASH_COMMENT_RE = re.compile(r"#.*")
+# .gfx and .gui files use `#`, `//`, and `/* */` comments. The stripper is
+# quote-aware: a `//` inside a quoted texturefile path (e.g. "gfx//interface/…")
+# is NOT a comment. Stripping it blindly leaves an unterminated quote that
+# corrupts brace/block extraction and drops the whole sprite definition.
 
 
 def _strip_comments(text: str) -> str:
-    """Remove comments from Clausewitz GUI/GFX text.
+    """Remove `#`, `//`, and `/* */` comments from Clausewitz GUI/GFX text.
 
-    `#` is the actual Clausewitz line-comment marker (interface/*.gui|*.gfx use
-    it almost exclusively); `//` and `/* */` are also stripped for safety. Without
-    `#` stripping, sprite references inside commented-out blocks leak through and
-    are wrongly reported as missing.
+    Comment markers inside double-quoted strings are preserved. Newlines are
+    kept for `#`/`//` line comments so line numbers stay stable.
     """
-    text = _BLOCK_COMMENT_RE.sub("", text)
-    text = _LINE_COMMENT_RE.sub("", text)
-    text = _HASH_COMMENT_RE.sub("", text)
-    return text
+    out: List[str] = []
+    in_str = False
+    i = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if in_str:
+            out.append(c)
+            if c == '"' and text[i - 1] != "\\":
+                in_str = False
+            i += 1
+        elif c == '"':
+            in_str = True
+            out.append(c)
+            i += 1
+        elif c == "#" or (c == "/" and i + 1 < n and text[i + 1] == "/"):
+            nl = text.find("\n", i)
+            if nl == -1:
+                break
+            i = nl
+        elif c == "/" and i + 1 < n and text[i + 1] == "*":
+            end = text.find("*/", i + 2)
+            if end == -1:
+                break
+            i = end + 2
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
 
 
 # All sprite type block openers in .gfx files; all use `name = "GFX_xxx"`.
@@ -98,7 +119,8 @@ _GFX_SPRITE_TYPES = re.compile(
 )
 
 # name = "GFX_xxx" inside a block
-_GFX_NAME = re.compile(r'\bname\s*=\s*"(GFX_[A-Za-z0-9_]+)"')
+# `@` appears in engine frame-variant names (e.g. GFX_x@highlight).
+_GFX_NAME = re.compile(r'\bname\s*=\s*"(GFX_[A-Za-z0-9_@]+)"')
 
 # GUI references — spriteType / quadTextureSprite / background
 _GUI_REF = re.compile(
@@ -172,6 +194,26 @@ def _find_vanilla_interface_dir() -> Optional[str]:
         if os.path.isdir(interface):
             return interface
     return None
+
+
+def _vanilla_gfx_files() -> List[str]:
+    """Return every vanilla .gfx path, including DLC interface dirs.
+
+    DLC sprites (dlc/*/interface, integrated_dlc/*/interface) are referenced by
+    vanilla-override .gui files, so omitting them false-positives those refs.
+    """
+    base = find_hoi4_install()
+    if not base:
+        return []
+    files = glob.glob(os.path.join(base, "interface", "**", "*.gfx"), recursive=True)
+    for sub in ("dlc", "integrated_dlc"):
+        files.extend(
+            glob.glob(
+                os.path.join(base, sub, "*", "interface", "**", "*.gfx"),
+                recursive=True,
+            )
+        )
+    return sorted(files)
 
 
 _UNUSED_SPRITE_LIMIT = 50
@@ -363,7 +405,7 @@ class GfxReferenceValidator(BaseValidator):
         """
         self._log_section("Building GFX sprite definition set")
         # Always scan the full repo — definitions must come from anywhere.
-        gfx_files = self._collect_files(["interface/*.gfx"], ignore_staged=True)
+        gfx_files = self._collect_files(["interface/**/*.gfx"], ignore_staged=True)
         results = self._pool_map(
             _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
         )
@@ -375,9 +417,8 @@ class GfxReferenceValidator(BaseValidator):
         )
 
         defined = set(mod_defined)
-        vanilla_dir = _find_vanilla_interface_dir()
-        if vanilla_dir:
-            vanilla_gfx = glob.glob(os.path.join(vanilla_dir, "*.gfx"))
+        vanilla_gfx = _vanilla_gfx_files()
+        if vanilla_gfx:
             vanilla_results = self._pool_map(
                 _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
             )
@@ -389,7 +430,7 @@ class GfxReferenceValidator(BaseValidator):
             self._vanilla_defs_loaded = True
             self.log(
                 f"  Found {len(vanilla_defined)} GFX sprite names in vanilla "
-                f"({len(new)} new) at {vanilla_dir}"
+                f"({len(new)} new) across {len(vanilla_gfx)} .gfx files"
             )
         else:
             manifest = _load_vanilla_sprite_manifest()
@@ -412,7 +453,7 @@ class GfxReferenceValidator(BaseValidator):
     def _collect_gui_refs(self, defined: Set[str]) -> List[Tuple[str, str, int]]:
         """Return undefined GUI sprite references from interface/*.gui files."""
         self._log_section("Collecting GFX references from interface/*.gui files")
-        gui_files = self._collect_files(["interface/*.gui"])
+        gui_files = self._collect_files(["interface/**/*.gui"])
         all_refs: List[Tuple[str, str, int]] = []
         for batch in self._pool_map(
             _parse_gui_file, [(f, self.mod_path) for f in gui_files]
@@ -502,6 +543,12 @@ class GfxReferenceValidator(BaseValidator):
         warnings: List[Tuple[str, str, int]] = []
         seen: Set[Tuple[str, str, int]] = set()
         ci = mod_defined_ci or {}
+        # Vanilla .gui files ship dead sprite refs of their own; an MD-authored
+        # copy (e.g. a nation variant of a designer .gui) inheriting the same
+        # ref is vanilla's bug, not the mod's — downgrade to WARNING.
+        override_refs: Set[str] = set()
+        if gui_mode:
+            override_refs = {s for s, f, _ in refs if not _is_md_gui_file(f)}
 
         for sprite, filepath, line in refs:
             if sprite in defined:
@@ -526,7 +573,7 @@ class GfxReferenceValidator(BaseValidator):
             else:
                 msg = f"Undefined sprite '{sprite}'"
             entry = (msg, rel, line)
-            if gui_mode and not _is_md_gui_file(filepath):
+            if gui_mode and (not _is_md_gui_file(filepath) or sprite in override_refs):
                 warnings.append(entry)
             else:
                 errors.append(entry)

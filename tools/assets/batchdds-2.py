@@ -489,6 +489,24 @@ def convert_dds(input_path, output_path=None, fmt="dxt5"):
         header = make_dxt1_header(width, height)
         compress = compress_to_dxt1
 
+    # Idempotency: a file already in the target legacy FourCC with no mipmap
+    # chain is what this tool would produce, so re-encoding it only degrades
+    # quality. Skip it (copying bytes when writing to a separate output).
+    mip_count = struct.unpack_from("<I", data, 28)[0]
+    already_target = mip_count in (0, 1) and (
+        (use_dxt5 and pf_fourcc == DXT5_FOURCC)
+        or (not use_dxt5 and pf_fourcc == DXT1_FOURCC)
+    )
+    if already_target:
+        print(f"  = Skipping {input_path}: already {out_fmt}, no mipmaps")
+        if output_path != input_path:
+            os.makedirs(
+                os.path.dirname(os.path.abspath(output_path)) or ".", exist_ok=True
+            )
+            with open(output_path, "wb") as f:
+                f.write(data)
+        return True
+
     print(f"Converting: {input_path}  ({width}x{height}, {fmt_name} → {out_fmt})")
     compressed = compress(pixels, width, height)
 

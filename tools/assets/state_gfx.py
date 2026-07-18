@@ -5,17 +5,25 @@
 import csv
 import os
 import re
+import sys
 
 import PIL.Image
 from PIL import Image
 
-mod = "Millennium_Dawn"
-path = os.path.abspath(os.path.join(os.path.dirname(mod), ".."))
-states_dir = os.path.abspath(os.path.join(os.path.dirname(mod), r"..\history\states"))
-definition_file = os.path.abspath(
-    os.path.join(os.path.dirname(mod), r"..\map\definition.csv")
-)
+# Anchor to the repo (tools/assets/ -> repo root) with OS-correct separators;
+# the old `r"..\history\states"` literals were dead on Linux.
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+states_dir = os.path.join(REPO_ROOT, "history", "states")
+definition_file = os.path.join(REPO_ROOT, "map", "definition.csv")
+provinces_bmp = os.path.join(REPO_ROOT, "map", "provinces.bmp")
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+
+for _required in (states_dir, definition_file, provinces_bmp):
+    if not os.path.exists(_required):
+        sys.exit(
+            f"ERROR: required path not found: {_required}\n"
+            "state_gfx.py must be run from within the Millennium Dawn repository."
+        )
 
 state_ids = input("Enter the state ID(s) separated by spaces: ").split(" ")
 scale_number = int(
@@ -98,9 +106,7 @@ for state_id in state_ids:
     else:
         print("Couldn't find state file")
 
-    image_path = os.path.abspath(
-        os.path.join(os.path.dirname(mod), r"..\map\provinces.bmp")
-    )
+    image_path = provinces_bmp
     target_hex_codes = hex_codes
     replacement_hex_code = "#ffffff"
 

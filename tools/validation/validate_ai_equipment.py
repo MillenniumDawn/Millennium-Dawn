@@ -17,6 +17,13 @@ CATEGORY_RE = re.compile(r"category\s*=\s*(naval|land|air)")
 TEMPLATE_NAME_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
 
 
+def _strip_line_comment(line: str) -> str:
+    """Return *line* with any `#` comment removed, so an unbalanced brace inside
+    a comment doesn't corrupt block brace-depth counting."""
+    pos = line.find("#")
+    return line if pos < 0 else line[:pos]
+
+
 def parse_tags(text: str) -> Set[str]:
     """Extract 3-letter country tags from a block."""
     return set(re.findall(r"\b([A-Z]{3})\b", text))
@@ -59,13 +66,15 @@ def parse_equipment_file(
         match = re.match(r"^(\w+)\s*=\s*\{", line)
         if match:
             template_name = match.group(1)
-            brace_depth = line.count("{") - line.count("}")
+            code = _strip_line_comment(line)
+            brace_depth = code.count("{") - code.count("}")
             block_lines = [line]
             i += 1
 
             while i < len(lines) and brace_depth > 0:
                 block_lines.append(lines[i])
-                brace_depth += lines[i].count("{") - lines[i].count("}")
+                code = _strip_line_comment(lines[i])
+                brace_depth += code.count("{") - code.count("}")
                 i += 1
 
             block_text = "\n".join(block_lines)

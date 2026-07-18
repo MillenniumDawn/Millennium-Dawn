@@ -38,22 +38,38 @@ _BLOCK_PROPS = {
 }
 
 
+def _option_body(option_block: List[str]) -> List[str]:
+    """Lines between the option header's opening brace and its matching close."""
+    return option_block[1:-1] if len(option_block) >= 2 else []
+
+
+def _option_indent(option_block: List[str]) -> str:
+    """Leading-tab indent of the option body, from its first non-blank line.
+    Files with 2-tab option bodies get a 2-tab log line, 3-tab bodies get 3."""
+    for line in _option_body(option_block):
+        if line.strip():
+            return line[: len(line) - len(line.lstrip("\t"))] or "\t\t\t"
+    return "\t\t\t"
+
+
 def _option_log_line(option_block: List[str]) -> str:
     """Build the log line for an event option. Uses the first `name = ...`
-    line found in the block (matches legacy behaviour)."""
+    line found in the block (matches legacy behaviour); indent follows the body."""
     option_name = "option"
     for line in option_block:
         stripped = line.strip()
         if stripped.startswith("name ="):
             option_name = stripped.split("=", 1)[1].strip()
             break
-    return f'\t\t\tlog = "[GetDateText]: [This.GetName]: {option_name} executed"'
+    indent = _option_indent(option_block)
+    return f'{indent}log = "[GetDateText]: [This.GetName]: {option_name} executed"'
 
 
 def _option_has_effects(option_block: List[str]) -> bool:
-    """Check whether an option has any meaningful effect lines."""
+    """Check whether an option's body has any meaningful effect lines. Scans only
+    the body so the `option = {` header line itself never trips detection."""
     skip_prefixes = ("name =", "ai_chance =", "trigger =")
-    for line in option_block:
+    for line in _option_body(option_block):
         stripped = line.strip()
         if not stripped or stripped in ("{", "}"):
             continue

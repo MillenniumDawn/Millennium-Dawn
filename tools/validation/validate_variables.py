@@ -42,6 +42,14 @@ _FLAG_LONG_FORM_RE = re.compile(
 _MATH_PRECISION_RE = re.compile(
     r"\b(add|subtract|multiply|divide|value)\s*=\s*[-+]?\d*\.\d{6,}"
 )
+# Shorthand variable assignment: `set_variable = { my_var = 0.1234567 }` (also
+# set_temp_variable / add_to_variable / multiply_variable / …). The value sits
+# on the RHS of the variable name, not behind a `value =` key, so the operator
+# pattern above misses it. Requires a `..._variable` opener so a plain
+# `{ key = 0.123456 }` block (e.g. an ai_will_do factor) is not matched.
+_MATH_PRECISION_SHORTHAND_RE = re.compile(
+    r"\b\w*_variable\s*=\s*\{\s*\w+\s*=\s*[-+]?\d*\.\d{6,}"
+)
 
 
 def _scan_flags_in_file(
@@ -167,12 +175,153 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     rel = os.path.relpath(filename, mod_path)
 
     issues: List[str] = []
-    for m in _MATH_PRECISION_RE.finditer(cleaned):
-        line = cleaned[: m.start()].count("\n") + 1
-        issues.append(
-            f"{rel}:{line} - math expression literal with >5 decimal places"
-            f" (engine truncates silently): {m.group(0).strip()}"
-        )
+    for pattern in (_MATH_PRECISION_RE, _MATH_PRECISION_SHORTHAND_RE):
+        for m in pattern.finditer(cleaned):
+            line = cleaned[: m.start()].count("\n") + 1
+            issues.append(
+                f"{rel}:{line} - math expression literal with >5 decimal places"
+                f" (engine truncates silently): {m.group(0).strip()}"
+            )
+    return issues
+
+
+# modify_treasury_effect writes the country-scope `treasury` variable
+# (add_to_variable = { treasury = treasury_change }). Called while the current
+# scope is a STATE it silently writes an unrelated state variable and the
+# nation's balance never changes. The scope tracker below flags calls whose
+# nearest enclosing scope switch is a state block with no intervening
+# country-scope opener.
+_TREASURY_ANCHOR_RE = re.compile(r"\bmodify_treasury_effect\s*=\s*yes\b")
+_SCOPE_OPEN_RE = re.compile(r"([^\s{}=]+)\s*=\s*\{")
+# Effect iterators / scopes that switch the current scope to a STATE.
+_STATE_SCOPE_TOKENS = frozenset(
+    {
+        "capital_scope",
+        "random_owned_state",
+        "every_owned_state",
+        "all_owned_state",
+        "random_state",
+        "every_state",
+        "all_state",
+        "random_controlled_state",
+        "every_controlled_state",
+        "all_controlled_state",
+        "random_owned_controlled_state",
+        "every_owned_controlled_state",
+        "random_neighbor_state",
+        "every_neighbor_state",
+        "all_neighbor_state",
+    }
+)
+# Scopes that switch to a country / other non-state scope. These mask an outer
+# state scope, so a treasury call inside them is not flagged. ROOT/PREV/FROM/THIS
+# are treated as non-state conservatively (unknown target → don't flag).
+_NONSTATE_SCOPE_TOKENS = frozenset(
+    {
+        "owner",
+        "OWNER",
+        "controller",
+        "CONTROLLER",
+        "ROOT",
+        "PREV",
+        "FROM",
+        "THIS",
+        "overlord",
+    }
+)
+_TAG_SCOPE_RE = re.compile(r"^[A-Z][A-Z0-9]{2}(?:_[A-Za-z0-9]+)*$")
+_DECIMAL_RE = re.compile(r"\d+\.\d+")
+
+
+def _classify_scope_token(token: str, parent: str) -> str:
+    """Classify a `token = {` opener as STATE, NONSTATE, or INHERIT.
+
+    INHERIT means the block does not change scope (if/limit/effect args, weights),
+    so the current scope is whatever the nearest STATE/NONSTATE ancestor set.
+    """
+    if token.isdigit() or _DECIMAL_RE.fullmatch(token):
+        # A bare number is a state id at effect level, but a bucket weight inside
+        # random_list (inherits the enclosing scope, not a state switch).
+        if parent == "random_list":
+            return "INHERIT"
+        return "STATE"
+    if token in _STATE_SCOPE_TOKENS:
+        return "STATE"
+    low = token.lower()
+    if low.startswith(("random_", "every_", "all_")) and "state" in low:
+        return "STATE"
+    if token in _NONSTATE_SCOPE_TOKENS:
+        return "NONSTATE"
+    if token.startswith(("ROOT", "PREV", "FROM", "THIS", "var:", "event_target:")):
+        return "NONSTATE"
+    if "country" in low:
+        return "NONSTATE"
+    if _TAG_SCOPE_RE.match(token):
+        return "NONSTATE"
+    return "INHERIT"
+
+
+def process_file_for_treasury_scope(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag modify_treasury_effect calls that run in state scope.
+
+    Returns (message, rel_path, line) tuples. Only flags a call whose nearest
+    enclosing scope switch is a state block — conservative, so an intervening
+    owner/CONTROLLER/tag/ROOT opener suppresses the finding.
+    """
+    filename, mod_path = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = strip_comments(text)
+    if "modify_treasury_effect" not in cleaned:
+        return []
+
+    events = []
+    for m in _SCOPE_OPEN_RE.finditer(cleaned):
+        events.append((m.end() - 1, 0, m.group(1)))
+    for m in re.finditer(r"\}", cleaned):
+        events.append((m.start(), 1, None))
+    for m in _TREASURY_ANCHOR_RE.finditer(cleaned):
+        events.append((m.start(), 2, None))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    rel = os.path.relpath(filename, mod_path)
+    stack: List[Tuple[str, str]] = []
+    issues: List[Tuple[str, str, int]] = []
+    for pos, kind, tok in events:
+        if kind == 0:
+            parent = stack[-1][1] if stack else ""
+            stack.append((_classify_scope_token(tok, parent), tok))
+        elif kind == 1:
+            if stack:
+                stack.pop()
+        else:
+            scope = ""
+            frame_tok = ""
+            for cat, ftok in reversed(stack):
+                if cat in ("STATE", "NONSTATE"):
+                    scope = cat
+                    frame_tok = ftok
+                    break
+            if scope == "STATE":
+                line = cleaned[:pos].count("\n") + 1
+                issues.append(
+                    (
+                        f"modify_treasury_effect runs in state scope"
+                        f" (inside `{frame_tok} = {{`) — treasury is a country"
+                        f" variable, so the nation's balance never changes",
+                        rel,
+                        line,
+                    )
+                )
     return issues
 
 
@@ -820,6 +969,42 @@ class Validator(BaseValidator):
             category="orphan-money-setter",
         )
 
+    def validate_treasury_state_scope(self):
+        """Flag modify_treasury_effect calls that execute in state scope (WARNING).
+
+        The effect writes the country-scope `treasury` variable; called inside a
+        state block (state id, random_owned_state, ...) it silently writes an
+        unrelated state variable and the money never moves. Only flags when the
+        nearest enclosing scope switch is a state — an intervening
+        owner/CONTROLLER/tag/ROOT opener suppresses it.
+        """
+        self._log_section("Checking for modify_treasury_effect in state scope...")
+
+        txt_files = self._collect_files(
+            [
+                "common/national_focus/*.txt",
+                "common/decisions/**/*.txt",
+                "common/on_actions/**/*.txt",
+                "events/**/*.txt",
+            ]
+        )
+        if not txt_files:
+            self.log("✓ No modify_treasury_effect state-scope issues found")
+            return
+
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_treasury_scope, args_list, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No modify_treasury_effect state-scope issues found",
+            "modify_treasury_effect calls in state scope (treasury is a country variable — the money never moves):",
+            severity=Severity.WARNING,
+            category="treasury-state-scope",
+        )
+
     def validate_flag_syntax(self):
         """Combined check for two flag syntax issues in a single pool_map pass:
 
@@ -996,6 +1181,7 @@ class Validator(BaseValidator):
     def run_validations(self):
         self.validate_math_precision()
         self.validate_orphan_money_setters()
+        self.validate_treasury_state_scope()
 
         if self.staged_only:
             # Variable validation cross-references flags across all files

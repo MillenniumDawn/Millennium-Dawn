@@ -95,7 +95,9 @@ def main():
             print(e)
 
     # Exit 1 if any files were modified (pre-commit convention for auto-fixers)
-    return 1 if modified else 0
+    # or if a standardizer crashed — a crash means the file was left
+    # unprocessed/corrupt, so the commit must not proceed silently.
+    return 1 if (modified or errors) else 0
 
 
 if __name__ == "__main__":

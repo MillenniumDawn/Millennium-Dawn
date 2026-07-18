@@ -119,7 +119,11 @@ _NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILIN
 _PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([A-Za-z0-9_.-]+)", re.MULTILINE)
 _ALLOWED_ALWAYS_NO = re.compile(r"\ballowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
-_ALLOWED_TAG_CHECK = re.compile(r"\ballowed\s*=\s*\{[^}]*\btag\s*=\s*([A-Z]{3})[^}]*\}")
+_ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
+# `\btag` does not match inside `original_tag` (the preceding `_` is a word char),
+# so these two are disjoint.
+_TAG_IN_ALLOWED = re.compile(r"\btag\s*=\s*([A-Z][A-Z0-9_]{2})\b")
+_ORIGINAL_TAG_IN_ALLOWED = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{2})\b")
 _PICTURE_LINE = re.compile(r"^\s+picture\s*=", re.MULTILINE)
 _ON_ADD_BLOCK_START = re.compile(r"\bon_add\s*=\s*\{")
 _LOG_LINE = re.compile(r'^\s*log\s*=\s*"[^"]*"\s*$')
@@ -334,22 +338,31 @@ def _parse_ideas_from_text(
                         )
                     )
 
-                tag_match = _ALLOWED_TAG_CHECK.search(idea_text)
-                if (
-                    tag_match
-                    and "original_tag"
-                    not in idea_text.split("allowed")[1].split("}")[0]
-                    if "allowed" in idea_text
-                    else False
-                ):
-                    if category_name in _ALWAYS_NO_CATEGORIES:
+                allowed_start = _ALLOWED_BLOCK_START.search(idea_text)
+                if allowed_start:
+                    allowed_block, _ = extract_block_from_text(
+                        idea_text, allowed_start.end() - 1
+                    )
+                    tag_m = _TAG_IN_ALLOWED.search(allowed_block)
+                    has_original = _ORIGINAL_TAG_IN_ALLOWED.search(allowed_block)
+                    if tag_m and has_original:
+                        issues.append(
+                            IdeaIssue(
+                                current_idea,
+                                category_name,
+                                current_idea_line,
+                                "redundant-tag-and-original-tag",
+                                detail=tag_m.group(1),
+                            )
+                        )
+                    elif tag_m:
                         issues.append(
                             IdeaIssue(
                                 current_idea,
                                 category_name,
                                 current_idea_line,
                                 "tag-not-original-tag",
-                                detail=tag_match.group(1),
+                                detail=tag_m.group(1),
                             )
                         )
 
@@ -757,6 +770,13 @@ class Validator(BaseValidator):
                         issue.line,
                         f"'{issue.idea_name}' uses tag = {issue.detail} in allowed (use original_tag for civil war safety)",
                     )
+                elif issue.issue_type == "redundant-tag-and-original-tag":
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has both tag and original_tag = {issue.detail} in allowed"
+                        " (drop the tag = ...; original_tag already restricts it)",
+                    )
                 elif issue.issue_type == "on-add-log-only":
                     _add(
                         filepath,
@@ -896,14 +916,12 @@ class Validator(BaseValidator):
         point at vanilla pictures (e.g. `picture = generic_military_reform`)
         don't false-positive.
         """
-        import glob as _glob
-
         from validate_gfx_references import (
-            _find_vanilla_interface_dir,
             _parse_gfx_file,
+            _vanilla_gfx_files,
         )
 
-        gfx_files = self._collect_files(["interface/*.gfx"], ignore_staged=True)
+        gfx_files = self._collect_files(["interface/**/*.gfx"], ignore_staged=True)
         results = self._pool_map(
             _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
         )
@@ -914,15 +932,14 @@ class Validator(BaseValidator):
             f"  Found {len(defined)} GFX sprites across {len(gfx_files)} mod .gfx files"
         )
 
-        vanilla_dir = _find_vanilla_interface_dir()
-        if vanilla_dir:
-            vanilla_gfx = _glob.glob(os.path.join(vanilla_dir, "*.gfx"))
+        vanilla_gfx = _vanilla_gfx_files()
+        if vanilla_gfx:
             vanilla_results = self._pool_map(
                 _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
             )
             for s in vanilla_results:
                 defined.update(s)
-            self.log(f"  Added vanilla sprites from {vanilla_dir}")
+            self.log(f"  Added vanilla sprites from {len(vanilla_gfx)} .gfx files")
         else:
             self.log(
                 "  No vanilla HOI4 install detected — ideas using vanilla "
