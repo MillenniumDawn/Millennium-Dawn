@@ -31,22 +31,7 @@ grep -rn "old_opinion_modifier" common/ localisation/
 
 When a function uses array subscripts (`^idx`), trace every caller to confirm `idx` holds the expected value.
 
-### Common Index Confusions
-
-| Variable       | Typical Meaning       | What It Is NOT        |
-| -------------- | --------------------- | --------------------- |
-| `project`      | Slot index (0..14)    | Building type (1..14) |
-| `project_type` | Building type (1..14) | Slot index            |
-| `i` / `v`      | Loop position / value | Depends on context    |
-
-### Checklist
-
-- [ ] For every function that reads `foo^bar`, find every place `bar` is set.
-- [ ] Confirm `bar` is set **before** the function is called.
-- [ ] If `bar` is an argument-like variable, verify no caller passes the wrong index type.
-- [ ] If the function writes to `foo^bar`, confirm `bar` is a valid slot index at write time.
-
-**Example bug:** `project_build_amount^project_type` reads the build amount at the **building type** index, not the **slot** index. Fixed by using `project_build_amount^project`.
+For the index-type table (slot position vs lookup key) and naming semantics, see `.claude/docs/scripting-edge-cases.md` (Array Index Semantics). For every `foo^bar` read, find where `bar` is set, confirm it is set before the call, and verify it holds the kind of index the reader expects.
 
 ## 3. Global Variable -> Array Migration
 

@@ -411,6 +411,7 @@ on_actions = {
 				}
 				set_global_flag = GAME_RULE_disable_anti_bully
 			}
+
 			# Disable Formable Nations
 			if = {
 				limit = {
@@ -918,6 +919,40 @@ on_actions = {
 				}
 			}
 
+			# MP Free Factories: grant every human player offsite civ + mil factories at start
+			if = {
+				limit = { has_game_rule = { rule = rule_free_factories_amount option = one } }
+				every_country = {
+					limit = { is_ai = no }
+					add_offsite_building = { type = industrial_complex level = 1 }
+					add_offsite_building = { type = arms_factory level = 1 }
+				}
+			}
+			else_if = {
+				limit = { has_game_rule = { rule = rule_free_factories_amount option = two } }
+				every_country = {
+					limit = { is_ai = no }
+					add_offsite_building = { type = industrial_complex level = 2 }
+					add_offsite_building = { type = arms_factory level = 2 }
+				}
+			}
+			else_if = {
+				limit = { has_game_rule = { rule = rule_free_factories_amount option = three } }
+				every_country = {
+					limit = { is_ai = no }
+					add_offsite_building = { type = industrial_complex level = 3 }
+					add_offsite_building = { type = arms_factory level = 3 }
+				}
+			}
+			else_if = {
+				limit = { has_game_rule = { rule = rule_free_factories_amount option = five } }
+				every_country = {
+					limit = { is_ai = no }
+					add_offsite_building = { type = industrial_complex level = 5 }
+					add_offsite_building = { type = arms_factory level = 5 }
+				}
+			}
+
 			# Player Energy Difficulty
 			if = {
 				limit = {
@@ -1287,37 +1322,10 @@ on_actions = {
 					}
 					random_list = {
 						25 = { }	#Default
-						25 = { set_global_flag = CHI_CHINESE_HEGEMONY_FOCUS_PATH }
-						25 = { set_global_flag = CHI_RED_DAWN_FOCUS_PATH }
-						25 = { set_global_flag = CHI_A_LONG_PEACE_FOCUS_PATH }
+						25 = { }
+						25 = { }
+						25 = { }
 					}
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = CHI_ai_behavior
-							option = CHINESE_HEGEMONY
-						}
-					}
-					set_global_flag = CHI_CHINESE_HEGEMONY_FOCUS_PATH
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = CHI_ai_behavior
-							option = RED_DAWN
-						}
-					}
-					set_global_flag = CHI_RED_DAWN_FOCUS_PATH
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = CHI_ai_behavior
-							option = A_LONG_PEACE
-						}
-					}
-					set_global_flag = CHI_A_LONG_PEACE_FOCUS_PATH
 				}
 			}
 
@@ -1362,9 +1370,17 @@ on_actions = {
 							rule = SWE_ai_behavior
 							option = RANDOM
 						}
+						NOT = {
+							OR = {
+								has_global_flag = SWE_PRO_WESTERN_FOCUS_PATH
+								has_global_flag = SWE_NORTHERN_AMBITION_FOCUS_PATH
+								has_global_flag = SWE_RED_SWEDEN_FOCUS_PATH
+								has_global_flag = SWE_DEFAULT_FOCUS_PATH
+							}
+						}
 					}
 					random_list = {
-						10 = { }	#Default
+						10 = { set_global_flag = SWE_DEFAULT_FOCUS_PATH }	#Default
 						70 = { set_global_flag = SWE_PRO_WESTERN_FOCUS_PATH }
 						10 = { set_global_flag = SWE_NORTHERN_AMBITION_FOCUS_PATH }
 						10 = { set_global_flag = SWE_RED_SWEDEN_FOCUS_PATH }
@@ -1396,6 +1412,204 @@ on_actions = {
 						}
 					}
 					set_global_flag = SWE_RED_SWEDEN_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						has_global_flag = SWE_RED_SWEDEN_FOCUS_PATH
+						NOT = { has_country_flag = SWE_ai_sentiment_granted }
+					}
+					add_timed_idea = { idea = SWE_ai_communist_sentiment days = 1095 }
+					set_country_flag = SWE_ai_sentiment_granted
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						has_global_flag = SWE_NORTHERN_AMBITION_FOCUS_PATH
+						NOT = { has_country_flag = SWE_ai_sentiment_granted }
+					}
+					add_timed_idea = { idea = SWE_ai_nationalist_sentiment days = 1095 }
+					set_country_flag = SWE_ai_sentiment_granted
+				}
+			}
+
+			NRY = {
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = NRY_ai_behavior
+							option = RANDOM
+						}
+						NOT = {
+							OR = {
+								has_global_flag = NRY_LABOUR_FOCUS_PATH
+								has_global_flag = NRY_CHRISTIAN_PEOPLES_FOCUS_PATH
+								has_global_flag = NRY_PROGRESS_FOCUS_PATH
+								has_global_flag = NRY_DEFAULT_FOCUS_PATH
+							}
+						}
+					}
+					random_list = {
+						10 = { set_global_flag = NRY_DEFAULT_FOCUS_PATH }	#Default
+						30 = { set_global_flag = NRY_LABOUR_FOCUS_PATH }
+						30 = { set_global_flag = NRY_CHRISTIAN_PEOPLES_FOCUS_PATH }
+						30 = { set_global_flag = NRY_PROGRESS_FOCUS_PATH }
+					}
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = NRY_ai_behavior
+							option = LABOUR
+						}
+					}
+					set_global_flag = NRY_LABOUR_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = NRY_ai_behavior
+							option = CHRISTIAN_PEOPLES
+						}
+					}
+					set_global_flag = NRY_CHRISTIAN_PEOPLES_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = NRY_ai_behavior
+							option = PROGRESS
+						}
+					}
+					set_global_flag = NRY_PROGRESS_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						has_global_flag = NRY_LABOUR_FOCUS_PATH
+						NOT = { has_country_flag = NRY_ai_sentiment_granted }
+					}
+					add_timed_idea = { idea = NRY_ai_labour_sentiment days = 1095 }
+					set_country_flag = NRY_ai_sentiment_granted
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						has_global_flag = NRY_PROGRESS_FOCUS_PATH
+						NOT = { has_country_flag = NRY_ai_sentiment_granted }
+					}
+					add_timed_idea = { idea = NRY_ai_progress_sentiment days = 1095 }
+					set_country_flag = NRY_ai_sentiment_granted
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						has_global_flag = NRY_CHRISTIAN_PEOPLES_FOCUS_PATH
+						NOT = { has_country_flag = NRY_ai_sentiment_granted }
+					}
+					add_timed_idea = { idea = NRY_ai_christian_sentiment days = 1095 }
+					set_country_flag = NRY_ai_sentiment_granted
+				}
+			}
+
+			DEN = {
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = DEN_ai_behavior
+							option = RANDOM
+						}
+						NOT = {
+							OR = {
+								has_global_flag = DEN_PRO_WESTERN_FOCUS_PATH
+								has_global_flag = DEN_EUROSCEPTIC_FOCUS_PATH
+								has_global_flag = DEN_SOCIALIST_FOCUS_PATH
+								has_global_flag = DEN_MONARCHIST_FOCUS_PATH
+								has_global_flag = DEN_NATIONALIST_FOCUS_PATH
+								has_global_flag = DEN_DEFAULT_FOCUS_PATH
+							}
+						}
+					}
+					random_list = {
+						10 = { set_global_flag = DEN_DEFAULT_FOCUS_PATH }	#Default
+						30 = { set_global_flag = DEN_PRO_WESTERN_FOCUS_PATH }
+						15 = { set_global_flag = DEN_EUROSCEPTIC_FOCUS_PATH }
+						15 = { set_global_flag = DEN_SOCIALIST_FOCUS_PATH }
+						15 = { set_global_flag = DEN_MONARCHIST_FOCUS_PATH }
+						15 = { set_global_flag = DEN_NATIONALIST_FOCUS_PATH }
+					}
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = DEN_ai_behavior
+							option = DEN_PRO_WESTERN
+						}
+					}
+					set_global_flag = DEN_PRO_WESTERN_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = DEN_ai_behavior
+							option = DEN_EUROSCEPTIC
+						}
+					}
+					set_global_flag = DEN_EUROSCEPTIC_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = DEN_ai_behavior
+							option = DEN_SOCIALIST
+						}
+					}
+					set_global_flag = DEN_SOCIALIST_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = DEN_ai_behavior
+							option = DEN_MONARCHIST
+						}
+					}
+					set_global_flag = DEN_MONARCHIST_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = DEN_ai_behavior
+							option = DEN_NATIONALIST
+						}
+					}
+					set_global_flag = DEN_NATIONALIST_FOCUS_PATH
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						has_global_flag = DEN_NATIONALIST_FOCUS_PATH
+						NOT = { has_country_flag = DEN_ai_sentiment_granted }
+					}
+					add_timed_idea = { idea = DEN_ai_nationalist_sentiment days = 1095 }
+					set_country_flag = DEN_ai_sentiment_granted
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						has_global_flag = DEN_MONARCHIST_FOCUS_PATH
+						NOT = { has_country_flag = DEN_ai_sentiment_granted }
+					}
+					add_timed_idea = { idea = DEN_ai_nationalist_sentiment days = 1095 }
+					set_country_flag = DEN_ai_sentiment_granted
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						has_global_flag = DEN_SOCIALIST_FOCUS_PATH
+						NOT = { has_country_flag = DEN_ai_sentiment_granted }
+					}
+					add_timed_idea = { idea = DEN_ai_communist_sentiment days = 1095 }
+					set_country_flag = DEN_ai_sentiment_granted
 				}
 			}
 
@@ -1724,7 +1938,72 @@ on_actions = {
 				}
 			}
 
+			BUL = {
+				# Historical default: bias toward the Euro-Atlantic path
+				# so the AI always has a strategy plan to follow when the rule is untouched.
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = BUL_ai_behavior
+							option = DEFAULT
+						}
+					}
+					set_country_flag = BUL_EUROATLANTIC_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = BUL_ai_behavior
+							option = EUROATLANTIC
+						}
+					}
+					set_country_flag = BUL_EUROATLANTIC_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = BUL_ai_behavior
+							option = NATIONALIST
+						}
+					}
+					set_country_flag = BUL_NATIONALIST_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = BUL_ai_behavior
+							option = COMMUNIST
+						}
+					}
+					set_country_flag = BUL_COMMUNIST_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = BUL_ai_behavior
+							option = RANDOM
+						}
+					}
+					random_list = {
+						50 = { set_country_flag = BUL_EUROATLANTIC_PATH }
+						25 = { set_country_flag = BUL_NATIONALIST_PATH }
+						25 = { set_country_flag = BUL_COMMUNIST_PATH }
+					}
+				}
+			}
+
 			GRE = {
+				# Default rule: bias toward the historical Hellenic Republic path
+				# so the AI always has a strategy plan to follow when the player leaves the rule alone.
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = GRE_ai_behavior
+							option = DEFAULT
+						}
+					}
+					set_global_flag = GRE_HELLENIC_REPUBLIC_PATH
+				}
 				if = {
 					limit = {
 						has_game_rule = {
@@ -1756,14 +2035,87 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = GRE_ai_behavior
+							option = MULTIPOLAR_GREECE
+						}
+					}
+					set_global_flag = GRE_MULTIPOLAR_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = GRE_ai_behavior
 							option = RANDOM
 						}
 					}
 					random_list = {
-						25 = { set_global_flag = GRE_KKE_PATH }
-						25 = { set_global_flag = GRE_GOLDEN_DAWN_PATH }
-						25 = { set_global_flag = GRE_HELLENIC_REPUBLIC_PATH }
-						25 = { }
+						20 = { set_global_flag = GRE_KKE_PATH }
+						20 = { set_global_flag = GRE_GOLDEN_DAWN_PATH }
+						40 = { set_global_flag = GRE_HELLENIC_REPUBLIC_PATH }
+						20 = { set_global_flag = GRE_MULTIPOLAR_PATH }
+					}
+				}
+			}
+
+			MNT = {
+				# Historical default: bias toward the pro-Western Djukanovic course
+				# so the AI always has a strategy plan to follow when the rule is untouched.
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = MNT_ai_behavior
+							option = DEFAULT
+						}
+					}
+					set_country_flag = MNT_WESTERN_INTEGRATION_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = MNT_ai_behavior
+							option = WESTERN_INTEGRATION
+						}
+					}
+					set_country_flag = MNT_WESTERN_INTEGRATION_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = MNT_ai_behavior
+							option = EASTERN_ALIGNMENT
+						}
+					}
+					set_country_flag = MNT_EASTERN_ALIGNMENT_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = MNT_ai_behavior
+							option = SERBIAN_UNION
+						}
+					}
+					set_country_flag = MNT_SERBIAN_UNION_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = MNT_ai_behavior
+							option = NEUTRAL_HARBOUR
+						}
+					}
+					set_country_flag = MNT_NEUTRAL_HARBOUR_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = MNT_ai_behavior
+							option = RANDOM
+						}
+					}
+					random_list = {
+						45 = { set_country_flag = MNT_WESTERN_INTEGRATION_PATH }
+						20 = { set_country_flag = MNT_EASTERN_ALIGNMENT_PATH }
+						20 = { set_country_flag = MNT_SERBIAN_UNION_PATH }
+						15 = { set_country_flag = MNT_NEUTRAL_HARBOUR_PATH }
 					}
 				}
 			}
@@ -2263,41 +2615,43 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = SWI_ai_behavior
-							option = SWI_MOUNTAIN_FORTRESS
-						}
-					}
-					set_global_flag = SWI_MOUNTAIN_FORTRESS_PATH
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = SWI_ai_behavior
-							option = SWI_NATO
+							option = SWI_NATO_EU
 						}
 					}
 					set_global_flag = SWI_NATO_PATH
 				}
+				# Rule desc promises a friend to all: explicit neutrality never rolls the dissolution path
 				if = {
 					limit = {
 						has_game_rule = {
 							rule = SWI_ai_behavior
-							option = SWI_SWISS_PROTECTION_LEAGUE
+							option = SWI_NEUTRAL
 						}
 					}
-					set_global_flag = SWI_SWISS_PROTECTION_LEAGUE_PATH
+					set_global_flag = SWI_NEUTRAL_PATH
+					set_global_flag = SWI_KEEP_FEDERATION_PATH
 				}
+				# RANDOM defers to plain historical behaviour on historical AI
 				if = {
 					limit = {
 						has_game_rule = {
 							rule = SWI_ai_behavior
 							option = RANDOM
 						}
+						NOT = { is_historical_focus_on = yes }
+						NOT = { has_global_flag = SWI_NATO_PATH }
+						NOT = { has_global_flag = SWI_NEUTRAL_PATH }
 					}
 					random_list = {
-						25 = { set_global_flag = SWI_MOUNTAIN_FORTRESS_PATH }
-						25 = { set_global_flag = SWI_NATO_PATH }
-						25 = { set_global_flag = SWI_SWISS_PROTECTION_LEAGUE_PATH }
-						25 = { }
+						50 = { set_global_flag = SWI_NATO_PATH }
+						25 = {
+							set_global_flag = SWI_NEUTRAL_PATH
+							set_global_flag = SWI_KEEP_FEDERATION_PATH
+						}
+						25 = {
+							set_global_flag = SWI_NEUTRAL_PATH
+							set_global_flag = SWI_DISSOLVE_FEDERATION_PATH
+						}
 					}
 				}
 			}
@@ -2476,28 +2830,28 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = NKO_ai_behavior
-							option = NKO_NAM_RULES
+							option = NKO_nam_rules
 						}
 					}
-					set_global_flag = NKO_NAM_RULES_FOCUS_PATH
+					set_global_flag = NKO_nam_rules_focus_path
 				}
 				if = {
 					limit = {
 						has_game_rule = {
 							rule = NKO_ai_behavior
-							option = NKO_UN_RULES
+							option = NKO_un_rules
 						}
 					}
-					set_global_flag = NKO_UN_RULES_FOCUS_PATH
+					set_global_flag = NKO_un_rules_focus_path
 				}
 				if = {
 					limit = {
 						has_game_rule = {
 							rule = NKO_ai_behavior
-							option = NKO_JUNTA_RULES
+							option = NKO_junta_rules
 						}
 					}
-					set_global_flag = NKO_JUNTA_RULES_FOCUS_PATH
+					set_global_flag = NKO_junta_rules_focus_path
 				}
 				if = {
 					limit = {
@@ -2507,9 +2861,9 @@ on_actions = {
 						}
 					}
 					random_list = {
-						33 = { set_global_flag = NKO_NAM_RULES_FOCUS_PATH }
-						33 = { set_global_flag = NKO_UN_RULES_FOCUS_PATH }
-						33 = { set_global_flag = NKO_JUNTA_RULES_FOCUS_PATH }
+						33 = { set_global_flag = NKO_nam_rules_focus_path }
+						33 = { set_global_flag = NKO_un_rules_focus_path }
+						33 = { set_global_flag = NKO_junta_rules_focus_path }
 					}
 				}
 			}
@@ -2587,6 +2941,17 @@ on_actions = {
 				}
 			}
 			SER = {
+				# Historical default: bias toward the post-Milosevic democratic path
+				# so the AI always has a strategy plan to follow when the rule is untouched.
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = SER_ai_behavior
+							option = DEFAULT
+						}
+					}
+					set_global_flag = SER_SERBIAN_LIBERALS_FOCUS_PATH
+				}
 				if = {
 					limit = {
 						has_game_rule = {
@@ -2595,12 +2960,11 @@ on_actions = {
 						}
 					}
 					random_list = {
-						20 = { }	#Default
 						10 = { set_global_flag = SER_MILOCEVIC_COMMI_FOCUS_PATH }
 						10 = { set_global_flag = SER_MILOCEVIC_NATI_FOCUS_PATH }
 						20 = { set_global_flag = SER_MILOCEVIC_FEDERATION_FOCUS_PATH }
 						20 = { set_global_flag = SER_SERBIAN_KINGDOM_FOCUS_PATH }
-						20 = { set_global_flag = SER_SERBIAN_LIBERALS_FOCUS_PATH }
+						40 = { set_global_flag = SER_SERBIAN_LIBERALS_FOCUS_PATH }
 					}
 				}
 				if = {
@@ -3471,46 +3835,87 @@ on_actions = {
 			}
 
 			ROM = {
+				# Historical default: bias toward the PSD path so the AI
+				# always has a strategy plan to follow when the rule is untouched.
 				if = {
 					limit = {
 						has_game_rule = {
-							rule = ROM_AI_BEHAVIOR
+							rule = ROM_ai_behavior
+							option = HISTORICAL
+						}
+					}
+					set_global_flag = ROM_CENTER
+					set_global_flag = ROM_PSD_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = ROM_ai_behavior
 							option = RANDOM
 						}
 					}
 					random_list = {
-						10 = { }	#Default
-						25 = { set_global_flag = ROM_FASCIST }
-						15 = { set_global_flag = ROM_DEMOCRATIC }
-						25 = { set_global_flag = ROM_CENTER }
+						10 = {
+							set_global_flag = ROM_CENTER
+							set_global_flag = ROM_PSD_PATH
+						}
+						25 = {
+							set_global_flag = ROM_FASCIST
+							set_global_flag = ROM_GRP_PATH
+						}
+						15 = {
+							set_global_flag = ROM_DEMOCRATIC
+							random_list = {
+								34 = { set_global_flag = ROM_PNL_PATH }
+								33 = { set_global_flag = ROM_PD_PATH }
+								33 = { set_global_flag = ROM_EUROPEAN_PATH }
+							}
+						}
+						25 = {
+							set_global_flag = ROM_CENTER
+							random_list = {
+								50 = { set_global_flag = ROM_PSD_PATH }
+								50 = { set_global_flag = ROM_PEASANTS_PATH }
+							}
+						}
 					}
 				}
 				if = {
 					limit = {
 						has_game_rule = {
-							rule = ROM_AI_BEHAVIOR
+							rule = ROM_ai_behavior
 							option = FASCIST
 						}
 					}
 					set_global_flag = ROM_FASCIST
+					set_global_flag = ROM_GRP_PATH
 				}
 				if = {
 					limit = {
 						has_game_rule = {
-							rule = ROM_AI_BEHAVIOR
+							rule = ROM_ai_behavior
 							option = DEMOCRATIC
 						}
 					}
 					set_global_flag = ROM_DEMOCRATIC
+					random_list = {
+						34 = { set_global_flag = ROM_PNL_PATH }
+						33 = { set_global_flag = ROM_PD_PATH }
+						33 = { set_global_flag = ROM_EUROPEAN_PATH }
+					}
 				}
 				if = {
 					limit = {
 						has_game_rule = {
-							rule = ROM_AI_BEHAVIOR
+							rule = ROM_ai_behavior
 							option = CENTER
 						}
 					}
 					set_global_flag = ROM_CENTER
+					random_list = {
+						50 = { set_global_flag = ROM_PSD_PATH }
+						50 = { set_global_flag = ROM_PEASANTS_PATH }
+					}
 				}
 			}
 

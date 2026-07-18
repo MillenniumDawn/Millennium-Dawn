@@ -10,7 +10,7 @@ files themselves (CI handles the full cross-reference validation).
   - events/*.txt                      -> validate_events.py
   - common/decisions/*.txt            -> validate_decisions.py
   - localisation/*.yml                -> validate_localisation.py
-  - history/countries/*.txt           -> validate_history_techs.py
+  - history/countries/*.txt           -> validate_history.py
   - common/, events/, history/        -> validate_variables.py
   - common/scripted_localisation/     -> validate_scripted_localisation.py
   - common/                           -> validate_cosmetic_tags.py
@@ -84,7 +84,7 @@ VALIDATORS = [
         "suffix": ".txt",
         "cmd": [
             "python3",
-            "tools/validation/validate_history_techs.py",
+            "tools/validation/validate_history.py",
             "--staged",
             "--strict",
             "--no-color",
