@@ -15,11 +15,10 @@ from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
-    compact_block,
     create_backup,
-    create_standard_parser,
     extract_block,
     log_message,
+    run_tool_main,
 )
 
 
@@ -31,14 +30,11 @@ def compact_search_filters(block_lines: List[str]) -> str:
     entities = []
     for line in block_lines:
         if "search_filters" in line and "{" in line:
-            # Get everything after the first '{'
             after_brace = line.split("{", 1)[1]
-            # Remove everything after '}' if present
             after_brace = after_brace.split("}", 1)[0]
             tokens = after_brace.strip().split()
             entities.extend(tokens)
         elif "}" in line:
-            # Get everything before '}'
             before_brace = line.split("}", 1)[0]
             tokens = before_brace.strip().split()
             entities.extend(tokens)
@@ -53,14 +49,14 @@ def compact_search_filters(block_lines: List[str]) -> str:
 def compact_icon(block_lines: List[str]) -> str:
     """Compact icon block into a single line, handling both simple strings and multi-line blocks"""
     if not block_lines:
-        return "icon = GFX_goal_generic_support_the_left_wing"  # Default fallback
+        return "icon = GFX_goal_generic_support_the_left_wing"
 
     if len(block_lines) == 1:
         return block_lines[0].strip()
 
     compacted_lines = []
     for line in block_lines:
-        if line.strip():  # Only keep non-empty lines
+        if line.strip():
             compacted_lines.append(line.rstrip())
 
     return "\n".join(compacted_lines)
@@ -160,7 +156,7 @@ class BaseStandardizer(ABC):
             line = lines[i].rstrip()
 
             if re.match(self.get_block_pattern(), line):
-                log_message("DEBUG", f"Found block at line {i+1}", self.verbose)
+                log_message("DEBUG", f"Found block at line {i + 1}", self.verbose)
 
                 block_lines, next_i = extract_block(lines, i)
 
@@ -182,10 +178,16 @@ class BaseStandardizer(ABC):
                 output_lines.append(line)
                 i += 1
 
+        if self.processed_count == 0:
+            log_message("INFO", "No blocks matched — skipping file write")
+            return True
+
         try:
-            with open(output_file, "w", encoding="utf-8") as f:
+            tmp_path = output_file + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 for line in output_lines:
                     f.write(line + "\n")
+            os.replace(tmp_path, output_file)
 
             end_time = time.time()
             elapsed_time = end_time - self.start_time
@@ -203,6 +205,11 @@ class BaseStandardizer(ABC):
 
         except Exception as e:
             log_message("ERROR", f"Failed to write {output_file}: {e}")
+            try:
+                if os.path.exists(output_file + ".tmp"):
+                    os.remove(output_file + ".tmp")
+            except OSError:
+                pass
             return False
 
         return True
@@ -223,26 +230,12 @@ def create_standardizer_parser(description: str) -> argparse.ArgumentParser:
 
 
 def run_standardizer(standardizer_class, description: str, argv=None):
-    """Run a standardizer with standard command line interface"""
+    """Run a standardizer with standard command line interface."""
     parser = create_standardizer_parser(description)
-    args = parser.parse_args(argv)
-
-    if not os.path.exists(args.input_file):
-        log_message("ERROR", f"File '{args.input_file}' does not exist")
-        sys.exit(1)
-
-    output_file = args.output if args.output else args.input_file
-    standardizer = standardizer_class(verbose=args.verbose)
-
-    if args.backup:
-        backup_file = create_backup(args.input_file)
-        if not backup_file:
-            sys.exit(1)
-
-    log_message("INFO", f"Starting standardization of {args.input_file}", args.verbose)
-
-    if standardizer.standardize_file(args.input_file, output_file):
-        log_message("SUCCESS", f"Standardization completed: {output_file}")
-    else:
-        log_message("ERROR", "Standardization failed")
-        sys.exit(1)
+    run_tool_main(
+        standardizer_class,
+        description=description,
+        method_name="standardize_file",
+        argv=argv,
+        parser=parser,
+    )

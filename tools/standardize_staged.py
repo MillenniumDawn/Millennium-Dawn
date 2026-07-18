@@ -80,7 +80,9 @@ def main():
             if standardize_file(filepath, file_type):
                 modified.append(filepath)
         except Exception as e:
-            errors.append(f"  {filepath}: {e}")
+            import traceback
+
+            errors.append(f"  {filepath}: {e}\n{traceback.format_exc()}")
 
     if modified:
         print(f"Standardized {len(modified)} file(s):")

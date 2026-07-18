@@ -608,7 +608,7 @@ Database
 - Tweaked Denmark, Norway and Sweden and Danish ships to be more realstic in terms of equipment (MTG)
 - Added the Blekinge Class (A26) new submarine for Sweden (MTG)
 - Tweaked ships of Australia, Brazil, Canada, UK, France, Germany, Netherlands, Pakistan, India, Russia, Taiwan, Turkey, Ukraine, USA and Venezula, that had anti-submarine motars but should have torpedoes IRL and more (MTG)
-- Tweaked some unit spawn positions in FIN, NOR, SWE to be correct
+- Tweaked some unit spawn positions in FIN, NRY, SWE to be correct
 - Added reconnaissance for Special Forces
 - Locked Ukraine's militias from being deleted
 - Removed NH90 and Eurocopter Tiger from production and stockpile for France and Germany in 2000 bookmark

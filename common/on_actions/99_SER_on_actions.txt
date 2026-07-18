@@ -1,48 +1,48 @@
 on_actions = {
 	on_daily_SER = {
 		effect = {
-			# Montenegro Independence Referendum Ended
 			if = {
-				limit = {
-					134 = { is_owned_and_controlled_by = SER }
-					has_country_flag = SER_montenegro_independence
-					check_variable = { SER_Montenegro_separatism < 1 }
-					check_variable = { SER_Montenegro_combatants < 500 }
-					NOT = { has_country_flag = SER_montenegro_independence_dead }
+				limit = { 134 = { is_owned_and_controlled_by = SER } }
+				# Montenegro Independence Referendum Ended
+				if = {
+					limit = {
+						has_country_flag = SER_montenegro_independence
+						check_variable = { SER_Montenegro_separatism < 1 }
+						check_variable = { SER_Montenegro_combatants < 500 }
+						NOT = { has_country_flag = SER_montenegro_independence_dead }
+					}
+					country_event = Serbia.17
 				}
-				country_event = Serbia.17
-			}
-			# Montenegro Independence Referendum Failed
-			if = {
-				limit = {
-					134 = { is_owned_and_controlled_by = SER }
-					check_variable = { SER_Montenegro_separatism > 99 }
+				# Montenegro Independence Referendum Failed
+				else_if = {
+					limit = {
+						check_variable = { SER_Montenegro_separatism > 99 }
+					}
+					country_event = Serbia.15
 				}
-				country_event = Serbia.15
 			}
 
-			# Balkan Federation idea — add/remove based on having any federation subject
 			if = {
-				limit = {
-					has_completed_focus = SER_confederation_created
-					any_subject_country = {
-						has_autonomy_state = autonomy_balkan_federation
-					}
-					NOT = { has_idea = SER_federation }
+				limit = { has_completed_focus = SER_confederation_created }
+				set_temp_variable = { ser_has_fed_subject = 0 }
+				if = {
+					limit = { any_subject_country = { has_autonomy_state = autonomy_balkan_federation } }
+					set_temp_variable = { ser_has_fed_subject = 1 }
 				}
-				add_ideas = SER_federation
-			}
-			else_if = {
-				limit = {
-					has_completed_focus = SER_confederation_created
-					NOT = {
-						any_subject_country = {
-							has_autonomy_state = autonomy_balkan_federation
-						}
+				if = {
+					limit = {
+						NOT = { has_idea = SER_federation }
+						check_variable = { ser_has_fed_subject = 1 }
 					}
-					has_idea = SER_federation
+					add_ideas = SER_federation
 				}
-				remove_ideas = SER_federation
+				else_if = {
+					limit = {
+						has_idea = SER_federation
+						check_variable = { ser_has_fed_subject = 0 }
+					}
+					remove_ideas = SER_federation
+				}
 			}
 		}
 	}

@@ -106,7 +106,6 @@ def test_text_fallback_when_no_json(tmp_path):
     assert len(runs) == 1
     run = runs[0]
     assert run.had_json is False
-    # Parsed 2 issue lines from the log
     assert len(run.issues) == 2
     assert run.issues[0].file == "common/events/foo.txt"
     assert run.issues[0].line == 42

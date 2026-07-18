@@ -423,9 +423,10 @@ USA_default_naval_breakdown = { #Fleet in Being - Naval Strength on the High Sea
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 8 }
 }
 
+# Armor-heavy professional doctrine shared by USA and UKR (identical composition).
 USA_army_breakdown = {
-	allowed = { original_tag = USA }
-	enable = { original_tag = USA }
+	allowed = { OR = { original_tag = USA original_tag = UKR } }
+	enable = { always = yes }
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 19 }
@@ -788,7 +789,7 @@ USA_eu_relations = {
 	ai_strategy = { type = befriend id = "LUX" value = 30 }
 	ai_strategy = { type = befriend id = "GER" value = 30 }
 	ai_strategy = { type = befriend id = "DEN" value = 30 }
-	ai_strategy = { type = befriend id = "NOR" value = 30 }
+	ai_strategy = { type = befriend id = "NRY" value = 30 }
 	ai_strategy = { type = befriend id = "SWE" value = 30 }
 	ai_strategy = { type = befriend id = "FIN" value = 30 }
 	ai_strategy = { type = befriend id = "POL" value = 30 }
@@ -1060,7 +1061,7 @@ USA_operation_enduring_freedom = {
 	allowed = { original_tag = USA }
 	enable = {
 		has_country_leader_with_trait = war_on_terror_leader
-		NOT = { has_country_flag = Operation_enduring_freedom }
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
 	}
 	abort_when_not_enabled = yes
 
@@ -1077,7 +1078,7 @@ USA_operation_iraqi_campaign = {
 	allowed = { original_tag = USA }
 	enable = {
 		has_country_leader_with_trait = war_on_terror_leader
-		NOT = { has_country_flag = Operation_iraqi_freedom }
+		NOT = { has_country_flag = USA_wot_iraqi_freedom }
 		IRQ = { NOT = { has_country_flag = IRQ_victory_against_america } }
 	}
 	abort_when_not_enabled = yes
@@ -1094,7 +1095,7 @@ USA_operation_iraqi_campaign = {
 USA_operation_iraqi_freedom = {
 	allowed = { original_tag = USA }
 	enable = {
-		has_country_flag = Operation_iraqi_freedom
+		has_country_flag = USA_wot_iraqi_freedom
 		has_wargoal_against = IRQ
 	}
 	abort_when_not_enabled = yes
@@ -1163,11 +1164,13 @@ USA_prepare_to_attack_IRQ = {
 		owns_state = 488
 		country_exists = IRQ
 		OR = {
-			has_country_flag = us_prepare_for_iraq_invasion
+			has_country_flag = USA_wot_iraq_invasion_prepared
 			IRQ = { has_completed_focus = IRQ_an_era_of_saddam }
 		}
-		IRQ = { NOT = { has_country_flag = IRQ_victory_against_america } }
-		IRQ = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+		IRQ = {
+			NOT = { has_country_flag = IRQ_victory_against_america }
+			has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+		}
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = prepare_for_war id = IRQ value = 100 }
@@ -1178,7 +1181,7 @@ USA_support_afghanistan_enduring_freedom = {
 	enable = {
 		AFG = { NOT = { has_country_flag = AFG_new_war } }
 		country_exists = AFG
-		has_country_flag = Operation_enduring_freedom
+		has_country_flag = USA_wot_enduring_freedom
 		AFG = { has_war_with = TAL }
 	}
 	abort_when_not_enabled = yes
@@ -1296,5 +1299,36 @@ USA_construct_additional_microchips = {
 	}
 	abort_when_not_enabled = yes
 
+	ai_strategy = { type = build_building id = microchip_plant value = 50 }
 	ai_strategy = { type = building_target id = microchip_plant value = 350 }
+}
+
+USA_extradition_diplomacy = {
+	allowed = { original_tag = USA }
+	enable = {
+		has_country_flag = USA_wot_speech_given
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
+		country_exists = TAL
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = pp_spend_priority id = decision value = 250 }
+	ai_strategy = { type = pp_spend_amount id = decision value = 250 }
+	ai_strategy = { type = befriend id = "PAK" value = 100 }
+	ai_strategy = { type = befriend id = "SAU" value = 100 }
+}
+
+USA_wot_peaceful_settlement = {
+	allowed = { original_tag = USA }
+	enable = {
+		has_country_flag = USA_wot_extradition_accepted
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
+		NOT = { has_country_flag = USA_wot_afghan_settlement }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = pp_spend_priority id = decision value = 300 }
+	ai_strategy = { type = pp_spend_amount id = decision value = 300 }
+	ai_strategy = { type = influence id = "AFG" value = 200 }
+	ai_strategy = { type = declare_war id = "TAL" value = -200 }
 }

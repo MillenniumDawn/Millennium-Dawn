@@ -1,3 +1,9 @@
+---
+name: close-issue
+description: 'Close a GitHub issue with a brief comment summarizing the applied fix (inferred from the branch diff if not supplied). Use only on explicit request, e.g. "/close-issue 123".'
+disable-model-invocation: true
+---
+
 Close a GitHub issue with a brief comment summarizing the fix that was applied.
 
 Supported arguments: an issue number (required), and optionally a short description of the fix. If no description is provided, infer the fix from the current branch's diff against main.
@@ -12,7 +18,7 @@ Steps:
 
 2. **Infer the fix summary** (skip if a description was provided)
 
-   Fetch the issue title for context, then look at the current branch diff:
+   Fetch the issue title for context, then check the current branch diff:
 
    ```
    gh issue view <number> --json title,body
@@ -20,11 +26,7 @@ Steps:
    git diff origin/main...HEAD --stat
    ```
 
-   Write a 1-3 sentence comment covering:
-   - What the root cause was
-   - What was changed to fix it
-
-   Keep it concise and factual. Do not repeat the issue title back.
+   Write a 1-3 sentence comment covering the root cause and what was changed to fix it. Keep it concise and factual. Do not repeat the issue title back.
 
 3. **Post the comment and close the issue**
 
