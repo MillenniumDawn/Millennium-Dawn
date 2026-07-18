@@ -15,6 +15,9 @@ Unit tests for the checks added to check_common_mistakes.py:
   12. random_select_amount set to a non-integer-literal
   13. any_country/any_other_country with has_idea = X_member when array exists
   14. on_add adds to a global array the sibling on_remove never removes from
+  15. focus/decision/event log = "..." referencing the wrong id (Check C)
+  16. hidden_trigger = { } directly inside custom_trigger_tooltip (Check E1)
+  17. malformed country leader rotations in *_political_leaders.txt
 """
 
 import os
@@ -27,14 +30,19 @@ from check_common_mistakes import (
     _check_check_var_ge_le,
     _check_consecutive_scope_blocks,
     _check_decision_allowed_dynamic,
+    _check_decision_log_id,
     _check_divide_variable_zero_guard,
     _check_duplicate_add_to_variable,
     _check_embargo_dlc_guard,
+    _check_event_log_id,
     _check_every_country_member_array,
     _check_every_owned_controlled_state,
+    _check_focus_log_id,
     _check_focus_missing_war_hint,
     _check_has_idea_mutex_in_not_block,
+    _check_hidden_trigger_in_ctt,
     _check_influence_setter_scope,
+    _check_leader_rotation,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
     _check_tautological_or,
@@ -1571,6 +1579,681 @@ assert_finds(
 )
 
 
+# 15a. Focus log-id mismatch (Check C)
+
+print("\n── Focus log-id mismatch ──")
+
+# Basic copy-paste bug: log names a sibling focus's id -> flag
+assert_finds(
+    _check_focus_log_id,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ABK_our_place\n",
+        "\t\tcompletion_reward = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus ABK_tourism1"\n',
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "focus log referencing a different focus id flagged",
+)
+
+# Log matches the enclosing focus's own id -> no flag
+assert_finds(
+    _check_focus_log_id,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ABK_our_place\n",
+        "\t\tcompletion_reward = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus ABK_our_place"\n',
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "focus log matching its own id not flagged",
+)
+
+# Mismatch suppressed by complete_national_focus targeting the logged id in the
+# same block -- this focus intentionally completes a sibling and logs it
+assert_finds(
+    _check_focus_log_id,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ABK_our_place\n",
+        "\t\tcompletion_reward = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus ABK_tourism1"\n',
+        "\t\t\tcomplete_national_focus = ABK_tourism1\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "mismatch suppressed by complete_national_focus in same block",
+)
+
+# Mismatch suppressed by unlock_national_focus targeting the logged id
+assert_finds(
+    _check_focus_log_id,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ABK_our_place\n",
+        "\t\tcompletion_reward = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus ABK_tourism1"\n',
+        "\t\t\tunlock_national_focus = ABK_tourism1\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "mismatch suppressed by unlock_national_focus in same block",
+)
+
+# shared_focus block also checked, lowercase "focus" + "executed" suffix style
+assert_finds(
+    _check_focus_log_id,
+    [
+        "shared_focus = {\n",
+        "\tid = GCC_the_gcc\n",
+        "\tcompletion_reward = {\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: focus GCC_economic_union executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "shared_focus block with lowercase 'focus' log flagged",
+)
+
+# joint_focus block, log matches its own id -> no flag
+assert_finds(
+    _check_focus_log_id,
+    [
+        "\tjoint_focus = {\n",
+        "\t\tid = NKR_economy_start\n",
+        "\t\tcompletion_reward = {\n",
+        '\t\t\tlog = "[GetDateText]: [This.GetName]: focus NKR_economy_start executed"\n',
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "joint_focus block matching its own id not flagged",
+)
+
+
+# 15b. Decision log-id mismatch (Check C)
+
+print("\n── Decision log-id mismatch ──")
+
+# Basic copy-paste bug: complete_effect log names a different decision's id
+assert_finds(
+    _check_decision_log_id,
+    [
+        "LAT_decisions_category = {\n",
+        "\tLAT_reopen_the_vef_microchip_plant = {\n",
+        "\t\tcomplete_effect = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision POR_expand_the_neves_corvo_mine"\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "decision log referencing a different decision id flagged",
+)
+
+# "Decision remove <id>" keyword tolerance -- id matches -> no flag
+assert_finds(
+    _check_decision_log_id,
+    [
+        "UAR_decisions_category = {\n",
+        "\tUAR_integrate_MAU = {\n",
+        "\t\tremove_effect = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_MAU"\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "'Decision remove <own id>' keyword tolerance not flagged",
+)
+
+# "Decision remove <id>" keyword tolerance -- id mismatched -> flag
+assert_finds(
+    _check_decision_log_id,
+    [
+        "NKO_decisions_category = {\n",
+        "\tNKO_resource_extraction = {\n",
+        "\t\tremove_effect = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision remove BNKO_resource_extraction"\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "'Decision remove <wrong id>' (typo) still flagged",
+)
+
+# "Decision cancel effect <id>" double filler-word tolerance -- id matches
+assert_finds(
+    _check_decision_log_id,
+    [
+        "NATO_decisions_category = {\n",
+        "\tNATO_CSTO_breach_mission = {\n",
+        "\t\tcancel_effect = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision cancel effect NATO_CSTO_breach_mission"\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "'Decision cancel effect <own id>' double-filler tolerance not flagged",
+)
+
+# Keyword-only log (nothing substantive follows) -- not flagged, no token to compare
+assert_finds(
+    _check_decision_log_id,
+    [
+        "SOME_decisions_category = {\n",
+        "\tSOME_decision = {\n",
+        "\t\tcomplete_effect = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision"\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "keyword-only log with no id token not flagged",
+)
+
+# Log buried several if/limit levels deep still attributed to the correct
+# enclosing decision, not a sibling in the same category
+assert_finds(
+    _check_decision_log_id,
+    [
+        "MIX_decisions_category = {\n",
+        "\tMIX_first_decision = {\n",
+        "\t\tcomplete_effect = {\n",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision MIX_first_decision"\n',
+        "\t\t}\n",
+        "\t}\n",
+        "\tMIX_second_decision = {\n",
+        "\t\tcomplete_effect = {\n",
+        "\t\t\tif = {\n",
+        "\t\t\t\tlimit = { always = yes }\n",
+        "\t\t\t\tif = {\n",
+        "\t\t\t\t\tlimit = { always = yes }\n",
+        '\t\t\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision MIX_first_decision"\n',
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "nested-if log correctly attributed to its own enclosing decision",
+)
+
+
+# 15c. Event log-id / option-letter mismatch (Check C)
+
+print("\n── Event log-id / option-letter mismatch ──")
+
+# Bare id + separate "Option <letter>" matching position -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = HKG_contract.1\n",
+        "\toption = {\n",
+        "\t\tname = HKG_contract.1.a\n",
+        '\t\tlog = "[GetDateText]: [Root.GetName]: Event HKG_contract.1 Option a"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "bare id + matching Option letter not flagged",
+)
+
+# Bare id + Option letter that doesn't match this option's own name -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = HKG_contract.1\n",
+        "\toption = {\n",
+        "\t\tname = HKG_contract.1.b\n",
+        '\t\tlog = "[GetDateText]: [Root.GetName]: Event HKG_contract.1 Option a"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "Option letter not matching own name flagged",
+)
+
+# Event id itself mismatched -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = estonia.104\n",
+        "\toption = {\n",
+        "\t\tname = estonia.104.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: event estonia.103.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "log referencing the wrong event id flagged",
+)
+
+# Full dotted name matching the option's own name (a/b/c style) -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = satellites.2\n",
+        "\toption = {\n",
+        "\t\tname = satellites.2.a\n",
+        '\t\tlog = "[GetDateText]: [Root.GetName]: event satellites.2.a"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "full dotted name matching own name not flagged",
+)
+
+# Numeric 'oN' suffix convention matching own name -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = estonia.7\n",
+        "\toption = {\n",
+        "\t\tname = estonia.7.o2\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: event estonia.7.o2 executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "numeric oN suffix matching own name not flagged",
+)
+
+# Numeric 'oN' suffix copy-pasted from a sibling option -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = estonia.7\n",
+        "\toption = {\n",
+        "\t\tname = estonia.7.o1\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: event estonia.7.o1 executed"\n',
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = estonia.7.o2\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: event estonia.7.o1 executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "oN suffix copy-pasted from a sibling option flagged",
+)
+
+# Non-sequential option lettering (skips a letter): log matches the option's
+# own name -> not flagged even though the position-based letter would differ
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = singapore.101\n",
+        "\toption = {\n",
+        "\t\tname = singapore.101.c\n",
+        '\t\tlog = "[GetDateText]: [THIS.GetName]: event singapore.101.c"\n',
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = singapore.101.e\n",
+        '\t\tlog = "[GetDateText]: [THIS.GetName]: event singapore.101.e"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "non-sequential option lettering (c then e) not flagged",
+)
+
+# Nested country_event effect call (id + days, indented) is a scheduling call,
+# not a definition -- must not be scanned as its own event block
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = china.68\n",
+        "\toption = {\n",
+        "\t\tname = china.68.a\n",
+        '\t\tlog = "[GetDateText]: [Root.GetName]: event china.68.a"\n',
+        "\t\thidden_effect = {\n",
+        "\t\t\tcountry_event = {\n",
+        "\t\t\t\tid = china.69\n",
+        "\t\t\t\tdays = 35\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "nested country_event scheduling call not treated as a definition",
+)
+
+
+# 15d. hidden_trigger inside custom_trigger_tooltip (Check E1)
+
+print("\n── hidden_trigger inside custom_trigger_tooltip ──")
+
+# hidden_trigger at relative depth 1 -> flag
+assert_finds(
+    _check_hidden_trigger_in_ctt,
+    [
+        "\t\t\tcustom_trigger_tooltip = {\n",
+        "\t\t\t\ttooltip = GER_had_civilwar_TT\n",
+        "\t\t\t\thidden_trigger = {\n",
+        "\t\t\t\t\thas_country_flag = GER_constitutional_government\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+    ],
+    1,
+    "hidden_trigger at depth 1 inside custom_trigger_tooltip flagged",
+)
+
+# hidden_trigger nested under OR (relative depth 2) -> not flagged
+assert_finds(
+    _check_hidden_trigger_in_ctt,
+    [
+        "\tcustom_trigger_tooltip = {\n",
+        "\t\ttooltip = GCC_jihadist_government_tt\n",
+        "\t\tOR = {\n",
+        "\t\t\thidden_trigger = {\n",
+        "\t\t\t\thas_country_flag = test_flag\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "hidden_trigger nested under OR (depth 2) not flagged",
+)
+
+# hidden_trigger as a sibling AFTER custom_trigger_tooltip closes -> not flagged
+assert_finds(
+    _check_hidden_trigger_in_ctt,
+    [
+        "\t\t\tcustom_trigger_tooltip = {\n",
+        "\t\t\t\ttooltip = ISR_judicial_pres_TT\n",
+        "\t\t\t}\n",
+        "\t\t\thidden_trigger = {\n",
+        "\t\t\t\thas_country_flag = ISR_judicial\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "hidden_trigger as a sibling outside custom_trigger_tooltip not flagged",
+)
+
+# Quote-blanking regression: a log string containing a literal '{' inside the
+# custom_trigger_tooltip block must not drift the depth count and mask the
+# hidden_trigger that follows
+assert_finds(
+    _check_hidden_trigger_in_ctt,
+    [
+        "\tcustom_trigger_tooltip = {\n",
+        "\t\ttooltip = TEST_TT\n",
+        '\t\tlog = "test { brace"\n',
+        "\t\thidden_trigger = {\n",
+        "\t\t\thas_country_flag = test_flag\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "stray brace inside a quoted log string doesn't mask the hidden_trigger",
+)
+
+
+# 17. Malformed country leader rotations (set_leader_TAG)
+
+print("\n── Leader rotation (political_leaders) ──")
+
+
+def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail=""):
+    """One rotation tier: counter check, increment, kill, create, do_not_retire undo."""
+    retire = counter if retire is None else retire
+    undo = increment if undo is None else undo
+    return [
+        f"\t\tif = {{ limit = {{ check_variable = {{ {counter} = {number} }} {guard}}}\n",
+        f"\t\t\tadd_to_variable = {{ {counter} = {increment} }}\n",
+        "\t\t\thidden_effect = { kill_country_leader = yes }\n",
+        "\t\t\tcreate_country_leader = {\n",
+        f'\t\t\t\tname = "Leader {number}"\n',
+        "\t\t\t\tideology = conservatism\n",
+        "\t\t\t}\n",
+        f"\t\t\tif = {{ limit = {{ has_country_flag = do_not_retire }} subtract_from_variable = {{ {retire} = {undo} }} }}\n",
+        *tail,
+        "\t\t}\n",
+    ]
+
+
+def _rotation(*tiers, flag="set_conservatism"):
+    return [
+        "set_leader_TST = {\n",
+        f"\tif = {{ limit = {{ has_country_flag = {flag} }}\n",
+        *[line for tier in tiers for line in tier],
+        "\t}\n",
+        "}\n",
+    ]
+
+
+_B_GUARD = "NOT = { check_variable = { b = 1 } } "
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 1, guard=_B_GUARD),
+        _tier("conservatism_leader", 2, guard=_B_GUARD),
+    ),
+    0,
+    "well-formed 3-tier rotation",
+)
+
+# Descending tiers self-guard (only one can match top-down) -- CAS/CSA/FIJ/USB idiom
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 2),
+        _tier("conservatism_leader", 1),
+        _tier("conservatism_leader", 0),
+    ),
+    0,
+    "descending tier order not flagged",
+)
+
+# b = 2 / b = 3 cascade past a terminal b = 1 -- SWE/UKR/ANT/SIN, deliberate
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier(
+            "conservatism_leader",
+            0,
+            tail=[
+                "\t\t\tif = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } }\n"
+            ],
+        ),
+        _tier(
+            "conservatism_leader",
+            1,
+            guard="NOT = { check_variable = { b = 2 } } ",
+            tail=["\t\t\tset_temp_variable = { b = 2 }\n"],
+        ),
+    ),
+    0,
+    "b = 2 cascade guard not flagged",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 1, guard=_B_GUARD, increment=2),
+    ),
+    1,
+    "add_to_variable = 2 flagged (tier index used as the step)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(_tier("conservatism_leader", 0, increment=0)),
+    1,
+    "add_to_variable = 0 flagged (counter never advances)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(_tier("conservatism_leader", 0, undo=0)),
+    1,
+    "do_not_retire subtracting 0 flagged (no-op guard)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(_tier("conservatism_leader", 0, retire="socialism_leader")),
+    1,
+    "do_not_retire subtracting another ideology's counter flagged",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 2, guard=_B_GUARD),
+    ),
+    1,
+    "tier gap flagged (no tier 1)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 1),
+        _tier("conservatism_leader", 2, guard=_B_GUARD),
+    ),
+    1,
+    "rotation not starting at tier 0 flagged",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 0, guard=_B_GUARD),
+    ),
+    1,
+    "duplicate tier number flagged",
+)
+
+# ERI/ISR/CZE split a tier number on a second condition -- both stay reachable
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0, guard="has_country_flag = TST_coup "),
+        _tier("conservatism_leader", 0, guard="NOT = { has_country_flag = TST_coup } "),
+    ),
+    0,
+    "duplicate tier discriminated by a flag not flagged",
+)
+
+# JAP wraps its tiers in date containers; the same tier number under each is fine
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\t\tif = { limit = { date < 2002.12.10 }\n",
+        *_tier("conservatism_leader", 0),
+        "\t\t}\n",
+        "\t\tif = { limit = { date > 2002.12.10 }\n",
+        *_tier("conservatism_leader", 0),
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "same tier number under two date containers not flagged",
+)
+
+# ITA-style lookup table: the counter is set elsewhere, tiers never advance it
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_liberalism }\n",
+        "\t\tif = { limit = { check_variable = { liberalism_leader = 1 } }\n",
+        '\t\t\tcreate_country_leader = { name = "A" ideology = liberalism }\n',
+        "\t\t}\n",
+        "\t\tif = { limit = { check_variable = { liberalism_leader = 3 } }\n",
+        '\t\t\tcreate_country_leader = { name = "B" ideology = liberalism }\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "lookup-table branch with no increment not gap-checked",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "\telse_if = { limit = { has_country_flag = set_conservatism }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "duplicate set_conservatism branch flagged",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("conservatism_leader", 0),
+        _tier("conservatism_leader", 1, guard="NOT = { check_variable = { b = 0 } } "),
+    ),
+    1,
+    "NOT = { check_variable = { b = 0 } } flagged (always false)",
+)
+
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "\telse_if = { limit = { has_country_flag = set_Monarchist }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "branch counting with another ideology's counter flagged",
+)
+
+# CAS/PHI carry off-name counters (socalism_leader) that nothing else drives -- harmless
+assert_finds(
+    _check_leader_rotation,
+    _rotation(
+        _tier("socalism_leader", 0),
+        _tier("socalism_leader", 1, guard=_B_GUARD),
+        flag="set_socialism",
+    ),
+    0,
+    "off-name counter owned by a single branch not flagged",
+)
+
+
 # Guardrails: confirm the three new checks stay silent on known-valid patterns
 
 print("\n── Guardrails: no new-check false positives ──")
@@ -1613,6 +2296,95 @@ for _label, _snippet in _GUARDRAIL_SNIPPETS:
         _check_random_select_amount_literal,
     ):
         assert_finds(_check_fn, _snippet, 0, f"{_check_fn.__name__} on {_label}")
+
+
+# Hyphenated ids: log-id checks must see the full token, not the \w+ prefix
+
+_HYPHEN_FOCUS_OK = [
+    "\tfocus = {\n",
+    "\t\tid = TST_austria-este\n",
+    "\t\tcompletion_reward = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_austria-este"\n',
+    "\t\t}\n",
+    "\t}\n",
+]
+_HYPHEN_FOCUS_BAD = [
+    "\tfocus = {\n",
+    "\t\tid = TST_austria-este\n",
+    "\t\tcompletion_reward = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_austria-lorraine"\n',
+    "\t\t}\n",
+    "\t}\n",
+]
+assert_finds(
+    _check_focus_log_id, _HYPHEN_FOCUS_OK, 0, "hyphenated focus id, log matches"
+)
+assert_finds(
+    _check_focus_log_id, _HYPHEN_FOCUS_BAD, 1, "hyphenated focus id, log mismatch"
+)
+
+_HYPHEN_DECISION_OK = [
+    "category_test = {\n",
+    "\tCommunist-State_invite = {\n",
+    "\t\tcomplete_effect = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision Communist-State_invite"\n',
+    "\t\t}\n",
+    "\t}\n",
+    "}\n",
+]
+_HYPHEN_DECISION_BAD = [
+    "category_test = {\n",
+    "\tCommunist-State_invite = {\n",
+    "\t\tcomplete_effect = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision Communist-State_remove"\n',
+    "\t\t}\n",
+    "\t}\n",
+    "}\n",
+]
+assert_finds(
+    _check_decision_log_id,
+    _HYPHEN_DECISION_OK,
+    0,
+    "hyphenated decision id, log matches",
+)
+assert_finds(
+    _check_decision_log_id,
+    _HYPHEN_DECISION_BAD,
+    1,
+    "hyphenated decision id, log mismatch",
+)
+
+# AND directly under NOT is the sanctioned NAND disambiguation -- never redundant
+
+from cleanup_or import find_redundant_and_blocks, simplify_and_block
+
+_AND_UNDER_NOT = [
+    "\ttrigger = {\n",
+    "\t\tNOT = {\n",
+    "\t\t\tAND = {\n",
+    "\t\t\t\toriginal_tag = AUS\n",
+    "\t\t\t\thas_war = yes\n",
+    "\t\t\t}\n",
+    "\t\t}\n",
+    "\t}\n",
+]
+assert_finds(find_redundant_and_blocks, _AND_UNDER_NOT, 0, "AND under NOT not flagged")
+_simplified = simplify_and_block(_AND_UNDER_NOT)
+if _simplified == _AND_UNDER_NOT:
+    passed += 1
+    print("  PASS  simplify_and_block keeps AND under NOT")
+else:
+    failed += 1
+    print("  FAIL  simplify_and_block keeps AND under NOT")
+
+_BARE_AND = [
+    "\ttrigger = {\n",
+    "\t\tAND = {\n",
+    "\t\t\thas_war = yes\n",
+    "\t\t}\n",
+    "\t}\n",
+]
+assert_finds(find_redundant_and_blocks, _BARE_AND, 1, "bare AND still flagged")
 
 
 # Summary
