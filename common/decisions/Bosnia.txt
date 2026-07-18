@@ -1163,6 +1163,7 @@ BOS_internal_factions = {
 						}
 					}
 					30 = {
+						trigger = { NOT = { has_country_flag = BOS_dodik_banned } }
 						set_country_flag = BOS_snsd
 						clr_country_flag = BOS_df
 						set_temp_variable = { rul_party_temp = 18 }
@@ -1621,6 +1622,10 @@ BOS_eu_accession = {
 				factor = 0
 				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
 			}
+			modifier = {
+				factor = 5
+				has_country_flag = BOS_eu_negotiations_overdue
+			}
 		}
 	}
 
@@ -1660,6 +1665,41 @@ BOS_eu_accession = {
 
 		ai_will_do = {
 			base = 20
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
+		}
+	}
+
+	BOS_eu_growth_plan_tranche = {
+
+		icon = GFX_decision_generic_eurozone
+
+		cost = 25
+
+		days_remove = 180
+
+		available = {
+			has_country_flag = BOS_eu_growth_plan_eligible
+			NOT = { has_idea = corruption_level_08 }
+			NOT = { has_idea = corruption_level_09 }
+			NOT = { has_idea = corruption_level_10 }
+			has_stability > 0.4
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_eu_growth_plan_tranche"
+			set_temp_variable = { treasury_change = 4 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 2
+				has_country_flag = BOS_corridor_vc_complete
+			}
 			modifier = {
 				factor = 0
 				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
@@ -1851,6 +1891,14 @@ BOS_state_reform = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_diaspora_return_program"
 			add_ideas = BOS_diaspora_returnees
+			if = {
+				limit = { has_idea = BOS_brain_drain_1 }
+				custom_effect_tooltip = BOS_brain_drain_eased_tt
+				swap_ideas = {
+					remove_idea = BOS_brain_drain_1
+					add_idea = BOS_brain_drain_2
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -1906,6 +1954,297 @@ BOS_state_reform = {
 
 		ai_will_do = { base = 5 }
 	}
+
+	BOS_reject_third_entity_demand = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 50
+
+		fire_only_once = yes
+
+		available = {
+			has_idea = BOS_croat_grievance
+			NOT = { has_country_flag = BOS_third_entity_resolved }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_reject_third_entity_demand"
+			BOS_croat_attitude_decrease_effect = yes
+			add_stability = 0.02
+			set_country_flag = BOS_third_entity_resolved
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 2
+				has_country_flag = BOS_a_bosniak_is_in_power
+			}
+		}
+	}
+
+	BOS_concede_partial_croat_autonomy = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 75
+
+		fire_only_once = yes
+
+		available = {
+			has_idea = BOS_croat_grievance
+			NOT = { has_country_flag = BOS_third_entity_resolved }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_concede_partial_croat_autonomy"
+			BOS_croat_attitude_increase_effect = yes
+			add_ideas = BOS_third_entity_demand
+			set_country_flag = BOS_third_entity_resolved
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 2
+				has_country_flag = BOS_a_croat_is_in_power
+			}
+		}
+	}
+
+	BOS_register_defence_property = {
+
+		icon = GFX_decision_generic_construction
+
+		cost = 40
+
+		fire_only_once = yes
+
+		available = {
+			has_war = no
+			NOT = { has_country_flag = BOS_defence_property_registered }
+			OR = {
+				BOS_srpska_attitude_friendly_trigger = yes
+				BOS_srpska_attitude_loyal_trigger = yes
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_register_defence_property"
+			set_country_flag = BOS_defence_property_registered
+			add_stability = 0.01
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BOS_request_nato_waiver = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 85
+
+		fire_only_once = yes
+
+		available = {
+			has_war = no
+			NOT = { has_country_flag = BOS_defence_property_registered }
+			NOT = {
+				OR = {
+					BOS_srpska_attitude_friendly_trigger = yes
+					BOS_srpska_attitude_loyal_trigger = yes
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_request_nato_waiver"
+			set_country_flag = BOS_defence_property_registered
+			BOS_srpska_attitude_decrease_effect = yes
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BOS_activate_map = {
+
+		icon = GFX_decision_generic_join_nato
+
+		cost = 50
+
+		fire_only_once = yes
+
+		available = {
+			has_war = no
+			has_country_flag = BOS_defence_property_registered
+			NOT = { has_idea = NATO_member }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_activate_map"
+			add_ideas = BOS_map_participant
+		}
+
+		ai_will_do = { base = 20 }
+	}
+
+	BOS_pass_jmbg_law = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 30
+
+		fire_only_once = yes
+
+		available = {
+			has_idea = BOS_jmbg_crisis
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_pass_jmbg_law"
+			remove_ideas = BOS_jmbg_crisis
+			add_stability = 0.02
+			custom_effect_tooltip = BOS_jmbg_law_passed_tt
+			set_country_flag = BOS_jmbg_law_passed
+		}
+
+		ai_will_do = { base = 25 }
+	}
+
+	BOS_counter_radicalization_program = {
+
+		icon = GFX_decision_generic_police_action
+
+		cost = 40
+
+		fire_only_once = yes
+
+		available = {
+			OR = {
+				has_idea = BOS_domestic_terror_threat_1
+				has_idea = BOS_domestic_terror_threat_2
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_counter_radicalization_program"
+			if = {
+				limit = { has_idea = BOS_domestic_terror_threat_2 }
+				swap_ideas = {
+					remove_idea = BOS_domestic_terror_threat_2
+					add_idea = BOS_domestic_terror_threat_1
+				}
+			}
+			else_if = {
+				limit = { has_idea = BOS_domestic_terror_threat_1 }
+				remove_ideas = BOS_domestic_terror_threat_1
+			}
+			add_ideas = BOS_counter_radicalization_measures
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BOS_monitor_salafi_enclaves = {
+
+		icon = GFX_decision_generic_intelligence_operation
+
+		cost = 45
+
+		fire_only_once = yes
+
+		available = {
+			has_idea = BOS_domestic_terror_threat_2
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_monitor_salafi_enclaves"
+			remove_ideas = BOS_domestic_terror_threat_2
+			add_ideas = BOS_salafi_enclave_monitoring
+			BOS_bosniak_attitude_decrease_effect = yes
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 2
+				has_country_flag = BOS_a_serb_is_in_power
+			}
+		}
+	}
+
+	BOS_repatriate_foreign_fighters = {
+
+		icon = GFX_decision_generic_police_action
+
+		cost = 35
+
+		fire_only_once = yes
+
+		fixed_random_seed = no
+
+		available = {
+			date > 2019.01.01
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_repatriate_foreign_fighters"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			random_list = {
+				60 = {
+					custom_effect_tooltip = BOS_reintegration_success_tt
+					add_ideas = BOS_foreign_fighter_reintegration
+					if = {
+						limit = { has_idea = BOS_domestic_terror_threat_1 }
+						remove_ideas = BOS_domestic_terror_threat_1
+					}
+				}
+				40 = {
+					custom_effect_tooltip = BOS_reintegration_relapse_tt
+					add_stability = -0.02
+					if = {
+						limit = {
+							NOT = {
+								OR = {
+									has_idea = BOS_domestic_terror_threat_1
+									has_idea = BOS_domestic_terror_threat_2
+								}
+							}
+						}
+						add_ideas = BOS_domestic_terror_threat_1
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
 }
 
 BOS_dayton_pressure = {
@@ -1954,6 +2293,11 @@ BOS_dayton_pressure = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_invoke_bonn_powers"
 			add_ideas = BOS_ohr_supervision
 			BOS_srpska_attitude_decrease_effect = yes
+			if = {
+				limit = { has_country_flag = BOS_contested_high_representative }
+				custom_effect_tooltip = BOS_hr_legitimacy_disputed_tt
+				BOS_srpska_attitude_decrease_effect = yes
+			}
 			hidden_effect = { set_country_flag = BOS_rs_crisis_resolved }
 			remove_ideas = BOS_republika_srpska_secession_crisis
 		}
@@ -2074,6 +2418,8 @@ BOS_economic_development = {
 
 		fire_only_once = yes
 
+		fixed_random_seed = no
+
 		available = {
 			has_war = no
 			country_exists = SAU
@@ -2082,13 +2428,24 @@ BOS_economic_development = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_court_gulf_investment"
-			set_temp_variable = { treasury_change = 2 }
-			modify_treasury_effect = yes
-			add_stability = 0.02
 			set_temp_variable = { percent_change = 10 }
 			set_temp_variable = { tag_index = SAU.id }
 			set_temp_variable = { influence_target = BOS.id }
 			change_influence_percentage = yes
+			random_list = {
+				40 = {
+					custom_effect_tooltip = BOS_gulf_investment_delivered_tt
+					set_temp_variable = { treasury_change = 2 }
+					modify_treasury_effect = yes
+					add_stability = 0.02
+				}
+				60 = {
+					custom_effect_tooltip = BOS_gulf_investment_stalled_tt
+					set_temp_variable = { treasury_change = 1 }
+					modify_treasury_effect = yes
+					add_stability = -0.01
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -2176,9 +2533,16 @@ BOS_economic_development = {
 			set_temp_variable = { tag_index = CHI.id }
 			set_temp_variable = { influence_target = BOS.id }
 			change_influence_percentage = yes
+			set_country_flag = BOS_thermal_chinese_financed
 		}
 
-		ai_will_do = { base = 4 }
+		ai_will_do = {
+			base = 4
+			modifier = {
+				factor = 3
+				has_country_flag = BOS_energy_east_commitment
+			}
+		}
 	}
 
 	BOS_hydro_refurbishment = {
@@ -2204,6 +2568,72 @@ BOS_economic_development = {
 
 		ai_will_do = {
 			base = 4
+			modifier = {
+				factor = 2
+				has_country_flag = BOS_energy_west_commitment
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BOS_expand_arms_exports = {
+
+		icon = GFX_decision_arm_army_button
+
+		cost = 60
+
+		fire_only_once = yes
+
+		available = {
+			has_war = no
+			date > 2022.01.01
+			NOT = { has_country_flag = BOS_arms_export_active }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_expand_arms_exports"
+			set_country_flag = BOS_arms_export_active
+			set_temp_variable = { treasury_change = 3 }
+			modify_treasury_effect = yes
+			add_ideas = BOS_arms_export_boom
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 3
+				has_country_flag = BOS_defense_industry_matured
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BOS_host_sarajevo_film_festival = {
+
+		icon = GFX_decision_arm_tourism_button
+
+		cost = 20
+
+		available = {
+			has_war = no
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_host_sarajevo_film_festival"
+			set_temp_variable = { treasury_change = 1 }
+			modify_treasury_effect = yes
+			add_stability = 0.01
+		}
+
+		ai_will_do = {
+			base = 8
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
