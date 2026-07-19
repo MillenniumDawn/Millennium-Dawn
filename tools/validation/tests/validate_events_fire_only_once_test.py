@@ -169,6 +169,40 @@ def test_non_fire_only_once_event_not_flagged(tmp_path):
     assert res == []
 
 
+def test_fire_only_once_lookup_full_repo_in_staged_mode(tmp_path):
+    # Regression: the in-loop check built its fire_only_once ID set from
+    # _get_event_metadata(), a staged-limited scan. Under --staged a staged
+    # caller firing an existing fire_only_once event from a loop went unflagged
+    # when the `fire_only_once = yes` definition lived in an unstaged file.
+    from validate_events import Validator as EventsValidator
+
+    events_dir = tmp_path / "events"
+    events_dir.mkdir()
+    # Definition lives in an UNSTAGED event file.
+    (events_dir / "def.txt").write_text(
+        "add_namespace = foo\n" + _event_block("foo.1"),
+        encoding="utf-8",
+    )
+    # Staged caller fires it inside an every_country iterator.
+    common_dir = tmp_path / "common"
+    common_dir.mkdir()
+    caller = common_dir / "caller.txt"
+    caller.write_text(
+        "x = {\n\tevery_country = {\n\t\tcountry_event = foo.1\n\t}\n}\n",
+        encoding="utf-8",
+    )
+
+    v = EventsValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.staged_only = True
+    v.staged_files = [str(caller)]
+    v.validate_fire_only_once_in_loop()
+    assert v.errors_found >= 1, (
+        "fire_only_once definition in an unstaged file must still be looked "
+        "up — staged mode used to scan only staged event files and miss it, "
+        "silently passing the in-loop bug at commit time"
+    )
+
+
 def test_parse_metadata_strips_commented_fire_only_once(tmp_path):
     # A commented-out `#fire_only_once = yes` must NOT mark the event as
     # fire_only_once (regression: the unstripped `in body` check counted it).

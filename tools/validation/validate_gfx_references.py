@@ -4,7 +4,8 @@
 Checks sprites referenced in .gui files (spriteType/quadTextureSprite/background),
 scripted_gui image= properties, and scripted_localisation localization_key= against
 the set defined in interface/*.gfx. Promotes .gui errors from WARNING to ERROR for
-MD-authored files; vanilla-override files stay at WARNING.
+MD-authored files; vanilla-override files stay at WARNING, as do MD-authored nation
+variants for refs inherited from the specific vanilla file they copy.
 """
 
 import glob
@@ -43,19 +44,25 @@ from validator_common import (
 # means new MD content of any naming convention is classified correctly with no
 # edits here; the manifest only needs regenerating on a HOI4 version bump (see
 # gen_vanilla_gui_manifest.py).
+#
+# One carve-out: an MD-authored nation variant (`<vanilla_stem>_<tag>.gui`) that
+# inherits a dead ref from the specific vanilla file it copies stays WARNING too —
+# that ref is vanilla's bug, not the mod's (see _check_undefined_refs).
 
 _VANILLA_GUI_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_gui_files.txt")
 
 
 def _load_vanilla_gui_basenames() -> frozenset:
+    # UnicodeDecodeError too: a corrupt manifest must degrade to "no manifest"
+    # rather than crash the validator at module-import time.
     try:
         with open(_VANILLA_GUI_MANIFEST, encoding="utf-8") as fh:
             return frozenset(
                 line.strip() for line in fh if line.strip() and not line.startswith("#")
             )
-    except OSError:
-        # No manifest: treat every .gui as MD-authored (fail loud as ERRORs
-        # rather than silently downgrading real missing-sprite bugs).
+    except (OSError, UnicodeDecodeError):
+        # No/unreadable manifest: treat every .gui as MD-authored (fail loud as
+        # ERRORs rather than silently downgrading real missing-sprite bugs).
         return frozenset()
 
 
@@ -230,6 +237,45 @@ def _vanilla_gfx_files() -> List[str]:
             )
         )
     return sorted(files)
+
+
+def _vanilla_gui_files() -> List[str]:
+    """Return every vanilla .gui path, including DLC interface dirs."""
+    base = find_hoi4_install()
+    if not base:
+        return []
+    files = glob.glob(os.path.join(base, "interface", "**", "*.gui"), recursive=True)
+    for sub in ("dlc", "integrated_dlc"):
+        files.extend(
+            glob.glob(
+                os.path.join(base, sub, "*", "interface", "**", "*.gui"),
+                recursive=True,
+            )
+        )
+    return sorted(files)
+
+
+def _vanilla_gui_ref_index() -> dict:
+    """Map each vanilla .gui basename to the GFX sprite names it references.
+
+    Lets a nation-variant file (``<stem>_<tag>.gui``) be forgiven a dead ref its
+    real vanilla parent carries even when the mod ships no full-name override of
+    that parent — without a live install the mod's own override map is the only
+    signal, and a variant added alone would false-positive to ERROR. Empty when
+    no vanilla install is discoverable (CI), so callers keep current behaviour.
+    """
+    index: dict = {}
+    for path in _vanilla_gui_files():
+        raw = _read_raw(path)
+        if raw is None:
+            continue
+        text = _strip_comments(raw)
+        refs = index.setdefault(os.path.basename(path), set())
+        for m in _GUI_REF.finditer(text):
+            sprite = m.group(2)
+            if not _is_dynamic(sprite):
+                refs.add(sprite)
+    return index
 
 
 _UNUSED_SPRITE_LIMIT = 50
@@ -469,7 +515,10 @@ class GfxReferenceValidator(BaseValidator):
     def _collect_gui_refs(self, defined: Set[str]) -> List[Tuple[str, str, int]]:
         """Return undefined GUI sprite references from interface/*.gui files."""
         self._log_section("Collecting GFX references from interface/*.gui files")
-        gui_files = self._collect_files(["interface/**/*.gui"])
+        # Full-repo scan even under --staged: a variant file's inherited refs are
+        # only downgradable when their vanilla parent/override is in view, so the
+        # ref universe must not be staged-limited (would escalate WARNING->ERROR).
+        gui_files = self._collect_files(["interface/**/*.gui"], ignore_staged=True)
         all_refs: List[Tuple[str, str, int]] = []
         for batch in self._pool_map(
             _parse_gui_file, [(f, self.mod_path) for f in gui_files]
@@ -548,8 +597,11 @@ class GfxReferenceValidator(BaseValidator):
         When gui_mode is True, .gui files that are vanilla overrides (not
         MD-authored) are reported as WARNINGs rather than ERRORs, because
         those files legitimately reference vanilla sprites the mod doesn't
-        redefine. MD-authored .gui files and all scripted_gui/.txt files
-        get ERROR severity.
+        redefine. An MD-authored nation variant is likewise WARNING'd for a
+        ref inherited from the specific vanilla file it copies — from the
+        mod's own full-name override of that file, or (when a live vanilla
+        install is present) from real vanilla .gui data. Every other
+        MD-authored .gui ref and all scripted_gui/.txt refs get ERROR.
 
         *mod_defined_ci* is the casefold index of mod-only sprites (not
         vanilla). When a ref misses case-sensitively but hits here, the
@@ -566,10 +618,15 @@ class GfxReferenceValidator(BaseValidator):
         # its own parent carries, not any dead ref that happens to share a name
         # somewhere else in the repo.
         override_refs_by_file: dict = {}
+        vanilla_ref_index: dict = {}
         if gui_mode:
             for s, f, _ in refs:
                 if not _is_md_gui_file(f):
                     override_refs_by_file.setdefault(os.path.basename(f), set()).add(s)
+            # Real vanilla .gui refs (keyed by basename), so a variant added
+            # without a full-name mod override is still forgiven refs its actual
+            # vanilla parent carries. Empty without a live install (CI).
+            vanilla_ref_index = _vanilla_gui_ref_index()
 
         for sprite, filepath, line in refs:
             if sprite in defined:
@@ -600,8 +657,9 @@ class GfxReferenceValidator(BaseValidator):
                     downgrade = True
                 else:
                     parent = _vanilla_parent_basename(filepath)
-                    downgrade = parent is not None and sprite in (
-                        override_refs_by_file.get(parent, ())
+                    downgrade = parent is not None and (
+                        sprite in override_refs_by_file.get(parent, ())
+                        or sprite in vanilla_ref_index.get(parent, ())
                     )
             if downgrade:
                 warnings.append(entry)

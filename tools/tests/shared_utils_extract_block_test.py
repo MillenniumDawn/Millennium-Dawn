@@ -6,7 +6,7 @@ import sys
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
 
-from shared_utils import extract_block  # noqa: E402
+from shared_utils import blank_quoted_strings, extract_block  # noqa: E402
 
 
 def _split(text):
@@ -47,3 +47,45 @@ def test_brace_inside_comment_ignored():
     block, end = extract_block(lines, 0)
     assert block == lines[0:3]
     assert end == 3
+
+
+def test_leading_stray_brace_advances_index():
+    # A stray `}` before any `{` must return an advancing index (not the start
+    # index) so a caller looping on it can't spin forever.
+    lines = _split("}\nfocus = { id = a }\n")
+    block, end = extract_block(lines, 0)
+    assert block == []
+    assert end > 0
+
+
+def test_driver_loop_over_stray_brace_terminates():
+    # Mirrors the standardizer driver loop: `i = next_i` unconditionally. A
+    # non-advancing return (next_i == i) would hang here.
+    lines = _split("}\na = {\n\tb = 1\n}\ntrailing\n")
+    seen = []
+    i = 0
+    guard = 0
+    while i < len(lines):
+        guard += 1
+        assert guard <= len(lines) + 5, "extract_block driver loop did not terminate"
+        if "{" in lines[i] or "}" in lines[i]:
+            block, next_i = extract_block(lines, i)
+            assert next_i > i
+            if block:
+                seen.append(block)
+            i = next_i
+        else:
+            seen.append([lines[i]])
+            i += 1
+    # The real block is still recovered after skipping the stray brace.
+    assert lines[1:4] in seen
+
+
+def test_quoted_string_brace_does_not_break_boundary():
+    # A `{` / `}` inside a quoted string (blanked via blank_quoted_strings, as
+    # the standardizers pass their input) must not shift the block boundary.
+    raw = 'a = {\n\tlog = "brace } and { inside"\n\tb = 1\n}\nafter\n'
+    lines = _split(blank_quoted_strings(raw))
+    block, end = extract_block(lines, 0)
+    assert len(block) == 4
+    assert end == 4

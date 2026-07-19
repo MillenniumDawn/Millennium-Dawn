@@ -168,8 +168,10 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
             i += 1
             break
         elif brace_count < 0:
-            # Malformed: more closing than opening braces.
-            break
+            # Malformed: a stray `}` before any `{`. Advance past it (returning
+            # no block) so a caller looping on the returned index still makes
+            # forward progress instead of spinning on an unchanged start index.
+            return [], i + 1
 
         i += 1
 

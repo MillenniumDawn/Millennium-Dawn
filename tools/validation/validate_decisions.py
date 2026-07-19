@@ -8,9 +8,13 @@ adapted for Millennium Dawn with multiprocessing.
 import glob
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import blank_quoted_strings
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -72,7 +76,7 @@ def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set]:
             decisions.update(_DECISION_NAME_RE.findall(block))
     if "activate_mission" in text_file:
         missions.update(_MISSION_NAME_RE.findall(text_file))
-    if "remove_decision" in text_file:
+    if "remove_decision" in text_file or "remove_targeted_decision" in text_file:
         removals.update(_REMOVE_DECISION_RE.findall(text_file))
         for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
             removals.update(_REMOVE_DECISION_NAME_RE.findall(block))
@@ -441,7 +445,7 @@ class DecisionFactory:
     def __init__(self, dec: str, source_basename: str = "") -> None:
         self.source_basename = source_basename
         self.raw = dec
-        self.token = re.findall(r"^\t*(.+) = \{", dec, flags=re.MULTILINE)[0]
+        self.token = re.findall(r"^\t*(\S+)\s*=\s*\{", dec, flags=re.MULTILINE)[0]
         self.allowed = extract_value_multi_line(dec, "allowed")
         self.available = extract_value_multi_line(dec, "available")
         self.visible = extract_value_multi_line(dec, "visible")
@@ -545,8 +549,14 @@ def parse_all_decisions(
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
-            matches = _DECISIONS_BLOCK_RE.findall(text_file)
-            for match in matches:
+            # Neutralize quoted strings before block-splitting: a literal `}`
+            # inside a `name = "... } ..."` value would otherwise close the
+            # block early and drop every field after it. blank_quoted_strings
+            # preserves length/offsets, so match spans still slice the real
+            # text (quoted fields intact) for downstream extraction.
+            blanked = blank_quoted_strings(text_file)
+            for m in _DECISIONS_BLOCK_RE.finditer(blanked):
+                match = text_file[m.start() : m.end()]
                 decisions.append(match)
                 paths[match] = os.path.basename(filename)
 

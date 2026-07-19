@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from _common import format_elapsed
 from shared_utils import (
     create_backup,
     extract_block,
@@ -189,15 +190,7 @@ class BaseStandardizer(ABC):
                     f.write(line + "\n")
             os.replace(tmp_path, output_file)
 
-            end_time = time.time()
-            elapsed_time = end_time - self.start_time
-
-            if elapsed_time < 60:
-                time_str = f"{elapsed_time:.2f} seconds"
-            else:
-                minutes = int(elapsed_time // 60)
-                seconds = elapsed_time % 60
-                time_str = f"{minutes}m {seconds:.2f}s"
+            time_str = format_elapsed(time.time() - self.start_time)
 
             log_message("SUCCESS", f"Standardization completed in {time_str}")
             log_message("SUCCESS", f"Processed {self.processed_count} blocks")

@@ -23,6 +23,11 @@ def _round(content, index):
     return _format_output(header, entries, index)
 
 
+def _round_stem(content, index, stem, references=None):
+    header, entries = _parse_loc_file(content)
+    return _format_output(header, entries, index, stem, references)
+
+
 def test_user_comment_and_quoted_value_preserved():
     content = 'l_english:\n # user comment\n my_key: "A   B   C"\n'
     out = _round(content, _empty_index())
@@ -44,6 +49,28 @@ def test_round_trip_idempotent():
     index = _empty_index()
     once = _round(content, index)
     twice = _round(once, index)
+    assert once == twice
+
+
+def test_focus_tree_anchor_preserved_and_idempotent():
+    # Matching `MD_focus_<TAG>_l_english` stem so the `<TAG>_focus_tree` anchor
+    # path fires. The anchor key is not indexed as a focus, so it categorises as
+    # Unreferenced — the case the old NF-only anchor search corrupted on re-run.
+    index = _empty_index()
+    index["National Focus"].add("ISR_test_focus")
+    stem = "MD_focus_ISR_l_english.yml"
+    content = (
+        "l_english:\n"
+        ' ISR_focus_tree: "Israeli Focus Tree"\n'
+        ' ISR_test_focus: "Test Focus"\n'
+    )
+
+    once = _round_stem(content, index, stem, references=set())
+    assert ' ISR_focus_tree: "Israeli Focus Tree"' in once
+    assert ' ISR_focus_tree: ""' not in once
+    assert once.count("ISR_focus_tree:") == 1
+
+    twice = _round_stem(once, index, stem, references=set())
     assert once == twice
 
 

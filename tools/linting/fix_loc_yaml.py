@@ -174,7 +174,10 @@ def process_file(file_path: Path, fix_mode: bool) -> tuple:
         return (0, 0)
 
     has_bom = raw.startswith(codecs.BOM_UTF8)
-    content = raw.decode("utf-8-sig")
+    try:
+        content = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        content = raw.decode("utf-8-sig", errors="replace")
     lines = content.split("\n")
 
     all_problems = []

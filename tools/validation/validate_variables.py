@@ -180,8 +180,15 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     rel = os.path.relpath(filename, mod_path)
 
     issues: List[str] = []
+    # Both patterns fire on `..._variable = { ... value = X.XXXXXX }`, matching the
+    # same literal (same end offset). Dedupe on it so one bad literal is one finding;
+    # the operator pattern runs first, so its tighter match text is what's reported.
+    seen_ends: set = set()
     for pattern in (_MATH_PRECISION_RE, _MATH_PRECISION_SHORTHAND_RE):
         for m in pattern.finditer(cleaned):
+            if m.end() in seen_ends:
+                continue
+            seen_ends.add(m.end())
             line = cleaned[: m.start()].count("\n") + 1
             issues.append(
                 f"{rel}:{line} - math expression literal with >5 decimal places"

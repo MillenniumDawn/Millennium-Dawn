@@ -378,6 +378,7 @@ class Validator(BaseValidator):
         self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
+        self._fire_only_once_ids_cache: Optional[set] = None
 
     def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
         if self._events_cache is not None:
@@ -451,6 +452,38 @@ class Validator(BaseValidator):
             ids.update(_extract_random_event_ids(text))
 
         self._random_events_cache = ids
+        return ids
+
+    def _get_fire_only_once_ids(self) -> set:
+        """Return IDs of events declared ``fire_only_once = yes``.
+
+        Lookup pass: must scan the full repo even in staged mode. Otherwise a
+        staged caller that fires an existing fire_only_once event whose
+        definition lives in an unstaged file drops out of the ID set, and the
+        real in-loop / multi-caller bug commits silently.
+        """
+        if self._fire_only_once_ids_cache is not None:
+            return self._fire_only_once_ids_cache
+
+        files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
+        ids: set = set()
+        for filepath in files:
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            basename = os.path.basename(filepath)
+            file_meta, _ = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "events.metadata",
+                filepath,
+                text,
+                lambda: _parse_event_metadata(text, basename),
+            )
+            ids.update(ev["id"] for ev in file_meta if ev["fire_only_once"])
+
+        self._fire_only_once_ids_cache = ids
         return ids
 
     def validate_unsupported_title_desc(self):
@@ -850,8 +883,7 @@ class Validator(BaseValidator):
             "Checking for fire_only_once events fired inside iterators..."
         )
 
-        meta, _ = self._get_event_metadata()
-        fire_only_once_ids = frozenset(ev["id"] for ev in meta if ev["fire_only_once"])
+        fire_only_once_ids = frozenset(self._get_fire_only_once_ids())
         if not fire_only_once_ids:
             self.log("  No fire_only_once events defined — skipping")
             self._report(

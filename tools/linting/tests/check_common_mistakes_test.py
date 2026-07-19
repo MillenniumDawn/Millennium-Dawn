@@ -1,23 +1,35 @@
 """
-Unit tests for the checks added to check_common_mistakes.py:
+Unit tests for the checks added to check_common_mistakes.py (in file order):
 
   1. Consecutive same-tag scope blocks
   2. send_embargo / break_embargo without DLC guard
   3. divide_variable without zero guard
   4. Duplicate consecutive add_to_variable lines
   5. every_country with has_idea = X_member when array exists
-  6. has_idea mutex inside NOT/AND blocks
-  7. change_influence_percentage setter with no matching call
-  8. check_variable with inline >= / <=
-  9. tautological OR = { X = yes X = no }
-  10. check_expr operand chained with a raw comparator symbol
-  11. every_owned_controlled_state (nonexistent effect)
-  12. random_select_amount set to a non-integer-literal
-  13. any_country/any_other_country with has_idea = X_member when array exists
-  14. on_add adds to a global array the sibling on_remove never removes from
-  15. focus/decision/event log = "..." referencing the wrong id (Check C)
-  16. hidden_trigger = { } directly inside custom_trigger_tooltip (Check E1)
-  17. malformed country leader rotations in *_political_leaders.txt
+  6. any_country/any_other_country with has_idea = X_member (trigger context)
+  7. on_add adds to a global array the sibling on_remove never removes from
+  8. has_idea mutex inside NOT/AND blocks
+  9. change_influence_percentage setter with no matching call
+  10. check_variable with inline >= / <=
+  11. tautological OR = { X = yes X = no }
+  12. dynamic triggers in decision allowed blocks
+  13. focus declares war without will_lead_to_war_with
+  14. check_expr operand chained with a raw comparator symbol
+  15. every_owned_controlled_state (nonexistent effect)
+  16. random_select_amount set to a non-integer-literal
+  17. focus/decision/event log = "..." referencing the wrong id (Check C)
+  18. hidden_trigger = { } directly inside custom_trigger_tooltip (Check E1)
+  19. malformed country leader rotations in *_political_leaders.txt
+  20. country_exists scope contradiction — NOT = { country_exists = TAG }
+  21. single-valued-trigger contradiction, including single-line forms
+  22. embargo DLC guard must not leak an inline guard to the parent frame
+  23. is_X_nation regex matches multi-segment nation names
+  24. _get_block ignores braces inside quoted strings
+  25. ideas brace tracking ignores braces inside comments (check_file)
+  26. division check does not fire inside quoted strings (check_file)
+  27. mutex-trigger regex built from _MUTUALLY_EXCLUSIVE_TRIGGERS
+  28. embargo guard stack is quote-aware (stray brace in log/loc string)
+  29. _files_need_global_refs pre-scan gate matches whitespace-flexible form
 """
 
 import os
@@ -51,6 +63,7 @@ from check_common_mistakes import (
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
     _check_tautological_or,
+    _files_need_global_refs,
     _get_block,
     check_file,
 )
@@ -2856,6 +2869,51 @@ assert_finds(
     ],
     1,
     "stray { in a log string does not hide an ungated embargo",
+)
+
+
+# 27. _files_need_global_refs pre-scan gate matches the whitespace-flexible
+#     _RE_AVAILABLE_ALWAYS_NO downstream check, so a spaceless always=no is not
+#     skipped (which would surface as a false-positive unreachable-focus finding)
+
+print("\n── _files_need_global_refs whitespace-flexible gate ──")
+
+
+def _needs_global_refs(rel_path, text):
+    root = tempfile.mkdtemp()
+    fp = os.path.join(root, rel_path)
+    os.makedirs(os.path.dirname(fp), exist_ok=True)
+    with open(fp, "w", encoding="utf-8") as f:
+        f.write(text)
+    try:
+        return _files_need_global_refs([fp])
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+assert_eq(
+    _needs_global_refs(
+        "common/national_focus/test.txt",
+        "focus = {\n\tavailable = { always = no }\n}\n",
+    ),
+    True,
+    "canonical available = { always = no } forces the global-refs scan",
+)
+assert_eq(
+    _needs_global_refs(
+        "common/national_focus/test.txt",
+        "focus = {\n\tavailable={always=no}\n}\n",
+    ),
+    True,
+    "spaceless available={always=no} still forces the global-refs scan",
+)
+assert_eq(
+    _needs_global_refs(
+        "common/national_focus/test.txt",
+        "focus = {\n\tavailable = { has_war = yes }\n}\n",
+    ),
+    False,
+    "focus without available always-no does not force the scan",
 )
 
 

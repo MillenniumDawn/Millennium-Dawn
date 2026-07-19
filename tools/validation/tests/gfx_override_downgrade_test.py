@@ -9,9 +9,12 @@ unrelated vanilla dead ref elsewhere in the repo must stay an ERROR.
 
 import os
 
+import pytest
+import validate_gfx_references as vg
 from validate_gfx_references import (
     GfxReferenceValidator,
     Severity,
+    _load_vanilla_gui_basenames,
     _vanilla_parent_basename,
 )
 
@@ -19,6 +22,14 @@ from validate_gfx_references import (
 # variant basename is MD-authored (absent from the manifest).
 VANILLA_BASE = "tank_chassis_super_heavy_tank.gui"
 MD_VARIANT = "tank_chassis_super_heavy_tank_isr.gui"
+
+
+@pytest.fixture(autouse=True)
+def _no_vanilla_gui_index(monkeypatch):
+    # Default the tests to "no live vanilla install": downgrades then come only
+    # from the in-mod override map, matching CI. Tests that exercise the
+    # vanilla-.gui carve-out opt in by re-patching this seam.
+    monkeypatch.setattr(vg, "_vanilla_gui_ref_index", lambda: {})
 
 
 def _validator(tmp_path):
@@ -100,3 +111,51 @@ def test_variant_ref_not_carried_by_parent_stays_error(tmp_path):
     )
     sev = _severity_by_file(v)
     assert sev[MD_VARIANT] == Severity.ERROR
+
+
+def test_corrupt_manifest_does_not_crash_loader(tmp_path, monkeypatch):
+    # A non-UTF-8 vanilla_gui_files.txt must degrade to "no manifest" (frozenset)
+    # instead of raising UnicodeDecodeError at module-import time.
+    manifest = tmp_path / "vanilla_gui_files.txt"
+    manifest.write_bytes(b"\xff\xfe\x00 not utf-8 \x80")
+    monkeypatch.setattr(vg, "_VANILLA_GUI_MANIFEST", str(manifest))
+    assert _load_vanilla_gui_basenames() == frozenset()
+
+
+def test_vanilla_inherited_variant_without_override_not_error(tmp_path, monkeypatch):
+    # Nation variant added with no matching full-name mod override in the ref set,
+    # but its ref is carried by the real vanilla parent .gui — inherited, so it
+    # must stay a WARNING, not regress to a false-positive ERROR.
+    sprite = "GFX_dead_vanilla_ref"
+    monkeypatch.setattr(vg, "_vanilla_gui_ref_index", lambda: {VANILLA_BASE: {sprite}})
+    v = _validator(tmp_path)
+    refs = [
+        (sprite, _iface(tmp_path, MD_VARIANT), 20),
+    ]
+    v._check_undefined_refs(
+        refs,
+        set(),
+        source_label=".gui files",
+        category="undefined-sprite",
+        gui_mode=True,
+    )
+    sev = _severity_by_file(v)
+    assert sev[MD_VARIANT] == Severity.WARNING
+
+
+def test_undefined_md_ref_without_vanilla_parent_stays_error(tmp_path):
+    # Genuinely-undefined ref in a standalone MD file: no vanilla parent, empty
+    # vanilla index (autouse default) — must remain an ERROR.
+    v = _validator(tmp_path)
+    refs = [
+        ("GFX_md_typo_sprite", _iface(tmp_path, "MD_unique_feature.gui"), 12),
+    ]
+    v._check_undefined_refs(
+        refs,
+        set(),
+        source_label=".gui files",
+        category="undefined-sprite",
+        gui_mode=True,
+    )
+    sev = _severity_by_file(v)
+    assert sev["MD_unique_feature.gui"] == Severity.ERROR

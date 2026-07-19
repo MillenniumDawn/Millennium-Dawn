@@ -248,10 +248,10 @@ def scan_meta_constructed_names(files, defined_names):
 
         content_clean = strip_comments(content)
 
-        templates = [m.group(1) for m in _META_TEMPLATE_RE.finditer(content_clean)]
-        templates += [
+        templates = {m.group(1) for m in _META_TEMPLATE_RE.finditer(content_clean)}
+        templates.update(
             m.group(1) for m in _QUOTED_META_TEMPLATE_RE.finditer(content_clean)
-        ]
+        )
 
         for template in templates:
             parts = re.split(r"\[[^\]]+\]", template)

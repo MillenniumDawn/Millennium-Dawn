@@ -1562,80 +1562,103 @@ class Validator(BaseValidator):
 
         parsed = self._get_parsed_files()
 
-        results = []
+        # Build ONE global dependency graph across every file. A prerequisite
+        # edge can route through a shared_focus / joint_focus target (defined at
+        # file top level, outside any focus_tree) and can cross files, so a
+        # per-tree graph silently drops those edges and misses cycles that pass
+        # through them.
+        adjacency: Dict[str, Set[str]] = defaultdict(set)
+        node_info: Dict[str, Tuple[str, int, str]] = {}
+
+        def _register(focus_id: str, line: int, filepath: str) -> None:
+            adjacency.setdefault(focus_id, set())
+            if focus_id not in node_info:
+                node_info[focus_id] = (
+                    os.path.relpath(filepath, self.mod_path),
+                    line,
+                    filepath,
+                )
+
         for pf in parsed:
             fp = pf["filepath"]
-            if not self._is_reportable(fp):
-                continue
-            rel = os.path.relpath(fp, self.mod_path)
+            for sfid, sdata in pf["shared_defs"].items():
+                _register(sfid, sdata["line"], fp)
             for tree in pf["trees"]:
-                # Build adjacency: focus_id -> set of direct prerequisite IDs
-                # (flatten OR-groups — for cycle detection any edge matters)
-                tree_ids: Set[str] = {f[0] for f in tree["focuses"]}
-                adjacency: Dict[str, Set[str]] = {fid: set() for fid in tree_ids}
-                id_to_line: Dict[str, int] = {}
+                for focus_id, line, _groups in tree["focuses"]:
+                    _register(focus_id, line, fp)
 
-                for focus_id, line, prereq_groups in tree["focuses"]:
-                    id_to_line[focus_id] = line
-                    for group in prereq_groups:
-                        for prereq_id in group:
-                            if prereq_id in tree_ids:
-                                adjacency[focus_id].add(prereq_id)
+        def _add_edges(focus_id: str, prereq_groups: List[List[str]]) -> None:
+            # Flatten OR-groups — for cycle detection any edge matters. Only keep
+            # edges to known nodes (a prereq into another mod object isn't ours).
+            for group in prereq_groups:
+                for prereq_id in group:
+                    if prereq_id in node_info:
+                        adjacency[focus_id].add(prereq_id)
 
-                # DFS cycle detection. Iterative with an explicit work stack:
-                # prerequisite chains can run 1000+ deep, and a recursive DFS
-                # blows the Python recursion limit on those.
-                WHITE, GRAY, BLACK = 0, 1, 2
-                color: Dict[str, int] = {fid: WHITE for fid in tree_ids}
+        for pf in parsed:
+            for sfid, sdata in pf["shared_defs"].items():
+                _add_edges(sfid, sdata["prereq_groups"])
+            for tree in pf["trees"]:
+                for focus_id, _line, prereq_groups in tree["focuses"]:
+                    _add_edges(focus_id, prereq_groups)
 
-                def dfs(start: str) -> Optional[List[str]]:
-                    path: List[str] = [start]
-                    work = [(start, iter(adjacency.get(start, ())))]
-                    color[start] = GRAY
-                    while work:
-                        node, neighbors = work[-1]
-                        advanced = False
-                        for neighbor in neighbors:
-                            if color[neighbor] == GRAY:
-                                # A GRAY neighbor off the current path is a
-                                # cross-edge into a subtree an earlier cycle
-                                # abort left unfinished — skip it. Only a
-                                # neighbor still on this path is a live back-edge.
-                                if neighbor not in path:
-                                    continue
-                                cycle_start = path.index(neighbor)
-                                return path[cycle_start:] + [neighbor]
-                            if color[neighbor] == WHITE:
-                                color[neighbor] = GRAY
-                                path.append(neighbor)
-                                work.append(
-                                    (neighbor, iter(adjacency.get(neighbor, ())))
-                                )
-                                advanced = True
-                                break
-                        if not advanced:
-                            color[node] = BLACK
-                            work.pop()
-                            path.pop()
-                    return None
+        # Iterative white/gray/black DFS with an explicit work stack: prerequisite
+        # chains can run 1000+ deep, so a recursive DFS would blow the Python
+        # recursion limit. Every node is finalized to BLACK when it pops, so no
+        # GRAY state survives a cycle — that lets independent cycles sharing a
+        # node each be reported instead of only the first one found.
+        WHITE, GRAY, BLACK = 0, 1, 2
+        color: Dict[str, int] = {fid: WHITE for fid in node_info}
 
-                reported_cycles: Set[FrozenSet] = set()
-                for fid in tree_ids:
-                    if color[fid] == WHITE:
-                        cycle = dfs(fid)
-                        if cycle:
-                            cycle_key = frozenset(cycle)
-                            if cycle_key not in reported_cycles:
-                                reported_cycles.add(cycle_key)
-                                cycle_str = " -> ".join(cycle)
-                                line = id_to_line.get(cycle[0], 0)
-                                results.append(
-                                    (
-                                        f"Dependency cycle detected: {cycle_str}",
-                                        rel,
-                                        line,
-                                    )
-                                )
+        results = []
+        reported_cycles: Set[FrozenSet] = set()
+
+        def _record_cycle(cycle: List[str]) -> None:
+            cycle_key = frozenset(cycle)
+            if cycle_key in reported_cycles:
+                return
+            if not any(self._is_reportable(node_info[n][2]) for n in cycle):
+                return
+            reported_cycles.add(cycle_key)
+            rel, line, _fp = node_info[cycle[0]]
+            results.append(
+                (
+                    f"Dependency cycle detected: {' -> '.join(cycle)}",
+                    rel,
+                    line,
+                )
+            )
+
+        for root in node_info:
+            if color[root] != WHITE:
+                continue
+            path: List[str] = [root]
+            on_path: Set[str] = {root}
+            color[root] = GRAY
+            work = [(root, iter(adjacency[root]))]
+            while work:
+                node, neighbors = work[-1]
+                advanced = False
+                for neighbor in neighbors:
+                    if color[neighbor] == GRAY:
+                        # A GRAY node is always still on the current path (popped
+                        # nodes are BLACK), so this is a live back-edge -> cycle.
+                        if neighbor in on_path:
+                            start = path.index(neighbor)
+                            _record_cycle(path[start:] + [neighbor])
+                        continue
+                    if color[neighbor] == WHITE:
+                        color[neighbor] = GRAY
+                        path.append(neighbor)
+                        on_path.add(neighbor)
+                        work.append((neighbor, iter(adjacency[neighbor])))
+                        advanced = True
+                        break
+                if not advanced:
+                    color[node] = BLACK
+                    on_path.discard(node)
+                    work.pop()
+                    path.pop()
 
         self._report(
             results,

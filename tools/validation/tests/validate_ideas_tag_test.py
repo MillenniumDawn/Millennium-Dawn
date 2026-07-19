@@ -42,6 +42,17 @@ def test_original_tag_not_flagged():
     assert "redundant-tag-and-original-tag" not in types
 
 
+def test_runtime_tag_flagged():
+    # A civil-war runtime tag (longer than 3 chars) must still be caught.
+    text = _wrap(
+        "\t\tmy_idea = {\n"
+        "\t\t\tallowed = { tag = ISR_CW_0 }\n"
+        "\t\t\tpicture = GFX_idea_x\n"
+        "\t\t}"
+    )
+    assert "tag-not-original-tag" in _issue_types(text)
+
+
 def test_tag_after_nested_block_flagged():
     # A nested block before the tag = line closes `[^}]*` early in the old
     # regex; brace-balanced extraction still sees the tag.

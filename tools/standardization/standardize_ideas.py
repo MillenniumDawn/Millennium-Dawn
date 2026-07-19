@@ -10,6 +10,7 @@ import re
 import time
 from typing import Any, Dict, List
 
+from _common import format_elapsed
 from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
 from shared_utils import (
     collapse_or_compact,
@@ -53,7 +54,9 @@ def _rewrite_allowed_tag(line: str) -> str:
 
 
 def _explode_braces(block_lines: List[str]) -> List[str]:
-    """Split packed lines so each ``{``/``}`` and statement sits on its own line.
+    """Split packed lines at each ``{``/``}`` boundary so every brace and the text
+    between braces sits on its own line. Statements sharing a brace level are not
+    split apart (`{ a = 1 b = 2 }` yields `{`, `a = 1 b = 2`, `}`).
 
     Quoted strings and trailing ``#`` comments are preserved. Used to normalize a
     single-line or opener-packed idea/lifecycle block before property extraction
@@ -439,13 +442,7 @@ class IdeaStandardizer(BaseStandardizer):
                 for line in output_lines:
                     f.write(line + "\n")
 
-            elapsed_time = time.time() - self.start_time
-            if elapsed_time < 60:
-                time_str = f"{elapsed_time:.2f} seconds"
-            else:
-                minutes = int(elapsed_time // 60)
-                seconds = elapsed_time % 60
-                time_str = f"{minutes}m {seconds:.2f}s"
+            time_str = format_elapsed(time.time() - self.start_time)
 
             log_message("SUCCESS", f"Standardization completed in {time_str}")
             log_message("SUCCESS", f"Processed {self.processed_count} ideas")

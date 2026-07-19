@@ -36,3 +36,27 @@ def test_five_decimals_ok():
 def test_plain_block_not_flagged():
     # not a _variable opener, so a many-decimal factor is not a math literal
     assert not _matches("ai_will_do = { factor = 0.123456 }")
+
+
+def test_single_literal_reports_once(tmp_path):
+    # regression: the operator and shorthand patterns both fire on the same
+    # `value =` literal — dedupe so one bad literal yields exactly one finding
+    f = tmp_path / "x.txt"
+    f.write_text(
+        "effect = {\n"
+        "    set_variable = {\n"
+        "        var = my_var\n"
+        "        value = 0.123456\n"
+        "    }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    issues = V.process_file_for_math_precision((str(f), str(tmp_path)))
+    assert len(issues) == 1
+
+
+def test_two_distinct_literals_report_twice(tmp_path):
+    f = tmp_path / "y.txt"
+    f.write_text("set_variable = { var = 0.123456 add = 0.999999 }\n", encoding="utf-8")
+    issues = V.process_file_for_math_precision((str(f), str(tmp_path)))
+    assert len(issues) == 2

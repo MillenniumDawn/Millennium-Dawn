@@ -6,7 +6,10 @@
 import glob
 import os
 import re
+import sys
 from typing import Dict, List, Set
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import strip_inline_comment
 from validator_common import BaseValidator, run_validator_main

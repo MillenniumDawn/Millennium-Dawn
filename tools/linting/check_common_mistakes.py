@@ -371,7 +371,7 @@ def _files_need_global_refs(files_list) -> bool:
             return True
         if (
             "common/national_focus" in nf or "common/decisions" in nf
-        ) and "always = no" in content:
+        ) and _RE_AVAILABLE_ALWAYS_NO.search(content):
             return True
     return False
 

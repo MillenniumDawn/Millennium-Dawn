@@ -617,6 +617,12 @@ def main():
         except ValueError:
             print(f"error: --top expects an integer, got '{val}'", file=sys.stderr)
             sys.exit(1)
+        if top_n < 0:
+            print(
+                f"error: --top expects a non-negative integer, got '{val}'",
+                file=sys.stderr,
+            )
+            sys.exit(1)
         # Remove exactly the flag and its value (not every matching token).
         args = args[:idx] + args[idx + 2 :]
 

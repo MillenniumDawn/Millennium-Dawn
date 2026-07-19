@@ -459,10 +459,27 @@ def process_file(filepath):
 _EXCLUDED_DIRS = {"resources", ".git"}
 
 
+def _is_excluded_path(path):
+    """True if any component of path is an excluded dir (resources/, .git).
+
+    Mid-walk pruning only stops os.walk from descending into an excluded
+    subdir; it never guards the walk root or a directly-passed file, so a
+    `resources/...` target would otherwise be rewritten regardless.
+    """
+    parts = os.path.normpath(os.path.abspath(path)).split(os.sep)
+    return any(part in _EXCLUDED_DIRS for part in parts)
+
+
 def main(paths):
     """Process paths: directories are walked recursively, files are processed directly."""
     changed = []
     for path in paths:
+        if _is_excluded_path(path):
+            print(
+                f"SKIP: {path} is under an excluded directory (resources/, .git); not modified",
+                file=sys.stderr,
+            )
+            continue
         if os.path.isdir(path):
             for dirpath, dirnames, filenames in os.walk(path):
                 dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIRS]

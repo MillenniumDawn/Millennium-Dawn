@@ -167,3 +167,39 @@ def test_packed_option_standardization_idempotent():
     once = _standardize_event(_PACKED_EVENT)
     twice = _standardize_event(once)
     assert once == twice
+
+
+def test_multiline_option_packed_interior_line_effect_detected():
+    # Multi-line option whose body packs an effect after a skipped statement on
+    # one physical interior line -- effect detection must still fire.
+    option = _option(
+        [
+            "\toption = {",
+            "\t\tname = test.1.a",
+            "\t\tai_chance = { factor = 1 }  add_political_power = 10",
+            "\t}",
+        ]
+    )
+    assert _option_has_effects(option)
+
+
+_PACKED_INTERIOR_EVENT = [
+    "country_event = {",
+    "\tid = test.3",
+    "\ttitle = test.3.t",
+    "\tdesc = test.3.d",
+    "\tis_triggered_only = yes",
+    "",
+    "\toption = {",
+    "\t\tname = test.3.a",
+    "\t\tai_chance = { factor = 1 }  add_political_power = 10",
+    "\t}",
+    "}",
+]
+
+
+def test_multiline_packed_interior_option_gets_log():
+    text = "\n".join(_standardize_event(_PACKED_INTERIOR_EVENT))
+    # Effect on the packed interior line is detected, so the option gets its log.
+    assert '\t\tlog = "[GetDateText]: [This.GetName]: test.3.a executed"' in text
+    assert "add_political_power = 10" in text

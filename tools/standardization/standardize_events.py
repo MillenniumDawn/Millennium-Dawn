@@ -132,17 +132,19 @@ def _option_log_line(option_block: List[str]) -> str:
 
 def _option_has_effects(option_block: List[str]) -> bool:
     """Check whether an option's body has any meaningful effect lines. Scans only
-    the body so the `option = {` header line itself never trips detection."""
+    the body so the `option = {` header line itself never trips detection. Each
+    body line is split into its packed statements so an effect jammed onto a
+    physical line after a skipped one (`name = x  add_pp = 10`) is still seen."""
     skip_prefixes = ("name =", "ai_chance =", "trigger =")
     for line in _option_body(option_block):
-        stripped = line.strip()
-        if not stripped or stripped in ("{", "}"):
-            continue
-        if stripped.startswith("#"):
-            continue
-        if stripped.startswith(skip_prefixes):
-            continue
-        return True
+        for stripped in _split_packed_body(line.strip()):
+            if not stripped or stripped in ("{", "}"):
+                continue
+            if stripped.startswith("#"):
+                continue
+            if stripped.startswith(skip_prefixes):
+                continue
+            return True
     return False
 
 
