@@ -6,8 +6,12 @@
 import glob
 import os
 import re
+import sys
 from typing import Dict, List, Set
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import strip_inline_comment
 from validator_common import BaseValidator, run_validator_main
 
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
@@ -59,13 +63,15 @@ def parse_equipment_file(
         match = re.match(r"^(\w+)\s*=\s*\{", line)
         if match:
             template_name = match.group(1)
-            brace_depth = line.count("{") - line.count("}")
+            code = strip_inline_comment(line)
+            brace_depth = code.count("{") - code.count("}")
             block_lines = [line]
             i += 1
 
             while i < len(lines) and brace_depth > 0:
                 block_lines.append(lines[i])
-                brace_depth += lines[i].count("{") - lines[i].count("}")
+                code = strip_inline_comment(lines[i])
+                brace_depth += code.count("{") - code.count("}")
                 i += 1
 
             block_text = "\n".join(block_lines)

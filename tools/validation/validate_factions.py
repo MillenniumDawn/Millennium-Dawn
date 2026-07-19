@@ -157,12 +157,12 @@ class Validator(BaseValidator):
         goals_dir = self._faction_path("goals")
         for filepath in glob.glob(os.path.join(goals_dir, "*.txt")):
             content = read_file(filepath)
-            for block_id in extract_block_ids(content):
-                if IS_MANIFEST_RE.search(
-                    content[content.index(block_id) : content.index(block_id) + 500]
-                    if block_id in content
-                    else ""
-                ):
+            # Scan at each block's definition site, not the first substring
+            # occurrence of its id (a reference earlier in the file would grab
+            # the wrong window and misclassify the manifest flag).
+            for m in BLOCK_DEF_RE.finditer(content):
+                block_id = m.group(1)
+                if IS_MANIFEST_RE.search(content[m.end() : m.end() + 500]):
                     self.manifest_ids.add(block_id)
                 self.goal_ids.add(block_id)
 
