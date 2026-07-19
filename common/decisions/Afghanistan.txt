@@ -17,7 +17,7 @@ Afghanistan_domestic_decisions = {
 			AFG = { country_event = AfghanistanPolicalEvents.4 }
 			set_country_flag = AFG_Election_over
 			set_country_flag = {
-				flag = flag_time_afghanistan
+				flag = AFG_election_cooldown
 				days = 200
 				value = 1
 			}
@@ -39,7 +39,7 @@ Afghanistan_domestic_decisions = {
 			has_country_flag = AFG_Election_over
 			has_war = no
 			NOT = { has_country_flag = AFG_Election_over2 }
-			NOT = { has_country_flag = flag_time_afghanistan }
+			NOT = { has_country_flag = AFG_election_cooldown }
 		}
 
 		cost = 150
@@ -1291,7 +1291,7 @@ Taliban_insurgency_category = {
 
 
 		visible = {
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 
 		available = {
@@ -1728,20 +1728,23 @@ Taliban_insurgency_category = {
 		icon = GFX_decision_generic_army_support
 
 		visible = {
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 
 		}
 
 		complete_effect = {
-			every_country = {
-				limit = {
-					has_country_flag = afg_support_counter_insurgency
+			#Array entries can be a month stale, so re-check both existence and the flag
+			for_each_scope_loop = {
+				array = AFG_ci_array
+				if = {
+					limit = {
+						exists = yes
+						has_country_flag = wot_supporting_afghan_counter_insurgency
+					}
+					set_temp_variable = { selected_tag = THIS.id }
+					TAG_get_name_with_flag = yes
+					newline = yes
 				}
-				display_individual_scopes = yes
-
-				set_temp_variable = { selected_tag = THIS.id }
-				TAG_get_name_with_flag = yes
-				newline = yes
 			}
 		}
 		ai_will_do = { base = 0 }
@@ -1758,7 +1761,7 @@ Taliban_insurgency_category = {
 		custom_cost_text = command_power_more_than_40
 
 		visible = {
-			has_country_flag = afg_support_counter_insurgency
+			has_country_flag = wot_supporting_afghan_counter_insurgency
 			AFG = {
 				check_variable = {
 					var = taliban_strength
@@ -1884,7 +1887,7 @@ Taliban_insurgency_category = {
 
 
 		visible = {
-			has_country_flag = afg_support_counter_insurgency
+			has_country_flag = wot_supporting_afghan_counter_insurgency
 			AFG = {
 				check_variable = {
 					var = taliban_strength
@@ -1984,7 +1987,7 @@ Taliban_insurgency_category = {
 		custom_cost_text = command_power_more_than_40
 
 		visible = {
-			has_country_flag = afg_support_counter_insurgency
+			has_country_flag = wot_supporting_afghan_counter_insurgency
 			AFG = {
 				check_variable = {
 					var = taliban_strength
@@ -2097,7 +2100,7 @@ Taliban_insurgency_category = {
 		custom_cost_text = cost_0_5
 
 		visible = {
-			has_country_flag = afg_support_counter_insurgency
+			has_country_flag = wot_supporting_afghan_counter_insurgency
 			AFG = {
 				check_variable = {
 					var = taliban_strength
@@ -2126,13 +2129,10 @@ Taliban_insurgency_category = {
 		remove_effect = {
 			AFG = {
 				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = FROM.id }
 				change_influence_percentage = yes
 				add_stability = 0.01
 				set_temp_variable = { taliban_strength_decrease = 5 }
 				decrease_taliban_strength = yes
-				add_to_variable = { var = taliban_attack_strength value = -0.05 }
-				clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 			}
 		}
 
@@ -2159,9 +2159,9 @@ Taliban_insurgency_category = {
 
 		visible = {
 			has_military_access_to = AFG
-			has_country_flag = afg_support_counter_insurgency
+			has_country_flag = wot_supporting_afghan_counter_insurgency
 			AFG = {
-				has_country_flag = afg_active_taliban_insurgency
+				has_country_flag = AFG_active_taliban_insurgency
 			}
 		}
 
@@ -2195,7 +2195,7 @@ Taliban_insurgency_category = {
 					active = no
 				}
 			}
-			clr_country_flag = afg_support_counter_insurgency
+			clr_country_flag = wot_supporting_afghan_counter_insurgency
 		}
 
 		ai_will_do = {
@@ -2234,7 +2234,7 @@ Taliban_insurgency_category = {
 		custom_cost_text = command_power_more_than_40
 
 		visible = {
-			has_country_flag = afg_active_taliban_insurgency
+			has_country_flag = AFG_active_taliban_insurgency
 		}
 
 		available = {
@@ -2356,19 +2356,17 @@ Taliban_insurgency_category = {
 		days_remove = 15
 
 		remove_effect = {
+			#TAL can be the subject of a live or queued Security Council vote (extradition, type 7).
+			#on_annex would tear that down, but a scripted annex_country is not worth betting on.
+			TAL = { clear_united_nations_member_state = yes }
 			annex_country = {
 				target = TAL
 			}
-			clear_variable = taliban_strength
-			clr_country_flag = afg_active_taliban_insurgency
-			set_country_flag = afg_taliban_insurgency_eliminated
+			reset_taliban_strength = yes
+			clr_country_flag = AFG_active_taliban_insurgency
+			set_country_flag = AFG_taliban_insurgency_eliminated
 			hidden_effect = {
-				every_other_country = {
-					limit = {
-						has_country_flag = afg_support_counter_insurgency
-					}
-					clr_country_flag = afg_support_counter_insurgency
-				}
+				AFG_clear_ci_supporters = yes
 			}
 			news_event = {
 				id = TalibanInsurgency.8
