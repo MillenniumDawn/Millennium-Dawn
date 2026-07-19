@@ -46,9 +46,11 @@ _MATH_PRECISION_RE = re.compile(
 # set_temp_variable / add_to_variable / multiply_variable / …). The value sits
 # on the RHS of the variable name, not behind a `value =` key, so the operator
 # pattern above misses it. Requires a `..._variable` opener so a plain
-# `{ key = 0.123456 }` block (e.g. an ai_will_do factor) is not matched.
+# `{ key = 0.123456 }` block (e.g. an ai_will_do factor) is not matched. The
+# `[^{}]*?` lets the offending key sit anywhere in the block, not just first, so
+# `clamp_variable = { var = x min = 0.123456789 }` is still caught.
 _MATH_PRECISION_SHORTHAND_RE = re.compile(
-    r"\b\w*_variable\s*=\s*\{\s*\w+\s*=\s*[-+]?\d*\.\d{6,}"
+    r"\b\w*_variable\s*=\s*\{[^{}]*?\b\w+\s*=\s*[-+]?\d*\.\d{6,}"
 )
 
 
@@ -171,7 +173,10 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     except Exception:
         return []
 
-    cleaned = re.sub(r"#[^\n]*", "", text)
+    # Quote-aware comment strip, then blank quoted-string interiors so a `#` or a
+    # high-precision decimal inside a `desc = "..."` string is neither treated as
+    # a comment nor mis-flagged as a truncated math literal.
+    cleaned = blank_quoted_strings(strip_comments(text))
     rel = os.path.relpath(filename, mod_path)
 
     issues: List[str] = []
@@ -185,13 +190,20 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     return issues
 
 
-# modify_treasury_effect writes the country-scope `treasury` variable
-# (add_to_variable = { treasury = treasury_change }). Called while the current
-# scope is a STATE it silently writes an unrelated state variable and the
-# nation's balance never changes. The scope tracker below flags calls whose
-# nearest enclosing scope switch is a state block with no intervening
-# country-scope opener.
-_TREASURY_ANCHOR_RE = re.compile(r"\bmodify_treasury_effect\s*=\s*yes\b")
+# modify_treasury_effect / modify_debt_effect / modify_international_investment_effect
+# each write a country-scope variable (treasury / debt / int_investment) via
+# add_to_variable. Called while the current scope is a STATE they silently write an
+# unrelated state variable and the nation's balance never changes. The scope tracker
+# below flags calls whose nearest enclosing scope switch is a state block with no
+# intervening country-scope opener.
+_TREASURY_EFFECT_KEYWORDS = (
+    "modify_treasury_effect",
+    "modify_debt_effect",
+    "modify_international_investment_effect",
+)
+_TREASURY_ANCHOR_RE = re.compile(
+    r"\b(modify_(?:treasury|debt|international_investment)_effect)\s*=\s*yes\b"
+)
 _SCOPE_OPEN_RE = re.compile(r"([^\s{}=]+)\s*=\s*\{")
 # Effect iterators / scopes that switch the current scope to a STATE.
 _STATE_SCOPE_TOKENS = frozenset(
@@ -281,7 +293,7 @@ def process_file_for_treasury_scope(
         return []
 
     cleaned = strip_comments(text)
-    if "modify_treasury_effect" not in cleaned:
+    if not any(k in cleaned for k in _TREASURY_EFFECT_KEYWORDS):
         return []
 
     # Blank quoted-string interiors so a literal `}` inside a `log = "...}"`
@@ -294,7 +306,7 @@ def process_file_for_treasury_scope(
     for m in re.finditer(r"\}", cleaned):
         events.append((m.start(), 1, None))
     for m in _TREASURY_ANCHOR_RE.finditer(cleaned):
-        events.append((m.start(), 2, None))
+        events.append((m.start(), 2, m.group(1)))
     events.sort(key=lambda e: (e[0], e[1]))
 
     rel = os.path.relpath(filename, mod_path)
@@ -319,8 +331,8 @@ def process_file_for_treasury_scope(
                 line = cleaned[:pos].count("\n") + 1
                 issues.append(
                     (
-                        f"modify_treasury_effect runs in state scope"
-                        f" (inside `{frame_tok} = {{`) — treasury is a country"
+                        f"{tok} runs in state scope"
+                        f" (inside `{frame_tok} = {{`) — the target is a country"
                         f" variable, so the nation's balance never changes",
                         rel,
                         line,
@@ -974,26 +986,31 @@ class Validator(BaseValidator):
         )
 
     def validate_treasury_state_scope(self):
-        """Flag modify_treasury_effect calls that execute in state scope (WARNING).
+        """Flag treasury/debt/investment effect calls in state scope (WARNING).
 
-        The effect writes the country-scope `treasury` variable; called inside a
-        state block (state id, random_owned_state, ...) it silently writes an
-        unrelated state variable and the money never moves. Only flags when the
-        nearest enclosing scope switch is a state — an intervening
-        owner/CONTROLLER/tag/ROOT opener suppresses it.
+        Each effect writes a country-scope variable (treasury / debt /
+        int_investment); called inside a state block (state id,
+        random_owned_state, ...) it silently writes an unrelated state variable
+        and the money never moves. Only flags when the nearest enclosing scope
+        switch is a state — an intervening owner/CONTROLLER/tag/ROOT opener
+        suppresses it.
         """
-        self._log_section("Checking for modify_treasury_effect in state scope...")
+        self._log_section(
+            "Checking for treasury/debt/investment effects in state scope..."
+        )
 
         txt_files = self._collect_files(
             [
                 "common/national_focus/*.txt",
                 "common/decisions/**/*.txt",
                 "common/on_actions/**/*.txt",
+                "common/special_projects/**/*.txt",
+                "common/intelligence_agency_upgrades/**/*.txt",
                 "events/**/*.txt",
             ]
         )
         if not txt_files:
-            self.log("✓ No modify_treasury_effect state-scope issues found")
+            self.log("✓ No treasury/debt/investment state-scope issues found")
             return
 
         args_list = [(f, self.mod_path) for f in txt_files]
@@ -1003,8 +1020,8 @@ class Validator(BaseValidator):
         issues = [issue for file_issues in all_results for issue in file_issues]
         self._report(
             issues,
-            "✓ No modify_treasury_effect state-scope issues found",
-            "modify_treasury_effect calls in state scope (treasury is a country variable — the money never moves):",
+            "✓ No treasury/debt/investment state-scope issues found",
+            "treasury/debt/investment effect calls in state scope (each writes a country variable — the money never moves):",
             severity=Severity.WARNING,
             category="treasury-state-scope",
         )

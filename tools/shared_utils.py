@@ -139,8 +139,9 @@ def strip_inline_comment(line: str) -> str:
 def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     """Extract a multi-line block by counting braces.
 
-    Inline comments are stripped before counting so a ``#`` comment containing an
-    unbalanced brace does not corrupt the depth.
+    Inline comments are stripped and quoted-string interiors blanked before
+    counting, so a ``#`` comment or a ``{`` / ``}`` inside a ``"..."`` string
+    does not corrupt the depth.
     """
     if start_index >= len(lines):
         return [], start_index
@@ -154,7 +155,7 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
         line = lines[i]
         block_lines.append(line)
 
-        code = strip_inline_comment(line)
+        code = blank_quoted_strings(strip_inline_comment(line))
         if "{" in code:
             opened = True
         brace_count += code.count("{") - code.count("}")

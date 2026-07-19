@@ -168,6 +168,11 @@ def scan_fire_only_once_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return []
+    # Cheap early-out: a file that fires no events can't fire one inside a loop,
+    # so skip the two full-text transforms + tokenize on the bulk of the repo
+    # (history/, ai_strategy/, unit stat files, ... none of which fire events).
+    if not any(k in text for k in _EVENT_CALL_KEYWORDS):
+        return []
     # Quote-aware: strip comments, then blank quoted-string interiors so a
     # literal brace inside a `log = "...{..."` string can't desync the depth
     # stack and corrupt every finding after it.
@@ -335,12 +340,12 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
     for m in _EVENT_TYPE_PATTERN.finditer(text):
         event_type = m.group(1)
         body, _ = extract_block_from_text(text, m.end() - 1)
-        # Strip line comments before the `in body` flag checks: a commented-out
-        # `#fire_only_once = yes` (or hidden / is_triggered_only /
-        # mean_time_to_happen) must not be counted as an active directive, or
-        # the fire_only_once-in-loop check and the mtth/hidden checks all
-        # false-trigger on commented-out lines.
-        body_nc = re.sub(r"#[^\n]*", "", body)
+        # Quote-aware comment strip + quoted-string blanking before the `in body`
+        # flag checks: a commented-out `#fire_only_once = yes` (or hidden /
+        # is_triggered_only / mean_time_to_happen) must not count as an active
+        # directive, and a `#` (or one of those keywords) inside a quoted
+        # log/desc string must not truncate the line or false-match.
+        body_nc = blank_quoted_strings(strip_comments(body))
 
         id_match = _EVENT_ID_PATTERN.search(body)
         if not id_match:

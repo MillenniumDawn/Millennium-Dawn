@@ -2684,6 +2684,17 @@ assert_finds(
     0,
     "single-line guard covers a same-line inline embargo",
 )
+assert_finds(
+    _check_embargo_dlc_guard,
+    [
+        "option = {\n",
+        '\ttrigger = { has_dlc = "By Blood Alone" }\n',
+        "\tsend_embargo = FROM\n",
+        "}\n",
+    ],
+    0,
+    "trigger-gated has_dlc covers a sibling embargo in the same option",
+)
 
 
 # 21. is_X_nation regex matches multi-segment nation names

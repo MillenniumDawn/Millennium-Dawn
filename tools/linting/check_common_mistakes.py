@@ -695,6 +695,9 @@ _RE_DLC_TOKEN = re.compile(
     r'\{|\}|has_dlc\s*=\s*"By Blood Alone"|\b(?:send_embargo|break_embargo)\b'
 )
 _RE_IF_BEFORE_BRACE = re.compile(r"\b(?:if|else_if)\s*=\s*$")
+# trigger/available/visible/allowed gate the whole enclosing object, so a guard
+# inside one covers its siblings (unlike an if, which only guards its own body).
+_RE_GATE_BEFORE_BRACE = re.compile(r"\b(?:trigger|available|visible|allowed)\s*=\s*$")
 _RE_ADD_TO_VAR = re.compile(
     r"^\s*(add_to_variable|add_to_temp_variable)\s*=\s*\{.*\}\s*$"
 )
@@ -1132,9 +1135,12 @@ def _check_embargo_dlc_guard(lines):
     be inside an if block that checks has_dlc = "By Blood Alone".
     """
     issues = []
-    # Each frame: [is_if, guarded]. A has_dlc token marks the nearest enclosing
-    # if-frame guarded so an inline `if = { limit = { has_dlc } }` guard stays
-    # scoped to that if and cannot leak to a sibling embargo in the parent frame.
+    # Each frame: [is_if, guarded, is_gate]. A has_dlc token marks the nearest
+    # enclosing if-frame guarded so an inline `if = { limit = { has_dlc } }` guard
+    # stays scoped to that if and cannot leak to a sibling embargo in the parent
+    # frame. With no enclosing if, a has_dlc inside a gate (trigger/available/
+    # visible/allowed) instead marks that gate's PARENT, since the gate covers the
+    # whole enclosing object and every sibling effect in it.
     stack = []
 
     for i, line in enumerate(lines):
@@ -1149,16 +1155,29 @@ def _check_embargo_dlc_guard(lines):
             tok = m.group(0)
             if tok == "{":
                 preceding = code[last_end : m.start()]
-                stack.append([bool(_RE_IF_BEFORE_BRACE.search(preceding)), False])
+                stack.append(
+                    [
+                        bool(_RE_IF_BEFORE_BRACE.search(preceding)),
+                        False,
+                        bool(_RE_GATE_BEFORE_BRACE.search(preceding)),
+                    ]
+                )
             elif tok == "}":
                 if stack:
                     stack.pop()
             elif tok.startswith("has_dlc"):
                 target = next((f for f in reversed(stack) if f[0]), None)
-                if target is None and stack:
-                    target = stack[-1]
                 if target is not None:
                     target[1] = True
+                else:
+                    gate_idx = next(
+                        (idx for idx in range(len(stack) - 1, -1, -1) if stack[idx][2]),
+                        None,
+                    )
+                    if gate_idx is not None:
+                        stack[gate_idx - 1 if gate_idx > 0 else 0][1] = True
+                    elif stack:
+                        stack[-1][1] = True
             else:
                 if not any(f[1] for f in stack):
                     issues.append(
