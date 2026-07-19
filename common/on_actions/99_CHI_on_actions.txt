@@ -1,46 +1,48 @@
+
 on_actions = {
-	on_weekly_TAI = {
-		effect = {
-			if = {
-				limit = { has_dynamic_modifier = the_great_chip_race_modifier }
-
-				set_temp_variable = { tai_chips = TAI.resource_produced@microchips }
-				set_temp_variable = { chi_chips = CHI.resource_produced@microchips }
-
-				if = { limit = { check_variable = { chi_chips < 1 } } set_temp_variable = { chi_chips = 1 } }
-
-				if = {
-					limit = { check_variable = { chi_chips > tai_chips } }
-					remove_dynamic_modifier = { modifier = the_great_chip_race_modifier }
-				}
-
-				divide_temp_variable = { chi_chips = tai_chips }
-
-				set_variable = { tai_microchip_const_boost_var = chi_chips }
-				multiply_temp_variable = { chi_chips = 0.25 }
-				set_variable = { tai_microchip_prod_boost_var = chi_chips }
-			}
-
-			if = {
-				limit = {
-					NOT = { has_country_flag = has_had_chip_event }
-				}
-				country_event = taiwan.18
-			}
-		}
-	}
-	on_weekly_CHI = {
+	on_ruling_party_change = {
 		effect = {
 			if = {
 				limit = {
-					NOT = { has_country_flag = CHI_promise_of_elections }
+					original_tag = TAI
+					is_in_array = { ruling_party = 2 }
 					CHI = {
-						has_elections = yes
-						NOT = { has_completed_focus = CHI_Free_and_Fair_Elections }
+						exists = yes
+						check_variable = { CHI_TAI_trust > 0 }
 					}
 				}
-				set_country_flag = CHI_promise_of_elections
-				country_event = china.6
+				CHI = {
+					add_to_variable = { CHI_TAI_trust = -22 }
+					if = {
+						limit = { check_variable = { CHI_TAI_trust < 0 } }
+						set_variable = { CHI_TAI_trust = 0 }
+					}
+					country_event = { id = china_sar.004 days = 7 }
+				}
+			}
+			else_if = {
+				limit = {
+					original_tag = TAI
+					OR = {
+						is_in_array = { ruling_party = 1 }
+						is_in_array = { ruling_party = 14 }
+					}
+					country_exists = CHI
+				}
+				CHI = {
+					add_to_variable = { CHI_TAI_trust = 5 }
+					clamp_variable = { var = CHI_TAI_trust min = 0 max = 100 }
+				}
+			}
+			if = {
+				limit = {
+					original_tag = USA
+					CHI = {
+						exists = yes
+						has_completed_focus = CHI_TAI_cross_strait_policy
+					}
+				}
+				CHI = { CHI_update_us_president_support = yes }
 			}
 
 			if = {
@@ -56,222 +58,410 @@ on_actions = {
 			}
 		}
 	}
+
 	on_monthly_CHI = {
 		effect = {
-			#Chinese Aggression
 			if = {
-				limit = { check_variable = { chinese_aggression > 0 } }
-				subtract_from_variable = { chinese_aggression = 1 }
+				limit = {
+					has_completed_focus = CHI_TAI_cross_strait_policy
+					country_exists = TAI
+					NOT = { has_war_with = TAI }
+				}
+				if = {
+					limit = {
+						NOT = { has_country_flag = CHI_recent_provocation }
+						check_variable = { CHI_taiwan_strait_tension > 0 }
+					}
+					add_to_variable = { CHI_taiwan_strait_tension = -1 }
+					clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
+				}
+				if = {
+					limit = {
+						has_completed_focus = CHI_TAI_economic_leverage
+						has_country_flag = { flag = CHI_us_support_decay_tick days > 60 }
+						check_variable = { CHI_taiwan_us_support > 0 }
+					}
+					add_to_variable = { CHI_taiwan_us_support = -1 }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+					clr_country_flag = CHI_us_support_decay_tick
+					set_country_flag = CHI_us_support_decay_tick
+				}
+				else_if = {
+					limit = {
+						has_completed_focus = CHI_TAI_economic_leverage
+						NOT = { has_country_flag = CHI_us_support_decay_tick }
+					}
+					set_country_flag = CHI_us_support_decay_tick
+				}
+				if = {
+					limit = {
+						has_country_flag = CHI_harris_us_support_floor
+						check_variable = { CHI_taiwan_us_support < 40 }
+					}
+					set_variable = { CHI_taiwan_us_support = 40 }
+				}
+				if = {
+					limit = {
+						check_variable = { CHI_taiwan_strait_tension > 99 }
+						NOT = { has_country_flag = CHI_taiwan_crisis_triggered }
+					}
+					set_country_flag = CHI_taiwan_crisis_triggered
+					country_event = { id = china_sar.019 days = 1 }
+				}
+				if = {
+					limit = {
+						check_variable = { CHI_taiwan_recognition_count < 5 }
+						NOT = { has_country_flag = CHI_taiwan_diplomatic_alone }
+					}
+					set_country_flag = CHI_taiwan_diplomatic_alone
+					country_event = { id = china_sar.011 days = 1 }
+				}
+				if = {
+					limit = {
+						NOT = { has_country_flag = CHI_usa_multiwar_penalty_applied }
+						USA = {
+							has_war = yes
+							num_of_factories > 0
+							count_triggers = {
+								amount = 2
+								has_war_with = JAP
+								has_war_with = SOV
+								has_war_with = CHI
+								has_war_with = NKO
+								has_war_with = PER
+								has_war_with = IRQ
+								has_war_with = AFG
+								has_war_with = SYR
+							}
+						}
+					}
+					set_country_flag = CHI_usa_multiwar_penalty_applied
+					add_to_variable = { CHI_taiwan_us_support = -8 tooltip = CHI_taiwan_us_support_tt }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				}
+				if = {
+					limit = {
+						has_completed_focus = CHI_TAI_lobby_network
+						has_country_flag = { flag = CHI_lobby_event_cooldown days > 180 }
+					}
+					clr_country_flag = CHI_lobby_event_cooldown
+					set_country_flag = CHI_lobby_event_cooldown
+					random_list = {
+						50 = { country_event = { id = china_sar.012 days = 3 } }
+						50 = { country_event = { id = china_sar.013 days = 3 } }
+					}
+				}
+				else_if = {
+					limit = {
+						has_completed_focus = CHI_TAI_lobby_network
+						NOT = { has_country_flag = CHI_lobby_event_cooldown }
+					}
+					set_country_flag = CHI_lobby_event_cooldown
+				}
+				if = {
+					limit = { has_country_flag = CHI_TAI_full_blockade_active }
+					add_to_variable = { CHI_taiwan_strait_tension = 2 tooltip = CHI_taiwan_strait_tension_tt }
+					clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
+					add_to_variable = { CHI_taiwan_us_support = -3 tooltip = CHI_taiwan_us_support_tt }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				}
+			}
+			if = {
+				limit = { has_completed_focus = CHI_TAI_cross_strait_policy }
+				CHI_update_us_president_support = yes
 			}
 
 			if = {
 				limit = {
-					OR = {
-						has_communist_government_or_in_coalition = yes
-						has_communist_government = yes
-					}
-					HKG = { is_subject_of = CHI }
-					has_country_flag = CHI_sar_five_decade_period
-					date > 2047.7.1
+					has_completed_focus = CHI_Belt_and_Road_Initiative
 				}
-				annex_country = { target = HKG transfer_troops = yes }
-				595 = {
-					add_core_of = CHI
-					remove_dynamic_modifier = { modifier = CHI_hong_kong }
-					add_dynamic_modifier = { modifier = CHI_special_economic_zone }
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						has_communist_government_or_in_coalition = yes
-						has_communist_government = yes
-					}
-					MAC = { is_subject_of = CHI }
-					has_country_flag = CHI_sar_five_decade_period
-					date > 2049.12.20
-				}
-				annex_country = { target = MAC transfer_troops = yes }
-				1106 = {
-					add_core_of = CHI
-					remove_dynamic_modifier = { modifier = CHI_macau }
-					add_dynamic_modifier = { modifier = CHI_special_economic_zone }
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						has_communist_government_or_in_coalition = yes
-						has_communist_government = yes
-					}
-					OR = {
-						MON = { is_subject_of = CHI }
-						NOT = { country_exists = MON }
-					}
-					OR = {
-						TAI = { is_subject_of = CHI }
-						NOT = { country_exists = TAI }
-					}
-				}
-				country_event = { id = china.58 days = 1 }
-			}
-			if = {
-				limit = {
-					OR = {
-						has_communist_government_or_in_coalition = yes
-						has_communist_government = yes
-					}
-					NOT = { country_exists = MON }
-					NOT = { country_exists = TAI }
-					is_greater_china_state_owned = yes
-					is_outer_manchuria_state_owned = yes
-					is_buryatia_state_owned = yes
-					is_uriankhai_state_owned = yes
-					is_outer_xinjiang_state_owned = yes
-				}
-				country_event = { id = china.64 days = 1 }
-			}
-			random = {
-				chance = 20
-				subtract_from_variable = { CHI.kasmir_china_readiness = 5 }
-			}
-			random = {
-				chance = 20
-				subtract_from_variable = { GLOBAL.arunachal_tension = 5 }
-			}
-			random = {
-				chance = 20
-				subtract_from_variable = { CHI.arunachal_readiness = 5 }
+				CHI_BRI_monthly_tick = yes
 			}
 
-			# moved out for smooth value calculation
-			if = { limit = { has_variable = CHI.kasmir_china_readiness } clamp_variable = { var = CHI.kasmir_china_readiness min = 0 max = 100 } }
-			if = { limit = { has_variable = GLOBAL.arunachal_tension } clamp_variable = { var = GLOBAL.arunachal_tension min = 0 max = 100 } }
-			if = { limit = { has_variable = CHI.arunachal_readiness } clamp_variable = { var = CHI.arunachal_readiness min = 0 max = 100 } }
-
-			#uighur event chain
 			if = {
 				limit = {
-					OR = {
-						check_variable = { global.month = 4 }
-						check_variable = { global.month = 8 }
-						check_variable = { global.month = 12 }
-					}
+					has_completed_focus = CHI_the_poly_compromise
 				}
-				random_list = {
-					100 = {
-						modifier = {
-							factor = 0
-							NOT = { CHI = { has_country_flag = borderland_calm_down } }
-						}
-						add_political_power = 1
-					}
-					20 = {
-						modifier = {
-							factor = 0
-							NOT = {
-								CHI = {
-									controls_state = 592
-									check_variable = {
-										var = uighur_opinion
-										value = 100
-										compare = less_than
-									}
-									check_variable = {
-										var = uighur_threat
-										value = 50
-										compare = greater_than
-									}
-								}
-							}
-						}
-						country_event = china.9
-					}
-					20 = {
-						modifier = {
-							factor = 0
-							NOT = {
-								CHI = {
-									controls_state = 592
-									check_variable = {
-										var = uighur_opinion
-										value = 100
-										compare = less_than
-									}
-									check_variable = {
-										var = uighur_threat
-										value = 70
-										compare = greater_than
-									}
-								}
-							}
-						}
-						country_event = china.10
-					}
-					10 = {
-						modifier = {
-							factor = 0
-							NOT = {
-								controls_state = 592
-								check_variable = {
-									var = uighur_opinion
-									value = 100
-									compare = less_than
-								}
-							}
-						}
-						country_event = china.11
-					}
-					10 = {
-						modifier = {
-							factor = 0
-							NOT = {
-								CHI = {
-									controls_state = 592
-									check_variable = { uighur_opinion < 100 }
-								}
-							}
-						}
-						country_event = china.8
-					}
-					5 = {
-						modifier = {
-							factor = 0
-							NOT = {
-								CHI = {
-									controls_state = 592
-									check_variable = { uighur_opinion > 89 }
-								}
-							}
-						}
-						modifier = {
-							factor = 1.50
-							check_variable = { uighur_threat > 94 }
-						}
-						modifier = {
-							factor = 1.75
-							CHI = { has_war = yes }
-						}
-						modifier = {
-							factor = 1.25
-							CHI = { has_stability < 0.4 }
-						}
-						country_event = china.13
-					}
-				}
-
+				CHI_military_corruption_monthly_tick = yes
 			}
 
-			#SCO GUI Update
 			if = {
 				limit = {
-					OR = {
-						check_variable = { global.month = 4 }
-						check_variable = { global.month = 8 }
-						check_variable = { global.month = 12 }
+					has_variable = CHI_korea_peninsula_tension
+					check_variable = { CHI_korea_peninsula_tension > 30 }
+				}
+				add_to_variable = { CHI_korea_peninsula_tension = -1 }
+			}
+
+			if = {
+				limit = {
+					has_variable = CHI_demographic_policy_stage
+				}
+				if = {
+					limit = { check_variable = { CHI_demographic_policy_stage = 1 } }
+					add_to_variable = { CHI_demographic_aging = 0.40 }
+				}
+				else_if = {
+					limit = { check_variable = { CHI_demographic_policy_stage = 2 } }
+					add_to_variable = { CHI_demographic_aging = 0.08 }
+				}
+				else_if = {
+					limit = { check_variable = { CHI_demographic_policy_stage = 3 } }
+					add_to_variable = { CHI_demographic_aging = 0.02 }
+				}
+				else = {
+					add_to_variable = { CHI_demographic_aging = -0.10 }
+				}
+				clamp_variable = { var = CHI_demographic_aging min = 0 max = 100 }
+				CHI_apply_demographic_tier = yes
+
+				if = {
+					limit = {
+						check_variable = { CHI_demographic_aging > 49 }
+						NOT = { has_country_flag = CHI_demographic_fading_warned }
+						NOT = { has_active_mission = CHI_grey_society_crisis }
+					}
+					set_country_flag = CHI_demographic_fading_warned
+					country_event = { id = CHI_political_events.50 days = 1 }
+				}
+			}
+
+			if = {
+				limit = {
+					has_completed_focus = CHI_Form_the_SCO
+					NOT = { has_country_flag = sco_yearly_cohesion_reset }
+				}
+				set_variable = { global.sco_cohesion_yearly_contribution = 0 }
+				set_country_flag = { flag = sco_yearly_cohesion_reset days = 350 value = 1 }
+			}
+
+			if = {
+				limit = {
+					has_completed_focus = CHI_Form_the_SCO
+				}
+				if = {
+					limit = {
+						check_variable = { CHI_sco_cohesion < 2 }
+						NOT = { has_country_flag = sco_low_cohesion_fired }
+					}
+					set_country_flag = { flag = sco_low_cohesion_fired days = 365 value = 1 }
+					country_event = { id = CHI_sco.20 days = 1 }
+				}
+				if = {
+					limit = {
+						check_variable = { CHI_sco_cohesion > 8 }
+						NOT = { has_country_flag = sco_high_cohesion_fired }
+					}
+					set_country_flag = { flag = sco_high_cohesion_fired days = 365 value = 1 }
+					country_event = { id = CHI_sco.21 days = 1 }
+				}
+				if = {
+					limit = {
+						check_variable = { CHI_sco_balance > 5 }
+						NOT = { has_country_flag = sco_china_dominant_fired }
+					}
+					set_country_flag = { flag = sco_china_dominant_fired days = 365 value = 1 }
+					country_event = { id = CHI_sco.22 days = 1 }
+				}
+				if = {
+					limit = {
+						check_variable = { CHI_sco_balance < -5 }
+						NOT = { has_country_flag = sco_russia_dominant_fired }
+					}
+					set_country_flag = { flag = sco_russia_dominant_fired days = 365 value = 1 }
+					country_event = { id = CHI_sco.23 days = 1 }
+				}
+			}
+			if = {
+				limit = {
+					has_idea = CHI_scs_adiz
+					NOT = { has_country_flag = { flag = CHI_scs_adiz_intercept_cd days < 120 } }
+				}
+				clr_country_flag = CHI_scs_adiz_intercept_cd
+				set_country_flag = { flag = CHI_scs_adiz_intercept_cd days = 120 value = 1 }
+				country_event = { id = china_scs.21 days = 1 }
+			}
+
+			if = {
+				limit = {
+					check_variable = { CHI_chinese_aggression > 30 }
+					NOT = { has_global_flag = quad_formed }
+				}
+				set_global_flag = quad_formed
+				news_event = { id = china_scs.60 days = 1 }
+			}
+			if = {
+				limit = {
+					has_country_flag = CHI_paf_militia_toggle_active
+					country_exists = JAP
+					NOT = { has_war_with = JAP }
+				}
+				add_to_variable = { CHI_senkaku_pressure = 2 tooltip = CHI_senkaku_pressure_tt }
+				clamp_variable = { var = CHI_senkaku_pressure min = 0 max = 100 }
+				if = {
+					limit = {
+						check_variable = { CHI_senkaku_pressure > 29 }
+						NOT = { has_country_flag = senkaku_incident_30_fired }
+					}
+					set_country_flag = senkaku_incident_30_fired
+					JAP = { country_event = { id = CHI_foreign.212 days = 3 } }
+				}
+				if = {
+					limit = {
+						check_variable = { CHI_senkaku_pressure > 59 }
+						NOT = { has_country_flag = senkaku_incident_60_fired }
+					}
+					set_country_flag = senkaku_incident_60_fired
+					JAP = { country_event = { id = CHI_foreign.216 days = 3 } }
+				}
+				if = {
+					limit = {
+						check_variable = { CHI_senkaku_pressure > 89 }
+						NOT = { has_country_flag = senkaku_incident_90_fired }
+					}
+					set_country_flag = senkaku_incident_90_fired
+					JAP = { country_event = { id = CHI_foreign.217 days = 3 } }
+				}
+			}
+			if = {
+				limit = {
+					controls_state = 592
+				}
+				CHI_uighur_monthly_tick = yes
+			}
+			if = {
+				limit = { has_country_flag = CHI_ic_initialized }
+				CHI_gain_commission_influence = yes
+			}
+		}
+	}
+
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = CHI }
+					FROM = { original_tag = TAI }
+					ROOT = { has_completed_focus = CHI_TAI_combat_the_traitors }
+				}
+				ROOT = {
+					remove_dynamic_modifier = { modifier = CHI_TAI_shared_modifier }
+					clr_country_flag = CHI_taiwan_crisis_triggered
+					clr_country_flag = CHI_taiwan_diplomatic_alone
+					clr_country_flag = CHI_TAI_full_blockade_active
+					clr_country_flag = CHI_recent_provocation
+				}
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = NPM }
+					FROM = { original_tag = NEP }
+					CHI = {
+						exists = yes
+						has_country_flag = CHI_backing_npm_insurgency
 					}
 				}
-				SCO_dirty_update = yes
+				ROOT = {
+					remove_ideas = CHI_npm_red_banner_insurgency
+					country_event = { id = sino_indian.53 days = 3 }
+				}
+				CHI = { clr_country_flag = CHI_backing_npm_insurgency }
+			}
+		}
+	}
+
+	on_army_leader_won_combat = {
+		effect = {
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = allow_easter_eggs
+						option = yes
+					}
+					ROOT = {
+						OR = {
+							has_trait = CHI_special_weapons_general
+							has_trait = CHI_infantry_general
+							has_trait = CHI_tank_general
+							has_trait = CHI_nuke_general
+						}
+					}
+					FROM = {
+						original_tag = CHI
+						OR = {
+							has_country_flag = {
+								flag = CHI_cnc_general_quote_used
+								days > 30
+							}
+							NOT = { has_country_flag = CHI_cnc_general_quote_used }
+						}
+					}
+				}
+				CHI_general_quote_shout = yes
+			}
+		}
+	}
+	on_unit_leader_level_up = {
+		effect = {
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = allow_easter_eggs
+						option = yes
+					}
+					ROOT = {
+						OR = {
+							has_trait = CHI_special_weapons_general
+							has_trait = CHI_infantry_general
+							has_trait = CHI_tank_general
+							has_trait = CHI_nuke_general
+						}
+					}
+					FROM = { original_tag = CHI }
+				}
+				CHI_general_quote_shout = yes
+			}
+		}
+	}
+
+	on_startup = {
+		effect = {
+			every_country = {
+				limit = { is_in_array = { global.bri_eligible_countries = THIS.id } }
+				BRI_init_named_maxes = yes
+			}
+		}
+	}
+
+	on_monthly = {
+		effect = {
+			if = {
+				limit = {
+					country_exists = CHI
+					NOT = { original_tag = CHI }
+					has_opinion = { target = CHI value < 0 }
+					has_idea = CHI_pla_basing_economic_help
+				}
+				remove_ideas = CHI_pla_basing_economic_help
+				remove_opinion_modifier = { target = CHI modifier = CHI_pla_basing_partner }
+				CHI = { country_event = { id = chi_bri.132 days = 1 } }
+			}
+		}
+	}
+
+	on_war_relation_added = {
+		effect = {
+			if = {
+				limit = {
+					country_exists = CHI
+					CHI = { NOT = { has_country_flag = { flag = CHI_communique_defender_cd days < 30 } } }
+					has_idea = CHI_brokered_non_aggression_pact
+					FROM = { has_idea = CHI_brokered_non_aggression_pact }
+				}
+				CHI = {
+					set_country_flag = { flag = CHI_communique_defender_cd days = 30 value = 1 }
+					country_event = { id = chi_bri.134 days = 1 }
+				}
 			}
 		}
 	}
