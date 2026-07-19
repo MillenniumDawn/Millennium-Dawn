@@ -980,14 +980,9 @@ country_event = {
 			country_event = { id = kosovo_rec.6 days = 1 }
 		}
 		ai_chance = {
-			base = 1
-			modifier = {
-				add = 0.2
-				has_opinion = {
-					target = SER
-					value > 10
-				}
-			}
+			base = 10
+			modifier = { factor = 3 has_opinion = { target = SER value > 30 } }
+			modifier = { factor = 0.2 has_opinion = { target = SER value < 0 } }
 		}
 	}
 	option = {
@@ -1005,14 +1000,9 @@ country_event = {
 			target = SER
 		}
 		ai_chance = {
-			base = 1
-			modifier = {
-				add = 0.2
-				has_opinion = {
-					target = SER
-					value < 10
-				}
-			}
+			base = 10
+			modifier = { factor = 3 has_opinion = { target = SER value < 0 } }
+			modifier = { factor = 0.2 has_opinion = { target = SER value > 30 } }
 		}
 	}
 }
@@ -4228,12 +4218,10 @@ country_event = {
 		custom_effect_tooltip = KOS_SER_opinion_decrease_5
 		add_to_variable = { var = KOS_serbs value = -0.05 }
 		clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-		hidden_effect = {
-			if = {
-				limit = { country_exists = SER }
-				add_opinion_modifier = { target = SER modifier = diplomatic_insults }
-				SER = { add_opinion_modifier = { target = ROOT modifier = diplomatic_insults } }
-			}
+		if = {
+			limit = { country_exists = SER }
+			add_opinion_modifier = { target = SER modifier = diplomatic_insults }
+			SER = { add_opinion_modifier = { target = ROOT modifier = diplomatic_insults } }
 		}
 		ai_chance = { base = 30 }
 	}
@@ -4259,25 +4247,23 @@ country_event = {
 		add_stability = 0.02
 		custom_effect_tooltip = KOS_icj_opinion_tt
 		custom_effect_tooltip = KOS_icj_ser_reaction_tt
-		hidden_effect = {
-			set_country_flag = KOS_icj_opinion
+		if = {
+			limit = { country_exists = SER }
 			if = {
-				limit = { country_exists = SER }
-				if = {
-					limit = { SER = { has_government = nationalist } }
-					set_temp_variable = { modify_europeanism = -0.03 }
-					set_temp_variable = { modify_europeanism_target = SER }
-					europeanism_change = yes
-				}
-				else = {
-					SER = {
-						set_temp_variable = { party_index = 20 }
-						set_temp_variable = { party_popularity_increase = -0.02 }
-						add_relative_party_popularity = yes
-					}
+				limit = { SER = { has_government = nationalist } }
+				set_temp_variable = { modify_europeanism = -0.03 }
+				set_temp_variable = { modify_europeanism_target = SER }
+				europeanism_change = yes
+			}
+			else = {
+				SER = {
+					set_temp_variable = { party_index = 20 }
+					set_temp_variable = { party_popularity_increase = -0.02 }
+					add_relative_party_popularity = yes
 				}
 			}
 		}
+		hidden_effect = { set_country_flag = KOS_icj_opinion }
 		ai_chance = { base = 30 }
 	}
 }
@@ -4298,20 +4284,15 @@ country_event = {
 		NOT = { has_global_flag = GLOBAL_ser_kos_normalization }
 	}
 
-	immediate = {
-		hidden_effect = {
-			add_opinion_modifier = { target = SER modifier = border_tensions }
-			SER = { add_opinion_modifier = { target = KOS modifier = border_tensions } }
-			set_temp_variable = { modify_europeanism = -0.03 }
-			set_temp_variable = { modify_europeanism_target = SER }
-			europeanism_change = yes
-		}
-	}
-
 	option = {
 		name = kosovo.12.a
 		log = "[GetDateText]: [This.GetName]: kosovo.12.a executed"
 		add_stability = -0.03
+		add_opinion_modifier = { target = SER modifier = border_tensions }
+		SER = { add_opinion_modifier = { target = KOS modifier = border_tensions } }
+		set_temp_variable = { modify_europeanism = -0.03 }
+		set_temp_variable = { modify_europeanism_target = SER }
+		europeanism_change = yes
 		ai_chance = {
 			base = 80
 			modifier = {
@@ -4326,6 +4307,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: kosovo.12.b executed"
 		add_stability = -0.05
 		add_war_support = 0.05
+		add_opinion_modifier = { target = SER modifier = border_tensions }
+		SER = { add_opinion_modifier = { target = KOS modifier = border_tensions } }
+		set_temp_variable = { modify_europeanism = -0.03 }
+		set_temp_variable = { modify_europeanism_target = SER }
+		europeanism_change = yes
 		ai_chance = {
 			base = 20
 			modifier = {
