@@ -418,7 +418,7 @@ def generate_goals(mod_root, gfxbool=None):
             "\t\t}\n"
             "\t\tanimation = {\n"
             f'\t\t\tanimationmaskfile = "{texture_path}"\n'
-            '\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n'
+            '\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.dds"\n'
             "\t\t\tanimationrotation = 90.0\n"
             "\t\t\tanimationlooping = no\n"
             "\t\t\tanimationtime = 0.75\n"

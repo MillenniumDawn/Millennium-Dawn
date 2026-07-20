@@ -269,7 +269,7 @@ def _check_focus_standards(text: str, path: str):
             and not found_focus_id
             and ("id =" in line or "id=" in line)
         ):
-            m = re.match(r"[ \t]+id\s?=\s?([A-Za-z0-9_?]+)", line)
+            m = re.match(r"[ \t]+id\s*=\s*([A-Za-z0-9_?]+)", line)
             if m:
                 current_focus_id = m.group(1)
                 found_focus_id = True

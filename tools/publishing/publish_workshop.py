@@ -167,7 +167,10 @@ def find_steamcmd() -> Path:
     sys.exit("ERROR: steamcmd not found. Install it or add it to PATH.")
 
 
-def git_diff_name_only(base_ref: str, diff_filter: str) -> set[str]:
+def git_diff_name_only(
+    base_ref: str, diff_filter: str, find_renames: bool = True
+) -> set[str]:
+    rename_flag = "--find-renames" if find_renames else "--no-renames"
     try:
         result = subprocess.run(
             [
@@ -175,7 +178,7 @@ def git_diff_name_only(base_ref: str, diff_filter: str) -> set[str]:
                 "diff",
                 "--name-only",
                 f"--diff-filter={diff_filter}",
-                "--find-renames",
+                rename_flag,
                 f"{base_ref}...HEAD",
             ],
             cwd=REPO_ROOT,
@@ -199,7 +202,9 @@ def get_changed_files(base_ref: str) -> set[str]:
 
 
 def get_deleted_files(base_ref: str) -> set[str]:
-    return git_diff_name_only(base_ref, "D")
+    # --no-renames so a rename decomposes into add + delete; otherwise the old
+    # path is reported as R (never D) and its stale file lingers in the Workshop.
+    return git_diff_name_only(base_ref, "D", find_renames=False)
 
 
 def get_publishable_changed_files(mod_dir: Path, changed: set[str]) -> set[str]:

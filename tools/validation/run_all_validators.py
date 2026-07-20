@@ -469,6 +469,11 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             file=human_stream,
         )
 
+    # A crashed validator is infrastructure failure, not findings: it produced
+    # no verdict at all, so it must fail the run regardless of --strict.
+    if crashed_validators:
+        return 1
+
     # Warnings are advisory everywhere else (per-validator --strict gates on
     # errors only; the CI legend says warnings never block) — match that here.
     return 1 if (args.strict and total_errors > 0) else 0

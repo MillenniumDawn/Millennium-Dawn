@@ -5,7 +5,11 @@ multiple times. The standardizer must preserve every occurrence, in order.
 Log injection must also survive an id line carrying a trailing comment.
 """
 
-from standardize_focus_tree import extract_focus_properties, format_focus_block
+from standardize_focus_tree import (
+    extract_focus_properties,
+    format_focus_block,
+    reindent_by_brace_depth,
+)
 
 
 def _focus_with_war_targets(targets):
@@ -148,3 +152,30 @@ def test_id_line_comment_kept_out_of_log():
     out = format_focus_block(props)
     log_lines = [l.strip() for l in out if "log =" in l]
     assert log_lines == ['log = "[GetDateText]: [Root.GetName]: Focus TST_coup"']
+
+
+def test_comment_brace_does_not_shift_indent():
+    # A brace inside a comment must not count toward brace depth during reindent,
+    # or every line after it is pushed one level too deep.
+    block = [
+        "shared_focus = {",
+        "id = TST_x",
+        "completion_reward = {",
+        "# TODO fix { this unbalanced brace",
+        "add_political_power = 10",
+        "}",
+        "ai_will_do = { base = 1 }",
+        "}",
+    ]
+    out = reindent_by_brace_depth(block)
+    by_text = {line.strip(): line for line in out}
+    # Statement after the comment stays inside completion_reward (two tabs), and
+    # the closing brace returns to one tab — not shifted by the comment's `{`.
+    assert by_text["add_political_power = 10"] == "\t\tadd_political_power = 10"
+    assert by_text["# TODO fix { this unbalanced brace"].startswith("\t\t#")
+    assert out[-1] == "}"
+    assert out[-2] == "\tai_will_do = { base = 1 }"
+    # Overall brace balance is preserved across the emitted code (comments,
+    # which may carry an unbalanced brace, are excluded from the count).
+    code = "\n".join(line.split("#", 1)[0] for line in out)
+    assert code.count("{") == code.count("}")

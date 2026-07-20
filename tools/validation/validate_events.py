@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text
+from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
 from sprite_index import build_sprite_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -28,8 +28,22 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
+# The five HOI4 event-firing keywords. It is `operative_leader_event`, not
+# `operative_event`, and there is no `character_event`; because `operative` has
+# no word boundary before `_leader_event`, an `operative`/`_event` split never
+# matches the real keyword. Kept in sync with the definition keywords in
+# _EVENT_BLOCK_PATTERN / _EVENT_TYPE_PATTERN.
+_EVENT_CALL_KEYWORDS = (
+    "country_event",
+    "news_event",
+    "state_event",
+    "unit_leader_event",
+    "operative_leader_event",
+)
+_EVENT_CALL_ALT = "|".join(_EVENT_CALL_KEYWORDS)
+
 _LONG_FORM_PATTERN = re.compile(
-    r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
+    r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )
 
 # Event picture: `picture = GFX_xxx` (always GFX_-prefixed, resolves to that
@@ -109,6 +123,126 @@ def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
     return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
 
 
+# --- fire_only_once fired inside a country/state iterator ---
+#
+# An event with `fire_only_once = yes` fired inside an iterating scope
+# (every_country / every_other_country / every_state / for_each_scope_loop /
+# any every_* or for_each_* iterator) only reaches the first recipient: the
+# flag is set on the first iteration and subsequent firings no-op. The
+# caller meant to drop fire_only_once, or fire the event outside the loop.
+# A scope switch to a FIXED recipient between the iterator and the call
+# (ROOT/FROM/PREV/THIS, a literal tag, event_target:/var:) fires the same
+# recipient every iteration, so fire_only_once is a legitimate dedup idiom
+# there and the outer iterator is not flagged. `random_country` /
+# `random_state` pick a single scope by design and are not iterators.
+
+# Iterating effect scopes: every_* and for_each_* (array walkers). `any_*` /
+# `all_*` are triggers, not effect loops, so events are never fired inside
+# them; they are not matched here. random_* picks a single scope (not an
+# iterator) but does not shield an outer iterator either, so it needs no
+# frame kind of its own — its brace is just an "other" frame.
+_FOF_ITER_OPEN = r"\b(?:every_\w+|for_each_\w+)\s*=\s*\{"
+_RE_FOF_ITER_OPEN = re.compile(_FOF_ITER_OPEN)
+# Scope-switch openers that pin the recipient to a fixed country: an explicit
+# scope keyword (incl. chains like PREV.PREV), a literal 3-letter tag (AND/NOT
+# excluded — trigger operators, not scopes), or an event_target:/var: ref.
+_FOF_PINNED = (
+    r"(?:(?:ROOT|FROM|PREV|THIS)(?:\.(?:ROOT|FROM|PREV|THIS))*"
+    r"|(?:event_target|var):[\w.@:^]+"
+    r"|(?<![A-Za-z0-9_])(?!AND|NOT)[A-Z]{3}(?![A-Za-z0-9_]))\s*=\s*\{"
+)
+_RE_FOF_PINNED_OPEN = re.compile(_FOF_PINNED)
+
+# Event-call opens. Long form (`<type>_event = { id = X ... }`) and short
+# form (`<type>_event = X`). The long-form alternative is tried first so the
+# brace is consumed with the opener (the bare `\{` below never re-matches
+# it).
+_FOF_EVENT_LONG = r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*\{"
+_FOF_EVENT_SHORT = r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*[A-Za-z0-9_.]+"
+_RE_FOF_EVENT_LONG = re.compile(_FOF_EVENT_LONG)
+_RE_FOF_EVENT_SHORT = re.compile(_FOF_EVENT_SHORT)
+_RE_FOF_ID = re.compile(r"\bid\s*=\s*([^\s}]+)")
+_RE_FOF_TOKEN = re.compile(
+    "|".join(
+        (r"\{", r"\}", _FOF_ITER_OPEN, _FOF_PINNED, _FOF_EVENT_LONG, _FOF_EVENT_SHORT)
+    )
+)
+
+
+def _fof_stack_flags(stack: List[str]) -> bool:
+    """Walk scope frames innermost-first; True iff the nearest loop/pin frame is
+    an iterator. A "pinned" scope switch fixes the recipient, so it shields an
+    outer iterator (dedup idiom); "other" frames (incl. random_*) are
+    transparent, so a random pick nested inside an iterator is still flagged."""
+    for kind in reversed(stack):
+        if kind == "iter":
+            return True
+        if kind == "pinned":
+            return False
+    return False
+
+
+def scan_fire_only_once_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
+    """Pool worker: flag fire_only_once events fired inside an iterator."""
+    filename, fire_only_once_ids, mod_path = args
+    if not fire_only_once_ids or _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    # Cheap early-out: a file that fires no events can't fire one inside a loop,
+    # so skip the two full-text transforms + tokenize on the bulk of the repo
+    # (history/, ai_strategy/, unit stat files, ... none of which fire events).
+    if not any(k in text for k in _EVENT_CALL_KEYWORDS):
+        return []
+    # Quote-aware: strip comments, then blank quoted-string interiors so a
+    # literal brace inside a `log = "...{..."` string can't desync the depth
+    # stack and corrupt every finding after it.
+    cleaned = blank_quoted_strings(strip_comments(text))
+    findings: List[str] = []
+
+    def _flag(eid: str, pos: int) -> None:
+        line = cleaned.count("\n", 0, pos) + 1
+        rel = os.path.relpath(filename, mod_path)
+        findings.append(
+            f"{rel}:{line} - fire_only_once event {eid} fired inside"
+            f" an every_*/for_each_* iterator (only the first"
+            f" recipient gets it; drop fire_only_once or fire it"
+            f" outside the loop)"
+        )
+
+    # Stack of scope frames: "iter" (every_/for_each_), "pinned"
+    # (fixed-recipient scope switch), or "other" (limit / if / random_* /
+    # completion_reward / the event-call block / ...). An event call is flagged
+    # when the nearest enclosing loop/pin frame is an iterator (_fof_stack_flags).
+    stack: List[str] = []
+    for m in _RE_FOF_TOKEN.finditer(cleaned):
+        tok = m.group(0)
+        if tok == "{":
+            stack.append("other")
+        elif tok == "}":
+            if stack:
+                stack.pop()
+        elif _RE_FOF_ITER_OPEN.match(tok):
+            stack.append("iter")
+        elif _RE_FOF_PINNED_OPEN.match(tok):
+            stack.append("pinned")
+        elif _RE_FOF_EVENT_LONG.match(tok):
+            # Long form: extract id from the block body (id may not be first).
+            stack.append("other")
+            body, _ = extract_block_from_text(cleaned, m.end() - 1)
+            idm = _RE_FOF_ID.search(body)
+            eid = idm.group(1) if idm else None
+            if eid and eid in fire_only_once_ids and _fof_stack_flags(stack[:-1]):
+                _flag(eid, m.start())
+        elif _RE_FOF_EVENT_SHORT.match(tok):
+            eid = tok.split("=", 1)[1].strip()
+            if eid in fire_only_once_ids and _fof_stack_flags(stack):
+                _flag(eid, m.start())
+    return findings
+
+
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
     """Pool worker: find id-only long-form event calls in one .txt file."""
     filename, mod_path = args
@@ -138,7 +272,9 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
 
 
 _EVENT_BLOCK_PATTERN = re.compile(
-    r"^(?:country_event|news_event) = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE
+    r"^(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*\{(.*?)^\}",
+    flags=re.DOTALL | re.MULTILINE,
 )
 
 
@@ -224,6 +360,12 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
     for m in _EVENT_TYPE_PATTERN.finditer(text):
         event_type = m.group(1)
         body, _ = extract_block_from_text(text, m.end() - 1)
+        # Quote-aware comment strip + quoted-string blanking before the `in body`
+        # flag checks: a commented-out `#fire_only_once = yes` (or hidden /
+        # is_triggered_only / mean_time_to_happen) must not count as an active
+        # directive, and a `#` (or one of those keywords) inside a quoted
+        # log/desc string must not truncate the line or false-match.
+        body_nc = blank_quoted_strings(strip_comments(body))
 
         id_match = _EVENT_ID_PATTERN.search(body)
         if not id_match:
@@ -234,10 +376,10 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "id": id_match.group(1),
                 "type": event_type,
                 "file": basename,
-                "is_hidden": "hidden = yes" in body,
-                "is_triggered_only": "is_triggered_only = yes" in body,
-                "fire_only_once": "fire_only_once = yes" in body,
-                "has_mtth": "mean_time_to_happen" in body,
+                "is_hidden": "hidden = yes" in body_nc,
+                "is_triggered_only": "is_triggered_only = yes" in body_nc,
+                "fire_only_once": "fire_only_once = yes" in body_nc,
+                "has_mtth": "mean_time_to_happen" in body_nc,
                 "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
                 "title_desc_refs": [
                     v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
@@ -256,6 +398,7 @@ class Validator(BaseValidator):
         self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
+        self._fire_only_once_ids_cache: Optional[set] = None
 
     def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
         if self._events_cache is not None:
@@ -329,6 +472,38 @@ class Validator(BaseValidator):
             ids.update(_extract_random_event_ids(text))
 
         self._random_events_cache = ids
+        return ids
+
+    def _get_fire_only_once_ids(self) -> set:
+        """Return IDs of events declared ``fire_only_once = yes``.
+
+        Lookup pass: must scan the full repo even in staged mode. Otherwise a
+        staged caller that fires an existing fire_only_once event whose
+        definition lives in an unstaged file drops out of the ID set, and the
+        real in-loop / multi-caller bug commits silently.
+        """
+        if self._fire_only_once_ids_cache is not None:
+            return self._fire_only_once_ids_cache
+
+        files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
+        ids: set = set()
+        for filepath in files:
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            basename = os.path.basename(filepath)
+            file_meta, _ = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "events.metadata",
+                filepath,
+                text,
+                lambda: _parse_event_metadata(text, basename),
+            )
+            ids.update(ev["id"] for ev in file_meta if ev["fire_only_once"])
+
+        self._fire_only_once_ids_cache = ids
         return ids
 
     def validate_unsupported_title_desc(self):
@@ -714,6 +889,51 @@ class Validator(BaseValidator):
             category="missing-event-picture",
         )
 
+    def validate_fire_only_once_in_loop(self):
+        """Flag fire_only_once events fired inside an every_*/for_each_* iterator.
+
+        A fire_only_once event sets a one-shot flag on first firing, so inside
+        an iterating scope (every_country / every_state / for_each_scope_loop
+        / etc.) only the first recipient actually gets it -- the rest of the
+        iterations silently no-op. ``random_country`` / ``random_state`` pick a
+        single scope by design and are not iterators, so calls nested only in
+        them are not flagged.
+        """
+        self._log_section(
+            "Checking for fire_only_once events fired inside iterators..."
+        )
+
+        fire_only_once_ids = frozenset(self._get_fire_only_once_ids())
+        if not fire_only_once_ids:
+            self.log("  No fire_only_once events defined — skipping")
+            self._report(
+                [],
+                "✓ No fire_only_once events fired inside iterators",
+                "fire_only_once events fired inside iterators (only the first recipient gets it):",
+                category="fire-only-once-in-loop",
+            )
+            return
+
+        txt_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        )
+        args_list = [(f, fire_only_once_ids, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            scan_fire_only_once_in_loop, args_list, chunksize=30
+        )
+        results = [r for file_res in all_results for r in file_res]
+
+        # WARNING until the 11-site pre-existing backlog is cleared, then ERROR.
+        self._report(
+            results,
+            "✓ No fire_only_once events fired inside iterators",
+            "fire_only_once events fired inside every_*/for_each_* iterators"
+            " (only the first recipient gets it; drop fire_only_once or fire"
+            " the event outside the loop):",
+            Severity.WARNING,
+            category="fire-only-once-in-loop",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
@@ -726,6 +946,7 @@ class Validator(BaseValidator):
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
         self.validate_event_pictures()
+        self.validate_fire_only_once_in_loop()
 
 
 if __name__ == "__main__":
