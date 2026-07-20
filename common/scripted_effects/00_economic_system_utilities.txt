@@ -70,6 +70,7 @@ ai_repay_debt = {
 		limit = {
 			check_variable = { debt > 0 }
 			check_variable = { treasury > 0 }
+			check_variable = { debt_ratio > 0.3 }
 			NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 			NOT = { has_country_flag = paused_debt_repayment }
 		}
@@ -109,12 +110,41 @@ ai_repay_debt = {
 			if = { limit = { check_variable = { debt < 0.001 } }
 				set_variable = { debt = 0 }
 			}
-			calculate_interest_rate = yes
 			if = { limit = { is_debug = yes }
-				log = "[GetDateText]: [THIS.GetName]: AI repaid [?ai_debt_payment]b debt (Reserve: [?ai_debt_reserve]b, Treasury: [?treasury]b, Debt: [?debt]b, Interest Rate: [?interest_rate]%, Treasury Rate: [?treasury_rate]b)"
+				log = "[GetDateText]: [Root.GetName]: AI repaid [?ai_debt_payment]b debt (Reserve: [?ai_debt_reserve]b, Treasury: [?treasury]b, Debt: [?debt]b, Interest Rate: [?interest_rate]%, Treasury Rate: [?treasury_rate]b)"
 			}
 		}
 	}
+}
+
+# Effect: resync_economic_project_flag
+# Purpose: Re-derives active_economic_project from the ten hidden project ideas and clears the pre-collapse per-project flags; corrects the flag/idea desync left by a mid-save mod upgrade or a civil-war split-off (ideas are inherited, country flags are not)
+resync_economic_project_flag = {
+	if = {
+		limit = {
+			OR = {
+				has_idea = industrial_projects_idea
+				has_idea = service_constructions_idea
+				has_idea = infrastructure_investiture_idea
+				has_idea = arms_industry_stipends_idea
+				has_idea = retool_shipyards_idea
+				has_idea = agro_industrial_expansion_idea
+				has_idea = advanced_manufacturing_idea
+				has_idea = energy_grid_modernization_idea
+				has_idea = strategic_defense_infrastructure_idea
+				has_idea = strategic_rd_sites_idea
+			}
+		}
+		set_country_flag = active_economic_project
+	}
+	else = {
+		clr_country_flag = active_economic_project
+	}
+	clr_country_flag = industrial_projects_flag
+	clr_country_flag = service_constructions_flag
+	clr_country_flag = infrastructure_investiture_flag
+	clr_country_flag = arms_industry_stipends_flag
+	clr_country_flag = retool_shipyards_flag
 }
 
 # Enable/Disable Personal Tax Rate Change
