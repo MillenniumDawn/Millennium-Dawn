@@ -13,9 +13,11 @@ import pytest
 import validate_gfx_references as vg
 from validate_gfx_references import (
     Severity,
-    Validator as GfxReferenceValidator,
     _load_vanilla_gui_basenames,
     _vanilla_parent_basename,
+)
+from validate_gfx_references import (
+    Validator as GfxReferenceValidator,
 )
 
 # Real vanilla designer GUIs (present in vanilla_gui_files.txt); the `_isr`
