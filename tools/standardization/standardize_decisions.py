@@ -18,6 +18,7 @@ from common_utils import (
 )
 from shared_utils import (
     collapse_or_compact,
+    collapse_ws_outside_quotes,
     convert_root_factor_to_base,
     create_backup,
     extract_block,
@@ -58,30 +59,6 @@ def _count_braces(text: str) -> tuple:
     return opens, closes
 
 
-def _collapse_ws_outside_quotes(text: str) -> str:
-    """Collapse runs of whitespace outside double-quoted spans to single spaces,
-    leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
-    unquoted text, but a `log`/tooltip string keeps its internal spacing."""
-    result: List[str] = []
-    in_str = False
-    prev_space = False
-    for i, c in enumerate(text):
-        if c == '"' and (i == 0 or text[i - 1] != "\\"):
-            in_str = not in_str
-            result.append(c)
-            prev_space = False
-        elif in_str:
-            result.append(c)
-        elif c.isspace():
-            if not prev_space:
-                result.append(" ")
-            prev_space = True
-        else:
-            result.append(c)
-            prev_space = False
-    return "".join(result).strip()
-
-
 def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
     """Re-indent a block starting at base_indent tabs, tracking brace depth.
 
@@ -100,7 +77,7 @@ def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
         if not stripped:
             continue
         # Normalise internal whitespace (tabs → single spaces), quote-safe
-        normalized = _collapse_ws_outside_quotes(stripped)
+        normalized = collapse_ws_outside_quotes(stripped)
 
         opens, closes = _count_braces(normalized)
 
@@ -173,7 +150,7 @@ def format_decision(block_lines: List[str]) -> List[str]:
             lines.append("")
             i = next_i
         else:
-            lines.append(f"\t\t{_collapse_ws_outside_quotes(stripped)}")
+            lines.append(f"\t\t{collapse_ws_outside_quotes(stripped)}")
             lines.append("")
             i += 1
 

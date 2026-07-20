@@ -16,8 +16,8 @@ def _issue_types(text):
     return {i.issue_type for i in issues}
 
 
-def _wrap(body):
-    return "ideas = {\n\tcountry = {\n" + body + "\n\t}\n}\n"
+def _wrap(body, category="country"):
+    return "ideas = {\n\t" + category + " = {\n" + body + "\n\t}\n}\n"
 
 
 def test_bare_tag_flagged():
@@ -72,3 +72,34 @@ def test_redundant_tag_and_original_tag_flagged():
         "\t\tmy_idea = {\n\t\t\tallowed = { original_tag = ISR tag = ISR }\n\t\t}"
     )
     assert "redundant-tag-and-original-tag" in _issue_types(text)
+
+
+def test_bare_tag_flagged_in_selectable_category():
+    # `country` is non-selectable; the check must also fire in a selectable
+    # category (one with a slot), e.g. political_reforms.
+    text = _wrap(
+        "\t\tmy_idea = {\n"
+        "\t\t\tallowed = { tag = ISR }\n"
+        "\t\t\tpicture = GFX_idea_x\n"
+        "\t\t}",
+        category="political_reforms",
+    )
+    assert "tag-not-original-tag" in _issue_types(text)
+
+
+def test_tag_and_original_tag_in_different_or_branches_not_redundant():
+    # A shared multi-country idea: tag and original_tag are OR alternatives,
+    # not redundant siblings. Still a bare-tag warning, never "redundant".
+    text = _wrap(
+        "\t\tmy_idea = {\n"
+        "\t\t\tallowed = {\n"
+        "\t\t\t\tOR = {\n"
+        "\t\t\t\t\toriginal_tag = ISR\n"
+        "\t\t\t\t\ttag = USA\n"
+        "\t\t\t\t}\n"
+        "\t\t\t}\n"
+        "\t\t}"
+    )
+    types = _issue_types(text)
+    assert "redundant-tag-and-original-tag" not in types
+    assert "tag-not-original-tag" in types

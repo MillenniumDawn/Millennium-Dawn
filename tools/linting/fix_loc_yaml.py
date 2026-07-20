@@ -165,19 +165,27 @@ def fix_line(line: str) -> str:
 
 
 def process_file(file_path: Path, fix_mode: bool) -> tuple:
-    """Process a single file. Returns (problems_found, problems_fixed)."""
+    """Process a single file. Returns (problems_found, problems_fixed, decode_error)."""
     try:
         with open(file_path, "rb") as f:
             raw = f.read()
     except OSError as e:
         print(f"  Error reading {file_path}: {e}", file=sys.stderr)
-        return (0, 0)
+        return (0, 0, False)
 
     has_bom = raw.startswith(codecs.BOM_UTF8)
     try:
         content = raw.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        content = raw.decode("utf-8-sig", errors="replace")
+    except UnicodeDecodeError as e:
+        # Never scan or rewrite U+FFFD-substituted text: an errors="replace"
+        # fallback would corrupt a file that merely has one bad byte, so skip
+        # it entirely and flag it for the exit code.
+        note = "skipping" if fix_mode else "needs manual attention"
+        print(
+            f"  {file_path}: invalid UTF-8 at byte {e.start} ({e.reason}); {note}",
+            file=sys.stderr,
+        )
+        return (0, 0, True)
     lines = content.split("\n")
 
     all_problems = []
@@ -186,12 +194,12 @@ def process_file(file_path: Path, fix_mode: bool) -> tuple:
         all_problems.extend(problems)
 
     if not all_problems:
-        return (0, 0)
+        return (0, 0, False)
 
     if not fix_mode:
         for line_num, issue_type, desc in all_problems:
             print(f"  {file_path}:{line_num}: [{issue_type}] {desc}")
-        return (len(all_problems), 0)
+        return (len(all_problems), 0, False)
 
     # Fix mode
     fixed_lines = [fix_line(line) for line in lines]
@@ -207,7 +215,7 @@ def process_file(file_path: Path, fix_mode: bool) -> tuple:
         counts[issue_type] = counts.get(issue_type, 0) + 1
     summary = ", ".join(f"{v} {k}" for k, v in sorted(counts.items()))
     print(f"  Fixed {file_path}: {summary}")
-    return (len(all_problems), len(all_problems))
+    return (len(all_problems), len(all_problems), False)
 
 
 def main():
@@ -227,19 +235,31 @@ def main():
 
     total_problems = 0
     total_fixed = 0
+    decode_errors = 0
 
     for f in files:
         if not f.exists():
             continue
-        problems, fixed = process_file(f, args.fix)
+        problems, fixed, decode_error = process_file(f, args.fix)
         total_problems += problems
         total_fixed += fixed
+        if decode_error:
+            decode_errors += 1
+
+    if decode_errors:
+        print(
+            f"\n{decode_errors} file(s) could not be decoded as UTF-8 and were skipped; fix the invalid byte(s) manually.",
+            file=sys.stderr,
+        )
 
     if total_problems > 0 and not args.fix:
         print(f"\nFound {total_problems} issue(s). Run with --fix to auto-fix.")
         sys.exit(1)
     elif total_fixed > 0:
         print(f"\nFixed {total_fixed} issue(s).")
+
+    if decode_errors:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

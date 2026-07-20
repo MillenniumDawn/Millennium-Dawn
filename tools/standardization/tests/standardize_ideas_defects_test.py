@@ -80,6 +80,61 @@ def test_log_only_single_line_on_remove_not_stripped():
     assert "remove idea foo" in text
 
 
+def test_packed_single_line_category_child_not_duplicated():
+    # A packed one-line category child of `ideas` must not be emitted twice (the
+    # raw opener/closer path duplicated the single physical line, growing the file
+    # on every run).
+    src = [
+        "ideas = {",
+        "\tinternal_factions = { first_faction = { cost = 1500 } }",
+        "}",
+    ]
+    out = _process(src)
+    text = "\n".join(out)
+    assert text.count("internal_factions = {") == 1
+    assert text.count("first_faction = {") == 1
+    assert text.count("cost = 1500") == 1
+    # Re-processing the output is a no-op (round-trips, no exponential growth).
+    assert _process(out) == out
+
+
+def test_quoted_brace_in_idea_prop_does_not_drop_lines():
+    # (defect) a `{` inside a quoted value must not be counted as a block opener
+    # — doing so sent extract_block negative and silently deleted every line from
+    # there to the idea's closer.
+    out = _standardize_idea(
+        [
+            "\tfoo = {",
+            '\t\tsome_prop = "has { brace"',
+            "\t\tpicture = x",
+            "\t}",
+        ]
+    )
+    text = "\n".join(out)
+    assert 'some_prop = "has { brace"' in text
+    assert "picture = x" in text
+
+
+def test_empty_single_line_on_add_dropped():
+    # (defect) an empty single-line on_add must be dropped, not emit a stray log
+    # outside the block (which accumulated one bogus idea-level log per run).
+    out = _standardize_idea(
+        [
+            "\tfoo = {",
+            "\t\tpicture = x",
+            "\t\ton_add = { }",
+            "\t}",
+        ]
+    )
+    text = "\n".join(out)
+    assert "on_add" not in text
+    assert "log =" not in text
+    second = IdeaStandardizer().format_block(
+        IdeaStandardizer().extract_properties([ln + "\n" for ln in out]), "\t"
+    )
+    assert out == second
+
+
 def test_law_category_children_not_flattened():
     # (b) a non-wrapper law category must be recursed into, so each child idea is
     # formatted separately rather than merged into one mangled block.

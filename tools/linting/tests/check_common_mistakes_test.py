@@ -30,6 +30,8 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   27. mutex-trigger regex built from _MUTUALLY_EXCLUSIVE_TRIGGERS
   28. embargo guard stack is quote-aware (stray brace in log/loc string)
   29. _files_need_global_refs pre-scan gate matches whitespace-flexible form
+  30. add_to_faction with a non-country argument (a faction name)
+  31. create_faction is deprecated (use create_faction_from_template)
 """
 
 import os
@@ -40,11 +42,13 @@ import tempfile
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from check_common_mistakes import (
     _RE_IS_X_NATION,
+    _check_add_to_faction_country,
     _check_any_country_member_array,
     _check_check_expr_bad_operand,
     _check_check_var_ge_le,
     _check_consecutive_scope_blocks,
     _check_country_exists_scope_contradiction,
+    _check_create_faction_deprecated,
     _check_decision_allowed_dynamic,
     _check_decision_log_id,
     _check_divide_variable_zero_guard,
@@ -1136,6 +1140,159 @@ assert_finds(
     ],
     0,
     ">= in comment not flagged",
+)
+
+
+# add_to_faction with a non-country argument (a faction name)
+
+print("\n── add_to_faction non-country argument ──")
+
+# faction name (uppercase, not a 3-letter tag) → flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = BRICS\n",
+    ],
+    1,
+    "add_to_faction = BRICS (faction name) flagged",
+)
+
+# lowercase faction id → flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = warsaw_pact\n",
+    ],
+    1,
+    "add_to_faction = warsaw_pact (lowercase faction id) flagged",
+)
+
+# 3-letter country tag → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = FIN\n",
+    ],
+    0,
+    "add_to_faction = FIN (country tag) not flagged",
+)
+
+# scope keyword → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = ROOT\n",
+    ],
+    0,
+    "add_to_faction = ROOT (scope keyword) not flagged",
+)
+
+# tag inside a scope switch → no flag (value is the 3-letter tag)
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tSOV = { add_to_faction = FIN }\n",
+    ],
+    0,
+    "add_to_faction = FIN inside SOV scope not flagged",
+)
+
+# dotted scope chain (tricky-but-legal) → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = PREV.PREV\n",
+    ],
+    0,
+    "add_to_faction = PREV.PREV (scope chain) not flagged",
+)
+
+# var: reference → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = var:ally_tag\n",
+    ],
+    0,
+    "add_to_faction = var:ally_tag not flagged",
+)
+
+# faction name inside a comment → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\t# add_to_faction = BRICS\n",
+    ],
+    0,
+    "add_to_faction = BRICS in comment not flagged",
+)
+
+
+# 31. create_faction is deprecated (use create_faction_from_template)
+
+print("\n── create_faction deprecated ──")
+
+# bare form → flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\tcreate_faction = some_id\n",
+    ],
+    1,
+    "create_faction = some_id (bare) flagged",
+)
+
+# quoted form → flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        '\tcreate_faction = "Name"\n',
+    ],
+    1,
+    'create_faction = "Name" (quoted) flagged',
+)
+
+# inside a scope block → flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\tFROM = { create_faction = X }\n",
+    ],
+    1,
+    "create_faction inside FROM scope block flagged",
+)
+
+# create_faction_from_template (the replacement) → no flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\tcreate_faction_from_template = faction_template_nato\n",
+    ],
+    0,
+    "create_faction_from_template not flagged",
+)
+
+# on_create_faction (on_actions hook) → no flag; \b doesn't separate on_ from
+# create since _ is a word char, but the trailing \s*= requirement alone
+# rules this out too since neither on_ nor a bare hook name is followed by =
+# immediately after create_faction.
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\ton_create_faction = {\n",
+    ],
+    0,
+    "on_create_faction hook line not flagged",
+)
+
+# commented-out line → no flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\t# create_faction = X\n",
+    ],
+    0,
+    "create_faction = X in comment not flagged",
 )
 
 

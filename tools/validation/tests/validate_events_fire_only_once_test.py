@@ -158,6 +158,63 @@ def test_random_nested_in_every_country_flagged(tmp_path):
     assert len(res) == 1
 
 
+def test_pinned_root_scope_in_every_country_not_flagged(tmp_path):
+    # A scope switch to ROOT between the iterator and the call fires the same
+    # recipient every iteration, so fire_only_once is a legitimate dedup idiom.
+    call = tmp_path / "common" / "f.txt"
+    call.parent.mkdir(parents=True)
+    call.write_text(
+        "x = {\n"
+        "\tevery_country = {\n"
+        "\t\tROOT = {\n"
+        "\t\t\tcountry_event = foo.1\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    assert res == []
+
+
+def test_pinned_tag_scope_in_every_country_not_flagged(tmp_path):
+    # A literal tag scope (SAU = { ... }) between the iterator and the call pins
+    # the recipient the same way ROOT does.
+    call = tmp_path / "common" / "f.txt"
+    call.parent.mkdir(parents=True)
+    call.write_text(
+        "x = {\n"
+        "\tevery_country = {\n"
+        "\t\tSAU = {\n"
+        "\t\t\tcountry_event = { id = foo.1 days = 2 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    assert res == []
+
+
+def test_iterator_wrapping_pinned_scope_still_flagged(tmp_path):
+    # A pinned scope OUTSIDE the loop does not shield: every_country still fires
+    # to each iterated country, so only the first gets the fire_only_once event.
+    call = tmp_path / "common" / "f.txt"
+    call.parent.mkdir(parents=True)
+    call.write_text(
+        "x = {\n"
+        "\tROOT = {\n"
+        "\t\tevery_country = {\n"
+        "\t\t\tcountry_event = foo.1\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    assert len(res) == 1
+
+
 def test_non_fire_only_once_event_not_flagged(tmp_path):
     call = tmp_path / "common" / "f.txt"
     call.parent.mkdir(parents=True)
@@ -196,7 +253,8 @@ def test_fire_only_once_lookup_full_repo_in_staged_mode(tmp_path):
     v.staged_only = True
     v.staged_files = [str(caller)]
     v.validate_fire_only_once_in_loop()
-    assert v.errors_found >= 1, (
+    # WARNING-severity until the pre-existing backlog is cleared.
+    assert v.warnings_found >= 1, (
         "fire_only_once definition in an unstaged file must still be looked "
         "up — staged mode used to scan only staged event files and miss it, "
         "silently passing the in-loop bug at commit time"

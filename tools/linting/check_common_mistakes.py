@@ -48,6 +48,11 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     counting with another ideology's leader counter. set_leader kills the country
     leader before dispatching, so every one of these hands the country a randomly
     generated leader.
+  - add_to_faction = X where X is not a country (a faction name like BRICS, or a
+    lowercase id) -- add_to_faction adds the ARGUMENT country to the current
+    scope's faction; it takes a country tag or scope ref, never a faction name.
+  - create_faction = X (deprecated; use create_faction_from_template = TEMPLATE
+    for DLC compatibility)
 """
 
 import os
@@ -210,6 +215,26 @@ _RE_COMPLETE_EFFECT_OPEN = re.compile(r"\bcomplete_effect\s*=\s*\{")
 _RE_REMOVE_EFFECT_OPEN = re.compile(r"\bremove_effect\s*=\s*\{")
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
+# add_to_faction adds the ARGUMENT country to the current scope's faction, so it
+# takes a country tag or scope ref -- never a faction id (add_to_faction = BRICS
+# is a no-op; BRICS is a faction, not a country). The value captures identifier
+# chars only so a trailing } / whitespace ends the token.
+_RE_ADD_TO_FACTION = re.compile(r"\badd_to_faction\s*=\s*([A-Za-z0-9_:.@\[\]]+)")
+# create_faction is deprecated in MD; factions must be built via
+# create_faction_from_template for DLC compatibility. The trailing \s*=
+# requirement alone rules out create_faction_from_template (the replacement),
+# and \b at the start rules out on_create_faction (the on_actions hook) since
+# _ is a word char and leaves no boundary between the trailing on_ and create.
+_RE_CREATE_FACTION_DEPRECATED = re.compile(r"\bcreate_faction\s*=")
+_ADD_TO_FACTION_SCOPE_KEYWORDS = {
+    "ROOT",
+    "FROM",
+    "PREV",
+    "THIS",
+    "OWNER",
+    "CONTROLLER",
+    "CAPITAL",
+}
 _RE_DECISION_ALLOWED_DYNAMIC = re.compile(
     r"\b(?:num_of_factories|has_opinion|strength_ratio|"
     r"has_army_size|has_navy_size|has_political_power|date)\b"
@@ -1761,6 +1786,69 @@ def _check_every_owned_controlled_state(lines):
     return issues
 
 
+def _add_to_faction_value_ok(value):
+    """True when value is a country add_to_faction can take: a 3-letter tag, a
+    country scope keyword or dotted scope chain (PREV.PREV), a var:/event_target:
+    ref, or a dynamic [square-bracket] token. A faction name (BRICS, lowercase
+    ids) is none of these and is flagged.
+    """
+    return (
+        (len(value) == 3 and _RE_TAG_SCOPE.match(value) is not None)
+        or value in _ADD_TO_FACTION_SCOPE_KEYWORDS
+        or value.startswith(("var:", "event_target:"))
+        or "." in value
+        or "[" in value
+    )
+
+
+def _check_add_to_faction_country(lines):
+    """Flag add_to_faction with a non-country argument (a faction name).
+
+    add_to_faction adds the ARGUMENT country to the current scope's faction, so
+    it takes a country tag or scope ref (ROOT/FROM/PREV/THIS/var:), never a
+    faction id -- add_to_faction = BRICS silently does nothing since BRICS is a
+    faction, not a country. To add a member to a bloc, scope to a faction member
+    and pass the new member's tag.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "add_to_faction" not in line or line.strip().startswith("#"):
+            continue
+        code_part = _code_for_depth(line)
+        for m in _RE_ADD_TO_FACTION.finditer(code_part):
+            value = m.group(1)
+            if not _add_to_faction_value_ok(value):
+                issues.append(
+                    (
+                        line_num,
+                        f"add_to_faction = {value} is not a country -- add_to_faction "
+                        f"takes a country tag or scope (ROOT/FROM/PREV/THIS/var:), not a "
+                        f"faction name; it adds that country to the current scope's faction",
+                    )
+                )
+    return issues
+
+
+def _check_create_faction_deprecated(lines):
+    """Flag create_faction = X, deprecated in MD in favor of
+    create_faction_from_template for DLC compatibility.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "create_faction" not in line or line.strip().startswith("#"):
+            continue
+        code_part = _code_for_depth(line)
+        if _RE_CREATE_FACTION_DEPRECATED.search(code_part):
+            issues.append(
+                (
+                    line_num,
+                    "create_faction is deprecated -- use create_faction_from_template "
+                    "= TEMPLATE instead for DLC compatibility",
+                )
+            )
+    return issues
+
+
 def _check_random_select_amount_literal(lines):
     """Flag random_select_amount set to anything but an integer literal."""
     issues = []
@@ -2640,6 +2728,8 @@ def check_file(filepath):
     issues.extend(_check_is_x_nation_runtime(lines, filepath))
     issues.extend(_check_influence_setter_scope(lines))
     issues.extend(_check_check_var_ge_le(lines))
+    issues.extend(_check_add_to_faction_country(lines))
+    issues.extend(_check_create_faction_deprecated(lines))
     issues.extend(_check_tautological_or(lines))
     issues.extend(_check_check_expr_bad_operand(lines))
     issues.extend(_check_random_select_amount_literal(lines))

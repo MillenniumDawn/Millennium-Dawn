@@ -90,47 +90,21 @@ def _vanilla_parent_basename(filepath: str) -> Optional[str]:
     return parent if parent in _VANILLA_GUI_BASENAMES else None
 
 
-# .gfx and .gui files use `#`, `//`, and `/* */` comments. The stripper is
-# quote-aware: a `//` inside a quoted texturefile path (e.g. "gfx//interface/…")
-# is NOT a comment. Stripping it blindly leaves an unterminated quote that
-# corrupts brace/block extraction and drops the whole sprite definition.
+_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
+_HASH_COMMENT_RE = re.compile(r"#.*")
 
 
 def _strip_comments(text: str) -> str:
-    """Remove `#`, `//`, and `/* */` comments from Clausewitz GUI/GFX text.
+    """Remove comments from Clausewitz GUI/GFX text.
 
-    Comment markers inside double-quoted strings are preserved. Newlines are
-    kept for `#`/`//` line comments so line numbers stay stable.
+    `#` is the Clausewitz line-comment marker. `//` is NOT stripped: it never
+    appears as a comment in interface/, but does appear inside texture paths
+    (`"gfx//interface/..."`), and cutting there leaves an unterminated quote that
+    desyncs the quote-aware block scanner and silently drops the sprite.
     """
-    out: List[str] = []
-    in_str = False
-    i = 0
-    n = len(text)
-    while i < n:
-        c = text[i]
-        if in_str:
-            out.append(c)
-            if c == '"' and text[i - 1] != "\\":
-                in_str = False
-            i += 1
-        elif c == '"':
-            in_str = True
-            out.append(c)
-            i += 1
-        elif c == "#" or (c == "/" and i + 1 < n and text[i + 1] == "/"):
-            nl = text.find("\n", i)
-            if nl == -1:
-                break
-            i = nl
-        elif c == "/" and i + 1 < n and text[i + 1] == "*":
-            end = text.find("*/", i + 2)
-            if end == -1:
-                break
-            i = end + 2
-        else:
-            out.append(c)
-            i += 1
-    return "".join(out)
+    text = _BLOCK_COMMENT_RE.sub("", text)
+    text = _HASH_COMMENT_RE.sub("", text)
+    return text
 
 
 # All sprite type block openers in .gfx files; all use `name = "GFX_xxx"`.
@@ -444,7 +418,7 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
-class GfxReferenceValidator(BaseValidator):
+class Validator(BaseValidator):
     TITLE = "GFX SPRITE REFERENCE VALIDATION"
     STAGED_EXTENSIONS = [".gui", ".gfx", ".txt"]
 
@@ -611,6 +585,14 @@ class GfxReferenceValidator(BaseValidator):
         warnings: List[Tuple[str, str, int]] = []
         seen: Set[Tuple[str, str, int]] = set()
         ci = mod_defined_ci or {}
+        # .gui refs are gathered full-repo (ignore_staged) to build the override
+        # index below, so under --staged the reported entries must be re-scoped to
+        # the staged files or the whole repo's ~50 .gui errors would surface.
+        staged_rel = (
+            {os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])}
+            if self.staged_only
+            else None
+        )
         # Vanilla .gui files ship dead sprite refs of their own; an MD-authored
         # nation variant (`<vanilla_stem>_<tag>.gui`) inheriting the same ref is
         # vanilla's bug, not the mod's — downgrade to WARNING. Keyed per vanilla
@@ -638,6 +620,8 @@ class GfxReferenceValidator(BaseValidator):
             if not self._vanilla_defs_loaded and _is_likely_vanilla(sprite):
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
+            if staged_rel is not None and rel not in staged_rel:
+                continue
             key = (sprite, rel, line)
             if key in seen:
                 continue
@@ -789,7 +773,7 @@ class GfxReferenceValidator(BaseValidator):
 
 def main() -> int:
     return run_validator_main(
-        GfxReferenceValidator,
+        Validator,
         description="Validate GFX sprite references in Millennium Dawn mod.",
     )
 

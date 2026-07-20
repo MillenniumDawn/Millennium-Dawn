@@ -13,6 +13,7 @@ from typing import Any, Dict, List
 from _common import format_elapsed
 from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
 from shared_utils import (
+    blank_quoted_strings,
     collapse_or_compact,
     extract_block,
     log_message,
@@ -182,12 +183,16 @@ class IdeaStandardizer(BaseStandardizer):
             elif line.startswith("#"):
                 props["other"].append(("comment", block_lines[i].rstrip()))
             elif line:
-                code = strip_inline_comment(line)
+                # Blank quoted strings before counting so a `{` inside a quoted
+                # value isn't misread as a block opener (which would send the
+                # quote-aware extract_block negative and drop lines to the closer).
+                code = blank_quoted_strings(strip_inline_comment(line))
                 if code.count("{") > code.count("}"):
                     block, next_i = extract_block(block_lines, i)
-                    props["other"].append(("block", block))
-                    i = next_i
-                    continue
+                    if block:
+                        props["other"].append(("block", block))
+                        i = next_i
+                        continue
                 props["other"].append(("line", line))
 
             i += 1
@@ -282,6 +287,16 @@ class IdeaStandardizer(BaseStandardizer):
 
         return compacted
 
+    def _reindent_or_collapse(
+        self, block_lines: List[str], prop_indent: str
+    ) -> List[str]:
+        """Single-line collapse a single-leaf block, else reindent at prop_indent."""
+        collapsed = collapse_or_compact(block_lines[:], prop_indent)
+        multi = self.compact_block(block_lines[:], prop_indent)
+        if len(collapsed) == 1 and len(multi) != 1:
+            return collapsed
+        return multi
+
     def _emit_lifecycle_block(
         self,
         block: List[str],
@@ -300,6 +315,11 @@ class IdeaStandardizer(BaseStandardizer):
         # exactly as before so this fix doesn't silently strip them.
         if len(block) == 1:
             exploded = _explode_braces(block)
+            # An empty single-line block (`on_add = { }`) reads as meaningful when
+            # left packed, so the legacy path would inject a log outside its
+            # braces. Detect emptiness on the exploded form and drop it.
+            if self.is_empty_log_block(exploded):
+                return []
             if self.has_meaningful_effects(exploded) and not any(
                 "log =" in line for line in exploded
             ):
@@ -359,12 +379,7 @@ class IdeaStandardizer(BaseStandardizer):
             "equipment_bonus",
         ):
             for block in props[key]:
-                collapsed = collapse_or_compact(block[:], prop_indent)
-                multi = self.compact_block(block[:], prop_indent)
-                if len(collapsed) == 1 and len(multi) != 1:
-                    lines.extend(collapsed)
-                else:
-                    lines.extend(multi)
+                lines.extend(self._reindent_or_collapse(block, prop_indent))
 
         # 11. on_add (log only when making changes)
         for block in props["on_add"]:
@@ -382,12 +397,7 @@ class IdeaStandardizer(BaseStandardizer):
         # and unknown/nested blocks (reindented, structure preserved).
         for kind, data in props["other"]:
             if kind == "block":
-                collapsed = collapse_or_compact(data[:], prop_indent)
-                multi = self.compact_block(data[:], prop_indent)
-                if len(collapsed) == 1 and len(multi) != 1:
-                    lines.extend(collapsed)
-                else:
-                    lines.extend(multi)
+                lines.extend(self._reindent_or_collapse(data, prop_indent))
             else:
                 lines.append(prop_indent + data.strip())
 
@@ -496,16 +506,27 @@ class IdeaStandardizer(BaseStandardizer):
                         f"Found wrapper block: {block_name} at line {i + 1}",
                         self.verbose,
                     )
-                    output_lines.append(line)
-
                     block_lines, next_i = extract_block(lines, i)
-                    inner_lines = block_lines[1:-1]  # Skip opening and closing braces
-                    output_lines.extend(
-                        self._process_lines(inner_lines, depth + 1, child_mode)
-                    )
-
-                    if block_lines:
-                        output_lines.append(block_lines[-1].rstrip())
+                    if len(block_lines) == 1:
+                        # A packed one-line wrapper (`internal_factions = { X = {...} }`)
+                        # has its opener and closer on the same physical line; the raw
+                        # opener/closer path would emit that line twice. Explode it so
+                        # opener, inner, and closer are distinct.
+                        indent = line[: len(line) - len(line.lstrip("\t"))]
+                        exploded = _explode_braces(block_lines)
+                        output_lines.append(indent + exploded[0])
+                        output_lines.extend(
+                            self._process_lines(exploded[1:-1], depth + 1, child_mode)
+                        )
+                        output_lines.append(indent + exploded[-1])
+                    else:
+                        output_lines.append(line)
+                        inner_lines = block_lines[1:-1]  # Skip opening/closing braces
+                        output_lines.extend(
+                            self._process_lines(inner_lines, depth + 1, child_mode)
+                        )
+                        if block_lines:
+                            output_lines.append(block_lines[-1].rstrip())
 
                     i = next_i
                 else:
