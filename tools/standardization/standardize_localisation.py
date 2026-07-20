@@ -110,6 +110,15 @@ _SUFFIXES = ("_desc", "_tt", "_name", "_short", "_loc", "_choice_tt")
 
 SEPARATOR = " # =============================="
 
+# Section-header comments this tool emits itself; filtered on re-parse so they
+# are regenerated rather than accumulated (keeps standardization idempotent).
+_SECTION_HEADER_LABELS = frozenset(f" # {cat}" for cat in SECTION_ORDER)
+
+
+def _is_generated_comment(line: str) -> bool:
+    stripped = line.rstrip()
+    return stripped == SEPARATOR or stripped in _SECTION_HEADER_LABELS
+
 
 def _extract_tag(stem: str) -> Optional[str]:
     """Return the TAG from 'MD_focus_TAG_l_english', or None."""
@@ -245,7 +254,8 @@ def _parse_loc_file(content: str) -> Tuple[str, List[LocEntry]]:
             continue
 
         if stripped.startswith("#"):
-            pending_comments.append(line.rstrip())
+            if not _is_generated_comment(line):
+                pending_comments.append(line.rstrip())
             continue
 
         # Try to parse as a loc key: ` key: "value"` or ` key: value`
@@ -283,37 +293,54 @@ def _format_output(
     references: Optional[Set[str]] = None,
 ) -> str:
     buckets: Dict[str, List[LocEntry]] = {cat: [] for cat in SECTION_ORDER}
+    trailing_comments: List[str] = []
+
+    tag = _extract_tag(file_stem)
+    anchor_key = f"{tag}_focus_tree" if tag else None
+    anchor_entry: Optional[LocEntry] = None
 
     for entry in entries:
         if not entry.key:
+            trailing_comments.extend(entry.leading_comments)
+            continue
+        if anchor_key and entry.key == anchor_key:
+            # Extract the focus-tree anchor before bucketing so it lands atop
+            # National Focus exactly once; the old NF-only search left the real
+            # text categorised elsewhere and blanked/duplicated it on re-runs.
+            # HOI4 loc is last-wins, so keep the LAST non-blank duplicate (a later
+            # blank does not clobber an earlier real value).
+            if anchor_entry is None or entry.value.strip(' "'):
+                anchor_entry = entry
             continue
         category = _find_category(entry.key, index, references)
         buckets[category].append(entry)
 
     output_lines: List[str] = [header]
 
-    tag = _extract_tag(file_stem)
-
     for category in SECTION_ORDER:
         bucket = buckets[category]
-        if not bucket:
+
+        if category == "National Focus" and anchor_key:
+            if anchor_entry is None and not bucket:
+                continue
+            if anchor_entry is None:
+                anchor_entry = LocEntry([], anchor_key, ' ""')
+            bucket.sort(key=lambda e: e.key.lower())
+            bucket.insert(0, anchor_entry)
+        elif bucket:
+            bucket.sort(key=lambda e: e.key.lower())
+        else:
             continue
-
-        bucket.sort(key=lambda e: e.key.lower())
-
-        if category == "National Focus" and tag:
-            anchor_key = f"{tag}_focus_tree"
-            existing = next((e for e in bucket if e.key == anchor_key), None)
-            if existing:
-                bucket.remove(existing)
-            else:
-                existing = LocEntry([], anchor_key, ' ""')
-            bucket.insert(0, existing)
 
         output_lines.extend(_format_section_header(category))
 
         for entry in bucket:
+            output_lines.extend(entry.leading_comments)
             output_lines.append(f" {entry.key}:{entry.value}")
+
+    if trailing_comments:
+        output_lines.append("")
+        output_lines.extend(trailing_comments)
 
     output_lines.append("")  # trailing newline
     return "\n".join(output_lines)
