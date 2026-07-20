@@ -1848,31 +1848,13 @@ country_event = {
 		name = HOL_military.035.a #Accept
 		log = "[GetDateText]: [This.GetName]: HOL_military.035.a executed"
 		set_country_flag = HOL_FAD_member
-		set_country_flag = HOL_FAD_variant_created
-		create_equipment_variant = {
-			name = "Future Air Defender"
-			type = frigate_hull_5
-			allow_without_tech = yes
-			modules = {
-				fixed_ship_engine_slot = module_surface_mod_reactor_power
-				fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_6
-				fixed_ship_auxillary_slot_2 = module_vls_lam_4
-				fixed_ship_auxillary_slot_1 = module_esm_3
-				fixed_ship_auxillary_slot = module_152mm_battery
-				fixed_ship_battery_slot = module_aa_missiles_4
-				front_1_custom_slot = module_aa_missiles_4
-				rear_1_custom_slot = module_asm_4
+		activate_mission = HOL_FAD_construction
+		if = {
+			limit = { NOT = { original_tag = GER } }
+			add_days_mission_timeout = {
+				mission = HOL_FAD_construction
+				days = -730
 			}
-		}
-		add_equipment_production = {
-			equipment = {
-				type = frigate_hull_5
-				version_name = "Future Air Defender"
-			}
-			amount = 2
-			progress = 0.20
-			requested_factories = 1
 		}
 		FROM = { country_event = { id = HOL_military.036 days = 1 } }
 		if = {
@@ -1916,7 +1898,7 @@ country_event = {
 
 }
 country_event = {
-	id = HOL_military.036 #Future Air Defender Program - a partner joins
+	id = HOL_military.036 #Future Air Defender Program - a member joins (Netherlands side)
 	title = HOL_military.036.t
 	desc = HOL_military.036.d
 	picture = GFX_hol_future_air_defender_event_picture
@@ -1926,44 +1908,24 @@ country_event = {
 		name = HOL_military.036.a
 		log = "[GetDateText]: [This.GetName]: HOL_military.036.a executed"
 		if = {
-			limit = { NOT = { has_country_flag = HOL_FAD_member } }
-			set_country_flag = HOL_FAD_member
-			set_country_flag = HOL_FAD_variant_created
+			limit = { NOT = { has_active_mission = HOL_FAD_construction } }
+			if = {
+				limit = { NOT = { has_country_flag = HOL_FAD_member } }
+				set_country_flag = HOL_FAD_member
+			}
 			unlock_decision_category_tooltip = HOL_future_air_defender_program
-			create_equipment_variant = {
-				name = "Future Air Defender"
-				type = frigate_hull_5
-				allow_without_tech = yes
-				modules = {
-					fixed_ship_engine_slot = module_surface_mod_reactor_power
-					fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-					fixed_ship_radar_slot = module_radar_6
-					fixed_ship_auxillary_slot_2 = module_vls_lam_4
-					fixed_ship_auxillary_slot_1 = module_esm_3
-					fixed_ship_auxillary_slot = module_152mm_battery
-					fixed_ship_battery_slot = module_aa_missiles_4
-					front_1_custom_slot = module_aa_missiles_4
-					rear_1_custom_slot = module_asm_4
-				}
-				design_team = mio:HOL_Damen_naval_equipment_organisation
+			activate_mission = HOL_FAD_construction
+			if = {
+				limit = { FROM = { original_tag = GER } }
+				GER = { country_event = { id = HOL_military.038 days = 912 } }
 			}
-			add_equipment_production = {
-				equipment = {
-					type = frigate_hull_5
-					version_name = "Future Air Defender"
-				}
-				amount = 2
-				progress = 0.20
-				requested_factories = 1
-			}
-			newline = yes
-			set_temp_variable = { treasury_change = -25 }
-			modify_treasury_effect = yes
 		}
-		if = {
-			limit = { has_idea = maritime_industry }
-			set_temp_variable = { temp_opinion = 5 }
-			change_maritime_industry_opinion = yes
+		else = {
+			custom_effect_tooltip = HOL_FAD_delay_reduced_tt
+			add_days_mission_timeout = {
+				mission = HOL_FAD_construction
+				days = -180
+			}
 		}
 		newline = yes
 		set_temp_variable = { treasury_change = -35 }
@@ -1973,7 +1935,7 @@ country_event = {
 }
 
 country_event = {
-	id = HOL_military.037 #Future Air Defender Program - a partner declines
+	id = HOL_military.037 #Future Air Defender Program - a member leaves or declines (Netherlands side)
 	title = HOL_military.037.t
 	desc = HOL_military.037.d
 	picture = GFX_hol_dutch_flag_bad_event_picture
@@ -1983,13 +1945,63 @@ country_event = {
 		name = HOL_military.037.a
 		log = "[GetDateText]: [This.GetName]: HOL_military.037.a executed"
 		if = {
-			limit = { NOT = { has_country_flag = HOL_FAD_member } }
-			set_country_flag = HOL_FAD_member
+			limit = { NOT = { has_active_mission = HOL_FAD_construction } }
+			if = {
+				limit = { NOT = { has_country_flag = HOL_FAD_member } }
+				set_country_flag = HOL_FAD_member
+			}
 			unlock_decision_category_tooltip = HOL_future_air_defender_program
+			if = {
+				limit = { FROM = { original_tag = GER } }
+				set_country_flag = HOL_FAD_GER_declined
+			}
+			activate_mission = HOL_FAD_construction
 		}
-		if = {
+		else_if = {
 			limit = { FROM = { original_tag = GER } }
-			set_country_flag = HOL_FAD_GER_declined
+			custom_effect_tooltip = HOL_FAD_ger_withdrew_tt
+			add_days_mission_timeout = {
+				mission = HOL_FAD_construction
+				days = 729
+			}
+		}
+	}
+
+}
+
+country_event = {
+	id = HOL_military.038 #Future Air Defender Program - German funding crisis
+	title = HOL_military.038.t
+	desc = HOL_military.038.d
+	picture = GFX_hol_future_air_defender_event_picture
+	is_triggered_only = yes
+
+	option = {
+		name = HOL_military.038.a #Increase funding
+		log = "[GetDateText]: [This.GetName]: HOL_military.038.a executed"
+		newline = yes
+		set_temp_variable = { treasury_change = -40 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 55
+			modifier = {
+				has_war = yes
+				add = -20
+			}
+		}
+	}
+
+	option = {
+		name = HOL_military.038.b #Withdraw from the program
+		log = "[GetDateText]: [This.GetName]: HOL_military.038.b executed"
+		clr_country_flag = HOL_FAD_member
+		FROM = { country_event = { id = HOL_military.037 days = 1 } }
+		ai_chance = {
+			base = 45
+			modifier = {
+				has_war = yes
+				add = 20
+			}
 		}
 	}
 
@@ -4721,7 +4733,7 @@ country_event = {
 		custom_effect_tooltip = TT_IF_WE_ACCEPT
 		log = "[GetDateText]: [Root.GetName]: HOL_monarchy.37.a executed"
 		HOL = { country_event = { id = HOL_monarchy.38 days = 1 } }
-		ai_chance = { base = 60 }
+		ai_chance = { base = 90 }
 	}
 
 	option = {
@@ -4729,7 +4741,7 @@ country_event = {
 		custom_effect_tooltip = TT_IF_WE_DECLINE
 		log = "[GetDateText]: [Root.GetName]: HOL_monarchy.37.b executed"
 		HOL = { country_event = { id = HOL_monarchy.39 days = 1 } }
-		ai_chance = { base = 40 }
+		ai_chance = { base = 10 }
 	}
 
 }
@@ -4849,14 +4861,14 @@ country_event = {
 				if = {
 					limit = { has_idea = HOL_dbb }
 					random_list = {
-						50 = {
+						80 = {
 							country_event = {
 								id = HOL_politics.03
 								days = 90
 								random_days = 14
 							}
 						}
-						50 = {
+						20 = {
 							country_event = {
 								id = HOL_politics.04
 								days = 90
@@ -4867,14 +4879,14 @@ country_event = {
 				}
 				else = {
 					random_list = {
-						90 = {
+						95 = {
 							country_event = {
 								id = HOL_politics.03
 								days = 90
 								random_days = 14
 							}
 						}
-						10 = {
+						5 = {
 							country_event = {
 								id = HOL_politics.04
 								days = 90
@@ -4888,14 +4900,14 @@ country_event = {
 				if = {
 					limit = { has_idea = HOL_dbb }
 					random_list = {
-						80 = {
+						50 = {
 							country_event = {
 								id = HOL_politics.03
 								days = 90
 								random_days = 14
 							}
 						}
-						20 = {
+						50 = {
 							country_event = {
 								id = HOL_politics.04
 								days = 90
@@ -6748,8 +6760,8 @@ country_event = {
 		name = HOL_politics.51.a
 		log = "[GetDateText]: [This.GetName]: HOL_politics.51.a executed"
 		add_ideas = HOL_suriname_trade_agreement_idea1
-		set_temp_variable = { receiver_nation = SUR.id }
-		set_temp_variable = { sender_nation = HOL.id }
+		set_temp_variable = { receiver_nation = SUR }
+		set_temp_variable = { sender_nation = HOL }
 		set_improved_trade_agreement = yes
 		HOL = { country_event = HOL_politics.52 }
 		ai_chance = {
@@ -6778,7 +6790,6 @@ country_event = {
 		name = HOL_politics.52.a
 		log = "[GetDateText]: [This.GetName]: HOL_politics.52.a executed"
 		add_ideas = HOL_suriname_trade_agreement_idea1
-		set_country_flag = HOL_suriname_agreement_accepted
 	}
 
 }
@@ -6792,7 +6803,6 @@ country_event = {
 	option = {
 		name = HOL_politics.53.a
 		log = "[GetDateText]: [This.GetName]: HOL_politics.53.a executed"
-		add_political_power = -100
 	}
 
 }
@@ -9127,9 +9137,9 @@ country_event = {
 
 	#picture = GFX_hol_navy_intimidating_event_picture
 	option = {
-			log = "[GetDateText]: [This.GetName]: HOL_voc.25.a exe
-		custom_effect_tooltip = TT_IF_WE_ACCEPTcuted"
 		name = HOL_voc.25.a
+		log = "[GetDateText]: [This.GetName]: HOL_voc.25.a executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
 	}
 
 }
