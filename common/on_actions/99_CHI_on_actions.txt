@@ -167,15 +167,20 @@ on_actions = {
 				}
 			}
 			if = {
+				limit = {
+					country_exists = TAI
+					TAI = { has_dynamic_modifier = { modifier = CHI_TAI_intl_isolation_modifier } }
+				}
+				TAI = { CHI_TAI_recompute_isolation = yes }
+			}
+			if = {
 				limit = { has_completed_focus = CHI_TAI_cross_strait_policy }
 				CHI_update_us_president_support = yes
 			}
 
 			if = {
-				limit = {
-					has_completed_focus = CHI_Belt_and_Road_Initiative
-				}
-				CHI_BRI_monthly_tick = yes
+				limit = { has_completed_focus = CHI_Belt_and_Road_Initiative }
+				CHI_bri_monthly_tick = yes
 			}
 
 			if = {
@@ -191,39 +196,6 @@ on_actions = {
 					check_variable = { CHI_korea_peninsula_tension > 30 }
 				}
 				add_to_variable = { CHI_korea_peninsula_tension = -1 }
-			}
-
-			if = {
-				limit = {
-					has_variable = CHI_demographic_policy_stage
-				}
-				if = {
-					limit = { check_variable = { CHI_demographic_policy_stage = 1 } }
-					add_to_variable = { CHI_demographic_aging = 0.40 }
-				}
-				else_if = {
-					limit = { check_variable = { CHI_demographic_policy_stage = 2 } }
-					add_to_variable = { CHI_demographic_aging = 0.08 }
-				}
-				else_if = {
-					limit = { check_variable = { CHI_demographic_policy_stage = 3 } }
-					add_to_variable = { CHI_demographic_aging = 0.02 }
-				}
-				else = {
-					add_to_variable = { CHI_demographic_aging = -0.10 }
-				}
-				clamp_variable = { var = CHI_demographic_aging min = 0 max = 100 }
-				CHI_apply_demographic_tier = yes
-
-				if = {
-					limit = {
-						check_variable = { CHI_demographic_aging > 49 }
-						NOT = { has_country_flag = CHI_demographic_fading_warned }
-						NOT = { has_active_mission = CHI_grey_society_crisis }
-					}
-					set_country_flag = CHI_demographic_fading_warned
-					country_event = { id = CHI_political_events.50 days = 1 }
-				}
 			}
 
 			if = {
@@ -340,6 +312,14 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
+					country_exists = CHI
+					FROM = { CHI_bri_is_engaged = yes }
+				}
+				FROM = { CHI_bri_drop_partner = yes }
+			}
+
+			if = {
+				limit = {
 					ROOT = { original_tag = CHI }
 					FROM = { original_tag = TAI }
 					ROOT = { has_completed_focus = CHI_TAI_combat_the_traitors }
@@ -424,15 +404,6 @@ on_actions = {
 		}
 	}
 
-	on_startup = {
-		effect = {
-			every_country = {
-				limit = { is_in_array = { global.bri_eligible_countries = THIS.id } }
-				BRI_init_named_maxes = yes
-			}
-		}
-	}
-
 	on_monthly = {
 		effect = {
 			if = {
@@ -462,6 +433,27 @@ on_actions = {
 					set_country_flag = { flag = CHI_communique_defender_cd days = 30 value = 1 }
 					country_event = { id = chi_bri.134 days = 1 }
 				}
+			}
+
+			if = {
+				limit = {
+					country_exists = CHI
+					NOT = { original_tag = CHI }
+					has_war_with = CHI
+					CHI_bri_is_engaged = yes
+				}
+				CHI_bri_drop_partner = yes
+			}
+			if = {
+				limit = {
+					country_exists = CHI
+					FROM = {
+						NOT = { original_tag = CHI }
+						has_war_with = CHI
+						CHI_bri_is_engaged = yes
+					}
+				}
+				FROM = { CHI_bri_drop_partner = yes }
 			}
 		}
 	}
