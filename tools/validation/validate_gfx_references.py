@@ -67,24 +67,19 @@ def _is_md_gui_file(filepath: str) -> bool:
     return os.path.basename(filepath) not in _VANILLA_GUI_BASENAMES
 
 
-# .gfx and .gui files use C-style // and /* */ comments, NOT the # used by .txt scripts.
-# strip_comments() from shared_utils strips # comments; do NOT use it here.
-
 _BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
-_LINE_COMMENT_RE = re.compile(r"//.*")
 _HASH_COMMENT_RE = re.compile(r"#.*")
 
 
 def _strip_comments(text: str) -> str:
     """Remove comments from Clausewitz GUI/GFX text.
 
-    `#` is the actual Clausewitz line-comment marker (interface/*.gui|*.gfx use
-    it almost exclusively); `//` and `/* */` are also stripped for safety. Without
-    `#` stripping, sprite references inside commented-out blocks leak through and
-    are wrongly reported as missing.
+    `#` is the Clausewitz line-comment marker. `//` is NOT stripped: it never
+    appears as a comment in interface/, but does appear inside texture paths
+    (`"gfx//interface/..."`), and cutting there leaves an unterminated quote that
+    desyncs the quote-aware block scanner and silently drops the sprite.
     """
     text = _BLOCK_COMMENT_RE.sub("", text)
-    text = _LINE_COMMENT_RE.sub("", text)
     text = _HASH_COMMENT_RE.sub("", text)
     return text
 
@@ -340,7 +335,7 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
-class GfxReferenceValidator(BaseValidator):
+class Validator(BaseValidator):
     TITLE = "GFX SPRITE REFERENCE VALIDATION"
     STAGED_EXTENSIONS = [".gui", ".gfx", ".txt"]
 
@@ -654,7 +649,7 @@ class GfxReferenceValidator(BaseValidator):
 
 def main() -> int:
     return run_validator_main(
-        GfxReferenceValidator,
+        Validator,
         description="Validate GFX sprite references in Millennium Dawn mod.",
     )
 
