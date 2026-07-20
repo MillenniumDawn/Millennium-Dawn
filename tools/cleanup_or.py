@@ -457,17 +457,24 @@ def process_file(filepath):
 
 # resources/ is reference-only and must never be modified; .git is not content.
 _EXCLUDED_DIRS = {"resources", ".git"}
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
-def _is_excluded_path(path):
-    """True if any component of path is an excluded dir (resources/, .git).
+def _is_excluded_path(path, repo_root=None):
+    """True if the path is under an excluded dir (resources/, .git) inside the repo.
+
+    Matching is against the path *relative to the repo root*, not the absolute
+    path: a checkout nested under an ancestor dir literally named `resources`
+    would otherwise match every file and no-op the whole repo. Ancestors above
+    the root collapse to `..` and never carry an excluded name.
 
     Mid-walk pruning only stops os.walk from descending into an excluded
     subdir; it never guards the walk root or a directly-passed file, so a
     `resources/...` target would otherwise be rewritten regardless.
     """
-    parts = os.path.normpath(os.path.abspath(path)).split(os.sep)
-    return any(part in _EXCLUDED_DIRS for part in parts)
+    root = _REPO_ROOT if repo_root is None else os.path.abspath(repo_root)
+    rel = os.path.relpath(os.path.abspath(path), root)
+    return any(part in _EXCLUDED_DIRS for part in rel.split(os.sep))
 
 
 def main(paths):

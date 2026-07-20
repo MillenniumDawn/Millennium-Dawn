@@ -74,6 +74,29 @@ def test_focus_tree_anchor_preserved_and_idempotent():
     assert once == twice
 
 
+def test_duplicate_focus_tree_anchor_keeps_last_non_blank():
+    # HOI4 loc is last-wins, so a later duplicate of the focus-tree anchor must
+    # win. The old dedup kept the FIRST non-blank, silently flipping the shown
+    # name back after standardization.
+    index = _empty_index()
+    stem = "MD_focus_ISR_l_english.yml"
+    content = 'l_english:\n ISR_focus_tree: "Old Name"\n ISR_focus_tree: "New Name"\n'
+    out = _round_stem(content, index, stem, references=set())
+    assert ' ISR_focus_tree: "New Name"' in out
+    assert ' ISR_focus_tree: "Old Name"' not in out
+    assert out.count("ISR_focus_tree:") == 1
+
+
+def test_duplicate_focus_tree_later_blank_does_not_clobber():
+    # A later blank duplicate must not wipe an earlier real value.
+    index = _empty_index()
+    stem = "MD_focus_ISR_l_english.yml"
+    content = 'l_english:\n ISR_focus_tree: "Real Name"\n ISR_focus_tree: ""\n'
+    out = _round_stem(content, index, stem, references=set())
+    assert ' ISR_focus_tree: "Real Name"' in out
+    assert out.count("ISR_focus_tree:") == 1
+
+
 def test_bom_preserved_and_file_idempotent(tmp_path):
     mod_root = tmp_path / "mod"
     (mod_root / "common").mkdir(parents=True)

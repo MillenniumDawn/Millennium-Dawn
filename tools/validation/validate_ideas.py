@@ -139,6 +139,25 @@ _ALLOWED_CIVIL_WAR_ALWAYS_NO = re.compile(
 )
 
 
+def _blank_nested_braces(text: str) -> str:
+    """Blank everything nested inside `{...}`, keeping only top-level text.
+
+    Lets a caller test whether two keys are direct siblings at the block's top
+    level rather than split across nested OR/NOT/AND child blocks."""
+    out = []
+    depth = 0
+    for ch in text:
+        if ch == "{":
+            depth += 1
+            out.append(" ")
+        elif ch == "}":
+            depth -= 1
+            out.append(" ")
+        else:
+            out.append(ch if depth == 0 else " ")
+    return "".join(out)
+
+
 def _missing_icon_message(
     idea_name: str,
     cat: str,
@@ -345,25 +364,26 @@ def _parse_ideas_from_text(
                         idea_text, allowed_start.end() - 1
                     )
                     tag_m = _TAG_IN_ALLOWED.search(allowed_block)
-                    has_original = _ORIGINAL_TAG_IN_ALLOWED.search(allowed_block)
-                    if tag_m and has_original:
+                    if tag_m:
+                        # Redundant only when tag and original_tag are direct
+                        # top-level siblings; in different OR branches they are
+                        # alternatives (shared multi-country idea), not redundant.
+                        top_level = _blank_nested_braces(allowed_block)
+                        top_tag = _TAG_IN_ALLOWED.search(top_level)
+                        top_original = _ORIGINAL_TAG_IN_ALLOWED.search(top_level)
+                        if top_tag and top_original:
+                            kind = "redundant-tag-and-original-tag"
+                            detail = top_tag.group(1)
+                        else:
+                            kind = "tag-not-original-tag"
+                            detail = tag_m.group(1)
                         issues.append(
                             IdeaIssue(
                                 current_idea,
                                 category_name,
                                 current_idea_line,
-                                "redundant-tag-and-original-tag",
-                                detail=tag_m.group(1),
-                            )
-                        )
-                    elif tag_m:
-                        issues.append(
-                            IdeaIssue(
-                                current_idea,
-                                category_name,
-                                current_idea_line,
-                                "tag-not-original-tag",
-                                detail=tag_m.group(1),
+                                kind,
+                                detail=detail,
                             )
                         )
 

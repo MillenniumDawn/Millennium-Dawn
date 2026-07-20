@@ -307,7 +307,9 @@ def _format_output(
             # Extract the focus-tree anchor before bucketing so it lands atop
             # National Focus exactly once; the old NF-only search left the real
             # text categorised elsewhere and blanked/duplicated it on re-runs.
-            if anchor_entry is None or not anchor_entry.value.strip(' "'):
+            # HOI4 loc is last-wins, so keep the LAST non-blank duplicate (a later
+            # blank does not clobber an earlier real value).
+            if anchor_entry is None or entry.value.strip(' "'):
                 anchor_entry = entry
             continue
         category = _find_category(entry.key, index, references)

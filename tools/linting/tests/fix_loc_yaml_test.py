@@ -43,15 +43,29 @@ def test_bom_and_value_preserved(tmp_path):
     assert result == codecs.BOM_UTF8 + b' KEY: "value"\n'
 
 
-def test_malformed_encoding_does_not_crash(tmp_path):
+def test_malformed_encoding_skipped_not_corrupted(tmp_path):
     path = tmp_path / "bad_l_english.yml"
-    # 0xFF is not valid UTF-8; the decode must fall back to errors="replace"
-    # rather than raising UnicodeDecodeError.
-    path.write_bytes(codecs.BOM_UTF8 + b' KEY:0 "value \xff"\n')
+    # 0xFF is not valid UTF-8. --fix must leave the file byte-identical rather
+    # than writing U+FFFD-substituted text back and corrupting it.
+    original = codecs.BOM_UTF8 + b' KEY:0 "value \xff"\n'
+    path.write_bytes(original)
 
-    process_file(path, fix_mode=True)
+    problems, fixed, decode_error = process_file(path, fix_mode=True)
 
-    assert path.read_bytes().startswith(codecs.BOM_UTF8)
+    assert path.read_bytes() == original
+    assert fixed == 0
+    assert decode_error is True
+
+
+def test_malformed_encoding_flagged_in_check_mode(tmp_path):
+    path = tmp_path / "bad_l_english.yml"
+    original = codecs.BOM_UTF8 + b' KEY:0 "value \xff"\n'
+    path.write_bytes(original)
+
+    problems, fixed, decode_error = process_file(path, fix_mode=False)
+
+    assert path.read_bytes() == original
+    assert decode_error is True
 
 
 def test_fix_is_idempotent(tmp_path):

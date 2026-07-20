@@ -17,7 +17,12 @@ from common_utils import (
     inject_log_after_brace,
     run_standardizer,
 )
-from shared_utils import collapse_or_compact, extract_block, strip_inline_comment
+from shared_utils import (
+    blank_quoted_strings,
+    collapse_or_compact,
+    extract_block,
+    strip_inline_comment,
+)
 
 _EVENT_TYPES = ("country_event", "province_event", "unit_leader_event", "news_event")
 
@@ -88,7 +93,16 @@ def _option_body(option_block: List[str]) -> List[str]:
         if open_idx == -1 or close_idx <= open_idx:
             return []
         return _split_packed_body(code[open_idx + 1 : close_idx])
-    return option_block[1:-1]
+    body = list(option_block[1:-1])
+    # A statement packed onto the closer line (`add_political_power = 10 }`) is
+    # invisible to a plain [1:-1] slice — recover the code before the trailing `}`.
+    last = strip_inline_comment(option_block[-1])
+    close_idx = last.rfind("}")
+    if close_idx != -1:
+        tail = last[:close_idx].strip()
+        if tail:
+            body.append(tail)
+    return body
 
 
 def _explode_packed_option(option_block: List[str]) -> List[str]:
@@ -134,15 +148,24 @@ def _option_has_effects(option_block: List[str]) -> bool:
     """Check whether an option's body has any meaningful effect lines. Scans only
     the body so the `option = {` header line itself never trips detection. Each
     body line is split into its packed statements so an effect jammed onto a
-    physical line after a skipped one (`name = x  add_pp = 10`) is still seen."""
+    physical line after a skipped one (`name = x  add_pp = 10`) is still seen.
+
+    Brace depth is tracked across body lines so the inner lines of a multi-line
+    skipped block (`ai_chance = {` / `trigger = {`) are swallowed whole and not
+    misread as top-level effects."""
     skip_prefixes = ("name =", "ai_chance =", "trigger =")
+    depth = 0
     for line in _option_body(option_block):
         for stripped in _split_packed_body(line.strip()):
-            if not stripped or stripped in ("{", "}"):
+            if not stripped or stripped.startswith("#"):
                 continue
-            if stripped.startswith("#"):
+            code = blank_quoted_strings(strip_inline_comment(stripped))
+            delta = code.count("{") - code.count("}")
+            if depth > 0:
+                depth = max(0, depth + delta)
                 continue
-            if stripped.startswith(skip_prefixes):
+            if stripped in ("{", "}") or stripped.startswith(skip_prefixes):
+                depth = max(0, depth + delta)
                 continue
             return True
     return False

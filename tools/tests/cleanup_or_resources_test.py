@@ -44,3 +44,23 @@ def test_resources_directory_not_walked(tmp_path):
     f.write_text(_REWRITABLE, encoding="utf-8")
     cleanup_or.main([str(res)])
     assert f.read_text(encoding="utf-8") == _REWRITABLE
+
+
+def test_ancestor_resources_outside_repo_not_excluded(tmp_path):
+    # A checkout nested under an ancestor dir literally named "resources" must
+    # NOT exclude the whole repo: relative to its own root the file carries no
+    # excluded component.
+    repo_root = tmp_path / "resources" / "MillenniumDawn"
+    target = repo_root / "common" / "national_focus" / "foo.txt"
+    target.parent.mkdir(parents=True)
+    target.write_text(_REWRITABLE, encoding="utf-8")
+    assert not cleanup_or._is_excluded_path(str(target), repo_root=str(repo_root))
+
+
+def test_repo_own_resources_still_excluded(tmp_path):
+    # The repo's own resources/ (reference-only) stays excluded regardless.
+    repo_root = tmp_path / "MillenniumDawn"
+    target = repo_root / "resources" / "ref.txt"
+    target.parent.mkdir(parents=True)
+    target.write_text(_REWRITABLE, encoding="utf-8")
+    assert cleanup_or._is_excluded_path(str(target), repo_root=str(repo_root))

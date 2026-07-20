@@ -183,6 +183,68 @@ def test_multiline_option_packed_interior_line_effect_detected():
     assert _option_has_effects(option)
 
 
+def test_multiline_ai_chance_only_has_no_effects():
+    # (defect) an option whose only body is name + a multi-line ai_chance (with a
+    # nested modifier block) must not be misread as having effects — brace depth
+    # has to be tracked so the ai_chance interior is swallowed whole.
+    option = _option(
+        [
+            "\toption = {",
+            "\t\tname = bul_mech.19.b",
+            "\t\tai_chance = {",
+            "\t\t\tbase = 40",
+            "\t\t\tmodifier = {",
+            "\t\t\t\tadd = 30",
+            "\t\t\t\thas_opinion = { target = BUL value < 0 }",
+            "\t\t\t}",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    assert not _option_has_effects(option)
+
+
+def test_statement_packed_on_closer_line_detected():
+    # (defect) an effect jammed onto the closer line (`add_pp = 10 }`) was hidden
+    # by the plain [1:-1] body slice — the closer's code must be scanned too.
+    option = _option(
+        [
+            "\toption = {",
+            "\t\tname = test.5.a",
+            "\t\tadd_political_power = 10 }",
+        ]
+    )
+    assert _option_has_effects(option)
+
+
+_MULTILINE_AI_CHANCE_EVENT = [
+    "country_event = {",
+    "\tid = test.4",
+    "\ttitle = test.4.t",
+    "\tdesc = test.4.d",
+    "\tis_triggered_only = yes",
+    "",
+    "\toption = {",
+    "\t\tname = test.4.b",
+    "\t\tai_chance = {",
+    "\t\t\tbase = 40",
+    "\t\t\tmodifier = {",
+    "\t\t\t\tadd = 30",
+    "\t\t\t\thas_opinion = { target = BUL value < 0 }",
+    "\t\t\t}",
+    "\t\t}",
+    "\t}",
+    "}",
+]
+
+
+def test_multiline_ai_chance_only_option_gets_no_log():
+    text = "\n".join(_standardize_event(_MULTILINE_AI_CHANCE_EVENT))
+    # Effectless option (name + multi-line ai_chance only) gets no log.
+    assert "test.4.b executed" not in text
+    assert "log =" not in text
+
+
 _PACKED_INTERIOR_EVENT = [
     "country_event = {",
     "\tid = test.3",

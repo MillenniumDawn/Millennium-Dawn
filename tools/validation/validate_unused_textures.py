@@ -19,6 +19,7 @@ from validator_common import (
     BaseValidator,
     Colors,
     FileOpener,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
@@ -479,13 +480,24 @@ class Validator(BaseValidator):
 
         if self.hoi4_path:
             msg = "Referenced textures that do not exist in mod or vanilla .gfx files:"
+            severity = Severity.ERROR
         else:
-            msg = "Referenced textures that do not exist (vanilla not checked):"
+            # Without a vanilla install the vanilla_* reference sets are empty, so
+            # every ref that resolves to a real vanilla texture looks "missing".
+            # Report as WARNING rather than emit hundreds of unverifiable errors.
+            msg = "Referenced textures that do not exist (vanilla not checked — WARNING only):"
+            severity = Severity.WARNING
+            self.log(
+                "  No HOI4 install detected — missing-texture findings reported as "
+                "warnings (vanilla textures cannot be verified)",
+                "warning",
+            )
 
         self._report(
             missing_textures,
             "✓ All referenced textures exist",
             msg,
+            severity=severity,
         )
 
     def run_validations(self):

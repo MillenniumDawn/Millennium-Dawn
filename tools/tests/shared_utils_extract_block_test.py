@@ -81,6 +81,45 @@ def test_driver_loop_over_stray_brace_terminates():
     assert lines[1:4] in seen
 
 
+def test_over_closing_line_keeps_block():
+    # `} }` overshoots the depth negative after the block opened. The whole
+    # block (including the over-closing line) must be returned, never dropped —
+    # a standardizer driver appends only truthy blocks, so a lost block deletes
+    # those source lines from the rewritten file.
+    lines = _split("focus = {\n\tid = a\n} }\nnext = yes\n")
+    block, end = extract_block(lines, 0)
+    assert block == lines[0:3]
+    assert end == 3
+
+
+def test_nested_over_closing_line_keeps_block():
+    # A nested block whose final line over-closes (`} } }` at depth 2 drives
+    # depth to -1). The accumulated lines must still come back with that line
+    # as the closer instead of being discarded.
+    lines = _split("a = {\n\tb = {\n\t} } }\nafter\n")
+    block, end = extract_block(lines, 0)
+    assert block == lines[0:3]
+    assert end == 3
+
+
+def test_over_closing_driver_loses_no_lines():
+    # Reconstruct the file through the standardizer driver loop and assert every
+    # input line is preserved (no silent data loss on an over-closing block).
+    lines = _split("focus = {\n\tid = a\n} }\nnext = yes\n")
+    out = []
+    i = 0
+    while i < len(lines):
+        if "{" in lines[i] or "}" in lines[i]:
+            block, next_i = extract_block(lines, i)
+            assert next_i > i
+            out.extend(block)
+            i = next_i
+        else:
+            out.append(lines[i])
+            i += 1
+    assert out == lines
+
+
 def test_quoted_string_brace_does_not_break_boundary():
     # A `{` / `}` inside a quoted string (blanked via blank_quoted_strings, as
     # the standardizers pass their input) must not shift the block boundary.

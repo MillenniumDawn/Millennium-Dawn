@@ -168,6 +168,11 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
             i += 1
             break
         elif brace_count < 0:
+            if opened:
+                # Over-closing line (e.g. `} }` or a stray extra `}`) after the
+                # block opened: keep the accumulated lines with this line as the
+                # closer so the consumer never silently drops source lines.
+                return block_lines, i + 1
             # Malformed: a stray `}` before any `{`. Advance past it (returning
             # no block) so a caller looping on the returned index still makes
             # forward progress instead of spinning on an unchanged start index.
@@ -222,6 +227,30 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+def collapse_ws_outside_quotes(text: str) -> str:
+    """Collapse runs of whitespace outside double-quoted spans to single spaces,
+    leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
+    unquoted text, but a `log`/tooltip string keeps its internal spacing."""
+    result: List[str] = []
+    in_str = False
+    prev_space = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+            result.append(c)
+            prev_space = False
+        elif in_str:
+            result.append(c)
+        elif c.isspace():
+            if not prev_space:
+                result.append(" ")
+            prev_space = True
+        else:
+            result.append(c)
+            prev_space = False
+    return "".join(result).strip()
+
+
 def _normalize_oneline_braces(text: str) -> str:
     """Collapse whitespace and put single spaces around ``{``/``}``, leaving the
     contents of double-quoted strings untouched."""
@@ -237,24 +266,7 @@ def _normalize_oneline_braces(text: str) -> str:
             out.append(" ")
         else:
             out.append(c)
-    # Collapse runs of whitespace that sit outside string literals.
-    result: List[str] = []
-    in_str = False
-    prev_space = False
-    joined = "".join(out)
-    for i, c in enumerate(joined):
-        if c == '"' and (i == 0 or joined[i - 1] != "\\"):
-            in_str = not in_str
-            result.append(c)
-            prev_space = False
-        elif not in_str and c.isspace():
-            if not prev_space:
-                result.append(" ")
-            prev_space = True
-        else:
-            result.append(c)
-            prev_space = False
-    return "".join(result).strip()
+    return collapse_ws_outside_quotes("".join(out))
 
 
 def collapse_or_compact(
