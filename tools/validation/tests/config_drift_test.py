@@ -250,9 +250,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert (
-        not gone
-    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    assert not gone, (
+        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    )
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -300,9 +300,9 @@ def test_validator_cache_restore_is_source_hash_scoped():
                     restore_steps.extend(
                         step.get("with", {}).get("restore-keys", "").splitlines()
                     )
-        assert (
-            restore_steps
-        ), f"No validator cache restore keys found in {workflow.name}"
+        assert restore_steps, (
+            f"No validator cache restore keys found in {workflow.name}"
+        )
         assert all(key.startswith(expected_prefix) for key in restore_steps), (
             f"{workflow.name} has a validator cache fallback outside the current "
             "validator source-hash generation"
@@ -333,10 +333,7 @@ def test_scripted_localisation_core_runs_for_interface_changes():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     core = workflow["jobs"]["validate-core"]
     assert "needs.detect-changes.outputs.interface == 'true'" in core["if"]
-    scripts = {
-        entry["script"]
-        for entry in core["strategy"]["matrix"]["validator"]
-    }
+    scripts = {entry["script"] for entry in core["strategy"]["matrix"]["validator"]}
     assert "validate_scripted_localisation.py" in scripts
 
 

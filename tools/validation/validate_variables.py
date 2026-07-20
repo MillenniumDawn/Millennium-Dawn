@@ -93,7 +93,7 @@ def process_file_for_all_flags(
     if not text:
         return {}, {}, {}
     basename = os.path.basename(filename)
-    namespace = f"variables.flags.{flag_type}.lc={int(lowercase)}"
+    namespace = f"variables.flags.{flag_type}.lc={'1' if lowercase else '0'}"
     set_list, used_list, cleared_list = disk_cache.per_file_cached_by_content(
         mod_path,
         namespace,
@@ -475,7 +475,7 @@ def process_file_for_all_targets(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        f"variables.targets.lc={int(lowercase)}",
+        f"variables.targets.lc={'1' if lowercase else '0'}",
         filename,
         text_file,
         lambda: _scan_targets_in_text(text_file, filename),
@@ -600,7 +600,7 @@ class Validator(BaseValidator):
         for result in results:
             identifier = result.get("flag") or result.get("target") or ""
             file_path = result.get("file", "")
-            line_no = int(result.get("line", 0) or 0)
+            line_no = result.get("line", 0) or 0
             tuples.append((identifier, file_path, line_no))
         self._report(
             tuples,
@@ -661,8 +661,11 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking cleared {flag_type} flags that are never set...")
 
-        cleared_flags = DataCleaner.clear_false_positives_partial_match(
-            list(cleared_paths.keys()), tuple(false_positives)
+        cleared_flags = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(cleared_paths.keys()), tuple(false_positives)
+            )
+            or []
         )
         dynamic_set_patterns = self._build_dynamic_flag_matchers(list(set_paths.keys()))
 
@@ -696,8 +699,11 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking missing {flag_type} flags (used but not set)...")
 
-        used_flags = DataCleaner.clear_false_positives_partial_match(
-            list(used_paths.keys()), tuple(false_positives)
+        used_flags = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(used_paths.keys()), tuple(false_positives)
+            )
+            or []
         )
         dynamic_set_patterns = self._build_dynamic_flag_matchers(list(set_paths.keys()))
 
@@ -731,8 +737,11 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking unused {flag_type} flags (set but not used)...")
 
-        set_flags = DataCleaner.clear_false_positives_partial_match(
-            list(set_paths.keys()), tuple(false_positives)
+        set_flags = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(set_paths.keys()), tuple(false_positives)
+            )
+            or []
         )
         dynamic_used_patterns = self._build_dynamic_flag_matchers(
             list(used_paths.keys())
@@ -897,8 +906,11 @@ class Validator(BaseValidator):
 
         FALSE_POSITIVES = ["."]
         results = []
-        used_targets = DataCleaner.clear_false_positives_partial_match(
-            list(used_paths.keys()), tuple(FALSE_POSITIVES)
+        used_targets = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(used_paths.keys()), tuple(FALSE_POSITIVES)
+            )
+            or []
         )
 
         for target in used_targets:
@@ -938,8 +950,11 @@ class Validator(BaseValidator):
         FALSE_POSITIVES = ["wca_usa_floyd_olson", "wca_usa_al_smith", "target_value"]
         results = []
         potential_results = []
-        set_targets = DataCleaner.clear_false_positives_partial_match(
-            list(set_paths.keys()), tuple(FALSE_POSITIVES)
+        set_targets = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(set_paths.keys()), tuple(FALSE_POSITIVES)
+            )
+            or []
         )
 
         for target in set_targets:

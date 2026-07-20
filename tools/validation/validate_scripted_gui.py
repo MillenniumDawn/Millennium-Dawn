@@ -315,7 +315,7 @@ def _parse_var_writes_text(text: str) -> Tuple[Set[str], Set[str]]:
     return written, global_refs
 
 
-class ScriptedGuiValidator(BaseValidator):
+class Validator(BaseValidator):
     TITLE = "SCRIPTED GUI VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".gui", ".yml"]
 
@@ -750,7 +750,7 @@ class ScriptedGuiValidator(BaseValidator):
 
 def main() -> int:
     return run_validator_main(
-        ScriptedGuiValidator,
+        Validator,
         description="Validate scripted GUI cross-references against .gui and loc files.",
     )
 
