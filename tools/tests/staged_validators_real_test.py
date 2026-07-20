@@ -307,8 +307,22 @@ def _touched_files_clean() -> bool:
     return r.returncode == 0 and not r.stdout.strip()
 
 
+def _game_content_checked_out() -> bool:
+    """CI's report-lib-tests job sparse-checks out only tools/ — no game dirs."""
+    return all(
+        os.path.isdir(os.path.join(REPO_ROOT, d))
+        for d in ("events", "common", "localisation")
+    )
+
+
 def test_real_files_present():
-    """Always-collectible smoke check needing no git staging area."""
+    """Always-collectible smoke check needing no git staging area.
+
+    Skips under a sparse checkout (e.g. the CI report-lib-tests job, which only
+    checks out tools/) since the game content this asserts on isn't present there.
+    """
+    if not _game_content_checked_out():
+        pytest.skip("game content not checked out (sparse checkout)")
     for rel in _TOUCHED_FILES:
         assert os.path.exists(os.path.join(REPO_ROOT, rel))
 
