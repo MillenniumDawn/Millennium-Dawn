@@ -60,6 +60,8 @@ on_actions = {
 			}
 
 			if = { limit = { NOT = { has_country_flag = disabled_economic_system } }
+				set_temp_variable = { treasury_rate_gain = treasury_rate }
+
 				# Pay down debt automatically this weekly tick
 				if = {
 					limit = {
@@ -67,9 +69,9 @@ on_actions = {
 						check_variable = { treasury_rate > 0 }
 						check_variable = { debt > 0 }
 					}
-					set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
-					multiply_temp_variable = { treasury_rate_debt_payment = 0.25 }
+					set_temp_variable = { treasury_rate_debt_payment = { value = treasury_rate multiply = 0.25 } }
 					subtract_from_variable = { debt = treasury_rate_debt_payment }
+					subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
 
 					if = {
 						limit = { check_variable = { debt < 0.001 } }
@@ -78,10 +80,11 @@ on_actions = {
 					}
 				}
 
-				set_temp_variable = { treasury_rate_gain = treasury_rate }
-				subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
-
 				add_to_variable = { treasury = treasury_rate_gain }
+
+				# Must sit after the accrual and before automated_debt_taker, or the two fight over the same treasury
+				if = { limit = { is_ai = yes } ai_repay_debt = yes }
+
 				#Automated taking debt - has calculate_interest_rate at the end
 				automated_debt_taker = yes
 			}
