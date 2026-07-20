@@ -795,15 +795,22 @@ def _check_decision_allowed_dynamic(lines):
                     allowed_depth = 0
                     for p, dbl in enumerate(dec_block):
                         dbl_code = strip_inline_comment(dbl)
-                        if (
-                            not in_allowed
-                            and _RE_ALLOWED_OPEN_WB.search(dbl_code)
-                            and "allowed_civil_war" not in dbl_code
-                        ):
-                            in_allowed = True
-                            allowed_depth = dbl_code.count("{") - dbl_code.count("}")
+                        delta = dbl_code.count("{") - dbl_code.count("}")
+                        # if/else, not two ifs: the opening line's delta must
+                        # only be counted once (via the entry branch), or
+                        # allowed_depth never returns to <=0 at the block's
+                        # real close and in_allowed leaks into the rest of the
+                        # decision.
+                        if not in_allowed:
+                            if (
+                                _RE_ALLOWED_OPEN_WB.search(dbl_code)
+                                and "allowed_civil_war" not in dbl_code
+                            ):
+                                in_allowed = True
+                                allowed_depth = delta
+                        else:
+                            allowed_depth += delta
                         if in_allowed:
-                            allowed_depth += dbl_code.count("{") - dbl_code.count("}")
                             if _RE_DECISION_ALLOWED_DYNAMIC.search(dbl_code):
                                 trigger = _RE_DECISION_ALLOWED_DYNAMIC.search(
                                     dbl_code

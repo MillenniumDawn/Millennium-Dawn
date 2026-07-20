@@ -908,6 +908,64 @@ on_actions = {
 				set_country_flag = SIA_paetongtarn_crisis_done
 				country_event = { id = thailand.320 days = 1 }
 			}
+
+			# Preah Vihear domestic-politics gates — dated historical beats; ladder mechanics live in common/decisions/preah_vihear_decisions.txt.
+			# The Noppadon Communiqué — right after the .100/.101 UNESCO seed
+			if = {
+				limit = {
+					date > 2008.7.1
+					date < 2009.7.1
+					NOT = { has_country_flag = SIA_noppadon_communique_done }
+				}
+				set_country_flag = SIA_noppadon_communique_done
+				country_event = { id = preah_vihear.110 days = 1 }
+			}
+			# Thaksin appointed Cambodian economic adviser — the ambassador-recall crisis
+			if = {
+				limit = {
+					date > 2009.11.1
+					date < 2010.11.1
+					NOT = { has_country_flag = SIA_thaksin_phnom_penh_done }
+				}
+				set_country_flag = SIA_thaksin_phnom_penh_done
+				country_event = { id = preah_vihear.111 days = 1 }
+			}
+			# Yellow Shirts at the Border — fires once under a ruling Thaksinist (PT,
+			# idx 18) government once tension climbs past 60. Mirrors the
+			# SIA_path_populist + party_index = 18 ruling check used by the coup-risk
+			# block above.
+			set_party_index_to_ruling_party = yes
+			if = {
+				limit = {
+					has_country_flag = SIA_path_populist
+					check_variable = { party_index = 18 }
+					check_variable = { GLOBAL.preah_vihear_tension > 60 }
+					NOT = { has_country_flag = SIA_yellow_shirts_border_done }
+				}
+				set_country_flag = SIA_yellow_shirts_border_done
+				country_event = { id = preah_vihear.112 days = 1 }
+			}
+			# UNSC referral — flavour
+			if = {
+				limit = {
+					date > 2011.2.1
+					date < 2012.2.1
+					NOT = { has_country_flag = SIA_preah_vihear_unsc_done }
+				}
+				set_country_flag = SIA_preah_vihear_unsc_done
+				country_event = { id = preah_vihear.120 days = 1 }
+			}
+			# Indonesian observer mission offer
+			if = {
+				limit = {
+					date > 2011.2.1
+					date < 2012.6.1
+					check_variable = { GLOBAL.preah_vihear_tension > 40 }
+					NOT = { has_country_flag = SIA_preah_vihear_observers_done }
+				}
+				set_country_flag = SIA_preah_vihear_observers_done
+				country_event = { id = preah_vihear.121 days = 1 }
+			}
 		}
 	}
 
@@ -977,6 +1035,40 @@ on_actions = {
 				# SIA_thailand_effects.txt so a big FTA web cannot snowball.
 				SIA_recalculate_trade_diplomacy = yes
 				SIA_collect_trade_dividend = yes
+			}
+
+			# Preah Vihear monthly decay (both sides, CBD via inner scope) — must hit
+			# GLOBAL.preah_vihear_tension itself or it never comes down, per the
+			# 99_RAJ_on_actions.txt:27 Kashmir bug.
+			if = {
+				limit = {
+					date > 2008.7.1
+					NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+				}
+				subtract_from_variable = { GLOBAL.preah_vihear_tension = 3 }
+				clamp_variable = { var = GLOBAL.preah_vihear_tension min = 0 max = 100 }
+				subtract_from_variable = { preah_vihear_readiness = 5 }
+				clamp_variable = { var = preah_vihear_readiness min = 0 max = 100 }
+				if = {
+					limit = { country_exists = CBD }
+					CBD = {
+						subtract_from_variable = { preah_vihear_readiness = 5 }
+						clamp_variable = { var = preah_vihear_readiness min = 0 max = 100 }
+					}
+				}
+				# Reverse domestic coupling: a lingering Preah Vihear crisis is a COST of
+				# the populist path, not free nationalist PP. Only while Pheu Thai (PT,
+				# idx 18) actually rules — mirrors the SIA_path_populist + party_index = 18
+				# ruling check the coup-risk block uses in on_weekly_SIA.
+				set_party_index_to_ruling_party = yes
+				if = {
+					limit = {
+						has_country_flag = SIA_path_populist
+						check_variable = { party_index = 18 }
+						check_variable = { GLOBAL.preah_vihear_tension > 50 }
+					}
+					add_stability = -0.01
+				}
 			}
 		}
 	}
