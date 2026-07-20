@@ -977,81 +977,61 @@ HOL_carrier_production = {
 	}
 }
 HOL_future_air_defender_program = {
-	HOL_FAD_produce_batch = {
-		icon = GFX_decision_generic_construction
+	HOL_FAD_construction = {
+		icon = GFX_decision_navy
 
-		visible = { has_country_flag = HOL_FAD_member }
-
-		cost = 50
-
-		days_re_enable = 180
-
-		complete_effect = {
-			if = {
-				limit = { NOT = { has_country_flag = HOL_FAD_variant_created } }
-				if = {
-					limit = { original_tag = HOL }
-					create_equipment_variant = {
-						name = "Future Air Defender"
-						type = frigate_hull_5
-						allow_without_tech = yes
-						modules = {
-							fixed_ship_engine_slot = module_light_surface_mod_reactor_power
-							fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-							fixed_ship_radar_slot = module_radar_6
-							fixed_ship_auxillary_slot_2 = module_vls_lam_4
-							fixed_ship_auxillary_slot_1 = module_esm_3
-							fixed_ship_auxillary_slot = module_aa_missiles_4
-							fixed_ship_battery_slot = module_152mm_battery
-							front_1_custom_slot = module_aa_missiles_4
-							rear_1_custom_slot = module_asm_4
-						}
-						design_team = mio:HOL_Damen_naval_equipment_organisation
-					}
-				}
-				else = {
-					create_equipment_variant = {
-						name = "Future Air Defender"
-						type = frigate_hull_5
-						allow_without_tech = yes
-						modules = {
-							fixed_ship_engine_slot = module_light_surface_mod_reactor_power
-							fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-							fixed_ship_radar_slot = module_radar_6
-							fixed_ship_auxillary_slot_2 = module_vls_lam_4
-							fixed_ship_auxillary_slot_1 = module_esm_3
-							fixed_ship_auxillary_slot = module_aa_missiles_4
-							fixed_ship_battery_slot = module_152mm_battery
-							front_1_custom_slot = module_aa_missiles_4
-							rear_1_custom_slot = module_asm_4
-						}
-					}
-				}
-				set_country_flag = HOL_FAD_variant_created
+		allowed = {
+			OR = {
+				original_tag = HOL
+				original_tag = GER
+				original_tag = SWE
+				original_tag = DEN
+				original_tag = NRY
+				original_tag = FIN
 			}
-			add_equipment_production = {
-				equipment = {
-					type = frigate_hull_5
-					version_name = "Future Air Defender"
-				}
-				amount = 2
-				progress = 0.20
-				requested_factories = 1
-			}
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.08 }
-			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		is_good = yes
+		selectable_mission = no
+		fire_only_once = no
+
+		activation = { always = no }
+		available = { always = no }
+
+		days_mission_timeout = 1825
+
+		cancel_trigger = { NOT = { has_country_flag = HOL_FAD_member } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HOL_FAD_construction"
+			if = {
+				limit = { original_tag = HOL }
+				set_temp_variable = { FAD_count = 4 }
+				if = { limit = { SWE = { has_country_flag = HOL_FAD_member } } add_to_temp_variable = { FAD_count = 1 } }
+				if = { limit = { DEN = { has_country_flag = HOL_FAD_member } } add_to_temp_variable = { FAD_count = 1 } }
+				if = { limit = { NRY = { has_country_flag = HOL_FAD_member } } add_to_temp_variable = { FAD_count = 1 } }
+				if = { limit = { FIN = { has_country_flag = HOL_FAD_member } } add_to_temp_variable = { FAD_count = 1 } }
+			}
+			else_if = {
+				limit = { original_tag = GER }
+				set_temp_variable = { FAD_count = 6 }
+			}
+			else = {
+				set_temp_variable = { FAD_count = 2 }
+			}
+			while_loop_effect = {
+				limit = { check_variable = { FAD_count > 0 } }
+				create_ship = { type = frigate_hull_5 equipment_variant = "Future Air Defender" creator = HOL }
+				subtract_from_temp_variable = { FAD_count = 1 }
+			}
+		}
 	}
 	HOL_FAD_invite_partner = {
 		icon = GFX_decision_generic_form_nation
 
 		allowed = { original_tag = HOL }
 
-		targets = { SWE DEN NRY }
+		targets = { SWE DEN NRY FIN }
 		target_trigger = {
 			FROM = {
 				exists = yes
@@ -1063,7 +1043,11 @@ HOL_future_air_defender_program = {
 		}
 
 		visible = {
-			has_country_flag = HOL_FAD_GER_declined
+			has_active_mission = HOL_FAD_construction
+			OR = {
+				has_country_flag = HOL_FAD_GER_declined
+				GER = { NOT = { has_country_flag = HOL_FAD_member } }
+			}
 		}
 
 		cost = 50
