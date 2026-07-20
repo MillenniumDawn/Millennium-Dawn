@@ -101,10 +101,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_recover_from_97_crisis"
-			add_ideas = SIA_imf_program
+			set_country_flag = SIA_imf_program_active
 			set_temp_variable = { debt_change = 40 }
 			modify_debt_effect = yes
-			increase_economic_growth = yes
 			country_event = thailand.50
 			506 = {
 				add_resource = {
@@ -119,15 +118,18 @@ focus_tree = {
 				category = CAT_util
 			}
 			# Recovery spine Step 1: float the baht. Capital flight and the export
-			# collapse end, so the spirit sheds its trade_opinion and min_export drags.
-			if = {
-				limit = { has_idea = SIA_tom_yum_kung_crisis }
-				swap_ideas = {
-					remove_idea = SIA_tom_yum_kung_crisis
-					add_idea = SIA_crisis_floated
-				}
-			}
-			add_ideas = SIA_export_competitiveness
+			# collapse end (trade/min_export clear), but the IMF loan arrives with
+			# interest and austerity while the revenue base craters.
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_crisis_modifier }
+			add_to_variable = { SIA_crisis_trade_opinion_factor = 0.25 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_crisis_min_export = 0.08 tooltip = min_export_tt }
+			add_to_variable = { SIA_crisis_interest_rate_multiplier_modifier = -1 tooltip = interest_rate_multiplier_modifier_tt }
+			add_to_variable = { SIA_crisis_consumer_goods_factor = -0.04 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_crisis_stability_factor = 0.03 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_crisis_tax_gain_multiplier_modifier = -0.15 tooltip = tax_gain_multiplier_modifier_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_econ_min_export = 0.05 tooltip = min_export_tt }
 		}
 
 		ai_will_do = {
@@ -179,27 +181,34 @@ focus_tree = {
 
 		available = {
 			date > 2003.1.1		# Thaksin's historical early IMF payoff completed 31 Jul 2003 (2yrs ahead of the 2004 schedule)
-			has_idea = SIA_imf_program
+			has_country_flag = SIA_imf_program_active
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_repay_the_imf"
-			set_temp_variable = { treasury_change = -40 }
-			modify_treasury_effect = yes
-			set_temp_variable = { debt_change = -40 }
+			set_temp_variable = { debt_change = -60 }
 			modify_debt_effect = yes
-			remove_ideas = SIA_imf_program
-			add_ideas = SIA_debt_free_credibility
-			# Recovery spine Step 4: the early IMF payoff ends austerity, so the consumer
-			# goods burden and the revenue drag lift. The budget is the kingdom's again.
+			clr_country_flag = SIA_imf_program_active
+			# Also granted by the SIA_tax_modernization decision - guard so the two
+			# sources never stack the same bonus twice.
 			if = {
-				limit = { has_idea = SIA_crisis_restructured }
-				swap_ideas = {
-					remove_idea = SIA_crisis_restructured
-					add_idea = SIA_crisis_unshackled
-				}
+				limit = { NOT = { has_country_flag = SIA_debt_free_credibility_active } }
+				set_country_flag = SIA_debt_free_credibility_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+				add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+				add_to_variable = { SIA_econ_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+				add_to_variable = { SIA_econ_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+				add_to_variable = { SIA_econ_corporate_tax_income_multiplier_modifier = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
+				add_to_variable = { SIA_econ_population_tax_income_multiplier_modifier = 0.05 tooltip = population_tax_income_multiplier_modifier_tt }
 			}
-			increase_economic_growth = yes
+			# Recovery spine Step 4: the early IMF payoff ends austerity, so the consumer
+			# goods burden and the revenue drag lift together; the loan interest only
+			# eases partway (the stability dip is the IMF crutch leaving with the program).
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_crisis_modifier }
+			add_to_variable = { SIA_crisis_interest_rate_multiplier_modifier = -1 tooltip = interest_rate_multiplier_modifier_tt }
+			add_to_variable = { SIA_crisis_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_crisis_tax_gain_multiplier_modifier = 0.15 tooltip = tax_gain_multiplier_modifier_tt }
+			add_to_variable = { SIA_crisis_stability_factor = -0.01 tooltip = stability_factor_tt }
 			set_temp_variable = { int_investment_change = 10 }
 			modify_international_investment_effect = yes
 			add_political_power = 100
@@ -232,14 +241,15 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_clean_the_banks"
 			# Recovery spine Step 2: the FRA auctions and the TAMC bad bank pull the bad
 			# loans out, credit thaws, and the construction drag eases off neutral.
-			if = {
-				limit = { has_idea = SIA_crisis_floated }
-				swap_ideas = {
-					remove_idea = SIA_crisis_floated
-					add_idea = SIA_crisis_recapitalized
-				}
-			}
-			add_ideas = SIA_tamc_cleanup
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_crisis_modifier }
+			add_to_variable = { SIA_crisis_stability_factor = 0.02 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_crisis_production_speed_buildings_factor = 0.12 tooltip = production_speed_buildings_factor_tt }
+			add_to_variable = { SIA_crisis_industrial_capacity_factory = 0.06 tooltip = industrial_capacity_factory_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.1 tooltip = production_speed_buildings_factor_tt }
+			add_to_variable = { SIA_econ_production_speed_offices_factor = 0.1 tooltip = production_speed_offices_factor_tt }
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -267,14 +277,18 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_dual_track_recovery"
 			# Recovery spine Step 5/6, demand-led variant: fast growth closes the last
 			# wound, hot but graft-prone. Mutually exclusive with the resilient variant.
-			if = {
-				limit = { has_idea = SIA_crisis_unshackled }
-				swap_ideas = {
-					remove_idea = SIA_crisis_unshackled
-					add_idea = SIA_tom_yum_kung_recovered
-				}
-			}
-			add_ideas = SIA_thaksinomics_dual_track
+			# The crisis modifier stays for the rest of the game at its positive
+			# recovered values - the lesson of 1997, kept.
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_crisis_modifier }
+			add_to_variable = { SIA_crisis_stability_factor = 0.09 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_crisis_research_speed_factor = 0.04 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_crisis_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_stability_factor = 0.1 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.08 tooltip = production_speed_buildings_factor_tt }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.05 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_corruption_cost_factor = 0.1 tooltip = corruption_cost_factor_tt }
 			increase_economic_growth = yes
 		}
 
@@ -303,14 +317,17 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_sufficiency_path"
 			# Recovery spine Step 5/6, resilient variant: self-reliance closes the last
 			# wound, slower and shock-proof, and it cleans up governance along the way.
-			if = {
-				limit = { has_idea = SIA_crisis_unshackled }
-				swap_ideas = {
-					remove_idea = SIA_crisis_unshackled
-					add_idea = SIA_tom_yum_kung_recovered
-				}
-			}
-			add_ideas = SIA_sufficiency_recovery
+			# The crisis modifier stays for the rest of the game at its positive
+			# recovered values - the lesson of 1997, kept.
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_crisis_modifier }
+			add_to_variable = { SIA_crisis_stability_factor = 0.09 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_crisis_research_speed_factor = 0.04 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_crisis_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_stability_factor = 0.1 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_econ_foreign_influence_defense_modifier = 0.1 tooltip = foreign_influence_defense_modifier_tt }
+			add_to_variable = { SIA_econ_local_resources_factor = 0.05 tooltip = local_resources_factor_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
 			decrease_corruption = yes
 		}
 
@@ -338,11 +355,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_amazing_thailand"
 			509 = { one_state_office_construction = yes }
 			# (story 4.1): SIA_amazing_thailand_campaign retired — its tourism beat folded into this flat reward.
-			add_ideas = SIA_amazing_thailand_idea
-			add_stability = 0.04
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_corporate_tax_income_multiplier_modifier = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SIA_econ_receiving_investment_cost_modifier = -0.1 tooltip = receiving_investment_cost_modifier_tt }
 			hidden_effect = {
 				country_event = { id = thailand.201 days = 60 random_days = 60 }
 			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -367,26 +387,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_rice_and_rubber"
-			add_resource = {
-				type = rubber
-				amount = 10
-				state = 509
-			}
-			add_resource = {
-				type = rubber
-				amount = 4
-				state = 506
-			}
-			set_temp_variable = { treasury_change = 6 }
+			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
-			if = {
-				limit = { has_idea = SIA_rice_bowl_start }
-				swap_ideas = {
-					remove_idea = SIA_rice_bowl_start
-					add_idea = SIA_worlds_rice_bowl
-				}
-			}
-			else = { add_ideas = SIA_worlds_rice_bowl }
+			one_random_agriculture_district = yes
+			one_random_agriculture_district = yes
+			add_ideas = SIA_worlds_rice_bowl
 			hidden_effect = {
 				country_event = { id = thailand.202 days = 90 random_days = 60 }
 			}
@@ -450,14 +455,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_detroit_of_asia"
 			508 = { one_state_industrial_complex = yes }
 			506 = { one_state_industrial_complex = yes }
-			if = {
-				limit = { has_idea = SIA_detroit_of_asia_start }
-				swap_ideas = {
-					remove_idea = SIA_detroit_of_asia_start
-					add_idea = SIA_detroit_of_asia_idea
-				}
-			}
-			else = { add_ideas = SIA_detroit_of_asia_idea }
+			add_ideas = SIA_detroit_of_asia_idea
 			add_tech_bonus = {
 				name = SIA_detroit_of_asia
 				bonus = 0.5
@@ -467,16 +465,6 @@ focus_tree = {
 			set_temp_variable = { int_investment_change = 10 }
 			modify_international_investment_effect = yes
 			country_event = thailand.55
-			# Recovery spine Step 3: corporate restructuring and the return of FDI reopen
-			# idle plant, so the factory output and efficiency penalties clear.
-			if = {
-				limit = { has_idea = SIA_crisis_recapitalized }
-				swap_ideas = {
-					remove_idea = SIA_crisis_recapitalized
-					add_idea = SIA_crisis_restructured
-				}
-			}
-			add_ideas = SIA_fdi_return
 		}
 
 		ai_will_do = {
@@ -505,7 +493,9 @@ focus_tree = {
 				one_state_dockyard = yes
 			}
 			set_country_flag = SIA_eec_active
-			add_ideas = SIA_eec_development_1
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
 			country_event = { id = thailand.60 days = 14 }
 			509 = { one_state_industrial_complex = yes }
 		}
@@ -540,7 +530,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_national_rnd_network"
-			add_ideas = SIA_national_rnd_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
 			add_tech_bonus = {
 				name = SIA_rnd_computing
 				bonus = 0.5
@@ -577,11 +569,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_ptt_energy_champion"
-			add_ideas = SIA_ptt_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_fuel_gain_factor = 0.1 tooltip = fuel_gain_factor_tt }
+			add_to_variable = { SIA_econ_max_fuel_factor = 0.1 tooltip = max_fuel_factor_tt }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.03 tooltip = industrial_capacity_factory_tt }
 			set_temp_variable = { int_investment_change = 10 }
 			modify_international_investment_effect = yes
+			# The Gulf of Thailand gas-and-condensate fields, PTT's upstream arm.
 			508 = {
 				one_state_fuel_reserve = yes
+				add_resource = {
+					type = oil
+					amount = 8
+				}
 			}
 		}
 
@@ -607,7 +607,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_scg_industrial_titan"
-			add_ideas = SIA_scg_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.1 tooltip = production_speed_buildings_factor_tt }
+			add_to_variable = { SIA_econ_infrastructure_cost_multiplier_modifier = -0.08 tooltip = infrastructure_cost_multiplier_modifier_tt }
+			add_to_variable = { SIA_econ_bureaucracy_cost_multiplier_modifier = 0.03 tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			add_to_variable = { SIA_econ_corporate_tax_income_multiplier_modifier = 0.02 tooltip = corporate_tax_income_multiplier_modifier_tt }
 			508 = { one_state_industrial_complex = yes }
 			507 = { one_state_industrial_complex = yes }
 		}
@@ -634,7 +638,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_cp_agribusiness_giant"
-			add_ideas = SIA_cp_group_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_econ_monthly_population = 0.05 tooltip = monthly_population_tt }
+			add_to_variable = { SIA_econ_agricolture_productivity_modifier = 0.25 tooltip = agricolture_productivity_modifier_tt }
 			509 = { one_state_agriculture_district = yes }
 			506 = { one_state_agriculture_district = yes }
 		}
@@ -772,7 +780,7 @@ focus_tree = {
 
 	########################
 	# SPACE PROGRAMME (GISTDA / THEOS). Branches off the civilian R&D
-	# centre. A tiered intelligence/research spirit (SIA_gistda_idea 1→3) is the
+	# centre. Tiered intelligence/research gains accumulate on SIA_military_modifier as the
 	# spine; an aerospace industrial park supplies the buildings; the capstone
 	# unlocks the SIA_sovereign_launch flag for downstream content. Sits in the
 	# free column directly below the air R&D centre (abs x=4, y=2..5 rel network).
@@ -794,7 +802,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_gistda_space_agency"
 			set_country_flag = SIA_space_program_active
-			add_ideas = SIA_gistda_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_mil_intel_network_gain_factor = 0.1 tooltip = intel_network_gain_factor_tt }
 			add_tech_bonus = {
 				name = SIA_gistda_space_agency
 				bonus = 0.5
@@ -857,10 +867,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_theos_earth_observation"
-			swap_ideas = {
-				remove_idea = SIA_gistda_idea
-				add_idea = SIA_gistda_idea_2
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_intel_network_gain_factor = 0.05 tooltip = intel_network_gain_factor_tt }
+			add_to_variable = { SIA_mil_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_mil_recon_factor = 0.05 tooltip = recon_factor_tt }
 			add_tech_bonus = {
 				name = SIA_theos_earth_observation
 				bonus = 0.5
@@ -906,6 +916,9 @@ focus_tree = {
 				uses = 1
 				category = CAT_satellite
 			}
+			# The science-park spillover: labs and startups cluster around GISTDA.
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.04 tooltip = research_speed_factor_tt }
 		}
 
 		ai_will_do = {
@@ -931,10 +944,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_sovereign_launch_capability"
 			set_country_flag = SIA_sovereign_launch
-			swap_ideas = {
-				remove_idea = SIA_gistda_idea_2
-				add_idea = SIA_gistda_idea_3
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_intel_network_gain_factor = 0.05 tooltip = intel_network_gain_factor_tt }
+			add_to_variable = { SIA_mil_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_mil_intelligence_agency_defense = 0.5 tooltip = intelligence_agency_defense_tt }
 			add_tech_bonus = {
 				name = SIA_sovereign_launch_capability
 				bonus = 1.0
@@ -968,7 +981,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_medical_hub"
-			add_ideas = SIA_medical_hub_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_stability_factor = 0.03 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_econ_healthcare_income_multiplier_modifier = 0.08 tooltip = healthcare_income_multiplier_modifier_tt }
+			add_to_variable = { SIA_econ_monthly_population = 0.05 tooltip = monthly_population_tt }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.05 tooltip = trade_opinion_factor_tt }
 		}
 
 		ai_will_do = {
@@ -1005,6 +1022,33 @@ focus_tree = {
 		}
 	}
 
+	focus = {
+		id = SIA_education_for_the_future
+		icon = education_reform
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_land_of_smiles
+
+		cost = 6
+
+		prerequisite = { focus = SIA_land_of_smiles }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_education_for_the_future"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_education_cost_multiplier_modifier = -0.10 tooltip = education_cost_multiplier_modifier_tt }
+			add_to_variable = { SIA_pol_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
 	########################
 	# ARMED FORCES MODERNIZATION (shared cluster, any path)
 	########################
@@ -1028,7 +1072,12 @@ focus_tree = {
 			navy_experience = 25
 			air_experience = 25
 			add_command_power = 50
-			add_ideas = SIA_professional_forces
+			set_variable = { SIA_prof_forces_tier = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.05 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.05 tooltip = experience_gain_navy_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
+			add_to_variable = { SIA_mil_training_time_factor = -0.05 tooltip = training_time_factor_tt }
 		}
 
 		ai_will_do = {
@@ -1063,7 +1112,7 @@ focus_tree = {
 				# has_completed_focus = SIA_armed_forces_modernization
 			}
 			NOT = { has_completed_focus = SIA_seeds_of_reform }
-			NOT = { has_idea = SIA_imf_program }
+			NOT = { has_country_flag = SIA_imf_program_active }
 			has_war_support > 0.30
 		}
 
@@ -1168,7 +1217,11 @@ focus_tree = {
 				uses = 1
 				category = CAT_air_eqp
 			}
-			add_ideas = SIA_cobra_gold
+			set_country_flag = SIA_cobra_gold_active
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.10 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_max_planning = 0.05 tooltip = max_planning_tt }
+			add_to_variable = { SIA_mil_training_time_factor = -0.10 tooltip = training_time_factor_tt }
 			add_tech_bonus = {
 				name = SIA_treaty_ally_inf
 				bonus = 0.5
@@ -1359,9 +1412,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_thaksinomics"
-			add_ideas = SIA_growth_machine
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.1 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_econ_corruption_cost_factor = 0.15 tooltip = corruption_cost_factor_tt }
 			increase_economic_growth = yes
 			add_political_power = 50
+			set_temp_variable = { temp_opinion = -10 }
+			change_landowners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1415,9 +1472,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_30_baht_healthcare"
-			add_ideas = SIA_30_baht_scheme
-			# Universal healthcare answers the provinces' deepest grievance.
-			if = { limit = { has_idea = SIA_two_thailands } remove_ideas = SIA_two_thailands }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_stability_factor = 0.05 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_econ_monthly_population = 0.1 tooltip = monthly_population_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = 0.01 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_political_power_factor = -0.02 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_econ_health_cost_multiplier_modifier = 0.2 tooltip = health_cost_multiplier_modifier_tt }
 			set_temp_variable = { party_index = 18 }
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			add_relative_party_popularity = yes
@@ -1446,11 +1506,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_village_fund"
-			add_ideas = SIA_village_fund_idea
-			# Buying the rural base closes the Bangkok/provinces divide.
-			if = { limit = { has_idea = SIA_two_thailands } remove_ideas = SIA_two_thailands }
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_political_power_factor = 0.1 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_econ_corruption_cost_factor = 0.1 tooltip = corruption_cost_factor_tt }
 			set_temp_variable = { party_index = 18 }
-			set_temp_variable = { party_popularity_increase = 0.08 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
 			add_relative_party_popularity = yes
 			hidden_effect = {
 				country_event = { id = thailand.64 days = 720 random_days = 180 }
@@ -1480,9 +1542,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_otop"
-			set_temp_variable = { treasury_change = 1 }
+			set_temp_variable = { treasury_change = 10 }
 			modify_treasury_effect = yes
-			add_ideas = SIA_thaksinomics_idea			# SIA_otop_idea merged → SIA_thaksinomics_idea
+			# SIA_otop_idea merged → SIA_thaksinomics_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_industrial_complex_factor = 0.15 tooltip = production_speed_industrial_complex_factor_tt }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_econ_stability_factor = 0.02 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_econ_political_power_factor = -0.05 tooltip = political_power_factor_tt }
 			increase_economic_growth = yes
 		}
 
@@ -1517,6 +1584,9 @@ focus_tree = {
 			# preserve the populist path's reward value.
 			add_political_power = 150
 			add_stability = 0.03
+			# The full dual-track program - healthcare, village credit and OTOP
+			# together - is what finally closes the Bangkok/provinces divide.
+			if = { limit = { has_idea = SIA_two_thailands } remove_ideas = SIA_two_thailands }
 		}
 
 		ai_will_do = {
@@ -1573,7 +1643,9 @@ focus_tree = {
 			add_ideas = SIA_populist_machine
 			custom_effect_tooltip = SIA_coup_risk_increase_tt
 			add_to_variable = { SIA_coup_risk = 15 }
-			set_party_index_to_ruling_party = yes
+			# Boost Thai Rak Thai (idx 18) explicitly - the machine being built is
+			# Thaksin's, whoever happens to sit in Government House today.
+			set_temp_variable = { party_index = 18 }
 			set_temp_variable = { party_popularity_increase = 0.15 }
 			add_relative_party_popularity = yes
 		}
@@ -1646,7 +1718,6 @@ focus_tree = {
 
 		available = {
 			SIA_populist_trunk_open = yes
-			NOT = { has_idea = SIA_coup_rumblings_idea }
 		}
 
 		completion_reward = {
@@ -1797,7 +1868,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_sufficiency_economy"
-			add_ideas = SIA_sufficiency_economy_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_stability_factor = 0.05 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_production_speed_infrastructure_factor = 0.1 tooltip = production_speed_infrastructure_factor_tt }
 			set_temp_variable = { treasury_change = 4 }
 			modify_treasury_effect = yes
 			set_country_flag = SIA_royal_projects_unlocked
@@ -2009,6 +2083,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_2006_coup"
 			custom_effect_tooltip = SIA_the_2006_coup_choice_tt
 			country_event = thailand.4
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2036,7 +2112,9 @@ focus_tree = {
 			add_war_support = 0.03
 			add_command_power = 100
 			army_experience = 50
-			add_ideas = SIA_royal_thai_armed_forces_ascendant
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.1 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_training_time_factor = -0.1 tooltip = training_time_factor_tt }
 			hidden_effect = {
 				country_event = { id = thailand.7 days = 200 }
 			}
@@ -2134,7 +2212,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_lese_majeste_enforcement"
 			add_stability = 0.05
 			add_war_support = 0.05
-			add_ideas = SIA_lese_majeste_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.15 tooltip = drift_defence_factor_tt }
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			add_relative_party_popularity = yes
@@ -2199,7 +2278,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_2017_constitution"
-			add_ideas = SIA_garrison_state
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_land_doctrine_cost_factor = -0.1 tooltip = land_doctrine_cost_factor_tt }
+			add_to_variable = { SIA_mil_personnel_cost_multiplier_modifier = -0.05 tooltip = personnel_cost_multiplier_modifier_tt }
 			# N-1: SIA_privy_council_idea (post 2017_charter merge) is
 			# already granted upstream by SIA_privy_council on the mandatory royalist chain,
 			# so re-granting here is a no-op. Replaced with a flat stability top-up
@@ -2376,7 +2457,9 @@ focus_tree = {
 			# common/scripted_effects/ - substituted with the verified real bureaucracy
 			# lever (00_budget_effects.txt) so the reward isn't a silent no-op.
 			increase_centralization = yes
-			add_ideas = SIA_senate_leverage
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_popularity_attack_modifier = 0.15 tooltip = popularity_attack_modifier_tt }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.1 tooltip = drift_defence_factor_tt }
 		}
 
 		ai_will_do = {
@@ -2440,7 +2523,9 @@ focus_tree = {
 			add_stability = 0.03
 			add_to_variable = { SIA_reform_pressure = 10 }
 			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
-			add_ideas = SIA_managed_democracy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.15 tooltip = drift_defence_factor_tt }
+			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
 		}
 
 		ai_will_do = {
@@ -2465,7 +2550,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_establishment_consensus"
-			add_ideas = SIA_establishment_consensus_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_stability_factor = 0.03 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.1 tooltip = drift_defence_factor_tt }
 			add_stability = 0.03
 			unlock_decision_category_tooltip = SIA_establishment_category
 		}
@@ -2527,6 +2615,8 @@ focus_tree = {
 			add_relative_party_popularity = yes
 			recalculate_party = yes
 			add_timed_idea = { idea = SIA_reform_spring days = 365 }
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2611,7 +2701,9 @@ focus_tree = {
 			# admin dividends) plus a one-time clean-government windfall. The
 			# constituency-machine decisions now open one focus earlier, at
 			# SIA_the_democrats_endure, alongside the populist-tide meter they fight.
-			add_ideas = SIA_clean_administration
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_corruption_cost_factor = -0.1 tooltip = corruption_cost_factor_tt }
+			add_to_variable = { SIA_pol_police_cost_multiplier_modifier = -0.1 tooltip = police_cost_multiplier_modifier_tt }
 			decrease_corruption = yes
 			set_temp_variable = { temp_opinion = 10 }
 			change_small_medium_business_owners_opinion = yes
@@ -2640,7 +2732,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_rule_of_law"
-			add_ideas = SIA_fiscal_credibility
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_population_tax_income_multiplier_modifier = 0.1 tooltip = population_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SIA_econ_corporate_tax_income_multiplier_modifier = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
 			# Independent institutions cool the coup machinery.
 			# Rule of law constrains the patronage politics the populist machine runs on.
 			set_temp_variable = { pt_delta = -10 }
@@ -2669,7 +2763,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_judicial_independence"
-			add_ideas = SIA_independent_judiciary
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_pol_stability_factor = 0.05 tooltip = stability_factor_tt }
 			add_stability = 0.05
 			# Independent courts are the sharpest check on the populists - the bench that dissolved party after party. The tide recedes.
 			set_temp_variable = { pt_delta = -15 }
@@ -2698,7 +2794,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_strengthen_parliament"
-			add_ideas = SIA_working_legislature
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_production_speed_offices_factor = 0.1 tooltip = production_speed_offices_factor_tt }
+			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
 			increase_centralization = yes
 			# A working legislature lets the party govern with less reliance on
 			# emergency powers — a standing political-capacity dividend.
@@ -2727,7 +2825,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_liberal_market_stewardship"
-			add_ideas = SIA_business_friendly_climate
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_industrial_complex_factor = 0.1 tooltip = production_speed_industrial_complex_factor_tt }
+			add_to_variable = { SIA_econ_local_resources_factor = 0.05 tooltip = local_resources_factor_tt }
 			# Economic capability anchor: a trade/finance edge as the counterweight
 			# to Thaksinomics, kept light so the path stays "stable civilian".
 			add_tech_bonus = {
@@ -2748,7 +2848,10 @@ focus_tree = {
 
 	focus = {
 		id = SIA_southern_stronghold
-		available = { SIA_democrat_trunk_open = yes }
+		available = {
+			SIA_democrat_trunk_open = yes
+			has_completed_focus = SIA_the_southern_question
+		}
 		icon = generic_counter_insurgency_icon
 
 		x = 0
@@ -2798,7 +2901,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_coalition_government"
-			add_ideas = SIA_national_unity_government
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_stability_factor = 0.1 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_pol_corruption_cost_factor = 0.05 tooltip = corruption_cost_factor_tt }
 			# The survival mechanic: weather coup pressure by coalition-building,
 			# WITHOUT changing the ruling party (cf. event thailand.70 option C).
 			add_political_power = 75
@@ -2934,7 +3039,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_answer_thaksinomics"
-			add_ideas = SIA_rural_credit_reform
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.05 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_monthly_population = 0.05 tooltip = monthly_population_tt }
 			# Pre-empt the populists: a Democrat village fund, a farmers' debt
 			# moratorium and cheap rural credit - launched before Thaksin can.
 			# Blunt the pitch that won him the Northeast.
@@ -2967,7 +3074,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_pracha_wiwat"
-			add_ideas = SIA_peoples_agenda_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_monthly_population = 0.1 tooltip = monthly_population_tt }
+			add_to_variable = { SIA_pol_stability_factor = 0.03 tooltip = stability_factor_tt }
 			# The People's Agenda (Pracha Wiwat): free electricity for the poorest
 			# households, cooking-gas subsidies, welfare for motorcycle-taxi drivers
 			# and street vendors. Welfare with a Democrat face.
@@ -3001,7 +3110,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_contest_every_election"
-			add_ideas = SIA_democratic_legitimacy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_stability_factor = 0.05 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.1 tooltip = drift_defence_factor_tt }
 			# Stay in the democratic game whatever the provocation: contest every
 			# poll, accept every result. It denies the populists the one charge that
 			# sticks - that the Democrats only win when soldiers and judges do.
@@ -3073,7 +3184,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_break_into_isan"
-			add_ideas = SIA_isan_development
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.1 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_econ_local_resources_factor = 0.05 tooltip = local_resources_factor_tt }
 			# A decade of development in the Northeast: two new civilian works in Isaan.
 			506 = {
 				one_state_industrial_complex = yes
@@ -3229,7 +3342,9 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = -10 }
 			change_the_military_opinion = yes
 			army_experience = 25
-			add_ideas = SIA_civilian_supremacy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_pol_war_support_factor = -0.05 tooltip = war_support_factor_tt }
 			set_country_flag = SIA_coups_disabled
 			SIA_coup_cleanup_effect = yes
 		}
@@ -3313,7 +3428,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_marriage_equality"
 			add_stability = 0.02
 			add_political_power = 50
-			add_ideas = SIA_pride_of_asia
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_stability_factor = 0.02 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_pol_trade_opinion_factor = 0.05 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_pol_monthly_population = 0.05 tooltip = monthly_population_tt }
 			hidden_effect = {
 				news_event = { id = thailand_news.9 days = 2 }
 			}
@@ -3344,7 +3462,9 @@ focus_tree = {
 			decrease_corruption = yes
 			set_temp_variable = { treasury_change = 8 }
 			modify_treasury_effect = yes
-			add_ideas = SIA_open_markets
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_pol_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
 			hidden_effect = {
 				country_event = { id = thailand.212 days = 30 }
 			}
@@ -3379,7 +3499,11 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 			add_stability = 0.05
-			add_ideas = SIA_thai_welfare_state
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_stability_factor = 0.05 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_pol_consumer_goods_factor = 0.01 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_pol_monthly_population = 0.1 tooltip = monthly_population_tt }
+			add_to_variable = { SIA_pol_political_power_factor = -0.05 tooltip = political_power_factor_tt }
 		}
 
 		ai_will_do = {
@@ -3612,8 +3736,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_modernize_the_rta"
 			army_experience = 75
 			if = {
-				limit = { NOT = { has_idea = SIA_modernized_rta } }
-				add_ideas = SIA_modernized_rta
+				limit = { NOT = { has_country_flag = SIA_modernized_rta_active } }
+				set_country_flag = SIA_modernized_rta_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_max_planning = 0.10 tooltip = max_planning_tt }
+				add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+				add_to_variable = { SIA_mil_training_time_factor = -0.10 tooltip = training_time_factor_tt }
 			}
 			add_tech_bonus = {
 				name = SIA_modernize_the_rta
@@ -3653,8 +3781,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_blue_water_navy"
 			navy_experience = 75
 			if = {
-				limit = { NOT = { has_idea = SIA_blue_water_navy_idea } }
-				add_ideas = SIA_blue_water_navy_idea
+				limit = { NOT = { has_country_flag = SIA_blue_water_navy_active } }
+				set_country_flag = SIA_blue_water_navy_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.15 tooltip = industrial_capacity_dockyard_tt }
+				add_to_variable = { SIA_mil_production_speed_dockyard_factor = 0.10 tooltip = production_speed_dockyard_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.10 tooltip = experience_gain_navy_factor_tt }
 			}
 			country_event = thailand.57
 			509 = { one_state_dockyard = yes }
@@ -3692,11 +3824,11 @@ focus_tree = {
 			modify_treasury_effect = yes
 			air_experience = 75
 			if = {
-				limit = {
-					NOT = { has_idea = SIA_gripen_air_force_1 }
-					NOT = { has_idea = SIA_gripen_air_force_2 }
-				}
-				add_ideas = SIA_gripen_air_force_1
+				limit = { NOT = { check_variable = { SIA_gripen_tier > 0 } } }
+				set_variable = { SIA_gripen_tier = 1 }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_air_accidents_factor = -0.10 tooltip = air_accidents_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
 			}
 			add_tech_bonus = {
 				name = SIA_gripen_squadrons_rearm
@@ -3750,7 +3882,13 @@ focus_tree = {
 				uses = 1
 				category = CAT_inf_wep
 			}
-			add_ideas = SIA_dti_self_reliance_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_consumer_goods_factor = -0.05 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_mil_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_mil_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.05 tooltip = industrial_capacity_dockyard_tt }
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -3959,7 +4097,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_suwannaphum"
 			add_political_power = 150
 			country_event = thailand.105
-			add_ideas = SIA_war_economy_mobilization
+			# Reachable from two branches - guard so the mobilization bonus never stacks.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_war_economy_mobilization_active } }
+				set_country_flag = SIA_war_economy_mobilization_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_industrial_capacity_factory = 0.10 tooltip = industrial_capacity_factory_tt }
+				add_to_variable = { SIA_mil_consumer_goods_factor = 0.03 tooltip = consumer_goods_factor_tt }
+			}
 		}
 
 		ai_will_do = {
@@ -3988,7 +4133,15 @@ focus_tree = {
 			army_experience = 50
 			navy_experience = 50
 			air_experience = 50
-			add_ideas = SIA_martial_glory
+			# Reachable from two branches - guard so the martial-glory bonus never stacks.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_martial_glory_active } }
+				set_country_flag = SIA_martial_glory_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_war_support_factor = 0.10 tooltip = war_support_factor_tt }
+				add_to_variable = { SIA_mil_army_attack_factor = 0.05 tooltip = army_attack_factor_tt }
+				add_to_variable = { SIA_mil_stability_factor = -0.02 tooltip = stability_factor_tt }
+			}
 			add_ideas = SIA_greater_thailand_consolidated
 			add_manpower = 5000
 			hidden_effect = {
@@ -4021,12 +4174,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_thailand_4_0"
+			# EEC development tier 2 -> 3.
 			if = {
-				limit = { has_idea = SIA_eec_development_1 }
-				swap_ideas = {
-					remove_idea = SIA_eec_development_1
-					add_idea = SIA_eec_development_2
-				}
+				limit = { has_country_flag = SIA_eec_active }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+				add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
+				add_to_variable = { SIA_econ_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
+				add_to_variable = { SIA_econ_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
+				add_to_variable = { SIA_econ_stability_factor = 0.02 tooltip = stability_factor_tt }
 			}
 			add_tech_bonus = {
 				name = SIA_thailand_4_0
@@ -4107,6 +4262,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_u_tapao_aerotropolis"
 			set_temp_variable = { temp_productivity_change = 10 }
 			508 = { state_flat_productivity_change_effect = yes }
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			508 = {
+				one_state_air_base = yes
+				one_state_air_base = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4132,12 +4293,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_eec_take_off"
+			# EEC development tier 1 -> 2 (tier steps were previously inverted between
+			# this focus and SIA_thailand_4_0, leaving tier 3 unreachable; fixed here).
 			if = {
-				limit = { has_idea = SIA_eec_development_2 }
-				swap_ideas = {
-					remove_idea = SIA_eec_development_2
-					add_idea = SIA_eec_development_3
-				}
+				limit = { has_country_flag = SIA_eec_active }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+				add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
+				add_to_variable = { SIA_econ_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
+				add_to_variable = { SIA_econ_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
 			}
 			add_stability = 0.02
 			add_political_power = 100
@@ -4145,6 +4308,8 @@ focus_tree = {
 			news_event = { id = thailand_news.5 hours = 6 }
 			# Mid-chain EEC milestone (additive fire).
 			country_event = { id = thailand.417 days = 1 }
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4269,11 +4434,11 @@ focus_tree = {
 			modify_treasury_effect = yes
 			air_experience = 75
 			if = {
-				limit = {
-					NOT = { has_idea = SIA_gripen_air_force_1 }
-					NOT = { has_idea = SIA_gripen_air_force_2 }
-				}
-				add_ideas = SIA_gripen_air_force_1
+				limit = { NOT = { check_variable = { SIA_gripen_tier > 0 } } }
+				set_variable = { SIA_gripen_tier = 1 }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_air_accidents_factor = -0.10 tooltip = air_accidents_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
 			}
 			# Saab's offer is technology transfer + industrial offsets, not just airframes —
 			# the reason to pick Stockholm over Washington. Encode it as a research anchor
@@ -4319,16 +4484,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_gripen_ef_program"
 			air_experience = 50
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			if = {
-				limit = { has_idea = SIA_gripen_air_force_1 }
-				swap_ideas = {
-					remove_idea = SIA_gripen_air_force_1
-					add_idea = SIA_gripen_air_force_2
-				}
+				limit = { check_variable = { SIA_gripen_tier = 1 } }
+				add_to_variable = { SIA_mil_air_accidents_factor = -0.05 tooltip = air_accidents_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
+				add_to_variable = { SIA_mil_air_ace_generation_chance_factor = 0.10 tooltip = air_ace_generation_chance_factor_tt }
 			}
 			else = {
-				add_ideas = SIA_gripen_air_force_2
+				add_to_variable = { SIA_mil_air_accidents_factor = -0.15 tooltip = air_accidents_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.10 tooltip = experience_gain_air_factor_tt }
+				add_to_variable = { SIA_mil_air_ace_generation_chance_factor = 0.10 tooltip = air_ace_generation_chance_factor_tt }
 			}
+			set_variable = { SIA_gripen_tier = 2 }
 			507 = { one_state_air_base = yes }
 			add_tech_bonus = {
 				name = SIA_gripen_ef_program
@@ -4366,7 +4534,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_eyes_in_the_sky"
-			add_ideas = SIA_israeli_drone_integration
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_recon_factor = 0.1 tooltip = recon_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.03 tooltip = experience_gain_army_factor_tt }
 			509 = {
 				one_state_air_base = yes
 				one_state_radar_station = yes
@@ -4422,7 +4592,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_gripen_globaleye"
-			add_ideas = SIA_globaleye_aewc
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_air_superiority_efficiency = 0.05 tooltip = air_superiority_efficiency_tt }
+			add_to_variable = { SIA_mil_air_mission_efficiency = 0.05 tooltip = air_mission_efficiency_tt }
 			507 = { one_state_radar_station = yes }
 			add_tech_bonus = {
 				name = SIA_gripen_globaleye
@@ -4468,7 +4640,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_j10_squadrons"
 			add_to_variable = { SIA_pick_china = 1 }
-			add_ideas = SIA_j10_multirole
+			if = {
+				limit = { NOT = { has_country_flag = SIA_j10_multirole_active } }
+				set_country_flag = SIA_j10_multirole_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_air_superiority_efficiency = 0.05 tooltip = air_superiority_efficiency_tt }
+				add_to_variable = { SIA_mil_ground_attack_factor = 0.05 tooltip = ground_attack_factor_tt }
+			}
 			set_temp_variable = { treasury_change = -8 }
 			modify_treasury_effect = yes
 			# J-10CE multirole fighters off the Chinese line.
@@ -4518,7 +4696,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_hq9_air_defense"
-			add_ideas = SIA_chinese_iads
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_static_anti_air_hit_chance_factor = 0.1 tooltip = static_anti_air_hit_chance_factor_tt }
+			add_to_variable = { SIA_mil_air_intercept_efficiency = 0.05 tooltip = air_intercept_efficiency_tt }
 			508 = {
 				one_state_radar_station = yes
 				one_state_anti_air = yes
@@ -4609,7 +4789,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_f5th_super_tigris"
 			add_to_variable = { SIA_pick_self = 1 }
-			add_ideas = SIA_f5th_upgrade
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
+			add_to_variable = { SIA_mil_ground_attack_factor = 0.03 tooltip = ground_attack_factor_tt }
 			# Early sweetener: F-5TH "Super Tigris" — Israeli-upgraded legacy airframes.
 			add_equipment_to_stockpile = {
 				type = MR_Fighter2
@@ -4646,7 +4828,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_dti_uav_command"
-			add_ideas = SIA_indigenous_air_isr
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_air_mission_efficiency = 0.05 tooltip = air_mission_efficiency_tt }
+			add_to_variable = { SIA_mil_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
 			add_tech_bonus = {
 				name = SIA_dti_uav_command
 				bonus = 0.5
@@ -4684,9 +4868,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_air_dominance_doctrine"
-			add_ideas = SIA_air_dominance_core
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_air_intercept_efficiency = 0.05 tooltip = air_intercept_efficiency_tt }
+			add_to_variable = { SIA_mil_air_defence_factor = 0.05 tooltip = air_defence_factor_tt }
 			air_experience = 50
 			add_command_power = 50
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4720,7 +4908,11 @@ focus_tree = {
 			add_to_variable = { SIA_pick_china = 1 }
 			# "Half a Western tank, no end-user sermons" — the discount carried
 			# forward by the idea's license_purchase_cost.
-			add_ideas = SIA_chinese_armor_deal
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_attack_factor = 0.03 tooltip = army_attack_factor_tt }
+			add_to_variable = { SIA_mil_army_org_factor = 0.02 tooltip = army_org_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.05 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_license_purchase_cost = -0.15 tooltip = license_purchase_cost_tt }
 			add_tech_bonus = {
 				name = SIA_chinese_steel
 				bonus = 0.5
@@ -4771,7 +4963,11 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
 			navy_experience = 50
-			add_ideas = SIA_s26t_submarine_force
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_convoy_raiding_efficiency_factor = 0.15 tooltip = convoy_raiding_efficiency_factor_tt }
+			add_to_variable = { SIA_mil_navy_max_range_factor = 0.1 tooltip = navy_max_range_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.05 tooltip = experience_gain_navy_factor_tt }
+			add_to_variable = { SIA_mil_license_purchase_cost = -0.1 tooltip = license_purchase_cost_tt }
 			add_tech_bonus = {
 				name = SIA_s26t_program
 				bonus = 0.5
@@ -4824,6 +5020,9 @@ focus_tree = {
 				category = CAT_armor
 			}
 			army_experience = 25
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			one_random_arms_factory = yes
 			one_random_arms_factory = yes
 		}
 
@@ -5033,7 +5232,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_tavor_standard"
 			add_to_variable = { SIA_pick_self = 1 }
-			add_ideas = SIA_small_arms_autonomy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_production_speed_arms_factory_factor = 0.05 tooltip = production_speed_arms_factory_factor_tt }
+			add_to_variable = { SIA_mil_trade_opinion_factor = 0.05 tooltip = trade_opinion_factor_tt }
 			# Early sweetener: free batch of domestically-assembled Tavor rifles.
 			add_equipment_to_stockpile = {
 				type = infantry_weapons2
@@ -5124,7 +5325,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_dti_black_widow"
-			add_ideas = SIA_indigenous_armour
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_production_factory_max_efficiency_factor = 0.05 tooltip = production_factory_max_efficiency_factor_tt }
+			add_to_variable = { SIA_mil_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
 			add_tech_bonus = {
 				name = SIA_dti_black_widow
 				bonus = 0.5
@@ -5162,9 +5365,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_first_army_modernized"
-			add_ideas = SIA_modern_rta_core
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_defence_factor = 0.05 tooltip = army_defence_factor_tt }
+			add_to_variable = { SIA_mil_army_morale_factor = 0.05 tooltip = army_morale_factor_tt }
 			army_experience = 50
 			add_command_power = 50
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -5284,7 +5491,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_uxv_carrier_conversion"
-			add_ideas = SIA_chakri_uxv_carrier
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.1 tooltip = experience_gain_navy_factor_tt }
+			add_to_variable = { SIA_mil_stability_factor = 0.01 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_mil_naval_speed_factor = 0.05 tooltip = naval_speed_factor_tt }
 			navy_experience = 50
 			508 = { one_state_dockyard = yes }
 			add_tech_bonus = {
@@ -5333,7 +5543,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_korean_frigates"
 			add_to_variable = { SIA_pick_west = 1 }
-			add_ideas = SIA_aegis_lite
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_naval_morale_factor = 0.05 tooltip = naval_morale_factor_tt }
+			add_to_variable = { SIA_mil_navy_capital_ship_attack_factor = 0.05 tooltip = navy_capital_ship_attack_factor_tt }
 			509 = {
 				add_building_construction = {
 					type = naval_base
@@ -5439,7 +5651,7 @@ focus_tree = {
 	# --- Self+Others sea path: "Built in Sattahip" (align_self) ---
 	focus = {
 		id = SIA_krabi_class_opv
-		icon = navy
+		icon = naval_industry
 
 		x = -2
 		y = 1
@@ -5455,7 +5667,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_krabi_class_opv"
 			add_to_variable = { SIA_pick_self = 1 }
-			add_ideas = SIA_domestic_yards
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_production_speed_dockyard_factor = 0.1 tooltip = production_speed_dockyard_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.05 tooltip = experience_gain_navy_factor_tt }
 			# Early sweetener: domestic offshore-patrol-vessel line stands up immediately.
 			509 = {
 				one_state_dockyard = yes
@@ -5498,7 +5712,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_european_propulsion"
-			add_ideas = SIA_euro_marine_systems
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_navy_max_range_factor = 0.1 tooltip = navy_max_range_factor_tt }
+			add_to_variable = { SIA_mil_naval_morale_factor = 0.05 tooltip = naval_morale_factor_tt }
 			add_tech_bonus = {
 				name = SIA_european_propulsion
 				bonus = 0.5
@@ -5533,7 +5749,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_naval_self_reliance"
-			add_ideas = SIA_indigenous_navy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.1 tooltip = industrial_capacity_dockyard_tt }
+			add_to_variable = { SIA_mil_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
 			508 = { one_state_dockyard = yes }
 			add_tech_bonus = {
 				name = SIA_naval_self_reliance
@@ -5567,11 +5785,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_command_of_the_seas"
 			if = {
-				limit = { NOT = { has_idea = SIA_blue_water_navy_idea } }
-				add_ideas = SIA_blue_water_navy_idea
+				limit = { NOT = { has_country_flag = SIA_blue_water_navy_active } }
+				set_country_flag = SIA_blue_water_navy_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.15 tooltip = industrial_capacity_dockyard_tt }
+				add_to_variable = { SIA_mil_production_speed_dockyard_factor = 0.10 tooltip = production_speed_dockyard_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.10 tooltip = experience_gain_navy_factor_tt }
 			}
 			navy_experience = 150
 			add_command_power = 50
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -5610,7 +5834,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_western_anchor"
-			add_ideas = SIA_western_anchor
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.1 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_recon_factor = 0.1 tooltip = recon_factor_tt }
+			add_to_variable = { SIA_mil_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_mil_army_attack_factor = 0.05 tooltip = army_attack_factor_tt }
 			set_country_flag = SIA_western_anchored
 			# Beijing reacts to Thailand's full Western alignment (repurposed thailand.217).
 			if = {
@@ -5666,7 +5894,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_bamboo_bloc"
-			add_ideas = SIA_bamboo_bloc
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_industrial_capacity_factory = 0.15 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_mil_production_speed_arms_factory_factor = 0.1 tooltip = production_speed_arms_factory_factor_tt }
 			set_country_flag = SIA_bamboo_aligned
 			# Washington reacts to Thailand's full Chinese alignment (repurposed thailand.218).
 			if = {
@@ -5723,7 +5953,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_strategic_autonomy"
-			add_ideas = SIA_strategic_autonomy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_production_factory_max_efficiency_factor = 0.15 tooltip = production_factory_max_efficiency_factor_tt }
+			add_to_variable = { SIA_mil_trade_opinion_factor = 0.15 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_mil_max_planning = 0.15 tooltip = max_planning_tt }
 			set_country_flag = SIA_strategic_autonomy_done
 			set_temp_variable = { percent_change = 10 }
 			change_domestic_influence_percentage = yes
@@ -5994,7 +6227,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_digital_democracy"
 			add_political_power = 50
-			add_ideas = SIA_egovernment
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_political_power_factor = 0.1 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_pol_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
 			decrease_corruption = yes
 			add_tech_bonus = {
 				name = SIA_digital_democracy
@@ -6037,7 +6272,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_creative_economy"
 			increase_economic_growth = yes
 			add_stability = 0.02
-			add_ideas = SIA_soft_power_wave
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_pol_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_pol_foreign_influence_defense_modifier = 0.1 tooltip = foreign_influence_defense_modifier_tt }
 			hidden_effect = {
 				news_event = { id = thailand_news.11 days = 3 }
 			}
@@ -6074,7 +6312,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_truth_and_reconciliation"
 			add_stability = 0.05
-			add_ideas = SIA_reckoned_past
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
+			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
 			if = {
 				limit = { has_idea = SIA_drug_war_stain }
 				remove_ideas = SIA_drug_war_stain
@@ -6244,9 +6484,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_heartland_development"
 			# Reward the red-shirt base — Isaan (506) and Northern Thailand (507), not the capital.
-			hidden_effect = {
-				country_event = { id = thailand.225 days = 14 }
-			}
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
+			506 = { one_state_infrastructure = yes }
+			507 = { one_state_infrastructure = yes }
+			country_event = { id = thailand.225 days = 14 }
 		}
 
 		ai_will_do = {
@@ -6343,7 +6585,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_buddhist_nationalism"
 			add_stability = 0.05
 			add_war_support = 0.05
-			add_ideas = SIA_buddhist_nationalism_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.1 tooltip = drift_defence_factor_tt }
+			add_to_variable = { SIA_pol_war_support_factor = 0.05 tooltip = war_support_factor_tt }
+			add_to_variable = { SIA_pol_stability_factor = 0.03 tooltip = stability_factor_tt }
 			if = {
 				limit = { has_country_flag = SIA_ds_active }
 				custom_effect_tooltip = SIA_insurgency_intensity_increase_tt
@@ -6428,7 +6673,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_conscription_abolished"
-			add_ideas = SIA_volunteer_force
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_training_time_factor = -0.15 tooltip = training_time_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.1 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
 			add_stability = -0.02
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = -0.04 }
@@ -6502,7 +6750,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_chao_phraya_megaprojects"
 			506 = { one_state_infrastructure = yes }
-			add_ideas = SIA_chao_phraya_project
+			# Shared with SIA_flood_preparedness_focus - guard so the flood-works
+			# bonus never stacks from both sources.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_chao_phraya_project_active } }
+				set_country_flag = SIA_chao_phraya_project_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+				add_to_variable = { SIA_econ_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+				add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.10 tooltip = production_speed_buildings_factor_tt }
+				add_to_variable = { SIA_econ_stability_factor = 0.03 tooltip = stability_factor_tt }
+			}
 		}
 
 		ai_will_do = {
@@ -6543,8 +6800,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_civil_service_reform"
 			add_political_power = 50
-			add_ideas = SIA_merit_civil_service
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_pol_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_pol_stability_factor = 0.02 tooltip = stability_factor_tt }
 			decrease_corruption = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_landowners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -6567,20 +6829,18 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
-		available = {
-			# date > 2005.1.1
-			OR = {
-				has_country_flag = SIA_path_populist
-				has_country_flag = SIA_path_royalist
-				has_country_flag = SIA_path_reform
-				has_country_flag = SIA_path_democrat
-			}
-			NOT = { has_completed_focus = SIA_flood_preparedness_focus }
-		}
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_flood_preparedness_focus"
-			add_ideas = SIA_chao_phraya_project			# SIA_flood_preparedness merged → SIA_chao_phraya_project
+			# SIA_flood_preparedness merged → the shared Chao Phraya flood-works bonus;
+			# guarded against SIA_chao_phraya_megaprojects granting it first.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_chao_phraya_project_active } }
+				set_country_flag = SIA_chao_phraya_project_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+				add_to_variable = { SIA_econ_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+				add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.10 tooltip = production_speed_buildings_factor_tt }
+				add_to_variable = { SIA_econ_stability_factor = 0.03 tooltip = stability_factor_tt }
+			}
 			508 = { one_state_infrastructure = yes }
 		}
 
@@ -6604,20 +6864,15 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ECONOMY }
 
 		available = {
-			date > 2003.1.1
-			OR = {
-				has_country_flag = SIA_path_populist
-				has_country_flag = SIA_path_royalist
-				has_country_flag = SIA_path_reform
-				has_country_flag = SIA_path_democrat
-			}
 			NOT = { has_completed_focus = SIA_asean_hegemony }
-			has_completed_focus = SIA_asean_centrality
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_asean_customs_window"
-			add_ideas = SIA_asean_single_window
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.08 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_improve_relations_maintain_cost_factor = -0.1 tooltip = improve_relations_maintain_cost_factor_tt }
 			set_temp_variable = { treasury_change = 4 }
 			modify_treasury_effect = yes
 			add_opinion_modifier = { target = IND modifier = small_increase }
@@ -6645,20 +6900,12 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESEARCH }
 
-		available = {
-			# date > 2010.1.1
-			OR = {
-				has_country_flag = SIA_path_populist
-				has_country_flag = SIA_path_royalist
-				has_country_flag = SIA_path_reform
-				has_country_flag = SIA_path_democrat
-			}
-			NOT = { has_completed_focus = SIA_national_broadband_focus }
-		}
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_national_broadband_focus"
-			add_ideas = SIA_national_broadband
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.01 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_political_power_factor = 0.03 tooltip = political_power_factor_tt }
 			add_tech_bonus = {
 				name = SIA_national_broadband_focus
 				bonus = 0.5
@@ -6761,7 +7008,10 @@ focus_tree = {
 			SIA_ds_raise_floor = yes
 			custom_effect_tooltip = SIA_coup_risk_increase_tt
 			add_to_variable = { SIA_coup_risk = 10 }
-			add_ideas = SIA_counter_insurgency_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_stability_factor = 0.03 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_mil_resistance_damage_to_garrison = -0.1 tooltip = resistance_damage_to_garrison_tt }
+			add_to_variable = { SIA_mil_political_power_factor = 0.05 tooltip = political_power_factor_tt }
 		}
 
 		ai_will_do = {
@@ -6997,6 +7247,10 @@ focus_tree = {
 			set_temp_variable = { ds_delta = -7 }
 			SIA_ds_set_intensity = yes
 			add_stability = 0.03
+			add_political_power = -75
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -7228,7 +7482,7 @@ focus_tree = {
 			date > 2008.1.1
 			has_completed_focus = SIA_thailand_4_0
 			has_stability > 0.50
-			NOT = { has_idea = SIA_imf_program }
+			NOT = { has_country_flag = SIA_imf_program_active }
 		}
 
 		completion_reward = {
@@ -7463,7 +7717,13 @@ focus_tree = {
 				category = CAT_naval_doctrine
 			}
 			navy_experience = 100
-			add_ideas = SIA_two_oceans_navy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_naval_speed_factor = 0.05 tooltip = naval_speed_factor_tt }
+			add_to_variable = { SIA_mil_navy_org_factor = 0.05 tooltip = navy_org_factor_tt }
+			add_to_variable = { SIA_mil_navy_max_range_factor = 0.1 tooltip = navy_max_range_factor_tt }
+			add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.05 tooltip = industrial_capacity_dockyard_tt }
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
 			hidden_effect = {
 				news_event = { id = thailand_news.20 days = 2 }
 				country_event = { id = thailand.390 days = 7 }
@@ -7578,7 +7838,11 @@ focus_tree = {
 			modify_international_investment_effect = yes
 			set_temp_variable = { treasury_change = 10 }
 			modify_treasury_effect = yes
-			add_ideas = SIA_gateway_of_asia_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.15 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.04 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.1 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_econ_production_factory_max_efficiency_factor = 0.05 tooltip = production_factory_max_efficiency_factor_tt }
 			if = {
 				limit = { has_country_flag = SIA_kra_canal_complete }
 				set_country_flag = SIA_strait_patrol_unlocked
@@ -7768,7 +8032,10 @@ focus_tree = {
 			set_temp_variable = { temp_outlook_increase = 0.10 }
 			add_relative_party_popularity = yes
 			recalculate_party = yes
-			add_ideas = SIA_peoples_war_doctrine
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_morale_factor = 0.05 tooltip = army_morale_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.1 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
 			army_experience = 25
 			hidden_effect = {
 				news_event = { id = thailand_news.31 days = 2 }
@@ -7885,7 +8152,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_peoples_tribunals"
-			add_ideas = SIA_revolutionary_justice
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.15 tooltip = drift_defence_factor_tt }
+			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_pol_stability_factor = -0.03 tooltip = stability_factor_tt }
 			add_war_support = 0.05
 			# Revolutionary security organs crush the active insurgency, if any.
 			if = {
@@ -7904,7 +8174,7 @@ focus_tree = {
 
 	focus = {
 		id = SIA_broad_united_front
-		icon = chinese_united_front
+		icon = generic_communism_focus
 
 		x = 2
 		y = 1
@@ -7919,7 +8189,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_broad_united_front"
-			add_ideas = SIA_united_front
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_stability_factor = 0.1 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_pol_political_power_factor = 0.08 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
 			# Lift the emerging (communist) outlook too, else the party share caps out.
 			set_temp_variable = { party_index = 4 }
 			set_temp_variable = { party_popularity_increase = 0.08 }
@@ -7967,6 +8240,11 @@ focus_tree = {
 				limit = { has_idea = SIA_privy_council_idea }
 				remove_ideas = SIA_privy_council_idea
 			}
+			add_political_power = -200
+			if = {
+				limit = { has_idea = landowners }
+				swap_ideas = { remove_idea = landowners add_idea = farmers }
+			}
 			# Royalist emigration event
 			hidden_effect = {
 				country_event = { id = thailand.252 days = 30 random_days = 30 }
@@ -7995,7 +8273,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_five_year_plan"
-			add_ideas = SIA_planned_economy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.1 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.1 tooltip = production_speed_buildings_factor_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_trade_opinion_factor = -0.1 tooltip = trade_opinion_factor_tt }
 			508 = {
 				one_state_industrial_complex = yes
 			}
@@ -8032,7 +8314,10 @@ focus_tree = {
 				uses = 1
 				category = CAT_inf_wep
 			}
-			add_ideas = SIA_peoples_liberation_army
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_conscription_factor = 0.1 tooltip = conscription_factor_tt }
+			add_to_variable = { SIA_mil_training_time_army_factor = -0.15 tooltip = training_time_army_factor_tt }
+			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
 			army_experience = 25
 		}
 
@@ -8059,7 +8344,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_socialist_education"
-			add_ideas = SIA_socialist_education_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_research_speed_factor = 0.08 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_pol_stability_factor = 0.05 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
 			decrease_corruption = yes
 			add_stability = 0.03
 		}
@@ -8120,7 +8408,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_kingmaker_coalition"
 			add_political_power = 100
-			add_ideas = SIA_coalition_price
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_education_cost_multiplier_modifier = 0.05 tooltip = education_cost_multiplier_modifier_tt }
+			add_to_variable = { SIA_pol_stability_factor = -0.02 tooltip = stability_factor_tt }
 			hidden_effect = {
 				country_event = { id = thailand.271 days = 3 }
 			}
@@ -8243,7 +8533,9 @@ focus_tree = {
 				}
 			}
 			# +10% trade opinion: national trade opinion modifier
-			add_ideas = SIA_million_rai_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_econ_political_power_factor = 0.05 tooltip = political_power_factor_tt }
 		}
 
 		ai_will_do = {
@@ -8272,7 +8564,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_defence_industry_act"
-			add_ideas = SIA_defence_industry_act_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_license_purchase_cost = -0.2 tooltip = license_purchase_cost_tt }
+			add_to_variable = { SIA_mil_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
 		}
 
 		ai_will_do = {
@@ -8338,7 +8632,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_arms_exporter"
-			add_ideas = SIA_asean_arsenal
+			set_variable = { SIA_arsenal_tier = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_industrial_capacity_factory = 0.10 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_mil_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
 			set_country_flag = SIA_arms_export_unlocked
 			hidden_effect = {
 				news_event = { id = thailand_news.15 days = 3 }
@@ -8372,6 +8669,15 @@ focus_tree = {
 				mio:SIA_chaiseri_tank_manufacturer = {
 					add_mio_funds_gain_factor = 0.10
 					add_to_variable = { free_trait_picks = 2 }
+					add_mio_task_capacity = 1
+				}
+				mio:SIA_panus_tank_manufacturer = {
+					add_mio_funds_gain_factor = 0.10
+					add_mio_task_capacity = 1
+				}
+				mio:SIA_bangkok_dock_naval_manufacturer = {
+					add_mio_funds_gain_factor = 0.10
+					add_mio_task_capacity = 1
 				}
 			}
 			hidden_effect = {
@@ -8401,7 +8707,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_regional_defense_pact"
-			add_ideas = SIA_regional_defense_pact_idea
+			# Also granted by the merged arsenal-integration focus - guard against stacking.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_regional_defense_pact_active } }
+				set_country_flag = SIA_regional_defense_pact_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_production_speed_arms_factory_factor = 0.10 tooltip = production_speed_arms_factory_factor_tt }
+				add_to_variable = { SIA_mil_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+				add_to_variable = { SIA_mil_license_purchase_cost = -0.10 tooltip = license_purchase_cost_tt }
+			}
 			if = {
 				limit = { country_exists = MAY }
 				add_opinion_modifier = { target = MAY modifier = medium_increase }
@@ -8460,6 +8774,8 @@ focus_tree = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 10 }
 			modify_international_investment_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_production_cost_arms_factory_factor = -0.05 tooltip = production_cost_arms_factory_factor_tt }
 			hidden_effect = {
 				news_event = { id = thailand_news.27 days = 3 }
 			}
@@ -8494,10 +8810,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_self_reliant_defense_base"
 			if = {
-				limit = { has_idea = SIA_asean_arsenal }
-				swap_ideas = { remove_idea = SIA_asean_arsenal add_idea = SIA_asean_arsenal_2 }
+				limit = { check_variable = { SIA_arsenal_tier = 1 } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_production_speed_arms_factory_factor = 0.10 tooltip = production_speed_arms_factory_factor_tt }
+				add_to_variable = { SIA_mil_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
+				add_to_variable = { SIA_mil_trade_opinion_factor = 0.05 tooltip = trade_opinion_factor_tt }
 			}
-			else = { add_ideas = SIA_asean_arsenal_2 }
+			else = {
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_industrial_capacity_factory = 0.15 tooltip = industrial_capacity_factory_tt }
+				add_to_variable = { SIA_mil_trade_opinion_factor = 0.15 tooltip = trade_opinion_factor_tt }
+				add_to_variable = { SIA_mil_production_speed_arms_factory_factor = 0.10 tooltip = production_speed_arms_factory_factor_tt }
+			}
+			set_variable = { SIA_arsenal_tier = 2 }
 			add_tech_bonus = {
 				name = SIA_self_reliant_base
 				bonus = 1.0
@@ -8538,7 +8863,9 @@ focus_tree = {
 				uses = 1
 				category = CAT_computing_tech
 			}
-			add_ideas = SIA_cyber_corps
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_mil_drift_defence_factor = 0.1 tooltip = drift_defence_factor_tt }
 			if = {
 				limit = {
 					has_idea = SIA_isoc_network
@@ -8603,7 +8930,7 @@ focus_tree = {
 	# cover, at the price of autonomy) or the senior partner of an Indochinese bloc.
 	focus = {
 		id = SIA_the_beijing_road
-		icon = asian_investment
+		icon = align_to_china
 
 		x = -2
 		y = 1
@@ -8622,7 +8949,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_beijing_road"
-			add_ideas = SIA_beijing_road
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_production_speed_buildings_factor = 0.15 tooltip = production_speed_buildings_factor_tt }
+			add_to_variable = { SIA_pol_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_pol_political_power_factor = -0.05 tooltip = political_power_factor_tt }
 			# Chinese capital pays for the construction it funds.
 			# Thailand enters China's orbit: CHI is the influencer, SIA the influenced
 			# (positive percent_change grows China's grip — §6 direction rule).
@@ -8648,7 +8978,7 @@ focus_tree = {
 
 	focus = {
 		id = SIA_indochina_federation
-		icon = asian_union
+		icon = asean_mutual_trade
 
 		x = 2
 		y = 1
@@ -8663,7 +8993,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_indochina_federation"
-			add_ideas = SIA_indochina_solidarity
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_political_power_factor = 0.1 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_pol_stability_factor = 0.05 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_pol_improve_relations_maintain_cost_factor = -0.15 tooltip = improve_relations_maintain_cost_factor_tt }
 			add_stability = 0.05
 			# Thailand projects influence onto its neighbours as senior partner: SIA is
 			# the influencer, the neighbour the influenced, positive (§6 direction rule).
@@ -8723,7 +9056,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_us_coin_legacy"
-			add_ideas = SIA_coin_doctrine
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_org_factor = 0.03 tooltip = army_org_factor_tt }
+			add_to_variable = { SIA_mil_stability_factor = 0.03 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_mil_training_time_army_factor = -0.05 tooltip = training_time_army_factor_tt }
+			add_to_variable = { SIA_mil_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
 			add_stability = 0.05
 			if = {
 				limit = { has_country_flag = SIA_ds_active }
@@ -8807,7 +9144,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_post_cold_war_professionalization"
-			add_ideas = SIA_professional_officer_corps
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_training_time_army_factor = -0.1 tooltip = training_time_army_factor_tt }
+			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
 			army_experience = 50
 			country_event = { id = thailand.330 days = 3 }
 		}
@@ -8839,7 +9178,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_multi_domain_operations"
-			add_ideas = SIA_mdo_doctrine
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+			add_to_variable = { SIA_mil_war_support_factor = 0.05 tooltip = war_support_factor_tt }
+			add_to_variable = { SIA_mil_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_mil_cyber_capability_modifier = 2 tooltip = cyber_capability_modifier_tt }
 			add_tech_bonus = {
 				name = SIA_mdo_l_drone
 				bonus = 1.0
@@ -8921,10 +9264,23 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_professional_officer_corps_focus"
 			custom_effect_tooltip = SIA_doctrine_professional_tt
 			if = {
-				limit = { has_idea = SIA_professional_forces }
-				swap_ideas = { remove_idea = SIA_professional_forces add_idea = SIA_professional_forces_2 }
+				limit = { check_variable = { SIA_prof_forces_tier = 1 } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_experience_gain_army_factor = 0.03 tooltip = experience_gain_army_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.03 tooltip = experience_gain_navy_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.03 tooltip = experience_gain_air_factor_tt }
+				add_to_variable = { SIA_mil_training_time_factor = -0.05 tooltip = training_time_factor_tt }
+				add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
 			}
-			else = { add_ideas = SIA_professional_forces_2 }
+			else = {
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_experience_gain_army_factor = 0.08 tooltip = experience_gain_army_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.08 tooltip = experience_gain_navy_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.08 tooltip = experience_gain_air_factor_tt }
+				add_to_variable = { SIA_mil_training_time_factor = -0.10 tooltip = training_time_factor_tt }
+				add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+			}
+			set_variable = { SIA_prof_forces_tier = 2 }
 			army_experience = 50
 			decrease_corruption = yes
 			set_temp_variable = { temp_opinion = -5 }
@@ -8958,7 +9314,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_martial_prestige_focus"
 			custom_effect_tooltip = SIA_doctrine_prestige_tt
-			add_ideas = SIA_martial_glory
+			# Reachable from two branches - guard so the martial-glory bonus never stacks.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_martial_glory_active } }
+				set_country_flag = SIA_martial_glory_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_war_support_factor = 0.10 tooltip = war_support_factor_tt }
+				add_to_variable = { SIA_mil_army_attack_factor = 0.05 tooltip = army_attack_factor_tt }
+				add_to_variable = { SIA_mil_stability_factor = -0.02 tooltip = stability_factor_tt }
+			}
 			set_temp_variable = { temp_opinion = 10 }
 			change_the_military_opinion = yes
 			increase_military_spending = yes
@@ -8990,17 +9354,37 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_jointness_reform"
 			if = {
-				limit = { has_idea = SIA_professional_forces_2 }
-				swap_ideas = { remove_idea = SIA_professional_forces_2 add_idea = SIA_professional_forces_3 }
+				limit = { check_variable = { SIA_prof_forces_tier = 2 } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_experience_gain_army_factor = 0.02 tooltip = experience_gain_army_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.02 tooltip = experience_gain_navy_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.02 tooltip = experience_gain_air_factor_tt }
+				add_to_variable = { SIA_mil_training_time_factor = -0.02 tooltip = training_time_factor_tt }
+				add_to_variable = { SIA_mil_command_power_gain_mult = 0.10 tooltip = command_power_gain_mult_tt }
+			}
+			else_if = {
+				limit = { check_variable = { SIA_prof_forces_tier = 1 } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_experience_gain_army_factor = 0.05 tooltip = experience_gain_army_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.05 tooltip = experience_gain_navy_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
+				add_to_variable = { SIA_mil_training_time_factor = -0.07 tooltip = training_time_factor_tt }
+				add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+				add_to_variable = { SIA_mil_command_power_gain_mult = 0.10 tooltip = command_power_gain_mult_tt }
 			}
 			else = {
-				if = {
-					limit = { has_idea = SIA_professional_forces }
-					swap_ideas = { remove_idea = SIA_professional_forces add_idea = SIA_professional_forces_3 }
-				}
-				else = { add_ideas = SIA_professional_forces_3 }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_experience_gain_army_factor = 0.10 tooltip = experience_gain_army_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.10 tooltip = experience_gain_navy_factor_tt }
+				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.10 tooltip = experience_gain_air_factor_tt }
+				add_to_variable = { SIA_mil_training_time_factor = -0.12 tooltip = training_time_factor_tt }
+				add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+				add_to_variable = { SIA_mil_command_power_gain_mult = 0.10 tooltip = command_power_gain_mult_tt }
 			}
-			add_ideas = SIA_joint_force_command_idea
+			set_variable = { SIA_prof_forces_tier = 3 }
+			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+			add_to_variable = { SIA_mil_planning_speed = 0.1 tooltip = planning_speed_tt }
+			add_to_variable = { SIA_mil_command_power_gain_mult = 0.1 tooltip = command_power_gain_mult_tt }
 			army_experience = 25
 			increase_centralization = yes
 			set_temp_variable = { treasury_change = -10 }
@@ -9030,7 +9414,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_total_defense_doctrine"
-			add_ideas = SIA_total_defense_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_stability_factor = 0.05 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_mil_drift_defence_factor = 0.1 tooltip = drift_defence_factor_tt }
+			add_to_variable = { SIA_mil_war_support_factor = 0.05 tooltip = war_support_factor_tt }
+			add_to_variable = { SIA_mil_conscription_factor = 0.05 tooltip = conscription_factor_tt }
 			add_stability = 0.05
 			hidden_effect = {
 				news_event = { id = thailand_news.28 days = 2 }
@@ -9117,7 +9505,10 @@ focus_tree = {
 				uses = 1
 				category = CAT_nuclear_reactors
 			}
-			add_ideas = SIA_atoms_for_peace_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_production_speed_nuclear_reactor_factor = 0.1 tooltip = production_speed_nuclear_reactor_factor_tt }
+			add_to_variable = { SIA_econ_nuclear_energy_gain = 0.1 tooltip = nuclear_energy_gain_tt }
 			add_political_power = 50
 		}
 
@@ -9141,6 +9532,10 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
 
+		available = {
+			is_special_project_completed = sp:sp_nuclear_energy
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_smr_initiative"
 			add_tech_bonus = {
@@ -9150,6 +9545,9 @@ focus_tree = {
 				category = CAT_nuclear_reactors
 			}
 			add_political_power = 50
+			set_temp_variable = { treasury_change = -15.5 }
+			modify_treasury_effect = yes
+			random_owned_state = { add_building_construction = { type = enrichment_facility level = 1 } }
 		}
 
 		ai_will_do = {
@@ -9174,7 +9572,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_nuclear_power_program"
-			add_ideas = SIA_nuclear_energy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
 			set_country_flag = SIA_nuclear_program_active
 			# Flip the MD nuclear power-status law from non_nuclear_power to
 			# nuclear_energy so reactors generate baseload power. Guard on
@@ -9410,7 +9810,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_board_of_investment"
 			# Capability anchor: a permanent outbound-investment spirit.
-			add_ideas = SIA_board_of_investment_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_return_on_investment_modifier = 0.03 tooltip = return_on_investment_modifier_tt }
+			add_to_variable = { SIA_econ_investment_cost_modifier = -0.05 tooltip = investment_cost_modifier_tt }
+			add_to_variable = { SIA_econ_investment_duration_modifier = -0.1 tooltip = investment_duration_modifier_tt }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.05 tooltip = trade_opinion_factor_tt }
 		}
 
 		ai_will_do = {
@@ -9535,6 +9939,8 @@ focus_tree = {
 			add_ideas = SIA_asean_security_pledge
 			add_political_power = 75
 			add_stability = 0.05
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -9751,7 +10157,10 @@ focus_tree = {
 				uses = 1
 				category = CAT_land_doctrine
 			}
-			add_ideas = SIA_joint_command_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_land_doctrine_cost_factor = -0.1 tooltip = land_doctrine_cost_factor_tt }
+			add_to_variable = { SIA_mil_max_planning = 0.1 tooltip = max_planning_tt }
+			add_to_variable = { SIA_mil_planning_speed = 0.05 tooltip = planning_speed_tt }
 		}
 
 		ai_will_do = {
@@ -9780,7 +10189,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_asean_rapid_reaction"
-			add_ideas = SIA_asean_rapid_reaction_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_out_of_supply_factor = -0.1 tooltip = out_of_supply_factor_tt }
+			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+			add_to_variable = { SIA_mil_supply_consumption_factor = -0.05 tooltip = supply_consumption_factor_tt }
 			add_war_support = 0.05
 			army_experience = 25
 		}
@@ -9815,7 +10227,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_arsenal_integration"
-			add_ideas = SIA_regional_defense_pact_idea			# SIA_arsenal_integration_idea merged → SIA_regional_defense_pact_idea (DS-M); focus chain preserved
+			# SIA_arsenal_integration_idea merged → SIA_regional_defense_pact_idea (DS-M);
+			# focus chain preserved - guard against the pact focus having granted it first.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_regional_defense_pact_active } }
+				set_country_flag = SIA_regional_defense_pact_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_production_speed_arms_factory_factor = 0.10 tooltip = production_speed_arms_factory_factor_tt }
+				add_to_variable = { SIA_mil_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+				add_to_variable = { SIA_mil_license_purchase_cost = -0.10 tooltip = license_purchase_cost_tt }
+			}
 			increase_exports = yes
 		}
 
@@ -9907,7 +10328,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_friends_abroad"
-			add_ideas = SIA_defense_diplomacy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_pol_improve_relations_maintain_cost_factor = -0.25 tooltip = improve_relations_maintain_cost_factor_tt }
+			add_to_variable = { SIA_pol_opinion_gain_monthly_factor = 0.15 tooltip = opinion_gain_monthly_factor_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 			army_experience = 15
@@ -9948,7 +10372,10 @@ focus_tree = {
 				uses = 1
 				category = CAT_land_doctrine
 			}
-			add_ideas = SIA_cobra_gold_doctrine
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_land_doctrine_cost_factor = -0.05 tooltip = land_doctrine_cost_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.05 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_max_planning = 0.05 tooltip = max_planning_tt }
 			# US-aligned bias (§6c): if Thailand tilted to Washington, deepen US influence.
 			if = {
 				limit = { has_country_flag = SIA_us_aligned }
@@ -9989,6 +10416,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_hedging_partners"
 			add_political_power = 25
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_improve_relations_maintain_cost_factor = -0.10 tooltip = improve_relations_maintain_cost_factor_tt }
 			# Hedging bias (§6c): if Thailand chose to hedge, spread influence across Tokyo and Beijing.
 			if = {
 				limit = { has_country_flag = SIA_hedging }
@@ -10203,7 +10632,10 @@ focus_tree = {
 			# near the infra level-5 cap, so infra there is wasted). Isaan and the
 			# North get real transmission (infrastructure) plus the factory the new
 			# grid can finally power.
-			add_ideas = SIA_national_grid_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_infrastructure_factor = 0.1 tooltip = production_speed_infrastructure_factor_tt }
+			add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
+			add_to_variable = { SIA_econ_energy_gain_multiplier = 0.05 tooltip = energy_gain_multiplier_tt }
 		}
 
 		ai_will_do = {
@@ -10234,7 +10666,9 @@ focus_tree = {
 			508 = { one_state_renewable_energy_infra = yes }
 			509 = { one_state_renewable_energy_infra = yes }
 			510 = { one_state_renewable_energy_infra = yes }
-			add_ideas = SIA_renewable_energy_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_energy_infrastructure_factor = 0.15 tooltip = production_speed_energy_infrastructure_factor_tt }
+			add_to_variable = { SIA_econ_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
 			add_political_power = 50
 		}
 
@@ -10246,7 +10680,7 @@ focus_tree = {
 
 	focus = {
 		id = SIA_green_grid
-		icon = nuclear_energy
+		icon = BRA_renewable_energy_funds
 
 		x = 0
 		y = 1
@@ -10256,28 +10690,21 @@ focus_tree = {
 
 		prerequisite = { focus = SIA_renewable_push }
 
-		available = {
-			has_completed_focus = SIA_nuclear_power_program
-			has_tech = reactor1
-			# OR = {
-			# 	has_completed_focus = SIA_atoms_for_peace
-			# 	# date > 2004.1.1
-			# }
-		}
-
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_green_grid"
-			508 = { one_state_nuclear_reactor = yes }
-			506 = { one_state_nuclear_reactor = yes }
-			one_random_synthetic_refinery = yes
-			add_tech_bonus = {
-				name = SIA_green_grid_tech
-				bonus = 0.5
-				uses = 1
-				category = CAT_nuclear_reactors
+			508 = {
+				one_state_renewable_energy_infra = yes
+				one_state_renewable_energy_infra = yes
 			}
+			506 = {
+				one_state_renewable_energy_infra = yes
+				one_state_renewable_energy_infra = yes
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_renewable_energy_gain_multiplier = 0.20 tooltip = renewable_energy_gain_multiplier_tt }
+			add_to_variable = { SIA_econ_production_speed_renewable_energy_infra_factor = 0.15 tooltip = production_speed_renewable_energy_infra_factor_tt }
 			add_political_power = 50
 			add_stability = 0.02
 		}
@@ -10305,10 +10732,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_fossil_fuels_deal"
-			add_ideas = SIA_fossil_energy_idea
-			508 = {
-				one_state_fossil_fuel_powerplant = yes
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_army_fuel_consumption_factor = -0.05 tooltip = army_fuel_consumption_factor_tt }
+			add_to_variable = { SIA_econ_navy_fuel_consumption_factor = -0.05 tooltip = navy_fuel_consumption_factor_tt }
+			add_to_variable = { SIA_econ_fuel_gain_factor = 0.1 tooltip = fuel_gain_factor_tt }
+			one_random_synthetic_refinery = yes
 			if = {
 				limit = { country_exists = SAU }
 				add_opinion_modifier = { target = SAU modifier = medium_increase }
@@ -10386,7 +10814,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_anti_narcotics_bureau"
-			add_ideas = SIA_anti_narcotics_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_stability_factor = 0.04 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_mil_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			add_to_variable = { SIA_mil_resistance_damage_to_garrison = -0.1 tooltip = resistance_damage_to_garrison_tt }
 			add_stability = 0.02
 		}
 
@@ -10479,8 +10910,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_transparency_watchdog"
 			decrease_corruption = yes
-			add_stability = 0.02
-			add_political_power = 25
+			add_stability = -0.05
+			add_political_power = -100
 			# The exposed networks fight back through procedural obstruction.
 			add_timed_idea = { idea = SIA_watchdog_backlash days = 180 }
 		}
@@ -10508,7 +10939,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_decentralize_governance"
-			add_ideas = SIA_decentralized_governance_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_stability_factor = 0.08 tooltip = stability_factor_tt }
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_landowners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -10533,7 +10969,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_bangkok_primacy"
-			add_ideas = SIA_bangkok_primacy_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_stability_factor = -0.08 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = 0.01 tooltip = consumer_goods_factor_tt }
+			set_temp_variable = { temp_opinion = 10 }
+			change_landowners_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -10573,9 +11017,18 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_asean_hegemony"
 			add_war_support = 0.10
 			add_political_power = 50
-			add_ideas = SIA_war_economy_mobilization
+			# Reachable from two branches - guard so the mobilization bonus never stacks.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_war_economy_mobilization_active } }
+				set_country_flag = SIA_war_economy_mobilization_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+				add_to_variable = { SIA_mil_industrial_capacity_factory = 0.10 tooltip = industrial_capacity_factory_tt }
+				add_to_variable = { SIA_mil_consumer_goods_factor = 0.03 tooltip = consumer_goods_factor_tt }
+			}
 			add_named_threat = { threat = 6 name = SIA_asean_hegemon_threat }
 			country_event = { id = thailand.393 days = 5 }
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -11160,6 +11613,8 @@ focus_tree = {
 			add_opinion_modifier = { target = BRM modifier = medium_decrease }
 			# Unique upside the annexation route cannot get: soft-power administration.
 			add_ideas = SIA_frontier_partners
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -11211,6 +11666,8 @@ focus_tree = {
 			add_opinion_modifier = { target = PHI modifier = small_decrease }
 			add_opinion_modifier = { target = LAO modifier = small_decrease }
 			add_ideas = SIA_regional_pariah
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -11434,7 +11891,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_industrial_estates"
-			add_ideas = SIA_industrial_estates_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_industrial_complex_factor = 0.1 tooltip = production_speed_industrial_complex_factor_tt }
+			add_to_variable = { SIA_econ_receiving_investment_cost_modifier = -0.1 tooltip = receiving_investment_cost_modifier_tt }
 		}
 
 		ai_will_do = {
@@ -11462,9 +11921,14 @@ focus_tree = {
 			508 = {
 				one_state_industrial_complex = yes
 				one_state_industrial_complex = yes
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = microchip_plant level = 1 instant_build = yes }
 			}
 			add_tech_bonus = { name = SIA_hard_disk_bonus bonus = 1.0 uses = 1 category = CAT_computing_tech }
-			add_ideas = SIA_electronics_export_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.08 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_econ_min_export = 0.05 tooltip = min_export_tt }
+			add_to_variable = { SIA_econ_microchip_export_multiplier_modifier = -0.1 tooltip = microchip_export_multiplier_modifier_tt }
 		}
 
 		ai_will_do = {
@@ -11525,7 +11989,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_retail_kings"
-			add_ideas = SIA_modern_retail_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_tax_gain_multiplier_modifier = 0.03 tooltip = tax_gain_multiplier_modifier_tt }
+			add_to_variable = { SIA_econ_stability_factor = 0.03 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_econ_political_power_factor = 0.02 tooltip = political_power_factor_tt }
 			add_political_power = 50
 		}
 
@@ -11554,7 +12021,8 @@ focus_tree = {
 			set_temp_variable = { int_investment_change = 8 }
 			modify_international_investment_effect = yes
 			add_political_power = 50
-			add_ideas = SIA_beverage_empire_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_corporate_tax_income_multiplier_modifier = 0.03 tooltip = corporate_tax_income_multiplier_modifier_tt }
 			add_stability = -0.05
 		}
 
@@ -11614,7 +12082,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_sugar_and_ethanol"
 			one_random_synthetic_refinery = yes
-			add_ideas = SIA_sugar_and_ethanol_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_fuel_gain_factor = 0.05 tooltip = fuel_gain_factor_tt }
 		}
 
 		ai_will_do = {
@@ -11640,7 +12109,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_gems_and_gold"
 			add_political_power = 25
-			add_ideas = SIA_gems_and_gold_idea
+			# Chanthaburi's gem fields and the Bangkok bullion trade, on the books.
+			508 = {
+				add_resource = {
+					type = chromium
+					amount = 5
+				}
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_resource_export_multiplier_modifier = 0.05 tooltip = resource_export_multiplier_modifier_tt }
 		}
 
 		ai_will_do = {
@@ -11696,9 +12173,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_ignite_thailand"
 			set_country_flag = SIA_national_strategy_active
-			add_ideas = SIA_middle_income_trap_1
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = -0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_productivity_growth_modifier = -0.40 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { SIA_econ_monthly_population = -0.05 tooltip = monthly_population_tt }
 			add_tech_bonus = { name = SIA_ignite_bonus bonus = 0.5 uses = 1 category = CAT_computing_tech }
 			add_political_power = 100
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -11724,7 +12206,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_digital_kingdom"
 			add_tech_bonus = { name = SIA_digital_kingdom_bonus bonus = 1.0 uses = 1 category = CAT_internet_tech }
-			add_ideas = SIA_digital_economy_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_production_speed_offices_factor = 0.1 tooltip = production_speed_offices_factor_tt }
 		}
 
 		ai_will_do = {
@@ -11749,17 +12233,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_data_center_hub"
-			add_ideas = SIA_data_center_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_production_speed_offices_factor = 0.1 tooltip = production_speed_offices_factor_tt }
+			add_to_variable = { SIA_econ_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_productivity_growth_modifier = 0.12 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { SIA_econ_monthly_population = 0.02 tooltip = monthly_population_tt }
 			508 = {
 				one_state_office_construction = yes
 			}
 			set_temp_variable = { int_investment_change = 15 }
 			modify_international_investment_effect = yes
 			custom_effect_tooltip = SIA_data_center_grid_strain_tt
-			if = { limit = { has_idea = SIA_middle_income_trap_1 } swap_ideas = { remove_idea = SIA_middle_income_trap_1 add_idea = SIA_middle_income_trap_2 } }
-			else_if = { limit = { has_idea = SIA_middle_income_trap_2 } swap_ideas = { remove_idea = SIA_middle_income_trap_2 add_idea = SIA_middle_income_trap_3 } }
 			add_to_variable = { SIA_ignite_sectors_done = 1 }
-			custom_effect_tooltip = SIA_trap_step_down_tt
 		}
 
 		ai_will_do = {
@@ -11784,7 +12270,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_virtual_banks"
-			add_ideas = SIA_fintech_rail
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_tax_gain_multiplier_modifier = 0.05 tooltip = tax_gain_multiplier_modifier_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
 			decrease_corruption = yes
 			add_political_power = 75
 		}
@@ -11812,7 +12300,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_bcg_economy"
 			add_tech_bonus = { name = SIA_bcg_bonus bonus = 0.5 uses = 1 category = CAT_util }
-			add_ideas = SIA_bcg_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_production_factory_efficiency_gain_factor = 0.05 tooltip = production_factory_efficiency_gain_factor_tt }
+			add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
 		}
 
 		ai_will_do = {
@@ -11837,12 +12328,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_future_food"
-			add_ideas = SIA_future_food_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_local_resources_factor = 0.1 tooltip = local_resources_factor_tt }
+			add_to_variable = { SIA_econ_production_factory_efficiency_gain_factor = 0.05 tooltip = production_factory_efficiency_gain_factor_tt }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_productivity_growth_modifier = 0.12 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { SIA_econ_monthly_population = 0.02 tooltip = monthly_population_tt }
 			add_resource = { type = rubber amount = 6 state = 507 }
-			if = { limit = { has_idea = SIA_middle_income_trap_1 } swap_ideas = { remove_idea = SIA_middle_income_trap_1 add_idea = SIA_middle_income_trap_2 } }
-			else_if = { limit = { has_idea = SIA_middle_income_trap_2 } swap_ideas = { remove_idea = SIA_middle_income_trap_2 add_idea = SIA_middle_income_trap_3 } }
 			add_to_variable = { SIA_ignite_sectors_done = 1 }
-			custom_effect_tooltip = SIA_trap_step_down_tt
 		}
 
 		ai_will_do = {
@@ -11867,7 +12360,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_durian_road"
-			add_ideas = SIA_china_fruit_trade
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { SIA_econ_local_resources_factor = 0.1 tooltip = local_resources_factor_tt }
 			add_opinion_modifier = { target = CHI modifier = medium_increase }
 			add_political_power = 50
 		}
@@ -11894,7 +12389,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_capital_of_capital"
-			add_ideas = SIA_finance_hub
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_corporate_tax_income_multiplier_modifier = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SIA_econ_tax_gain_multiplier_modifier = 0.03 tooltip = tax_gain_multiplier_modifier_tt }
 			add_tech_bonus = { name = SIA_capital_bonus bonus = 0.5 uses = 1 category = CAT_computing_tech }
 			add_political_power = 50
 		}
@@ -11925,11 +12422,13 @@ focus_tree = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 20 }
 			modify_international_investment_effect = yes
-			add_ideas = SIA_investor_nation_idea
-			if = { limit = { has_idea = SIA_middle_income_trap_1 } swap_ideas = { remove_idea = SIA_middle_income_trap_1 add_idea = SIA_middle_income_trap_2 } }
-			else_if = { limit = { has_idea = SIA_middle_income_trap_2 } swap_ideas = { remove_idea = SIA_middle_income_trap_2 add_idea = SIA_middle_income_trap_3 } }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_return_on_investment_modifier = 0.08 tooltip = return_on_investment_modifier_tt }
+			add_to_variable = { SIA_econ_foreign_influence_modifier = 0.05 tooltip = foreign_influence_modifier_tt }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_productivity_growth_modifier = 0.12 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { SIA_econ_monthly_population = 0.02 tooltip = monthly_population_tt }
 			add_to_variable = { SIA_ignite_sectors_done = 1 }
-			custom_effect_tooltip = SIA_trap_step_down_tt
 		}
 
 		ai_will_do = {
@@ -11958,10 +12457,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_escape_the_trap"
-			if = { limit = { has_idea = SIA_middle_income_trap_3 } swap_ideas = { remove_idea = SIA_middle_income_trap_3 add_idea = SIA_high_income_kingdom } }
-			else_if = { limit = { has_idea = SIA_middle_income_trap_2 } swap_ideas = { remove_idea = SIA_middle_income_trap_2 add_idea = SIA_high_income_kingdom } }
-			else_if = { limit = { has_idea = SIA_middle_income_trap_1 } swap_ideas = { remove_idea = SIA_middle_income_trap_1 add_idea = SIA_high_income_kingdom } }
-			else = { add_ideas = SIA_high_income_kingdom }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = 0.04 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_productivity_growth_modifier = 0.12 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { SIA_econ_monthly_population = 0.04 tooltip = monthly_population_tt }
 			increase_economic_growth = yes
 			508 = {
 				one_state_industrial_complex = yes

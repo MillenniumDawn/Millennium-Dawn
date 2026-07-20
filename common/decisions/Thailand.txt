@@ -693,7 +693,7 @@ SIA_economy_category = {
 		fire_only_once = no
 
 		visible = {
-			has_idea = SIA_medical_hub_idea
+			has_completed_focus = SIA_medical_hub
 		}
 
 		custom_cost_trigger = {
@@ -2217,7 +2217,18 @@ SIA_economy_wave3_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_tax_modernization"
-			add_ideas = SIA_debt_free_credibility		# SIA_clean_revenue merged → SIA_debt_free_credibility
+			# SIA_clean_revenue merged → SIA_debt_free_credibility; also granted by
+			# SIA_repay_the_imf - guard so the two sources never stack.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_debt_free_credibility_active } }
+				set_country_flag = SIA_debt_free_credibility_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+				add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+				add_to_variable = { SIA_econ_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+				add_to_variable = { SIA_econ_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+				add_to_variable = { SIA_econ_corporate_tax_income_multiplier_modifier = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
+				add_to_variable = { SIA_econ_population_tax_income_multiplier_modifier = 0.05 tooltip = population_tax_income_multiplier_modifier_tt }
+			}
 			# Tighter collection is a permanent +3 effective corporate-tax rate: lasting
 			# revenue, at a standing law-attitude cost (modify_corporate_tax_rate_effect
 			# fires the tax law-change attitude hit automatically).
