@@ -964,6 +964,7 @@ CPD_make_puppet_in_state_effect = {
 		}
 	}
 	else = {
+		set_temp_variable = { CPD_splinter_source = THIS.owner }
 		create_dynamic_country = {
 			original_tag = THIS.owner
 			# Install taker's exact subideology onto the new puppet via MD's
@@ -981,10 +982,11 @@ CPD_make_puppet_in_state_effect = {
 			clear_array = gov_coalition_array
 			change_ruling_party_effect = yes
 			reserve_dynamic_country = yes
-			var:CPD_taker = { puppet = PREV }
 			transfer_state = PREV
+			var:CPD_taker = { puppet = PREV }
 
-			ingame_startup_nations_effect = yes
+			# PREV must be the source country, not the state create_dynamic_country was called from
+			var:CPD_splinter_source = { PREV = { ingame_startup_nations_effect = yes } }
 		}
 	}
 }
@@ -1049,7 +1051,7 @@ CPD_liberate_in_state_effect = {
 			original_tag = var:CPD_liberated_state_owner
 			transfer_state = var:CPD_liberated_state
 			reserve_dynamic_country = yes
-			ingame_startup_nations_effect = yes
+			var:CPD_liberated_state_owner = { PREV = { ingame_startup_nations_effect = yes } }
 		}
 	}
 }
