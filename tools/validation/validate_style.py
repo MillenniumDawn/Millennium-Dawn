@@ -230,9 +230,12 @@ def _check_focus_standards(text: str, path: str):
             depth -= line.count("}")
 
         # A focus = { block sits inside focus_tree = { ... } (depth 1); a
-        # shared_focus = { block sits at the file top level (depth 0). Match
-        # either and remember the depth so the block closes at the right level.
-        if not in_focus_block and re.match(r"^\s*(?:shared_)?focus\s*=\s*\{", line):
+        # shared_focus/joint_focus = { block sits at the file top level
+        # (depth 0). Match any and remember the depth so the block closes at
+        # the right level.
+        if not in_focus_block and re.match(
+            r"^\s*(?:shared_|joint_)?focus\s*=\s*\{", line
+        ):
             in_focus_block = True
             found_focus_id = False
             focus_open_depth = depth - 1

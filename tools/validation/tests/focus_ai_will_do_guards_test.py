@@ -295,6 +295,37 @@ def test_worker_computed_treasury_change_is_unknown(tmp_path):
     assert d["unknown"] is True
 
 
+def test_worker_gdp_multiply_idiom_is_unknown(tmp_path):
+    """The `set gdp_total, multiply by -N%` idiom (issue: the multiply's own
+    literal used to be misread as a fresh treasury_change set)."""
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_total }\n"
+        "			multiply_temp_variable = { treasury_change = -0.05 }\n"
+        "			modify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is True
+    assert d["unknown"] is True
+
+
+def test_worker_bare_identifier_set_is_unknown(tmp_path):
+    reward = (
+        "set_temp_variable = { treasury_change = needed_money }\n"
+        "			modify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is True
+    assert d["unknown"] is True
+
+
 def test_worker_ignores_spend_inside_effect_tooltip(tmp_path):
     reward = "effect_tooltip = {\n			" + _spend(-20) + "\n			}"
     fpath = _write_focus_file(
@@ -329,8 +360,8 @@ def test_worker_detects_treasury_effect_corruption_variant(tmp_path):
         FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
     )
     d = _guard_data(fpath, tmp_path)[0]
-    assert d["spend"] == 7.0
     assert d["has_cost"] is True
+    assert d["unknown"] is True
 
 
 def test_worker_takes_max_spend_across_if_else(tmp_path):
@@ -495,6 +526,25 @@ def test_validator_income_not_flagged(tmp_path):
     )
     v = _run_check(tmp_path)
     assert v.warnings_found == 0
+
+
+def test_validator_gdp_multiply_focus_flagged_as_scripted(tmp_path):
+    """A GDP-multiply spend with no guard has no summable spend, so it must
+    surface in the scripted/unknown (verify) category, not go unflagged."""
+    _write_effects_file(tmp_path)
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_total }\n"
+        "			multiply_temp_variable = { treasury_change = -0.05 }\n"
+        "			modify_treasury_effect = yes"
+    )
+    _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    v = _run_check(tmp_path)
+    assert v.warnings_found >= 1
+    issues = [i for i in v._issues if i.category == "missing-bankruptcy-guard-scripted"]
+    assert len(issues) == 1
 
 
 def test_validator_unneeded_bankruptcy_guard_flagged(tmp_path):

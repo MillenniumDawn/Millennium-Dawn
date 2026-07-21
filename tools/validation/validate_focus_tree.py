@@ -110,13 +110,41 @@ _BANKRUPTCY_GUARD_RE = re.compile(
 )
 _ADD_BUILDING_START = re.compile(r"\badd_building_construction\s*=\s*\{")
 _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
-# Money spend (MD budget system): treasury_change is set (a literal, or a `{ }`
-# computed value we can't sum statically) then applied by modify_treasury_effect;
+# Money spend (MD budget system): treasury_change is set (a literal, a `{ }`
+# computed value, or a bare-identifier reference to another variable — the
+# latter two we can't sum statically) then applied by modify_treasury_effect;
 # modify_debt_effect raises debt. Negative treasury spends, positive is income.
-_TREASURY_CHANGE_RE = re.compile(r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{)")
+# Only set_temp_variable/set_variable actually assign treasury_change (as the
+# key, or as `var = treasury_change`); any other verb touching it
+# (multiply_temp_variable, add_to_temp_variable, clamp_temp_variable, ...)
+# mutates the running value in a way that can't be summed statically, so it
+# forces the segment unknown rather than being read as a fresh set.
+_TREASURY_CHANGE_RE = re.compile(
+    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_]\w*)"
+    r"|\bvar\s*=\s*treasury_change\b"
+)
+_TREASURY_SET_VERBS = frozenset({"set_temp_variable", "set_variable"})
+_TREASURY_MUTATE_VERBS = frozenset(
+    {
+        "multiply_temp_variable",
+        "add_to_temp_variable",
+        "subtract_from_temp_variable",
+        "divide_temp_variable",
+        "clamp_temp_variable",
+        "add_to_variable",
+        "subtract_from_variable",
+        "multiply_variable",
+        "clamp_variable",
+        "divide_variable",
+    }
+)
+_NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
-# which multiplies the cost). The `_tt` loc key is never called with `= yes`.
-_MODIFY_TREASURY_RE = re.compile(r"\bmodify_treasury_effect\w*\s*=\s*yes\b")
+# which scales the applied amount by a corruption-level idea before adding it to
+# the treasury). Group 1 is the suffix, empty for the plain form; a non-empty
+# suffix applies an amount that can't be computed statically, so it forces the
+# segment unknown. The `_tt` loc key is never called with `= yes`.
+_MODIFY_TREASURY_RE = re.compile(r"\bmodify_treasury_effect(\w*)\s*=\s*yes\b")
 _MODIFY_DEBT_RE = re.compile(r"\bmodify_debt_effect\s*=\s*yes\b")
 _SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^{}]*)\}")
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
@@ -285,8 +313,10 @@ def _body_money_cost(
                actually applied via modify_treasury_effect.
     has_cost - the body reduces the treasury or raises debt at all.
     unknown  - a real cost exists whose amount can't be summed statically (a
-               computed treasury_change, a debt change, or a called effect in
-               *money_effects*).
+               computed or variable-referenced treasury_change, a
+               treasury_change touched by anything other than a plain set, a
+               debt change, a corruption-style modify_treasury_effect variant,
+               or a called effect in *money_effects*).
     Amounts inside effect_tooltip previews (outcomes applied elsewhere) are
     ignored.
     """
@@ -297,11 +327,18 @@ def _body_money_cost(
 
     events: List[Tuple[int, str, Optional[str]]] = []
     for m in _TREASURY_CHANGE_RE.finditer(body):
-        if not previewed(m.start()):
-            events.append((m.start(), "set", m.group(1)))
+        if previewed(m.start()):
+            continue
+        verb, _ = _enclosing_block_label(body, m.start())
+        if verb in _TREASURY_MUTATE_VERBS:
+            events.append((m.start(), "mutate", None))
+        elif verb in _TREASURY_SET_VERBS:
+            val = m.group(1)
+            known = val is not None and _NUMERIC_LITERAL_RE.match(val)
+            events.append((m.start(), "set", val if known else None))
     for m in _MODIFY_TREASURY_RE.finditer(body):
         if not previewed(m.start()):
-            events.append((m.start(), "apply", None))
+            events.append((m.start(), "apply", "variant" if m.group(1) else None))
     events.sort()
 
     # treasury_change is a temp var: each apply spends the value set most
@@ -309,6 +346,12 @@ def _body_money_cost(
     # set it (only one runs), take the largest magnitude so a big conditional
     # spend isn't hidden by a small sibling branch. An apply with no set since
     # the last one reuses the carried value (the var persists between applies).
+    # A mutate event (multiply_temp_variable and friends touching
+    # treasury_change) means the segment's magnitude can no longer be summed
+    # statically, so it marks the segment unknown without resetting it as a
+    # fresh set. A variant apply (modify_treasury_effect_corruption, ...)
+    # scales the applied value unpredictably, so it forces that application
+    # unknown regardless of the segment.
     spend = 0.0
     has_cost = False
     unknown = False
@@ -321,15 +364,20 @@ def _body_money_cost(
     for _, kind, val in events:
         if kind == "set":
             seg_has_set = True
-            if val == "{":
+            if val is None:
                 seg_unknown = True
             elif float(val) < 0:
                 seg_max = max(seg_max, -float(val))
+        elif kind == "mutate":
+            seg_has_set = True
+            seg_unknown = True
         else:  # apply
             if seg_has_set:
                 cur_neg, cur_unknown, cur_init = seg_max, seg_unknown, True
             elif not cur_init:
                 cur_unknown, cur_init = True, True  # treasury_change set elsewhere
+            if val == "variant":
+                cur_unknown = True
             if cur_unknown:
                 has_cost = True
                 unknown = True
@@ -722,7 +770,7 @@ def _extract_ai_guard_data(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.ai_guards.v4",
+        "focus_tree.ai_guards.v5",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
