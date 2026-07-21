@@ -1230,6 +1230,28 @@ assert_finds(
     "has_opinion in single-line allowed still flagged",
 )
 
+# 11d. Multi-line allowed = { ... } then a sibling available with has_opinion →
+#      no flag. Pins the double-count regression: a multi-line allowed left
+#      in_allowed one too high, leaking into the following block.
+assert_finds(
+    _check_decision_allowed_dynamic,
+    [
+        "GRE_decisions_category = {\n",
+        "\tGRE_some_decision = {\n",
+        "\t\tallowed = {\n",
+        "\t\t\toriginal_tag = GRE\n",
+        "\t\t}\n",
+        "\t\tavailable = {\n",
+        "\t\t\thas_opinion = { target = CHI value > 0 }\n",
+        "\t\t}\n",
+        "\t\tcomplete_effect = { add_political_power = 10 }\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "has_opinion in available after multi-line allowed not flagged",
+)
+
 # 10. Focus declares war without will_lead_to_war_with
 
 print("\n── Focus missing war hint ──")

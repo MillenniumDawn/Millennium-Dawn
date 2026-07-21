@@ -90,7 +90,16 @@ SIA_deep_south_category = {
 			set_temp_variable = { ds_delta = -8 }
 			SIA_ds_set_intensity = yes
 			510 = {
-				add_extra_state_shared_building_slots = 1
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_variable = SIA_granted_shared_slots }
+							check_variable = { SIA_granted_shared_slots < 8 }
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_to_variable = { SIA_granted_shared_slots = 1 }
+				}
 			}
 			custom_effect_tooltip = SIA_ds_peace_track_increase_tt
 			add_to_variable = { SIA_ds_peace_track = 1 }
@@ -642,8 +651,11 @@ SIA_economy_category = {
 		remove_effect = {
 			set_temp_variable = { treasury_change = 6 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = SIA_coup_risk_increase_tt
-			add_to_variable = { SIA_coup_risk = 5 }
+			if = {
+				limit = { has_country_flag = SIA_path_populist }
+				set_temp_variable = { coup_delta = 5 }
+				SIA_coup_set_risk = yes
+			}
 		}
 
 		ai_will_do = {
@@ -676,6 +688,7 @@ SIA_economy_category = {
 			set_temp_variable = { party_index = 1 }
 			set_temp_variable = { party_popularity_increase = 0.02 }
 			add_relative_party_popularity = yes
+			recalculate_party = yes
 			# Sustained rural development: resource extraction + a steadier countryside
 			# for 540 days, against the consumer-goods draw of the works themselves.
 			add_timed_idea = { idea = SIA_royal_development_lands days = 540 }
@@ -1052,11 +1065,11 @@ SIA_greater_thailand_category = {
 		remove_effect = {
 			add_to_variable = { SIA_shan_militia_support = 20 }
 			add_equipment_to_stockpile = {
-				type = Inf_equipment
+				type = infantry_weapons_type
 				amount = -2000
 			}
 			add_equipment_to_stockpile = {
-				type = cnc_equipment
+				type = cnc_equipment_type
 				amount = -200
 			}
 		}
@@ -1087,7 +1100,10 @@ SIA_greater_thailand_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_shan_client_state"
-			SHN = { country_event = { id = thailand.273 days = 1 } }
+			if = {
+				limit = { country_exists = SHN }
+				SHN = { country_event = { id = thailand.273 days = 1 } }
+			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				puppet = SHN
@@ -1339,6 +1355,7 @@ SIA_political_gambits_category = {
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			add_relative_party_popularity = yes
+			recalculate_party = yes
 			# Increment radicalization counter (forward hook for Wave 3)
 			if = {
 				limit = { has_variable = SIA_reform_radicalization }
@@ -1768,13 +1785,11 @@ SIA_coup_watch_category = {
 			# Discreet budgets and promotions are graft by another name. There is a 15%
 			# chance the favours backfire, either deepening corruption or padding the
 			# payroll with a year of inflated officer wages.
-			random_list = {
-				85 = { }
-				15 = {
-					random_list = {
-						50 = { increase_corruption = yes }
-						50 = { add_timed_idea = { idea = SIA_army_wage_inflation days = 365 } }
-					}
+			random = {
+				chance = 15
+				random_list = {
+					50 = { increase_corruption = yes }
+					50 = { add_timed_idea = { idea = SIA_army_wage_inflation days = 365 } }
 				}
 			}
 		}
@@ -1816,13 +1831,11 @@ SIA_coup_watch_category = {
 			# A no-questions-asked procurement splurge invites skim and waste. There is a
 			# 15% chance it backfires, either deepening corruption or locking in a year of
 			# inflated military wages.
-			random_list = {
-				85 = { }
-				15 = {
-					random_list = {
-						50 = { increase_corruption = yes }
-						50 = { add_timed_idea = { idea = SIA_army_wage_inflation days = 365 } }
-					}
+			random = {
+				chance = 15
+				random_list = {
+					50 = { increase_corruption = yes }
+					50 = { add_timed_idea = { idea = SIA_army_wage_inflation days = 365 } }
 				}
 			}
 		}
@@ -1943,8 +1956,6 @@ SIA_red_path_category = {
 	SIA_spread_flame_isaan = {
 		icon = GFX_decision_generic_political_discourse
 
-		allowed = { original_tag = SIA }
-
 		visible = {
 			has_country_flag = SIA_village_committees_unlocked
 		}
@@ -1977,8 +1988,6 @@ SIA_red_path_category = {
 	SIA_spread_flame_north = {
 		icon = GFX_decision_generic_political_discourse
 
-		allowed = { original_tag = SIA }
-
 		visible = {
 			has_country_flag = SIA_village_committees_unlocked
 		}
@@ -2010,8 +2019,6 @@ SIA_red_path_category = {
 	# Politburo Mass Education Campaign — all SIA states
 	SIA_mass_education_campaign = {
 		icon = GFX_decision_generic_propaganda
-
-		allowed = { original_tag = SIA }
 
 		visible = {
 			has_country_flag = SIA_village_committees_unlocked
@@ -2564,7 +2571,16 @@ SIA_reconstruction_category = {
 					level = 1
 					instant_build = yes
 				}
-				add_extra_state_shared_building_slots = 1
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_variable = SIA_granted_shared_slots }
+							check_variable = { SIA_granted_shared_slots < 8 }
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_to_variable = { SIA_granted_shared_slots = 1 }
+				}
 			}
 		}
 
