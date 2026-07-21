@@ -559,6 +559,17 @@ USA_ibm_reconstruct_consequences = {
 		}
 		set_country_flag = USA_ibm_event_23_resolved
 		set_country_flag = USA_ibm_watson_health_governance_failure
+		if = {
+			limit = {
+				NOT = {
+					OR = {
+						has_country_flag = USA_ibm_watsonx_open
+						has_country_flag = USA_ibm_watsonx_regulated
+					}
+				}
+			}
+			set_country_flag = USA_ibm_watson_crisis_eligible
+		}
 		add_to_variable = { USA_ibm_faction_research = 1 }
 		add_to_variable = { USA_ibm_faction_financial = 1 }
 		add_to_variable = { USA_oem_vertical_integration = -1 }
@@ -828,6 +839,7 @@ USA_ibm_reconstruct_integrations = {
 		}
 		set_country_flag = USA_ibm_event_38_resolved
 		set_country_flag = USA_ibm_merchant_foundry_capacity
+		set_country_flag = USA_ibm_foundry_crisis_eligible
 		add_to_variable = { USA_ibm_faction_financial = 1 }
 		add_to_variable = { USA_ibm_faction_open_platform = 1 }
 		add_to_variable = { USA_oem_open_standards = 1 }
@@ -898,6 +910,7 @@ USA_ibm_reconstruct_integrations = {
 		}
 		set_country_flag = USA_ibm_event_43_resolved
 		set_country_flag = USA_ibm_firmware_vendor_council
+		set_country_flag = USA_ibm_firmware_crisis_eligible
 		add_to_variable = { USA_ibm_faction_open_platform = 2 }
 		add_to_variable = { USA_ibm_faction_services = 1 }
 		add_to_variable = { USA_oem_vertical_integration = -1 }
@@ -947,12 +960,112 @@ USA_ibm_reconstruct_integrations = {
 		}
 		set_country_flag = USA_ibm_event_46_resolved
 		set_country_flag = USA_ibm_national_systems_prime
+		set_country_flag = USA_ibm_procurement_crisis_eligible
 		add_to_variable = { USA_ibm_faction_systems = 2 }
 		add_to_variable = { USA_ibm_faction_services = 1 }
 		add_to_variable = { USA_oem_vertical_integration = 1 }
 		add_to_variable = { USA_oem_security_control = 2 }
 		add_to_variable = { USA_oem_national_compute_stack = 2 }
 		USA_ibm_clamp_state = yes
+	}
+}
+
+USA_ibm_monthly_crisis_checks = {
+	if = {
+		limit = {
+			original_tag = USA
+			NOT = { has_country_flag = collapsed_nation }
+			has_country_flag = USA_ibm_capstone_resolved
+			NOT = { has_country_flag = USA_ibm_recovery_cooldown }
+		}
+
+		if = {
+			limit = {
+				has_country_flag = USA_ibm_watson_crisis_eligible
+				NOT = { has_country_flag = USA_ibm_watson_crisis_active }
+				NOT = { has_country_flag = USA_ibm_watson_crisis_resolved }
+				NOT = { has_country_flag = USA_ibm_retreat_to_certainty_scheduled }
+				NOT = { has_country_flag = USA_ibm_retreat_to_certainty_resolved }
+				OR = {
+					has_country_flag = USA_ibm_outcome_big_blue_intact
+					has_country_flag = USA_ibm_outcome_fortress_z
+				}
+				OR = {
+					check_variable = { USA_oem_vertical_integration > 6 }
+					check_variable = { USA_oem_national_compute_stack > 7 }
+				}
+			}
+			set_country_flag = USA_ibm_watson_crisis_active
+			set_country_flag = USA_ibm_retreat_to_certainty_scheduled
+			add_ideas = USA_ibm_watson_governance_crisis
+			country_event = { id = USA_ibm_events.47 days = 30 }
+		}
+
+		if = {
+			limit = {
+				has_country_flag = USA_ibm_maintainer_crisis_eligible
+				NOT = { has_country_flag = USA_ibm_maintainer_crisis_active }
+				NOT = { has_country_flag = USA_ibm_maintainer_crisis_resolved }
+				NOT = { has_country_flag = USA_ibm_retreat_to_certainty_scheduled }
+				NOT = { has_country_flag = USA_ibm_retreat_to_certainty_resolved }
+				OR = {
+					has_country_flag = USA_ibm_outcome_big_blue_intact
+					has_country_flag = USA_ibm_outcome_fortress_z
+				}
+				check_variable = { USA_oem_open_standards < 5 }
+			}
+			set_country_flag = USA_ibm_maintainer_crisis_active
+			set_country_flag = USA_ibm_retreat_to_certainty_scheduled
+			add_ideas = USA_ibm_maintainers_revolt_crisis
+			country_event = { id = USA_ibm_events.47 days = 30 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_country_flag = USA_ibm_foundry_crisis_active }
+				NOT = { has_country_flag = USA_ibm_foundry_crisis_resolved }
+				NOT = { has_country_flag = USA_ibm_hardware_reentry_scheduled }
+				NOT = { has_country_flag = USA_ibm_hardware_reentry_resolved }
+				OR = {
+					has_country_flag = USA_ibm_outcome_cloud_without_iron
+					has_country_flag = USA_ibm_outcome_open_hybrid
+				}
+				OR = {
+					AND = {
+						has_country_flag = USA_ibm_foundry_crisis_eligible
+						check_variable = { USA_oem_supply_resilience < 6 }
+					}
+					AND = {
+						has_country_flag = USA_ibm_firmware_crisis_eligible
+						check_variable = { USA_oem_security_control < 6 }
+					}
+				}
+			}
+			set_country_flag = USA_ibm_foundry_crisis_active
+			set_country_flag = USA_ibm_hardware_reentry_scheduled
+			add_ideas = USA_ibm_foundry_crisis
+			country_event = { id = USA_ibm_events.48 days = 30 }
+		}
+
+		if = {
+			limit = {
+				has_country_flag = USA_ibm_procurement_crisis_eligible
+				has_country_flag = USA_ibm_outcome_systems_ministry
+				has_country_flag = USA_ibm_national_systems_prime
+				NOT = { has_country_flag = USA_ibm_procurement_crisis_active }
+				NOT = { has_country_flag = USA_ibm_procurement_crisis_resolved }
+				NOT = { has_country_flag = USA_ibm_ministry_breakup_scheduled }
+				NOT = { has_country_flag = USA_ibm_ministry_breakup_resolved }
+				OR = {
+					check_variable = { USA_oem_vertical_integration > 6 }
+					check_variable = { USA_oem_national_compute_stack > 7 }
+				}
+			}
+			set_country_flag = USA_ibm_procurement_crisis_active
+			set_country_flag = USA_ibm_ministry_breakup_scheduled
+			add_ideas = USA_ibm_procurement_crisis
+			country_event = { id = USA_ibm_events.49 days = 30 }
+		}
 	}
 }
 
