@@ -2,17 +2,34 @@
 import codecs
 import os
 import shutil
+import sys
 
 country_tag_list = []
 inputpath = ""
 
-mod = "Millennium_Dawn"
+# Anchor to the repo (tools/generators/ -> repo root) with OS-correct
+# separators; the old `"..\\common\\country_tags"` literals were dead on Linux.
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+TAG_DIR = os.path.join(REPO_ROOT, "common", "country_tags")
 newline = "\n\t\t\t"
 newline2 = "\n\t\t\t\t"
 modifiers = "\n\t\t\t\tcic_to_target_factor = 0.2\n\t\t\t\textra_trade_to_target_factor = 0.2\n\t\t\t\ttrade_cost_for_target_factor = -0.2\n\t\t\t"
 
 
 def main():
+    for _required in (
+        os.path.join(TAG_DIR, "00_countries.txt"),
+        os.path.join(TAG_DIR, "zz_dynamic_countries.txt"),
+        os.path.join(REPO_ROOT, "common", "ideas"),
+        os.path.join(REPO_ROOT, "localisation", "english"),
+    ):
+        if not os.path.exists(_required):
+            sys.exit(
+                f"ERROR: required path not found: {_required}\n"
+                "generate_tribute_ideas.py must run from within the "
+                "Millennium Dawn repository."
+            )
+
     country_tag_list = createcountrytaglist()
     country_tag_list.extend(pulldynamictags())
 
@@ -38,18 +55,18 @@ def main():
                 f' {fname}_tribute: "Economic Exploitation by [{fname}.GetName]"\n'
             )
     print("Tribute ideas complete")
-    shutil.copy("tribute_ideas.txt", "../common/ideas")
+    shutil.copy("tribute_ideas.txt", os.path.join(REPO_ROOT, "common", "ideas"))
     os.remove("tribute_ideas.txt")
-    shutil.copy("MD_tribute_ideas_l_english.yml", "../localisation/english")
+    shutil.copy(
+        "MD_tribute_ideas_l_english.yml",
+        os.path.join(REPO_ROOT, "localisation", "english"),
+    )
     os.remove("MD_tribute_ideas_l_english.yml")
 
 
 def createcountrytaglist():
     temp_array = []
-    tag_path = os.path.abspath(
-        os.path.join(os.path.dirname(mod), "..\\common\\country_tags")
-    )
-    tag_path = str(tag_path) + "\\00_countries.txt"
+    tag_path = os.path.join(TAG_DIR, "00_countries.txt")
     read_tags = open(tag_path, "r")
     lines = read_tags.readlines()
     bad_line = 0
@@ -67,10 +84,7 @@ def createcountrytaglist():
 
 def pulldynamictags():
     temp_array = []
-    tag_path = os.path.abspath(
-        os.path.join(os.path.dirname(mod), "..\\common\\country_tags")
-    )
-    tag_path = str(tag_path) + "\\zz_dynamic_countries.txt"
+    tag_path = os.path.join(TAG_DIR, "zz_dynamic_countries.txt")
     read_tags = open(tag_path, "r")
     lines = read_tags.readlines()
     bad_line = 0

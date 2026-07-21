@@ -5,10 +5,18 @@
 import glob
 import os
 import re
+import sys
 from multiprocessing import Pool
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import disk_cache
+
+# strip_comments is quote-aware: a '#' inside a quoted log string must survive,
+# or the orphaned quote desyncs extract_block_from_text's in-string tracking
+# and container spans are silently lost.
+from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
 from validator_common import (
     BaseValidator,
     DataCleaner,
@@ -33,6 +41,16 @@ _FLAG_LONG_FORM_RE = re.compile(
 # HOI4 silently truncates at 5, so the value computed at runtime is wrong.
 _MATH_PRECISION_RE = re.compile(
     r"\b(add|subtract|multiply|divide|value)\s*=\s*[-+]?\d*\.\d{6,}"
+)
+# Shorthand variable assignment: `set_variable = { my_var = 0.1234567 }` (also
+# set_temp_variable / add_to_variable / multiply_variable / …). The value sits
+# on the RHS of the variable name, not behind a `value =` key, so the operator
+# pattern above misses it. Requires a `..._variable` opener so a plain
+# `{ key = 0.123456 }` block (e.g. an ai_will_do factor) is not matched. The
+# `[^{}]*?` lets the offending key sit anywhere in the block, not just first, so
+# `clamp_variable = { var = x min = 0.123456789 }` is still caught.
+_MATH_PRECISION_SHORTHAND_RE = re.compile(
+    r"\b\w*_variable\s*=\s*\{[^{}]*?\b\w+\s*=\s*[-+]?\d*\.\d{6,}"
 )
 
 
@@ -85,7 +103,7 @@ def process_file_for_all_flags(
     if not text:
         return {}, {}, {}
     basename = os.path.basename(filename)
-    namespace = f"variables.flags.{flag_type}.lc={int(lowercase)}"
+    namespace = f"variables.flags.{flag_type}.lc={'1' if lowercase else '0'}"
     set_list, used_list, cleared_list = disk_cache.per_file_cached_by_content(
         mod_path,
         namespace,
@@ -155,16 +173,410 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     except Exception:
         return []
 
-    cleaned = re.sub(r"#[^\n]*", "", text)
+    # Quote-aware comment strip, then blank quoted-string interiors so a `#` or a
+    # high-precision decimal inside a `desc = "..."` string is neither treated as
+    # a comment nor mis-flagged as a truncated math literal.
+    cleaned = blank_quoted_strings(strip_comments(text))
     rel = os.path.relpath(filename, mod_path)
 
     issues: List[str] = []
-    for m in _MATH_PRECISION_RE.finditer(cleaned):
-        line = cleaned[: m.start()].count("\n") + 1
-        issues.append(
-            f"{rel}:{line} - math expression literal with >5 decimal places"
-            f" (engine truncates silently): {m.group(0).strip()}"
+    # Both patterns fire on `..._variable = { ... value = X.XXXXXX }`, matching the
+    # same literal (same end offset). Dedupe on it so one bad literal is one finding;
+    # the operator pattern runs first, so its tighter match text is what's reported.
+    seen_ends: set = set()
+    for pattern in (_MATH_PRECISION_RE, _MATH_PRECISION_SHORTHAND_RE):
+        for m in pattern.finditer(cleaned):
+            if m.end() in seen_ends:
+                continue
+            seen_ends.add(m.end())
+            line = cleaned[: m.start()].count("\n") + 1
+            issues.append(
+                f"{rel}:{line} - math expression literal with >5 decimal places"
+                f" (engine truncates silently): {m.group(0).strip()}"
+            )
+    return issues
+
+
+# modify_treasury_effect / modify_debt_effect / modify_international_investment_effect
+# each write a country-scope variable (treasury / debt / int_investment) via
+# add_to_variable. Called while the current scope is a STATE they silently write an
+# unrelated state variable and the nation's balance never changes. The scope tracker
+# below flags calls whose nearest enclosing scope switch is a state block with no
+# intervening country-scope opener.
+_TREASURY_EFFECT_KEYWORDS = (
+    "modify_treasury_effect",
+    "modify_debt_effect",
+    "modify_international_investment_effect",
+)
+_TREASURY_ANCHOR_RE = re.compile(
+    r"\b(modify_(?:treasury|debt|international_investment)_effect)\s*=\s*yes\b"
+)
+_SCOPE_OPEN_RE = re.compile(r"([^\s{}=]+)\s*=\s*\{")
+# Effect iterators / scopes that switch the current scope to a STATE.
+_STATE_SCOPE_TOKENS = frozenset(
+    {
+        "capital_scope",
+        "random_owned_state",
+        "every_owned_state",
+        "all_owned_state",
+        "random_state",
+        "every_state",
+        "all_state",
+        "random_controlled_state",
+        "every_controlled_state",
+        "all_controlled_state",
+        "random_owned_controlled_state",
+        "every_owned_controlled_state",
+        "random_neighbor_state",
+        "every_neighbor_state",
+        "all_neighbor_state",
+    }
+)
+# Scopes that switch to a country / other non-state scope. These mask an outer
+# state scope, so a treasury call inside them is not flagged. ROOT/PREV/FROM/THIS
+# are treated as non-state conservatively (unknown target → don't flag).
+_NONSTATE_SCOPE_TOKENS = frozenset(
+    {
+        "owner",
+        "OWNER",
+        "controller",
+        "CONTROLLER",
+        "ROOT",
+        "PREV",
+        "FROM",
+        "THIS",
+        "overlord",
+    }
+)
+_TAG_SCOPE_RE = re.compile(r"^[A-Z][A-Z0-9]{2}(?:_[A-Za-z0-9]+)*$")
+_DECIMAL_RE = re.compile(r"\d+\.\d+")
+
+
+def _classify_scope_token(token: str, parent: str) -> str:
+    """Classify a `token = {` opener as STATE, NONSTATE, or INHERIT.
+
+    INHERIT means the block does not change scope (if/limit/effect args, weights),
+    so the current scope is whatever the nearest STATE/NONSTATE ancestor set.
+    """
+    if token.isdigit() or _DECIMAL_RE.fullmatch(token):
+        # A bare number is a state id at effect level, but a bucket weight inside
+        # random_list (inherits the enclosing scope, not a state switch).
+        if parent == "random_list":
+            return "INHERIT"
+        return "STATE"
+    if token in _STATE_SCOPE_TOKENS:
+        return "STATE"
+    low = token.lower()
+    if low.startswith(("random_", "every_", "all_")) and "state" in low:
+        return "STATE"
+    if token in _NONSTATE_SCOPE_TOKENS:
+        return "NONSTATE"
+    if token.startswith(("ROOT", "PREV", "FROM", "THIS", "var:", "event_target:")):
+        return "NONSTATE"
+    if "country" in low:
+        return "NONSTATE"
+    if _TAG_SCOPE_RE.match(token):
+        return "NONSTATE"
+    return "INHERIT"
+
+
+def process_file_for_treasury_scope(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag modify_treasury_effect calls that run in state scope.
+
+    Returns (message, rel_path, line) tuples. Only flags a call whose nearest
+    enclosing scope switch is a state block — conservative, so an intervening
+    owner/CONTROLLER/tag/ROOT opener suppresses the finding.
+    """
+    filename, mod_path = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = strip_comments(text)
+    if not any(k in cleaned for k in _TREASURY_EFFECT_KEYWORDS):
+        return []
+
+    # Blank quoted-string interiors so a literal `}` inside a `log = "...}"`
+    # string can't be counted as a real close brace and desync the scope stack.
+    cleaned = blank_quoted_strings(cleaned)
+
+    events = []
+    for m in _SCOPE_OPEN_RE.finditer(cleaned):
+        events.append((m.end() - 1, 0, m.group(1)))
+    for m in re.finditer(r"\}", cleaned):
+        events.append((m.start(), 1, None))
+    for m in _TREASURY_ANCHOR_RE.finditer(cleaned):
+        events.append((m.start(), 2, m.group(1)))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    rel = os.path.relpath(filename, mod_path)
+    stack: List[Tuple[str, str]] = []
+    issues: List[Tuple[str, str, int]] = []
+    for pos, kind, tok in events:
+        if kind == 0:
+            parent = stack[-1][1] if stack else ""
+            stack.append((_classify_scope_token(tok, parent), tok))
+        elif kind == 1:
+            if stack:
+                stack.pop()
+        else:
+            scope = ""
+            frame_tok = ""
+            for cat, ftok in reversed(stack):
+                if cat in ("STATE", "NONSTATE"):
+                    scope = cat
+                    frame_tok = ftok
+                    break
+            if scope == "STATE":
+                line = cleaned[:pos].count("\n") + 1
+                issues.append(
+                    (
+                        f"{tok} runs in state scope"
+                        f" (inside `{frame_tok} = {{`) — the target is a country"
+                        f" variable, so the nation's balance never changes",
+                        rel,
+                        line,
+                    )
+                )
+    return issues
+
+
+# Money-system input variables and the scripted effect that consumes each.
+# A set_temp_variable of one of these with no consumer call afterwards in the
+# same effect block is a dead setter — the money never moves (Sweden_foci.57).
+_MONEY_EFFECT_PAIRS = {
+    "treasury_change": "modify_treasury_effect",
+    "debt_change": "modify_debt_effect",
+    "int_investment_change": "modify_international_investment_effect",
+}
+_MONEY_SETTER_RE = re.compile(
+    r"set_temp_variable\s*=\s*\{\s*(" + "|".join(_MONEY_EFFECT_PAIRS) + r")\s*="
+)
+# Blocks that delimit one effect execution. hidden_effect is NOT a boundary —
+# it runs in the same execution as its parent, only hidden from the tooltip.
+# effect_tooltip is deliberately its own container: a setter previewed there
+# must also be consumed there or the tooltip renders nothing, and a consumer
+# that only appears inside a tooltip never runs.
+_EFFECT_CONTAINER_RE = re.compile(
+    r"\b(?:completion_reward|select_effect|bypass_effect|option|immediate|"
+    r"complete_effect|remove_effect|timeout_effect|cancel_effect|"
+    r"effect_tooltip|effect)\s*=\s*\{"
+)
+_SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
+# Value-producing writers only — add_to/multiply etc. read the existing value.
+_WRITE_BEFORE_RE = re.compile(
+    r"(?:set_temp_variable|set_variable)\s*=\s*\{\s*$"
+    r"|set_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*$"
+)
+_MONEY_WRITE_RES = {
+    var: re.compile(
+        r"\b(?:set_temp_variable|set_variable)\s*=\s*\{\s*" + var + r"\s*="
+        r"|\bset_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*" + var + r"\b"
+    )
+    for var in _MONEY_EFFECT_PAIRS
+}
+
+
+def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
+    """Map each money input variable to the scripted effects that consume it.
+
+    An effect consumes a variable when the variable's first appearance in its
+    body is a read (add_to_variable r-value, multiply, check, ...) rather than
+    a set_temp_variable/set_variable write — a wrapper that writes first
+    overwrites the caller's value and cannot consume it. Closed transitively
+    so wrappers of wrappers (GRE_pay_or_defer -> modify_debt_effect) count.
+    """
+    bodies: Dict[str, str] = {}
+    for fp in effect_files:
+        try:
+            with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                text = strip_comments(fh.read())
+        except Exception:
+            continue
+        for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
+            body, _ = extract_block_from_text(text, m.start())
+            if body:
+                bodies[m.group(1)] = body
+
+    def first_positions(body: str, var: str):
+        first_read = first_write = None
+        for om in re.finditer(r"\b" + var + r"\b", body):
+            if _WRITE_BEFORE_RE.search(body, 0, om.start()):
+                if first_write is None:
+                    first_write = om.start()
+            elif first_read is None:
+                first_read = om.start()
+            if first_read is not None and first_write is not None:
+                break
+        return first_read, first_write
+
+    consumers = {var: {base} for var, base in _MONEY_EFFECT_PAIRS.items()}
+    for var in _MONEY_EFFECT_PAIRS:
+        for name, body in bodies.items():
+            first_read, first_write = first_positions(body, var)
+            if first_read is not None and (
+                first_write is None or first_read < first_write
+            ):
+                consumers[var].add(name)
+
+    changed = True
+    while changed:
+        changed = False
+        for var, known in consumers.items():
+            call_re = re.compile(
+                r"\b(?:"
+                + "|".join(re.escape(n) for n in sorted(known))
+                + r")\s*=\s*yes\b"
+            )
+            for name, body in bodies.items():
+                if name in known:
+                    continue
+                call = call_re.search(body)
+                if not call:
+                    continue
+                _, first_write = first_positions(body, var)
+                if first_write is None or call.start() < first_write:
+                    known.add(name)
+                    changed = True
+    return {var: frozenset(names) for var, names in consumers.items()}
+
+
+def _has_sequential_rewrite(
+    cleaned: str, start: int, end: int, var: str, write_re: re.Pattern
+) -> bool:
+    """Whether the setter's variable is re-set in [start, end) as a clobber.
+
+    Depth heuristic: only a re-write at the setter's own brace depth counts —
+    branch-gated writes (if/else arms) sit in nested blocks and never clobber.
+    A same-depth re-write that reads the variable in its value expression
+    (``value = X multiply = -1``, events/raids.txt) folds the old value
+    forward and is not a clobber either.
+    """
+    rewrites = [w.start() for w in write_re.finditer(cleaned, start, end)]
+    if not rewrites:
+        return False
+    var_re = re.compile(r"\b" + var + r"\b")
+    ri = 0
+    depth = 1  # start sits inside the setter's own braces
+    in_str = False
+    for i in range(start, end):
+        if ri < len(rewrites) and rewrites[ri] == i:
+            if depth == 0 and not in_str:
+                # First same-depth re-write decides: the sole var occurrence
+                # in its block is the l-value; a second one is a self-read.
+                body, _ = extract_block_from_text(cleaned, i)
+                return len(var_re.findall(body)) <= 1
+            ri += 1
+            if ri == len(rewrites):
+                return False
+        c = cleaned[i]
+        if c == '"' and cleaned[i - 1] != "\\":
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth < 0:
+                    return False
+    return False
+
+
+def process_file_for_orphan_money(
+    args: Tuple[str, str, Dict[str, frozenset]],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag money-variable setters that are dead in their block —
+    never consumed, or overwritten at the same depth before the consumer runs.
+
+    Returns (message, rel_path, line) tuples. Setters outside any known effect
+    container (loose scripted-effect bodies that produce the value for their
+    caller) are skipped.
+    """
+    filename, mod_path, consumer_map = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    # Quote-aware strip — the naive regex strip broke brace tracking in every
+    # file with a '#' inside a log string.
+    cleaned = strip_comments(text)
+    setters = list(_MONEY_SETTER_RE.finditer(cleaned))
+    if not setters:
+        return []
+
+    spans = []
+    for m in _EFFECT_CONTAINER_RE.finditer(cleaned):
+        brace = m.end() - 1  # the container regex ends at the opening brace
+        body, end = extract_block_from_text(cleaned, brace)
+        if body:
+            is_tooltip = cleaned.startswith("effect_tooltip", m.start())
+            spans.append((brace + 1, end, is_tooltip))
+    tooltip_spans = [(s, e) for s, e, is_tt in spans if is_tt]
+
+    consumer_res = {
+        var: re.compile(
+            r"\b(?:" + "|".join(re.escape(n) for n in sorted(names)) + r")\s*=\s*yes\b"
         )
+        for var, names in consumer_map.items()
+    }
+    rel = os.path.relpath(filename, mod_path)
+    issues: List[Tuple[str, str, int]] = []
+    for m in setters:
+        var = m.group(1)
+        holder = None
+        for start, end, is_tt in spans:
+            if start <= m.start() < end and (holder is None or start > holder[0]):
+                holder = (start, end, is_tt)
+        if holder is None:
+            continue
+        if holder[2]:
+            # Setter previewed in a tooltip: any consumer within it renders.
+            hits = list(consumer_res[var].finditer(cleaned, m.end(), holder[1]))
+        else:
+            # Runtime setter: consumers that only exist inside a nested
+            # effect_tooltip are previews and never execute.
+            hits = [
+                cm
+                for cm in consumer_res[var].finditer(cleaned, m.end(), holder[1])
+                if not any(ts <= cm.start() < te for ts, te in tooltip_spans)
+            ]
+        if hits and not _has_sequential_rewrite(
+            cleaned, m.end(), hits[0].start(), var, _MONEY_WRITE_RES[var]
+        ):
+            continue
+        line = cleaned[: m.start()].count("\n") + 1
+        if hits:
+            issues.append(
+                (
+                    f"set_temp_variable {var} is overwritten before"
+                    f" {_MONEY_EFFECT_PAIRS[var]} (or wrapper) runs — a later"
+                    f" write to {var} clobbers this value, so this setter is dead",
+                    rel,
+                    line,
+                )
+            )
+        else:
+            issues.append(
+                (
+                    f"set_temp_variable {var} is never consumed — no"
+                    f" {_MONEY_EFFECT_PAIRS[var]} (or wrapper) follows in the"
+                    f" same effect block, so the money never moves",
+                    rel,
+                    line,
+                )
+            )
     return issues
 
 
@@ -235,7 +647,7 @@ def process_file_for_all_targets(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        f"variables.targets.lc={int(lowercase)}",
+        f"variables.targets.lc={'1' if lowercase else '0'}",
         filename,
         text_file,
         lambda: _scan_targets_in_text(text_file, filename),
@@ -360,7 +772,7 @@ class Validator(BaseValidator):
         for result in results:
             identifier = result.get("flag") or result.get("target") or ""
             file_path = result.get("file", "")
-            line_no = int(result.get("line", 0) or 0)
+            line_no = result.get("line", 0) or 0
             tuples.append((identifier, file_path, line_no))
         self._report(
             tuples,
@@ -421,8 +833,11 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking cleared {flag_type} flags that are never set...")
 
-        cleared_flags = DataCleaner.clear_false_positives_partial_match(
-            list(cleared_paths.keys()), tuple(false_positives)
+        cleared_flags = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(cleared_paths.keys()), tuple(false_positives)
+            )
+            or []
         )
         dynamic_set_patterns = self._build_dynamic_flag_matchers(list(set_paths.keys()))
 
@@ -456,8 +871,11 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking missing {flag_type} flags (used but not set)...")
 
-        used_flags = DataCleaner.clear_false_positives_partial_match(
-            list(used_paths.keys()), tuple(false_positives)
+        used_flags = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(used_paths.keys()), tuple(false_positives)
+            )
+            or []
         )
         dynamic_set_patterns = self._build_dynamic_flag_matchers(list(set_paths.keys()))
 
@@ -491,8 +909,11 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking unused {flag_type} flags (set but not used)...")
 
-        set_flags = DataCleaner.clear_false_positives_partial_match(
-            list(set_paths.keys()), tuple(false_positives)
+        set_flags = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(set_paths.keys()), tuple(false_positives)
+            )
+            or []
         )
         dynamic_used_patterns = self._build_dynamic_flag_matchers(
             list(used_paths.keys())
@@ -537,6 +958,88 @@ class Validator(BaseValidator):
             "Math expression literals with >5 decimal places (engine silently truncates):",
             severity=Severity.ERROR,
             category="math-precision",
+        )
+
+    def validate_orphan_money_setters(self):
+        """Flag money-variable setters whose value is never consumed (WARNING).
+
+        set_temp_variable of treasury_change/debt_change/int_investment_change
+        must be followed, within the same effect block, by the matching
+        modify_*_effect call or a wrapper that consumes it — otherwise the
+        setter is dead and the transfer silently never happens. A setter
+        re-written at the same brace depth before the consumer runs is
+        equally dead (clobbered).
+        """
+        self._log_section("Checking for orphan money-variable setters...")
+
+        txt_files = self._collect_files(
+            [
+                "common/national_focus/*.txt",
+                "common/decisions/**/*.txt",
+                "common/on_actions/**/*.txt",
+                "events/**/*.txt",
+            ]
+        )
+        if not txt_files:
+            self.log("✓ No orphan money-variable setters found")
+            return
+
+        effect_files = self._collect_files(
+            ["common/scripted_effects/**/*.txt"], ignore_staged=True
+        )
+        consumer_map = build_money_consumer_map(effect_files)
+        args_list = [(f, self.mod_path, consumer_map) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_orphan_money, args_list, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No orphan money-variable setters found",
+            "Dead money-variable setters (never consumed, or overwritten before the consumer runs — the money never moves):",
+            severity=Severity.WARNING,
+            category="orphan-money-setter",
+        )
+
+    def validate_treasury_state_scope(self):
+        """Flag treasury/debt/investment effect calls in state scope (WARNING).
+
+        Each effect writes a country-scope variable (treasury / debt /
+        int_investment); called inside a state block (state id,
+        random_owned_state, ...) it silently writes an unrelated state variable
+        and the money never moves. Only flags when the nearest enclosing scope
+        switch is a state — an intervening owner/CONTROLLER/tag/ROOT opener
+        suppresses it.
+        """
+        self._log_section(
+            "Checking for treasury/debt/investment effects in state scope..."
+        )
+
+        txt_files = self._collect_files(
+            [
+                "common/national_focus/*.txt",
+                "common/decisions/**/*.txt",
+                "common/on_actions/**/*.txt",
+                "common/special_projects/**/*.txt",
+                "common/intelligence_agency_upgrades/**/*.txt",
+                "events/**/*.txt",
+            ]
+        )
+        if not txt_files:
+            self.log("✓ No treasury/debt/investment state-scope issues found")
+            return
+
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_treasury_scope, args_list, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No treasury/debt/investment state-scope issues found",
+            "treasury/debt/investment effect calls in state scope (each writes a country variable — the money never moves):",
+            severity=Severity.WARNING,
+            category="treasury-state-scope",
         )
 
     def validate_flag_syntax(self):
@@ -616,8 +1119,11 @@ class Validator(BaseValidator):
 
         FALSE_POSITIVES = ["."]
         results = []
-        used_targets = DataCleaner.clear_false_positives_partial_match(
-            list(used_paths.keys()), tuple(FALSE_POSITIVES)
+        used_targets = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(used_paths.keys()), tuple(FALSE_POSITIVES)
+            )
+            or []
         )
 
         for target in used_targets:
@@ -657,8 +1163,11 @@ class Validator(BaseValidator):
         FALSE_POSITIVES = ["wca_usa_floyd_olson", "wca_usa_al_smith", "target_value"]
         results = []
         potential_results = []
-        set_targets = DataCleaner.clear_false_positives_partial_match(
-            list(set_paths.keys()), tuple(FALSE_POSITIVES)
+        set_targets = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(set_paths.keys()), tuple(FALSE_POSITIVES)
+            )
+            or []
         )
 
         for target in set_targets:
@@ -714,6 +1223,8 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         self.validate_math_precision()
+        self.validate_orphan_money_setters()
+        self.validate_treasury_state_scope()
 
         if self.staged_only:
             # Variable validation cross-references flags across all files
