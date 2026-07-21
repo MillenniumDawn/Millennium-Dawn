@@ -75,10 +75,15 @@ _STAFFABLE_TRIGGERS = {
     "agriculture_district": "can_staff_an_agriculture_district",
 }
 
-# Bankruptcy-guard cost thresholds: >= 8 generally, >= 5 when the focus is
-# tagged military/economic/research via a generic search filter.
-_BANKRUPTCY_COST_DEFAULT = 8
-_BANKRUPTCY_COST_STRICT = 5
+# A focus whose completion_reward spends at least this much (billions, summed
+# from negative treasury_change literals applied via modify_treasury_effect)
+# needs the bankruptcy guard. Focus `cost` is completion time, not money, so
+# the actual money spend in the reward is what gates the guard.
+_MONEY_SPEND_THRESHOLD = 5.0
+# Search filters that mark a focus as military/economic/research. A focus that
+# spends money or builds should carry one of these; a money/building focus
+# tagged with none of them is miscategorized (e.g. an economic focus tagged
+# only political).
 _MIL_ECON_RESEARCH_FILTERS = frozenset(
     {
         "FOCUS_FILTER_INDUSTRY",
@@ -105,9 +110,42 @@ _BANKRUPTCY_GUARD_RE = re.compile(
 )
 _ADD_BUILDING_START = re.compile(r"\badd_building_construction\s*=\s*\{")
 _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
-# Value may be numeric or a file-local @constant reference.
-_COST_LINE_RE = re.compile(r"\bcost\s*=\s*(@?[\w.]+)")
-_CONSTANT_DEF_RE = re.compile(r"^@([\w.]+)\s*=\s*(-?\d+(?:\.\d+)?)", re.M)
+# Money spend (MD budget system): treasury_change is set (a literal, a `{ }`
+# computed value, or a bare-identifier reference to another variable — the
+# latter two we can't sum statically) then applied by modify_treasury_effect;
+# modify_debt_effect raises debt. Negative treasury spends, positive is income.
+# Only set_temp_variable/set_variable actually assign treasury_change (as the
+# key, or as `var = treasury_change`); any other verb touching it
+# (multiply_temp_variable, add_to_temp_variable, clamp_temp_variable, ...)
+# mutates the running value in a way that can't be summed statically, so it
+# forces the segment unknown rather than being read as a fresh set.
+_TREASURY_CHANGE_RE = re.compile(
+    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_]\w*)"
+    r"|\bvar\s*=\s*treasury_change\b"
+)
+_TREASURY_SET_VERBS = frozenset({"set_temp_variable", "set_variable"})
+_TREASURY_MUTATE_VERBS = frozenset(
+    {
+        "multiply_temp_variable",
+        "add_to_temp_variable",
+        "subtract_from_temp_variable",
+        "divide_temp_variable",
+        "clamp_temp_variable",
+        "add_to_variable",
+        "subtract_from_variable",
+        "multiply_variable",
+        "clamp_variable",
+        "divide_variable",
+    }
+)
+_NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
+# modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
+# which scales the applied amount by a corruption-level idea before adding it to
+# the treasury). Group 1 is the suffix, empty for the plain form; a non-empty
+# suffix applies an amount that can't be computed statically, so it forces the
+# segment unknown. The `_tt` loc key is never called with `= yes`.
+_MODIFY_TREASURY_RE = re.compile(r"\bmodify_treasury_effect(\w*)\s*=\s*yes\b")
+_MODIFY_DEBT_RE = re.compile(r"\bmodify_debt_effect\s*=\s*yes\b")
 _SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^{}]*)\}")
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
@@ -160,31 +198,26 @@ _CONTROL_FLOW_SCOPES = frozenset(
 _NON_TAG_KEYWORDS = frozenset({"AND", "NOT", "NOR"})
 
 
-def _top_level_text(body: str) -> str:
-    """Return only the depth-0 characters of a block body, so focus-level
-    fields (cost) aren't shadowed by same-named keys inside nested blocks
-    (advisor cost, reduce_focus_completion_cost, ...)."""
-    out = []
+def _top_level_search_filters(body: str) -> Set[str]:
+    """Extract top-level search filter tokens from a focus block."""
     depth = 0
-    for ch in body:
+    i = 0
+    while i < len(body):
+        ch = body[i]
         if ch == "{":
             depth += 1
-        elif ch == "}":
+            i += 1
+            continue
+        if ch == "}":
             depth = max(0, depth - 1)
-        elif depth == 0:
-            out.append(ch)
-    return "".join(out)
-
-
-def _resolve_cost(token: Optional[str], constants: Dict[str, float]) -> Optional[float]:
-    if token is None:
-        return None
-    if token.startswith("@"):
-        return constants.get(token[1:])
-    try:
-        return float(token)
-    except ValueError:
-        return None
+            i += 1
+            continue
+        if depth == 0:
+            m = _SEARCH_FILTERS_RE.match(body, i)
+            if m:
+                return set(m.group(1).split())
+        i += 1
+    return set()
 
 
 def _line_of(text: str, pos: int) -> int:
@@ -269,6 +302,105 @@ def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, in
             continue
         spans.append((tm.start(), tend))
         pos = tend
+
+
+def _body_money_cost(
+    body: str, money_effects: FrozenSet[str]
+) -> Tuple[float, bool, bool]:
+    """Money an effect body spends. Returns (spend, has_cost, unknown).
+
+    spend    - summed magnitude (billions) of negative treasury_change literals
+               actually applied via modify_treasury_effect.
+    has_cost - the body reduces the treasury or raises debt at all.
+    unknown  - a real cost exists whose amount can't be summed statically (a
+               computed or variable-referenced treasury_change, a
+               treasury_change touched by anything other than a plain set, a
+               debt change, a corruption-style modify_treasury_effect variant,
+               or a called effect in *money_effects*).
+    Amounts inside effect_tooltip previews (outcomes applied elsewhere) are
+    ignored.
+    """
+    spans = _effect_tooltip_spans(body, 0, len(body))
+
+    def previewed(i: int) -> bool:
+        return any(s <= i < e for s, e in spans)
+
+    events: List[Tuple[int, str, Optional[str]]] = []
+    for m in _TREASURY_CHANGE_RE.finditer(body):
+        if previewed(m.start()):
+            continue
+        verb, _ = _enclosing_block_label(body, m.start())
+        if verb in _TREASURY_MUTATE_VERBS:
+            events.append((m.start(), "mutate", None))
+        elif verb in _TREASURY_SET_VERBS:
+            val = m.group(1)
+            known = val is not None and _NUMERIC_LITERAL_RE.match(val)
+            events.append((m.start(), "set", val if known else None))
+    for m in _MODIFY_TREASURY_RE.finditer(body):
+        if not previewed(m.start()):
+            events.append((m.start(), "apply", "variant" if m.group(1) else None))
+    events.sort()
+
+    # treasury_change is a temp var: each apply spends the value set most
+    # recently before it. Across mutually exclusive if/else branches that both
+    # set it (only one runs), take the largest magnitude so a big conditional
+    # spend isn't hidden by a small sibling branch. An apply with no set since
+    # the last one reuses the carried value (the var persists between applies).
+    # A mutate event (multiply_temp_variable and friends touching
+    # treasury_change) means the segment's magnitude can no longer be summed
+    # statically, so it marks the segment unknown without resetting it as a
+    # fresh set. A variant apply (modify_treasury_effect_corruption, ...)
+    # scales the applied value unpredictably, so it forces that application
+    # unknown regardless of the segment.
+    spend = 0.0
+    has_cost = False
+    unknown = False
+    cur_neg = 0.0
+    cur_unknown = False
+    cur_init = False
+    seg_max = 0.0
+    seg_unknown = False
+    seg_has_set = False
+    for _, kind, val in events:
+        if kind == "set":
+            seg_has_set = True
+            if val is None:
+                seg_unknown = True
+            elif float(val) < 0:
+                seg_max = max(seg_max, -float(val))
+        elif kind == "mutate":
+            seg_has_set = True
+            seg_unknown = True
+        else:  # apply
+            if seg_has_set:
+                cur_neg, cur_unknown, cur_init = seg_max, seg_unknown, True
+            elif not cur_init:
+                cur_unknown, cur_init = True, True  # treasury_change set elsewhere
+            if val == "variant":
+                cur_unknown = True
+            if cur_unknown:
+                has_cost = True
+                unknown = True
+            elif cur_neg > 0:
+                spend += cur_neg
+                has_cost = True
+            # a non-negative applied treasury_change is income, not a cost
+            seg_max, seg_unknown, seg_has_set = 0.0, False, False
+
+    for m in _MODIFY_DEBT_RE.finditer(body):
+        if not previewed(m.start()):
+            has_cost = True
+            unknown = True
+            break
+
+    if money_effects:
+        for m in _REWARD_KEY_RE.finditer(body):
+            if m.group(1) in money_effects and not previewed(m.start()):
+                has_cost = True
+                unknown = True
+                break
+
+    return spend, has_cost, unknown
 
 
 def _is_tag_routed(option_bodies: List[str]) -> bool:
@@ -494,36 +626,35 @@ def _extract_tech_bonuses(
 
 
 def _extract_ai_guard_data(
-    args: Tuple[str, str, Dict[str, FrozenSet[str]]],
+    args: Tuple[str, str, Dict[str, FrozenSet[str]], FrozenSet[str]],
 ) -> List[Dict]:
     """Pool worker: per-focus facts for the ai_will_do guard checks.
 
-    Returns one dict per focus: id, line, cost (numeric or resolved from a
-    file-local @constant), search filters, the staffable building types its
-    rewards construct (directly or via a scripted effect from
-    *staffable_map*, and never from inside an effect_tooltip, which only
-    previews), and the guard triggers present in factor = 0 ai_will_do
-    modifiers (both the `X = no` and `NOT = { X = yes }` forms; guards hidden
-    behind wrapper scripted triggers are not recognized). The staffable map
-    is folded into the cache tag so entries invalidate when scripted-effect
+    Returns one dict per focus: id, line, search filters, the staffable
+    building types its rewards construct (directly or via a scripted effect
+    from *staffable_map*, and never from inside an effect_tooltip, which only
+    previews), the money its rewards spend (spend / has_cost / unknown, with
+    *money_effects* naming the scripted effects that spend money), and the
+    guard triggers present in factor = 0 ai_will_do modifiers (both the
+    `X = no` and `NOT = { X = yes }` forms; guards hidden behind wrapper
+    scripted triggers are not recognized). The staffable and money-effect maps
+    are folded into the cache tag so entries invalidate when scripted-effect
     definitions change.
     """
-    filepath, mod_path, staffable_map = args
+    filepath, mod_path, staffable_map, money_effects = args
     try:
         with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
             raw = fh.read()
     except Exception:
         return []
     text = strip_comments(raw)
-    constants: Dict[str, float] = {}
-    for m in _CONSTANT_DEF_RE.finditer(text):
-        try:
-            constants[m.group(1)] = float(m.group(2))
-        except ValueError:
-            continue
-    fingerprint = ";".join(
-        f"{name}:{','.join(sorted(types))}"
-        for name, types in sorted(staffable_map.items())
+    fingerprint = (
+        ";".join(
+            f"{name}:{','.join(sorted(types))}"
+            for name, types in sorted(staffable_map.items())
+        )
+        + "|"
+        + ",".join(sorted(money_effects))
     )
 
     def _compute() -> List[Dict]:
@@ -542,10 +673,12 @@ def _extract_ai_guard_data(
                 pos = fend
                 continue
 
-            cm = _COST_LINE_RE.search(_top_level_text(fbody))
-            sf = _SEARCH_FILTERS_RE.search(fbody)
+            sf = _top_level_search_filters(fbody)
 
             buildings: Set[str] = set()
+            spend = 0.0
+            has_cost = False
+            unknown_cost = False
             rpos = fm.start()
             while True:
                 rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
@@ -581,6 +714,10 @@ def _extract_ai_guard_data(
                             if t in _STAFFABLE_TRIGGERS
                         )
                     bpos = bend
+                s, hc, u = _body_money_cost(rbody, money_effects)
+                spend += s
+                has_cost = has_cost or hc
+                unknown_cost = unknown_cost or u
                 rpos = rend
 
             guards: Set[str] = set()
@@ -620,10 +757,12 @@ def _extract_ai_guard_data(
                     "id": idm.group(1),
                     "file": filepath,
                     "line": _line_of(text, fm.start()),
-                    "cost": _resolve_cost(cm.group(1) if cm else None, constants),
-                    "filters": set(sf.group(1).split()) if sf else set(),
+                    "filters": sf,
                     "buildings": buildings,
                     "guards": guards,
+                    "spend": spend,
+                    "has_cost": has_cost,
+                    "unknown": unknown_cost,
                 }
             )
             pos = fend
@@ -631,10 +770,51 @@ def _extract_ai_guard_data(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.ai_guards.v3",
+        "focus_tree.ai_guards.v5",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
+    )
+
+
+def _extract_focus_search_filters(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: focus blocks that omit a top-level search_filters block.
+
+    The focus standard is checked on the focus block itself and not inside
+    nested reward blocks.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[Tuple[str, str, int]]:
+        out: List[Tuple[str, str, int]] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            if not idm:
+                pos = fend
+                continue
+            if not _top_level_search_filters(fbody):
+                out.append((idm.group(1), filepath, _line_of(text, fm.start())))
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.search_filters.v1", filepath, text, _compute
     )
 
 
@@ -1223,7 +1403,39 @@ class Validator(BaseValidator):
         )
 
     # -----------------------------------------------------------------------
-    # Check 5b: ai_will_do staffing / bankruptcy guards
+    # Check 5b: Missing search_filters in focus blocks
+    # -----------------------------------------------------------------------
+
+    def validate_missing_search_filters(self):
+        self._log_section("Checking for focus blocks missing search_filters...")
+
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        missing_lists = self._pool_map(
+            _extract_focus_search_filters,
+            [(f, self.mod_path) for f in files],
+            chunksize=10,
+        )
+
+        results = []
+        for sub in missing_lists:
+            for focus_id, fp, line in sub:
+                if not self._is_reportable(fp):
+                    continue
+                rel = os.path.relpath(fp, self.mod_path)
+                results.append(
+                    (f"Focus '{focus_id}' missing search_filters", rel, line)
+                )
+
+        self._report(
+            results,
+            "No focus blocks are missing search_filters",
+            "Focuses missing search_filters:",
+            Severity.WARNING,
+            category="missing-search-filters",
+        )
+
+    # -----------------------------------------------------------------------
+    # Check 5c: ai_will_do staffing / bankruptcy guards
     # -----------------------------------------------------------------------
 
     def _staffable_effect_map(self) -> Dict[str, FrozenSet[str]]:
@@ -1310,18 +1522,78 @@ class Validator(BaseValidator):
                     changed = True
         return mapping
 
+    def _money_cost_effect_names(self) -> FrozenSet[str]:
+        """Scripted-effect names that (transitively) reduce the treasury or
+        raise debt, so a focus reward calling one counts as spending money.
+
+        Mirrors _staffable_effect_map: each effect's own body is scanned with
+        _body_money_cost, then call chains are resolved to a fixed point so a
+        money-spending wrapper of any depth stays visible. A computed
+        (non-literal) treasury_change is treated as a cost even though its sign
+        is unknown, so a handful of computed-income effects may be included.
+        """
+        fx_files = self._collect_files(
+            ["common/scripted_effects/*.txt"], ignore_staged=True
+        )
+        direct: Set[str] = set()
+        effect_bodies: Dict[str, str] = {}
+        for fp in fx_files:
+            try:
+                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                    text = strip_comments(fh.read())
+            except Exception:
+                continue
+
+            def _compute(text=text) -> List[str]:
+                found: List[str] = []
+                for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                    body, _ = _extract_block(text, m.start())
+                    if body and _body_money_cost(body, frozenset())[1]:
+                        found.append(m.group(1))
+                return found
+
+            direct.update(
+                disk_cache.per_file_cached_by_content(
+                    self.mod_path, "focus_tree.money_fx", fp, text, _compute
+                )
+            )
+            for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                body, _ = _extract_block(text, m.start())
+                if body:
+                    effect_bodies[m.group(1)] = body
+
+        known_effects = set(effect_bodies)
+        calls = {
+            name: set(_REWARD_KEY_RE.findall(body)) & known_effects
+            for name, body in effect_bodies.items()
+        }
+        money = set(direct)
+        changed = True
+        while changed:
+            changed = False
+            for name, dependencies in calls.items():
+                if name not in money and dependencies & money:
+                    money.add(name)
+                    changed = True
+        return frozenset(money)
+
     def validate_ai_will_do_guards(self):
-        """Flag focuses missing the ai_will_do factor = 0 guards the AI needs.
+        """Flag focuses missing (or carrying an unneeded) ai_will_do guard.
 
         can_staff (issue #2233): a focus whose reward builds a staffable
         building — directly or via a scripted effect — needs the matching
         can_staff_an_* = no modifier so the AI skips it with no free workers.
-        Bankruptcy: high-cost focuses need a
-        has_active_mission = bankruptcy_incoming_collapse modifier; reported
-        as a per-file aggregate so the pre-existing backlog stays readable.
-        Builder-effect chains are resolved to a fixed point so a wrapper of
-        any depth remains visible; guards written via wrapper scripted
-        triggers are not recognized.
+        Bankruptcy: a focus whose reward spends money needs a
+        has_active_mission = bankruptcy_incoming_collapse modifier. Spend is
+        the money the reward actually costs (summed negative treasury_change,
+        or a money-spending scripted effect), not the focus completion time —
+        so a focus spending at least the threshold without the guard is
+        flagged, a focus carrying the guard with no money cost is flagged as
+        unneeded, and a money/building focus tagged neither economic nor
+        military is flagged as miscategorized. Effect chains are resolved to a
+        fixed point so a wrapper of any depth stays visible; guards written via
+        wrapper scripted triggers are not recognized. All are per-file
+        aggregates so the backlog stays readable.
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 
@@ -1332,15 +1604,21 @@ class Validator(BaseValidator):
                 "can_staff detection limited to direct add_building_construction",
                 "warning",
             )
+        money_effects = self._money_cost_effect_names()
         files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
         data_lists = self._pool_map(
             _extract_ai_guard_data,
-            [(f, self.mod_path, staffable) for f in files],
+            [(f, self.mod_path, staffable, money_effects) for f in files],
             chunksize=10,
         )
 
         staff_results = []
-        bankruptcy_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+        underguarded_by_file: Dict[str, List[Tuple[str, int, float]]] = defaultdict(
+            list
+        )
+        unknown_spend_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+        unneeded_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+        miscategorized_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
         for sub in data_lists:
             for d in sub:
                 if not self._is_reportable(d["file"]):
@@ -1366,17 +1644,31 @@ class Validator(BaseValidator):
                         )
                     )
 
-                if d["cost"] is not None:
-                    threshold = (
-                        _BANKRUPTCY_COST_STRICT
-                        if d["filters"] & _MIL_ECON_RESEARCH_FILTERS
-                        else _BANKRUPTCY_COST_DEFAULT
-                    )
-                    if (
-                        d["cost"] >= threshold
-                        and "bankruptcy_incoming_collapse" not in d["guards"]
-                    ):
-                        bankruptcy_by_file[rel].append((d["id"], d["line"]))
+                has_guard = "bankruptcy_incoming_collapse" in d["guards"]
+                if not has_guard:
+                    if d["spend"] >= _MONEY_SPEND_THRESHOLD:
+                        underguarded_by_file[rel].append(
+                            (d["id"], d["line"], d["spend"])
+                        )
+                    elif d["unknown"]:
+                        unknown_spend_by_file[rel].append((d["id"], d["line"]))
+                elif not d["has_cost"]:
+                    unneeded_by_file[rel].append((d["id"], d["line"]))
+
+                if (
+                    d["filters"]
+                    and (d["buildings"] or d["spend"] >= _MONEY_SPEND_THRESHOLD)
+                    and not (d["filters"] & _MIL_ECON_RESEARCH_FILTERS)
+                ):
+                    miscategorized_by_file[rel].append((d["id"], d["line"]))
+
+        def _aggregate(by_file: Dict[str, List[Tuple]], noun: str) -> List[Tuple]:
+            rows = []
+            for rel, hits in sorted(by_file.items()):
+                examples = ", ".join(f"{h[0]} (line {h[1]})" for h in hits[:3])
+                more = f" and {len(hits) - 3} more" if len(hits) > 3 else ""
+                rows.append((f"{len(hits)} {noun}: {examples}{more}", rel, hits[0][1]))
+            return rows
 
         self._report(
             staff_results,
@@ -1385,26 +1677,48 @@ class Validator(BaseValidator):
             Severity.WARNING,
             category="missing-can-staff-guard",
         )
-
-        bankruptcy_results = []
-        for rel, hits in sorted(bankruptcy_by_file.items()):
-            examples = ", ".join(f"{fid} (line {line})" for fid, line in hits[:3])
-            more = f" and {len(hits) - 3} more" if len(hits) > 3 else ""
-            bankruptcy_results.append(
-                (
-                    f"{len(hits)} high-cost focus(es) without the"
-                    f" bankruptcy_incoming_collapse ai_will_do guard:"
-                    f" {examples}{more}",
-                    rel,
-                    hits[0][1],
-                )
-            )
         self._report(
-            bankruptcy_results,
-            "All high-cost focuses carry the bankruptcy ai_will_do guard",
-            "Files with high-cost focuses missing the bankruptcy guard:",
+            _aggregate(
+                underguarded_by_file,
+                f"focus(es) spending >= {_MONEY_SPEND_THRESHOLD:g}bn without the"
+                " bankruptcy guard",
+            ),
+            "All money-spending focuses carry the bankruptcy ai_will_do guard",
+            "Files with high-spend focuses missing the bankruptcy guard:",
             Severity.WARNING,
             category="missing-bankruptcy-guard",
+        )
+        self._report(
+            _aggregate(
+                unknown_spend_by_file,
+                "focus(es) spending money via a scripted effect (amount unknown)"
+                " without the bankruptcy guard",
+            ),
+            "No focuses spend via scripted effects without a bankruptcy guard",
+            "Files with scripted-spend focuses missing the bankruptcy guard (verify):",
+            Severity.WARNING,
+            category="missing-bankruptcy-guard-scripted",
+        )
+        self._report(
+            _aggregate(
+                unneeded_by_file,
+                "focus(es) with a bankruptcy guard but no money cost (guard unneeded)",
+            ),
+            "No focuses carry an unneeded bankruptcy guard",
+            "Files with an unneeded bankruptcy guard (no treasury cost):",
+            Severity.WARNING,
+            category="unneeded-bankruptcy-guard",
+        )
+        self._report(
+            _aggregate(
+                miscategorized_by_file,
+                "money/building focus(es) tagged neither economic nor military"
+                " (search_filter mismatch)",
+            ),
+            "All money/building focuses carry an economic/military search filter",
+            "Files with money/building focuses lacking an economic/military filter:",
+            Severity.WARNING,
+            category="focus-filter-mismatch",
         )
 
     def _notification_event_ids(self) -> FrozenSet[str]:
@@ -1725,6 +2039,7 @@ class Validator(BaseValidator):
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
         self.validate_tech_bonus_names()
+        self.validate_missing_search_filters()
         self.validate_ai_will_do_guards()
         self.validate_cross_country_event_tooltips()
         self.validate_pp_malus_in_rewards()
