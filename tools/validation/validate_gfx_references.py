@@ -588,11 +588,11 @@ class Validator(BaseValidator):
         # .gui refs are gathered full-repo (ignore_staged) to build the override
         # index below, so under --staged the reported entries must be re-scoped to
         # the staged files or the whole repo's ~50 .gui errors would surface.
-        staged_rel = (
-            {os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])}
-            if self.staged_only
-            else None
-        )
+        staged_rel: Set[str] = set()
+        if self.staged_only:
+            staged_rel = {
+                os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])
+            }
         # Vanilla .gui files ship dead sprite refs of their own; an MD-authored
         # nation variant (`<vanilla_stem>_<tag>.gui`) inheriting the same ref is
         # vanilla's bug, not the mod's — downgrade to WARNING. Keyed per vanilla
@@ -620,7 +620,7 @@ class Validator(BaseValidator):
             if not self._vanilla_defs_loaded and _is_likely_vanilla(sprite):
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
-            if staged_rel is not None and rel not in staged_rel:
+            if self.staged_only and rel not in staged_rel:
                 continue
             key = (sprite, rel, line)
             if key in seen:
