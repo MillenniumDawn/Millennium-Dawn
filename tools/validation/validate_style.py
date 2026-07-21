@@ -442,11 +442,7 @@ class Validator(BaseValidator):
         )
 
         self._log_section("Focus Standards (WARNING)")
-        focus_warnings = [
-            r
-            for r in warning_results
-            if "focus" in r[0].lower() or "search_filters" in r[0].lower()
-        ]
+        focus_warnings = [r for r in warning_results if "focus" in r[0].lower()]
         self._report(
             focus_warnings,
             "Focus standards OK",
