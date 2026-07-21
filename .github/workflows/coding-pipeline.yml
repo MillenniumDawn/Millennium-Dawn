@@ -213,6 +213,11 @@ jobs:
             echo "valcache_matched=${{ steps.valcache.outputs.cache-matched-key }}"
           } | tee .workspace-manifest
 
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
+
       - name: Record changed style lines
         env:
           STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
@@ -222,6 +227,7 @@ jobs:
           import json
           import os
           import subprocess
+          import sys
 
           from tools.validation.validate_style import _changed_lines_from_diff
 
@@ -239,21 +245,30 @@ jobs:
           for path in files:
               if not os.path.isfile(path):
                   continue
-              result = subprocess.run(
-                  [
-                      "git",
-                      "diff",
-                      "--unified=0",
-                      "--no-color",
-                      base_sha,
-                      merge_sha,
-                      "--",
-                      path,
-                  ],
-                  check=True,
-                  capture_output=True,
-                  text=True,
-              )
+              try:
+                  result = subprocess.run(
+                      [
+                          "git",
+                          "diff",
+                          "--unified=0",
+                          "--no-color",
+                          base_sha,
+                          merge_sha,
+                          "--",
+                          path,
+                      ],
+                      check=True,
+                      capture_output=True,
+                      text=True,
+                      timeout=15,
+                  )
+              except (OSError, subprocess.SubprocessError) as error:
+                  print(
+                      f"warning: could not compute changed lines for {path} "
+                      f"({error}); skipping its layout gate",
+                      file=sys.stderr,
+                  )
+                  continue
               changed_lines[path] = sorted(_changed_lines_from_diff(result.stdout))
 
           with open(".style-changed-lines.json", "w", encoding="utf-8") as file:

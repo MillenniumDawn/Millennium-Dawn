@@ -1,4 +1,5 @@
 import json
+import subprocess
 
 import pytest
 import validate_style
@@ -53,6 +54,15 @@ def test_four_space_indentation_is_changed_line_gated():
 
     assert any(finding.category == "layout-indentation" for finding in findings)
     assert not any(finding.category == "indent-brackets" for finding in findings)
+
+
+def test_layout_rejects_space_indentation_at_top_level():
+    findings = _errors("root = {\n\tvalue = yes\n}\n    stray = yes\n")
+
+    assert any(
+        finding.category == "layout-indentation" and finding.line == 4
+        for finding in findings
+    )
 
 
 def test_layout_rejects_doubled_token_spacing():
@@ -287,6 +297,55 @@ def test_staged_scan_reports_layout_only_on_changed_lines(
     assert validator.errors_found == expected_errors
 
 
+def test_staged_scan_keeps_missing_separator_when_focus_inserted_before_existing(
+    tmp_path, monkeypatch
+):
+    # A focus inserted before an existing one, with no blank line separating
+    # them, must still be caught when the changed-line set covers only the
+    # inserted focus — the existing focus's first line did not move in the diff.
+    content_dir = tmp_path / "common" / "national_focus"
+    content_dir.mkdir(parents=True)
+    path = content_dir / "test.txt"
+    new_focus = _focus_block("AAA_new")
+    text = "focus_tree = {\n" + new_focus + _focus_block("AAA_existing") + "}\n"
+    path.write_text(text)
+    changed_lines = set(range(2, 2 + new_focus.count("\n")))
+
+    validator = Validator(
+        str(tmp_path), use_colors=False, no_cache=True, staged_only=True
+    )
+    validator.staged_files = [str(path)]
+    monkeypatch.setattr(
+        validate_style,
+        "_staged_changed_lines",
+        lambda _mod_path, _rel_path: changed_lines,
+    )
+
+    validator.run_all_validations()
+
+    assert validator.errors_found == 1
+
+
+def test_staged_scan_keeps_non_layout_findings_on_unchanged_lines(
+    tmp_path, monkeypatch
+):
+    content_dir = tmp_path / "common" / "scripted_effects"
+    content_dir.mkdir(parents=True)
+    path = content_dir / "test.txt"
+    path.write_text("root = {\n\tvalue = yes\n")
+    validator = Validator(
+        str(tmp_path), use_colors=False, no_cache=True, staged_only=True
+    )
+    validator.staged_files = [str(path)]
+    monkeypatch.setattr(
+        validate_style, "_staged_changed_lines", lambda _mod_path, _rel_path: set()
+    )
+
+    validator.run_all_validations()
+
+    assert validator.errors_found == 1
+
+
 def test_staged_changed_lines_reads_ci_sidecar(tmp_path, monkeypatch):
     sidecar = tmp_path / ".style-changed-lines.json"
     sidecar.write_text(
@@ -309,3 +368,57 @@ def test_staged_changed_lines_rejects_missing_ci_metadata(tmp_path, monkeypatch)
         validate_style._staged_changed_lines(
             str(tmp_path), "common/scripted_effects/test.txt"
         )
+
+
+def _run_git(args, cwd):
+    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True)
+
+
+def test_staged_changed_lines_git_fallback_uses_one_subprocess_call(
+    tmp_path, monkeypatch
+):
+    # Without the CI sidecar, N staged files must cost one git subprocess call,
+    # not N — this is the local/pre-commit path every `git commit` pays.
+    monkeypatch.delenv("MD_STAGED_CHANGED_LINES_FILE", raising=False)
+    monkeypatch.setattr(validate_style, "_staged_bulk_changed_lines_cache", {})
+    content_dir = tmp_path / "common" / "scripted_effects"
+    content_dir.mkdir(parents=True)
+    path_a = content_dir / "a.txt"
+    path_b = content_dir / "b.txt"
+    path_a.write_text("root = {\n\tvalue = yes\n\tother = yes\n}\n")
+    path_b.write_text("root = {\n\tvalue = yes\n\tother = yes\n}\n")
+
+    _run_git(["init", "-q"], tmp_path)
+    _run_git(["config", "user.email", "test@example.com"], tmp_path)
+    _run_git(["config", "user.name", "Test"], tmp_path)
+    _run_git(["add", "-A"], tmp_path)
+    _run_git(["commit", "-q", "-m", "init"], tmp_path)
+
+    path_a.write_text("root = {\n\tvalue = no\n\tother = yes\n}\n")
+    path_b.write_text("root = {\n\tvalue = yes\n\tother = no\n}\n")
+    _run_git(["add", "-A"], tmp_path)
+    monkeypatch.setenv(
+        "MD_STAGED_FILES",
+        "common/scripted_effects/a.txt\ncommon/scripted_effects/b.txt",
+    )
+
+    call_count = 0
+    real_run = subprocess.run
+
+    def _counting_run(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        return real_run(*args, **kwargs)
+
+    monkeypatch.setattr(validate_style.subprocess, "run", _counting_run)
+
+    lines_a = validate_style._staged_changed_lines(
+        str(tmp_path), "common/scripted_effects/a.txt"
+    )
+    lines_b = validate_style._staged_changed_lines(
+        str(tmp_path), "common/scripted_effects/b.txt"
+    )
+
+    assert lines_a == {2}
+    assert lines_b == {3}
+    assert call_count == 1
