@@ -298,11 +298,20 @@ class MIOStandardizer(BaseStandardizer):
         self, block_lines: List[str], key: str, indent: str
     ) -> List[str]:
         """Format `key = { tokens }` as single-line for 1 token, multi-line for 2+.
-        Falls back to compact_block if the block contains comments (to preserve them).
+        Falls back to compact_block if the block contains comments (to preserve them),
+        or collapse_or_compact if the block wraps a nested block (e.g.
+        `parent = { traits = { ... } }`) whose inner `{`/`}`/`=` must not be
+        flattened into stray tokens.
         """
         for line in block_lines:
             if line.strip().startswith("#"):
                 return compact_block(block_lines)
+
+        full = " ".join(l.strip() for l in block_lines if l.strip())
+        if "{" in full and "}" in full:
+            inner = full.split("{", 1)[1].rsplit("}", 1)[0].strip()
+            if "{" in inner or "}" in inner:
+                return collapse_or_compact(block_lines, indent)
 
         content_tokens = []
         for line in block_lines:
