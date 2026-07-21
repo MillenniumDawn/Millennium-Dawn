@@ -324,22 +324,49 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: gulf.16.a executed"
 		if = {
 			limit = { tag = USA }
-			every_country = {
-				limit = {
-					OR = {
-						has_idea = NATO_member
-						tag = ISR
-						if = {
-							limit = { NOT = { SYR = { has_idea = LoAS_member } } }
-							has_idea = LoAS_member
-						}
+			for_each_scope_loop = {
+				array = global.nato_members
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = { tag = ISR }
+						NOT = { tag = SYR }
+						NOT = { tag = FSA }
+						NOT = { has_country_flag = received_assad_coalition_proposal }
+						NOT = { has_country_flag = proposed_coalition_against_assad }
 					}
-					NOT = { tag = SYR }
-					NOT = { tag = FSA }
-					NOT = { has_country_flag = received_assad_coalition_proposal }
-					NOT = { has_country_flag = proposed_coalition_against_assad }
+					country_event = gulf.16
 				}
-				country_event = gulf.16
+			}
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = { has_idea = NATO_member }
+						NOT = { tag = ISR }
+						NOT = { SYR = { has_idea = LoAS_member } }
+						NOT = { tag = SYR }
+						NOT = { tag = FSA }
+						NOT = { has_country_flag = received_assad_coalition_proposal }
+						NOT = { has_country_flag = proposed_coalition_against_assad }
+					}
+					country_event = gulf.16
+				}
+			}
+			if = {
+				limit = {
+					country_exists = ISR
+					ISR = {
+						NOT = { tag = SYR }
+						NOT = { tag = FSA }
+						NOT = { has_country_flag = received_assad_coalition_proposal }
+						NOT = { has_country_flag = proposed_coalition_against_assad }
+					}
+				}
+				ISR = {
+					country_event = gulf.16
+				}
 			}
 			if = {
 				limit = { threat < 0.1 }
@@ -699,8 +726,10 @@ country_event = {
 		text = gulf.22.d3
 		trigger = {
 			NOT = {
-				original_tag = USA
-				original_tag = ISR
+				OR = {
+					original_tag = USA
+					original_tag = ISR
+				}
 			}
 		}
 	}
@@ -827,9 +856,13 @@ country_event = {
 		FROM = {
 			country_event = { days = 1 id = gulf.25 }
 		}
-		every_other_country = {
-			limit = { has_idea = NATO_member }
-			country_event = { days = 1 id = gulf.22 }
+		for_each_scope_loop = {
+			array = global.nato_members
+			tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				country_event = { days = 1 id = gulf.22 }
+			}
 		}
 		ai_chance = {
 			factor = 1
@@ -1241,18 +1274,53 @@ country_event = {
 					}
 				}
 			}
+			for_each_scope_loop = {
+				array = global.nato_members
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = {
+							OR = {
+								has_war_with = PER
+								is_subject_of = PER
+							}
+						}
+						NOT = { tag = USA }
+						NOT = { original_tag = ISR }
+						NOT = { has_country_flag = proposed_coalition_against_iran }
+					}
+					country_event = gulf.30
+				}
+			}
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = {
+							OR = {
+								has_war_with = PER
+								is_subject_of = PER
+							}
+						}
+						NOT = { tag = USA }
+						NOT = { has_idea = NATO_member }
+						NOT = { original_tag = ISR }
+						NOT = { has_country_flag = proposed_coalition_against_iran }
+					}
+					country_event = gulf.30
+				}
+			}
 			every_country = {
 				limit = {
+					original_tag = ISR
 					NOT = {
-						has_war_with = PER
-						is_subject_of = PER
+						OR = {
+							has_war_with = PER
+							is_subject_of = PER
+						}
 					}
 					NOT = { tag = USA }
-					OR = {
-						has_idea = NATO_member
-						original_tag = ISR
-						has_idea = LoAS_member
-					}
 					NOT = { has_country_flag = proposed_coalition_against_iran }
 				}
 				country_event = gulf.30
@@ -1296,7 +1364,7 @@ country_event = {
 		}
 	}
 	option = {
-		trigger = { NOT = { is_arabic_nation = yes } }
+		trigger = { NOT = { has_country_flag = arabic_nation_flag } }
 		name = gulf.30.b #Middle Eastern politics is none of our business.
 		log = "[GetDateText]: [This.GetName]: gulf.30.b executed"
 		if = {
@@ -1331,7 +1399,7 @@ country_event = {
 		}
 	}
 	option = {
-		trigger = { is_arabic_nation = yes }
+		trigger = { has_country_flag = arabic_nation_flag }
 		name = gulf.30.c #We have nothing to gain from [FROM.GetAdjective] adventurism.
 		log = "[GetDateText]: [This.GetName]: gulf.30.c executed"
 		ai_chance = {
@@ -1446,15 +1514,25 @@ country_event = {
 			type = topple_government
 			target = PER
 		}
-		every_country = {
-			limit = {
-				OR = {
-					tag = ISR
-					has_idea = LoAS_member
+		for_each_scope_loop = {
+			array = global.arab_league_members
+			tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
+			if = {
+				limit = {
+					NOT = { tag = ISR }
+					NOT = { has_country_flag = proposed_coalition_against_iran }
 				}
-				NOT = { has_country_flag = proposed_coalition_against_iran }
+				country_event = gulf.30
 			}
-			country_event = gulf.30
+		}
+		if = {
+			limit = {
+				country_exists = ISR
+				ISR = { NOT = { has_country_flag = proposed_coalition_against_iran } }
+			}
+			ISR = {
+				country_event = gulf.30
+			}
 		}
 		news_event = { days = 2 id = gulf.32 }
 	}
@@ -1542,7 +1620,7 @@ country_event = {
 		every_country = {
 			limit = {
 				has_military_access_to = ROOT
-				NOT = { is_arabic_nation = yes }
+				NOT = { has_country_flag = arabic_nation_flag }
 			}
 			diplomatic_relation = {
 				country = ROOT
@@ -1562,8 +1640,10 @@ country_event = {
 			modifier = {
 				add = 1
 				NOT = {
-					has_government = democratic
-					has_government = communism
+					OR = {
+						has_government = democratic
+						has_government = communism
+					}
 				}
 			}
 		}
@@ -2186,10 +2266,12 @@ country_event = {
 
 	option = {
 		name = gcc.11.a
-		every_other_country = {
-			limit = { has_idea = idea_gcc_member_state }
-			PREV = {
-				give_guarantee = PREV
+		for_each_scope_loop = {
+			array = global.gcc_member_state
+			tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				ROOT = { give_guarantee = PREV }
 			}
 		}
 		if = {
@@ -2727,12 +2809,16 @@ country_event = {
 	option = {
 		name = gcc.18.b #veto the expulsion
 		log = "[GetDateText]: [This.GetName]: gcc.18.b executed"
-		every_other_country = {
-			limit = {
-				has_idea = idea_gcc_member_state
-				NOT = { has_country_flag = being_expelled }
+		for_each_scope_loop = {
+			array = global.gcc_member_state
+			tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+			if = {
+				limit = {
+					NOT = { tag = ROOT }
+					NOT = { has_country_flag = being_expelled }
+				}
+				country_event = { days = 1 id = gcc.19 }
 			}
-			country_event = { days = 1 id = gcc.19 }
 		}
 		ai_chance = {
 			factor = 1
@@ -2939,8 +3025,8 @@ news_event = {
 					joint_gcc_ventures
 				}
 				remove_from_faction = THIS
-				every_country = {
-					limit = { has_idea = idea_gcc_member_state }
+				for_each_scope_loop = {
+					array = global.gcc_member_state
 					remove_opinion_modifier = {
 						target = ROOT
 						modifier = Gulf_Cooperation_Council_Relations
@@ -3636,8 +3722,9 @@ country_event = {
 				}
 			}
 		}
-		every_country = {
-			limit = { has_idea = idea_gcc_member_state }
+		for_each_scope_loop = {
+			array = global.gcc_member_state
+			tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
 			news_event = { days = 1 id = gcc.23 }
 		}
 		ai_chance = {
@@ -4502,28 +4589,84 @@ country_event = {
 	option = {
 		name = saudi_royal.5.c #Do nothing.
 		log = "[GetDateText]: [This.GetName]: saudi_royal.5.c executed"
-		every_other_country = {
-			limit = {
-				OR = {
-					has_idea = NATO_member
-					tag = AUS
-					tag = SWE
-				}
-				if = {
-					limit = {
-						USA = {
-							has_country_leader = {
-								name = "Donald Trump"
-								ruling_only = yes
-							}
+		for_each_scope_loop = {
+			array = global.nato_members
+			tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			if = {
+				limit = {
+					NOT = { tag = ROOT }
+					NOT = {
+						OR = {
+							tag = AUS
+							tag = SWE
 						}
 					}
-					NOT = { tag = USA }
+					if = {
+						limit = {
+							USA = {
+								has_country_leader = {
+									name = "Donald Trump"
+									ruling_only = yes
+								}
+							}
+						}
+						NOT = { tag = USA }
+					}
+				}
+				add_opinion_modifier = {
+					target = SAU
+					modifier = khashoggi_affair
 				}
 			}
-			add_opinion_modifier = {
-				target = SAU
-				modifier = khashoggi_affair
+		}
+		if = {
+			limit = { country_exists = AUS }
+			AUS = {
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+						if = {
+							limit = {
+								USA = {
+									has_country_leader = {
+										name = "Donald Trump"
+										ruling_only = yes
+									}
+								}
+							}
+							NOT = { tag = USA }
+						}
+					}
+					add_opinion_modifier = {
+						target = SAU
+						modifier = khashoggi_affair
+					}
+				}
+			}
+		}
+		if = {
+			limit = { country_exists = SWE }
+			SWE = {
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+						if = {
+							limit = {
+								USA = {
+									has_country_leader = {
+										name = "Donald Trump"
+										ruling_only = yes
+									}
+								}
+							}
+							NOT = { tag = USA }
+						}
+					}
+					add_opinion_modifier = {
+						target = SAU
+						modifier = khashoggi_affair
+					}
+				}
 			}
 		}
 		custom_effect_tooltip = MBS_strengthened_tt
