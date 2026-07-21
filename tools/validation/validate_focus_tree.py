@@ -176,6 +176,28 @@ def _top_level_text(body: str) -> str:
     return "".join(out)
 
 
+def _top_level_search_filters(body: str) -> Set[str]:
+    """Extract top-level search filter tokens from a focus block."""
+    depth = 0
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if ch == "{":
+            depth += 1
+            i += 1
+            continue
+        if ch == "}":
+            depth = max(0, depth - 1)
+            i += 1
+            continue
+        if depth == 0:
+            m = _SEARCH_FILTERS_RE.match(body, i)
+            if m:
+                return set(m.group(1).split())
+        i += 1
+    return set()
+
+
 def _resolve_cost(token: Optional[str], constants: Dict[str, float]) -> Optional[float]:
     if token is None:
         return None
@@ -543,7 +565,7 @@ def _extract_ai_guard_data(
                 continue
 
             cm = _COST_LINE_RE.search(_top_level_text(fbody))
-            sf = _SEARCH_FILTERS_RE.search(fbody)
+            sf = _top_level_search_filters(fbody)
 
             buildings: Set[str] = set()
             rpos = fm.start()
@@ -621,7 +643,7 @@ def _extract_ai_guard_data(
                     "file": filepath,
                     "line": _line_of(text, fm.start()),
                     "cost": _resolve_cost(cm.group(1) if cm else None, constants),
-                    "filters": set(sf.group(1).split()) if sf else set(),
+                    "filters": sf,
                     "buildings": buildings,
                     "guards": guards,
                 }
@@ -635,6 +657,47 @@ def _extract_ai_guard_data(
         filepath,
         text + "\x00" + fingerprint,
         _compute,
+    )
+
+
+def _extract_focus_search_filters(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: focus blocks that omit a top-level search_filters block.
+
+    The focus standard is checked on the focus block itself and not inside
+    nested reward blocks.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except Exception:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[Tuple[str, str, int]]:
+        out: List[Tuple[str, str, int]] = []
+        pos = 0
+        while True:
+            fm = _FOCUS_BLOCK_START.search(text, pos)
+            if not fm:
+                break
+            fbody, fend = _extract_block(text, fm.start())
+            if not fbody:
+                pos = fm.end()
+                continue
+            idm = _ID_LINE_RE.search(fbody)
+            if not idm:
+                pos = fend
+                continue
+            if not _top_level_search_filters(fbody):
+                out.append((idm.group(1), filepath, _line_of(text, fm.start())))
+            pos = fend
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.search_filters.v1", filepath, text, _compute
     )
 
 
@@ -1223,7 +1286,39 @@ class Validator(BaseValidator):
         )
 
     # -----------------------------------------------------------------------
-    # Check 5b: ai_will_do staffing / bankruptcy guards
+    # Check 5b: Missing search_filters in focus blocks
+    # -----------------------------------------------------------------------
+
+    def validate_missing_search_filters(self):
+        self._log_section("Checking for focus blocks missing search_filters...")
+
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        missing_lists = self._pool_map(
+            _extract_focus_search_filters,
+            [(f, self.mod_path) for f in files],
+            chunksize=10,
+        )
+
+        results = []
+        for sub in missing_lists:
+            for focus_id, fp, line in sub:
+                if not self._is_reportable(fp):
+                    continue
+                rel = os.path.relpath(fp, self.mod_path)
+                results.append(
+                    (f"Focus '{focus_id}' missing search_filters", rel, line)
+                )
+
+        self._report(
+            results,
+            "No focus blocks are missing search_filters",
+            "Focuses missing search_filters:",
+            Severity.WARNING,
+            category="missing-search-filters",
+        )
+
+    # -----------------------------------------------------------------------
+    # Check 5c: ai_will_do staffing / bankruptcy guards
     # -----------------------------------------------------------------------
 
     def _staffable_effect_map(self) -> Dict[str, FrozenSet[str]]:
@@ -1725,6 +1820,7 @@ class Validator(BaseValidator):
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
         self.validate_tech_bonus_names()
+        self.validate_missing_search_filters()
         self.validate_ai_will_do_guards()
         self.validate_cross_country_event_tooltips()
         self.validate_pp_malus_in_rewards()
