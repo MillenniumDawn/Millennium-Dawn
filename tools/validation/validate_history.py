@@ -43,7 +43,9 @@ _MODULES_BLOCK_RE = re.compile(r"\bmodules\s*=\s*\{")
 _MODULE_ENTRY_RE = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)")
 _STATE_OWNER_RE = re.compile(r"^\s*owner\s*=\s*(\S+)")
 _OOB_REF_RE = re.compile(r'(oob|set_oob|set_air_oob|set_naval_oob)\s*=\s*"([^"]+)"')
-_CAPITAL_RE = re.compile(r"^capital\s*=\s*\d+", re.MULTILINE)
+# Anchored to line start (indent-tolerant for DLC-guarded blocks) so a
+# `capital = N` inside a quoted string mid-line can't count as a real capital.
+_CAPITAL_RE = re.compile(r"^\s*capital\s*=\s*\d+", re.MULTILINE)
 # `complete_special_project = sp:sp_X` lines grant a country the special project
 # at game start. Used to detect techs whose `allow` block requires an SP the
 # country has not completed.
@@ -1348,7 +1350,7 @@ def validate_capital_defined(filepath: str) -> List[str]:
     except Exception:
         return [f"{filename}: could not read file"]
 
-    if not _CAPITAL_RE.search(content):
+    if not _CAPITAL_RE.search(strip_comments(content)):
         return [f"{filename}: no capital defined"]
     return []
 

@@ -8,9 +8,13 @@ adapted for Millennium Dawn with multiprocessing.
 import glob
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import blank_quoted_strings
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -44,22 +48,6 @@ _BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
 _SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
 
 
-def _scan_activations_in_file(filename: str) -> Tuple[set, set]:
-    if _should_skip(filename):
-        return set(), set()
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=False, strip_comments_flag=True
-    )
-    decisions: set = set()
-    missions: set = set()
-    if "activate_targeted_decision" in text_file:
-        for block in _TARGETED_BLOCK_RE.findall(text_file):
-            decisions.update(_DECISION_NAME_RE.findall(block))
-    if "activate_mission" in text_file:
-        missions.update(_MISSION_NAME_RE.findall(text_file))
-    return decisions, missions
-
-
 # --- Decision parsing helpers ---
 
 _REMOVE_DECISION_RE = re.compile(r"\bremove_decision\s*=\s*(\w+)")
@@ -69,18 +57,30 @@ _REMOVE_TARGETED_BLOCK_RE = re.compile(
 _REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\w+)")
 
 
-def _scan_external_removals(filename: str) -> set:
+def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set]:
+    """Single-read worker: (activated_decisions, activated_missions, removed).
+
+    Combines the activation and external-removal scans so the full-repo .txt
+    sweep reads each file once instead of twice.
+    """
     if _should_skip(filename):
-        return set()
+        return set(), set(), set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
-    if "remove_decision" not in text_file:
-        return set()
-    out = set(_REMOVE_DECISION_RE.findall(text_file))
-    for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
-        out.update(_REMOVE_DECISION_NAME_RE.findall(block))
-    return out
+    decisions: set = set()
+    missions: set = set()
+    removals: set = set()
+    if "activate_targeted_decision" in text_file:
+        for block in _TARGETED_BLOCK_RE.findall(text_file):
+            decisions.update(_DECISION_NAME_RE.findall(block))
+    if "activate_mission" in text_file:
+        missions.update(_MISSION_NAME_RE.findall(text_file))
+    if "remove_decision" in text_file or "remove_targeted_decision" in text_file:
+        removals.update(_REMOVE_DECISION_RE.findall(text_file))
+        for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
+            removals.update(_REMOVE_DECISION_NAME_RE.findall(block))
+    return decisions, missions, removals
 
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
@@ -102,10 +102,13 @@ _TAG_TOKEN_PATTERN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7
 # Decision-block / category-block parsing patterns (hoisted from cached
 # closures in parse_all_decisions / parse_all_decision_names /
 # parse_decision_categories / parse_categories_with_decisions).
+# The name is confined to its own line (`[^\t#\n]`): allowing newlines let the
+# non-greedy match jump from a stray `\t}` across blank lines into a column-0
+# decision, producing a bogus block with no name line.
 _DECISIONS_BLOCK_RE = re.compile(
-    r"^\t[^\t#]+ = \{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
+    r"^\t[^\t#\n]+?\s*=\s*\{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
 )
-_DECISION_TOKEN_LINE_RE = re.compile(r"^\t(.+) =", flags=re.MULTILINE)
+_DECISION_TOKEN_LINE_RE = re.compile(r"^\t(\S+)\s*=", flags=re.MULTILINE)
 _CATEGORY_BLOCK_RE = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
@@ -442,7 +445,7 @@ class DecisionFactory:
     def __init__(self, dec: str, source_basename: str = "") -> None:
         self.source_basename = source_basename
         self.raw = dec
-        self.token = re.findall(r"^\t*(.+) = \{", dec, flags=re.MULTILINE)[0]
+        self.token = re.findall(r"^\t*(\S+)\s*=\s*\{", dec, flags=re.MULTILINE)[0]
         self.allowed = extract_value_multi_line(dec, "allowed")
         self.available = extract_value_multi_line(dec, "available")
         self.visible = extract_value_multi_line(dec, "visible")
@@ -546,8 +549,14 @@ def parse_all_decisions(
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
-            matches = _DECISIONS_BLOCK_RE.findall(text_file)
-            for match in matches:
+            # Neutralize quoted strings before block-splitting: a literal `}`
+            # inside a `name = "... } ..."` value would otherwise close the
+            # block early and drop every field after it. blank_quoted_strings
+            # preserves length/offsets, so match spans still slice the real
+            # text (quoted fields intact) for downstream extraction.
+            blanked = blank_quoted_strings(text_file)
+            for m in _DECISIONS_BLOCK_RE.finditer(blanked):
+                match = text_file[m.start() : m.end()]
                 decisions.append(match)
                 paths[match] = os.path.basename(filename)
 
@@ -728,8 +737,36 @@ class Validator(BaseValidator):
     def __init__(self, *args, fix: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fix = fix
+        self._activation_removal_cache = None
         if self.no_cache:
             _set_cache_enabled(False)
+
+    def _get_activation_removal_scan(self) -> Tuple[set, set, set]:
+        """Full-repo scan for decision activations and external removals.
+
+        One .txt sweep shared by validate_unused_decisions and
+        validate_orphaned_remove_effect (was two separate full-repo passes).
+        """
+        if self._activation_removal_cache is not None:
+            return self._activation_removal_cache
+        all_files = list(
+            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+        )
+        activated_decisions: set = set()
+        activated_missions: set = set()
+        externally_removed: set = set()
+        for dec_set, mis_set, rem_set in self._pool_map(
+            _scan_activations_and_removals, all_files, chunksize=30
+        ):
+            activated_decisions |= dec_set
+            activated_missions |= mis_set
+            externally_removed |= rem_set
+        self._activation_removal_cache = (
+            activated_decisions,
+            activated_missions,
+            externally_removed,
+        )
+        return self._activation_removal_cache
 
     def _apply_ai_factor_fixes(self, fixes: list):
         """Insert a default ai_will_do = { base = 0 } block into decisions missing one."""
@@ -814,16 +851,7 @@ class Validator(BaseValidator):
         # `activate_targeted_decision = { ... }` block; the bare keyword
         # `decision` appears in unrelated places (on_political_decision hooks etc.)
         # and matching them would hide genuinely unused decisions.
-        all_files = list(
-            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
-        )
-        activated_decisions: set = set()
-        activated_missions: set = set()
-        for dec_set, mis_set in self._pool_map(
-            _scan_activations_in_file, all_files, chunksize=30
-        ):
-            activated_decisions.update(dec_set)
-            activated_missions.update(mis_set)
+        activated_decisions, activated_missions, _ = self._get_activation_removal_scan()
 
         results = sorted(
             (manual_decisions - activated_decisions)
@@ -1854,15 +1882,7 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
 
-        externally_removed: set = set()
-        for found in self._pool_map(
-            _scan_external_removals,
-            list(
-                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
-            ),
-            chunksize=30,
-        ):
-            externally_removed |= found
+        _, _, externally_removed = self._get_activation_removal_scan()
 
         results = []
 
