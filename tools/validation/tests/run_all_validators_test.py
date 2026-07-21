@@ -131,6 +131,65 @@ def test_json_without_output_prints_json_for_findings(tmp_path, monkeypatch, cap
     assert "VALIDATION FAILED" in captured.err
 
 
+def test_crashed_validator_fails_run_without_strict(tmp_path, monkeypatch, capsys):
+    # A validator that exits non-zero with no findings crashed. That is
+    # infrastructure failure and must fail the run even when --strict is off.
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([], returncode=2))
+
+    code = runner._run_suite(
+        _args("both", strict=False),
+        [],
+        str(tmp_path),
+        [("stub", "validate_stub.py", "Stub")],
+        str(tmp_path),
+    )
+
+    captured = capsys.readouterr()
+    assert code == 1
+    assert "crashed" in (captured.out + captured.err)
+
+
+def test_clean_run_passes_without_strict(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([], returncode=0))
+
+    code = runner._run_suite(
+        _args("both", strict=False),
+        [],
+        str(tmp_path),
+        [("stub", "validate_stub.py", "Stub")],
+        str(tmp_path),
+    )
+
+    assert code == 0
+
+
+def test_findings_without_strict_do_not_fail(tmp_path, monkeypatch):
+    # Ordinary findings (validator exits 0, reports errors) stay advisory in
+    # non-strict mode — only crashes and --strict escalate to a non-zero exit.
+    issues = [
+        {
+            "severity": "error",
+            "category": "test-finding",
+            "message": "finding",
+            "file": "test.txt",
+            "line": 1,
+        }
+    ]
+    monkeypatch.setattr(
+        runner, "launch_validator", _launcher_with(issues, returncode=0)
+    )
+
+    code = runner._run_suite(
+        _args("both", strict=False),
+        [],
+        str(tmp_path),
+        [("stub", "validate_stub.py", "Stub")],
+        str(tmp_path),
+    )
+
+    assert code == 0
+
+
 def test_both_without_output_prints_json_and_human_report(
     tmp_path, monkeypatch, capsys
 ):
