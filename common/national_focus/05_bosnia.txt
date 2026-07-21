@@ -1,4 +1,4 @@
-# Author(s): Sheep. Discord(s) Sheep#8702
+# Author(s): Sheep, Bird, TheGeneral
 focus_tree = {
 	id = BOS_focus
 	country = {
@@ -40,7 +40,7 @@ focus_tree = {
 		id = BOS_politicized_army
 		icon = Army_of_the_Republic_of_Bosnia_and_Herzegovina_1
 
-		x = 60
+		x = 62
 		y = 0
 
 		cost = 3
@@ -897,11 +897,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_main_battle_line"
 			add_ideas = BOS_main_battle_line
+			newline = yes
 			add_tech_bonus = {
-				name = BOS_armor_bonus
-				bonus = 0.2
+				name = BOS_main_battle_line
+				bonus = 0.3
 				uses = 2
-				category = CAT_armor
+				category = CAT_at
 			}
 		}
 
@@ -999,12 +1000,15 @@ focus_tree = {
 
 		available = {
 			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
-			NOT = { has_idea = draft_army }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_mobilization_requirements"
-			increase_conscription_effect = yes
+			add_ideas = BOS_national_mobilization
+			if = {
+				limit = { NOT = { has_idea = draft_army } }
+				increase_conscription_effect = yes
+			}
 		}
 
 		ai_will_do = {
@@ -1078,18 +1082,30 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_small_arms_purchase"
-			add_equipment_to_stockpile = {
-				type = infantry_weapons_4
-				amount = 240
-				producer = GER
+			if = {
+				limit = { country_exists = GER }
+				GER = { country_event = { id = BOS_events.21 days = 1 } }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				effect_tooltip = {
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_4
+						amount = 240
+						producer = GER
+					}
+				}
 			}
-			add_equipment_to_stockpile = {
-				type = infantry_weapons_2
-				amount = 1540
-				producer = SOV
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { country_event = { id = BOS_events.24 days = 1 } }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				effect_tooltip = {
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 1540
+						producer = SOV
+					}
+				}
 			}
-			set_temp_variable = { treasury_change = -12.6 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -2426,36 +2442,25 @@ focus_tree = {
 			BOS_bosniak_manpower_decrease_effect = yes
 			BOS_bosniak_attitude_decrease_effect = yes
 			BOS_bosniak_stability_decrease_effect = yes
-			modify_timed_idea = {
-				idea = BOS_pro_srpska
-				days = 70
-			}
-			SER = {
-				set_temp_variable = { temp_yugo_nost_gain = 4 }
-				add_yugo_nostalgia_effect = yes
-			}
-			KOS = {
-				set_temp_variable = { temp_yugo_nost_gain = 4 }
-				add_yugo_nostalgia_effect = yes
-			}
-			MNT = {
-				set_temp_variable = { temp_yugo_nost_gain = 4 }
-				add_yugo_nostalgia_effect = yes
-			}
-			SER = {
-				create_production_license = {
-					target = BOS
-					equipment = {
-						type = Strike_fighter2
+			newline = yes
+			SER = { country_event = { id = BOS_events.15 days = 1 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				SER = {
+					create_production_license = {
+						target = BOS
+						equipment = {
+							type = Strike_fighter2
+						}
+						cost_factor = 0
 					}
-					cost_factor = 0
-				}
-				create_production_license = {
-					target = BOS
-					equipment = {
-						type = infantry_weapons_3
+					create_production_license = {
+						target = BOS
+						equipment = {
+							type = infantry_weapons_3
+						}
+						cost_factor = 0
 					}
-					cost_factor = 0
 				}
 			}
 		}
@@ -2669,9 +2674,9 @@ focus_tree = {
 			}
 			SOV = { country_event = { id = BOS_events.34 days = 3 } }
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { custom_effect_tooltip = BOS_csto_accept_tt }
+			effect_tooltip = { SOV = {  add_to_faction = BOS } }
 			custom_effect_tooltip = TT_IF_THEY_REJECT
-			effect_tooltip = { custom_effect_tooltip = BOS_csto_reject_tt }
+			effect_tooltip = { add_opinion_modifier = { target = ROOT modifier = declined_faction_request  } }
 		}
 
 		ai_will_do = {
@@ -3064,11 +3069,14 @@ focus_tree = {
 				remove_idea = the_ulema
 				add_idea = the_clergy
 			}
+			swap_ideas = {
+				remove_idea = sunni
+				add_idea = orthodox_christian
+			}
 			modify_timed_idea = {
 				idea = BOS_pro_srpska
 				days = 70
 			}
-			add_ideas = orthodox_christian
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_clergy_opinion = yes
 		}
@@ -3288,6 +3296,7 @@ focus_tree = {
 				idea = BOS_pro_srpska
 				days = 70
 			}
+
 			128 = { one_state_office_construction = yes }
 		}
 
@@ -4114,7 +4123,7 @@ focus_tree = {
 		id = BOS_national_unrest
 		icon = peasant_rebellion
 
-		x = -1
+		x = -2
 		y = 1
 		relative_position_id = BOS_a_new_struggle
 
@@ -4439,13 +4448,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_state_atheism_new"
-			if = {
-				limit = { NOT = { has_idea = DEN_idea_state_atheism } }
-				add_ideas = DEN_idea_state_atheism
+			swap_ideas = {
+				remove_idea = sunni
+				add_idea = DEN_idea_state_atheism
 			}
-			set_temp_variable = { temp_opinion = -15 }
-			change_the_clergy_opinion = yes
-			add_political_power = 50
+			swap_ideas = {
+				remove_idea = the_clergy
+				add_idea = labour_unions
+			}
 		}
 
 		ai_will_do = {
@@ -4606,14 +4616,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_workers_republic"
-			hidden_effect = {
-				set_temp_variable = { rul_party_temp = 4 }
-				change_ruling_party_effect = yes
-			}
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.3 }
-			set_temp_variable = { temp_outlook_increase = 0.25 }
-			add_relative_party_popularity = yes
 			add_ideas = BOS_workers_republic_idea
 			set_cosmetic_tag = bos_workers_republic
 		}
@@ -4717,10 +4719,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_muslim_nationalism"
-			if = {
-				limit = { NOT = { has_idea = intervention_neo_imperialism } }
-				add_ideas = intervention_neo_imperialism
-			}
+			set_intervention_to_lvl_6 = yes
 			if = {
 				limit = { NOT = { has_idea = BOS_muslim_nationalism_idea } }
 				add_ideas = BOS_muslim_nationalism_idea
@@ -4821,56 +4820,56 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_religious_identity"
 			unlock_decision_category_tooltip = BOS_return_of_entitled_lands
-			custom_effect_tooltip = bos_war_goals
+			newline = yes
 			add_state_claim = 131
 			add_state_claim = 134
 			add_state_claim = 127
-			hidden_effect = {
-				if = {
-					limit = { country_exists = CRO }
-					set_temp_variable = { wargoal_on = CRO }
-					add_threat_from_wargoal_effect = yes
-					create_wargoal = {
-						target = CRO
-						type = puppet_wargoal_focus
-						expire = 0
-					}
+			newline = yes
+			set_rule = { can_create_collaboration_government = yes }
+			if = {
+				limit = { country_exists = CRO }
+				set_temp_variable = { wargoal_on = CRO }
+				add_threat_from_wargoal_effect = yes
+				create_wargoal = {
+					target = CRO
+					type = puppet_wargoal_focus
+					expire = 0
 				}
-				if = {
-					limit = { country_exists = SER }
-					set_temp_variable = { wargoal_on = SER }
-					add_threat_from_wargoal_effect = yes
-					create_wargoal = {
-						target = SER
-						type = puppet_wargoal_focus
-						expire = 0
-					}
+				add_collaboration = {
+					target = CRO
+					value = 0.45
 				}
-				if = {
-					limit = { country_exists = MNT }
-					set_temp_variable = { wargoal_on = MNT }
-					add_threat_from_wargoal_effect = yes
-					create_wargoal = {
-						target = MNT
-						type = puppet_wargoal_focus
-						expire = 0
-					}
+				newline = yes
+			}
+			if = {
+				limit = { country_exists = SER }
+				set_temp_variable = { wargoal_on = SER }
+				add_threat_from_wargoal_effect = yes
+				create_wargoal = {
+					target = SER
+					type = puppet_wargoal_focus
+					expire = 0
 				}
-				set_rule = { can_create_collaboration_government = yes }
-				if = {
-					limit = { country_exists = CRO }
-					add_collaboration = {
-						target = CRO
-						value = 0.45
-					}
+				add_collaboration = {
+					target = SER
+					value = 0.45
 				}
-				if = {
-					limit = { country_exists = SER }
-					add_collaboration = {
-						target = SER
-						value = 0.45
-					}
+				newline = yes
+			}
+			if = {
+				limit = { country_exists = MNT }
+				set_temp_variable = { wargoal_on = MNT }
+				add_threat_from_wargoal_effect = yes
+				create_wargoal = {
+					target = MNT
+					type = puppet_wargoal_focus
+					expire = 0
 				}
+				add_collaboration = {
+					target = MNT
+					value = 0.45
+				}
+				newline = yes
 			}
 		}
 
@@ -4918,7 +4917,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_end_nato"
-			custom_effect_tooltip = bos_nato_will_crush_you_be_careful
 			for_each_scope_loop = {
 				array = global.nato_members
 				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
@@ -5386,10 +5384,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_FOREIGN_POLICY }
 
 		available = {
-			hidden_trigger = {
-				NOT = { has_country_flag = civil_war_focus }
-				NOT = { has_country_flag = BOS_loser }
-			}
+			NOT = { has_country_flag = civil_war_focus }
+			NOT = { has_country_flag = BOS_loser }
 			has_idea = BOS_EUFOR
 			OR = {
 				country_exists = GER
@@ -5413,14 +5409,16 @@ focus_tree = {
 			if = { limit = { country_exists = FRA } FRA = { country_event = { id = BOS_political.21 days = 1 } } }
 			if = { limit = { country_exists = BEL } BEL = { country_event = { id = BOS_political.21 days = 1 } } }
 			if = { limit = { country_exists = HOL } HOL = { country_event = { id = BOS_political.21 days = 1 } } }
+			newline = yes
 			modify_timed_idea = {
 				idea = BOS_pro_bosnia
 				days = 70
 			}
+			newline = yes
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { custom_effect_tooltip = BOS_euro_defence_accept_tt }
+			effect_tooltip = { give_guarantee = BOS }
 			custom_effect_tooltip = TT_IF_THEY_REJECT
-			effect_tooltip = { custom_effect_tooltip = BOS_euro_defence_reject_tt }
+			effect_tooltip = { add_opinion_modifier = { target = ROOT modifier = refused_help } }
 		}
 
 		ai_will_do = {
@@ -6078,11 +6076,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_eu_loans"
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.02 }
-			modify_treasury_effect = yes
-			set_temp_variable = { debt_change = 0.02 }
-			modify_debt_effect = yes
+			add_timed_idea = { idea = BOS_eu_development_loans years = 2 }
 		}
 
 		ai_will_do = {
@@ -6115,7 +6109,7 @@ focus_tree = {
 		id = BOS_bosnian_elections
 		icon = BOS_econ
 
-		x = 32
+		x = 33
 		y = 0
 
 		cost = 1.5
@@ -6129,8 +6123,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_bosnian_elections"
-			add_political_power = 20
-			add_stability = 0.05
+			add_timed_idea = { idea = BOS_election_stimulus days = 200 }
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.01 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6146,7 +6142,7 @@ focus_tree = {
 		id = BOS_post_war_effort
 		icon = gold_standard
 
-		x = 40
+		x = 41
 		y = 0
 
 		cost = 5.6
@@ -6185,7 +6181,7 @@ focus_tree = {
 		id = BOS_economic_revision
 		icon = broken_bosnia
 
-		x = 34
+		x = 35
 		y = 0
 
 		cost = 5.6
@@ -6507,14 +6503,22 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_oppress_serbian_back_supports"
-			BOS = {
-				set_temp_variable = { percent_change = 6 }
-				set_temp_variable = { tag_index = GER.id }
-				change_influence_percentage = yes
+			if = { limit = { country_exists = GER } GER = { country_event = { id = BOS_events.18 days = 2 } } }
+			if = { limit = { country_exists = USA } USA = { country_event = { id = BOS_events.18 days = 2 } } }
+			if = { limit = { country_exists = FRA } FRA = { country_event = { id = BOS_events.18 days = 2 } } }
+			if = { limit = { country_exists = ITA } ITA = { country_event = { id = BOS_events.18 days = 2 } } }
+			if = { limit = { country_exists = JAP } JAP = { country_event = { id = BOS_events.18 days = 2 } } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
 			}
-			128 = { one_state_industrial_complex = yes }
-			GER = { add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship } }
-			add_opinion_modifier = { target = GER modifier = declaration_of_friendship }
 		}
 
 		ai_will_do = {
@@ -6600,10 +6604,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_the_state"
 			set_temp_variable = { temp_yugo_nost_gain = 12 }
 			add_yugo_nostalgia_effect = yes
-			swap_ideas = {
-				remove_idea = international_bankers
-				add_idea = farmers
-			}
+			newline = yes
 			random_list = {
 				50 = {
 					set_temp_variable = { party_index = 1 }
@@ -6620,6 +6621,9 @@ focus_tree = {
 				remove_idea = BOS_post_yugoslav_war_state
 				add_idea = BOS_land_mines
 			}
+			128 = { one_state_infrastructure = yes }
+			newline = yes
+			add_timed_idea = { idea = BOS_reconstruction_drive days = 365 }
 		}
 
 		ai_will_do = {
@@ -6768,23 +6772,15 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_EXPENDITURE }
 
-		available = {
-			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
-			NOT = { has_idea = recession }
-			NOT = { has_idea = depression }
-			custom_trigger_tooltip = {
-				tooltip = BOS_treasury_higher_than_1_5_tt
-				check_variable = { treasury > 1.5 }
-			}
-		}
+		available = { if = { limit = { has_country_flag = civil_war_focus } NOT = { has_country_flag = civil_war_focus } } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_banja_luka_mine"
-			set_temp_variable = { treasury_change = -1.50 }
+			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 			add_resource = {
 				type = steel
-				amount = 3
+				amount = 8
 				state = 1054
 			}
 			add_ideas = BOS_mining_development
@@ -6822,9 +6818,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INDUSTRY }
 
 		available = {
-			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			if = { limit = { has_country_flag = civil_war_focus } NOT = { has_country_flag = civil_war_focus } }
 			has_completed_focus = BOS_land_mine_removal
-			has_idea = farmers
 		}
 
 		completion_reward = {
@@ -6861,51 +6856,27 @@ focus_tree = {
 
 		cost = 7
 
-		prerequisite = { focus = BOS_banja_luka_mine focus = BOS_farming_sector }
+		prerequisite = { focus = BOS_banja_luka_mine }
+		prerequisite = { focus = BOS_farming_sector }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 
-		available = {
-			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
-			NOT = { has_idea = recession }
-			NOT = { has_idea = depression }
-		}
+		available = { if = { limit = { has_country_flag = civil_war_focus } NOT = { has_country_flag = civil_war_focus } } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_make_way_for_more_industry"
-			custom_effect_tooltip = bos_this_focus_will_give_more_rewards_if_you_do_both_of_the_requirements
-			if = {
-				limit = { has_completed_focus = BOS_farming_sector }
-				swap_ideas = {
-					remove_idea = BOS_farming_improvements
-					add_idea = BOS_farming_powerhouse
-				}
+			swap_ideas = {
+				remove_idea = BOS_farming_improvements
+				add_idea = BOS_farming_powerhouse
 			}
-			else = {
-				add_timed_idea = {
-					idea = BOS_unproductive_farming
-					days = 365
-				}
-				country_event = { id = BOS_events.12 days = 1 }
+			swap_ideas = {
+				remove_idea = BOS_mining_development
+				add_idea = BOS_mining_industry
 			}
-			if = {
-				limit = { has_completed_focus = BOS_banja_luka_mine }
-				add_resource = {
-					type = steel
-					amount = 1
-					state = 128
-				}
-				swap_ideas = {
-					remove_idea = BOS_mining_development
-					add_idea = BOS_mining_industry
-				}
-			}
-			else = {
-				add_timed_idea = {
-					idea = BOS_failing_mining_industry
-					days = 365
-				}
-				country_event = { id = BOS_events.14 days = 1 }
+			add_resource = {
+				type = steel
+				amount = 8
+				state = 128
 			}
 		}
 
@@ -7953,14 +7924,19 @@ focus_tree = {
 		id = BOS_economic_reconstruction
 		icon = BOS_econ
 
-		x = 30
-		y = 13
+		x = 0
+		y = 3
+		relative_position_id = BOS_rebuild_infrastructure_in_sarajevo
+
+		prerequisite = { focus = BOS_final_land_mine_removal_efforts }
+		prerequisite = { focus = BOS_rebuild_factories_in_sarajevo }
+		prerequisite = { focus = BOS_the_repair_of_srpska_and_herzegovina }
 
 		cost = 5
 
 		search_filters = { FOCUS_FILTER_ECONOMY }
 
-		available = { hidden_trigger = { NOT = { has_country_flag = civil_war_focus } } }
+		available = { if = { limit = { has_country_flag = civil_war_focus } NOT = { has_country_flag = civil_war_focus } } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_economic_reconstruction"
