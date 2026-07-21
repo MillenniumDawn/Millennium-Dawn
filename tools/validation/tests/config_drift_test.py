@@ -58,9 +58,6 @@ STRICT_MISMATCH_ALLOWED = {
     # CI runs --strict; pre-commit runs without it because pre-existing
     # equipment-coverage gaps would otherwise block every commit.
     "validate_ai_equipment.py",
-    # pre-commit runs --strict; CI runs informational (strict: false) because of
-    # ~30 pre-existing undefined-idea references on main awaiting triage.
-    "validate_ideas.py",
 }
 
 

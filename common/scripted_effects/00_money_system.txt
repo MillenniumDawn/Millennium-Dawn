@@ -3370,15 +3370,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 		}
 		if = {
-			limit = {
-				OR = {
-					has_country_flag = infrastructure_investiture_flag
-					has_country_flag = industrial_projects_flag
-					has_country_flag = service_constructions_flag
-					has_country_flag = arms_industry_stipends_flag
-					has_country_flag = retool_shipyards_flag
-				}
-			}
+			limit = { has_country_flag = active_economic_project }
 			set_variable = { project_decisions_cost = { value = gdp_total multiply = 0.001 } }
 
 			set_temp_variable = { project_cost_multiplier = { value = 1 add = modifier@projects_cost_modifier } }
@@ -4192,8 +4184,10 @@ update_display = {
 	if = {
 		limit = {
 			NOT = {
-				has_active_mission = cheap_loan_from_the_imf_mission
-				has_country_flag = paused_debt_repayment
+				OR = {
+					has_active_mission = cheap_loan_from_the_imf_mission
+					has_country_flag = paused_debt_repayment
+				}
 			}
 		}
 		add_to_variable = { display_expense = debt_rate }
@@ -6067,7 +6061,7 @@ calculate_gdp_modifiers = {
 
 # Effect: calculate_ai_taxes_desire
 # Purpose: Calculates the tax rate for the AI to change
-# Runs monthly from MD_on_actions (AI path only). Changes are ±1 per week.
+# Runs monthly from MD_on_actions (AI path only). Changes are ±1 per run.
 calculate_ai_taxes_desire = {
 	if = { limit = { NOT = { has_variable = population_tax_rate } } set_variable = { var = population_tax_rate value = 20 } }
 	if = { limit = { NOT = { has_variable = corporate_tax_rate } } set_variable = { var = corporate_tax_rate value = 20 } }
