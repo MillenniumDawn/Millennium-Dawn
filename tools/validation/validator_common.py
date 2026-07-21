@@ -40,6 +40,13 @@ _META_TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
 )
 
+# Quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# The `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives in
+# the quoted assignment, so a leading placeholder with only a trailing constant must
+# still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_META_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
+
 _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
 
 
@@ -220,9 +227,11 @@ def scan_meta_constructed_names(files, defined_names):
     template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
 
     For every file containing ``meta_effect`` or ``meta_trigger``, extracts
-    identifier templates of the form ``prefix_[VAR]_suffix``, splits on ``[VAR]``
-    segments, and matches any defined name whose lower-cased form starts with
-    *prefix* and ends with *suffix*.
+    identifier templates of the form ``prefix_[VAR]_suffix`` — both bare
+    identifiers and quoted meta-substitution values (tooltips/templates such as
+    ``"[?var]_unlock_btn_enabled"``) — splits on ``[VAR]`` segments, and matches
+    any defined name whose lower-cased form starts with *prefix* and ends with
+    *suffix*.
     """
     defined_lower = {n.lower(): n for n in defined_names}
     used = set()
@@ -239,8 +248,12 @@ def scan_meta_constructed_names(files, defined_names):
 
         content_clean = strip_comments(content)
 
-        for m in _META_TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
+        templates = {m.group(1) for m in _META_TEMPLATE_RE.finditer(content_clean)}
+        templates.update(
+            m.group(1) for m in _QUOTED_META_TEMPLATE_RE.finditer(content_clean)
+        )
+
+        for template in templates:
             parts = re.split(r"\[[^\]]+\]", template)
             prefix = parts[0].lower()
             suffix = parts[-1].lower() if len(parts) > 1 else ""
@@ -411,6 +424,10 @@ class BaseValidator:
         self.staged_only = staged_only
         self.workers = workers if workers else max(1, cpu_count() // 2)
         self.no_cache = no_cache
+        # Pool workers call disk_cache at module level and never see `self`, so the
+        # env var is the only channel that reaches them (fork inherits it).
+        if no_cache:
+            os.environ["MD_NO_CACHE"] = "1"
         self.staged_files = None
         self.output_lines = []
         self._pool: Optional[Pool] = None
@@ -890,8 +907,17 @@ class BaseValidator:
 
         Also includes vanilla-provided keys that MD decisions/events override
         but reuse the vanilla loc string for (see ``KNOWN_VANILLA_LOC_KEYS``).
+
+        Always scans the full repo: in staged mode the referencing .txt is
+        staged but its loc .yml usually is not, and a staged-only key set
+        makes every unchanged key report as missing.
         """
-        yml_files = self._collect_files(["localisation/english/**/*.yml"])
+        memo = getattr(self, "_loc_keys_memo", None)
+        if memo is not None:
+            return memo
+        yml_files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
         key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
         all_keys: set = set()
         for filepath in yml_files:
@@ -902,7 +928,8 @@ class BaseValidator:
                 continue
             all_keys.update(key_pattern.findall(text))
         all_keys.update(KNOWN_VANILLA_LOC_KEYS)
-        return frozenset(all_keys)
+        self._loc_keys_memo = frozenset(all_keys)
+        return self._loc_keys_memo
 
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")

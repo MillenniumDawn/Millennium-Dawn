@@ -24,9 +24,8 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 `.claude/docs/agent-conventions.md` (especially pre-commit / CI divergence rules), plus tooling-specific files:
 
-- `tools/shared_utils.py` — `Timer`, `create_linting_parser`, `collect_files_by_mode`, `get_root_dir`, `run_with_pool`, `get_git_diff_files`, `get_all_txt_files`, `print_timing_summary`, `FileOpener`.
+- `tools/shared_utils.py` — `Timer`, `create_linting_parser`, `collect_files_by_mode`, `get_root_dir`, `run_with_pool`, `get_git_diff_files`, `get_all_txt_files`, `print_timing_summary`, `FileOpener`, `clean_filepath`.
 - `tools/validation/validator_common.py` — `BaseValidator`, `_pool_map`, staged-file support.
-- `tools/path_utils.py` — `clean_filepath`.
 - `pyproject.toml` — single source for ruff (lint), pytest (testpaths), black, isort config.
 - `.pre-commit-config.yaml` — which scripts are hooks vs `stages: [manual]` vs unwired; the `ruff` hook and the `tools-pytest` pre-push hook.
 - `.github/workflows/tools-validation.yml` — the `ruff-lint` job, the pytest job (runs all four test dirs), and `validate_tools.py --strict`.

@@ -130,14 +130,14 @@ if __name__ == "__main__":
 
 Style checkers, formatters, and encoding validators. These are used in pre-commit hooks and CI.
 
-| Script                                | Description                                                                                                                                       |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **check_common_mistakes.py**          | Detects common scripting mistakes: bad value ranges, `allowed`/`cancel` no-ops, `ai_will_do factor` vs `base`, division instead of multiplication |
-| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace)                                                                     |
-| **fix_line_endings.py**               | Converts CRLF to LF line endings                                                                                                                  |
-| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)                                                                               |
-| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                                                                                     |
-| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                                                                                            |
+| Script                                | Description                                                                                                                                                                                                |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **check_common_mistakes.py**          | Detects common scripting mistakes: bad value ranges, `allowed`/`cancel` no-ops, `ai_will_do factor` vs `base`, division instead of multiplication, malformed leader rotations in `*_political_leaders.txt` |
+| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace)                                                                                                                              |
+| **fix_line_endings.py**               | Converts CRLF to LF line endings                                                                                                                                                                           |
+| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)                                                                                                                                        |
+| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                                                                                                                                              |
+| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                                                                                                                                                     |
 
 ### Validation (`validation/`)
 
@@ -236,6 +236,10 @@ Hook entry points, CI tools, shared libraries, and other scripts that stay at th
 | **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse factories (`create_validation_parser`, `create_linting_parser`, `create_standard_parser`), entry points (`run_validator_main`, `run_tool_main`), `find_hoi4_install()`, `extract_block_from_text()`. |
 | **loc.py**                        | Localisation utilities                                                                                                                                                                                                                                                                                                                             |
 | **logging_tool.py**               | Logging utility                                                                                                                                                                                                                                                                                                                                    |
+| **cleanup_or.py**                 | Library for `linting/check_common_mistakes.py`: finds redundant `AND`/single-condition `OR` blocks                                                                                                                                                                                                                                                 |
+| **assign_mio_icons.py**           | Manual tool: assigns MIO trait icons deterministically from the trait's winning modifier                                                                                                                                                                                                                                                           |
+| **summarize_game_log.py**         | Manual tool: parses scripted `log =` lines out of game.log into a "what happened" report after a test run                                                                                                                                                                                                                                          |
+| **sync_dynamic_tokens.py**        | Manual tool: regenerates `common/synchronized_dynamic_tokens` from error.log                                                                                                                                                                                                                                                                       |
 
 ---
 

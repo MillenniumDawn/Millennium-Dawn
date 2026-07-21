@@ -905,7 +905,6 @@ country_event = {
 	title = indian_event.30.t
 	desc = indian_event.30.d
 	is_triggered_only = yes
-	fire_only_once = yes
 	picture = GFX_fracking
 	option = {
 		name = indian_event.30.a
@@ -959,16 +958,26 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 	picture = GFX_CHI_south_sea_victory
+	trigger = {
+		is_in_faction = no
+	}
 	option = {
 		name = indian_event.32.a
 		log = "[GetDateText]: [This.GetName]: indian_event.32.a executed"
-		if = {
-			limit = { is_faction_leader = yes }
-			RAJ = { add_to_faction = VIE }
-		}
-		else = {
-			create_faction_from_template = faction_template_rajpact
-			VIE = { add_to_faction = RAJ }
+		RAJ = {
+			if = {
+				limit = { is_faction_leader = yes }
+				add_to_faction = VIE
+			}
+			else_if = {
+				limit = { is_in_faction = no }
+				create_faction_from_template = faction_template_rajpact
+				add_to_faction = VIE
+			}
+			else = {
+				add_opinion_modifier = { target = VIE modifier = declaration_of_friendship }
+				reverse_add_opinion_modifier = { target = VIE modifier = declaration_of_friendship }
+			}
 		}
 		ai_chance = {
 			factor = 20
@@ -993,11 +1002,11 @@ country_event = {
 	option = {
 		name = indian_event.33.a
 		log = "[GetDateText]: [This.GetName]: indian_event.33.a executed"
+		ROOT = {
+			every_owned_state = { add_core_of = RAJ }
+		}
 		RAJ = {
 			annex_country = { target = ROOT transfer_troops = yes }
-			every_owned_state = {
-				add_core_of = RAJ
-			}
 		}
 		ai_chance = {
 			factor = 10
@@ -1248,11 +1257,11 @@ country_event = {
 	option = {
 		name = indian_event.36.a
 		log = "[GetDateText]: [This.GetName]: indian_event.36.a executed"
+		ROOT = {
+			every_owned_state = { add_core_of = RAJ }
+		}
 		RAJ = {
 			annex_country = { target = ROOT transfer_troops = yes }
-			every_owned_state = {
-				add_core_of = RAJ
-			}
 		}
 		ai_chance = {
 			factor = 80
@@ -1283,8 +1292,11 @@ country_event = {
 	title = indian_event.37.t
 	desc = indian_event.37.d
 	is_triggered_only = yes
-	fire_only_once = yes
 	picture = GFX_china_indian_border_skirmish
+	trigger = {
+		NOT = { has_war_with = FROM }
+		is_in_faction = no
+	}
 	option = {
 		name = indian_event.37.a
 		log = "[GetDateText]: [This.GetName]: indian_event.37.a executed"
@@ -2172,11 +2184,6 @@ country_event = {
 			relation = non_aggression_pact
 			active = yes
 		}
-		diplomatic_relation = {
-			country = TRK
-			relation = non_aggression_pact
-			active = yes
-		}
 		set_country_flag = TRK_accepted_this
 	}
 	option = {
@@ -2662,17 +2669,9 @@ country_event = {
 		if = {
 			limit = { country_exists = BAN }
 			add_opinion_modifier = { target = BAN modifier = declaration_of_friendship }
-			if = {
-				limit = { NOT = { has_country_flag = trade_agreement@BAN } }
-				set_country_flag = trade_agreement@BAN
-				add_to_variable = { signed_trade_agreements = 1 }
-				add_opinion_modifier = { target = BAN modifier = mutual_trade_agreement }
-				reverse_add_opinion_modifier = { target = BAN modifier = mutual_trade_agreement }
-				BAN = {
-					set_country_flag = trade_agreement@RAJ
-					add_to_variable = { signed_trade_agreements = 1 }
-				}
-			}
+			set_temp_variable = { receiver_nation = BAN.id }
+			set_temp_variable = { sender_nation = RAJ.id }
+			set_improved_trade_agreement = yes
 		}
 
 		ai_chance = { base = 1 }
@@ -2950,26 +2949,16 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: RAJ_regional.11.a executed"
 		add_war_support = 0.01
 		if = {
-			limit = { country_exists = BAN  NOT = { has_country_flag = trade_agreement@BAN } }
-			set_country_flag = trade_agreement@BAN
-			add_to_variable = { signed_trade_agreements = 1 }
-			add_opinion_modifier = { target = BAN modifier = mutual_trade_agreement }
-			reverse_add_opinion_modifier = { target = BAN modifier = mutual_trade_agreement }
-			BAN = {
-				set_country_flag = trade_agreement@RAJ
-				add_to_variable = { signed_trade_agreements = 1 }
-			}
+			limit = { country_exists = BAN }
+			set_temp_variable = { receiver_nation = BAN.id }
+			set_temp_variable = { sender_nation = RAJ.id }
+			set_improved_trade_agreement = yes
 		}
 		if = {
-			limit = { country_exists = BRM  NOT = { has_country_flag = trade_agreement@BRM } }
-			set_country_flag = trade_agreement@BRM
-			add_to_variable = { signed_trade_agreements = 1 }
-			add_opinion_modifier = { target = BRM modifier = mutual_trade_agreement }
-			reverse_add_opinion_modifier = { target = BRM modifier = mutual_trade_agreement }
-			BRM = {
-				set_country_flag = trade_agreement@RAJ
-				add_to_variable = { signed_trade_agreements = 1 }
-			}
+			limit = { country_exists = BRM }
+			set_temp_variable = { receiver_nation = BRM.id }
+			set_temp_variable = { sender_nation = RAJ.id }
+			set_improved_trade_agreement = yes
 		}
 
 		ai_chance = { base = 1 }
@@ -3254,15 +3243,10 @@ country_event = {
 		clamp_variable = { var = RAJ.kasmir_china_readiness min = 0 max = 100 }
 		add_war_support = 0.01
 		if = {
-			limit = { country_exists = BHU  NOT = { has_country_flag = trade_agreement@BHU } }
-			set_country_flag = trade_agreement@BHU
-			add_to_variable = { signed_trade_agreements = 1 }
-			add_opinion_modifier = { target = BHU modifier = mutual_trade_agreement }
-			reverse_add_opinion_modifier = { target = BHU modifier = mutual_trade_agreement }
-			BHU = {
-				set_country_flag = trade_agreement@RAJ
-				add_to_variable = { signed_trade_agreements = 1 }
-			}
+			limit = { country_exists = BHU }
+			set_temp_variable = { receiver_nation = BHU.id }
+			set_temp_variable = { sender_nation = RAJ.id }
+			set_improved_trade_agreement = yes
 		}
 		hidden_effect = {
 			if = { limit = { country_exists = BHU } BHU = { country_event = { id = RAJ_regional.25 days = 5 } } }
@@ -3352,15 +3336,10 @@ country_event = {
 		set_temp_variable = { influence_target = BHU }
 		change_influence_percentage = yes
 		if = {
-			limit = { country_exists = BHU  NOT = { has_country_flag = trade_agreement@BHU } }
-			set_country_flag = trade_agreement@BHU
-			add_to_variable = { signed_trade_agreements = 1 }
-			add_opinion_modifier = { target = BHU modifier = mutual_trade_agreement }
-			reverse_add_opinion_modifier = { target = BHU modifier = mutual_trade_agreement }
-			BHU = {
-				set_country_flag = trade_agreement@RAJ
-				add_to_variable = { signed_trade_agreements = 1 }
-			}
+			limit = { country_exists = BHU }
+			set_temp_variable = { receiver_nation = BHU.id }
+			set_temp_variable = { sender_nation = RAJ.id }
+			set_improved_trade_agreement = yes
 		}
 
 		ai_chance = {
@@ -3997,6 +3976,79 @@ country_event = {
 			modifier = {
 				add = -25
 				has_opinion = { target = FROM value > 50 }
+			}
+		}
+	}
+}
+
+# Central Asian Loyalty Ultimatum (fires to KYR/KAZ/UZB/TAJ - RAJ_true_indian_territories_in_cenasia)
+country_event = {
+	id = indian_event.83
+	title = indian_event.83.t
+	desc = indian_event.83.d
+	is_triggered_only = yes
+	picture = GFX_fracking
+	trigger = {
+		FROM = { exists = yes }
+		NOT = { has_war_with = FROM }
+		NOT = { is_in_faction_with = FROM }
+	}
+
+	option = {
+		name = indian_event.83.a
+		log = "[GetDateText]: [This.GetName]: indian_event.83.a executed"
+		FROM = {
+			annex_country = { target = ROOT transfer_troops = yes }
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 25
+				sender_influence_higher_70 = yes
+			}
+			modifier = {
+				add = 20
+				sender_influence_higher_90 = yes
+			}
+			modifier = {
+				add = -20
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+	option = {
+		name = indian_event.83.b
+		log = "[GetDateText]: [This.GetName]: indian_event.83.b executed"
+		FROM = {
+			set_temp_variable = { wargoal_on = ROOT }
+			set_temp_variable = { wargoal_type = 2 }
+			add_threat_from_wargoal_effect = yes
+			create_wargoal = {
+				type = annex_everything
+				target = ROOT
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = -20
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = -25
+				sender_influence_higher_70 = yes
+			}
+			modifier = {
+				add = -20
+				sender_influence_higher_90 = yes
+			}
+			modifier = {
+				add = 20
+				has_opinion = { target = FROM value < 0 }
 			}
 		}
 	}

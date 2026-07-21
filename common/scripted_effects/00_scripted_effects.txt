@@ -2181,18 +2181,6 @@ SF_PARA_combat_effect = { #When changing this, update the research tooltip
 		days = 30
 	}
 }
-one_random_arms_factory_free = {
-	every_controlled_state = {
-		limit = { free_shared_building_slots = yes }
-		random_select_amount = 1
-		add_extra_state_shared_building_slots = 1
-		add_building_construction = {
-			type = arms_factory
-			level = 1
-			instant_build = yes
-		}
-	}
-}
 
 one_random_land_facility = {
 	random_owned_controlled_state = {
@@ -2264,9 +2252,20 @@ one_random_nuclear_facility = {
 # Null
 ingame_startup_nations_effect = {
 	hidden_effect = {
+		set_temp_variable = { fresh_nation_temp = 0 }
+		if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
+			set_temp_variable = { fresh_nation_temp = 1 }
+		}
 		setup_employment_variables = yes
-		set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
-		inherit_technology = PREV
+		if = { limit = { PREV = { has_variable = gdpc_converging_var } }
+			set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
+			inherit_technology = PREV
+		}
+		else_if = { limit = { NOT = { has_variable = gdpc_converging_var } }
+			set_variable = { gdpc_converging_var = overall_productivity }
+			multiply_variable = { gdpc_converging_var = 0.05 }
+			clamp_variable = { var = gdpc_converging_var min = 2 }
+		}
 		if = {
 			limit = {
 				NOT = { has_variable = domestic_influence_amount }
@@ -2285,18 +2284,44 @@ ingame_startup_nations_effect = {
 		add_dynamic_modifier = { modifier = inflation_dynamic_modifier }
 		calculate_influence_percentage = yes #set alignment drifts from influence
 		startup_politics = yes
-		ingame_update_setup = yes	 #money system
-		setup_init_factions = yes	 #flags for int. factions
 		set_law_vars = yes	 #vars for change laws secondary effects
+		if = { limit = { NOT = { has_variable = cyber_capability } }
+			cyber_nation_startup = yes #must precede ingame_update_setup so cyber_capability is set before update_military_rate checks it
+		}
+		currency_startup = yes
+		ingame_update_setup = yes	 #money system
+		if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
+			set_variable = { last_quarter_gdp_total = gdp_total }
+		}
+		if = { limit = { NOT = { has_variable = last_quarter_gdpc_total } }
+			set_variable = { last_quarter_gdpc_total = gdp_per_capita }
+		}
+		setup_init_factions = yes	 #flags for int. factions
 		update_neighbors_effects = yes # Updates Neighbor Effects
 		economic_cycle_drift_popularity = yes #drift from neighbor
 		init_auto_influence_array = yes
 		ingame_init_investment_system = yes
 		research_slot_init_for_country = yes
 		calculate_expected_spending = yes
+		recalculate_law_desires = yes
+		un_recog_setup_check = yes
+		if = { limit = { NOT = { has_variable = steel_in_storage } }
+			resource_storage_system_setup = yes
+		}
+		IP_idea_configuration = yes
 		setup_missile_configuration_effect = yes
 		microchip_startup = yes
 		add_country_to_power_ranking = yes
+		#Init protest variables, this should stop error spam
+		if = { limit = { NOT = { has_variable = protest_strength } }
+			set_variable = { protest_strength = 0 }
+		}
+		if = { limit = { NOT = { has_variable = protest_radicalisation } }
+			set_variable = { protest_radicalisation = 0 }
+		}
+		if = { limit = { NOT = { has_variable = anti_bully_wars } }
+			set_variable = { anti_bully_wars = 0 }
+		}
 		# Released nations skip on_startup, so enroll them in the counter-terror staggered
 		# cycle. That cycle is also what re-applies each nation's power ranking idea every
 		# quarter, so without this their Power Status idea would freeze at its release value.
@@ -2307,12 +2332,22 @@ ingame_startup_nations_effect = {
 			counter_terror_nation_startup = yes
 			add_on_creation = yes
 		}
+		if = { limit = { check_variable = { fresh_nation_temp = 1 } }
+			increment_global_reserve_currency = yes
+			calculate_starting_utility_stockpile = yes
+			calculate_starting_mio_size = yes
+			AGRI_plant_the_seeds = yes
+			EDU_learn_your_ABCs_with_dread = yes
+		}
 	}
 }
 
 # Civil War Replication Effect
-# Purpose:
+# Purpose: full init plus politics/taxes/influence/faction copy from PREV onto a
+# freshly split-off nation (civil wars, dynamic peace-deal splinters)
 civil_war_replication_effect = {
+	ingame_startup_nations_effect = yes
+
 	set_temp_variable = { nation_to_copy_from = PREV.id }
 	replicate_configure_politics = yes
 
@@ -2320,6 +2355,9 @@ civil_war_replication_effect = {
 	set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
 	set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
 	set_variable = { treasury = PREV.treasury }
+
+	set_temp_variable = { nation_to_copy_from = PREV.id }
+	setup_employment_variables = yes
 
 	#don't get values of original yet - REMINDER -> add it on_civil_war_end
 	set_variable = { debt = 0 }
@@ -2357,15 +2395,7 @@ civil_war_replication_effect = {
 
 	calculate_influence_percentage = yes #set alignment drifts from influence
 	ingame_update_setup = yes	 #money system
-	setup_init_factions = yes	 #flags for int. factions
-	set_law_vars = yes	 #vars for change laws secondary effects
-	update_neighbors_effects = yes # Updates Neighbor Effects
-	economic_cycle_drift_popularity = yes #drift from neighbor
-	init_auto_influence_array = yes
-	ingame_init_investment_system = yes
-	research_slot_init_for_country = yes
 	calculate_expected_spending = yes
-	setup_missile_configuration_effect = yes
 
 	mb_refresh_relations_effect = yes
 }
@@ -2434,40 +2464,13 @@ clear_sabotaged_resources_if_necesary = {
 	}
 }
 
-set_continent_nation_flag = {
-	if = {
-		limit = { is_in_europe = yes }
-		set_country_flag = european_nation_flag
-	}
-	else_if = {
-		limit = { is_in_africa = yes }
-		set_country_flag = african_nation_flag
-	}
-	else_if = {
-		limit = { is_in_the_middle_east = yes }
-		set_country_flag = middle_east_nation_flag
-	}
-	else_if = {
-		limit = {
-			OR = {
-				is_in_asia = yes
-				is_in_oceania = yes
-			}
-		}
-		set_country_flag = asian_nation_flag
-	}
-	else_if = {
-		limit = { is_in_the_americas = yes }
-		set_country_flag = american_nation_flag
-	}
-}
-
 # wargoal_by = wargoal FROM
 # wargoal_on = country on which wargoal is placed
 # wargoal_type = 0 - puppet/default, 1 - liberate/change government, 2 - conquer
 add_threat_from_wargoal_effect = {
 	if = {
 		limit = { check_variable = { wargoal_by = 0 } }
+		set_temp_variable = { wargoal_by = THIS.id }
 	}
 
 	set_temp_variable = { temp_threat = 5 }
@@ -2566,6 +2569,58 @@ add_threat_from_wargoal_effect = {
 
 	var:wargoal_by = {
 		add_threat = temp_threat
+	}
+}
+
+CHI_censored_nation_level_up = {
+	if = {
+		limit = { has_idea = censored_nation_01 }
+		swap_ideas = {
+			remove_idea = censored_nation_01
+			add_idea = censored_nation_02
+		}
+	}
+	else_if = {
+		limit = { has_idea = censored_nation_02 }
+		swap_ideas = {
+			remove_idea = censored_nation_02
+			add_idea = censored_nation_03
+		}
+	}
+	else_if = {
+		limit = { has_idea = censored_nation_03 }
+		swap_ideas = {
+			remove_idea = censored_nation_03
+			add_idea = censored_nation_04
+		}
+	}
+	else_if = {
+		limit = { has_idea = censored_nation_04 }
+		swap_ideas = {
+			remove_idea = censored_nation_04
+			add_idea = censored_nation_05
+		}
+	}
+	else_if = {
+		limit = { has_idea = censored_nation_05 }
+		swap_ideas = {
+			remove_idea = censored_nation_05
+			add_idea = censored_nation_06
+		}
+	}
+	else_if = {
+		limit = { has_idea = censored_nation_06 }
+		swap_ideas = {
+			remove_idea = censored_nation_06
+			add_idea = censored_nation_07
+		}
+	}
+	else_if = {
+		limit = { has_idea = closed_nation }
+		swap_ideas = {
+			remove_idea = closed_nation
+			add_idea = censored_nation_01
+		}
 	}
 }
 
