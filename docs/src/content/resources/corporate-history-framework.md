@@ -45,7 +45,7 @@ HOI4 cannot parameterize identifier names (variables, flags, ideas, event ids) w
 | --- | --- |
 | `<TAG>_<co>_initialize_state` | flag-guarded `set_variable` defaults + trailing clamp call |
 | `<TAG>_<co>_clamp_state` | per variable: `set_temp_variable = { corp_value = X }` → `corporate_history_clamp_value = yes` → `set_variable = { X = corp_value }` |
-| `<TAG>_<co>_reconstruct_history` | date-ascending ladder; every step `date > D` + `NOT` on **all** sibling outcome markers; `add_ideas` steps guarded by `NOT has_idea` on all alternatives; no event fires; ends with silent capstone resolution where the chain has one |
+| `<TAG>_<co>_reconstruct_history` | date-ascending ladder; every step `date > D` + `NOT` on **all** sibling outcome markers; `add_ideas` steps guarded by `NOT has_idea` on all alternatives; no event fires; ends with silent capstone resolution where the chain has one, then sets `<TAG>_<co>_reconstruct_complete` once the final milestone date has passed (the monthly driver's only terminal check). A ladder can end *after* its capstone (IBM's integrations run to 2027.6.1, past the 2026.6.2 capstone), so the completion date is the last step's date, not the capstone's |
 | `<TAG>_<co>_events.90` | hidden, `fire_only_once` event whose immediate is a thin call to the reconstruct effect (IBM's also keeps its `date < 2000.2.1` prehistory-scheduling branch) |
 | `<TAG>_<co>_schedule_current_year_events` | per-year Jan-1 window guard + `country_event` offsets (optional; Apple only so far) |
 | capstone family | `clear_capstone_outcome` (remove all competing ideas + flags) / `apply_*_capstone` (clear, add one idea, set outcome + resolved flags) / `resolve_capstone` (threshold ladder) |
@@ -104,7 +104,7 @@ Classification of the existing chains (chains predating the budgets are marked *
 1. Wrapper effect file in `common/scripted_effects/` with the contract set above (init, clamp, reconstruct; capstone family for Tier 1; scheduler if the chain has potential start-year milestones).
 2. Hidden `.90` event whose immediate is a thin reconstruct call.
 3. Schedule entries added to the matching `<TAG>_corporate_trigger_year_<YYYY>` effects (create new ones as needed; never schedule inline in `00_yearly_effects.txt`), plus the startup entry in `corporate_history_on_startup` (both branches).
-4. Monthly-driver coverage: add the reconstruct call and a cheap terminal check to `<TAG>_corporate_history_monthly_outcomes` (create the `on_monthly_<TAG>` hook if the country has none).
+4. Monthly-driver coverage: add the reconstruct call to `<TAG>_corporate_history_monthly_outcomes`; the driver terminates on the chain's `*_reconstruct_complete` flag, so the ladder must set that flag at its true final milestone (create the `on_monthly_<TAG>` hook if the country has none).
 5. Outcome ideas: `allowed = { original_tag = <TAG> }` **and** `allowed_civil_war = { always = yes }`.
 6. Guard audit on every reconstruct step: `date >` gate; `NOT` on the step's own marker **and all sibling markers**; `add_ideas` guarded by `NOT has_idea` on all alternatives; no event fires inside reconstruction; single-child `NOT`s only.
 7. Cross-links declared in the table above; localisation; changelog.
