@@ -442,6 +442,7 @@
 
 	-- Disabled as it seems like this is causing performance problems?
 	NDefines.NMilitary.BASE_FEMALE_DIVISIONAL_COMMANDER_CHANCE = 0 -- Vanilla sets this to 0
+	NDefines.NMilitary.GENERATE_AI_DIV_COMMAND_HISTORY_ENTRIES = false -- Reduces save game file size -- Vanilla has this set to true, but we don't care about division history for non-player nations
 
 	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
 	NDefines.NAir.ACCIDENT_CHANCE_RELIABILITY_MULT = 0.2 -- vanilla 2.0 Multiplier to accident chance per point of missing reliability.
@@ -1112,6 +1113,7 @@
 	NDefines.NSupply.RAILWAY_CONVERSION_COOLDOWN_CORE = 3 -- 5
 	NDefines.NSupply.SUPPLY_FLOW_DROP_REDUCTION_AT_MAX_INFRA = 0.40 -- max infrastructure level will reduce the supply flow drop off by this ratio
 	NDefines.NSupply.SUPPLY_FLOW_PENALTY_CROSSING_RIVERS = 0.15 -- crossing rivers introduces additional penalty
+	NDefines.NSupply.NON_CORE_MANPOWER_STATE_SUPPLY = 0.30
 
 	-- NGeography Defines
 	NDefines.NGeography.MEDITERRANEAN_SEA_REGIONS = { 29, 68, 69, 168, 169, 214 }
