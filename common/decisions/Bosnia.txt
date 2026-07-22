@@ -25,6 +25,41 @@ BOS_operation_althea = {
 	}
 }
 
+BOS_peacekeeper_oversight = {
+
+	BOS_demand_eufor_withdrawal = {
+
+		icon = GFX_decision_eng_trade_unions_demand
+
+		cost = 75
+
+		available = {
+			has_idea = BOS_EUFOR
+			has_completed_focus = BOS_bosnian_revanchism
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_demand_eufor_withdrawal"
+			remove_ideas = BOS_EUFOR
+			add_stability = -0.05
+			add_named_threat = {
+				threat = 2
+				name = BOS_eufor_withdrawal_threat
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = PRO_BOSNIAN_LEADERSHIP_MUSLIM_NATION
+				NOT = { has_idea = BOS_financial_crisis }
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
 BOS_SFOR_title = {
 
 	BOS_more_sfor = {
@@ -176,41 +211,50 @@ BOS_islamic_uprising = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_declare_islamic_takeover"
+			custom_effect_tooltip = BOS_islamic_takeover_consequences_tt
+			if = {
+				limit = { has_country_flag = BOS_croat_neutrality_pact }
+				custom_effect_tooltip = BOS_croat_neutrality_pact_honored_tt
+			}
 			news_event = news.84
 			hidden_effect = {
-				release = HZG
 				add_ideas = BOS_aggressive_nation
-				HZG = {
-					set_cosmetic_tag = BOS_gov_old_name
-					declare_war_on = {
-						target = BOS
-						type = civil_war
+				# Croat Neutrality Pact keeps Herceg-Bosna out of the fight, so the HZG splinter is skipped entirely.
+				if = {
+					limit = { NOT = { has_country_flag = BOS_croat_neutrality_pact } }
+					release = HZG
+					HZG = {
+						set_cosmetic_tag = BOS_gov_old_name
+						declare_war_on = {
+							target = BOS
+							type = civil_war
+						}
+						declare_war_on = {
+							target = RSK
+							type = civil_war
+						}
+						add_state_core = 1054
+						add_state_core = 1053
+						add_state_core = 129
+						add_state_core = 128
+						add_state_core = 1051
+						hidden_effect = {
+							set_temp_variable = { rul_party_temp = 0 }
+							change_ruling_party_effect = yes
+						}
+						set_temp_variable = { party_index = 0 }
+						set_temp_variable = { party_popularity_increase = 0.6 }
+						set_temp_variable = { temp_outlook_increase = 0.87 }
+						add_relative_party_popularity = yes
 					}
-					declare_war_on = {
-						target = RSK
-						type = civil_war
+					transfer_units_fraction = {
+						target = HZG
+						size = 0.3
+						stockpile_ratio = 0.3
+						army_ratio = 0.9
+						navy_ratio = 0.0
+						air_ratio = 0.0
 					}
-					add_state_core = 1054
-					add_state_core = 1053
-					add_state_core = 129
-					add_state_core = 128
-					add_state_core = 1051
-					hidden_effect = {
-						set_temp_variable = { rul_party_temp = 0 }
-						change_ruling_party_effect = yes
-					}
-					set_temp_variable = { party_index = 0 }
-					set_temp_variable = { party_popularity_increase = 0.6 }
-					set_temp_variable = { temp_outlook_increase = 0.87 }
-					add_relative_party_popularity = yes
-				}
-				transfer_units_fraction = {
-					target = HZG
-					size = 0.3
-					stockpile_ratio = 0.3
-					army_ratio = 0.9
-					navy_ratio = 0.0
-					air_ratio = 0.0
 				}
 				set_cosmetic_tag = BOS_islamic_revolt
 				set_temp_variable = { rul_party_temp = 11 }
@@ -437,7 +481,10 @@ BOS_internal_factions = {
 
 		cost = 15
 
-		visible = { NOT = { BOS_srpska_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_srpska_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_quell_serbians"
@@ -484,7 +531,10 @@ BOS_internal_factions = {
 
 		cost = 15
 
-		visible = { NOT = { BOS_srpska_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_srpska_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_gain_srpska_popular_support"
@@ -515,7 +565,10 @@ BOS_internal_factions = {
 
 		cost = 15
 
-		visible = { NOT = { BOS_srpska_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_srpska_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_collaboration_with_serbians"
@@ -542,7 +595,10 @@ BOS_internal_factions = {
 
 		available = { BOS_bosniak_attitude_hostile_trigger = yes }
 
-		visible = { NOT = { BOS_bosniak_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_bosniak_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_quell_bosniaks"
@@ -589,7 +645,10 @@ BOS_internal_factions = {
 
 		cost = 15
 
-		visible = { NOT = { BOS_bosniak_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_bosniak_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_collaboration_with_bosniaks"
@@ -616,7 +675,10 @@ BOS_internal_factions = {
 
 		available = { BOS_croat_attitude_hostile_trigger = yes }
 
-		visible = { NOT = { BOS_croat_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_croat_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_quell_croats"
@@ -671,7 +733,10 @@ BOS_internal_factions = {
 
 		available = { BOS_bosniak_attitude_inconsequential_trigger = yes }
 
-		visible = { NOT = { BOS_bosniak_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_bosniak_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_gain_bosniak_popular_support"
@@ -702,7 +767,10 @@ BOS_internal_factions = {
 
 		cost = 15
 
-		visible = { NOT = { BOS_croat_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_croat_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_collaboration_with_croats"
@@ -729,7 +797,10 @@ BOS_internal_factions = {
 
 		cost = 15
 
-		visible = { NOT = { BOS_croat_attitude_loyal_trigger = yes } }
+		visible = {
+			NOT = { BOS_croat_attitude_loyal_trigger = yes }
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_gain_croat_popular_support"
@@ -748,6 +819,97 @@ BOS_internal_factions = {
 				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
 			}
 		}
+	}
+
+	BOS_offer_amnesty = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 25
+
+		fire_only_once = yes
+
+		visible = { has_country_flag = civil_war_bosnia }
+
+		available = { has_war = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_offer_amnesty"
+			BOS_srpska_stability_increase_effect = yes
+			add_war_support = -0.05
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 2
+				BOS_srpska_attitude_hostile_trigger = yes
+			}
+		}
+	}
+
+	BOS_forced_requisition = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 0
+
+		days_re_enable = 60
+
+		fixed_random_seed = no
+
+		visible = { has_country_flag = civil_war_bosnia }
+
+		available = { has_war = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_forced_requisition"
+			random_list = {
+				33 = { set_temp_variable = { treasury_change = 3 } }
+				34 = { set_temp_variable = { treasury_change = 4 } }
+				33 = { set_temp_variable = { treasury_change = 5 } }
+			}
+			modify_treasury_effect = yes
+			BOS_srpska_attitude_decrease_effect = yes
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				BOS_srpska_attitude_hostile_trigger = yes
+			}
+		}
+	}
+
+	BOS_sign_croat_neutrality_pact = {
+
+		icon = GFX_decision_faction_bos_croat
+
+		cost = 35
+
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = civil_war_bosnia
+			NOT = { country_exists = HZG }
+		}
+
+		available = {
+			OR = {
+				BOS_croat_attitude_friendly_trigger = yes
+				BOS_croat_attitude_loyal_trigger = yes
+			}
+			NOT = { has_country_flag = BOS_croat_neutrality_pact }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_sign_croat_neutrality_pact"
+			set_country_flag = BOS_croat_neutrality_pact
+			BOS_croat_attitude_increase_effect = yes
+		}
+
+		ai_will_do = { base = 10 }
 	}
 
 	BOS_destabilize_the_government = {
@@ -1282,64 +1444,15 @@ BOS_internal_factions = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_srpska_declares_independence"
-			hidden_effect = {
-				RSK = {
-					if = {
-						limit = { NOT = { has_template = "Milicija Divizija" } }
-						division_template = {
-							name = "Milicija Divizija"
-							division_names_group = BOS_MIL
-							is_locked = yes
-							regiments = {
-								Militia_Bat = { x = 0 y = 0 }
-							}
-						}
-					}
-				}
-				BOS_set_civil_war_internal_factions_effect = yes
+			custom_effect_tooltip = BOS_srpska_secession_crisis_opens_tt
+			custom_effect_tooltip = BOS_dayton_pressure_decisions_available_tt
+			set_country_flag = BOS_srpska_secession_war_pending
+			clr_country_flag = BOS_rs_crisis_resolved
+			add_timed_idea = {
+				idea = BOS_republika_srpska_secession_crisis
+				days = 180
 			}
-			release = RSK
-			add_ideas = BOS_bosniak_balkan_aspiration
-			country_event = BOS_events.1
-			if = {
-				limit = { country_exists = SER }
-				custom_effect_tooltip = BOS_serbia_reaction_tt
-				SER = { country_event = { id = Serbia.35 days = 2 } }
-			}
-			transfer_units_fraction = {
-				target = RSK
-				size = 0.0
-				stockpile_ratio = 0.1
-				army_ratio = 0.0
-				navy_ratio = 0.0
-				air_ratio = 0.0
-			}
-			129 = { set_demilitarized_zone = no }
-			1053 = { set_demilitarized_zone = no }
-			1054 = { set_demilitarized_zone = no }
-			128 = {
-				create_unit = {
-					division = "name = \"Južna milicija farmera\" division_template = \"Milicija Divizija\" start_experience_factor = 0.2"
-					owner = BOS
-					count = 5
-				}
-			}
-			RSK = {
-				129 = {
-					create_unit = {
-						division = "name = \"Južna milicija farmera\" division_template = \"Milicija Divizija\" start_experience_factor = 0.1"
-						owner = RSK
-						count = 3
-					}
-				}
-				1054 = {
-					create_unit = {
-						division = "name = \"Komunistička milicija\" division_template = \"Milicija Divizija\" start_experience_factor = 0"
-						owner = RSK
-						count = 2
-					}
-				}
-			}
+			country_event = { id = BOS_political.82 days = 1 }
 		}
 	}
 
@@ -1376,16 +1489,133 @@ BOS_internal_factions = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_croats_declare_independence"
-			hidden_effect = { BOS_set_civil_war_internal_factions_effect = yes }
-			release = HZG
-			add_ideas = BOS_bosniak_balkan_aspiration
-			country_event = { id = BOS_events.2 days = 2 }
-			if = {
-				limit = { country_exists = CRO }
-				custom_effect_tooltip = BOS_croatia_reaction_tt
-				CRO = { country_event = { id = CRO_political.10 days = 2 } }
+			custom_effect_tooltip = BOS_croat_secession_crisis_opens_tt
+			set_country_flag = BOS_croat_secession_war_pending
+			add_timed_idea = {
+				idea = BOS_croat_secession_crisis
+				days = 180
 			}
-			1052 = { set_demilitarized_zone = no }
+			country_event = { id = BOS_political.83 days = 1 }
+		}
+	}
+
+	BOS_fund_bosniak_community_programs = {
+
+		icon = GFX_decision_generic_civil_support
+
+		custom_cost_text = cost_2_0
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.99 }
+		}
+
+		days_re_enable = 90
+
+		available = { BOS_bosniak_attitude_inconsequential_trigger = yes }
+
+		visible = {
+			BOS_bosniak_attitude_inconsequential_trigger = yes
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_fund_bosniak_community_programs"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_trust_change = 8 }
+			BOS_bosniak_trust_add_effect = yes
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 2
+				BOS_bosniak_attitude_hostile_trigger = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
+		}
+	}
+
+	BOS_fund_croat_community_programs = {
+
+		icon = GFX_decision_generic_civil_support
+
+		custom_cost_text = cost_2_0
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.99 }
+		}
+
+		days_re_enable = 90
+
+		available = { BOS_croat_attitude_inconsequential_trigger = yes }
+
+		visible = {
+			BOS_croat_attitude_inconsequential_trigger = yes
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_fund_croat_community_programs"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_trust_change = 8 }
+			BOS_croat_trust_add_effect = yes
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 2
+				BOS_croat_attitude_hostile_trigger = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
+		}
+	}
+
+	BOS_fund_srpska_community_programs = {
+
+		icon = GFX_decision_generic_civil_support
+
+		custom_cost_text = cost_2_0
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.99 }
+		}
+
+		days_re_enable = 90
+
+		available = { BOS_srpska_attitude_inconsequential_trigger = yes }
+
+		visible = {
+			BOS_srpska_attitude_inconsequential_trigger = yes
+			NOT = { has_country_flag = civil_war_bosnia }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_fund_srpska_community_programs"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_trust_change = 8 }
+			BOS_srpska_trust_add_effect = yes
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 2
+				BOS_srpska_attitude_hostile_trigger = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
 		}
 	}
 }
@@ -1547,6 +1777,8 @@ BOS_eu_accession = {
 			custom_effect_tooltip = BOS_market_aligned_with_eu_tt
 			set_country_flag = BOS_market_aligned_with_eu
 			add_ideas = BOS_eu_accession_funds
+			set_temp_variable = { temp_opinion = 10 }
+			change_international_bankers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1905,6 +2137,8 @@ BOS_state_reform = {
 
 		remove_effect = {
 			add_ideas = BOS_diaspora_returnees
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
 			if = {
 				limit = { has_idea = BOS_brain_drain_1 }
 				custom_effect_tooltip = BOS_brain_drain_eased_tt
@@ -2195,6 +2429,8 @@ BOS_state_reform = {
 			remove_ideas = BOS_domestic_terror_threat_2
 			add_ideas = BOS_salafi_enclave_monitoring
 			BOS_bosniak_attitude_decrease_effect = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_ulema_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2417,6 +2653,10 @@ BOS_economic_development = {
 			set_temp_variable = { tag_index = TUR.id }
 			set_temp_variable = { influence_target = BOS.id }
 			change_influence_percentage = yes
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_bosniak_trust_add_effect = yes
+			set_temp_variable = { temp_trust_change = -3 }
+			BOS_srpska_trust_add_effect = yes
 		}
 
 		ai_will_do = {
@@ -2450,6 +2690,12 @@ BOS_economic_development = {
 			set_temp_variable = { tag_index = SAU.id }
 			set_temp_variable = { influence_target = BOS.id }
 			change_influence_percentage = yes
+			set_temp_variable = { temp_trust_change = 4 }
+			BOS_bosniak_trust_add_effect = yes
+			set_temp_variable = { temp_trust_change = -3 }
+			BOS_croat_trust_add_effect = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_ulema_opinion = yes
 			random_list = {
 				40 = {
 					custom_effect_tooltip = BOS_gulf_investment_delivered_tt
@@ -2491,12 +2737,18 @@ BOS_economic_development = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_rapid_privatization"
 			set_country_flag = BOS_privatization_settled
-			set_temp_variable = { treasury_change = 3 }
+			set_temp_variable = { treasury_change = 4 }
 			modify_treasury_effect = yes
 			set_temp_variable = { temp_productivity_change = 3 }
 			flat_productivity_change_effect = yes
 			increase_corruption = yes
 			add_stability = -0.03
+			set_temp_variable = { temp_trust_change = -3 }
+			BOS_bosniak_trust_add_effect = yes
+			BOS_croat_trust_add_effect = yes
+			BOS_srpska_trust_add_effect = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = { base = 5 }
@@ -2522,6 +2774,21 @@ BOS_economic_development = {
 			modify_treasury_effect = yes
 			decrease_corruption = yes
 			add_stability = 0.02
+			set_temp_variable = { temp_trust_change = 5 }
+			if = {
+				limit = { BOS_bosniak_leads_government_trigger = yes }
+				BOS_bosniak_trust_add_effect = yes
+			}
+			else_if = {
+				limit = { BOS_croat_leads_government_trigger = yes }
+				BOS_croat_trust_add_effect = yes
+			}
+			else_if = {
+				limit = { BOS_srpska_leads_government_trigger = yes }
+				BOS_srpska_trust_add_effect = yes
+			}
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = { base = 5 }
@@ -2552,6 +2819,8 @@ BOS_economic_development = {
 			set_temp_variable = { influence_target = BOS.id }
 			change_influence_percentage = yes
 			set_country_flag = BOS_thermal_chinese_financed
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_srpska_trust_add_effect = yes
 		}
 
 		ai_will_do = {
@@ -2582,6 +2851,8 @@ BOS_economic_development = {
 			set_temp_variable = { temp_productivity_change = 3 }
 			flat_productivity_change_effect = yes
 			add_stability = 0.02
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_croat_trust_add_effect = yes
 		}
 
 		ai_will_do = {
@@ -2623,7 +2894,7 @@ BOS_economic_development = {
 			base = 10
 			modifier = {
 				factor = 3
-				has_country_flag = BOS_defense_industry_matured
+				has_completed_focus = BOS_defense_export_drive
 			}
 			modifier = {
 				factor = 0
@@ -2655,6 +2926,345 @@ BOS_economic_development = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BOS_federation_development_grant = {
+
+		icon = GFX_decision_generic_construction
+
+		custom_cost_text = cost_2_0
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.99 }
+		}
+
+		available = {
+			has_war = no
+			owns_state = 128
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			NOT = { has_country_flag = BOS_federation_grant_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_federation_development_grant"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { skip_payment = 1 }
+			random_list = {
+				50 = { 128 = { one_state_infrastructure = yes } }
+				50 = { 1051 = { one_state_infrastructure = yes } }
+			}
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_bosniak_trust_add_effect = yes
+			random = {
+				chance = 25
+				set_temp_variable = { temp_trust_change = -3 }
+				BOS_srpska_trust_add_effect = yes
+			}
+			set_country_flag = { flag = BOS_federation_grant_cooldown days = 180 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 3
+				OR = {
+					BOS_bosniak_attitude_hostile_trigger = yes
+					BOS_bosniak_attitude_inconsequential_trigger = yes
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
+		}
+	}
+
+	BOS_herzegovina_development_grant = {
+
+		icon = GFX_decision_generic_construction
+
+		custom_cost_text = cost_2_0
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.99 }
+		}
+
+		available = {
+			has_war = no
+			owns_state = 1052
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			NOT = { has_country_flag = BOS_herzegovina_grant_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_herzegovina_development_grant"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { skip_payment = 1 }
+			1052 = { one_state_infrastructure = yes }
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_croat_trust_add_effect = yes
+			random = {
+				chance = 25
+				set_temp_variable = { temp_trust_change = -3 }
+				BOS_bosniak_trust_add_effect = yes
+			}
+			set_country_flag = { flag = BOS_herzegovina_grant_cooldown days = 180 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 3
+				OR = {
+					BOS_croat_attitude_hostile_trigger = yes
+					BOS_croat_attitude_inconsequential_trigger = yes
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
+		}
+	}
+
+	BOS_srpska_development_grant = {
+
+		icon = GFX_decision_generic_construction
+
+		custom_cost_text = cost_2_0
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.99 }
+		}
+
+		available = {
+			has_war = no
+			owns_state = 129
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			NOT = { has_country_flag = BOS_srpska_grant_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_srpska_development_grant"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { skip_payment = 1 }
+			random_list = {
+				50 = { 129 = { one_state_infrastructure = yes } }
+				50 = { 1054 = { one_state_infrastructure = yes } }
+			}
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_srpska_trust_add_effect = yes
+			random = {
+				chance = 25
+				set_temp_variable = { temp_trust_change = -3 }
+				BOS_bosniak_trust_add_effect = yes
+			}
+			set_country_flag = { flag = BOS_srpska_grant_cooldown days = 180 value = 1 }
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 3
+				OR = {
+					BOS_srpska_attitude_hostile_trigger = yes
+					BOS_srpska_attitude_inconsequential_trigger = yes
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
+		}
+	}
+}
+
+BOS_srpska_supremacy_measures = {
+
+	BOS_canton_pressure_campaign = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 40
+
+		days_re_enable = 120
+
+		available = { has_war = no }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_canton_pressure_campaign"
+			BOS_bosniak_attitude_decrease_effect = yes
+			BOS_croat_attitude_decrease_effect = yes
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	BOS_serbian_alignment_overtures = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 35
+
+		days_re_enable = 120
+
+		available = {
+			has_war = no
+			country_exists = SER
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_serbian_alignment_overtures"
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = SER.id }
+			set_temp_variable = { influence_target = BOS.id }
+			change_influence_percentage = yes
+			BOS_srpska_attitude_increase_effect = yes
+			BOS_bosniak_attitude_decrease_effect = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+}
+
+BOS_civil_war_operations = {
+
+	RSK_requisition_the_mines = {
+
+		icon = arm_economy_button
+
+		cost = 30
+
+		days_re_enable = 90
+
+		visible = {
+			original_tag = RSK
+			has_war = yes
+		}
+
+		available = {
+			has_war = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision RSK_requisition_the_mines"
+			set_temp_variable = { treasury_change = 20.00 }
+			modify_treasury_effect = yes
+			add_war_support = -0.05
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 0
+				has_war = no
+			}
+		}
+	}
+
+	RSK_appeal_to_belgrade = {
+
+		icon = generic_political_discourse
+
+		cost = 25
+
+		days_re_enable = 120
+
+		visible = {
+			original_tag = RSK
+			has_war = yes
+		}
+
+		available = {
+			country_exists = SER
+			NOT = { has_war_with = SER }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision RSK_appeal_to_belgrade"
+			add_war_support = 0.05
+			add_opinion_modifier = { target = SER modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = SER modifier = military_aid }
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = {
+				factor = 0
+				has_war = no
+			}
+		}
+	}
+
+	HZG_war_levy = {
+
+		icon = arm_economy_button
+
+		cost = 30
+
+		days_re_enable = 90
+
+		visible = {
+			original_tag = HZG
+			has_war = yes
+		}
+
+		available = {
+			has_war = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HZG_war_levy"
+			set_temp_variable = { treasury_change = 20.00 }
+			modify_treasury_effect = yes
+			add_stability = -0.05
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 0
+				has_war = no
+			}
+		}
+	}
+
+	HZG_appeal_to_zagreb = {
+
+		icon = generic_political_discourse
+
+		cost = 25
+
+		days_re_enable = 120
+
+		visible = {
+			original_tag = HZG
+			has_war = yes
+		}
+
+		available = {
+			country_exists = CRO
+			NOT = { has_war_with = CRO }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HZG_appeal_to_zagreb"
+			add_war_support = 0.05
+			add_opinion_modifier = { target = CRO modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = CRO modifier = military_aid }
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = {
+				factor = 0
+				has_war = no
 			}
 		}
 	}

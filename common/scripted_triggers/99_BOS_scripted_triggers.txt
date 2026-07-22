@@ -1,92 +1,92 @@
 BOS_bosniak_attitude_hostile_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_Bosniak_attitude_Hostile_tt
-		check_variable = { BOS_bosniak_attitude < 2 }
+		check_variable = { BOS_bosniak_trust < 25 }
 	}
 }
 BOS_bosniak_attitude_inconsequential_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_Bosniak_attitude_Inconsequential_tt
-		check_variable = { BOS_bosniak_attitude < 3 }
+		check_variable = { BOS_bosniak_trust < 51 }
 	}
 }
 BOS_bosniak_attitude_friendly_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_Bosniak_attitude_friendly_tt
-		check_variable = { BOS_bosniak_attitude > 2 }
-		check_variable = { BOS_bosniak_attitude < 4 }
+		check_variable = { BOS_bosniak_trust > 50 }
+		check_variable = { BOS_bosniak_trust < 75 }
 	}
 }
 BOS_bosniak_attitude_loyal_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_Bosniak_attitude_loyal_tt
-		check_variable = { BOS_bosniak_attitude > 3 }
+		check_variable = { BOS_bosniak_trust > 74 }
 	}
 }
 
 BOS_croat_attitude_friendly_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_croat_attitude_friendly_tt
-		check_variable = { BOS_croat_attitude > 2 }
-		check_variable = { BOS_croat_attitude < 4 }
+		check_variable = { BOS_croat_trust > 50 }
+		check_variable = { BOS_croat_trust < 75 }
 	}
 }
 BOS_croat_attitude_loyal_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_croat_attitude_loyal_tt
-		check_variable = { BOS_croat_attitude > 3 }
+		check_variable = { BOS_croat_trust > 74 }
 	}
 }
 
 BOS_croat_attitude_not_loyal_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_croat_attitude_not_loyal_tt
-		check_variable = { BOS_croat_attitude < 4 }
+		check_variable = { BOS_croat_trust < 75 }
 	}
 }
 BOS_croat_attitude_inconsequential_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_croat_attitude_Inconsequential_tt
-		check_variable = { BOS_croat_attitude < 3 }
+		check_variable = { BOS_croat_trust < 51 }
 	}
 }
 BOS_croat_attitude_hostile_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_croat_attitude_Hostile_tt
-		check_variable = { BOS_croat_attitude < 2 }
+		check_variable = { BOS_croat_trust < 25 }
 	}
 }
 
 BOS_srpska_attitude_hostile_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_serbian_attitude_Hostile_tt
-		check_variable = { BOS_srpska_attitude < 2 }
+		check_variable = { BOS_srpska_trust < 25 }
 	}
 }
 BOS_srpska_attitude_inconsequential_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_serbian_attitude_Inconsequential_tt
-		check_variable = { BOS_srpska_attitude < 3 }
+		check_variable = { BOS_srpska_trust < 51 }
 	}
 }
 BOS_srpska_attitude_friendly_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_serbian_attitude_friendly_tt
-		check_variable = { BOS_srpska_attitude > 2 }
-		check_variable = { BOS_srpska_attitude < 4 }
+		check_variable = { BOS_srpska_trust > 50 }
+		check_variable = { BOS_srpska_trust < 75 }
 	}
 }
 BOS_srpska_attitude_loyal_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_serbian_attitude_loyal_tt
-		check_variable = { BOS_srpska_attitude > 3 }
+		check_variable = { BOS_srpska_trust > 74 }
 	}
 }
 
 BOS_srpska_attitude_not_loyal_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = bos_serbian_attitude_not_loyal_tt
-		check_variable = { BOS_srpska_attitude < 4 }
+		check_variable = { BOS_srpska_trust < 75 }
 	}
 }
 
@@ -254,5 +254,52 @@ BOS_all_factions_at_least_friendly_trigger = {
 	OR = {
 		BOS_srpska_attitude_friendly_trigger = yes
 		BOS_srpska_attitude_loyal_trigger = yes
+	}
+}
+
+# Rotation flag marks the seat the NEXT rotation installs, so the current chair is the previous ethnicity in the serb -> croat -> bosniak cycle: flag serb = a Bosniak sits, flag croat = a Serb sits, flag bosniak = a Croat sits. The BOS_pro_srpska / BOS_pro_bosnia timed ideas from the lead-government focuses override the rotation while active.
+BOS_srpska_leads_government_trigger = {
+	NOT = { has_country_flag = civil_war_bosnia }
+	OR = {
+		has_idea = BOS_pro_srpska
+		AND = {
+			NOT = { has_idea = BOS_pro_srpska }
+			NOT = { has_idea = BOS_pro_bosnia }
+			has_country_flag = BOS_a_croat_is_in_power
+		}
+	}
+}
+BOS_bosniak_leads_government_trigger = {
+	NOT = { has_country_flag = civil_war_bosnia }
+	NOT = { has_idea = BOS_pro_srpska }
+	OR = {
+		has_idea = BOS_pro_bosnia
+		AND = {
+			NOT = { has_idea = BOS_pro_bosnia }
+			has_country_flag = BOS_a_serb_is_in_power
+		}
+	}
+}
+BOS_croat_leads_government_trigger = {
+	NOT = { has_country_flag = civil_war_bosnia }
+	NOT = { has_idea = BOS_pro_srpska }
+	NOT = { has_idea = BOS_pro_bosnia }
+	has_country_flag = BOS_a_bosniak_is_in_power
+}
+
+BOS_governing_faction_loyal_trigger = {
+	OR = {
+		AND = {
+			BOS_bosniak_leads_government_trigger = yes
+			BOS_bosniak_attitude_loyal_trigger = yes
+		}
+		AND = {
+			BOS_croat_leads_government_trigger = yes
+			BOS_croat_attitude_loyal_trigger = yes
+		}
+		AND = {
+			BOS_srpska_leads_government_trigger = yes
+			BOS_srpska_attitude_loyal_trigger = yes
+		}
 	}
 }

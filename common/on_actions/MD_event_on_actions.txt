@@ -2153,10 +2153,7 @@ on_actions = {
 				if = {
 					limit = {
 						is_owned_by = BOS
-						OR = {
-							check_variable = { BOS.BOS_bosniak_attitude < 2 }
-							check_variable = { BOS.BOS_bosniak_stability < 2 }
-						}
+						check_variable = { BOS.BOS_bosniak_trust < 25 }
 					}
 					if = {
 						limit = { NOT = { has_dynamic_modifier = { modifier = BOS_anti_government_demonstrations } } }
@@ -2174,10 +2171,7 @@ on_actions = {
 				if = {
 					limit = {
 						is_owned_by = BOS
-						OR = {
-							check_variable = { BOS.BOS_bosniak_attitude < 2 }
-							check_variable = { BOS.BOS_bosniak_stability < 2 }
-						}
+						check_variable = { BOS.BOS_bosniak_trust < 25 }
 					}
 					if = {
 						limit = { NOT = { has_dynamic_modifier = { modifier = BOS_anti_government_demonstrations } } }
@@ -2195,10 +2189,7 @@ on_actions = {
 				if = {
 					limit = {
 						is_owned_by = BOS
-						OR = {
-							check_variable = { BOS.BOS_croat_attitude < 2 }
-							check_variable = { BOS.BOS_croat_stability < 2 }
-						}
+						check_variable = { BOS.BOS_croat_trust < 25 }
 					}
 					if = {
 						limit = { NOT = { has_dynamic_modifier = { modifier = BOS_anti_government_demonstrations } } }
@@ -2216,10 +2207,7 @@ on_actions = {
 				if = {
 					limit = {
 						is_owned_by = BOS
-						OR = {
-							check_variable = { BOS.BOS_srpska_attitude < 2 }
-							check_variable = { BOS.BOS_srpska_stability < 2 }
-						}
+						check_variable = { BOS.BOS_srpska_trust < 25 }
 					}
 					if = {
 						limit = { NOT = { has_dynamic_modifier = { modifier = BOS_anti_government_demonstrations } } }
@@ -2237,10 +2225,7 @@ on_actions = {
 				if = {
 					limit = {
 						is_owned_by = BOS
-						OR = {
-							check_variable = { BOS.BOS_srpska_attitude < 2 }
-							check_variable = { BOS.BOS_srpska_stability < 2 }
-						}
+						check_variable = { BOS.BOS_srpska_trust < 25 }
 					}
 					if = {
 						limit = { NOT = { has_dynamic_modifier = { modifier = BOS_anti_government_demonstrations } } }
@@ -2255,10 +2240,68 @@ on_actions = {
 				}
 			}
 			BOS_update_national_reconciliation_effect = yes
+			BOS_update_governing_partner_effect = yes
+			if = {
+				limit = {
+					has_war = no
+					has_civil_war = no
+					NOT = { has_country_flag = civil_war_bosnia }
+					NOT = { has_country_flag = BOS_faction_demand_cooldown }
+					OR = {
+						check_variable = { BOS_bosniak_trust < 51 }
+						check_variable = { BOS_croat_trust < 51 }
+						check_variable = { BOS_srpska_trust < 51 }
+					}
+				}
+				set_country_flag = { flag = BOS_faction_demand_cooldown days = 110 value = 1 }
+				if = {
+					limit = {
+						check_variable = { BOS_bosniak_trust < 51 }
+						check_variable = { var = BOS_bosniak_trust value = BOS_croat_trust compare = less_than_or_equals }
+						check_variable = { var = BOS_bosniak_trust value = BOS_srpska_trust compare = less_than_or_equals }
+					}
+					country_event = { id = BOS_events.56 days = 3 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { BOS_croat_trust < 51 }
+						check_variable = { var = BOS_croat_trust value = BOS_srpska_trust compare = less_than_or_equals }
+					}
+					country_event = { id = BOS_events.57 days = 3 }
+				}
+				else_if = {
+					limit = { check_variable = { BOS_srpska_trust < 51 } }
+					country_event = { id = BOS_events.58 days = 3 }
+				}
+			}
+			# Presidency rotation left overdue: both the 240d cooldown and the 360d overdue window have lapsed with no rotation, so the faction next in line to hold the seat sours. 180d souring cooldown throttles the nag.
+			if = {
+				limit = {
+					has_country_flag = BOS_presidency_rotation_started
+					OR = {
+						has_idea = BOS_rotating_presidency
+						has_idea = BOS_rotating_presidency2
+						has_idea = BOS_rotating_presidency3
+					}
+					has_war = no
+					has_civil_war = no
+					NOT = { has_country_flag = civil_war_bosnia }
+					NOT = { has_country_flag = BOS_presidency_rotation_cooldown }
+					NOT = { has_country_flag = BOS_presidency_overdue_window }
+					NOT = { has_country_flag = BOS_presidency_souring_cooldown }
+					OR = {
+						has_country_flag = BOS_a_serb_is_in_power
+						has_country_flag = BOS_a_croat_is_in_power
+						has_country_flag = BOS_a_bosniak_is_in_power
+					}
+				}
+				set_country_flag = { flag = BOS_presidency_souring_cooldown days = 180 value = 1 }
+				country_event = { id = BOS_political.84 days = 3 }
+			}
 			if = {
 				limit = {
 					has_idea = BOS_milorad_dodik_idea
-					check_variable = { BOS_srpska_attitude < 2 }
+					check_variable = { BOS_srpska_trust < 25 }
 					NOT = { has_idea = BOS_republika_srpska_secession_crisis }
 					NOT = { has_country_flag = BOS_rs_crisis_cooldown }
 					NOT = { has_country_flag = civil_war_bosnia }
@@ -2283,6 +2326,211 @@ on_actions = {
 					chance = 4
 					set_country_flag = { flag = BOS_corruption_scandal_cooldown days = 365 value = 1 }
 					country_event = { id = BOS_political.26 days = 2 }
+				}
+			}
+			# The community holding the government leverages the seat for an economic ask. Shares the 110d demand cooldown so the ask and demand loops interleave rather than stack.
+			if = {
+				limit = {
+					has_war = no
+					has_civil_war = no
+					NOT = { has_country_flag = civil_war_bosnia }
+					NOT = { has_country_flag = BOS_faction_demand_cooldown }
+					NOT = { has_country_flag = BOS_governing_ask_cooldown }
+					OR = {
+						AND = {
+							BOS_srpska_leads_government_trigger = yes
+							check_variable = { BOS_srpska_trust > 50 }
+							country_exists = CHI
+						}
+						AND = {
+							BOS_croat_leads_government_trigger = yes
+							check_variable = { BOS_croat_trust > 50 }
+						}
+						AND = {
+							BOS_bosniak_leads_government_trigger = yes
+							check_variable = { BOS_bosniak_trust > 50 }
+						}
+					}
+				}
+				set_country_flag = { flag = BOS_governing_ask_cooldown days = 240 value = 1 }
+				set_country_flag = { flag = BOS_faction_demand_cooldown days = 110 value = 1 }
+				if = {
+					limit = { BOS_srpska_leads_government_trigger = yes }
+					country_event = { id = BOS_events.61 days = 3 }
+				}
+				else_if = {
+					limit = { BOS_croat_leads_government_trigger = yes }
+					country_event = { id = BOS_events.62 days = 3 }
+				}
+				else_if = {
+					limit = { BOS_bosniak_leads_government_trigger = yes }
+					country_event = { id = BOS_events.63 days = 3 }
+				}
+			}
+		}
+	}
+
+	on_monthly_BOS = {
+		effect = {
+			if = {
+				limit = {
+					has_civil_war = no
+					NOT = { has_country_flag = civil_war_bosnia }
+				}
+				# Emigration pressure drifts on structural push factors (brain drain, corruption, hostile communities) against retention policy (jobs, youth grants, the corridor, remittances).
+				set_temp_variable = { BOS_emig_delta = 0 }
+				if = {
+					limit = { has_idea = BOS_brain_drain_2 }
+					add_to_temp_variable = { BOS_emig_delta = 3 }
+				}
+				else_if = {
+					limit = { has_idea = BOS_brain_drain_1 }
+					add_to_temp_variable = { BOS_emig_delta = 2 }
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = corruption_level_07
+							has_idea = corruption_level_08
+							has_idea = corruption_level_09
+							has_idea = corruption_level_10
+						}
+					}
+					add_to_temp_variable = { BOS_emig_delta = 1 }
+				}
+				if = {
+					limit = { check_variable = { BOS_bosniak_trust < 25 } }
+					add_to_temp_variable = { BOS_emig_delta = 1 }
+				}
+				if = {
+					limit = { check_variable = { BOS_croat_trust < 25 } }
+					add_to_temp_variable = { BOS_emig_delta = 1 }
+				}
+				if = {
+					limit = { check_variable = { BOS_srpska_trust < 25 } }
+					add_to_temp_variable = { BOS_emig_delta = 1 }
+				}
+				if = {
+					limit = { has_idea = BOS_jobs_program_idea }
+					subtract_from_temp_variable = { BOS_emig_delta = 1 }
+				}
+				if = {
+					limit = { has_idea = BOS_youth_retention_idea }
+					subtract_from_temp_variable = { BOS_emig_delta = 1 }
+				}
+				if = {
+					limit = { has_idea = BOS_corridor_vc_trade_boost }
+					subtract_from_temp_variable = { BOS_emig_delta = 1 }
+				}
+				if = {
+					limit = { has_idea = BOS_diaspora_remittances }
+					subtract_from_temp_variable = { BOS_emig_delta = 1 }
+				}
+				add_to_variable = { BOS_emigration_pressure = BOS_emig_delta }
+				clamp_variable = { var = BOS_emigration_pressure min = 0 max = 100 }
+
+				# Sustained pressure bleeds manpower from every community.
+				if = {
+					limit = { check_variable = { BOS_emigration_pressure > 75 } }
+					set_temp_variable = { temp_manpower_change = -2 }
+					BOS_bosniak_manpower_apply_effect = yes
+					BOS_croat_manpower_apply_effect = yes
+					BOS_srpska_manpower_apply_effect = yes
+				}
+				else_if = {
+					limit = { check_variable = { BOS_emigration_pressure > 50 } }
+					set_temp_variable = { temp_manpower_change = -1 }
+					BOS_bosniak_manpower_apply_effect = yes
+					BOS_croat_manpower_apply_effect = yes
+					BOS_srpska_manpower_apply_effect = yes
+				}
+
+				# Warn once per excursion above each threshold; clear the guard when pressure falls back under it.
+				if = {
+					limit = {
+						check_variable = { BOS_emigration_pressure > 50 }
+						NOT = { has_country_flag = BOS_emigration_pressure_warned }
+					}
+					set_country_flag = BOS_emigration_pressure_warned
+					country_event = { id = BOS_events.64 days = 2 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { BOS_emigration_pressure < 51 }
+						has_country_flag = BOS_emigration_pressure_warned
+					}
+					clr_country_flag = BOS_emigration_pressure_warned
+				}
+				if = {
+					limit = {
+						check_variable = { BOS_emigration_pressure > 75 }
+						NOT = { has_country_flag = BOS_emigration_crisis_warned }
+					}
+					set_country_flag = BOS_emigration_crisis_warned
+					country_event = { id = BOS_events.65 days = 2 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { BOS_emigration_pressure < 76 }
+						has_country_flag = BOS_emigration_crisis_warned
+					}
+					clr_country_flag = BOS_emigration_crisis_warned
+				}
+
+				# Foreign patron pull: strong Belgrade or Zagreb influence erodes that community's trust in Sarajevo, unless the community holds the government, where the tie instead reinforces it. Capped short of the ends to avoid pinning.
+				if = {
+					limit = {
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							var:v = { tag = SER }
+							check_variable = { influence_array_val^i > 50 }
+						}
+					}
+					if = {
+						limit = {
+							BOS_srpska_leads_government_trigger = yes
+							check_variable = { BOS_srpska_trust < 90 }
+						}
+						set_temp_variable = { temp_trust_change = 1 }
+						BOS_srpska_trust_apply_effect = yes
+					}
+					else_if = {
+						limit = {
+							NOT = { BOS_srpska_leads_government_trigger = yes }
+							check_variable = { BOS_srpska_trust > 10 }
+						}
+						set_temp_variable = { temp_trust_change = -1 }
+						BOS_srpska_trust_apply_effect = yes
+					}
+				}
+				if = {
+					limit = {
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							var:v = { tag = CRO }
+							check_variable = { influence_array_val^i > 40 }
+						}
+					}
+					if = {
+						limit = {
+							BOS_croat_leads_government_trigger = yes
+							check_variable = { BOS_croat_trust < 90 }
+						}
+						set_temp_variable = { temp_trust_change = 1 }
+						BOS_croat_trust_apply_effect = yes
+					}
+					else_if = {
+						limit = {
+							NOT = { BOS_croat_leads_government_trigger = yes }
+							check_variable = { BOS_croat_trust > 10 }
+						}
+						set_temp_variable = { temp_trust_change = -1 }
+						BOS_croat_trust_apply_effect = yes
+					}
 				}
 			}
 		}

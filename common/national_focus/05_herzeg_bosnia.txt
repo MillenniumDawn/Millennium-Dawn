@@ -1,0 +1,179 @@
+# Author(s): Bird
+focus_tree = {
+	id = HZG_focus
+	country = {
+		base = 0
+		modifier = {
+			add = 20
+			original_tag = HZG
+		}
+	}
+
+	continuous_focus_position = { x = 100 y = 1000 }
+
+	# Rally the Cantons
+	focus = {
+		id = HZG_rally_the_cantons
+		icon = bos_apc_rush
+
+		x = 2
+		y = 0
+
+		cost = 2
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_STABILITY }
+
+		available = {
+			has_war = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus HZG_rally_the_cantons"
+			add_war_support = 0.10
+			add_timed_idea = {
+				idea = HZG_rally_the_cantons
+				days = 180
+			}
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_war = no
+			}
+		}
+	}
+
+	# Croat Volunteers
+	focus = {
+		id = HZG_croat_volunteers
+		icon = ultranationalist_volunteers
+
+		x = 0
+		y = 1
+		relative_position_id = HZG_rally_the_cantons
+
+		cost = 3
+
+		prerequisite = { focus = HZG_rally_the_cantons }
+
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			has_war = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus HZG_croat_volunteers"
+			add_timed_idea = {
+				idea = HZG_croat_volunteers
+				days = 180
+			}
+			if = {
+				limit = {
+					country_exists = CRO
+					NOT = { has_war_with = CRO }
+				}
+				CRO = { country_event = { id = BOS_events.70 days = 2 } }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				effect_tooltip = { custom_effect_tooltip = HZG_croat_volunteers_accept_tt }
+			}
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_war = no
+			}
+		}
+	}
+
+	# The Herzeg Line
+	focus = {
+		id = HZG_the_herzeg_line
+		icon = border_conflict_bunker
+
+		x = -1
+		y = 1
+		relative_position_id = HZG_croat_volunteers
+
+		cost = 3
+
+		prerequisite = { focus = HZG_croat_volunteers }
+
+		search_filters = { FOCUS_FILTER_ARMY FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			has_war = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus HZG_the_herzeg_line"
+			add_timed_idea = {
+				idea = HZG_the_herzeg_line
+				days = 180
+			}
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_war = no
+			}
+		}
+	}
+
+	# Zagreb's Patronage
+	focus = {
+		id = HZG_zagrebs_patronage
+		icon = lend_lease
+
+		x = 1
+		y = 1
+		relative_position_id = HZG_croat_volunteers
+
+		cost = 3
+
+		prerequisite = { focus = HZG_croat_volunteers }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			has_war = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus HZG_zagrebs_patronage"
+			set_temp_variable = { treasury_change = 15.00 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { country_exists = CRO }
+				add_equipment_to_stockpile = {
+					type = infantry_weapons_2
+					amount = 500
+					producer = CRO
+				}
+				add_opinion_modifier = { target = CRO modifier = declaration_of_friendship }
+				reverse_add_opinion_modifier = { target = CRO modifier = declaration_of_friendship }
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = infantry_weapons_2
+					amount = 500
+					producer = HZG
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_war = no
+			}
+		}
+	}
+}

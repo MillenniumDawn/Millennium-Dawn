@@ -159,6 +159,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_national_high_command"
 			set_temp_variable = { temp_yugo_nost_gain = 12 }
 			add_yugo_nostalgia_effect = yes
+			newline = yes
 			swap_ideas = {
 				remove_idea = BOS_politicized_army_idea2
 				add_idea = BOS_politicized_army_idea3
@@ -1312,6 +1313,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_restoration_of_old_aircraft"
 			128 = { one_state_air_base = yes }
+			newline = yes
 			add_tech_bonus = {
 				name = CAT_trans_heli
 				bonus = 0.2
@@ -1373,6 +1375,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_aircraft_acquiring"
 			128 = { one_state_air_base = yes }
+			# TODO: needs to be an event to Russia
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				add_equipment_to_stockpile = {
@@ -1475,6 +1478,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_domestic_production"
 			129 = { one_state_arms_factory = yes }
+
 		}
 
 		ai_will_do = {
@@ -1514,7 +1518,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_aerial_cooperation"
-			add_ideas = BOS_aerial_dominance2
+			if = {
+				limit = { has_idea = BOS_aerial_dominance }
+				swap_ideas = {
+					remove_idea = BOS_aerial_dominance
+					add_idea = BOS_aerial_dominance2
+				}
+			}
+			else = {
+				add_ideas = BOS_aerial_dominance
+			}
 		}
 
 		ai_will_do = {
@@ -1546,6 +1559,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_air_defence_initiative"
 			add_ideas = BOS_air_defence_initiative_idea
+			newline = yes
+			if = {
+				limit = { NOT = { is_special_project_completed = sp:sp_missile_project }  }
+				complete_special_project = sp:sp_missile_project
+			}
+			if = {
+				limit = { NOT = { has_tech = air_defense } }
+				set_technology = {
+					air_defense = 1
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -1571,12 +1595,18 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_ADD_BUILDING FOCUS_FILTER_EXPENDITURE }
 
-		available = { hidden_trigger = { NOT = { has_country_flag = civil_war_focus } } }
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			has_tech = air_defense
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_sam_systems"
+			set_temp_variable = { skip_payment = 1 }
 			129 = { one_state_anti_air = yes }
 			128 = { one_state_anti_air = yes }
+			newline = yes
+			# TODO: Add an event requesting SAM missiles if you have GDM to Russia
 		}
 
 		ai_will_do = {
@@ -1650,6 +1680,7 @@ focus_tree = {
 				remove_idea = BOS_air_defence_initiative_idea
 				add_idea = BOS_air_defence_initiative_idea2
 			}
+			newline = yes
 			128 = { one_state_radar_station = yes }
 		}
 
@@ -3898,6 +3929,7 @@ focus_tree = {
 				add_idea = the_military
 			}
 			custom_effect_tooltip = BOS_may_draw_us_closer_to_civil_war
+			custom_effect_tooltip = BOS_revanchism_peacekeepers_warning_tt
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 		}
@@ -4088,6 +4120,7 @@ focus_tree = {
 			}
 			custom_effect_tooltip = Bos_will_pull_us_into_a_war
 			custom_effect_tooltip = BOS_unlocks_prep_for_srpska_war
+			custom_effect_tooltip = BOS_national_awakening_consequences_tt
 		}
 
 		ai_will_do = {
@@ -6124,7 +6157,10 @@ focus_tree = {
 
 		available = {
 			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
-			has_country_flag = BOS_financial_crisis
+			custom_trigger_tooltip = {
+				tooltip = BOS_bosnian_elections_crisis_gate_tt
+				has_country_flag = BOS_financial_crisis
+			}
 		}
 
 		completion_reward = {
@@ -6517,6 +6553,12 @@ focus_tree = {
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				random_owned_state = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+						}
+					}
 					add_extra_state_shared_building_slots = 1
 					add_building_construction = {
 						type = industrial_complex
@@ -6563,14 +6605,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_anti_serbian_propaganda"
 			add_stability = -0.05
-			BOS = {
-				set_temp_variable = { percent_change = -4 }
-				set_temp_variable = { tag_index = GER.id }
-				change_influence_percentage = yes
-			}
+			set_temp_variable = { percent_change = -4 }
+			set_temp_variable = { tag_index = GER.id }
+			change_influence_percentage = yes
+			newline = yes
 			128 = { one_state_industrial_complex = yes }
-			GER = { add_opinion_modifier = { target = ROOT modifier = unprovoked_aggression } }
+			newline = yes
 			add_opinion_modifier = { target = GER modifier = unprovoked_aggression }
+			reverse_add_opinion_modifier = { target = GER modifier = unprovoked_aggression }
 		}
 
 		ai_will_do = {
@@ -6789,6 +6831,7 @@ focus_tree = {
 				amount = 8
 				state = 1054
 			}
+			newline = yes
 			add_ideas = BOS_mining_development
 		}
 
@@ -6830,13 +6873,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_farming_sector"
-			set_temp_variable = { party_index = 17 }
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_farmers_opinion = yes
-			custom_effect_tooltip = farmers_opinion_tt
+			newline = yes
 			add_ideas = BOS_farming_improvements
+			if = { limit = { has_idea = farmers }
+				custom_effect_tooltip = if_farmers_opinion_at_least_enthusiastic_tt
+				effect_tooltip = {
+					set_temp_variable = { skip_payment = 1 }
+					one_random_agriculture_district = yes
+				}
+				hidden_effect = {
+					if = {
+						limit = { check_variable = { farmers_opinion > 74.999 } }
+						set_temp_variable = { skip_payment = 1 }
+						one_random_agriculture_district = yes
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -7329,10 +7383,19 @@ focus_tree = {
 			BOS_srpska_attitude_decrease_effect = yes
 			BOS_srpska_stability_decrease_effect = yes
 			add_stability = -0.02
+			if = {
+				limit = { BOS_governing_faction_loyal_trigger = yes }
+				custom_effect_tooltip = BOS_governing_partner_dividends_tt
+				add_timed_idea = { idea = BOS_reconstruction_dividends days = 180 }
+			}
 		}
 
 		ai_will_do = {
 			base = 8
+			modifier = {
+				add = 10
+				BOS_governing_faction_loyal_trigger = yes
+			}
 			modifier = {
 				factor = 2
 				has_global_flag = PRO_BOSNIAN_LEADERSHIP_PEACEFUL
@@ -7410,10 +7473,19 @@ focus_tree = {
 			BOS_bosniak_stability_decrease_effect = yes
 			BOS_croat_attitude_decrease_effect = yes
 			BOS_croat_stability_decrease_effect = yes
+			if = {
+				limit = { BOS_governing_faction_loyal_trigger = yes }
+				custom_effect_tooltip = BOS_governing_partner_dividends_tt
+				add_timed_idea = { idea = BOS_reconstruction_dividends days = 180 }
+			}
 		}
 
 		ai_will_do = {
 			base = 8
+			modifier = {
+				add = 10
+				BOS_governing_faction_loyal_trigger = yes
+			}
 			modifier = {
 				factor = 2
 				OR = {
@@ -7492,10 +7564,19 @@ focus_tree = {
 			BOS_bosniak_attitude_decrease_effect = yes
 			BOS_bosniak_stability_decrease_effect = yes
 			add_stability = -0.02
+			if = {
+				limit = { BOS_governing_faction_loyal_trigger = yes }
+				custom_effect_tooltip = BOS_governing_partner_dividends_tt
+				add_timed_idea = { idea = BOS_reconstruction_dividends days = 180 }
+			}
 		}
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				add = 10
+				BOS_governing_faction_loyal_trigger = yes
+			}
 			modifier = {
 				factor = 2
 				OR = {
@@ -7889,7 +7970,7 @@ focus_tree = {
 		id = BOS_develop_national_sentiment
 		icon = ultranationalist_volunteers
 
-		x = 1
+		x = 0
 		y = 1
 		relative_position_id = BOS_formation_of_a_junta
 
@@ -8045,10 +8126,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_corridor_vc_northern_construction"
 			128 = { one_state_infrastructure = yes }
+			if = {
+				limit = { BOS_governing_faction_loyal_trigger = yes }
+				custom_effect_tooltip = BOS_governing_partner_dividends_tt
+				add_timed_idea = { idea = BOS_reconstruction_dividends days = 180 }
+			}
 		}
 
 		ai_will_do = {
 			base = 6
+			modifier = {
+				add = 10
+				BOS_governing_faction_loyal_trigger = yes
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -8075,6 +8165,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_corridor_vc_southern_construction"
 			1052 = { one_state_infrastructure = yes }
+			BOS_croat_stability_increase_effect = yes
 		}
 
 		ai_will_do = {
@@ -8108,6 +8199,7 @@ focus_tree = {
 			custom_effect_tooltip = BOS_corridor_vc_complete_tt
 			add_ideas = BOS_corridor_vc_trade_boost
 			add_political_power = 20
+			BOS_all_faction_trust_increase_effect = yes
 		}
 
 		ai_will_do = {
@@ -8143,6 +8235,8 @@ focus_tree = {
 			set_temp_variable = { tag_index = CHI.id }
 			set_temp_variable = { influence_target = BOS.id }
 			change_influence_percentage = yes
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_srpska_trust_add_effect = yes
 		}
 
 		ai_will_do = {
@@ -8182,6 +8276,8 @@ focus_tree = {
 			set_temp_variable = { modify_europeanism = 0.01 }
 			set_temp_variable = { modify_europeanism_target = THIS }
 			europeanism_change = yes
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_croat_trust_add_effect = yes
 		}
 
 		ai_will_do = {
@@ -8214,15 +8310,32 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INDUSTRY }
 
-		available = { hidden_trigger = { NOT = { has_country_flag = civil_war_focus } } }
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			owns_state = 128
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_defense_industry_revival"
 			128 = { one_state_arms_factory = yes }
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			custom_effect_tooltip = the_military_opinion_tt
+			set_temp_variable = { temp_trust_change = 4 }
+			BOS_bosniak_trust_add_effect = yes
+			if = {
+				limit = { BOS_governing_faction_loyal_trigger = yes }
+				custom_effect_tooltip = BOS_governing_partner_dividends_tt
+				add_timed_idea = { idea = BOS_reconstruction_dividends days = 180 }
+			}
 		}
 
 		ai_will_do = {
 			base = 6
+			modifier = {
+				add = 10
+				BOS_governing_faction_loyal_trigger = yes
+			}
 			modifier = {
 				factor = 0
 				can_staff_an_arms_industry = no
@@ -8296,9 +8409,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_defense_export_drive"
-			set_country_flag = BOS_defense_industry_matured
-			custom_effect_tooltip = BOS_defense_industry_matured_tt
 			add_ideas = BOS_defense_industrial_base
+			newline = yes
+			if = {
+				limit = { has_dlc = "Arms Against Tyranny" }
+				every_military_industrial_organization = {
+					add_mio_funds = 150
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -8342,10 +8460,23 @@ focus_tree = {
 				remove_ideas = BOS_brain_drain_2
 			}
 			add_ideas = BOS_jobs_program_idea
+			set_temp_variable = { temp_trust_change = 3 }
+			BOS_bosniak_trust_add_effect = yes
+			BOS_croat_trust_add_effect = yes
+			BOS_srpska_trust_add_effect = yes
+			if = {
+				limit = { BOS_governing_faction_loyal_trigger = yes }
+				custom_effect_tooltip = BOS_governing_partner_dividends_tt
+				add_timed_idea = { idea = BOS_reconstruction_dividends days = 180 }
+			}
 		}
 
 		ai_will_do = {
 			base = 6
+			modifier = {
+				add = 10
+				BOS_governing_faction_loyal_trigger = yes
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -8388,6 +8519,329 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+		}
+	}
+
+	# Wave 3C: EU accession, entity politics, energy transition, diaspora economy
+	focus = {
+		id = BOS_eu_accession_push
+		icon = EU_policies
+
+		x = 0
+		y = 1
+		relative_position_id = BOS_growth_plan_negotiations
+
+		cost = 7
+
+		prerequisite = { focus = BOS_growth_plan_negotiations }
+
+		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL }
+
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			date > 2022.12.01
+			has_country_flag = BOS_eu_growth_plan_eligible
+			BOS_all_factions_at_least_friendly_trigger = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_eu_accession_push"
+			set_temp_variable = { temp_opinion = 10 }
+			change_international_bankers_opinion = yes
+			add_timed_idea = { idea = BOS_eu_candidacy_momentum days = 365 }
+			BOS_all_faction_trust_increase_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	focus = {
+		id = BOS_electoral_reform_package
+		icon = Focus_Parliament_Constitution
+
+		x = 0
+		y = 1
+		relative_position_id = BOS_eu_accession_push
+
+		cost = 7
+
+		prerequisite = { focus = BOS_eu_accession_push }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			NOT = { has_country_flag = civil_war_bosnia }
+			has_country_flag = BOS_sejdic_finci_ruling
+			BOS_bosniak_attitude_loyal_trigger = yes
+			BOS_croat_attitude_loyal_trigger = yes
+			BOS_srpska_attitude_loyal_trigger = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_electoral_reform_package"
+			custom_effect_tooltip = BOS_reformed_presidency_tt
+			if = {
+				limit = { has_idea = BOS_rotating_presidency }
+				swap_ideas = { remove_idea = BOS_rotating_presidency add_idea = BOS_reformed_presidency }
+			}
+			else_if = {
+				limit = { has_idea = BOS_rotating_presidency2 }
+				swap_ideas = { remove_idea = BOS_rotating_presidency2 add_idea = BOS_reformed_presidency }
+			}
+			else_if = {
+				limit = { has_idea = BOS_rotating_presidency3 }
+				swap_ideas = { remove_idea = BOS_rotating_presidency3 add_idea = BOS_reformed_presidency }
+			}
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = BOS_open_balkan_initiative
+		icon = customs_union
+
+		x = -2
+		y = 1
+		relative_position_id = BOS_corridor_vc_opening
+
+		cost = 5
+
+		prerequisite = { focus = BOS_corridor_vc_opening }
+		mutually_exclusive = { focus = BOS_berlin_process_commitment }
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_open_balkan_initiative"
+			add_ideas = BOS_open_balkan_market
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
+			if = {
+				limit = { country_exists = SER }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = SER.id }
+				set_temp_variable = { influence_target = BOS.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { temp_trust_change = 5 }
+			BOS_srpska_trust_add_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				has_global_flag = PRO_LEADERSHIP_TO_SRPSKA_SRPSKA_FIRST
+			}
+		}
+	}
+
+	focus = {
+		id = BOS_berlin_process_commitment
+		icon = association_agreement
+
+		x = 0
+		y = 1
+		relative_position_id = BOS_corridor_vc_opening
+
+		cost = 5
+
+		prerequisite = { focus = BOS_corridor_vc_opening }
+		mutually_exclusive = { focus = BOS_open_balkan_initiative }
+
+		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_berlin_process_commitment"
+			set_temp_variable = { modify_europeanism = 0.01 }
+			set_temp_variable = { modify_europeanism_target = THIS }
+			europeanism_change = yes
+			if = {
+				limit = { country_exists = GER }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = GER.id }
+				set_temp_variable = { influence_target = BOS.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { temp_trust_change = 4 }
+			BOS_croat_trust_add_effect = yes
+			BOS_bosniak_trust_add_effect = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_international_bankers_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = PRO_BOSNIAN_LEADERSHIP_PEACEFUL
+					has_global_flag = PRO_BOSNIAN_LEADERSHIP_MUSLIM_NATION
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = BOS_confront_entity_obstruction
+		icon = political_pressure
+
+		x = 2
+		y = 1
+		relative_position_id = BOS_corridor_vc_opening
+
+		cost = 6
+
+		prerequisite = { focus = BOS_corridor_vc_opening }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			date > 2021.01.01
+			OR = {
+				has_idea = BOS_milorad_dodik_idea
+				BOS_srpska_attitude_inconsequential_trigger = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_confront_entity_obstruction"
+			custom_effect_tooltip = BOS_confront_entity_obstruction_choice_tt
+			country_event = { id = BOS_events.66 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 4
+		}
+	}
+
+	focus = {
+		id = BOS_energy_transition_strategy
+		icon = expand_bosnia_green
+
+		x = -1
+		y = 1
+		relative_position_id = BOS_west_energy_partnership
+
+		cost = 5
+
+		prerequisite = { focus = BOS_east_energy_partnership focus = BOS_west_energy_partnership }
+
+		search_filters = { FOCUS_FILTER_RENEWABLE_ENERGY_INFRASTRUCTURE FOCUS_FILTER_POWER_INFRASTRUCTURE }
+
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_energy_transition_strategy"
+			one_random_renewable_energy_infra = yes
+			set_temp_variable = { temp_trust_change = 3 }
+			BOS_croat_trust_add_effect = yes
+			BOS_srpska_trust_add_effect = yes
+			custom_effect_tooltip = BOS_emigration_eased_energy_tt
+			subtract_from_variable = { BOS_emigration_pressure = 5 }
+			clamp_variable = { var = BOS_emigration_pressure min = 0 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = BOS_digital_diaspora_economy
+		icon = diaspora_influence
+
+		x = 0
+		y = 1
+		relative_position_id = BOS_youth_retention_initiative
+
+		cost = 5
+
+		prerequisite = { focus = BOS_youth_retention_initiative }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_MIGRANT_CRISIS }
+
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_digital_diaspora_economy"
+			add_ideas = BOS_digital_economy_idea
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
+			custom_effect_tooltip = BOS_emigration_eased_digital_tt
+			subtract_from_variable = { BOS_emigration_pressure = 10 }
+			clamp_variable = { var = BOS_emigration_pressure min = 0 max = 100 }
+			if = {
+				limit = { has_idea = BOS_diaspora_remittances }
+				custom_effect_tooltip = BOS_digital_diaspora_synergy_tt
+				set_temp_variable = { skip_payment = 1 }
+				one_random_industrial_complex = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = BOS_census_2023
+		icon = democracy_bosnia
+
+		x = 0
+		y = 1
+		relative_position_id = BOS_digital_diaspora_economy
+
+		cost = 4
+
+		prerequisite = { focus = BOS_digital_diaspora_economy }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MANPOWER }
+
+		available = {
+			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
+			date > 2023.01.01
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_census_2023"
+			country_event = { id = BOS_events.67 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
 		}
 	}
 }

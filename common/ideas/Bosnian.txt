@@ -379,6 +379,7 @@ ideas = {
 			modifier = {
 				production_speed_industrial_complex_factor = 0.10
 				consumer_goods_factor = -0.03
+				internal_investment_slot_number = 1
 				return_on_investment_modifier = 0.03
 			}
 		}
@@ -526,7 +527,8 @@ ideas = {
 			picture = un_intervention
 			allowed_civil_war = { always = yes }
 			modifier = {
-				stability_factor = 0.05
+				stability_factor = 0.15
+				political_power_factor = 0.15
 				western_outlook_campaign_cost_modifier = -0.12
 			}
 		}
@@ -617,6 +619,18 @@ ideas = {
 				neutrality_drift = 0.03
 				tax_gain_multiplier_modifier = 0.08
 				foreign_influence_modifier = 0.10
+			}
+		}
+		BOS_reformed_presidency = {
+			picture = bosnia_goverment_change
+			allowed_civil_war = { always = yes }
+			modifier = {
+				bureaucracy_cost_multiplier_modifier = 0.10
+				stability_factor = 0.15
+				democratic_drift = 0.03
+				tax_gain_multiplier_modifier = 0.10
+				political_power_gain = 0.05
+				drift_defence_factor = 0.15
 			}
 		}
 
@@ -819,7 +833,6 @@ ideas = {
 
 		BOS_reconstruction_drive = {
 			picture = construction
-			allowed = { always = no }
 			allowed_civil_war = { always = yes }
 			modifier = {
 				production_speed_buildings_factor = 0.10
@@ -882,7 +895,6 @@ ideas = {
 
 		BOS_national_mobilization = {
 			picture = manpower_bonus
-			allowed = { always = no }
 			allowed_civil_war = { always = yes }
 			modifier = {
 				conscription = 0.02
@@ -1042,7 +1054,6 @@ ideas = {
 		}
 		BOS_eu_development_loans = {
 			picture = foreign_capital
-			allowed = { always = no }
 			allowed_civil_war = { always = yes }
 			modifier = {
 				production_speed_buildings_factor = 0.10
@@ -1061,10 +1072,66 @@ ideas = {
 			on_remove = {
 				log = "[GetDateText]: [Root.GetName]: Idea BOS_republika_srpska_secession_crisis removed"
 				if = {
-					limit = { NOT = { has_country_flag = BOS_rs_crisis_resolved } }
-					country_event = { id = BOS_political.28 days = 2 }
+					# Crisis raised by the Srpska secession mission: unresolved expiry means war, not a brinkmanship escalation.
+					limit = { has_country_flag = BOS_srpska_secession_war_pending }
+					clr_country_flag = BOS_srpska_secession_war_pending
+					if = {
+						limit = {
+							OR = {
+								has_country_flag = BOS_rs_crisis_resolved
+								BOS_srpska_attitude_friendly_trigger = yes
+								BOS_srpska_attitude_loyal_trigger = yes
+							}
+						}
+						clr_country_flag = BOS_rs_crisis_resolved
+					}
+					else = {
+						country_event = { id = BOS_events.59 days = 2 }
+					}
 				}
-				clr_country_flag = BOS_rs_crisis_resolved
+				else = {
+					if = {
+						limit = { NOT = { has_country_flag = BOS_rs_crisis_resolved } }
+						country_event = { id = BOS_political.28 days = 2 }
+					}
+					clr_country_flag = BOS_rs_crisis_resolved
+				}
+			}
+		}
+		BOS_croat_secession_crisis = {
+			picture = sub_federalism_idea
+			allowed_civil_war = { always = yes }
+			modifier = {
+				stability_factor = -0.10
+				civil_war_involvement_tension = -0.25
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea BOS_croat_secession_crisis removed"
+				if = {
+					limit = { has_country_flag = BOS_croat_secession_war_pending }
+					clr_country_flag = BOS_croat_secession_war_pending
+					if = {
+						# De-escalated: Croat attitude recovered to friendly via the faction decisions.
+						limit = {
+							OR = {
+								BOS_croat_attitude_friendly_trigger = yes
+								BOS_croat_attitude_loyal_trigger = yes
+							}
+						}
+						add_stability = 0.02
+					}
+					else = {
+						country_event = { id = BOS_events.60 days = 2 }
+					}
+				}
+			}
+		}
+		BOS_dayton_two = {
+			picture = international_treaty2
+			allowed_civil_war = { always = yes }
+			modifier = {
+				stability_factor = 0.05
+				political_power_gain = 0.05
 			}
 		}
 		BOS_ohr_supervision = {
@@ -1081,6 +1148,38 @@ ideas = {
 			modifier = {
 				stability_factor = 0.10
 				political_power_gain = 0.05
+			}
+		}
+		BOS_bosniak_governing_partner = {
+			picture = the_bosnian_people
+			allowed_civil_war = { always = yes }
+			modifier = {
+				stability_factor = 0.04
+				political_power_gain = 0.04
+			}
+		}
+		BOS_croat_governing_partner = {
+			picture = trade
+			allowed_civil_war = { always = yes }
+			modifier = {
+				consumer_goods_factor = -0.04
+				production_speed_buildings_factor = 0.03
+			}
+		}
+		BOS_srpska_governing_partner = {
+			picture = flexible_foreign_policy2
+			allowed_civil_war = { always = yes }
+			modifier = {
+				production_speed_buildings_factor = 0.04
+				local_resources_factor = 0.05
+			}
+		}
+		BOS_reconstruction_dividends = {
+			picture = foreign_capital
+			allowed_civil_war = { always = yes }
+			modifier = {
+				production_speed_buildings_factor = 0.10
+				consumer_goods_factor = -0.03
 			}
 		}
 		BOS_diaspora_remittances = {
@@ -1122,6 +1221,13 @@ ideas = {
 			modifier = {
 				political_power_gain = -0.05
 				stability_factor = 0.05
+			}
+		}
+		BOS_entity_competency_transfer = {
+			picture = sub_federalism_idea
+			allowed_civil_war = { always = yes }
+			modifier = {
+				political_power_factor = -0.05
 			}
 		}
 		BOS_contested_high_representative = {
@@ -1179,8 +1285,9 @@ ideas = {
 			picture = resource_production
 			allowed_civil_war = { always = yes }
 			modifier = {
-				production_speed_arms_factory_factor = 0.05
-				consumer_goods_factor = -0.02
+				production_speed_arms_factory_factor = 0.10
+				military_factories_productivity = 0.10
+				military_industry_tax_modifier = 0.10
 			}
 		}
 		BOS_jobs_program_idea = {
@@ -1193,7 +1300,6 @@ ideas = {
 		}
 		BOS_election_stimulus = {
 			picture = positive_gold
-			allowed = { always = no }
 			allowed_civil_war = { always = yes }
 			modifier = {
 				consumer_goods_factor = -0.05
@@ -1206,6 +1312,30 @@ ideas = {
 			modifier = {
 				monthly_population = 0.02
 				research_speed_factor = 0.02
+			}
+		}
+		BOS_eu_candidacy_momentum = {
+			picture = EU_Roundel
+			allowed_civil_war = { always = yes }
+			modifier = {
+				political_power_gain = 0.10
+				stability_factor = 0.05
+			}
+		}
+		BOS_open_balkan_market = {
+			picture = foreign_capital
+			allowed_civil_war = { always = yes }
+			modifier = {
+				international_market_income_modifier = 0.08
+				consumer_goods_factor = -0.02
+			}
+		}
+		BOS_digital_economy_idea = {
+			picture = positive_gold
+			allowed_civil_war = { always = yes }
+			modifier = {
+				research_speed_factor = 0.03
+				production_factory_efficiency_gain_factor = 0.05
 			}
 		}
 		BOS_mostar_industrial_decline = {
@@ -1336,6 +1466,110 @@ ideas = {
 			allowed_civil_war = { always = yes }
 			modifier = {
 				stability_factor = 0.01
+			}
+		}
+
+		# Republika Srpska civil war mini-tree ideas
+		RSK_entity_under_arms = {
+			name = RSK_idea_entity_under_arms
+			picture = politicised_army
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				army_morale_factor = 0.05
+				max_planning = 0.10
+			}
+		}
+		RSK_serbian_volunteers = {
+			name = RSK_idea_serbian_volunteers
+			picture = volunteer_defenders2
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				conscription = 0.01
+				army_morale_factor = 0.05
+			}
+		}
+		RSK_drina_supply_line = {
+			name = RSK_idea_drina_supply_line
+			picture = planning_bonus
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				supply_consumption_factor = -0.10
+				attrition = -0.15
+			}
+		}
+		RSK_mobilize_the_entity = {
+			name = RSK_idea_mobilize_the_entity
+			picture = manpower_bonus
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				conscription_factor = 0.03
+			}
+		}
+		RSK_banja_luka_high_command = {
+			name = RSK_idea_banja_luka_high_command
+			picture = planning_bonus
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				command_power_gain = 0.20
+				max_planning = 0.15
+				planning_speed = 0.03
+			}
+		}
+		RSK_hold_the_line = {
+			name = RSK_idea_hold_the_line
+			picture = strong_outposts_1
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				defence = 0.15
+				dig_in_speed = 2
+			}
+		}
+		RSK_push_to_sarajevo = {
+			name = RSK_idea_push_to_sarajevo
+			picture = planning_bonus
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				offence = 0.15
+				army_attack_speed_factor = 0.10
+			}
+		}
+
+		# Herzeg-Bosnia civil war mini-tree ideas
+		HZG_rally_the_cantons = {
+			name = HZG_idea_rally_the_cantons
+			picture = national_unity
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				stability_factor = 0.10
+				war_support_factor = 0.05
+			}
+		}
+		HZG_croat_volunteers = {
+			name = HZG_idea_croat_volunteers
+			picture = volunteer_defenders2
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				conscription = 0.01
+				army_morale_factor = 0.05
+			}
+		}
+		HZG_the_herzeg_line = {
+			name = HZG_idea_the_herzeg_line
+			picture = strong_outposts_1
+			allowed_civil_war = { always = yes }
+			cancel = { has_war = no }
+			modifier = {
+				defence = 0.15
+				dig_in_speed = 2
 			}
 		}
 	}
