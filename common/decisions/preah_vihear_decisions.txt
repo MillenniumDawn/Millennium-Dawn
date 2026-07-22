@@ -358,6 +358,61 @@ preah_vihear_decisions_category = {
 		}
 	}
 
+	### Opening provocation - Thailand (one-shot narrative kickoff) ###
+	SIA_escalate_preah_vihear_tensions = {
+		icon = GFX_decision_generic_territorial_pressure
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		fire_only_once = yes
+		cost = 25
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+			check_variable = { GLOBAL.preah_vihear_tension < 25 }
+		}
+
+		available = {
+			has_war = no
+			date > 2008.7.1
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_escalate_preah_vihear_tensions"
+			add_war_support = 0.03
+			custom_effect_tooltip = preah_vihear_increase_tension_TT
+			add_to_variable = { GLOBAL.preah_vihear_tension = 10 }
+			clamp_variable = {
+				var = GLOBAL.preah_vihear_tension
+				min = 0
+				max = 100
+			}
+			if = {
+				limit = { country_exists = CBD }
+				CBD = { country_event = preah_vihear.1 }
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 3
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2
+				date > 2008.1.1
+				date < 2012.1.1
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
 	### Tension - Thailand ###
 	SIA_pv_nationalist_rhetoric = {
 		icon = GFX_decision_generic_nationalism
@@ -490,7 +545,7 @@ preah_vihear_decisions_category = {
 	}
 
 	### Tension - Cambodia ###
-	CBD_pv_formal_protest = {
+	CBD_pv_nationalist_rhetoric = {
 		icon = GFX_decision_generic_nationalism
 
 		allowed = {
@@ -512,7 +567,7 @@ preah_vihear_decisions_category = {
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_formal_protest"
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_nationalist_rhetoric"
 			add_command_power = -15
 			set_country_flag = {
 				flag = preah_vihear_protest_recent
@@ -567,7 +622,7 @@ preah_vihear_decisions_category = {
 
 		available = {
 			has_war = no
-			NOT = { has_decision = CBD_pv_formal_protest }
+			NOT = { has_decision = CBD_pv_nationalist_rhetoric }
 		}
 
 		days_remove = 15
@@ -640,11 +695,10 @@ preah_vihear_decisions_category = {
 
 		cost = 0
 		days_remove = 10
-		days_re_enable = 30
+		days_re_enable = 45
 
 		available = {
 			NOT = { has_war_with = CBD }
-			NOT = { has_country_flag = preah_vihear_attack_recent }
 			NOT = { has_country_flag = preah_vihear_clash_active }
 			NOT = { has_country_flag = preah_vihear_settled_cooldown }
 			custom_trigger_tooltip = {
@@ -665,11 +719,6 @@ preah_vihear_decisions_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_attack_preah_vihear"
 			add_threat = 1
-			set_country_flag = {
-				flag = preah_vihear_attack_recent
-				days = 200
-				value = 1
-			}
 			set_country_flag = preah_vihear_clash_active
 			CBD = {
 				country_event = preah_vihear.5
@@ -756,11 +805,10 @@ preah_vihear_decisions_category = {
 
 		cost = 0
 		days_remove = 10
-		days_re_enable = 30
+		days_re_enable = 45
 
 		available = {
 			NOT = { has_war_with = SIA }
-			NOT = { has_country_flag = preah_vihear_attack_recent }
 			NOT = { has_country_flag = preah_vihear_clash_active }
 			NOT = { has_country_flag = preah_vihear_settled_cooldown }
 			custom_trigger_tooltip = {
@@ -782,11 +830,6 @@ preah_vihear_decisions_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_attack_preah_vihear"
 			add_threat = 1
-			set_country_flag = {
-				flag = preah_vihear_attack_recent
-				days = 200
-				value = 1
-			}
 			set_country_flag = preah_vihear_clash_active
 			SIA = {
 				country_event = preah_vihear.6
@@ -936,8 +979,8 @@ preah_vihear_decisions_category = {
 		available = {
 			NOT = { has_country_flag = preah_vihear_settled_cooldown }
 			custom_trigger_tooltip = {
-				tooltip = preah_vihear_progress_60_TT
-				check_variable = { THIS.preah_vihear_war_progress > 59 }
+				tooltip = preah_vihear_progress_50_TT
+				check_variable = { THIS.preah_vihear_war_progress > 49 }
 			}
 		}
 
@@ -945,8 +988,8 @@ preah_vihear_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_decisive_victory"
-			custom_effect_tooltip = preah_vihear_decrease_progress_60_TT
-			subtract_from_variable = { THIS.preah_vihear_war_progress = 60 }
+			custom_effect_tooltip = preah_vihear_decrease_progress_50_TT
+			subtract_from_variable = { THIS.preah_vihear_war_progress = 50 }
 			clamp_variable = {
 				var = THIS.preah_vihear_war_progress
 				min = 0
@@ -1001,8 +1044,8 @@ preah_vihear_decisions_category = {
 		available = {
 			NOT = { has_country_flag = preah_vihear_settled_cooldown }
 			custom_trigger_tooltip = {
-				tooltip = preah_vihear_progress_60_TT
-				check_variable = { THIS.preah_vihear_war_progress > 59 }
+				tooltip = preah_vihear_progress_50_TT
+				check_variable = { THIS.preah_vihear_war_progress > 49 }
 			}
 		}
 
@@ -1010,8 +1053,8 @@ preah_vihear_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_decisive_victory"
-			custom_effect_tooltip = preah_vihear_decrease_progress_60_TT
-			subtract_from_variable = { THIS.preah_vihear_war_progress = 60 }
+			custom_effect_tooltip = preah_vihear_decrease_progress_50_TT
+			subtract_from_variable = { THIS.preah_vihear_war_progress = 50 }
 			clamp_variable = {
 				var = THIS.preah_vihear_war_progress
 				min = 0
@@ -1194,6 +1237,44 @@ preah_vihear_decisions_category = {
 					compare = greater_than_or_equals
 				}
 			}
+		}
+	}
+
+	### Diplomatic protest - Cambodia (political response, no tension change) ###
+	CBD_protest_thai_actions = {
+		icon = GFX_decision_generic_diplomacy
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		cost = 25
+		days_remove = 20
+		days_re_enable = 40
+
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_protest_grievance_TT
+				OR = {
+					check_variable = { GLOBAL.preah_vihear_tension > 10 }
+					has_country_flag = preah_vihear_attacked_by_sia
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_protest_thai_actions"
+			add_political_power = 25
+			add_stability = 0.02
+			if = {
+				limit = { country_exists = SIA }
+				add_opinion_modifier = { target = SIA modifier = preah_vihear_dispute }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
 		}
 	}
 

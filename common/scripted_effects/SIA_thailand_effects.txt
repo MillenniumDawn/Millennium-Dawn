@@ -357,7 +357,35 @@ SIA_thaksin_rise_update = {
 		add_relative_party_popularity = yes
 		recalculate_party = yes
 	}
+	# NAP (idx 20) starts at 0.30 and, untouched, is max_index_2 at the ~Nov-2000
+	# election — the AI's coalition-cost math then installs it over the Democrats/TRT.
+	# Drain it into the Thaksinite line a step at a time so it collapses out of the top
+	# two before the vote (its members defected to TRT ahead of the 2001 landslide; the
+	# 2002 SIA_merge_nap_into_trt folds whatever residual is left). A bare negative would
+	# not stick — recalculate_party renormalizes idx 20 back up against the untouched
+	# nationalist outlook — so this mirrors SIA_merge_nap_into_trt's outlook correction.
+	SIA_nap_decline_step = yes
 	add_to_variable = { SIA_thaksin_rise_months = 1 }
+}
+
+SIA_nap_decline_step = {
+	if = {
+		limit = { check_variable = { party_pop_array^20 > 0.01 } }
+		hidden_effect = {
+			set_temp_variable = { merge_amount = party_pop_array^20 }
+			clamp_temp_variable = { var = merge_amount min = 0 max = 0.035 }
+			set_temp_variable = { dem_before = party_popularity@democratic }
+			set_temp_variable = { merge_amount_neg = merge_amount }
+			multiply_temp_variable = { merge_amount_neg = -1 }
+			add_popularity = { ideology = nationalist popularity = merge_amount_neg }
+			set_temp_variable = { dem_correction = dem_before }
+			subtract_from_temp_variable = { dem_correction = party_popularity@democratic }
+			add_popularity = { ideology = democratic popularity = dem_correction }
+			add_to_variable = { party_pop_array^18 = merge_amount }
+			subtract_from_variable = { party_pop_array^20 = merge_amount }
+			recalculate_party = yes
+		}
+	}
 }
 
 ## ─── Coup-risk machinery (Thaksinist / populist path) ───────────────────
