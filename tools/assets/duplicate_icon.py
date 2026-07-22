@@ -17,18 +17,24 @@ Example:
 
 import sys
 
-file = f"../common/national_focus/{sys.argv[1]}"
 
-with open(file) as f:
-    seen = set()
-    count = 0
-    for line in f:
-        line_lower = line.lower()
-        if line_lower in seen:
-            if "icon" in line_lower:
-                count = count + 1
-                print(line)
-        else:
-            seen.add(line_lower)
+def main():
+    file = f"../common/national_focus/{sys.argv[1]}"
 
-print(f"{sys.argv[1]} has {count} duplicate icons. Review the above list.")
+    with open(file) as f:
+        seen = set()
+        count = 0
+        for line in f:
+            line_lower = line.lower()
+            if line_lower in seen:
+                if "icon" in line_lower:
+                    count = count + 1
+                    print(line)
+            else:
+                seen.add(line_lower)
+
+    print(f"{sys.argv[1]} has {count} duplicate icons. Review the above list.")
+
+
+if __name__ == "__main__":
+    main()

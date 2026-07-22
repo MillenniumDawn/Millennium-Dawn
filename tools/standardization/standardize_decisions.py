@@ -18,6 +18,7 @@ from common_utils import (
 )
 from shared_utils import (
     collapse_or_compact,
+    collapse_ws_outside_quotes,
     convert_root_factor_to_base,
     create_backup,
     extract_block,
@@ -75,8 +76,8 @@ def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
         stripped = line.strip()
         if not stripped:
             continue
-        # Normalise internal whitespace (tabs → single spaces)
-        normalized = " ".join(stripped.split())
+        # Normalise internal whitespace (tabs → single spaces), quote-safe
+        normalized = collapse_ws_outside_quotes(stripped)
 
         opens, closes = _count_braces(normalized)
 
@@ -101,127 +102,6 @@ def _reindent_or_collapse(block_lines: List[str], base_indent: int) -> List[str]
     if len(collapsed) == 1 and len(multi) != 1:
         return collapsed
     return multi
-
-
-class DecisionCategoryStandardizer(BaseStandardizer):
-    """Standardizer for HOI4 decision categories"""
-
-    def get_block_pattern(self) -> str:
-        """Return regex pattern to identify decision category blocks"""
-        return r"\s*\w+_category\s*=\s*{"
-
-    def extract_properties(self, block_lines: List[str]) -> Dict[str, Any]:
-        """Extract properties from decision category block lines"""
-        props: Dict[str, Any] = {
-            "id": "",
-            "allowed": [],
-            "icon": "",
-            "picture": "",
-            "priority": "",
-            "scripted_gui": "",
-            "visible_when_empty": "",
-            "visibility_type": "",
-            "visible": [],
-            "target_root_trigger": [],
-            "on_map_area": [],
-            "other": [],
-        }
-
-        if block_lines:
-            first_line = block_lines[0].strip()
-            if first_line and not first_line.startswith("#"):
-                id_match = PROP_NAME_RE.match(first_line)
-                if id_match:
-                    props["id"] = id_match.group(1)
-
-        i = 1  # Skip opening brace
-        while i < len(block_lines) - 1:  # Skip closing brace
-            line = block_lines[i].strip()
-            match = PROP_NAME_RE.match(line)
-            prop_name = match.group(1) if match else None
-
-            if prop_name in _CATEGORY_SINGLE_LINE_PROPS:
-                props[prop_name] = line
-            elif prop_name == "priority":
-                # priority can be `priority = 200` (single-line) or `priority = { base = 100 }` (block)
-                if "{" in line:
-                    block, next_i = extract_block(block_lines, i)
-                    props["priority"] = block
-                    i = next_i
-                    continue
-                else:
-                    props["priority"] = line
-            elif prop_name in _CATEGORY_BLOCK_PROPS:
-                block, next_i = extract_block(block_lines, i)
-                props[prop_name].append(block)
-                i = next_i
-                continue
-            else:
-                props["other"].append(block_lines[i])
-
-            i += 1
-
-        return props
-
-    def format_block(self, props: Dict[str, Any]) -> List[str]:
-        """Format decision category according to Millennium Dawn standard"""
-        lines = []
-
-        if props["id"]:
-            lines.append(f"{props['id']} = {{")
-        else:
-            lines.append("category = {")
-
-        for allowed in props["allowed"]:
-            lines.extend(_reindent_or_collapse(allowed, 1))
-            lines.append("")
-
-        if props["icon"]:
-            lines.append(f"\t{props['icon']}")
-
-        if props["picture"]:
-            lines.append(f"\t{props['picture']}")
-
-        if props["priority"]:
-            if isinstance(props["priority"], list):
-                lines.extend(_reindent_or_collapse(props["priority"], 1))
-                lines.append("")
-            else:
-                lines.append(f"\t{props['priority']}")
-
-        if props["scripted_gui"]:
-            lines.append(f"\t{props['scripted_gui']}")
-
-        if props["visible_when_empty"]:
-            lines.append(f"\t{props['visible_when_empty']}")
-
-        if props["visibility_type"]:
-            lines.append(f"\t{props['visibility_type']}")
-
-        for visible in props["visible"]:
-            lines.extend(_reindent_or_collapse(visible, 1))
-            lines.append("")
-
-        for target_root_trigger in props["target_root_trigger"]:
-            lines.extend(_reindent_or_collapse(target_root_trigger, 1))
-            lines.append("")
-
-        for on_map_area in props["on_map_area"]:
-            lines.extend(_reindent_or_collapse(on_map_area, 1))
-            lines.append("")
-
-        if props["other"]:
-            for line in props["other"]:
-                if line.strip():
-                    lines.append(f"\t{line.strip()}")
-            lines.append("")
-
-        # Remove trailing blank lines before closing brace
-        while lines and lines[-1] == "":
-            lines.pop()
-        lines.append("}")
-
-        return collapse_blank_runs(lines)
 
 
 def format_decision(block_lines: List[str]) -> List[str]:
@@ -270,7 +150,7 @@ def format_decision(block_lines: List[str]) -> List[str]:
             lines.append("")
             i = next_i
         else:
-            lines.append(f"\t\t{' '.join(stripped.split())}")
+            lines.append(f"\t\t{collapse_ws_outside_quotes(stripped)}")
             lines.append("")
             i += 1
 
