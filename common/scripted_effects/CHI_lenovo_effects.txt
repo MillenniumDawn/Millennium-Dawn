@@ -6,6 +6,26 @@ CHI_lenovo_initialize_state = {
 	}
 }
 
+CHI_lenovo_schedule_cfius_followup = {
+	if = {
+		limit = {
+			original_tag = CHI
+			NOT = { has_country_flag = collapsed_nation }
+			has_country_flag = CHI_lenovo_ibm_bid_accepted
+			NOT = { has_country_flag = CHI_lenovo_cfius_cleared }
+			NOT = { has_country_flag = CHI_lenovo_cfius_followup_scheduled }
+			country_exists = USA
+			NOT = { has_war_with = USA }
+			USA = {
+				NOT = { has_country_flag = collapsed_nation }
+				has_country_flag = USA_ibm_lenovo_cfius_cleared
+			}
+		}
+		set_country_flag = CHI_lenovo_cfius_followup_scheduled
+		country_event = { id = CHI_lenovo_events.2 }
+	}
+}
+
 CHI_lenovo_begin_ibm_bridge = {
 	set_country_flag = CHI_lenovo_ibm_pc_acquired
 	set_country_flag = CHI_lenovo_service_alliance
@@ -36,6 +56,38 @@ CHI_lenovo_complete_systemx_integration = {
 	add_ideas = CHI_lenovo_enterprise_server_platform
 }
 
+CHI_lenovo_update_motorola_mobility = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = CHI_lenovo_motorola_mobility_integrated }
+			country_exists = USA
+			NOT = { has_war_with = USA }
+			USA = {
+				NOT = { has_country_flag = collapsed_nation }
+				has_country_flag = USA_motorola_mobility_lenovo_owned
+			}
+		}
+		set_country_flag = CHI_lenovo_motorola_mobility_integrated
+	}
+}
+
+CHI_lenovo_reward_motorola_mobility = {
+	CHI_lenovo_update_motorola_mobility = yes
+	if = {
+		limit = {
+			has_country_flag = CHI_lenovo_motorola_mobility_integrated
+			NOT = { has_country_flag = CHI_lenovo_motorola_mobility_rewarded }
+		}
+		set_country_flag = CHI_lenovo_motorola_mobility_rewarded
+		add_tech_bonus = {
+			name = CHI_lenovo_motorola_mobility_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_computing_tech
+		}
+	}
+}
+
 CHI_lenovo_reconstruct_history = {
 	CHI_lenovo_initialize_state = yes
 	if = {
@@ -46,6 +98,7 @@ CHI_lenovo_reconstruct_history = {
 			USA = {
 				NOT = { has_country_flag = collapsed_nation }
 				has_country_flag = USA_ibm_pc_divested
+				has_country_flag = USA_ibm_lenovo_cfius_cleared
 			}
 		}
 		set_country_flag = CHI_lenovo_ibm_bid_accepted
@@ -70,13 +123,37 @@ CHI_lenovo_reconstruct_history = {
 	if = {
 		limit = {
 			date > 2014.10.1
+			NOT = { has_country_flag = CHI_lenovo_systemx_path_resolved }
 			country_exists = USA
 			NOT = { has_war_with = USA }
 			USA = {
 				NOT = { has_country_flag = collapsed_nation }
-				has_country_flag = USA_ibm_x86_divested
+				OR = {
+					has_country_flag = USA_ibm_x86_divested
+					has_country_flag = USA_ibm_silicon_retained
+				}
 			}
 		}
+		set_country_flag = CHI_lenovo_systemx_path_chosen
+		set_country_flag = CHI_lenovo_systemx_acquisition_route
+		set_country_flag = CHI_lenovo_systemx_path_resolved
 		CHI_lenovo_complete_systemx_integration = yes
 	}
+	if = {
+		limit = {
+			date > 2014.10.1
+			NOT = { has_country_flag = CHI_lenovo_systemx_path_resolved }
+			country_exists = USA
+			NOT = { has_war_with = USA }
+			USA = {
+				NOT = { has_country_flag = collapsed_nation }
+				has_country_flag = USA_ibm_x86_retained
+			}
+		}
+		set_country_flag = CHI_lenovo_systemx_path_chosen
+		set_country_flag = CHI_lenovo_systemx_organic_route
+		set_country_flag = CHI_lenovo_systemx_path_resolved
+	}
+
+	CHI_lenovo_update_motorola_mobility = yes
 }

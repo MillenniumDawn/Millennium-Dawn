@@ -32,7 +32,7 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: CHI_lenovo_events.1.a executed"
 		set_country_flag = CHI_lenovo_pc_path_chosen
 		set_country_flag = CHI_lenovo_ibm_bid_accepted
-		country_event = { id = CHI_lenovo_events.2 days = 21 }
+		CHI_lenovo_schedule_cfius_followup = yes
 		ai_chance = {
 			base = 90
 			modifier = { add = 10 is_historical_focus_on = yes }
@@ -55,25 +55,34 @@ country_event = {
 		if = {
 			limit = { USA = { has_country_flag = USA_ibm_pc_divested } }
 			set_country_flag = CHI_lenovo_ibm_bid_accepted
-			country_event = { id = CHI_lenovo_events.2 days = 30 }
+			CHI_lenovo_schedule_cfius_followup = yes
 		}
 		else = { country_event = { id = CHI_lenovo_events.6 days = 180 } }
 		ai_chance = {
 			base = 10
-			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				USA = { has_country_flag = USA_ibm_pc_divested }
+			}
 		}
 	}
 
 	option = {
 		name = CHI_lenovo_events.1.c
+		trigger = {
+			USA = {
+				OR = {
+					has_country_flag = USA_ibm_pc_retained
+					has_country_flag = USA_ibm_pc_spinout
+				}
+			}
+		}
 		log = "[GetDateText]: [Root.GetName]: CHI_lenovo_events.1.c executed"
 		set_country_flag = CHI_lenovo_pc_path_chosen
 		set_country_flag = CHI_lenovo_organic_globalization
 		country_event = { id = CHI_lenovo_events.5 days = 365 }
-		ai_chance = {
-			base = 10
-			modifier = { factor = 0 is_historical_focus_on = yes }
-		}
+		ai_chance = { base = 10 }
 	}
 }
 
@@ -338,10 +347,18 @@ country_event = {
 	option = {
 		name = CHI_lenovo_events.7.a
 		trigger = {
-			USA = { has_country_flag = USA_ibm_x86_divested }
+			USA = {
+				OR = {
+					has_country_flag = USA_ibm_x86_divested
+					has_country_flag = USA_ibm_silicon_retained
+				}
+			}
 		}
 		log = "[GetDateText]: [Root.GetName]: CHI_lenovo_events.7.a executed"
 		set_country_flag = CHI_lenovo_systemx_path_chosen
+		set_country_flag = CHI_lenovo_systemx_acquisition_route
+		clr_country_flag = CHI_lenovo_systemx_alliance_route
+		clr_country_flag = CHI_lenovo_systemx_organic_route
 		add_ideas = CHI_lenovo_global_integration_costs
 		country_event = { id = CHI_lenovo_events.8 days = 120 }
 		ai_chance = {
@@ -354,6 +371,9 @@ country_event = {
 		name = CHI_lenovo_events.7.b
 		log = "[GetDateText]: [Root.GetName]: CHI_lenovo_events.7.b executed"
 		set_country_flag = CHI_lenovo_systemx_path_chosen
+		clr_country_flag = CHI_lenovo_systemx_acquisition_route
+		set_country_flag = CHI_lenovo_systemx_alliance_route
+		clr_country_flag = CHI_lenovo_systemx_organic_route
 		country_event = { id = CHI_lenovo_events.8 days = 150 }
 		ai_chance = { base = 15 }
 	}
@@ -362,6 +382,9 @@ country_event = {
 		name = CHI_lenovo_events.7.c
 		log = "[GetDateText]: [Root.GetName]: CHI_lenovo_events.7.c executed"
 		set_country_flag = CHI_lenovo_systemx_path_chosen
+		clr_country_flag = CHI_lenovo_systemx_acquisition_route
+		clr_country_flag = CHI_lenovo_systemx_alliance_route
+		set_country_flag = CHI_lenovo_systemx_organic_route
 		country_event = { id = CHI_lenovo_events.8 days = 180 }
 		ai_chance = { base = 5 }
 	}
@@ -379,12 +402,14 @@ country_event = {
 		original_tag = CHI
 		NOT = { has_country_flag = collapsed_nation }
 		has_country_flag = CHI_lenovo_systemx_path_chosen
-		NOT = { has_country_flag = CHI_lenovo_systemx_integrated }
+		NOT = { has_country_flag = CHI_lenovo_systemx_path_resolved }
 	}
 
 	option = {
 		name = CHI_lenovo_events.8.a
+		trigger = { has_country_flag = CHI_lenovo_systemx_acquisition_route }
 		log = "[GetDateText]: [Root.GetName]: CHI_lenovo_events.8.a executed"
+		set_country_flag = CHI_lenovo_systemx_path_resolved
 		CHI_lenovo_complete_systemx_integration = yes
 		ai_chance = {
 			base = 60
@@ -394,15 +419,18 @@ country_event = {
 
 	option = {
 		name = CHI_lenovo_events.8.b
+		trigger = { has_country_flag = CHI_lenovo_systemx_alliance_route }
 		log = "[GetDateText]: [Root.GetName]: CHI_lenovo_events.8.b executed"
-		CHI_lenovo_complete_systemx_integration = yes
+		set_country_flag = CHI_lenovo_systemx_path_resolved
+		add_political_power = 15
 		ai_chance = { base = 30 }
 	}
 
 	option = {
 		name = CHI_lenovo_events.8.c
+		trigger = { has_country_flag = CHI_lenovo_systemx_organic_route }
 		log = "[GetDateText]: [Root.GetName]: CHI_lenovo_events.8.c executed"
-		CHI_lenovo_complete_systemx_integration = yes
+		set_country_flag = CHI_lenovo_systemx_path_resolved
 		add_stability = 0.01
 		ai_chance = { base = 10 }
 	}
