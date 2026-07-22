@@ -233,6 +233,8 @@ country_event = {
 			}
 			release = HZG
 			HZG = {
+				set_country_flag = civil_war_bosnia
+				set_country_flag = civil_war_bos_two
 				declare_war_on = {
 					target = BOS
 					type = civil_war
@@ -1310,6 +1312,10 @@ country_event = {
 		ai_chance = {
 			base = 50
 			modifier = {
+				factor = 100
+				has_global_flag = PRO_BOSNIAN_LEADERSHIP_COMMIE
+			}
+			modifier = {
 				factor = 2
 				is_historical_focus_on = yes
 			}
@@ -1354,6 +1360,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 50
+			modifier = {
+				factor = 0
+				has_global_flag = PRO_BOSNIAN_LEADERSHIP_COMMIE
+			}
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -1403,7 +1413,6 @@ country_event = {
 	option = {
 		name = BOS_political.5.a
 		log = "[GetDateText]: [This.GetName]: BOS_political.5.a executed"
-		set_country_flag = BOS_financial_crisis
 		add_timed_idea = {
 			idea = BOS_financial_crisis
 			days = 1825
@@ -1631,18 +1640,41 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		original_tag = RSK
+		OR = {
+			AND = {
+				original_tag = RSK
+				has_country_flag = RSK_civil_war_recovery_pending
+			}
+			AND = {
+				original_tag = HZG
+				has_country_flag = HZG_civil_war_recovery_pending
+			}
+			AND = {
+				original_tag = BOS
+				has_country_flag = BOS_hzg_civil_war_recovery_pending
+			}
+		}
 		is_subject = no
 		has_civil_war = no
 		has_country_flag = civil_war_bosnia
-		has_country_flag = RSK_civil_war_recovery_pending
 		has_war = no
 	}
 
-	immediate = { clr_country_flag = RSK_civil_war_recovery_pending }
+	immediate = {
+		if = {
+			limit = { original_tag = RSK }
+			clr_country_flag = RSK_civil_war_recovery_pending
+		}
+		else_if = {
+			limit = { original_tag = HZG }
+			clr_country_flag = HZG_civil_war_recovery_pending
+		}
+		else = { clr_country_flag = BOS_hzg_civil_war_recovery_pending }
+	}
 
 	option = {
 		name = BOS_political.20.a
+		trigger = { original_tag = RSK }
 		log = "[GetDateText]: [This.GetName]: BOS_political.20.a executed"
 		news_event = news.86
 		BOS = {
@@ -1695,6 +1727,99 @@ country_event = {
 			change_ruling_party_effect = yes
 			set_temp_variable = { add_col_one = 14 }
 			add_coalition_members_effect = yes
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	option = {
+		name = BOS_political.20.b
+		trigger = { original_tag = HZG }
+		log = "[GetDateText]: [This.GetName]: BOS_political.20.b executed"
+		news_event = news.86
+		BOS = {
+			hidden_effect = {
+				if = {
+					limit = { 128 = { is_owned_by = ROOT } }
+					transfer_state = 128
+				}
+				change_tag_from = ROOT
+				if = {
+					limit = { 129 = { is_owned_by = ROOT } }
+					transfer_state = 129
+				}
+				if = {
+					limit = { 1052 = { is_owned_by = ROOT } }
+					transfer_state = 1052
+				}
+				if = {
+					limit = { 1051 = { is_owned_by = ROOT } }
+					transfer_state = 1051
+				}
+				if = {
+					limit = { 1054 = { is_owned_by = ROOT } }
+					transfer_state = 1054
+				}
+				if = {
+					limit = { 1053 = { is_owned_by = ROOT } }
+					transfer_state = 1053
+				}
+				set_country_flag = BOS_loser
+				unlock_national_focus = BOS_house_of_representatives
+				unlock_national_focus = BOS_elections_political
+				unlock_national_focus = BOS_the_federation
+				unlock_national_focus = BOS_role_the_dice
+				remove_ideas = BOS_rotating_presidency
+				remove_ideas = BOS_rotating_presidency2
+				remove_ideas = BOS_rotating_presidency3
+			}
+			BOS_finish_civil_war_recovery_effect = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.08 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { rul_party_temp = 20 }
+			change_ruling_party_effect = yes
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	option = {
+		name = BOS_political.20.c
+		trigger = { original_tag = BOS }
+		log = "[GetDateText]: [This.GetName]: BOS_political.20.c executed"
+		news_event = news.86
+		BOS = {
+			hidden_effect = {
+				if = {
+					limit = { 128 = { is_owned_by = HZG } }
+					transfer_state = 128
+				}
+				if = {
+					limit = { 129 = { is_owned_by = HZG } }
+					transfer_state = 129
+				}
+				if = {
+					limit = { 1052 = { is_owned_by = HZG } }
+					transfer_state = 1052
+				}
+				if = {
+					limit = { 1051 = { is_owned_by = HZG } }
+					transfer_state = 1051
+				}
+				if = {
+					limit = { 1054 = { is_owned_by = HZG } }
+					transfer_state = 1054
+				}
+				if = {
+					limit = { 1053 = { is_owned_by = HZG } }
+					transfer_state = 1053
+				}
+			}
+			BOS_finish_civil_war_recovery_effect = yes
 		}
 		ai_chance = {
 			base = 60
