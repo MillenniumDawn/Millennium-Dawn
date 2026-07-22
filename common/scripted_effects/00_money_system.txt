@@ -2312,12 +2312,19 @@ calculate_interest_rate = {
 		set_variable = { interest_rate = 0 }
 		set_variable = { debt_rate = 0 }
 		set_variable = { debt_ratio = 0 }
+		set_variable = { debt_interest_premium = 0 }
+		set_variable = { interest_rate_multiplier = 0 }
+		set_variable = { cb_rate_premium = 0 }
+		set_variable = { threat_interest_premium = 0 }
+		set_variable = { adjusted_tension_premium = 0 }
+		set_variable = { interest_rate_clamp_adjustment = 0 }
 	}
 	else = {
 		# Country has debt - calculate interest rate, debt_rate, and debt_ratio
 		clamp_variable = { var = gdp_total min = 0.001 }
 		#Base value comes from debt/gdp ratio
-		set_variable = { interest_rate = { value = debt divide = gdp_total multiply = 10 } }
+		set_variable = { debt_interest_premium = { value = debt divide = gdp_total multiply = 10 } }
+		set_variable = { interest_rate = debt_interest_premium }
 
 		#Additional additive modifiers
 		set_variable = { interest_rate_multiplier = modifier@interest_rate_multiplier_modifier }
@@ -2325,14 +2332,13 @@ calculate_interest_rate = {
 
 		#CB policy rate raises sovereign borrowing premium — tighter monetary policy = costlier debt
 		#Coefficient 0.5: a 6% CB rate adds +3pp to interest_rate
-		set_temp_variable = { cb_rate_premium = { value = cb_policy_rate multiply = 0.5 } }
+		set_variable = { cb_rate_premium = { value = cb_policy_rate multiply = 0.5 } }
 		add_to_variable = { interest_rate = cb_rate_premium }
 
 		# Threat premium - current threat level raises borrowing costs; decays with world tension.
 		# as 1.825% per year. 80% (0.8) tensioon -> 4% interest rate (4.0).
 		set_variable = { threat_interest_premium = { value = global.threat multiply = 5 clamp = { min = 0 max = 5 } } }
 		add_to_variable = { interest_rate = threat_interest_premium }
-		multiply_variable = { threat_interest_premium = 0.01 } # For localisation display.
 
 		# World tension cause premium - Countries which cause world tension are chaotic and less
 		# stable.
@@ -2342,10 +2348,11 @@ calculate_interest_rate = {
 		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
 		add_to_variable = { interest_rate = adjusted_tension_premium }
 		set_variable = { tracked_threat = has_added_tension_amount }
-		multiply_variable = { adjusted_tension_premium = 0.01 } # For localisation display.
 
-
+		set_temp_variable = { pre_clamp_interest_rate = interest_rate }
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
+		set_variable = { interest_rate_clamp_adjustment = interest_rate }
+		subtract_from_variable = { interest_rate_clamp_adjustment = pre_clamp_interest_rate }
 
 		#Calculate weekly debt rate based on interest (52 weeks in a year)
 		set_variable = { debt_rate = { value = debt multiply = 0.00019 multiply = interest_rate } }
