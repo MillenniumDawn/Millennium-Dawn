@@ -1,0 +1,197 @@
+# Corporate-history framework. Docs: docs/src/content/resources/corporate-history-framework.md
+#
+# Chains: IBM, Sun/Microsoft, HP, Apple (USA), Sony (JAP), Matrox (CAN), Nokia (FIN);
+# dispatch/gating only for Siemens (GER), Ericsson (SWE), BlackBerry (CAN/USA).
+# The rule_corporate_history game rule gates chains ONLY at dispatcher level: the
+# startup driver below, the TAG_corporate_trigger_year_* effects
+# (00_corporate_history_dispatch_effects.txt), the monthly outcome drivers below,
+# and the USA_ibm_monthly_crisis_checks call site - never inside individual events.
+#
+# Start-date invariant: every milestone day offset assumes scheduling from January 1
+# (startup at the 2000.1.1 bookmark) or from the first monthly tick of the year
+# (yearly dispatch). Start-year schedulers therefore stay behind a per-year window
+# (NOT = { has_start_date < Y.1.1 } + has_start_date < Y.1.2, see
+# USA_apple_schedule_current_year_events); non-January starts get passed milestones
+# from the reconstruct effects and deliberately do not queue the start year's rest.
+
+# Effect: corporate_history_apply_delta
+# Purpose: Applies a signed delta to a corporate state value and clamps it to the
+#          framework band. The 0..10 bounds live only here.
+# Parameters:
+# - corp_delta: The signed delta to add before clamping
+# - corp_value: The state value, read and written back as a temp variable (optional here only when chained from corporate_history_clamp_value; direct callers must set it)
+corporate_history_apply_delta = {
+	add_to_temp_variable = { corp_value = corp_delta }
+	clamp_temp_variable = { var = corp_value min = 0 max = 10 }
+}
+
+# Effect: corporate_history_clamp_value
+# Purpose: Clamps a corporate state value to the framework band without changing it.
+# Parameters:
+# - corp_value: The state value, read and written back as a temp variable
+corporate_history_clamp_value = {
+	set_temp_variable = { corp_delta = 0 }
+	corporate_history_apply_delta = yes
+}
+
+# Effect: corporate_history_on_startup
+# Purpose: Startup dispatcher for the corporate-history chains; sole caller is
+#          MD_event_on_startup_events, which runs in the ABK init scope - every
+#          action below must stay inside an explicit TAG = { } block.
+corporate_history_on_startup = {
+	if = {
+		limit = { corporate_history_full_enabled = yes }
+		if = {
+			limit = { country_exists = GER }
+			GER = { country_event = { id = GER_siemens_events.1 days = 120 } }
+		}
+
+		if = {
+			limit = { country_exists = USA }
+			USA = {
+				USA_microsoft_reconstruct_history = yes
+				USA_apple_reconstruct_history = yes
+				USA_apple_schedule_current_year_events = yes
+				country_event = { id = USA_ibm_events.90 days = 1 }
+			}
+		}
+
+		if = {
+			limit = { country_exists = USA }
+			USA = { country_event = { id = USA_hp_events.1 days = 153 } }
+		}
+
+		if = {
+			limit = {
+				country_exists = CAN
+				date > 2000.3.15
+			}
+			CAN = { country_event = { id = CAN_matrox_events.90 days = 1 } }
+		}
+		else_if = {
+			limit = { country_exists = CAN }
+			CAN = { country_event = { id = CAN_matrox_events.1 days = 75 } }
+		}
+
+		if = {
+			limit = {
+				country_exists = FIN
+				date > 2003.10.15
+			}
+			FIN = { country_event = { id = FIN_nokia_events.90 days = 1 } }
+		}
+
+		if = {
+			limit = {
+				country_exists = SWE
+				date > 2001.9.30
+			}
+			SWE = { country_event = { id = SWE_ericsson_events.90 days = 1 } }
+		}
+
+		if = {
+			limit = {
+				country_exists = JAP
+				date > 2000.3.3
+			}
+			JAP = { country_event = { id = JAP_sony_events.90 days = 2 } }
+		}
+		else_if = {
+			limit = { country_exists = JAP }
+			JAP = { country_event = { id = JAP_sony_events.1 days = 63 } }
+		}
+	}
+	else_if = {
+		limit = { corporate_history_outcomes_only_enabled = yes }
+		if = {
+			limit = { country_exists = USA }
+			USA = {
+				USA_microsoft_reconstruct_history = yes
+				USA_apple_reconstruct_history = yes
+				USA_ibm_reconstruct_history = yes
+			}
+		}
+		if = {
+			limit = { country_exists = JAP }
+			JAP = { JAP_sony_reconstruct_history = yes }
+		}
+		if = {
+			limit = { country_exists = CAN }
+			CAN = { CAN_matrox_reconstruct_history = yes }
+		}
+		if = {
+			limit = { country_exists = FIN }
+			FIN = { FIN_nokia_reconstruct_history = yes }
+		}
+		# TODO: Siemens (GER), Ericsson (SWE) and BlackBerry (CAN/USA) have no
+		# reconstruction effects yet - Outcomes Only suppresses their events with
+		# no silent replacement. HP has no persistent state to reconstruct.
+	}
+}
+
+# Effect: USA_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only driver - applies IBM/Microsoft/Apple historical outcomes
+#          on the first monthly tick after each milestone date (<= ~31 days lag,
+#          the same order of slop as the yearly dispatcher's early-January offsets).
+USA_corporate_history_monthly_outcomes = {
+	if = {
+		limit = {
+			corporate_history_outcomes_only_enabled = yes
+			original_tag = USA
+			NOT = { has_country_flag = collapsed_nation }
+			OR = {
+				NOT = { has_country_flag = USA_microsoft_reconstruct_complete }
+				NOT = { has_country_flag = USA_apple_reconstruct_complete }
+				NOT = { has_country_flag = USA_ibm_reconstruct_complete }
+			}
+		}
+		USA_microsoft_reconstruct_history = yes
+		USA_apple_reconstruct_history = yes
+		USA_ibm_reconstruct_history = yes
+	}
+}
+
+# Effect: JAP_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only driver for the Sony chain; terminates once the ladder
+#          sets its completion flag (final milestone 2024.5.22).
+JAP_corporate_history_monthly_outcomes = {
+	if = {
+		limit = {
+			corporate_history_outcomes_only_enabled = yes
+			original_tag = JAP
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = JAP_sony_reconstruct_complete }
+		}
+		JAP_sony_reconstruct_history = yes
+	}
+}
+
+# Effect: CAN_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only driver for the Matrox chain; terminates once the ladder
+#          sets its completion flag (final milestone 2026.5.25).
+CAN_corporate_history_monthly_outcomes = {
+	if = {
+		limit = {
+			corporate_history_outcomes_only_enabled = yes
+			original_tag = CAN
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CAN_matrox_reconstruct_complete }
+		}
+		CAN_matrox_reconstruct_history = yes
+	}
+}
+
+# Effect: FIN_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only driver for the Nokia chain; terminates once the ladder
+#          sets its completion flag (final milestone 2016.5.17).
+FIN_corporate_history_monthly_outcomes = {
+	if = {
+		limit = {
+			corporate_history_outcomes_only_enabled = yes
+			original_tag = FIN
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = FIN_nokia_reconstruct_complete }
+		}
+		FIN_nokia_reconstruct_history = yes
+	}
+}

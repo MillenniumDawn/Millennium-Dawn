@@ -35,6 +35,7 @@ Effect snippets (treasury, debt, buildings, factions, influence, party managemen
 - [Influence Effects](/dev-resources/scripted-effects-reference/#influence-effects) - Influence actions
 - [Political Effects](/dev-resources/scripted-effects-reference/#political-effects) - Party management
 - [Special System Effects](/dev-resources/scripted-effects-reference/#special-system-effects) - EU, Energy, Cartels
+- [Corporate History Framework](/dev-resources/corporate-history-framework/) - Company chains, game rule, tier budgets
 
 ## How-To Guides
 
