@@ -42,7 +42,7 @@ def standardize_file(filepath, file_type):
         original = f.read()
 
     if file_type == "focus":
-        standardize_focus_tree(filepath, filepath, verbose=False)
+        ok = standardize_focus_tree(filepath, filepath, verbose=False)
     else:
         cls = {
             "event": EventStandardizer,
@@ -50,7 +50,13 @@ def standardize_file(filepath, file_type):
             "idea": IdeaStandardizer,
         }[file_type]
         standardizer = cls(verbose=False)
-        standardizer.standardize_file(filepath, filepath)
+        ok = standardizer.standardize_file(filepath, filepath)
+
+    # A False return is a non-raising failure (e.g. a write error left the file
+    # unprocessed). Raise so main() logs it as an error and the commit stops
+    # rather than proceeding with an unstandardized file.
+    if ok is False:
+        raise RuntimeError("standardizer reported failure")
 
     with open(filepath, "r", encoding="utf-8") as f:
         updated = f.read()
@@ -95,7 +101,9 @@ def main():
             print(e)
 
     # Exit 1 if any files were modified (pre-commit convention for auto-fixers)
-    return 1 if modified else 0
+    # or if a standardizer crashed — a crash means the file was left
+    # unprocessed/corrupt, so the commit must not proceed silently.
+    return 1 if (modified or errors) else 0
 
 
 if __name__ == "__main__":

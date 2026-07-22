@@ -2252,9 +2252,20 @@ one_random_nuclear_facility = {
 # Null
 ingame_startup_nations_effect = {
 	hidden_effect = {
+		set_temp_variable = { fresh_nation_temp = 0 }
+		if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
+			set_temp_variable = { fresh_nation_temp = 1 }
+		}
 		setup_employment_variables = yes
-		set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
-		inherit_technology = PREV
+		if = { limit = { PREV = { has_variable = gdpc_converging_var } }
+			set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
+			inherit_technology = PREV
+		}
+		else_if = { limit = { NOT = { has_variable = gdpc_converging_var } }
+			set_variable = { gdpc_converging_var = overall_productivity }
+			multiply_variable = { gdpc_converging_var = 0.05 }
+			clamp_variable = { var = gdpc_converging_var min = 2 }
+		}
 		if = {
 			limit = {
 				NOT = { has_variable = domestic_influence_amount }
@@ -2274,7 +2285,17 @@ ingame_startup_nations_effect = {
 		calculate_influence_percentage = yes #set alignment drifts from influence
 		startup_politics = yes
 		set_law_vars = yes	 #vars for change laws secondary effects
+		if = { limit = { NOT = { has_variable = cyber_capability } }
+			cyber_nation_startup = yes #must precede ingame_update_setup so cyber_capability is set before update_military_rate checks it
+		}
+		currency_startup = yes
 		ingame_update_setup = yes	 #money system
+		if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
+			set_variable = { last_quarter_gdp_total = gdp_total }
+		}
+		if = { limit = { NOT = { has_variable = last_quarter_gdpc_total } }
+			set_variable = { last_quarter_gdpc_total = gdp_per_capita }
+		}
 		setup_init_factions = yes	 #flags for int. factions
 		update_neighbors_effects = yes # Updates Neighbor Effects
 		economic_cycle_drift_popularity = yes #drift from neighbor
@@ -2282,9 +2303,25 @@ ingame_startup_nations_effect = {
 		ingame_init_investment_system = yes
 		research_slot_init_for_country = yes
 		calculate_expected_spending = yes
+		recalculate_law_desires = yes
+		un_recog_setup_check = yes
+		if = { limit = { NOT = { has_variable = steel_in_storage } }
+			resource_storage_system_setup = yes
+		}
+		IP_idea_configuration = yes
 		setup_missile_configuration_effect = yes
 		microchip_startup = yes
 		add_country_to_power_ranking = yes
+		#Init protest variables, this should stop error spam
+		if = { limit = { NOT = { has_variable = protest_strength } }
+			set_variable = { protest_strength = 0 }
+		}
+		if = { limit = { NOT = { has_variable = protest_radicalisation } }
+			set_variable = { protest_radicalisation = 0 }
+		}
+		if = { limit = { NOT = { has_variable = anti_bully_wars } }
+			set_variable = { anti_bully_wars = 0 }
+		}
 		# Released nations skip on_startup, so enroll them in the counter-terror staggered
 		# cycle. That cycle is also what re-applies each nation's power ranking idea every
 		# quarter, so without this their Power Status idea would freeze at its release value.
@@ -2295,12 +2332,22 @@ ingame_startup_nations_effect = {
 			counter_terror_nation_startup = yes
 			add_on_creation = yes
 		}
+		if = { limit = { check_variable = { fresh_nation_temp = 1 } }
+			increment_global_reserve_currency = yes
+			calculate_starting_utility_stockpile = yes
+			calculate_starting_mio_size = yes
+			AGRI_plant_the_seeds = yes
+			EDU_learn_your_ABCs_with_dread = yes
+		}
 	}
 }
 
 # Civil War Replication Effect
-# Purpose:
+# Purpose: full init plus politics/taxes/influence/faction copy from PREV onto a
+# freshly split-off nation (civil wars, dynamic peace-deal splinters)
 civil_war_replication_effect = {
+	ingame_startup_nations_effect = yes
+
 	set_temp_variable = { nation_to_copy_from = PREV.id }
 	replicate_configure_politics = yes
 
@@ -2308,6 +2355,9 @@ civil_war_replication_effect = {
 	set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
 	set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
 	set_variable = { treasury = PREV.treasury }
+
+	set_temp_variable = { nation_to_copy_from = PREV.id }
+	setup_employment_variables = yes
 
 	#don't get values of original yet - REMINDER -> add it on_civil_war_end
 	set_variable = { debt = 0 }
@@ -2344,16 +2394,8 @@ civil_war_replication_effect = {
 	copy_subideolgy_leader_throughput = yes
 
 	calculate_influence_percentage = yes #set alignment drifts from influence
-	set_law_vars = yes	 #vars for change laws secondary effects
 	ingame_update_setup = yes	 #money system
-	setup_init_factions = yes	 #flags for int. factions
-	update_neighbors_effects = yes # Updates Neighbor Effects
-	economic_cycle_drift_popularity = yes #drift from neighbor
-	init_auto_influence_array = yes
-	ingame_init_investment_system = yes
-	research_slot_init_for_country = yes
 	calculate_expected_spending = yes
-	setup_missile_configuration_effect = yes
 
 	mb_refresh_relations_effect = yes
 }
