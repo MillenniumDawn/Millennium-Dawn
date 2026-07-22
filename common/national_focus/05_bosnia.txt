@@ -2274,7 +2274,6 @@ focus_tree = {
 		cost = 8
 
 		prerequisite = { focus = BOS_revive_relation_with_serbia_yugoslavia }
-		mutually_exclusive = { focus = BOS_western_objectives }
 
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
@@ -5230,7 +5229,6 @@ focus_tree = {
 		cost = 8
 
 		prerequisite = { focus = BOS_alija_izetbegovic_legacy }
-		mutually_exclusive = { focus = BOS_eastern_frontier }
 
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
@@ -6587,6 +6585,52 @@ focus_tree = {
 	}
 
 	focus = {
+		id = BOS_anti_federation_propaganda
+		icon = central_planned_economy2
+
+		x = -2
+		y = 1
+		relative_position_id = BOS_oppress_serbian_back_supports
+
+		cost = 10
+
+		prerequisite = { focus = BOS_grant_more_rights_to_serbian_peoples }
+
+		search_filters = { FOCUS_FILTER_PROPAGANDA FOCUS_FILTER_INDUSTRY FOCUS_FILTER_ADD_BUILDING }
+
+		available = { hidden_trigger = { NOT = { has_country_flag = civil_war_focus } } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOS_anti_serbian_propaganda"
+			add_stability = -0.05
+			set_temp_variable = { percent_change = -4 }
+			set_temp_variable = { tag_index = GER.id }
+			change_influence_percentage = yes
+			newline = yes
+			128 = { one_state_industrial_complex = yes }
+			newline = yes
+			add_opinion_modifier = { target = GER modifier = unprovoked_aggression }
+			reverse_add_opinion_modifier = { target = GER modifier = unprovoked_aggression }
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 3
+				has_global_flag = PRO_BOSNIAN_LEADERSHIP_MUSLIM_NATION
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
 		id = BOS_anti_serbian_propaganda
 		icon = central_planned_economy2
 
@@ -7014,8 +7058,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_improve_service_industry"
-			set_temp_variable = { corp_change = -1 }
-			modify_corporate_tax_rate_effect = yes
+			if = {
+				limit = { check_variable = { corporate_tax_rate < 10 } }
+				set_temp_variable = { corp_change = -1 }
+				modify_corporate_tax_rate_effect = yes
+			}
 			128 = {
 				one_state_office_construction = yes
 				one_state_infrastructure = yes
@@ -7539,7 +7586,7 @@ focus_tree = {
 		icon = industry_civilian
 
 		x = -1
-		y = 1
+		y = 2
 		relative_position_id = BOS_rebuild_infrastructure_in_herzegovina
 
 		cost = 15
@@ -8029,6 +8076,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_economic_reconstruction"
 			add_stability = 0.02
 			add_political_power = 25
+			newline = yes
+			increase_economic_growth = yes
 		}
 
 		ai_will_do = {
@@ -8059,7 +8108,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_reform_agenda_adoption"
 			decrease_corruption = yes
-			set_temp_variable = { temp_productivity_change = 2 }
+			newline = yes
+			set_temp_variable = { temp_productivity_change = 20 }
 			flat_productivity_change_effect = yes
 		}
 
@@ -8093,8 +8143,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_growth_plan_negotiations"
-			set_country_flag = BOS_eu_growth_plan_eligible
-			custom_effect_tooltip = BOS_eu_growth_plan_eligible_tt
+			unlock_decision_tooltip = BOS_eu_growth_plan_tranche
 			add_political_power = 20
 		}
 
@@ -8195,10 +8244,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_corridor_vc_opening"
-			set_country_flag = BOS_corridor_vc_complete
-			custom_effect_tooltip = BOS_corridor_vc_complete_tt
 			add_ideas = BOS_corridor_vc_trade_boost
 			add_political_power = 20
+			newline = yes
 			BOS_all_faction_trust_increase_effect = yes
 		}
 
@@ -8229,12 +8277,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_east_energy_partnership"
-			set_country_flag = BOS_energy_east_commitment
-			custom_effect_tooltip = BOS_energy_east_commitment_tt
 			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { tag_index = CHI.id }
 			set_temp_variable = { influence_target = BOS.id }
 			change_influence_percentage = yes
+			newline = yes
 			set_temp_variable = { temp_trust_change = 5 }
 			BOS_srpska_trust_add_effect = yes
 		}
@@ -8271,13 +8318,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_west_energy_partnership"
-			set_country_flag = BOS_energy_west_commitment
-			custom_effect_tooltip = BOS_energy_west_commitment_tt
-			set_temp_variable = { modify_europeanism = 0.01 }
+			set_temp_variable = { modify_europeanism = 0.05 }
 			set_temp_variable = { modify_europeanism_target = THIS }
 			europeanism_change = yes
 			set_temp_variable = { temp_trust_change = 5 }
 			BOS_croat_trust_add_effect = yes
+			newline = yes
 		}
 
 		ai_will_do = {
@@ -8300,7 +8346,7 @@ focus_tree = {
 		id = BOS_defense_industry_revival
 		icon = army_military_industryy
 
-		x = 4
+		x = 3
 		y = 1
 		relative_position_id = BOS_economic_reconstruction
 
@@ -8432,7 +8478,7 @@ focus_tree = {
 		id = BOS_national_jobs_program
 		icon = focus_generic_full_employment
 
-		x = 7
+		x = 6
 		y = 1
 		relative_position_id = BOS_economic_reconstruction
 
@@ -8540,7 +8586,7 @@ focus_tree = {
 		available = {
 			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
 			date > 2022.12.01
-			has_country_flag = BOS_eu_growth_plan_eligible
+			has_completed_focus = BOS_growth_plan_negotiations
 			BOS_all_factions_at_least_friendly_trigger = yes
 		}
 
@@ -8607,7 +8653,7 @@ focus_tree = {
 		id = BOS_open_balkan_initiative
 		icon = customs_union
 
-		x = -2
+		x = -1
 		y = 1
 		relative_position_id = BOS_corridor_vc_opening
 
@@ -8651,7 +8697,7 @@ focus_tree = {
 		id = BOS_berlin_process_commitment
 		icon = association_agreement
 
-		x = 0
+		x = 1
 		y = 1
 		relative_position_id = BOS_corridor_vc_opening
 
@@ -8701,7 +8747,7 @@ focus_tree = {
 		id = BOS_confront_entity_obstruction
 		icon = political_pressure
 
-		x = 2
+		x = 3
 		y = 1
 		relative_position_id = BOS_corridor_vc_opening
 
