@@ -19,16 +19,36 @@ USA_ibm_initialize_state = {
 }
 
 USA_ibm_clamp_state = {
-	clamp_variable = { var = USA_oem_open_standards min = 0 max = 10 }
-	clamp_variable = { var = USA_oem_vertical_integration min = 0 max = 10 }
-	clamp_variable = { var = USA_oem_supply_resilience min = 0 max = 10 }
-	clamp_variable = { var = USA_oem_security_control min = 0 max = 10 }
-	clamp_variable = { var = USA_oem_national_compute_stack min = 0 max = 10 }
-	clamp_variable = { var = USA_ibm_faction_systems min = 0 max = 10 }
-	clamp_variable = { var = USA_ibm_faction_services min = 0 max = 10 }
-	clamp_variable = { var = USA_ibm_faction_open_platform min = 0 max = 10 }
-	clamp_variable = { var = USA_ibm_faction_financial min = 0 max = 10 }
-	clamp_variable = { var = USA_ibm_faction_research min = 0 max = 10 }
+	set_temp_variable = { corp_value = USA_oem_open_standards }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_oem_open_standards = corp_value }
+	set_temp_variable = { corp_value = USA_oem_vertical_integration }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_oem_vertical_integration = corp_value }
+	set_temp_variable = { corp_value = USA_oem_supply_resilience }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_oem_supply_resilience = corp_value }
+	set_temp_variable = { corp_value = USA_oem_security_control }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_oem_security_control = corp_value }
+	set_temp_variable = { corp_value = USA_oem_national_compute_stack }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_oem_national_compute_stack = corp_value }
+	set_temp_variable = { corp_value = USA_ibm_faction_systems }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_ibm_faction_systems = corp_value }
+	set_temp_variable = { corp_value = USA_ibm_faction_services }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_ibm_faction_services = corp_value }
+	set_temp_variable = { corp_value = USA_ibm_faction_open_platform }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_ibm_faction_open_platform = corp_value }
+	set_temp_variable = { corp_value = USA_ibm_faction_financial }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_ibm_faction_financial = corp_value }
+	set_temp_variable = { corp_value = USA_ibm_faction_research }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_ibm_faction_research = corp_value }
 }
 
 USA_ibm_schedule_prehistory = {
@@ -1293,5 +1313,152 @@ USA_ibm_resolve_capstone = {
 		}
 
 		set_country_flag = USA_ibm_capstone_resolved
+	}
+}
+
+# Effect: USA_ibm_reconstruct_main_decisions
+# Purpose: Main-decision flag ladder (2005.5.1 - 2026.6.2), moved verbatim from
+#          USA_ibm_events.90. Idempotent: every step is date + marker guarded.
+USA_ibm_reconstruct_main_decisions = {
+	if = {
+		limit = {
+			date > 2005.5.1
+			NOT = { has_country_flag = USA_ibm_pc_divested }
+			NOT = { has_country_flag = USA_ibm_pc_retained }
+			NOT = { has_country_flag = USA_ibm_pc_spinout }
+		}
+		set_country_flag = USA_ibm_pc_divested
+		add_to_variable = { USA_oem_vertical_integration = -1 }
+		add_to_variable = { USA_oem_supply_resilience = -1 }
+		add_to_variable = { USA_oem_national_compute_stack = -1 }
+	}
+	if = {
+		limit = {
+			date > 2011.2.16
+			NOT = { has_country_flag = USA_ibm_watson_enterprise }
+			NOT = { has_country_flag = USA_ibm_watson_state }
+			NOT = { has_country_flag = USA_ibm_watson_research }
+		}
+		set_country_flag = USA_ibm_watson_enterprise
+		add_to_variable = { USA_oem_open_standards = 1 }
+		add_to_variable = { USA_oem_security_control = 1 }
+	}
+	if = {
+		limit = {
+			date > 2014.1.23
+			NOT = { has_country_flag = USA_ibm_x86_divested }
+			NOT = { has_country_flag = USA_ibm_x86_retained }
+			NOT = { has_country_flag = USA_ibm_silicon_retained }
+		}
+		set_country_flag = USA_ibm_x86_divested
+		add_to_variable = { USA_oem_vertical_integration = -1 }
+		add_to_variable = { USA_oem_supply_resilience = -1 }
+		add_to_variable = { USA_oem_national_compute_stack = -1 }
+	}
+	if = {
+		limit = {
+			date > 2015.4.13
+			NOT = { has_country_flag = USA_ibm_watson_health }
+			NOT = { has_country_flag = USA_ibm_watson_workflows }
+			NOT = { has_country_flag = USA_ibm_watson_public_sector }
+		}
+		set_country_flag = USA_ibm_watson_health
+		set_country_flag = USA_ibm_watson_crisis_eligible
+		add_to_variable = { USA_oem_security_control = 1 }
+	}
+	if = {
+		limit = {
+			date > 2018.10.28
+			NOT = { has_country_flag = USA_ibm_redhat_neutral }
+			NOT = { has_country_flag = USA_ibm_redhat_absorbed }
+			NOT = { has_country_flag = USA_ibm_redhat_missed }
+		}
+		set_country_flag = USA_ibm_redhat_neutral
+		add_to_variable = { USA_oem_open_standards = 2 }
+		add_to_variable = { USA_oem_vertical_integration = 1 }
+		add_to_variable = { USA_oem_national_compute_stack = 2 }
+	}
+	if = {
+		limit = {
+			date > 2020.10.8
+			NOT = { has_country_flag = USA_ibm_kyndryl_spun }
+			NOT = { has_country_flag = USA_ibm_services_retained }
+			NOT = { has_country_flag = USA_ibm_federal_systems_arm }
+		}
+		set_country_flag = USA_ibm_kyndryl_spun
+		add_to_variable = { USA_oem_open_standards = 1 }
+		add_to_variable = { USA_oem_vertical_integration = -1 }
+		add_to_variable = { USA_oem_supply_resilience = -1 }
+		add_to_variable = { USA_oem_national_compute_stack = -1 }
+	}
+	if = {
+		limit = {
+			date > 2022.4.5
+			NOT = { has_country_flag = USA_ibm_z_hybrid_spine }
+			NOT = { has_country_flag = USA_ibm_fortress_z_path }
+			NOT = { has_country_flag = USA_ibm_z_demoted }
+		}
+		set_country_flag = USA_ibm_z_hybrid_spine
+		add_to_variable = { USA_oem_security_control = 2 }
+		add_to_variable = { USA_oem_national_compute_stack = 1 }
+	}
+	if = {
+		limit = {
+			date > 2023.7.11
+			NOT = { has_country_flag = USA_ibm_watsonx_open }
+			NOT = { has_country_flag = USA_ibm_watsonx_services }
+			NOT = { has_country_flag = USA_ibm_watsonx_regulated }
+		}
+		set_country_flag = USA_ibm_watsonx_open
+		clr_country_flag = USA_ibm_watson_crisis_eligible
+		add_to_variable = { USA_oem_open_standards = 1 }
+		add_to_variable = { USA_oem_security_control = 1 }
+		add_to_variable = { USA_oem_national_compute_stack = 1 }
+	}
+	if = {
+		limit = {
+			date > 2025.2.27
+			NOT = { has_country_flag = USA_ibm_hashicorp_integrated }
+			NOT = { has_country_flag = USA_ibm_hashicorp_neutral }
+			NOT = { has_country_flag = USA_ibm_hashicorp_strategic }
+		}
+		set_country_flag = USA_ibm_hashicorp_integrated
+		add_to_variable = { USA_oem_vertical_integration = 1 }
+		add_to_variable = { USA_oem_security_control = 1 }
+		add_to_variable = { USA_oem_national_compute_stack = 1 }
+	}
+	if = {
+		limit = {
+			date > 2026.6.2
+			NOT = { has_country_flag = USA_ibm_quantum_open }
+			NOT = { has_country_flag = USA_ibm_quantum_classified }
+			NOT = { has_country_flag = USA_ibm_quantum_halo }
+		}
+		set_country_flag = USA_ibm_quantum_open
+		add_to_variable = { USA_oem_open_standards = 1 }
+		add_to_variable = { USA_oem_security_control = 1 }
+		add_to_variable = { USA_oem_national_compute_stack = 1 }
+	}
+}
+
+# Effect: USA_ibm_reconstruct_history
+# Purpose: Full silent later-start catch-up; mirrors the USA_ibm_events.90
+#          reconstruction path. Idempotent, safe for repeated monthly calls
+#          under the Outcomes Only game rule.
+USA_ibm_reconstruct_history = {
+	USA_ibm_initialize_state = yes
+	USA_ibm_reconstruct_prehistory = yes
+	USA_ibm_reconstruct_main_decisions = yes
+	USA_ibm_reconstruct_consequences = yes
+	USA_ibm_reconstruct_integrations = yes
+	USA_ibm_clamp_state = yes
+	if = {
+		limit = {
+			date > 2026.6.2
+			NOT = { has_country_flag = USA_ibm_capstone_resolved }
+		}
+		set_country_flag = USA_ibm_catchup_silent
+		USA_ibm_resolve_capstone = yes
+		clr_country_flag = USA_ibm_catchup_silent
 	}
 }
