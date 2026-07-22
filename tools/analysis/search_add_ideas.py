@@ -7,8 +7,7 @@ Supports searching single files, multiple files, or entire directories recursive
 import argparse
 import os
 import re
-from pathlib import Path
-from typing import List, Set, Tuple
+from typing import List, Tuple
 
 
 def find_idea_patterns(
@@ -22,7 +21,6 @@ def find_idea_patterns(
     idea_in_timed_pattern = r"^\s*idea\s*=\s*([A-Za-z0-9_]+)\s*$"
 
     in_timed_block = False
-    timed_block_start_line = 0
 
     for line_num, line in enumerate(lines, 1):
         line_stripped = line.strip()
@@ -36,7 +34,6 @@ def find_idea_patterns(
         timed_start_match = re.match(timed_pattern, line)
         if timed_start_match:
             in_timed_block = True
-            timed_block_start_line = line_num
             continue
 
         if in_timed_block:
@@ -53,7 +50,7 @@ def find_idea_patterns(
 
 def search_file(filepath: str) -> List[Tuple[str, int, str, str]]:
     try:
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
         return find_idea_patterns(content, os.path.basename(filepath))
     except Exception as e:

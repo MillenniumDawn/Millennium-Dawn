@@ -1,6 +1,6 @@
 # Focus Tree Reference
 
-On-demand reference for focus tree structure, property order, and examples. For best practices, see CLAUDE.md.
+On-demand reference for focus tree structure, property order, and examples. For best practices, see AGENTS.md.
 
 ## File Naming
 
@@ -10,7 +10,7 @@ On-demand reference for focus tree structure, property order, and examples. For 
 | `01-04_` | Shared/joint trees (EU, African Union, etc.) |
 | `05_`    | Country-specific trees                       |
 
-The prefix number forces load order: shared trees load before country-specific ones.
+Prefix number forces load order: shared trees load before country-specific ones.
 
 ## Focus Tree Container
 
@@ -48,6 +48,25 @@ focus_tree = {
 10. completion_reward / select_effect / bypass_effect
 11. ai_will_do                  (ALWAYS LAST)
 ```
+
+## Shared and Joint Focuses
+
+A **shared focus** lives in one tree file and appears in several countries' trees, each pulling it in via `shared_focus = X` inside their `focus_tree`. A **joint focus** (`joint_focus = { ... }`) is a shared focus that additionally **shares completion**: when one joint country completes it, it is marked complete for every country in its joint set.
+
+`joint_trigger` defines the **joint set** — it is evaluated per country and determines who shares completion and receives the rewards. It is **not** a selection gate; who can actually pick the focus is still governed by `available` / `visible` / `prerequisite` / `allow_branch`, exactly as in a normal focus.
+
+| Reward block                         | Fires on                                         |
+| ------------------------------------ | ------------------------------------------------ |
+| `completion_reward`                  | every joint country                              |
+| `completion_reward_joint_originator` | only the country that directly completed it      |
+| `completion_reward_joint_member`     | every joint country **other than** the completer |
+
+### Conventions
+
+- **All-members focus** — omit `joint_trigger` and gate `available` with the membership trigger (e.g. `benelux_cooperation_trigger`). When omitted, the default joint set is every country that has the tree, so `joint_trigger = { is_benelux_country = yes }` is redundant. `06_Commonwealth_Shared.txt` ships 38 joint focuses this way: no `joint_trigger`, `available = { is_commonwealth_member = yes }`, rewards shared across all members.
+- **Country-specific focus** — gate `available` to that country **and** restrict the joint set with `joint_trigger = { original_tag = TAG }` (or an `OR` of tags). Do **not** rely on `available` alone here: the default joint set is structural (all tree-holders), so without a `joint_trigger` the other members can still receive shared completion and rewards when that country completes the focus. Keep the `joint_trigger` until this is verified in-game.
+
+Joint focuses pick a `text_icon` titlebar style matching the joint set (`JOINT_BEL_LUX_HOL_focus_style`, `JOINT_HOL_focus_style`, etc.), defined in `common/national_focus/00_titlebar_styles.txt`.
 
 ## Example: Basic Focus
 
@@ -87,35 +106,18 @@ focus = {
 
 ## Example: Bankruptcy Guard in `ai_will_do`
 
-High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) must prevent the AI from queueing them during financial collapse. This is done in `ai_will_do` — not `available` — so the player is never blocked:
+A focus whose `completion_reward` spends money must prevent the AI from queueing it during financial collapse. The gate is the reward's actual money cost (a negative `treasury_change` applied via `modify_treasury_effect` summing to ~5bn or more, or a money-costing scripted/building effect), not the focus `cost` field, which is completion time. Do this in `ai_will_do`, not `available`, so the player is never blocked. A guard on a focus with no money cost is flagged as unneeded, so add it only where the reward actually spends:
 
 ```
 focus = {
 	id = ISR_milk_and_honey
-	icon = ISR_peace_isr
-
-	x = 2
-	y = 4
-	relative_position_id = ISR_binational_state
-
+	# ...
 	cost = 10
-
-	search_filters = { FOCUS_FILTER_ISRPOLIT FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
-
-	available = {
-		OR = {
-			emerging_anarchist_communism_are_in_power = yes
-			emerging_communist_state_are_in_power = yes
-			# ...
-		}
-	}
-
 	completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus ISR_milk_and_honey executed"
-		two_random_industrial_complex = yes
-		two_state_infrastructure = yes
+		# ... spends treasury:
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
 	}
-
 	ai_will_do = {
 		base = 3
 		modifier = {
@@ -141,87 +143,34 @@ focus = {
 	bypass = {
 		has_country_flag = ISR_start_operation
 	}
-
 	# ...
 }
 ```
 
-## Example: Cross-Country Event Tooltips
+## Cross-Country Event Tooltips
 
-When a focus fires an event to another country, always show the accept outcome. Include the reject outcome only when rejection triggers real effects (opinion penalty, retaliation, tariff, follow-up chain). Omit reject when it just means "nothing happens" — the accept tooltip already implies the alternative.
-
-Both branches have real outcomes (include both):
-
-```
-focus = {
-	id = ISR_passover_massacre
-	# ...
-	completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus ISR_passover_massacre executed"
-		PAL = {
-			country_event = {
-				id = israel.68
-				days = 1
-			}
-		}
-		custom_effect_tooltip = TT_IF_THEY_REJECT
-		effect_tooltip = {
-			custom_effect_tooltip = oper_def_shiel_tt
-		}
-		custom_effect_tooltip = TT_IF_THEY_ACCEPT
-		effect_tooltip = {
-			custom_effect_tooltip = oper_city_wall_tt
-		}
-	}
-}
-```
-
-Accept-only (reject is a no-op — omit the reject block):
-
-```
-focus = {
-	id = TAG_propose_trade_deal
-	# ...
-	completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus TAG_propose_trade_deal executed"
-		OTHER = {
-			country_event = {
-				id = namespace.N
-				days = 1
-			}
-		}
-		custom_effect_tooltip = TT_IF_THEY_ACCEPT
-		effect_tooltip = {
-			custom_effect_tooltip = TAG_trade_deal_effects_tt
-		}
-	}
-}
-```
+When a focus fires an event to another country, add the `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` tooltip pattern — full rules and examples in `.claude/docs/event-reference.md` (Cross-Country Event Tooltips).
 
 ## Example: `country_exists` Guard + Wargoal
 
 Always check `country_exists` before targeting another country with wargoals:
 
 ```
-focus = {
-	id = ISR_down_with_imperialism
-	# ...
-	available = {
-		country_exists = USA
-		NOT = { has_war_with = USA }
-		# ideology checks...
-	}
+available = {
+	country_exists = USA
+	NOT = { has_war_with = USA }
+	# ideology checks...
+}
 
-	completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus ISR_down_with_imperialism executed"
-		set_temp_variable = { wargoal_on = USA }
-		set_temp_variable = { wargoal_type = 1 }
-		add_threat_from_wargoal_effect = yes
-		create_wargoal = {
-			type = topple_government
-			target = USA
-			expire = 365
-		}
+completion_reward = {
+	log = "[GetDateText]: [This.GetName]: focus ISR_down_with_imperialism executed"
+	set_temp_variable = { wargoal_on = USA }
+	set_temp_variable = { wargoal_type = 1 }
+	add_threat_from_wargoal_effect = yes
+	create_wargoal = {
+		type = topple_government
+		target = USA
+		expire = 365
 	}
 }
 ```
@@ -283,4 +232,4 @@ two_random_industrial_complex = yes
 
 Cost includes a building slot ($1.00). To give a building without a slot, subtract $1.00.
 
-For the full scripted effects library (economic, political, influence, energy), see `docs/src/content/resources/code-resource.md`.
+For the full scripted effects library (economic, political, influence, energy), see `docs/src/content/resources/scripted-effects-reference.md`.

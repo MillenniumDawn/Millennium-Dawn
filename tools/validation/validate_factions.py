@@ -1,28 +1,22 @@
 #!/usr/bin/env python3
-##########################
-# Faction System Validation Script
-# Cross-references faction templates, goals, rules, manifests, upgrades, and icons
-# to catch broken references that cause crashes or silent failures.
-#
-# Checks:
-#   1. Template manifest references exist
-#   2. Template goal references exist
-#   3. Template default_rules references exist
-#   4. Template icon references exist in pool or interface
-#   5. Rule group references exist
-#   6. Rule types are valid engine types
-#   7. No duplicate template IDs
-#   8. No duplicate goal IDs
-#   9. No duplicate rule IDs
-#  10. Upgrade group references exist
-#  11. Orphaned manifests (warnings)
-##########################
+# Cross-reference faction templates, goals, rules, manifests, upgrades, and icons
+# to catch broken references and duplicate IDs that cause crashes or silent
+# failures, and warn about orphaned manifests.
 import glob
 import os
 import re
-from typing import Dict, List, Set, Tuple
+import sys
+from typing import Dict, List, Set
 
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import extract_block_from_text
+from validator_common import (
+    BaseValidator,
+    Colors,
+    FileOpener,
+    run_validator_main,
+)
 
 # Valid faction rule types per engine documentation
 VALID_RULE_TYPES = {
@@ -36,11 +30,9 @@ VALID_RULE_TYPES = {
     "contribution_rule",
 }
 
-# Regex patterns
 # Top-level block: word = { at the start of a line (possibly indented by tabs)
 BLOCK_DEF_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
 
-# Property extraction
 MANIFEST_RE = re.compile(r"\bmanifest\s*=\s*(\w+)")
 ICON_RE = re.compile(r"\bicon\s*=\s*(\w+)")
 TYPE_RE = re.compile(r"\btype\s*=\s*(\w+)")
@@ -48,12 +40,11 @@ IS_MANIFEST_RE = re.compile(r"\bis_manifest\s*=\s*yes\b")
 
 
 def read_file(filepath: str) -> str:
-    """Read a file and strip comments."""
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            return strip_comments(f.read())
-    except Exception:
-        return ""
+    # FileOpener-cached so the seven check methods that iterate templates only
+    # pay disk cost once.
+    return FileOpener.open_text_file(
+        filepath, lowercase=False, strip_comments_flag=True
+    )
 
 
 def extract_block_ids(content: str) -> List[str]:
@@ -146,6 +137,8 @@ class Validator(BaseValidator):
         self.rule_ids: Set[str] = set()
         self.upgrade_ids: Set[str] = set()
         self.icon_ids: Set[str] = set()
+        self.interface_icon_count: int = 0
+        self.interface_read_failures: List[str] = []
 
     def _faction_path(self, *parts: str) -> str:
         return os.path.join(self.mod_path, "common", "factions", *parts)
@@ -161,19 +154,22 @@ class Validator(BaseValidator):
             for block_id in extract_block_ids(content):
                 fname = os.path.basename(filepath)
                 if block_id in self.template_ids:
-                    pass  # Duplicate check happens later
+                    pass  # collection intentionally does not dedup; _validate_duplicate_templates reports duplicates
                 self.template_ids[block_id] = fname
 
         # Collect goal and manifest IDs from goals/
         goals_dir = self._faction_path("goals")
         for filepath in glob.glob(os.path.join(goals_dir, "*.txt")):
             content = read_file(filepath)
-            for block_id in extract_block_ids(content):
-                if IS_MANIFEST_RE.search(
-                    content[content.index(block_id) : content.index(block_id) + 500]
-                    if block_id in content
-                    else ""
-                ):
+            # Scan at each block's definition site, not the first substring
+            # occurrence of its id (a reference earlier in the file would grab
+            # the wrong window and misclassify the manifest flag). Clamp the
+            # search to the block's own braces so a short goal block can't be
+            # misread as a manifest by bleeding into the next block.
+            for m in BLOCK_DEF_RE.finditer(content):
+                block_id = m.group(1)
+                block_body, _ = extract_block_from_text(content, m.end() - 1)
+                if IS_MANIFEST_RE.search(block_body):
                     self.manifest_ids.add(block_id)
                 self.goal_ids.add(block_id)
 
@@ -204,19 +200,24 @@ class Validator(BaseValidator):
             content = read_file(pool_path)
             self.icon_ids = set(re.findall(r"(GFX_\w+)", content))
 
-        # Also collect GFX from interface files
+        # Also collect GFX from interface files. Read with errors="replace" so a
+        # single stray byte in factions.gfx (which alone defines every faction
+        # icon) can't drop the whole file and masquerade as dozens of bogus
+        # "icon not found" errors; a genuine IO failure is logged, never silent.
         interface_dir = os.path.join(self.mod_path, "interface")
         for filepath in glob.glob(
             os.path.join(interface_dir, "**", "*.gfx"), recursive=True
         ):
             try:
-                with open(filepath, "r", encoding="utf-8-sig") as f:
-                    for match in re.finditer(
-                        r'name\s*=\s*"?(GFX_faction\w+)"?', f.read()
-                    ):
-                        self.icon_ids.add(match.group(1))
-            except Exception:
-                pass
+                with open(filepath, "r", encoding="utf-8-sig", errors="replace") as f:
+                    content = f.read()
+            except OSError as ex:
+                self.interface_read_failures.append(filepath)
+                self.log(f"  Warning: could not read {filepath}: {ex}", "warning")
+                continue
+            for match in re.finditer(r'name\s*=\s*"?(GFX_faction\w+)"?', content):
+                self.icon_ids.add(match.group(1))
+                self.interface_icon_count += 1
 
         self.log(f"  Templates: {len(self.template_ids)}")
         self.log(f"  Goals (incl manifests): {len(self.goal_ids)}")
@@ -298,16 +299,41 @@ class Validator(BaseValidator):
         self._log_section("Checking template icon references...")
 
         results = []
+        referenced: Set[str] = set()
         template_dir = self._faction_path("templates")
         for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for match in ICON_RE.finditer(content):
                 icon_id = match.group(1)
+                referenced.add(icon_id)
                 if icon_id not in self.icon_ids:
                     results.append(
                         f"{fname}: icon '{icon_id}' not found in pool or interface"
                     )
+
+        # Faction icons all live in interface/factions/factions.gfx. Collecting
+        # fewer faction sprites than the templates even reference means that
+        # source did not load (missing, unreadable, or an empty scan), so every
+        # "not found" above is a false positive. Report that one root cause
+        # instead, naming the read failure when we caught one.
+        if referenced and (
+            self.interface_read_failures or self.interface_icon_count < len(referenced)
+        ):
+            detail = (
+                "; ".join(self.interface_read_failures)
+                if self.interface_read_failures
+                else "interface/factions/factions.gfx missing or unreadable"
+            )
+            self._report(
+                [
+                    f"faction icon source did not load ({detail}); "
+                    "skipping per-template icon checks"
+                ],
+                "All template icon references are valid",
+                "Faction icon source unavailable:",
+            )
+            return
 
         self._report(
             results,

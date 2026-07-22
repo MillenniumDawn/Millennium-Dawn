@@ -3,7 +3,7 @@ title: Claude Code Skills
 description: AI-assisted development tools built into the Millennium Dawn repository
 ---
 
-The Millennium Dawn repository includes a set of Claude Code skills — slash commands that automate common development tasks. They are available to anyone using [Claude Code](https://claude.ai/code) with the repository open.
+The Millennium Dawn repository includes a set of Claude Code skills, slash commands that automate common development tasks. They are available to anyone using [Claude Code](https://claude.ai/code) with the repository open.
 
 > **Setup**: Claude Code reads `.claude/` automatically when you open the repo. No additional configuration is needed.
 
@@ -31,13 +31,13 @@ The Millennium Dawn repository includes a set of Claude Code skills — slash co
 
 There are three review skills with different scopes:
 
-**`/review-branch`** — fast, inline, single-pass. Covers coding standards, performance patterns, logic correctness, localisation, and quick content design checks. Best for PR review gating. Runs in one pass without sub-agents.
+**`/review-branch`**: fast, inline, single-pass. Covers coding standards, performance patterns, logic correctness, localisation, and quick content design checks. Best for PR review gating. Runs in one pass without sub-agents.
 
-**`/content-review`** — focused on design quality. Checks the full developer content review guide: economic balance, political guidelines, visual standards, military counts, AI rules, and miscellaneous checklist items. Best when a developer thinks their content is submission-ready.
+**`/content-review`**: focused on design quality. Checks the full developer content review guide: economic balance, political guidelines, visual standards, military counts, AI rules, and miscellaneous checklist items. Best when a developer thinks their content is submission-ready.
 
-**`/audit`** — deep, multi-agent. Spawns three parallel agents (simplification, performance, content review) and merges their findings. Can also apply fixes. Best for a pre-merge cleanup sprint or a thorough file-level analysis.
+**`/audit`**: deep, multi-agent. Spawns three parallel agents (simplification, performance, content review) and merges their findings. Can also apply fixes. Best for a pre-merge cleanup sprint or a thorough file-level analysis.
 
-These are additive tiers, not alternatives — running all three gives the most complete picture.
+These are additive tiers, not alternatives, running all three gives the most complete picture.
 
 ---
 
@@ -45,14 +45,14 @@ These are additive tiers, not alternatives — running all three gives the most 
 
 For developers building new country content, the recommended flow is:
 
-1. `/new-focus <TAG>` — scaffold the focus tree file
-2. `/add-leader <TAG>` — scaffold generals and admirals once OOB is drafted
-3. `/search-filter-check <file>` — validate search filters before submitting
-4. `/lifecycle-check <TAG>` — audit which lifecycle items are done
-5. `/content-review` — full design quality pass
-6. `/review-branch` — coding standards pass
-7. `/validate` — run automated validation tools
-8. `/changelog` — update the changelog
+1. `/new-focus <TAG>`: scaffold the focus tree file
+2. `/add-leader <TAG>`: scaffold generals and admirals once OOB is drafted
+3. `/search-filter-check <file>`: validate search filters before submitting
+4. `/lifecycle-check <TAG>`: audit which lifecycle items are done
+5. `/content-review`: full design quality pass
+6. `/review-branch`: coding standards pass
+7. `/validate`: run automated validation tools
+8. `/changelog`: update the changelog
 
 ---
 
@@ -74,7 +74,7 @@ To update a skill's behavior, edit the relevant `.SKILL.md` file. To add a new s
 
 ## Related Resources
 
-- [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist)
-- [Content Review Guide](/dev-resources/content-review-guide)
-- [New General Guidelines](/dev-resources/new-general-guidelines)
-- [Code Stylization Guide](/dev-resources/code-stylization-guide)
+- [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/)
+- [Content Review Guide](/dev-resources/content-review-guide/)
+- [New General Guidelines](/dev-resources/new-general-guidelines/)
+- [Code Stylization Guide](/dev-resources/code-stylization-guide/)

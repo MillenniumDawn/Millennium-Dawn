@@ -5,6 +5,7 @@ Millennium Dawn Event Standardizer
 Standardizes HOI4 event files according to Millennium Dawn coding standards
 """
 
+import re
 from typing import Any, Dict, List
 
 from common_utils import (
@@ -16,7 +17,12 @@ from common_utils import (
     inject_log_after_brace,
     run_standardizer,
 )
-from shared_utils import compact_block, extract_block
+from shared_utils import (
+    blank_quoted_strings,
+    collapse_or_compact,
+    extract_block,
+    strip_inline_comment,
+)
 
 _EVENT_TYPES = ("country_event", "province_event", "unit_leader_event", "news_event")
 
@@ -38,30 +44,130 @@ _BLOCK_PROPS = {
 }
 
 
+_OPTION_STATEMENT_RE = re.compile(r"[A-Za-z_]\w*\s*=")
+
+
+def _split_packed_body(body: str) -> List[str]:
+    """Split a packed one-line option body into its top-level ``key = value``
+    statements. Brace- and quote-aware so nested blocks and quoted values that
+    contain spaces or ``=`` are not split mid-statement."""
+    boundaries: List[int] = []
+    depth = 0
+    in_str = False
+    for i, c in enumerate(body):
+        if c == '"' and (i == 0 or body[i - 1] != "\\"):
+            in_str = not in_str
+        elif in_str:
+            continue
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+        elif (
+            depth == 0
+            and (i == 0 or body[i - 1].isspace())
+            and _OPTION_STATEMENT_RE.match(body, i)
+        ):
+            boundaries.append(i)
+    if not boundaries:
+        stripped = body.strip()
+        return [stripped] if stripped else []
+    boundaries.append(len(body))
+    out: List[str] = []
+    for a, b in zip(boundaries, boundaries[1:]):
+        seg = body[a:b].strip()
+        if seg:
+            out.append(seg)
+    return out
+
+
+def _option_body(option_block: List[str]) -> List[str]:
+    """Statements between the option header's ``{`` and its matching ``}``.
+    A packed single-line option (`option = { name = x  add_pp = 10 }`) keeps
+    header, body, and closer on one physical line, so its body is split out of
+    that line rather than read as the empty slice between two list elements."""
+    if len(option_block) == 1:
+        code = strip_inline_comment(option_block[0])
+        open_idx = code.find("{")
+        close_idx = code.rfind("}")
+        if open_idx == -1 or close_idx <= open_idx:
+            return []
+        return _split_packed_body(code[open_idx + 1 : close_idx])
+    body = list(option_block[1:-1])
+    # A statement packed onto the closer line (`add_political_power = 10 }`) is
+    # invisible to a plain [1:-1] slice — recover the code before the trailing `}`.
+    last = strip_inline_comment(option_block[-1])
+    close_idx = last.rfind("}")
+    if close_idx != -1:
+        tail = last[:close_idx].strip()
+        if tail:
+            body.append(tail)
+    return body
+
+
+def _explode_packed_option(option_block: List[str]) -> List[str]:
+    """Expand a packed single-line option into header / body / closer lines so a
+    log can be injected inside its braces. Multi-line options pass through."""
+    if len(option_block) != 1:
+        return option_block
+    line = option_block[0].rstrip("\n")
+    code = strip_inline_comment(line)
+    comment = line[len(code) :].strip()
+    indent = line[: len(line) - len(line.lstrip("\t"))]
+    closer = f"{indent}}}" + (f" {comment}" if comment else "")
+    return (
+        [f"{indent}option = {{"]
+        + [f"{indent}\t{stmt}" for stmt in _option_body(option_block)]
+        + [closer]
+    )
+
+
+def _option_indent(option_block: List[str]) -> str:
+    """Leading-tab indent of the option body, from its first non-blank line.
+    Files with 2-tab option bodies get a 2-tab log line, 3-tab bodies get 3."""
+    for line in _option_body(option_block):
+        if line.strip():
+            return line[: len(line) - len(line.lstrip("\t"))] or "\t\t\t"
+    return "\t\t\t"
+
+
 def _option_log_line(option_block: List[str]) -> str:
     """Build the log line for an event option. Uses the first `name = ...`
-    line found in the block (matches legacy behaviour)."""
+    line found in the block (matches legacy behaviour); indent follows the body."""
     option_name = "option"
     for line in option_block:
         stripped = line.strip()
         if stripped.startswith("name ="):
             option_name = stripped.split("=", 1)[1].strip()
             break
-    return f'\t\t\tlog = "[GetDateText]: [This.GetName]: {option_name} executed"'
+    indent = _option_indent(option_block)
+    return f'{indent}log = "[GetDateText]: [This.GetName]: {option_name} executed"'
 
 
 def _option_has_effects(option_block: List[str]) -> bool:
-    """Check whether an option has any meaningful effect lines."""
+    """Check whether an option's body has any meaningful effect lines. Scans only
+    the body so the `option = {` header line itself never trips detection. Each
+    body line is split into its packed statements so an effect jammed onto a
+    physical line after a skipped one (`name = x  add_pp = 10`) is still seen.
+
+    Brace depth is tracked across body lines so the inner lines of a multi-line
+    skipped block (`ai_chance = {` / `trigger = {`) are swallowed whole and not
+    misread as top-level effects."""
     skip_prefixes = ("name =", "ai_chance =", "trigger =")
-    for line in option_block:
-        stripped = line.strip()
-        if not stripped or stripped in ("{", "}"):
-            continue
-        if stripped.startswith("#"):
-            continue
-        if stripped.startswith(skip_prefixes):
-            continue
-        return True
+    depth = 0
+    for line in _option_body(option_block):
+        for stripped in _split_packed_body(line.strip()):
+            if not stripped or stripped.startswith("#"):
+                continue
+            code = blank_quoted_strings(strip_inline_comment(stripped))
+            delta = code.count("{") - code.count("}")
+            if depth > 0:
+                depth = max(0, depth + delta)
+                continue
+            if stripped in ("{", "}") or stripped.startswith(skip_prefixes):
+                depth = max(0, depth + delta)
+                continue
+            return True
     return False
 
 
@@ -98,7 +204,6 @@ class EventStandardizer(BaseStandardizer):
             "comments_after_options": [],
         }
 
-        # Determine event type from first line
         first_line = block_lines[0].strip()
         for event_type in _EVENT_TYPES:
             if event_type in first_line:
@@ -135,7 +240,7 @@ class EventStandardizer(BaseStandardizer):
                 current_section = section
                 continue
             else:
-                # This is a comment or unrecognized line - add to current section
+                # Comment or unrecognized line: bucket it under the current section.
                 props[f"comments_after_{current_section}"].append(block_lines[i])
 
             i += 1
@@ -149,41 +254,41 @@ class EventStandardizer(BaseStandardizer):
 
         # 1. ID (first line after opening brace)
         if props["id"]:
-            lines.append(f'\t{props["id"]}')
+            lines.append(f"\t{props['id']}")
 
         # 2. Title and description (may repeat as conditional blocks)
         for title_entry in props["title"]:
             if isinstance(title_entry, list):
-                lines.extend(compact_block(title_entry[:]))
+                lines.extend(collapse_or_compact(title_entry[:]))
             else:
                 lines.append(f"\t{title_entry}")
         for desc_entry in props["desc"]:
             if isinstance(desc_entry, list):
-                lines.extend(compact_block(desc_entry[:]))
+                lines.extend(collapse_or_compact(desc_entry[:]))
             else:
                 lines.append(f"\t{desc_entry}")
 
         # 3. Picture
         if props["picture"]:
-            lines.append(f'\t{props["picture"]}')
+            lines.append(f"\t{props['picture']}")
 
         # 4. is_triggered_only (required for triggered events)
         if props["is_triggered_only"]:
-            lines.append(f'\t{props["is_triggered_only"]}')
+            lines.append(f"\t{props['is_triggered_only']}")
         elif not props["mean_time_to_happen"]:
             lines.append("\tis_triggered_only = yes")
 
         # 5. major flag (use sparingly)
         if props["major"]:
-            lines.append(f'\t{props["major"]}')
+            lines.append(f"\t{props['major']}")
 
         # 6. hidden parameter
         if props["hidden"]:
-            lines.append(f'\t{props["hidden"]}')
+            lines.append(f"\t{props['hidden']}")
 
         # 7. fire_only_once (use sparingly)
         if props["fire_only_once"]:
-            lines.append(f'\t{props["fire_only_once"]}')
+            lines.append(f"\t{props['fire_only_once']}")
 
         lines.append("")
 
@@ -191,19 +296,19 @@ class EventStandardizer(BaseStandardizer):
 
         # 8. Mean time to happen
         for mtth in props["mean_time_to_happen"]:
-            lines.extend(compact_block(mtth[:]))
+            lines.extend(collapse_or_compact(mtth[:]))
             lines.append("")
         emit_comments(lines, props["comments_after_mtth"])
 
         # 9. Trigger
         for trigger in props["trigger"]:
-            lines.extend(compact_block(trigger[:]))
+            lines.extend(collapse_or_compact(trigger[:]))
             lines.append("")
         emit_comments(lines, props["comments_after_trigger"])
 
         # 10. Immediate effects
         for immediate in props["immediate"]:
-            lines.extend(compact_block(immediate[:]))
+            lines.extend(collapse_or_compact(immediate[:]))
             lines.append("")
         emit_comments(lines, props["comments_after_immediate"])
 
@@ -214,10 +319,13 @@ class EventStandardizer(BaseStandardizer):
                 and not block_has_log(option)
                 and props["id"]
             ):
+                # Explode a packed single-line option first so the log lands
+                # inside its braces, not as a sibling after the close.
+                option = _explode_packed_option(option)
                 log_line = _option_log_line(option)
                 option = inject_log_after_brace(option, log_line)
 
-            lines.extend(compact_block(option[:]))
+            lines.extend(collapse_or_compact(option[:]))
             lines.append("")
 
         emit_comments(lines, props["comments_after_options"])

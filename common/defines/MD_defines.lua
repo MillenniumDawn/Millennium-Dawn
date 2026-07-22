@@ -156,8 +156,8 @@
 	NDefines.NAI.RAIDS_CREATE_FREQUENCY_DAYS = 30 -- 7 -- Changed this to monthly to reduce the performance hit, given the number of raids present
 	NDefines.NAI.RAIDS_COMMAND_POWER_CAP_TO_CREATE = 60 -- 60
 	NDefines.NAI.RAIDS_CANCEL_AFTER_DAYS_LAUNCHABLE = 90 -- 60 -- Increased to give the AI more time to try and make a raid happen
-	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_DURATION_DAYS = 180 -- 180
-	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_FACTOR = 0.4 -- 0.4
+	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_DURATION_DAYS = 270 -- 180 -- Longer cooldown so the AI re-scores the same target less often
+	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_FACTOR = 0.2 -- 0.4 -- Stronger score penalty for already-raided targets
 	NDefines.NAI.RAIDS_NUKE_TARGET_CUT_OFF = 10 -- 10
 	NDefines.NAI.RAIDS_UNIT_SCORE_SUCCESS_CHANCE_FACTOR = 500.0 -- 500.0
 	NDefines.NAI.RAIDS_UNIT_SCORE_DISTANCE_KM_FACTOR = 0.1 -- 0.1
@@ -270,24 +270,32 @@
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
 	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 25.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
-	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
+	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 24
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.RADAR_INTEL_EFFECT = 60 -- 40
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
 	NDefines.NBuildings.MAX_SHARED_SLOTS = 56
-	NDefines.NBuildings.OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.05	--upped from 0.02, vanilla 0.2
 	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 3.5 -- was 4.0 --Fucked with this to see
 	-- NOTE: The below piercing values are granularized to make piercing less punishing for nations with no real tank access
 	-- Nations with huge advantages will keep them, but the narrower the gap, the less effective the buffs get
 	-- these stats may be adjusted further, but for now, the scale remains 50% - 100%
 
-	NDefines.NMilitary.MAX_DIVISION_BRIGADE_WIDTH = 4 -- 5
+	NDefines.NMilitary.MAX_DIVISION_BRIGADE_WIDTH = 5 -- 5
 	NDefines.NMilitary.MIN_DIVISION_BRIGADE_HEIGHT = 3 -- 4
+	NDefines.NMilitary.MAX_REGIMENTAL_SUPPORT_WIDTH = 5		-- Max width of regimental supports in division designer.
+	NDefines.NMilitary.MAX_REGIMENTAL_SUPPORT_HEIGHT = 3		-- Max height of regimental supports in division designer.
+	NDefines.NMilitary.MAX_HQ_BATTALION_WIDTH = 1			-- Max width of regiments in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_BATTALION_HEIGHT = 4			-- Max height of regiments in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_SUPPORT_WIDTH = 1			-- Max width of support in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_SUPPORT_HEIGHT = 4			-- Max height of support in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_REGIMENTAL_SUPPORT_WIDTH = 0		-- Max width of regimental supports in division designer (Army HQ templates).
+	NDefines.NMilitary.MAX_HQ_REGIMENTAL_SUPPORT_HEIGHT = 0		-- Max height of regimental supports in division designer (Army HQ templates).
+	NDefines.NMilitary.REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS = { 1, 3, 5 } -- For each regimental support row, how many battalions are required in the regiment to be able to place a support in that row.
 	NDefines.NMilitary.HOURLY_ORG_MOVEMENT_IMPACT = -0.1 -- -0.2
-	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
+	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.6 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
 
 	NDefines.NMilitary.SOFT_ATTACK_TARGETING_FACTOR = 1.0 -- 1.0
@@ -296,8 +304,8 @@
 	NDefines.NMilitary.PIERCING_THRESHOLD_DAMAGE_VALUES = { 1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.55, 0.50 }
 	NDefines.NMilitary.SPOTTING_QUALITY_DROP_HOURS = 6 -- 4
 	NDefines.NMilitary.BASE_CHANCE_TO_AVOID_HIT = 80 -- 90
-	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50 -- 60
-	NDefines.NMilitary.ARMOR_VS_AVERAGE = 0.3 -- 0.4 Decrease armor from individual units, to make needing to average armor out more important
+	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 30 -- 60
+	NDefines.NMilitary.ARMOR_VS_AVERAGE = 0.4 -- 0.4 Reset this back up to try and improve tanks a little bit, keeping below to make pen better
 	NDefines.NMilitary.PEN_VS_AVERAGE = 0.425 -- 0.4 Increase pen avaiable to units, so that infantry has a better chance against armor
 
 	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 18 -- Vanilla 24
@@ -330,13 +338,15 @@
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.45 -- -0.5
 	NDefines.NMilitary.BASE_FORT_PENALTY = -0.075 -- -0.15
 	NDefines.NMilitary.RECON_SKILL_IMPACT = 2.5 -- 5
-	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.5 -- -0.35
-	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.3 -- -0.3
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.65 -- -0.35
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.4 -- -0.3
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_DEFENSE = 0.8 -- 0.75
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_DEFENSE_STEEPNESS = 625 -- 625
 	NDefines.NMilitary.SLOWEST_SPEED = 4 -- 4
-	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.6 -- -0.5
+	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.8 -- -0.5
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
 	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
-	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.7 -- 1.00
+	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.45 -- 1.00
 	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
 	NDefines.NMilitary.SUPPLY_GRACE = 96 -- 72
 	NDefines.NMilitary.MAX_OUT_OF_SUPPLY_DAYS = 45 -- 30
@@ -344,7 +354,7 @@
 	NDefines.NMilitary.NON_CORE_SUPPLY_SPEED = -0.20 -- -0.5
 	NDefines.NMilitary.NON_CORE_SUPPLY_AIR_SPEED = -0.10 -- -0.25
 	NDefines.NMilitary.OUT_OF_SUPPLY_MORALE = -0.15 -- -0.30
-	NDefines.NMilitary.AIR_SUPPORT_BASE = 0.5 -- 0.25
+	NDefines.NMilitary.AIR_SUPPORT_BASE = 0.45 -- 0.25
 	NDefines.NMilitary.REINFORCE_CHANCE = 0.05 -- 0.02
 	NDefines.NMilitary.PARACHUTE_DISRUPTED_AA_PENALTY = 0.75 -- 1
 	NDefines.NMilitary.PARACHUTE_COMPLETE_ORG = 0.3 -- 0.1
@@ -368,7 +378,7 @@
 	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_MAX = 10.0               -- Additional speed of strategic redeployment on max-level infrastructure
 	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_BASE = 20.0               -- Base speed of strategic redeployment when on railways -- vanilla is 15
 	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_MAX = 40.0                -- Additional speed of strategic redeployment on max-level railways -- vanilla is 25
-	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.4 -- 0.1
+	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.3 -- 0.1
 	NDefines.NMilitary.LAND_EQUIPMENT_BASE_COST = 5 -- 10 --Used to determine Upgrade Cost
 	NDefines.NMilitary.LAND_EQUIPMENT_RAMP_COST = 3 -- 5
 	NDefines.NMilitary.NAVAL_EQUIPMENT_BASE_COST = 15 -- 25
@@ -376,7 +386,7 @@
 	NDefines.NMilitary.FASTER_ORG_REGAIN_MULT = 0.40 -- 1.0
 	NDefines.NMilitary.SLOWER_ORG_REGAIN_MULT = -0.6 -- -0.5
 	NDefines.NMilitary.FRONT_MIN_PATH_TO_REDEPLOY = 3 -- 8
-	NDefines.NMilitary.BASE_CAPTURE_EQUIPMENT_RATIO = 0.06 -- 0.0
+	NDefines.NMilitary.BASE_CAPTURE_EQUIPMENT_RATIO = 0.05 -- 0.0
 	NDefines.NMilitary.GARRISON_ORDER_ARMY_CAP_FACTOR = 2.0 -- 3.0
 	NDefines.NMilitary.ACCLIMATIZATION_SPEED_GAIN = 0.1 -- 0.15
 	NDefines.NMilitary.ACCLIMATIZATION_LOSS_SPEED_FACTOR = 0.5 -- 2.0
@@ -390,7 +400,7 @@
 	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.02 -- 0.07
 	NDefines.NMilitary.ANTI_AIR_ATTACK_TO_AMOUNT = 0.005 -- 0.005
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 0.0003 -- 0.0001
-	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.25 -- 1.0
+	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.5 -- 1.0
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.0035 -- 0.0015
 	NDefines.NMilitary.TRAINING_EXPERIENCE_SCALE = 92.0 -- 62.0
 	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }
@@ -469,7 +479,7 @@
 	NDefines.NAir.NAVAL_STRIKE_CARRIER_MULTIPLIER = 7.5 -- 5.0
 	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.025 -- 0.05
 	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1.15 -- 2.0
-	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.25 -- 0.5
+	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.15 -- 0.5
 	NDefines.NAir.AIR_AGILITY_TO_NAVAL_STRIKE_AGILITY = 0.04 -- 0.01
 	NDefines.NAir.AIR_DAMAGE_TO_DIVISION_LOSSES = 1.5 -- 1.0
 	NDefines.NAir.BASE_STRATEGIC_BOMBING_HIT_SHIP_CHANCE = 0.30 -- 0.01
@@ -507,12 +517,10 @@
 	NDefines.NAir.CAPACITY_PENALTY = 4 -- 2
 	NDefines.NAir.DISRUPTION_FACTOR = 6.0 -- 4.0
 	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 8.0 -- 8.0
-	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
+	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 12 -- Increased to 12 to match the new air wing size.
 	NDefines.NAir.REINFORCEMENT_DISABLING_DURATION_IN_LAND_CARRIER_TRANSFER = 12 -- 48 vanilla; reduced so AI is less reluctant to move planes onto carriers
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50 -- 10 vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10 -- 1 vanilla
 	NDefines.NAir.MAX_QUICK_WING_SELECTION = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
@@ -535,7 +543,8 @@
 		0,0, -- NUCLEAR
 		0,0, -- SAM
 	}
-
+	NDefines.NNavy.NAVAL_INVASION_PLAN_CAP = 4
+	NDefines.NNavy.COMBAT_MAX_GROUPS = 1 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 2 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_SCREENS_RATIO = 0.5 -- 0.25
 	NDefines.NNavy.DECRYPTION_SPOTTING_BONUS = 0.3 -- 0.2
@@ -603,9 +612,9 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_EFFECT = 0.3 -- 0.5
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2 -- 2.0
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
-	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1 -- Reduced to 100% from 200% -- 25% is vanilla
-	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.99 -- HGA / (VAL * 100) = Add to Shore Bombard Mod
-	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.025 -- LGA / (VAL * 100) = Add to Shore Bombard Mod
+	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 0.75 -- Reduced to 100% from 200% -- 25% is vanilla
+	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.001 -- HGA / (VAL * 100) = Add to Shore Bombard Mod
+	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.85 -- LGA / (VAL * 100) = Add to Shore Bombard Mod
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
 	NDefines.NNavy.MIN_HIT_PROFILE_MULT = 0.1 -- largest hit profile penalty to hitting (higher value of the define makes ships easier to hit, i assume by reducing the penalty caused by small hit profile of target ship)
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
@@ -665,19 +674,21 @@
 	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 1
 	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 2
 
+	-- Updated based on RBAMs fixes with slight tweaks to try to keep the focus on smaller navies
+	-- Positioning should matter more and be less punishing for bigger fleet
 	NDefines.NNavy.BASE_POSITIONING = 0.70 -- 1.0
 	NDefines.NNavy.RELATIVE_SURFACE_DETECTION_TO_POSITIONING_FACTOR = 0.01 -- 0.01
-	NDefines.NNavy.MAX_POSITIONING_BONUS_FROM_SURFACE_DETECTION = 0.35 -- 0.0
+	NDefines.NNavy.MAX_POSITIONING_BONUS_FROM_SURFACE_DETECTION = 0.25 -- 0.0
 	NDefines.NNavy.HIGHER_SHIP_RATIO_POSITIONING_PENALTY_FACTOR = 0.25 -- 0.25
-	NDefines.NNavy.MAX_POSITIONING_PENALTY_FROM_HIGHER_SHIP_RATIO = 0.75 -- 0.5
+	NDefines.NNavy.MAX_POSITIONING_PENALTY_FROM_HIGHER_SHIP_RATIO = 0.70 -- 0.5
 	NDefines.NNavy.HIGHER_CARRIER_RATIO_POSITIONING_PENALTY_FACTOR = 0.4 -- 0.2
 	NDefines.NNavy.MAX_CARRIER_RATIO_POSITIONING_PENALTY_FACTOR = 0.2 -- 0.2
-	NDefines.NNavy.POSITIONING_PENALTY_FOR_SHIPS_JOINED_COMBAT_AFTER_IT_STARTS = 0.025 -- 0.05
-	NDefines.NNavy.MAX_POSITIONING_PENALTY_FOR_NEWLY_JOINED_SHIPS = 0.3 -- 0.5
-	NDefines.NNavy.POSITIONING_PENALTY_HOURLY_DECAY_FOR_NEWLY_JOINED_SHIPS = 0.04 -- 0.002
-	NDefines.NNavy.DAMAGE_PENALTY_ON_MINIMUM_POSITIONING = 0.9 -- 0.5
-	NDefines.NNavy.SCREENING_EFFICIENCY_PENALTY_ON_MINIMUM_POSITIONING = 0.65 -- 0.5
-	NDefines.NNavy.AA_EFFICIENCY_PENALTY_ON_MINIMUM_POSITIONING = 0.9 -- 0.7
+	NDefines.NNavy.POSITIONING_PENALTY_FOR_SHIPS_JOINED_COMBAT_AFTER_IT_STARTS = 0.015 -- 0.05
+	NDefines.NNavy.MAX_POSITIONING_PENALTY_FOR_NEWLY_JOINED_SHIPS = 0.25 -- 0.5
+	NDefines.NNavy.POSITIONING_PENALTY_HOURLY_DECAY_FOR_NEWLY_JOINED_SHIPS = 0.05 -- 0.002
+	NDefines.NNavy.DAMAGE_PENALTY_ON_MINIMUM_POSITIONING = 0.80 -- 0.5
+	NDefines.NNavy.SCREENING_EFFICIENCY_PENALTY_ON_MINIMUM_POSITIONING = 0.5 -- 0.5
+	NDefines.NNavy.AA_EFFICIENCY_PENALTY_ON_MINIMUM_POSITIONING = 0.8 -- 0.7
 	NDefines.NNavy.SUBMARINE_REVEAL_ON_MINIMUM_POSITIONING = 3.0 -- 2.0
 
 	NDefines.NNavy.NAVAL_COMBAT_SUB_DETECTION_FACTOR = 1.2      -- balance value for sub detection in combat by ships
@@ -753,7 +764,7 @@
 	-- While allowing them to still shore bombard, while cannons can now attack light ships, and add guns back as a real naval weapon!
 	NDefines.NNavy.NAVY_PIERCING_THRESHOLDS = { 2.00, 1.00, 0.75, 0.50, 0.10, 0.01, 0.00 }
 	NDefines.NNavy.NAVY_PIERCING_THRESHOLD_CRITICAL_VALUES = { 2.00, 1.00, 0.75, 0.50, 0.10, 0.00, 0.00 }
-	NDefines.NNavy.NAVY_PIERCING_THRESHOLD_DAMAGE_VALUES = { 1.00, 1.00, 0.70, 0.40, 0.30, 0.10, 0.00 }
+	NDefines.NNavy.NAVY_PIERCING_THRESHOLD_DAMAGE_VALUES = { 1.00, 1.00, 0.70, 0.40, 0.30, 0.10, 0.05 }
 
 	-- NTrade Defines
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
@@ -783,7 +794,7 @@
 	NDefines.NAI.DIPLOMACY_ACCEPT_ATTACHE_BASE = 75 -- 50
 	NDefines.NAI.MIN_DELIVERED_TRADE_FRACTION = 0.6 -- 0.8
 	NDefines.NAI.MAX_VOLUNTEER_ARMY_FRACTION = 0.5			-- 0.25
-	NDefines.NAI.DEPLOY_MIN_EQUIPMENT_WAR_FACTOR = 0.60		-- 0.90
+	NDefines.NAI.DEPLOY_MIN_EQUIPMENT_WAR_FACTOR = 0.90		-- vanilla
 	NDefines.NAI.CALL_ALLY_BASE_DESIRE = 25					-- 20
 	NDefines.NAI.CALL_ALLY_DEMOCRATIC_DESIRE = 25			-- 50
 	NDefines.NAI.CALL_ALLY_FASCIST_DESIRE = 25				-- -10
@@ -793,6 +804,7 @@
 	NDefines.NAI.JOIN_ALLY_FASCIST_DESIRE = 25				-- -10
 	NDefines.NAI.JOIN_ALLY_COMMUNIST_DESIRE = 25				-- 75
 	NDefines.NAI.LENDLEASE_FRACTION_OF_PRODUCTION = 0.6		-- 0.5
+	NDefines.NAI.MINIMUM_MONTHLY_LEND_LEASE_EQUIPMENT = 25	-- 10 AI will not offer lend-lease if the monthly amount would be less than this
 	NDefines.NAI.PLAN_ATTACK_MIN_ORG_FACTOR_LOW = 0.85		-- 0.85
 	NDefines.NAI.PLAN_FRONTUNIT_DISTANCE_FACTOR = 20			-- 10
 	NDefines.NAI.PLAN_ATTACK_DEPTH_FACTOR = 1.2				-- 0.5
@@ -855,7 +867,6 @@
 	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_ARMY = 1					-- 0
 	NDefines.NAI.MINES_SWEEPING_PLANES_PER_MAX_MINES = 10				-- 150
 	NDefines.NAI.MINES_PLANTING_PLANES_PER_MAX_DESIRE = 5				-- 100
-
 
 	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25				-- 20
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 30				-- 25
@@ -957,12 +968,12 @@
 	NDefines.NAI.STR_BOMB_AIR_SUPERIORITY_IMPORTANCE = 0.7 -- 0.10; AI actually escorts its strategic bomber fleets
 	NDefines.NAI.LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 2 -- 5; even small nations value air defense
 	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
-	NDefines.NAir.ACE_WING_SIZE = 25 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
+	NDefines.NAir.ACE_WING_SIZE = 24 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
 	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 20 -- 10; AI can restart more focuses after interruption
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'fossil_powerplant', 'industrial_complex', 'internet_station', 'microchip_plant', 'renewable_energy_infra', 'nuclear_reactor', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory'
+		'fossil_powerplant', 'industrial_complex', 'internet_station', 'microchip_plant', 'renewable_energy_infra', 'nuclear_reactor', 'enrichment_facility', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of civ factories
@@ -974,11 +985,24 @@
 	NDefines.NAI.DAYS_BETWEEN_CHECK_BEST_EQUIPMENT = 14 -- 7; 2x less frequent equipment re-evaluation
 	NDefines.NAI.DAYS_BETWEEN_AIR_PRIORITIES_UPDATE = 14 -- 4; less frequent than vanilla to reduce CPU load
 
-	-- AI Combat Responsiveness — more frequent than vanilla for smarter wartime AI (trades CPU for quality)
-	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 24 -- 72; 3x faster encirclement detection
-	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 24 -- 48; 2x faster unit role reassignment
-	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 24 -- 52; 2x faster supply motorization response
-	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 48 -- 168; 3.5x faster supply bottleneck response
+	-- AI Combat Responsiveness — slower than vanilla; these hot-path checks cost real CPU per tick for little AI gain on a 200+ nation mod
+	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 96 -- 72; per-army province scan, eased ~1.5x
+	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 72 -- 48
+	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 72 -- 52
+	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 240 -- 168
+
+	-- AI Periodic Recalc — slowed past vanilla; periodic re-evaluation that barely changes between ticks
+	NDefines.NAI.EQUIPMENT_MARKET_UPDATE_FREQUENCY_DAYS = 16 -- 11
+	NDefines.NAI.AIFC_UPDATE_FREQUENCY_DAYS = 8 -- 5; force-concentration logic, perf-sensitive
+	NDefines.NAI.CONVOY_RAIDING_TARGET_RECALC_DAYS = 22 -- 15
+	NDefines.NAI.STRIKE_FORCE_TARGET_RECALC_DAYS = 8 -- 5
+	NDefines.NAI.AI_NAVAL_GOALS_UPDATE_FREQUENCY_DAYS = 10 -- 7
+	NDefines.NAI.AI_OBJECTIVE_DEFAULT_TARGET_RECALC_DAYS = 8 -- 5
+	NDefines.NFactions.AI_DAYS_TO_SELECT_GOAL = 21 -- 14
+
+	-- Raid Interface — throttle per-hour/per-frame raid target evaluation to cut map-icon refresh cost
+	NDefines.NRaids.MAX_STATE_TARGETS_TO_EVALUATE_PER_HOUR = 15 -- 50
+	NDefines.NRaids.MAX_TARGETS_TO_UPDATE_PER_FRAME = 25 -- 100
 
 	-- AI Research Stuff
 	NDefines.NAI.RESEARCH_WEIGHT_TRUNCATION_THRESHOLD = 0.5 -- Reduced this from 0.75
@@ -999,7 +1023,7 @@
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = true				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = true				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
-	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.3 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
+	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.4 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
 	NDefines.NAI.LAND_COMBAT_MISSILE_IMPORTANCE_FACTOR = 1.75 -- Importance of missiles for regions of strat importance. Higher = more -- 1.5
 	NDefines.NAI.LAND_DEFENSE_AA_IMPORTANCE_FACTOR = 1.0 -- Factor of AA on stat importance
 	NDefines.NAI.ROCKET_ASSIGN_SCORE_REDUCTION_PER_ASSIGNMENT = 2.0 -- 0.5 vanilla; each assigned missile wing reduces region score to prevent overstacking (vanilla 0.5 allowed ~20 wings per region)
@@ -1086,6 +1110,8 @@
 	NDefines.NSupply.SUPPLY_BASE_MULT = 0.4 -- 0.2
 	NDefines.NSupply.RAILWAY_CONVERSION_COOLDOWN = 6 -- 10
 	NDefines.NSupply.RAILWAY_CONVERSION_COOLDOWN_CORE = 3 -- 5
+	NDefines.NSupply.SUPPLY_FLOW_DROP_REDUCTION_AT_MAX_INFRA = 0.40 -- max infrastructure level will reduce the supply flow drop off by this ratio
+	NDefines.NSupply.SUPPLY_FLOW_PENALTY_CROSSING_RIVERS = 0.15 -- crossing rivers introduces additional penalty
 
 	-- NGeography Defines
 	NDefines.NGeography.MEDITERRANEAN_SEA_REGIONS = { 29, 68, 69, 168, 169, 214 }
@@ -1125,10 +1151,9 @@
 		200, -- NAVAL INVASION SUPPORT
 	}
 
-	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
-	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.1					-- 0.1
-	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.1		-- 0
-	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 800					-- 700
+	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.05					-- 0.1
+	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.05		-- 0
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 1000					-- 700
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 75 			-- 100
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_POW = 1.8			-- 1.8
 	NDefines.NIndustrialOrganisation.UNLOCKED_TRAITS_PER_SIZE_UP = 1			-- 1

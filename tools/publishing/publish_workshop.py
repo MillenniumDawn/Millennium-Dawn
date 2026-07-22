@@ -78,6 +78,11 @@ ANYWHERE_EXCLUDES = {
     ".continue",
     ".DS_Store",
     "CLAUDE.md",
+    "AGENTS.md",
+    "docs-audit.md",
+    "opencode.json",
+    "pyproject.toml",
+    ".mcp.json",
     "node_modules",
     "vscode-userdata:",
     "pythontools.log",
@@ -87,6 +92,17 @@ ANYWHERE_EXCLUDES = {
     "*.pyd",
     "*.psd",
     "repomix-*.xml",
+    # Tool/CI caches. Gitignored but copytree ships the working tree, not the
+    # git index, so these leak into the upload. .validation_cache alone is
+    # ~267k files and blows the Workshop commit-manifest step past its timeout.
+    ".validation_cache",
+    ".md-mcp-cache",
+    ".opencode",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    ".astro",
+    "testing-docs",
 }
 
 DEFAULT_EXCLUDES = ROOT_ONLY_EXCLUDES | ANYWHERE_EXCLUDES
@@ -151,7 +167,10 @@ def find_steamcmd() -> Path:
     sys.exit("ERROR: steamcmd not found. Install it or add it to PATH.")
 
 
-def git_diff_name_only(base_ref: str, diff_filter: str) -> set[str]:
+def git_diff_name_only(
+    base_ref: str, diff_filter: str, find_renames: bool = True
+) -> set[str]:
+    rename_flag = "--find-renames" if find_renames else "--no-renames"
     try:
         result = subprocess.run(
             [
@@ -159,7 +178,7 @@ def git_diff_name_only(base_ref: str, diff_filter: str) -> set[str]:
                 "diff",
                 "--name-only",
                 f"--diff-filter={diff_filter}",
-                "--find-renames",
+                rename_flag,
                 f"{base_ref}...HEAD",
             ],
             cwd=REPO_ROOT,
@@ -183,7 +202,9 @@ def get_changed_files(base_ref: str) -> set[str]:
 
 
 def get_deleted_files(base_ref: str) -> set[str]:
-    return git_diff_name_only(base_ref, "D")
+    # --no-renames so a rename decomposes into add + delete; otherwise the old
+    # path is reported as R (never D) and its stale file lingers in the Workshop.
+    return git_diff_name_only(base_ref, "D", find_renames=False)
 
 
 def get_publishable_changed_files(mod_dir: Path, changed: set[str]) -> set[str]:
@@ -298,10 +319,10 @@ def prune_unchanged(mod_dir: Path, changed: set[str], verbose: bool = False) -> 
     total = sum(s for _, s in kept)
     if verbose:
         print(f"\n  {'File':<70}  {'Size':>10}")
-        print(f"  {'-'*70}  {'-'*10}")
+        print(f"  {'-' * 70}  {'-' * 10}")
         for rel, size in kept:
             print(f"  {rel:<70}  {format_size(size):>10}")
-        print(f"  {'-'*70}  {'-'*10}")
+        print(f"  {'-' * 70}  {'-' * 10}")
         print(f"  {'TOTAL':<70}  {format_size(total):>10}")
     print(
         f"\n  Removed {removed}, kept {len(kept)} files "

@@ -1,3 +1,23 @@
+# Must run in the rebel country's scope; the protester flag lives on ROOT, which is whoever ran the civil-war event.
+LBA_nato_support_libyan_rebels = {
+	if = {
+		limit = {
+			ROOT = { has_country_flag = LBA_military_used_on_protesters }
+			OR = {
+				has_government = democratic
+				has_government = neutrality
+			}
+		}
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = { has_country_flag = european_nation_flag }
+				add_ai_strategy = { type = support id = PREV value = 200 }
+			}
+		}
+	}
+}
+
 libya_update_nationalisation = {
 	set_temp_variable = { lba_oil_nationalisation_neg = lba_oil_nationalisation }
 	multiply_temp_variable = { lba_oil_nationalisation_neg = -1 }
@@ -324,7 +344,11 @@ update_gaddafi_family_ideas = {
 libya_gaddafi_family_modify_instability = {
 	custom_effect_tooltip = libya_gaddafi_family_modify_instability_tt
 	add_to_variable = { gaddafi_family_instability = family_instability_change }
-	clamp_variable = { var = gaddafi_family_instability min = 0 }
+	update_gaddafi_family_stability_effect = yes
+}
+
+update_gaddafi_family_stability_effect = {
+	clamp_variable = { var = gaddafi_family_instability min = 0 max = 200 }
 	set_variable = { gaddafi_family_stability_effect = gaddafi_family_instability }
 	multiply_variable = { gaddafi_family_stability_effect = -0.005 }
 }
@@ -1844,8 +1868,8 @@ LBA_civil_war_cleanup_effect = {
 	add_state_core = 1101
 	set_capital = { state = 391 }
 	if = {
-		limit = { has_idea = Non_State_Actor }
-		remove_ideas = Non_State_Actor
+		limit = { has_idea = non_state_actor }
+		remove_ideas = non_state_actor
 	}
 	news_event = { id = LibyaNews.1 hours = 18 random_hours = 24 }
 }

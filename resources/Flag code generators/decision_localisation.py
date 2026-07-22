@@ -4,7 +4,7 @@
 #            "LBA","LEB","LIB","MAD","MAL","MAU","MAY","MEX","MLW","MOR","MOZ","NAM","NEP","NGR","NIG","NKO","PAK","PER","PHI","PRU","RAJ","SAF","SAU",
 #            "SIA","SOV","SYR","USA","MON","SIE","VIE",
 #            "ALB","ARM","AUS","AZE","BEL","BLR","BOS","BUL","CRO","CZE","DEN","ENG","EST","FIN","FRA","FYR","GEO","GER","GRE",
-#            "HOL","HUN","IRE","ITA","LAT","LIT","MLV","NOR","POL","POR","ROM","SER","SWE","SWI","UKR","TUR"}
+#            "HOL","HUN","IRE","ITA","LAT","LIT","MLV","NRY","POL","POR","ROM","SER","SWE","SWI","UKR","TUR"}
 
 #FLAG_TYPES = {"reset","Autocracy","Special","More_Special","Rebel","Special_Rebel"}
 

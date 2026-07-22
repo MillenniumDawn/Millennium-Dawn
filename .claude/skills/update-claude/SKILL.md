@@ -1,6 +1,20 @@
+---
+name: update-claude
+description: "Summarize the current session and propose improvements to CLAUDE.md, rules, docs, and skills, applying them after user confirmation. Use only when explicitly invoked."
+disable-model-invocation: true
+---
+
 Summarize the current conversation and propose improvements to CLAUDE.md, rules, and skills.
 
 **Syntax:** `/update-claude`
+
+## Placement rules
+
+- One home per rule: grep `.claude/` for an existing statement before adding anywhere; extend the existing home, and put at most a one-line pointer elsewhere.
+- Always-loaded files (`CLAUDE.md`, `AGENTS.md`, `.claude/rules/*.md` without `paths:` frontmatter) hold only high-frequency, broadly-applicable rules in <=2 lines; worked examples and niche topics go to `.claude/docs/`.
+- Every new `.claude/docs` file must be added to `.claude/docs/documentation-references.md`.
+- New skills need frontmatter (`name` + a trigger-quality `description`); never add tables duplicating harness-injected lists.
+- Topic guidance that should auto-load for certain files → `.claude/rules/*.md` with `paths:` glob frontmatter.
 
 ## Execution
 
@@ -10,17 +24,17 @@ Review the full conversation and extract:
 
 - **What was built or changed** — new files, refactored systems, validator additions, etc.
 - **Patterns discovered** — recurring issues, anti-patterns, common mistakes found during the work.
-- **Rules applied or created** — any coding conventions, scripting patterns, or process rules that emerged.
+- **Rules applied or created** — coding conventions, scripting patterns, or process rules that emerged.
 - **Decisions made** — architectural choices, tradeoffs, why something was done a certain way.
 
 ### 2. Identify generalizable improvements
 
-For each pattern or rule discovered, assess whether it applies broadly or only to the specific task:
+For each pattern or rule, assess whether it applies broadly or only to the specific task:
 
-- **Broad rules** go in `.claude/rules/general-rules.md` or `.claude/rules/localisation-rules.md`
-- **Documentation references** go in `.claude/docs/`
-- **Skill improvements** go in `.claude/skills/*/SKILL.md`
-- **Project context** (non-obvious, persists across sessions) goes in memory
+- **Broad rules** → `.claude/rules/general-rules.md` or `.claude/docs/localisation-rules.md`
+- **Documentation references** → `.claude/docs/`
+- **Skill improvements** → `.claude/skills/*/SKILL.md`
+- **Project context** (non-obvious, persists across sessions) → memory
 
 Filter ruthlessly — only propose additions that:
 
@@ -34,14 +48,14 @@ Read the current state of:
 
 - `CLAUDE.md` — is the skill table up to date?
 - `.claude/rules/general-rules.md` — any rules that conflict with what we learned?
-- `.claude/rules/localisation-rules.md` — any gaps?
-- `AGENTS.md` — any conventions that need updating?
+- `.claude/docs/localisation-rules.md` — any gaps?
+- `AGENTS.md` — any conventions needing updates?
 
-Flag anything that is outdated or contradicts current practice.
+Flag anything outdated or contradicting current practice.
 
 ### 4. Propose changes
 
-Present a structured list of proposed changes:
+Present a structured list:
 
 ```
 ## Rules to add/update
@@ -59,7 +73,7 @@ Present a structured list of proposed changes:
 
 ### 5. Apply changes (with confirmation)
 
-After presenting the proposals, ask the user which ones to apply. Then:
+After presenting the proposals, ask the user which to apply. Then:
 
 - Edit the relevant files directly
 - Update `CLAUDE.md` skill table if new skills were added
@@ -67,7 +81,7 @@ After presenting the proposals, ask the user which ones to apply. Then:
 
 ## Important Notes
 
-- Do NOT add implementation details, file paths, or architecture that can be derived from reading the code.
+- Do NOT add implementation details, file paths, or architecture derivable from reading the code.
 - Do NOT duplicate what's already in AGENTS.md or existing rules files.
 - Focus on **why** not **what** — rules should explain the reasoning so edge cases can be judged.
 - Keep rules concise — one pattern per entry, with a wrong/right example where helpful.

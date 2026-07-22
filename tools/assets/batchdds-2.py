@@ -406,6 +406,27 @@ def convert_dds(input_path, output_path=None, fmt="dxt5"):
     width = struct.unpack_from("<I", data, 16)[0]
     pf_flags = struct.unpack_from("<I", data, 80)[0]
     pf_fourcc = struct.unpack_from("<I", data, 84)[0]
+    mip_count = struct.unpack_from("<I", data, 28)[0]
+
+    # Idempotency fast path: for a fixed target format, a file already in that
+    # legacy FourCC with no mipmap chain is exactly what this tool would emit, so
+    # re-encoding only degrades quality. Detect it before decompressing (the
+    # repeat-run case). "auto" needs the decoded pixels to know whether
+    # transparency forces DXT5, so it is handled after decompression below.
+    if fmt in ("dxt5", "dxt1") and mip_count in (0, 1):
+        if (fmt == "dxt5" and pf_fourcc == DXT5_FOURCC) or (
+            fmt == "dxt1" and pf_fourcc == DXT1_FOURCC
+        ):
+            out_fmt = "DXT5" if fmt == "dxt5" else "DXT1"
+            print(f"  = Skipping {input_path}: already {out_fmt}, no mipmaps")
+            if output_path != input_path:
+                os.makedirs(
+                    os.path.dirname(os.path.abspath(output_path)) or ".",
+                    exist_ok=True,
+                )
+                with open(output_path, "wb") as f:
+                    f.write(data)
+            return True
 
     pixels = None
     fmt_name = "unknown"
@@ -488,6 +509,23 @@ def convert_dds(input_path, output_path=None, fmt="dxt5"):
         out_fmt = "DXT1"
         header = make_dxt1_header(width, height)
         compress = compress_to_dxt1
+
+    # Idempotency for "auto": now that transparency has resolved use_dxt5, skip a
+    # file already in the target FourCC with no mipmaps (fixed formats took the
+    # fast path above). Copy bytes when writing to a separate output.
+    already_target = mip_count in (0, 1) and (
+        (use_dxt5 and pf_fourcc == DXT5_FOURCC)
+        or (not use_dxt5 and pf_fourcc == DXT1_FOURCC)
+    )
+    if already_target:
+        print(f"  = Skipping {input_path}: already {out_fmt}, no mipmaps")
+        if output_path != input_path:
+            os.makedirs(
+                os.path.dirname(os.path.abspath(output_path)) or ".", exist_ok=True
+            )
+            with open(output_path, "wb") as f:
+                f.write(data)
+        return True
 
     print(f"Converting: {input_path}  ({width}x{height}, {fmt_name} → {out_fmt})")
     compressed = compress(pixels, width, height)

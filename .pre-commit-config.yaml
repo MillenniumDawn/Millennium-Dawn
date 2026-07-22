@@ -56,8 +56,9 @@ repos:
         args: ['--maxkb=100000']  # Prevent files larger than 100MB
       - id: check-case-conflict
       - id: check-executables-have-shebangs
-        exclude: '\.txt$|\.mod$'
+        files: '^tools/'
       - id: check-shebang-scripts-are-executable
+        files: '^tools/'
       - id: fix-byte-order-marker
         exclude: 'localisation/.*\.yml$|^(gfx|map|interface|music|sound)/'
       - id: check-ast
@@ -66,18 +67,18 @@ repos:
         files: '\.py$'
       - id: name-tests-test
         files: 'tools/.*test.*\.py$'
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
+  # ruff owns lint (E/F), import order (I), and formatting. Config (select,
+  # ignores, per-file-ignores, isort) lives in pyproject.toml.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.17
     hooks:
-      - id: black
+      - id: ruff
+        name: Lint Python (ruff)
         files: '^tools/.*\.py$'
-        args: [--line-length=88]
-  - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
-    hooks:
-      - id: isort
+        args: [--fix]
+      - id: ruff-format
+        name: Format Python (ruff)
         files: '^tools/.*\.py$'
-        args: [--profile=black]
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
   - repo: https://github.com/rbubley/mirrors-prettier
@@ -118,13 +119,21 @@ repos:
         language: system
         files: '\.mod$'
         pass_filenames: true
-      - id: check-braces
-        name: Check for missing braces
-        entry: python3 tools/linting/check_braces.py
+      - id: docs-link-syntax
+        name: Check docs Markdown link syntax (no unclosed links)
+        entry: python3 tools/docs_checks/check_link_syntax.py
         language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        files: '^docs/src/content/.*\.(md|mdx)$'
         pass_filenames: true
+      # Runs the full tools test suite before push (not on every commit).
+      # Enable with: pre-commit install --hook-type pre-push
+      - id: tools-pytest
+        name: Run tools test suite (pytest)
+        entry: python3 -m pytest
+        language: system
+        files: '^tools/.*\.py$'
+        pass_filenames: false
+        stages: [pre-push]
       # --- MD-specific hooks (manual by default) ---
       - id: md-fix-styling
         name: MD Fix Styling (auto-fix spaces/tabs/braces)
@@ -141,29 +150,19 @@ repos:
         files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
         pass_filenames: true
         stages: [manual]
-      - id: check-basic-style
-        name: MD Basic Style Check
-        entry: python3 tools/linting/check_basic_style.py --mode staged
+      - id: md-validate-content
+        name: MD Validate (commit-stage content validators, in parallel)
+        # One process fans the run-on-commit validators out concurrently instead
+        # of running ~8 separate hooks serially: ~3x faster on a content commit,
+        # and the staged-file list is discovered once and shared via
+        # MD_STAGED_FILES so none of them shells out to git. The expensive
+        # cross-reference validators stay stages:[manual] below. Routing and the
+        # per-validator --strict flags live in tools/precommit_validate.py;
+        # tools/tests/precommit_validate_test.py pins coverage against drift.
+        entry: python3 tools/precommit_validate.py --no-color
         language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
-        stages: [manual]
-      - id: check-basic-style-2
-        name: MD Basic Style Check (secondary)
-        entry: python3 tools/linting/check_basic_style_2.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
-        stages: [manual]
-      - id: coding-standards
-        name: MD Coding Standards (focus IDs, flags, events)
-        entry: python3 tools/linting/coding_standards.py --mode staged
-        language: system
-        files: '(common/national_focus|events)/.*\.txt$'
-        pass_filenames: false
-        stages: [manual]
+        files: '\.(txt|yml)$'
+        pass_filenames: true
       - id: check-common-mistakes
         name: MD Common Mistakes (threat scale, value ranges, always=no, etc.)
         entry: python3 tools/linting/check_common_mistakes.py --mode staged
@@ -171,48 +170,11 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-      - id: md-validate-oob-units
-        name: MD Validate OOB unit names
-        entry: python3 tools/validation/validate_oob_units.py --staged --strict --no-color
-        language: system
-        files: '(history/units|common/units|common/ai_templates|common/scripted_effects)/.*\.txt$'
-        pass_filenames: false
-      - id: md-validate-ai-roles
-        name: MD Validate AI role references
-        entry: python3 tools/validation/validate_ai_roles.py --staged --strict --no-color
-        language: system
-        files: '(common/ai_strategy|common/ai_templates)/.*\.txt$'
-        pass_filenames: false
       - id: md-validate-defines
         name: MD Validate defines against vanilla
         entry: python3 tools/validation/validate_defines.py --staged --strict --no-color
         language: system
         files: 'common/defines/.*\.lua$'
-        pass_filenames: false
-      - id: md-validate-ai-navy
-        name: MD Validate AI navy (ship types, missions, fleet refs)
-        entry: python3 tools/validation/validate_ai_navy.py --staged --strict --no-color
-        language: system
-        files: '(common/ai_navy|common/units)/.*\.txt$'
-        pass_filenames: false
-      - id: md-validate-ai-equipment
-        name: MD Validate AI equipment coverage (naval/land/air)
-        # No --strict: pre-existing coverage gaps would block all commits
-        entry: python3 tools/validation/validate_ai_equipment.py --staged --no-color
-        language: system
-        files: 'common/ai_equipment/.*\.txt$'
-        pass_filenames: false
-      - id: md-validate-agency-upgrades
-        name: MD Validate intelligence agency upgrade integration
-        entry: python3 tools/validation/validate_agency_upgrades.py --staged --strict --no-color
-        language: system
-        files: '(common/intelligence_agency_upgrades/.*\.txt|common/on_actions/MD_auto_agency_on_actions\.txt|common/scripted_guis/00_MD_auto_agency_scripted_gui\.txt|common/scripted_localisation/00_MD_auto_agency_scripted_localisation\.txt|localisation/english/MD_auto_agency_l_english\.yml)$'
-        pass_filenames: false
-      - id: md-validate-ideas
-        name: MD Validate idea references (undefined ideas, redundant allowed blocks)
-        entry: python3 tools/validation/validate_ideas.py --staged --strict --no-color --workers 4
-        language: system
-        files: '(common/ideas|common/national_focus|common/decisions|events)/.*\.txt$|localisation/english/.*\.yml$'
         pass_filenames: false
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
@@ -224,16 +186,5 @@ repos:
         entry: python3 tools/validation/validate_unused_textures.py --no-color
         language: system
         files: '\.(gfx|asset|dds|tga|png)$'
-        pass_filenames: false
-        stages: [manual]
-      # NOTE: validate_set_variables.py exists but is intentionally not wired
-      # anywhere. False-positive volume at repo scale makes it too noisy as a
-      # gate. Run manually when investigating a specific variable:
-      #   python3 tools/validation/validate_set_variables.py --staged
-      - id: validate-staged
-        name: MD Validate staged files
-        entry: python3 tools/validate_staged.py
-        language: system
-        files: '(events/.*\.txt|common/.*\.txt|history/.*\.txt|localisation/.*\.yml)$'
         pass_filenames: false
         stages: [manual]

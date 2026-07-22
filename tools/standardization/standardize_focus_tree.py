@@ -10,31 +10,17 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
 
-from common_utils import compact_icon, compact_search_filters
-
-
-def log_message(level: str, message: str, verbose: bool = False):
-    """Log a message with timestamp"""
-    if level == "DEBUG" and not verbose:
-        return
-
-    timestamp = datetime.now().strftime("%H:%M:%S")
-
-    colors = {
-        "SUCCESS": "\033[92m",  # Green
-        "INFO": "\033[94m",  # Blue
-        "DEBUG": "\033[90m",  # Gray
-        "WARNING": "\033[93m",  # Yellow
-        "ERROR": "\033[91m",  # Red
-    }
-    reset_color = "\033[0m"
-
-    color = colors.get(level, "")
-
-    formatted_message = f"{color}[{timestamp}] {level}: {message}{reset_color}"
-    print(formatted_message, file=sys.stderr)
+from _common import format_elapsed
+from common_utils import PROP_NAME_RE, compact_icon, compact_search_filters
+from shared_utils import (
+    collapse_or_compact,
+    convert_root_factor_to_base,
+    create_backup,
+    extract_block,
+    log_message,
+    strip_inline_comment,
+)
 
 
 def is_empty_block(block_lines):
@@ -57,6 +43,11 @@ _SINGLE_LINE_PROPS = {
     "y": "y",
     "relative_position_id": "relative_position_id",
     "cost": "cost",
+}
+
+# Single-line list props: a focus-level attribute that may repeat (one line per
+# value). Each occurrence is appended to the list in original order.
+_SINGLE_LINE_LIST_PROPS = {
     "will_lead_to_war_with": "will_lead_to_war_with",
 }
 
@@ -90,7 +81,6 @@ _DEFAULT_REMOVALS = {
     "available_if_capitulated = no",
 }
 
-_PROP_NAME_RE = re.compile(r"^(\w+)\s*=")
 _COMMENTED_EMPTY_BLOCK_RE = re.compile(
     r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$"
 )
@@ -98,8 +88,39 @@ _COMMENTED_EMPTY_BLOCK_RE = re.compile(
 # Matches an existing log line so we can correct a wrong focus ID or missing prefix.
 # Handles [Root.GetName] / [This.GetName] (any capitalisation) and an optional "Focus " prefix.
 _LOG_FOCUS_RE = re.compile(
-    r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:Focus\s+)?(\w+)(")'
+    r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:[Ff]ocus\s+)?([\w-]+)(")'
 )
+
+
+def _split_block(block_lines):
+    """Split an extracted block into (header, inner_lines, close_line).
+    Returns None when the shape isn't a recognizable block."""
+    first = block_lines[0]
+    if len(block_lines) == 1:
+        code = strip_inline_comment(first)
+        if "{" not in code or code.count("{") != code.count("}"):
+            return None
+        open_idx = first.index("{")
+        close_idx = first.rindex("}")
+        indent = first[: len(first) - len(first.lstrip())]
+        inner = first[open_idx + 1 : close_idx].strip()
+        inner_lines = [f"{indent}\t{inner}"] if inner else []
+        return first[: open_idx + 1], inner_lines, f"{indent}}}"
+    if block_lines[-1].strip() != "}":
+        return None
+    return first, block_lines[1:-1], block_lines[-1]
+
+
+def _merge_duplicate_blocks(first, second):
+    """The engine ANDs duplicate trigger blocks and runs duplicate effect
+    blocks in order, so concatenating inner lines under one header preserves
+    semantics. Falls back to emitting both blocks when a shape is opaque."""
+    a = _split_block(first)
+    b = _split_block(second)
+    if a is None or b is None:
+        return first + second
+    header, inner_a, close = a
+    return [header] + inner_a + b[1] + [close]
 
 
 def extract_focus_properties(focus_lines):
@@ -140,7 +161,7 @@ def extract_focus_properties(focus_lines):
             i += 1
             continue
 
-        match = _PROP_NAME_RE.match(line)
+        match = PROP_NAME_RE.match(line)
         prop_name = match.group(1) if match else None
 
         if prop_name == "icon":
@@ -164,6 +185,11 @@ def extract_focus_properties(focus_lines):
             i += 1
             continue
 
+        if prop_name in _SINGLE_LINE_LIST_PROPS:
+            props[_SINGLE_LINE_LIST_PROPS[prop_name]].append(line)
+            i += 1
+            continue
+
         if prop_name in _BLOCK_PROPS:
             key, style = _BLOCK_PROPS[prop_name]
             block_lines, next_i = extract_block(focus_lines, i)
@@ -171,6 +197,8 @@ def extract_focus_properties(focus_lines):
             if not skip_empty or not is_empty_block(block_lines):
                 if style.endswith("list"):
                     props[key].append(block_lines)
+                elif props[key]:
+                    props[key] = _merge_duplicate_blocks(props[key], block_lines)
                 else:
                     props[key] = block_lines
             i = next_i
@@ -182,37 +210,6 @@ def extract_focus_properties(focus_lines):
     return props
 
 
-def extract_block(lines, start_index):
-    """Extract a multi-line block by counting braces"""
-    if start_index >= len(lines):
-        return [], start_index
-
-    block_lines = []
-    brace_count = 0
-    i = start_index
-
-    while i < len(lines):
-        line = lines[i]
-        block_lines.append(line)
-
-        line_no_comment = line.split("#")[
-            0
-        ]  # Strip inline comments before counting braces
-        brace_count += line_no_comment.count("{") - line_no_comment.count("}")
-
-        if brace_count == 0 and "{" in lines[start_index]:
-            # We've closed all braces, block is complete
-            i += 1
-            break
-        elif brace_count < 0:
-            # More closing than opening braces - malformed
-            break
-
-        i += 1
-
-    return block_lines, i  # Return the position AFTER the block (not i-1)
-
-
 def clean_block_lines(block_lines):
     """Remove trailing blank lines from a block and return cleaned lines"""
     if not block_lines:
@@ -222,20 +219,6 @@ def clean_block_lines(block_lines):
         block_lines.pop()
 
     return block_lines
-
-
-def compact_block(block_lines):
-    """Completely compact a block by removing all internal blank lines"""
-    if not block_lines:
-        return block_lines
-
-    compacted = []
-    for line in block_lines:
-        stripped = line.strip()
-        if stripped:
-            compacted.append(line.rstrip())
-
-    return compacted
 
 
 def _fix_log_id(line: str, focus_id: str) -> str:
@@ -283,7 +266,7 @@ def emit_effect_block_with_log(lines, effect_block, focus_id):
             _fix_log_id(line, focus_id) if "log =" in line else line
             for line in effect_block
         ]
-    for line in compact_block(effect_block[:]):
+    for line in collapse_or_compact(effect_block[:]):
         lines.append(line)
     lines.append("")
 
@@ -293,7 +276,6 @@ def format_focus_offset_block(block_lines):
     lines = []
     lines.append("\t\toffset = {")
 
-    # Extract properties
     x_val = ""
     y_val = ""
     trigger_lines = []
@@ -317,31 +299,14 @@ def format_focus_offset_block(block_lines):
 
         i += 1
 
-    # Format output with 3-tab indentation for properties
     if x_val:
         lines.append(f"\t\t\t{x_val}")
     if y_val:
         lines.append(f"\t\t\t{y_val}")
 
     if trigger_lines:
-        # Reformat trigger block with brace-aware indentation
-        lines.append("\t\t\ttrigger = {")
-        depth = 0  # Nesting depth relative to trigger block
-        for trigger_line in trigger_lines[1:-1]:  # Skip opening/closing braces
-            stripped = trigger_line.strip()
-            if not stripped:
-                continue
-            # Adjust depth for closing braces before writing the line
-            close_count = stripped.count("}")
-            open_count = stripped.count("{")
-            if stripped == "}":
-                depth -= 1
-            indent = "\t\t\t\t" + "\t" * max(0, depth)
-            lines.append(f"{indent}{stripped}")
-            # Adjust depth for opening braces after writing the line
-            if stripped != "}":
-                depth += open_count - close_count
-        lines.append("\t\t\t}")
+        for line in collapse_or_compact(trigger_lines[:], indent="\t\t\t"):
+            lines.append(line)
 
     for line in other_lines:
         if line.strip():
@@ -356,9 +321,9 @@ def format_focus_block(props, block_type="focus"):
     lines = []
     lines.append(f"\t{block_type} = {{")
 
-    # 1. ID and icon (no blank line between them)
+    # 1. ID, icon, text_icon, overlay (no blank line between them)
     if props["id"]:
-        lines.append(f'\t\t{props["id"]}')
+        lines.append(f"\t\t{props['id']}")
     if props["icon"]:
         # `icon` is always list[list[str]] — emit each entry in order.
         for icon_block in props["icon"]:
@@ -369,17 +334,21 @@ def format_focus_block(props, block_type="focus"):
                         lines.append(icon_line)
             else:
                 lines.append(f"\t\t{icon_lines}")
+    if props["text_icon"]:
+        lines.append(f"\t\t{props['text_icon']}")
+    if props["overlay"]:
+        lines.append(f"\t\t{props['overlay']}")
 
     # 2. Blank line before position group
     lines.append("")
 
     # 3. Position group (x, y, relative_position_id - no blank lines between them)
     if props["x"]:
-        lines.append(f'\t\t{props["x"]}')
+        lines.append(f"\t\t{props['x']}")
     if props["y"]:
-        lines.append(f'\t\t{props["y"]}')
+        lines.append(f"\t\t{props['y']}")
     if props["relative_position_id"]:
-        lines.append(f'\t\t{props["relative_position_id"]}')
+        lines.append(f"\t\t{props['relative_position_id']}")
     for offset_block in props["offset"]:
         formatted_offset = format_focus_offset_block(offset_block[:])
         for line in formatted_offset:
@@ -390,18 +359,14 @@ def format_focus_block(props, block_type="focus"):
 
     # 5. Cost
     if props["cost"]:
-        lines.append(f'\t\t{props["cost"]}')
-    if props["text_icon"]:
-        lines.append(f'\t\t{props["text_icon"]}')
-    if props["overlay"]:
-        lines.append(f'\t\t{props["overlay"]}')
+        lines.append(f"\t\t{props['cost']}")
 
     # 6. Blank line before prerequisites/conditions
     lines.append("")
 
     # 7. Allow branch (before prerequisites)
     if props["allow_branch"]:
-        compacted_allow_branch = compact_block(props["allow_branch"][:])
+        compacted_allow_branch = collapse_or_compact(props["allow_branch"][:])
         for line in compacted_allow_branch:
             lines.append(line)
         lines.append("")
@@ -410,21 +375,21 @@ def format_focus_block(props, block_type="focus"):
     condition_group_added = False
 
     for prereq in props["prerequisites"]:
-        compacted_prereq = compact_block(prereq[:])
+        compacted_prereq = collapse_or_compact(prereq[:])
         for line in compacted_prereq:
             lines.append(line)
         condition_group_added = True
 
     # Add all mutually_exclusive (no spacing between these and prerequisites)
     for mutex in props["mutually_exclusive"]:
-        compacted_mutex = compact_block(mutex[:])
+        compacted_mutex = collapse_or_compact(mutex[:])
         for line in compacted_mutex:
             lines.append(line)
         condition_group_added = True
 
-    # Add will_lead_to_war_with as single-line property
-    if props["will_lead_to_war_with"]:
-        lines.append(f'\t\t{props["will_lead_to_war_with"]}')
+    # Add will_lead_to_war_with as single-line property (may repeat — one line per target)
+    for war_target in props["will_lead_to_war_with"]:
+        lines.append(f"\t\t{war_target}")
         condition_group_added = True
 
     # Only add blank line after the entire condition group (if any conditions were added)
@@ -439,28 +404,28 @@ def format_focus_block(props, block_type="focus"):
 
     # 10. Joint trigger (after search filters, before available)
     if props["joint_trigger"]:
-        compacted_joint_trigger = compact_block(props["joint_trigger"][:])
+        compacted_joint_trigger = collapse_or_compact(props["joint_trigger"][:])
         for line in compacted_joint_trigger:
             lines.append(line)
         lines.append("")
 
     # 11. Available block
     if props["available"]:
-        compacted_available = compact_block(props["available"][:])
+        compacted_available = collapse_or_compact(props["available"][:])
         for line in compacted_available:
             lines.append(line)
         lines.append("")
 
     # 11. Bypass block (positioned after available)
     if props["bypass"]:
-        compacted_bypass = compact_block(props["bypass"][:])
+        compacted_bypass = collapse_or_compact(props["bypass"][:])
         for line in compacted_bypass:
             lines.append(line)
         lines.append("")
 
     # 12. Cancel block (positioned after bypass)
     if props["cancel"]:
-        compacted_cancel = compact_block(props["cancel"][:])
+        compacted_cancel = collapse_or_compact(props["cancel"][:])
         for line in compacted_cancel:
             lines.append(line)
         lines.append("")
@@ -473,21 +438,22 @@ def format_focus_block(props, block_type="focus"):
         if props["other"]:
             lines.append("")
 
-    focus_id = props["id"].split("=")[1].strip() if props["id"] else ""
+    # id lines may carry a trailing comment — keep it out of the log string
+    focus_id = props["id"].split("=")[1].split("#")[0].strip() if props["id"] else ""
 
     # 14. Completion reward (add log if missing)
     emit_effect_block_with_log(lines, props["completion_reward"], focus_id)
 
     # 15. Completion reward joint originator
     if props["completion_reward_joint_originator"]:
-        compacted = compact_block(props["completion_reward_joint_originator"][:])
+        compacted = collapse_or_compact(props["completion_reward_joint_originator"][:])
         for line in compacted:
             lines.append(line)
         lines.append("")
 
     # 16. Completion reward joint member
     if props["completion_reward_joint_member"]:
-        compacted = compact_block(props["completion_reward_joint_member"][:])
+        compacted = collapse_or_compact(props["completion_reward_joint_member"][:])
         for line in compacted:
             lines.append(line)
         lines.append("")
@@ -498,30 +464,15 @@ def format_focus_block(props, block_type="focus"):
     # 18. Bypass effect (add log if missing)
     emit_effect_block_with_log(lines, props["bypass_effect"], focus_id)
 
-    # 17. AI will do (always last, always multi-line)
+    # 17. AI will do (always last)
     if props["ai_will_do"]:
-        ai_lines = props["ai_will_do"]
-        if len(ai_lines) == 1 and "ai_will_do = {" in ai_lines[0]:
-            line = ai_lines[0]
-            factor_match = re.search(r"factor\s*=\s*(\d+)", line)
-            if factor_match:
-                factor_value = factor_match.group(1)
-                lines.append("\t\tai_will_do = {")
-                lines.append(f"\t\t\tfactor = {factor_value}")
-                lines.append("\t\t}")
-            else:
-                # Fallback to original if no factor found
-                compacted_ai = compact_block(ai_lines[:])
-                for line in compacted_ai:
-                    lines.append(line)
-        else:
-            compacted_ai = compact_block(ai_lines[:])
-            for line in compacted_ai:
-                lines.append(line)
+        compacted_ai = collapse_or_compact(
+            convert_root_factor_to_base(props["ai_will_do"][:])
+        )
+        for line in compacted_ai:
+            lines.append(line)
     else:
-        lines.append("\t\tai_will_do = {")
-        lines.append("\t\t\tfactor = 1")
-        lines.append("\t\t}")
+        lines.append("\t\tai_will_do = { base = 1 }")
 
     lines.append("\t}")
 
@@ -541,12 +492,50 @@ def format_focus_block(props, block_type="focus"):
     return cleaned_lines
 
 
+def reindent_by_brace_depth(block_lines, base_tabs=0):
+    """Re-indent a formatted block so each line's tab depth is derived purely
+    from brace nesting (base_tabs at the outermost level). Blank lines are kept
+    empty. Braces inside double-quoted strings are ignored. Used to render a
+    top-level shared_focus/joint_focus block at column 0 regardless of the
+    source's original indentation, keeping the standardizer idempotent."""
+    out = []
+    depth = 0
+    for line in block_lines:
+        stripped = line.strip()
+        if not stripped:
+            out.append("")
+            continue
+
+        # Count braces on the code portion only: a `#` comment may carry an
+        # unbalanced brace (e.g. `# TODO fix { this }`) that must not shift depth.
+        code = strip_inline_comment(stripped)
+        opens = closes = 0
+        in_str = False
+        prev = ""
+        for c in code:
+            if c == '"' and prev != "\\":
+                in_str = not in_str
+            elif not in_str:
+                if c == "{":
+                    opens += 1
+                elif c == "}":
+                    closes += 1
+            prev = c
+
+        this_depth = depth - 1 if code.startswith("}") else depth
+        indent = "\t" * (base_tabs + max(0, this_depth))
+        out.append(f"{indent}{stripped}")
+
+        depth = max(0, depth + opens - closes)
+
+    return out
+
+
 def format_shortcut_block(block_lines):
     """Format shortcut block according to standard"""
     lines = []
     lines.append("\tshortcut = {")
 
-    # Extract properties
     name = ""
     target = ""
     scroll_wheel_factor = ""
@@ -573,7 +562,6 @@ def format_shortcut_block(block_lines):
 
         i += 1
 
-    # Format output
     if name:
         lines.append(f"\t\t{name}")
     if target:
@@ -582,7 +570,7 @@ def format_shortcut_block(block_lines):
         lines.append(f"\t\t{scroll_wheel_factor}")
 
     if trigger_lines:
-        compacted_trigger = compact_block(trigger_lines[:])
+        compacted_trigger = collapse_or_compact(trigger_lines[:])
         for line in compacted_trigger:
             lines.append(line)
 
@@ -599,7 +587,6 @@ def format_inlay_window_block(block_lines):
     lines = []
     lines.append("\tinlay_window = {")
 
-    # Extract properties
     window_id = ""
     position_lines = []
     override_position_lines = []
@@ -626,17 +613,16 @@ def format_inlay_window_block(block_lines):
 
         i += 1
 
-    # Format output
     if window_id:
         lines.append(f"\t\t{window_id}")
 
     if position_lines:
-        compacted_position = compact_block(position_lines[:])
+        compacted_position = collapse_or_compact(position_lines[:])
         for line in compacted_position:
             lines.append(line)
 
     if override_position_lines:
-        compacted_override = compact_block(override_position_lines[:])
+        compacted_override = collapse_or_compact(override_position_lines[:])
         for line in compacted_override:
             lines.append(line)
 
@@ -653,7 +639,6 @@ def format_offset_block(block_lines):
     lines = []
     lines.append("\toffset = {")
 
-    # Extract properties
     x_val = ""
     y_val = ""
     trigger_lines = []
@@ -677,14 +662,13 @@ def format_offset_block(block_lines):
 
         i += 1
 
-    # Format output
     if x_val:
         lines.append(f"\t\t{x_val}")
     if y_val:
         lines.append(f"\t\t{y_val}")
 
     if trigger_lines:
-        compacted_trigger = compact_block(trigger_lines[:])
+        compacted_trigger = collapse_or_compact(trigger_lines[:])
         for line in compacted_trigger:
             lines.append(line)
 
@@ -732,7 +716,6 @@ def format_initial_show_position_block(block_lines):
     lines = []
     lines.append("\tinitial_show_position = {")
 
-    # Extract properties
     x_val = ""
     y_val = ""
     focus_val = ""
@@ -772,18 +755,15 @@ def format_initial_show_position_block(block_lines):
 
         i += 1
 
-    # Format output - prefer single line if simple
+    # Prefer single-line output when the block has only simple coordinates.
     if focus_val and not x_val and not y_val and not offset_lines and not other_lines:
-        # Simple case: just focus reference
         return [f"\tinitial_show_position = {{ {focus_val} }}"]
 
     if x_val and y_val and not focus_val and not offset_lines and not other_lines:
-        # Simple case: just x/y coordinates
         x_num = x_val.split("=", 1)[1].strip()
         y_num = y_val.split("=", 1)[1].strip()
         return [f"\tinitial_show_position = {{ x = {x_num} y = {y_num} }}"]
 
-    # Multi-line format
     if x_val:
         lines.append(f"\t\t{x_val}")
     if y_val:
@@ -792,7 +772,7 @@ def format_initial_show_position_block(block_lines):
         lines.append(f"\t\t{focus_val}")
 
     if offset_lines:
-        compacted_offset = compact_block(offset_lines[:])
+        compacted_offset = collapse_or_compact(offset_lines[:])
         for line in compacted_offset:
             lines.append(line)
 
@@ -869,6 +849,10 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
             if block_type in _FOCUS_BLOCK_TYPES:
                 props = extract_focus_properties(block_lines)
                 formatted_lines = format_focus_block(props, block_type)
+                if block_type in {"shared_focus", "joint_focus"}:
+                    # shared_focus/joint_focus are top-level definitions (no
+                    # focus_tree wrapper), so render them at column 0.
+                    formatted_lines = reindent_by_brace_depth(formatted_lines)
                 counts[block_type] += 1
                 log_message(
                     "DEBUG",
@@ -889,7 +873,7 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
         i = next_i
 
     # Post-processing: ensure blank lines between consecutive focus/shared_focus/joint_focus blocks
-    focus_block_pattern = re.compile(r"^\t(focus|shared_focus|joint_focus)\s*=\s*{")
+    focus_block_pattern = re.compile(r"^\t?(focus|shared_focus|joint_focus)\s*=\s*{")
     final_lines = []
     for idx, line in enumerate(output_lines):
         if focus_block_pattern.match(line) and final_lines:
@@ -912,15 +896,7 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
             for line in output_lines:
                 f.write(line + "\n")
 
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-
-        if elapsed_time < 60:
-            time_str = f"{elapsed_time:.2f} seconds"
-        else:
-            minutes = int(elapsed_time // 60)
-            seconds = elapsed_time % 60
-            time_str = f"{minutes}m {seconds:.2f}s"
+        time_str = format_elapsed(time.time() - start_time)
 
         log_message("SUCCESS", f"Standardization completed in {time_str}")
         log_message("SUCCESS", f"Processed {counts['focus']} focus blocks")
@@ -938,22 +914,6 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
         return False
 
     return True
-
-
-def create_backup(filename: str) -> str:
-    """Create a backup of the input file"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_filename = f"{filename}.backup.{timestamp}"
-
-    try:
-        with open(filename, "r", encoding="utf-8") as src:
-            with open(backup_filename, "w", encoding="utf-8") as dst:
-                dst.write(src.read())
-        log_message("INFO", f"Backup created: {backup_filename}")
-        return backup_filename
-    except Exception as e:
-        log_message("ERROR", f"Failed to create backup: {str(e)}")
-        return ""
 
 
 def main():

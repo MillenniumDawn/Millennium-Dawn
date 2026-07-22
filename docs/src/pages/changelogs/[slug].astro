@@ -4,6 +4,7 @@ import type { GetStaticPaths } from "astro";
 import { MarkdownDocLayout } from "@/app/layouts";
 import { getArticleFooterProps } from "@/shared/lib/content/article-footer-props";
 import { getChangelogHeroProps } from "@/shared/lib/content/article-hero-props";
+import { buildArticleJsonLd, ogImageAbsoluteUrl } from "@/shared/lib/seo";
 import { getChangelogPath, getEntryBaseId } from "@/shared/lib/routing/content-routes";
 import { buildMarkdownDocStaticPaths, renderMarkdownDocEntry } from "@/shared/lib/content/markdown-doc-entry";
 import ArticleShell from "@/shared/ui/ArticleShell.astro";
@@ -20,9 +21,28 @@ export const getStaticPaths: GetStaticPaths = async () => {
 const { entry }: Props = Astro.props;
 const { Content, headings } = await renderMarkdownDocEntry(entry);
 const heroProps = getChangelogHeroProps(entry);
+const canonicalPath = getChangelogPath(entry);
+const publishedTime = entry.data.last_updated?.toISOString();
+const seoArticle = publishedTime ? { publishedTime, modifiedTime: publishedTime } : undefined;
+const articleJsonLd = buildArticleJsonLd({
+  headline: entry.data.title,
+  description: entry.data.description,
+  canonicalPath,
+  datePublished: publishedTime,
+  dateModified: publishedTime,
+  imageUrl: ogImageAbsoluteUrl(canonicalPath),
+});
 ---
 
-<MarkdownDocLayout entry={entry} canonicalPath={getChangelogPath(entry)} headings={headings} toc="auto">
+<MarkdownDocLayout
+  entry={entry}
+  canonicalPath={canonicalPath}
+  headings={headings}
+  toc="auto"
+  ogType="article"
+  seoArticle={seoArticle}
+  extraJsonLd={[articleJsonLd]}
+>
   <ArticleShell {...heroProps} {...getArticleFooterProps(entry)}>
     <MarkdownContent Content={Content} />
   </ArticleShell>

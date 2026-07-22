@@ -1,4 +1,11 @@
+---
+name: changelog
+description: "Summarize branch changes vs main and add them to Changelog.txt under the current version's existing categories. Use when asked to update the changelog or add changelog entries. Optional version argument (e.g. v1.13.0) starts a new version heading."
+---
+
 Summarize all changes on the current branch compared to main and add them to `Changelog.txt`.
+
+Optional argument: a version string (e.g. `v1.13.0`) to start a new version heading above the current top-most one. Without it, entries are appended under the existing top-most version.
 
 Requested arguments: $ARGUMENTS
 
@@ -14,9 +21,9 @@ Steps:
    git diff origin/main...HEAD
    ```
 
-3. Scan the existing `Changelog.txt` for all category headings (lines matching ` CategoryName:`) and collect them into a list. **Only use categories that already exist in the file.** Do not invent new category names. If a change does not fit any existing category, use the closest match. The typical categories found in this file are: Achievements, AI, Balance, Bugfix, Content, Database, Factions, Game Rules, Graphics, Localization, Map, Map Modes, Performance, Quality of Life, Sound, Technology, User Interface.
+3. Scan `Changelog.txt` for all category headings (lines matching ` CategoryName:`) and collect them. **Only use categories that already exist in the file.** Do not invent new names. If a change doesn't fit any existing category, use the closest match. Typical categories: Achievements, AI, Balance, Bugfix, Content, Database, Factions, Game Rules, Graphics, Localization, Map, Map Modes, Performance, Quality of Life, Sound, Technology, User Interface.
 
-   Classify each change into one of those existing categories (skip empty categories). Focus on user-facing and gameplay-relevant changes — omit internal refactors or implementation details that don't affect the player experience unless they have a meaningful performance or correctness impact.
+   Classify each change into one existing category (skip empty categories). Focus on user-facing and gameplay-relevant changes; omit internal refactors or implementation details that don't affect the player unless they have meaningful performance or correctness impact.
 
 4. Write each entry following the `Changelog.txt` format:
    - 1 space before category name, followed by a colon (e.g., ` AI:`)
@@ -27,5 +34,9 @@ Steps:
    - Use past tense ("Added", "Fixed", "Reduced", "Reworked")
    - Be specific: name the focus, event, decision, or mechanic affected
    - Mention issue numbers if referenced in commits (e.g., `(Issue #330)`)
+   - No em dashes — end the sentence with a period instead
+   - Entries are short one-liners, not in-depth explanations; depth belongs in the commit/PR
+
+   What NOT to write: padding filler ("Fixed an issue where the AI would not behave correctly" — say what specifically, e.g. "Fixed AI sending volunteers to countries it cannot reach"); internal terminology players don't know ("immediate block", "trigger scope"); future tense ("Will add" — use "Added"); a duplicate of an entry already covering the same change.
 
 5. Insert the new entries into `Changelog.txt` under the existing top-most version heading. Merge into existing categories if they already exist; append new categories after existing ones. Do not create a new version heading unless $ARGUMENTS contains a version string (e.g., `v1.13.0`), in which case add a new version heading above the current top-most one.
