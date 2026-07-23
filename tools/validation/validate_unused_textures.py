@@ -8,7 +8,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -19,6 +19,7 @@ from validator_common import (
     BaseValidator,
     Colors,
     FileOpener,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
@@ -81,14 +82,18 @@ def _textures_init(
     _W_FILENAME_LOOKUP = filename_lookup
 
 
-def process_gfx_file(filename: str) -> Set[str]:
+def process_gfx_file(filename: str) -> Tuple[Set[str], Set[str]]:
     """
     Process a single .gfx file and extract all texturefile references.
-    Returns a set of texture paths referenced in the file.
-    For entity .gfx files, also matches by filename only.
+
+    Returns ``(resolved, raw)``: *resolved* is the set of on-disk texture paths
+    the references map to (full-path or basename match) — used for the unused
+    check; *raw* is every normalized reference path as written — used for the
+    missing check (a raw ref that resolves to nothing is a missing texture).
     """
     texture_files, filename_lookup = _W_TEXTURE_FILES, _W_FILENAME_LOOKUP
     referenced_textures = set()
+    raw_references = set()
 
     try:
         content = FileOpener.open_text_file(
@@ -112,6 +117,8 @@ def process_gfx_file(filename: str) -> Set[str]:
                 while "//" in texture_path:
                     texture_path = texture_path.replace("//", "/")
 
+                raw_references.add(texture_path)
+
                 # Check if this is a full path match
                 if texture_path in texture_files:
                     referenced_textures.add(texture_path)
@@ -127,7 +134,7 @@ def process_gfx_file(filename: str) -> Set[str]:
         # Silently skip files that can't be read
         pass
 
-    return referenced_textures
+    return referenced_textures, raw_references
 
 
 def _sprite_name_to_texture(gfx_files: List[str]) -> Dict[str, str]:
@@ -204,7 +211,9 @@ class Validator(BaseValidator):
         self.texture_files = set()
         self.texture_filename_lookup = {}  # Maps filename -> list of full paths
         self.referenced_textures = set()
+        self.raw_referenced_textures = set()
         self.vanilla_referenced_textures = set()
+        self.vanilla_raw_referenced_textures = set()
         self.game_file_textures = set()
         self.text_icon_referenced_textures = set()
         self.unused_count = 0
@@ -268,9 +277,12 @@ class Validator(BaseValidator):
 
     def _get_all_referenced_textures(
         self, search_path: str = None, label: str = "mod"
-    ) -> Set[str]:
+    ) -> Tuple[Set[str], Set[str]]:
         """
         Get all texture files referenced in .gfx files using multiprocessing.
+
+        Returns ``(resolved, raw)``: resolved on-disk paths (unused check) and
+        every normalized reference as written (missing check).
         """
         gfx_files = self._find_all_gfx_files(search_path)
         self.log(f"  Found {len(gfx_files)} {label} .gfx files to process")
@@ -288,10 +300,12 @@ class Validator(BaseValidator):
         )
 
         referenced_textures = set()
-        for texture_set in all_results:
-            referenced_textures.update(texture_set)
+        raw_references = set()
+        for resolved_set, raw_set in all_results:
+            referenced_textures.update(resolved_set)
+            raw_references.update(raw_set)
 
-        return referenced_textures
+        return referenced_textures, raw_references
 
     def _get_game_file_references(self) -> Set[str]:
         """
@@ -382,15 +396,19 @@ class Validator(BaseValidator):
 
         self._log_section("Scanning .gfx files for texture references...")
 
-        self.referenced_textures = self._get_all_referenced_textures(label="mod")
+        self.referenced_textures, self.raw_referenced_textures = (
+            self._get_all_referenced_textures(label="mod")
+        )
         self.log(
             f"  Found {len(self.referenced_textures)} unique texture references in mod"
         )
 
         if self.hoi4_path:
             self._log_section("Scanning vanilla HoI4 .gfx files...")
-            self.vanilla_referenced_textures = self._get_all_referenced_textures(
-                search_path=self.hoi4_path, label="vanilla"
+            self.vanilla_referenced_textures, self.vanilla_raw_referenced_textures = (
+                self._get_all_referenced_textures(
+                    search_path=self.hoi4_path, label="vanilla"
+                )
             )
             self.log(
                 f"  Found {len(self.vanilla_referenced_textures)} unique texture references in vanilla"
@@ -435,25 +453,51 @@ class Validator(BaseValidator):
         self._log_section("Checking for missing texture files...")
 
         missing_textures = []
-        for texture_ref in sorted(self.referenced_textures):
-            # Check if the referenced texture exists in mod
-            full_path = os.path.join(self.mod_path, texture_ref)
-            if not os.path.exists(full_path):
-                # If not in mod, check if it's referenced in vanilla .gfx
-                if texture_ref not in self.vanilla_referenced_textures:
-                    missing_textures.append(texture_ref)
+        for texture_ref in sorted(self.raw_referenced_textures):
+            # Resolves to a real mod file by full path or basename?
+            if texture_ref in self.texture_files:
+                continue
+            if os.path.basename(texture_ref) in self.texture_filename_lookup:
+                continue
+            if os.path.exists(os.path.join(self.mod_path, texture_ref)):
+                continue
+            # Referenced or present in vanilla — not the mod's problem.
+            if (
+                texture_ref in self.vanilla_referenced_textures
+                or texture_ref in self.vanilla_raw_referenced_textures
+            ):
+                continue
+            # On disk in the vanilla install but not declared by a vanilla .gfx
+            # (e.g. atlas/icon strips loaded by convention). Still a real file
+            # in-game, so the reference is valid.
+            if self.hoi4_path and os.path.exists(
+                os.path.join(self.hoi4_path, texture_ref)
+            ):
+                continue
+            missing_textures.append(texture_ref)
 
         self.missing_count = len(missing_textures)
 
         if self.hoi4_path:
             msg = "Referenced textures that do not exist in mod or vanilla .gfx files:"
+            severity = Severity.ERROR
         else:
-            msg = "Referenced textures that do not exist (vanilla not checked):"
+            # Without a vanilla install the vanilla_* reference sets are empty, so
+            # every ref that resolves to a real vanilla texture looks "missing".
+            # Report as WARNING rather than emit hundreds of unverifiable errors.
+            msg = "Referenced textures that do not exist (vanilla not checked — WARNING only):"
+            severity = Severity.WARNING
+            self.log(
+                "  No HOI4 install detected — missing-texture findings reported as "
+                "warnings (vanilla textures cannot be verified)",
+                "warning",
+            )
 
         self._report(
             missing_textures,
             "✓ All referenced textures exist",
             msg,
+            severity=severity,
         )
 
     def run_validations(self):

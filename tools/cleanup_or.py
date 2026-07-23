@@ -190,11 +190,10 @@ def _fix_inline_or_line(line):
     Only replaces when the content between the braces is exactly one condition.
     Handles lines with trailing comments by splitting on # first.
     """
-    comment_pos = line.find("#")
-    if comment_pos >= 0:
-        code, comment = line[:comment_pos], line[comment_pos:]
-    else:
-        code, comment = line, ""
+    # Split code from a trailing comment quote-aware: a `#` inside a
+    # double-quoted string is not a comment and must not split the line.
+    code = strip_inline_comment(line)
+    comment = line[len(code) :]
 
     def _replace(m):
         inner = m.group(1)
@@ -438,8 +437,14 @@ def simplify_or_block(lines):
 
 
 def process_file(filepath):
-    with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
-        lines = f.readlines()
+    # Read strict: silently dropping undecodable bytes (errors="ignore") on the
+    # read path would then write the mangled text back and corrupt the file.
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except UnicodeDecodeError as e:
+        print(f"ERROR: {filepath}: undecodable UTF-8, skipping ({e})", file=sys.stderr)
+        return False
     # OR cleanup first so OR = { AND = { A B } } chains fully collapse
     new_lines = simplify_or_block(lines)
     new_lines = simplify_and_block(new_lines)
@@ -450,12 +455,41 @@ def process_file(filepath):
     return False
 
 
+# resources/ is reference-only and must never be modified; .git is not content.
+_EXCLUDED_DIRS = {"resources", ".git"}
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
+def _is_excluded_path(path, repo_root=None):
+    """True if the path is under an excluded dir (resources/, .git) inside the repo.
+
+    Matching is against the path *relative to the repo root*, not the absolute
+    path: a checkout nested under an ancestor dir literally named `resources`
+    would otherwise match every file and no-op the whole repo. Ancestors above
+    the root collapse to `..` and never carry an excluded name.
+
+    Mid-walk pruning only stops os.walk from descending into an excluded
+    subdir; it never guards the walk root or a directly-passed file, so a
+    `resources/...` target would otherwise be rewritten regardless.
+    """
+    root = _REPO_ROOT if repo_root is None else os.path.abspath(repo_root)
+    rel = os.path.relpath(os.path.abspath(path), root)
+    return any(part in _EXCLUDED_DIRS for part in rel.split(os.sep))
+
+
 def main(paths):
     """Process paths: directories are walked recursively, files are processed directly."""
     changed = []
     for path in paths:
+        if _is_excluded_path(path):
+            print(
+                f"SKIP: {path} is under an excluded directory (resources/, .git); not modified",
+                file=sys.stderr,
+            )
+            continue
         if os.path.isdir(path):
-            for dirpath, _, filenames in os.walk(path):
+            for dirpath, dirnames, filenames in os.walk(path):
+                dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIRS]
                 for fn in filenames:
                     if fn.lower().endswith(".txt"):
                         full = os.path.join(dirpath, fn)
@@ -473,8 +507,18 @@ def main(paths):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        main(sys.argv[1:])
-    else:
+    argv = sys.argv[1:]
+    if argv == ["--all"]:
+        # Repo-wide run must be explicit, and resources/ is pruned by main().
         root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         main([root])
+    elif argv:
+        main([a for a in argv if a != "--all"])
+    else:
+        print(
+            "usage: cleanup_or.py <path> [<path> ...] | --all\n"
+            "  Pass explicit files/dirs, or --all to scan the whole repo "
+            "(resources/ is always excluded).",
+            file=sys.stderr,
+        )
+        sys.exit(1)

@@ -1,34 +1,54 @@
 """
-Unit tests for the checks added to check_common_mistakes.py:
+Unit tests for the checks added to check_common_mistakes.py (in file order):
 
   1. Consecutive same-tag scope blocks
   2. send_embargo / break_embargo without DLC guard
   3. divide_variable without zero guard
   4. Duplicate consecutive add_to_variable lines
   5. every_country with has_idea = X_member when array exists
-  6. has_idea mutex inside NOT/AND blocks
-  7. change_influence_percentage setter with no matching call
-  8. check_variable with inline >= / <=
-  9. tautological OR = { X = yes X = no }
-  10. check_expr operand chained with a raw comparator symbol
-  11. every_owned_controlled_state (nonexistent effect)
-  12. random_select_amount set to a non-integer-literal
-  13. any_country/any_other_country with has_idea = X_member when array exists
-  14. on_add adds to a global array the sibling on_remove never removes from
-  15. focus/decision/event log = "..." referencing the wrong id (Check C)
-  16. hidden_trigger = { } directly inside custom_trigger_tooltip (Check E1)
-  17. malformed country leader rotations in *_political_leaders.txt
+  6. any_country/any_other_country with has_idea = X_member (trigger context)
+  7. on_add adds to a global array the sibling on_remove never removes from
+  8. has_idea mutex inside NOT/AND blocks
+  9. change_influence_percentage setter with no matching call
+  10. check_variable with inline >= / <=
+  11. tautological OR = { X = yes X = no }
+  12. dynamic triggers in decision allowed blocks
+  13. focus declares war without will_lead_to_war_with
+  14. check_expr operand chained with a raw comparator symbol
+  15. every_owned_controlled_state (nonexistent effect)
+  16. random_select_amount set to a non-integer-literal
+  17. focus/decision/event log = "..." referencing the wrong id (Check C)
+  18. hidden_trigger = { } directly inside custom_trigger_tooltip (Check E1)
+  19. malformed country leader rotations in *_political_leaders.txt
+  20. country_exists scope contradiction — NOT = { country_exists = TAG }
+  21. single-valued-trigger contradiction, including single-line forms
+  22. embargo DLC guard must not leak an inline guard to the parent frame
+  23. is_X_nation regex matches multi-segment nation names
+  24. _get_block ignores braces inside quoted strings
+  25. ideas brace tracking ignores braces inside comments (check_file)
+  26. division check does not fire inside quoted strings (check_file)
+  27. mutex-trigger regex built from _MUTUALLY_EXCLUSIVE_TRIGGERS
+  28. embargo guard stack is quote-aware (stray brace in log/loc string)
+  29. _files_need_global_refs pre-scan gate matches whitespace-flexible form
+  30. add_to_faction with a non-country argument (a faction name)
+  31. create_faction is deprecated (use create_faction_from_template)
 """
 
 import os
+import shutil
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from check_common_mistakes import (
+    _RE_IS_X_NATION,
+    _check_add_to_faction_country,
     _check_any_country_member_array,
     _check_check_expr_bad_operand,
     _check_check_var_ge_le,
     _check_consecutive_scope_blocks,
+    _check_country_exists_scope_contradiction,
+    _check_create_faction_deprecated,
     _check_decision_allowed_dynamic,
     _check_decision_log_id,
     _check_divide_variable_zero_guard,
@@ -43,9 +63,13 @@ from check_common_mistakes import (
     _check_hidden_trigger_in_ctt,
     _check_influence_setter_scope,
     _check_leader_rotation,
+    _check_mutually_exclusive_contradictions,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
     _check_tautological_or,
+    _files_need_global_refs,
+    _get_block,
+    check_file,
 )
 
 passed = 0
@@ -1116,6 +1140,159 @@ assert_finds(
     ],
     0,
     ">= in comment not flagged",
+)
+
+
+# add_to_faction with a non-country argument (a faction name)
+
+print("\n── add_to_faction non-country argument ──")
+
+# faction name (uppercase, not a 3-letter tag) → flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = BRICS\n",
+    ],
+    1,
+    "add_to_faction = BRICS (faction name) flagged",
+)
+
+# lowercase faction id → flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = warsaw_pact\n",
+    ],
+    1,
+    "add_to_faction = warsaw_pact (lowercase faction id) flagged",
+)
+
+# 3-letter country tag → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = FIN\n",
+    ],
+    0,
+    "add_to_faction = FIN (country tag) not flagged",
+)
+
+# scope keyword → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = ROOT\n",
+    ],
+    0,
+    "add_to_faction = ROOT (scope keyword) not flagged",
+)
+
+# tag inside a scope switch → no flag (value is the 3-letter tag)
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tSOV = { add_to_faction = FIN }\n",
+    ],
+    0,
+    "add_to_faction = FIN inside SOV scope not flagged",
+)
+
+# dotted scope chain (tricky-but-legal) → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = PREV.PREV\n",
+    ],
+    0,
+    "add_to_faction = PREV.PREV (scope chain) not flagged",
+)
+
+# var: reference → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\tadd_to_faction = var:ally_tag\n",
+    ],
+    0,
+    "add_to_faction = var:ally_tag not flagged",
+)
+
+# faction name inside a comment → no flag
+assert_finds(
+    _check_add_to_faction_country,
+    [
+        "\t# add_to_faction = BRICS\n",
+    ],
+    0,
+    "add_to_faction = BRICS in comment not flagged",
+)
+
+
+# 31. create_faction is deprecated (use create_faction_from_template)
+
+print("\n── create_faction deprecated ──")
+
+# bare form → flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\tcreate_faction = some_id\n",
+    ],
+    1,
+    "create_faction = some_id (bare) flagged",
+)
+
+# quoted form → flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        '\tcreate_faction = "Name"\n',
+    ],
+    1,
+    'create_faction = "Name" (quoted) flagged',
+)
+
+# inside a scope block → flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\tFROM = { create_faction = X }\n",
+    ],
+    1,
+    "create_faction inside FROM scope block flagged",
+)
+
+# create_faction_from_template (the replacement) → no flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\tcreate_faction_from_template = faction_template_nato\n",
+    ],
+    0,
+    "create_faction_from_template not flagged",
+)
+
+# on_create_faction (on_actions hook) → no flag; \b doesn't separate on_ from
+# create since _ is a word char, but the trailing \s*= requirement alone
+# rules this out too since neither on_ nor a bare hook name is followed by =
+# immediately after create_faction.
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\ton_create_faction = {\n",
+    ],
+    0,
+    "on_create_faction hook line not flagged",
+)
+
+# commented-out line → no flag
+assert_finds(
+    _check_create_faction_deprecated,
+    [
+        "\t# create_faction = X\n",
+    ],
+    0,
+    "create_faction = X in comment not flagged",
 )
 
 
@@ -2385,6 +2562,516 @@ _BARE_AND = [
     "\t}\n",
 ]
 assert_finds(find_redundant_and_blocks, _BARE_AND, 1, "bare AND still flagged")
+
+
+# 18. country_exists scope contradiction — NOT = { country_exists = TAG }
+# alongside TAG = { ... } in the same AND block is always false (scope fails
+# when TAG is absent, NOT is only true then) -> dead bypass/gate.
+
+print("\n── country_exists scope contradiction ──")
+
+# Dead bypass: NOT = { country_exists = CAN } + CAN = { ... } siblings.
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tbypass = {\n",
+        "\t\tCAN = { is_subject_of = USA }\n",
+        "\t\tNOT = { country_exists = CAN }\n",
+        "\t}\n",
+    ],
+    1,
+    "NOT country_exists + TAG scope switch in AND bypass flagged",
+)
+
+# Same bug, NOT block first then scope switch (order-independent).
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tavailable = {\n",
+        "\t\tNOT = { country_exists = CAN }\n",
+        "\t\tCAN = { has_government = democratic }\n",
+        "\t}\n",
+    ],
+    1,
+    "order-independent: NOT then scope switch flagged",
+)
+
+# Multi-line NOT block.
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tbypass = {\n",
+        "\t\tCAN = { is_subject_of = USA }\n",
+        "\t\tNOT = {\n",
+        "\t\t\tcountry_exists = CAN\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "multi-line NOT = { country_exists = CAN } flagged",
+)
+
+# OR-wrapped is the correct form -> not flagged.
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tbypass = {\n",
+        "\t\tOR = {\n",
+        "\t\t\tNOT = { country_exists = CAN }\n",
+        "\t\t\tCAN = { is_subject_of = USA }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "OR-wrapped (intended form) not flagged",
+)
+
+# Positive guard + scope switch is the correct idiom -> not flagged.
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tavailable = {\n",
+        "\t\tcountry_exists = CAN\n",
+        "\t\tCAN = { has_government = democratic }\n",
+        "\t}\n",
+    ],
+    0,
+    "positive country_exists + scope switch (guard idiom) not flagged",
+)
+
+# NOT = { TAG = { ... } } (NOT wrapping a scope switch, not country_exists) is
+# a different construct and must NOT be flagged.
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tlimit = {\n",
+        "\t\tJOR = { influence_higher_10 = yes }\n",
+        "\t\tNOT = { JOR = { influence_higher_20 = yes } }\n",
+        "\t}\n",
+    ],
+    0,
+    "NOT wrapping a scope switch (not country_exists) not flagged",
+)
+
+# Multi-statement NOT is a NAND (not both at once), satisfiable with the tag
+# alive -> not flagged (real case: IRQ_reintegration_of_kurdistan).
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tavailable = {\n",
+        "\t\tNOT = {\n",
+        "\t\t\tcountry_exists = KUR\n",
+        "\t\t\tcountry_exists = PUK\n",
+        "\t\t}\n",
+        "\t\tKUR = { is_subject_of = IRQ }\n",
+        "\t}\n",
+    ],
+    0,
+    "multi-child NOT (NAND) not flagged",
+)
+
+# NOT mixing country_exists with another trigger is also a NAND -> not flagged.
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tbypass = {\n",
+        "\t\tNOT = {\n",
+        "\t\t\thas_war_with = AFG\n",
+        "\t\t\tcountry_exists = AFG\n",
+        "\t\t}\n",
+        "\t\tAFG = { is_subject = yes }\n",
+        "\t}\n",
+    ],
+    0,
+    "NOT mixing country_exists with another trigger (NAND) not flagged",
+)
+
+# Flags and variables persist on dead/unreleased tags, so a scope checking only
+# those is satisfiable next to NOT country_exists -> not flagged (real case:
+# SubjectRussia separatism tracking on not-yet-released subjects).
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tlimit = {\n",
+        "\t\tNOT = { country_exists = CHE }\n",
+        "\t\tCHE = { NOT = { has_country_flag = SUB_subject_rebellion_flag } }\n",
+        "\t}\n",
+    ],
+    0,
+    "scope checking only flags on a dead tag not flagged",
+)
+
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tvisible = {\n",
+        "\t\tNOT = { country_exists = PTR }\n",
+        "\t\tPTR = { check_variable = { separatism > 10 } }\n",
+        "\t}\n",
+    ],
+    0,
+    "scope checking only variables on a dead tag not flagged",
+)
+
+# A live-country property (opinion) cannot hold for an absent tag -> flagged
+# even when mixed with flag checks.
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tcancel = {\n",
+        "\t\tBLZ = { has_opinion = { target = CAN value < 24 } }\n",
+        "\t\tNOT = { country_exists = BLZ }\n",
+        "\t}\n",
+    ],
+    1,
+    "scope with live-country trigger (has_opinion) still flagged",
+)
+
+# Different tags in the same AND block -> no contradiction.
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tbypass = {\n",
+        "\t\tCAN = { is_subject_of = USA }\n",
+        "\t\tNOT = { country_exists = MEX }\n",
+        "\t}\n",
+    ],
+    0,
+    "different tags in AND block not flagged",
+)
+
+# A stray } in a log string inside the scope block must not desync the frame
+# stack and drop the finding (quote-blanking, same as the embargo guard).
+assert_finds(
+    _check_country_exists_scope_contradiction,
+    [
+        "\tbypass = {\n",
+        "\t\tCAN = {\n",
+        '\t\t\tlog = "closing } here"\n',
+        "\t\t\tis_subject_of = USA\n",
+        "\t\t}\n",
+        "\t\tNOT = { country_exists = CAN }\n",
+        "\t}\n",
+    ],
+    1,
+    "stray } in a log string inside the scope block still flagged",
+)
+
+
+def assert_eq(actual, expected, label):
+    global passed, failed
+    if actual == expected:
+        passed += 1
+        print(f"  PASS  {label}")
+    else:
+        failed += 1
+        print(f"  FAIL  {label}: expected {expected!r}, got {actual!r}")
+
+
+def _isx_nation_matches(lines):
+    return [
+        (i + 1, line) for i, line in enumerate(lines) if _RE_IS_X_NATION.search(line)
+    ]
+
+
+def _run_check_file(rel_path, text):
+    root = tempfile.mkdtemp()
+    fp = os.path.join(root, rel_path)
+    os.makedirs(os.path.dirname(fp), exist_ok=True)
+    with open(fp, "w", encoding="utf-8") as f:
+        f.write(text)
+    try:
+        return check_file(fp)
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+# 19. single-valued-trigger contradiction, including single-line forms
+
+print("\n── single-valued trigger contradiction ──")
+
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    ["\tNOT = { tag = USA tag = CHI }\n"],
+    1,
+    "single-line NOT with two tag values flagged",
+)
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    ["\tlimit = { has_government = communism has_government = nationalist }\n"],
+    1,
+    "single-line AND with two has_government values flagged",
+)
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    ["\tOR = { tag = USA tag = CHI }\n"],
+    0,
+    "single-line OR with two tag values not flagged",
+)
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    [
+        "\tNOT = {\n",
+        "\t\ttag = USA\n",
+        "\t\ttag = CHI\n",
+        "\t}\n",
+    ],
+    1,
+    "multi-line NOT contradiction still flagged (regression)",
+)
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    ["\tlimit = { has_government = communism }\n"],
+    0,
+    "single value not flagged",
+)
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    ['\tlog = "NOT = { tag = USA tag = CHI }"\n'],
+    0,
+    "contradiction shape inside a quoted string not flagged",
+)
+
+
+# 20. embargo DLC guard must not leak an inline guard to the parent frame
+
+print("\n── embargo DLC guard inline-leak ──")
+
+assert_finds(
+    _check_embargo_dlc_guard,
+    [
+        "ISR = {\n",
+        '\tif = { limit = { has_dlc = "By Blood Alone" } }\n',
+        "\tsend_embargo = TAG\n",
+        "}\n",
+    ],
+    1,
+    "inline guard does not cover a sibling embargo outside the if",
+)
+assert_finds(
+    _check_embargo_dlc_guard,
+    ['\tif = { limit = { has_dlc = "By Blood Alone" } send_embargo = TAG }\n'],
+    0,
+    "single-line guard covers a same-line inline embargo",
+)
+assert_finds(
+    _check_embargo_dlc_guard,
+    [
+        "option = {\n",
+        '\ttrigger = { has_dlc = "By Blood Alone" }\n',
+        "\tsend_embargo = FROM\n",
+        "}\n",
+    ],
+    0,
+    "trigger-gated has_dlc covers a sibling embargo in the same option",
+)
+
+
+# 21. is_X_nation regex matches multi-segment nation names
+
+print("\n── is_X_nation multi-segment names ──")
+
+assert_finds(
+    _isx_nation_matches,
+    ["\tis_horn_of_africa_nation = yes\n"],
+    1,
+    "multi-segment is_horn_of_africa_nation matched",
+)
+assert_finds(
+    _isx_nation_matches,
+    ["\tis_arab_nation = yes\n"],
+    1,
+    "single-segment is_arab_nation matched",
+)
+assert_finds(
+    _isx_nation_matches,
+    ["\tis_nation = yes\n"],
+    1,
+    "bare is_nation matched",
+)
+assert_finds(
+    _isx_nation_matches,
+    ["\thas_war = yes\n"],
+    0,
+    "non-nation trigger not matched",
+)
+
+
+# 22. _get_block ignores braces inside quoted strings
+
+print("\n── _get_block quote-blanking ──")
+
+_GET_BLOCK_LINES = [
+    "foo = {\n",
+    '\tlog = "a { brace in a string"\n',
+    "\tbar = yes\n",
+    "}\n",
+    "next = yes\n",
+]
+_block, _next = _get_block(_GET_BLOCK_LINES, 0)
+assert_eq(_next, 4, "_get_block stops at the real closing brace (quoted { ignored)")
+assert_eq(
+    "next = yes\n" not in _block,
+    True,
+    "_get_block does not swallow past the block on a quoted brace",
+)
+
+
+# 23. ideas brace tracking ignores braces inside comments (check_file)
+
+print("\n── ideas comment-brace tracking ──")
+
+_IDEAS_WITH_COMMENT_BRACE = (
+    "ideas = {\n"
+    "\tcountry = {\n"
+    "\t\tFOO_idea = {\n"
+    "\t\t\t# this comment has an extra { brace\n"
+    "\t\t\tallowed = { tag = FOO }\n"
+    "\t\t}\n"
+    "\t}\n"
+    "}\n"
+)
+_ideas_issues = _run_check_file(
+    os.path.join("common", "ideas", "probe.txt"), _IDEAS_WITH_COMMENT_BRACE
+)
+assert_eq(
+    any("civil war split-offs" in msg for _fp, _ln, msg in _ideas_issues),
+    True,
+    "allowed = { tag } still caught after a comment brace (no desync)",
+)
+
+_IDEAS_ORIGINAL_TAG = (
+    "ideas = {\n"
+    "\tcountry = {\n"
+    "\t\tFOO_idea = {\n"
+    "\t\t\t# comment with { brace\n"
+    "\t\t\tallowed = { original_tag = FOO }\n"
+    "\t\t}\n"
+    "\t}\n"
+    "}\n"
+)
+_ideas_ok = _run_check_file(
+    os.path.join("common", "ideas", "probe2.txt"), _IDEAS_ORIGINAL_TAG
+)
+assert_eq(
+    any("civil war split-offs" in msg for _fp, _ln, msg in _ideas_ok),
+    False,
+    "correct original_tag idea not flagged",
+)
+
+
+# 24. division check does not fire inside quoted strings (check_file)
+
+print("\n── division check quote-blanking ──")
+
+_DIV_ISSUES = _run_check_file(
+    "probe.txt",
+    "effect = {\n"
+    "\tset_variable = { x = whatever / 100 }\n"
+    '\tlog = "progress 50/100 complete"\n'
+    "}\n",
+)
+_div_lines = [ln for _fp, ln, msg in _DIV_ISSUES if "multiplication instead" in msg]
+assert_eq(
+    _div_lines, [2], "division flagged only for the real / 100, not the quoted one"
+)
+
+
+# 25. mutex-trigger regex is built from _MUTUALLY_EXCLUSIVE_TRIGGERS, so every
+# member of the set (not just tag / has_government) is covered.
+
+print("\n── single-valued trigger regex from set ──")
+
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    [
+        "\tNOT = { has_country_leader_ideology = communism"
+        " has_country_leader_ideology = fascism }\n"
+    ],
+    1,
+    "has_country_leader_ideology contradiction covered by set-driven regex",
+)
+assert_finds(
+    _check_mutually_exclusive_contradictions,
+    ["\tNOT = { original_tag = USA tag = CHI }\n"],
+    0,
+    "original_tag and tag are different triggers -- not a single-trigger contradiction",
+)
+
+
+# 26. embargo guard stack is quote-aware: a stray brace in a log/loc string must
+# not desync the if/guard frames (a stray } previously popped the guard frame).
+
+print("\n── embargo guard quote-blanking ──")
+
+assert_finds(
+    _check_embargo_dlc_guard,
+    [
+        "if = {\n",
+        '\tlimit = { has_dlc = "By Blood Alone" }\n',
+        '\tlog = "closing } here"\n',
+        "\tsend_embargo = TAG\n",
+        "}\n",
+    ],
+    0,
+    "stray } in a log string does not pop the BBA guard frame",
+)
+assert_finds(
+    _check_embargo_dlc_guard,
+    [
+        "effect = {\n",
+        '\tlog = "stray { brace"\n',
+        "\tsend_embargo = TAG\n",
+        "}\n",
+    ],
+    1,
+    "stray { in a log string does not hide an ungated embargo",
+)
+
+
+# 27. _files_need_global_refs pre-scan gate matches the whitespace-flexible
+#     _RE_AVAILABLE_ALWAYS_NO downstream check, so a spaceless always=no is not
+#     skipped (which would surface as a false-positive unreachable-focus finding)
+
+print("\n── _files_need_global_refs whitespace-flexible gate ──")
+
+
+def _needs_global_refs(rel_path, text):
+    root = tempfile.mkdtemp()
+    fp = os.path.join(root, rel_path)
+    os.makedirs(os.path.dirname(fp), exist_ok=True)
+    with open(fp, "w", encoding="utf-8") as f:
+        f.write(text)
+    try:
+        return _files_need_global_refs([fp])
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+assert_eq(
+    _needs_global_refs(
+        "common/national_focus/test.txt",
+        "focus = {\n\tavailable = { always = no }\n}\n",
+    ),
+    True,
+    "canonical available = { always = no } forces the global-refs scan",
+)
+assert_eq(
+    _needs_global_refs(
+        "common/national_focus/test.txt",
+        "focus = {\n\tavailable={always=no}\n}\n",
+    ),
+    True,
+    "spaceless available={always=no} still forces the global-refs scan",
+)
+assert_eq(
+    _needs_global_refs(
+        "common/national_focus/test.txt",
+        "focus = {\n\tavailable = { has_war = yes }\n}\n",
+    ),
+    False,
+    "focus without available always-no does not force the scan",
+)
 
 
 # Summary
