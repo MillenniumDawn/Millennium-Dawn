@@ -3,85 +3,65 @@
 
 set_leader_PHI = {
 	# Lakas–Christian Muslim Democrats (Lakas-CMD)
-	if = {
-    limit = {
-        has_country_flag = set_conservatism
-    }
-    if = {
-        limit = { check_variable = { conservatism_leader = 0 } }
-        add_to_variable = { conservatism_leader = 1 }
-        hidden_effect = { kill_country_leader = yes }
-        create_country_leader = {
-            name = "Gloria Macapagal Arroyo"
-            picture = "gfx/leaders/PHI/gloria_macapagal_arroyo.dds"
-            ideology = conservatism
-            traits = {
-                deceitful
-                teacher
-                captain_of_industry
-                experienced_banker
-                western_conservatism
-            }
-        }
-        if = { limit = { date < 2010.6.30 } set_temp_variable = { b = 1 } }
-    }
-if = {
-    limit = {
-        check_variable = { conservatism_leader = 1 }
-        NOT = { check_variable = { b = 1 } }
-        has_country_flag = PHI_edsa_dos_resolved
-        date < 2010.6.30
-    }
-    hidden_effect = { kill_country_leader = yes }
-    create_country_leader = {
-        name = "Gloria Macapagal Arroyo"
-        picture = "gfx/leaders/PHI/gloria_macapagal_arroyo.dds"
-        ideology = conservatism
-        traits = {
-            deceitful
-            teacher
-            captain_of_industry
-            experienced_banker
-            western_conservatism
-        }
-    }
-    if = { limit = { date < 2010.6.30 } set_temp_variable = { b = 1 } }
-}
-# EDSA Dos path — Teodoro takes over after 2010
-if = {
-    limit = {
-        check_variable = { conservatism_leader = 1 }
-        NOT = { check_variable = { b = 1 } }
-        has_country_flag = PHI_edsa_dos_resolved
-        date > 2010.6.29
-    }
-    add_to_variable = { conservatism_leader = 1 }
-    hidden_effect = { kill_country_leader = yes }
-    create_country_leader = {
-        name = "Gilbert Teodoro"
-        picture = "gfx/leaders/PHI/gilbert_teodoro.dds"
-        ideology = conservatism
-        traits = {
-            lawyer
-            rational
-            cautious
-            western_conservatism
-        }
-    }
-    if = { limit = { date < 2016.6.30 } set_temp_variable = { b = 1 } }
-}
-		if = { limit = { check_variable = { conservatism_leader = 2 } NOT = { check_variable = { b = 1 } } }
+	if = { limit = { has_country_flag = set_conservatism }
+
+		# Counter 0: GMA 1 — always the first leader, no conditions
+		if = { limit = { check_variable = { conservatism_leader = 0 } }
 			add_to_variable = { conservatism_leader = 1 }
-			if = { limit = { NOT = { has_country_flag = PHI_anti_dynasty_law_active } }
+			hidden_effect = { kill_country_leader = yes }
+			create_country_leader = {
+				name = "Gloria Macapagal Arroyo"
+				picture = "gfx/leaders/PHI/gloria_macapagal_arroyo.dds"
+				ideology = conservatism
+				traits = {
+					deceitful
+					teacher
+					captain_of_industry
+					experienced_banker
+					western_conservatism
+				}
+			}
+			set_temp_variable = { b = 1 }
+		}
+
+		# Counter 1: GMA 2 if Erap was ousted, skip to Teodoro if Erap won
+		if = { limit = { check_variable = { conservatism_leader = 1 } NOT = { check_variable = { b = 1 } } }
+			add_to_variable = { conservatism_leader = 1 }
+			if = { limit = { NOT = { has_country_flag = PHI_edsa_dos_erap_victory } }
 				hidden_effect = { kill_country_leader = yes }
 				create_country_leader = {
-					name = "Martin Romualdez"
-					picture = "gfx/leaders/PHI/martin_romualdez.dds"
+					name = "Gloria Macapagal Arroyo"
+					picture = "gfx/leaders/PHI/gloria_macapagal_arroyo.dds"
 					ideology = conservatism
-					traits = { western_conservatism }
+					traits = {
+						deceitful
+						teacher
+						captain_of_industry
+						experienced_banker
+						western_conservatism
+					}
 				}
-				set_temp_variable = { b = 1 }
+				if = { limit = { date < 2010.6.30 } set_temp_variable = { b = 1 } }
 			}
+			# PHI_edsa_dos_erap_victory: no leader created, no b set, falls through to Teodoro
+		}
+
+		# Counter 2: Teodoro — reached normally after GMA 2, or immediately if Erap won
+		if = { limit = { check_variable = { conservatism_leader = 2 } NOT = { check_variable = { b = 1 } } }
+			add_to_variable = { conservatism_leader = 1 }
+			hidden_effect = { kill_country_leader = yes }
+			create_country_leader = {
+				name = "Gilbert Teodoro"
+				picture = "gfx/leaders/PHI/gilbert_teodoro.dds"
+				ideology = conservatism
+				traits = {
+					lawyer
+					rational
+					cautious
+					western_conservatism
+				}
+			}
+			if = { limit = { date < 2016.6.30 } set_temp_variable = { b = 1 } }
 		}
 
 		if = { limit = { check_variable = { conservatism_leader = 3 } NOT = { check_variable = { b = 1 } } }
@@ -89,10 +69,14 @@ if = {
 			if = { limit = { NOT = { has_country_flag = PHI_anti_dynasty_law_active } }
 				hidden_effect = { kill_country_leader = yes }
 				create_country_leader = {
-					name = "Ramon 'Bong' Revilla Jr."
-					picture = "gfx/leaders/PHI/bong_revilla.dds"
+					name = "Martin Romualdez"
+					picture = "gfx/leaders/PHI/martin_romualdez.dds"
 					ideology = conservatism
-					traits = { western_conservatism }
+					traits = {
+						lawyer
+						career_politician
+						western_conservatism
+					}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -100,24 +84,34 @@ if = {
 
 		if = { limit = { check_variable = { conservatism_leader = 4 } NOT = { check_variable = { b = 1 } } }
 			add_to_variable = { conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-			create_country_leader = {
-				name = "Manuel Jose 'Mannix' Dalipe"
-				picture = "gfx/leaders/PHI/mannix_dalipe.dds"
-				ideology = conservatism
-				traits = { western_conservatism }
+			if = { limit = { NOT = { has_country_flag = PHI_anti_dynasty_law_active } }
+				hidden_effect = { kill_country_leader = yes }
+				create_country_leader = {
+					name = "Ramon 'Bong' Revilla Jr."
+					picture = "gfx/leaders/PHI/bong_revilla.dds"
+					ideology = conservatism
+					traits = {
+						actor_politician
+						populist
+						western_conservatism
+					}
+				}
+				set_temp_variable = { b = 1 }
 			}
-			set_temp_variable = { b = 1 }
 		}
 
 		if = { limit = { check_variable = { conservatism_leader = 5 } NOT = { check_variable = { b = 1 } } }
 			add_to_variable = { conservatism_leader = 1 }
 			hidden_effect = { kill_country_leader = yes }
 			create_country_leader = {
-				name = "Jose Aquino II"
-				picture = "gfx/leaders/PHI/jose_aquino_ii.dds"
+				name = "Manuel Jose 'Mannix' Dalipe"
+				picture = "gfx/leaders/PHI/mannix_dalipe.dds"
 				ideology = conservatism
-				traits = { western_conservatism }
+				traits = {
+					career_politician
+					lawyer
+					western_conservatism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -126,10 +120,14 @@ if = {
 			add_to_variable = { conservatism_leader = 1 }
 			hidden_effect = { kill_country_leader = yes }
 			create_country_leader = {
-				name = "Fredenil H. Castro"
-				picture = "gfx/leaders/PHI/fredenil_castro.dds"
+				name = "Jose Aquino II"
+				picture = "gfx/leaders/PHI/jose_aquino_ii.dds"
 				ideology = conservatism
-				traits = { western_conservatism }
+				traits = {
+					career_politician
+					businessman
+					western_conservatism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -138,10 +136,30 @@ if = {
 			add_to_variable = { conservatism_leader = 1 }
 			hidden_effect = { kill_country_leader = yes }
 			create_country_leader = {
+				name = "Fredenil H. Castro"
+				picture = "gfx/leaders/PHI/fredenil_castro.dds"
+				ideology = conservatism
+				traits = {
+					military_career
+					lawyer
+					western_conservatism
+				}
+			}
+			set_temp_variable = { b = 1 }
+		}
+
+		if = { limit = { check_variable = { conservatism_leader = 8 } NOT = { check_variable = { b = 1 } } }
+			add_to_variable = { conservatism_leader = 1 }
+			hidden_effect = { kill_country_leader = yes }
+			create_country_leader = {
 				name = "Danilo 'Dan' Suarez"
 				picture = "gfx/leaders/PHI/dan_suarez.dds"
 				ideology = conservatism
-				traits = { western_conservatism }
+				traits = {
+					career_politician
+					businessman
+					western_conservatism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -157,7 +175,12 @@ if = {
 				name = "Benigno 'Noynoy' Aquino III"
 				picture = "gfx/leaders/PHI/benigno_aquino_III.dds"
 				ideology = liberalism
-				traits = { western_liberalism }
+				traits = {
+					honest
+					democratic_champion
+					career_politician
+					western_liberalism
+				}
 			}
 			if = { limit = { date < 2016.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -169,7 +192,11 @@ if = {
 				name = "Manuel 'Mar' Roxas II"
 				picture = "gfx/leaders/PHI/mar_roxas.dds"
 				ideology = liberalism
-				traits = { western_liberalism }
+				traits = {
+					technocrat
+					former_finance_minister
+					western_liberalism
+				}
 			}
 			if = { limit = { date < 2022.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -181,7 +208,11 @@ if = {
 				name = "Maria Leonor 'Leni' Robredo"
 				picture = "gfx/leaders/PHI/leni_robredo.dds"
 				ideology = liberalism
-				traits = { western_liberalism }
+				traits = {
+					lawyer
+					humble
+					western_liberalism
+				}
 			}
 			if = { limit = { date < 2028.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -193,7 +224,11 @@ if = {
 				name = "Bam Aquino"
 				picture = "gfx/leaders/PHI/bam_aquino.dds"
 				ideology = liberalism
-				traits = { western_liberalism }
+				traits = {
+					career_politician
+					educator
+					western_liberalism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -205,7 +240,11 @@ if = {
 				name = "Francisco 'Kiko' Pangilinan"
 				picture = "gfx/leaders/PHI/kiko_pangilinan.dds"
 				ideology = liberalism
-				traits = { western_liberalism }
+				traits = {
+					lawyer
+					agrarian_expert
+					western_liberalism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -217,7 +256,11 @@ if = {
 				name = "Erin Tañada"
 				picture = "gfx/leaders/PHI/erin_tanada.dds"
 				ideology = liberalism
-				traits = { western_liberalism }
+				traits = {
+					lawyer
+					career_politician
+					western_liberalism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -233,7 +276,11 @@ if = {
 				name = "Raul S. Roco"
 				picture = "gfx/leaders/PHI/raul_roco.dds"
 				ideology = neutral_Social
-				traits = { neutrality_neutral_Social }
+				traits = {
+					lawyer
+					educator
+					neutrality_neutral_Social
+				}
 			}
 			if = { limit = { date < 2005.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -245,7 +292,11 @@ if = {
 				name = "Herminio Aquino"
 				picture = "gfx/leaders/PHI/herminio_aquino.dds"
 				ideology = neutral_Social
-				traits = { neutrality_neutral_Social }
+				traits = {
+					career_politician
+					agronomist
+					neutrality_neutral_Social
+				}
 			}
 			if = { limit = { date < 2009.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -257,7 +308,11 @@ if = {
 				name = "Jaime Galvez-Tan"
 				picture = "gfx/leaders/PHI/jaime_galvez_tan.dds"
 				ideology = neutral_Social
-				traits = { neutrality_neutral_Social }
+				traits = {
+					doctor
+					public_health_admin
+					neutrality_neutral_Social
+				}
 			}
 			if = { limit = { date < 2013.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -269,7 +324,11 @@ if = {
 				name = "Robbie Pierre 'Bobbit' Roco"
 				picture = "gfx/leaders/PHI/bobbit_roco.dds"
 				ideology = neutral_Social
-				traits = { neutrality_neutral_Social }
+				traits = {
+					career_politician
+					lawyer
+					neutrality_neutral_Social
+				}
 			}
 			if = { limit = { date < 2021.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -281,7 +340,11 @@ if = {
 				name = "Francisco 'Isko' Moreno Domagoso"
 				picture = "gfx/leaders/PHI/isko_moreno.dds"
 				ideology = neutral_Social
-				traits = { neutrality_neutral_Social }
+				traits = {
+					actor_politician
+					populist
+					neutrality_neutral_Social
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -297,7 +360,11 @@ if = {
 				name = "Etta Rosales"
 				picture = "gfx/leaders/PHI/etta_rosales.dds"
 				ideology = socialism
-				traits = { western_socialism }
+				traits = {
+					political_prisoner
+					career_politician
+					western_socialism
+				}
 			}
 			if = { limit = { date < 2010.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -309,7 +376,11 @@ if = {
 				name = "Walden Bello"
 				picture = "gfx/leaders/PHI/walden_bello.dds"
 				ideology = socialism
-				traits = { western_socialism }
+				traits = {
+					writer
+					economist
+					western_socialism
+				}
 			}
 			if = { limit = { date < 2016.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -321,7 +392,11 @@ if = {
 				name = "Risa Hontiveros"
 				picture = "gfx/leaders/PHI/risa_hontiveros.dds"
 				ideology = socialism
-				traits = { western_socialism }
+				traits = {
+					career_politician
+					staunch_constitutionalist
+					western_socialism
+				}
 			}
 			if = { limit = { date < 2028.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -333,7 +408,11 @@ if = {
 				name = "Chel Diokno"
 				picture = "gfx/leaders/PHI/chel_diokno.dds"
 				ideology = socialism
-				traits = { western_socialism }
+				traits = {
+					lawyer
+					political_prisoner
+					western_socialism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -345,7 +424,11 @@ if = {
 				name = "Perci Cendaña"
 				picture = "gfx/leaders/PHI/perci_cendana.dds"
 				ideology = socialism
-				traits = { western_socialism }
+				traits = {
+					career_politician
+					union_man
+					western_socialism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -357,7 +440,11 @@ if = {
 				name = "Dadah Ismula"
 				picture = "gfx/leaders/PHI/dadah_ismula.dds"
 				ideology = socialism
-				traits = { western_socialism }
+				traits = {
+					career_politician
+					diplomat
+					western_socialism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -373,7 +460,11 @@ if = {
 				name = "Lito Osmeña"
 				picture = "gfx/leaders/PHI/lito_osmena.dds"
 				ideology = Neutral_green
-				traits = { neutrality_neutral_green }
+				traits = {
+					businessman
+					career_politician
+					neutrality_neutral_green
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -385,7 +476,11 @@ if = {
 				name = "Miguel 'Mimo' Osmeña"
 				picture = "gfx/leaders/PHI/migs_osmena.dds"
 				ideology = Neutral_green
-				traits = { neutrality_neutral_green }
+				traits = {
+					businessman
+					career_politician
+					neutrality_neutral_green
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -401,7 +496,12 @@ if = {
 				name = "Miriam Defensor Santiago"
 				picture = "gfx/leaders/PHI/miriam_defensor_santiago.dds"
 				ideology = Neutral_Communism
-				traits = { neutrality_Neutral_Communism }
+				traits = {
+					lawyer
+					judiciary
+					stubborn
+					neutrality_Neutral_Communism
+				}
 			}
 			if = { limit = { date < 2016.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -413,7 +513,11 @@ if = {
 				name = "Francisco Tatad"
 				picture = "gfx/leaders/PHI/francisco_tatad.dds"
 				ideology = Neutral_Communism
-				traits = { neutrality_Neutral_Communism }
+				traits = {
+					journalist
+					career_politician
+					neutrality_Neutral_Communism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -425,7 +529,11 @@ if = {
 				name = "Dr. Esperanza Cabral"
 				picture = "gfx/leaders/PHI/esperanza_cabral.dds"
 				ideology = Neutral_Communism
-				traits = { neutrality_Neutral_Communism }
+				traits = {
+					doctor
+					public_health_admin
+					neutrality_Neutral_Communism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -437,7 +545,11 @@ if = {
 				name = "Mike Defensor"
 				picture = "gfx/leaders/PHI/mike_defensor.dds"
 				ideology = Neutral_Communism
-				traits = { neutrality_Neutral_Communism }
+				traits = {
+					career_politician
+					lawyer
+					neutrality_Neutral_Communism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -449,7 +561,11 @@ if = {
 				name = "Narciso Santiago Jr."
 				picture = "gfx/leaders/PHI/narciso_santiago_jr.dds"
 				ideology = Neutral_Communism
-				traits = { neutrality_Neutral_Communism }
+				traits = {
+					career_politician
+					lawyer
+					neutrality_Neutral_Communism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -460,18 +576,19 @@ if = {
 
 		if = { limit = { check_variable = { Neutral_Autocracy_leader = 0 } }
 			add_to_variable = { Neutral_Autocracy_leader = 1 }
-			if = { limit = { NOT = { has_country_flag = PHI_anti_dynasty_law_active } }
+			if = { limit = { NOT = { has_country_flag = PHI_anti_dynasty_law_active } NOT = { has_country_flag = PHI_edsa_dos_erap_victory }
 				hidden_effect = { kill_country_leader = yes }
 				create_country_leader = {
 					name = "Joseph 'Erap' Estrada"
 					picture = "gfx/leaders/PHI/joseph_estrada.dds"
 					ideology = Neutral_Autocracy
 					traits = {
-						neutrality_Neutral_Autocracy
-						greedy
-						deceitful
-						silent_workhorse
-					}
+					greedy
+					deceitful
+					populist
+					actor_politician
+					neutrality_Neutral_Autocracy
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -485,7 +602,11 @@ if = {
 					name = "Jinggoy Estrada"
 					picture = "gfx/leaders/PHI/jinggoy_estrada.dds"
 					ideology = Neutral_Autocracy
-					traits = { neutrality_Neutral_Autocracy }
+					traits = {
+					actor_politician
+					corruptible
+					neutrality_Neutral_Autocracy
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -499,7 +620,11 @@ if = {
 					name = "Joseph Victor 'JV' Ejercito"
 					picture = "gfx/leaders/PHI/jv_ejercito.dds"
 					ideology = Neutral_Autocracy
-					traits = { neutrality_Neutral_Autocracy }
+					traits = {
+					actor_politician
+					career_politician
+					neutrality_Neutral_Autocracy
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -512,12 +637,33 @@ if = {
 				name = "Juan Ponce Enrile"
 				picture = "gfx/leaders/PHI/juan_ponce_enrile.dds"
 				ideology = Neutral_Autocracy
-				traits = { neutrality_Neutral_Autocracy }
+				traits = {
+					lawyer
+					elder
+					sly
+					neutrality_Neutral_Autocracy
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
+		if = { limit = { check_variable = { Neutral_Autocracy_leader = 4 } NOT = { check_variable = { b = 1 } } }
+			add_to_variable = { Neutral_Autocracy_leader = 1 }
+			if = { limit = { NOT = { has_country_flag = PHI_anti_dynasty_law_active } }
+				hidden_effect = { kill_country_leader = yes }
+				create_country_leader = {
+					name = "Sebastian Duterte"
+					picture = "gfx/leaders/PHI/sebastian_duterte.dds"
+					ideology = Neutral_Autocracy
+					traits = {
+						career_politician
+						populist
+						neutrality_Neutral_Autocracy
+					}
+				}
+				set_temp_variable = { b = 1 }
+			}
+		}
 
-		
 	}
 
 	# Laban ng Demokratikong Pilipino (LDP) / Fight of Democratic Filipinos
@@ -530,7 +676,11 @@ if = {
 				name = "Arthur Angara"
 				picture = "gfx/leaders/PHI/arthur_angara.dds"
 				ideology = Neutral_conservatism
-				traits = { neutrality_Neutral_conservatism }
+				traits = {
+					lawyer
+					career_politician
+					neutrality_Neutral_conservatism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -542,7 +692,11 @@ if = {
 				name = "Bellaflor Angara-Castillo"
 				picture = "gfx/leaders/PHI/bellaflor_angara_castillo.dds"
 				ideology = Neutral_conservatism
-				traits = { neutrality_Neutral_conservatism }
+				traits = {
+					career_politician
+					lawyer
+					neutrality_Neutral_conservatism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -554,7 +708,11 @@ if = {
 				name = "Sonny Angara"
 				picture = "gfx/leaders/PHI/sonny_angara.dds"
 				ideology = Neutral_conservatism
-				traits = { neutrality_Neutral_conservatism }
+				traits = {
+					career_politician
+					lawyer
+					neutrality_Neutral_conservatism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -570,7 +728,11 @@ if = {
 				name = "Pablo P. Garcia"
 				picture = "gfx/leaders/PHI/pablo_garcia.dds"
 				ideology = oligarchism
-				traits = { neutrality_oligarchism }
+				traits = {
+					career_politician
+					lawyer
+					neutrality_oligarchism
+				}
 			}
 			if = { limit = { date < 2013.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -582,7 +744,11 @@ if = {
 				name = "Ronaldo Puno"
 				picture = "gfx/leaders/PHI/ronaldo_puno.dds"
 				ideology = oligarchism
-				traits = { neutrality_oligarchism }
+				traits = {
+					former_interior_minister
+					lawyer
+					neutrality_oligarchism
+				}
 			}
 			if = { limit = { date < 2028.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -595,7 +761,11 @@ if = {
 					name = "Luis Raymund 'LRay' Villafuerte Jr."
 					picture = "gfx/leaders/PHI/lray_villafuerte.dds"
 					ideology = oligarchism
-					traits = { neutrality_oligarchism }
+					traits = {
+					career_politician
+					businessman
+					neutrality_oligarchism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -608,7 +778,10 @@ if = {
 				name = "Reginald Velasco"
 				picture = "gfx/leaders/PHI/reginald_velasco.dds"
 				ideology = oligarchism
-				traits = { neutrality_oligarchism }
+				traits = {
+					career_politician
+					neutrality_oligarchism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -620,7 +793,11 @@ if = {
 				name = "Lorna Silverio"
 				picture = "gfx/leaders/PHI/lorna_silverio.dds"
 				ideology = oligarchism
-				traits = { neutrality_oligarchism }
+				traits = {
+					businessman
+					career_politician
+					neutrality_oligarchism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -633,7 +810,11 @@ if = {
 					name = "Pablo John Garcia"
 					picture = "gfx/leaders/PHI/pablo_john_garcia.dds"
 					ideology = oligarchism
-					traits = { neutrality_oligarchism }
+					traits = {
+					career_politician
+					lawyer
+					neutrality_oligarchism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -651,7 +832,12 @@ if = {
 				name = "Eduardo 'Danding' Cojuangco Jr."
 				picture = "gfx/leaders/PHI/danding_cojuangco.dds"
 				ideology = Neutral_Libertarian
-				traits = { neutrality_neutral_libertarian }
+				traits = {
+					businessman
+					sly
+					corruptible
+					neutrality_neutral_libertarian
+				}
 			}
 			if = { limit = { date < 2010.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -663,7 +849,11 @@ if = {
 				name = "Faustino Dy Jr."
 				picture = "gfx/leaders/PHI/faustino_dy_jr.dds"
 				ideology = Neutral_Libertarian
-				traits = { neutrality_neutral_libertarian }
+				traits = {
+					career_politician
+					businessman
+					neutrality_neutral_libertarian
+				}
 			}
 			if = { limit = { date < 2013.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -675,7 +865,11 @@ if = {
 				name = "Tito Sotto"
 				picture = "gfx/leaders/PHI/tito_sotto.dds"
 				ideology = Neutral_Libertarian
-				traits = { neutrality_neutral_libertarian }
+				traits = {
+					actor_politician
+					populist
+					neutrality_neutral_libertarian
+				}
 			}
 			if = { limit = { date < 2028.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -688,7 +882,11 @@ if = {
 					name = "Mark Cojuangco"
 					picture = "gfx/leaders/PHI/mark_cojuangco.dds"
 					ideology = Neutral_Libertarian
-					traits = { neutrality_neutral_libertarian }
+					traits = {
+					businessman
+					career_politician
+					neutrality_neutral_libertarian
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -701,7 +899,11 @@ if = {
 				name = "Jack Duavit"
 				picture = "gfx/leaders/PHI/jack_duavit.dds"
 				ideology = Neutral_Libertarian
-				traits = { neutrality_neutral_libertarian }
+				traits = {
+					businessman
+					career_politician
+					neutrality_neutral_libertarian
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -713,7 +915,11 @@ if = {
 				name = "Francis Escudero"
 				picture = "gfx/leaders/PHI/francis_escudero.dds"
 				ideology = Neutral_Libertarian
-				traits = { neutrality_neutral_libertarian }
+				traits = {
+					lawyer
+					career_politician
+					neutrality_neutral_libertarian
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -725,7 +931,11 @@ if = {
 				name = "Mark Enverga"
 				picture = "gfx/leaders/PHI/mark_enverga.dds"
 				ideology = Neutral_Libertarian
-				traits = { neutrality_neutral_libertarian }
+				traits = {
+					businessman
+					career_politician
+					neutrality_neutral_libertarian
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -742,7 +952,12 @@ if = {
 				name = "Aquilino 'Nene' Pimentel Jr."
 				picture = "gfx/leaders/PHI/nene_pimentel.dds"
 				ideology = anarchist_communism
-				traits = { emerging_anarchist_communism }
+				traits = {
+					lawyer
+					career_politician
+					staunch_constitutionalist
+					emerging_anarchist_communism
+				}
 			}
 			if = { limit = { date < 2010.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -755,7 +970,12 @@ if = {
 					name = "Jejomar 'Jojo' Binay"
 					picture = "gfx/leaders/PHI/jojo_binay.dds"
 					ideology = anarchist_communism
-					traits = { emerging_anarchist_communism }
+					traits = {
+					lawyer
+					corruptible
+					career_politician
+					emerging_anarchist_communism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -769,7 +989,12 @@ if = {
 					name = "Rodrigo Duterte"
 					picture = "gfx/leaders/PHI/rodrigo_duterte.dds"
 					ideology = anarchist_communism
-					traits = { emerging_anarchist_communism }
+					traits = {
+					ruthless
+					populist
+					war_criminal
+					emerging_anarchist_communism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -782,7 +1007,11 @@ if = {
 				name = "Emmanuel 'Manny' Pacquiao"
 				picture = "gfx/leaders/PHI/manny_pacquiao.dds"
 				ideology = anarchist_communism
-				traits = { emerging_anarchist_communism }
+				traits = {
+					athlete
+					populist
+					emerging_anarchist_communism
+				}
 			}
 			if = { limit = { date < 2028.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -795,7 +1024,12 @@ if = {
 					name = "Sara Duterte-Carpio"
 					picture = "gfx/leaders/PHI/sara_duterte.dds"
 					ideology = anarchist_communism
-					traits = { emerging_anarchist_communism }
+					traits = {
+					career_politician
+					populist
+					stubborn
+					emerging_anarchist_communism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -808,7 +1042,11 @@ if = {
 				name = "Aquilino 'Koko' Pimentel III"
 				picture = "gfx/leaders/PHI/koko_pimentel.dds"
 				ideology = anarchist_communism
-				traits = { emerging_anarchist_communism }
+				traits = {
+					lawyer
+					career_politician
+					emerging_anarchist_communism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -820,7 +1058,11 @@ if = {
 				name = "Alfonso Cusi"
 				picture = "gfx/leaders/PHI/alfonso_cusi.dds"
 				ideology = anarchist_communism
-				traits = { emerging_anarchist_communism }
+				traits = {
+					businessman
+					career_politician
+					emerging_anarchist_communism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -836,7 +1078,12 @@ if = {
 				name = "Manuel 'Manny' Bamba Villar Jr."
 				picture = "gfx/leaders/PHI/Manny_Villar.dds"
 				ideology = Nat_Populism
-				traits = { nationalist_Nat_Populism }
+				traits = {
+					businessman
+					sly
+					career_politician
+					nationalist_Nat_Populism
+				}
 			}
 			if = { limit = { date < 2018.1.1 } set_temp_variable = { b = 1 } }
 		}
@@ -850,7 +1097,11 @@ if = {
 					name = "Ferdinand 'Bongbong' Romualdez Marcos Jr."
 					picture = "gfx/leaders/PHI/bongbong_marcos.dds"
 					ideology = Nat_Populism
-					traits = { nationalist_Nat_Populism }
+					traits = {
+					career_politician
+					populist
+					nationalist_Nat_Populism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -864,7 +1115,11 @@ if = {
 					name = "Mark Villar"
 					picture = "gfx/leaders/PHI/mark_villar.dds"
 					ideology = Nat_Populism
-					traits = { nationalist_Nat_Populism }
+					traits = {
+					career_politician
+					businessman
+					nationalist_Nat_Populism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -878,7 +1133,11 @@ if = {
 					name = "Camille Villar"
 					picture = "gfx/leaders/PHI/camille_villar.dds"
 					ideology = Nat_Populism
-					traits = { nationalist_Nat_Populism }
+					traits = {
+					career_politician
+					businessman
+					nationalist_Nat_Populism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -892,7 +1151,11 @@ if = {
 					name = "Alan Peter Cayetano"
 					picture = "gfx/leaders/PHI/alan_cayetano.dds"
 					ideology = Nat_Populism
-					traits = { nationalist_Nat_Populism }
+					traits = {
+					lawyer
+					career_politician
+					nationalist_Nat_Populism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -906,7 +1169,11 @@ if = {
 					name = "Pia Cayetano"
 					picture = "gfx/leaders/PHI/pia_cayetano.dds"
 					ideology = Nat_Populism
-					traits = { nationalist_Nat_Populism }
+					traits = {
+					lawyer
+					career_politician
+					nationalist_Nat_Populism
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -924,7 +1191,10 @@ if = {
 				name = "Jesus 'Jayvee' Hinlo Jr."
 				picture = "gfx/leaders/PHI/jayvee_hinlo.dds"
 				ideology = Western_Autocracy
-				traits = { western_Western_Autocracy }
+				traits = {
+					career_politician
+					western_Western_Autocracy
+				}
 			}
 			if = { limit = { date < 2018.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -936,7 +1206,11 @@ if = {
 				name = "John Castriciones"
 				picture = "gfx/leaders/PHI/john_castriciones.dds"
 				ideology = Western_Autocracy
-				traits = { western_Western_Autocracy }
+				traits = {
+					lawyer
+					career_politician
+					western_Western_Autocracy
+				}
 			}
 			if = { limit = { date < 2019.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -948,7 +1222,10 @@ if = {
 				name = "Reynaldo Tamayo Jr."
 				picture = "gfx/leaders/PHI/reynaldo_tamayo.dds"
 				ideology = Western_Autocracy
-				traits = { western_Western_Autocracy }
+				traits = {
+					career_politician
+					western_Western_Autocracy
+				}
 			}
 			if = { limit = { date < 2022.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -961,7 +1238,12 @@ if = {
 					name = "Ferdinand 'Bongbong' Marcos Jr."
 					picture = "gfx/leaders/PHI/bongbong_marcos.dds"
 					ideology = Western_Autocracy
-					traits = { western_Western_Autocracy }
+					traits = {
+					populist
+					corruptible
+					career_politician
+					western_Western_Autocracy
+				}
 				}
 				if = { limit = { date < 2028.6.30 } set_temp_variable = { b = 1 } }
 			}
@@ -975,7 +1257,11 @@ if = {
 					name = "Sandro Marcos"
 					picture = "gfx/leaders/PHI/sandro_marcos.dds"
 					ideology = Western_Autocracy
-					traits = { western_Western_Autocracy }
+					traits = {
+					career_politician
+					inexperienced
+					western_Western_Autocracy
+				}
 				}
 				set_temp_variable = { b = 1 }
 			}
@@ -992,7 +1278,11 @@ if = {
 				name = "Antonio Trillanes IV"
 				picture = "gfx/leaders/PHI/antonio_trillanes.dds"
 				ideology = Nat_Fascism
-				traits = { nationalist_Nat_Fascism }
+				traits = {
+					military_career
+					staunch_constitutionalist
+					nationalist_Nat_Fascism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1004,7 +1294,11 @@ if = {
 				name = "Gary Alejano"
 				picture = "gfx/leaders/PHI/gary_alejano.dds"
 				ideology = Nat_Fascism
-				traits = { nationalist_Nat_Fascism }
+				traits = {
+					military_career
+					career_politician
+					nationalist_Nat_Fascism
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1020,7 +1314,11 @@ if = {
 				name = "Ismael Kiram II"
 				picture = "gfx/leaders/PHI/ismael_kiram_ii.dds"
 				ideology = Monarchist
-				traits = { neutrality_Monarchist }
+				traits = {
+					king
+					warmonger
+					neutrality_Monarchist
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1032,7 +1330,11 @@ if = {
 				name = "Muedzul Lail Tan Kiram"
 				picture = "gfx/leaders/PHI/muedzul_kiram.dds"
 				ideology = Monarchist
-				traits = { neutrality_Monarchist }
+				traits = {
+					king
+					humble
+					neutrality_Monarchist
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1048,7 +1350,11 @@ if = {
 				name = "Angelo Reyes"
 				picture = "gfx/leaders/PHI/angelo_reyes.dds"
 				ideology = Nat_Autocracy
-				traits = { nationalist_Nat_Autocracy }
+				traits = {
+					military_career
+					army_general
+					nationalist_Nat_Autocracy
+				}
 			}
 			if = { limit = { date < 2003.2.1 } set_temp_variable = { b = 1 } }
 		}
@@ -1060,7 +1366,11 @@ if = {
 				name = "Generoso Senga"
 				picture = "gfx/leaders/PHI/generoso_senga.dds"
 				ideology = Nat_Autocracy
-				traits = { nationalist_Nat_Autocracy }
+				traits = {
+					military_career
+					army_general
+					nationalist_Nat_Autocracy
+				}
 			}
 			if = { limit = { date < 2006.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -1072,7 +1382,11 @@ if = {
 				name = "Hermogenes Esperon Jr."
 				picture = "gfx/leaders/PHI/hermogenes_esperon.dds"
 				ideology = Nat_Autocracy
-				traits = { nationalist_Nat_Autocracy }
+				traits = {
+					military_career
+					army_general
+					nationalist_Nat_Autocracy
+				}
 			}
 			if = { limit = { date < 2010.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -1084,7 +1398,11 @@ if = {
 				name = "Alexander Yano"
 				picture = "gfx/leaders/PHI/alexander_yano.dds"
 				ideology = Nat_Autocracy
-				traits = { nationalist_Nat_Autocracy }
+				traits = {
+					military_career
+					army_general
+					nationalist_Nat_Autocracy
+				}
 			}
 			if = { limit = { date < 2014.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -1096,7 +1414,11 @@ if = {
 				name = "Eduardo Año"
 				picture = "gfx/leaders/PHI/eduardo_ano.dds"
 				ideology = Nat_Autocracy
-				traits = { nationalist_Nat_Autocracy }
+				traits = {
+					military_career
+					former_interior_minister
+					nationalist_Nat_Autocracy
+				}
 			}
 			if = { limit = { date < 2018.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -1108,7 +1430,11 @@ if = {
 				name = "Carlito Galvez Jr."
 				picture = "gfx/leaders/PHI/carlito_galvez.dds"
 				ideology = Nat_Autocracy
-				traits = { nationalist_Nat_Autocracy }
+				traits = {
+					military_career
+					diplomat
+					nationalist_Nat_Autocracy
+				}
 			}
 			if = { limit = { date < 2022.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -1120,7 +1446,11 @@ if = {
 				name = "Andres Centino"
 				picture = "gfx/leaders/PHI/andres_centino.dds"
 				ideology = Nat_Autocracy
-				traits = { nationalist_Nat_Autocracy }
+				traits = {
+					military_career
+					army_general
+					nationalist_Nat_Autocracy
+				}
 			}
 			if = { limit = { date < 2024.6.30 } set_temp_variable = { b = 1 } }
 		}
@@ -1132,7 +1462,11 @@ if = {
 				name = "Romeo Brawner Jr."
 				picture = "gfx/leaders/PHI/romeo_brawner.dds"
 				ideology = Nat_Autocracy
-				traits = { nationalist_Nat_Autocracy }
+				traits = {
+					military_career
+					army_general
+					nationalist_Nat_Autocracy
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1148,7 +1482,11 @@ if = {
 				name = "Jose Maria Sison"
 				picture = "gfx/leaders/PHI/jose_maria_sison.dds"
 				ideology = Communist-State
-				traits = { emerging_Communist-State }
+				traits = {
+					communist_revolutionary
+					permanent_revolutionary
+					emerging_Communist-State
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1160,7 +1498,11 @@ if = {
 				name = "Wilma Tiamzon"
 				picture = "gfx/leaders/PHI/wilma_tiamzon.dds"
 				ideology = Communist-State
-				traits = { emerging_Communist-State }
+				traits = {
+					communist_revolutionary
+					guerrilla_leader
+					emerging_Communist-State
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1172,7 +1514,11 @@ if = {
 				name = "Benito Tiamzon"
 				picture = "gfx/leaders/PHI/benito_tiamzon.dds"
 				ideology = Communist-State
-				traits = { emerging_Communist-State }
+				traits = {
+					communist_revolutionary
+					guerrilla_leader
+					emerging_Communist-State
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1184,7 +1530,11 @@ if = {
 				name = "Gregorio Rosal"
 				picture = "gfx/leaders/PHI/gregorio_rosal.dds"
 				ideology = Communist-State
-				traits = { emerging_Communist-State }
+				traits = {
+					communist_revolutionary
+					spy
+					emerging_Communist-State
+				}
 			}
 			set_temp_variable = { b = 1 }
 		}
@@ -1193,25 +1543,35 @@ if = {
 	# Abu Sayyaf
 	else_if = { limit = { has_country_flag = set_Caliphate }
 
-		if = { limit = { check_variable = { Caliphate_leader = 0 } date < 2007.1.1 }
+		if = { limit = { check_variable = { Caliphate_leader = 0 } }
 			add_to_variable = { Caliphate_leader = 1 }
 			hidden_effect = { kill_country_leader = yes }
 			create_country_leader = {
 				name = "Khadaffy Janjalani"
 				picture = "gfx/leaders/PHI/khadaffy_janjalani.dds"
 				ideology = Caliphate
-				traits = { salafist_Caliphate }
+				traits = {
+					taliban_militant
+					ruthless
+					salafist_Caliphate
+				}
 			}
+			if = { limit = { date < 2007.1.1 } set_temp_variable = { b = 1 } }
 		}
 
-		if = { limit = { check_variable = { Caliphate_leader = 1 } date > 2007.1.1 }
+		if = { limit = { check_variable = { Caliphate_leader = 1 } NOT = { check_variable = { b = 1 } } }
 			add_to_variable = { Caliphate_leader = 1 }
 			hidden_effect = { kill_country_leader = yes }
 			create_country_leader = {
 				name = "Isnilon Totoni Hapilon"
 				picture = "gfx/leaders/PHI/isnilon_hapilon.dds"
 				ideology = Caliphate
-				traits = { salafist_Caliphate }
+				traits = {
+					taliban_militant
+					war_criminal
+					pro_isis
+					salafist_Caliphate
+				}
 			}
 		}
 	}
