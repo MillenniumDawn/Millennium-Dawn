@@ -184,21 +184,46 @@ def test_comment_brace_does_not_shift_indent():
 
 
 def test_country_modifier_names_must_be_snake_case():
-    valid = [
-        "focus = {\n",
-        "\tid = TST_valid\n",
-        "\tcustom_effect_tooltip = { MODIFIER = TST_valid_modifier }\n",
-        "}\n",
-    ]
-    invalid = [
-        "focus = {\n",
-        "\tid = TST_invalid\n",
-        "\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }\n",
-        "}\n",
-    ]
+    for block_type in ("focus", "shared_focus", "joint_focus"):
+        valid = [
+            f"{block_type} = {{\n",
+            "\tid = TST_valid\n",
+            "\tcustom_effect_tooltip = { MODIFIER = TST_valid_modifier }\n",
+            "}\n",
+        ]
+        invalid = [
+            f"{block_type} = {{\n",
+            "\tid = TST_invalid\n",
+            "\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }\n",
+            "}\n",
+        ]
 
-    assert validate_modifier_naming(valid, "valid.txt") == 0
-    assert validate_modifier_naming(invalid, "invalid.txt") == 1
+        assert validate_modifier_naming(valid, "valid.txt") == 0
+        assert validate_modifier_naming(invalid, "invalid.txt") == 1
+
+
+def test_shared_and_joint_focuses_are_reindented_at_top_level(tmp_path):
+    for block_type in ("shared_focus", "joint_focus"):
+        source = tmp_path / f"{block_type}.txt"
+        output = tmp_path / f"{block_type}-output.txt"
+        source.write_text(
+            f"""\t{block_type} = {{
+\t\tid = TST_{block_type}
+\t\tcompletion_reward = {{
+\t\t\tadd_political_power = 1
+\t\t}}
+\t}}
+""",
+            encoding="utf-8",
+        )
+
+        assert standardize_focus_tree(str(source), str(output)) is True
+
+        lines = output.read_text(encoding="utf-8").splitlines()
+        assert lines[0] == f"{block_type} = {{"
+        assert f"\tid = TST_{block_type}" in lines
+        assert "\t\tadd_political_power = 1" in lines
+        assert lines[-1] == "}"
 
 
 def test_invalid_modifier_name_rejects_standardization_without_writing(tmp_path):

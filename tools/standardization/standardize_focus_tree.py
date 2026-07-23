@@ -99,79 +99,54 @@ _MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_[a-z][a-z0-9_]*$")
 
 
 def validate_modifier_naming(lines, filepath, check_naming=True):
-    """Check country-specific MODIFIER values follow TAG_snake_case.
-
-    Logs an error for each violation and returns the number found. Untagged
-    dynamic modifiers are outside this convention and are left unchanged.
-    """
+    """Check country-specific MODIFIER values in every focus block follow TAG_snake_case."""
     if not check_naming:
         return 0
 
     violations = 0
-    text = "".join(lines)
-    # Map character positions to line numbers for extract_block
-    line_starts = []
-    cum = 0
-    for line in lines:
-        line_starts.append(cum)
-        cum += len(line)
-
-    pos = 0
-    while True:
-        fm = re.search(r"\bfocus\s*=\s*\{", text[pos:])
-        if not fm:
-            break
-        char_start = pos + fm.start()
-        # Convert character position to line index
-        import bisect
-
-        line_idx = bisect.bisect_right(line_starts, char_start) - 1
-        if line_idx < 0:
-            line_idx = 0
-        block_lines, end = extract_block(lines, line_idx)
-        if not block_lines:
-            pos = char_start + 1
+    index = 0
+    while index < len(lines):
+        match = _BLOCK_DISPATCH_RE.match(lines[index].rstrip())
+        if not match:
+            index += 1
             continue
 
-        # Extract focus ID from the block.
+        block_type = match.group(1)
+        block_lines, next_index = extract_block(lines, index)
+        if block_type not in _FOCUS_BLOCK_TYPES or not block_lines:
+            index = next_index
+            continue
+
         focus_id = ""
         for line in block_lines:
-            m = re.match(r"\s*id\s*=\s*(\S+)", line)
-            if m:
-                focus_id = m.group(1)
+            id_match = re.match(r"\s*id\s*=\s*(\S+)", line)
+            if id_match:
+                focus_id = id_match.group(1)
                 break
 
-        # Scan each line for MODIFIER = <name>.
-        for line in block_lines:
-            m = re.search(r"MODIFIER\s*=\s*(\S+)", line)
-            if not m:
+        for line_offset, line in enumerate(block_lines):
+            modifier_match = re.search(r"MODIFIER\s*=\s*(\S+)", line)
+            if not modifier_match:
                 continue
-            name = m.group(1)
+            name = modifier_match.group(1)
             if not _MODIFIER_TAG_PREFIX_RE.match(name) or _MODIFIER_NAME_RE.match(name):
                 continue
 
-            # Build suggestion by converting the identifier body to snake_case.
-            suggested = name
-            parts = suggested.split("_")
-            if len(parts) >= 2:
-                tag = parts[0]
-                rest = "_".join(parts[1:])
-                rest = re.sub(r"([A-Z])([A-Z][a-z])", r"\1_\2", rest)
-                rest = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", rest)
-                rest = rest.lower()
-                suggested = f"{tag}_{rest}"
+            parts = name.split("_")
+            tag = parts[0]
+            rest = "_".join(parts[1:])
+            rest = re.sub(r"([A-Z])([A-Z][a-z])", r"\1_\2", rest)
+            rest = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", rest)
+            suggested = f"{tag}_{rest.lower()}"
 
-            line_num = line_idx + block_lines.index(line) + 1
             log_message(
                 "ERROR",
-                f"{filepath}:{line_num} - Focus '{focus_id}' uses non-standard"
-                f" MODIFIER name '{name}' — use '{suggested}' (TAG_snake_case)",
+                f"{filepath}:{index + line_offset + 1} - {block_type} '{focus_id}' uses"
+                f" non-standard MODIFIER name '{name}' — use '{suggested}' (TAG_snake_case)",
             )
             violations += 1
 
-        # Advance past this block
-        end_char = line_starts[end] if end < len(line_starts) else len(text)
-        pos = end_char
+        index = next_index
 
     return violations
 
