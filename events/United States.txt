@@ -30095,7 +30095,31 @@ country_event = {
 	}
 }
 
-# MNNA Under Attack - USA dilemma
+# MNNA Dummy Event
+country_event = {
+	id = department_of_state.1000
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		random_scope_in_array = {
+			array = global.nato_members
+			limit = {
+				is_faction_leader = yes
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = mnna_event_cooldown }
+				NOT = { has_war_with = event_target:mnna_aggressor }
+			}
+			set_country_flag = {
+				flag = mnna_event_cooldown
+				days = 7
+				value = 1
+			}
+			country_event = { id = department_of_state.232 days = 2 }
+		}
+	}
+}
+
+# MNNA Under Attack - NATO Faction leader dilemma
 country_event = {
 	id = department_of_state.232
 	title = department_of_state.232.t
@@ -30122,19 +30146,26 @@ country_event = {
 	option = {
 		name = department_of_state.232.a
 		log = "[GetDateText]: [This.GetName]: department_of_state.232.a executed"
-		add_to_war = {
-			targeted_alliance = FROM
-			enemy = event_target:mnna_aggressor
-		}
-		newline = yes
 		add_war_support = 0.05
 		add_political_power = -50
 		newline = yes
-		add_opinion_modifier = { target = FROM modifier = usa_fp_major_alliance_support }
-		reverse_add_opinion_modifier = { target = FROM modifier = usa_fp_major_alliance_support }
-		add_relation_modifier = {
-			target = FROM
-			modifier = generic_increased_military_support
+		event_target:mnna_defender = {
+			add_opinion_modifier = { target = ROOT modifier = usa_fp_major_alliance_support }
+			reverse_add_opinion_modifier = { target = ROOT modifier = usa_fp_major_alliance_support }
+			add_relation_modifier = {
+				target = ROOT
+				modifier = generic_increased_military_support
+			}
+			hidden_effect = {
+				event_target:mnna_aggressor = {
+					ROOT = {
+						add_to_war = {
+							targeted_alliance = PREV.PREV
+							enemy = PREV
+						}
+					}
+				}
+			}
 		}
 		ai_chance = {
 			base = 20
@@ -30146,6 +30177,7 @@ country_event = {
 						original_tag = SOV
 						original_tag = PER
 					}
+					NOT = { is_in_faction_with = PREV }
 				}
 			}
 			modifier = {
@@ -30393,7 +30425,7 @@ country_event = {
 	}
 }
 
-# NATO Coup via Influence — USA dilemma
+# NATO Coup via Influence — NATO faction leader dilemma
 country_event = {
 	id = department_of_state.233
 	title = department_of_state.233.t
@@ -30402,7 +30434,6 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		original_tag = USA
 		has_idea = NATO_member
 		is_faction_leader = yes
 		NOT = { has_country_flag = collapsed_nation }
@@ -30410,6 +30441,7 @@ country_event = {
 			exists = yes
 			has_idea = NATO_member
 			NOT = { has_government = democratic }
+			NOT = { has_government = neutrality }
 		}
 	}
 
@@ -30420,7 +30452,7 @@ country_event = {
 		event_target:nato_coup_victim = {
 			remove_ideas = NATO_member
 			leave_faction = yes
-			add_opinion_modifier = { target = USA modifier = usa_fp_major_diplomatic_fallout }
+			add_opinion_modifier = { target = ROOT modifier = usa_fp_major_diplomatic_fallout }
 			decrease_economic_growth = yes
 			add_stability = -0.05
 			country_event = { id = department_of_state.234 days = 1 }
@@ -30451,7 +30483,7 @@ country_event = {
 			add_stability = -0.07
 			add_political_power = -50
 			set_temp_variable = { percent_change = 10.00 }
-			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { tag_index = ROOT }
 			change_influence_percentage = yes
 			if = {
 				limit = {
@@ -30492,10 +30524,10 @@ country_event = {
 			tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 			if = {
 				limit = {
-					NOT = { original_tag = USA }
+					NOT = { tag = ROOT }
 					NOT = { tag = event_target:nato_coup_victim }
 				}
-				add_opinion_modifier = { target = USA modifier = usa_fp_diplomatic_protest }
+				add_opinion_modifier = { target = ROOT modifier = usa_fp_diplomatic_protest }
 			}
 		}
 		ai_chance = {
