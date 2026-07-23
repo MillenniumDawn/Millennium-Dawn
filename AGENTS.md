@@ -37,7 +37,7 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - Omit defaults: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
 - No empty `mutually_exclusive`/`available` blocks; limit permanent effects to 5
 - Never `available = { always = no }` with a `bypass` — use matching condition
-- High-cost focuses (cost >= 8, or >= 5 for mil/econ/research): add the standard bankruptcy guard (`has_active_mission = bankruptcy_incoming_collapse` → `factor = 0`) inside `ai_will_do` — block in `.claude/docs/focus-tree-reference.md`
+- Money-spending focuses (completion_reward spends treasury via `modify_treasury_effect`, or a money-costing scripted/building effect): add the standard bankruptcy guard (`has_active_mission = bankruptcy_incoming_collapse` → `factor = 0`) inside `ai_will_do`. Gate on the reward's money cost (~5bn+), not the focus `cost` (completion time). Block in `.claude/docs/focus-tree-reference.md`
 - Ref: `.claude/docs/focus-tree-reference.md`
 
 ## Decisions

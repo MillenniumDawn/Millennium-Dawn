@@ -158,7 +158,7 @@ These custom filters exist for other country trees — do not add them to Israel
 | Only custom filter, no generic                                         | Always add the paired generic (see tables above)                                                                    |
 | `FOCUS_FILTER_MILITARY`                                                | Use `FOCUS_FILTER_MILITARY_LAWS` (MILITARY is a legacy/unused alias)                                                |
 | Using `FOCUS_FILTER_DIPLOMACY` for all foreign policy                  | Use `FOCUS_FILTER_FOREIGN_POLICY` for general relations; `FOCUS_FILTER_DIPLOMACY` for specific diplomatic actions   |
-| Tagging economic investment focuses without `FOCUS_FILTER_EXPENDITURE` | Add `FOCUS_FILTER_EXPENDITURE` to high-cost industrial/economic focuses, and add a bankruptcy guard in `ai_will_do` |
+| Tagging economic investment focuses without `FOCUS_FILTER_EXPENDITURE` | Add `FOCUS_FILTER_EXPENDITURE` to treasury-spending industrial/economic focuses, and add a bankruptcy guard in `ai_will_do` |
 | Missing filter entirely                                                | Every focus must have at least one filter                                                                           |
 | Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific — never cross-assign                    |
 
@@ -166,5 +166,5 @@ These custom filters exist for other country trees — do not add them to Israel
 
 1. Choose the **country-specific custom filter** matching the focus's branch.
 2. Choose the **generic filter** from the tables above (one or two — don't over-tag).
-3. For high-cost focuses, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` — AI-only, not in `available`. Thresholds: `cost >= 8` for any focus, or `cost >= 5` if tagged military / economy / research. **Why:** at/above these costs the focus commits enough treasury that an AI already in collapse digs deeper; the lower econ/mil/research threshold reflects that those focuses typically chain larger monetary effects on top of the focus cost.
+3. For money-spending focuses, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` (AI-only, not in `available`). The gate is the completion_reward's actual money cost (a negative `treasury_change` via `modify_treasury_effect` summing to ~5bn or more, or a money-costing scripted/building effect), not the focus `cost` field, which is completion time. **Why:** a reward that spends real treasury drags an AI already in collapse deeper into debt.
 4. Write `search_filters` as a single line: `search_filters = { CUSTOM_FILTER GENERIC_FILTER }`.
