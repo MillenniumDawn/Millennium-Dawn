@@ -962,16 +962,6 @@ country_event = {
 		tag = SIA
 	}
 
-	immediate = {
-		if = {
-			limit = {
-				SIA_royalist_trunk_open = yes
-				NOT = { has_completed_focus = SIA_2004_tsunami }
-			}
-			complete_national_focus = SIA_2004_tsunami
-		}
-	}
-
 	option = {
 		name = thailand.52.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.52.a"
@@ -1034,7 +1024,10 @@ country_event = {
 				instant_build = yes
 			}
 		}
-		# Option b intentionally has no repair hook.
+		# No repair hook - the coast is left to languish. This is the scarred-coast
+		# malus that SIA_rebuild_the_andaman ("After the Wave") later clears, migrated
+		# here from the removed thailand.72 focus event.
+		add_timed_idea = { idea = SIA_scarred_coast days = 730 }
 		if = {
 			limit = { has_idea = SIA_tourism_powerhouse }
 			remove_ideas = SIA_tourism_powerhouse
@@ -1250,7 +1243,10 @@ country_event = {
 		set_temp_variable = { treasury_change = -2 }
 		modify_treasury_effect = yes
 		if = {
-			limit = { NOT = { has_idea = SIA_tourism_powerhouse } }
+			limit = {
+				NOT = { has_idea = SIA_tourism_powerhouse }
+				NOT = { has_idea = SIA_tourism_high_value }
+			}
 			add_ideas = SIA_tourism_powerhouse
 		}
 		add_stability = 0.03
@@ -1924,70 +1920,6 @@ country_event = {
 		ai_chance = {
 			base = 3
 		}
-	}
-}
-
-# The Boxing Day Tsunami
-country_event = {
-	id = thailand.72
-	title = thailand.72.t
-	desc = thailand.72.d
-	picture = GFX_generic_factory
-	is_triggered_only = yes
-
-	trigger = {
-		tag = SIA
-	}
-
-	# Marshal the state - a government-led reconstruction blitz
-	option = {
-		name = thailand.72.a
-		log = "[GetDateText]: [Root.GetName]: event thailand.72.a"
-		add_stability = 0.03
-		add_political_power = 50
-		# Whoever holds power is seen to act decisively.
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.10 }
-		add_relative_party_popularity = yes
-		ai_chance = { base = 5 }
-	}
-
-	# Let the palace lead - royal charities and foreign aid
-	option = {
-		name = thailand.72.b
-		log = "[GetDateText]: [Root.GetName]: event thailand.72.b"
-		set_temp_variable = { treasury_change = -3 }
-		modify_treasury_effect = yes
-		add_stability = 0.02
-		add_political_power = 25
-		# Cheaper, but the coast recovers slowly without state money behind it.
-		add_timed_idea = { idea = SIA_scarred_coast days = 730 }
-		add_opinion_modifier = { target = USA modifier = medium_increase }
-		add_opinion_modifier = { target = JAP modifier = medium_increase }
-		# The royalist establishment claims the humanitarian mantle.
-		set_temp_variable = { party_index = 23 }
-		set_temp_variable = { party_popularity_increase = 0.12 }
-		add_relative_party_popularity = yes
-		recalculate_party = yes
-		ai_chance = { base = 5 }
-	}
-
-	# Build a tsunami early-warning system - invest in resilience
-	option = {
-		name = thailand.72.c
-		log = "[GetDateText]: [Root.GetName]: event thailand.72.c"
-		set_temp_variable = { treasury_change = -3 }
-		modify_treasury_effect = yes
-		add_stability = 0.02
-		add_war_support = 0.02
-		set_country_flag = SIA_tsunami_warning_system
-		add_tech_bonus = {
-			name = SIA_tsunami_warning
-			bonus = 0.5
-			uses = 1
-			category = CAT_computing_tech
-		}
-		ai_chance = { base = 3 }
 	}
 }
 
@@ -3895,7 +3827,15 @@ country_event = {
 	option = {
 		name = thailand.220.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.220.a"
-		add_ideas = SIA_tourism_powerhouse
+		# Restore the base tourism idea only if the player hasn't upgraded past it
+		# (SIA_high_value_tourism swaps powerhouse -> SIA_tourism_high_value).
+		if = {
+			limit = {
+				NOT = { has_idea = SIA_tourism_powerhouse }
+				NOT = { has_idea = SIA_tourism_high_value }
+			}
+			add_ideas = SIA_tourism_powerhouse
+		}
 	}
 }
 

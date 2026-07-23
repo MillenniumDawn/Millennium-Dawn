@@ -507,7 +507,9 @@ SIA_deep_south_category = {
 	}
 }
 
-SIA_asean_diplomacy_category = {
+# Consolidated into SIA_economy_category ("Thai Strategic and Economic Decisions").
+# HOI4 merges decision blocks sharing a category key.
+SIA_economy_category = {
 	SIA_asean_rotating_summit = {
 		icon = GFX_decision_generic_speech
 		cost = 50
@@ -635,6 +637,9 @@ SIA_economy_category = {
 
 		visible = {
 			has_country_flag = SIA_dynasty_holdings_unlocked
+			# Only while the Thaksinite party (Pheu Thai, idx 18) actually governs —
+			# the family's state-business nexus dries up the moment it loses power.
+			is_in_array = { ruling_party = 18 }
 		}
 
 		custom_cost_trigger = {
@@ -743,8 +748,16 @@ SIA_economy_category = {
 			has_country_flag = SIA_eec_active
 		}
 
+		custom_cost_trigger = {
+			check_variable = { treasury > 4.9 }
+		}
+		custom_cost_text = SIA_cost_5_0
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_eec_investment_phase"
+			# The corridor's next tranche is real money out the door before the works pay off.
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 			# Active build phase: faster construction and factory output for a year.
 			add_timed_idea = { idea = SIA_eec_construction_boom days = 365 }
 		}
@@ -791,15 +804,12 @@ SIA_economy_category = {
 
 	SIA_asean_arms_export = {
 		icon = GFX_decision_generic_military
+		cost = 50
 		days_remove = 365
 		days_re_enable = 365
 		fire_only_once = no
 
 		visible = {
-			has_country_flag = SIA_arms_export_unlocked
-		}
-
-		available = {
 			has_country_flag = SIA_arms_export_unlocked
 		}
 
@@ -2292,19 +2302,29 @@ SIA_realm_diplomacy_category = {
 	}
 }
 
-## Economy / Energy decisions
-SIA_economy_wave3_category = {
+## Economy / Energy / Strategic decisions — consolidated into SIA_economy_category
+## ("Thai Strategic and Economic Decisions"). HOI4 merges decision blocks sharing
+## a category key.
+SIA_economy_category = {
 
 	SIA_renegotiate_china_contracts = {
 		icon = GFX_decision_generic_economy
-		fire_only_once = yes
 
 		visible = {
 			has_completed_focus = SIA_eec_take_off
 		}
 
+		# Stays visible but greys out once taken, rather than vanishing.
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_china_contracts_renegotiated
+				NOT = { has_country_flag = SIA_china_contracts_renegotiated }
+			}
+		}
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_renegotiate_china_contracts"
+			set_country_flag = SIA_china_contracts_renegotiated
 			country_event = { id = thailand.313 days = 3 }
 		}
 
@@ -2315,14 +2335,22 @@ SIA_economy_wave3_category = {
 
 	SIA_us_security_review = {
 		icon = GFX_decision_generic_military
-		fire_only_once = yes
 
 		visible = {
 			has_completed_focus = SIA_treaty_ally
 		}
 
+		# Stays visible but greys out once taken, rather than vanishing.
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_us_security_reviewed
+				NOT = { has_country_flag = SIA_us_security_reviewed }
+			}
+		}
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_us_security_review"
+			set_country_flag = SIA_us_security_reviewed
 			country_event = { id = thailand.314 days = 3 }
 		}
 
@@ -2388,12 +2416,23 @@ SIA_economy_wave3_category = {
 
 	SIA_tax_modernization = {
 		icon = GFX_decision_generic_economy
-		fire_only_once = yes
-		# B-1: the old NOT={has_idea=SIA_clean_revenue} guard was
-		# redirected to SIA_debt_free_credibility by the merge — but that idea is also
-		# granted by the mainstream SIA_repay_the_imf focus, which would permanently lock
-		# IMF-repayment players out of this decision. fire_only_once=yes already prevents
-		# any double-run, so the guard is removed.
+		# Single-run via the available flag-gate (not fire_only_once), so it greys out
+		# in place instead of vanishing. The old NOT={has_idea=SIA_clean_revenue} guard
+		# was dropped because SIA_repay_the_imf also grants that idea and would have
+		# permanently locked IMF-repayment players out.
+
+		# Own date gate: the parent category now surfaces earlier for other levers, so
+		# this keeps tax modernization to the mid-2000s window it was written for.
+		visible = {
+			date > 2005.1.1
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_tax_modernized
+				NOT = { has_country_flag = SIA_tax_modernized }
+			}
+		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 11.9 }
@@ -2402,6 +2441,7 @@ SIA_economy_wave3_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_tax_modernization"
+			set_country_flag = SIA_tax_modernized
 			# SIA_clean_revenue merged → SIA_debt_free_credibility; also granted by
 			# SIA_repay_the_imf - guard so the two sources never stack.
 			if = {
@@ -2429,15 +2469,18 @@ SIA_economy_wave3_category = {
 	## RTAF recapitalization
 	SIA_gripen_ef_upgrade = {
 		icon = GFX_decision_generic_air
-		fire_only_once = yes
 
 		visible = {
 			date > 2025.8.1
 			has_completed_focus = SIA_gripen_ef_program
 		}
 
+		# Stays visible but greys out once the contract is signed, rather than vanishing.
 		available = {
-			NOT = { has_country_flag = SIA_gripen_ef_contracted }
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_gripen_ef_contracted
+				NOT = { has_country_flag = SIA_gripen_ef_contracted }
+			}
 		}
 
 		cost = 50
