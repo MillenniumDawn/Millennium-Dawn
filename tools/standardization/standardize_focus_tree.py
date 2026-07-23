@@ -91,6 +91,93 @@ _LOG_FOCUS_RE = re.compile(
     r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:[Ff]ocus\s+)?([\w-]+)(")'
 )
 
+# Matches MODIFIER = <name> on a single line inside a focus block.
+# Valid pattern: 2-4 uppercase tag prefix + underscore + snake_case body, no _modifier suffix.
+_MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_[a-z][a-z_]+$")
+# Suffix patterns that violate the convention.
+_MODIFIER_BAD_SUFFIX_RE = re.compile(r"_modifier$", re.IGNORECASE)
+
+
+def validate_modifier_naming(lines, filepath, check_naming=True):
+    """Check MODIFIER = <name> in custom_effect_tooltip blocks follow TAG_snake_case.
+
+    Logs a WARNING for each violation with the focus ID, the offending name,
+    and the suggested fix (convert to snake_case, strip _modifier suffix).
+    Returns the count of violations found.
+    """
+    if not check_naming:
+        return 0
+
+    violations = 0
+    text = "".join(lines)
+    # Map character positions to line numbers for extract_block
+    line_starts = []
+    cum = 0
+    for line in lines:
+        line_starts.append(cum)
+        cum += len(line)
+
+    pos = 0
+    while True:
+        fm = re.search(r"\bfocus\s*=\s*\{", text[pos:])
+        if not fm:
+            break
+        char_start = pos + fm.start()
+        # Convert character position to line index
+        import bisect
+
+        line_idx = bisect.bisect_right(line_starts, char_start) - 1
+        if line_idx < 0:
+            line_idx = 0
+        block_lines, end = extract_block(lines, line_idx)
+        if not block_lines:
+            pos = char_start + 1
+            continue
+
+        # Extract focus ID from the block.
+        focus_id = ""
+        for line in block_lines:
+            m = re.match(r"\s*id\s*=\s*(\S+)", line)
+            if m:
+                focus_id = m.group(1)
+                break
+
+        # Scan each line for MODIFIER = <name>.
+        for line in block_lines:
+            m = re.search(r"MODIFIER\s*=\s*(\S+)", line)
+            if not m:
+                continue
+            name = m.group(1)
+            if _MODIFIER_NAME_RE.match(name):
+                continue  # already valid
+
+            # Build suggestion: strip _modifier suffix, convert to snake_case.
+            suggested = name
+            suggested = _MODIFIER_BAD_SUFFIX_RE.sub("", suggested)
+            parts = suggested.split("_")
+            if len(parts) >= 2:
+                tag = parts[0]
+                rest = "_".join(parts[1:])
+                rest = re.sub(r"([A-Z])([A-Z][a-z])", r"\1_\2", rest)
+                rest = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", rest)
+                rest = rest.lower()
+                suggested = f"{tag}_{rest}"
+
+            line_num = line_idx + block_lines.index(line) + 1
+            log_message(
+                "WARNING",
+                f"{filepath}:{line_num} - Focus '{focus_id}' uses non-standard"
+                f" MODIFIER name '{name}' — use '{suggested}'"
+                f" (TAG_snake_case, no _modifier suffix)",
+            )
+            violations += 1
+
+        # Advance past this block
+        end_char = line_starts[end] if end < len(line_starts) else len(text)
+        pos = end_char
+
+    return violations
+
 
 def _split_block(block_lines):
     """Split an extracted block into (header, inner_lines, close_line).
@@ -810,7 +897,9 @@ _BLOCK_COUNT_ORDER = (
 _BLOCK_DISPATCH_RE = re.compile(r"^\s*(" + "|".join(_BLOCK_COUNT_ORDER) + r")\s*=\s*\{")
 
 
-def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = False):
+def standardize_focus_tree(
+    input_file: str, output_file: str, verbose: bool = False, check_naming: bool = True
+):
     """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
     start_time = time.time()
 
@@ -891,6 +980,9 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
         final_lines.append(line)
     output_lines = final_lines
 
+    # Naming convention check (runs on original lines, not reformatted output)
+    violations = validate_modifier_naming(lines, input_file, check_naming)
+
     try:
         with open(output_file, "w", encoding="utf-8") as f:
             for line in output_lines:
@@ -928,6 +1020,12 @@ def main():
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    parser.add_argument(
+        "--check-naming",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Check MODIFIER names follow TAG_snake_case convention (default: on)",
+    )
 
     args = parser.parse_args()
 
@@ -948,7 +1046,9 @@ def main():
         args.verbose,
     )
 
-    if standardize_focus_tree(args.input_file, output_file, args.verbose):
+    if standardize_focus_tree(
+        args.input_file, output_file, args.verbose, args.check_naming
+    ):
         log_message("SUCCESS", f"Standardization completed: {output_file}")
     else:
         log_message("ERROR", "Standardization failed")
