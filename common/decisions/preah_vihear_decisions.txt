@@ -393,6 +393,10 @@ preah_vihear_decisions_category = {
 				limit = { country_exists = CBD }
 				CBD = { country_event = preah_vihear.1 }
 			}
+			if = {
+				limit = { has_idea = SIA_cambodia_partnership }
+				remove_ideas = SIA_cambodia_partnership
+			}
 		}
 
 		ai_will_do = {
@@ -437,6 +441,10 @@ preah_vihear_decisions_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_nationalist_rhetoric"
 			add_command_power = -15
+			if = {
+				limit = { has_idea = SIA_cambodia_partnership }
+				remove_ideas = SIA_cambodia_partnership
+			}
 			custom_effect_tooltip = preah_vihear_increase_tension_TT
 			hidden_effect = {
 				set_temp_variable = { pv_tension_delta = 0 }
@@ -486,7 +494,10 @@ preah_vihear_decisions_category = {
 		available = {
 			has_war = no
 			NOT = { has_decision = SIA_pv_nationalist_rhetoric }
-			NOT = { has_country_flag = preah_vihear_escalation_recent }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_recent_escalation_TT
+				NOT = { has_country_flag = preah_vihear_escalation_recent }
+			}
 		}
 
 		days_remove = 15
@@ -500,6 +511,10 @@ preah_vihear_decisions_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_military_posturing"
 			add_command_power = -15
+			if = {
+				limit = { has_idea = SIA_cambodia_partnership }
+				remove_ideas = SIA_cambodia_partnership
+			}
 			set_country_flag = {
 				flag = preah_vihear_escalation_recent
 				days = 180
@@ -555,7 +570,10 @@ preah_vihear_decisions_category = {
 		available = {
 			has_war = no
 			NOT = { has_decision = CBD_pv_military_posturing }
-			NOT = { has_country_flag = preah_vihear_protest_recent }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_recent_protest_TT
+				NOT = { has_country_flag = preah_vihear_protest_recent }
+			}
 		}
 
 		days_remove = 15
@@ -699,8 +717,14 @@ preah_vihear_decisions_category = {
 
 		available = {
 			NOT = { has_war_with = CBD }
-			NOT = { has_country_flag = preah_vihear_clash_active }
-			NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
 			custom_trigger_tooltip = {
 				tooltip = preah_vihear_tension_TT
 				check_variable = { GLOBAL.preah_vihear_tension > 40 }
@@ -719,6 +743,10 @@ preah_vihear_decisions_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_attack_preah_vihear"
 			add_threat = 1
+			if = {
+				limit = { has_idea = SIA_cambodia_partnership }
+				remove_ideas = SIA_cambodia_partnership
+			}
 			set_country_flag = preah_vihear_clash_active
 			CBD = {
 				country_event = preah_vihear.5
@@ -809,8 +837,14 @@ preah_vihear_decisions_category = {
 
 		available = {
 			NOT = { has_war_with = SIA }
-			NOT = { has_country_flag = preah_vihear_clash_active }
-			NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
 			custom_trigger_tooltip = {
 				tooltip = preah_vihear_tension_TT
 				check_variable = { GLOBAL.preah_vihear_tension > 40 }
@@ -977,7 +1011,10 @@ preah_vihear_decisions_category = {
 		cost = 75
 
 		available = {
-			NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
 			custom_trigger_tooltip = {
 				tooltip = preah_vihear_progress_50_TT
 				check_variable = { THIS.preah_vihear_war_progress > 49 }
@@ -1042,7 +1079,10 @@ preah_vihear_decisions_category = {
 		cost = 75
 
 		available = {
-			NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
 			custom_trigger_tooltip = {
 				tooltip = preah_vihear_progress_50_TT
 				check_variable = { THIS.preah_vihear_war_progress > 49 }
@@ -1086,6 +1126,82 @@ preah_vihear_decisions_category = {
 						value = 1
 					}
 					country_event = preah_vihear.130
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	### Territorial resolution - Thailand (annex the disputed state, ends the dispute) ###
+	SIA_pv_capture_northern_khmer = {
+		icon = GFX_decision_generic_territorial_pressure
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 512
+			}
+		}
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+			NOT = { controls_state = 512 }
+		}
+
+		cost = 75
+		days_remove = 30
+
+		available = {
+			NOT = { has_war_with = CBD }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_progress_80_TT
+				check_variable = { THIS.preah_vihear_war_progress > 79 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_capture_northern_khmer"
+			custom_effect_tooltip = preah_vihear_decrease_progress_80_TT
+			subtract_from_variable = { THIS.preah_vihear_war_progress = 80 }
+			clamp_variable = {
+				var = THIS.preah_vihear_war_progress
+				min = 0
+				max = 100
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove decision SIA_pv_capture_northern_khmer"
+			transfer_state = 512
+			set_global_flag = GLOBAL_preah_vihear_resolved
+			custom_effect_tooltip = preah_vihear_tension_resolved_TT
+			set_variable = { GLOBAL.preah_vihear_tension = 0 }
+			clamp_variable = {
+				var = GLOBAL.preah_vihear_tension
+				min = 0
+				max = 100
+			}
+			add_ideas = SIA_preah_vihear_vindicated
+			add_political_power = 75
+			add_war_support = 0.05
+			news_event = preah_vihear_news.4
+			if = {
+				limit = { country_exists = CBD }
+				CBD = {
+					add_ideas = CBD_preah_vihear_humiliation
+					country_event = preah_vihear.131
 				}
 			}
 		}
@@ -1138,6 +1254,7 @@ preah_vihear_decisions_category = {
 				min = 0
 				max = 100
 			}
+			custom_effect_tooltip = preah_vihear_deescalation_used_TT
 			add_to_variable = { SIA_pv_deescalation_uses = 1 }
 			clamp_variable = {
 				var = SIA_pv_deescalation_uses
@@ -1211,6 +1328,7 @@ preah_vihear_decisions_category = {
 				min = 0
 				max = 100
 			}
+			custom_effect_tooltip = preah_vihear_deescalation_used_TT
 			add_to_variable = { CBD_pv_deescalation_uses = 1 }
 			clamp_variable = {
 				var = CBD_pv_deescalation_uses
@@ -1407,7 +1525,10 @@ preah_vihear_decisions_category = {
 
 		available = {
 			NOT = { has_war_with = CBD }
-			NOT = { has_country_flag = preah_vihear_clash_active }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
 		}
 
 		complete_effect = {
@@ -1456,7 +1577,10 @@ preah_vihear_decisions_category = {
 
 		available = {
 			NOT = { has_war_with = CBD }
-			NOT = { has_country_flag = preah_vihear_clash_active }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
 			OR = {
 				has_government = nationalist
 				has_idea = intervention_regional_interventionism
