@@ -40,6 +40,13 @@ _META_TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
 )
 
+# Quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# The `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives in
+# the quoted assignment, so a leading placeholder with only a trailing constant must
+# still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_META_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
+
 _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
 
 
@@ -220,9 +227,11 @@ def scan_meta_constructed_names(files, defined_names):
     template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
 
     For every file containing ``meta_effect`` or ``meta_trigger``, extracts
-    identifier templates of the form ``prefix_[VAR]_suffix``, splits on ``[VAR]``
-    segments, and matches any defined name whose lower-cased form starts with
-    *prefix* and ends with *suffix*.
+    identifier templates of the form ``prefix_[VAR]_suffix`` — both bare
+    identifiers and quoted meta-substitution values (tooltips/templates such as
+    ``"[?var]_unlock_btn_enabled"``) — splits on ``[VAR]`` segments, and matches
+    any defined name whose lower-cased form starts with *prefix* and ends with
+    *suffix*.
     """
     defined_lower = {n.lower(): n for n in defined_names}
     used = set()
@@ -239,8 +248,12 @@ def scan_meta_constructed_names(files, defined_names):
 
         content_clean = strip_comments(content)
 
-        for m in _META_TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
+        templates = {m.group(1) for m in _META_TEMPLATE_RE.finditer(content_clean)}
+        templates.update(
+            m.group(1) for m in _QUOTED_META_TEMPLATE_RE.finditer(content_clean)
+        )
+
+        for template in templates:
             parts = re.split(r"\[[^\]]+\]", template)
             prefix = parts[0].lower()
             suffix = parts[-1].lower() if len(parts) > 1 else ""

@@ -7,25 +7,13 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "validation"))
 from validator_common import BaseValidator, Colors, run_validator_main
 
 # Prevent self-validation
 _SKIP_SCRIPTS = frozenset({"validate_tools.py"})
-
-# Library/utility modules that are imported by other scripts, not run directly.
-# Shebang, executability, and main-guard checks are not meaningful for these.
-_LIBRARY_MODULES = frozenset(
-    {
-        "shared_utils.py",
-        "loc.py",
-        "logging_tool.py",
-        "common_utils.py",
-        "validator_common.py",
-    }
-)
 
 
 class ToolsValidator(BaseValidator):
@@ -50,18 +38,21 @@ class ToolsValidator(BaseValidator):
             )
             return []
 
-    def _validate_script(self, path: Path) -> Tuple[Optional[str], bool, bool]:
-        """Read file once; return (syntax_error, has_shebang, has_main)."""
+    def _validate_script(
+        self, path: Path
+    ) -> Tuple[Optional[str], bool, bool, bool, Set[str]]:
+        """Read file once; return (syntax_error, has_shebang, has_main, has_guard, imports)."""
         rel = str(path.relative_to(self.tools_dir))
         try:
             with open(path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
-            return f"{rel}: {e}", False, False
+            return f"{rel}: {e}", False, False, False, set()
 
         syntax_err = None
+        tree = None
         try:
-            ast.parse(content, filename=str(path))
+            tree = ast.parse(content, filename=str(path))
         except SyntaxError as e:
             syntax_err = f"{rel}: {e}"
         except Exception as e:
@@ -69,14 +60,47 @@ class ToolsValidator(BaseValidator):
 
         first_line = content.split("\n", 1)[0].strip()
         has_shebang = first_line.startswith("#!") and "python" in first_line
+        has_guard = 'if __name__ == "__main__"' in content
         has_main = (
-            'if __name__ == "__main__"' in content
+            has_guard
             or "def main(" in content
             or "run_validator_main(" in content
             or "run_standardizer(" in content
         )
+        imports = self._imported_modules(tree) if tree is not None else set()
 
-        return syntax_err, has_shebang, has_main
+        return syntax_err, has_shebang, has_main, has_guard, imports
+
+    @staticmethod
+    def _imported_modules(tree: ast.AST) -> Set[str]:
+        mods: Set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    mods.update(alias.name.split("."))
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                mods.update(node.module.split("."))
+        return mods
+
+    def _is_library(
+        self, path: Path, has_guard: bool, pkg_dirs: Set[Path], imported: Set[str]
+    ) -> bool:
+        name = path.name
+        if name in ("__init__.py", "conftest.py"):
+            return True
+        if name.startswith("test_") or name.endswith("_test.py"):
+            return True
+        if "tests" in path.relative_to(self.tools_dir).parts:
+            return True
+        # A real entry guard means the file is meant to be run, even when a test
+        # also imports it — check it before the import-based library signals.
+        if has_guard:
+            return False
+        if name.startswith("_"):
+            return True
+        if any(parent in pkg_dirs for parent in path.parents):
+            return True
+        return path.stem in imported
 
     def _is_executable(self, path: Path) -> bool:
         return os.access(path, os.X_OK)
@@ -111,19 +135,29 @@ class ToolsValidator(BaseValidator):
         scripts = self._find_scripts()
         self.log(f"  Found {len(scripts)} Python scripts to validate")
 
+        pkg_dirs = {p.parent for p in scripts if p.name == "__init__.py"}
+
         syntax_errors = []
         missing_shebangs = []
         non_executable = []
         no_main = []
+        scanned = {}
+        imported: Set[str] = set()
+
+        for path in scripts:
+            syntax_err, has_shebang, has_main, has_guard, imports = (
+                self._validate_script(path)
+            )
+            scanned[path] = (syntax_err, has_shebang, has_main, has_guard)
+            imported |= imports
 
         for path in scripts:
             rel = str(path.relative_to(self.tools_dir))
-            is_library = path.name in _LIBRARY_MODULES
-            syntax_err, has_shebang, has_main = self._validate_script(path)
+            syntax_err, has_shebang, has_main, has_guard = scanned[path]
 
             if syntax_err:
                 syntax_errors.append(syntax_err)
-            if not is_library:
+            if not self._is_library(path, has_guard, pkg_dirs, imported):
                 if not has_shebang:
                     missing_shebangs.append(rel)
                 if not self._is_executable(path):

@@ -63,6 +63,84 @@ automated_debt_taker = { # Checks to see if treasury is negative at the same tim
 	}
 }
 
+# Effect: ai_repay_debt
+# Purpose: Weekly AI-only principal repayment from the treasury stockpile above an operating reserve
+ai_repay_debt = {
+	if = {
+		limit = {
+			check_variable = { debt > 0 }
+			check_variable = { treasury > 0 }
+			check_variable = { debt_ratio > 0.3 }
+			NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+			NOT = { has_country_flag = paused_debt_repayment }
+		}
+		set_temp_variable = { ai_debt_reserve = { value = display_expense multiply = 8 } }
+		set_temp_variable = { ai_debt_reserve_min = { value = gdp_total multiply = 0.02 } }
+		# Absolute floor, or a collapsed economy with near-zero GDP and expenses empties its whole treasury
+		if = { limit = { check_variable = { ai_debt_reserve_min < 1 } }
+			set_temp_variable = { ai_debt_reserve_min = 1 }
+		}
+		if = { limit = { check_variable = { ai_debt_reserve < ai_debt_reserve_min } }
+			set_temp_variable = { ai_debt_reserve = ai_debt_reserve_min }
+		}
+		# A year of runway; automated_debt_taker borrows >=1% of GDP with a 1% fee on any dip below zero
+		if = { limit = { check_variable = { treasury_rate < 0 } }
+			set_temp_variable = { ai_debt_deficit_runway = { value = treasury_rate multiply = -52 } }
+			add_to_temp_variable = { ai_debt_reserve = ai_debt_deficit_runway }
+		}
+
+		set_temp_variable = { ai_debt_payment = { value = treasury subtract = ai_debt_reserve } }
+		if = { limit = { check_variable = { ai_debt_payment > debt } }
+			set_temp_variable = { ai_debt_payment = debt }
+		}
+
+		set_temp_variable = { ai_debt_payment_min = { value = gdp_total multiply = 0.005 } }
+		if = { limit = { check_variable = { ai_debt_payment_min < 0.01 } }
+			set_temp_variable = { ai_debt_payment_min = 0.01 }
+		}
+		# Collapsing the threshold to the remainder lets the final instalment clear the debt
+		if = { limit = { check_variable = { ai_debt_payment_min > debt } }
+			set_temp_variable = { ai_debt_payment_min = debt }
+		}
+
+		if = {
+			limit = { check_variable = { var = ai_debt_payment value = ai_debt_payment_min compare = greater_than_or_equals } }
+			subtract_from_variable = { treasury = ai_debt_payment }
+			subtract_from_variable = { debt = ai_debt_payment }
+			if = { limit = { check_variable = { debt < 0.001 } }
+				set_variable = { debt = 0 }
+			}
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [Root.GetName]: AI repaid [?ai_debt_payment]b debt (Reserve: [?ai_debt_reserve]b, Treasury: [?treasury]b, Debt: [?debt]b, Interest Rate: [?interest_rate]%, Treasury Rate: [?treasury_rate]b)"
+			}
+		}
+	}
+}
+
+# Effect: resync_economic_project_flag
+# Purpose: Re-derives active_economic_project from the ten hidden project ideas; corrects the flag/idea desync left by a mid-save mod upgrade or a civil-war split-off (ideas are inherited, country flags are not)
+resync_economic_project_flag = {
+	if = {
+		limit = {
+			OR = {
+				has_idea = industrial_projects_idea
+				has_idea = service_constructions_idea
+				has_idea = infrastructure_investiture_idea
+				has_idea = arms_industry_stipends_idea
+				has_idea = retool_shipyards_idea
+				has_idea = agro_industrial_expansion_idea
+				has_idea = advanced_manufacturing_idea
+				has_idea = energy_grid_modernization_idea
+				has_idea = strategic_defense_infrastructure_idea
+				has_idea = strategic_rd_sites_idea
+			}
+		}
+		set_country_flag = active_economic_project
+	}
+	else = {
+		clr_country_flag = active_economic_project
+	}
+}
 
 # Enable/Disable Personal Tax Rate Change
 disable_personal_tax_rate_change = {

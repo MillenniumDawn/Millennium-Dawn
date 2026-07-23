@@ -8,10 +8,10 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` (all `tools/linting/`) are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land BOM or encoding regressions. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
 - `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate the manifest with `gen_vanilla_defines_manifest.py` after a HOI4 version bump (same for `vanilla_sprites.txt` via `gen_vanilla_sprites_manifest.py`).
-- `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`strict: false`, informational) until the ~30 pre-existing undefined-idea references on main are triaged. Once cleared, flip the CI entry to strict.
+- `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`--strict`) — the undefined-idea backlog was cleared, so both sides gate identically.
 - `validate_unused_textures.py` is wired into pre-commit as `stages: [manual]` only. CI cannot run it, so invoke the manual hook when a texture audit is needed.
-- `validate_set_variables.py` runs **CI-only** (informational). Its false-positive volume at repo scale makes it too noisy for a commit gate, so it has no pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) against a specific variable when needed.
-- `validate_scripted_localisation.py` runs **CI-only**, `strict: false` (informational) until the ~100 pre-existing missing/unused scripted-loc findings in `localisation/english` and `common/scripted_localisation` are triaged. Flip the CI entry to strict once cleared.
+- `validate_set_variables.py` runs **CI-only**, `--strict` (its unused-variable backlog was cleared). No pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) for a local check.
+- `validate_scripted_localisation.py` runs **CI-only**, `--strict` (its missing/unused scripted-loc backlog was cleared). No pre-commit hook; run it directly for a local check.
 
 ## Tooling deprecation watch
 

@@ -9,6 +9,7 @@ from vanilla overrides. Run this after a HOI4 version bump:
 Requires the game installed (auto-detected, or set $HOI4_PATH).
 """
 
+import glob
 import os
 import sys
 
@@ -17,7 +18,7 @@ from shared_utils import find_hoi4_install
 
 _MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_gui_files.txt")
 _HEADER = [
-    "# Vanilla Hearts of Iron IV interface/*.gui basenames.",
+    "# Vanilla Hearts of Iron IV interface .gui basenames (base + DLC, recursive).",
     "# Used by validate_gfx_references.py to tell MD-authored .gui files (a",
     "# missing sprite is a real bug -> ERROR) from vanilla overrides (which",
     "# reference thousands of vanilla sprites MD doesn't redefine -> WARNING).",
@@ -35,8 +36,15 @@ def main() -> int:
     if not base:
         print("No HOI4 install found (set $HOI4_PATH).", file=sys.stderr)
         return 1
-    vdir = os.path.join(base, "interface")
-    names = sorted(f for f in os.listdir(vdir) if f.endswith(".gui"))
+    files = glob.glob(os.path.join(base, "interface", "**", "*.gui"), recursive=True)
+    for sub in ("dlc", "integrated_dlc"):
+        files.extend(
+            glob.glob(
+                os.path.join(base, sub, "*", "interface", "**", "*.gui"),
+                recursive=True,
+            )
+        )
+    names = sorted({os.path.basename(f) for f in files})
     with open(_MANIFEST, "w", encoding="utf-8") as f:
         f.write("\n".join(_HEADER) + "\n".join(names) + "\n")
     print(f"Wrote {len(names)} vanilla .gui basenames to {_MANIFEST}")

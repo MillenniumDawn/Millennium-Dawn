@@ -106,14 +106,18 @@ focus = {
 
 ## Example: Bankruptcy Guard in `ai_will_do`
 
-High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) must prevent the AI from queueing them during financial collapse. Do this in `ai_will_do`, not `available`, so the player is never blocked:
+A focus whose `completion_reward` spends money must prevent the AI from queueing it during financial collapse. The gate is the reward's actual money cost (a negative `treasury_change` applied via `modify_treasury_effect` summing to ~5bn or more, or a money-costing scripted/building effect), not the focus `cost` field, which is completion time. Do this in `ai_will_do`, not `available`, so the player is never blocked. A guard on a focus with no money cost is flagged as unneeded, so add it only where the reward actually spends:
 
 ```
 focus = {
 	id = ISR_milk_and_honey
 	# ...
 	cost = 10
-	# ...
+	completion_reward = {
+		# ... spends treasury:
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+	}
 	ai_will_do = {
 		base = 3
 		modifier = {

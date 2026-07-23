@@ -16,11 +16,16 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - Multiple has_idea checks from the same mutex group (e.g. intervention doctrines)
     at the same AND/NOT depth — same logic as above; only one slot can be filled at a
     time so the block is always false (AND) or always true (NOT).
+  - NOT = { country_exists = TAG } alongside a TAG = { ... } scope switch in the
+    same AND block — always false; caller meant OR = { ... }. Multi-statement
+    NOTs (NAND) and scopes checking only flags/variables (valid on dead tags)
+    are exempt.
   - Consecutive same-tag scope blocks that should be merged
   - send_embargo/break_embargo without has_dlc = "By Blood Alone" guard
   - divide_variable by a variable without a zero guard
   - Duplicate consecutive add_to_variable / add_to_temp_variable lines
   - every_country with has_idea = X_member when a pre-built array exists
+    (display_individual_scopes loops exempt -- conversion collapses their output)
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
   - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
@@ -43,6 +48,11 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     counting with another ideology's leader counter. set_leader kills the country
     leader before dispatching, so every one of these hands the country a randomly
     generated leader.
+  - add_to_faction = X where X is not a country (a faction name like BRICS, or a
+    lowercase id) -- add_to_faction adds the ARGUMENT country to the current
+    scope's faction; it takes a country tag or scope ref, never a faction name.
+  - create_faction = X (deprecated; use create_faction_from_template = TEMPLATE
+    for DLC compatibility)
 """
 
 import os
@@ -145,9 +155,6 @@ _RE_LOG_EVENT_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bEvent\s+([\w.]+)', re.IGNOR
 _RE_LOG_EVENT_OPTION_SUFFIX = re.compile(r"\s+Option\s+([a-zA-Z])\b", re.IGNORECASE)
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
-_RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
-_RE_NOT_BLOCK_OPEN = re.compile(r"^\s*NOT\s*=\s*\{")
-_RE_TRIGGER_ASSIGN = re.compile(r"^(\w+)\s*=\s*([\w.]+)$")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
 # A focus block that declares war via create_wargoal/declare_war at the focus
 # OWNER's scope must carry the matching will_lead_to_war_with hint so the AI
@@ -208,11 +215,31 @@ _RE_COMPLETE_EFFECT_OPEN = re.compile(r"\bcomplete_effect\s*=\s*\{")
 _RE_REMOVE_EFFECT_OPEN = re.compile(r"\bremove_effect\s*=\s*\{")
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
+# add_to_faction adds the ARGUMENT country to the current scope's faction, so it
+# takes a country tag or scope ref -- never a faction id (add_to_faction = BRICS
+# is a no-op; BRICS is a faction, not a country). The value captures identifier
+# chars only so a trailing } / whitespace ends the token.
+_RE_ADD_TO_FACTION = re.compile(r"\badd_to_faction\s*=\s*([A-Za-z0-9_:.@\[\]]+)")
+# create_faction is deprecated in MD; factions must be built via
+# create_faction_from_template for DLC compatibility. The trailing \s*=
+# requirement alone rules out create_faction_from_template (the replacement),
+# and \b at the start rules out on_create_faction (the on_actions hook) since
+# _ is a word char and leaves no boundary between the trailing on_ and create.
+_RE_CREATE_FACTION_DEPRECATED = re.compile(r"\bcreate_faction\s*=")
+_ADD_TO_FACTION_SCOPE_KEYWORDS = {
+    "ROOT",
+    "FROM",
+    "PREV",
+    "THIS",
+    "OWNER",
+    "CONTROLLER",
+    "CAPITAL",
+}
 _RE_DECISION_ALLOWED_DYNAMIC = re.compile(
     r"\b(?:num_of_factories|has_opinion|strength_ratio|"
     r"has_army_size|has_navy_size|has_political_power|date)\b"
 )
-_RE_IS_X_NATION = re.compile(r"\bis_([a-z]+_)?nation\s*=\s*yes\b")
+_RE_IS_X_NATION = re.compile(r"\bis_([a-z][a-z_]*_)?nation\s*=\s*yes\b")
 _RE_SET_NATION_FLAG = re.compile(
     r"set_country_flag\s*=\s*(?:\{\s*flag\s*=\s*)?(\w+_nation_flag)\b"
 )
@@ -258,6 +285,20 @@ _IDEA_TO_MUTEX_GROUP = {
 _RE_MUTEX_TOKEN = re.compile(r"\{|\}|has_idea\s*=\s*(\w+)")
 _RE_NOT_EQ = re.compile(r"\bNOT\s*=\s*$")
 _RE_OR_EQ = re.compile(r"\bOR\s*=\s*$")
+# Token scanner for the single-valued-trigger contradiction check: braces and
+# `trigger = value` for each mutually-exclusive trigger, in source order, so
+# single-line `NOT = { tag = USA tag = CHI }` is caught alongside multi-line.
+# Built from _MUTUALLY_EXCLUSIVE_TRIGGERS (single source of truth) so adding a
+# trigger there extends the check; longest name first so original_tag wins the
+# alternation over tag.
+_RE_MUTEX_TRIGGER_TOKEN = re.compile(
+    r"\{|\}|\b("
+    + "|".join(
+        re.escape(t)
+        for t in sorted(_MUTUALLY_EXCLUSIVE_TRIGGERS, key=lambda t: (-len(t), t))
+    )
+    + r")\s*=\s*([\w.]+)"
+)
 
 # Populated by main() before spawning Pool workers; propagated via initializer.
 _SCRIPT_COMPLETED_FOCUSES: set = set()
@@ -327,16 +368,49 @@ def _scan_global_refs(root_dir):
     return focuses, decisions, nation_flags
 
 
+def _targeted_mode(args) -> bool:
+    """True when the run is scoped to an explicit small file set (pre-commit
+    positional args, --files, --mode staged/diff) rather than the whole repo."""
+    return (
+        bool(getattr(args, "filenames", None))
+        or bool(getattr(args, "files", None))
+        or getattr(args, "mode", "all") in ("staged", "diff")
+    )
+
+
+def _files_need_global_refs(files_list) -> bool:
+    """True if any targeted file could trigger a check that consumes the global
+    reference sets: focus/decision available = { always = no } (needs completion
+    refs) or is_X_nation (needs real nation flags). Reads the small targeted set
+    once so a clean set can skip the ~2s full-tree scan; unreadable files force
+    the scan to stay safe.
+    """
+    for fp in files_list:
+        nf = fp.replace("\\", "/")
+        try:
+            with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+        except OSError:
+            return True
+        if _RE_IS_X_NATION.search(content):
+            return True
+        if (
+            "common/national_focus" in nf or "common/decisions" in nf
+        ) and _RE_AVAILABLE_ALWAYS_NO.search(content):
+            return True
+    return False
+
+
 def _get_block(lines, start):
     """Collect the complete brace-delimited block starting at lines[start].
     Returns (block_lines, next_idx) where next_idx is the first index after the block.
     Works on any list — passing a sub-list is safe.
     """
-    code = strip_inline_comment(lines[start])
+    code = _code_for_depth(lines[start])
     depth = code.count("{") - code.count("}")
     j = start + 1
     while depth > 0 and j < len(lines):
-        code = strip_inline_comment(lines[j])
+        code = _code_for_depth(lines[j])
         depth += code.count("{") - code.count("}")
         j += 1
     return lines[start:j], j
@@ -518,54 +592,47 @@ def _check_mutually_exclusive_contradictions(lines):
     stack = [(False, False, {})]
 
     for i, line in enumerate(lines):
-        code = strip_inline_comment(line)
-        stripped = code.strip()
-        if not stripped:
+        code = _RE_QUOTED_STRING.sub('""', strip_inline_comment(line))
+        if not code.strip():
             continue
 
-        if "{" not in code and "}" not in code:
-            m = _RE_TRIGGER_ASSIGN.match(stripped)
-            if m and m.group(1) in _MUTUALLY_EXCLUSIVE_TRIGGERS:
-                stack[-1][2].setdefault(m.group(1), []).append((i + 1, m.group(2)))
-
-        is_or = bool(_RE_OR_BLOCK_OPEN.match(line))
-        is_not = bool(_RE_NOT_BLOCK_OPEN.match(line))
-
-        opens = code.count("{")
-        closes = code.count("}")
-
-        for k in range(opens):
-            # Only the first open on a line carries the OR/NOT keyword
-            if k == 0:
+        last_end = 0
+        for m in _RE_MUTEX_TRIGGER_TOKEN.finditer(code):
+            tok = m.group(0)
+            if tok == "{":
+                preceding = code[last_end : m.start()]
+                is_not = bool(_RE_NOT_EQ.search(preceding))
+                is_or = bool(_RE_OR_EQ.search(preceding))
                 stack.append((is_or, is_not, {}))
-            else:
-                stack.append((False, False, {}))
-
-        for _ in range(closes):
-            if len(stack) > 1:
-                popped_or, popped_not, popped_triggers = stack.pop()
-                if popped_or:
-                    continue
-                for trigger, entries in popped_triggers.items():
-                    values = {v for _, v in entries}
-                    if len(values) < 2:
+            elif tok == "}":
+                if len(stack) > 1:
+                    popped_or, popped_not, popped_triggers = stack.pop()
+                    if popped_or:
+                        last_end = m.end()
                         continue
-                    first_line = entries[0][0]
-                    vals_str = ", ".join(sorted(values))
-                    if popped_not:
-                        msg = (
-                            f"NOT = {{ }} contains multiple '{trigger}' values"
-                            f" ({vals_str}) -- always true since a country has"
-                            f" only one {trigger}; use separate NOT blocks or"
-                            f" NOT = {{ OR = {{ ... }} }}"
-                        )
-                    else:
-                        msg = (
-                            f"multiple '{trigger}' values in same AND block"
-                            f" ({vals_str}) -- always false since a country has"
-                            f" only one {trigger}; wrap in OR = {{ }} to match any"
-                        )
-                    issues.append((first_line, msg))
+                    for trigger, entries in popped_triggers.items():
+                        values = {v for _, v in entries}
+                        if len(values) < 2:
+                            continue
+                        first_line = entries[0][0]
+                        vals_str = ", ".join(sorted(values))
+                        if popped_not:
+                            msg = (
+                                f"NOT = {{ }} contains multiple '{trigger}' values"
+                                f" ({vals_str}) -- always true since a country has"
+                                f" only one {trigger}; use separate NOT blocks or"
+                                f" NOT = {{ OR = {{ ... }} }}"
+                            )
+                        else:
+                            msg = (
+                                f"multiple '{trigger}' values in same AND block"
+                                f" ({vals_str}) -- always false since a country has"
+                                f" only one {trigger}; wrap in OR = {{ }} to match any"
+                            )
+                        issues.append((first_line, msg))
+            else:
+                stack[-1][2].setdefault(m.group(1), []).append((i + 1, m.group(2)))
+            last_end = m.end()
 
     return issues
 
@@ -647,8 +714,15 @@ _RE_COUNTRY_SCOPE_OPEN = re.compile(
     r"^(\s*)([A-Z]{3}|FROM|ROOT|PREV|OWNER|CAPITAL)\s*=\s*\{"
 )
 _LOGIC_KEYWORDS = {"NOT", "OR", "AND", "IF", "GFX", "GUI", "ROW"}
-_RE_EMBARGO = re.compile(r"\b(send_embargo|break_embargo)\s*=")
-_RE_DLC_BBA = re.compile(r'has_dlc\s*=\s*"By Blood Alone"')
+# Ordered tokens for the embargo DLC-guard scan: braces, the BBA guard, and the
+# embargo effects, so an inline guard is attributed to the correct frame.
+_RE_DLC_TOKEN = re.compile(
+    r'\{|\}|has_dlc\s*=\s*"By Blood Alone"|\b(?:send_embargo|break_embargo)\b'
+)
+_RE_IF_BEFORE_BRACE = re.compile(r"\b(?:if|else_if)\s*=\s*$")
+# trigger/available/visible/allowed gate the whole enclosing object, so a guard
+# inside one covers its siblings (unlike an if, which only guards its own body).
+_RE_GATE_BEFORE_BRACE = re.compile(r"\b(?:trigger|available|visible|allowed)\s*=\s*$")
 _RE_ADD_TO_VAR = re.compile(
     r"^\s*(add_to_variable|add_to_temp_variable)\s*=\s*\{.*\}\s*$"
 )
@@ -700,6 +774,153 @@ _MEMBER_IDEA_PATTERNS = {
 }
 
 
+# Tokens for the country_exists-vs-scope contradiction: braces and
+# `country_exists = TAG` assignments. The preceding text before each `{`
+# is inspected to classify it as NOT / OR / country-scope / plain AND.
+_RE_CE_TOKEN = re.compile(r"\{|\}|country_exists\s*=\s*([A-Z]{3})")
+_RE_CE_SCOPE_TAG = re.compile(r"\b([A-Z]{3})\s*=\s*$")
+_CE_LOGIC_TAGS = {"AND", "OR", "NOT", "FOR", "ALL"}
+_RE_CE_STMT = re.compile(r"[=<>]+")
+_RE_CE_TRIGGER_KEY = re.compile(r"\b([a-z][a-zA-Z0-9_@.:]*)\s*[=<>]")
+_RE_CE_BRACE_BLOCK = re.compile(r"\{[^{}]*\}")
+# Flag/variable trigger blocks carry arbitrary parameter and variable names;
+# blank them before the key scan so those names don't read as live triggers.
+_RE_CE_VAR_BLOCK = re.compile(
+    r"\b(?:check_variable|has_variable|is_variable_equals|has_country_flag"
+    r"|has_global_flag)\s*=\s*\{[^{}]*\}"
+)
+# Triggers that hold on a non-existent tag (flags and variables persist on
+# dead/unreleased countries). A scope block built only from these is
+# satisfiable alongside NOT = { country_exists = TAG }.
+_CE_DEAD_TAG_SAFE = {
+    "has_country_flag",
+    "has_global_flag",
+    "has_variable",
+    "check_variable",
+    "is_variable_equals",
+}
+
+
+def _ce_blank_nested(text, pattern):
+    while True:
+        new = pattern.sub(" ", text)
+        if new == text:
+            return text
+        text = new
+
+
+def _check_country_exists_scope_contradiction(lines):
+    """Flag an AND block with both `NOT = { country_exists = TAG }` and a
+    `TAG = { ... }` country-scope switch as direct siblings.
+
+    The scope switch to TAG fails (always false) when TAG is absent, and the
+    NOT is only true when TAG is absent, so their AND is unconditionally false
+    -- a dead bypass/available gate. The caller meant OR = { ... }.
+
+    Not flagged: the positive guard-then-scope idiom (`country_exists = TAG`
+    next to `TAG = { ... }`), a NOT with several statements (NAND -- no child
+    is individually negated), and scope blocks whose triggers all hold on a
+    non-existent tag (flag/variable checks -- see _CE_DEAD_TAG_SAFE).
+    """
+    issues = []
+    # Stack frame: [is_or, is_not, opens_tag, open_line, children, texts].
+    # opens_tag is "" for non-scope blocks (plain AND / OR / NOT) and the
+    # 3-letter tag for a country-scope switch. texts interleaves the frame's
+    # own code with each closed child's re-bracketed text, so a frame's full
+    # source can be reconstructed for the NAND and dead-tag-safe scans.
+    # children entries: (line, kind, tag) where kind is "country_exists"
+    # (raw, inside a NOT), "not_country_exists" (emitted from a closed NOT),
+    # or "scope_switch" (emitted from a closed country-scope block).
+    stack = [[False, False, "", 0, [], []]]
+
+    for i, line in enumerate(lines):
+        code = _code_for_depth(line)
+        if not code.strip():
+            continue
+        last_end = 0
+        for m in _RE_CE_TOKEN.finditer(code):
+            tok = m.group(0)
+            preceding = code[last_end : m.start()]
+            stack[-1][5].append(preceding)
+            if tok == "{":
+                is_not = bool(_RE_NOT_EQ.search(preceding))
+                is_or = bool(_RE_OR_EQ.search(preceding))
+                opens_tag = ""
+                if not is_not and not is_or:
+                    sm = _RE_CE_SCOPE_TAG.search(preceding)
+                    if sm and sm.group(1) not in _CE_LOGIC_TAGS:
+                        opens_tag = sm.group(1) or ""
+                stack.append([is_or, is_not, opens_tag, i + 1, [], []])
+            elif tok == "}":
+                if len(stack) > 1:
+                    popped = stack.pop()
+                    (
+                        popped_or,
+                        popped_not,
+                        popped_tag,
+                        pop_line,
+                        popped_children,
+                        popped_texts,
+                    ) = popped
+                    block_text = " ".join(popped_texts)
+                    stack[-1][5].append("{ " + block_text + " }")
+                    parent = stack[-1][4]
+                    if popped_or:
+                        pass
+                    elif popped_not:
+                        ce_children = [
+                            (cl, ctag)
+                            for cl, ck, ctag in popped_children
+                            if ck == "country_exists"
+                        ]
+                        # Direct statements = assignments/comparisons left after
+                        # blanking child blocks, plus the country_exists tokens
+                        # (consumed, never in text). A NOT with several is a
+                        # NAND: no child is individually negated.
+                        direct = _ce_blank_nested(block_text, _RE_CE_BRACE_BLOCK)
+                        n_stmts = len(_RE_CE_STMT.findall(direct)) + len(ce_children)
+                        if n_stmts <= 1:
+                            for cl, ctag in ce_children:
+                                parent.append((cl, "not_country_exists", ctag))
+                    elif popped_tag:
+                        scan = _ce_blank_nested(block_text, _RE_CE_VAR_BLOCK)
+                        keys = _RE_CE_TRIGGER_KEY.findall(scan)
+                        if keys and not all(k in _CE_DEAD_TAG_SAFE for k in keys):
+                            parent.append((pop_line, "scope_switch", popped_tag))
+                    else:
+                        not_exists = [
+                            (cl, ctag)
+                            for cl, ck, ctag in popped_children
+                            if ck == "not_country_exists"
+                        ]
+                        scopes = {
+                            ctag
+                            for _cl, ck, ctag in popped_children
+                            if ck == "scope_switch"
+                        }
+                        for n_line, n_tag in not_exists:
+                            if n_tag in scopes:
+                                issues.append(
+                                    (
+                                        n_line,
+                                        f"AND block has NOT = {{ "
+                                        f"country_exists = {n_tag} }} alongside"
+                                        f" a {n_tag} = {{ ... }} scope switch --"
+                                        f" always false (the scope fails when"
+                                        f" {n_tag} is absent, the NOT is only"
+                                        f" true then); use OR = {{ ... }} to"
+                                        f" match either condition",
+                                    )
+                                )
+            else:
+                tag = m.group(1)
+                stack[-1][4].append((i + 1, "country_exists", tag))
+            last_end = m.end()
+        stack[-1][5].append(code[last_end:])
+
+    return issues
+
+
 def _check_decision_available_always_no(lines):
     """Flag available = { always = no } in decisions with no valid completion mechanism.
 
@@ -716,11 +937,7 @@ def _check_decision_available_always_no(lines):
     while i < n:
         code = strip_inline_comment(lines[i])
         # Category block: starts at column 0 with a word and {
-        if (
-            _RE_TOPLEVEL_WORD.match(lines[i])
-            and "{" in code
-            and not lines[i].lstrip().startswith("#")
-        ):
+        if _RE_TOPLEVEL_WORD.match(lines[i]) and "{" in code:
             cat_start = i
             cat_block, i = _get_block(lines, cat_start)
             k = 1  # skip category header line
@@ -943,46 +1160,59 @@ def _check_embargo_dlc_guard(lines):
     be inside an if block that checks has_dlc = "By Blood Alone".
     """
     issues = []
-    depth = 0
-    dlc_guard_stack = []
+    # Each frame: [is_if, guarded, is_gate]. A has_dlc token marks the nearest
+    # enclosing if-frame guarded so an inline `if = { limit = { has_dlc } }` guard
+    # stays scoped to that if and cannot leak to a sibling embargo in the parent
+    # frame. With no enclosing if, a has_dlc inside a gate (trigger/available/
+    # visible/allowed) instead marks that gate's PARENT, since the gate covers the
+    # whole enclosing object and every sibling effect in it.
+    stack = []
 
     for i, line in enumerate(lines):
-        code = strip_inline_comment(line)
-
-        if _RE_DLC_BBA.search(code):
-            if dlc_guard_stack:
-                dlc_guard_stack[-1] = True
-
-        opens = code.count("{")
-        closes = code.count("}")
-
-        if _RE_IF_OPEN.search(code):
-            for _ in range(opens):
-                depth += 1
-                dlc_guard_stack.append(False)
-        else:
-            for _ in range(opens):
-                depth += 1
-                dlc_guard_stack.append(
-                    dlc_guard_stack[-1] if dlc_guard_stack else False
+        # Blank quoted strings so a stray { or } in a log/loc string can't desync
+        # the if/guard stack; keep the BBA guard literal so its token still matches.
+        code = _RE_QUOTED_STRING.sub(
+            lambda mm: mm.group(0) if mm.group(0) == '"By Blood Alone"' else '""',
+            strip_inline_comment(line),
+        )
+        last_end = 0
+        for m in _RE_DLC_TOKEN.finditer(code):
+            tok = m.group(0)
+            if tok == "{":
+                preceding = code[last_end : m.start()]
+                stack.append(
+                    [
+                        bool(_RE_IF_BEFORE_BRACE.search(preceding)),
+                        False,
+                        bool(_RE_GATE_BEFORE_BRACE.search(preceding)),
+                    ]
                 )
-
-        m = _RE_EMBARGO.search(code)
-        if m:
-            guarded = any(dlc_guard_stack)
-            if not guarded:
-                issues.append(
-                    (
-                        i + 1,
-                        f'{m.group(1)} without has_dlc = "By Blood Alone" guard'
-                        f' -- wrap in if = {{ limit = {{ has_dlc = "By Blood Alone" }} }}',
+            elif tok == "}":
+                if stack:
+                    stack.pop()
+            elif tok.startswith("has_dlc"):
+                target = next((f for f in reversed(stack) if f[0]), None)
+                if target is not None:
+                    target[1] = True
+                else:
+                    gate_idx = next(
+                        (idx for idx in range(len(stack) - 1, -1, -1) if stack[idx][2]),
+                        None,
                     )
-                )
-
-        for _ in range(closes):
-            if dlc_guard_stack:
-                dlc_guard_stack.pop()
-            depth = max(0, depth - 1)
+                    if gate_idx is not None:
+                        stack[gate_idx - 1 if gate_idx > 0 else 0][1] = True
+                    elif stack:
+                        stack[-1][1] = True
+            else:
+                if not any(f[1] for f in stack):
+                    issues.append(
+                        (
+                            i + 1,
+                            f'{tok} without has_dlc = "By Blood Alone" guard'
+                            f' -- wrap in if = {{ limit = {{ has_dlc = "By Blood Alone" }} }}',
+                        )
+                    )
+            last_end = m.end()
 
     return issues
 
@@ -1326,6 +1556,13 @@ def _check_every_country_member_array(lines):
         if open_match:
             open_line = i
             block, next_i = _get_block(lines, i)
+            # Display-only loops: for_each_scope_loop's tooltip param collapses
+            # the per-country output these loops exist to render.
+            if any(
+                "display_individual_scopes" in strip_inline_comment(bl) for bl in block
+            ):
+                i = next_i
+                continue
             # Only check the first-level limit block, not nested if-limits.
             # The limit is typically within the first 5 lines of every_country.
             limit_text = ""
@@ -1544,6 +1781,69 @@ def _check_every_owned_controlled_state(lines):
                 (
                     line_num,
                     "every_owned_controlled_state does not exist -- use every_controlled_state",
+                )
+            )
+    return issues
+
+
+def _add_to_faction_value_ok(value):
+    """True when value is a country add_to_faction can take: a 3-letter tag, a
+    country scope keyword or dotted scope chain (PREV.PREV), a var:/event_target:
+    ref, or a dynamic [square-bracket] token. A faction name (BRICS, lowercase
+    ids) is none of these and is flagged.
+    """
+    return (
+        (len(value) == 3 and _RE_TAG_SCOPE.match(value) is not None)
+        or value in _ADD_TO_FACTION_SCOPE_KEYWORDS
+        or value.startswith(("var:", "event_target:"))
+        or "." in value
+        or "[" in value
+    )
+
+
+def _check_add_to_faction_country(lines):
+    """Flag add_to_faction with a non-country argument (a faction name).
+
+    add_to_faction adds the ARGUMENT country to the current scope's faction, so
+    it takes a country tag or scope ref (ROOT/FROM/PREV/THIS/var:), never a
+    faction id -- add_to_faction = BRICS silently does nothing since BRICS is a
+    faction, not a country. To add a member to a bloc, scope to a faction member
+    and pass the new member's tag.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "add_to_faction" not in line or line.strip().startswith("#"):
+            continue
+        code_part = _code_for_depth(line)
+        for m in _RE_ADD_TO_FACTION.finditer(code_part):
+            value = m.group(1)
+            if not _add_to_faction_value_ok(value):
+                issues.append(
+                    (
+                        line_num,
+                        f"add_to_faction = {value} is not a country -- add_to_faction "
+                        f"takes a country tag or scope (ROOT/FROM/PREV/THIS/var:), not a "
+                        f"faction name; it adds that country to the current scope's faction",
+                    )
+                )
+    return issues
+
+
+def _check_create_faction_deprecated(lines):
+    """Flag create_faction = X, deprecated in MD in favor of
+    create_faction_from_template for DLC compatibility.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "create_faction" not in line or line.strip().startswith("#"):
+            continue
+        code_part = _code_for_depth(line)
+        if _RE_CREATE_FACTION_DEPRECATED.search(code_part):
+            issues.append(
+                (
+                    line_num,
+                    "create_faction is deprecated -- use create_faction_from_template "
+                    "= TEMPLATE instead for DLC compatibility",
                 )
             )
     return issues
@@ -2249,7 +2549,8 @@ def check_file(filepath):
         stripped = line.strip()
 
         if is_ideas:
-            brace_depth += stripped.count("{") - stripped.count("}")
+            depth_code = _code_for_depth(line)
+            brace_depth += depth_code.count("{") - depth_code.count("}")
 
             if _RE_IDEAS_BLOCK.match(stripped):
                 ideas_depth = brace_depth - 1
@@ -2378,7 +2679,7 @@ def check_file(filepath):
                 )
             )
 
-        div_match = _RE_DIVISION.search(code_part)
+        div_match = _RE_DIVISION.search(_RE_QUOTED_STRING.sub('""', code_part))
         if div_match:
             divisor = int(div_match.group(1))
             multiplier = 1.0 / divisor
@@ -2400,6 +2701,7 @@ def check_file(filepath):
         issues.append((ln, msg))
     issues.extend(_check_mutually_exclusive_contradictions(lines))
     issues.extend(_check_has_idea_mutex_in_not_block(lines))
+    issues.extend(_check_country_exists_scope_contradiction(lines))
 
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))
@@ -2426,6 +2728,8 @@ def check_file(filepath):
     issues.extend(_check_is_x_nation_runtime(lines, filepath))
     issues.extend(_check_influence_setter_scope(lines))
     issues.extend(_check_check_var_ge_le(lines))
+    issues.extend(_check_add_to_faction_country(lines))
+    issues.extend(_check_create_faction_deprecated(lines))
     issues.extend(_check_tautological_or(lines))
     issues.extend(_check_check_expr_bad_operand(lines))
     issues.extend(_check_random_select_amount_literal(lines))
@@ -2450,17 +2754,26 @@ def main():
         print("No files to check")
         return 0
 
-    # Always scan globally (~1.3s): the available=always-no and is_X_nation checks
-    # depend on completion refs and real nation flags, and they run in every mode
-    # (pre-commit --mode staged, CI positional args). Skipping the scan there made
-    # both checks false-positive on legitimately script-completed focuses and on
-    # triggers with no flag fast path.
+    # The available=always-no and is_X_nation checks need completion refs and
+    # real nation flags gathered from the whole tree (~2s). A full `all` run
+    # always scans. A targeted run (pre-commit args, --files, staged/diff) skips
+    # the scan only when none of its files can trigger those checks; scanning
+    # otherwise, so a script-completed focus in an unstaged file is not
+    # false-positived.
     global _SCRIPT_COMPLETED_FOCUSES, _SCRIPT_COMPLETED_DECISIONS, _REAL_NATION_FLAGS
-    with Timer("scan global refs") as t:
-        _SCRIPT_COMPLETED_FOCUSES, _SCRIPT_COMPLETED_DECISIONS, _REAL_NATION_FLAGS = (
-            _scan_global_refs(root_dir)
-        )
-    timings.append(("scan global refs", t.elapsed))
+    if _targeted_mode(args) and not _files_need_global_refs(files_list):
+        _SCRIPT_COMPLETED_FOCUSES = set()
+        _SCRIPT_COMPLETED_DECISIONS = set()
+        _REAL_NATION_FLAGS = set()
+        timings.append(("scan global refs (skipped)", 0.0))
+    else:
+        with Timer("scan global refs") as t:
+            (
+                _SCRIPT_COMPLETED_FOCUSES,
+                _SCRIPT_COMPLETED_DECISIONS,
+                _REAL_NATION_FLAGS,
+            ) = _scan_global_refs(root_dir)
+        timings.append(("scan global refs", t.elapsed))
 
     print(f"Checking {len(files_list)} files for common mistakes...")
 
