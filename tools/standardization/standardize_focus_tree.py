@@ -91,19 +91,18 @@ _LOG_FOCUS_RE = re.compile(
     r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:[Ff]ocus\s+)?([\w-]+)(")'
 )
 
-# Matches MODIFIER = <name> on a single line inside a focus block.
-# Valid pattern: 2-4 uppercase tag prefix + underscore + snake_case body, no _modifier suffix.
-_MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_[a-z][a-z_]+$")
-# Suffix patterns that violate the convention.
-_MODIFIER_BAD_SUFFIX_RE = re.compile(r"_modifier$", re.IGNORECASE)
+# Country-specific dynamic modifiers use an uppercase country tag followed by a
+# lowercase snake_case identifier. The optional `_modifier` suffix is part of
+# many existing dynamic modifier IDs, so it is valid here.
+_MODIFIER_TAG_PREFIX_RE = re.compile(r"^[A-Z]{2,4}_")
+_MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_[a-z][a-z0-9_]*$")
 
 
 def validate_modifier_naming(lines, filepath, check_naming=True):
-    """Check MODIFIER = <name> in custom_effect_tooltip blocks follow TAG_snake_case.
+    """Check country-specific MODIFIER values follow TAG_snake_case.
 
-    Logs a WARNING for each violation with the focus ID, the offending name,
-    and the suggested fix (convert to snake_case, strip _modifier suffix).
-    Returns the count of violations found.
+    Logs an error for each violation and returns the number found. Untagged
+    dynamic modifiers are outside this convention and are left unchanged.
     """
     if not check_naming:
         return 0
@@ -148,12 +147,11 @@ def validate_modifier_naming(lines, filepath, check_naming=True):
             if not m:
                 continue
             name = m.group(1)
-            if _MODIFIER_NAME_RE.match(name):
-                continue  # already valid
+            if not _MODIFIER_TAG_PREFIX_RE.match(name) or _MODIFIER_NAME_RE.match(name):
+                continue
 
-            # Build suggestion: strip _modifier suffix, convert to snake_case.
+            # Build suggestion by converting the identifier body to snake_case.
             suggested = name
-            suggested = _MODIFIER_BAD_SUFFIX_RE.sub("", suggested)
             parts = suggested.split("_")
             if len(parts) >= 2:
                 tag = parts[0]
@@ -165,10 +163,9 @@ def validate_modifier_naming(lines, filepath, check_naming=True):
 
             line_num = line_idx + block_lines.index(line) + 1
             log_message(
-                "WARNING",
+                "ERROR",
                 f"{filepath}:{line_num} - Focus '{focus_id}' uses non-standard"
-                f" MODIFIER name '{name}' — use '{suggested}'"
-                f" (TAG_snake_case, no _modifier suffix)",
+                f" MODIFIER name '{name}' — use '{suggested}' (TAG_snake_case)",
             )
             violations += 1
 
@@ -330,7 +327,7 @@ def emit_effect_block_with_log(lines, effect_block, focus_id):
             and "}" in first
             and first.count("{") == first.count("}")
         ):
-            leading = re.match(r"^(\s*)", first).group(1)
+            leading = first[: len(first) - len(first.lstrip())]
             open_idx = first.index("{")
             close_idx = first.rindex("}")
             header = first[: open_idx + 1].rstrip()
@@ -980,8 +977,14 @@ def standardize_focus_tree(
         final_lines.append(line)
     output_lines = final_lines
 
-    # Naming convention check (runs on original lines, not reformatted output)
+    # Naming convention check runs before writing so a failed standardization
+    # cannot silently leave a partially reformatted file behind.
     violations = validate_modifier_naming(lines, input_file, check_naming)
+    if violations:
+        log_message(
+            "ERROR", f"Standardization rejected: {violations} naming violation(s)"
+        )
+        return False
 
     try:
         with open(output_file, "w", encoding="utf-8") as f:
@@ -1024,7 +1027,7 @@ def main():
         "--check-naming",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Check MODIFIER names follow TAG_snake_case convention (default: on)",
+        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: on)",
     )
 
     args = parser.parse_args()

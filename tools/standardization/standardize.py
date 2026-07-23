@@ -162,7 +162,8 @@ Examples:
 
             if not create_backup(args.input_file):
                 sys.exit(1)
-        standardize_focus_tree(args.input_file, output_file, args.verbose)
+        if not standardize_focus_tree(args.input_file, output_file, args.verbose):
+            sys.exit(1)
     elif args.command == "event":
         run_standardizer(
             EventStandardizer,

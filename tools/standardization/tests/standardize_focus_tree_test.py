@@ -9,6 +9,8 @@ from standardize_focus_tree import (
     extract_focus_properties,
     format_focus_block,
     reindent_by_brace_depth,
+    standardize_focus_tree,
+    validate_modifier_naming,
 )
 
 
@@ -179,3 +181,39 @@ def test_comment_brace_does_not_shift_indent():
     # which may carry an unbalanced brace, are excluded from the count).
     code = "\n".join(line.split("#", 1)[0] for line in out)
     assert code.count("{") == code.count("}")
+
+
+def test_country_modifier_names_must_be_snake_case():
+    valid = [
+        "focus = {\n",
+        "\tid = TST_valid\n",
+        "\tcustom_effect_tooltip = { MODIFIER = TST_valid_modifier }\n",
+        "}\n",
+    ]
+    invalid = [
+        "focus = {\n",
+        "\tid = TST_invalid\n",
+        "\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }\n",
+        "}\n",
+    ]
+
+    assert validate_modifier_naming(valid, "valid.txt") == 0
+    assert validate_modifier_naming(invalid, "invalid.txt") == 1
+
+
+def test_invalid_modifier_name_rejects_standardization_without_writing(tmp_path):
+    source = tmp_path / "focus.txt"
+    output = tmp_path / "output.txt"
+    source.write_text(
+        """focus_tree = {
+\tfocus = {
+\t\tid = TST_invalid
+\t\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }
+\t}
+}
+""",
+        encoding="utf-8",
+    )
+
+    assert standardize_focus_tree(str(source), str(output)) is False
+    assert not output.exists()
