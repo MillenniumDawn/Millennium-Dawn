@@ -5474,10 +5474,10 @@ base = 1
 	}
 
 	focus = {
-		id = JAP_automobiles
-		icon = toyota_focus
+		id = JAP_automotive_industry
+		icon = goal_unknown
 
-		x = -2
+		x = -1
 		y = 1
 		relative_position_id = JAP_economic_sectors
 
@@ -5488,8 +5488,9 @@ base = 1
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus JAP_automobiles"
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_automotive_industry"
 			two_random_industrial_complex = yes
+			add_timed_idea = { idea = JAP_automotive_retooling_drive days = 730 }
 		}
 
 		ai_will_do = {
@@ -5506,36 +5507,323 @@ base = 1
 	}
 
 	focus = {
-		id = JAP_japanese_brand
-		icon = focus_JAP_minshu_shugi
+		id = JAP_lean_production_system
+		icon = goal_unknown
 
-		x = -1
+		x = -2
 		y = 1
-		relative_position_id = JAP_automobiles
+		relative_position_id = JAP_automotive_industry
 
 		cost = 10
 
-		prerequisite = { focus = JAP_automobiles }
+		prerequisite = { focus = JAP_automotive_industry }
 
-		search_filters = { FOCUS_FILTER_ECONOMY }
+		mutually_exclusive = { focus = JAP_keiretsu_supplier_network }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus JAP_japanese_brand"
-			if = {
-				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_industries_modifier } } }
-				 add_dynamic_modifier = {
-					modifier = JAP_industries_modifier
-				 }
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_lean_production_system"
+			add_tech_bonus = {
+				name = JAP_lean_production_system
+				category = CAT_industry
+				uses = 1
+				bonus = 0.5
 			}
+			newline = yes
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = JAP_industries_modifier
+				MODIFIER = JAP_economy_modifier
 			}
-			add_to_variable = { JAP_industries_civilian_factories_productivity = 0.15 tooltip = civilian_factories_productivity_tt }
+			add_to_variable = { JAP_economy_production_factory_max_efficiency_factor = 0.08 tooltip = production_factory_max_efficiency_factor_tt }
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = JAP_keiretsu_supplier_network
+		icon = goal_unknown
+
+		x = 2
+		y = 1
+		relative_position_id = JAP_automotive_industry
+
+		cost = 10
+
+		prerequisite = { focus = JAP_automotive_industry }
+
+		mutually_exclusive = { focus = JAP_lean_production_system }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_keiretsu_supplier_network"
+			one_random_industrial_complex = yes
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_production_speed_industrial_complex_factor = 0.10 tooltip = production_speed_industrial_complex_factor_tt }
+			add_to_variable = { JAP_economy_civilian_factories_productivity = 0.03 tooltip = civilian_factories_productivity_tt }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = JAP_precision_machine_tools
+		icon = goal_unknown
+
+		x = -2
+		y = 2
+		relative_position_id = JAP_automotive_industry
+
+		cost = 10
+
+		prerequisite = { focus = JAP_lean_production_system focus = JAP_keiretsu_supplier_network }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_precision_machine_tools"
+			add_tech_bonus = {
+				name = JAP_precision_machine_tools
+				category = CAT_industry
+				uses = 2
+				bonus = 0.5
+			}
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = JAP_domestic_champions
+		icon = goal_unknown
+
+		x = 2
+		y = 2
+		relative_position_id = JAP_automotive_industry
+
+		cost = 10
+
+		prerequisite = { focus = JAP_lean_production_system focus = JAP_keiretsu_supplier_network }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INFLUENCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_domestic_champions"
+			add_tech_bonus = {
+				name = JAP_domestic_champions
+				category = CAT_industry
+				uses = 1
+				bonus = 0.5
+			}
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_foreign_influence_modifier = 0.05 tooltip = foreign_influence_modifier_tt }
+			add_to_variable = { JAP_economy_production_speed_offices_factor = 0.05 tooltip = production_speed_offices_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = JAP_hybrid_powertrains
+		icon = goal_unknown
+
+		x = 0
+		y = 3
+		relative_position_id = JAP_automotive_industry
+
+		cost = 10
+
+		prerequisite = { focus = JAP_precision_machine_tools focus = JAP_domestic_champions }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_hybrid_powertrains"
+			add_tech_bonus = {
+				name = JAP_hybrid_powertrains
+				category = CAT_industry
+				uses = 1
+				bonus = 0.5
+			}
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_productivity_growth_modifier = 0.05 tooltip = productivity_growth_modifier_tt }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = JAP_battery_electric_shift
+		icon = goal_unknown
+
+		x = -2
+		y = 4
+		relative_position_id = JAP_automotive_industry
+
+		cost = 10
+
+		prerequisite = { focus = JAP_hybrid_powertrains }
+
+		mutually_exclusive = { focus = JAP_hydrogen_society }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_battery_electric_shift"
+			one_random_industrial_complex = yes
+			add_timed_idea = { idea = JAP_battery_gigafactory_program days = 730 }
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_civilian_factories_productivity = 0.05 tooltip = civilian_factories_productivity_tt }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = JAP_hydrogen_society
+		icon = goal_unknown
+
+		x = 2
+		y = 4
+		relative_position_id = JAP_automotive_industry
+
+		cost = 10
+
+		prerequisite = { focus = JAP_hybrid_powertrains }
+
+		mutually_exclusive = { focus = JAP_battery_electric_shift }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_hydrogen_society"
+			add_tech_bonus = {
+				name = JAP_hydrogen_society
+				category = CAT_industry
+				uses = 1
+				bonus = 0.5
+			}
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_production_factory_max_efficiency_factor = 0.05 tooltip = production_factory_max_efficiency_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = JAP_automotive_superpower
+		icon = goal_unknown
+
+		x = 0
+		y = 5
+		relative_position_id = JAP_automotive_industry
+
+		cost = 10
+
+		prerequisite = { focus = JAP_battery_electric_shift focus = JAP_hydrogen_society }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_automotive_superpower"
+			two_random_industrial_complex = yes
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_productivity_growth_modifier = 0.05 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { JAP_economy_production_speed_industrial_complex_factor = 0.05 tooltip = production_speed_industrial_complex_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
 		}
 	}
 
@@ -5543,13 +5831,13 @@ base = 1
 		id = JAP_semiconductor
 		icon = economic_it
 
-		x = 1
+		x = 2
 		y = 1
-		relative_position_id = JAP_automobiles
+		relative_position_id = JAP_broadband
 
 		cost = 10
 
-		prerequisite = { focus = JAP_automobiles }
+		prerequisite = { focus = JAP_broadband }
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
@@ -5568,74 +5856,6 @@ base = 1
 				factor = 0
 				can_staff_an_microchip_plant = no
 			}
-		}
-	}
-
-	focus = {
-		id = JAP_machinery_that_supports_manufacturing
-		icon = economic_civil_industry
-
-		x = 2
-		y = 1
-		relative_position_id = JAP_economic_sectors
-
-		cost = 10
-
-		prerequisite = { focus = JAP_economic_sectors }
-
-		search_filters = { FOCUS_FILTER_ECONOMY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus JAP_machinery_that_supports_manufacturing"
-			if = {
-				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_industries_modifier } } }
-				 add_dynamic_modifier = {
-					modifier = JAP_industries_modifier
-				 }
-			}
-			custom_effect_tooltip = {
-				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = JAP_industries_modifier
-			}
-			add_to_variable = { JAP_industries_production_speed_industrial_complex_factor = 0.15 tooltip = production_speed_industrial_complex_factor_tt }
-		}
-
-		ai_will_do = {
-			base = 1
-		}
-	}
-
-	focus = {
-		id = JAP_small_factory_craftsmanship
-		icon = red_industry
-
-		x = 0
-		y = 1
-		relative_position_id = JAP_machinery_that_supports_manufacturing
-
-		cost = 10
-
-		prerequisite = { focus = JAP_machinery_that_supports_manufacturing }
-
-		search_filters = { FOCUS_FILTER_ECONOMY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus JAP_small_factory_craftsmanship"
-			if = {
-				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_industries_modifier } } }
-				 add_dynamic_modifier = {
-					modifier = JAP_industries_modifier
-				 }
-			}
-			custom_effect_tooltip = {
-				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = JAP_industries_modifier
-			}
-			add_to_variable = { JAP_industries_civilian_factories_productivity = 0.15 tooltip = civilian_factories_productivity_tt }
-		}
-
-		ai_will_do = {
-			base = 1
 		}
 	}
 
