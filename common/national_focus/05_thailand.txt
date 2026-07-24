@@ -1063,7 +1063,7 @@ focus_tree = {
 		id = SIA_armed_forces_modernization
 		icon = army_reform
 
-		x = 61
+		x = 57
 		y = 0
 		relative_position_id = SIA_assess_the_kingdom
 
@@ -4301,7 +4301,6 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = SIA_three_airport_rail }
-		# prerequisite = { focus = SIA_u_tapao_aerotropolis }
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
@@ -4309,10 +4308,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_eec_take_off"
 			# EEC development tier 1 -> 2 (tier steps were previously inverted between
 			# this focus and SIA_thailand_4_0, leaving tier 3 unreachable; fixed here).
-			add_stability = 0.02
 			add_political_power = 100
+
 			increase_economic_growth = yes
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+
 			news_event = { id = thailand_news.5 hours = 6 }
+
 			# Mid-chain EEC milestone (additive fire).
 			country_event = { id = thailand.417 days = 1 }
 			set_temp_variable = { temp_opinion = 5 }
@@ -4368,7 +4371,7 @@ focus_tree = {
 		id = SIA_cavalry_of_the_sky
 		icon = air_force
 
-		x = -4
+		x = 0
 		y = 1
 		relative_position_id = SIA_armed_forces_modernization
 
@@ -5004,7 +5007,7 @@ focus_tree = {
 		id = SIA_rta_looks_abroad
 		icon = army_upgrade
 
-		x = -10
+		x = -6
 		y = 1
 		relative_position_id = SIA_armed_forces_modernization
 
@@ -5393,7 +5396,7 @@ focus_tree = {
 		id = SIA_stream_of_the_navy
 		icon = navy
 
-		x = 2
+		x = 6
 		y = 1
 		relative_position_id = SIA_armed_forces_modernization
 
@@ -6355,7 +6358,7 @@ focus_tree = {
 		id = SIA_the_2005_landslide
 		icon = political_pressure_blue
 
-		x = 4
+		x = -2
 		y = 1
 		relative_position_id = SIA_dual_track_economy
 
@@ -7761,9 +7764,10 @@ focus_tree = {
 		id = SIA_territorial_defense
 		icon = military_sphere
 
-		x = 0
-		y = 2
-		relative_position_id = SIA_self_reliant_defense_base
+		x = -8
+		y = 1
+		relative_position_id = SIA_ministry_of_defence
+		prerequisite = { focus = SIA_ministry_of_defence }
 
 		cost = 8
 
@@ -8739,13 +8743,13 @@ focus_tree = {
 		id = SIA_defence_industry_act
 		icon = army_military_industryy
 
-		x = 7
+		x = -3
 		y = 1
-		relative_position_id = SIA_armed_forces_modernization
+		relative_position_id = SIA_comprehensive_security
 
 		cost = 6
 
-		prerequisite = { focus = SIA_armed_forces_modernization }
+		prerequisite = { focus = SIA_comprehensive_security }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_MILITARY_LAWS }
 
@@ -9028,13 +9032,13 @@ focus_tree = {
 		id = SIA_cyber_command
 		icon = cyberwarfare
 
-		x = 10
+		x = 0
 		y = 1
-		relative_position_id = SIA_armed_forces_modernization
+		relative_position_id = SIA_comprehensive_security
 
 		cost = 5
 
-		prerequisite = { focus = SIA_armed_forces_modernization }
+		prerequisite = { focus = SIA_comprehensive_security }
 
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_POLITICAL }
 
@@ -9227,13 +9231,13 @@ focus_tree = {
 		id = SIA_us_coin_legacy
 		icon = focus_generic_national_security
 
-		x = 14
+		x = 3
 		y = 1
-		relative_position_id = SIA_armed_forces_modernization
+		relative_position_id = SIA_comprehensive_security
 
 		cost = 5
 
-		prerequisite = { focus = SIA_armed_forces_modernization }
+		prerequisite = { focus = SIA_comprehensive_security }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_STABILITY }
 
@@ -9354,7 +9358,6 @@ focus_tree = {
 
 		cost = 6
 
-		# prerequisite = { focus = SIA_post_cold_war_professionalization }
 		prerequisite = { focus = SIA_cyber_command }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
@@ -9408,17 +9411,46 @@ focus_tree = {
 
 		x = 0
 		y = 1
-		relative_position_id = SIA_multi_domain_operations
+		relative_position_id = SIA_ministry_of_defence
 
 		cost = 6
 
-		prerequisite = { focus = SIA_multi_domain_operations }
+		prerequisite = { focus = SIA_ministry_of_defence }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_comprehensive_security"
 			add_ideas = SIA_comprehensive_security_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_war_support_factor = 0.03 tooltip = war_support_factor_tt }
+			add_to_variable = { SIA_mil_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_ministry_of_defence
+		icon = general_staff
+
+		x = 0
+		y = 11
+		relative_position_id = SIA_armed_forces_modernization
+
+		cost = 3
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_ministry_of_defence"
+			add_political_power = 50
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_stability_factor = 0.03 tooltip = stability_factor_tt }
+			add_to_variable = { SIA_mil_command_power_gain_mult = 0.05 tooltip = command_power_gain_mult_tt }
 		}
 
 		ai_will_do = {
@@ -9528,13 +9560,13 @@ focus_tree = {
 		id = SIA_jointness_reform
 		icon = general_staff
 
-		x = 2
+		x = 1
 		y = 1
-		relative_position_id = SIA_multi_domain_operations
+		relative_position_id = SIA_professional_officer_corps_focus
 
 		cost = 6
 
-		prerequisite = { focus = SIA_multi_domain_operations }
+		prerequisite = { focus = SIA_professional_officer_corps_focus focus = SIA_martial_prestige_focus }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 
@@ -9590,12 +9622,14 @@ focus_tree = {
 		icon = focus_generic_national_security
 
 		x = 0
-		y = 1
-		relative_position_id = SIA_comprehensive_security
+		y = 4
+		relative_position_id = SIA_multi_domain_operations
 
 		cost = 5
 
-		prerequisite = { focus = SIA_comprehensive_security }
+		prerequisite = { focus = SIA_self_reliant_defense_base }
+		prerequisite = { focus = SIA_multi_domain_operations }
+		prerequisite = { focus = SIA_jointness_reform }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_STABILITY }
 
@@ -13304,18 +13338,19 @@ focus_tree = {
 			# offices, not a permanent modifier - the arrivals surge is real but
 			# seasonal (moved to the timed idea below).
 			508 = {
-				one_state_air_base = yes
+				# one_state_air_base = yes
 				one_state_office_construction = yes
 			}
 			add_timed_idea = { idea = SIA_tourism_boom days = 365 }
+
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			# Sacrifice: overtourism crowds infrastructure and public patience alike.
 			add_to_variable = { SIA_econ_stability_factor = -0.05 tooltip = stability_factor_tt }
-			if = {
-				limit = { has_idea = landowners }
-				set_temp_variable = { temp_opinion = -5 }
-				change_landowners_opinion = yes
-			}
+			# if = {
+			# 	limit = { has_idea = landowners }
+			# 	set_temp_variable = { temp_opinion = -5 }
+			# 	change_landowners_opinion = yes
+			# }
 		}
 
 		ai_will_do = {
@@ -13379,24 +13414,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_tourism_capital"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
-			add_to_variable = { SIA_econ_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
-			add_to_variable = { SIA_econ_tax_gain_multiplier_modifier = 0.03 tooltip = tax_gain_multiplier_modifier_tt }
+			# custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			# add_to_variable = { SIA_econ_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+			# add_to_variable = { SIA_econ_tax_gain_multiplier_modifier = 0.03 tooltip = tax_gain_multiplier_modifier_tt }
 			# "Land of Smiles" soft-power payoff, merged in from the former standalone
 			# SIA_land_of_smiles capstone (fires Visit Thailand Year). The capstone is
 			# also the sole place the branch's durable tourism idea now escalates -
 			# both forks feed it seasonal boosts, not permanent idea swaps.
-			if = {
-				limit = { has_idea = SIA_tourism_powerhouse }
-				swap_ideas = {
-					remove_idea = SIA_tourism_powerhouse
-					add_idea = SIA_tourism_powerhouse_2
-				}
-			}
-			else = {
-				add_ideas = SIA_tourism_powerhouse_2
-			}
+			add_ideas = SIA_tourism_powerhouse_2
 			add_political_power = 100
+			
 			country_event = thailand.56
 			# Unlocks the repeatable tourism decisions in SIA_economy_category
 			# (common/decisions/Thailand.txt) via visible = { has_completed_focus = SIA_tourism_capital }.
@@ -14570,6 +14597,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -15 }
 			set_temp_variable = { int_investment_change = 10 }
 			modify_treasury_effect = yes
+			modify_international_investment_effect = yes
 			if = {
 				limit = { has_idea = industrial_conglomerates }
 				set_temp_variable = { temp_opinion = 4 }
@@ -14617,6 +14645,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -6 }
 			set_temp_variable = { int_investment_change = 3 }
 			modify_treasury_effect = yes
+			modify_international_investment_effect = yes
 			if = {
 				limit = { has_idea = oligarchs }
 				set_temp_variable = { temp_opinion = 4 }
@@ -14705,6 +14734,8 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -10 }
 			set_temp_variable = { int_investment_change = 6 }
 			modify_treasury_effect = yes
+			modify_international_investment_effect = yes
+
 			if = {
 				limit = { has_idea = international_bankers }
 				set_temp_variable = { temp_opinion = 4 }
@@ -14900,11 +14931,11 @@ focus_tree = {
 		id = SIA_the_national_intelligence
 		icon = central_intelligence_agency
 
-		x = 19
+		x = 8
 		y = 1
-		relative_position_id = SIA_armed_forces_modernization
+		relative_position_id = SIA_ministry_of_defence
 		
-		prerequisite = { focus = SIA_armed_forces_modernization }
+		prerequisite = { focus = SIA_ministry_of_defence }
 
 		cost = 6
 
