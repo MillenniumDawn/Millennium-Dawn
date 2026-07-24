@@ -1,37 +1,69 @@
 on_actions = {
+	# ROOT = aggressor, FROM = attacked country.
 	on_declare_war = {
 		effect = {
-			# ROOT = aggressor, FROM = attacked country.
+			# Skip the whole NATO block when NATO is disabled by game rule or the
+			# attacker is itself a NATO member (no Article 5 / MNNA pulse to fire).
 			if = {
 				limit = {
 					NOT = { has_global_flag = GAME_RULE_nato_disabled }
 					NOT = { has_idea = NATO_member }
-					FROM = { NOT = { is_subject_of = ROOT } }
-					OR = {
-						# A member is attacked directly...
-						FROM = { has_idea = NATO_member }
-						# ...or a member's subject is attacked, which pulls in the NATO
-						# overlord and rallies the alliance to the defense.
+				}
+				# Article 5 — NATO rallies to defend an attacked member (or member's subject).
+				if = {
+					limit = {
 						FROM = {
-							is_subject = yes
-							overlord = { has_idea = NATO_member }
+							NOT = { is_subject_of = ROOT }
+							OR = {
+								has_idea = NATO_member
+								AND = {
+									is_subject = yes
+									OVERLORD = { has_idea = NATO_member }
+								}
+							}
+						}
+					}
+					for_each_scope_loop = {
+						array = global.nato_members
+						if = {
+							limit = {
+								has_idea = NATO_member
+								is_subject = no
+								NOT = { has_country_flag = collapsed_nation }
+								NOT = { has_war_with = ROOT }
+							}
+							add_to_war = {
+								targeted_alliance = FROM
+								enemy = ROOT
+								hostility_reason = NATO_collective_defense_agreement
+							}
 						}
 					}
 				}
-				FROM = { save_event_target_as = nato_collective_defender }
-				for_each_scope_loop = {
-					array = global.nato_members
-					if = {
-						limit = {
-							has_idea = NATO_member
-							is_subject = no
-							NOT = { has_country_flag = collapsed_nation }
-							NOT = { has_war_with = ROOT }
+				# MNNA Attack Pulse
+				if = {
+					limit = {
+						FROM = {
+							has_idea = Major_Non_NATO_Ally
+							NOT = { is_subject_of = ROOT }
 						}
-						add_to_war = {
-							targeted_alliance = event_target:nato_collective_defender
-							enemy = ROOT
-							hostility_reason = asked_to_join
+						NOT = { has_government = democratic }
+						NOT = { has_idea = Major_Non_NATO_Ally }
+						any_of_scopes = {
+							array = global.nato_members
+							is_faction_leader = yes
+							NOT = { has_country_flag = collapsed_nation }
+							NOT = { has_country_flag = mnna_event_cooldown }
+							NOT = { has_war_with = ROOT }
+							NOT = { tag = ROOT }
+						}
+					}
+					custom_effect_tooltip = MNNA_nato_may_intervene_in_this_conflict_tt
+					hidden_effect = {
+						save_global_event_target_as = mnna_aggressor
+						FROM = {
+							save_global_event_target_as = mnna_defender
+							country_event = { id = department_of_state.1000 days = 3 }
 						}
 					}
 				}
