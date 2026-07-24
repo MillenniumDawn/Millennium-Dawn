@@ -1061,9 +1061,9 @@ focus_tree = {
 	focus = {
 		
 		id = SIA_armed_forces_modernization
-		icon = army_reform
+		icon = coalition_army
 
-		x = 57
+		x = 58
 		y = 0
 		relative_position_id = SIA_assess_the_kingdom
 
@@ -1082,11 +1082,570 @@ focus_tree = {
 			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.05 tooltip = experience_gain_army_factor_tt }
 			add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.05 tooltip = experience_gain_navy_factor_tt }
 			add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
-			add_to_variable = { SIA_mil_training_time_factor = -0.05 tooltip = training_time_factor_tt }
 		}
 
 		ai_will_do = {
 			base = 50
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	########################
+	# FORCE-MODEL FORK — "The Old Guard and Its Two Exits" (thailand-force-model-spec)
+	# Standalone third military branch, rootless gateway at (16,1) rel AFM, filling the
+	# clear corridor between the service branches (x<=6) and the ASEAN head (x=32). The
+	# RTARF starts corrupt/inefficient (SIA_armed_forces_state, seeded in 99_SIA_on_actions
+	# on_startup): -0.10 army_org_factor, -0.10 experience_gain_army_factor, +0.15
+	# army_personnel_cost_multiplier_modifier. Path A (Professional, x=12-14) heals the
+	# quality half and never the wage half; Path B (Conscript, x=18-20) heals the wage half
+	# and never the quality half. Each path is a branching tree: head -> 2 parallel reforms
+	# -> reconverge -> internal ME fork -> converge -> capstone. No forced conscription-law
+	# swap (spec §5) — the trade lives entirely in the SIA_military_modifier accumulator.
+	########################
+
+	focus = {
+		id = SIA_the_army_question
+		icon = centralization_question
+
+		x = 14
+		y = 0
+		relative_position_id = SIA_armed_forces_modernization
+
+		cost = 1
+
+		available = {
+			date > 2001.1.1
+		}
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_army_question"
+			army_experience = 25
+		}
+
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	########################
+	# PATH A — QUALITY / PROFESSIONAL ("Fewer But Better")
+	########################
+
+	focus = {
+		id = SIA_the_professional_turn
+		icon = military_academy
+
+		x = -2
+		y = 1
+		relative_position_id = SIA_the_army_question
+
+		cost = 6
+
+		prerequisite = { focus = SIA_the_army_question }
+		mutually_exclusive = { focus = SIA_the_conscript_host }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY FOCUS_FILTER_COUNTER_DEBUFF }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_professional_turn"
+			set_country_flag = SIA_force_professional
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_armed_forces_state }
+			add_to_variable = { SIA_afs_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+			add_to_variable = { SIA_afs_experience_gain_army_factor = 0.05 tooltip = experience_gain_army_factor_tt }
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_the_reshuffle_list
+		icon = military_purge
+
+		x = -1
+		y = 1
+		relative_position_id = SIA_the_professional_turn
+
+		cost = 5
+
+		prerequisite = { focus = SIA_the_professional_turn }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_reshuffle_list"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_command_power_gain_mult = 0.10 tooltip = command_power_gain_mult_tt }
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_retire_the_experts
+		icon = focus_AFG_retire_the_uncles
+
+		x = 1
+		y = 1
+		relative_position_id = SIA_the_professional_turn
+
+		cost = 6
+
+		prerequisite = { focus = SIA_the_professional_turn }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY FOCUS_FILTER_COUNTER_DEBUFF }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_retire_the_experts"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_armed_forces_state }
+			add_to_variable = { SIA_afs_army_personnel_cost_multiplier_modifier = -0.05 tooltip = army_personnel_cost_multiplier_modifier_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_leader_cost_factor = -0.10 tooltip = army_leader_cost_factor_tt }
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_close_the_ledger
+		icon = focus_SIA_the_yellow_dossier
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_the_reshuffle_list
+
+		cost = 6
+
+		prerequisite = { focus = SIA_the_reshuffle_list }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_CORRUPTION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_close_the_ledger"
+			set_temp_variable = { treasury_change = 12 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_supply_consumption_factor = -0.05 tooltip = supply_consumption_factor_tt }
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_break_the_class_ladder
+		icon = focus_SIA_sacred_hierarchy
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_retire_the_experts
+
+		cost = 6
+
+		prerequisite = { focus = SIA_the_reshuffle_list }
+		prerequisite = { focus = SIA_retire_the_experts }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY FOCUS_FILTER_COUNTER_DEBUFF }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_break_the_class_ladder"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_armed_forces_state }
+			add_to_variable = { SIA_afs_experience_gain_army_factor = 0.05 tooltip = experience_gain_army_factor_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_leader_start_level = 1 tooltip = army_leader_start_level_tt }
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_all_volunteer_force
+		icon = Generic_Volunteer_Corps
+
+		x = -1
+		y = 1
+		relative_position_id = SIA_break_the_class_ladder
+
+		cost = 6
+
+		prerequisite = { focus = SIA_break_the_class_ladder }
+		mutually_exclusive = { focus = SIA_the_elite_spearhead }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_all_volunteer_force"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.05 tooltip = experience_gain_army_factor_tt }
+			add_to_variable = { SIA_mil_training_time_factor = -0.05 tooltip = training_time_factor_tt }
+			add_to_variable = { SIA_mil_max_training = 0.05 tooltip = max_training_tt }
+			add_to_variable = { SIA_mil_personnel_cost_multiplier_modifier = 0.05 tooltip = personnel_cost_multiplier_modifier_tt }
+			army_experience = 25
+		}
+
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_the_elite_spearhead
+		icon = HK_elite_team
+
+		x = 1
+		y = 1
+		relative_position_id = SIA_break_the_class_ladder
+
+		cost = 6
+
+		prerequisite = { focus = SIA_break_the_class_ladder }
+		mutually_exclusive = { focus = SIA_all_volunteer_force }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_elite_spearhead"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_special_forces_cap = 0.10 tooltip = special_forces_cap_tt }
+			add_to_variable = { SIA_mil_special_forces_attack_factor = 0.10 tooltip = special_forces_attack_factor_tt }
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_high_readiness_army
+		icon = rapid_brigade
+
+		x = 1
+		y = 1
+		relative_position_id = SIA_all_volunteer_force
+
+		cost = 5
+
+		prerequisite = { focus = SIA_all_volunteer_force focus = SIA_the_elite_spearhead }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_high_readiness_army"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_org_factor = 0.03 tooltip = army_org_factor_tt }
+			add_to_variable = { SIA_mil_planning_speed = 0.05 tooltip = planning_speed_tt }
+			add_to_variable = { SIA_mil_recon_factor = 0.05 tooltip = recon_factor_tt }
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_the_minister_decides
+		icon = chiefs_of_staff_committee
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_high_readiness_army
+
+		cost = 8
+
+		prerequisite = { focus = SIA_high_readiness_army }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_POLITICAL FOCUS_FILTER_COUNTER_DEBUFF }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_minister_decides"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_armed_forces_state }
+			add_to_variable = { SIA_afs_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_pocket_penalty = -0.05 tooltip = pocket_penalty_tt }
+			add_to_variable = { SIA_mil_max_planning = 0.05 tooltip = max_planning_tt }
+			set_country_flag = SIA_civilian_control
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	########################
+	# PATH B — QUANTITY / TERRITORIAL ("Many, Cheaply")
+	########################
+
+	focus = {
+		id = SIA_the_conscript_host
+		icon = conscription
+
+		x = 2
+		y = 1
+		relative_position_id = SIA_the_army_question
+
+		cost = 6
+
+		prerequisite = { focus = SIA_the_army_question }
+		mutually_exclusive = { focus = SIA_the_professional_turn }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER FOCUS_FILTER_COUNTER_DEBUFF }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_conscript_host"
+			set_country_flag = SIA_force_conscript
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_armed_forces_state }
+			add_to_variable = { SIA_afs_army_personnel_cost_multiplier_modifier = -0.10 tooltip = army_personnel_cost_multiplier_modifier_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_conscription_factor = 0.05 tooltip = conscription_factor_tt }
+			add_to_variable = { SIA_mil_army_core_defence_factor = 0.05 tooltip = army_core_defence_factor_tt }
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 55
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_fill_the_quota
+		icon = army_recruting
+
+		x = -1
+		y = 1
+		relative_position_id = SIA_the_conscript_host
+
+		cost = 5
+
+		prerequisite = { focus = SIA_the_conscript_host }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_fill_the_quota"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_conscription_factor = 0.05 tooltip = conscription_factor_tt }
+			add_to_variable = { SIA_mil_army_core_attack_factor = 0.05 tooltip = army_core_attack_factor_tt }
+			add_to_variable = { SIA_mil_army_morale_factor = -0.03 tooltip = army_morale_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_the_boys_in_black
+		icon = paramilitary_group
+
+		x = 1
+		y = 1
+		relative_position_id = SIA_the_conscript_host
+
+		cost = 5
+
+		prerequisite = { focus = SIA_the_conscript_host }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_boys_in_black"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_terrain_penalty_reduction = 0.05 tooltip = terrain_penalty_reduction_tt }
+			add_to_variable = { SIA_mil_army_core_defence_factor = 0.05 tooltip = army_core_defence_factor_tt }
+			add_to_variable = { SIA_mil_enemy_attrition = 0.02 tooltip = enemy_attrition_tt }
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_or_sor_grid
+		icon = focus_ROM_form_peasant_militias
+
+		x = 1
+		y = 1
+		relative_position_id = SIA_fill_the_quota
+
+		cost = 6
+
+		prerequisite = { focus = SIA_fill_the_quota }
+		prerequisite = { focus = SIA_the_boys_in_black }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_or_sor_grid"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_recruitable_population_factor = 0.03 tooltip = recruitable_population_factor_tt }
+			add_to_variable = { SIA_mil_out_of_supply_factor = -0.05 tooltip = out_of_supply_factor_tt }
+			add_to_variable = { SIA_mil_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_cheap_steel_many_hulls
+		icon = steel_production
+
+		x = -1
+		y = 1
+		relative_position_id = SIA_or_sor_grid
+
+		cost = 6
+
+		prerequisite = { focus = SIA_or_sor_grid }
+		mutually_exclusive = { focus = SIA_the_barracks_economy }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_cheap_steel_many_hulls"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_equipment_cost_multiplier_modifier = -0.05 tooltip = equipment_cost_multiplier_modifier_tt }
+			add_to_variable = { SIA_mil_production_speed_arms_factory_factor = 0.05 tooltip = production_speed_arms_factory_factor_tt }
+			add_to_variable = { SIA_mil_army_attack_factor = -0.03 tooltip = army_attack_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_the_barracks_economy
+		icon = NKO_bribe_officers
+
+		x = 1
+		y = 1
+		relative_position_id = SIA_or_sor_grid
+
+		cost = 6
+
+		prerequisite = { focus = SIA_or_sor_grid }
+		mutually_exclusive = { focus = SIA_cheap_steel_many_hulls }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_CORRUPTION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_barracks_economy"
+			set_temp_variable = { treasury_change = 12 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { SIA_mil_experience_gain_army_factor = -0.03 tooltip = experience_gain_army_factor_tt }
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_reserve_of_the_realm
+		icon = mobilization_plan
+
+		x = 1
+		y = 1
+		relative_position_id = SIA_cheap_steel_many_hulls
+
+		cost = 6
+
+		prerequisite = { focus = SIA_cheap_steel_many_hulls focus = SIA_the_barracks_economy }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_reserve_of_the_realm"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_mobilization_speed = 0.10 tooltip = mobilization_speed_tt }
+			add_to_variable = { SIA_mil_recruitable_population_factor = 0.03 tooltip = recruitable_population_factor_tt }
+			add_to_variable = { SIA_mil_training_time_factor = 0.10 tooltip = training_time_factor_tt }
+		}
+
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_the_old_guard_endures
+		icon = SIA_commander
+
+		x = 0
+		y = 1
+		relative_position_id = SIA_reserve_of_the_realm
+
+		cost = 8
+
+		prerequisite = { focus = SIA_reserve_of_the_realm }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER FOCUS_FILTER_COUNTER_DEBUFF }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_old_guard_endures"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_armed_forces_state }
+			add_to_variable = { SIA_afs_army_personnel_cost_multiplier_modifier = -0.05 tooltip = army_personnel_cost_multiplier_modifier_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+			add_to_variable = { SIA_mil_army_core_defence_factor = 0.05 tooltip = army_core_defence_factor_tt }
+			add_to_variable = { SIA_mil_conscription_factor = 0.05 tooltip = conscription_factor_tt }
+			add_war_support = 0.05
+			set_country_flag = SIA_old_guard_entrenched
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 40
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -1150,7 +1709,7 @@ focus_tree = {
 		id = SIA_asean_centrality
 		icon = align_to_asean
 
-		x = 32
+		x = 29
 		y = 0
 		relative_position_id = SIA_armed_forces_modernization
 
@@ -4394,15 +4953,15 @@ focus_tree = {
 			add_tech_bonus = {
 				name = SIA_cavalry_of_the_sky_1
 				bonus = 0.5
-				uses = 1
+				uses = 2
 				category = CAT_heli
 			}
-			add_tech_bonus = {
-				name = SIA_cavalry_of_the_sky_2
-				bonus = 0.5
-				uses = 1
-				category = CAT_heli
-			}
+			# add_tech_bonus = {
+			# 	name = SIA_cavalry_of_the_sky_2
+			# 	bonus = 0.5
+			# 	uses = 1
+			# 	category = CAT_heli
+			# }
 		}
 
 		ai_will_do = {
@@ -4881,8 +5440,7 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_air_intercept_efficiency = 0.05 tooltip = air_intercept_efficiency_tt }
 			add_to_variable = { SIA_mil_air_defence_factor = 0.05 tooltip = air_defence_factor_tt }
-			air_experience = 50
-			add_command_power = 50
+			add_to_variable = { SIA_mil_air_attack_factor = 0.05 tooltip = air_attack_factor_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 		}
@@ -5374,10 +5932,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_first_army_modernized"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
-			add_to_variable = { SIA_mil_army_defence_factor = 0.05 tooltip = army_defence_factor_tt }
 			add_to_variable = { SIA_mil_army_morale_factor = 0.05 tooltip = army_morale_factor_tt }
-			army_experience = 50
-			add_command_power = 50
+			add_to_variable = { SIA_mil_army_org_regain = 0.05 tooltip = army_org_regain_tt }
+			add_to_variable = { SIA_mil_breakthrough_factor = 0.05 tooltip = breakthrough_factor_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 		}
@@ -5796,12 +6353,12 @@ focus_tree = {
 				limit = { NOT = { has_country_flag = SIA_blue_water_navy_active } }
 				set_country_flag = SIA_blue_water_navy_active
 				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
-				add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.15 tooltip = industrial_capacity_dockyard_tt }
+				add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.05 tooltip = industrial_capacity_dockyard_tt }
 				add_to_variable = { SIA_mil_production_speed_dockyard_factor = 0.10 tooltip = production_speed_dockyard_factor_tt }
 				add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.10 tooltip = experience_gain_navy_factor_tt }
+				add_to_variable = { SIA_mil_naval_coordination = 0.05 tooltip = naval_coordination_tt }
+				add_to_variable = { SIA_mil_navy_max_range_factor = 0.05 tooltip = navy_max_range_factor_tt }
 			}
-			navy_experience = 150
-			add_command_power = 50
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 		}
