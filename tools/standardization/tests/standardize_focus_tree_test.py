@@ -202,6 +202,47 @@ def test_country_modifier_names_must_be_snake_case():
         assert validate_modifier_naming(invalid, "invalid.txt") == 1
 
 
+def test_shared_modifier_second_tag_segment_is_valid():
+    """CHI_NKO_shared_modifier — a joint modifier carries a second uppercase tag."""
+    lines = [
+        "focus = {\n",
+        "\tid = TST_joint_modifier\n",
+        "\tcustom_effect_tooltip = { MODIFIER = CHI_NKO_shared_modifier }\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "joint.txt") == 0
+
+
+def test_camel_case_after_second_tag_segment_is_rejected():
+    lines = [
+        "focus = {\n",
+        "\tid = TST_joint_modifier\n",
+        "\tcustom_effect_tooltip = { MODIFIER = CHI_NKO_Shared_modifier }\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "joint.txt") == 1
+
+
+def test_modifier_inside_quoted_string_is_ignored():
+    lines = [
+        "focus = {\n",
+        "\tid = TST_quoted\n",
+        '\tlog = "MODIFIER = TST_Not_A_Reference"\n',
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "quoted.txt") == 0
+
+
+def test_check_naming_disabled_skips_validation():
+    lines = [
+        "focus = {\n",
+        "\tid = TST_invalid\n",
+        "\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "invalid.txt", check_naming=False) == 0
+
+
 def test_shared_and_joint_focuses_are_reindented_at_top_level(tmp_path):
     for block_type in ("shared_focus", "joint_focus"):
         source = tmp_path / f"{block_type}.txt"

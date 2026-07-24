@@ -14,6 +14,7 @@ import time
 from _common import format_elapsed
 from common_utils import PROP_NAME_RE, compact_icon, compact_search_filters
 from shared_utils import (
+    blank_quoted_strings,
     collapse_or_compact,
     convert_root_factor_to_base,
     create_backup,
@@ -94,8 +95,11 @@ _LOG_FOCUS_RE = re.compile(
 # Country-specific dynamic modifiers use an uppercase country tag followed by a
 # lowercase snake_case identifier. The optional `_modifier` suffix is part of
 # many existing dynamic modifier IDs, so it is valid here.
+# A second uppercase tag segment marks a shared/joint modifier (CHI_NKO_shared_modifier).
 _MODIFIER_TAG_PREFIX_RE = re.compile(r"^[A-Z]{2,4}_")
-_MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_[a-z][a-z0-9_]*$")
+_MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_([A-Z]{2,4}_)?[a-z][a-z0-9_]*$")
+_MODIFIER_ID_RE = re.compile(r"\s*id\s*=\s*(\S+)")
+_MODIFIER_VALUE_RE = re.compile(r"MODIFIER\s*=\s*(\S+)")
 
 
 def validate_modifier_naming(lines, filepath, check_naming=True):
@@ -119,13 +123,13 @@ def validate_modifier_naming(lines, filepath, check_naming=True):
 
         focus_id = ""
         for line in block_lines:
-            id_match = re.match(r"\s*id\s*=\s*(\S+)", line)
+            id_match = _MODIFIER_ID_RE.match(line)
             if id_match:
                 focus_id = id_match.group(1)
                 break
 
         for line_offset, line in enumerate(block_lines):
-            modifier_match = re.search(r"MODIFIER\s*=\s*(\S+)", line)
+            modifier_match = _MODIFIER_VALUE_RE.search(blank_quoted_strings(line))
             if not modifier_match:
                 continue
             name = modifier_match.group(1)

@@ -53,6 +53,12 @@ Examples:
     focus_parser.add_argument(
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
+    focus_parser.add_argument(
+        "--check-naming",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: on)",
+    )
 
     event_parser = subparsers.add_parser("event", help="Standardize event files")
     event_parser.add_argument("input_file", help="Input event file")
@@ -162,7 +168,9 @@ Examples:
 
             if not create_backup(args.input_file):
                 sys.exit(1)
-        if not standardize_focus_tree(args.input_file, output_file, args.verbose):
+        if not standardize_focus_tree(
+            args.input_file, output_file, args.verbose, args.check_naming
+        ):
             sys.exit(1)
     elif args.command == "event":
         run_standardizer(
