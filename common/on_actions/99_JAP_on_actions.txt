@@ -167,6 +167,97 @@ on_actions = {
 				}
 				country_event = Japan_economy.11
 			}
+
+			# Electronics: Model Competition pressure, driven by China's semiconductor rise and offset by Japan's own resilience
+			set_temp_variable = { jap_ec_pressure = 1 }
+			if = {
+				limit = {
+					country_exists = CHI
+					CHI = {
+						OR = {
+							has_completed_focus = CHI_smic_advanced_node
+							has_completed_focus = CHI_domestic_eda
+							has_idea = CHI_semiconductor_backwardness_3
+							has_idea = CHI_semiconductor_backwardness_4
+						}
+					}
+				}
+				add_to_temp_variable = { jap_ec_pressure = 1 }
+			}
+			if = {
+				limit = {
+					country_exists = CHI
+					CHI = {
+						OR = {
+							has_completed_focus = CHI_sicarrier_euv
+							AND = {
+								has_completed_focus = CHI_big_fund_phase_1
+								NOT = { has_idea = CHI_semiconductor_backwardness }
+								NOT = { has_idea = CHI_semiconductor_backwardness_2 }
+								NOT = { has_idea = CHI_semiconductor_backwardness_3 }
+								NOT = { has_idea = CHI_semiconductor_backwardness_4 }
+							}
+						}
+					}
+				}
+				add_to_temp_variable = { jap_ec_pressure = 1 }
+			}
+			subtract_from_temp_variable = { jap_ec_pressure = JAP_electronics_resilience }
+			clamp_temp_variable = { var = jap_ec_pressure min = 0 max = 3 }
+
+			if = {
+				limit = {
+					check_variable = { jap_ec_pressure > 2 }
+					NOT = { has_idea = JAP_model_competition_3 }
+				}
+				if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
+				if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
+				add_ideas = JAP_model_competition_3
+				if = {
+					limit = { check_variable = { JAP_electronics_competition_tier < 3 } }
+					country_event = { id = JAP_electronics.2 days = 3 }
+				}
+				set_variable = { JAP_electronics_competition_tier = 3 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { jap_ec_pressure = 2 }
+					NOT = { has_idea = JAP_model_competition_2 }
+				}
+				if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
+				if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+				add_ideas = JAP_model_competition_2
+				if = {
+					limit = { check_variable = { JAP_electronics_competition_tier < 2 } }
+					country_event = { id = JAP_electronics.1 days = 3 }
+				}
+				set_variable = { JAP_electronics_competition_tier = 2 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { jap_ec_pressure = 1 }
+					NOT = { has_idea = JAP_model_competition_1 }
+				}
+				if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
+				if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+				add_ideas = JAP_model_competition_1
+				set_variable = { JAP_electronics_competition_tier = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { jap_ec_pressure < 1 }
+					OR = {
+						has_idea = JAP_model_competition_1
+						has_idea = JAP_model_competition_2
+						has_idea = JAP_model_competition_3
+					}
+				}
+				if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
+				if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
+				if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+				country_event = { id = JAP_electronics.3 days = 3 }
+				set_variable = { JAP_electronics_competition_tier = 0 }
+			}
 		}
 	}
 }
