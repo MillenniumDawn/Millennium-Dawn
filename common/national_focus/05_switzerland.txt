@@ -1351,6 +1351,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_SWI_MILITARY_READINESS FOCUS_FILTER_AIRCRAFT }
 
 		available = { country_exists = GER }
+		bypass = { NOT = { country_exists = GER } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_import_eurofighters"
@@ -1399,6 +1400,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_SWI_MILITARY_READINESS FOCUS_FILTER_AIRCRAFT }
 
 		available = { country_exists = FRA }
+		bypass = { NOT = { country_exists = FRA } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_import_rafale_fighters"
@@ -1565,6 +1567,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_SWI_MILITARY_READINESS FOCUS_FILTER_AIRCRAFT }
 
 		available = { country_exists = USA }
+		bypass = { NOT = { country_exists = USA } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_acquire_transport_planes"
@@ -2068,6 +2071,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SWI_suisse_politique }
+		mutually_exclusive = { focus = SWI_strengthening_the_federation }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -2090,9 +2094,12 @@ focus_tree = {
 			}
 			set_cosmetic_tag = SWI_swiss_republic
 			clr_country_flag = dynamic_flag
+			# Centralised republic abolishes cantonal direct democracy: closes the referendum toolset
+			set_country_flag = SWI_federation_dissolved
 			newline = yes
 			add_stability = -0.15
 			remove_ideas = swiss_political_system
+			add_ideas = SWI_new_age
 		}
 
 		ai_will_do = {
@@ -2135,6 +2142,7 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = SWI_suisse_politique }
+		mutually_exclusive = { focus = SWI_dissolving_the_federation }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -3406,29 +3414,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_geneva_climate_diplomatic_hub"
-			GER = {
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = SWI_german_treaty_trade
-				}
+			if = {
+				limit = { country_exists = GER }
+				GER = { add_opinion_modifier = { target = ROOT modifier = SWI_german_treaty_trade } }
 			}
-			FRA = {
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = SWI_german_treaty_trade
-				}
+			if = {
+				limit = { country_exists = FRA }
+				FRA = { add_opinion_modifier = { target = ROOT modifier = SWI_german_treaty_trade } }
 			}
-			AUS = {
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = SWI_german_treaty_trade
-				}
+			if = {
+				limit = { country_exists = AUS }
+				AUS = { add_opinion_modifier = { target = ROOT modifier = SWI_german_treaty_trade } }
 			}
-			ITA = {
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = SWI_german_treaty_trade
-				}
+			if = {
+				limit = { country_exists = ITA }
+				ITA = { add_opinion_modifier = { target = ROOT modifier = SWI_german_treaty_trade } }
 			}
 		}
 
@@ -3696,6 +3696,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_centralization"
 			increase_centralization = yes
+			add_political_power = 150
+			add_stability = 0.05
 		}
 
 		ai_will_do = { base = 1 }
@@ -4008,6 +4010,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_stop_un_training"
 			set_temp_variable = { treasury_change = 5.00 }
 			modify_treasury_effect = yes
+			add_political_power = 75
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = { base = 1 }
@@ -4913,7 +4918,7 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = { focus = SWI_strengthening_the_federation }
+		prerequisite = { focus = SWI_dissolving_the_federation }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -5098,7 +5103,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 5
+				has_global_flag = SWI_NEUTRAL_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -5133,7 +5144,13 @@ focus_tree = {
 			increase_military_spending = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 5
+				has_global_flag = SWI_NEUTRAL_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -5320,7 +5337,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 5
+				has_global_flag = SWI_NEUTRAL_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -6131,10 +6154,17 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			# Isolation plan (NATO chosen, none left to join) wants mercenaries over UN peacekeeping
+			modifier = {
+				add = 10
+				has_global_flag = SWI_NATO_PATH
+				check_variable = { global.nato_members^num < 1 }
+			}
 			# Historical AI holds for UN accession + Swisscoy peacekeeping instead
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = { has_global_flag = SWI_NATO_PATH }
 			}
 		}
 	}
@@ -6154,7 +6184,12 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 
-		available = { has_dynamic_modifier = { modifier = united_nations_member } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SWI_un_member_tt
+				has_dynamic_modifier = { modifier = united_nations_member }
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_swiss_peacekeeping"
@@ -6166,6 +6201,11 @@ focus_tree = {
 			modifier = {
 				add = 5
 				is_historical_focus_on = yes
+			}
+			# Neutral plans keep to UN peacekeeping rather than mercenary work
+			modifier = {
+				add = 10
+				has_global_flag = SWI_NEUTRAL_PATH
 			}
 		}
 	}
@@ -6209,7 +6249,12 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 
-		available = { has_dynamic_modifier = { modifier = united_nations_member } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SWI_un_member_tt
+				has_dynamic_modifier = { modifier = united_nations_member }
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_enforcing_the_uns_will"
@@ -6726,6 +6771,9 @@ focus_tree = {
 					modifier = trade_mission
 				}
 			}
+			newline = yes
+			set_temp_variable = { treasury_change = 10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6760,6 +6808,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_partner_like_everyone"
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
+			add_political_power = 75
 		}
 
 		ai_will_do = {
