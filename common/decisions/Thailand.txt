@@ -1045,7 +1045,9 @@ SIA_overseas_acquisitions_category = {
 	}
 }
 
-SIA_kra_category = {
+# Folded into SIA_kra_construction ("Kra Canal") — the post-canal naval lever
+# lives alongside the construction phases. HOI4 merges same-key decision blocks.
+SIA_kra_construction = {
 	SIA_strait_patrol = {
 		icon = GFX_decision_generic_military
 		cost = 25
@@ -1447,7 +1449,9 @@ SIA_greater_thailand_category = {
 	}
 }
 
-SIA_reform_gambits_category = {
+# Folded into SIA_political_gambits_category — the reform-path amendment retry sits
+# with the other political levers. HOI4 merges same-key decision blocks.
+SIA_political_gambits_category = {
 	SIA_retry_section_112 = {
 		icon = GFX_decision_category_generic_political_actions
 		cost = 100
@@ -2240,7 +2244,9 @@ SIA_red_path_category = {
 	}
 }
 
-SIA_realm_diplomacy_category = {
+# Folded into SIA_economy_category ("Thai Strategic and Economic Decisions") — the
+# counter-influence levers join the strategic hub. HOI4 merges same-key decision blocks.
+SIA_economy_category = {
 	SIA_counter_chinese_influence = {
 		icon = GFX_decision_generic_political_discourse
 		cost = 75
@@ -2500,12 +2506,15 @@ SIA_economy_category = {
 
 ####################################################################
 # PLAYER-DRIVEN REALIGNMENT — deliberately change the ruling party.
-# These never swap the focus trunk directly; they change who governs,
-# and the weekly realignment detector (99_SIA_on_actions.txt) then
-# moves the player onto the new ruling party's trunk and strips the
-# outgoing party's signature ideas.
+# Folded into SIA_political_gambits_category (HOI4 merges decision blocks
+# sharing a category key). These never swap the focus trunk directly; they
+# change who governs, and the weekly realignment detector (99_SIA_on_actions.txt)
+# then moves the player onto the new ruling party's trunk and strips the
+# outgoing party's signature ideas. The two extra category gates the old
+# realignment category carried (NOT communist / NOT republic) now sit on each
+# decision's own visible, since political gambits does not carry them.
 ####################################################################
-SIA_realignment_category = {
+SIA_political_gambits_category = {
 
 	# (A snap-election lever is intentionally NOT provided here: the base game's
 	# "Hold new extraordinary elections" decision already covers going to the
@@ -2523,9 +2532,12 @@ SIA_realignment_category = {
 		fire_only_once = no
 
 		# Path flag lags the party switch by up to a week: check ruling_party directly too.
+		# NOT communist / NOT republic preserved from the former realignment category.
 		visible = {
 			NOT = { has_country_flag = SIA_path_royalist }
 			NOT = { is_in_array = { ruling_party = 23 } }
+			NOT = { has_country_flag = SIA_path_communist }
+			NOT = { has_country_flag = SIA_republic_declared }
 		}
 
 		available = {
@@ -2561,8 +2573,11 @@ SIA_realignment_category = {
 		fire_only_once = no
 
 		# The court dissolves governments, not the Crown: hidden under absolute rule.
+		# NOT communist / NOT republic preserved from the former realignment category.
 		visible = {
 			NOT = { is_in_array = { ruling_party = 23 } }
+			NOT = { has_country_flag = SIA_path_communist }
+			NOT = { has_country_flag = SIA_republic_declared }
 		}
 
 		available = {
@@ -3001,6 +3016,77 @@ SIA_establishment_category = {
 
 		ai_will_do = {
 			base = 3
+		}
+	}
+}
+
+## Resource-sovereignty capstone levers (SIA_resource_sovereignty, 05_thailand.txt)
+## - the new reward kind the capstone unlocks instead of bigger accumulator
+## numbers (spec §11.3). Folded into SIA_economy_category (HOI4 merges decision
+## blocks sharing a category key).
+SIA_economy_category = {
+
+	# Repeatable SWF allocation: pay treasury now, the fund's returns feed back
+	# in as a self-expiring idea once the cycle completes - same shape as
+	# SIA_strategic_fuel_reserve above.
+	SIA_sovereign_wealth_fund_allocation = {
+		icon = GFX_decision_generic_economy
+
+		visible = {
+			has_country_flag = SIA_resource_sovereignty_unlocked
+		}
+
+		days_remove = 365
+		days_re_enable = 365
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 9.9 }
+		}
+		custom_cost_text = cost_10_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_sovereign_wealth_fund_allocation"
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			add_timed_idea = { idea = SIA_swf_windfall days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	# Repeatable resource-royalty lever: the state takes a direct equity stake
+	# in the concessions instead of just taxing them - fast money now, at a
+	# real graft and landowner-relations cost.
+	SIA_state_resource_stake = {
+		icon = GFX_decision_generic_economy
+		cost = 60
+		days_re_enable = 270
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_resource_sovereignty_unlocked
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_state_resource_stake"
+			set_temp_variable = { treasury_change = 8 }
+			modify_treasury_effect = yes
+			increase_corruption = yes
+			if = {
+				limit = { has_idea = landowners }
+				set_temp_variable = { temp_opinion = -5 }
+				change_landowners_opinion = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 8
 		}
 	}
 }
