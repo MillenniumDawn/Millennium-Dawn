@@ -99,7 +99,7 @@ _LOG_FOCUS_RE = re.compile(
 _MODIFIER_TAG_PREFIX_RE = re.compile(r"^[A-Z]{2,4}_")
 _MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_([A-Z]{2,4}_)?[a-z][a-z0-9_]*$")
 _MODIFIER_ID_RE = re.compile(r"\s*id\s*=\s*(\S+)")
-_MODIFIER_VALUE_RE = re.compile(r"MODIFIER\s*=\s*(\S+)")
+_MODIFIER_VALUE_RE = re.compile(r"\bMODIFIER\s*=\s*(\S+)")
 
 
 def validate_modifier_naming(lines, filepath, check_naming=True):
@@ -129,7 +129,8 @@ def validate_modifier_naming(lines, filepath, check_naming=True):
                 break
 
         for line_offset, line in enumerate(block_lines):
-            modifier_match = _MODIFIER_VALUE_RE.search(blank_quoted_strings(line))
+            code = blank_quoted_strings(strip_inline_comment(line))
+            modifier_match = _MODIFIER_VALUE_RE.search(code)
             if not modifier_match:
                 continue
             name = modifier_match.group(1)
@@ -137,11 +138,14 @@ def validate_modifier_naming(lines, filepath, check_naming=True):
                 continue
 
             parts = name.split("_")
-            tag = parts[0]
-            rest = "_".join(parts[1:])
+            prefix = [parts[0]]
+            # a second uppercase tag segment marks a joint modifier and keeps its case
+            if len(parts) > 2 and re.fullmatch(r"[A-Z]{2,4}", parts[1]):
+                prefix.append(parts[1])
+            rest = "_".join(parts[len(prefix) :])
             rest = re.sub(r"([A-Z])([A-Z][a-z])", r"\1_\2", rest)
             rest = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", rest)
-            suggested = f"{tag}_{rest.lower()}"
+            suggested = f"{'_'.join(prefix)}_{rest.lower()}"
 
             log_message(
                 "ERROR",
@@ -1005,8 +1009,8 @@ def main():
     parser.add_argument(
         "--check-naming",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: on)",
+        default=False,
+        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: off)",
     )
 
     args = parser.parse_args()

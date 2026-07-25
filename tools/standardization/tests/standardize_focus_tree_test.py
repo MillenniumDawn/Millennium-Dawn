@@ -233,6 +233,37 @@ def test_modifier_inside_quoted_string_is_ignored():
     assert validate_modifier_naming(lines, "quoted.txt") == 0
 
 
+def test_commented_out_modifier_is_ignored():
+    lines = [
+        "focus = {\n",
+        "\tid = TST_commented\n",
+        "\t# custom_effect_tooltip = { MODIFIER = TST_Old_Name }\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "commented.txt") == 0
+
+
+def test_modifier_key_suffix_does_not_substring_match():
+    lines = [
+        "focus = {\n",
+        "\tid = TST_suffix\n",
+        "\tCUSTOM_MODIFIER = TST_Not_The_Key\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "suffix.txt") == 0
+
+
+def test_suggested_fix_keeps_second_tag_segment_case(capsys):
+    lines = [
+        "focus = {\n",
+        "\tid = TST_joint\n",
+        "\tcustom_effect_tooltip = { MODIFIER = CHI_NKO_Shared_modifier }\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "joint.txt") == 1
+    assert "CHI_NKO_shared_modifier" in capsys.readouterr().err
+
+
 def test_check_naming_disabled_skips_validation():
     lines = [
         "focus = {\n",

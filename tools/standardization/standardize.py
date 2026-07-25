@@ -56,8 +56,8 @@ Examples:
     focus_parser.add_argument(
         "--check-naming",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: on)",
+        default=False,
+        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: off)",
     )
 
     event_parser = subparsers.add_parser("event", help="Standardize event files")

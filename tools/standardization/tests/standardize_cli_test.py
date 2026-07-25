@@ -35,24 +35,25 @@ def _run(*args):
     )
 
 
-def test_focus_naming_check_rejects_legacy_name_by_default(tmp_path):
+def test_focus_legacy_name_does_not_block_standardization_by_default(tmp_path):
+    """A pre-existing violation elsewhere in the tree must not reject an unrelated edit."""
     source = tmp_path / "input.txt"
     output = tmp_path / "output.txt"
     source.write_text(_LEGACY_MODIFIER_FOCUS, encoding="utf-8")
 
     result = _run("focus", str(source), "-o", str(output))
 
-    assert result.returncode != 0
-    assert not output.exists()
+    assert result.returncode == 0
+    assert output.exists()
+    assert "TST_Legacy_modifier" in output.read_text(encoding="utf-8")
 
 
-def test_focus_no_check_naming_flag_is_forwarded(tmp_path):
+def test_focus_check_naming_flag_is_forwarded(tmp_path):
     source = tmp_path / "input.txt"
     output = tmp_path / "output.txt"
     source.write_text(_LEGACY_MODIFIER_FOCUS, encoding="utf-8")
 
-    result = _run("focus", str(source), "-o", str(output), "--no-check-naming")
+    result = _run("focus", str(source), "-o", str(output), "--check-naming")
 
-    assert result.returncode == 0
-    assert output.exists()
-    assert "TST_Legacy_modifier" in output.read_text(encoding="utf-8")
+    assert result.returncode != 0
+    assert not output.exists()
