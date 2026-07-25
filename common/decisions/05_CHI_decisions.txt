@@ -3170,31 +3170,31 @@ CHI_national_commitee_decisions_category = {
 		activation = { has_completed_focus = CHI_yangtze_delta_integration }
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission CHI_yangtze_delta_integration_mission timed out"
+			custom_effect_tooltip = CHI_yangtze_delta_integration_mission_shanghai_tt
+			effect_tooltip = {
+				540 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
+			}
+			custom_effect_tooltip = CHI_yangtze_delta_integration_mission_jiangsu_tt
+			effect_tooltip = {
+				541 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
+			}
+			custom_effect_tooltip = CHI_yangtze_delta_integration_mission_zhejiang_tt
+			effect_tooltip = {
+				538 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
+			}
+			newline = yes
+			custom_effect_tooltip = current_effect_tooltip
 			if = {
-				limit = {
-					540 = {
-						custom_trigger_tooltip = { tooltip = STATE_productivity_atleast_1500_tt }
-						check_variable = { 540.productivity_state_var > 1499 }
-					}
-				}
+				limit = { 540 = { check_variable = { 540.productivity_state_var > 1499 } } }
 				540 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
 			}
 			if = {
-				limit = {
-					541 = {
-						custom_trigger_tooltip = { tooltip = STATE_productivity_atleast_1500_tt }
-						check_variable = { 541.productivity_state_var > 1499 }
-					}
-				}
+				limit = { 541 = { check_variable = { 541.productivity_state_var > 1499 } } }
 				541 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
 			}
 			if = {
-				limit = {
-					538 = {
-						custom_trigger_tooltip = { tooltip = STATE_productivity_atleast_1500_tt }
-						check_variable = { 538.productivity_state_var > 1499 }
-					}
-				}
+				limit = { 538 = { check_variable = { 538.productivity_state_var > 1499 } } }
 				538 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
 			}
 		}
@@ -3237,9 +3237,18 @@ CHI_national_commitee_decisions_category = {
 			}
 			has_tech = energy_efficiency
 			has_tech = early_renewables
-			has_idea = edu_03
-			has_idea = health_02
-			has_idea = social_02
+			custom_trigger_tooltip = {
+				tooltip = CHI_11fyp_edu_goal_tt
+				check_variable = { education_law > 2 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_11fyp_health_goal_tt
+				check_variable = { health_law > 1 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_11fyp_welfare_goal_tt
+				check_variable = { social_law > 1 }
+			}
 			custom_trigger_tooltip = {
 				tooltip = CHI_11fyp_social_goal_tt
 				check_variable = { display_income > display_expense }
@@ -3248,7 +3257,6 @@ CHI_national_commitee_decisions_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission CHI_eleventh_five_year_plan_mission completed"
-			custom_effect_tooltip = CHI_11fyp_full_success_tt
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_political_system }
 			add_to_variable = { CHI_pol_drift_defence_factor = 0.15 tooltip = drift_defence_factor_tt }
 			newline = yes
@@ -3294,9 +3302,9 @@ CHI_national_commitee_decisions_category = {
 			}
 			if = {
 				limit = {
-					has_idea = edu_03
-					has_idea = health_02
-					has_idea = social_02
+					check_variable = { education_law > 2 }
+					check_variable = { health_law > 1 }
+					check_variable = { social_law > 1 }
 					check_variable = { display_income > display_expense }
 				}
 				add_to_temp_variable = { CHI_fyp_goals_met = 1 }
@@ -3312,7 +3320,6 @@ CHI_national_commitee_decisions_category = {
 				add_to_variable = { CHI_economy_production_speed_nuclear_reactor_factor = 0.05 tooltip = production_speed_nuclear_reactor_factor_tt }
 			}
 			else = {
-				custom_effect_tooltip = CHI_11fyp_failed_tt
 				add_timed_idea = {
 					idea = CHI_failed_five_year_plan
 					years = 3
@@ -11068,23 +11075,29 @@ CHI_industrial_investment_category = {
 				tooltip = CHI_bfiii_cap_tt
 				check_variable = {
 					var = CHI_bfiii_stacks
-					value = 6
+					value = 5
 					compare = less_than
 				}
 			}
 		}
 
-		available = { has_political_power > 49 }
+		available = {
+			has_political_power > 49
+			check_variable = {
+				tooltip = CHI_big_fund_iii_allocate_tranche_decision_tt
+				var = CHI_bfiii_stacks
+				value = 5
+				compare = less_than
+			}
+		}
 
 		cost = 50
 
-		days_re_enable = 90
+		days_remove = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_big_fund_iii_allocate_tranche_decision executed"
 			one_random_microchip_plant = yes
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
-			add_to_variable = { CHI_economy_production_factory_max_efficiency_factor = 0.02 tooltip = production_factory_max_efficiency_factor_tt }
 			add_to_variable = { CHI_bfiii_stacks = 1 }
 			newline = yes
 			set_temp_variable = { treasury_change = -8.5 }
@@ -12234,6 +12247,7 @@ CHI_space_program = {
 				}
 				50 = {
 					set_country_flag = CHI_shenzhou_mission_failed
+					unlock_decision_tooltip = CHI_retry_shenzhou_mission
 				}
 			}
 		}
