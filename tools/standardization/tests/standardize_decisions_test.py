@@ -262,6 +262,72 @@ def test_root_factor_converted_to_base_in_ai_will_do():
     assert "factor" not in text
 
 
+def test_quoted_multiple_spaces_preserved_single_line():
+    # Line-273 path: a single-line property whose quoted value has intentional
+    # runs of spaces must stay byte-exact (old `" ".join(split())` collapsed them).
+    block = _decision(
+        [
+            "\tCHI_x_decision = {",
+            '\t\tcustom_tooltip = "Spaced    Out    Text"',
+            "\t}",
+        ]
+    )
+    text = "\n".join(format_decision(block))
+    assert 'custom_tooltip = "Spaced    Out    Text"' in text
+
+
+def test_quoted_multiple_spaces_preserved_in_reindented_block():
+    # Line-79 path: multi-leaf block stays multi-line and is reindented; a quoted
+    # value inside it must keep its internal spacing.
+    block = _decision(
+        [
+            "\tCHI_x_decision = {",
+            "\t\tmodifier = {",
+            '\t\t\tcustom_modifier_tooltip = "A    B    C"',
+            "\t\t\tstability_factor = 0.05",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    text = "\n".join(format_decision(block))
+    assert '"A    B    C"' in text
+
+
+def test_log_string_spaces_preserved():
+    block = _decision(
+        [
+            "\tCHI_x_decision = {",
+            "\t\tcomplete_effect = {",
+            '\t\t\tlog = "[GetDateText]: A   B"',
+            "\t\t\tadd_political_power = 10",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    text = "\n".join(format_decision(block))
+    assert 'log = "[GetDateText]: A   B"' in text
+
+
+def test_format_decision_idempotent():
+    block = _decision(
+        [
+            "\tCHI_x_decision = {",
+            '\t\tcustom_tooltip = "Spaced    Out"',
+            "\t\tmodifier = {",
+            "\t\t\tcivilian_factory_use = 30",
+            "\t\t\tstability_factor = 0.05",
+            "\t\t}",
+            "\t\tcomplete_effect = {",
+            "\t\t\tadd_political_power = 10",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    once = format_decision(block)
+    twice = format_decision([l + "\n" for l in once])
+    assert once == twice
+
+
 def test_modifier_factor_untouched_in_ai_will_do():
     block = _decision(
         [

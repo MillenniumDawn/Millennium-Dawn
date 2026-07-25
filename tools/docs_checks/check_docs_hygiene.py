@@ -14,6 +14,7 @@ TEXT_EXTENSIONS = {
     ".html",
     ".yml",
     ".yaml",
+    ".json",
     ".scss",
     ".css",
     ".js",
