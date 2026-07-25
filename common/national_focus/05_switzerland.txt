@@ -1974,7 +1974,17 @@ focus_tree = {
 			set_temp_variable = { change_resource = 500 }
 			change_reactor_grade_material_effect = yes
 			newline = yes
-			one_random_nuclear_reactor = yes
+			random_owned_state = {
+				construct_building_in_random_province = { nuclear_facility = 1 }
+				add_building_construction = {
+					type = nuclear_reactor
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -24 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -2188,7 +2198,7 @@ focus_tree = {
 		id = SWI_further_strengthen_the_federation
 		icon = focus_SWI_swiss_guiding_principles
 
-		x = -18
+		x = -17
 		y = 1
 		relative_position_id = SWI_deepening_swiss_democracy
 
@@ -2457,7 +2467,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus SWI_strengthen_the_federation" add_ideas = { SWI_growing_federation } }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SWI_strengthen_the_federation"
+			swap_ideas = {
+				remove_idea = SWI_develop_federation
+				add_idea = SWI_growing_federation
+			}
+			remove_ideas = SWI_mind_federation
+		}
 
 		ai_will_do = { base = 1 }
 	}
@@ -2479,9 +2496,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_modernize_direct_democracy"
-			add_stability = 0.15
-			add_ideas = {
-				SWI_modernize_direct
+			swap_ideas = {
+				remove_idea = SWI_growing_federation
+				add_idea = SWI_modernize_direct
 			}
 		}
 
@@ -2505,8 +2522,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_empower_the_council_of_states"
-			add_ideas = {
-				SWI_council_states
+			swap_ideas = {
+				remove_idea = SWI_growing_federation
+				add_idea = SWI_council_states
 			}
 			decrease_centralization = yes
 		}
@@ -2530,10 +2548,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_fiscal_equalization_fund"
-			add_ideas = {
-				SWI_fiscal_equalization
+			if = {
+				limit = { has_completed_focus = SWI_modernize_direct_democracy }
+				swap_ideas = {
+					remove_idea = SWI_modernize_direct
+					add_idea = SWI_fiscal_equalization
+				}
 			}
-			add_stability = 0.1
+			else = {
+				swap_ideas = {
+					remove_idea = SWI_council_states
+					add_idea = SWI_fiscal_equalization_council
+				}
+			}
 		}
 
 		ai_will_do = { base = 1 }
@@ -5980,7 +6007,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SWI_the_cern_project
 
-		cost = 15
+		cost = 5
 
 		prerequisite = { focus = SWI_the_cern_project }
 
@@ -5988,13 +6015,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_digitalisation"
-			two_random_network_infrastructure = yes
 			add_tech_bonus = {
 				name = SWI_digitalisation
 				category = CAT_internet_tech
 				uses = 1
 				ahead_reduction = 1
 			}
+			newline = yes
+			two_random_network_infrastructure = yes
 		}
 
 		ai_will_do = {
@@ -6014,7 +6042,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SWI_digitalisation
 
-		cost = 15
+		cost = 5
 
 		prerequisite = { focus = SWI_digitalisation }
 
@@ -6025,6 +6053,7 @@ focus_tree = {
 			set_temp_variable = { temp_change = 1 }
 			set_temp_variable = { skip_payment = 1 }
 			build_battery_park_effect = yes
+			newline = yes
 			two_random_renewable_energy_infra = yes
 		}
 
@@ -6045,7 +6074,7 @@ focus_tree = {
 		y = 0
 		relative_position_id = SWI_sustainability
 
-		cost = 15
+		cost = 5
 
 		prerequisite = { focus = SWI_digitalisation }
 
@@ -6059,6 +6088,7 @@ focus_tree = {
 				uses = 1
 				ahead_reduction = 1
 			}
+			one_random_microchip_plant = yes
 		}
 
 		ai_will_do = { base = 1 }
@@ -6066,13 +6096,13 @@ focus_tree = {
 
 	focus = {
 		id = SWI_microchip_plant
-		icon = factory_complex
+		icon = microschip_production
 
 		x = -1
 		y = 1
 		relative_position_id = SWI_microchip_research
 
-		cost = 15
+		cost = 5
 
 		prerequisite = { focus = SWI_microchip_research }
 		prerequisite = { focus = SWI_sustainability }
@@ -6385,22 +6415,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = SWI_proclaim_alp_federation_claims_tt
-				owns_state = 857
-				owns_state = 285
-				owns_state = 286
-			}
+			owns_state = 857
+			owns_state = 285
+			owns_state = 286
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SWI_proclaim_the_alp_federation"
-			hidden_effect = {
-				news_event = {
-					id = switzerland_news.7
-					hours = 6
-				}
-			}
 			set_cosmetic_tag = SWI_alpine_federation
 			clr_country_flag = dynamic_flag
 			newline = yes
@@ -6425,6 +6446,12 @@ focus_tree = {
 				}
 				else = {
 					add_claim_by = ROOT
+				}
+			}
+			hidden_effect = {
+				news_event = {
+					id = switzerland_news.7
+					hours = 6
 				}
 			}
 		}
