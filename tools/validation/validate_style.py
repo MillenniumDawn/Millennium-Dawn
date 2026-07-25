@@ -14,7 +14,6 @@ WARNING-level checks (reported, do not fail):
   - Odd number of quotation marks on a line
   - Running brace depth going negative
   - Focus ID format (must be TAG_focus_name)
-  - Missing search_filters in focus blocks
   - Event option has effects but no log =
 """
 
@@ -214,69 +213,44 @@ def _check_spacing_and_quotes(text: str, path: str):
 
 
 def _check_focus_standards(text: str, path: str):
-    """Focus ID format and missing search_filters. Returns [(message, line)]."""
+    """Focus ID format checks. Returns [(message, line)]."""
     warnings = []
     lines = text.splitlines()
-    braces = 0
-    current_focus_id = ""
-    has_search_filters = False
+    depth = 0
     in_focus_block = False
-    in_completion_reward = False
     found_focus_id = False
-    focus_line = 0
     focus_open_depth = 0
-    completion_reward_depth = 0
 
     for line_num, line in enumerate(lines, 1):
         if line.startswith("#") or not line.strip():
             continue
-        depth_before = braces
         if "{" in line:
-            braces += line.count("{")
+            depth += line.count("{")
         if "}" in line:
-            braces -= line.count("}")
-
-        if "completion_reward" in line and "{" in line:
-            in_completion_reward = True
-            completion_reward_depth = depth_before
-        elif in_completion_reward and braces == completion_reward_depth:
-            in_completion_reward = False
-
-        if in_focus_block and "search_filters" in line:
-            has_search_filters = True
+            depth -= line.count("}")
 
         # A focus = { block sits inside focus_tree = { ... } (depth 1); a
-        # shared_focus = { block sits at the file top level (depth 0). Match
-        # either and remember the depth so the block closes at the right level.
-        if not in_focus_block and re.match(r"^\s*(?:shared_)?focus\s*=\s*\{", line):
+        # shared_focus/joint_focus = { block sits at the file top level
+        # (depth 0). Match any and remember the depth so the block closes at
+        # the right level.
+        if not in_focus_block and re.match(
+            r"^\s*(?:shared_|joint_)?focus\s*=\s*\{", line
+        ):
             in_focus_block = True
             found_focus_id = False
-            has_search_filters = False
-            focus_line = line_num
-            focus_open_depth = depth_before
-        elif in_focus_block and braces == focus_open_depth:
-            if found_focus_id and not has_search_filters:
-                warnings.append(
-                    (f"Focus {current_focus_id} missing search_filters", focus_line)
-                )
+            focus_open_depth = depth - 1
+        elif in_focus_block and depth <= focus_open_depth:
             in_focus_block = False
-            current_focus_id = ""
             found_focus_id = False
 
-        if (
-            in_focus_block
-            and not in_completion_reward
-            and not found_focus_id
-            and ("id =" in line or "id=" in line)
-        ):
+        if in_focus_block and not found_focus_id and ("id =" in line or "id=" in line):
             m = re.match(r"[ \t]+id\s*=\s*([A-Za-z0-9_?]+)", line)
             if m:
-                current_focus_id = m.group(1)
                 found_focus_id = True
-                if not _has_focus_format(current_focus_id):
+                if not _has_focus_format(m.group(1)):
                     warnings.append(
                         (
-                            f"Focus ID {current_focus_id} must be TAG_focus_name",
+                            f"Focus ID {m.group(1)} must be TAG_focus_name",
                             line_num,
                         )
                     )
@@ -471,11 +445,7 @@ class Validator(BaseValidator):
         )
 
         self._log_section("Focus Standards (WARNING)")
-        focus_warnings = [
-            r
-            for r in warning_results
-            if "focus" in r[0].lower() or "search_filters" in r[0].lower()
-        ]
+        focus_warnings = [r for r in warning_results if "focus" in r[0].lower()]
         self._report(
             focus_warnings,
             "Focus standards OK",
