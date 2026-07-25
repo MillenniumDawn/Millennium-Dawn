@@ -215,12 +215,12 @@ increase_military_spending = yes / decrease_military_spending = yes
 ```
 # Party popularity — defaults to the ruling party when party_index is unset
 set_temp_variable = { party_popularity_increase = 0.10 }
-add_relative_party_popularity = yes
+change_relative_party_popularity = yes
 
 # Or target a specific party by index (0-23)
 set_temp_variable = { party_index = 2 }
 set_temp_variable = { party_popularity_increase = 0.10 }
-add_relative_party_popularity = yes
+change_relative_party_popularity = yes
 
 # Ban/unban party
 set_temp_variable = { party_index = 1 }
