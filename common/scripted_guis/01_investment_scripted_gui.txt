@@ -155,6 +155,10 @@ scripted_gui = {
 					tooltip = not_investment_target_tt
 					PREV = { CONTROLLER = { NOT = { has_country_flag = not_investment_target } } }
 				}
+				custom_trigger_tooltip = {
+					tooltip = not_recently_canceled_a_project_in_state_tt
+					ROOT = { NOT = { has_country_flag = recently_canceled_a_project_in_this_state_@PREV } }
+				}
 				if = {
 					limit = {
 						has_game_rule = {
@@ -247,8 +251,12 @@ scripted_gui = {
 			}
 			# Begins project or cancels the project if you have one active in a given state
 			invest_button_click = {
-				# Runtime validation to prevent exploit when game is paused (issue #374)
-				# These checks mirror the trigger conditions but are enforced at execution time
+				hidden_effect = {
+					ROOT = {
+						update_gui = yes
+						refresh_investment_gui = yes
+					}
+				}
 				if = {
 					limit = {
 						NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
@@ -269,13 +277,11 @@ scripted_gui = {
 						}
 					}
 					# PREV is the state target
-					THIS = {
-						set_variable = { ROOT.investments_state_target = THIS.id }
-						# CONTROLLER is pretty obvious
-						CONTROLLER = {
-							set_variable = { ROOT.investments_nation_target = THIS.id }
-							ROOT = { set_country_flag = { flag = this_investment_offer_pending@PREV days = 90 value = 1 } }
-						}
+					set_variable = { ROOT.investments_state_target = THIS.id }
+					# CONTROLLER is pretty obvious
+					CONTROLLER = {
+						set_variable = { ROOT.investments_nation_target = THIS.id }
+						ROOT = { set_country_flag = { flag = this_investment_offer_pending@PREV days = 90 value = 1 } }
 					}
 					ROOT = {
 						update_gui = yes
@@ -283,29 +289,22 @@ scripted_gui = {
 						country_event = investments_event.3
 					}
 				}
-				else = {
+				else_if = {
+					limit = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
+					CONTROLLER = { set_temp_variable = { influence_target = THIS } }
 					ROOT = {
 						set_variable = { project = PREV.project_target_state_@ROOT }
 						end_project = yes
 						refresh_investment_gui = yes
-						if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_0_5_percent_invest } }
-							set_temp_variable = { percent_change = -0.5 }
-						}
-						else_if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_1_percent_invest } }
-							set_temp_variable = { percent_change = -1.00 }
-						}
-						else_if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_2_percent_invest } }
-							set_temp_variable = { percent_change = -2.00 }
-						}
-						else = {
-							set_temp_variable = { percent_change = -1.50 }
-						}
-						PREV = {
-							CONTROLLER = {
-								set_temp_variable = { influence_target = THIS.id }
+						set_temp_variable = {
+							percent_change = {
+								value = global.investment_percent_change_value
+								multiply = -1
 							}
 						}
+						set_temp_variable = { tag_index = THIS.id }
 						change_influence_percentage = yes
+						set_country_flag = { flag = recently_canceled_a_project_in_this_state_@PREV value = 1 days = 3 }
 					}
 				}
 			}

@@ -47,8 +47,12 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
-			set_variable = { investor_cost = FROM.project_monetary_cost_effect }
-			multiply_variable = { investor_cost = 0.1 }
+			set_variable = {
+				investor_cost = {
+					value = FROM.project_monetary_cost_effect
+					multiply = 0.1
+				}
+			}
 			set_variable = { pending_offer_total_cost = FROM.project_monetary_cost^-1 }
 			set_variable = { pending_offer_duration = FROM.project_construction_duration^-1 }
 			set_variable = { pending_offer_amount = FROM.project_build_amount^-1 }
@@ -65,9 +69,13 @@ country_event = {
 				set_variable = { project_building_type^-1 = PREV.pending_offer_type }
 				set_variable = { project_build_amount^-1 = PREV.pending_offer_amount }
 				set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }
-				set_variable = { project_monetary_cost_effect = PREV.pending_offer_total_cost }
-				multiply_variable = { project_monetary_cost_effect = -1 }
 				set_variable = { investments_state_target = PREV.pending_offer_state }
+				set_variable = {
+					project_monetary_cost_effect = {
+						value = PREV.pending_offer_total_cost
+						multiply = -1
+					}
+				}
 
 				start_project_two = yes
 				clr_country_flag = this_investment_offer_pending@PREV
@@ -76,20 +84,10 @@ country_event = {
 			# Influence Section
 			if = {
 				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_0_5_percent_invest } }
-					set_temp_variable = { percent_change = 0.50 }
-				}
-				else_if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_1_percent_invest } }
-					set_temp_variable = { percent_change = 1.0 }
-				}
-				else_if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_2_percent_invest } }
-					set_temp_variable = { percent_change = 2.0 }
-				}
-				else = {
-					set_temp_variable = { percent_change = 1.5 }
-				}
+				set_temp_variable = { percent_change = global.investment_percent_change_value }
 				set_temp_variable = { tag_index = FROM.id }
 				change_influence_percentage = yes
+				newline = yes
 
 				# Cool Down for the Influence Gain
 				if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown } }
