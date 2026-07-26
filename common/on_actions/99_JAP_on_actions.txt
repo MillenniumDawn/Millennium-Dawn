@@ -184,7 +184,33 @@ on_actions = {
 			}
 			clamp_variable = { var = JAP_galapagos_research_drift min = -0.15 max = 0 }
 
-			# Galapagos: #2606 hooks its quarterly sphere recount (JAP_galapagos_sphere_count) here
+			if = {
+				limit = { has_country_flag = JAP_cool_japan_doctrine }
+				add_to_variable = { JAP_galapagos_recount_timer = 1 }
+				if = {
+					limit = { check_variable = { JAP_galapagos_recount_timer > 2 } }
+					set_variable = { JAP_galapagos_recount_timer = 0 }
+					set_variable = { JAP_galapagos_sphere_count = 0 }
+					every_other_country = {
+						limit = {
+							exists = yes
+							influence_higher_20 = yes
+						}
+						ROOT = { add_to_variable = { JAP_galapagos_sphere_count = 1 } }
+					}
+					set_temp_variable = { jap_sphere_yield = JAP_galapagos_sphere_count }
+					multiply_temp_variable = { jap_sphere_yield = 0.01 }
+					if = {
+						limit = { has_country_flag = JAP_galapagos_electronics_anchor }
+						multiply_temp_variable = { jap_sphere_yield = 1.5 }
+					}
+					set_variable = { JAP_galapagos_influence_projection = jap_sphere_yield }
+					clamp_variable = { var = JAP_galapagos_influence_projection min = 0 max = 0.30 }
+					set_variable = { JAP_galapagos_roi = jap_sphere_yield }
+					multiply_variable = { JAP_galapagos_roi = 0.2 }
+					clamp_variable = { var = JAP_galapagos_roi min = 0 max = 0.06 }
+				}
+			}
 
 			if = {
 				limit = {
