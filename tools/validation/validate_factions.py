@@ -5,8 +5,12 @@
 import glob
 import os
 import re
+import sys
 from typing import Dict, List, Set
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import extract_block_from_text
 from validator_common import (
     BaseValidator,
     Colors,
@@ -157,12 +161,15 @@ class Validator(BaseValidator):
         goals_dir = self._faction_path("goals")
         for filepath in glob.glob(os.path.join(goals_dir, "*.txt")):
             content = read_file(filepath)
-            for block_id in extract_block_ids(content):
-                if IS_MANIFEST_RE.search(
-                    content[content.index(block_id) : content.index(block_id) + 500]
-                    if block_id in content
-                    else ""
-                ):
+            # Scan at each block's definition site, not the first substring
+            # occurrence of its id (a reference earlier in the file would grab
+            # the wrong window and misclassify the manifest flag). Clamp the
+            # search to the block's own braces so a short goal block can't be
+            # misread as a manifest by bleeding into the next block.
+            for m in BLOCK_DEF_RE.finditer(content):
+                block_id = m.group(1)
+                block_body, _ = extract_block_from_text(content, m.end() - 1)
+                if IS_MANIFEST_RE.search(block_body):
                     self.manifest_ids.add(block_id)
                 self.goal_ids.add(block_id)
 

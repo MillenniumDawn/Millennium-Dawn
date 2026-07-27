@@ -117,6 +117,9 @@ on_actions = {
 	on_liberate = {
 		effect = {
 			log = "[GetDateText]: [This.GetName]: country [ROOT.GetName]|[THIS.GetName] is liberated by [FROM.GetName]"
+			if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
+				FROM = { ROOT = { ingame_startup_nations_effect = yes } }
+			}
 			# if basic setup failed for some reason - country file not loaded
 			if = { limit = { NOT = { country_exists = ROOT } }
 				if = {
@@ -141,90 +144,23 @@ on_actions = {
 
 					log = "[GetDateText]: [This.GetName]: country [ROOT.GetName] history file is not loaded"
 
-					ROOT = {
-						if = {
-							limit = {
-								NOT = { has_variable = domestic_influence_amount }
+					FROM = {
+						ROOT = {
+							civil_war_replication_effect = yes
+							set_variable = { treasury = 0 }
+							update_laws_for_new_nation = yes
+
+							set_temp_variable = { nation_to_copy_from = PREV.id }
+							configure_religious_setup = yes
+
+							add_ideas = {
+								police_02
+								health_02
+								bureau_02
+								edu_02
+								social_02
+								defence_02
 							}
-							set_variable = { domestic_influence_amount = 100 }
-						}
-						ingame_init_investment_system = yes
-						init_auto_influence_array = yes
-
-						calculate_influence_percentage = yes #set alignment drifts from influence
-						startup_politics = yes
-						set_law_vars = yes 	#vars for change laws secondary effects
-						ingame_update_setup = yes 	#money system
-						setup_init_factions = yes 	#flags for int. factions
-						update_neighbors_effects = yes # Updates Neighbor Effects
-						economic_cycle_drift_popularity = yes #drift from neighbor
-						calculate_expected_spending = yes
-
-						set_temp_variable = { nation_to_copy_from = FROM.id }
-						replicate_configure_politics = yes
-
-						#VARIABLES
-						set_variable = { var = corporate_tax_rate value = FROM.corporate_tax_rate }
-						set_variable = { var = population_tax_rate value = FROM.population_tax_rate }
-						set_variable = { treasury = 0 }
-
-						set_temp_variable = { nation_to_copy_from = PREV.id }
-						setup_employment_variables = yes
-
-						#don't get values of original yet - REMINDER -> add it on_civil_war_end
-						set_variable = { debt = 0 }
-						set_variable = { int_investments = 0 }
-
-						#influence
-						set_variable = { domestic_influence_amount = FROM.domestic_influence_amount }
-						#just copy all
-						for_loop_effect = {
-							end = FROM.influence_array^num
-							value = v
-
-							if = {
-								limit = { NOT = { is_in_array = { influence_array = FROM.influence_array^v } } }
-								add_to_array = { influence_array = FROM.influence_array^v }
-								add_to_array = { influence_array_val = FROM.influence_array_val^v }
-							}
-						}
-						recalculate_influence = yes
-
-						#GAME VARIABLES
-						add_political_power = FROM.political_power
-						add_political_power = 400 #bonus
-
-						#LAWS
-						set_variable = { gdp_per_capita = FROM.gdp_per_capita }
-						update_laws_for_new_nation = yes
-
-						### Internal factions
-						set_temp_variable = { nation_to_copy_from = FROM.id }
-						copy_internal_factions = yes
-						#copy leader throughput
-						set_temp_variable = { nation_to_copy_from = FROM.id }
-						copy_subideolgy_leader_throughput = yes
-
-						calculate_influence_percentage = yes #set alignment drifts from influence
-						ingame_update_setup = yes 	#money system
-						setup_init_factions = yes 	#flags for int. factions
-						update_neighbors_effects = yes # Updates Neighbor Effects
-						economic_cycle_drift_popularity = yes #drift from neighbor
-
-						set_temp_variable = { nation_to_copy_from = PREV.id }
-						setup_employment_variables = yes
-						set_temp_variable = { nation_to_copy_from = PREV.id }
-						configure_religious_setup = yes
-
-						inherit_technology = FROM
-
-						add_ideas = {
-							police_02
-							health_02
-							bureau_02
-							edu_02
-							social_02
-							defence_02
 						}
 					}
 				}
@@ -234,22 +170,15 @@ on_actions = {
 						set_temp_variable = { tag_index = FROM.id }
 						set_temp_variable = { influence_target = ROOT.id }
 						change_influence_percentage = yes
-						ingame_init_investment_system = yes
-						init_auto_influence_array = yes
 
 						calculate_influence_percentage = yes #set alignment drifts from influence
-						startup_politics = yes
-						setup_init_factions = yes 	#flags for int. factions
-						set_law_vars = yes 	#vars for change laws secondary effects
 						update_neighbors_effects = yes # Updates Neighbor Effects
-						economic_cycle_drift_popularity = yes #drift from neighbor
 						calculate_expected_spending = yes
 
 						set_temp_variable = { nation_to_copy_from = PREV.id }
 						setup_employment_variables = yes
 
 						ingame_update_setup = yes 	#money system
-						research_slot_init_for_country = yes
 					}
 				}
 			}

@@ -10,12 +10,14 @@ Usage:
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import time
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.chdir(REPO_ROOT)
+import pytest
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 MAX_TIME = 10.0
 passed = 0
@@ -116,6 +118,7 @@ def run_validator(script, label, expect_issues=True, min_issues=0):
 def main():
     global passed, failed
 
+    os.chdir(REPO_ROOT)
     staged_files = []
 
     def stage(path):
@@ -281,6 +284,63 @@ def run_validator(script, label, expect_issues=True, min_issues=0):
         output = (result.stderr or "") + (result.stdout or "")
         for line in output.strip().split("\n")[-5:]:
             print(f"        {line}")
+
+
+# ── pytest entry points ─────────────────────────────────────────────────────
+# Without a `test_*` function pytest collects this `*_test.py` module but finds
+# zero tests. These wrap the script logic so `pytest` actually exercises it.
+
+_TOUCHED_FILES = (
+    "events/Event Horizon.txt",
+    "localisation/english/MD_focus_ALG_l_english.yml",
+    "common/national_focus/05_algeria.txt",
+)
+
+
+def _touched_files_clean() -> bool:
+    r = subprocess.run(
+        ["git", "status", "--porcelain", "--", *_TOUCHED_FILES],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return r.returncode == 0 and not r.stdout.strip()
+
+
+def _game_content_checked_out() -> bool:
+    """CI's report-lib-tests job sparse-checks out only tools/ — no game dirs."""
+    return all(
+        os.path.isdir(os.path.join(REPO_ROOT, d))
+        for d in ("events", "common", "localisation")
+    )
+
+
+def test_real_files_present():
+    """Always-collectible smoke check needing no git staging area.
+
+    Skips under a sparse checkout (e.g. the CI report-lib-tests job, which only
+    checks out tools/) since the game content this asserts on isn't present there.
+    """
+    if not _game_content_checked_out():
+        pytest.skip("game content not checked out (sparse checkout)")
+    for rel in _TOUCHED_FILES:
+        assert os.path.exists(os.path.join(REPO_ROOT, rel))
+
+
+def test_staged_validators_real():
+    """Integration run; stages/restores real files, so they must be clean first.
+
+    Opt-in (MD_RUN_STAGED_INTEGRATION=1): it mutates the working repo and runs
+    the full validator set, so it stays out of the default `pytest` sweep."""
+    if not os.environ.get("MD_RUN_STAGED_INTEGRATION"):
+        pytest.skip(
+            "set MD_RUN_STAGED_INTEGRATION=1 to run staged-validator integration"
+        )
+    if shutil.which("git") is None:
+        pytest.skip("git not available")
+    if not _touched_files_clean():
+        pytest.skip("target files have local changes; skipping to avoid clobbering")
+    assert main() == 0
 
 
 if __name__ == "__main__":

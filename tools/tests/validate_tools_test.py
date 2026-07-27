@@ -32,8 +32,8 @@ _BROKEN = (
 
 def _write_script(tmp_path, name, content, mode=0o755):
     tools_dir = tmp_path / "tools"
-    tools_dir.mkdir(exist_ok=True)
     path = tools_dir / name
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
     path.chmod(mode)
     return path
@@ -70,11 +70,62 @@ def test_style_warnings_for_bare_script(tmp_path):
     assert "no main guard" in output
 
 
-def test_library_modules_exempt_from_style_checks(tmp_path):
-    _write_script(tmp_path, "shared_utils.py", "x = 1\n", mode=0o644)
+def test_test_files_and_markers_exempt(tmp_path):
+    for name in ("thing_test.py", "test_thing.py", "__init__.py", "conftest.py"):
+        _write_script(tmp_path, name, "x = 1\n", mode=0o644)
     validator = _run(tmp_path)
     assert validator.errors_found == 0
     assert not any("Warning:" in line for line in validator.output_lines)
+
+
+def test_files_under_tests_dir_exempt(tmp_path):
+    _write_script(tmp_path, "tests/helper_bits.py", "x = 1\n", mode=0o644)
+    validator = _run(tmp_path)
+    assert not any("Warning:" in line for line in validator.output_lines)
+
+
+def test_private_module_exempt(tmp_path):
+    _write_script(tmp_path, "_internal.py", "x = 1\n", mode=0o644)
+    validator = _run(tmp_path)
+    assert not any("Warning:" in line for line in validator.output_lines)
+
+
+def test_in_package_library_exempt(tmp_path):
+    _write_script(tmp_path, "pkg/__init__.py", "", mode=0o644)
+    _write_script(tmp_path, "pkg/helper.py", "x = 1\n", mode=0o644)
+    validator = _run(tmp_path)
+    assert not any("Warning:" in line for line in validator.output_lines)
+
+
+def test_imported_standalone_library_exempt(tmp_path):
+    _write_script(tmp_path, "shared_bits.py", "x = 1\n", mode=0o644)
+    _write_script(
+        tmp_path, "runner.py", "#!/usr/bin/env python3\nimport shared_bits\n" + _HEALTHY
+    )
+    validator = _run(tmp_path)
+    assert validator.errors_found == 0
+    assert not any("Warning:" in line for line in validator.output_lines)
+
+
+def test_guarded_script_checked_even_when_imported(tmp_path):
+    # A main guard means "runnable"; being imported by a test must not exempt it.
+    guarded = (
+        "#!/usr/bin/env python3\n"
+        "def main():\n"
+        '    print("ok")\n'
+        "\n"
+        'if __name__ == "__main__":\n'
+        "    main()\n"
+    )
+    _write_script(tmp_path, "dual_use.py", guarded, mode=0o644)
+    _write_script(
+        tmp_path, "runner.py", "#!/usr/bin/env python3\nimport dual_use\n" + _HEALTHY
+    )
+    validator = _run(tmp_path)
+    output = "\n".join(validator.output_lines)
+    assert "not executable — dual_use.py" in output
+    assert "no main guard or main() — dual_use.py" not in output
+    assert "missing python shebang — dual_use.py" not in output
 
 
 def test_old_directory_excluded(tmp_path):

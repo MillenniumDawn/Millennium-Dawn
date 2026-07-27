@@ -10,12 +10,13 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
 
-from common_utils import compact_icon, compact_search_filters
+from _common import format_elapsed
+from common_utils import PROP_NAME_RE, compact_icon, compact_search_filters
 from shared_utils import (
     collapse_or_compact,
     convert_root_factor_to_base,
+    create_backup,
     extract_block,
     log_message,
     strip_inline_comment,
@@ -80,7 +81,6 @@ _DEFAULT_REMOVALS = {
     "available_if_capitulated = no",
 }
 
-_PROP_NAME_RE = re.compile(r"^(\w+)\s*=")
 _COMMENTED_EMPTY_BLOCK_RE = re.compile(
     r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$"
 )
@@ -161,7 +161,7 @@ def extract_focus_properties(focus_lines):
             i += 1
             continue
 
-        match = _PROP_NAME_RE.match(line)
+        match = PROP_NAME_RE.match(line)
         prop_name = match.group(1) if match else None
 
         if prop_name == "icon":
@@ -506,10 +506,13 @@ def reindent_by_brace_depth(block_lines, base_tabs=0):
             out.append("")
             continue
 
+        # Count braces on the code portion only: a `#` comment may carry an
+        # unbalanced brace (e.g. `# TODO fix { this }`) that must not shift depth.
+        code = strip_inline_comment(stripped)
         opens = closes = 0
         in_str = False
         prev = ""
-        for c in stripped:
+        for c in code:
             if c == '"' and prev != "\\":
                 in_str = not in_str
             elif not in_str:
@@ -519,7 +522,7 @@ def reindent_by_brace_depth(block_lines, base_tabs=0):
                     closes += 1
             prev = c
 
-        this_depth = depth - 1 if stripped.startswith("}") else depth
+        this_depth = depth - 1 if code.startswith("}") else depth
         indent = "\t" * (base_tabs + max(0, this_depth))
         out.append(f"{indent}{stripped}")
 
@@ -893,15 +896,7 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
             for line in output_lines:
                 f.write(line + "\n")
 
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-
-        if elapsed_time < 60:
-            time_str = f"{elapsed_time:.2f} seconds"
-        else:
-            minutes = int(elapsed_time // 60)
-            seconds = elapsed_time % 60
-            time_str = f"{minutes}m {seconds:.2f}s"
+        time_str = format_elapsed(time.time() - start_time)
 
         log_message("SUCCESS", f"Standardization completed in {time_str}")
         log_message("SUCCESS", f"Processed {counts['focus']} focus blocks")
@@ -919,22 +914,6 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
         return False
 
     return True
-
-
-def create_backup(filename: str) -> str:
-    """Create a backup of the input file"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_filename = f"{filename}.backup.{timestamp}"
-
-    try:
-        with open(filename, "r", encoding="utf-8") as src:
-            with open(backup_filename, "w", encoding="utf-8") as dst:
-                dst.write(src.read())
-        log_message("INFO", f"Backup created: {backup_filename}")
-        return backup_filename
-    except Exception as e:
-        log_message("ERROR", f"Failed to create backup: {str(e)}")
-        return ""
 
 
 def main():

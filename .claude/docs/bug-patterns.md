@@ -15,7 +15,7 @@ Plus every pattern in `.claude/rules/general-rules.md` § Scripting Patterns —
 - `tag` instead of `original_tag` in idea `allowed` blocks (breaks civil war tags)
 - `set_cosmetic_tag = original_tag` (should be `drop_cosmetic_tag = yes`)
 - Missing `country_exists` guard before firing an event to a potentially non-existent tag
-- `AND` of conditions that can never be simultaneously true (e.g. `exists = no` + `is_in_faction_with = X`) in `cancel` or `available` — rethink as `OR` or fix the logic
+- `AND` of conditions that can never be simultaneously true (e.g. `exists = no` + `is_in_faction_with = X`) in `cancel` or `available` — rethink as `OR` or fix the logic. Caveat: flags and variables persist on dead/unreleased tags, so `NOT = { country_exists = X }` next to `X = { has_country_flag = ... }` is satisfiable and often intentional (subject-release systems); only live-country properties (subject status, opinion, ideas, war) make it a true contradiction
 - `for_each_scope_loop` iterating a numeric-index array (only works on scope objects; use `for_each_loop`)
 - GUI buttons with a `trigger` block but no `effects` block (button renders, clicking does nothing)
 - OOB templates using equipment variants the country cannot have at game start (wrong tech level or missing DLC variant)

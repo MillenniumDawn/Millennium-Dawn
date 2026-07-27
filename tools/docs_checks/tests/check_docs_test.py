@@ -5,6 +5,7 @@ masking in the link-syntax scanner, and same-origin vs external URL handling
 in the OG image normalizer.
 """
 
+import check_content_html as content_html
 import check_link_syntax as link_syntax
 import check_og_images as og
 import pytest
@@ -38,6 +39,33 @@ def test_mask_inline_code_preserves_length():
 
 def test_link_syntax_self_test_passes():
     assert link_syntax.self_test() == 0
+
+
+@pytest.mark.parametrize(
+    "text, should_flag",
+    [
+        # Balanced inline code with angle brackets is masked, not flagged.
+        ("Inline `<script>` in code is safe.", False),
+        ("Sample `<button onclick=x>` in code.", False),
+        # A <script> between stray unpaired backticks must still be flagged.
+        ("Stray ``<script> between backticks.", True),
+        ("A ` span ` and a real <script> tag.", True),
+        ("Raw <script>alert(1)</script> tag.", True),
+    ],
+)
+def test_scan_blocked_html(text, should_flag):
+    assert bool(content_html.scan_blocked_html(text, "t.md")) is should_flag
+
+
+def test_mask_code_preserves_length():
+    text = "a `<x>` b"
+    masked = content_html.mask_code(text)
+    assert len(masked) == len(text)
+    assert "<x>" not in masked
+
+
+def test_content_html_self_test_passes():
+    assert content_html.self_test() == 0
 
 
 SITE = "https://millenniumdawn.github.io"

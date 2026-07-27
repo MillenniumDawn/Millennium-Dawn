@@ -239,7 +239,9 @@ def event_add(cpath, dry_run=False):
             outputfile = (
                 io.StringIO()
                 if dry_run
-                else open(os.path.join(cpath, "events", filename), "w", "utf-8-sig")
+                else open(
+                    os.path.join(cpath, "events", filename), "w", encoding="utf-8"
+                )
             )
             outputfile.truncate()
             for line in lines:
@@ -271,7 +273,9 @@ def event_remove(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "events")):
         if ".txt" in filename:
-            outputfile = open(os.path.join(cpath, "events", filename), "r", "utf-8-sig")
+            outputfile = open(
+                os.path.join(cpath, "events", filename), "r", encoding="utf-8-sig"
+            )
             size = os.path.getsize(os.path.join(cpath, "events", filename))
             if size < 100:
                 continue
@@ -284,7 +288,9 @@ def event_remove(cpath, dry_run=False):
             outputfile = (
                 io.StringIO()
                 if dry_run
-                else open(os.path.join(cpath, "events", filename), "w", "utf-8-sig")
+                else open(
+                    os.path.join(cpath, "events", filename), "w", encoding="utf-8"
+                )
             )
             outputfile.truncate()
             for line in lines:
