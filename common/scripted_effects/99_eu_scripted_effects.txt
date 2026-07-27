@@ -794,6 +794,15 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_member = SPR }
 			add_to_array = { global.EU_member = SWE }
 
+			# Baseline EU penalties applied to every founding member at startup
+			for_each_scope_loop = {
+				array = global.EU_member
+				add_ideas = {
+					foreign_data_kraken
+					asylum_shopping
+				}
+			}
+
 			add_to_array = { global.EU_potential = ALB }
 			add_to_array = { global.EU_potential = ARM }
 			add_to_array = { global.EU_potential = AUS }
@@ -842,6 +851,7 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_potential = SPR }
 			add_to_array = { global.EU_potential = SWE }
 			add_to_array = { global.EU_potential = SWI }
+			add_to_array = { global.EU_potential = VTB }
 			add_to_array = { global.EU_potential = TUR }
 			add_to_array = { global.EU_potential = UKR }
 			add_to_array = { global.EU_potential = WAS }
@@ -899,7 +909,6 @@ on_startup_euu_action = {
 				array = global.EU_potential
 				limit = { is_ai = yes }
 				add_ideas = EUU_monitor
-				activate_mission = EU_update_vars_mission
 				country_event = EUelection.2
 				# First EP election lands on the historical June 2004 date (2000.1.1 + 1625 days);
 				# EUelection.1 then arms EU_election_5_years, which carries the 5-year cycle (2009, 2014, ...).
@@ -908,6 +917,32 @@ on_startup_euu_action = {
 
 			set_global_flag = { flag = EU_president_commission_ai value = 1 days = 10 }
 			set_global_flag = { flag = ECB_president_ai value = 1 days = 10 }
+
+			# Starting europeanism for members and candidates. Set before EU_update_vars so the
+			# population-weighted global.var_europeanism is correct on day 1.
+			# Default for non-member candidates in EU_potential
+			for_each_scope_loop = {
+				array = global.EU_potential
+				set_variable = { europeanism = 0.3 }
+			}
+			# Founding members and other notable cases
+			set_variable = { AUS.europeanism = 0.75 }
+			set_variable = { BEL.europeanism = 0.9 }
+			set_variable = { DEN.europeanism = 0.76 }
+			set_variable = { ENG.europeanism = 0.76 }
+			set_variable = { FIN.europeanism = 0.78 }
+			set_variable = { FRA.europeanism = 0.86 }
+			set_variable = { GER.europeanism = 0.85 }
+			set_variable = { GRE.europeanism = 0.92 }
+			set_variable = { HOL.europeanism = 0.94 }
+			set_variable = { IRE.europeanism = 0.94 }
+			set_variable = { ITA.europeanism = 0.91 }
+			set_variable = { LUX.europeanism = 0.94 }
+			set_variable = { POR.europeanism = 0.95 }
+			set_variable = { SPR.europeanism = 0.94 }
+			set_variable = { SWE.europeanism = 0.62 }
+			set_variable = { SOV.europeanism = 0.05 }
+			set_variable = { VTB.europeanism = 0.5 }
 
 			EU_update_vars = yes
 			EU_init_focus_vote_weights = yes
@@ -2116,6 +2151,13 @@ EU_adopt_passed_laws = {
 			add_ideas = EUU_idea_gdpr
 			remove_ideas = foreign_data_kraken
 		}
+		else = {
+			# GDPR not passed yet — new member inherits the baseline data penalty unless already on GDPR
+			if = {
+				limit = { NOT = { has_idea = EUU_idea_gdpr } }
+				add_ideas = foreign_data_kraken
+			}
+		}
 		# focus_EU402
 		if = {
 			limit = {
@@ -2139,6 +2181,10 @@ EU_adopt_passed_laws = {
 			add_to_variable = { party_pop_array^20 = 0.03 }
 			add_popularity = { ideology = nationalist popularity = 0.03 }
 			recalculate_party = yes
+		}
+		else = {
+			# EU403 not passed yet — new member inherits the baseline asylum penalty
+			add_ideas = asylum_shopping
 		}
 		# focus_EU404
 		if = {
