@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from common_utils import run_standardizer
 from standardize_decisions import DecisionStandardizer
 from standardize_events import EventStandardizer
-from standardize_focus_tree import standardize_focus_tree
+from standardize_focus_tree import add_check_naming_argument, standardize_focus_tree
 from standardize_history import HistoryStandardizer
 from standardize_ideas import IdeaStandardizer
 from standardize_localisation import LocalisationStandardizer, _detect_mod_root
@@ -53,12 +53,7 @@ Examples:
     focus_parser.add_argument(
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
-    focus_parser.add_argument(
-        "--check-naming",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: off)",
-    )
+    add_check_naming_argument(focus_parser)
 
     event_parser = subparsers.add_parser("event", help="Standardize event files")
     event_parser.add_argument("input_file", help="Input event file")

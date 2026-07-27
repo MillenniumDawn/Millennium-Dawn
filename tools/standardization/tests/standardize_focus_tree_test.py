@@ -5,6 +5,8 @@ multiple times. The standardizer must preserve every occurrence, in order.
 Log injection must also survive an id line carrying a trailing comment.
 """
 
+import standardize_focus_tree as focus_tree_module
+from shared_utils import strip_inline_comment
 from standardize_focus_tree import (
     extract_focus_properties,
     format_focus_block,
@@ -12,6 +14,11 @@ from standardize_focus_tree import (
     standardize_focus_tree,
     validate_modifier_naming,
 )
+
+
+def _code_braces_balanced(lines):
+    code = "\n".join(strip_inline_comment(line) for line in lines)
+    return code.count("{") == code.count("}")
 
 
 def _focus_with_war_targets(targets):
@@ -85,6 +92,22 @@ def test_offset_single_line_trigger_preserved():
     assert offset_lines == ["trigger = { original_tag = NKO }"]
 
 
+def test_single_line_offset_block_contents_preserved():
+    # The property loops read block_lines[1:-1], which is empty for a one-line
+    # block — the whole offset used to be emitted as `offset = { }`.
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_joint\n",
+            "\t\toffset = { trigger = { original_tag = HOL } x = 70 }\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    assert "\t\toffset = { trigger = { original_tag = HOL } x = 70 }" in out
+    assert _code_braces_balanced(out)
+
+
 def test_offset_multi_line_trigger_preserved():
     props = extract_focus_properties(
         _focus_with_offset(
@@ -121,6 +144,84 @@ def test_duplicate_available_blocks_merged_not_dropped():
     assert "has_country_flag = TST_flag" in " ".join(inner)
     out = format_focus_block(props)
     assert sum(1 for l in out if l.strip().startswith("available")) == 1
+
+
+def test_duplicate_single_line_available_blocks_merged():
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_gated\n",
+            "\t\tavailable = { has_country_flag = TST_a }\n",
+            "\t\tavailable = { has_country_flag = TST_b }\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    assert sum(1 for l in out if l.strip().startswith("available")) == 1
+    body = "\n".join(out)
+    assert "has_country_flag = TST_a" in body
+    assert "has_country_flag = TST_b" in body
+    assert _code_braces_balanced(out)
+
+
+def test_duplicate_single_line_blocks_with_comment_braces_not_merged():
+    # A `}` inside a trailing comment must not be mistaken for the block's
+    # closing brace — merging is skipped and both blocks survive verbatim.
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_gated\n",
+            "\t\tavailable = { has_country_flag = TST_a } # old: checked { something } here\n",
+            "\t\tavailable = { has_country_flag = TST_b }\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    assert _code_braces_balanced(out)
+    assert sum(1 for l in out if l.strip().startswith("available")) == 2
+    assert (
+        "\t\tavailable = { has_country_flag = TST_a } # old: checked { something } here"
+        in out
+    )
+
+
+def test_single_line_effect_block_with_comment_braces_keeps_log_inside_or_absent():
+    # The log must never land outside the braces; an unsplittable block is left
+    # unlogged rather than rewritten wrongly.
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_reward\n",
+            "\t\tcompletion_reward = { add_political_power = 50 } # was { 100 }\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    assert _code_braces_balanced(out)
+    assert not any(l.strip().startswith("log =") for l in out)
+    assert "add_political_power = 50" in "\n".join(out)
+
+
+def test_single_line_effect_block_gets_log_inside_braces():
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_reward\n",
+            "\t\tcompletion_reward = { add_political_power = 50 }\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    assert _code_braces_balanced(out)
+    reward_start = next(
+        i for i, l in enumerate(out) if l.strip().startswith("completion_reward")
+    )
+    assert out[reward_start].strip() == "completion_reward = {"
+    assert out[reward_start + 1].strip() == (
+        'log = "[GetDateText]: [Root.GetName]: Focus TST_reward"'
+    )
+    assert out[reward_start + 2].strip() == "add_political_power = 50"
+    assert out[reward_start + 3].strip() == "}"
 
 
 def test_hyphenated_focus_id_log_corrected():
@@ -264,6 +365,17 @@ def test_suggested_fix_keeps_second_tag_segment_case(capsys):
     assert "CHI_NKO_shared_modifier" in capsys.readouterr().err
 
 
+def test_reported_focus_id_excludes_trailing_comment(capsys):
+    lines = [
+        "focus = {\n",
+        "\tid = TST_commented #Infiltrate Lebanon\n",
+        "\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "commented.txt") == 1
+    assert "'TST_commented'" in capsys.readouterr().err
+
+
 def test_check_naming_disabled_skips_validation():
     lines = [
         "focus = {\n",
@@ -298,19 +410,43 @@ def test_shared_and_joint_focuses_are_reindented_at_top_level(tmp_path):
         assert lines[-1] == "}"
 
 
-def test_invalid_modifier_name_rejects_standardization_without_writing(tmp_path):
-    source = tmp_path / "focus.txt"
-    output = tmp_path / "output.txt"
-    source.write_text(
-        """focus_tree = {
+_INVALID_MODIFIER_TREE = """focus_tree = {
 \tfocus = {
 \t\tid = TST_invalid
 \t\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }
 \t}
 }
-""",
-        encoding="utf-8",
-    )
+"""
 
-    assert standardize_focus_tree(str(source), str(output)) is False
+
+def test_invalid_modifier_name_rejects_standardization_without_writing(tmp_path):
+    source = tmp_path / "focus.txt"
+    output = tmp_path / "output.txt"
+    source.write_text(_INVALID_MODIFIER_TREE, encoding="utf-8")
+
+    assert standardize_focus_tree(str(source), str(output), check_naming=True) is False
     assert not output.exists()
+
+
+def test_naming_check_is_opt_in(tmp_path):
+    source = tmp_path / "focus.txt"
+    output = tmp_path / "output.txt"
+    source.write_text(_INVALID_MODIFIER_TREE, encoding="utf-8")
+
+    assert standardize_focus_tree(str(source), str(output)) is True
+    assert "TST_Invalid_modifier" in output.read_text(encoding="utf-8")
+
+
+def test_failed_write_leaves_original_intact_and_no_temp_file(tmp_path, monkeypatch):
+    target = tmp_path / "focus.txt"
+    original = "focus_tree = {\n\tfocus = {\n\t\tid = TST_x\n\t}\n}\n"
+    target.write_text(original, encoding="utf-8")
+
+    def _boom(src, dst):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(focus_tree_module.os, "replace", _boom)
+
+    assert standardize_focus_tree(str(target), str(target)) is False
+    assert target.read_text(encoding="utf-8") == original
+    assert not (tmp_path / "focus.txt.tmp").exists()
