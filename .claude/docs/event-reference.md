@@ -18,7 +18,7 @@ country_event = {
 		name = tag_ns.N.a
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
 		set_temp_variable = { party_popularity_increase = -0.01 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = { base = 1 }
 	}
