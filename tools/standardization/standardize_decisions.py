@@ -7,6 +7,7 @@ Standardizes HOI4 decision and decision category files according to Millennium D
 
 import argparse
 import os
+import re
 from typing import Any, Dict, List
 
 from common_utils import (
@@ -25,6 +26,21 @@ from shared_utils import (
     log_message,
     strip_inline_comment,
 )
+
+# Decision/category IDs, unlike the property keywords PROP_NAME_RE matches, may
+# contain hyphens (e.g. `Communist-State_invite`) — verified against every ID in
+# common/decisions/. A header this can't read is surfaced as an error, not guessed.
+_HEADER_ID_RE = re.compile(r"^([\w-]+)\s*=")
+
+
+def _read_header_id(block_lines: List[str]) -> str:
+    """Read the ID from a block's header line (block_lines[0]), or raise ValueError."""
+    header = block_lines[0].strip() if block_lines else ""
+    match = _HEADER_ID_RE.match(header)
+    if not match:
+        raise ValueError(f"cannot read an identifier from block header: {header!r}")
+    return match.group(1)
+
 
 _CATEGORY_SINGLE_LINE_PROPS = {
     "icon",
@@ -117,8 +133,7 @@ def format_decision(block_lines: List[str]) -> List[str]:
     if not block_lines:
         return block_lines
 
-    header_match = PROP_NAME_RE.match(block_lines[0].strip())
-    did = header_match.group(1) if header_match else "decision"
+    did = _read_header_id(block_lines)
 
     lines: List[str] = [f"\t{did} = {{", ""]
     i = 1  # skip opening header line
@@ -181,13 +196,7 @@ class DecisionStandardizer(BaseStandardizer):
         properties, ``decision`` for a nested decision block, ``raw`` for a
         comment or stray line kept verbatim.
         """
-        props: Dict[str, Any] = {"id": "", "children": []}
-
-        header_match = (
-            PROP_NAME_RE.match(block_lines[0].strip()) if block_lines else None
-        )
-        if header_match:
-            props["id"] = header_match.group(1)
+        props: Dict[str, Any] = {"id": _read_header_id(block_lines), "children": []}
 
         i = 1  # skip opening header line
         while i < len(block_lines) - 1:  # skip closing brace
@@ -229,8 +238,7 @@ class DecisionStandardizer(BaseStandardizer):
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Emit the category with its children reformatted in source order."""
-        cid = props["id"] or "category"
-        lines: List[str] = [f"{cid} = {{", ""]
+        lines: List[str] = [f"{props['id']} = {{", ""]
 
         for kind, data in props["children"]:
             if kind == "cat_single":

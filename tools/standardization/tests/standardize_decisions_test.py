@@ -7,6 +7,7 @@ The standardizer must preserve every decision ID, keep all properties in source
 order, and never drop or split content.
 """
 
+import pytest
 from shared_utils import collapse_or_compact
 from standardize_decisions import DecisionStandardizer, format_decision
 
@@ -346,3 +347,72 @@ def test_modifier_factor_untouched_in_ai_will_do():
     text = "\n".join(format_decision(block))
     assert "base = 5" in text
     assert "factor = 0" in text
+
+
+def test_hyphenated_decision_id_preserved_and_idempotent():
+    # Regression: `Communist-State_invite` was misread by the \w+-only header
+    # regex and silently rewritten to the literal ID `decision`.
+    block = _decision(
+        [
+            "\tCommunist-State_invite = {",
+            "\t\tcomplete_effect = {",
+            "\t\t\tadd_political_power = 10",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    out = format_decision(block)
+    assert out[0].strip() == "Communist-State_invite = {"
+    text = "\n".join(out)
+    assert 'Decision Communist-State_invite"' in text
+
+    reparsed = format_decision([l + "\n" for l in out])
+    assert reparsed == out
+
+
+def test_hyphenated_decision_ids_survive_full_category_pass():
+    category = _decision(
+        [
+            "Coalition_decisions = {",
+            "\tCommunist-State_invite = {",
+            "\t\ticon = generic_decision",
+            "\t}",
+            "\tCommunist-State_remove = {",
+            "\t\ticon = generic_decision",
+            "\t}",
+            "}",
+        ]
+    )
+    std = DecisionStandardizer()
+    out = std.format_block(std.extract_properties(category))
+    assert _ids(out) == [
+        "Coalition_decisions",
+        "Communist-State_invite",
+        "Communist-State_remove",
+    ]
+
+
+def test_unreadable_decision_header_raises_instead_of_guessing():
+    block = _decision(
+        [
+            "\t$broken@header = {",
+            "\t\ticon = generic_decision",
+            "\t}",
+        ]
+    )
+    with pytest.raises(ValueError):
+        format_decision(block)
+
+
+def test_unreadable_category_header_raises_instead_of_guessing():
+    category = _decision(
+        [
+            "$broken@category = {",
+            "\tCHI_x_decision = {",
+            "\t\ticon = generic_decision",
+            "\t}",
+            "}",
+        ]
+    )
+    with pytest.raises(ValueError):
+        DecisionStandardizer().extract_properties(category)
