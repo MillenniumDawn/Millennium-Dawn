@@ -42,7 +42,12 @@ def standardize_file(filepath, file_type):
         original = f.read()
 
     if file_type == "focus":
-        ok = standardize_focus_tree(filepath, filepath, verbose=False)
+        # Naming enforcement is opt-in: it scans the whole file and would
+        # hard-reject any edit to a tree carrying pre-existing violations.
+        # Run it deliberately via the CLI (--check-naming) instead.
+        ok = standardize_focus_tree(
+            filepath, filepath, verbose=False, check_naming=False
+        )
     else:
         cls = {
             "event": EventStandardizer,
