@@ -2818,10 +2818,13 @@ scripted_gui = {
 			send_advisors_button_click_enabled = {
 				has_political_power > 100
 				custom_trigger_tooltip = {
+					tooltip = ct_nation_selected_tt
+					has_valid_ct_nation_selected = yes
+				}
+				custom_trigger_tooltip = {
 					tooltip = is_ct_does_not_have_advisors
 					var:selected_ct_nation = {
 						NOT = { has_country_flag = has_ct_advisor_from@ROOT }
-						NOT = { tag = ROOT }
 					}
 				}
 				custom_trigger_tooltip = {
@@ -2838,6 +2841,10 @@ scripted_gui = {
 			send_advisors_button_right_click_enabled = {
 				has_political_power > 100
 				custom_trigger_tooltip = {
+					tooltip = ct_nation_selected_tt
+					has_valid_ct_nation_selected = yes
+				}
+				custom_trigger_tooltip = {
 					tooltip = is_ct_does_have_advisors
 					var:selected_ct_nation = {
 						has_country_flag = has_ct_advisor_from@ROOT
@@ -2848,6 +2855,10 @@ scripted_gui = {
 			conduct_drone_operations_button_click_enabled = {
 				has_political_power > 100
 				set_temp_variable = { req_level > 24 }
+				custom_trigger_tooltip = {
+					tooltip = ct_nation_selected_tt
+					has_valid_ct_nation_selected = yes
+				}
 				custom_trigger_tooltip = {
 					tooltip = ct_required_intel_level_tt
 					check_variable = { international_terror_org_intel^selected_org > req_level }
@@ -2866,13 +2877,19 @@ scripted_gui = {
 			conduct_joint_training_button_click_enabled = {
 				has_political_power > 100
 				custom_trigger_tooltip = {
+					tooltip = ct_nation_selected_tt
+					has_valid_ct_nation_selected = yes
+				}
+				custom_trigger_tooltip = {
 					tooltip = no_recent_joint_exercises
 					var:selected_ct_nation = {
-						NOT = {
-							has_country_flag = has_recent_joint_exercise@ROOT
-							has_country_flag = refused_joint_exercises@ROOT
-							tag = ROOT
-						}
+						NOT = { has_country_flag = has_recent_joint_exercise@ROOT }
+					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = ct_joint_exercises_not_refused_tt
+					var:selected_ct_nation = {
+						NOT = { has_country_flag = refused_joint_exercises@ROOT }
 					}
 				}
 			}
@@ -3160,7 +3177,12 @@ scripted_gui = {
 					array = global.asian_nations
 					value = v
 
-					ROOT = { add_to_array = { selected_ct_nations_list = v } }
+					var:v = {
+						if = {
+							limit = { is_valid_ct_nation_target = yes }
+							add_to_array = { ROOT.selected_ct_nations_list = THIS }
+						}
+					}
 				}
 				international_systems_update = yes
 			}
@@ -3170,7 +3192,12 @@ scripted_gui = {
 					array = global.middle_eastern_nations
 					value = v
 
-					ROOT = { add_to_array = { selected_ct_nations_list = v } }
+					var:v = {
+						if = {
+							limit = { is_valid_ct_nation_target = yes }
+							add_to_array = { ROOT.selected_ct_nations_list = THIS }
+						}
+					}
 				}
 				international_systems_update = yes
 			}
@@ -3180,7 +3207,12 @@ scripted_gui = {
 					array = global.sub_saharan_nations
 					value = v
 
-					ROOT = { add_to_array = { selected_ct_nations_list = v } }
+					var:v = {
+						if = {
+							limit = { is_valid_ct_nation_target = yes }
+							add_to_array = { ROOT.selected_ct_nations_list = THIS }
+						}
+					}
 				}
 				international_systems_update = yes
 			}
@@ -3190,7 +3222,12 @@ scripted_gui = {
 					array = global.european_nations
 					value = v
 
-					ROOT = { add_to_array = { selected_ct_nations_list = v } }
+					var:v = {
+						if = {
+							limit = { is_valid_ct_nation_target = yes }
+							add_to_array = { ROOT.selected_ct_nations_list = THIS }
+						}
+					}
 				}
 				international_systems_update = yes
 			}
@@ -3200,7 +3237,12 @@ scripted_gui = {
 					array = global.american_nations
 					value = v
 
-					ROOT = { add_to_array = { selected_ct_nations_list = v } }
+					var:v = {
+						if = {
+							limit = { is_valid_ct_nation_target = yes }
+							add_to_array = { ROOT.selected_ct_nations_list = THIS }
+						}
+					}
 				}
 				international_systems_update = yes
 			}
@@ -9869,8 +9911,10 @@ scripted_gui = {
 
 		effects = {
 			name_of_nation_button_click = {
-				ROOT = { set_variable = { selected_ct_nation = PREV } }
-				international_systems_update = yes
+				ROOT = {
+					set_variable = { selected_ct_nation = PREV }
+					international_systems_update = yes
+				}
 			}
 		}
 	}
