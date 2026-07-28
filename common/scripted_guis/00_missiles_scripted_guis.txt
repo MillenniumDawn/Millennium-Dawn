@@ -1075,7 +1075,6 @@ scripted_gui = {
 				set_variable = { var_gui_prod_11_days_unit = global.prod_11_duration_unit^i }
 				set_variable = { var_gui_prod_11_amount = 1 }
 				set_variable = { prod_11_multiplier = 1 }
-				set_variable = { var_space_production_GNSS = prod_11_display_array^i }
 				calculate_production_vars_11 = yes
 
 				clear_prod_display_arrays = yes
@@ -1090,7 +1089,6 @@ scripted_gui = {
 				set_variable = { var_gui_prod_12_days_unit = global.prod_12_duration_unit^i }
 				set_variable = { var_gui_prod_12_amount = 1 }
 				set_variable = { prod_12_multiplier = 1 }
-				set_variable = { var_space_production_COMSAT = prod_12_display_array^i }
 				calculate_production_vars_12 = yes
 
 				clear_prod_display_arrays = yes
@@ -1105,7 +1103,6 @@ scripted_gui = {
 				set_variable = { var_gui_prod_13_days_unit = global.prod_13_duration_unit^i }
 				set_variable = { var_gui_prod_13_amount = 1 }
 				set_variable = { prod_13_multiplier = 1 }
-				set_variable = { var_space_production_SPYSAT = prod_13_display_array^i }
 				calculate_production_vars_13 = yes
 
 				clear_prod_display_arrays = yes
@@ -1120,7 +1117,6 @@ scripted_gui = {
 				set_variable = { var_gui_prod_14_days_unit = global.prod_14_duration_unit^i }
 				set_variable = { var_gui_prod_14_amount = 1 }
 				set_variable = { prod_14_multiplier = 1 }
-				set_variable = { var_space_production_KILLSAT = prod_14_display_array^i }
 				calculate_production_vars_14 = yes
 
 				clear_prod_display_arrays = yes
@@ -2976,10 +2972,15 @@ scripted_gui = {
 				add_to_variable = { ct_global_base_detect_var = intel_gain_var }
 				custom_effect_tooltip = is_ct_dom_suv_tt
 
-				set_temp_variable = { fail_chance = 100 }
-				set_temp_variable = { gov_mod = government_coalition_strength }
-				multiply_temp_variable = { gov_mod = 100 }
-				subtract_from_temp_variable = { fail_chance = gov_mod }
+				set_temp_variable = {
+					fail_chance = {
+						value = 100
+						subtract = {
+							value = government_coalition_strength
+							multiply = 100
+						}
+					}
+				}
 
 				random = {
 					chance = fail_chance
@@ -3024,19 +3025,31 @@ scripted_gui = {
 			exploit_intelligence_button_click = {
 				custom_effect_tooltip = is_ct_exploit_intel_tt
 
-				set_temp_variable = { exploit_int = ct_mass_gather_store_var^selected_org }
+				set_temp_variable = {
+					exploit_int = {
+						value = ct_mass_gather_store_var^selected_org
+						multiply = 1.25
+					}
+				}
 				set_variable = { ct_mass_gather_store_var^selected_org = 0 }
-				multiply_temp_variable = { exploit_int = 1.25 }
 				add_to_variable = { international_terror_org_temp_specific_intel^selected_org = exploit_int }
 				international_systems_update = yes
 			}
 			infil_agent_button_click = {
 				add_political_power = -50
 				custom_effect_tooltip = is_ct_infil_agent_tt
-				set_temp_variable = { fail_chance = 100 }
-				set_temp_variable = { success_chance = international_terror_org_intel^selected_org }
-				add_to_temp_variable = { success_chance = ct_intel_agency_value }
-				subtract_from_temp_variable = { fail_chance = success_chance }
+				set_temp_variable = {
+					success_chance = {
+						value = international_terror_org_intel^selected_org
+						add = ct_intel_agency_value
+					}
+				}
+				set_temp_variable = {
+					fail_chance = {
+						value = 100
+						subtract = success_chance
+					}
+				}
 
 				random_list = {
 					success_chance = {
@@ -4954,8 +4967,13 @@ scripted_gui = {
 			cyber_invest_offense_button_click = {
 				log = "[GetDateText]: [Root.GetName]: cyber_invest_offense GUI"
 				add_command_power = -25
-				add_to_variable = { cyber_offense_investment = 2 }
-				clamp_variable = { var = cyber_offense_investment min = 0 max = 100 }
+				set_variable = {
+					cyber_offense_investment = {
+						value = cyber_offense_investment
+						add = 2
+						clamp = { min = 0 max = 100 }
+					}
+				}
 				calculate_cyber_capability = yes
 				custom_effect_tooltip = cyber_gui_invest_offense_tt
 				international_systems_update = yes
@@ -4964,8 +4982,13 @@ scripted_gui = {
 			cyber_invest_offense_button_right_click = {
 				log = "[GetDateText]: [Root.GetName]: cyber_divest_offense GUI"
 				add_command_power = -25
-				add_to_variable = { cyber_offense_investment = -2 }
-				clamp_variable = { var = cyber_offense_investment min = 0 max = 100 }
+				set_variable = {
+					cyber_offense_investment = {
+						value = cyber_offense_investment
+						subtract = 2
+						clamp = { min = 0 max = 100 }
+					}
+				}
 				calculate_cyber_capability = yes
 				custom_effect_tooltip = cyber_gui_divest_offense_tt
 				international_systems_update = yes
@@ -4974,8 +4997,13 @@ scripted_gui = {
 			cyber_invest_defense_button_click = {
 				log = "[GetDateText]: [Root.GetName]: cyber_invest_defense GUI"
 				add_command_power = -25
-				add_to_variable = { cyber_defense_investment = 2 }
-				clamp_variable = { var = cyber_offense_investment min = 0 max = 100 }
+				set_variable = {
+					cyber_defense_investment = {
+						value = cyber_defense_investment
+						add = 2
+						clamp = { min = 0 max = 100 }
+					}
+				}
 				calculate_cyber_capability = yes
 				custom_effect_tooltip = cyber_gui_invest_defense_tt
 				international_systems_update = yes
@@ -4984,8 +5012,13 @@ scripted_gui = {
 			cyber_invest_defense_button_right_click = {
 				log = "[GetDateText]: [Root.GetName]: cyber_divest_defense GUI"
 				add_command_power = -25
-				add_to_variable = { cyber_defense_investment = -2 }
-				clamp_variable = { var = cyber_defense_investment min = 0 max = 100 }
+				set_variable = {
+					cyber_defense_investment = {
+						value = cyber_defense_investment
+						subtract = 2
+						clamp = { min = 0 max = 100 }
+					}
+				}
 				calculate_cyber_capability = yes
 				custom_effect_tooltip = cyber_gui_divest_defense_tt
 				international_systems_update = yes
@@ -5352,7 +5385,6 @@ scripted_gui = {
 				log = "[GetDateText]: [Root.GetName]: Apply for ATCP GUI"
 				set_country_flag = antarctica_atcp_application_pending
 				custom_effect_tooltip = antarctica_atcp_apply_pending_tt
-				set_variable = { global.missile_ui_updated = global.missile_ui_updated }
 				add_to_variable = { global.missile_ui_updated = 1 }
 			}
 			antarctica_treaty_leave_button_click = {
@@ -6871,8 +6903,12 @@ scripted_gui = {
 							tooltip = pmc_upgrade_tt
 							check_variable = { global.merc_upgrade^[compcheck] > [upchk] }
 						}
-						set_temp_variable = { sum = global.merc_deploy_cost^1 }
-						add_to_temp_variable = { sum = global.merc_deployed^[compcheck] }
+						set_temp_variable = {
+							sum = {
+								value = global.merc_deploy_cost^1
+								add = global.merc_deployed^[compcheck]
+							}
+						}
 						pmc_can_recruit = yes
 						custom_trigger_tooltip = {
 							tooltip = pmc_surpassing_TT
@@ -7622,8 +7658,12 @@ scripted_gui = {
 				}
 				else_if = { limit = { check_variable = { v = 031 } }
 					check_variable = { global.merc_upgrade^4 > -1 }
-					set_temp_variable = { sum = global.merc_deploy_cost^0 }
-					add_to_temp_variable = { sum = global.merc_deployed^4 }
+					set_temp_variable = {
+						sum = {
+							value = global.merc_deploy_cost^0
+							add = global.merc_deployed^4
+						}
+					}
 					pmc_can_recruit = yes
 					custom_trigger_tooltip = {
 						tooltip = pmc_surpassing_TT
