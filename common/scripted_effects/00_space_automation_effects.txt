@@ -1,19 +1,5 @@
 # Author(s): Blazer135
 
-# Type ID layout shared by every helper below:
-#   family 0 = GNSS    IDs 121-132   sat_mass offset  0   line 11
-#   family 1 = COMSAT  IDs 141-152   sat_mass offset 12   line 12
-#   family 2 = SPYSAT  IDs 161-172   sat_mass offset 24   line 13
-#   OLV                IDs 101-112                        line 10
-# KILLSAT is deliberately absent: it has no *_sat_system_max_array, so there is
-# no coverage target to fill toward.
-#
-# Tier is 1-based (GNSS8 = 128); every per-tier array is 0-based, so
-# array index = tier - 1. temp_fam = 99 means "not a supported satellite".
-# 1 is the empty-slot marker, matching vanilla payload_types_array.
-
-# in:  temp_pid
-# out: temp_fam, temp_tier, temp_idx, temp_massidx
 space_auto_classify = {
 	set_temp_variable = { temp_fam = 99 }
 	set_temp_variable = { temp_tier = 0 }
@@ -59,20 +45,11 @@ space_auto_classify = {
 	}
 }
 
-# var_space_auto_preset selects where each tick's manifest comes from:
-#   0 = Auto — rebuild the most outdated network first, then move up
-#   1 = GNSS focus      2 = COMSAT focus     3 = SPYSAT focus
-#   4 = GNSS + COMSAT   5 = GNSS + SPYSAT    6 = COMSAT + SPYSAT
-#   7 = Balanced        8 = Custom (whatever Save Custom captured)
-
-# in: temp_fam
 space_auto_push_slot = {
 	space_auto_newest_id = yes
 	add_to_array = { space_auto_source_array = temp_newest_id }
 }
 
-# out: temp_auto_fam (99 when nothing is left to build)
-# "Oldest" is the lowest active tier index, not the largest shortfall.
 space_auto_pick_oldest_family = {
 	set_temp_variable = { temp_auto_fam = 99 }
 	set_temp_variable = { temp_auto_idx = 99 }
@@ -208,8 +185,6 @@ space_auto_resolve_source = {
 	}
 }
 
-# in:  temp_fam
-# out: temp_newest_id (1 when that family has nothing researched)
 space_auto_newest_id = {
 	set_temp_variable = { temp_newest_id = 1 }
 	if = {
@@ -348,7 +323,6 @@ space_auto_refresh_olv = {
 	else_if = { limit = { has_tech = OLV1 } set_variable = { var_space_auto_newest_olv = 101 } }
 }
 
-# out: temp_mass (total launch mass of space_auto_effective_array)
 space_auto_manifest_mass = {
 	set_temp_variable = { temp_mass = 0 }
 	set_temp_variable = { temp_scan = 0 }
@@ -367,14 +341,9 @@ space_auto_manifest_mass = {
 	}
 }
 
-# in:  temp_mass (mass of one flight's manifest)
-# out: temp_rocket_stock
-# Counts every generation heavy enough, not just the one flying next, or usable
-# older stages read as empty stock and automation keeps buying new rockets.
 space_auto_usable_rocket_stock = {
 	set_temp_variable = { temp_rocket_stock = 0 }
 	if = {
-		# Older stages will not be flown, so they must not suppress ordering
 		limit = { has_country_flag = space_auto_latest_olv_only }
 		set_temp_variable = { temp_rocket_stock = missile_inventory_array^var_space_auto_newest_olv }
 	}
@@ -395,13 +364,6 @@ space_auto_usable_rocket_stock = {
 	clamp_temp_variable = { var = temp_rocket_stock min = 0 max = 10000 }
 }
 
-# in: temp_capacity
-# SPYSAT masses equal the matching OLV capacity tier for tier, so a satellite
-# generation researched ahead of its launch vehicle produces a manifest nothing
-# researched can lift. Trimming would then empty it, drop slots_used to 0 and
-# stall ordering permanently - including the rocket that would resolve it. Step
-# the slot down to the newest tier that does fit instead; flying an older
-# satellite beats flying nothing.
 space_auto_fit_slot_tiers = {
 	set_temp_variable = { temp_fit_scan = 0 }
 	while_loop_effect = {
@@ -416,7 +378,6 @@ space_auto_fit_slot_tiers = {
 					check_variable = { temp_fam < 3 }
 					check_variable = { temp_fit_mass > temp_capacity }
 				}
-				# Family base ID (120/140/160) and mass offset (0/12/24)
 				set_temp_variable = { temp_fit_base = temp_pid }
 				subtract_from_temp_variable = { temp_fit_base = temp_tier }
 				set_temp_variable = { temp_fit_moff = temp_massidx }
@@ -543,9 +504,6 @@ space_auto_build_effective_manifest = {
 		add_to_temp_variable = { temp_scan = 1 }
 	}
 
-	# Governs what is flown, not what is ordered: production still buys the newest.
-	# Subscripting an array inside check_variable's var= field does not evaluate -
-	# hoist into a plain temp or this test silently never passes.
 	set_variable = { var_space_auto_olv = 0 }
 	if = {
 		limit = { has_country_flag = space_auto_latest_olv_only }
@@ -570,15 +528,11 @@ space_auto_build_effective_manifest = {
 			add_to_temp_variable = { temp_scan_olv = 1 }
 		}
 	}
-	# Must name the newest researched type, not the largest in stock: nothing in
-	# stock can lift the manifest here, so the trim below would empty it, drop
-	# slots_used to 0, and permanently stall the ordering step gated on it.
 	if = {
 		limit = { check_variable = { var_space_auto_olv = 0 } }
 		set_variable = { var_space_auto_olv = var_space_auto_newest_olv }
 	}
 
-	# launch_OLV enforces no mass limit; only the manual launch trigger does.
 	set_temp_variable = { temp_olv_idx = var_space_auto_olv }
 	subtract_from_temp_variable = { temp_olv_idx = 101 }
 	clamp_temp_variable = { var = temp_olv_idx min = 0 max = 11 }
@@ -671,7 +625,6 @@ space_auto_build_order_list = {
 	}
 }
 
-# in: temp_pid, temp_fam, temp_idx, temp_need, temp_budget_free
 space_auto_start_sat_batch = {
 	if = {
 		limit = {
@@ -701,9 +654,6 @@ space_auto_start_sat_batch = {
 			}
 		}
 		else = {
-			# Restore, or the refused batch stays staged on the manual line and its
-			# Start button - which only tests var_space_production_GNSS - offers the
-			# player the very order automation just judged unaffordable.
 			set_variable = { var_space_auto_starved = 1 }
 			set_variable = { var_space_production_GNSS = temp_sv_prod }
 			set_variable = { var_gui_prod_11_price_unit = temp_sv_price }
@@ -741,9 +691,6 @@ space_auto_start_sat_batch = {
 			}
 		}
 		else = {
-			# Restore, or the refused batch stays staged on the manual line and its
-			# Start button - which only tests var_space_production_COMSAT - offers the
-			# player the very order automation just judged unaffordable.
 			set_variable = { var_space_auto_starved = 1 }
 			set_variable = { var_space_production_COMSAT = temp_sv_prod }
 			set_variable = { var_gui_prod_12_price_unit = temp_sv_price }
@@ -781,9 +728,6 @@ space_auto_start_sat_batch = {
 			}
 		}
 		else = {
-			# Restore, or the refused batch stays staged on the manual line and its
-			# Start button - which only tests var_space_production_SPYSAT - offers the
-			# player the very order automation just judged unaffordable.
 			set_variable = { var_space_auto_starved = 1 }
 			set_variable = { var_space_production_SPYSAT = temp_sv_prod }
 			set_variable = { var_gui_prod_13_price_unit = temp_sv_price }
@@ -798,11 +742,6 @@ space_auto_start_sat_batch = {
 space_auto_compute_budget = {
 	space_prod_weekly_expense = yes
 
-	# Balance, not treasury_rate: solvent nations often run a negative weekly rate.
-	# Money owed on batches already running is not available to a new one. The four
-	# lines free up independently, so without this the programme commits several
-	# times the treasury with deficit spending off - which the deficit tooltip
-	# explicitly promises it cannot do.
 	set_temp_variable = { temp_committed = 0 }
 	if = {
 		limit = { has_country_flag = missile_construction_10 }
@@ -850,8 +789,6 @@ space_auto_compute_budget = {
 		clamp_variable = { var = var_space_auto_budget min = 0 max = 1000000 }
 	}
 
-	# Base unit prices, so the real charge is higher by the parallel-line surcharge:
-	# this shows what changing the rotation costs, not what is being billed.
 	set_variable = { var_space_auto_est_cost = 0 }
 	set_temp_variable = { temp_e = 0 }
 	while_loop_effect = {
@@ -885,9 +822,6 @@ space_auto_compute_budget = {
 		multiply_temp_variable = { temp_unit = var_space_auto_flights }
 		add_to_variable = { var_space_auto_est_cost = temp_unit }
 	}
-	# price_total is unit * (amount + multiplier) and the fit loop opens at
-	# multiplier = amount, so an unreduced batch bills exactly double the base.
-	# Quote that, not the base, or the panel understates every order by ~2x.
 	multiply_variable = { var_space_auto_est_cost = 2 }
 
 	set_variable = { var_space_auto_bld_olv = 0 }
@@ -916,11 +850,6 @@ space_auto_compute_budget = {
 	add_to_variable = { var_space_auto_bld_total = var_space_auto_bld_spy }
 }
 
-# The multiplier is the parallel-line dial: it divides build days and adds one
-# unit of cost per line. At 1 a batch runs the sum of every unit's build time -
-# 28 GNSS4 is 3920 days - so buy as much of it as the allowance carries.
-#
-# in: temp_need, temp_budget_free   out: prod_NN_multiplier, temp_cost/days/weekly
 space_auto_fit_multiplier_10 = {
 	set_variable = { prod_10_multiplier = temp_need }
 	space_auto_price_10 = yes
@@ -936,9 +865,6 @@ space_auto_fit_multiplier_10 = {
 		round_variable = prod_10_multiplier
 		space_auto_price_10 = yes
 	}
-	# The multiplier alone floors the price at unit * (amount + 1), so a
-	# shortfall the treasury cannot cover in one go would order nothing at
-	# all, forever. Halve the batch itself so partial progress still happens.
 	set_temp_variable = { temp_fit_guard = 0 }
 	while_loop_effect = {
 		limit = {
@@ -974,9 +900,6 @@ space_auto_fit_multiplier_11 = {
 		round_variable = prod_11_multiplier
 		space_auto_price_11 = yes
 	}
-	# The multiplier alone floors the price at unit * (amount + 1), so a
-	# shortfall the treasury cannot cover in one go would order nothing at
-	# all, forever. Halve the batch itself so partial progress still happens.
 	set_temp_variable = { temp_fit_guard = 0 }
 	while_loop_effect = {
 		limit = {
@@ -1012,9 +935,6 @@ space_auto_fit_multiplier_12 = {
 		round_variable = prod_12_multiplier
 		space_auto_price_12 = yes
 	}
-	# The multiplier alone floors the price at unit * (amount + 1), so a
-	# shortfall the treasury cannot cover in one go would order nothing at
-	# all, forever. Halve the batch itself so partial progress still happens.
 	set_temp_variable = { temp_fit_guard = 0 }
 	while_loop_effect = {
 		limit = {
@@ -1050,9 +970,6 @@ space_auto_fit_multiplier_13 = {
 		round_variable = prod_13_multiplier
 		space_auto_price_13 = yes
 	}
-	# The multiplier alone floors the price at unit * (amount + 1), so a
-	# shortfall the treasury cannot cover in one go would order nothing at
-	# all, forever. Halve the batch itself so partial progress still happens.
 	set_temp_variable = { temp_fit_guard = 0 }
 	while_loop_effect = {
 		limit = {
@@ -1073,7 +990,6 @@ space_auto_price_13 = {
 	space_auto_weekly_cost = yes
 }
 
-# in: temp_cost, temp_days   out: temp_weekly
 space_auto_weekly_cost = {
 	set_temp_variable = { temp_weeks = temp_days }
 	divide_temp_variable = { temp_weeks = 7 }
@@ -1082,10 +998,6 @@ space_auto_weekly_cost = {
 	divide_temp_variable = { temp_weekly = temp_weeks }
 }
 
-# The OLV guard belongs here, not only on the weekly tick: the panel buttons order
-# too, and with no launch vehicle researched var_space_production_OLV would be set
-# to 0, so the decision timeout pays for a batch and delivers it to inventory slot
-# 0 instead of a rocket.
 space_auto_order_production = {
 	if = {
 		limit = {
@@ -1124,8 +1036,6 @@ space_auto_order_production_inner = {
 		add_to_temp_variable = { temp_order = 1 }
 	}
 
-	# Rockets first, deliberately: 240-440 days against 80-260 for a satellite at a
-	# fraction of the cost, so a payload batch eating the budget strands the stock.
 	if = {
 		limit = {
 			check_variable = { var_space_auto_slots_used > 0 }
@@ -1174,9 +1084,7 @@ space_auto_order_production_inner = {
 	}
 }
 
-# in: temp_need, temp_budget_free
 space_auto_start_olv_batch = {
-	# Newest generation always, even while older stock is still flying
 	set_temp_variable = { temp_idx = var_space_auto_newest_olv }
 	subtract_from_temp_variable = { temp_idx = 101 }
 	clamp_temp_variable = { var = temp_idx min = 0 max = 11 }
@@ -1238,8 +1146,6 @@ space_auto_start_olv_batch = {
 	}
 }
 
-# The rotation is a per-tick allowance, and on_weekly and on_monthly can both
-# fire the engine on the same day - without this the rotation silently doubles.
 space_auto_run_launch = {
 	if = {
 		limit = {
@@ -1247,7 +1153,6 @@ space_auto_run_launch = {
 			check_variable = { var_space_auto_slots_used > 0 }
 			check_variable = { var_space_auto_olv > 100 }
 		}
-		# One flight carries the whole manifest, so the fewest complete copies wins.
 		set_temp_variable = { temp_flights = var_space_auto_flights }
 		if = {
 			limit = { check_variable = { missile_inventory_array^var_space_auto_olv < temp_flights } }
@@ -1284,9 +1189,7 @@ space_auto_run_launch = {
 	}
 }
 
-# in: temp_flights
 space_auto_execute_launch = {
-	# launch_OLV drains var_OLV_flights/_inventory, so save the player's staging.
 	set_temp_variable = { temp_saved_type = var_OLV_type }
 	set_temp_variable = { temp_saved_rel = var_OLV_reliability }
 	set_temp_variable = { temp_saved_mass = var_OLV_payload_mass }
@@ -1301,9 +1204,6 @@ space_auto_execute_launch = {
 	set_variable = { var_OLV_inventory = missile_inventory_array^var_space_auto_olv }
 	set_variable = { var_OLV_flights = temp_flights }
 
-	# launch_OLV consumes payload_types_array and clear_payload_types resets it,
-	# so an automated launch would silently destroy whatever the player staged
-	# on the manual launch screen.
 	clear_array = space_auto_staging_backup
 	set_temp_variable = { temp_scan = 0 }
 	while_loop_effect = {
@@ -1343,7 +1243,6 @@ space_auto_execute_launch = {
 		set_variable = { var_OLV_inventory = 0 }
 	}
 
-	# Promote before recomputing, or the refreshed stats still describe the old tier
 	space_auto_raise_system_tiers = yes
 	update_space_system_values = yes
 
@@ -1353,9 +1252,6 @@ space_auto_execute_launch = {
 	}
 }
 
-# check_sat_systems_min_sat_num only ever downgrades; nothing else promotes.
-# Gated on equal-or-better coverage ratio, which cannot be a downgrade because
-# the max bonus rises with tier.
 space_auto_raise_system_tiers = {
 	space_auto_raise_gnss = yes
 	space_auto_raise_comsat = yes
@@ -1513,7 +1409,6 @@ space_auto_clear_line_13 = {
 	clr_country_flag = space_auto_line_13
 }
 
-# A line flagged automated with no batch behind it would bill forever.
 space_auto_reconcile_lines = {
 	if = {
 		limit = {
@@ -1544,16 +1439,6 @@ space_auto_reconcile_lines = {
 		space_auto_clear_line_13 = yes
 	}
 }
-
-# Reading the live production variables needs no latched copy only because a
-# running batch is frozen: every button that could change its amount or duration
-# requires missile_construction_NN to be clear.
-#
-# Weekly ticks never divide a build duration evenly, so the weekly figure is
-# capped at what is outstanding and the decision timeout settles the remainder;
-# total paid lands exactly on the quoted price.
-#
-# Pure so the panel may call it freely - only space_prod_weekly_bill accrues.
 
 space_prod_weekly_expense = {
 	set_temp_variable = { temp_accrue = 0 }
@@ -1669,10 +1554,6 @@ space_prod_weekly_calc = {
 	}
 }
 
-# in: temp_settle_price, temp_settle_paid
-# The paid check is save compatibility: a batch predating weekly billing has no
-# accrued total and would be charged its full price again. Every batch runs 80+
-# days, so a genuine one always accrues at least one weekly charge.
 space_prod_settle_balance = {
 	set_temp_variable = { temp_outstanding = temp_settle_price }
 	subtract_from_temp_variable = { temp_outstanding = temp_settle_paid }
@@ -1745,10 +1626,6 @@ space_automation_weekly = {
 	}
 }
 
-# The saved layout and constellation tier do not re-normalise weekly the way the
-# effective manifest does, and space_auto_raise_system_tiers otherwise only runs
-# off the back of a launch. Edge-triggered because space_auto_upgrade_all ends in
-# update_space_system_values, which raises news events.
 space_auto_tech_watch = {
 	if = {
 		limit = {
@@ -1775,17 +1652,11 @@ space_auto_tech_watch = {
 	}
 }
 
-# Safe to overlap the weekly tick: reconcile is a no-op when nothing changed,
-# ordering is blocked per line by missile_construction_NN, launching is bounded
-# by stock.
 space_automation_monthly = {
 	space_automation_weekly = yes
 	space_auto_tech_watch = yes
 }
 
-# Stops short of space_auto_tech_watch and of launching: both end in
-# update_space_system_values, and a news event raised mid-click truncates the
-# rest of the click effect, including the dirty bump that repaints the panel.
 space_auto_refresh_ui = {
 	if = {
 		limit = { has_completed_space_program = yes }
@@ -1798,7 +1669,6 @@ space_auto_refresh_ui = {
 }
 
 space_auto_save_template = {
-	# The payload picker appends a slot once the base four are full.
 	clear_array = space_auto_manifest_array
 	set_temp_variable = { temp_scan = 0 }
 	while_loop_effect = {
@@ -1817,7 +1687,6 @@ space_auto_save_template = {
 		}
 		add_to_temp_variable = { temp_scan = 1 }
 	}
-	# Saving must select the custom preset, or the layout is stored then ignored.
 	set_variable = { var_space_auto_preset = 8 }
 	space_auto_preview = yes
 	if = {
@@ -1842,7 +1711,6 @@ space_auto_upgrade_all = {
 	}
 	space_auto_resolve_source = yes
 	space_auto_build_effective_manifest = yes
-	# Promote before recomputing, or the refreshed stats still describe the old tier
 	space_auto_raise_system_tiers = yes
 	update_space_system_values = yes
 	if = {
@@ -1861,8 +1729,6 @@ space_auto_toggle = {
 	else = {
 		set_country_flag = space_auto_active
 		clamp_variable = { var = var_space_auto_flights min = 1 max = 10 }
-		# Orders now rather than idling to the weekly tick, but never launches -
-		# see space_auto_refresh_ui for why a click effect must not raise events.
 		space_auto_preview = yes
 		space_auto_order_production = yes
 		log = "[GetDateText]: [Root.GetName]: space automation enabled"
@@ -1890,8 +1756,6 @@ space_auto_toggle_deficit = {
 	space_auto_apply_now = yes
 }
 
-# Binary switches only. Cycling presets or nudging the rotation must not order,
-# or an intermediate click locks a batch in at a setting passed through on the way.
 space_auto_apply_now = {
 	space_auto_preview = yes
 	if = {
@@ -1900,10 +1764,6 @@ space_auto_apply_now = {
 	}
 }
 
-# Frame 1 is red, frame 2 green. A properties "image" bound to scripted
-# localisation only re-evaluates once the GUI dirty counter is picked up, leaving
-# a checkbox on its previous state after a click; a "frame" bound to a variable
-# updates immediately.
 space_auto_sync_switches = {
 	if = {
 		limit = { has_country_flag = space_auto_active }
@@ -1961,7 +1821,6 @@ space_auto_toggle_latest_olv = {
 
 space_auto_cycle_preset = {
 	add_to_variable = { var_space_auto_preset = 1 }
-	# Skip the custom slot until something has been saved into it
 	if = {
 		limit = {
 			check_variable = { var_space_auto_preset = 8 }
