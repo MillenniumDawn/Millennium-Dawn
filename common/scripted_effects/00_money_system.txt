@@ -2282,6 +2282,16 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_GRE_creditor }
 	}
 
+	# Interest on Belt and Road loans (China is the only creditor; ledger at the end of 05_CHI_scripted_effects.txt)
+	if = {
+		limit = {
+			original_tag = CHI
+			check_variable = { CHI_bri_loan_income > 0 }
+		}
+		set_variable = { additional_income_CHI_bri_loans = CHI_bri_loan_income }
+		add_to_variable = { additional_income_rate = additional_income_CHI_bri_loans }
+	}
+
 	# Energy Load Sharing Income
 	if = { limit = { check_variable = { energy_load_sharing_nations^num > 0 } }
 		set_variable = { energy_load_sharing_income_var = { value = energy_load_sharing_use_var multiply = global.price_per_gw_for_els clamp = { min = 0 max = @math_expressions_max } } }
@@ -2302,12 +2312,19 @@ calculate_interest_rate = {
 		set_variable = { interest_rate = 0 }
 		set_variable = { debt_rate = 0 }
 		set_variable = { debt_ratio = 0 }
+		set_variable = { debt_interest_premium = 0 }
+		set_variable = { interest_rate_multiplier = 0 }
+		set_variable = { cb_rate_premium = 0 }
+		set_variable = { threat_interest_premium = 0 }
+		set_variable = { adjusted_tension_premium = 0 }
+		set_variable = { interest_rate_clamp_adjustment = 0 }
 	}
 	else = {
 		# Country has debt - calculate interest rate, debt_rate, and debt_ratio
 		clamp_variable = { var = gdp_total min = 0.001 }
 		#Base value comes from debt/gdp ratio
-		set_variable = { interest_rate = { value = debt divide = gdp_total multiply = 10 } }
+		set_variable = { debt_interest_premium = { value = debt divide = gdp_total multiply = 10 } }
+		set_variable = { interest_rate = debt_interest_premium }
 
 		#Additional additive modifiers
 		set_variable = { interest_rate_multiplier = modifier@interest_rate_multiplier_modifier }
@@ -2315,14 +2332,13 @@ calculate_interest_rate = {
 
 		#CB policy rate raises sovereign borrowing premium — tighter monetary policy = costlier debt
 		#Coefficient 0.5: a 6% CB rate adds +3pp to interest_rate
-		set_temp_variable = { cb_rate_premium = { value = cb_policy_rate multiply = 0.5 } }
+		set_variable = { cb_rate_premium = { value = cb_policy_rate multiply = 0.5 } }
 		add_to_variable = { interest_rate = cb_rate_premium }
 
 		# Threat premium - current threat level raises borrowing costs; decays with world tension.
 		# as 1.825% per year. 80% (0.8) tensioon -> 4% interest rate (4.0).
 		set_variable = { threat_interest_premium = { value = global.threat multiply = 5 clamp = { min = 0 max = 5 } } }
 		add_to_variable = { interest_rate = threat_interest_premium }
-		multiply_variable = { threat_interest_premium = 0.01 } # For localisation display.
 
 		# World tension cause premium - Countries which cause world tension are chaotic and less
 		# stable.
@@ -2332,10 +2348,11 @@ calculate_interest_rate = {
 		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
 		add_to_variable = { interest_rate = adjusted_tension_premium }
 		set_variable = { tracked_threat = has_added_tension_amount }
-		multiply_variable = { adjusted_tension_premium = 0.01 } # For localisation display.
 
-
+		set_temp_variable = { pre_clamp_interest_rate = interest_rate }
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
+		set_variable = { interest_rate_clamp_adjustment = interest_rate }
+		subtract_from_variable = { interest_rate_clamp_adjustment = pre_clamp_interest_rate }
 
 		#Calculate weekly debt rate based on interest (52 weeks in a year)
 		set_variable = { debt_rate = { value = debt multiply = 0.00019 multiply = interest_rate } }
@@ -3277,6 +3294,17 @@ update_infra_rate = {
 # Purpose: Aggregates special expenses (propaganda campaigns, diplomatic actions, special projects)
 calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
+
+	# Interest owed on a Belt and Road loan
+	if = {
+		limit = {
+			check_variable = { bri_loan_payment > 0 }
+			CHI = { has_completed_focus = CHI_Belt_and_Road_Initiative }
+		}
+		set_variable = { additional_expense_bri_loan = bri_loan_payment }
+		add_to_variable = { additional_expenses_rate = additional_expense_bri_loan }
+	}
+
 	# Additional expenses, set expense amount as a variable (weekly gain)
 	# Generic Propaganda Campaign Decisions
 	# AI do not use the propganda campaigns at all. Wrap them in a check to minimize checking.
@@ -3349,15 +3377,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 		}
 		if = {
-			limit = {
-				OR = {
-					has_country_flag = infrastructure_investiture_flag
-					has_country_flag = industrial_projects_flag
-					has_country_flag = service_constructions_flag
-					has_country_flag = arms_industry_stipends_flag
-					has_country_flag = retool_shipyards_flag
-				}
-			}
+			limit = { has_country_flag = active_economic_project }
 			set_variable = { project_decisions_cost = { value = gdp_total multiply = 0.001 } }
 
 			set_temp_variable = { project_cost_multiplier = { value = 1 add = modifier@projects_cost_modifier } }
@@ -4171,8 +4191,10 @@ update_display = {
 	if = {
 		limit = {
 			NOT = {
-				has_active_mission = cheap_loan_from_the_imf_mission
-				has_country_flag = paused_debt_repayment
+				OR = {
+					has_active_mission = cheap_loan_from_the_imf_mission
+					has_country_flag = paused_debt_repayment
+				}
 			}
 		}
 		add_to_variable = { display_expense = debt_rate }
@@ -6046,7 +6068,7 @@ calculate_gdp_modifiers = {
 
 # Effect: calculate_ai_taxes_desire
 # Purpose: Calculates the tax rate for the AI to change
-# Runs monthly from MD_on_actions (AI path only). Changes are ±1 per week.
+# Runs monthly from MD_on_actions (AI path only). Changes are ±1 per run.
 calculate_ai_taxes_desire = {
 	if = { limit = { NOT = { has_variable = population_tax_rate } } set_variable = { var = population_tax_rate value = 20 } }
 	if = { limit = { NOT = { has_variable = corporate_tax_rate } } set_variable = { var = corporate_tax_rate value = 20 } }
