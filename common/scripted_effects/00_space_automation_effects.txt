@@ -2,20 +2,12 @@
 
 space_auto_classify = {
 	set_temp_variable = { temp_fam = 99 }
-	set_temp_variable = { temp_tier = 0 }
-	set_temp_variable = { temp_idx = 0 }
-	set_temp_variable = { temp_massidx = 0 }
 	if = {
 		limit = {
 			check_variable = { temp_pid > 120 }
 			check_variable = { temp_pid < 133 }
 		}
 		set_temp_variable = { temp_fam = 0 }
-		set_temp_variable = { temp_tier = temp_pid }
-		subtract_from_temp_variable = { temp_tier = 120 }
-		set_temp_variable = { temp_idx = temp_tier }
-		subtract_from_temp_variable = { temp_idx = 1 }
-		set_temp_variable = { temp_massidx = temp_idx }
 	}
 	else_if = {
 		limit = {
@@ -23,12 +15,6 @@ space_auto_classify = {
 			check_variable = { temp_pid < 153 }
 		}
 		set_temp_variable = { temp_fam = 1 }
-		set_temp_variable = { temp_tier = temp_pid }
-		subtract_from_temp_variable = { temp_tier = 140 }
-		set_temp_variable = { temp_idx = temp_tier }
-		subtract_from_temp_variable = { temp_idx = 1 }
-		set_temp_variable = { temp_massidx = temp_idx }
-		add_to_temp_variable = { temp_massidx = 12 }
 	}
 	else_if = {
 		limit = {
@@ -36,12 +22,34 @@ space_auto_classify = {
 			check_variable = { temp_pid < 173 }
 		}
 		set_temp_variable = { temp_fam = 2 }
-		set_temp_variable = { temp_tier = temp_pid }
-		subtract_from_temp_variable = { temp_tier = 160 }
-		set_temp_variable = { temp_idx = temp_tier }
-		subtract_from_temp_variable = { temp_idx = 1 }
-		set_temp_variable = { temp_massidx = temp_idx }
-		add_to_temp_variable = { temp_massidx = 24 }
+	}
+	if = {
+		limit = { check_variable = { temp_fam < 3 } }
+		set_temp_variable = {
+			temp_tier = {
+				value = temp_pid
+				subtract = @sat_pid_base
+				subtract = {
+					value = temp_fam
+					multiply = @sat_family_stride
+				}
+			}
+		}
+		set_temp_variable = { temp_idx = { value = temp_tier subtract = 1 } }
+		set_temp_variable = {
+			temp_massidx = {
+				value = temp_idx
+				add = {
+					value = temp_fam
+					multiply = @tier_count
+				}
+			}
+		}
+	}
+	else = {
+		set_temp_variable = { temp_tier = 0 }
+		set_temp_variable = { temp_idx = 0 }
+		set_temp_variable = { temp_massidx = 0 }
 	}
 }
 
@@ -189,10 +197,14 @@ space_auto_newest_id = {
 	set_temp_variable = { temp_newest_id = 1 }
 	if = {
 		limit = { check_variable = { space_auto_newest_array^temp_fam > 0 } }
-		set_temp_variable = { temp_newest_id = temp_fam }
-		multiply_temp_variable = { temp_newest_id = 20 }
-		add_to_temp_variable = { temp_newest_id = 120 }
-		add_to_temp_variable = { temp_newest_id = space_auto_newest_array^temp_fam }
+		set_temp_variable = {
+			temp_newest_id = {
+				value = temp_fam
+				multiply = @sat_family_stride
+				add = @sat_pid_base
+				add = space_auto_newest_array^temp_fam
+			}
+		}
 	}
 }
 
@@ -206,6 +218,21 @@ space_auto_refresh_targets = {
 	space_auto_refresh_comsat = yes
 	space_auto_refresh_spysat = yes
 	space_auto_refresh_olv = yes
+}
+
+# Appends the temp_tier / temp_cur / temp_max triple resolved by a space_auto_refresh_* effect onto the parallel per-family arrays
+space_auto_push_family_state = {
+	add_to_array = { space_auto_newest_array = temp_tier }
+	add_to_array = { space_auto_orbit_array = temp_cur }
+	add_to_array = { space_auto_target_array = temp_max }
+	set_temp_variable = {
+		temp_short = {
+			value = temp_max
+			subtract = temp_cur
+			clamp = { min = 0 max = @space_count_max }
+		}
+	}
+	add_to_array = { space_auto_short_array = temp_short }
 }
 
 space_auto_refresh_gnss = {
@@ -222,23 +249,16 @@ space_auto_refresh_gnss = {
 	else_if = { limit = { has_tech = GNSS3 } set_temp_variable = { temp_tier = 3 } }
 	else_if = { limit = { has_tech = GNSS2 } set_temp_variable = { temp_tier = 2 } }
 	else_if = { limit = { has_tech = GNSS1 } set_temp_variable = { temp_tier = 1 } }
-	add_to_array = { space_auto_newest_array = temp_tier }
 
 	set_temp_variable = { temp_cur = 0 }
 	set_temp_variable = { temp_max = 0 }
 	if = {
 		limit = { check_variable = { temp_tier > 0 } }
-		set_temp_variable = { temp_idx = temp_tier }
-		subtract_from_temp_variable = { temp_idx = 1 }
+		set_temp_variable = { temp_idx = { value = temp_tier subtract = 1 } }
 		set_temp_variable = { temp_cur = GNSS_satellite_array^temp_idx }
 		set_temp_variable = { temp_max = global.GNSS_sat_system_max_array^temp_idx }
 	}
-	add_to_array = { space_auto_orbit_array = temp_cur }
-	add_to_array = { space_auto_target_array = temp_max }
-	set_temp_variable = { temp_short = temp_max }
-	subtract_from_temp_variable = { temp_short = temp_cur }
-	clamp_temp_variable = { var = temp_short min = 0 max = 10000 }
-	add_to_array = { space_auto_short_array = temp_short }
+	space_auto_push_family_state = yes
 }
 
 space_auto_refresh_comsat = {
@@ -255,23 +275,16 @@ space_auto_refresh_comsat = {
 	else_if = { limit = { has_tech = COMSAT3 } set_temp_variable = { temp_tier = 3 } }
 	else_if = { limit = { has_tech = COMSAT2 } set_temp_variable = { temp_tier = 2 } }
 	else_if = { limit = { has_tech = COMSAT1 } set_temp_variable = { temp_tier = 1 } }
-	add_to_array = { space_auto_newest_array = temp_tier }
 
 	set_temp_variable = { temp_cur = 0 }
 	set_temp_variable = { temp_max = 0 }
 	if = {
 		limit = { check_variable = { temp_tier > 0 } }
-		set_temp_variable = { temp_idx = temp_tier }
-		subtract_from_temp_variable = { temp_idx = 1 }
+		set_temp_variable = { temp_idx = { value = temp_tier subtract = 1 } }
 		set_temp_variable = { temp_cur = COM_satellite_array^temp_idx }
 		set_temp_variable = { temp_max = global.COM_sat_system_max_array^temp_idx }
 	}
-	add_to_array = { space_auto_orbit_array = temp_cur }
-	add_to_array = { space_auto_target_array = temp_max }
-	set_temp_variable = { temp_short = temp_max }
-	subtract_from_temp_variable = { temp_short = temp_cur }
-	clamp_temp_variable = { var = temp_short min = 0 max = 10000 }
-	add_to_array = { space_auto_short_array = temp_short }
+	space_auto_push_family_state = yes
 }
 
 space_auto_refresh_spysat = {
@@ -288,23 +301,16 @@ space_auto_refresh_spysat = {
 	else_if = { limit = { has_tech = SPYSAT3 } set_temp_variable = { temp_tier = 3 } }
 	else_if = { limit = { has_tech = SPYSAT2 } set_temp_variable = { temp_tier = 2 } }
 	else_if = { limit = { has_tech = SPYSAT1 } set_temp_variable = { temp_tier = 1 } }
-	add_to_array = { space_auto_newest_array = temp_tier }
 
 	set_temp_variable = { temp_cur = 0 }
 	set_temp_variable = { temp_max = 0 }
 	if = {
 		limit = { check_variable = { temp_tier > 0 } }
-		set_temp_variable = { temp_idx = temp_tier }
-		subtract_from_temp_variable = { temp_idx = 1 }
+		set_temp_variable = { temp_idx = { value = temp_tier subtract = 1 } }
 		set_temp_variable = { temp_cur = SPY_satellite_array^temp_idx }
 		set_temp_variable = { temp_max = global.SPY_sat_system_max_array^temp_idx }
 	}
-	add_to_array = { space_auto_orbit_array = temp_cur }
-	add_to_array = { space_auto_target_array = temp_max }
-	set_temp_variable = { temp_short = temp_max }
-	subtract_from_temp_variable = { temp_short = temp_cur }
-	clamp_temp_variable = { var = temp_short min = 0 max = 10000 }
-	add_to_array = { space_auto_short_array = temp_short }
+	space_auto_push_family_state = yes
 }
 
 space_auto_refresh_olv = {
@@ -348,11 +354,10 @@ space_auto_usable_rocket_stock = {
 		set_temp_variable = { temp_rocket_stock = missile_inventory_array^var_space_auto_newest_olv }
 	}
 	else = {
-		set_temp_variable = { temp_stock_scan = 101 }
+		set_temp_variable = { temp_stock_scan = @olv_pid_base }
 		while_loop_effect = {
-			limit = { check_variable = { temp_stock_scan < 113 } }
-			set_temp_variable = { temp_stock_idx = temp_stock_scan }
-			subtract_from_temp_variable = { temp_stock_idx = 101 }
+			limit = { check_variable = { temp_stock_scan < @olv_pid_end } }
+			set_temp_variable = { temp_stock_idx = { value = temp_stock_scan subtract = @olv_pid_base } }
 			set_temp_variable = { temp_stock_cap = global.OLV_payload_mass_array^temp_stock_idx }
 			if = {
 				limit = { check_variable = { var = temp_stock_cap value = temp_mass compare = greater_than_or_equals } }
@@ -361,7 +366,7 @@ space_auto_usable_rocket_stock = {
 			add_to_temp_variable = { temp_stock_scan = 1 }
 		}
 	}
-	clamp_temp_variable = { var = temp_rocket_stock min = 0 max = 10000 }
+	clamp_temp_variable = { var = temp_rocket_stock min = 0 max = @space_count_max }
 }
 
 space_auto_fit_slot_tiers = {
@@ -378,10 +383,8 @@ space_auto_fit_slot_tiers = {
 					check_variable = { temp_fam < 3 }
 					check_variable = { temp_fit_mass > temp_capacity }
 				}
-				set_temp_variable = { temp_fit_base = temp_pid }
-				subtract_from_temp_variable = { temp_fit_base = temp_tier }
-				set_temp_variable = { temp_fit_moff = temp_massidx }
-				subtract_from_temp_variable = { temp_fit_moff = temp_idx }
+				set_temp_variable = { temp_fit_base = { value = temp_pid subtract = temp_tier } }
+				set_temp_variable = { temp_fit_moff = { value = temp_massidx subtract = temp_idx } }
 
 				set_temp_variable = { temp_fit_tier = temp_tier }
 				set_temp_variable = { temp_fit_searching = 1 }
@@ -391,9 +394,7 @@ space_auto_fit_slot_tiers = {
 						check_variable = { temp_fit_searching = 1 }
 					}
 					subtract_from_temp_variable = { temp_fit_tier = 1 }
-					set_temp_variable = { temp_fit_mi = temp_fit_moff }
-					add_to_temp_variable = { temp_fit_mi = temp_fit_tier }
-					subtract_from_temp_variable = { temp_fit_mi = 1 }
+					set_temp_variable = { temp_fit_mi = { value = temp_fit_moff add = temp_fit_tier subtract = 1 } }
 					set_temp_variable = { temp_fit_mass = global.sat_mass_array^temp_fit_mi }
 					if = {
 						limit = { check_variable = { var = temp_capacity value = temp_fit_mass compare = greater_than_or_equals } }
@@ -402,8 +403,7 @@ space_auto_fit_slot_tiers = {
 				}
 				if = {
 					limit = { check_variable = { temp_fit_searching = 0 } }
-					set_temp_variable = { temp_fit_id = temp_fit_base }
-					add_to_temp_variable = { temp_fit_id = temp_fit_tier }
+					set_temp_variable = { temp_fit_id = { value = temp_fit_base add = temp_fit_tier } }
 					set_variable = { space_auto_effective_array^temp_fit_scan = temp_fit_id }
 				}
 			}
@@ -510,11 +510,10 @@ space_auto_build_effective_manifest = {
 		set_variable = { var_space_auto_olv = var_space_auto_newest_olv }
 	}
 	else = {
-		set_temp_variable = { temp_scan_olv = 101 }
+		set_temp_variable = { temp_scan_olv = @olv_pid_base }
 		while_loop_effect = {
-			limit = { check_variable = { temp_scan_olv < 113 } }
-			set_temp_variable = { temp_olv_cap_idx = temp_scan_olv }
-			subtract_from_temp_variable = { temp_olv_cap_idx = 101 }
+			limit = { check_variable = { temp_scan_olv < @olv_pid_end } }
+			set_temp_variable = { temp_olv_cap_idx = { value = temp_scan_olv subtract = @olv_pid_base } }
 			set_temp_variable = { temp_olv_cap = global.OLV_payload_mass_array^temp_olv_cap_idx }
 			set_temp_variable = { temp_olv_stock = missile_inventory_array^temp_scan_olv }
 			if = {
@@ -533,9 +532,13 @@ space_auto_build_effective_manifest = {
 		set_variable = { var_space_auto_olv = var_space_auto_newest_olv }
 	}
 
-	set_temp_variable = { temp_olv_idx = var_space_auto_olv }
-	subtract_from_temp_variable = { temp_olv_idx = 101 }
-	clamp_temp_variable = { var = temp_olv_idx min = 0 max = 11 }
+	set_temp_variable = {
+		temp_olv_idx = {
+			value = var_space_auto_olv
+			subtract = @olv_pid_base
+			clamp = { min = 0 max = @olv_max_idx }
+		}
+	}
 	set_temp_variable = { temp_capacity = global.OLV_payload_mass_array^temp_olv_idx }
 
 	space_auto_fit_slot_tiers = yes
@@ -585,9 +588,13 @@ space_auto_build_effective_manifest = {
 		}
 		add_to_temp_variable = { temp_scan = 1 }
 	}
-	set_variable = { var_space_auto_olv_tier = var_space_auto_olv }
-	subtract_from_variable = { var_space_auto_olv_tier = 100 }
-	clamp_variable = { var = var_space_auto_olv_tier min = 0 max = 12 }
+	set_variable = {
+		var_space_auto_olv_tier = {
+			value = var_space_auto_olv
+			subtract = 100
+			clamp = { min = 0 max = @tier_count }
+		}
+	}
 
 	space_auto_build_order_list = yes
 }
@@ -742,48 +749,72 @@ space_auto_compute_budget = {
 	set_temp_variable = { temp_committed = 0 }
 	if = {
 		limit = { has_active_mission = missile_construction_10 }
-		set_temp_variable = { temp_owed = var_gui_prod_10_price_total }
-		subtract_from_temp_variable = { temp_owed = var_space_paid_10 }
-		clamp_temp_variable = { var = temp_owed min = 0 max = 1000000 }
-		add_to_temp_variable = { temp_committed = temp_owed }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_10_price_total
+				subtract = var_space_paid_10
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
 	}
 	if = {
 		limit = { has_active_mission = missile_construction_11 }
-		set_temp_variable = { temp_owed = var_gui_prod_11_price_total }
-		subtract_from_temp_variable = { temp_owed = var_space_paid_11 }
-		clamp_temp_variable = { var = temp_owed min = 0 max = 1000000 }
-		add_to_temp_variable = { temp_committed = temp_owed }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_11_price_total
+				subtract = var_space_paid_11
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
 	}
 	if = {
 		limit = { has_active_mission = missile_construction_12 }
-		set_temp_variable = { temp_owed = var_gui_prod_12_price_total }
-		subtract_from_temp_variable = { temp_owed = var_space_paid_12 }
-		clamp_temp_variable = { var = temp_owed min = 0 max = 1000000 }
-		add_to_temp_variable = { temp_committed = temp_owed }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_12_price_total
+				subtract = var_space_paid_12
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
 	}
 	if = {
 		limit = { has_active_mission = missile_construction_13 }
-		set_temp_variable = { temp_owed = var_gui_prod_13_price_total }
-		subtract_from_temp_variable = { temp_owed = var_space_paid_13 }
-		clamp_temp_variable = { var = temp_owed min = 0 max = 1000000 }
-		add_to_temp_variable = { temp_committed = temp_owed }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_13_price_total
+				subtract = var_space_paid_13
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
 	}
 	if = {
 		limit = { has_active_mission = missile_construction_14 }
-		set_temp_variable = { temp_owed = var_gui_prod_14_price_total }
-		subtract_from_temp_variable = { temp_owed = var_space_paid_14 }
-		clamp_temp_variable = { var = temp_owed min = 0 max = 1000000 }
-		add_to_temp_variable = { temp_committed = temp_owed }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_14_price_total
+				subtract = var_space_paid_14
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
 	}
 
 	if = {
 		limit = { has_country_flag = space_auto_allow_deficit }
-		set_variable = { var_space_auto_budget = 1000000 }
+		set_variable = { var_space_auto_budget = @space_math_max }
 	}
 	else = {
-		set_variable = { var_space_auto_budget = treasury }
-		subtract_from_variable = { var_space_auto_budget = temp_committed }
-		clamp_variable = { var = var_space_auto_budget min = 0 max = 1000000 }
+		set_variable = {
+			var_space_auto_budget = {
+				value = treasury
+				subtract = temp_committed
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
 	}
 
 	set_variable = { var_space_auto_est_cost = 0 }
@@ -805,19 +836,32 @@ space_auto_compute_budget = {
 			limit = { check_variable = { temp_fam = 2 } }
 			set_temp_variable = { temp_unit = global.prod_13_price_unit^temp_idx }
 		}
-		multiply_temp_variable = { temp_unit = space_auto_order_count_array^temp_e }
-		multiply_temp_variable = { temp_unit = var_space_auto_flights }
-		add_to_variable = { var_space_auto_est_cost = temp_unit }
+		add_to_variable = {
+			var = var_space_auto_est_cost
+			value = {
+				value = temp_unit
+				multiply = space_auto_order_count_array^temp_e
+				multiply = var_space_auto_flights
+			}
+		}
 		add_to_temp_variable = { temp_e = 1 }
 	}
 	if = {
 		limit = { check_variable = { var_space_auto_newest_olv > 100 } }
-		set_temp_variable = { temp_oidx = var_space_auto_newest_olv }
-		subtract_from_temp_variable = { temp_oidx = 101 }
-		clamp_temp_variable = { var = temp_oidx min = 0 max = 11 }
-		set_temp_variable = { temp_unit = global.prod_10_price_unit^temp_oidx }
-		multiply_temp_variable = { temp_unit = var_space_auto_flights }
-		add_to_variable = { var_space_auto_est_cost = temp_unit }
+		set_temp_variable = {
+			temp_oidx = {
+				value = var_space_auto_newest_olv
+				subtract = @olv_pid_base
+				clamp = { min = 0 max = @olv_max_idx }
+			}
+		}
+		add_to_variable = {
+			var = var_space_auto_est_cost
+			value = {
+				value = global.prod_10_price_unit^temp_oidx
+				multiply = var_space_auto_flights
+			}
+		}
 	}
 	multiply_variable = { var_space_auto_est_cost = 2 }
 
@@ -841,10 +885,14 @@ space_auto_compute_budget = {
 		limit = { has_active_mission = missile_construction_13 }
 		set_variable = { var_space_auto_bld_spy = var_gui_prod_13_amount }
 	}
-	set_variable = { var_space_auto_bld_total = var_space_auto_bld_olv }
-	add_to_variable = { var_space_auto_bld_total = var_space_auto_bld_gnss }
-	add_to_variable = { var_space_auto_bld_total = var_space_auto_bld_com }
-	add_to_variable = { var_space_auto_bld_total = var_space_auto_bld_spy }
+	set_variable = {
+		var_space_auto_bld_total = {
+			value = var_space_auto_bld_olv
+			add = var_space_auto_bld_gnss
+			add = var_space_auto_bld_com
+			add = var_space_auto_bld_spy
+		}
+	}
 }
 
 space_auto_fit_multiplier_10 = {
@@ -988,11 +1036,16 @@ space_auto_price_13 = {
 }
 
 space_auto_weekly_cost = {
-	set_temp_variable = { temp_weeks = temp_days }
-	divide_temp_variable = { temp_weeks = 7 }
-	clamp_temp_variable = { var = temp_weeks min = 1 max = 1000 }
-	set_temp_variable = { temp_weekly = temp_cost }
-	divide_temp_variable = { temp_weekly = temp_weeks }
+	set_temp_variable = {
+		temp_weekly = {
+			value = temp_cost
+			divide = {
+				value = temp_days
+				divide = @days_per_week
+				clamp = { min = 1 max = @space_weeks_max }
+			}
+		}
+	}
 }
 
 space_auto_order_production = {
@@ -1022,10 +1075,14 @@ space_auto_order_production_inner = {
 		set_temp_variable = { temp_pid = space_auto_order_type_array^temp_order }
 		set_temp_variable = { temp_percount = space_auto_order_count_array^temp_order }
 		space_auto_classify = yes
-		set_temp_variable = { temp_lneed = space_auto_short_array^temp_fam }
-		divide_temp_variable = { temp_lneed = temp_percount }
-		add_to_temp_variable = { temp_lneed = 0.49999 }
-		round_temp_variable = temp_lneed
+		set_temp_variable = {
+			temp_lneed = {
+				value = space_auto_short_array^temp_fam
+				divide = temp_percount
+				add = @round_half
+				round = yes
+			}
+		}
 		if = {
 			limit = { check_variable = { temp_lneed > temp_launches_needed } }
 			set_temp_variable = { temp_launches_needed = temp_lneed }
@@ -1062,8 +1119,7 @@ space_auto_order_production_inner = {
 		set_temp_variable = { temp_pid = space_auto_order_type_array^temp_order }
 		set_temp_variable = { temp_percount = space_auto_order_count_array^temp_order }
 		space_auto_classify = yes
-		set_temp_variable = { temp_need = temp_percount }
-		multiply_temp_variable = { temp_need = var_space_auto_flights }
+		set_temp_variable = { temp_need = { value = temp_percount multiply = var_space_auto_flights } }
 		if = {
 			limit = { has_country_flag = space_auto_stockpile }
 			set_temp_variable = { temp_need = space_auto_short_array^temp_fam }
@@ -1082,9 +1138,13 @@ space_auto_order_production_inner = {
 }
 
 space_auto_start_olv_batch = {
-	set_temp_variable = { temp_idx = var_space_auto_newest_olv }
-	subtract_from_temp_variable = { temp_idx = 101 }
-	clamp_temp_variable = { var = temp_idx min = 0 max = 11 }
+	set_temp_variable = {
+		temp_idx = {
+			value = var_space_auto_newest_olv
+			subtract = @olv_pid_base
+			clamp = { min = 0 max = @olv_max_idx }
+		}
+	}
 
 	set_temp_variable = { temp_sv_prod = var_space_production_OLV }
 	set_temp_variable = { temp_sv_price = var_gui_prod_10_price_unit }
@@ -1158,10 +1218,14 @@ space_auto_run_launch = {
 		while_loop_effect = {
 			limit = { check_variable = { temp_order < space_auto_order_type_array^num } }
 			set_temp_variable = { temp_pid = space_auto_order_type_array^temp_order }
-			set_temp_variable = { temp_cap = missile_inventory_array^temp_pid }
-			divide_temp_variable = { temp_cap = space_auto_order_count_array^temp_order }
-			subtract_from_temp_variable = { temp_cap = 0.49999 }
-			round_temp_variable = temp_cap
+			set_temp_variable = {
+				temp_cap = {
+					value = missile_inventory_array^temp_pid
+					divide = space_auto_order_count_array^temp_order
+					subtract = @round_half
+					round = yes
+				}
+			}
 			if = {
 				limit = { check_variable = { temp_cap < temp_flights } }
 				set_temp_variable = { temp_flights = temp_cap }
@@ -1190,9 +1254,13 @@ space_auto_execute_launch = {
 	set_temp_variable = { temp_saved_rel = var_OLV_reliability }
 	set_temp_variable = { temp_saved_mass = var_OLV_payload_mass }
 
-	set_temp_variable = { temp_olv_idx = var_space_auto_olv }
-	subtract_from_temp_variable = { temp_olv_idx = 101 }
-	clamp_temp_variable = { var = temp_olv_idx min = 0 max = 11 }
+	set_temp_variable = {
+		temp_olv_idx = {
+			value = var_space_auto_olv
+			subtract = @olv_pid_base
+			clamp = { min = 0 max = @olv_max_idx }
+		}
+	}
 
 	set_variable = { var_OLV_type = var_space_auto_olv }
 	set_variable = { var_OLV_reliability = global.OLV_reliability_array^temp_olv_idx }
@@ -1257,8 +1325,7 @@ space_auto_raise_system_tiers = {
 space_auto_raise_gnss = {
 	if = {
 		limit = { check_variable = { space_auto_newest_array^0 > 0 } }
-		set_temp_variable = { temp_new_idx = space_auto_newest_array^0 }
-		subtract_from_temp_variable = { temp_new_idx = 1 }
+		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^0 subtract = 1 } }
 		set_temp_variable = { temp_new_cnt = GNSS_satellite_array^temp_new_idx }
 		set_temp_variable = { temp_new_max = global.GNSS_sat_system_max_array^temp_new_idx }
 		set_temp_variable = { temp_new_min = global.GNSS_sat_system_min_array^temp_new_idx }
@@ -1268,12 +1335,9 @@ space_auto_raise_gnss = {
 				check_variable = { var_GNSS_mil_system_idx < temp_new_idx }
 				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
 			}
-			set_temp_variable = { temp_old_cnt = GNSS_satellite_array^var_GNSS_mil_system_idx }
-			set_temp_variable = { temp_old_max = global.GNSS_sat_system_max_array^var_GNSS_mil_system_idx }
-			set_temp_variable = { temp_lhs = temp_new_cnt }
-			multiply_temp_variable = { temp_lhs = temp_old_max }
-			set_temp_variable = { temp_rhs = temp_old_cnt }
-			multiply_temp_variable = { temp_rhs = temp_new_max }
+			# Cross-multiplied fill ratio: new_cnt / new_max >= old_cnt / old_max
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.GNSS_sat_system_max_array^var_GNSS_mil_system_idx } }
+			set_temp_variable = { temp_rhs = { value = GNSS_satellite_array^var_GNSS_mil_system_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
 				set_variable = { var_GNSS_mil_system_idx = temp_new_idx }
@@ -1285,12 +1349,8 @@ space_auto_raise_gnss = {
 				check_variable = { var_GNSS_civ_system_idx < temp_new_idx }
 				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
 			}
-			set_temp_variable = { temp_old_cnt = GNSS_satellite_array^var_GNSS_civ_system_idx }
-			set_temp_variable = { temp_old_max = global.GNSS_sat_system_max_array^var_GNSS_civ_system_idx }
-			set_temp_variable = { temp_lhs = temp_new_cnt }
-			multiply_temp_variable = { temp_lhs = temp_old_max }
-			set_temp_variable = { temp_rhs = temp_old_cnt }
-			multiply_temp_variable = { temp_rhs = temp_new_max }
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.GNSS_sat_system_max_array^var_GNSS_civ_system_idx } }
+			set_temp_variable = { temp_rhs = { value = GNSS_satellite_array^var_GNSS_civ_system_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
 				set_variable = { var_GNSS_civ_system_idx = temp_new_idx }
@@ -1303,8 +1363,7 @@ space_auto_raise_gnss = {
 space_auto_raise_comsat = {
 	if = {
 		limit = { check_variable = { space_auto_newest_array^1 > 0 } }
-		set_temp_variable = { temp_new_idx = space_auto_newest_array^1 }
-		subtract_from_temp_variable = { temp_new_idx = 1 }
+		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^1 subtract = 1 } }
 		set_temp_variable = { temp_new_cnt = COM_satellite_array^temp_new_idx }
 		set_temp_variable = { temp_new_max = global.COM_sat_system_max_array^temp_new_idx }
 		set_temp_variable = { temp_new_min = global.COM_sat_system_min_array^temp_new_idx }
@@ -1314,12 +1373,8 @@ space_auto_raise_comsat = {
 				check_variable = { var_COM_mil_system_idx < temp_new_idx }
 				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
 			}
-			set_temp_variable = { temp_old_cnt = COM_satellite_array^var_COM_mil_system_idx }
-			set_temp_variable = { temp_old_max = global.COM_sat_system_max_array^var_COM_mil_system_idx }
-			set_temp_variable = { temp_lhs = temp_new_cnt }
-			multiply_temp_variable = { temp_lhs = temp_old_max }
-			set_temp_variable = { temp_rhs = temp_old_cnt }
-			multiply_temp_variable = { temp_rhs = temp_new_max }
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.COM_sat_system_max_array^var_COM_mil_system_idx } }
+			set_temp_variable = { temp_rhs = { value = COM_satellite_array^var_COM_mil_system_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
 				set_variable = { var_COM_mil_system_idx = temp_new_idx }
@@ -1331,12 +1386,8 @@ space_auto_raise_comsat = {
 				check_variable = { var_COM_civ_system_idx < temp_new_idx }
 				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
 			}
-			set_temp_variable = { temp_old_cnt = COM_satellite_array^var_COM_civ_system_idx }
-			set_temp_variable = { temp_old_max = global.COM_sat_system_max_array^var_COM_civ_system_idx }
-			set_temp_variable = { temp_lhs = temp_new_cnt }
-			multiply_temp_variable = { temp_lhs = temp_old_max }
-			set_temp_variable = { temp_rhs = temp_old_cnt }
-			multiply_temp_variable = { temp_rhs = temp_new_max }
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.COM_sat_system_max_array^var_COM_civ_system_idx } }
+			set_temp_variable = { temp_rhs = { value = COM_satellite_array^var_COM_civ_system_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
 				set_variable = { var_COM_civ_system_idx = temp_new_idx }
@@ -1349,8 +1400,7 @@ space_auto_raise_comsat = {
 space_auto_raise_spysat = {
 	if = {
 		limit = { check_variable = { space_auto_newest_array^2 > 0 } }
-		set_temp_variable = { temp_new_idx = space_auto_newest_array^2 }
-		subtract_from_temp_variable = { temp_new_idx = 1 }
+		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^2 subtract = 1 } }
 		set_temp_variable = { temp_new_cnt = SPY_satellite_array^temp_new_idx }
 		set_temp_variable = { temp_new_max = global.SPY_sat_system_max_array^temp_new_idx }
 		set_temp_variable = { temp_new_min = global.SPY_sat_system_min_array^temp_new_idx }
@@ -1360,12 +1410,8 @@ space_auto_raise_spysat = {
 				check_variable = { var_SPY_mil_system_idx < temp_new_idx }
 				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
 			}
-			set_temp_variable = { temp_old_cnt = SPY_satellite_array^var_SPY_mil_system_idx }
-			set_temp_variable = { temp_old_max = global.SPY_sat_system_max_array^var_SPY_mil_system_idx }
-			set_temp_variable = { temp_lhs = temp_new_cnt }
-			multiply_temp_variable = { temp_lhs = temp_old_max }
-			set_temp_variable = { temp_rhs = temp_old_cnt }
-			multiply_temp_variable = { temp_rhs = temp_new_max }
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.SPY_sat_system_max_array^var_SPY_mil_system_idx } }
+			set_temp_variable = { temp_rhs = { value = SPY_satellite_array^var_SPY_mil_system_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
 				set_variable = { var_SPY_mil_system_idx = temp_new_idx }
@@ -1377,12 +1423,8 @@ space_auto_raise_spysat = {
 				check_variable = { var_SPY_civ_system_idx < temp_new_idx }
 				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
 			}
-			set_temp_variable = { temp_old_cnt = SPY_satellite_array^var_SPY_civ_system_idx }
-			set_temp_variable = { temp_old_max = global.SPY_sat_system_max_array^var_SPY_civ_system_idx }
-			set_temp_variable = { temp_lhs = temp_new_cnt }
-			multiply_temp_variable = { temp_lhs = temp_old_max }
-			set_temp_variable = { temp_rhs = temp_old_cnt }
-			multiply_temp_variable = { temp_rhs = temp_new_max }
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.SPY_sat_system_max_array^var_SPY_civ_system_idx } }
+			set_temp_variable = { temp_rhs = { value = SPY_satellite_array^var_SPY_civ_system_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
 				set_variable = { var_SPY_civ_system_idx = temp_new_idx }
@@ -1453,13 +1495,14 @@ space_prod_weekly_calc = {
 		set_temp_variable = { temp_cost = var_gui_prod_10_price_total }
 		set_temp_variable = { temp_days = var_gui_prod_10_days }
 		space_auto_weekly_cost = yes
-		set_temp_variable = { temp_outstanding = var_gui_prod_10_price_total }
-		subtract_from_temp_variable = { temp_outstanding = var_space_paid_10 }
-		if = {
-			limit = { check_variable = { temp_weekly > temp_outstanding } }
-			set_temp_variable = { temp_weekly = temp_outstanding }
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_10_price_total subtract = var_space_paid_10 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
 		}
-		clamp_temp_variable = { var = temp_weekly min = 0 max = 1000000 }
 		add_to_variable = { space_prod_expense = temp_weekly }
 		if = {
 			limit = { check_variable = { temp_accrue = 1 } }
@@ -1471,13 +1514,14 @@ space_prod_weekly_calc = {
 		set_temp_variable = { temp_cost = var_gui_prod_11_price_total }
 		set_temp_variable = { temp_days = var_gui_prod_11_days }
 		space_auto_weekly_cost = yes
-		set_temp_variable = { temp_outstanding = var_gui_prod_11_price_total }
-		subtract_from_temp_variable = { temp_outstanding = var_space_paid_11 }
-		if = {
-			limit = { check_variable = { temp_weekly > temp_outstanding } }
-			set_temp_variable = { temp_weekly = temp_outstanding }
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_11_price_total subtract = var_space_paid_11 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
 		}
-		clamp_temp_variable = { var = temp_weekly min = 0 max = 1000000 }
 		add_to_variable = { space_prod_expense = temp_weekly }
 		if = {
 			limit = { check_variable = { temp_accrue = 1 } }
@@ -1489,13 +1533,14 @@ space_prod_weekly_calc = {
 		set_temp_variable = { temp_cost = var_gui_prod_12_price_total }
 		set_temp_variable = { temp_days = var_gui_prod_12_days }
 		space_auto_weekly_cost = yes
-		set_temp_variable = { temp_outstanding = var_gui_prod_12_price_total }
-		subtract_from_temp_variable = { temp_outstanding = var_space_paid_12 }
-		if = {
-			limit = { check_variable = { temp_weekly > temp_outstanding } }
-			set_temp_variable = { temp_weekly = temp_outstanding }
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_12_price_total subtract = var_space_paid_12 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
 		}
-		clamp_temp_variable = { var = temp_weekly min = 0 max = 1000000 }
 		add_to_variable = { space_prod_expense = temp_weekly }
 		if = {
 			limit = { check_variable = { temp_accrue = 1 } }
@@ -1507,13 +1552,14 @@ space_prod_weekly_calc = {
 		set_temp_variable = { temp_cost = var_gui_prod_13_price_total }
 		set_temp_variable = { temp_days = var_gui_prod_13_days }
 		space_auto_weekly_cost = yes
-		set_temp_variable = { temp_outstanding = var_gui_prod_13_price_total }
-		subtract_from_temp_variable = { temp_outstanding = var_space_paid_13 }
-		if = {
-			limit = { check_variable = { temp_weekly > temp_outstanding } }
-			set_temp_variable = { temp_weekly = temp_outstanding }
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_13_price_total subtract = var_space_paid_13 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
 		}
-		clamp_temp_variable = { var = temp_weekly min = 0 max = 1000000 }
 		add_to_variable = { space_prod_expense = temp_weekly }
 		if = {
 			limit = { check_variable = { temp_accrue = 1 } }
@@ -1525,13 +1571,14 @@ space_prod_weekly_calc = {
 		set_temp_variable = { temp_cost = var_gui_prod_14_price_total }
 		set_temp_variable = { temp_days = var_gui_prod_14_days }
 		space_auto_weekly_cost = yes
-		set_temp_variable = { temp_outstanding = var_gui_prod_14_price_total }
-		subtract_from_temp_variable = { temp_outstanding = var_space_paid_14 }
-		if = {
-			limit = { check_variable = { temp_weekly > temp_outstanding } }
-			set_temp_variable = { temp_weekly = temp_outstanding }
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_14_price_total subtract = var_space_paid_14 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
 		}
-		clamp_temp_variable = { var = temp_weekly min = 0 max = 1000000 }
 		add_to_variable = { space_prod_expense = temp_weekly }
 		if = {
 			limit = { check_variable = { temp_accrue = 1 } }
@@ -1541,8 +1588,7 @@ space_prod_weekly_calc = {
 }
 
 space_prod_settle_balance = {
-	set_temp_variable = { temp_outstanding = temp_settle_price }
-	subtract_from_temp_variable = { temp_outstanding = temp_settle_paid }
+	set_temp_variable = { temp_outstanding = { value = temp_settle_price subtract = temp_settle_paid } }
 	if = {
 		limit = {
 			check_variable = { temp_outstanding > 0 }
