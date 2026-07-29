@@ -14,6 +14,7 @@ import time
 from _common import format_elapsed
 from common_utils import PROP_NAME_RE, compact_icon, compact_search_filters
 from shared_utils import (
+    blank_quoted_strings,
     collapse_or_compact,
     convert_root_factor_to_base,
     create_backup,
@@ -91,6 +92,75 @@ _LOG_FOCUS_RE = re.compile(
     r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:[Ff]ocus\s+)?([\w-]+)(")'
 )
 
+# Country-specific dynamic modifiers use an uppercase country tag followed by a
+# lowercase snake_case identifier. The optional `_modifier` suffix is part of
+# many existing dynamic modifier IDs, so it is valid here.
+# A second uppercase tag segment marks a shared/joint modifier (CHI_NKO_shared_modifier).
+_MODIFIER_TAG_PREFIX_RE = re.compile(r"^[A-Z]{2,4}_")
+_MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_([A-Z]{2,4}_)?[a-z][a-z0-9_]*$")
+_MODIFIER_TAG_SEGMENT_RE = re.compile(r"[A-Z]{2,4}")
+_MODIFIER_ID_RE = re.compile(r"\s*id\s*=\s*(\S+)")
+_MODIFIER_VALUE_RE = re.compile(r"\bMODIFIER\s*=\s*(\S+)")
+_ACRONYM_BOUNDARY_RE = re.compile(r"([A-Z])([A-Z][a-z])")
+_CAMEL_BOUNDARY_RE = re.compile(r"([a-z0-9])([A-Z])")
+
+
+def validate_modifier_naming(lines, filepath, check_naming=True):
+    """Check country-specific MODIFIER values in every focus block follow TAG_snake_case."""
+    if not check_naming:
+        return 0
+
+    violations = 0
+    index = 0
+    while index < len(lines):
+        match = _BLOCK_DISPATCH_RE.match(lines[index].rstrip())
+        if not match:
+            index += 1
+            continue
+
+        block_type = match.group(1)
+        block_lines, next_index = extract_block(lines, index)
+        if block_type not in _FOCUS_BLOCK_TYPES or not block_lines:
+            index = next_index
+            continue
+
+        focus_id = ""
+        for line in block_lines:
+            id_match = _MODIFIER_ID_RE.match(strip_inline_comment(line))
+            if id_match:
+                focus_id = id_match.group(1)
+                break
+
+        for line_offset, line in enumerate(block_lines):
+            code = blank_quoted_strings(strip_inline_comment(line))
+            modifier_match = _MODIFIER_VALUE_RE.search(code)
+            if not modifier_match:
+                continue
+            name = modifier_match.group(1)
+            if not _MODIFIER_TAG_PREFIX_RE.match(name) or _MODIFIER_NAME_RE.match(name):
+                continue
+
+            parts = name.split("_")
+            prefix = [parts[0]]
+            # a second uppercase tag segment marks a joint modifier and keeps its case
+            if len(parts) > 2 and _MODIFIER_TAG_SEGMENT_RE.fullmatch(parts[1]):
+                prefix.append(parts[1])
+            rest = "_".join(parts[len(prefix) :])
+            rest = _ACRONYM_BOUNDARY_RE.sub(r"\1_\2", rest)
+            rest = _CAMEL_BOUNDARY_RE.sub(r"\1_\2", rest)
+            suggested = f"{'_'.join(prefix)}_{rest.lower()}"
+
+            log_message(
+                "ERROR",
+                f"{filepath}:{index + line_offset + 1} - {block_type} '{focus_id}' uses"
+                f" non-standard MODIFIER name '{name}' — use '{suggested}' (TAG_snake_case)",
+            )
+            violations += 1
+
+        index = next_index
+
+    return violations
+
 
 def _split_block(block_lines):
     """Split an extracted block into (header, inner_lines, close_line).
@@ -98,7 +168,9 @@ def _split_block(block_lines):
     first = block_lines[0]
     if len(block_lines) == 1:
         code = strip_inline_comment(first)
-        if "{" not in code or code.count("{") != code.count("}"):
+        # A trailing comment may carry its own braces, so the split indices
+        # would land inside it — bail and let the caller keep the line intact.
+        if code != first or "{" not in code or code.count("{") != code.count("}"):
             return None
         open_idx = first.index("{")
         close_idx = first.rindex("}")
@@ -234,25 +306,14 @@ def emit_effect_block_with_log(lines, effect_block, focus_id):
         return
     if focus_id and not any("log =" in line for line in effect_block):
         log_line = f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
-        # Single-line block (`prop = { ... }` on one line): expand to multi-line
-        # so the log lands INSIDE the braces, not after them.
-        first = effect_block[0]
-        if (
-            len(effect_block) == 1
-            and "{" in first
-            and "}" in first
-            and first.count("{") == first.count("}")
-        ):
-            leading = re.match(r"^(\s*)", first).group(1)
-            open_idx = first.index("{")
-            close_idx = first.rindex("}")
-            header = first[: open_idx + 1].rstrip()
-            inner = first[open_idx + 1 : close_idx].strip()
-            expanded = [header, log_line]
-            if inner:
-                expanded.append(f"{leading}\t{inner}")
-            expanded.append(f"{leading}}}")
-            effect_block = expanded
+        if len(effect_block) == 1:
+            # Expand `prop = { ... }` so the log lands INSIDE the braces, not
+            # after them. _split_block bails on an inline comment (whose braces
+            # would misplace the split), leaving such a block unlogged.
+            split = _split_block(effect_block)
+            if split is not None:
+                header, inner_lines, close = split
+                effect_block = [header, log_line, *inner_lines, close]
         else:
             new_block = []
             for i, line in enumerate(effect_block):
@@ -271,8 +332,20 @@ def emit_effect_block_with_log(lines, effect_block, focus_id):
     lines.append("")
 
 
+def _passthrough_single_line(block_lines, indent):
+    """A one-line block has no interior lines for the property loops below to
+    read, so reformatting it would emit an empty block — keep it verbatim."""
+    if len(block_lines) != 1:
+        return None
+    return [f"{indent}{block_lines[0].strip()}"]
+
+
 def format_focus_offset_block(block_lines):
     """Format offset block within a focus (with 2-tab base indentation)"""
+    passthrough = _passthrough_single_line(block_lines, "\t\t")
+    if passthrough is not None:
+        return passthrough
+
     lines = []
     lines.append("\t\toffset = {")
 
@@ -533,6 +606,10 @@ def reindent_by_brace_depth(block_lines, base_tabs=0):
 
 def format_shortcut_block(block_lines):
     """Format shortcut block according to standard"""
+    passthrough = _passthrough_single_line(block_lines, "\t")
+    if passthrough is not None:
+        return passthrough
+
     lines = []
     lines.append("\tshortcut = {")
 
@@ -584,6 +661,10 @@ def format_shortcut_block(block_lines):
 
 def format_inlay_window_block(block_lines):
     """Format inlay_window block according to standard"""
+    passthrough = _passthrough_single_line(block_lines, "\t")
+    if passthrough is not None:
+        return passthrough
+
     lines = []
     lines.append("\tinlay_window = {")
 
@@ -636,6 +717,10 @@ def format_inlay_window_block(block_lines):
 
 def format_offset_block(block_lines):
     """Format offset block according to standard"""
+    passthrough = _passthrough_single_line(block_lines, "\t")
+    if passthrough is not None:
+        return passthrough
+
     lines = []
     lines.append("\toffset = {")
 
@@ -810,7 +895,19 @@ _BLOCK_COUNT_ORDER = (
 _BLOCK_DISPATCH_RE = re.compile(r"^\s*(" + "|".join(_BLOCK_COUNT_ORDER) + r")\s*=\s*\{")
 
 
-def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = False):
+def add_check_naming_argument(parser: argparse.ArgumentParser) -> None:
+    """Register --check-naming so this module and standardize.py cannot drift."""
+    parser.add_argument(
+        "--check-naming",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: off)",
+    )
+
+
+def standardize_focus_tree(
+    input_file: str, output_file: str, verbose: bool = False, check_naming: bool = False
+):
     """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
     start_time = time.time()
 
@@ -891,10 +988,23 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
         final_lines.append(line)
     output_lines = final_lines
 
+    # Naming convention check runs before writing so a failed standardization
+    # cannot silently leave a partially reformatted file behind.
+    violations = validate_modifier_naming(lines, input_file, check_naming)
+    if violations:
+        log_message(
+            "ERROR", f"Standardization rejected: {violations} naming violation(s)"
+        )
+        return False
+
+    # Written via a temp file + os.replace so an interrupted or failing write
+    # never leaves a truncated focus tree behind.
+    tmp_path = f"{output_file}.tmp"
     try:
-        with open(output_file, "w", encoding="utf-8") as f:
+        with open(tmp_path, "w", encoding="utf-8") as f:
             for line in output_lines:
                 f.write(line + "\n")
+        os.replace(tmp_path, output_file)
 
         time_str = format_elapsed(time.time() - start_time)
 
@@ -911,6 +1021,10 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
 
     except Exception as e:
         log_message("ERROR", f"Failed to write {output_file}: {e}")
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
         return False
 
     return True
@@ -928,6 +1042,7 @@ def main():
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    add_check_naming_argument(parser)
 
     args = parser.parse_args()
 
@@ -948,7 +1063,9 @@ def main():
         args.verbose,
     )
 
-    if standardize_focus_tree(args.input_file, output_file, args.verbose):
+    if standardize_focus_tree(
+        args.input_file, output_file, args.verbose, args.check_naming
+    ):
         log_message("SUCCESS", f"Standardization completed: {output_file}")
     else:
         log_message("ERROR", "Standardization failed")
