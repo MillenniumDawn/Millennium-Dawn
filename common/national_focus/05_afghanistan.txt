@@ -406,9 +406,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_going_offensive"
 			army_experience = 10
-			swap_ideas = {
-				remove_idea = AFG_idea_afghan_defence
-				add_idea = AFG_idea_starting_offensive
+			if = {
+				limit = { has_idea = AFG_idea_afghan_defence }
+				swap_ideas = {
+					remove_idea = AFG_idea_afghan_defence
+					add_idea = AFG_idea_starting_offensive
+				}
+			}
+			else = {
+				add_ideas = AFG_idea_starting_offensive
 			}
 			if = {
 				limit = {
@@ -1263,9 +1269,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_the_end_of_war"
 			increase_economic_growth = yes
 			decrease_corruption = yes
-			remove_ideas = {
-				AFG_idea_enhanced_recruitment_efforts
-				AFG_idea_war_experience
+			remove_ideas = AFG_idea_enhanced_recruitment_efforts
+			if = {
+				limit = { has_idea = AFG_idea_war_experience }
+				remove_ideas = AFG_idea_war_experience
 			}
 			add_political_power = 200
 			hidden_effect = {
@@ -3741,15 +3748,6 @@ focus_tree = {
 					value = 10
 				}
 			}
-			NOT = {
-				OR = {
-					has_idea = corruption_level_10
-					has_idea = corruption_level_09
-					has_idea = corruption_level_08
-					has_idea = defence_01
-					has_idea = defence_02
-				}
-			}
 		}
 
 		completion_reward = {
@@ -3997,13 +3995,6 @@ focus_tree = {
 				}
 			}
 			has_stability > 0.5
-			NOT = {
-				OR = {
-					has_idea = corruption_level_10
-					has_idea = corruption_level_09
-					has_idea = corruption_level_08
-				}
-			}
 		}
 
 		completion_reward = {
@@ -5657,12 +5648,16 @@ focus_tree = {
 
 		available = {
 			western_autocrats_are_in_power = yes
-			has_country_leader = { name = "Hamid Karzai" ruling_only = yes }
+			OR = {
+				has_country_leader = { name = "Hamid Karzai" ruling_only = yes }
+				has_country_flag = AFG_karzai_installed
+			}
+			NOT = { has_country_flag = AFG_political_path_chosen }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_endorse_the_american_candidate"
-			custom_effect_tooltip = AFG_focus_will_auto_complete
+			set_country_flag = AFG_political_path_chosen
 			AFG_national_assembly_checks = yes
 			set_variable = { additional_income_AFG_tolls_income1 = 0 }
 		}
@@ -5681,11 +5676,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 
-		available = { neutrality_neutral_muslim_brotherhood_are_in_power = yes }
+		available = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			NOT = { has_country_flag = AFG_political_path_chosen }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_islamic_democracy"
-			custom_effect_tooltip = AFG_focus_will_auto_complete
+			set_country_flag = AFG_political_path_chosen
 			AFG_national_assembly_checks = yes
 		}
 
@@ -5703,11 +5701,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 
-		available = { neutrality_neutral_conservatism_are_in_power = yes }
+		available = {
+			neutrality_neutral_conservatism_are_in_power = yes
+			NOT = { has_country_flag = AFG_political_path_chosen }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_naveen"
-			custom_effect_tooltip = AFG_focus_will_auto_complete
+			set_country_flag = AFG_political_path_chosen
 			AFG_national_assembly_checks = yes
 		}
 
@@ -5725,11 +5726,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 
-		available = { western_liberals_are_in_power = yes }
+		available = {
+			western_liberals_are_in_power = yes
+			NOT = { has_country_flag = AFG_political_path_chosen }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_basej_e_milli"
-			custom_effect_tooltip = AFG_focus_will_auto_complete
+			set_country_flag = AFG_political_path_chosen
 			AFG_national_assembly_checks = yes
 		}
 
@@ -5779,7 +5783,6 @@ focus_tree = {
 							emotional
 						}
 					}
-					set_country_flag = no_leader_change
 				}
 			}
 		}
@@ -6100,7 +6103,10 @@ focus_tree = {
 
 		available = {
 			western_autocrats_are_in_power = yes
-			has_country_leader = { name = "Hamid Karzai" ruling_only = yes }
+			OR = {
+				has_country_leader = { name = "Hamid Karzai" ruling_only = yes }
+				has_country_flag = AFG_karzai_installed
+			}
 		}
 
 		completion_reward = {
@@ -6413,6 +6419,7 @@ focus_tree = {
 			custom_effect_tooltip = AFG_the_farmer_and_their_rifle_tt
 			custom_effect_tooltip = AFG_tech_the_farmer_and_their_rifle_tt
 			hidden_effect = {
+				set_technology = { AFG_tech_the_farmer_and_their_rifle = 1 popup = no }
 				if = {
 					limit = { has_template = "mzr'eh dar" }
 					delete_unit_template_and_units = {
@@ -6489,7 +6496,6 @@ focus_tree = {
 
 		cost = 7.2
 
-		prerequisite = { focus = AFG_the_farmer_and_their_rifle }
 		prerequisite = { focus = AFG_the_farmer_and_their_rifle }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
@@ -7263,7 +7269,7 @@ focus_tree = {
 
 		cost = 2
 
-		search_filters = { TEMP }
+		search_filters = { FOCUS_FILTER_ARMY FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_anjuman_pass"
@@ -7489,9 +7495,13 @@ focus_tree = {
 
 		prerequisite = { focus = AFG_anjuman_pass }
 
-		search_filters = { TEMP }
+		search_filters = { FOCUS_FILTER_INSURGENCY }
 
-		available = { country_exists = UZB }
+		available = {
+			country_exists = UZB
+			country_exists = TAL
+			has_war_with = TAL
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_imu_countermeasures"
@@ -7533,7 +7543,7 @@ focus_tree = {
 
 		prerequisite = { focus = AFG_anjuman_pass }
 
-		search_filters = { TEMP }
+		search_filters = { FOCUS_FILTER_ARMY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_heirs_o_the_mujahideen"
@@ -7564,7 +7574,7 @@ focus_tree = {
 
 		prerequisite = { focus = AFG_anjuman_pass }
 
-		search_filters = { TEMP }
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_shura_system"
@@ -7594,7 +7604,7 @@ focus_tree = {
 
 		prerequisite = { focus = AFG_shura_system }
 
-		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INTERNAL_AFFAIRS }
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
 			custom_trigger_tooltip = {
