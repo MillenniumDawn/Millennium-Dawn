@@ -815,15 +815,6 @@ country_event = {
 				id = AFG_taliban_insurgency.10
 				hours = 1
 			}
-			#Use it later for US withdraw and after map rework, Afghan military collapses, Rural Kandahar & Helmand falls, Wakhan corridor taken over by pro-Taliban Tajiks
-			# delete_unit = {
-			# 	state = 415
-			# 	disband = yes
-			# }
-			# delete_unit = {
-			# 	state = 411
-			# 	disband = yes
-			# }
 		}
 		AFG_clear_ci_supporters = yes
 	}
@@ -3453,7 +3444,6 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	#fire_only_once = yes
 	option = {
 		name = AFG_news.19.a
 		ai_chance = {
@@ -3488,7 +3478,6 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	#fire_only_once = yes
 	option = {
 		name = AFG_news.21.a
 		ai_chance = {
@@ -4094,7 +4083,7 @@ country_event = {
 		name = AFG_events.27.a
 		log = "[GetDateText]: [This.GetName]: AFG_events.27.a executed"
 		ai_chance = { base = 100 }
-		add_ideas = no_women_in_military
+		set_no_women_effect = yes
 		set_temp_variable = { taliban_strength_decrease = 5 }
 		decrease_taliban_strength = yes
 		set_temp_variable = { temp_opinion = 5 }
@@ -4105,10 +4094,9 @@ country_event = {
 		name = AFG_events.27.b
 		log = "[GetDateText]: [This.GetName]: AFG_events.27.b executed"
 		ai_chance = { base = 100 }
-		#add_ideas = pluralist
 		set_temp_variable = { temp_opinion = -5 }
 		change_the_ulema_opinion = yes
-		add_ideas = volunteer_women
+		set_drafted_women_effect = yes
 	}
 
 }
@@ -4190,11 +4178,11 @@ country_event = {
 	hidden = yes
 	fire_only_once = yes
 
-	#Its immediate clears GLOBAL_afghanistan_civil_war_over, which is also the guard on the
-	#on_monthly_TAL block that queues it — without this a later reconquest re-arms the uprising.
+	#Immediate clears the same flag that guards the on_monthly_TAL block queueing this event.
 	trigger = {
 		original_tag = TAL
 		has_global_flag = GLOBAL_afghan_civil_war_over
+		has_game_rule = { rule = AFG_northern_alliance_uprising option = yes }
 		NOT = {
 			country_exists = AFG
 		}
@@ -4271,15 +4259,6 @@ country_event = {
 				id = AFG_taliban_insurgency.10
 				hours = 1
 			}
-			#Use it later for US withdraw and after map rework, Afghan military collapses, Rural Kandahar & Helmand falls, Wakhan corridor taken over by pro-Taliban Tajiks
-			# delete_unit = {
-			# 	state = 415
-			# 	disband = yes
-			# }
-			# delete_unit = {
-			# 	state = 411
-			# 	disband = yes
-			# }
 		}
 		AFG_clear_ci_supporters = yes
 	}
@@ -4749,72 +4728,6 @@ country_event = {
 	}
 
 }
-# End civil war
-country_event = {
-	id = AFG_events.49
-	is_triggered_only = yes
-	hidden = yes
-	fire_only_once = yes
-
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AFG_events.49 executed"
-		409 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		410 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		411 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		412 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		414 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		415 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		1153 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		1154 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		1152 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		drop_cosmetic_tag = yes
-		clr_country_flag = dynamic_flag
-		set_cosmetic_tag = AFG
-		if = {
-			limit = { has_idea = non_state_actor }
-			remove_ideas = non_state_actor
-		}
-		add_state_core = 409
-		add_state_core = 410
-		add_state_core = 411
-		add_state_core = 412
-		add_state_core = 414
-		add_state_core = 415
-		add_state_core = 1153
-		add_state_core = 1154
-		add_state_core = 1152
-		set_capital = { state = 414 }
-		AFG = { news_event = { id = AFG_news.1 hours = 6 } }
-	}
-
-}
 
 country_event = {
 	id = AFG_events.53
@@ -4987,6 +4900,21 @@ country_event = {
 	option = {
 		name = AFG_political_events.1.a
 		log = "[GetLogInfo]: event AFG_political_events.1.a"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 40
+				AFG = { is_top3_influencer = yes }
+			}
+			modifier = {
+				add = 30
+				has_opinion = { target = AFG value > 39 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = AFG value < 0 }
+			}
+		}
 		AFG = {
 			country_event = AFG_political_events.3
 		}
@@ -5034,12 +4962,21 @@ country_event = {
 	option = {
 		name = AFG_political_events.1.b
 		log = "[GetLogInfo]: event AFG_political_events.1.b"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 40
+				NOT = { AFG = { is_influencer = yes } }
+			}
+			modifier = {
+				add = 30
+				has_opinion = { target = AFG value < 0 }
+			}
+		}
 		AFG = {
 			country_event = AFG_political_events.2
 		}
 	}
-
-	#Rejects Arms Deal
 
 }
 
@@ -5102,6 +5039,15 @@ country_event = {
 	option = {
 		name = AFG_political_events.4.a
 		log = "[GetLogInfo]: event AFG_political_events.4.a"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 90
+				check_variable = { party_pop_array^0 > party_pop_array^14 }
+				check_variable = { party_pop_array^0 > party_pop_array^12 }
+				check_variable = { party_pop_array^0 > party_pop_array^2 }
+			}
+		}
 		set_temp_variable = { rul_party_temp = 0 }
 		change_ruling_party_effect = yes
 		mark_focus_tree_layout_dirty = yes
@@ -5110,6 +5056,15 @@ country_event = {
 	option = {
 		name = AFG_political_events.4.b
 		log = "[GetLogInfo]: event AFG_political_events.4.b"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 90
+				check_variable = { party_pop_array^14 > party_pop_array^0 }
+				check_variable = { party_pop_array^14 > party_pop_array^12 }
+				check_variable = { party_pop_array^14 > party_pop_array^2 }
+			}
+		}
 		set_temp_variable = { rul_party_temp = 14 }
 		change_ruling_party_effect = yes
 		mark_focus_tree_layout_dirty = yes
@@ -5118,6 +5073,15 @@ country_event = {
 	option = {
 		name = AFG_political_events.4.c
 		log = "[GetLogInfo]: event AFG_political_events.4.c"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 90
+				check_variable = { party_pop_array^12 > party_pop_array^0 }
+				check_variable = { party_pop_array^12 > party_pop_array^14 }
+				check_variable = { party_pop_array^12 > party_pop_array^2 }
+			}
+		}
 		set_temp_variable = { rul_party_temp = 12 }
 		change_ruling_party_effect = yes
 		mark_focus_tree_layout_dirty = yes
@@ -5126,6 +5090,15 @@ country_event = {
 	option = {
 		name = AFG_political_events.4.e
 		log = "[GetLogInfo]: event AFG_political_events.4.e"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 90
+				check_variable = { party_pop_array^2 > party_pop_array^0 }
+				check_variable = { party_pop_array^2 > party_pop_array^14 }
+				check_variable = { party_pop_array^2 > party_pop_array^12 }
+			}
+		}
 		set_temp_variable = { rul_party_temp = 2 }
 		change_ruling_party_effect = yes
 		mark_focus_tree_layout_dirty = yes
@@ -5143,6 +5116,13 @@ country_event = {
 	option = {
 		name = AFG_political_events.5.a
 		log = "[GetLogInfo]: event AFG_political_events.5.a"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 90
+				check_variable = { party_pop_array^0 > party_pop_array^2 }
+			}
+		}
 		set_temp_variable = { rul_party_temp = 0 }
 		change_ruling_party_effect = yes
 		complete_national_focus = AFG_ashraf_ghani
@@ -5152,6 +5132,13 @@ country_event = {
 	option = {
 		name = AFG_political_events.5.b
 		log = "[GetLogInfo]: event AFG_political_events.5.b"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 90
+				check_variable = { party_pop_array^2 > party_pop_array^0 }
+			}
+		}
 		set_temp_variable = { rul_party_temp = 2 }
 		change_ruling_party_effect = yes
 		mark_focus_tree_layout_dirty = yes
@@ -5204,7 +5191,7 @@ country_event = {
 
 	option = {
 		name = AFG_border_wars.1.b
-		trigger = { tag = event_target:AFG_ATTACKER }
+		trigger = { NOT = { tag = event_target:AFG_ATTACKER } }
 		log = "[GetDateText]: [This.GetName]: AFG_border_wars.1.b executed"
 		ai_chance = {
 			base = 20
@@ -5215,7 +5202,7 @@ country_event = {
 
 	option = {
 		name = AFG_border_wars.1.c
-		trigger = { tag = event_target:AFG_ATTACKER }
+		trigger = { NOT = { tag = event_target:AFG_ATTACKER } }
 		log = "[GetDateText]: [This.GetName]: AFG_border_wars.1.c executed"
 		ai_chance = {
 			base = 80
@@ -5247,7 +5234,7 @@ country_event = {
 
 	option = {
 		name = AFG_border_wars.2.a
-		trigger = { tag = event_target:AFG_ATTACKER }
+		trigger = { NOT = { tag = event_target:AFG_ATTACKER } }
 		log = "[GetDateText]: [This.GetName]: AFG_border_wars.2.a executed"
 	}
 
@@ -5436,10 +5423,19 @@ country_event = {
 				transfer_state_to = AFG
 			}
 		}
+		if = {
+			limit = {
+				has_country_flag = AFG_attacking_1207
+			}
+			1207 = {
+				transfer_state_to = AFG
+			}
+		}
 		clr_country_flag = AFG_attacking_1208
 		clr_country_flag = AFG_attacking_1154
 		clr_country_flag = AFG_attacking_1152
 		clr_country_flag = AFG_attacking_415
+		clr_country_flag = AFG_attacking_1207
 		clr_country_flag = AFG_doing_border_raid
 		army_experience = 25
 		ai_chance = {
@@ -5530,6 +5526,7 @@ country_event = {
 		clr_country_flag = AFG_attacking_1154
 		clr_country_flag = AFG_attacking_1152
 		clr_country_flag = AFG_attacking_415
+		clr_country_flag = AFG_attacking_1207
 		clr_country_flag = AFG_doing_border_raid
 		ai_chance = {
 			base = 1
@@ -5548,6 +5545,14 @@ country_event = {
 	option = {
 		name = AFG_border_wars.9.a
 		log = "[GetDateText]: [This.GetName]: AFG_border_wars.9.a"
+		clr_country_flag = AFG_attacking_1207
+		clr_country_flag = AFG_attacking_1208
+		clr_country_flag = AFG_attacking_1154
+		clr_country_flag = AFG_attacking_1152
+		clr_country_flag = AFG_attacking_415
+		clr_country_flag = TAL_attacking_1154
+		clr_country_flag = TAL_attacking_1208
+		clr_country_flag = TAL_attacking_415
 		clr_country_flag = AFG_doing_border_raid
 		ai_chance = {
 			base = 1

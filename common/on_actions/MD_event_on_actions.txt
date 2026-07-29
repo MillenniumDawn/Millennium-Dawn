@@ -411,6 +411,44 @@ on_actions = {
 					country_event = AFG_taliban_insurgency.19
 				}
 			}
+
+			#The toll GUI is the only thing that ever refreshed tollage, so an AI Afghanistan earned nothing from
+			#the transport tolls it starts with. Refresh monthly for everyone and let the AI work the rate itself.
+			every_owned_state = {
+				limit = {
+					OR = {
+						state = 409
+						state = 410
+						state = 411
+						state = 412
+						state = 414
+						state = 415
+					}
+				}
+				if = {
+					limit = { check_variable = { AFG_toll_level < 1 } }
+					set_variable = { AFG_toll_level = 3 }
+				}
+				if = {
+					limit = {
+						OWNER = { is_ai = yes }
+						check_variable = { AFG_toll_level < 5 }
+						OWNER = { check_variable = { treasury_rate < 0 } }
+					}
+					add_to_variable = { AFG_toll_level = 1 }
+					OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = 0.02 } }
+				}
+				else_if = {
+					limit = {
+						OWNER = { is_ai = yes }
+						check_variable = { AFG_toll_level > 1 }
+						OWNER = { has_stability < 0.35 }
+					}
+					add_to_variable = { AFG_toll_level = -1 }
+					OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = -0.02 } }
+				}
+				update_afghan_toll = yes
+			}
 		}
 	}
 
