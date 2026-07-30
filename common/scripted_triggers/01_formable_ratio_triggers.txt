@@ -41,6 +41,28 @@ is_md_formable_nation = {
 	}
 }
 
+# Function: formable_purchase_state_is_purchasable
+# Purpose: State-scoped trigger, ROOT = the prospective buyer. True while the state's current holder
+# can still be sold a formable core state. Shared by <TAG>_buy_core_state's target_trigger and
+# cancel_trigger and by formable_purchase_deliver_offer so all three agree on one definition.
+formable_purchase_state_is_purchasable = {
+	NOT = { is_owned_by = ROOT }
+	owner = {
+		NOT = { is_subject_of = ROOT }
+		NOT = { has_war_with = ROOT }
+		NOT = { has_country_flag = formable_purchase_offer_pending }
+		NOT = { check_variable = { formable_offer_buyer_id > 0 } }
+		NOT = {
+			ROOT = {
+				OR = {
+					has_country_flag = formable_purchase_cooldown@PREV
+					has_country_flag = formable_purchase_refused@PREV
+				}
+			}
+		}
+	}
+}
+
 # Function: formable_nation_check
 # Purpose: The check allows us to simplify and streamline the beahvior of the code down to one specific catch all
 formable_nation_check = {
