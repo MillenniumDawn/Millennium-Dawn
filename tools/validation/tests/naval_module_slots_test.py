@@ -6,7 +6,11 @@ These cover the resolver (archetype inheritance, module->category) and each
 finding kind against synthetic hull/module fixtures.
 """
 
-from naval_module_slots import build_indexes, check_naval_variants
+from naval_module_slots import (
+    build_indexes,
+    check_created_variants,
+    check_naval_variants,
+)
 from validate_ai_equipment import Validator
 
 # Archetype with two slots; hull_1 inherits, hull_2 overrides and adds a slot.
@@ -202,11 +206,129 @@ def test_non_naval_template_ignored():
     assert _kinds(content) == []
 
 
+def _created(hull, modules_body):
+    """A create_equipment_variant buried in a focus reward, as they really appear."""
+    return (
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tid = TST_ship\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\thidden_effect = {\n"
+        "\t\t\t\tcreate_equipment_variant = {\n"
+        '\t\t\t\t\tname = "Test Class"\n'
+        f"\t\t\t\t\ttype = {hull}\n"
+        "\t\t\t\t\tmodules = {\n"
+        f"{modules_body}"
+        "\t\t\t\t\t}\n"
+        "\t\t\t\t}\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+
+
+def _created_kinds(content):
+    hull_slots, module_category, known = _indexes()
+    return [
+        f.kind
+        for f in check_created_variants(content, hull_slots, module_category, known)
+    ]
+
+
+def test_created_variant_correct_passes():
+    content = _created(
+        "test_ship_hull_1",
+        "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
+        "\t\t\t\t\t\tfixed_ship_fire_control_system_slot = module_test_screen_fc\n",
+    )
+    assert _created_kinds(content) == []
+
+
+def test_created_variant_wrong_category_flagged():
+    content = _created(
+        "test_ship_hull_1",
+        "\t\t\t\t\t\tfixed_ship_fire_control_system_slot = module_test_plain_fc\n",
+    )
+    assert _created_kinds(content) == ["category_mismatch"]
+
+
+def test_created_variant_unknown_slot_flagged():
+    # The real ENG Type 32 Guardian shape: a tank slot name on a ship hull.
+    content = _created(
+        "test_ship_hull_1",
+        "\t\t\t\t\t\tengine_type_slot = module_test_gun\n",
+    )
+    assert _created_kinds(content) == ["unknown_slot"]
+
+
+def test_created_variant_non_ship_type_skipped():
+    # Tank and plane designs share the effect but not the hull index; flagging
+    # their chassis as an unknown hull would be a false positive on every one.
+    content = _created(
+        "medium_tank_chassis_1",
+        "\t\t\t\t\t\tturret_type_slot = tank_medium_cannon_2\n",
+    )
+    assert _created_kinds(content) == []
+
+
+def test_created_variant_empty_is_legal():
+    content = _created(
+        "test_ship_hull_1",
+        "\t\t\t\t\t\tfixed_ship_battery_slot = empty\n",
+    )
+    assert _created_kinds(content) == []
+
+
+def test_created_variant_reports_real_line_number():
+    content = _created(
+        "test_ship_hull_1",
+        "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
+        "\t\t\t\t\t\tnonexistent_slot = module_test_gun\n",
+    )
+    hull_slots, module_category, known = _indexes()
+    findings = check_created_variants(content, hull_slots, module_category, known)
+    assert len(findings) == 1
+    assert (
+        content.split("\n")[findings[0].line - 1].strip().startswith("nonexistent_slot")
+    )
+
+
+def test_created_variant_comment_does_not_hide_finding():
+    content = _created(
+        "test_ship_hull_1",
+        "\t\t\t\t\t\tnonexistent_slot = module_test_gun # legacy slot\n",
+    )
+    assert _created_kinds(content) == ["unknown_slot"]
+
+
 def _write(tmp_path, rel, body):
     p = tmp_path / rel
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(body, encoding="utf-8")
     return p
+
+
+def test_oob_validator_integration_reports_errors(tmp_path):
+    from validate_oob_units import Validator as OobValidator
+
+    _write(tmp_path, "common/units/equipment/MD_test_ships.txt", HULLS)
+    _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
+    _write(
+        tmp_path,
+        "common/national_focus/05_test.txt",
+        _created(
+            "test_ship_hull_1",
+            "\t\t\t\t\t\tfixed_ship_fire_control_system_slot = module_test_plain_fc\n",
+        ),
+    )
+    validator = OobValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    variant = [i for i in validator._issues if i.category.startswith("SHIP VARIANT")]
+    assert len(variant) == 1
+    assert variant[0].severity == "error"
+    assert variant[0].file == "common/national_focus/05_test.txt"
+    assert "module_test_plain_fc" in variant[0].message
 
 
 def test_validator_integration_reports_warnings(tmp_path):
