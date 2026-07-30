@@ -1,0 +1,44 @@
+# Author(s): AngriestBird
+
+# Function: formable_purchase_deliver_offer
+# Purpose: Called from a <TAG>_buy_core_state remove_effect once the negotiation timer elapses.
+# Sends formable_buy.1 to the state's holder. cancel_trigger only catches the two terminal cases, so
+# the sale is re-validated here against the full gate and refunded through the else branch.
+formable_purchase_deliver_offer = {
+	# Hidden because the raw country_event tooltip names neither the recipient nor the correct sender
+	custom_effect_tooltip = formable_purchase_offer_delivered_tt
+	hidden_effect = {
+		clr_country_flag = formable_purchase_offer_active
+		FROM = { clr_state_flag = formable_purchase_offer_target@ROOT }
+		if = {
+			limit = {
+				FROM = { formable_purchase_state_is_purchasable = yes }
+			}
+			set_variable = { formable_offer_state_id = FROM.id }
+			FROM = {
+				owner = {
+					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
+					set_country_flag = { flag = formable_purchase_offer_pending value = 1 days = 365 }
+					set_variable = { formable_offer_buyer_id = ROOT.id }
+					set_variable = { formable_offer_state_id = PREV.id }
+					# Fires on the holder, not the buyer: this block is FROM.owner
+					country_event = { id = formable_buy.1 hours = 6 }
+				}
+			}
+		}
+		else = {
+			formable_purchase_cancel_offer = yes
+		}
+	}
+}
+
+# Function: formable_purchase_cancel_offer
+# Purpose: Releases the offer lock and returns the escrowed purchase price to the buyer when an offer
+# never reaches a holder, either because the timer was cancelled or because it lapsed on delivery.
+formable_purchase_cancel_offer = {
+	clr_country_flag = formable_purchase_offer_active
+	FROM = { clr_state_flag = formable_purchase_offer_target@ROOT }
+	set_temp_variable = { treasury_change = 100 }
+	modify_treasury_effect = yes
+	country_event = { id = formable_buy.4 hours = 6 }
+}
