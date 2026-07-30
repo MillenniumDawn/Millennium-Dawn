@@ -11,6 +11,15 @@ on:
       - "localisation/**"
       - "interface/**"
       - "gfx/**"
+      # The remaining shipped roots carry no validator of their own, but
+      # validate-paths checks every tracked path for cross-platform hazards.
+      - "map/**"
+      - "music/**"
+      - "portraits/**"
+      - "sound/**"
+      - "descriptions/**"
+      - "scenario_tests/**"
+      - "tutorial/**"
       - "*.mod"
       # Tooling paths are intentionally absent: the validator jobs gate on
       # detect-changes (content groups), so a tooling-only PR would trigger the
@@ -611,12 +620,55 @@ jobs:
           retention-days: 7
 
   # ───────────────────────────────────────────────────────────────
+  # File paths — a mod path differing from a vanilla one only in case
+  # overrides it on Windows but loads beside it on Linux, so the two
+  # platforms checksum different file sets and cannot play together.
+  # Stands apart from the workspace bundle: that bundle carries no .git
+  # and no map/, and this check reads path names straight from the index.
+  # ───────────────────────────────────────────────────────────────
+  validate-paths:
+    name: File Paths
+    runs-on: ubuntu-latest
+    steps:
+      # blob:none fetches trees plus the tools/ blobs only — the index already
+      # names every shipped path, so materialising the content buys nothing.
+      # Cone mode also materialises root files, descriptor.mod among them.
+      - name: Checkout tooling
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            tools
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
+
+      - name: Run validation
+        run: |
+          python3 tools/validation/validate_file_paths.py \
+            --strict --no-color --output validation-file-paths.log
+
+      - name: Upload results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: validation-file-paths-results
+          path: |
+            validation-file-paths.log
+            validation-file-paths.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ───────────────────────────────────────────────────────────────
   # Validation report — collects all results and posts PR comment
   # ───────────────────────────────────────────────────────────────
   validation-report:
     name: Generate Validation Report
     runs-on: ubuntu-latest
-    needs: [validate-core, validate-targeted]
+    needs: [validate-core, validate-targeted, validate-paths]
     permissions:
       contents: read
       pull-requests: write
