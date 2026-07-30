@@ -143,7 +143,7 @@ repos:
         name: MD Standardize (auto-fix ideas/events/decisions/focuses)
         entry: python3 tools/standardize_staged.py
         language: system
-        files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
+        files: 'common/(national_focus|decisions|ideas)/.*\.txt$|events/.*\.txt$'
         pass_filenames: true
       - id: md-validate-content
         name: MD Validate (commit-stage content validators, in parallel)
@@ -167,19 +167,20 @@ repos:
         pass_filenames: false
       - id: md-validate-defines
         name: MD Validate defines against vanilla
-        entry: python3 tools/validation/validate_defines.py --staged --strict --no-color
+        entry: >-
+          python3 tools/validation/validate_defines.py --staged --strict
+          --no-color
         language: system
         files: 'common/defines/.*\.lua$'
         pass_filenames: false
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
         # Manual: full-repo scan is slow and currently reports ~22k legacy
-        # unreferenced textures. CI runs it informationally (no --strict) so
-        # the report is visible without gating PRs. Run before mod-size
-        # cleanup passes:
+        # unreferenced textures. CI cannot run it. Run before mod-size cleanup
+        # passes:
         #   pre-commit run md-validate-unused-textures --hook-stage manual
         entry: python3 tools/validation/validate_unused_textures.py --no-color
         language: system
-        files: '\.(gfx|asset|dds|tga|png)$'
+        always_run: true
         pass_filenames: false
         stages: [manual]
