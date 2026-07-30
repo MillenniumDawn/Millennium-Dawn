@@ -46,6 +46,10 @@ CI_EXEMPT = {
     # ~22k pre-existing unreferenced textures plus a slow full-repo scan make
     # this a periodic mod-size audit, not a per-PR gate. Manual hook only.
     "validate_unused_textures.py",
+    # Runs in the standalone validate-paths job. It reads path names from the
+    # git index, which the matrix jobs don't have: they restore a content
+    # bundle that carries no .git and omits map/.
+    "validate_file_paths.py",
 }
 
 # Validators intentionally without a pre-commit hook. Each needs a reason.
@@ -118,6 +122,21 @@ def _parse_ci():
     return result
 
 
+def _parse_ci_standalone():
+    """Map validate_*.py -> {'strict': bool} for jobs that invoke one directly.
+
+    The matrices name their script through `${{ matrix.validator.script }}`, so
+    only the standalone jobs (styling-check, validate-paths) match here."""
+    wf = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    result = {}
+    for job in wf["jobs"].values():
+        for step in job.get("steps", []):
+            command = step.get("run") or ""
+            for m in re.finditer(r"tools/validation/(validate_\w+\.py)", command):
+                result[m.group(1)] = {"strict": "--strict" in command}
+    return result
+
+
 def _workflow_trigger(workflow):
     config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
     # PyYAML 1.1 parses the YAML 1.2 `on` key as boolean True.
@@ -178,6 +197,11 @@ def ci():
     return _parse_ci()
 
 
+@pytest.fixture(scope="module")
+def ci_standalone():
+    return _parse_ci_standalone()
+
+
 def test_every_disk_validator_runs_on_ci(disk, ci):
     missing = sorted(disk - set(ci) - CI_EXEMPT)
     assert not missing, (
@@ -187,13 +211,15 @@ def test_every_disk_validator_runs_on_ci(disk, ci):
     )
 
 
-def test_every_disk_validator_runs_somewhere(disk, precommit, ci):
+def test_every_disk_validator_runs_somewhere(disk, precommit, ci, ci_standalone):
     # A validator must run on pre-commit OR in CI, or it is dead code. The
     # expensive cross-reference validators run CI-only (their unused manual
-    # pre-commit hooks were removed); the CI-exempt ones (style,
-    # unused_textures) run pre-commit-only. Neither side is required alone,
-    # but a validator in NEITHER place runs nowhere.
-    orphaned = sorted(disk - set(precommit) - set(ci) - PRECOMMIT_EXEMPT)
+    # pre-commit hooks were removed); unused_textures runs pre-commit-only.
+    # Neither side is required alone, but a validator in NEITHER place runs
+    # nowhere.
+    orphaned = sorted(
+        disk - set(precommit) - set(ci) - set(ci_standalone) - PRECOMMIT_EXEMPT
+    )
     assert not orphaned, (
         f"Validators run neither on pre-commit nor in CI: {orphaned}. Wire each "
         "into .pre-commit-config.yaml or the CI matrix, or add to "
@@ -201,10 +227,13 @@ def test_every_disk_validator_runs_somewhere(disk, precommit, ci):
     )
 
 
-def test_ci_exempt_validators_run_on_precommit(disk, precommit, ci):
-    # A validator that CI cannot run (CI_EXEMPT) has pre-commit as its only home,
-    # so it must be wired there or it runs nowhere.
-    homeless = sorted((CI_EXEMPT & disk) - set(precommit) - set(ci))
+def test_ci_exempt_validators_run_on_precommit(disk, precommit, ci, ci_standalone):
+    # CI_EXEMPT only means "not in a matrix". A validator that is also absent
+    # from the standalone CI jobs has pre-commit as its only home, so it must be
+    # wired there or it runs nowhere.
+    homeless = sorted(
+        (CI_EXEMPT & disk) - set(precommit) - set(ci) - set(ci_standalone)
+    )
     assert not homeless, (
         f"CI-exempt validators with no pre-commit hook: {homeless}. They run "
         "nowhere — add a hook in .pre-commit-config.yaml."
