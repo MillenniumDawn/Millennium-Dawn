@@ -1,3 +1,5 @@
+# FROM = target country, ROOT = origin country.
+
 increase_graft = {
 	icon = GFX_increase_corruption
 	map_icon = GFX_increase_corruption_map
@@ -95,6 +97,145 @@ increase_graft = {
 		}
 	}
 	phases = { #infiltrate military
+		infiltrate_military_bribe = { base = 25 }
+		infiltrate_military_seduction = { base = 25 }
+		infiltrate_military_ideological_supporter = {
+			base = 25
+			modifier = {
+				FROM = { has_government = ROOT }
+				factor = 0
+			}
+		}
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+					has_equipment = {
+						cv_medium_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = { base = 25 }
+	}
+}
+
+lobbying_government = {
+	icon = GFX_operations_infiltrate_civilian_govt
+	map_icon = GFX_operations_infiltrate_civilian_govt_map
+	name = lobbying_government
+	desc = lobbying_government_desc
+	priority = 1
+
+	days = 90
+	network_strength = 60
+	operatives = 2
+
+	visible = {
+		num_of_operatives > 0
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		has_operation_token = {
+			tag = FROM
+			token = token_civilian
+		}
+	}
+
+	available = {
+		FROM = {
+			is_top3_influencer = yes
+			custom_trigger_tooltip = {
+				tooltip = influence_government_not_lobbied_by_us_tt
+				NOT = {
+					AND = {
+						has_country_flag = influence_government_lobbied
+						check_variable = { influence_lobbied_by = ROOT.id }
+					}
+				}
+			}
+		}
+	}
+
+	required_tokens = { token_civilian }
+	awarded_tokens = { token_civilian }
+
+	risk_chance = 0.5
+	experience = 2
+	outcome_extra_chance = 0.10
+	risk_modifiers = { operation_risk }
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+
+	outcome_execute = {
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_civilian
+			}
+		}
+		FROM = {
+			set_variable = { influence_lobbied_by = ROOT.id }
+			set_country_flag = { flag = influence_government_lobbied value = 1 days = 180 }
+			country_event = { id = influence.62 days = 1 }
+		}
+	}
+
+	outcome_potential = {
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_civilian
+			}
+		}
+		custom_effect_tooltip = lobbying_government_outcome_tt
+	}
+
+	outcome_extra_execute = {
+		FROM = {
+			set_temp_variable = { percent_change = 2.5 }
+			change_influence_percentage = yes
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = { base = 25 }
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+					has_equipment = {
+						cv_medium_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = {
+					has_war = no
+				}
+			}
+		}
+	}
+	phases = { #infiltrate government
 		infiltrate_military_bribe = { base = 25 }
 		infiltrate_military_seduction = { base = 25 }
 		infiltrate_military_ideological_supporter = {
