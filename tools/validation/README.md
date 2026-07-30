@@ -1,11 +1,11 @@
 # Millennium Dawn Validation Tools
 
-Content validators for the Millennium Dawn mod. All validators share a common CLI interface and can be run individually or all at once via `run_all_validators.py`.
+Content validators for the Millennium Dawn mod. All validators share a common CLI interface. Cacheable validators can be run all at once via `run_all_validators.py`.
 
 ## Quick Start
 
 ```bash
-# Run all validators (from the mod root)
+# Run all cacheable validators (from the mod root)
 python3 tools/validation/run_all_validators.py
 
 # Strict mode: exit non-zero if any issues found (used in CI)
@@ -38,7 +38,7 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 | **validate_events.py**                | Events missing `is_triggered_only = yes`; unsupported title/desc combinations; redundant long-form event calls; every `picture` resolves to an MD-defined sprite (vanilla event pictures are not allowed, so this gates in CI without the game installed)                                                                                                                                                                         |
 | **validate_factions.py**              | Faction template/goal/rule/icon references exist; no duplicate IDs; valid rule types                                                                                                                                                                                                                                                                                                                                              |
 | **validate_focus_tree.py**            | Duplicate focus IDs; orphan focuses; missing prerequisite targets; missing loc keys; dependency cycles. Opt-in: `--missing-icons` (focuses whose `icon` sprite is undefined)                                                                                                                                                                                                                                                      |
-| **validate_gfx_references.py**        | Sprite names in `.gui` and scripted-GUI files are defined in `interface/*.gfx`; unused sprite definitions                                                                                                                                                                                                                                                                                                                         |
+| **validate_gfx_references.py**        | Sprite names in `.gui` and scripted-GUI files are defined in `interface/*.gfx`; unused sprite definitions (engine-resolved equipment icons and loc `£name` refs count as used)                                                                                                                                                                                                                                                    |
 | **validate_history.py**               | History files: technology dependencies, equipment variant modules, DLC-gated techs, OOB references, capital definitions                                                                                                                                                                                                                                                                                                           |
 | **validate_ideas.py**                 | Idea `allowed`/`visible` blocks reference defined ideas; no duplicate idea IDs; `GFX_idea_categories` has enough frames for the politics-view categories. Unused-ideas check is enabled by default (pass `--no-unused-ideas` to disable). Opt-in: `--missing-loc` (ideas without name/desc loc keys), `--missing-icons` (ideas whose `picture` sprite is undefined), `--suggest-consolidation` (advisory loc consolidation hints) |
 | **validate_localisation.py**          | Duplicate keys; unpaired brackets; color code mismatches; orphaned `_tt` tooltip keys                                                                                                                                                                                                                                                                                                                                             |
@@ -59,7 +59,7 @@ These cross-reference the entire codebase. A disk cache under `.validation_cache
 | ------------------------------- | ---------------------------------------------------------------------------------- |
 | **validate_set_variables.py**   | Variables set with `set_variable` are actually used somewhere                      |
 | **validate_unused_scripted.py** | Scripted effects/triggers defined but never called                                 |
-| **validate_unused_textures.py** | Texture files not referenced in any `.gfx` file; `.gfx` entries with missing files |
+| **validate_unused_textures.py** | Texture files not referenced in any `.gfx` file; `.gfx` entries with missing files. Manual-only. |
 | **validate_variables.py**       | Country/state/global flags and event targets: cleared-but-not-set, missing, unused |
 
 ---
@@ -158,7 +158,7 @@ All validators extend `BaseValidator` from `validator_common.py`. To add a new v
 3. Use `self.add_error(category, message, file, line)` / `self.add_warning(...)` to record issues
 4. To parse many files, call `self.parse_files_cached(patterns, namespace, parse_fn)` — it's staged-aware, case-preserving, and disk-caches each parse keyed on file content. Use a unique `namespace` string per call to avoid cache collisions.
 5. Call `run_validator_main(YourValidator, "Description")` at the bottom
-6. `run_all_validators.py` auto-discovers it on the next run — no registration needed
+6. `run_all_validators.py` auto-discovers it on the next run unless it is intentionally manual-only
 
 `validator_common.py` also provides `strip_comments()`, `FileOpener`, `DataCleaner`, `HOI4_BUILTIN_BLOCKS`, and `scan_meta_constructed_names()` for use in validators.
 
