@@ -11,13 +11,15 @@ at 19%.
 import validate_variables as V
 
 
-def _ranges(tmp_path, text):
+def _harvest(tmp_path, text):
     f = tmp_path / "src.txt"
     f.write_text(text, encoding="utf-8")
-    return {
-        name: (lo, hi)
-        for name, lo, hi in V.collect_clamp_ranges((str(f), str(tmp_path)))
-    }
+    return V.collect_clamp_ranges((str(f), str(tmp_path)))
+
+
+def _ranges(tmp_path, text):
+    found, _temp, _persistent = _harvest(tmp_path, text)
+    return {name: (lo, hi) for name, lo, hi in found}
 
 
 def _conflicts(tmp_path, text, ranges):
@@ -108,3 +110,39 @@ def test_commented_line_ignored(tmp_path):
         {"my_var": (0.0, 50.0)},
     )
     assert out == []
+
+
+def test_harvest_separates_temp_and_persistent_writes(tmp_path):
+    _found, temp, persistent = _harvest(
+        tmp_path,
+        "set_temp_variable = { pp_gain = political_power_daily }\n"
+        "set_variable = { var = expected_military_sp value = 2 }\n"
+        "set_global_variable = { GLOBAL_war_count = 0 }\n",
+    )
+    assert temp == ["pp_gain"]
+    assert set(persistent) == {"expected_military_sp", "GLOBAL_war_count"}
+
+
+def test_temp_only_variable_clamp_is_not_a_global_invariant(tmp_path):
+    # Regression: `clamp_variable = { var = pp_gain min = -500 max = -100 }` sits
+    # in a branch AFTER `check_variable = { pp_gain > -50 }` in the same effect,
+    # and pp_gain is a scratch parameter, so the clamp is no invariant on it.
+    src = tmp_path / "common" / "scripted_effects" / "pp.txt"
+    src.parent.mkdir(parents=True)
+    src.write_text(
+        "lose_pp_for_month = {\n"
+        "\tset_temp_variable = { pp_gain = political_power_daily }\n"
+        "\tif = {\n"
+        "\t\tlimit = { check_variable = { pp_gain > -50 } }\n"
+        "\t\tadd_political_power = -50\n"
+        "\t\telse = {\n"
+        "\t\t\tclamp_variable = { var = pp_gain min = -500 max = -100 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_clamp_range_conflicts()
+    assert not v._issues

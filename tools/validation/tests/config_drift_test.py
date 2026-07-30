@@ -338,6 +338,22 @@ def test_manual_texture_audit_always_runs():
     assert hook.get("pass_filenames") is False
 
 
+def test_ci_run_steps_default_to_strict():
+    # _parse_ci models an omitted `strict:` as --strict. Both Run steps must
+    # agree: keying off `= "true"` instead would silently drop the gate for any
+    # entry added without the field, and this guard could not see it.
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    for job in ("validate-core", "validate-targeted"):
+        run = next(
+            step["run"]
+            for step in workflow["jobs"][job]["steps"]
+            if step.get("name") == "Run validation"
+        )
+        assert 'matrix.validator.strict }}" != "false"' in run, (
+            f"{job}'s Run step must default to --strict when `strict:` is absent."
+        )
+
+
 def test_gfx_reference_validator_runs_for_all_reference_sources():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     entry = next(

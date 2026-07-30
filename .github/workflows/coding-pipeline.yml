@@ -90,9 +90,8 @@ jobs:
       # No checkout — on pull_request events dorny/paths-filter fetches the
       # changed-file list straight from the GitHub API, so cloning the repo
       # just to diff locally is pure overhead.
-      # dorny/paths-filter v4.0.1
       - name: Detect changed file groups
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
           # `style_files` (from list-files: json) carries the changed .txt paths
@@ -197,10 +196,9 @@ jobs:
           echo "hash=${{ hashFiles('tools/validation/**',
           'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
 
-      # actions/cache/restore v6.1.0
       - name: Restore shared validator disk cache
         id: valcache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .validation_cache
           key: >-
@@ -226,9 +224,8 @@ jobs:
       # Explicit save (not the combined action's post-job save): the upload
       # completes inside this step, so `needs: prepare-workspace` fully
       # orders save-before-restore for every consumer.
-      # actions/cache/save v6.1.0
       - name: Save bundled workspace cache
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORKSPACE_PATHS }}
           key: ${{ env.WORKSPACE_KEY }}
@@ -264,9 +261,8 @@ jobs:
     steps:
       # Built by prepare-workspace this run. If eviction broke a "Re-run
       # failed jobs", use "Re-run all jobs" so the bundle is rebuilt.
-      # actions/cache/restore v6.1.0
       - name: Restore prepared workspace
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORKSPACE_PATHS }}
           key: ${{ env.WORKSPACE_KEY }}
@@ -318,9 +314,8 @@ jobs:
       needs.detect-changes.outputs.mod == 'true'
     runs-on: ubuntu-latest
     steps:
-      # actions/cache/restore v6.1.0
       - name: Restore prepared workspace
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORKSPACE_PATHS }}
           key: ${{ env.WORKSPACE_KEY }}
@@ -404,9 +399,8 @@ jobs:
     steps:
       # Bundle includes the shared .validation_cache — one restore replaces
       # both the old checkout and per-validator cache steps.
-      # actions/cache/restore v6.1.0
       - name: Restore prepared workspace
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORKSPACE_PATHS }}
           key: ${{ env.WORKSPACE_KEY }}
@@ -417,15 +411,23 @@ jobs:
         with:
           python-version: "3.x"
 
+      # Per-matrix opt-out: `strict: false` makes the validator informational
+      # (still produces the log + PR comment but exits 0 on findings). An entry
+      # that omits the field keeps gating behavior — never fail open by default.
       - name: Run validation
         run: |
-          python3 tools/validation/${{ matrix.validator.script }} \
-            --strict --no-color --workers 4 \
-            --output validation-${{ matrix.validator.name }}.log
+          if [ "${{ matrix.validator.strict }}" != "false" ]; then
+            python3 tools/validation/${{ matrix.validator.script }} \
+              --strict --no-color --workers 4 \
+              --output validation-${{ matrix.validator.name }}.log
+          else
+            python3 tools/validation/${{ matrix.validator.script }} \
+              --no-color --workers 4 \
+              --output validation-${{ matrix.validator.name }}.log
+          fi
 
-      # actions/upload-artifact v7.0.1
       - name: Upload results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: validation-${{ matrix.validator.name }}-results
@@ -567,10 +569,9 @@ jobs:
       # changed. Steps below each carry the same `if` so a skipped entry
       # reports cleanly as "success with no work done" instead of
       # bulk-skipping the whole job.
-      # actions/cache/restore v6.1.0
       - name: Restore prepared workspace
         if: matrix.validator.should_run == 'true'
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORKSPACE_PATHS }}
           key: ${{ env.WORKSPACE_KEY }}
@@ -583,7 +584,7 @@ jobs:
       - name: Run validation
         if: matrix.validator.should_run == 'true'
         run: |
-          if [ "${{ matrix.validator.strict }}" = "true" ]; then
+          if [ "${{ matrix.validator.strict }}" != "false" ]; then
             python3 tools/validation/${{ matrix.validator.script }} \
               --strict --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
@@ -592,10 +593,9 @@ jobs:
               --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           fi
-      # actions/upload-artifact v7.0.1
       - name: Upload results
         if: always() && matrix.validator.should_run == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: validation-${{ matrix.validator.name }}-results
           path: |
@@ -636,9 +636,8 @@ jobs:
         with:
           python-version: "3.x"
 
-      # actions/download-artifact v8
       - name: Download all validation results
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: validation-*-results
           path: validation-results
@@ -660,9 +659,8 @@ jobs:
             --checks-api \
             --print
 
-      # actions/upload-artifact v7.0.1
       - name: Upload combined report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: validation-report

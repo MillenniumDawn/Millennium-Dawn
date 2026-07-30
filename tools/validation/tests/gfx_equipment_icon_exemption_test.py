@@ -25,6 +25,9 @@ EQUIPMENT_FIXTURE = (
     "\tinfantry_equipment_0 = {\n"
     "\t\tyear = 1936\n"
     "\t}\n"
+    "\tAPC_1 = {\n"
+    "\t\tyear = 1936\n"
+    "\t}\n"
     "}\n"
 )
 
@@ -43,13 +46,13 @@ def test_equipments_block_and_entry_regex_parse_one_tab_entries():
     assert end != -1
     entries = set(vg._EQUIPMENT_ENTRY_RE.findall(body))
     # nested `values` two tabs deep must not be picked up as an entry
-    assert entries == {"util_vehicle_1", "infantry_equipment_0"}
+    assert entries == {"util_vehicle_1", "infantry_equipment_0", "APC_1"}
 
 
 def test_load_equipment_names_reads_top_level_entries(tmp_path):
     _write_equipment(str(tmp_path))
     assert vg._load_equipment_names(str(tmp_path)) == frozenset(
-        {"util_vehicle_1", "infantry_equipment_0"}
+        {"util_vehicle_1", "infantry_equipment_0", "APC_1"}
     )
 
 
@@ -62,6 +65,18 @@ def test_equipment_icon_exempted_from_unused_report(tmp_path):
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
     v._check_unused_sprites(
         defined={"GFX_util_vehicle_1_medium"},
+        all_refs=set(),
+    )
+    assert not v._issues
+
+
+def test_archetype_starting_with_three_letter_prefix_is_exempted(tmp_path):
+    # APC_1, IFV_1, MBT_1 look like <TAG>_<name>: stripping the tag first leaves
+    # "1", which is no archetype, so the sprite was reported as unused.
+    _write_equipment(str(tmp_path))
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    v._check_unused_sprites(
+        defined={"GFX_APC_1_medium"},
         all_refs=set(),
     )
     assert not v._issues

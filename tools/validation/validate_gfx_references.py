@@ -282,7 +282,11 @@ def _is_likely_vanilla(name: str) -> bool:
 # with a country prefix (GFX_util_vehicle_1_medium, GFX_AFG_util_vehicle_1_medium).
 # They are never named literally in script, so the unused check needs the
 # equipment list to tell a real orphan from an engine-resolved icon.
-_EQUIPMENT_ICON_RE = re.compile(r"^GFX_(?:[A-Z]{3}_)?(.+?)_(?:small|medium|large)$")
+_EQUIPMENT_ICON_RE = re.compile(r"^GFX_(.+?)_(?:small|medium|large)$")
+# Stripped as a second attempt only. Folding the optional tag into the pattern
+# above swallows the archetype's own prefix (APC_1 → "1"), because the match
+# succeeds either way and never backtracks.
+_EQUIPMENT_ICON_TAG_RE = re.compile(r"^[A-Z]{3}_(.+)$")
 # Only entries directly inside `equipments = { }` are equipment. Matching any
 # one-tab key would also pick up container keys such as `values` in
 # tank_filters.txt, which could mask a genuinely dead sprite.
@@ -777,7 +781,13 @@ class Validator(BaseValidator):
 
         def _is_equipment_icon(name: str) -> bool:
             m = _EQUIPMENT_ICON_RE.match(name)
-            return bool(m) and m.group(1) in equipment
+            if not m:
+                return False
+            stem = m.group(1)
+            if stem in equipment:
+                return True
+            tagged = _EQUIPMENT_ICON_TAG_RE.match(stem)
+            return bool(tagged) and tagged.group(1) in equipment
 
         unused = sorted(
             s
