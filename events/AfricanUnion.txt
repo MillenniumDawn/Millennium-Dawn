@@ -1009,6 +1009,12 @@ country_event = {
 		has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
 		has_global_flag = African_Union_formed
 		check_variable = { debt_ratio > 0.05 }
+		any_of_scopes = {
+			array = global.AU_member
+			NOT = { tag = PREV }
+			NOT = { check_variable = { interest_rate > 8 } }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	mean_time_to_happen = {
@@ -1093,19 +1099,32 @@ country_event = {
 		ai_chance = {
 			factor = 80
 		}
-		set_temp_variable = { debt_change = gdp_total }
-		multiply_temp_variable = { debt_change = -0.05 }
-		modify_debt_effect = yes
-		random_other_country = {
+		random_scope_in_array = {
+			array = global.AU_member
 			limit = {
-				is_in_array = { global.is_african_nation = THIS.id }
-				has_idea = AU_member
+				NOT = { tag = PREV }
+				NOT = { check_variable = { interest_rate > 8 } }
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+			set_temp_variable = { available_treasury = { value = treasury clamp = { min = 0 } } }
+			set_temp_variable = {
+				debt_payment = {
+					value = PREV.gdp_total
+					multiply = 0.05
+					clamp = { min = 0 max = available_treasury }
+				}
+			}
+			set_temp_variable = { treasury_change = { value = debt_payment multiply = -1 } }
+			modify_treasury_effect = yes
+			PREV = {
+				set_temp_variable = { debt_change = PREV.treasury_change }
+				modify_debt_effect = yes
 			}
 			set_temp_variable = { tag_index = THIS }
+			set_temp_variable = { influence_target = PREV }
+			set_temp_variable = { percent_change = 4 }
+			change_influence_percentage = yes
 		}
-		set_temp_variable = { influence_target = ROOT }
-		set_temp_variable = { percent_change = 4 }
-		change_influence_percentage = yes
 	}
 	option = {
 		name = AfricanUnionRandomEvents.5.b
@@ -1134,6 +1153,8 @@ country_event = {
 		has_idea = AU_member
 		has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
 		has_global_flag = African_Union_formed
+		NOT = { check_variable = { interest_rate > 8 } }
+		NOT = { has_active_mission = bankruptcy_incoming_collapse }
 		any_of_scopes = {
 			array = global.is_african_nation
 			has_idea = AU_member
@@ -1184,10 +1205,9 @@ country_event = {
 				has_idea = AU_member
 				check_variable = { debt_ratio > 0.10 }
 			}
-			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { tag_index = PREV }
 			set_temp_variable = { influence_target = THIS }
-			set_temp_variable = { ROOT.treasury_change = THIS.gdp_total }
-			multiply_temp_variable = { ROOT.treasury_change = -0.10 }
+			set_temp_variable = { PREV.treasury_change = { value = THIS.gdp_total multiply = -0.10 } }
 			country_event = AfricanUnionRandomEvents.7
 		}
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
@@ -1217,9 +1237,30 @@ country_event = {
 	option = {
 		name = AfricanUnionRandomEvents.7.a
 		log = "[GetDateText]: [This.GetName]: AfricanUnionRandomEvents.7.a executed"
-		ai_chance = { factor = 80 }
-		set_temp_variable = { debt_change = gdp_total }
-		multiply_temp_variable = { debt_change = -0.10 }
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = 15
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				add = 20
+				has_opinion = { target = FROM value > 75 }
+			}
+			modifier = {
+				add = -15
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				add = -25
+				has_opinion = { target = FROM value < -50 }
+			}
+		}
+		set_temp_variable = { debt_change = { value = gdp_total multiply = -0.10 } }
 		hidden_effect = { FROM = { set_variable = { debt_to_pay = PREV.debt_change } } }
 		modify_debt_effect = yes
 		effect_tooltip = {
@@ -1233,7 +1274,29 @@ country_event = {
 	option = {
 		name = AfricanUnionRandomEvents.7.b
 		log = "[GetDateText]: [This.GetName]: AfricanUnionRandomEvents.6.b executed"
-		ai_chance = { factor = 20 }
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = -10
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = -15
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				add = -20
+				has_opinion = { target = FROM value > 75 }
+			}
+			modifier = {
+				add = 15
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				add = 25
+				has_opinion = { target = FROM value < -50 }
+			}
+		}
 		FROM = { country_event = { id = AfricanUnionRandomEvents.11 hours = 6 } }
 	}
 
