@@ -326,6 +326,32 @@ def test_tools_tests_checkout_consumed_workflows():
     assert ".github/workflows/validator-cache.yml" in sparse_paths
 
 
+def test_manual_texture_audit_always_runs():
+    config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
+    hook = next(
+        hook
+        for repo in config["repos"]
+        for hook in repo.get("hooks", [])
+        if hook.get("id") == "md-validate-unused-textures"
+    )
+    assert hook.get("always_run") is True
+    assert hook.get("pass_filenames") is False
+
+
+def test_gfx_reference_validator_runs_for_all_reference_sources():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    entry = next(
+        entry
+        for entry in workflow["jobs"]["validate-targeted"]["strategy"]["matrix"][
+            "validator"
+        ]
+        if entry["script"] == "validate_gfx_references.py"
+    )
+    expression = entry["should_run"]
+    for output in ("interface", "common", "events", "history", "localisation"):
+        assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
+
+
 def test_scripted_localisation_core_runs_for_interface_changes():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     core = workflow["jobs"]["validate-core"]
