@@ -1009,6 +1009,11 @@ country_event = {
 		has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
 		has_global_flag = African_Union_formed
 		check_variable = { debt_ratio > 0.05 }
+		any_of_scopes = {
+			array = global.AU_member
+			NOT = { tag = ROOT }
+			check_variable = { treasury > 0 }
+		}
 	}
 
 	mean_time_to_happen = {
@@ -1093,19 +1098,27 @@ country_event = {
 		ai_chance = {
 			factor = 80
 		}
-		set_temp_variable = { debt_change = gdp_total }
-		multiply_temp_variable = { debt_change = -0.05 }
-		modify_debt_effect = yes
-		random_other_country = {
+		random_scope_in_array = {
+			array = global.AU_member
 			limit = {
-				is_in_array = { global.is_african_nation = THIS.id }
-				has_idea = AU_member
+				NOT = { tag = ROOT }
+				check_variable = { treasury > 0 }
+			}
+			set_temp_variable = { debt_payment = ROOT.gdp_total }
+			multiply_temp_variable = { debt_payment = 0.05 }
+			clamp_temp_variable = { var = debt_payment min = 0 max = treasury }
+			set_temp_variable = { treasury_change = debt_payment }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			ROOT = {
+				set_temp_variable = { debt_change = PREV.treasury_change }
+				modify_debt_effect = yes
 			}
 			set_temp_variable = { tag_index = THIS }
+			set_temp_variable = { influence_target = ROOT }
+			set_temp_variable = { percent_change = 4 }
+			change_influence_percentage = yes
 		}
-		set_temp_variable = { influence_target = ROOT }
-		set_temp_variable = { percent_change = 4 }
-		change_influence_percentage = yes
 	}
 	option = {
 		name = AfricanUnionRandomEvents.5.b
