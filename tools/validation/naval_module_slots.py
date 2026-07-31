@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Cross-check naval AI-equipment variant modules against ship-hull slot rules.
+"""Cross-check ship variant modules against ship-hull slot rules.
 
 The engine silently drops a module assigned to a slot that does not exist on the
 hull, or whose module category is not in that slot's ``allowed_module_categories``
@@ -278,12 +277,14 @@ def _parse_module_assignments(
     return out
 
 
-def _iter_target_variants(text: str, lo: int, hi: int):
-    for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
-        if name == "target_variant":
+def _iter_named_blocks(text: str, lo: int, hi: int, name: str):
+    """Yield ``(body_lo, body_hi)`` for every ``name = { ... }`` block at any
+    nesting depth of the ``text[lo:hi]`` span."""
+    for key, blo, bhi, _ in _iter_blocks(text, lo, hi):
+        if key == name:
             yield blo, bhi
         else:
-            yield from _iter_target_variants(text, blo, bhi)
+            yield from _iter_named_blocks(text, blo, bhi, name)
 
 
 @dataclass
@@ -291,6 +292,87 @@ class Finding:
     line: int
     kind: str  # unknown_hull | unknown_slot | unknown_module | category_mismatch
     message: str
+
+
+def _check_variant(
+    text: str,
+    vlo: int,
+    vhi: int,
+    hull_slots: Dict[str, Optional[Dict[str, Optional[Set[str]]]]],
+    module_category: Dict[str, str],
+    known_categories: Set[str],
+    findings: List[Finding],
+    *,
+    naval_only: bool,
+) -> None:
+    """Validate one variant body's ``modules`` block against its hull's slots.
+
+    With *naval_only* the caller has already established that the variant is a
+    ship, so an unresolvable ``type`` is a real error. Without it the variant
+    may equally be a tank or plane design, whose chassis/airframe is absent
+    from the ship-hull index by construction, so those are skipped instead.
+    """
+    hull = _scalar(text, vlo, vhi, "type")
+    mods_span = None
+    for key, mlo, mhi, _ in _iter_blocks(text, vlo, vhi):
+        if key == "modules":
+            mods_span = (mlo, mhi)
+            break
+    if mods_span is None or hull is None:
+        return
+    if hull not in hull_slots:
+        if naval_only:
+            findings.append(
+                Finding(
+                    text.count("\n", 0, mods_span[0]) + 1,
+                    "unknown_hull",
+                    f"variant type '{hull}' is not a defined ship hull",
+                )
+            )
+        return
+    slots = hull_slots[hull]
+    if slots is None:
+        return
+    for slot, refs, off in _parse_module_assignments(text, *mods_span):
+        line = text.count("\n", 0, off) + 1
+        if slot not in slots:
+            findings.append(
+                Finding(
+                    line,
+                    "unknown_slot",
+                    f"hull '{hull}' has no slot '{slot}' — module "
+                    f"assignment is silently ignored",
+                )
+            )
+            continue
+        allowed = slots[slot]
+        for ref in refs:
+            if ref == "empty":
+                continue
+            if ref in module_category:
+                eff = module_category[ref]
+            elif ref in known_categories:
+                eff = ref
+            else:
+                findings.append(
+                    Finding(
+                        line,
+                        "unknown_module",
+                        f"'{ref}' in slot '{slot}' on hull '{hull}' is "
+                        f"neither a defined module nor a module category",
+                    )
+                )
+                continue
+            if allowed is not None and eff not in allowed:
+                findings.append(
+                    Finding(
+                        line,
+                        "category_mismatch",
+                        f"'{ref}' (category {eff}) is not allowed in slot "
+                        f"'{slot}' on hull '{hull}'; that slot accepts "
+                        f"{{{', '.join(sorted(allowed))}}}",
+                    )
+                )
 
 
 def check_naval_variants(
@@ -306,67 +388,50 @@ def check_naval_variants(
     for tname, tlo, thi, _ in _iter_blocks(text, 0, len(text)):
         if _scalar(text, tlo, thi, "category") != "naval":
             continue
-        for vlo, vhi in _iter_target_variants(text, tlo, thi):
-            hull = _scalar(text, vlo, vhi, "type")
-            mods_span = None
-            for key, mlo, mhi, _ in _iter_blocks(text, vlo, vhi):
-                if key == "modules":
-                    mods_span = (mlo, mhi)
-                    break
-            if mods_span is None or hull is None:
-                continue
-            if hull not in hull_slots:
-                findings.append(
-                    Finding(
-                        text.count("\n", 0, mods_span[0]) + 1,
-                        "unknown_hull",
-                        f"variant type '{hull}' is not a defined ship hull",
-                    )
-                )
-                continue
-            slots = hull_slots[hull]
-            if slots is None:
-                continue
-            for slot, refs, off in _parse_module_assignments(text, *mods_span):
-                line = text.count("\n", 0, off) + 1
-                if slot not in slots:
-                    findings.append(
-                        Finding(
-                            line,
-                            "unknown_slot",
-                            f"hull '{hull}' has no slot '{slot}' — module "
-                            f"assignment is silently ignored",
-                        )
-                    )
-                    continue
-                allowed = slots[slot]
-                for ref in refs:
-                    if ref == "empty":
-                        continue
-                    if ref in module_category:
-                        eff = module_category[ref]
-                    elif ref in known_categories:
-                        eff = ref
-                    else:
-                        findings.append(
-                            Finding(
-                                line,
-                                "unknown_module",
-                                f"'{ref}' in slot '{slot}' on hull '{hull}' is "
-                                f"neither a defined module nor a module category",
-                            )
-                        )
-                        continue
-                    if allowed is not None and eff not in allowed:
-                        findings.append(
-                            Finding(
-                                line,
-                                "category_mismatch",
-                                f"'{ref}' (category {eff}) is not allowed in slot "
-                                f"'{slot}' on hull '{hull}'; that slot accepts "
-                                f"{{{', '.join(sorted(allowed))}}}",
-                            )
-                        )
+        for vlo, vhi in _iter_named_blocks(text, tlo, thi, "target_variant"):
+            _check_variant(
+                text,
+                vlo,
+                vhi,
+                hull_slots,
+                module_category,
+                known_categories,
+                findings,
+                naval_only=True,
+            )
+    findings.sort(key=lambda f: f.line)
+    return findings
+
+
+def check_created_variants(
+    content: str,
+    hull_slots: Dict[str, Optional[Dict[str, Optional[Set[str]]]]],
+    module_category: Dict[str, str],
+    known_categories: Set[str],
+) -> List[Finding]:
+    """Same slot/category check for ``create_equipment_variant`` effects, which
+    are what focus rewards, events, decisions and history files use.
+
+    These blocks sit at arbitrary depth inside effect scopes and carry no
+    ``category`` marker, so a variant is treated as naval exactly when its
+    ``type`` resolves to a known ship hull. Tank and plane designs fall out
+    here; validating their slots needs a chassis/airframe index, and their
+    ``allowed_module_categories`` blocks are frequently empty (unconstrained),
+    which this resolver would read as "nothing permitted".
+    """
+    text = blank_comments(content)
+    findings: List[Finding] = []
+    for vlo, vhi in _iter_named_blocks(text, 0, len(text), "create_equipment_variant"):
+        _check_variant(
+            text,
+            vlo,
+            vhi,
+            hull_slots,
+            module_category,
+            known_categories,
+            findings,
+            naval_only=False,
+        )
     findings.sort(key=lambda f: f.line)
     return findings
 
