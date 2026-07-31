@@ -3225,6 +3225,14 @@ update_social_rate = {
 # Effect: update_infra_rate
 # Purpose: Computes daily infrastructure maintenance costs for power plants and network
 update_infra_rate = {
+	# Nations under ~1M population pay proportionally less upkeep; floor keeps it non-trivial
+	set_temp_variable = {
+		infra_size_scaling = {
+			value = population_total_m
+			clamp = { min = 0.25 max = 1 }
+		}
+	}
+
 	set_variable = {
 		nuclear_infra_expense = {
 			value = nuclear_reactors
@@ -3236,6 +3244,7 @@ update_infra_rate = {
 				add = modifier@nuclear_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3250,6 +3259,7 @@ update_infra_rate = {
 				add = modifier@fossil_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3264,6 +3274,7 @@ update_infra_rate = {
 				add = modifier@renewable_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3276,6 +3287,7 @@ update_infra_rate = {
 				add = modifier@infrastructure_cost_multiplier_modifier
 				multiply = common_money_modifier
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
