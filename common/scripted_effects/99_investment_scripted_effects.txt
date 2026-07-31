@@ -380,20 +380,33 @@ calculate_project_duration = {
 		set_temp_variable = { building_cost = 1 }
 	}
 
-	set_variable = { project_construction_duration^project = building_cost }
-	round_variable = project_construction_duration^project
+	set_variable = {
+		project_construction_duration^project = {
+			value = building_cost
+			round = yes
+		}
+	}
+
 	set_variable = { project_construction_duration^-2 = project_construction_duration^project }
 
 	# Total queue duration (only meaningful for active slots)
 	if = { limit = { check_variable = { project > -1 } }
-		set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
-		multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project }
+		set_variable = {
+			project_total_construction_duration_display^project = {
+				value = project_construction_duration^project
+				multiply = project_build_amount^project
+			}
+		}
 	}
 
 	# GUI Duration preview variable (staged, ^-1 access for display before project starts)
-	set_variable = { project_total_construction_duration_display^-1 = building_cost }
-	multiply_variable = { project_total_construction_duration_display^-1 = project_build_amount^-1 }
-	round_variable = project_total_construction_duration_display^-1
+	set_variable = {
+		project_total_construction_duration_display^-1 = {
+			value = building_cost
+			multiply = project_build_amount^-1
+			round = yes
+		}
+	}
 }
 
 
@@ -445,13 +458,13 @@ start_project_two = {
 		# Initializes the target decisions for the investment project
 		initialize_start_project_decisions = yes
 
-		clear_variable = project
-		clear_variable = project_type
-		clear_variable = new_project
-
 		if = { limit = { is_debug = yes }
 			log = "[GetDateText]: [THIS.GetName]: DEBUG: start_project_two - project started at slot [?new_project], cost = [?project_monetary_cost^-1], duration = [?project_construction_duration^new_project] days"
 		}
+
+		clear_variable = project
+		clear_variable = project_type
+		clear_variable = new_project
 	}
 	else = {
 		if = { limit = { is_debug = yes }
@@ -503,58 +516,60 @@ complete_project = {
 
 # Cancel or complete project: refund investor, give 10% to target.
 end_project = {
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: DEBUG: end_project - project = [?project], refund = [?project_monetary_cost^project]"
-	}
-
-	# INFO: project_array^project holds the target state id, stored negative (HOI4 encodes state scopes as negative). Empty slots are 0.
-	if = { limit = { check_variable = { project_array^project < 0 } }
-		random_state = {
-			limit = { state = PREV.project_array^PREV.project }
-			clear_variable = project_target_state_@PREV
-			for_each_loop = {
-				value = v
-				index = i
-				array = projects_in_state
-				if = { limit = { check_variable = { v = PREV.id } }
-					remove_from_array = { array = projects_in_state value = PREV.id }
-					remove_from_array = { array = project_type_in_state index = i }
-				}
-			}
-			set_temp_variable = { tag_index = THIS.id }
+	hidden_effect = {
+		if = { limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetName]: DEBUG: end_project - project = [?project], refund = [?project_monetary_cost^project]"
 		}
 
-		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
-			add_to_variable = { var = treasury value = project_monetary_cost^project }
-			if = { limit = { check_variable = { int_investments > project_monetary_cost^project } }
-				subtract_from_variable = { var = int_investments value = project_monetary_cost^project }
-				clamp_variable = { var = int_investments min = 0 }
+		# INFO: project_array^project holds the target state id, stored negative (HOI4 encodes state scopes as negative). Empty slots are 0.
+		if = { limit = { check_variable = { project_array^project < 0 } }
+			random_state = {
+				limit = { state = PREV.project_array^PREV.project }
+				clear_variable = project_target_state_@PREV
+				for_each_loop = {
+					value = v
+					index = i
+					array = projects_in_state
+					if = { limit = { check_variable = { v = PREV.id } }
+						remove_from_array = { array = projects_in_state value = PREV.id }
+						remove_from_array = { array = project_type_in_state index = i }
+					}
+				}
+				set_temp_variable = { tag_index = THIS.id }
 			}
-			else = {
-				subtract_from_variable = { var = treasury value = project_monetary_cost^project }
-			}
-			set_temp_variable = { return_to_sender = project_monetary_cost^project }
-			multiply_temp_variable = { return_to_sender = 0.10 }
-			var:project_array^project = {
-				if = { limit = { NOT = { is_controlled_by = PREV } }
-					CONTROLLER = { add_to_variable = { var = treasury value = return_to_sender } }
+
+			if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
+				add_to_variable = { var = treasury value = project_monetary_cost^project }
+				if = { limit = { check_variable = { int_investments > project_monetary_cost^project } }
+					subtract_from_variable = { var = int_investments value = project_monetary_cost^project }
+					clamp_variable = { var = int_investments min = 0 }
+				}
+				else = {
+					subtract_from_variable = { var = treasury value = project_monetary_cost^project }
+				}
+				set_temp_variable = { return_to_sender = project_monetary_cost^project }
+				multiply_temp_variable = { return_to_sender = 0.10 }
+				var:project_array^project = {
+					if = { limit = { NOT = { is_controlled_by = PREV } }
+						CONTROLLER = { add_to_variable = { var = treasury value = return_to_sender } }
+					}
 				}
 			}
+
+			initialize_end_project_decisions = yes
+
+			clear_variable = project_build_amount^project
+			clear_variable = project_building_type^project
+			clear_variable = project_construction_duration^project
+			clear_variable = project_total_construction_duration_display^project
+			clear_variable = project_target_country^project
+			clear_variable = project_monetary_cost^project
 		}
 
-		initialize_end_project_decisions = yes
+		clear_variable = project
 
-		clear_variable = project_build_amount^project
-		clear_variable = project_building_type^project
-		clear_variable = project_construction_duration^project
-		clear_variable = project_total_construction_duration_display^project
-		clear_variable = project_target_country^project
-		clear_variable = project_monetary_cost^project
+		refresh_investment_gui = yes
 	}
-
-	clear_variable = project
-
-	refresh_investment_gui = yes
 }
 
 # Activate investor + target decisions for project slot.
@@ -592,18 +607,20 @@ initialize_complete_project_decisions = {
 
 # Remove target decision, mark slot for cleanup, fire event.30.
 initialize_end_project_decisions = {
-	var:project_target_country^project = {
-		clear_variable = project_target_construction_duration
-		meta_effect = {
-			text = {
-				remove_targeted_decision = { target = PREV decision = investments_project_[INDEX]_target_decision }
+	hidden_effect = {
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			meta_effect = {
+				text = {
+					remove_targeted_decision = { target = PREV decision = investments_project_[INDEX]_target_decision }
+				}
+				INDEX = "[?PREV.project]"
 			}
-			INDEX = "[?PREV.project]"
 		}
-	}
 
-	set_variable = { project_array^project = 0 }
-	country_event = investments_event.30
+		set_variable = { project_array^project = 0 }
+		country_event = investments_event.30
+	}
 }
 
 # State-owned investment limit: set 120-day flags (max 6 concurrent).
