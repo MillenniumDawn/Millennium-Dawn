@@ -51,8 +51,11 @@ def log_message(
 
     timestamp = datetime.now().strftime("%H:%M:%S")
 
-    color = _LEVEL_COLORS.get(level, "") if use_colors else ""
-    reset = Colors.ENDC if use_colors else ""
+    # Honor the NO_COLOR convention (https://no-color.org) so CI logs stay
+    # escape-free even when a caller left use_colors at its default.
+    colors_on = use_colors and not os.environ.get("NO_COLOR")
+    color = _LEVEL_COLORS.get(level, "") if colors_on else ""
+    reset = Colors.ENDC if colors_on else ""
 
     formatted_message = f"{color}[{timestamp}] {level}: {message}{reset}"
     print(formatted_message, file=sys.stderr)
@@ -136,29 +139,44 @@ def strip_inline_comment(line: str) -> str:
 def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     """Extract a multi-line block by counting braces.
 
-    Inline comments are stripped before counting so a ``#`` comment containing an
-    unbalanced brace does not corrupt the depth.
+    Inline comments are stripped and quoted-string interiors blanked before
+    counting, so a ``#`` comment or a ``{`` / ``}`` inside a ``"..."`` string
+    does not corrupt the depth.
     """
     if start_index >= len(lines):
         return [], start_index
 
     block_lines = []
     brace_count = 0
+    opened = False
     i = start_index
 
     while i < len(lines):
         line = lines[i]
         block_lines.append(line)
 
-        code = strip_inline_comment(line)
+        code = blank_quoted_strings(strip_inline_comment(line))
+        if "{" in code:
+            opened = True
         brace_count += code.count("{") - code.count("}")
 
-        if brace_count == 0 and "{" in strip_inline_comment(lines[start_index]):
+        # `opened` lets the block terminate once braces balance even when the
+        # opening `{` sits on a later line than the name; without it a next-line
+        # brace never satisfies the old "{ on start line" check and the block
+        # ran to EOF.
+        if opened and brace_count == 0:
             i += 1
             break
         elif brace_count < 0:
-            # Malformed: more closing than opening braces.
-            break
+            if opened:
+                # Over-closing line (e.g. `} }` or a stray extra `}`) after the
+                # block opened: keep the accumulated lines with this line as the
+                # closer so the consumer never silently drops source lines.
+                return block_lines, i + 1
+            # Malformed: a stray `}` before any `{`. Advance past it (returning
+            # no block) so a caller looping on the returned index still makes
+            # forward progress instead of spinning on an unchanged start index.
+            return [], i + 1
 
         i += 1
 
@@ -209,6 +227,30 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+def collapse_ws_outside_quotes(text: str) -> str:
+    """Collapse runs of whitespace outside double-quoted spans to single spaces,
+    leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
+    unquoted text, but a `log`/tooltip string keeps its internal spacing."""
+    result: List[str] = []
+    in_str = False
+    prev_space = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+            result.append(c)
+            prev_space = False
+        elif in_str:
+            result.append(c)
+        elif c.isspace():
+            if not prev_space:
+                result.append(" ")
+            prev_space = True
+        else:
+            result.append(c)
+            prev_space = False
+    return "".join(result).strip()
+
+
 def _normalize_oneline_braces(text: str) -> str:
     """Collapse whitespace and put single spaces around ``{``/``}``, leaving the
     contents of double-quoted strings untouched."""
@@ -224,24 +266,7 @@ def _normalize_oneline_braces(text: str) -> str:
             out.append(" ")
         else:
             out.append(c)
-    # Collapse runs of whitespace that sit outside string literals.
-    result: List[str] = []
-    in_str = False
-    prev_space = False
-    joined = "".join(out)
-    for i, c in enumerate(joined):
-        if c == '"' and (i == 0 or joined[i - 1] != "\\"):
-            in_str = not in_str
-            result.append(c)
-            prev_space = False
-        elif not in_str and c.isspace():
-            if not prev_space:
-                result.append(" ")
-            prev_space = True
-        else:
-            result.append(c)
-            prev_space = False
-    return "".join(result).strip()
+    return collapse_ws_outside_quotes("".join(out))
 
 
 def collapse_or_compact(
@@ -551,6 +576,27 @@ def strip_comments(text: str) -> str:
                 break
         result.append(line)
     return "\n".join(result)
+
+
+def blank_quoted_strings(text: str) -> str:
+    """Replace the interior of double-quoted strings with spaces.
+
+    Quotes, string length, and newlines are preserved so byte offsets and line
+    numbers stay valid; only interior characters are blanked. Neutralizes
+    braces / ``#`` / ``=`` inside a quoted log string that would otherwise
+    desync a brace-depth or token scan. Run AFTER comment stripping — a stray
+    ``"`` in a ``#`` comment would otherwise flip the in-string state.
+    """
+    if '"' not in text:
+        return text
+    out = list(text)
+    in_str = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+        elif in_str and c != "\n":
+            out[i] = " "
+    return "".join(out)
 
 
 class FileOpener:

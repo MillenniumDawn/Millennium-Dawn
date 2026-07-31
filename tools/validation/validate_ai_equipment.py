@@ -6,9 +6,25 @@
 import glob
 import os
 import re
+import sys
 from typing import Dict, List, Set
 
-from validator_common import BaseValidator, run_validator_main
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from naval_module_slots import build_indexes, check_naval_variants
+from shared_utils import strip_inline_comment
+from validator_common import BaseValidator, Issue, Severity, run_validator_main
+
+# Ship hulls live only in files carrying one of these engine hull-type markers,
+# so plane/tank equipment files are skipped without parsing their whole tree.
+_SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
+
+_NAVAL_SLOT_CATEGORIES = {
+    "unknown_hull": "NAVAL VARIANT: unknown hull type",
+    "unknown_slot": "NAVAL VARIANT: slot not on hull",
+    "unknown_module": "NAVAL VARIANT: unknown module reference",
+    "category_mismatch": "NAVAL VARIANT: module category not allowed in slot",
+}
 
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
 BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)
@@ -59,13 +75,15 @@ def parse_equipment_file(
         match = re.match(r"^(\w+)\s*=\s*\{", line)
         if match:
             template_name = match.group(1)
-            brace_depth = line.count("{") - line.count("}")
+            code = strip_inline_comment(line)
+            brace_depth = code.count("{") - code.count("}")
             block_lines = [line]
             i += 1
 
             while i < len(lines) and brace_depth > 0:
                 block_lines.append(lines[i])
-                brace_depth += lines[i].count("{") - lines[i].count("}")
+                code = strip_inline_comment(lines[i])
+                brace_depth += code.count("{") - code.count("}")
                 i += 1
 
             block_text = "\n".join(block_lines)
@@ -107,12 +125,89 @@ def parse_equipment_file(
     return templates
 
 
+def _read_text(filepath: str) -> str:
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            return f.read()
+    except Exception:
+        return ""
+
+
 class Validator(BaseValidator):
     TITLE = "AI EQUIPMENT COVERAGE"
     STAGED_EXTENSIONS = [".txt"]
 
+    # WARNING until the ~270-site pre-existing backlog on main is cleared, then
+    # ERROR. PR #2510 fixed the screen-hull fire-control class but left other
+    # category mismatches (light engines on destroyers, ESM on subs, mineclearing
+    # on corvettes, engine modules in weapon slots) untouched.
+    NAVAL_SLOT_SEVERITY = Severity.WARNING
+
     def run_validations(self):
         self._validate_coverage()
+        self._validate_naval_variant_modules()
+
+    def _validate_naval_variant_modules(self):
+        equip_dir = os.path.join(self.mod_path, "common", "ai_equipment")
+        units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
+        if not os.path.isdir(equip_dir) or not os.path.isdir(units_dir):
+            return
+
+        staged_equip = None
+        if self.staged_only and self.staged_files:
+            staged_equip = {
+                os.path.basename(f) for f in self.staged_files if "ai_equipment" in f
+            }
+            if not staged_equip:
+                return
+
+        self._log_section("Checking naval variant modules against hull slot rules...")
+
+        def _build():
+            hull_texts = []
+            for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt"))):
+                text = _read_text(fp)
+                if any(marker in text for marker in _SHIP_HULL_MARKERS):
+                    hull_texts.append(text)
+            module_texts = [
+                _read_text(fp)
+                for fp in sorted(
+                    glob.iglob(os.path.join(units_dir, "modules", "*.txt"))
+                )
+            ]
+            return build_indexes(hull_texts, module_texts)
+
+        hull_slots, module_category, known_categories = self.cached(
+            "naval_hull_index", _build
+        )
+
+        results = []
+        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+            basename = os.path.basename(fp)
+            if staged_equip is not None and basename not in staged_equip:
+                continue
+            content = _read_text(fp)
+            findings = check_naval_variants(
+                content, hull_slots, module_category, known_categories
+            )
+            rel = os.path.relpath(fp, self.mod_path)
+            for f in findings:
+                results.append(
+                    Issue(
+                        severity=self.NAVAL_SLOT_SEVERITY,
+                        category=_NAVAL_SLOT_CATEGORIES[f.kind],
+                        message=f.message,
+                        file=rel,
+                        line=f.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ All naval variant modules match their hull slot rules",
+            "Naval variant modules invalid for their hull slot:",
+            severity=self.NAVAL_SLOT_SEVERITY,
+        )
 
     def _validate_coverage(self):
         equip_dir = os.path.join(self.mod_path, "common", "ai_equipment")
