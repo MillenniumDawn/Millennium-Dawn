@@ -1331,7 +1331,6 @@ BOS_internal_factions = {
 						}
 					}
 					25 = {
-						trigger = { NOT = { has_country_flag = BOS_dodik_banned } }
 						set_country_flag = BOS_snsd
 						clr_country_flag = BOS_sds
 						clr_country_flag = BOS_pdp
@@ -1991,7 +1990,134 @@ BOS_eu_accession = {
 	}
 }
 
-BOS_state_reform = {
+
+BOS_dayton_pressure = {
+
+	BOS_concede_to_srpska_demands = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 150
+
+		available = {
+			has_idea = BOS_republika_srpska_secession_crisis
+			NOT = { has_country_flag = BOS_rs_crisis_resolved }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_concede_to_srpska_demands"
+			BOS_srpska_attitude_increase_effect = yes
+			BOS_srpska_stability_increase_effect = yes
+			hidden_effect = { set_country_flag = BOS_rs_crisis_resolved }
+			remove_ideas = BOS_republika_srpska_secession_crisis
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
+		}
+	}
+
+	BOS_invoke_bonn_powers = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 25
+
+		available = {
+			has_idea = BOS_republika_srpska_secession_crisis
+			NOT = { has_idea = BOS_ohr_supervision }
+			NOT = { has_country_flag = BOS_rs_crisis_resolved }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_invoke_bonn_powers"
+			add_ideas = BOS_ohr_supervision
+			BOS_srpska_attitude_decrease_effect = yes
+			if = {
+				limit = { has_country_flag = BOS_contested_high_representative }
+				custom_effect_tooltip = BOS_hr_legitimacy_disputed_tt
+				BOS_srpska_attitude_decrease_effect = yes
+			}
+			hidden_effect = { set_country_flag = BOS_rs_crisis_resolved }
+			remove_ideas = BOS_republika_srpska_secession_crisis
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				has_stability < 0.35
+			}
+		}
+	}
+
+	BOS_request_international_arbitration = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		custom_cost_text = cost_2_0
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.99 }
+		}
+
+		days_remove = 60
+
+		available = { has_idea = BOS_republika_srpska_secession_crisis }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_request_international_arbitration"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			hidden_effect = { set_country_flag = BOS_rs_crisis_resolved }
+		}
+
+		remove_effect = {
+			remove_ideas = BOS_republika_srpska_secession_crisis
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
+			}
+		}
+	}
+
+	BOS_phase_out_ohr_supervision = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 50
+
+		days_remove = 90
+
+		available = {
+			has_idea = BOS_ohr_supervision
+			NOT = { has_idea = BOS_republika_srpska_secession_crisis }
+			has_stability > 0.5
+			OR = {
+				BOS_srpska_attitude_friendly_trigger = yes
+				BOS_srpska_attitude_loyal_trigger = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOS_phase_out_ohr_supervision"
+			remove_ideas = BOS_ohr_supervision
+			BOS_srpska_attitude_increase_effect = yes
+		}
+
+		ai_will_do = { base = 10 }
+	}
+}
+
+BOS_economic_development = {
 
 	BOS_anti_corruption_investigations = {
 
@@ -2536,136 +2662,6 @@ BOS_state_reform = {
 			}
 		}
 	}
-}
-
-BOS_dayton_pressure = {
-
-	BOS_concede_to_srpska_demands = {
-
-		icon = GFX_decision_generic_political_discourse
-
-		cost = 150
-
-		available = {
-			has_idea = BOS_republika_srpska_secession_crisis
-			NOT = { has_country_flag = BOS_rs_crisis_resolved }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BOS_concede_to_srpska_demands"
-			BOS_srpska_attitude_increase_effect = yes
-			BOS_srpska_stability_increase_effect = yes
-			hidden_effect = { set_country_flag = BOS_rs_crisis_resolved }
-			remove_ideas = BOS_republika_srpska_secession_crisis
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
-			}
-		}
-	}
-
-	BOS_invoke_bonn_powers = {
-
-		icon = GFX_decision_generic_political_discourse
-
-		cost = 25
-
-		available = {
-			has_idea = BOS_republika_srpska_secession_crisis
-			NOT = { has_idea = BOS_ohr_supervision }
-			NOT = { has_country_flag = BOS_rs_crisis_resolved }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BOS_invoke_bonn_powers"
-			add_ideas = BOS_ohr_supervision
-			BOS_srpska_attitude_decrease_effect = yes
-			if = {
-				limit = { has_country_flag = BOS_contested_high_representative }
-				custom_effect_tooltip = BOS_hr_legitimacy_disputed_tt
-				BOS_srpska_attitude_decrease_effect = yes
-			}
-			hidden_effect = { set_country_flag = BOS_rs_crisis_resolved }
-			remove_ideas = BOS_republika_srpska_secession_crisis
-		}
-
-		ai_will_do = {
-			base = 20
-			modifier = {
-				factor = 0
-				has_stability < 0.35
-			}
-		}
-	}
-
-	BOS_request_international_arbitration = {
-
-		icon = GFX_decision_generic_political_discourse
-
-		custom_cost_text = cost_2_0
-
-		custom_cost_trigger = {
-			check_variable = { treasury > 1.99 }
-		}
-
-		days_remove = 60
-
-		available = { has_idea = BOS_republika_srpska_secession_crisis }
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BOS_request_international_arbitration"
-			set_temp_variable = { treasury_change = -2 }
-			modify_treasury_effect = yes
-			hidden_effect = { set_country_flag = BOS_rs_crisis_resolved }
-		}
-
-		remove_effect = {
-			remove_ideas = BOS_republika_srpska_secession_crisis
-		}
-
-		ai_will_do = {
-			base = 15
-			modifier = {
-				factor = 0
-				NOT = { BOS_ai_can_fund_faction_recovery_trigger = yes }
-			}
-		}
-	}
-
-	BOS_phase_out_ohr_supervision = {
-
-		icon = GFX_decision_generic_political_discourse
-
-		cost = 50
-
-		days_remove = 90
-
-		available = {
-			has_idea = BOS_ohr_supervision
-			NOT = { has_idea = BOS_republika_srpska_secession_crisis }
-			has_stability > 0.5
-			OR = {
-				BOS_srpska_attitude_friendly_trigger = yes
-				BOS_srpska_attitude_loyal_trigger = yes
-			}
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BOS_phase_out_ohr_supervision"
-			remove_ideas = BOS_ohr_supervision
-			BOS_srpska_attitude_increase_effect = yes
-		}
-
-		ai_will_do = { base = 10 }
-	}
-}
-
-BOS_economic_development = {
-
 	BOS_court_turkish_investment = {
 
 		icon = GFX_decision_generic_eurozone
@@ -2686,14 +2682,12 @@ BOS_economic_development = {
 			modify_treasury_effect = yes
 			set_temp_variable = { temp_productivity_change = 2 }
 			flat_productivity_change_effect = yes
-			set_temp_variable = { percent_change = 10 }
-			set_temp_variable = { tag_index = TUR.id }
-			set_temp_variable = { influence_target = BOS.id }
-			change_influence_percentage = yes
 			set_temp_variable = { temp_trust_change = 5 }
 			BOS_bosniak_trust_add_effect = yes
 			set_temp_variable = { temp_trust_change = -3 }
 			BOS_srpska_trust_add_effect = yes
+			custom_effect_tooltip = BOS_court_turkish_investment_tt
+			TUR = { country_event = { id = BOS_events.73 days = 2 } }
 		}
 
 		ai_will_do = {
@@ -2723,10 +2717,6 @@ BOS_economic_development = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BOS_court_gulf_investment"
-			set_temp_variable = { percent_change = 10 }
-			set_temp_variable = { tag_index = SAU.id }
-			set_temp_variable = { influence_target = BOS.id }
-			change_influence_percentage = yes
 			set_temp_variable = { temp_trust_change = 4 }
 			BOS_bosniak_trust_add_effect = yes
 			set_temp_variable = { temp_trust_change = -3 }
@@ -2736,17 +2726,21 @@ BOS_economic_development = {
 			random_list = {
 				40 = {
 					custom_effect_tooltip = BOS_gulf_investment_delivered_tt
+					set_variable = { BOS_gulf_investment_disbursed = 2 }
 					set_temp_variable = { treasury_change = 2 }
 					modify_treasury_effect = yes
 					add_stability = 0.02
 				}
 				60 = {
 					custom_effect_tooltip = BOS_gulf_investment_stalled_tt
+					set_variable = { BOS_gulf_investment_disbursed = 1 }
 					set_temp_variable = { treasury_change = 1 }
 					modify_treasury_effect = yes
 					add_stability = -0.01
 				}
 			}
+			custom_effect_tooltip = BOS_court_gulf_investment_tt
+			SAU = { country_event = { id = BOS_events.74 days = 2 } }
 		}
 
 		ai_will_do = {
@@ -2851,13 +2845,15 @@ BOS_economic_development = {
 			flat_productivity_change_effect = yes
 			set_temp_variable = { debt_change = 0.1 }
 			modify_debt_effect = yes
-			set_temp_variable = { percent_change = 10 }
-			set_temp_variable = { tag_index = CHI.id }
-			set_temp_variable = { influence_target = BOS.id }
-			change_influence_percentage = yes
 			set_country_flag = BOS_thermal_chinese_financed
 			set_temp_variable = { temp_trust_change = 5 }
 			BOS_srpska_trust_add_effect = yes
+			1053 = {
+				add_to_variable = { state_renewable_capacity_factor_modifier_var = 0.35 }
+				add_state_modifier = { modifier = { state_renewable_capacity_factor_modifier = 0.35 } }
+			}
+			custom_effect_tooltip = BOS_thermal_chinese_financing_tt
+			CHI = { country_event = { id = BOS_events.72 days = 2 } }
 		}
 
 		ai_will_do = {
@@ -2890,6 +2886,11 @@ BOS_economic_development = {
 			add_stability = 0.02
 			set_temp_variable = { temp_trust_change = 5 }
 			BOS_croat_trust_add_effect = yes
+			129 = {
+				set_temp_variable = { electric_addition = 1.5 }
+				set_temp_variable = { storage_addition = 0.30 }
+				add_hydroelectric_energy_production_effect = yes
+			}
 		}
 
 		ai_will_do = {
@@ -2915,7 +2916,7 @@ BOS_economic_development = {
 
 		available = {
 			has_war = no
-			date > 2022.01.01
+			arms_factory > 2
 		}
 
 		complete_effect = {
@@ -2977,6 +2978,9 @@ BOS_economic_development = {
 
 		fixed_random_seed = no
 
+		days_remove = 180
+
+
 		available = {
 			has_war = no
 			owns_state = 128
@@ -3031,6 +3035,8 @@ BOS_economic_development = {
 
 		fixed_random_seed = no
 
+		days_remove = 180
+
 		available = {
 			has_war = no
 			owns_state = 1052
@@ -3082,6 +3088,8 @@ BOS_economic_development = {
 
 		fixed_random_seed = no
 
+
+		days_remove = 180
 		available = {
 			has_war = no
 			owns_state = 129
