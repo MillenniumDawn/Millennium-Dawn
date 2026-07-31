@@ -44,16 +44,16 @@ random_controlled_state = {
 | Radar                  | `one_state_radar_station`          | `one_radar_station`                 |
 | Nuclear Reactor        | `one_state_nuclear_reactor`        | `one_random_nuclear_reactor`        |
 | Agriculture District   | `one_state_agriculture_district`   | `one_random_agriculture_district`   |
-| Land Facility          | —                                  | `one_random_land_facility`          |
-| Naval Facility         | —                                  | `one_random_naval_facility`         |
-| Air Facility           | —                                  | `one_random_air_facility`           |
-| Nuclear Facility       | —                                  | `one_random_nuclear_facility`       |
+| Land Facility          | n/a                                | `one_random_land_facility`          |
+| Naval Facility         | n/a                                | `one_random_naval_facility`         |
+| Air Facility           | n/a                                | `one_random_air_facility`           |
+| Nuclear Facility       | n/a                                | `one_random_nuclear_facility`       |
 
-The four research facilities are random-scope only — they pick a state that passes `can_construct_building` and build into a province, so there is no predefined-state variant.
+The four research facilities are random-scope only: they pick a state that passes `can_construct_building` and build into a province, so there is no predefined-state variant.
 
-### Building Costs (State-Level)
+### Building Costs
 
-The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot.
+The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot. Every entry below is state-level except the four research facilities, which build into a province.
 
 | Building                            | Cost   |
 | ----------------------------------- | ------ |
@@ -69,10 +69,13 @@ The cost implies the INCLUSION of a building slot. A single building slot is $1.
 | Network Infrastructure              | $3.00  |
 | Missile Site                        | $3.00  |
 | Nuclear Reactor                     | $9.00  |
-| Fossil Powerplant                   | $2.25  |
+| Fossil Powerplant                   | $3.25  |
 | Microchip Plant                     | $10.50 |
-| Composite Plant                     | $7.50  |
-| Research Facility (land/naval/air/nuclear) | $15.00 |
+| Composite Plant                     | $8.50  |
+| Synthetic Refinery                  | $6.00  |
+| Reinforced Electrical Grid          | $6.50  |
+| High Capacity Electrical Grid       | $6.50  |
+| Research Facility                   | $15.00 |
 
 ---
 
