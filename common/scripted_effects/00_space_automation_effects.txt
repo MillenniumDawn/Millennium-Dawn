@@ -1,0 +1,1911 @@
+# Author(s): Blazer135
+
+@space_math_max = 1000000
+@space_count_max = 10000
+@space_weeks_max = 1000
+@days_per_week = 7
+@sat_pid_base = 120
+@sat_family_stride = 20
+@olv_pid_base = 101
+@olv_pid_end = 113
+@olv_max_idx = 11
+@tier_count = 12
+@round_half = 0.49999
+
+space_auto_classify = {
+	set_temp_variable = { temp_fam = 99 }
+	if = {
+		limit = {
+			check_variable = { temp_pid > 120 }
+			check_variable = { temp_pid < 133 }
+		}
+		set_temp_variable = { temp_fam = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { temp_pid > 140 }
+			check_variable = { temp_pid < 153 }
+		}
+		set_temp_variable = { temp_fam = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { temp_pid > 160 }
+			check_variable = { temp_pid < 173 }
+		}
+		set_temp_variable = { temp_fam = 2 }
+	}
+	if = {
+		limit = { check_variable = { temp_fam < 3 } }
+		set_temp_variable = {
+			temp_tier = {
+				value = temp_pid
+				subtract = @sat_pid_base
+				subtract = {
+					value = temp_fam
+					multiply = @sat_family_stride
+				}
+			}
+		}
+		set_temp_variable = { temp_idx = { value = temp_tier subtract = 1 } }
+		set_temp_variable = {
+			temp_massidx = {
+				value = temp_idx
+				add = {
+					value = temp_fam
+					multiply = @tier_count
+				}
+			}
+		}
+	}
+	else = {
+		set_temp_variable = { temp_tier = 0 }
+		set_temp_variable = { temp_idx = 0 }
+		set_temp_variable = { temp_massidx = 0 }
+	}
+}
+
+space_auto_push_slot = {
+	space_auto_newest_id = yes
+	add_to_array = { space_auto_source_array = temp_newest_id }
+}
+
+space_auto_pick_oldest_family = {
+	set_temp_variable = { temp_auto_fam = 99 }
+	set_temp_variable = { temp_auto_idx = 99 }
+	set_temp_variable = { temp_auto_short = 0 }
+	if = {
+		limit = {
+			check_variable = { space_auto_newest_array^0 > 0 }
+			check_variable = { space_auto_short_array^0 > 0 }
+			OR = {
+				check_variable = { var_GNSS_mil_system_idx < temp_auto_idx }
+				AND = {
+					check_variable = { var_GNSS_mil_system_idx = temp_auto_idx }
+					check_variable = { space_auto_short_array^0 > temp_auto_short }
+				}
+			}
+		}
+		set_temp_variable = { temp_auto_idx = var_GNSS_mil_system_idx }
+		set_temp_variable = { temp_auto_short = space_auto_short_array^0 }
+		set_temp_variable = { temp_auto_fam = 0 }
+	}
+	if = {
+		limit = {
+			check_variable = { space_auto_newest_array^1 > 0 }
+			check_variable = { space_auto_short_array^1 > 0 }
+			OR = {
+				check_variable = { var_COM_mil_system_idx < temp_auto_idx }
+				AND = {
+					check_variable = { var_COM_mil_system_idx = temp_auto_idx }
+					check_variable = { space_auto_short_array^1 > temp_auto_short }
+				}
+			}
+		}
+		set_temp_variable = { temp_auto_idx = var_COM_mil_system_idx }
+		set_temp_variable = { temp_auto_short = space_auto_short_array^1 }
+		set_temp_variable = { temp_auto_fam = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { space_auto_newest_array^2 > 0 }
+			check_variable = { space_auto_short_array^2 > 0 }
+			OR = {
+				check_variable = { var_SPY_mil_system_idx < temp_auto_idx }
+				AND = {
+					check_variable = { var_SPY_mil_system_idx = temp_auto_idx }
+					check_variable = { space_auto_short_array^2 > temp_auto_short }
+				}
+			}
+		}
+		set_temp_variable = { temp_auto_idx = var_SPY_mil_system_idx }
+		set_temp_variable = { temp_auto_short = space_auto_short_array^2 }
+		set_temp_variable = { temp_auto_fam = 2 }
+	}
+	set_variable = { var_space_auto_focus = temp_auto_fam }
+}
+
+space_auto_preset_slots = {
+	if = {
+		limit = { check_variable = { var_space_auto_preset = 1 } }
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+	}
+	else_if = {
+		limit = { check_variable = { var_space_auto_preset = 2 } }
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+	}
+	else_if = {
+		limit = { check_variable = { var_space_auto_preset = 3 } }
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+	}
+	else_if = {
+		limit = { check_variable = { var_space_auto_preset = 4 } }
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+	}
+	else_if = {
+		limit = { check_variable = { var_space_auto_preset = 5 } }
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+	}
+	else_if = {
+		limit = { check_variable = { var_space_auto_preset = 6 } }
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+	}
+	else = {
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 0 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 1 } space_auto_push_slot = yes
+		set_temp_variable = { temp_fam = 2 } space_auto_push_slot = yes
+	}
+}
+
+space_auto_resolve_source = {
+	clear_array = space_auto_source_array
+	set_variable = { var_space_auto_focus = 99 }
+	if = {
+		limit = { check_variable = { var_space_auto_preset = 8 } }
+		set_temp_variable = { temp_scan = 0 }
+		while_loop_effect = {
+			limit = { check_variable = { temp_scan < space_auto_manifest_array^num } }
+			add_to_array = { space_auto_source_array = space_auto_manifest_array^temp_scan }
+			add_to_temp_variable = { temp_scan = 1 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { var_space_auto_preset = 0 } }
+		space_auto_pick_oldest_family = yes
+		if = {
+			limit = { check_variable = { temp_auto_fam < 3 } }
+			set_temp_variable = { temp_fam = temp_auto_fam }
+			space_auto_push_slot = yes
+			space_auto_push_slot = yes
+			space_auto_push_slot = yes
+			space_auto_push_slot = yes
+		}
+	}
+	else = {
+		space_auto_preset_slots = yes
+	}
+}
+
+space_auto_newest_id = {
+	set_temp_variable = { temp_newest_id = 1 }
+	if = {
+		limit = { check_variable = { space_auto_newest_array^temp_fam > 0 } }
+		set_temp_variable = {
+			temp_newest_id = {
+				value = temp_fam
+				multiply = @sat_family_stride
+				add = @sat_pid_base
+				add = space_auto_newest_array^temp_fam
+			}
+		}
+	}
+}
+
+space_auto_refresh_targets = {
+	clear_array = space_auto_newest_array
+	clear_array = space_auto_orbit_array
+	clear_array = space_auto_target_array
+	clear_array = space_auto_short_array
+
+	space_auto_refresh_gnss = yes
+	space_auto_refresh_comsat = yes
+	space_auto_refresh_spysat = yes
+	space_auto_refresh_olv = yes
+}
+
+# Appends the temp_tier / temp_cur / temp_max triple resolved by a space_auto_refresh_* effect onto the parallel per-family arrays
+space_auto_push_family_state = {
+	add_to_array = { space_auto_newest_array = temp_tier }
+	add_to_array = { space_auto_orbit_array = temp_cur }
+	add_to_array = { space_auto_target_array = temp_max }
+	set_temp_variable = {
+		temp_short = {
+			value = temp_max
+			subtract = temp_cur
+			clamp = { min = 0 max = @space_count_max }
+		}
+	}
+	add_to_array = { space_auto_short_array = temp_short }
+}
+
+space_auto_refresh_gnss = {
+	set_temp_variable = { temp_tier = 0 }
+	if = { limit = { has_tech = GNSS12 } set_temp_variable = { temp_tier = 12 } }
+	else_if = { limit = { has_tech = GNSS11 } set_temp_variable = { temp_tier = 11 } }
+	else_if = { limit = { has_tech = GNSS10 } set_temp_variable = { temp_tier = 10 } }
+	else_if = { limit = { has_tech = GNSS9 } set_temp_variable = { temp_tier = 9 } }
+	else_if = { limit = { has_tech = GNSS8 } set_temp_variable = { temp_tier = 8 } }
+	else_if = { limit = { has_tech = GNSS7 } set_temp_variable = { temp_tier = 7 } }
+	else_if = { limit = { has_tech = GNSS6 } set_temp_variable = { temp_tier = 6 } }
+	else_if = { limit = { has_tech = GNSS5 } set_temp_variable = { temp_tier = 5 } }
+	else_if = { limit = { has_tech = GNSS4 } set_temp_variable = { temp_tier = 4 } }
+	else_if = { limit = { has_tech = GNSS3 } set_temp_variable = { temp_tier = 3 } }
+	else_if = { limit = { has_tech = GNSS2 } set_temp_variable = { temp_tier = 2 } }
+	else_if = { limit = { has_tech = GNSS1 } set_temp_variable = { temp_tier = 1 } }
+
+	set_temp_variable = { temp_cur = 0 }
+	set_temp_variable = { temp_max = 0 }
+	if = {
+		limit = { check_variable = { temp_tier > 0 } }
+		set_temp_variable = { temp_idx = { value = temp_tier subtract = 1 } }
+		set_temp_variable = { temp_cur = GNSS_satellite_array^temp_idx }
+		set_temp_variable = { temp_max = global.GNSS_sat_system_max_array^temp_idx }
+	}
+	space_auto_push_family_state = yes
+}
+
+space_auto_refresh_comsat = {
+	set_temp_variable = { temp_tier = 0 }
+	if = { limit = { has_tech = COMSAT12 } set_temp_variable = { temp_tier = 12 } }
+	else_if = { limit = { has_tech = COMSAT11 } set_temp_variable = { temp_tier = 11 } }
+	else_if = { limit = { has_tech = COMSAT10 } set_temp_variable = { temp_tier = 10 } }
+	else_if = { limit = { has_tech = COMSAT9 } set_temp_variable = { temp_tier = 9 } }
+	else_if = { limit = { has_tech = COMSAT8 } set_temp_variable = { temp_tier = 8 } }
+	else_if = { limit = { has_tech = COMSAT7 } set_temp_variable = { temp_tier = 7 } }
+	else_if = { limit = { has_tech = COMSAT6 } set_temp_variable = { temp_tier = 6 } }
+	else_if = { limit = { has_tech = COMSAT5 } set_temp_variable = { temp_tier = 5 } }
+	else_if = { limit = { has_tech = COMSAT4 } set_temp_variable = { temp_tier = 4 } }
+	else_if = { limit = { has_tech = COMSAT3 } set_temp_variable = { temp_tier = 3 } }
+	else_if = { limit = { has_tech = COMSAT2 } set_temp_variable = { temp_tier = 2 } }
+	else_if = { limit = { has_tech = COMSAT1 } set_temp_variable = { temp_tier = 1 } }
+
+	set_temp_variable = { temp_cur = 0 }
+	set_temp_variable = { temp_max = 0 }
+	if = {
+		limit = { check_variable = { temp_tier > 0 } }
+		set_temp_variable = { temp_idx = { value = temp_tier subtract = 1 } }
+		set_temp_variable = { temp_cur = COM_satellite_array^temp_idx }
+		set_temp_variable = { temp_max = global.COM_sat_system_max_array^temp_idx }
+	}
+	space_auto_push_family_state = yes
+}
+
+space_auto_refresh_spysat = {
+	set_temp_variable = { temp_tier = 0 }
+	if = { limit = { has_tech = SPYSAT12 } set_temp_variable = { temp_tier = 12 } }
+	else_if = { limit = { has_tech = SPYSAT11 } set_temp_variable = { temp_tier = 11 } }
+	else_if = { limit = { has_tech = SPYSAT10 } set_temp_variable = { temp_tier = 10 } }
+	else_if = { limit = { has_tech = SPYSAT9 } set_temp_variable = { temp_tier = 9 } }
+	else_if = { limit = { has_tech = SPYSAT8 } set_temp_variable = { temp_tier = 8 } }
+	else_if = { limit = { has_tech = SPYSAT7 } set_temp_variable = { temp_tier = 7 } }
+	else_if = { limit = { has_tech = SPYSAT6 } set_temp_variable = { temp_tier = 6 } }
+	else_if = { limit = { has_tech = SPYSAT5 } set_temp_variable = { temp_tier = 5 } }
+	else_if = { limit = { has_tech = SPYSAT4 } set_temp_variable = { temp_tier = 4 } }
+	else_if = { limit = { has_tech = SPYSAT3 } set_temp_variable = { temp_tier = 3 } }
+	else_if = { limit = { has_tech = SPYSAT2 } set_temp_variable = { temp_tier = 2 } }
+	else_if = { limit = { has_tech = SPYSAT1 } set_temp_variable = { temp_tier = 1 } }
+
+	set_temp_variable = { temp_cur = 0 }
+	set_temp_variable = { temp_max = 0 }
+	if = {
+		limit = { check_variable = { temp_tier > 0 } }
+		set_temp_variable = { temp_idx = { value = temp_tier subtract = 1 } }
+		set_temp_variable = { temp_cur = SPY_satellite_array^temp_idx }
+		set_temp_variable = { temp_max = global.SPY_sat_system_max_array^temp_idx }
+	}
+	space_auto_push_family_state = yes
+}
+
+space_auto_refresh_olv = {
+	set_variable = { var_space_auto_newest_olv = 0 }
+	if = { limit = { has_tech = OLV12 } set_variable = { var_space_auto_newest_olv = 112 } }
+	else_if = { limit = { has_tech = OLV11 } set_variable = { var_space_auto_newest_olv = 111 } }
+	else_if = { limit = { has_tech = OLV10 } set_variable = { var_space_auto_newest_olv = 110 } }
+	else_if = { limit = { has_tech = OLV9 } set_variable = { var_space_auto_newest_olv = 109 } }
+	else_if = { limit = { has_tech = OLV8 } set_variable = { var_space_auto_newest_olv = 108 } }
+	else_if = { limit = { has_tech = OLV7 } set_variable = { var_space_auto_newest_olv = 107 } }
+	else_if = { limit = { has_tech = OLV6 } set_variable = { var_space_auto_newest_olv = 106 } }
+	else_if = { limit = { has_tech = OLV5 } set_variable = { var_space_auto_newest_olv = 105 } }
+	else_if = { limit = { has_tech = OLV4 } set_variable = { var_space_auto_newest_olv = 104 } }
+	else_if = { limit = { has_tech = OLV3 } set_variable = { var_space_auto_newest_olv = 103 } }
+	else_if = { limit = { has_tech = OLV2 } set_variable = { var_space_auto_newest_olv = 102 } }
+	else_if = { limit = { has_tech = OLV1 } set_variable = { var_space_auto_newest_olv = 101 } }
+}
+
+space_auto_manifest_mass = {
+	set_temp_variable = { temp_mass = 0 }
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_effective_array^num } }
+		set_temp_variable = { temp_pid = space_auto_effective_array^temp_scan }
+		if = {
+			limit = { NOT = { check_variable = { temp_pid = 1 } } }
+			space_auto_classify = yes
+			if = {
+				limit = { check_variable = { temp_fam < 3 } }
+				add_to_temp_variable = { temp_mass = global.sat_mass_array^temp_massidx }
+			}
+		}
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+}
+
+space_auto_usable_rocket_stock = {
+	set_temp_variable = { temp_rocket_stock = 0 }
+	if = {
+		limit = { has_country_flag = space_auto_latest_olv_only }
+		set_temp_variable = { temp_rocket_stock = missile_inventory_array^var_space_auto_newest_olv }
+	}
+	else = {
+		set_temp_variable = { temp_stock_scan = @olv_pid_base }
+		while_loop_effect = {
+			limit = { check_variable = { temp_stock_scan < @olv_pid_end } }
+			set_temp_variable = { temp_stock_idx = { value = temp_stock_scan subtract = @olv_pid_base } }
+			set_temp_variable = { temp_stock_cap = global.OLV_payload_mass_array^temp_stock_idx }
+			if = {
+				limit = { check_variable = { var = temp_stock_cap value = temp_mass compare = greater_than_or_equals } }
+				add_to_temp_variable = { temp_rocket_stock = missile_inventory_array^temp_stock_scan }
+			}
+			add_to_temp_variable = { temp_stock_scan = 1 }
+		}
+	}
+	clamp_temp_variable = { var = temp_rocket_stock min = 0 max = @space_count_max }
+}
+
+space_auto_fit_slot_tiers = {
+	set_temp_variable = { temp_fit_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_fit_scan < space_auto_effective_array^num } }
+		set_temp_variable = { temp_pid = space_auto_effective_array^temp_fit_scan }
+		if = {
+			limit = { NOT = { check_variable = { temp_pid = 1 } } }
+			space_auto_classify = yes
+			set_temp_variable = { temp_fit_mass = global.sat_mass_array^temp_massidx }
+			if = {
+				limit = {
+					check_variable = { temp_fam < 3 }
+					check_variable = { temp_fit_mass > temp_capacity }
+				}
+				set_temp_variable = { temp_fit_base = { value = temp_pid subtract = temp_tier } }
+				set_temp_variable = { temp_fit_moff = { value = temp_massidx subtract = temp_idx } }
+
+				set_temp_variable = { temp_fit_tier = temp_tier }
+				set_temp_variable = { temp_fit_searching = 1 }
+				while_loop_effect = {
+					limit = {
+						check_variable = { temp_fit_tier > 1 }
+						check_variable = { temp_fit_searching = 1 }
+					}
+					subtract_from_temp_variable = { temp_fit_tier = 1 }
+					set_temp_variable = { temp_fit_mi = { value = temp_fit_moff add = temp_fit_tier subtract = 1 } }
+					set_temp_variable = { temp_fit_mass = global.sat_mass_array^temp_fit_mi }
+					if = {
+						limit = { check_variable = { var = temp_capacity value = temp_fit_mass compare = greater_than_or_equals } }
+						set_temp_variable = { temp_fit_searching = 0 }
+					}
+				}
+				if = {
+					limit = { check_variable = { temp_fit_searching = 0 } }
+					set_temp_variable = { temp_fit_id = { value = temp_fit_base add = temp_fit_tier } }
+					set_variable = { space_auto_effective_array^temp_fit_scan = temp_fit_id }
+				}
+			}
+		}
+		add_to_temp_variable = { temp_fit_scan = 1 }
+	}
+}
+
+space_auto_drop_heaviest_slot = {
+	set_temp_variable = { temp_heavy_idx = 999 }
+	set_temp_variable = { temp_heavy_mass = 0 }
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_effective_array^num } }
+		set_temp_variable = { temp_pid = space_auto_effective_array^temp_scan }
+		if = {
+			limit = { NOT = { check_variable = { temp_pid = 1 } } }
+			space_auto_classify = yes
+			if = {
+				limit = {
+					check_variable = { temp_fam < 3 }
+					check_variable = { global.sat_mass_array^temp_massidx > temp_heavy_mass }
+				}
+				set_temp_variable = { temp_heavy_mass = global.sat_mass_array^temp_massidx }
+				set_temp_variable = { temp_heavy_idx = temp_scan }
+			}
+		}
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+	if = {
+		limit = { check_variable = { temp_heavy_idx < 900 } }
+		set_variable = { space_auto_effective_array^temp_heavy_idx = 1 }
+	}
+}
+
+space_auto_build_effective_manifest = {
+	clear_array = space_auto_effective_array
+	set_temp_variable = { temp_best_fam = 99 }
+	set_temp_variable = { temp_best_short = 0 }
+
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_source_array^num } }
+		set_temp_variable = { temp_pid = space_auto_source_array^temp_scan }
+		space_auto_classify = yes
+		set_temp_variable = { temp_slot = 1 }
+		if = {
+			limit = {
+				check_variable = { temp_fam < 3 }
+				check_variable = { space_auto_short_array^temp_fam > 0 }
+			}
+			space_auto_newest_id = yes
+			set_temp_variable = { temp_slot = temp_newest_id }
+			if = {
+				limit = { check_variable = { space_auto_short_array^temp_fam > temp_best_short } }
+				set_temp_variable = { temp_best_short = space_auto_short_array^temp_fam }
+				set_temp_variable = { temp_best_fam = temp_fam }
+			}
+		}
+		add_to_array = { space_auto_effective_array = temp_slot }
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+	if = {
+		limit = { check_variable = { temp_best_fam < 3 } }
+		set_temp_variable = { temp_fam = temp_best_fam }
+		space_auto_newest_id = yes
+		set_temp_variable = { temp_fill_id = temp_newest_id }
+		set_temp_variable = { temp_scan = 0 }
+		while_loop_effect = {
+			limit = { check_variable = { temp_scan < space_auto_effective_array^num } }
+			if = {
+				limit = {
+					check_variable = { space_auto_effective_array^temp_scan = 1 }
+					NOT = { check_variable = { space_auto_source_array^temp_scan = 1 } }
+				}
+				set_variable = { space_auto_effective_array^temp_scan = temp_fill_id }
+			}
+			add_to_temp_variable = { temp_scan = 1 }
+		}
+	}
+
+	set_temp_variable = { temp_lightest = 999999 }
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_effective_array^num } }
+		set_temp_variable = { temp_pid = space_auto_effective_array^temp_scan }
+		if = {
+			limit = { NOT = { check_variable = { temp_pid = 1 } } }
+			space_auto_classify = yes
+			if = {
+				limit = {
+					check_variable = { temp_fam < 3 }
+					check_variable = { global.sat_mass_array^temp_massidx < temp_lightest }
+				}
+				set_temp_variable = { temp_lightest = global.sat_mass_array^temp_massidx }
+			}
+		}
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+
+	set_variable = { var_space_auto_olv = 0 }
+	if = {
+		limit = { has_country_flag = space_auto_latest_olv_only }
+		set_variable = { var_space_auto_olv = var_space_auto_newest_olv }
+	}
+	else = {
+		set_temp_variable = { temp_scan_olv = @olv_pid_base }
+		while_loop_effect = {
+			limit = { check_variable = { temp_scan_olv < @olv_pid_end } }
+			set_temp_variable = { temp_olv_cap_idx = { value = temp_scan_olv subtract = @olv_pid_base } }
+			set_temp_variable = { temp_olv_cap = global.OLV_payload_mass_array^temp_olv_cap_idx }
+			set_temp_variable = { temp_olv_stock = missile_inventory_array^temp_scan_olv }
+			if = {
+				limit = {
+					check_variable = { temp_olv_stock > 0 }
+					check_variable = { var_space_auto_olv = 0 }
+					check_variable = { var = temp_olv_cap value = temp_lightest compare = greater_than_or_equals }
+				}
+				set_variable = { var_space_auto_olv = temp_scan_olv }
+			}
+			add_to_temp_variable = { temp_scan_olv = 1 }
+		}
+	}
+	if = {
+		limit = { check_variable = { var_space_auto_olv = 0 } }
+		set_variable = { var_space_auto_olv = var_space_auto_newest_olv }
+	}
+
+	set_temp_variable = {
+		temp_olv_idx = {
+			value = var_space_auto_olv
+			subtract = @olv_pid_base
+			clamp = { min = 0 max = @olv_max_idx }
+		}
+	}
+	set_temp_variable = { temp_capacity = global.OLV_payload_mass_array^temp_olv_idx }
+
+	space_auto_fit_slot_tiers = yes
+
+	space_auto_manifest_mass = yes
+	set_temp_variable = { temp_had_payload = 0 }
+	if = {
+		limit = { check_variable = { temp_mass > 0 } }
+		set_temp_variable = { temp_had_payload = 1 }
+	}
+
+	set_temp_variable = { temp_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_guard < space_auto_effective_array^num }
+			check_variable = { temp_mass > temp_capacity }
+		}
+		add_to_temp_variable = { temp_guard = 1 }
+		space_auto_drop_heaviest_slot = yes
+		space_auto_manifest_mass = yes
+	}
+
+	set_variable = { var_space_auto_no_lift = 0 }
+	if = {
+		limit = {
+			check_variable = { temp_had_payload = 1 }
+			check_variable = { temp_mass = 0 }
+		}
+		set_variable = { var_space_auto_no_lift = 1 }
+	}
+
+	set_variable = { var_space_auto_slots_used = 0 }
+	set_variable = { var_space_auto_cnt_gnss = 0 }
+	set_variable = { var_space_auto_cnt_com = 0 }
+	set_variable = { var_space_auto_cnt_spy = 0 }
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_effective_array^num } }
+		set_temp_variable = { temp_pid = space_auto_effective_array^temp_scan }
+		if = {
+			limit = { NOT = { check_variable = { temp_pid = 1 } } }
+			add_to_variable = { var_space_auto_slots_used = 1 }
+			space_auto_classify = yes
+			if = { limit = { check_variable = { temp_fam = 0 } } add_to_variable = { var_space_auto_cnt_gnss = 1 } }
+			else_if = { limit = { check_variable = { temp_fam = 1 } } add_to_variable = { var_space_auto_cnt_com = 1 } }
+			else_if = { limit = { check_variable = { temp_fam = 2 } } add_to_variable = { var_space_auto_cnt_spy = 1 } }
+		}
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+	set_variable = {
+		var_space_auto_olv_tier = {
+			value = var_space_auto_olv
+			subtract = 100
+			clamp = { min = 0 max = @tier_count }
+		}
+	}
+
+	space_auto_build_order_list = yes
+}
+
+space_auto_build_order_list = {
+	clear_array = space_auto_order_type_array
+	clear_array = space_auto_order_count_array
+
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_effective_array^num } }
+		set_temp_variable = { temp_pid = space_auto_effective_array^temp_scan }
+		if = {
+			limit = { NOT = { check_variable = { temp_pid = 1 } } }
+			set_temp_variable = { temp_found = 999 }
+			set_temp_variable = { temp_probe = 0 }
+			while_loop_effect = {
+				limit = { check_variable = { temp_probe < space_auto_order_type_array^num } }
+				if = {
+					limit = { check_variable = { space_auto_order_type_array^temp_probe = temp_pid } }
+					set_temp_variable = { temp_found = temp_probe }
+				}
+				add_to_temp_variable = { temp_probe = 1 }
+			}
+			if = {
+				limit = { check_variable = { temp_found < 900 } }
+				add_to_variable = { space_auto_order_count_array^temp_found = 1 }
+			}
+			else = {
+				add_to_array = { space_auto_order_type_array = temp_pid }
+				add_to_array = { space_auto_order_count_array = 1 }
+			}
+		}
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+}
+
+space_auto_start_sat_batch = {
+	if = {
+		limit = {
+			check_variable = { temp_fam = 0 }
+			NOT = { has_active_mission = missile_construction_11 }
+		}
+		set_temp_variable = { temp_sv_prod = var_space_production_GNSS }
+		set_temp_variable = { temp_sv_price = var_gui_prod_11_price_unit }
+		set_temp_variable = { temp_sv_days = var_gui_prod_11_days_unit }
+		set_temp_variable = { temp_sv_amt = var_gui_prod_11_amount }
+		set_temp_variable = { temp_sv_mult = prod_11_multiplier }
+		set_variable = { var_space_production_GNSS = temp_pid }
+		set_variable = { var_gui_prod_11_price_unit = global.prod_11_price_unit^temp_idx }
+		set_variable = { var_gui_prod_11_days_unit = global.prod_11_duration_unit^temp_idx }
+		set_variable = { var_gui_prod_11_amount = temp_need }
+		space_auto_fit_multiplier_11 = yes
+		if = {
+			limit = { check_variable = { var = temp_cost value = temp_budget_free compare = less_than_or_equals } }
+			subtract_from_temp_variable = { temp_budget_free = temp_cost }
+			set_variable = { var_space_paid_11 = 0 }
+			set_country_flag = space_auto_line_11
+			activate_mission = missile_construction_11
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [Root.GetName]: space automation ordered [?temp_need] of type [?temp_pid] over [?temp_days] days at [?temp_weekly]b/week"
+			}
+		}
+		else = {
+			set_variable = { var_space_auto_starved = 1 }
+			set_variable = { var_space_production_GNSS = temp_sv_prod }
+			set_variable = { var_gui_prod_11_price_unit = temp_sv_price }
+			set_variable = { var_gui_prod_11_days_unit = temp_sv_days }
+			set_variable = { var_gui_prod_11_amount = temp_sv_amt }
+			set_variable = { prod_11_multiplier = temp_sv_mult }
+			calculate_production_vars_11 = yes
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { temp_fam = 1 }
+			NOT = { has_active_mission = missile_construction_12 }
+		}
+		set_temp_variable = { temp_sv_prod = var_space_production_COMSAT }
+		set_temp_variable = { temp_sv_price = var_gui_prod_12_price_unit }
+		set_temp_variable = { temp_sv_days = var_gui_prod_12_days_unit }
+		set_temp_variable = { temp_sv_amt = var_gui_prod_12_amount }
+		set_temp_variable = { temp_sv_mult = prod_12_multiplier }
+		set_variable = { var_space_production_COMSAT = temp_pid }
+		set_variable = { var_gui_prod_12_price_unit = global.prod_12_price_unit^temp_idx }
+		set_variable = { var_gui_prod_12_days_unit = global.prod_12_duration_unit^temp_idx }
+		set_variable = { var_gui_prod_12_amount = temp_need }
+		space_auto_fit_multiplier_12 = yes
+		if = {
+			limit = { check_variable = { var = temp_cost value = temp_budget_free compare = less_than_or_equals } }
+			subtract_from_temp_variable = { temp_budget_free = temp_cost }
+			set_variable = { var_space_paid_12 = 0 }
+			set_country_flag = space_auto_line_12
+			activate_mission = missile_construction_12
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [Root.GetName]: space automation ordered [?temp_need] of type [?temp_pid] over [?temp_days] days at [?temp_weekly]b/week"
+			}
+		}
+		else = {
+			set_variable = { var_space_auto_starved = 1 }
+			set_variable = { var_space_production_COMSAT = temp_sv_prod }
+			set_variable = { var_gui_prod_12_price_unit = temp_sv_price }
+			set_variable = { var_gui_prod_12_days_unit = temp_sv_days }
+			set_variable = { var_gui_prod_12_amount = temp_sv_amt }
+			set_variable = { prod_12_multiplier = temp_sv_mult }
+			calculate_production_vars_12 = yes
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { temp_fam = 2 }
+			NOT = { has_active_mission = missile_construction_13 }
+		}
+		set_temp_variable = { temp_sv_prod = var_space_production_SPYSAT }
+		set_temp_variable = { temp_sv_price = var_gui_prod_13_price_unit }
+		set_temp_variable = { temp_sv_days = var_gui_prod_13_days_unit }
+		set_temp_variable = { temp_sv_amt = var_gui_prod_13_amount }
+		set_temp_variable = { temp_sv_mult = prod_13_multiplier }
+		set_variable = { var_space_production_SPYSAT = temp_pid }
+		set_variable = { var_gui_prod_13_price_unit = global.prod_13_price_unit^temp_idx }
+		set_variable = { var_gui_prod_13_days_unit = global.prod_13_duration_unit^temp_idx }
+		set_variable = { var_gui_prod_13_amount = temp_need }
+		space_auto_fit_multiplier_13 = yes
+		if = {
+			limit = { check_variable = { var = temp_cost value = temp_budget_free compare = less_than_or_equals } }
+			subtract_from_temp_variable = { temp_budget_free = temp_cost }
+			set_variable = { var_space_paid_13 = 0 }
+			set_country_flag = space_auto_line_13
+			activate_mission = missile_construction_13
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [Root.GetName]: space automation ordered [?temp_need] of type [?temp_pid] over [?temp_days] days at [?temp_weekly]b/week"
+			}
+		}
+		else = {
+			set_variable = { var_space_auto_starved = 1 }
+			set_variable = { var_space_production_SPYSAT = temp_sv_prod }
+			set_variable = { var_gui_prod_13_price_unit = temp_sv_price }
+			set_variable = { var_gui_prod_13_days_unit = temp_sv_days }
+			set_variable = { var_gui_prod_13_amount = temp_sv_amt }
+			set_variable = { prod_13_multiplier = temp_sv_mult }
+			calculate_production_vars_13 = yes
+		}
+	}
+}
+
+space_auto_compute_budget = {
+	space_prod_weekly_expense = yes
+
+	set_temp_variable = { temp_committed = 0 }
+	if = {
+		limit = { has_active_mission = missile_construction_10 }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_10_price_total
+				subtract = var_space_paid_10
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_11 }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_11_price_total
+				subtract = var_space_paid_11
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_12 }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_12_price_total
+				subtract = var_space_paid_12
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_13 }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_13_price_total
+				subtract = var_space_paid_13
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_14 }
+		add_to_temp_variable = {
+			var = temp_committed
+			value = {
+				value = var_gui_prod_14_price_total
+				subtract = var_space_paid_14
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+	}
+
+	if = {
+		limit = { has_country_flag = space_auto_allow_deficit }
+		set_variable = { var_space_auto_budget = @space_math_max }
+	}
+	else = {
+		set_variable = {
+			var_space_auto_budget = {
+				value = treasury
+				subtract = temp_committed
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+	}
+
+	set_variable = { var_space_auto_est_cost = 0 }
+	set_temp_variable = { temp_e = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_e < space_auto_order_type_array^num } }
+		set_temp_variable = { temp_pid = space_auto_order_type_array^temp_e }
+		space_auto_classify = yes
+		set_temp_variable = { temp_unit = 0 }
+		if = {
+			limit = { check_variable = { temp_fam = 0 } }
+			set_temp_variable = { temp_unit = global.prod_11_price_unit^temp_idx }
+		}
+		else_if = {
+			limit = { check_variable = { temp_fam = 1 } }
+			set_temp_variable = { temp_unit = global.prod_12_price_unit^temp_idx }
+		}
+		else_if = {
+			limit = { check_variable = { temp_fam = 2 } }
+			set_temp_variable = { temp_unit = global.prod_13_price_unit^temp_idx }
+		}
+		add_to_variable = {
+			var = var_space_auto_est_cost
+			value = {
+				value = temp_unit
+				multiply = space_auto_order_count_array^temp_e
+				multiply = var_space_auto_flights
+			}
+		}
+		add_to_temp_variable = { temp_e = 1 }
+	}
+	if = {
+		limit = { check_variable = { var_space_auto_newest_olv > 100 } }
+		set_temp_variable = {
+			temp_oidx = {
+				value = var_space_auto_newest_olv
+				subtract = @olv_pid_base
+				clamp = { min = 0 max = @olv_max_idx }
+			}
+		}
+		add_to_variable = {
+			var = var_space_auto_est_cost
+			value = {
+				value = global.prod_10_price_unit^temp_oidx
+				multiply = var_space_auto_flights
+			}
+		}
+	}
+	multiply_variable = { var_space_auto_est_cost = 2 }
+
+	set_variable = { var_space_auto_bld_olv = 0 }
+	set_variable = { var_space_auto_bld_gnss = 0 }
+	set_variable = { var_space_auto_bld_com = 0 }
+	set_variable = { var_space_auto_bld_spy = 0 }
+	if = {
+		limit = { has_active_mission = missile_construction_10 }
+		set_variable = { var_space_auto_bld_olv = var_gui_prod_10_amount }
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_11 }
+		set_variable = { var_space_auto_bld_gnss = var_gui_prod_11_amount }
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_12 }
+		set_variable = { var_space_auto_bld_com = var_gui_prod_12_amount }
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_13 }
+		set_variable = { var_space_auto_bld_spy = var_gui_prod_13_amount }
+	}
+	set_variable = {
+		var_space_auto_bld_total = {
+			value = var_space_auto_bld_olv
+			add = var_space_auto_bld_gnss
+			add = var_space_auto_bld_com
+			add = var_space_auto_bld_spy
+		}
+	}
+}
+
+space_auto_fit_multiplier_10 = {
+	set_variable = { prod_10_multiplier = temp_need }
+	space_auto_price_10 = yes
+	set_temp_variable = { temp_fit_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_cost > temp_budget_free }
+			check_variable = { prod_10_multiplier > 1 }
+			check_variable = { temp_fit_guard < 16 }
+		}
+		add_to_temp_variable = { temp_fit_guard = 1 }
+		divide_variable = { prod_10_multiplier = 2 }
+		round_variable = prod_10_multiplier
+		space_auto_price_10 = yes
+	}
+	set_temp_variable = { temp_fit_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_cost > temp_budget_free }
+			check_variable = { var_gui_prod_10_amount > 1 }
+			check_variable = { temp_fit_guard < 16 }
+		}
+		add_to_temp_variable = { temp_fit_guard = 1 }
+		divide_variable = { var_gui_prod_10_amount = 2 }
+		round_variable = var_gui_prod_10_amount
+		space_auto_price_10 = yes
+	}
+}
+space_auto_price_10 = {
+	calculate_production_vars_10 = yes
+	set_temp_variable = { temp_cost = var_gui_prod_10_price_total }
+	set_temp_variable = { temp_days = var_gui_prod_10_days }
+	space_auto_weekly_cost = yes
+}
+
+space_auto_fit_multiplier_11 = {
+	set_variable = { prod_11_multiplier = temp_need }
+	space_auto_price_11 = yes
+	set_temp_variable = { temp_fit_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_cost > temp_budget_free }
+			check_variable = { prod_11_multiplier > 1 }
+			check_variable = { temp_fit_guard < 16 }
+		}
+		add_to_temp_variable = { temp_fit_guard = 1 }
+		divide_variable = { prod_11_multiplier = 2 }
+		round_variable = prod_11_multiplier
+		space_auto_price_11 = yes
+	}
+	set_temp_variable = { temp_fit_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_cost > temp_budget_free }
+			check_variable = { var_gui_prod_11_amount > 1 }
+			check_variable = { temp_fit_guard < 16 }
+		}
+		add_to_temp_variable = { temp_fit_guard = 1 }
+		divide_variable = { var_gui_prod_11_amount = 2 }
+		round_variable = var_gui_prod_11_amount
+		space_auto_price_11 = yes
+	}
+}
+space_auto_price_11 = {
+	calculate_production_vars_11 = yes
+	set_temp_variable = { temp_cost = var_gui_prod_11_price_total }
+	set_temp_variable = { temp_days = var_gui_prod_11_days }
+	space_auto_weekly_cost = yes
+}
+
+space_auto_fit_multiplier_12 = {
+	set_variable = { prod_12_multiplier = temp_need }
+	space_auto_price_12 = yes
+	set_temp_variable = { temp_fit_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_cost > temp_budget_free }
+			check_variable = { prod_12_multiplier > 1 }
+			check_variable = { temp_fit_guard < 16 }
+		}
+		add_to_temp_variable = { temp_fit_guard = 1 }
+		divide_variable = { prod_12_multiplier = 2 }
+		round_variable = prod_12_multiplier
+		space_auto_price_12 = yes
+	}
+	set_temp_variable = { temp_fit_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_cost > temp_budget_free }
+			check_variable = { var_gui_prod_12_amount > 1 }
+			check_variable = { temp_fit_guard < 16 }
+		}
+		add_to_temp_variable = { temp_fit_guard = 1 }
+		divide_variable = { var_gui_prod_12_amount = 2 }
+		round_variable = var_gui_prod_12_amount
+		space_auto_price_12 = yes
+	}
+}
+space_auto_price_12 = {
+	calculate_production_vars_12 = yes
+	set_temp_variable = { temp_cost = var_gui_prod_12_price_total }
+	set_temp_variable = { temp_days = var_gui_prod_12_days }
+	space_auto_weekly_cost = yes
+}
+
+space_auto_fit_multiplier_13 = {
+	set_variable = { prod_13_multiplier = temp_need }
+	space_auto_price_13 = yes
+	set_temp_variable = { temp_fit_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_cost > temp_budget_free }
+			check_variable = { prod_13_multiplier > 1 }
+			check_variable = { temp_fit_guard < 16 }
+		}
+		add_to_temp_variable = { temp_fit_guard = 1 }
+		divide_variable = { prod_13_multiplier = 2 }
+		round_variable = prod_13_multiplier
+		space_auto_price_13 = yes
+	}
+	set_temp_variable = { temp_fit_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_cost > temp_budget_free }
+			check_variable = { var_gui_prod_13_amount > 1 }
+			check_variable = { temp_fit_guard < 16 }
+		}
+		add_to_temp_variable = { temp_fit_guard = 1 }
+		divide_variable = { var_gui_prod_13_amount = 2 }
+		round_variable = var_gui_prod_13_amount
+		space_auto_price_13 = yes
+	}
+}
+space_auto_price_13 = {
+	calculate_production_vars_13 = yes
+	set_temp_variable = { temp_cost = var_gui_prod_13_price_total }
+	set_temp_variable = { temp_days = var_gui_prod_13_days }
+	space_auto_weekly_cost = yes
+}
+
+space_auto_weekly_cost = {
+	set_temp_variable = {
+		temp_weekly = {
+			value = temp_cost
+			divide = {
+				value = temp_days
+				divide = @days_per_week
+				clamp = { min = 1 max = @space_weeks_max }
+			}
+		}
+	}
+}
+
+space_auto_order_production = {
+	if = {
+		limit = {
+			OR = {
+				NOT = { has_completed_space_program = yes }
+				NOT = { check_variable = { var_space_auto_newest_olv > 100 } }
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+		set_variable = { var_space_auto_starved = 0 }
+	}
+	else = {
+		space_auto_order_production_inner = yes
+	}
+}
+
+space_auto_order_production_inner = {
+	set_variable = { var_space_auto_starved = 0 }
+	set_temp_variable = { temp_budget_free = var_space_auto_budget }
+
+	set_temp_variable = { temp_launches_needed = 0 }
+	set_temp_variable = { temp_order = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_order < space_auto_order_type_array^num } }
+		set_temp_variable = { temp_pid = space_auto_order_type_array^temp_order }
+		set_temp_variable = { temp_percount = space_auto_order_count_array^temp_order }
+		space_auto_classify = yes
+		set_temp_variable = {
+			temp_lneed = {
+				value = space_auto_short_array^temp_fam
+				divide = temp_percount
+				add = @round_half
+				round = yes
+			}
+		}
+		if = {
+			limit = { check_variable = { temp_lneed > temp_launches_needed } }
+			set_temp_variable = { temp_launches_needed = temp_lneed }
+		}
+		add_to_temp_variable = { temp_order = 1 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { var_space_auto_slots_used > 0 }
+			NOT = { has_active_mission = missile_construction_10 }
+		}
+		set_temp_variable = { temp_need = temp_launches_needed }
+		if = {
+			limit = { NOT = { has_country_flag = space_auto_stockpile } }
+			if = {
+				limit = { check_variable = { temp_need > var_space_auto_flights } }
+				set_temp_variable = { temp_need = var_space_auto_flights }
+			}
+		}
+		clamp_temp_variable = { var = temp_need min = 0 max = 200 }
+		space_auto_manifest_mass = yes
+		space_auto_usable_rocket_stock = yes
+		subtract_from_temp_variable = { temp_need = temp_rocket_stock }
+		if = {
+			limit = { check_variable = { temp_need > 0 } }
+			space_auto_start_olv_batch = yes
+		}
+	}
+
+	set_temp_variable = { temp_order = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_order < space_auto_order_type_array^num } }
+		set_temp_variable = { temp_pid = space_auto_order_type_array^temp_order }
+		set_temp_variable = { temp_percount = space_auto_order_count_array^temp_order }
+		space_auto_classify = yes
+		set_temp_variable = { temp_need = { value = temp_percount multiply = var_space_auto_flights } }
+		if = {
+			limit = { has_country_flag = space_auto_stockpile }
+			set_temp_variable = { temp_need = space_auto_short_array^temp_fam }
+		}
+		if = {
+			limit = { check_variable = { temp_need > space_auto_short_array^temp_fam } }
+			set_temp_variable = { temp_need = space_auto_short_array^temp_fam }
+		}
+		subtract_from_temp_variable = { temp_need = missile_inventory_array^temp_pid }
+		if = {
+			limit = { check_variable = { temp_need > 0 } }
+			space_auto_start_sat_batch = yes
+		}
+		add_to_temp_variable = { temp_order = 1 }
+	}
+}
+
+space_auto_start_olv_batch = {
+	set_temp_variable = {
+		temp_idx = {
+			value = var_space_auto_newest_olv
+			subtract = @olv_pid_base
+			clamp = { min = 0 max = @olv_max_idx }
+		}
+	}
+
+	set_temp_variable = { temp_sv_prod = var_space_production_OLV }
+	set_temp_variable = { temp_sv_price = var_gui_prod_10_price_unit }
+	set_temp_variable = { temp_sv_days = var_gui_prod_10_days_unit }
+	set_temp_variable = { temp_sv_amt = var_gui_prod_10_amount }
+	set_temp_variable = { temp_sv_mult = prod_10_multiplier }
+	set_variable = { var_space_production_OLV = var_space_auto_newest_olv }
+	set_variable = { var_gui_prod_10_price_unit = global.prod_10_price_unit^temp_idx }
+	set_variable = { var_gui_prod_10_days_unit = global.prod_10_duration_unit^temp_idx }
+	if = {
+		limit = {
+			has_tech = part_reusable_OLV6
+			check_variable = { var_space_auto_newest_olv = 106 }
+		}
+		add_to_variable = { var_gui_prod_10_price_unit = -0.005 }
+		add_to_variable = { var_gui_prod_10_days_unit = -10 }
+	}
+	if = {
+		limit = {
+			has_tech = full_reusable_OLV7
+			check_variable = { var_space_auto_newest_olv = 107 }
+		}
+		add_to_variable = { var_gui_prod_10_price_unit = -0.01 }
+		add_to_variable = { var_gui_prod_10_days_unit = -25 }
+	}
+	if = {
+		limit = {
+			has_tech = full_reusable_OLV8
+			check_variable = { var_space_auto_newest_olv = 108 }
+		}
+		add_to_variable = { var_gui_prod_10_price_unit = -0.03 }
+		add_to_variable = { var_gui_prod_10_days_unit = -45 }
+	}
+	set_variable = { var_gui_prod_10_amount = temp_need }
+	space_auto_fit_multiplier_10 = yes
+	if = {
+		limit = { check_variable = { var = temp_cost value = temp_budget_free compare = less_than_or_equals } }
+		subtract_from_temp_variable = { temp_budget_free = temp_cost }
+		set_variable = { var_space_paid_10 = 0 }
+		set_country_flag = space_auto_line_10
+		activate_mission = missile_construction_10
+		if = {
+			limit = { is_debug = yes }
+			log = "[GetDateText]: [Root.GetName]: space automation ordered [?temp_need] rockets of type [?var_space_auto_newest_olv] over [?temp_days] days at [?temp_weekly]b/week"
+		}
+	}
+	else = {
+		set_variable = { var_space_auto_starved = 1 }
+		set_variable = { var_space_production_OLV = temp_sv_prod }
+		set_variable = { var_gui_prod_10_price_unit = temp_sv_price }
+		set_variable = { var_gui_prod_10_days_unit = temp_sv_days }
+		set_variable = { var_gui_prod_10_amount = temp_sv_amt }
+		set_variable = { prod_10_multiplier = temp_sv_mult }
+		calculate_production_vars_10 = yes
+	}
+}
+
+space_auto_run_launch = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = space_auto_launched_today }
+			check_variable = { var_space_auto_slots_used > 0 }
+			check_variable = { var_space_auto_olv > 100 }
+		}
+		set_temp_variable = { temp_flights = var_space_auto_flights }
+		if = {
+			limit = { check_variable = { missile_inventory_array^var_space_auto_olv < temp_flights } }
+			set_temp_variable = { temp_flights = missile_inventory_array^var_space_auto_olv }
+		}
+		set_temp_variable = { temp_order = 0 }
+		while_loop_effect = {
+			limit = { check_variable = { temp_order < space_auto_order_type_array^num } }
+			set_temp_variable = { temp_pid = space_auto_order_type_array^temp_order }
+			set_temp_variable = {
+				temp_cap = {
+					value = missile_inventory_array^temp_pid
+					divide = space_auto_order_count_array^temp_order
+					subtract = @round_half
+					round = yes
+				}
+			}
+			if = {
+				limit = { check_variable = { temp_cap < temp_flights } }
+				set_temp_variable = { temp_flights = temp_cap }
+			}
+			add_to_temp_variable = { temp_order = 1 }
+		}
+		clamp_temp_variable = { var = temp_flights min = 0 max = 10 }
+
+		if = {
+			limit = { check_variable = { temp_flights > 0 } }
+			set_variable = { var_space_auto_waiting = 0 }
+			set_country_flag = { flag = space_auto_launched_today value = 1 days = 1 }
+			space_auto_execute_launch = yes
+		}
+		else = {
+			set_variable = { var_space_auto_waiting = 1 }
+		}
+	}
+	else = {
+		set_variable = { var_space_auto_waiting = 0 }
+	}
+}
+
+space_auto_execute_launch = {
+	set_temp_variable = { temp_saved_type = var_OLV_type }
+	set_temp_variable = { temp_saved_rel = var_OLV_reliability }
+	set_temp_variable = { temp_saved_mass = var_OLV_payload_mass }
+
+	set_temp_variable = {
+		temp_olv_idx = {
+			value = var_space_auto_olv
+			subtract = @olv_pid_base
+			clamp = { min = 0 max = @olv_max_idx }
+		}
+	}
+
+	set_variable = { var_OLV_type = var_space_auto_olv }
+	set_variable = { var_OLV_reliability = global.OLV_reliability_array^temp_olv_idx }
+	set_variable = { var_OLV_payload_mass = global.OLV_payload_mass_array^temp_olv_idx }
+	set_variable = { var_OLV_inventory = missile_inventory_array^var_space_auto_olv }
+	set_variable = { var_OLV_flights = temp_flights }
+
+	clear_array = space_auto_staging_backup
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < payload_types_array^num } }
+		add_to_array = { space_auto_staging_backup = payload_types_array^temp_scan }
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+
+	clear_array = payload_types_array
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_effective_array^num } }
+		add_to_array = { payload_types_array = space_auto_effective_array^temp_scan }
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+
+	launch_OLV = yes
+
+	clear_array = payload_types_array
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_staging_backup^num } }
+		add_to_array = { payload_types_array = space_auto_staging_backup^temp_scan }
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+	clear_array = space_auto_staging_backup
+
+	set_variable = { var_OLV_type = temp_saved_type }
+	set_variable = { var_OLV_reliability = temp_saved_rel }
+	set_variable = { var_OLV_payload_mass = temp_saved_mass }
+	set_variable = { var_OLV_flights = 0 }
+	if = {
+		limit = { check_variable = { temp_saved_type > 100 } }
+		set_variable = { var_OLV_inventory = missile_inventory_array^temp_saved_type }
+	}
+	else = {
+		set_variable = { var_OLV_inventory = 0 }
+	}
+
+	space_auto_raise_system_tiers = yes
+	update_space_system_values = yes
+
+	if = {
+		limit = { is_debug = yes }
+		log = "[GetDateText]: [Root.GetName]: space automation launched [?temp_flights] flights"
+	}
+}
+
+space_auto_raise_system_tiers = {
+	space_auto_raise_gnss = yes
+	space_auto_raise_comsat = yes
+	space_auto_raise_spysat = yes
+}
+
+space_auto_raise_gnss = {
+	if = {
+		limit = { check_variable = { space_auto_newest_array^0 > 0 } }
+		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^0 subtract = 1 } }
+		set_temp_variable = { temp_new_cnt = GNSS_satellite_array^temp_new_idx }
+		set_temp_variable = { temp_new_max = global.GNSS_sat_system_max_array^temp_new_idx }
+		set_temp_variable = { temp_new_min = global.GNSS_sat_system_min_array^temp_new_idx }
+
+		if = {
+			limit = {
+				check_variable = { var_GNSS_mil_system_idx < temp_new_idx }
+				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
+			}
+			# Cross-multiplied fill ratio: new_cnt / new_max >= old_cnt / old_max
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.GNSS_sat_system_max_array^var_GNSS_mil_system_idx } }
+			set_temp_variable = { temp_rhs = { value = GNSS_satellite_array^var_GNSS_mil_system_idx multiply = temp_new_max } }
+			if = {
+				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
+				set_variable = { var_GNSS_mil_system_idx = temp_new_idx }
+				set_variable = { var_GNSS_mil_sat_system_max = temp_new_max }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { var_GNSS_civ_system_idx < temp_new_idx }
+				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.GNSS_sat_system_max_array^var_GNSS_civ_system_idx } }
+			set_temp_variable = { temp_rhs = { value = GNSS_satellite_array^var_GNSS_civ_system_idx multiply = temp_new_max } }
+			if = {
+				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
+				set_variable = { var_GNSS_civ_system_idx = temp_new_idx }
+				set_variable = { var_GNSS_civ_sat_system_max = temp_new_max }
+			}
+		}
+	}
+}
+
+space_auto_raise_comsat = {
+	if = {
+		limit = { check_variable = { space_auto_newest_array^1 > 0 } }
+		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^1 subtract = 1 } }
+		set_temp_variable = { temp_new_cnt = COM_satellite_array^temp_new_idx }
+		set_temp_variable = { temp_new_max = global.COM_sat_system_max_array^temp_new_idx }
+		set_temp_variable = { temp_new_min = global.COM_sat_system_min_array^temp_new_idx }
+
+		if = {
+			limit = {
+				check_variable = { var_COM_mil_system_idx < temp_new_idx }
+				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.COM_sat_system_max_array^var_COM_mil_system_idx } }
+			set_temp_variable = { temp_rhs = { value = COM_satellite_array^var_COM_mil_system_idx multiply = temp_new_max } }
+			if = {
+				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
+				set_variable = { var_COM_mil_system_idx = temp_new_idx }
+				set_variable = { var_COM_mil_sat_system_max = temp_new_max }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { var_COM_civ_system_idx < temp_new_idx }
+				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.COM_sat_system_max_array^var_COM_civ_system_idx } }
+			set_temp_variable = { temp_rhs = { value = COM_satellite_array^var_COM_civ_system_idx multiply = temp_new_max } }
+			if = {
+				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
+				set_variable = { var_COM_civ_system_idx = temp_new_idx }
+				set_variable = { var_COM_civ_sat_system_max = temp_new_max }
+			}
+		}
+	}
+}
+
+space_auto_raise_spysat = {
+	if = {
+		limit = { check_variable = { space_auto_newest_array^2 > 0 } }
+		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^2 subtract = 1 } }
+		set_temp_variable = { temp_new_cnt = SPY_satellite_array^temp_new_idx }
+		set_temp_variable = { temp_new_max = global.SPY_sat_system_max_array^temp_new_idx }
+		set_temp_variable = { temp_new_min = global.SPY_sat_system_min_array^temp_new_idx }
+
+		if = {
+			limit = {
+				check_variable = { var_SPY_mil_system_idx < temp_new_idx }
+				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.SPY_sat_system_max_array^var_SPY_mil_system_idx } }
+			set_temp_variable = { temp_rhs = { value = SPY_satellite_array^var_SPY_mil_system_idx multiply = temp_new_max } }
+			if = {
+				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
+				set_variable = { var_SPY_mil_system_idx = temp_new_idx }
+				set_variable = { var_SPY_mil_sat_system_max = temp_new_max }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { var_SPY_civ_system_idx < temp_new_idx }
+				check_variable = { var = temp_new_cnt value = temp_new_min compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_lhs = { value = temp_new_cnt multiply = global.SPY_sat_system_max_array^var_SPY_civ_system_idx } }
+			set_temp_variable = { temp_rhs = { value = SPY_satellite_array^var_SPY_civ_system_idx multiply = temp_new_max } }
+			if = {
+				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
+				set_variable = { var_SPY_civ_system_idx = temp_new_idx }
+				set_variable = { var_SPY_civ_sat_system_max = temp_new_max }
+			}
+		}
+	}
+}
+
+space_auto_clear_line_10 = {
+	clr_country_flag = space_auto_line_10
+}
+space_auto_clear_line_11 = {
+	clr_country_flag = space_auto_line_11
+}
+space_auto_clear_line_12 = {
+	clr_country_flag = space_auto_line_12
+}
+space_auto_clear_line_13 = {
+	clr_country_flag = space_auto_line_13
+}
+
+space_auto_reconcile_lines = {
+	if = {
+		limit = {
+			has_country_flag = space_auto_line_10
+			NOT = { has_active_mission = missile_construction_10 }
+		}
+		space_auto_clear_line_10 = yes
+	}
+	if = {
+		limit = {
+			has_country_flag = space_auto_line_11
+			NOT = { has_active_mission = missile_construction_11 }
+		}
+		space_auto_clear_line_11 = yes
+	}
+	if = {
+		limit = {
+			has_country_flag = space_auto_line_12
+			NOT = { has_active_mission = missile_construction_12 }
+		}
+		space_auto_clear_line_12 = yes
+	}
+	if = {
+		limit = {
+			has_country_flag = space_auto_line_13
+			NOT = { has_active_mission = missile_construction_13 }
+		}
+		space_auto_clear_line_13 = yes
+	}
+}
+
+space_prod_weekly_expense = {
+	set_temp_variable = { temp_accrue = 0 }
+	space_prod_weekly_calc = yes
+}
+
+space_prod_weekly_bill = {
+	set_temp_variable = { temp_accrue = 1 }
+	space_prod_weekly_calc = yes
+}
+
+space_prod_weekly_calc = {
+	set_variable = { space_prod_expense = 0 }
+	if = {
+		limit = { has_active_mission = missile_construction_10 }
+		set_temp_variable = { temp_cost = var_gui_prod_10_price_total }
+		set_temp_variable = { temp_days = var_gui_prod_10_days }
+		space_auto_weekly_cost = yes
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_10_price_total subtract = var_space_paid_10 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+		add_to_variable = { space_prod_expense = temp_weekly }
+		if = {
+			limit = { check_variable = { temp_accrue = 1 } }
+			add_to_variable = { var_space_paid_10 = temp_weekly }
+		}
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_11 }
+		set_temp_variable = { temp_cost = var_gui_prod_11_price_total }
+		set_temp_variable = { temp_days = var_gui_prod_11_days }
+		space_auto_weekly_cost = yes
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_11_price_total subtract = var_space_paid_11 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+		add_to_variable = { space_prod_expense = temp_weekly }
+		if = {
+			limit = { check_variable = { temp_accrue = 1 } }
+			add_to_variable = { var_space_paid_11 = temp_weekly }
+		}
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_12 }
+		set_temp_variable = { temp_cost = var_gui_prod_12_price_total }
+		set_temp_variable = { temp_days = var_gui_prod_12_days }
+		space_auto_weekly_cost = yes
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_12_price_total subtract = var_space_paid_12 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+		add_to_variable = { space_prod_expense = temp_weekly }
+		if = {
+			limit = { check_variable = { temp_accrue = 1 } }
+			add_to_variable = { var_space_paid_12 = temp_weekly }
+		}
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_13 }
+		set_temp_variable = { temp_cost = var_gui_prod_13_price_total }
+		set_temp_variable = { temp_days = var_gui_prod_13_days }
+		space_auto_weekly_cost = yes
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_13_price_total subtract = var_space_paid_13 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+		add_to_variable = { space_prod_expense = temp_weekly }
+		if = {
+			limit = { check_variable = { temp_accrue = 1 } }
+			add_to_variable = { var_space_paid_13 = temp_weekly }
+		}
+	}
+	if = {
+		limit = { has_active_mission = missile_construction_14 }
+		set_temp_variable = { temp_cost = var_gui_prod_14_price_total }
+		set_temp_variable = { temp_days = var_gui_prod_14_days }
+		space_auto_weekly_cost = yes
+		set_temp_variable = { temp_outstanding = { value = var_gui_prod_14_price_total subtract = var_space_paid_14 } }
+		set_temp_variable = {
+			temp_weekly = {
+				value = temp_weekly
+				min = temp_outstanding
+				clamp = { min = 0 max = @space_math_max }
+			}
+		}
+		add_to_variable = { space_prod_expense = temp_weekly }
+		if = {
+			limit = { check_variable = { temp_accrue = 1 } }
+			add_to_variable = { var_space_paid_14 = temp_weekly }
+		}
+	}
+}
+
+space_prod_settle_balance = {
+	set_temp_variable = { temp_outstanding = { value = temp_settle_price subtract = temp_settle_paid } }
+	if = {
+		limit = {
+			check_variable = { temp_outstanding > 0 }
+			check_variable = { temp_settle_paid > 0 }
+		}
+		subtract_from_variable = { treasury = temp_outstanding }
+	}
+}
+
+space_prod_settle_10 = {
+	set_temp_variable = { temp_settle_price = var_gui_prod_10_price_total }
+	set_temp_variable = { temp_settle_paid = var_space_paid_10 }
+	space_prod_settle_balance = yes
+	set_variable = { var_space_paid_10 = 0 }
+}
+
+space_prod_settle_11 = {
+	set_temp_variable = { temp_settle_price = var_gui_prod_11_price_total }
+	set_temp_variable = { temp_settle_paid = var_space_paid_11 }
+	space_prod_settle_balance = yes
+	set_variable = { var_space_paid_11 = 0 }
+}
+
+space_prod_settle_12 = {
+	set_temp_variable = { temp_settle_price = var_gui_prod_12_price_total }
+	set_temp_variable = { temp_settle_paid = var_space_paid_12 }
+	space_prod_settle_balance = yes
+	set_variable = { var_space_paid_12 = 0 }
+}
+
+space_prod_settle_13 = {
+	set_temp_variable = { temp_settle_price = var_gui_prod_13_price_total }
+	set_temp_variable = { temp_settle_paid = var_space_paid_13 }
+	space_prod_settle_balance = yes
+	set_variable = { var_space_paid_13 = 0 }
+}
+
+space_prod_settle_14 = {
+	set_temp_variable = { temp_settle_price = var_gui_prod_14_price_total }
+	set_temp_variable = { temp_settle_paid = var_space_paid_14 }
+	space_prod_settle_balance = yes
+	set_variable = { var_space_paid_14 = 0 }
+}
+
+space_automation_weekly = {
+	space_auto_reconcile_lines = yes
+	if = {
+		limit = {
+			has_country_flag = space_auto_active
+			has_completed_space_program = yes
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+		space_auto_refresh_targets = yes
+		if = {
+			limit = { check_variable = { var_space_auto_newest_olv > 100 } }
+			space_auto_resolve_source = yes
+			space_auto_build_effective_manifest = yes
+			space_auto_compute_budget = yes
+			space_auto_order_production = yes
+			space_auto_run_launch = yes
+		}
+	}
+}
+
+space_auto_tech_watch = {
+	if = {
+		limit = {
+			has_country_flag = space_auto_active
+			has_completed_space_program = yes
+		}
+		space_auto_refresh_targets = yes
+		set_temp_variable = { temp_seen_gnss = space_auto_newest_array^0 }
+		set_temp_variable = { temp_seen_com = space_auto_newest_array^1 }
+		set_temp_variable = { temp_seen_spy = space_auto_newest_array^2 }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { temp_seen_gnss > var_space_auto_seen_gnss }
+					check_variable = { temp_seen_com > var_space_auto_seen_com }
+					check_variable = { temp_seen_spy > var_space_auto_seen_spy }
+				}
+			}
+			set_variable = { var_space_auto_seen_gnss = temp_seen_gnss }
+			set_variable = { var_space_auto_seen_com = temp_seen_com }
+			set_variable = { var_space_auto_seen_spy = temp_seen_spy }
+			space_auto_upgrade_all = yes
+		}
+	}
+}
+
+space_automation_monthly = {
+	space_automation_weekly = yes
+	space_auto_tech_watch = yes
+}
+
+space_auto_ai_monthly = {
+	if = {
+		limit = {
+			has_completed_space_program = yes
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+		if = {
+			limit = { NOT = { has_country_flag = space_auto_active } }
+			set_country_flag = space_auto_active
+			set_variable = { var_space_auto_preset = 0 }
+			set_variable = { var_space_auto_flights = 2 }
+			clr_country_flag = space_auto_allow_deficit
+			clr_country_flag = space_auto_stockpile
+			clr_country_flag = space_auto_latest_olv_only
+		}
+		space_automation_weekly = yes
+		space_auto_tech_watch = yes
+	}
+}
+
+space_auto_refresh_ui = {
+	if = {
+		limit = { has_completed_space_program = yes }
+		space_auto_preview = yes
+		if = {
+			limit = { has_country_flag = space_auto_active }
+			space_auto_order_production = yes
+		}
+	}
+}
+
+space_auto_save_template = {
+	clear_array = space_auto_manifest_array
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp_scan < payload_types_array^num }
+			check_variable = { temp_scan < 8 }
+		}
+		set_temp_variable = { temp_pid = payload_types_array^temp_scan }
+		space_auto_classify = yes
+		if = {
+			limit = { check_variable = { temp_fam < 3 } }
+			add_to_array = { space_auto_manifest_array = temp_pid }
+		}
+		else = {
+			add_to_array = { space_auto_manifest_array = 1 }
+		}
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+	set_variable = { var_space_auto_preset = 8 }
+	space_auto_preview = yes
+	if = {
+		limit = { is_debug = yes }
+		log = "[GetDateText]: [Root.GetName]: space automation custom layout saved"
+	}
+}
+
+space_auto_upgrade_all = {
+	space_auto_refresh_targets = yes
+	set_temp_variable = { temp_scan = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { temp_scan < space_auto_manifest_array^num } }
+		set_temp_variable = { temp_pid = space_auto_manifest_array^temp_scan }
+		space_auto_classify = yes
+		if = {
+			limit = { check_variable = { temp_fam < 3 } }
+			space_auto_newest_id = yes
+			set_variable = { space_auto_manifest_array^temp_scan = temp_newest_id }
+		}
+		add_to_temp_variable = { temp_scan = 1 }
+	}
+	space_auto_resolve_source = yes
+	space_auto_build_effective_manifest = yes
+	space_auto_raise_system_tiers = yes
+	update_space_system_values = yes
+	if = {
+		limit = { is_debug = yes }
+		log = "[GetDateText]: [Root.GetName]: space automation upgraded to newest generation"
+	}
+}
+
+space_auto_toggle = {
+	if = {
+		limit = { has_country_flag = space_auto_active }
+		clr_country_flag = space_auto_active
+		space_auto_sync_switches = yes
+		log = "[GetDateText]: [Root.GetName]: space automation disabled"
+	}
+	else = {
+		set_country_flag = space_auto_active
+		clamp_variable = { var = var_space_auto_flights min = 1 max = 10 }
+		space_auto_preview = yes
+		space_auto_order_production = yes
+		log = "[GetDateText]: [Root.GetName]: space automation enabled"
+	}
+}
+
+space_auto_preview = {
+	space_auto_sync_switches = yes
+	clamp_variable = { var = var_space_auto_flights min = 1 max = 10 }
+	space_auto_refresh_targets = yes
+	space_auto_resolve_source = yes
+	space_auto_build_effective_manifest = yes
+	space_auto_compute_budget = yes
+}
+
+space_auto_toggle_deficit = {
+	if = {
+		limit = { has_country_flag = space_auto_allow_deficit }
+		clr_country_flag = space_auto_allow_deficit
+	}
+	else = {
+		set_country_flag = space_auto_allow_deficit
+	}
+	space_auto_sync_switches = yes
+	space_auto_apply_now = yes
+}
+
+space_auto_apply_now = {
+	space_auto_preview = yes
+	if = {
+		limit = { has_country_flag = space_auto_active }
+		space_auto_order_production = yes
+	}
+}
+
+space_auto_sync_switches = {
+	if = {
+		limit = { has_country_flag = space_auto_active }
+		set_variable = { var_space_auto_on = 2 }
+	}
+	else = {
+		set_variable = { var_space_auto_on = 1 }
+	}
+	if = {
+		limit = { has_country_flag = space_auto_allow_deficit }
+		set_variable = { var_space_auto_deficit_on = 2 }
+	}
+	else = {
+		set_variable = { var_space_auto_deficit_on = 1 }
+	}
+	if = {
+		limit = { has_country_flag = space_auto_stockpile }
+		set_variable = { var_space_auto_stockpile_on = 2 }
+	}
+	else = {
+		set_variable = { var_space_auto_stockpile_on = 1 }
+	}
+	if = {
+		limit = { has_country_flag = space_auto_latest_olv_only }
+		set_variable = { var_space_auto_latest_olv_on = 2 }
+	}
+	else = {
+		set_variable = { var_space_auto_latest_olv_on = 1 }
+	}
+}
+
+space_auto_toggle_stockpile = {
+	if = {
+		limit = { has_country_flag = space_auto_stockpile }
+		clr_country_flag = space_auto_stockpile
+	}
+	else = {
+		set_country_flag = space_auto_stockpile
+	}
+	space_auto_sync_switches = yes
+	space_auto_apply_now = yes
+}
+
+space_auto_toggle_latest_olv = {
+	if = {
+		limit = { has_country_flag = space_auto_latest_olv_only }
+		clr_country_flag = space_auto_latest_olv_only
+	}
+	else = {
+		set_country_flag = space_auto_latest_olv_only
+	}
+	space_auto_sync_switches = yes
+	space_auto_apply_now = yes
+}
+
+space_auto_cycle_preset = {
+	add_to_variable = { var_space_auto_preset = 1 }
+	if = {
+		limit = {
+			check_variable = { var_space_auto_preset = 8 }
+			check_variable = { space_auto_manifest_array^num = 0 }
+		}
+		add_to_variable = { var_space_auto_preset = 1 }
+	}
+	if = {
+		limit = { check_variable = { var_space_auto_preset > 8 } }
+		set_variable = { var_space_auto_preset = 0 }
+	}
+	space_auto_preview = yes
+}
+
+space_auto_cycle_preset_back = {
+	subtract_from_variable = { var_space_auto_preset = 1 }
+	if = {
+		limit = { check_variable = { var_space_auto_preset < 0 } }
+		set_variable = { var_space_auto_preset = 8 }
+	}
+	if = {
+		limit = {
+			check_variable = { var_space_auto_preset = 8 }
+			check_variable = { space_auto_manifest_array^num = 0 }
+		}
+		set_variable = { var_space_auto_preset = 7 }
+	}
+	space_auto_preview = yes
+}
