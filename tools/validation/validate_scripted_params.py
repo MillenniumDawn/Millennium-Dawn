@@ -46,10 +46,6 @@ HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
         "required": ["remove_col_one"],
         "optional": [],
     },
-    "modify_missile_inventory_count": {
-        "required": ["missile_index", "missile_count"],
-        "optional": ["missile_type"],
-    },
     "change_arab_spring_strength": {
         "required": ["temp_strength"],
         "optional": [],
