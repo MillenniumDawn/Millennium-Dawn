@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Run all validation scripts in parallel (cross-platform).
+# Run auto-runnable validation scripts in parallel (cross-platform).
 # Usage: python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
 import argparse
 import glob
@@ -20,8 +20,14 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 
 
-_NON_VALIDATOR_SCRIPTS = frozenset(
-    ("validate_tools.py", "validate_staged.py", "run_all_validators.py")
+# The manual texture audit needs the full gfx tree, which cache warm-up omits.
+_AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
+    (
+        "validate_tools.py",
+        "validate_staged.py",
+        "run_all_validators.py",
+        "validate_unused_textures.py",
+    )
 )
 
 # Opt-in flags that only one validator understands, applied by its discovered
@@ -35,11 +41,11 @@ _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
 
 
 def discover_validators() -> List[Tuple[str, str, str]]:
-    """Return (name, script_name, label) for every validate_*.py in this dir."""
+    """Return (name, script_name, label) for each auto-runnable validator."""
     validators = []
     for script_path in glob.glob(os.path.join(SCRIPTS_DIR, "validate_*.py")):
         script_name = os.path.basename(script_path)
-        if script_name in _NON_VALIDATOR_SCRIPTS:
+        if script_name in _AUTO_RUN_EXCLUDED_SCRIPTS:
             continue
         name = script_name.replace("validate_", "").replace(".py", "").replace("_", "-")
         label = _extract_label_from_script(script_path, name)

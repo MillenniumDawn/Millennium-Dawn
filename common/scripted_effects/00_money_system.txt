@@ -3235,6 +3235,14 @@ update_social_rate = {
 # Effect: update_infra_rate
 # Purpose: Computes daily infrastructure maintenance costs for power plants and network
 update_infra_rate = {
+	# Nations under ~1M population pay proportionally less upkeep; floor keeps it non-trivial
+	set_temp_variable = {
+		infra_size_scaling = {
+			value = population_total_m
+			clamp = { min = 0.25 max = 1 }
+		}
+	}
+
 	set_variable = {
 		nuclear_infra_expense = {
 			value = nuclear_reactors
@@ -3246,6 +3254,7 @@ update_infra_rate = {
 				add = modifier@nuclear_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3260,6 +3269,7 @@ update_infra_rate = {
 				add = modifier@fossil_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3274,6 +3284,7 @@ update_infra_rate = {
 				add = modifier@renewable_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3286,6 +3297,7 @@ update_infra_rate = {
 				add = modifier@infrastructure_cost_multiplier_modifier
 				multiply = common_money_modifier
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3410,6 +3422,22 @@ calculate_additional_expense_rate = {
 		limit = { has_country_flag = DEF_military_industry_thriving_expense }
 		set_variable = { defence_industry_subsidies = { value = gdp_total multiply = 0.002 } }
 		add_to_variable = { additional_expenses_rate = defence_industry_subsidies }
+	}
+	if = {
+		limit = {
+			OR = {
+				has_active_mission = missile_construction_10
+				has_active_mission = missile_construction_11
+				has_active_mission = missile_construction_12
+				has_active_mission = missile_construction_13
+				has_active_mission = missile_construction_14
+			}
+		}
+		space_prod_weekly_expense = yes
+		add_to_variable = { additional_expenses_rate = space_prod_expense }
+	}
+	else = {
+		set_variable = { space_prod_expense = 0 }
 	}
 	if = {
 		limit = {

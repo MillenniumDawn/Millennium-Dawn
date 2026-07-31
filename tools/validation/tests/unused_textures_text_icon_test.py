@@ -18,6 +18,7 @@ def _write(mod_path, rel_path, content=""):
 def _build_mod(tmp_path):
     _write(tmp_path, "gfx/texticons/only_via_stem.dds")
     _write(tmp_path, "gfx/texticons/only_via_gfx_stem.dds")
+    _write(tmp_path, "gfx/texticons/comment_only.dds")
     _write(tmp_path, "gfx/texticons/truly_orphan.dds")
 
     _write(
@@ -32,6 +33,10 @@ def _build_mod(tmp_path):
         '\t\tname = "GFX_only_via_gfx_stem"\n'
         '\t\ttexturefile = "gfx/texticons/only_via_gfx_stem.dds"\n'
         "\t}\n"
+        "\tspriteType = {\n"
+        '\t\tname = "GFX_comment_only"\n'
+        '\t\ttexturefile = "gfx/texticons/comment_only.dds"\n'
+        "\t}\n"
         "}\n",
     )
 
@@ -40,7 +45,8 @@ def _build_mod(tmp_path):
         "localisation/english/test_l_english.yml",
         "l_english:\n"
         ' test_bare_stem: "£only_via_stem Some icon text"\n'
-        ' test_gfx_stem: "£GFX_only_via_gfx_stem Some other icon text"\n',
+        ' test_gfx_stem: "£GFX_only_via_gfx_stem Some other icon text"\n'
+        '# disabled: "£GFX_comment_only"\n',
     )
 
     return str(tmp_path)
@@ -66,6 +72,16 @@ def test_gfx_prefixed_stem_resolves_texture_and_is_not_reported_unused(tmp_path)
     )
     unused = {issue.message for issue in validator._issues}
     assert "gfx/texticons/only_via_gfx_stem.dds" not in unused
+
+
+def test_commented_text_icon_does_not_mark_texture_used(tmp_path):
+    mod_path = _build_mod(tmp_path)
+    validator = Validator(mod_path=mod_path, use_colors=False, workers=1)
+    validator.validate_unused_textures()
+
+    assert (
+        "gfx/texticons/comment_only.dds" not in validator.text_icon_referenced_textures
+    )
 
 
 def test_actually_unreferenced_texture_still_flagged(tmp_path):
