@@ -53,6 +53,32 @@ When a function uses `^index` array subscripts, the **meaning of the index varia
 
 ## Guard Gates on Optional / Elected Office Holders — Worked Example
 
+## EU Game-Rule Guard on europeanism_change Calls
+
+When the EU game rule (`GAME_RULE_eu_disabled`) is active, the `europeanism`
+country variable is meaningless — the EU system is entirely disabled. Any effect
+that modifies `europeanism` (via `europeanism_change`, `EU_europeanism_change`,
+or `EU_potential_europeanism_change`) will show in tooltips as junk effects
+that do nothing at runtime.
+
+**Rule:** the guard is built directly into `europeanism_change`,
+`EU_europeanism_change`, and `EU_potential_europeanism_change` themselves.
+No wrapper or inline `if` block is needed at call sites — just call them
+normally:
+
+```
+set_temp_variable = { modify_europeanism = ... }
+set_temp_variable = { modify_europeanism_target = ... }  # if needed
+europeanism_change = yes
+```
+
+When `GAME_RULE_eu_disabled` is active, the `custom_effect_tooltip` and
+`hidden_effect` inside each scripted effect are skipped, so no junk tooltip
+entries appear. The guard applies regardless of whether the enclosing
+event/decision already has a `GAME_RULE_eu_disabled` trigger check — the
+`if` block inside the scripted effect is needed because tooltips evaluate
+`completion_reward` / `remove_effect` content independently of the trigger.
+
 The rule (`general-rules.md`): any gate on "the holder of office X" needs a defined branch for the vacant case, or it is unsatisfiable while nobody holds the office.
 
 ```

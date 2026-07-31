@@ -23,6 +23,10 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`); **snake_case** for all identifiers
 - Flag naming: `TAG_` for a flag that only ever lands on one nation, `GLOBAL_` for `set_global_flag` and global event targets, a bare domain prefix (e.g. `wot_`) for a flag that can land on any nation. Name the thing, not the mechanic: `wot_refused_to_support_us`, not `wot_support_none`
+- Do not add flags that duplicate authoritative state. Use `has_idea`,
+  `has_completed_focus`, variables, event targets, ideology, subject status,
+  faction membership, and similar direct checks instead. Use a flag only for
+  state that cannot be queried directly or must record a historical transition.
 
 ## Performance
 
