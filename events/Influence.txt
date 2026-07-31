@@ -1239,39 +1239,8 @@ country_event = {
 				set_temp_variable = { percent_change = 10 }
 				set_temp_variable = { influence_target = FROM.id }
 				change_influence_percentage = yes
-				# NATO member couped by hostile power — trigger USA response
-				if = {
-					limit = {
-						FROM = {
-							has_idea = NATO_member
-							NOT = { original_tag = USA }
-						}
-						NOT = { has_government = democratic }
-						NOT = { original_tag = USA }
-						OR = {
-							original_tag = CHI
-							original_tag = SOV
-							original_tag = PER
-						}
-						USA = {
-							exists = yes
-							has_idea = NATO_member
-							is_faction_leader = yes
-							NOT = { has_country_flag = collapsed_nation }
-							NOT = { has_country_flag = USA_nato_coup_recently }
-						}
-					}
-					FROM = { save_event_target_as = nato_coup_victim }
-					save_event_target_as = nato_coup_aggressor
-					USA = {
-						set_country_flag = {
-							flag = USA_nato_coup_recently
-							days = 365
-							value = 1
-						}
-						country_event = { id = department_of_state.233 days = 3 }
-					}
-				}
+				# NATO member couped by hostile power — fire dilemma on the current NATO faction leader (USA, or any other if USA is gone)
+				NATO_coup_response_pulse = yes
 				# Other major influencers get a chance to contest the coup
 				if = {
 					limit = {
@@ -1318,7 +1287,6 @@ country_event = {
 			#discovered
 			var:FROM.fail_factor_biggest = {
 				custom_effect_tooltip = influence_coup_largest_discovered_TT
-
 				FROM = {
 					add_opinion_modifier = { target = ROOT modifier = failed_coup }
 				}
@@ -1884,7 +1852,7 @@ country_event = {
 				set_temp_variable = { party_index = 22 }
 				set_temp_variable = { party_popularity_increase = 1 }
 				set_temp_variable = { temp_outlook_increase = 1 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 				set_temp_variable = { rul_party_temp = 22 }
 				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
@@ -2178,7 +2146,7 @@ country_event = {
 			else = {
 				set_temp_variable = { party_popularity_increase = 0.03 }
 			}
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_political_power = -50
 		}
 		add_political_power = -50
@@ -2237,7 +2205,7 @@ country_event = {
 			else = {
 				set_temp_variable = { party_popularity_increase = 0.06 }
 			}
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_political_power = -100
 		}
 		set_temp_variable = { percent_change = 15 }
@@ -3296,5 +3264,18 @@ country_event = {
 				spread_influence = yes
 			}
 		}
+	}
+}
+
+#Foreign lobbying has locked our government out of combating one influencer
+country_event = {
+	id = influence.62
+	title = influence.62.t
+	desc = influence.62.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = {
+		name = influence.62.a
 	}
 }
