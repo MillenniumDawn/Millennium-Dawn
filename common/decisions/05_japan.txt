@@ -167,9 +167,7 @@ JAP_base_okinawa_decision = {
 		icon = GFX_decision_generic_army_support
 
 		available = {
-			USA = {
-				NOT = { has_war_with = ROOT }
-			}
+			NOT = { has_war_with = USA }
 		}
 
 		visible = {
@@ -179,7 +177,14 @@ JAP_base_okinawa_decision = {
 		}
 
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 5
+
+			modifier = {
+				add = 10
+				USA = { has_opinion = { target = JAP value > 50 } }
+			}
+		}
 
 		cost = 200
 
@@ -647,10 +652,8 @@ JAP_domestic_policy_decision = {
 	JAP_saudi_aramco_crude_storage = {
 		visible = {
 			has_completed_focus = JAP_resource_security_initiative
-			SAU = {
-				exists = yes
-				NOT = { has_war_with = JAP }
-			}
+			country_exists = SAU
+			NOT = { has_war_with = SAU }
 		}
 		icon = sau_oil
 
@@ -1196,7 +1199,14 @@ JAP_domestic_policy_decision = {
 				days = 720
 			}
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	JAP_kansai_medical_special_zone = {
@@ -1223,7 +1233,14 @@ JAP_domestic_policy_decision = {
 				days = 720
 			}
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	JAP_kyushu_logistics_special_zone = {
@@ -1250,7 +1267,14 @@ JAP_domestic_policy_decision = {
 				days = 720
 			}
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	JAP_expand_special_zones_nationwide = {
@@ -1283,7 +1307,14 @@ JAP_domestic_policy_decision = {
 			add_to_variable = { JAP_regulatory_reform_internal_investments_money_cost_modifier = -0.10 tooltip = internal_investments_money_cost_modifier_tt }
 			add_to_variable = { JAP_regulatory_reform_production_speed_buildings_factor = 0.03 tooltip = production_speed_buildings_factor_tt }
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 20
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 }
 
@@ -1293,15 +1324,24 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 150
 
-		visible = {
-			hidden_trigger = {
-				has_country_flag = JAP_usa_removed_guarantee_article_nine
-			}
-		}
+		visible = { has_country_flag = JAP_usa_removed_guarantee_article_nine }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_restore_guarantee"
 			USA = { country_event = JAP_diplomacy.21 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				USA = {
+					diplomatic_relation = {
+						country = JAP
+						relation = guarantee
+					}
+				}
+				add_power_balance_value = {
+					id = JAP_article_nine
+					value = 0.20
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -1313,15 +1353,25 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			hidden_trigger = {
-				has_country_flag = JAP_american_naval_blockade_active
-			}
-		}
+		visible = { has_country_flag = JAP_american_naval_blockade_active }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_remove_american_blockade"
 			USA = { country_event = JAP_diplomacy.24 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				USA = {
+					diplomatic_relation = {
+						country = JAP
+						relation = naval_blockade
+						active = no
+					}
+				}
+				add_power_balance_value = {
+					id = JAP_article_nine
+					value = 0.20
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -1340,6 +1390,16 @@ JAP_article_nine_balance_of_power_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_restore_trade_relations"
 			USA = { country_event = JAP_diplomacy.18 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				remove_ideas = JAP_american_pressure_article_nine
+				USA = {
+					remove_opinion_modifier = {
+						target = JAP
+						modifier = JAP_usa_trade_pressure
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -1355,22 +1415,10 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = JAP_chinese_agression_five_tt
-				CHI = {
-					check_variable = {
-						var = CHI_chinese_aggression
-						value = 5
-						compare = greater_than_or_equals
-					}
-				}
+				tooltip = CHI_aggression_gt_5_tt
+				CHI = { check_variable = { CHI_chinese_aggression > 4 } }
 			}
 		}
 
@@ -1395,22 +1443,10 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = JAP_chinese_agression_ten_tt
-				CHI = {
-					check_variable = {
-						var = CHI_chinese_aggression
-						value = 10
-						compare = greater_than_or_equals
-					}
-				}
+				tooltip = CHI_aggression_gt_10_tt
+				CHI = { check_variable = { CHI_chinese_aggression > 9 } }
 			}
 		}
 
@@ -1435,22 +1471,10 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = JAP_chinese_agression_twelve_tt
-				CHI = {
-					check_variable = {
-						var = CHI_chinese_aggression
-						value = 12
-						compare = greater_than_or_equals
-					}
-				}
+				tooltip = CHI_aggression_gt_12_tt
+				CHI = { check_variable = { CHI_chinese_aggression > 11 } }
 			}
 		}
 
@@ -1475,22 +1499,10 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = JAP_chinese_agression_fourteen_tt
-				CHI = {
-					check_variable = {
-						var = CHI_chinese_aggression
-						value = 14
-						compare = greater_than_or_equals
-					}
-				}
+				tooltip = CHI_aggression_gt_14_tt
+				CHI = { check_variable = { CHI_chinese_aggression > 13 } }
 			}
 		}
 
@@ -1515,22 +1527,10 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = JAP_chinese_agression_sixteen_tt
-				CHI = {
-					check_variable = {
-						var = CHI_chinese_aggression
-						value = 16
-						compare = greater_than_or_equals
-					}
-				}
+				tooltip = CHI_aggression_gt_16_tt
+				CHI = { check_variable = { CHI_chinese_aggression > 15 } }
 			}
 		}
 
@@ -1555,22 +1555,10 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = JAP_chinese_agression_eighteen_tt
-				CHI = {
-					check_variable = {
-						var = CHI_chinese_aggression
-						value = 18
-						compare = greater_than_or_equals
-					}
-				}
+				tooltip = CHI_aggression_gt_18_tt
+				CHI = { check_variable = { CHI_chinese_aggression > 17 } }
 			}
 		}
 
@@ -1595,22 +1583,10 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = JAP_chinese_agression_twenty_tt
-				CHI = {
-					check_variable = {
-						var = CHI_chinese_aggression
-						value = 20
-						compare = greater_than_or_equals
-					}
-				}
+				tooltip = CHI_aggression_gt_20_tt
+				CHI = { check_variable = { CHI_chinese_aggression > 19 } }
 			}
 		}
 
@@ -1634,12 +1610,6 @@ JAP_article_nine_balance_of_power_category = {
 		cost = 50
 
 		days_remove = 180
-
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
 
 		available = {
 			threat > 0.15
@@ -1666,12 +1636,6 @@ JAP_article_nine_balance_of_power_category = {
 
 		days_remove = 180
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			threat > 0.30
 		}
@@ -1696,12 +1660,6 @@ JAP_article_nine_balance_of_power_category = {
 		cost = 50
 
 		days_remove = 180
-
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
 
 		available = {
 			threat > 0.60
@@ -1728,12 +1686,6 @@ JAP_article_nine_balance_of_power_category = {
 
 		days_remove = 100
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = JAP_article_nine_protests_appeal_tt
@@ -1743,48 +1695,7 @@ JAP_article_nine_balance_of_power_category = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = JAP_article_nine_protests_appeal_tt2
-				OR = {
-					AND = {
-						check_variable = { THIS.expected_military_sp > 1 }
-						has_idea = defence_00
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 2 }
-						has_idea = defence_01
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 3 }
-						has_idea = defence_02
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 4 }
-						has_idea = defence_03
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 5 }
-						has_idea = defence_04
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 6 }
-						has_idea = defence_05
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 7 }
-						has_idea = defence_06
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 8 }
-						has_idea = defence_07
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 9 }
-						has_idea = defence_08
-					}
-					AND = {
-						check_variable = { THIS.expected_military_sp > 10 }
-						has_idea = defence_09
-					}
-				}
+				check_variable = { THIS.expected_military_sp > military_law }
 			}
 		}
 
@@ -1812,12 +1723,6 @@ JAP_article_nine_balance_of_power_category = {
 		cost = 250
 
 		days_remove = 365
-
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
 
 		available = {
 			OR = {
@@ -1854,12 +1759,6 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = { NKO = { has_completed_focus = NKO_the_road_to_war } }
 
 		complete_effect = {
@@ -1882,12 +1781,6 @@ JAP_article_nine_balance_of_power_category = {
 		days_remove = 360
 
 		cost = 50
-
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
 
 		available = { NKO = { has_completed_focus = NKO_threaten_the_south } }
 
@@ -1912,12 +1805,6 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = { NKO = { has_completed_focus = NKO_accelerate_testing } }
 
 		complete_effect = {
@@ -1941,12 +1828,6 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = { NKO = { has_completed_focus = NKO_remilitarize_the_dmz } }
 
 		complete_effect = {
@@ -1969,12 +1850,6 @@ JAP_article_nine_balance_of_power_category = {
 		days_remove = 180
 
 		cost = 50
-
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
 
 		available = {
 			SOV = {
@@ -2004,12 +1879,6 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			SOV = { has_completed_focus = SOV_zhirinovsky_secure_east_asia }
 		}
@@ -2035,12 +1904,6 @@ JAP_article_nine_balance_of_power_category = {
 
 		cost = 50
 
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
-
 		available = {
 			SOV = { has_completed_focus = SOV_allied_nrk }
 		}
@@ -2065,12 +1928,6 @@ JAP_article_nine_balance_of_power_category = {
 		days_remove = 180
 
 		cost = 50
-
-		visible = {
-			has_power_balance = {
-				id = JAP_article_nine
-			}
-		}
 
 		available = {
 			SOV = { has_completed_focus = SOV_expand_pacific_naval_presence }
@@ -2114,20 +1971,23 @@ JAP_military_decision_category = {
 		}
 
 		cancel_trigger = {
-			check_variable = {
-				var = JAP_stability_factor_article9
-				value = 0
-				compare = less_than_or_equals
-			}
-			check_variable = {
-				var = JAP_war_support_weekly_article9
-				value = 0
-				compare = greater_than_or_equals
-			}
-			check_variable = {
-				var = JAP_recruitable_population_factor_article9
-				value = 0
-				compare = greater_than_or_equals
+			custom_trigger_tooltip = {
+				tooltip = JAP_consolidate_national_defense_framework_cancel_tt
+				check_variable = {
+					var = JAP_stability_factor_article9
+					value = 0
+					compare = less_than_or_equals
+				}
+				check_variable = {
+					var = JAP_war_support_weekly_article9
+					value = 0
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = JAP_recruitable_population_factor_article9
+					value = 0
+					compare = greater_than_or_equals
+				}
 			}
 		}
 
@@ -2142,33 +2002,15 @@ JAP_military_decision_category = {
 				MODIFIER = JAP_article9_modifier
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_stability_factor_article9
-					value = 0
-					compare = greater_than
-					}
-				}
+				limit = { check_variable = { JAP_stability_factor_article9 > 0 } }
 				add_to_variable = { JAP_stability_factor_article9 = -0.025 tooltip = stability_factor_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_war_support_weekly_article9
-					value = 0
-					compare = less_than
-					}
-				}
+				limit = { check_variable = { JAP_war_support_weekly_article9 < 0 } }
 				add_to_variable = { JAP_war_support_weekly_article9 = 0.001 tooltip = war_support_weekly_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_recruitable_population_factor_article9
-					value = 0
-					compare = less_than
-					}
-				}
+				limit = { check_variable = { JAP_recruitable_population_factor_article9 < 0 } }
 				add_to_variable = { JAP_recruitable_population_factor_article9 = 0.05 tooltip = recruitable_population_factor_tt }
 			}
 		}
@@ -2197,30 +2039,33 @@ JAP_military_decision_category = {
 		}
 
 		cancel_trigger = {
-			check_variable = {
-				var = JAP_experience_gain_air_factor_article9
-				value = 0
-				compare = greater_than_or_equals
-			}
-			check_variable = {
-				var = JAP_experience_gain_army_factor_article9
-				value = 0
-				compare = greater_than_or_equals
-			}
-			check_variable = {
-				var = JAP_experience_gain_navy_factor_article9
-				value = 0
-				compare = greater_than_or_equals
-			}
-			check_variable = {
-				var = JAP_max_command_power_mult_article9
-				value = 0
-				compare = greater_than_or_equals
-			}
-			check_variable = {
-				var = JAP_army_leader_cost_factor_article9
-				value = 0
-				compare = less_than_or_equals
+			custom_trigger_tooltip = {
+				tooltip = JAP_modernize_joint_command_cancel_tt
+				check_variable = {
+					var = JAP_experience_gain_air_factor_article9
+					value = 0
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = JAP_experience_gain_army_factor_article9
+					value = 0
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = JAP_experience_gain_navy_factor_article9
+					value = 0
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = JAP_max_command_power_mult_article9
+					value = 0
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = JAP_army_leader_cost_factor_article9
+					value = 0
+					compare = less_than_or_equals
+				}
 			}
 		}
 
@@ -2235,53 +2080,23 @@ JAP_military_decision_category = {
 				MODIFIER = JAP_article9_modifier
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_experience_gain_air_factor_article9
-					value = 0
-					compare = less_than
-					}
-				}
+				limit = { check_variable = { JAP_experience_gain_air_factor_article9 < 0 } }
 				add_to_variable = { JAP_experience_gain_air_factor_article9 = 0.05 tooltip = experience_gain_air_factor_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_experience_gain_army_factor_article9
-					value = 0
-					compare = less_than
-					}
-				}
+				limit = { check_variable = { JAP_experience_gain_army_factor_article9 < 0 } }
 				add_to_variable = { JAP_experience_gain_army_factor_article9 = 0.05 tooltip = experience_gain_army_factor_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_experience_gain_navy_factor_article9
-					value = 0
-					compare = less_than
-					}
-				}
+				limit = { check_variable = { JAP_experience_gain_navy_factor_article9 < 0 } }
 				add_to_variable = { JAP_experience_gain_navy_factor_article9 = 0.05 tooltip = experience_gain_navy_factor_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_max_command_power_mult_article9
-					value = 0
-					compare = less_than
-					}
-				}
+				limit = { check_variable = { JAP_max_command_power_mult_article9 < 0 } }
 				add_to_variable = { JAP_max_command_power_mult_article9 = 0.05 tooltip = max_command_power_mult_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_army_leader_cost_factor_article9
-					value = 0
-					compare = greater_than
-					}
-				}
+				limit = { check_variable = { JAP_army_leader_cost_factor_article9 > 0 } }
 				add_to_variable = { JAP_army_leader_cost_factor_article9 = 0.05 tooltip = army_leader_cost_factor_tt }
 			}
 		}
@@ -2310,25 +2125,28 @@ JAP_military_decision_category = {
 		}
 
 		cancel_trigger = {
-			check_variable = {
-				var = JAP_army_attack_factor_article9
-				value = 0
-				compare = greater_than_or_equals
-			}
-			check_variable = {
-				var = JAP_army_core_attack_factor_article9
-				value = 0
-				compare = less_than_or_equals
-			}
-			check_variable = {
-				var = JAP_army_defence_factor_article9
-				value = 0
-				compare = greater_than_or_equals
-			}
-			check_variable = {
-				var = JAP_army_core_defence_factor_article9
-				value = 0
-				compare = less_than_or_equals
+			custom_trigger_tooltip = {
+				tooltip = JAP_normalize_defense_procurement_cancel_tt
+				check_variable = {
+					var = JAP_army_attack_factor_article9
+					value = 0
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = JAP_army_core_attack_factor_article9
+					value = 0
+					compare = less_than_or_equals
+				}
+				check_variable = {
+					var = JAP_army_defence_factor_article9
+					value = 0
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = JAP_army_core_defence_factor_article9
+					value = 0
+					compare = less_than_or_equals
+				}
 			}
 		}
 
@@ -2343,43 +2161,19 @@ JAP_military_decision_category = {
 				MODIFIER = JAP_article9_modifier
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_army_attack_factor_article9
-					value = 0
-					compare = less_than
-					}
-				}
+				limit = { check_variable = { JAP_army_attack_factor_article9 < 0 } }
 				add_to_variable = { JAP_army_attack_factor_article9 = 0.05 tooltip = army_attack_factor_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_army_core_attack_factor_article9
-					value = 0
-					compare = greater_than
-					}
-				}
+				limit = { check_variable = { JAP_army_core_attack_factor_article9 > 0 } }
 				add_to_variable = { JAP_army_core_attack_factor_article9 = -0.05 tooltip = army_core_attack_factor_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_army_defence_factor_article9
-					value = 0
-					compare = less_than
-					}
-				}
+				limit = { check_variable = { JAP_army_defence_factor_article9 < 0 } }
 				add_to_variable = { JAP_army_defence_factor_article9 = 0.05 tooltip = army_defence_factor_tt }
 			}
 			if = {
-				limit = {
-					check_variable = {
-					var = JAP_army_core_defence_factor_article9
-					value = 0
-					compare = greater_than
-					}
-				}
+				limit = { check_variable = { JAP_army_core_defence_factor_article9 > 0 } }
 				add_to_variable = { JAP_army_core_defence_factor_article9 = -0.05 tooltip = army_core_defence_factor_tt }
 			}
 		}
@@ -2663,6 +2457,8 @@ JAP_military_decision_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_demand_sakhalin"
 			SOV = { country_event = JAP_diplomacy.68 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { transfer_state = 691 }
 			if = {
 				limit = { NOT = { 691 = { is_core_of = JAP } } }
 				691 = { add_core_of = JAP }
@@ -2691,6 +2487,8 @@ JAP_military_decision_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_demand_north_kuril"
 			SOV = { country_event = JAP_diplomacy.71 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { transfer_state = 690 }
 			if = {
 				limit = { NOT = { 690 = { is_core_of = JAP } } }
 				690 = { add_core_of = JAP }
@@ -2719,6 +2517,8 @@ JAP_military_decision_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_demand_south_kuril"
 			SOV = { country_event = JAP_diplomacy.74 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { transfer_state = 1168 }
 			if = {
 				limit = { NOT = { 1168 = { is_core_of = JAP } } }
 				1168 = { add_core_of = JAP }
@@ -2755,11 +2555,9 @@ JAP_military_decision_category = {
 
 		visible = {
 			has_completed_focus = JAP_russian_lost_territories
-			NOT = {
-				691 = { is_owned_by = JAP }
-				690 = { is_owned_by = JAP }
-				1168 = { is_owned_by = JAP }
-			}
+			NOT = { 691 = { is_owned_by = JAP } }
+			NOT = { 690 = { is_owned_by = JAP } }
+			NOT = { 1168 = { is_owned_by = JAP } }
 		}
 
 		on_map_mode = map_and_decisions_view
@@ -2792,8 +2590,8 @@ JAP_military_decision_category = {
 		visible = {
 			has_completed_focus = JAP_russian_lost_territories
 			NOT = { has_country_flag = JAP_kor_auto_claiming_done }
+			country_exists = KOR
 			KOR = {
-				exists = yes
 				any_core_state = {
 					NOT = { is_claimed_by = JAP }
 				}
@@ -2860,14 +2658,10 @@ JAP_military_decision_category = {
 		visible = {
 			has_completed_focus = JAP_russian_lost_territories
 			NOT = { has_country_flag = JAP_nko_auto_claiming_done }
+			country_exists = NKO
 			NKO = {
-				exists = yes
-				NOT = {
-					NKO = {
-						all_core_state = {
-							is_claimed_by = JAP
-						}
-					}
+				any_core_state = {
+					NOT = { is_claimed_by = JAP }
 				}
 			}
 		}
@@ -3576,6 +3370,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_palau = {
+		war_with_on_complete = PAU
 		available = {
 			NOT = { 819 = { is_owned_by = JAP } }
 		}
@@ -3594,6 +3389,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.154 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = PAU
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = PAU
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3601,6 +3410,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_micronesia = {
+		war_with_on_complete = MIC
 		available = {
 			NOT = { 821 = { is_owned_by = JAP } }
 		}
@@ -3619,6 +3429,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.157 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = MIC
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = MIC
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3626,6 +3450,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_nauru = {
+		war_with_on_complete = NAU
 		available = {
 			NOT = { 1117 = { is_owned_by = JAP } }
 		}
@@ -3645,6 +3470,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.160 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = NAU
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = NAU
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3652,6 +3491,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_kiribati = {
+		war_with_on_complete = KIR
 		available = {
 			NOT = { 546 = { is_owned_by = JAP } }
 		}
@@ -3671,6 +3511,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.163 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = KIR
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = KIR
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3678,6 +3532,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_marshall_islands = {
+		war_with_on_complete = MAR
 		available = {
 			NOT = { 820 = { is_owned_by = JAP } }
 		}
@@ -3697,6 +3552,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.166 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = MAR
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = MAR
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3704,6 +3573,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_tuvalu = {
+		war_with_on_complete = TUL
 		available = {
 			NOT = { 568 = { is_owned_by = JAP } }
 		}
@@ -3723,6 +3593,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.169 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = TUL
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = TUL
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3730,6 +3614,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_solomon_islands = {
+		war_with_on_complete = SOL
 		available = {
 			NOT = { 1225 = { is_owned_by = JAP } }
 		}
@@ -3749,6 +3634,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.172 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = SOL
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = SOL
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3756,6 +3655,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_guinea = {
+		war_with_on_complete = PAP
 		available = {
 			NOT = { PAP = { is_subject_of = JAP } }
 		}
@@ -3777,6 +3677,20 @@ JAP_military_decision_category = {
 				}
 				country_event = JAP_diplomacy.175
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = PAP
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = PAP
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3784,6 +3698,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_vanuatu = {
+		war_with_on_complete = VAN
 		available = {
 			NOT = { 543 = { is_owned_by = JAP } }
 		}
@@ -3803,6 +3718,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.178 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = VAN
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = VAN
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3810,6 +3739,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_fiji = {
+		war_with_on_complete = FIJ
 		available = {
 			NOT = { 535 = { is_owned_by = JAP } }
 		}
@@ -3829,6 +3759,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.181 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = FIJ
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = FIJ
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3836,6 +3780,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_samoa = {
+		war_with_on_complete = SAM
 		available = {
 			NOT = { 569 = { is_owned_by = JAP } }
 		}
@@ -3855,6 +3800,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.184 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = SAM
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = SAM
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3862,6 +3821,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_tonga = {
+		war_with_on_complete = TON
 		available = {
 			NOT = { 1115 = { is_owned_by = JAP } }
 		}
@@ -3882,6 +3842,20 @@ JAP_military_decision_category = {
 				owner = { country_event = JAP_diplomacy.187 }
 				add_claim_by = JAP
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = {
+					target = TON
+					end_wars = yes
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = TON
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3889,6 +3863,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_american_islands = {
+		war_with_on_complete = USA
 		visible = {
 			has_completed_focus = JAP_reclaim_the_pacific
 		}
@@ -3902,6 +3877,21 @@ JAP_military_decision_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_demand_american_islands"
 			USA = { country_event = JAP_diplomacy.190 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				transfer_state = 818
+				transfer_state = 823
+				transfer_state = 822
+				transfer_state = 825
+				transfer_state = 827
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = USA
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3909,6 +3899,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_french_islands = {
+		war_with_on_complete = FRA
 		visible = {
 			has_completed_focus = JAP_reclaim_the_pacific
 		}
@@ -3922,6 +3913,19 @@ JAP_military_decision_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_demand_french_islands"
 			FRA = { country_event = JAP_diplomacy.193 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				transfer_state = 71
+				transfer_state = 1215
+				transfer_state = 69
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = FRA
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3929,6 +3933,7 @@ JAP_military_decision_category = {
 		}
 	}
 	JAP_demand_british_islands = {
+		war_with_on_complete = ENG
 		visible = {
 			has_completed_focus = JAP_reclaim_the_pacific
 		}
@@ -3942,6 +3947,17 @@ JAP_military_decision_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision JAP_demand_british_islands"
 			ENG = { country_event = JAP_diplomacy.196 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				transfer_state = 18
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = ENG
+					type = take_claimed_state
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -4069,7 +4085,22 @@ JAP_japanese_economy_decisions = {
 			}
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 10
+				has_idea = JAP_entrenched_demand_shortfall_idea_3
+			}
+			modifier = {
+				add = 5
+				has_idea = JAP_entrenched_demand_shortfall_idea_2
+			}
+		}
 	}
 
 	JAP_temporary_consumption_tax_cut = {
@@ -4106,7 +4137,22 @@ JAP_japanese_economy_decisions = {
 			}
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 10
+				has_idea = JAP_entrenched_demand_shortfall_idea_3
+			}
+			modifier = {
+				add = 5
+				has_idea = JAP_entrenched_demand_shortfall_idea_2
+			}
+		}
 	}
 
 	JAP_active_public_investment_decision = {
@@ -4139,7 +4185,22 @@ JAP_japanese_economy_decisions = {
 				country_event = Japan_economy.21
 			}
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 10
+				has_idea = JAP_entrenched_demand_shortfall_idea_3
+			}
+			modifier = {
+				add = 5
+				has_idea = JAP_entrenched_demand_shortfall_idea_2
+			}
+		}
 	}
 
 	JAP_stimulating_demand_durable_goods_decision = {
@@ -4177,7 +4238,22 @@ JAP_japanese_economy_decisions = {
 			}
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 10
+				has_idea = JAP_entrenched_demand_shortfall_idea_3
+			}
+			modifier = {
+				add = 5
+				has_idea = JAP_entrenched_demand_shortfall_idea_2
+			}
+		}
 	}
 
 	JAP_wage_negotiations = {
@@ -4216,7 +4292,22 @@ JAP_japanese_economy_decisions = {
 			}
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 10
+				has_idea = JAP_entrenched_demand_shortfall_idea_3
+			}
+			modifier = {
+				add = 5
+				has_idea = JAP_entrenched_demand_shortfall_idea_2
+			}
+		}
 	}
 }
 

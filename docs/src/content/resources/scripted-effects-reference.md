@@ -44,6 +44,12 @@ random_controlled_state = {
 | Radar                  | `one_state_radar_station`          | `one_radar_station`                 |
 | Nuclear Reactor        | `one_state_nuclear_reactor`        | `one_random_nuclear_reactor`        |
 | Agriculture District   | `one_state_agriculture_district`   | `one_random_agriculture_district`   |
+| Land Facility          | —                                  | `one_random_land_facility`          |
+| Naval Facility         | —                                  | `one_random_naval_facility`         |
+| Air Facility           | —                                  | `one_random_air_facility`           |
+| Nuclear Facility       | —                                  | `one_random_nuclear_facility`       |
+
+The four research facilities are random-scope only — they pick a state that passes `can_construct_building` and build into a province, so there is no predefined-state variant.
 
 ### Building Costs (State-Level)
 
@@ -66,6 +72,7 @@ The cost implies the INCLUSION of a building slot. A single building slot is $1.
 | Fossil Powerplant                   | $2.25  |
 | Microchip Plant                     | $10.50 |
 | Composite Plant                     | $7.50  |
+| Research Facility (land/naval/air/nuclear) | $15.00 |
 
 ---
 
