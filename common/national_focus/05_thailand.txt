@@ -10649,8 +10649,7 @@ focus_tree = {
 
 		cost = 6
 
-		prerequisite = { focus = SIA_guarantee_maritime }
-		prerequisite = { focus = SIA_guarantee_mainland }
+		prerequisite = { focus = SIA_guarantee_maritime focus = SIA_guarantee_mainland focus = SIA_guarantee_indochina }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -10673,7 +10672,7 @@ focus_tree = {
 	# SIA_asean_crossroads at 42,6). The faction chain now sequences off the
 	# guarantee sub-arc capstone (SIA_protector_of_asean_focus) and gates on the
 	# peace track flag set by thailand.392 option a.
-	# Tags confirmed: MAY IND VIE PHI SIN LAO CBD BRM BRU
+	# Tags confirmed: MAY IND VIE PHI SIN LAO CBD BRM BRU SHN KAR WAA
 	########################
 
 	focus = {
@@ -10808,6 +10807,51 @@ focus_tree = {
 			if = {
 				limit = { country_exists = BRU is_faction_leader = yes NOT = { BRU = { is_in_faction = yes } } }
 				BRU = { country_event = { id = thailand.431 days = 2 } }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				is_historical_focus_on = no
+			}
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	focus = {
+		id = SIA_invite_breakaways
+		icon = military_achievements
+
+		x = -3
+		y = 1
+		relative_position_id = SIA_found_the_pact
+
+		cost = 5
+
+		prerequisite = { focus = SIA_found_the_pact }
+
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_invite_breakaways"
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = SIA_invite_breakaways_tt
+			# Opt-in invitations (thailand.431), same pattern as the mainland focus. The
+			# statelets exist only where they were released, so each guard no-ops otherwise.
+			if = {
+				limit = { country_exists = SHN is_faction_leader = yes NOT = { SHN = { is_in_faction = yes } } }
+				SHN = { country_event = { id = thailand.431 days = 2 } }
+			}
+			if = {
+				limit = { country_exists = KAR is_faction_leader = yes NOT = { KAR = { is_in_faction = yes } } }
+				KAR = { country_event = { id = thailand.431 days = 2 } }
+			}
+			if = {
+				limit = { country_exists = WAA is_faction_leader = yes NOT = { WAA = { is_in_faction = yes } } }
+				WAA = { country_event = { id = thailand.431 days = 2 } }
 			}
 		}
 
@@ -12112,10 +12156,25 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_guarantee_maritime"
-			if = { limit = { country_exists = PHI NOT = { PHI = { is_subject_of = ROOT } } NOT = { PHI = { is_guaranteed_by = ROOT } } } give_guarantee = PHI }
-			if = { limit = { country_exists = IND NOT = { IND = { is_subject_of = ROOT } } NOT = { IND = { is_guaranteed_by = ROOT } } } give_guarantee = IND }
-			if = { limit = { country_exists = BRU NOT = { BRU = { is_subject_of = ROOT } } NOT = { BRU = { is_guaranteed_by = ROOT } } } give_guarantee = BRU }
-			add_political_power = 25
+			# 20 PP per guarantee actually extended, summed into one temp so the player
+			# sees a single political power line instead of one row per neighbour.
+			set_temp_variable = { SIA_guarantee_pp_temp = 0 }
+			if = {
+				limit = { country_exists = PHI NOT = { PHI = { is_subject_of = ROOT } } NOT = { PHI = { is_guaranteed_by = ROOT } } }
+				give_guarantee = PHI
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			if = {
+				limit = { country_exists = IND NOT = { IND = { is_subject_of = ROOT } } NOT = { IND = { is_guaranteed_by = ROOT } } }
+				give_guarantee = IND
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			if = {
+				limit = { country_exists = BRU NOT = { BRU = { is_subject_of = ROOT } } NOT = { BRU = { is_guaranteed_by = ROOT } } }
+				give_guarantee = BRU
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			add_political_power = SIA_guarantee_pp_temp
 		}
 
 		ai_will_do = {
@@ -12139,9 +12198,81 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_guarantee_mainland"
-			if = { limit = { country_exists = VIE NOT = { VIE = { is_subject_of = ROOT } } NOT = { VIE = { is_guaranteed_by = ROOT } } } give_guarantee = VIE }
-			if = { limit = { country_exists = SIN NOT = { SIN = { is_subject_of = ROOT } } NOT = { SIN = { is_guaranteed_by = ROOT } } } give_guarantee = SIN }
-			add_political_power = 25
+			set_temp_variable = { SIA_guarantee_pp_temp = 0 }
+			if = {
+				limit = { country_exists = VIE NOT = { VIE = { is_subject_of = ROOT } } NOT = { VIE = { is_guaranteed_by = ROOT } } }
+				give_guarantee = VIE
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			if = {
+				limit = { country_exists = SIN NOT = { SIN = { is_subject_of = ROOT } } NOT = { SIN = { is_guaranteed_by = ROOT } } }
+				give_guarantee = SIN
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			if = {
+				limit = { country_exists = MAY NOT = { MAY = { is_subject_of = ROOT } } NOT = { MAY = { is_guaranteed_by = ROOT } } }
+				give_guarantee = MAY
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			add_political_power = SIA_guarantee_pp_temp
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	focus = {
+		id = SIA_guarantee_indochina
+		icon = focus_generic_national_security
+
+		x = -3
+		y = 1
+		relative_position_id = SIA_asean_protector
+
+		cost = 7
+
+		prerequisite = { focus = SIA_asean_protector }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_guarantee_indochina"
+			set_temp_variable = { SIA_guarantee_pp_temp = 0 }
+			if = {
+				limit = { country_exists = LAO NOT = { LAO = { is_subject_of = ROOT } } NOT = { LAO = { is_guaranteed_by = ROOT } } }
+				give_guarantee = LAO
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			if = {
+				limit = { country_exists = CBD NOT = { CBD = { is_subject_of = ROOT } } NOT = { CBD = { is_guaranteed_by = ROOT } } }
+				give_guarantee = CBD
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			if = {
+				limit = { country_exists = BRM NOT = { BRM = { is_subject_of = ROOT } } NOT = { BRM = { is_guaranteed_by = ROOT } } }
+				give_guarantee = BRM
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			# The statelets exist only where the SIA_burma_breakaway_question arc or MD's
+			# burma.txt released them; each guard no-ops in a game where they never spawn,
+			# so the political power bill scales with how many actually take the umbrella.
+			if = {
+				limit = { country_exists = SHN NOT = { SHN = { is_subject_of = ROOT } } NOT = { SHN = { is_guaranteed_by = ROOT } } }
+				give_guarantee = SHN
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			if = {
+				limit = { country_exists = KAR NOT = { KAR = { is_subject_of = ROOT } } NOT = { KAR = { is_guaranteed_by = ROOT } } }
+				give_guarantee = KAR
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			if = {
+				limit = { country_exists = WAA NOT = { WAA = { is_subject_of = ROOT } } NOT = { WAA = { is_guaranteed_by = ROOT } } }
+				give_guarantee = WAA
+				subtract_from_temp_variable = { SIA_guarantee_pp_temp = 20 }
+			}
+			add_political_power = SIA_guarantee_pp_temp
 		}
 
 		ai_will_do = {
@@ -14349,15 +14480,17 @@ focus_tree = {
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_gdp_from_resource_sector_modifier = 0.05 tooltip = gdp_from_resource_sector_modifier_tt }
-			# Sacrifice: any mine this size draws complaints from the villages downstream of the tailings ponds.
-			add_to_variable = { SIA_econ_stability_factor = -0.05 tooltip = stability_factor_tt }
-			# Sacrifice: under the extractive posture the same health complaints (real-world
-			# cyanide and heavy-metal contamination claims that shut Chatree down in 2017)
-			# land harder, feeding the Section 67 risk armed by SIA_extractive_drive.
+			# Sacrifice: any mine this size draws complaints from the villages downstream of
+			# the tailings ponds, and under the extractive posture the same health claims
+			# (real-world cyanide and heavy-metal contamination, which shut Chatree down in
+			# 2017) land harder, feeding the Section 67 risk armed by SIA_extractive_drive.
+			# Summed into one temp so the player sees a single stability line, not two.
+			set_temp_variable = { SIA_econ_stability_factor_temp = -0.05 }
 			if = {
 				limit = { has_country_flag = SIA_extractive_drive_active }
-				add_to_variable = { SIA_econ_stability_factor = -0.05 tooltip = stability_factor_tt }
+				subtract_from_temp_variable = { SIA_econ_stability_factor_temp = 0.05 }
 			}
+			add_to_variable = { SIA_econ_stability_factor = SIA_econ_stability_factor_temp tooltip = stability_factor_tt }
 		}
 
 		ai_will_do = {
