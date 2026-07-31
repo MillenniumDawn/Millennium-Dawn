@@ -8743,6 +8743,9 @@ focus_tree = {
 			set_country_flag = party21_banned
 			set_country_flag = party22_banned
 			set_country_flag = party24_banned
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_Royalist_agenda }
+			add_to_variable = { FRA_king_STAB = 0.1 tooltip = stability_factor_tt }
+			add_to_variable = { FRA_king_drift_defense = 0.15 tooltip = drift_defence_factor_tt }
 		}
 
 		ai_will_do = {
@@ -8820,7 +8823,7 @@ focus_tree = {
 			factor = 3
 		}
 	}
-	focus = {#TODO if they dont exist event about schism
+	focus = {
 		id = FRA_friend_pope
 		icon = accord_with_pope
 
@@ -8846,14 +8849,27 @@ focus_tree = {
 
 		completion_reward = {#propose to vatican or italy to take back the pope/claim his realms or claim them
 			log = "[GetDateText]: [THIS.GetName]: Focus id = FRA_friend_pope"
-			set_temp_variable = { temp_opinion = 15 }
+			IF = {
+				limit = {country_exists = HLS}
+				set_temp_variable = { temp_opinion = 15 }
 			change_the_clergy_opinion = yes
-			FRA = {
-				add_political_power = 150
-				diplomatic_relation = {
-					country = HLS
-					relation = guarantee
+				FRA = {
+					add_political_power = 150
+					diplomatic_relation = {
+						country = HLS
+						relation = guarantee
+					}
 				}
+			}
+			ELSE = {
+				country_event = france_md.541
+			}
+			every_other_country = {
+				limit = {has_idea = christian}
+			}
+			add_opinion_modifier = {
+				target = FRA
+				modifier = supports_us
 			}
 		}
 
@@ -9089,13 +9105,14 @@ focus_tree = {
 		id = FRA_elder_daughter
 		icon = christian_gov
 
-		x = 0
+		x = 4
 		y = 23
 		relative_position_id = FRA_state_of_french_politics
 
 		cost = 10
 
-		prerequisite = { focus = FRA_destroy_republicanism }
+		prerequisite = { focus = FRA_prepare_crusade }
+		prerequisite = { focus = FRA_catholic_league }
 		available = {nationalist_monarchists_are_in_power = yes}
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -9127,14 +9144,12 @@ focus_tree = {
 		id = FRA_republican_cancer
 		icon = monarchism3
 
-		x = 4
+		x = 0
 		y = 23
 		relative_position_id = FRA_state_of_french_politics
 
 		cost = 10
-
-		prerequisite = { focus = FRA_prepare_crusade }
-		prerequisite = { focus = FRA_catholic_league }
+		prerequisite = { focus = FRA_destroy_republicanism }
 		available = {
 			nationalist_monarchists_are_in_power = yes
 			has_idea = FRA_kingdom_restored_idea
@@ -9161,7 +9176,7 @@ focus_tree = {
 		icon = crusader_kingdom
 
 		x = 0
-		y = 25
+		y = 24
 		relative_position_id = FRA_state_of_french_politics
 
 		cost = 10
