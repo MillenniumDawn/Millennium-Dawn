@@ -1,17 +1,26 @@
 EH_drone_mission_calculations_effect = {
-	# Drones bonus
-	set_variable = { EH_drone_success_chance = EH_selected_drones_var }
-	multiply_variable = { EH_drone_success_chance = 0.06 }
+	# Success Chance
+	set_variable = {
+		EH_drone_success_chance = {
+			value = EH_selected_drones_var
+			multiply = 0.06
 
-	# Air Intel bonus
-	set_variable = { EH_temp_air_intel = air_intel@ALN }
-	clamp_variable = { var = EH_temp_air_intel max = 100 }
-	multiply_variable = { EH_temp_air_intel = 0.55 }
-	add_to_variable = { EH_drone_success_chance = EH_temp_air_intel }
+			# Air Intel Bonus
+			add = {
+				value = air_intel@ALN
+				clamp = { min = 0 max = 100 }
+				multiply = 0.55
+			}
+		}
+	}
 
-	# Failure chance
-	set_variable = { EH_drone_failure_chance = 100 }
-	subtract_from_variable = { EH_drone_failure_chance = EH_drone_success_chance }
+	# Failure Chance
+	set_variable = {
+		EH_drone_failure_chance = {
+			value = 100
+			subtract = EH_drone_success_chance
+		}
+	}
 
 	EH_refresh_gui = yes
 }
@@ -29,17 +38,30 @@ EH_drone_mission_effect = {
 			set_country_flag = EH_country_succeeded_in_drone_mission_flag # Important further while recruiting scientists
 			clear_variable = EH_drone_success_chance
 			clear_variable = EH_drone_failure_chance
-			clear_variable = EH_temp_air_intel
 
 			set_temp_variable_to_random = {
 				var = EH_temp_drones_lost
 				max = EH_selected_drones_var
 				integer = yes
 			}
-			add_ai_strategy = {
-				type = equipment_variant_production_factor
-				id = small_plane_suicide_airframe
-				value = -100
+			if = {
+				limit = {
+					has_equipment = {
+						small_plane_suicide_airframe > EH_selected_drones_var
+					}
+				}
+				add_ai_strategy = {
+					type = equipment_variant_production_factor
+					id = small_plane_suicide_airframe
+					value = -100
+				}
+			}
+			else = {
+				add_ai_strategy = {
+					type = equipment_variant_production_factor
+					id = medium_plane_suicide_airframe
+					value = -100
+				}
 			}
 		}
 		EH_drone_failure_chance = {
@@ -50,32 +72,69 @@ EH_drone_mission_effect = {
 	}
 
 	multiply_temp_variable = { EH_temp_drones_lost = -1 }
-	add_equipment_to_stockpile = {
-		type = small_plane_suicide_airframe
-		amount = EH_temp_drones_lost
+	if = {
+		limit = {
+			has_equipment = {
+				small_plane_suicide_airframe > EH_selected_drones_var
+			}
+		}
+		add_equipment_to_stockpile = {
+			type = small_plane_suicide_airframe
+			amount = EH_temp_drones_lost
+		}
+	}
+	else = {
+		add_equipment_to_stockpile = {
+			type = medium_plane_suicide_airframe
+			amount = EH_temp_drones_lost
+		}
 	}
 
 	EH_refresh_gui = yes
 }
 
 EH_calculate_research_sites_effects = {
-	set_variable = { EH_research_sites_research_speed_factor_var = 0.01 }
-	set_variable = { EH_research_sites_scientist_breakthrough_bonus_factor_var = 0.02 }
-	set_variable = { EH_research_sites_scientist_research_bonus_factor_var = 0.025 }
-	set_variable = { EH_research_sites_scientist_xp_gain_factor_var = 0.03 }
-	multiply_variable = { EH_research_sites_research_speed_factor_var = EH_research_sites_constructed_var }
-	multiply_variable = { EH_research_sites_scientist_breakthrough_bonus_factor_var = EH_research_sites_constructed_var }
-	multiply_variable = { EH_research_sites_scientist_research_bonus_factor_var = EH_research_sites_constructed_var }
-	multiply_variable = { EH_research_sites_scientist_xp_gain_factor_var = EH_research_sites_constructed_var }
+	set_variable = {
+		EH_research_sites_research_speed_factor_var = {
+			value = 0.01
+			multiply = EH_research_sites_constructed_var
+		}
+	}
+	set_variable = {
+		EH_research_sites_scientist_breakthrough_bonus_factor_var = {
+			value = 0.02
+			multiply = EH_research_sites_constructed_var
+		}
+	}
+	set_variable = {
+		EH_research_sites_scientist_research_bonus_factor_var = {
+			value = 0.025
+			multiply = EH_research_sites_constructed_var
+		}
+	}
+	set_variable = {
+		EH_research_sites_scientist_xp_gain_factor_var = {
+			value = 0.03
+			multiply = EH_research_sites_constructed_var
+		}
+	}
 	EH_refresh_gui = yes
 }
 
 EH_research_site_strike_effect = {
-	set_temp_variable = { EH_temp_strike_success_chance = 80 }
-	subtract_from_temp_variable = { EH_temp_strike_success_chance = EH_research_sites_protection_var }
+	set_temp_variable = {
+		EH_temp_strike_success_chance = {
+			value = 80
+			subtract = EH_research_sites_protection_var
+		}
+	}
 
-	set_temp_variable = { EH_temp_strike_failure_chance = 100 }
-	subtract_from_temp_variable = { EH_temp_strike_failure_chance = EH_temp_strike_success_chance }
+	set_temp_variable = {
+		EH_temp_strike_failure_chance = {
+			value = 100
+			subtract = EH_temp_strike_success_chance
+		}
+	}
 
 	random_list = {
 		EH_temp_strike_success_chance = {
@@ -122,11 +181,19 @@ EH_research_site_strike_effect = {
 }
 
 EH_research_site_scientist_survive_effect = {
-	set_temp_variable = { EH_temp_scientist_killed_chance = 40 }
-	subtract_from_temp_variable = { EH_temp_scientist_killed_chance = EH_research_sites_scientist_protection_var }
+	set_temp_variable = {
+		EH_temp_scientist_killed_chance = {
+			value = 40
+			subtract = EH_research_sites_scientist_protection_var
+		}
+	}
 
-	set_temp_variable = { EH_temp_scientist_survived_chance = 100 }
-	subtract_from_temp_variable = { EH_temp_scientist_survived_chance = EH_temp_scientist_killed_chance }
+	set_temp_variable = {
+		EH_temp_scientist_survived_chance = {
+			value = 100
+			subtract = EH_temp_scientist_killed_chance
+		}
+	}
 
 	random_list = {
 		EH_temp_scientist_killed_chance = {
@@ -226,18 +293,20 @@ EH_convergence_event_chain_effect = {
 }
 
 EH_set_randallite_effect = {
-	set_variable = { EH_randallite_stockpile = EH_total_randallite_var }
-	subtract_from_variable = { EH_randallite_stockpile = modifier@randallite_resource_cost_modifier }
-	clamp_variable = {
-		var = EH_randallite_stockpile
-		max = 300
+	set_variable = {
+		EH_randallite_stockpile = {
+			value = EH_total_randallite_var
+			subtract = modifier@randallite_resource_cost_modifier
+			clamp = { max = 300 }
+		}
 	}
 
-	set_variable = { EH_randallite_usage_var = EH_total_randallite_var }
-	subtract_from_variable = { EH_randallite_usage_var = EH_randallite_stockpile }
-	clamp_variable = {
-		var = EH_randallite_usage_var
-		max = 300
+	set_variable = {
+		EH_randallite_usage_var = {
+			value = EH_total_randallite_var
+			subtract = EH_randallite_stockpile
+			clamp = { max = 300 }
+		}
 	}
 	EH_refresh_gui = yes
 }
@@ -610,23 +679,29 @@ EH_reset_tesla_weapon = {
 }
 
 EH_calculate_mechs_production_time_effect = {
-	set_variable = { EH_mech_production_cost_var = 10 }
-	add_to_variable = { EH_mech_production_cost_var = EH_selected_mechs_var }
-	multiply_variable = { EH_mech_production_cost_var = EH_mech_production_time_multiplier_var }
+	set_variable = {
+		EH_mech_production_cost_var = {
+			value = 10
+			add = EH_selected_mechs_var
+			multiply = EH_mech_production_time_multiplier_var
+		}
+	}
 
-	set_temp_variable = { EH_mech_production_cost_modifier_var = 1 }
-	subtract_from_temp_variable = { EH_mech_production_cost_modifier_var = modifier@mech_production_speed_multiplier_modifier }
-	clamp_variable = {
-		var = EH_mech_production_cost_modifier_var
-		min = 0.05
+	set_temp_variable = {
+		EH_mech_production_cost_modifier_var = {
+			value = 1
+			subtract = modifier@mech_production_speed_multiplier_modifier
+			clamp = { min = 0.05 }
+		}
 	}
 	multiply_variable = { EH_mech_production_cost_var = EH_mech_production_cost_modifier_var }
 
-	set_variable = { EH_add_mech_production_var = 100 }
-	divide_variable = { EH_add_mech_production_var = EH_mech_production_cost_var }
-	clamp_variable = {
-		var = EH_add_mech_production_var
-		min = 5
+	set_variable = {
+		EH_add_mech_production_var = {
+			value = 100
+			divide = EH_mech_production_cost_var
+			clamp = { min = 5 }
+		}
 	}
 
 	EH_calculate_randallite_mech_production_cost_effect = yes
@@ -672,8 +747,12 @@ EH_start_mech_production_factory_1_effect = {
 		limit = { has_country_flag = EH_mech_2_selected_flag }
 		set_country_flag = EH_first_mech_2_selected_flag
 	}
-	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
-	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = {
+		EH_mech_randallite_cost_to_remove = {
+			value = EH_mech_production_randallite_cost_var
+			multiply = -1
+		}
+	}
 	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
 	custom_effect_tooltip = EH_mech_production_effects_TT
@@ -691,8 +770,12 @@ EH_start_mech_production_factory_2_effect = {
 		limit = { has_country_flag = EH_mech_2_selected_flag }
 		set_country_flag = EH_second_mech_2_selected_flag
 	}
-	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
-	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = {
+		EH_mech_randallite_cost_to_remove = {
+			value = EH_mech_production_randallite_cost_var
+			multiply = -1
+		}
+	}
 	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
 	custom_effect_tooltip = EH_mech_production_effects_TT
@@ -710,8 +793,12 @@ EH_start_mech_production_factory_3_effect = {
 		limit = { has_country_flag = EH_mech_2_selected_flag }
 		set_country_flag = EH_third_mech_2_selected_flag
 	}
-	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
-	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = {
+		EH_mech_randallite_cost_to_remove = {
+			value = EH_mech_production_randallite_cost_var
+			multiply = -1
+		}
+	}
 	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
 	custom_effect_tooltip = EH_mech_production_effects_TT
@@ -729,8 +816,12 @@ EH_start_mech_production_factory_4_effect = {
 		limit = { has_country_flag = EH_mech_2_selected_flag }
 		set_country_flag = EH_fourth_mech_2_selected_flag
 	}
-	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
-	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = {
+		EH_mech_randallite_cost_to_remove = {
+			value = EH_mech_production_randallite_cost_var
+			multiply = -1
+		}
+	}
 	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
 	custom_effect_tooltip = EH_mech_production_effects_TT
@@ -748,8 +839,12 @@ EH_start_mech_production_factory_5_effect = {
 		limit = { has_country_flag = EH_mech_2_selected_flag }
 		set_country_flag = EH_fifth_mech_2_selected_flag
 	}
-	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
-	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = {
+		EH_mech_randallite_cost_to_remove = {
+			value = EH_mech_production_randallite_cost_var
+			multiply = -1
+		}
+	}
 	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
 	custom_effect_tooltip = EH_mech_production_effects_TT
@@ -774,8 +869,12 @@ EH_change_hacs_cost_effect = { # Percentual. If x < 0, makes abs(x). If provided
 		multiply_temp_variable = { EH_change_hacs_cost_temp = -1 }
 	}
 
-	set_temp_variable = { EH_temp_loc_var = EH_change_hacs_cost_temp }
-	subtract_from_temp_variable = { EH_temp_loc_var = 1 }
+	set_temp_variable = {
+		EH_temp_loc_var = {
+			value = EH_change_hacs_cost_temp
+			subtract = 1
+		}
+	}
 	custom_effect_tooltip = EH_changed_hacs_cost_TT
 
 	if = {
