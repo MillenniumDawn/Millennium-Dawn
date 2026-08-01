@@ -1,4 +1,4 @@
-## Thailand: shared scripted effects (v0.2)
+## Thailand: shared scripted effects ()
 
 # Strip whichever barami tier the country currently holds. Called by the reform
 # (amend_112 / a_new_republic) and communist (people_seize_power) paths, which
@@ -24,9 +24,7 @@ SIA_remove_three_pillars = {
 SIA_ds_update_tier = {
 	if = {
 		limit = {
-			has_country_flag = SIA_ds_active
-			NOT = { has_country_flag = SIA_ds_resolved_force }
-			NOT = { has_country_flag = SIA_ds_resolved_peace }
+			SIA_ds_conflict_live = yes
 		}
 		clamp_variable = {
 			var = SIA_insurgency_intensity
@@ -99,7 +97,7 @@ SIA_ds_cleanup_effect = {
 	}
 	# Reset the permanent grievance floor and re-arm the crisis
 	# pressure mission so a resolved (or re-escalating smoldering) conflict
-	# can end / re-arm cleanly. v0.8 twin-meter: clear the grievance meter too —
+	# can end / re-arm cleanly. twin-meter: clear the grievance meter too —
 	# a terminal resolution settles the root cause, not just the violence.
 	set_variable = { SIA_ds_grievance = 0 }
 	set_variable = { SIA_ds_intensity_floor = 0 }
@@ -110,7 +108,7 @@ SIA_ds_cleanup_effect = {
 # intensity transition surfaces a custom_effect_tooltip). The caller sets
 # the signed delta first: set_temp_variable = { ds_delta = N }.
 # The floor (SIA_ds_intensity_floor) is derived from the community-grievance
-# meter (v0.8 twin-meter) — intensity can never fall below the grievance behind
+# meter ( twin-meter) — intensity can never fall below the grievance behind
 # it. Recompute the floor first so a freshly-changed grievance binds immediately.
 SIA_ds_set_intensity = {
 	SIA_ds_recompute_floor = yes
@@ -130,12 +128,13 @@ SIA_ds_set_intensity = {
 		limit = { check_variable = { ds_delta < 0 } }
 		custom_effect_tooltip = SIA_ds_intensity_down
 	}
-	else = {
+	else_if = {
+		limit = { check_variable = { ds_delta > 0 } }
 		custom_effect_tooltip = SIA_ds_intensity_up
 	}
 }
 
-# / v0.8 — heavy-handed tactics deepen community grievance. Caller sets
+# / — heavy-handed tactics deepen community grievance. Caller sets
 # set_temp_variable = { ds_floor_delta = N }. Kept as a thin compatibility wrapper
 # so every existing repression call site (Iron-Fist focuses, events 152/356) now
 # feeds the grievance meter; the intensity floor is derived from grievance in
@@ -163,7 +162,7 @@ SIA_ds_set_grievance = {
 		max = 100
 	}
 	SIA_ds_recompute_floor = yes
-	# (code-review P4): pick the tooltip by sign — guard the "eases" tooltip on a
+	# pick the tooltip by sign — guard the "eases" tooltip on a
 	# strictly negative delta so a future zero-delta caller never shows green "eases (0)".
 	if = {
 		limit = { check_variable = { ds_grievance_delta > 0 } }
@@ -187,7 +186,7 @@ SIA_ds_recompute_floor = {
 		min = 0
 		max = 100
 	}
-	# (code-review P1): the floor binds IMMEDIATELY. Repression call-sites cut
+	# the floor binds IMMEDIATELY. Repression call-sites cut
 	# intensity first and raise grievance second, which would otherwise leave intensity
 	# stranded below the freshly-raised floor until the next intensity change — making a
 	# terminal "end the insurgency" gate pass or fail by RNG/timing. Pull intensity up to
@@ -195,9 +194,7 @@ SIA_ds_recompute_floor = {
 	# resolved/never-started state never has its zeroed intensity dragged up).
 	if = {
 		limit = {
-			has_country_flag = SIA_ds_active
-			NOT = { has_country_flag = SIA_ds_resolved_force }
-			NOT = { has_country_flag = SIA_ds_resolved_peace }
+			SIA_ds_conflict_live = yes
 			check_variable = { SIA_insurgency_intensity < SIA_ds_intensity_floor }
 		}
 		set_variable = { SIA_insurgency_intensity = SIA_ds_intensity_floor }
@@ -226,7 +223,7 @@ SIA_add_threat_from_wargoal_effect = {
 ## Called weekly from on_weekly after 2011. Mirrors the SIA_ds_update_tier idiom;
 ## edit the deltas here to retune, the thresholds in 99_SIA_on_actions.txt to retime.
 SIA_political_drift_update = {
-	# --- Productivity proxy: the MD economy-cycle idea (depression .. economic_boom) ---
+	# -- Productivity proxy: the MD economy-cycle idea (depression.. economic_boom) ---
 	if = {
 		limit = { has_idea = depression }
 		add_to_variable = { SIA_reform_pressure = 0.9 }
@@ -257,7 +254,7 @@ SIA_political_drift_update = {
 		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.2 } }
 		subtract_from_variable = { SIA_rural_discontent = 0.2 }
 	}
-	# --- Stability: unrest pushes both; the countryside feels collapse hardest ---
+	# -- Stability: unrest pushes both; the countryside feels collapse hardest ---
 	if = {
 		limit = { has_stability < 0.35 }
 		add_to_variable = { SIA_reform_pressure = 0.4 }
@@ -273,10 +270,10 @@ SIA_political_drift_update = {
 		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.05 } }
 		subtract_from_variable = { SIA_rural_discontent = 0.05 }
 	}
-	# --- Generational shift: the cohort that never knew the boom years ---
+	# -- Generational shift: the cohort that never knew the boom years ---
 	if = { limit = { date > 2014.5.22 } add_to_variable = { SIA_reform_pressure = 0.3 } }   # 2014 coup
 	if = { limit = { date > 2018.3.15 } add_to_variable = { SIA_reform_pressure = 0.5 } }  # Future Forward founded
-	# --- Path structure ---
+	# -- Path structure ---
 	# Royalist "lid": the establishment suppresses open politics, so on this path the
 	# pressure-relief decays above (prosperity + calm) are SKIPPED — good governance no
 	# longer passively bleeds off reform pressure. Combined with this steady accrual, the
@@ -292,7 +289,7 @@ SIA_political_drift_update = {
 	clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
 	clamp_variable = { var = SIA_rural_discontent min = 0 max = 100 }
 
-	# --- Convert the barometers into a capped weekly party drift ---
+	# -- Convert the barometers into a capped weekly party drift ---
 	# Move Forward (socialism, idx 3): scaled by reform pressure, capped at 0.45 so it
 	# pressures the system but never auto-wins. At pressure 50 this is ~+0.008/wk, and a
 	# sustained high pressure now drives Move Forward firmly toward its cap. Gated to the
@@ -308,6 +305,7 @@ SIA_political_drift_update = {
 		set_temp_variable = { party_popularity_increase = SIA_reform_pressure }
 		multiply_temp_variable = { party_popularity_increase = 0.00016 }
 		change_relative_party_popularity = yes
+		set_temp_variable = { sia_drift_moved = 1 }
 	}
 	# Pheu Thai populism (neutral_Social, idx 18): the countryside's anti-establishment vote.
 	if = {
@@ -319,6 +317,7 @@ SIA_political_drift_update = {
 		set_temp_variable = { party_popularity_increase = SIA_rural_discontent }
 		multiply_temp_variable = { party_popularity_increase = 0.00014 }
 		change_relative_party_popularity = yes
+		set_temp_variable = { sia_drift_moved = 1 }
 	}
 	# Establishment recovery: calm plus prosperity lets the palace network reclaim ground.
 	if = {
@@ -331,8 +330,14 @@ SIA_political_drift_update = {
 		set_temp_variable = { party_index = 23 }
 		set_temp_variable = { party_popularity_increase = 0.003 }
 		change_relative_party_popularity = yes
+		set_temp_variable = { sia_drift_moved = 1 }
 	}
-	recalculate_party = yes
+	# recalculate_party is a 24-entry sort plus a full coalition rebuild; skip it on
+	# the weeks where no drift branch moved anything.
+	if = {
+		limit = { check_variable = { sia_drift_moved = 1 } }
+		recalculate_party = yes
+	}
 }
 
 ## ─── Opening-year Thaksinite surge (2000 → the 2001 election) ─────────
@@ -401,9 +406,7 @@ SIA_nap_decline_step = {
 SIA_coup_update_tier = {
 	if = {
 		limit = {
-			has_country_flag = SIA_path_populist
-			NOT = { has_idea = SIA_junta_government }
-			NOT = { has_country_flag = SIA_coups_disabled }
+			SIA_coup_machinery_live = yes
 		}
 		clamp_variable = { var = SIA_coup_risk min = 0 max = 100 }
 		if = {
@@ -446,7 +449,8 @@ SIA_coup_set_risk = {
 		limit = { check_variable = { coup_delta < 0 } }
 		custom_effect_tooltip = SIA_coup_risk_decrease_tt
 	}
-	else = {
+	else_if = {
+		limit = { check_variable = { coup_delta > 0 } }
 		custom_effect_tooltip = SIA_coup_risk_increase_tt
 	}
 }
@@ -569,7 +573,8 @@ SIA_pt_pressure_set = {
 		limit = { check_variable = { pt_delta < 0 } }
 		custom_effect_tooltip = SIA_pt_pressure_decrease_tt
 	}
-	else = {
+	else_if = {
+		limit = { check_variable = { pt_delta > 0 } }
 		custom_effect_tooltip = SIA_pt_pressure_increase_tt
 	}
 }
@@ -661,6 +666,12 @@ SIA_clear_path_flags = {
 	if = { limit = { has_country_flag = SIA_path_royalist } clr_country_flag = SIA_path_royalist }
 	if = { limit = { has_country_flag = SIA_path_reform }   clr_country_flag = SIA_path_reform }
 	if = { limit = { has_country_flag = SIA_path_democrat } clr_country_flag = SIA_path_democrat }
+	# The communist road is entered before the party holds power, so its flag can
+	# still be set when another trunk realigns. Left standing it freezes the weekly
+	# realignment detector, which skips every tick while it is set.
+	if = { limit = { has_country_flag = SIA_path_communist } clr_country_flag = SIA_path_communist }
+	if = { limit = { has_country_flag = SIA_communist_armed_path } clr_country_flag = SIA_communist_armed_path }
+	if = { limit = { has_country_flag = SIA_communist_peaceful_path } clr_country_flag = SIA_communist_peaceful_path }
 	# The opening-year Thaksinite surge is a pre-realignment mechanic; retire it the
 	# moment any path is committed so it never runs alongside the standing systems.
 	if = { limit = { has_idea = SIA_thaksin_ascendant } remove_ideas = SIA_thaksin_ascendant }
@@ -751,13 +762,18 @@ SIA_junta_party_shift = {
 # the variable behind the SIA_trade_diplomacy_network dynamic modifier's
 # foreign_influence_modifier line. Called on the granting focus and refreshed
 # monthly in 99_SIA_on_actions.txt.
-#
 # Balance: 0.01 per agreement, clamped to +0.10 (Singapore is 0.02, clamped +0.30).
 SIA_recalculate_trade_diplomacy = {
-	set_variable = { SIA_trade_influence_strength = signed_trade_agreements }
-	multiply_variable = { SIA_trade_influence_strength = 0.01 }
-	clamp_variable = { var = SIA_trade_influence_strength min = 0 max = 0.10 }
-	force_update_dynamic_modifier = yes
+	# force_update_dynamic_modifier refreshes every dynamic modifier on the country,
+	# so only pay for it when the agreement count has actually moved.
+	if = {
+		limit = { NOT = { check_variable = { SIA_trade_agreements_last = signed_trade_agreements } } }
+		set_variable = { SIA_trade_agreements_last = signed_trade_agreements }
+		set_variable = { SIA_trade_influence_strength = signed_trade_agreements }
+		multiply_variable = { SIA_trade_influence_strength = 0.01 }
+		clamp_variable = { var = SIA_trade_influence_strength min = 0 max = 0.10 }
+		force_update_dynamic_modifier = yes
+	}
 }
 
 # The monthly trade dividend. Pays treasury scaled by the number of signed trade

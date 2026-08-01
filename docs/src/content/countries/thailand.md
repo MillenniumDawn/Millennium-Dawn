@@ -40,7 +40,7 @@ Thailand starts democratic, with the Democrat Party in power under Chuan Leekpai
 
 ## Focus Tree
 
-The tree has 299 focuses. A shared economic and diplomatic trunk is open to any government, and five political paths branch from the 2000 start:
+The tree has 386 focuses. A shared economic and diplomatic trunk is open to any government, and five political paths branch from the 2000 start:
 
 - **Thaksinist Populism** — the Thai Rak Thai landslide, rural spending, and the coup risk that comes with it.
 - **Royalist Establishment** — the palace, the army and the network that outlasts elected governments.
@@ -70,13 +70,12 @@ A dynamic modifier scaled by Thailand's signed trade agreements, deliberately we
 
 ## Content
 
-- 299 focuses
-- 273 national spirits
-- 75 decisions across 16 categories
-- 203 events
+- 386 focuses
+- 154 national spirits
+- 86 decisions across 12 categories
+- 196 events
 - 8 military industrial organizations covering the Thai defence industry: DTI, Chaiseri, Panus, Bangkok Dock, Marsun, TAI, DID and RV Connex
 
 ## Game Rules
 
-- **Alt-History Thailand** — gates the Greater Thailand branch, the Pan-Thai national spirit, and the two fictional wartime leaders. On by default.
-- **Thailand Greater Thailand AI** — whether an AI Thailand may pursue the Greater Thailand expansion. Historical by default.
+- **Alt-History Thailand** — gates the Greater Thailand branch, the Pan-Thai national spirit, and the two alternate-history wartime leaders. On by default.
