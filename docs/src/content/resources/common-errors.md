@@ -13,7 +13,7 @@ This guide is intended for developers to find and fix common errors and crashes 
 
 **Cause:** Setting `ai_will_do = { base = 0 }` on a special project causes a crash. Unlike focuses and decisions where `base = 0` is valid, the special projects system does not handle a zero base value correctly.
 
-**Note:** Using `factor = 0` inside a `modifier` block within `ai_will_do` is fine — the crash only occurs when the root-level `base` itself is 0.
+**Note:** Using `factor = 0` inside a `modifier` block within `ai_will_do` is fine, the crash only occurs when the root-level `base` itself is 0.
 
 **Fix:** Use a very small positive value instead:
 
@@ -39,7 +39,7 @@ ai_will_do = {
 **How it happens:** This usually occurs when a generic or scoped effect fires `give_military_access` using a variable or `FROM`/`ROOT` target without checking that the target is not the same country. For example:
 
 ```hoi4
-# WRONG — if ROOT and FROM are the same country, this corrupts the save
+# WRONG: if ROOT and FROM are the same country, this corrupts the save
 give_military_access = FROM
 ```
 
@@ -69,7 +69,7 @@ if = {
 1. **Event fires itself directly:**
 
 ```hoi4
-# WRONG — option fires the same event, infinite loop
+# WRONG: option fires the same event, infinite loop
 country_event = { id = my_event.1 }
 option = {
 	name = my_event.1.a
@@ -80,7 +80,7 @@ option = {
 2. **Two events fire each other:**
 
 ```hoi4
-# Event A fires Event B, Event B fires Event A — infinite ping-pong
+# Event A fires Event B, Event B fires Event A: infinite ping-pong
 ```
 
 3. **on_action or MTTH event with no exit condition:**

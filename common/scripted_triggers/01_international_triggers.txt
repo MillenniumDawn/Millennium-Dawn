@@ -1,3 +1,25 @@
+# Auto-vote flags for UN Security Council votes
+# Used by UNSC.100 and recognition.11 to skip sending vote events to AI nations
+# that have opted into automatic voting.
+has_auto_sc_vote = {
+	OR = {
+		has_country_flag = auto_accept_all_sc_votes
+		has_country_flag = auto_reject_all_sc_votes
+		has_country_flag = auto_abstain_all_sc_votes
+	}
+}
+
+# Auto-vote flags for UN General Assembly votes
+# Used by UN.100 and recognition.14 to skip sending vote events to AI nations
+# that have opted into automatic voting.
+has_auto_ga_vote = {
+	OR = {
+		has_country_flag = auto_accept_all_ga_votes
+		has_country_flag = auto_reject_all_ga_votes
+		has_country_flag = auto_abstain_all_ga_votes
+	}
+}
+
 is_major_company = {
 	OR = {
 		has_country_flag = blackwater_sel
@@ -9,17 +31,12 @@ is_major_company = {
 }
 
 has_support_of_p5 = {
-	meta_trigger = {
-		text = {
-			custom_trigger_tooltip = {
-				tooltip = security_council_support_tt
-				all_of_scopes = {
-					array = global.p5_sc_members
-					has_country_flag = Recognised_[thname]
-				}
-			}
+	custom_trigger_tooltip = {
+		tooltip = security_council_support_tt
+		all_of_scopes = {
+			array = global.p5_sc_members
+			has_country_flag = Recognised_@FROM
 		}
-		thname = "[?FROM.GetTag]"
 	}
 }
 
@@ -35,40 +52,23 @@ is_on_un_sec_council = {
 	}
 }
 
-EU_voting_decision_result_trigger = {
-	check_variable = { global.EU_pop_ratio_yes > 0.65 }
-	set_temp_variable = { total_eu_members = global.EU_active_vote_yes }
-	add_to_temp_variable = { total_eu_members = global.EU_active_vote_no }
-	set_temp_variable = { vote_numbers = global.EU_active_vote_yes }
-	divide_temp_variable = { vote_numbers = total_eu_members }
-	check_variable = { vote_numbers > 0.55 }
-}
-
 un_sc_voting_result_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = ongoing_sc_vote_tt
-		check_variable = { global.security_council_vote_yes > 8 }
+		check_variable = { global.security_council_vote_yes^num > 8 }
 		NOT = { has_global_flag = security_council_veto }
 	}
 }
 
 un_ga_2_3_required = {
-	set_temp_variable = { cur_assembly_target = global.UN_general_assembly^num }
-	multiply_temp_variable = { cur_assembly_target = 0.66 }
-	round_temp_variable = cur_assembly_target
-	subtract_from_temp_variable = { cur_assembly_target = 1 }
-
-	check_variable = { global.general_assembly_vote_yes^num > cur_assembly_target }
+	check_variable = { var = global.general_assembly_vote_yes^num value = global.un_2_3_number compare = greater_than_or_equals }
 }
 
 is_full_state = {
 	custom_trigger_tooltip = {
 		tooltip = is_un_is_recognized_nation
-		NOT = {
-			has_idea = Non_State_Actor
-			has_idea = Lacks_International_Recognition
-			has_idea = Lacks_International_Recognition_Taiwan
-		}
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_idea = lacks_international_recognition }
 	}
 }
 
@@ -188,5 +188,17 @@ has_target_in_country_intel = {
 
 	FROM = {
 		controls_state = var:current_target
+	}
+}
+
+is_valid_ct_nation_target = {
+	exists = yes
+	NOT = { tag = ROOT }
+}
+
+has_valid_ct_nation_selected = {
+	NOT = { check_variable = { selected_ct_nation = THIS } }
+	var:selected_ct_nation = {
+		exists = yes
 	}
 }

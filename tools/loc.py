@@ -40,15 +40,15 @@ def readfile(name):
     try:
         with open(name, "r") as f:
             lines = f.read().splitlines()
-    except:
+    except Exception:
         try:
             with open(name, "r", encoding="utf-8") as f:
                 lines = f.read().splitlines()
-        except:
+        except Exception:
             try:
                 with open(name, "r", encoding="utf-8-sig") as f:
                     lines = f.read().splitlines()
-            except:
+            except Exception:
                 print("Could not read file " + name + "!")
     tags = collections.OrderedDict()
 
@@ -175,63 +175,67 @@ parser.add_argument(
     help='Add "#TODO" to every added line instead of just once (Default: False)',
 )
 
-args = parser.parse_args()
 
-parsed_file = readfile(args.input)
-# if not parsed_file[1][0] and not parsed_file[1][1] and not parsed_file[1][2:]:
-#    sys.exit("File " + args.input + " is not a valid event, national_focus or ideas file.")
-lines = list()
-try:
-    with open(args.output, "r") as f:
-        lines = f.read().splitlines()
-except:
+def main():
+    args = parser.parse_args()
+
+    parsed_file = readfile(args.input)
+    lines = list()
     try:
-        with open(args.output, "r", encoding="utf-8") as f:
+        with open(args.output, "r") as f:
             lines = f.read().splitlines()
-    except:
+    except Exception:
         try:
-            with open(args.output, "r", encoding="utf-8-sig") as f:
+            with open(args.output, "r", encoding="utf-8") as f:
                 lines = f.read().splitlines()
-        except:
-            print("Could not read file " + args.output + "!")
-output_lines = list()
-if len(lines) < 1:
+        except Exception:
+            try:
+                with open(args.output, "r", encoding="utf-8-sig") as f:
+                    lines = f.read().splitlines()
+            except Exception:
+                print("Could not read file " + args.output + "!")
+    output_lines = list()
+    if len(lines) < 1:
+        print(
+            "Output file "
+            + args.output
+            + " is empty or doesn't exist, creating a new english localisation file."
+        )
+        output_lines.append("l_english:")
+    for line in lines:
+        for i, parsed_line in enumerate(parsed_file[0]):
+            match = re.match(r"^([^#:]*):", line)
+            if match and match.group(1).strip() == parsed_line.strip():
+                print(parsed_line + " already in output file, skipping")
+                parsed_file[0].remove(parsed_file[0][i])
+    if len(parsed_file[0]) > 0:
+        if not args.todo:
+            output_lines.append("\n #TODO")
+        else:
+            output_lines.append("\n")
+        for line in parsed_file[0]:
+            if args.todo:
+                output_lines.append(" #TODO")
+            x = line
+            x = line.split("_")
+            y = ""
+            for i in x:
+                if "SPR" in i:
+                    print("hah pink shirt")
+                else:
+                    y = y + i.capitalize() + " "
+            print(y)
+            output_lines.append(" " + line + ': "' + y + '"')
+        with open(args.output, "a") as f:
+            f.writelines(str(line) + "\n" for line in output_lines)
     print(
-        "Output file "
+        "Appended "
+        + str(len(parsed_file[0]))
+        + " lines to output file "
         + args.output
-        + " is empty or doesn't exist, creating a new english localisation file."
+        + " successfully!"
     )
-    output_lines.append("l_english:")
-for line in lines:
-    for i, parsed_line in enumerate(parsed_file[0]):
-        match = re.match(r"^([^#:]*):", line)
-        if match and match.group(1).strip() == parsed_line.strip():
-            print(parsed_line + " already in output file, skipping")
-            parsed_file[0].remove(parsed_file[0][i])
-if len(parsed_file[0]) > 0:
-    if not args.todo:
-        output_lines.append("\n #TODO")
-    else:
-        output_lines.append("\n")
-    for line in parsed_file[0]:
-        if args.todo:
-            output_lines.append(" #TODO")
-        x = line
-        x = line.split("_")
-        y = ""
-        for i in x:
-            if "SPR" in i:
-                print("hah pink shirt")
-            else:
-                y = y + i.capitalize() + " "
-        print(y)
-        output_lines.append(" " + line + ': "' + y + '"')
-    with open(args.output, "a") as f:
-        f.writelines(str(line) + "\n" for line in output_lines)
-print(
-    "Appended "
-    + str(len(parsed_file[0]))
-    + " lines to output file "
-    + args.output
-    + " successfully!"
-)
+
+
+if __name__ == "__main__":
+    main()

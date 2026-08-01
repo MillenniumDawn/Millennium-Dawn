@@ -1,0 +1,1829 @@
+#### Other Generic Politics ########
+generic_coalition_politics_decisions = {
+	leave_UNASUL = {
+		icon = GFX_decision_generic_decision
+
+		visible = { has_idea = UNASUL_member }
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision leave_UNASUL"
+			UNASUL_leave = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	## Change election laws ##
+
+	# Demobilization
+	demobilize_after_warfare_mission = {
+		activation = {
+			has_war = no
+			# Fascists and Caliph can go higher
+			nationalist_fascist_are_in_power = no
+			salafist_caliphate_are_in_power = no
+			OR = {
+				has_idea = defence_09
+				has_idea = defence_08
+				has_idea = defence_07
+			}
+		}
+		days_mission_timeout = 180
+		icon = GFX_decision_demobilisation_button
+		selectable_mission = yes
+
+		cancel_trigger = {
+			has_war = yes
+			NOT = {
+				OR = {
+					has_idea = defence_09
+					has_idea = defence_08
+					has_idea = defence_07
+				}
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision demobilize_after_warfare_mission"
+			if = { limit = { has_idea = defence_09 }
+				swap_ideas = {
+					remove_idea = defence_09
+					add_idea = defence_06
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = defence_08
+				}
+				swap_ideas = {
+					remove_idea = defence_08
+					add_idea = defence_06
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = defence_07
+				}
+				swap_ideas = {
+					remove_idea = defence_07
+					add_idea = defence_06
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	### Extremist Civil Wars
+	fascism_extremist_civil_war = {
+		icon = revolt
+
+		cost = 150
+
+		visible = {
+			check_variable = { party_pop_array^21 > 0.10 } #significant fascism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					nationalist_fascist_are_in_coalition = yes #not is in coalition
+					nationalist_fascist_are_in_power = yes #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = nationalist
+			}
+			custom_trigger_tooltip = {
+				tooltip = fascism_20_tt
+				check_variable = { party_pop_array^21 > 0.2 } #test
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision fascism_extremist_civil_war"
+
+			hidden_effect = {
+				#Release copy of existing
+				start_civil_war_with_no_leader_change = yes
+
+				#replicating current politics
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { TAG = PREV }
+					}
+					civil_war_replication_effect = yes
+				}
+
+				#For player:
+
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.5
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 21 } #fascists
+					set_variable = { party_pop_array^21 = 0.7 } #generate the rest
+					startup_politics = yes
+				}
+
+				#Switch to fascist leader
+					set_country_flag = set_Nat_Fascism
+					set_leader = yes
+
+				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	nat_autocracy_extremist_civil_war = {
+		icon = revolt
+
+		cost = 150
+
+		visible = {
+			check_variable = { party_pop_array^22 > 0.10 } #significant nat autocracy
+			has_civil_war = no
+			NOT = {
+				OR = {
+					nationalist_military_junta_are_in_coalition = yes #not is in coalition
+					nationalist_military_junta_are_in_power = yes #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = nationalist
+			}
+			custom_trigger_tooltip = {
+				tooltip = nat_autocracy_20_tt
+				check_variable = { party_pop_array^22 > 0.2 } #test
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision nat_autocracy_extremist_civil_war"
+
+			hidden_effect = {
+				#Release copy of existing
+				start_civil_war_with_no_leader_change = yes
+
+				#replicating current politics
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { TAG = PREV }
+					}
+					civil_war_replication_effect = yes
+				}
+
+				#For player:
+
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.5
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 22 } #nat autocracy
+					set_variable = { party_pop_array^22 = 0.7 } #generate the rest
+					startup_politics = yes
+				}
+
+				#Switch to nat autocracy leader
+					set_country_flag = set_Nat_Autocracy
+					set_leader = yes
+
+				log = "[GetDateText]: [This.GetName]: nat_autocracy_extremist_civil_war setup finished"
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	monarchist_extremist_civil_war = {
+		icon = revolt
+
+		cost = 150
+
+		visible = {
+			check_variable = { party_pop_array^23 > 0.10 } #significant fascism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					nationalist_monarchists_are_in_coalition = yes #not is in coalition
+					nationalist_monarchists_are_in_power = yes #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = nationalist
+			}
+			custom_trigger_tooltip = {
+				tooltip = monarchist_20_tt
+				check_variable = { party_pop_array^23 > 0.2 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision monarchist_extremist_civil_war"
+
+			hidden_effect = {
+				#Release copy of existing
+				start_civil_war_with_no_leader_change = yes
+
+				#replicating current politics
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { TAG = PREV }
+					}
+					civil_war_replication_effect = yes
+				}
+
+				#For player:
+
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.5
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 23 } #monarchist
+					set_variable = { party_pop_array^23 = 0.7 } #generate the rest
+					startup_politics = yes
+				}
+
+				#Switch to monarchist leader
+					set_country_flag = set_Monarchist
+					set_leader = yes
+
+				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	caliphate_extremist_civil_war = {
+		allowed = {
+			NOT = { tag = BHR }
+			NOT = { tag = KUW }
+			NOT = { tag = OMA }
+			NOT = { tag = QAT }
+			NOT = { tag = SAU }
+			NOT = { tag = UAE }
+		}
+		icon = revolt
+
+		cost = 150
+
+		visible = {
+			check_variable = { party_pop_array^11 > 0.10 } #significant jihadist
+			has_civil_war = no
+			NOT = {
+				OR = {
+					salafist_caliphate_are_in_coalition = yes #not is in coalition
+					salafist_caliphate_are_in_power = yes #not is ruling party
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = caliphate_20_tt
+				check_variable = { party_pop_array^11 > 0.2 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision caliphate_extremist_civil_war"
+
+			hidden_effect = {
+				#Release copy of existing
+				start_civil_war_with_no_leader_change = yes
+
+				#replicating current politics
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { TAG = PREV }
+					}
+					civil_war_replication_effect = yes
+				}
+
+				#For player:
+
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = fascism
+					popularity = 0.5
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 11 } #jihadist
+					set_variable = { party_pop_array^11 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+
+				#Switch to fascist leader
+					set_country_flag = set_Caliphate
+					set_leader = yes
+
+				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	communist_state_extremist_civil_war = {
+		icon = revolt
+
+		cost = 150
+
+		visible = {
+			check_variable = { party_pop_array^4 > 0.10 } #significant communism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					emerging_communist_state_are_in_coalition = yes #not is in coalition
+					emerging_communist_state_are_in_power = yes #not is ruling party
+					#not already communist
+					neutrality_neutral_communism_are_in_coalition = yes #not is in coalition
+					neutrality_neutral_communism_are_in_power = yes #not is ruling party
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = communist_state_20_tt
+				check_variable = { party_pop_array^4 > 0.2 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision communist_state_extremist_civil_war"
+
+			hidden_effect = {
+				#Release copy of existing
+				start_civil_war_with_no_leader_change = yes
+
+				#replicating current politics
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { TAG = PREV }
+					}
+					civil_war_replication_effect = yes
+				}
+
+				#copy leader throughput
+				set_temp_variable = { nation_to_copy_from = PREV }
+				copy_subideolgy_leader_throughput = yes
+
+				#For player:
+
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.5
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 4 } #communism
+					set_variable = { party_pop_array^4 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				#Switch to commie leader
+				set_country_flag = set_Communist-State
+				set_leader = yes
+
+				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	neutral_communist_extremist_civil_war = {
+		icon = revolt
+
+		cost = 150
+
+		visible = {
+			check_variable = { party_pop_array^19 > 0.10 } #significant communism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					emerging_communist_state_are_in_coalition = yes #not is in coalition
+					emerging_communist_state_are_in_power = yes #not is ruling party
+					#not already communist
+					neutrality_neutral_communism_are_in_coalition = yes #not is in coalition
+					neutrality_neutral_communism_are_in_power = yes #not is ruling party
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = neutral_communist_20_tt
+				check_variable = { party_pop_array^19 > 0.2 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision neutral_communist_extremist_civil_war"
+
+			hidden_effect = {
+				#Release copy of existing
+				start_civil_war_with_no_leader_change = yes
+
+				#replicating current politics
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { TAG = PREV }
+					}
+					civil_war_replication_effect = yes
+				}
+
+				#For player:
+
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = neutrality
+					popularity = 0.5
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 19 } #communism
+					set_variable = { party_pop_array^19 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+
+				#Switch to fascist leader
+					set_country_flag = set_Neutral_Communism
+					set_leader = yes
+
+				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+	#shiite revolutionary
+	vilayat_e_faqih_extremist_civil_war = {
+		icon = revolt
+
+		cost = 150
+
+		visible = {
+			check_variable = { party_pop_array^9 > 0.10 } #significant shiite theocracy
+			has_civil_war = no
+			NOT = {
+				OR = {
+					emerging_hardline_shiite_are_in_coalition = yes #not is in coalition
+					emerging_hardline_shiite_are_in_power = yes #not is ruling party
+					#also see if their moderate friends are there
+					emerging_moderate_shiite_are_in_coalition = yes #not is in coalition
+					emerging_moderate_shiite_are_in_power = yes #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = communism
+			}
+			custom_trigger_tooltip = {
+				tooltip = vilayat_e_faqih_20_tt
+				check_variable = { party_pop_array^9 > 0.2 }
+			}
+			if = {
+				limit = {
+					OR = {
+						tag = BHR
+						tag = KUW
+						tag = OMA
+						tag = QAT
+						tag = SAU
+						tag = UAE
+					}
+				}
+				has_idea = shia_resistance_10
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision vilayat_e_faqih_extremist_civil_war"
+			hidden_effect = {
+				#Release copy of existing
+				start_civil_war_with_no_leader_change = yes
+
+				#replicating current politics
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { tag = ROOT }
+					}
+					civil_war_replication_effect = yes
+				}
+
+				#For player:
+
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.5
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 9 } #shiite theocracy
+					set_variable = { party_pop_array^9 = 0.9 } #generate the rest
+					startup_politics = yes
+
+					add_ideas = shia
+				}
+
+				#Switch to shiite leader
+					set_country_flag = set_Vilayat_e_Faqih
+					set_leader = yes
+
+				#Give support from resistance axis
+				set_country_flag = set_vilayat_e_faqih_civil_war
+				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	# Propaganda to Reduce Spending
+	promote_reduced_spending_campaigns = {
+		icon = GFX_decision_spending_lower_button
+		cost = 50
+		days_remove = 160
+		days_re_enable = 30
+		fixed_random_seed = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision promote_reduced_spending_campaigns"
+			custom_effect_tooltip = propaganda_campaign_costs_tt
+			ingame_update_setup = yes
+			random = {
+				chance = 25
+				increase_corruption = yes
+			}
+		}
+		remove_effect = {
+			ingame_update_setup = yes
+		}
+		modifier = {
+			foreign_influence_defense_modifier = -0.15
+			expected_adm_modifier = -1
+			expected_police_modifier = -1
+			expected_education_modifier = -1
+			expected_healthcare_modifier = -1
+			expected_welfare_modifier = -1
+			expected_mil_modifier = -1
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	# Discourage Population Growth
+	discourage_population_growth_decision = {
+		icon = GFX_decision_no_more_population_button
+		days_remove = 180
+		days_re_enable = 60
+
+		cost = 100
+
+		modifier = {
+			monthly_population = -0.40
+			stability_factor = -0.05
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	##Generic Political Decisiosn
+	remove_usaid = {
+		icon = GFX_decision_usaidban_button
+
+		visible = {
+			has_idea = USA_usaid
+		}
+
+		fire_only_once = yes
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove_usaid"
+			remove_ideas = USA_usaid
+			add_opinion_modifier = {
+				target = USA
+				modifier = requested_remove_usaid
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = requested_remove_usaid
+				}
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+	HOL_add_dutchaid = {
+		visible = {
+			HOL = { has_completed_focus = HOL_wic_dutch_aid_program }
+			OR = {
+				check_variable = { gdp_per_capita > 29.999 }
+				HOL_is_wic_country = yes
+				HOL_is_voc_country = yes
+			}
+		}
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HOL_add_dutchaid"
+			add_ideas = HOL_dutchaid
+		}
+
+		ai_will_do = { base = 0 }
+	}
+	HOL_remove_dutchaid = {
+
+		visible = {
+			has_idea = HOL_dutchaid
+		}
+
+		fire_only_once = yes
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HOL_remove_dutchaid"
+			remove_ideas = HOL_dutchaid
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	GEN_remove_saudi_aid = {
+		allowed = {
+			NOT = {
+				OR = {
+					is_middle_eastern_nation_no_custom_tt = yes
+					original_tag = ISR
+					original_tag = PER
+					original_tag = PAL
+					original_tag = HAM
+					is_Caucasus = yes
+				}
+			}
+		}
+		icon = generic_break_treaty
+
+
+		cost = 50
+
+		visible = {
+			has_idea = saudi_aid
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_remove_saudi_aid"
+			remove_ideas = saudi_aid
+			SAU = { add_opinion_modifier = { target = ROOT modifier = GEN_banned_saudi_mosques } }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	GEN_crack_down_on_muslim_broterhood = {
+		allowed = {
+			NOT = {
+				OR = {
+					is_middle_eastern_nation_no_custom_tt = yes
+					is_Caucasus = yes
+				}
+			}
+			NOT = {
+				OR = {
+					original_tag = ISR
+					original_tag = PER
+					original_tag = PAL
+					original_tag = HAM
+				}
+			}
+		}
+		icon = GFX_decision_oppression
+
+		available = {
+			has_idea = al_jazeera_banned
+		}
+
+		fire_only_once = yes
+
+		cost = 50
+
+		visible = {
+			has_game_rule = { rule = rule_disable_muslim_brotherhood_civil_war option = no }
+			has_idea = al_jazeera_banned
+			NOT = {
+				has_idea = muslim_brotherhood_crackdown
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_crack_down_on_muslim_broterhood"
+			add_ideas = muslim_brotherhood_crackdown
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 0
+				neutrality < 0.15
+			}
+			modifier = {
+				factor = 5
+				neutrality > 0.4
+			}
+			modifier = {
+				factor = 8
+				neutrality > 0.55
+			}
+			modifier = {
+				factor = 0.3
+				democratic > 0.6
+			}
+		}
+	}
+
+	GEN_stop_crackdowns = {
+
+		icon = generic_political_discourse
+
+		available = {
+			has_idea = muslim_brotherhood_crackdown
+		}
+
+		visible = {
+			NOT = {
+				OR = {
+					is_middle_eastern_nation_no_custom_tt = yes
+					is_Caucasus = yes
+				}
+			}
+			NOT = {
+				OR = {
+					original_tag = ISR
+					original_tag = PER
+					original_tag = PAL
+					original_tag = HAM
+				}
+			}
+			has_idea = muslim_brotherhood_crackdown
+		}
+		fire_only_once = yes
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_stop_crackdowns"
+			remove_ideas = muslim_brotherhood_crackdown
+			QAT = { add_opinion_modifier = { target = ROOT modifier = GEN_stopped_crackdown } }
+			TUN = { add_opinion_modifier = { target = ROOT modifier = GEN_stopped_crackdown } }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				neutrality > 0.35
+			}
+		}
+	}
+
+	GEN_ban_al_jazeera = {
+		allowed = {
+			NOT = {
+				OR = {
+					is_middle_eastern_nation_no_custom_tt = yes
+					is_Caucasus = yes
+				}
+			}
+			NOT = {
+				OR = {
+					original_tag = ISR
+					original_tag = PER
+					original_tag = PAL
+					original_tag = HAM
+				}
+			}
+		}
+
+		icon = GFX_decision_oppression
+
+
+
+		fire_only_once = yes
+
+		cost = 75
+
+		visible = {
+			has_idea = al_jazeera_allowed
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_ban_al_jazeera"
+			QAT = { add_opinion_modifier = { target = ROOT modifier = GEN_banned_al_jazeera } }
+			swap_ideas = {
+				remove_idea = al_jazeera_allowed
+				add_idea = al_jazeera_banned
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	GEN_allow_al_jazeera = {
+		allowed = {
+			NOT = {
+				OR = {
+					is_middle_eastern_nation_no_custom_tt = yes
+					is_Caucasus = yes
+				}
+			}
+			NOT = {
+				OR = {
+					original_tag = ISR
+					original_tag = PER
+					original_tag = PAL
+					original_tag = HAM
+				}
+			}
+		}
+
+		icon = generic_civil_support
+
+
+
+		fire_only_once = yes
+
+		cost = 50
+
+		visible = {
+			has_idea = al_jazeera_banned
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_allow_al_jazeera"
+			QAT = { add_opinion_modifier = { target = ROOT modifier = GEN_allowed_al_jazeera } }
+			swap_ideas = {
+				remove_idea = al_jazeera_banned
+				add_idea = al_jazeera_allowed
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	# Protests mechanic
+	give_in_to_protestors = {
+		icon = generic_civil_support
+
+		visible = {
+			check_variable = { protest_strength > 35 }
+			check_variable = { protest_radicalisation > 5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision give_in_to_protestors"
+			give_in_to_protestors_effect = yes
+		}
+
+		ai_will_do = {
+			base = 50
+		}
+	}
+
+	# Generic Country Unique
+	AFRICA_adopt_the_cfa_franc = {
+		allowed = { is_french_africa_nation = yes }
+		icon = generic_civil_support
+
+		visible = {
+			NOT = {
+				OR = {
+					has_idea = cfa_franc
+					has_idea = cfa_franc_2
+					has_idea = the_eco
+				}
+			}
+			if = {
+				limit = { original_tag = COM }
+				has_completed_focus = COM_embrace_francafrique
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = france_has_fifteen_influence_in_us_tt
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+
+					var:v = { tag = FRA }
+					check_variable = { influence_array_val^i > 14.999 }
+				}
+			}
+			NOT = { has_war_with = FRA }
+			NOT = { has_government = nationalist }
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFRICA_adopt_the_cfa_franc"
+			if = {
+				limit = {
+					FRA = { has_completed_focus = FRA_introduce_the_eco }
+				}
+				add_ideas = the_eco
+			}
+			else = {
+				add_ideas = cfa_franc
+			}
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_war_with = FRA
+			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FRA
+					value < 0
+				}
+			}
+			modifier = {
+				factor = 1.5
+				is_subject_of = FRA
+			}
+			modifier = {
+				factor = 0.75
+				check_variable = { domestic_influence_amount > 50 }
+			}
+			modifier = {
+				factor = 1.5
+				has_government = FRA
+			}
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = FRA
+					value > 50
+				}
+			}
+		}
+	}
+	AFRICA_remove_the_cfa_franc = {
+		allowed = { is_french_africa_nation = yes }
+		icon = generic_civil_support
+
+		visible = {
+			OR = {
+				has_idea = cfa_franc
+				has_idea = cfa_franc_2
+				has_idea = the_eco
+			}
+		}
+
+		available = {
+			OR = {
+				has_war_with = FRA
+				has_government = nationalist
+				NOT = {
+					custom_trigger_tooltip = {
+						tooltip = france_has_fifteen_influence_in_us_tt
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+
+							var:v = { tag = FRA }
+							check_variable = { influence_array_val^i > 14.999 }
+						}
+					}
+				}
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFRICA_remove_the_cfa_franc"
+			if = {
+				limit = { has_idea = cfa_franc }
+				remove_ideas = cfa_franc
+			}
+			else_if = {
+				limit = { has_idea = cfa_franc_2 }
+				remove_ideas = cfa_franc_2
+			}
+			else = {
+				remove_ideas = the_eco
+			}
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 2.5
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.65
+				is_subject_of = FRA
+			}
+			modifier = {
+				factor = 2
+				has_war_with = FRA
+			}
+			modifier = {
+				factor = 1.25
+				check_variable = { domestic_influence_amount < 30 }
+			}
+			modifier = {
+				factor = 1.5
+				OR = {
+					AND = {
+						FRA = { has_government = democratic }
+						NOT = { has_government = democratic }
+					}
+					AND = {
+						FRA = { has_government = neutrality }
+						NOT = { has_government = neutrality }
+					}
+					AND = {
+						FRA = { has_government = communism }
+						NOT = { has_government = communism }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.15
+				has_opinion = {
+					target = FRA
+					value < 0
+				}
+			}
+			modifier = {
+				factor = 0.75
+				has_opinion = {
+					target = FRA
+					value < 51
+				}
+				has_opinion = {
+					target = FRA
+					value > 0
+				}
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FRA
+					value > 50
+				}
+			}
+		}
+	}
+
+	# NATO Major Non-Nato Ally
+	NATO_ask_to_join_f35_program2 = {
+		allowed = { ai_for_units_is_not_disabled = yes }
+		icon = GFX_decision_nato_f35_expansion_button
+
+		cost = 50
+
+		days_remove = 45
+		days_re_enable = 45
+
+		visible = {
+			NOT = {
+				has_country_flag = F35_blacklist
+			}
+			OR = {
+				# Allies mode: require Major Non-NATO Ally status
+				AND = {
+					USA = { has_country_flag = USA_open_f35_program_allies }
+					has_idea = Major_Non_NATO_Ally
+				}
+				# World mode: any country can apply
+				USA = { has_country_flag = USA_open_f35_program_world }
+			}
+			country_exists = USA
+			USA = {
+				NOT = {
+					has_country_flag = collapsed_nation
+				}
+			}
+			NOT = {
+				OR = {
+					has_country_flag = USA_f35_legacy_members
+					has_country_flag = USA_f35_program_member_new
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NATO_ask_to_join_f35_program2"
+			USA = {
+				country_event = usa.89
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 0
+				check_variable = { gdp_total < 500 }
+			}
+		}
+	}
+
+	denounce_status_as_the_commonwealth_of_nation_member = {
+		icon = GFX_decision_generic_leave_commonwealth_of_nation
+
+		visible = { has_dynamic_modifier = { modifier = Commonwealth_member_modifier } }
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision denounce_status_as_the_commonwealth_of_nation_member"
+			remove_dynamic_modifier = {	modifier = Commonwealth_member_modifier }
+			remove_from_array = { global.commonwealth_member = THIS }
+			ENG = { add_opinion_modifier = { target = PREV modifier = left_alliance } }
+			newline = yes
+			for_each_scope_loop = {
+				array = global.commonwealth_member
+				country_event = CMW_Leaving.1
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	#GLOBAL REACTION CONTENT
+	#ARMENIA DEMAND NAKHICHEVAN FROM AZER
+	GLOBAL_armenia_demand_nachi_azer = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			has_government = nationalist
+			country_exists = AZE
+			AZE = {
+				owns_state = 711
+				NOT = { is_subject_of = ARM }
+				NOT = { is_in_faction_with = ARM }
+			}
+			owns_state = 1036
+			owns_state = 1037
+			owns_state = 710
+
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_armenia_demand_nachi_azer"
+			AZE = { country_event = SOV_Global.34 }
+		}
+		ai_will_do = {
+			base = 0
+			modifier = {
+				strength_ratio = {
+					tag = AZE
+					ratio < 1
+				}
+				add = 355
+			}
+		}
+	}
+	#ARMENIA DELETE DEBUFF RESISTANCE IN ABKHAZIA
+	GLOBAL_arm_delete_abk_resistan = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			706 = {
+				has_dynamic_modifier = {
+					modifier = GLOBAL_abk_resistance_modifier
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_arm_delete_abk_resistan"
+			706 = {
+				remove_dynamic_modifier = {
+					modifier = GLOBAL_abk_resistance_modifier
+				}
+			}
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#ARMENIA DELETE DEBUFF RESISTANCE IN AZERBAIJAN
+	GLOBAL_arm_delete_aze_resistan = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			713 = {
+				has_dynamic_modifier = {
+					modifier = GLOBAL_azer_resistance_modifier
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_arm_delete_aze_resistan"
+			713 = {
+				remove_dynamic_modifier = {
+					modifier = GLOBAL_azer_resistance_modifier
+				}
+			}
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#ARMENIA DELETE DEBUFF RESISTANCE IN GEORGIA
+	GLOBAL_arm_delete_geo_resistan = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			707 = {
+				has_dynamic_modifier = {
+					modifier = GLOBAL_geo_resistance_modifier
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_arm_delete_geo_resistan"
+			707 = {
+				remove_dynamic_modifier = {
+					modifier = GLOBAL_geo_resistance_modifier
+				}
+			}
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#AZERBAIJAN AND GEORGIA VS ARMENIA
+	GLOBAL_try_create_anti_armenian_alliance = {
+		allowed = { original_tag = AZE }
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			country_exists = GEO
+			GEO = {
+				is_in_faction = no
+				is_subject = no
+			}
+			is_in_faction = no
+			is_subject = no
+
+			ARM = {
+				OR = {
+					owns_state = 710
+					owns_state = 1033
+					owns_state = 1036
+					owns_state = 1037
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_try_create_anti_armenian_alliance"
+			GEO = { country_event = SOV_Global.20 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#RUSSIA PUTIN START REBELLION IN ARMENIA
+	GLOBAL_putin_start_pro_russia_rebellion_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			emerging_reactionaries_are_in_power = yes
+			country_exists = ARM
+			ARM = {
+				owns_state = 1034
+				NOT = { is_subject_of = ARM }
+				NOT = { is_in_faction_with = ARM }
+				influence_higher_40 = yes
+				has_government = democratic
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_putin_start_pro_russia_rebellion_arm"
+			ARM = { country_event = SOV_Global.33 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN RESISTANCE IN GEORGIA
+	GLOBAL_russia_create_resist_geo_anti_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = GEO
+			}
+			ARM = {
+				owns_state = 707
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				NOT = { has_country_flag = GLOBAL_arm_geo_resistance }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_resist_geo_anti_arm"
+			ARM = { country_event = SOV_Global.24 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN COUP IN GEORGIA
+	GLOBAL_russia_create_coup_geo_anti_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = GEO
+			}
+			ARM = {
+				owns_state = 707
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				has_country_flag = GLOBAL_arm_geo_resistance
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_coup_geo_anti_arm"
+			ARM = { country_event = SOV_Global.18 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN RESISTANCE IN AZERBAIJAN
+	GLOBAL_russia_create_resist_aze_anti_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = AZE
+			}
+			ARM = {
+				owns_state = 713
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				NOT = { has_country_flag = GLOBAL_arm_aze_resistance }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_resist_aze_anti_arm"
+			ARM = { country_event = SOV_Global.25 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN COUP IN AZERBAIJAN
+	GLOBAL_russia_create_coup_aze_anti_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = AZE
+			}
+			ARM = {
+				owns_state = 713
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				has_country_flag = GLOBAL_arm_aze_resistance
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_coup_aze_anti_arm"
+			ARM = { country_event = SOV_Global.26 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN RESISTANCE IN ABKHAZIA
+	GLOBAL_russia_create_resist_abk_anti_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = ABK
+			}
+			ARM = {
+				owns_state = 706
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				NOT = { has_country_flag = GLOBAL_arm_abk_resistance }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_resist_abk_anti_arm"
+			ARM = { country_event = SOV_Global.27 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN COUP IN ABKHAZIA
+	GLOBAL_russia_create_coup_abk_anti_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = ABK
+			}
+			ARM = {
+				owns_state = 706
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				has_country_flag = GLOBAL_arm_abk_resistance
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_coup_abk_anti_arm"
+			ARM = { country_event = SOV_Global.28 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#TURKEY CREATE ANTI ARMENIAN COUP IN ADJARA
+	GLOBAL_turkey_create_coup_adj_anti_arm = {
+		allowed = { original_tag = TUR }
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = democratic
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = ADJ
+			}
+			ARM = {
+				owns_state = 466
+				NOT = { is_subject_of = TUR }
+				NOT = { is_in_faction_with = TUR }
+				influence_higher_30 = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_turkey_create_coup_adj_anti_arm"
+			ARM = { country_event = SOV_Global.29 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#TURKEY SEND ADVISORS TO ADJARA
+	GLOBAL_turkey_send_advise_adj_anti_arm = {
+		allowed = { original_tag = TUR }
+		icon = GFX_decision_message_receive_button
+		cost = 75
+		days_remove = 5
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = democratic
+				has_government = nationalist
+			}
+			NOT = { is_subject_of = ARM }
+			NOT = { is_in_faction_with = ARM }
+			ADJ = {
+				has_war_with = ARM
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_turkey_send_advise_adj_anti_arm"
+			ADJ = { country_event = SOV_Global.30 }
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+	#TURKEY ANNEX NAKHICHEVAN FROM AZER WHEN THEY PUPPET ARM
+	GLOBAL_turkey_annex_nachi_azer = {
+		allowed = { original_tag = TUR }
+		icon = GFX_decision_negotiate_icon
+		cost = 100
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			country_exists = AZE
+			AZE = {
+				influence_higher_40 = yes
+				owns_state = 711
+				is_subject_of = ARM
+			}
+			ARM = {
+				owns_state = 1036
+				owns_state = 1037
+				owns_state = 710
+			}
+			owns_state = 935
+			owns_state = 163
+
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_turkey_annex_nachi_azer"
+			transfer_state = 711
+			set_state_owner = 711
+			AZE = { country_event = SOV_Global.37 }
+			ARM = { country_event = SOV_Global.37 }
+			hidden_effect = {
+				set_temp_variable = { percent_change = -9 }
+				set_temp_variable = { tag_index = TUR }
+				set_temp_variable = { influence_target = AZE }
+				change_influence_percentage = yes
+			}
+		}
+		ai_will_do = {
+			base = 0
+		}
+	}
+	JAP_russia_demands_peace_russia = {
+
+		icon = GFX_decision_eng_propaganda_campaigns
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				surrender_progress > 0.35
+				add = 50
+			}
+		}
+
+		allowed = { original_tag = SOV }
+
+		available = {
+			691 = { is_controlled_by = JAP }
+			690 = { is_controlled_by = JAP }
+			1168 = { is_controlled_by = JAP }
+		}
+
+		visible = {
+			OR = {
+				is_debug = yes
+				AND = {
+					JAP = {
+						has_completed_focus = JAP_russian_lost_territories
+						has_war_with = SOV
+						hidden_trigger = {
+							NOT = {
+								OR = {
+									691 = { is_owned_by = JAP }
+									690 = { is_owned_by = JAP }
+									1168 = { is_owned_by = JAP }
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		cost = 75
+
+		fire_only_once = no
+
+		days_remove = 5
+
+		days_re_enable = 30
+
+		modifier = {
+			political_power_factor = -0.15
+		}
+
+		remove_effect = {
+			JAP = {
+				country_event = {
+					id = JAP_diplomacy.80
+					hours = 1
+				}
+			}
+		}
+	}
+	JAP_tookover_sikhalin_mission = {
+		icon = GFX_decision_eng_propaganda_campaigns
+
+		allowed = { original_tag = SOV }
+
+		days_mission_timeout = 30
+
+		fire_only_once = yes
+
+		is_good = no
+
+		selectable_mission = no
+
+		activation = {
+			has_country_flag = JAP_sikhalin_raid_done
+		}
+
+		available = {
+			hidden_trigger = {
+				always = no
+			}
+		}
+
+
+		cancel_trigger = {
+			691 = { is_fully_controlled_by = SOV }
+			690 = { is_fully_controlled_by = SOV }
+			1168 = { is_fully_controlled_by = SOV }
+		}
+
+		cancel_effect = {
+			JAP = {
+				country_event = { id = JAP_diplomacy.200 days = 1 }
+			}
+		}
+
+		timeout_effect = {
+			JAP = {
+				white_peace = {
+					tag = SOV
+				}
+				every_other_country = {
+					limit = {
+						is_in_faction_with = SOV
+					}
+					white_peace = {
+						tag = JAP
+					}
+				}
+				if = {
+					limit = { 691 = { is_fully_controlled_by = JAP } }
+					transfer_state = 691
+				}
+				if = {
+					limit = { 690 = { is_fully_controlled_by = JAP } }
+					transfer_state = 690
+				}
+				if = {
+					limit = { 1168 = { is_fully_controlled_by = JAP } }
+					transfer_state = 1168
+				}
+			}
+		}
+	}
+}

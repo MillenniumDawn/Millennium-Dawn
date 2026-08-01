@@ -1,27 +1,31 @@
 #!/usr/bin/env python3
-##########################
-# AI Equipment Coverage Validation Script
-# Ensures nations blocked from generic equipment files have all
-# required equipment roles covered in custom or shared files.
-#
-# Validates both naval (generic_naval.txt) and land (generic_tank.txt,
-# generic_afv.txt) equipment categories.
-#
-# Checks:
-#   1. Parses generic_*.txt for roles and their blocked_for lists
-#   2. Parses all other equipment files for roles and available_for lists
-#   3. Reports any nation blocked from a generic role without custom coverage
-#   4. Reports any role template with duplicate names across overlapping files
-##########################
+# Ensure nations blocked from generic equipment files (naval generic_naval.txt,
+# land generic_tank.txt / generic_afv.txt) have every required equipment role
+# covered in a custom or shared file, and flag role templates whose names
+# collide across overlapping files.
 import glob
 import os
 import re
 import sys
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-# Regex patterns
+from naval_module_slots import build_indexes, check_naval_variants
+from shared_utils import strip_inline_comment
+from validator_common import BaseValidator, Issue, Severity, run_validator_main
+
+# Ship hulls live only in files carrying one of these engine hull-type markers,
+# so plane/tank equipment files are skipped without parsing their whole tree.
+_SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
+
+_NAVAL_SLOT_CATEGORIES = {
+    "unknown_hull": "NAVAL VARIANT: unknown hull type",
+    "unknown_slot": "NAVAL VARIANT: slot not on hull",
+    "unknown_module": "NAVAL VARIANT: unknown module reference",
+    "category_mismatch": "NAVAL VARIANT: module category not allowed in slot",
+}
+
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
 BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)
 AVAILABLE_FOR_RE = re.compile(r"available_for\s*=\s*\{([^}]*)\}", re.DOTALL)
@@ -71,13 +75,15 @@ def parse_equipment_file(
         match = re.match(r"^(\w+)\s*=\s*\{", line)
         if match:
             template_name = match.group(1)
-            brace_depth = line.count("{") - line.count("}")
+            code = strip_inline_comment(line)
+            brace_depth = code.count("{") - code.count("}")
             block_lines = [line]
             i += 1
 
             while i < len(lines) and brace_depth > 0:
                 block_lines.append(lines[i])
-                brace_depth += lines[i].count("{") - lines[i].count("}")
+                code = strip_inline_comment(lines[i])
+                brace_depth += code.count("{") - code.count("}")
                 i += 1
 
             block_text = "\n".join(block_lines)
@@ -88,19 +94,16 @@ def parse_equipment_file(
                 continue
             category = cat_match.group(1)
 
-            # Extract roles
             role_match = ROLE_RE.search(block_text)
             if not role_match:
                 continue
             roles = set(role_match.group(1).split())
 
-            # Extract blocked_for
             blocked = set()
             blocked_match = BLOCKED_FOR_RE.search(block_text)
             if blocked_match:
                 blocked = parse_tags(blocked_match.group(1))
 
-            # Extract available_for
             available = set()
             available_match = AVAILABLE_FOR_RE.search(block_text)
             if available_match:
@@ -122,12 +125,89 @@ def parse_equipment_file(
     return templates
 
 
+def _read_text(filepath: str) -> str:
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            return f.read()
+    except Exception:
+        return ""
+
+
 class Validator(BaseValidator):
     TITLE = "AI EQUIPMENT COVERAGE"
     STAGED_EXTENSIONS = [".txt"]
 
+    # WARNING until the ~270-site pre-existing backlog on main is cleared, then
+    # ERROR. PR #2510 fixed the screen-hull fire-control class but left other
+    # category mismatches (light engines on destroyers, ESM on subs, mineclearing
+    # on corvettes, engine modules in weapon slots) untouched.
+    NAVAL_SLOT_SEVERITY = Severity.WARNING
+
     def run_validations(self):
         self._validate_coverage()
+        self._validate_naval_variant_modules()
+
+    def _validate_naval_variant_modules(self):
+        equip_dir = os.path.join(self.mod_path, "common", "ai_equipment")
+        units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
+        if not os.path.isdir(equip_dir) or not os.path.isdir(units_dir):
+            return
+
+        staged_equip = None
+        if self.staged_only and self.staged_files:
+            staged_equip = {
+                os.path.basename(f) for f in self.staged_files if "ai_equipment" in f
+            }
+            if not staged_equip:
+                return
+
+        self._log_section("Checking naval variant modules against hull slot rules...")
+
+        def _build():
+            hull_texts = []
+            for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt"))):
+                text = _read_text(fp)
+                if any(marker in text for marker in _SHIP_HULL_MARKERS):
+                    hull_texts.append(text)
+            module_texts = [
+                _read_text(fp)
+                for fp in sorted(
+                    glob.iglob(os.path.join(units_dir, "modules", "*.txt"))
+                )
+            ]
+            return build_indexes(hull_texts, module_texts)
+
+        hull_slots, module_category, known_categories = self.cached(
+            "naval_hull_index", _build
+        )
+
+        results = []
+        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+            basename = os.path.basename(fp)
+            if staged_equip is not None and basename not in staged_equip:
+                continue
+            content = _read_text(fp)
+            findings = check_naval_variants(
+                content, hull_slots, module_category, known_categories
+            )
+            rel = os.path.relpath(fp, self.mod_path)
+            for f in findings:
+                results.append(
+                    Issue(
+                        severity=self.NAVAL_SLOT_SEVERITY,
+                        category=_NAVAL_SLOT_CATEGORIES[f.kind],
+                        message=f.message,
+                        file=rel,
+                        line=f.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ All naval variant modules match their hull slot rules",
+            "Naval variant modules invalid for their hull slot:",
+            severity=self.NAVAL_SLOT_SEVERITY,
+        )
 
     def _validate_coverage(self):
         equip_dir = os.path.join(self.mod_path, "common", "ai_equipment")
@@ -143,11 +223,7 @@ class Validator(BaseValidator):
                 return
 
         # Parse all equipment files
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Parsing AI equipment files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Parsing AI equipment files...")
 
         generic_templates = []
         custom_templates = []
@@ -203,11 +279,7 @@ class Validator(BaseValidator):
                             role_covered.setdefault(role, set()).add(tag)
 
             # Check: every blocked nation must have custom coverage
-            self.log(f"\n{'='*80}")
-            self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Checking {cat_label} coverage for blocked nations...{Colors.ENDC if self.use_colors else ''}"
-            )
-            self.log(f"{'='*80}")
+            self._log_section(f"Checking {cat_label} coverage for blocked nations...")
 
             coverage_results = []
             for role, blocked_tags in sorted(role_blocked.items()):
@@ -225,11 +297,7 @@ class Validator(BaseValidator):
             )
 
         # Check: duplicate template names across files
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicate template names...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for duplicate template names...")
 
         all_templates = generic_templates + custom_templates
         name_locations: Dict[str, List[str]] = {}

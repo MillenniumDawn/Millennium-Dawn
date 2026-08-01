@@ -1,6 +1,48 @@
 on_actions = {
 	on_monthly_ENG = {
 		effect = {
+			#-----------# "Good Friday" #-----------#
+			if = {
+				limit = {
+					ENG = {
+						has_idea = ENG_the_dissident_campaign
+						check_variable = {
+							total_unemployed_percentage_display > 10
+						}
+					}
+				}
+				add_to_variable = { var = ENG_north_irish_agitation value = 0.15 }
+				add_to_variable = { var = ENG_north_irish_nationalists value = 1 }
+				if = {
+					limit = {
+						NOT = {
+							has_idea = ENG_the_dissident_campaign_hidden_idea
+						}
+					}
+					add_ideas = ENG_the_dissident_campaign_hidden_idea
+				}
+				
+				ENG_var_cap = yes
+			}
+			if = {
+				limit = {
+					ENG = {
+						has_idea = ENG_the_dissident_campaign
+						check_variable = {
+							total_unemployed_percentage_display < 10
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_idea = ENG_the_dissident_campaign_hidden_idea
+					}
+					remove_ideas = ENG_the_dissident_campaign_hidden_idea
+				}
+				add_to_variable = { var = ENG_north_irish_agitation value = 0.15 }
+				ENG_var_cap = yes
+			}
+			#-----------# "Good Friday End" #-----------#
 			if = {
 				limit = {
 					NOT = {	has_country_flag = ENG_devolution_purged }
@@ -74,25 +116,27 @@ on_actions = {
 						has_idea = stagnation
 						check_variable = { interest_rate > 9.000 }
 						check_variable = { inflation_rate_var > 7.000 }
-						# Political Reasons
+						# Political Reasons — fires when none of the stabilising conditions apply
 						NOT = {
-							has_government = democratic
-							has_government = neutrality
-							# Welfare
-							has_idea = social_05
-							has_idea = social_06
-							has_idea = health_05
-							has_idea = health_06
-							has_idea = edu_04
-							has_idea = edu_05
-							has_idea = EU_member # Leaving EU angers some constituents
+							OR = {
+								has_government = democratic
+								has_government = neutrality
+								# Welfare
+								has_idea = social_05
+								has_idea = social_06
+								has_idea = health_05
+								has_idea = health_06
+								has_idea = edu_04
+								has_idea = edu_05
+								has_idea = EU_member # Leaving EU angers some constituents
+							}
 						}
 						has_war = yes
-						has_idea = systematic_corruption
-						has_idea = unrestrained_corruption
-						has_idea = rampant_corruption
-						has_idea = crippling_corruption
-						has_idea = paralyzing_corruption
+						has_idea = corruption_level_06
+						has_idea = corruption_level_07
+						has_idea = corruption_level_08
+						has_idea = corruption_level_09
+						has_idea = corruption_level_10
 						# Military
 						has_idea = partial_draft_army
 						has_idea = draft_army
@@ -103,13 +147,9 @@ on_actions = {
 				country_event = { id = devolution.1 random_days = 15 }
 			}
 			else = {
-				random_list = {
-					30 = {
-						country_event = { id = devolution.1 random_days = 15 }
-					}
-					70 = {
-
-					}
+				random = {
+					chance = 30
+					country_event = { id = devolution.1 random_days = 15 }
 				}
 			}
 
@@ -166,6 +206,94 @@ on_actions = {
 				random = {
 					chance = 50
 					country_event = devolution.7
+				}
+			}
+
+			if = {
+				limit = { has_completed_focus = ENG_royal_visits_abroad }
+				every_other_country = {
+					limit = { has_idea = ENG_crown_realm_status }
+					set_temp_variable = { percent_change = 4 }
+					set_temp_variable = { tag_index = ENG }
+					change_influence_percentage = yes
+				}
+			}
+		}
+	}
+
+	on_weekly_ENG = {
+
+		# INNER CIRCLE - Make sure AI doesn't get stuck with focuses paused due to focus triggers (focuses need to be paused when events are pending)
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				if = {
+					limit = {
+						has_country_flag = { flag = ENG_charles_ascension_flag days > 20 }
+					}
+					unlock_national_focus = ENG_the_prince_trust
+					uncomplete_national_focus = {
+						focus = ENG_the_prince_trust
+						refund_political_power = yes
+					}
+					clr_country_flag = ENG_charles_ascension_flag
+				}
+				else_if = {
+					limit = {
+						has_country_flag = { flag = ENG_andrew_ascension_flag days > 20 }
+					}
+					unlock_national_focus = ENG_naval_prince
+					uncomplete_national_focus = {
+						focus = ENG_naval_prince
+						refund_political_power = yes
+					}
+					clr_country_flag = ENG_andrew_ascension_flag
+				}
+				else_if = {
+					limit = {
+						has_country_flag = { flag = ENG_anne_ascension_flag days > 20 }
+					}
+					unlock_national_focus = ENG_workhorse_of_the_crown
+					uncomplete_national_focus = {
+						focus = ENG_workhorse_of_the_crown
+						refund_political_power = yes
+					}
+					clr_country_flag = ENG_anne_ascension_flag
+				}
+				else_if = {
+					limit = {
+						has_country_flag = { flag = ENG_edward_ascension_flag days > 20 }
+					}
+					unlock_national_focus = ENG_chairman_international_award
+					uncomplete_national_focus = {
+						focus = ENG_chairman_international_award
+						refund_political_power = yes
+					}
+					clr_country_flag = ENG_edward_ascension_flag
+				}
+				else_if = {
+					limit = {
+						has_country_flag = { flag = ENG_philip_ascension_flag days > 20 }
+					}
+					unlock_national_focus = ENG_duke_charities
+					uncomplete_national_focus = {
+						focus = ENG_duke_charities
+						refund_political_power = yes
+					}
+					clr_country_flag = ENG_philip_ascension_flag
+				}
+				else_if = {
+					limit = {
+						has_country_flag = { flag = ENG_william_ascension_flag days > 20 }
+					}
+					unlock_national_focus = ENG_from_sandhurst_to_service
+					uncomplete_national_focus = {
+						focus = ENG_from_sandhurst_to_service
+						refund_political_power = yes
+					}
+					clr_country_flag = ENG_william_ascension_flag
 				}
 			}
 		}

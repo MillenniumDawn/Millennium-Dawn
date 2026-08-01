@@ -3,9 +3,6 @@ gulf_society = {
 
 		icon = GFX_decision_secur_brother_button
 
-
-		fire_only_once = yes
-
 		allowed = {
 			NOT = { original_tag = KAZ }
 			NOT = { original_tag = UZB }
@@ -13,6 +10,7 @@ gulf_society = {
 		}
 
 		visible = {
+			has_game_rule = { rule = rule_disable_muslim_brotherhood_civil_war option = no }
 			NOT = {
 				has_idea = muslim_brotherhood_crackdown
 			}
@@ -21,19 +19,37 @@ gulf_society = {
 		cost = 50
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GEN_crack_down_on_muslim_broterhood"
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_crack_down_on_muslim_broterhood"
 			add_ideas = muslim_brotherhood_crackdown
 		}
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 0
+				neutrality < 0.15
+			}
+			modifier = {
+				factor = 5
+				neutrality > 0.4
+			}
+			modifier = {
+				factor = 8
+				neutrality > 0.55
+			}
+			modifier = {
+				factor = 0.3
+				democratic > 0.6
+			}
+		}
 	}
 
 	GCC_stop_crackdowns = {
 
 		icon = GFX_decision_secur_brotheryes_button
-
-
-
-		fire_only_once = yes
 
 
 
@@ -44,13 +60,16 @@ gulf_society = {
 		cost = 50
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GEN_stop_crackdowns"
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_stop_crackdowns"
 			remove_ideas = muslim_brotherhood_crackdown
-			hidden_effect = {
-				every_other_country = { country_event = brotherhood.4 }
+		}
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				neutrality > 0.35
 			}
 		}
-		ai_will_do = { base = 0 }
 	}
 
 	GCC_ban_al_jazeera = {
@@ -70,7 +89,7 @@ gulf_society = {
 		cost = 75
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GEN_ban_al_jazeera"
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_ban_al_jazeera"
 			QAT = { add_opinion_modifier = { target = ROOT modifier = GEN_banned_al_jazeera } }
 			swap_ideas = {
 				remove_idea = al_jazeera_allowed
@@ -124,7 +143,7 @@ gulf_society = {
 		cost = 50
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GEN_remove_saudi_aid"
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_remove_saudi_aid"
 			add_stability = -0.05
 			remove_ideas = saudi_aid
 			set_temp_variable = { temp_modify_social_con_government = -5 }
@@ -299,7 +318,7 @@ gulf_society = {
 		remove_effect = {
 			set_temp_variable = { temp_modify_social_con_government = 2 }
 			modify_social_conservatism_government = yes
-			log = "[GetDateText]: [Root.GetName]: Decision GCC_encourage_female_representation"
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_discourage_female_representation"
 		}
 		ai_will_do = { base = 0 }
 	}
@@ -682,7 +701,7 @@ gulf_society = {
 			set_temp_variable = { temp_modify_social_con_government = -15 }
 			modify_social_conservatism_government = yes
 			set_country_flag = banned_head_scarf
-			log = "[GetDateText]: [Root.GetName]: Decision GCC_head_scarf"
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_head_scarves"
 		}
 
 		ai_will_do = {
@@ -789,8 +808,10 @@ gulf_society = {
 				check_variable = { social_conservatism_society < 20 }
 			}
 			NOT = {
-				has_idea = the_ulema
-				has_idea = wahabi_ulema
+				OR = {
+					has_idea = the_ulema
+					has_idea = wahabi_ulema
+				}
 			}
 			no_jihadist_government = yes
 		}
@@ -1060,9 +1081,13 @@ gcc_decisions = {
 		complete_effect = {
 			set_global_flag = GCC_joint_exercises_offered
 			set_country_flag = GCC_joint_exercises_accepted
-			every_other_country = {
-				limit = { has_idea = idea_gcc_member_state }
-				country_event = gcc.26
+			for_each_scope_loop = {
+				array = global.gcc_member_state
+				tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { exists = yes NOT = { tag = ROOT } }
+					country_event = gcc.26
+				}
 			}
 		}
 		ai_will_do = { base = 0 }
@@ -1085,13 +1110,17 @@ gcc_decisions = {
 
 		complete_effect = {
 			add_command_power = -20
-			every_country = {
-				limit = { has_idea = idea_gcc_member_state has_country_flag = GCC_joint_exercises_accepted }
-				add_timed_idea = {
-					idea = GCC_joint_drill
-					days = 30
+			for_each_scope_loop = {
+				array = global.gcc_member_state
+				tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { exists = yes has_country_flag = GCC_joint_exercises_accepted }
+					add_timed_idea = {
+						idea = GCC_joint_drill
+						days = 30
+					}
+					clr_country_flag = GCC_joint_exercises_accepted
 				}
-				clr_country_flag = GCC_joint_exercises_accepted
 			}
 		}
 
@@ -1127,8 +1156,10 @@ gcc_decisions = {
 			OR = {
 				AND = {
 					NOT = {
-						has_completed_focus = GCC_increase_autonomy
-						has_completed_focus = GCC_new_partners
+						OR = {
+							has_completed_focus = GCC_increase_autonomy
+							has_completed_focus = GCC_new_partners
+						}
 					}
 				}
 				has_global_flag = gcc_pro_iranian
@@ -1155,8 +1186,10 @@ gcc_decisions = {
 			if = {
 				limit = {
 					NOT = {
-						has_completed_focus = GCC_increase_autonomy
-						has_completed_focus = GCC_new_partners
+						OR = {
+							has_completed_focus = GCC_increase_autonomy
+							has_completed_focus = GCC_new_partners
+						}
 					}
 				}
 				USA = { country_event = gcc.22 }
@@ -1236,9 +1269,13 @@ gcc_decisions = {
 		complete_effect = {
 			FROM = { set_country_flag = being_expelled }
 			every_country = { limit = { has_country_flag = recently_expelled_from_gcc } clr_country_flag = recently_expelled_from_gcc }
-			every_other_country = {
-				limit = { has_idea = idea_gcc_member_state NOT = { tag = FROM } }
-				country_event = gcc.18
+			for_each_scope_loop = {
+				array = global.gcc_member_state
+				tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { exists = yes NOT = { tag = ROOT } NOT = { tag = FROM } }
+					country_event = gcc.18
+				}
 			}
 			set_country_flag = supports_expulsion_@FROM
 		}
@@ -1300,46 +1337,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1369,46 +1416,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1438,46 +1495,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1507,46 +1574,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1576,46 +1653,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1645,46 +1732,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1714,46 +1811,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1783,46 +1890,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1852,46 +1969,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1921,46 +2048,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -1990,46 +2127,56 @@ gcc_decisions = {
 							AND = {
 								check_variable = { influence_array^2 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^3 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^4 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^5 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+									}
 								}
 							}
 							AND = {
 								check_variable = { influence_array^6 = ROOT }
 								NOT = {
-									check_variable = { influence_array^0 = FROM }
-									check_variable = { influence_array^1 = FROM }
-									check_variable = { influence_array^2 = FROM }
-									check_variable = { influence_array^3 = FROM }
-									check_variable = { influence_array^4 = FROM }
-									check_variable = { influence_array^5 = FROM }
+									OR = {
+										check_variable = { influence_array^0 = FROM }
+										check_variable = { influence_array^1 = FROM }
+										check_variable = { influence_array^2 = FROM }
+										check_variable = { influence_array^3 = FROM }
+										check_variable = { influence_array^4 = FROM }
+										check_variable = { influence_array^5 = FROM }
+									}
 								}
 							}
 						}
@@ -2310,8 +2457,10 @@ gcc_decisions = {
 			NOT = { has_country_flag = supports_membership_@FROM }
 			FROM = {
 				NOT = {
-					jihadist_government = yes
-					has_idea = idea_gcc_member_state
+					OR = {
+						jihadist_government = yes
+						has_idea = idea_gcc_member_state
+					}
 				}
 			}
 		}
@@ -2421,8 +2570,10 @@ gcc_decisions = {
 			}
 			FROM = {
 				NOT = {
-					has_idea = idea_gcc_member_state
-					jihadist_government = yes
+					OR = {
+						has_idea = idea_gcc_member_state
+						jihadist_government = yes
+					}
 				}
 			}
 		}
@@ -2431,13 +2582,18 @@ gcc_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GCC_pressure_countries_to_support target: [From.GetName]"
-			every_other_country = {
-				limit = {
-					has_idea = idea_gcc_member_state
-					NOT = { has_country_flag = supports_membership_@FROM }
+			for_each_scope_loop = {
+				array = global.gcc_member_state
+				tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						exists = yes
+						NOT = { tag = ROOT }
+						NOT = { has_country_flag = supports_membership_@FROM }
+					}
+					FROM = { set_country_flag = pressured_to_accept_@PREV }
+					country_event = gcc.24
 				}
-				FROM = { set_country_flag = pressured_to_accept_@PREV }
-				country_event = gcc.24
 			}
 		}
 
@@ -2468,8 +2624,10 @@ gcc_decisions = {
 		visible = {
 			is_in_array = { global.possible_gcc_members = THIS }
 			NOT = {
-				jihadist_government = yes
-				has_idea = idea_gcc_member_state
+				OR = {
+					jihadist_government = yes
+					has_idea = idea_gcc_member_state
+				}
 			}
 		}
 
@@ -2495,8 +2653,10 @@ gcc_decisions = {
 		visible = {
 			is_in_array = { global.possible_gcc_members = THIS }
 			NOT = {
-				jihadist_government = yes
-				has_country_flag = gcc_accession_process
+				OR = {
+					jihadist_government = yes
+					has_country_flag = gcc_accession_process
+				}
 			}
 		}
 
@@ -2536,11 +2696,7 @@ gcc_decisions = {
 		}
 
 		available = {
-			# Requires GDP/C > 10,000
-			custom_trigger_tooltip = {
-				tooltip = 10_per_capita_or_more_tt
-				check_variable = { ROOT.gdp_per_capita > 9.999 }
-			}
+			gdp_per_capita_greater_than_10 = yes
 		}
 
 		cost = 100
@@ -2592,36 +2748,50 @@ gcc_decisions = {
 				limit = {
 					ROOT = {
 						NOT = {
-							NOT = { has_idea = saudi_royal_family }
-							has_idea = shia
-							has_government = communism
+							OR = {
+								NOT = { has_idea = saudi_royal_family }
+								has_idea = shia
+								has_government = communism
+							}
 						}
 					}
 				}
 				set_temp_variable = { temp_modify_gcc_unity = -5 }
 				modify_gcc_unity = yes
 			}
-			every_other_country = {
-				limit = { has_idea = idea_gcc_member_state }
-				add_opinion_modifier = { target = ROOT modifier = Gulf_Cooperation_Council_Relations }
-				reverse_add_opinion_modifier = { target = ROOT modifier = Gulf_Cooperation_Council_Relations }
+			for_each_scope_loop = {
+				array = global.gcc_member_state
+				tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { exists = yes NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = ROOT modifier = Gulf_Cooperation_Council_Relations }
+					reverse_add_opinion_modifier = { target = ROOT modifier = Gulf_Cooperation_Council_Relations }
+				}
 			}
 			if = {
 				limit = { has_global_flag = GCC_standardize_regulations_completed }
 				add_to_tech_sharing_group = GCC_Tech_Share
 			}
 			if = { limit = { has_global_flag = GCC_intra_gcc_trade_completed }
-				every_other_country = {
-					limit = { has_idea = idea_gcc_member_state }
-					add_opinion_modifier = { target = ROOT modifier = improve_trade }
-					reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
+				for_each_scope_loop = {
+					array = global.gcc_member_state
+					tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { exists = yes NOT = { tag = ROOT } }
+						add_opinion_modifier = { target = ROOT modifier = improve_trade }
+						reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
+					}
 				}
 			}
 			if = { limit = { has_global_flag = GCC_intra_gcc_trade_completed }
-				every_other_country = {
-					limit = { has_idea = idea_gcc_member_state }
-					add_opinion_modifier = { target = ROOT modifier = common_market }
-					reverse_add_opinion_modifier = { target = ROOT modifier = common_market }
+				for_each_scope_loop = {
+					array = global.gcc_member_state
+					tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { exists = yes NOT = { tag = ROOT } }
+						add_opinion_modifier = { target = ROOT modifier = common_market }
+						reverse_add_opinion_modifier = { target = ROOT modifier = common_market }
+					}
 				}
 			}
 			if = {
@@ -2635,10 +2805,14 @@ gcc_decisions = {
 					has_global_flag = GCC_joint_defense_agreement_completed
 					NOT = { has_global_flag = GCC_a_robust_alliance_completed }
 				}
-				every_other_country = {
-					limit = { has_idea = idea_gcc_member_state }
-					give_guarantee = ROOT
-					ROOT = { give_guarantee = PREV }
+				for_each_scope_loop = {
+					array = global.gcc_member_state
+					tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { exists = yes NOT = { tag = ROOT } }
+						give_guarantee = ROOT
+						ROOT = { give_guarantee = PREV }
+					}
 				}
 			}
 			if = {
@@ -2811,7 +2985,7 @@ subversive_activities = {
 				PAL = {
 					custom_trigger_tooltip = {
 						tooltip = hamas_tt
-						is_in_array = { ruling_party = 12 }
+						neutrality_neutral_muslim_brotherhood_are_in_power = yes
 					}
 				}
 			}
@@ -2971,7 +3145,6 @@ subversive_activities = {
 			IRQ = {
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { tag_index = PER.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 			}
 			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_pmu"
@@ -3022,7 +3195,6 @@ subversive_activities = {
 			SYR = {
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { tag_index = PER.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 			}
 			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_pro_government_forces"

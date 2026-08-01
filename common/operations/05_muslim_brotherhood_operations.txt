@@ -1,0 +1,275 @@
+# Muslim Brotherhood covert operations. FROM = target country, ROOT = origin country.
+
+organize_brotherhood_networks = {
+	icon = GFX_operations_boost_resistance
+	map_icon = GFX_operations_boost_resistance_map
+	name = organize_brotherhood_networks
+	desc = organize_brotherhood_networks_desc
+	priority = 1
+
+	days = 90
+	network_strength = 50
+	operatives = 2
+
+	visible = {
+		num_of_operatives > 0
+		ROOT = {
+			is_muslim_brotherhood = yes
+			has_idea = muslim_brotherhood_faction_member
+		}
+		FROM = {
+			is_in_array = { global.possible_muslim_brotherhood_nation = THIS.id }
+			NOT = { is_muslim_brotherhood = yes }
+			NOT = { has_government = neutrality }
+		}
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		has_operation_token = {
+			tag = FROM
+			token = token_civilian
+		}
+	}
+
+	required_tokens = { token_civilian }
+	awarded_tokens = { token_civilian }
+
+	risk_chance = 0.5
+	experience = 2
+	outcome_extra_chance = 0.10
+	risk_modifiers = { operation_risk }
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+
+	outcome_execute = {
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_civilian
+			}
+		}
+		FROM = {
+			add_popularity = { ideology = neutrality popularity = 0.06 }
+			recalculate_party = yes
+			# brotherhood.7 trigger requires the target to be in active crackdown
+			if = {
+				limit = { has_idea = muslim_brotherhood_crackdown }
+				country_event = { id = brotherhood.7 days = 5 }
+			}
+		}
+	}
+
+	outcome_potential = {
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_civilian
+			}
+		}
+		FROM = {
+			add_popularity = { ideology = neutrality popularity = 0.06 }
+			recalculate_party = yes
+			if = {
+				limit = { has_idea = muslim_brotherhood_crackdown }
+				country_event = { id = brotherhood.7 days = 5 }
+			}
+		}
+	}
+
+	outcome_extra_execute = {
+		FROM = {
+			add_popularity = { ideology = neutrality popularity = 0.04 }
+			recalculate_party = yes
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = { base = 25 }
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+					has_equipment = {
+						cv_medium_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1
+			}
+		}
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 4
+				ROOT = { has_war = no }
+				FROM = { has_war = no }
+			}
+		}
+	}
+	phases = { #infiltrate military
+		infiltrate_military_bribe = { base = 25 }
+		infiltrate_military_seduction = { base = 25 }
+		infiltrate_military_ideological_supporter = {
+			base = 25
+			modifier = {
+				FROM = { has_government = ROOT }
+				factor = 0
+			}
+		}
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+					has_equipment = {
+						cv_medium_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = { base = 25 }
+	}
+}
+
+roll_up_brotherhood_cell = {
+	icon = GFX_operations_targeted_sabotage
+	map_icon = GFX_operations_targeted_sabotage_map
+	name = roll_up_brotherhood_cell
+	desc = roll_up_brotherhood_cell_desc
+	priority = 1
+
+	days = 90
+	network_strength = 50
+	operatives = 2
+
+	visible = {
+		num_of_operatives > 0
+		ROOT = {
+			NOT = { is_muslim_brotherhood = yes }
+		}
+		FROM = {
+			is_in_array = { global.possible_muslim_brotherhood_nation = THIS.id }
+			NOT = { is_muslim_brotherhood = yes }
+			neutrality > 0.2
+		}
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		has_operation_token = {
+			tag = FROM
+			token = token_civilian
+		}
+	}
+
+	required_tokens = { token_civilian }
+	awarded_tokens = { token_civilian }
+
+	risk_chance = 0.5
+	experience = 2
+	outcome_extra_chance = 0.10
+	risk_modifiers = { operation_risk }
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+
+	outcome_execute = {
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_civilian
+			}
+		}
+		FROM = {
+			add_popularity = { ideology = neutrality popularity = -0.07 }
+			recalculate_party = yes
+		}
+	}
+
+	outcome_potential = {
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_civilian
+			}
+		}
+		FROM = {
+			add_popularity = { ideology = neutrality popularity = -0.07 }
+			recalculate_party = yes
+		}
+	}
+
+	outcome_extra_execute = {
+		FROM = {
+			add_popularity = { ideology = neutrality popularity = -0.04 }
+			recalculate_party = yes
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = { base = 25 }
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+					has_equipment = {
+						cv_medium_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1
+			}
+		}
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 4
+				ROOT = { has_war = no }
+				FROM = { has_war = no }
+			}
+		}
+	}
+	phases = { #infiltrate military
+		infiltrate_military_bribe = { base = 25 }
+		infiltrate_military_seduction = { base = 25 }
+		infiltrate_military_ideological_supporter = {
+			base = 25
+			modifier = {
+				FROM = { has_government = ROOT }
+				factor = 0
+			}
+		}
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+					has_equipment = {
+						cv_medium_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = { base = 25 }
+	}
+}

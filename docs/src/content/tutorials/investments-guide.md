@@ -11,7 +11,7 @@ Millennium Dawn includes two distinct investment systems: **International Invest
 
 ### Overview
 
-International investments allow you to fund the construction of buildings in foreign-controlled states. Once a project completes, the building becomes part of that state — permanently raising their production, infrastructure, or energy output. In return, you earn weekly income on the money you have spent.
+International investments allow you to fund the construction of buildings in foreign-controlled states. Once a project completes, the building becomes part of that state, permanently raising their production, infrastructure, or energy output. In return, you earn weekly income on the money you have spent.
 
 **Why invest internationally?**
 
@@ -22,7 +22,7 @@ International investments allow you to fund the construction of buildings in for
 ### How to Use
 
 1. Click on any state not owned or controlled by you
-2. An arrow button appears at the bottom of the state panel — click it to open the investments window
+2. An arrow button appears at the bottom of the state panel, click it to open the investments window
 3. Select a building type from the two pages of options
 4. Adjust the quantity with the +/− buttons
 5. Click the build button to initiate the project
@@ -109,7 +109,7 @@ When a foreign country offers to build in one of your states, you get an event:
 - **Accept**: The investor funds the full project cost. You receive 10% of the cost added to your treasury, and the investor gains influence over you.
 - **Decline**: Nothing happens. The investor cannot re-offer for a period.
 
-Accepting investments is generally beneficial — you get a free building plus a cash payment. The main reason to decline is if you do not want a rival nation accumulating influence over you.
+Accepting investments is generally beneficial, you get a free building plus a cash payment. The main reason to decline is if you do not want a rival nation accumulating influence over you.
 
 Some decisions and focuses can set your country to automatically reject all incoming investment offers.
 
@@ -125,7 +125,7 @@ Internal investments are temporary state-level buffs funded by political power a
 
 1. Click on any state you own or control
 2. Click the arrow button to open the owned-state investments panel
-3. Select an investment option — each shows its duration and what it does
+3. Select an investment option, each shows its duration and what it does
 4. Confirm to spend PP and treasury funds
 
 Each investment locks a **concurrent slot** for the duration. The number of available slots scales with your power rank:
@@ -158,7 +158,7 @@ Additional slots can be granted by national ideas and focus completions.
 | Expand Coastal Infrastructure     | 180 days | ~0.5% GDP                   | +15% naval base, naval HQ, and naval supply hub construction speed (coastal states only)     |
 | Expand Fortification Efforts      | 180 days | ~0.5% GDP                   | +15% bunker, coastal bunker, and stronghold construction speed                               |
 
-Treasury costs are proportional to your GDP, so they scale naturally with your economy — large nations pay more in absolute terms but the same fraction as small ones. For the two population-scaled options (Encourage Productivity and Improve Rebuilding Efforts), costs are also multiplied by the state's population in millions, meaning investing in densely populated states is more expensive.
+Treasury costs are proportional to your GDP, so they scale naturally with your economy, large nations pay more in absolute terms but the same fraction as small ones. For the two population-scaled options (Encourage Productivity and Improve Rebuilding Efforts), costs are also multiplied by the state's population in millions, meaning investing in densely populated states is more expensive.
 
 ### Building Capacity Expansion
 
@@ -189,7 +189,7 @@ The AI pulse only fires when all of the following are true:
 - Debt-to-GDP ratio below 2.5
 - Treasury above $5B
 
-If any condition fails, the pulse is skipped entirely. This means AI nations in economic difficulty stop investing abroad — and struggling nations will receive less foreign capital when they most need it.
+If any condition fails, the pulse is skipped entirely. This means AI nations in economic difficulty stop investing abroad, and struggling nations will receive less foreign capital when they most need it.
 
 ### Country Selection
 
@@ -239,7 +239,7 @@ Once a target country is selected, the AI evaluates every building type against 
 | Air Base             | Military ideas                               |
 | Renewable Energy     | Fuel silo technology                         |
 | Nuclear Reactor      | Nuclear reactor technology                   |
-| Agriculture District | **Never scored — AI does not build these**   |
+| Agriculture District | **Never scored, AI does not build these**    |
 
 **Building scoring summary:**
 
@@ -273,7 +273,7 @@ When the AI makes an offer, the target country evaluates it with a weighted rand
 - Energy deficit and the offered building is a power plant
 - Investor is among the top influencers in the country
 
-**Hard block — will always decline:**
+**Hard block, will always decline:**
 
 - Interest rate above 10%
 - Already refused this investor within the last 30 days
@@ -281,8 +281,8 @@ When the AI makes an offer, the target country evaluates it with a weighted rand
 **More likely to decline:**
 
 - Nationalist government ideology
-- Low domestic independence — the lower it falls, the more strongly the country resists accumulating more foreign influence
-- Energy-constrained country offered an economic building (factory, dockyard, office, agriculture) — strongly prefers energy investment first
+- Low domestic independence, the lower it falls, the more strongly the country resists accumulating more foreign influence
+- Energy-constrained country offered an economic building (factory, dockyard, office, agriculture), strongly prefers energy investment first
 - Ideological mismatch with the investor
 
 **Hardcoded rejections:**
@@ -305,19 +305,19 @@ After a decline, the target will not accept further offers from that same invest
 
 The scoring tables above show what drives AI country selection. In practice, the most actionable levers are:
 
-- **Faction membership and trade agreements** are the easiest consistent boosts — the major investing nations favour their bloc members and trading partners
-- **A Mutual Investment Treaty** is one of the highest-value diplomatic deals for investment attraction — it improves your country-selection score and reduces both cost and duration on incoming projects
-- **Keep corruption low and corporate tax below 30%** — both drag your score down; corruption is especially punishing at higher levels
-- **Use Encourage Investments on states you want developed** — it raises the per-state building score and speeds up incoming projects by 15%
-- **Keep interest rates below 10%** — above this, the target hard-blocks acceptance regardless of how attractive your country otherwise appears
+- **Faction membership and trade agreements** are the easiest consistent boosts, the major investing nations favour their bloc members and trading partners
+- **A Mutual Investment Treaty** is one of the highest-value diplomatic deals for investment attraction, it improves your country-selection score and reduces both cost and duration on incoming projects
+- **Keep corruption low and corporate tax below 30%**: both drag your score down; corruption is especially punishing at higher levels
+- **Use Encourage Investments on states you want developed**: it raises the per-state building score and speeds up incoming projects by 15%
+- **Keep interest rates below 10%**: above this, the target hard-blocks acceptance regardless of how attractive your country otherwise appears
 
 ### Deterring Unwanted Investment
 
 If a rival is accumulating influence through investments:
 
-- **Decline their offers** — each rejection locks them out temporarily and repeated declines make them deprioritize your country over time
-- **Use national decisions or focuses that auto-reject all incoming offers** — some countries have access to a blanket block
-- **Raise corporate tax above 30%** — reduces your score in AI country selection, though at the cost of your own productivity
+- **Decline their offers**: each rejection locks them out temporarily and repeated declines make them deprioritize your country over time
+- **Use national decisions or focuses that auto-reject all incoming offers**: some countries have access to a blanket block
+- **Raise corporate tax above 30%**: reduces your score in AI country selection, though at the cost of your own productivity
 
 ---
 
@@ -327,7 +327,7 @@ If a rival is accumulating influence through investments:
 
 **Use Encourage Investments to draw in foreign capital.** This internal investment makes your state more attractive to AI investors and speeds up incoming foreign projects by 15%. If you are developing an underdeveloped state and want foreign nations to pitch in, flag it first.
 
-**Use Expand Building Capacity before you need the slots.** Building slot expansion is the only internal investment option that outlasts its duration — the slot stays permanently. Do it early in states you intend to develop heavily rather than waiting until you are already blocked.
+**Use Expand Building Capacity before you need the slots.** Building slot expansion is the only internal investment option that outlasts its duration, the slot stays permanently. Do it early in states you intend to develop heavily rather than waiting until you are already blocked.
 
 **Grow your investment portfolio steadily through the mid game.** Once you have $100B+ invested, the weekly passive income becomes meaningful. Nations that invest abroad consistently can self-fund their late-game military expansion from returns alone.
 
@@ -337,6 +337,6 @@ If a rival is accumulating influence through investments:
 
 ## Related Documentation
 
-- [Economy Guide](/player-tutorials/economy-guide) — Full breakdown of income, expenses, debt, and the currency system
-- [Influence Guide](/player-tutorials/influence-guide) — How influence interacts with investments and diplomatic leverage
-- [International Systems Guide](/player-tutorials/international-systems) — PMCs, sanctions, and other cross-border mechanics
+- [Economy Guide](/player-tutorials/economy-guide/), Full breakdown of income, expenses, debt, and the currency system
+- [Influence Guide](/player-tutorials/influence-guide/), How influence interacts with investments and diplomatic leverage
+- [International Systems Guide](/player-tutorials/international-systems/), PMCs, sanctions, and other cross-border mechanics

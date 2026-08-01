@@ -8,7 +8,6 @@ import os
 import re
 import sys
 from collections import defaultdict
-from pathlib import Path
 
 
 def find_gfx_files(root_dir):
@@ -29,7 +28,6 @@ def extract_texture_definitions(file_path):
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
-        # Pattern to match texturefile = "path/to/file.dds"
         pattern = r'texturefile\s*=\s*"([^"]+)"'
         matches = re.finditer(pattern, content, re.IGNORECASE)
 
@@ -55,14 +53,11 @@ def find_duplicate_textures(root_dir):
     """Find all duplicate texture definitions across .gfx files."""
     print(f"Searching for .gfx files in: {root_dir}")
 
-    # Find all .gfx files
     gfx_files = find_gfx_files(root_dir)
     print(f"Found {len(gfx_files)} .gfx files")
 
-    # Dictionary to store texture paths and their definitions
     texture_registry = defaultdict(list)
 
-    # Process each .gfx file
     for gfx_file in gfx_files:
         # Skip goals_shine.gfx entirely as it contains intentional duplicates
         if "goals_shine.gfx" in gfx_file:
@@ -84,7 +79,6 @@ def find_duplicate_textures(root_dir):
         for definition in definitions:
             texture_registry[definition["texture_path"]].append(definition)
 
-    # Find duplicates
     duplicates = {}
     for texture_path, definitions in texture_registry.items():
         if len(definitions) > 1:
@@ -146,7 +140,6 @@ def print_results(duplicates, output_file=None):
 
 def main():
     """Main function."""
-    # Get the root directory (current directory by default)
     if len(sys.argv) > 1:
         root_dir = sys.argv[1]
     else:
@@ -159,18 +152,14 @@ def main():
     print("Millennium Dawn - Duplicate Texture Finder")
     print("=" * 50)
 
-    # Find duplicates
     duplicates = find_duplicate_textures(root_dir)
 
-    # Create output filename with timestamp
     from datetime import datetime
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_filename = f"duplicate_textures_report_{timestamp}.txt"
 
-    # Print results to console and file
     with open(output_filename, "w", encoding="utf-8") as output_file:
-        # Write header to file
         output_file.write("Millennium Dawn - Duplicate Texture Finder\n")
         output_file.write("=" * 50 + "\n")
         output_file.write(
@@ -178,18 +167,16 @@ def main():
         )
         output_file.write(f"Search directory: {root_dir}\n\n")
 
-        # Print results
         print_results(duplicates, output_file)
 
-        # Summary
         total_duplicates = sum(len(definitions) for definitions in duplicates.values())
         if duplicates:
             summary_lines = [
-                f"\nSummary:",
+                "\nSummary:",
                 f"   - {len(duplicates)} unique textures have duplicates",
                 f"   - {total_duplicates} total texture definitions",
                 f"   - {total_duplicates - len(duplicates)} duplicate definitions found",
-                f"   - Note: goals_shine.gfx and Modding resources are excluded (intentional duplicates)",
+                "   - Note: goals_shine.gfx and Modding resources are excluded (intentional duplicates)",
             ]
 
             for line in summary_lines:

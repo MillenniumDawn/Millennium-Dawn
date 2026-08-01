@@ -1,8 +1,19 @@
 # Decision Reference
 
-On-demand reference for decision structure and examples. For best practices, see CLAUDE.md.
+On-demand reference for decision structure and examples. For best practices, see AGENTS.md.
 
 Full HOI4 wiki reference: https://hoi4.paradoxwikis.com/Decision_modding
+
+## Icon Field
+
+The decision `icon = X` field accepts **either** the bare sprite stem **or** the fully-qualified `GFX_decision_` name — the engine auto-prepends `GFX_decision_` when resolving a bare name. Both render identically:
+
+```
+icon = generic_political_discourse              # resolves to GFX_decision_generic_political_discourse
+icon = GFX_decision_generic_political_discourse # explicit, same result
+```
+
+The bare form is the dominant convention in this codebase (e.g. `generic_decision`, `political_actions`, `generic_nationalism`). **Do not "fix" a bare decision icon by adding the `GFX_decision_` prefix — it is not broken.** Only flag an icon when neither `GFX_decision_<name>` nor `GFX_<name>` exists in any `interface/*.gfx` file. (Decision **category** icons and most other contexts still require the explicit `GFX_` sprite name — this auto-prefix shortcut is specific to the decision `icon` field.)
 
 ## Targeted Decisions
 
@@ -18,9 +29,11 @@ A decision becomes targeted when it includes `targets`, `target_array`, `target_
 | `visible`             | ROOT + FROM | Every tick                                   | UI visibility (most expensive)                |
 | `available`           | ROOT + FROM | Every tick                                   | Clickability gate                             |
 
+**Don't repeat the category's `allowed` on each decision.** A decision's `allowed` is redundant when it just duplicates the parent category's `allowed` (e.g. both are `original_tag = TAG`) — the category gate already applies to every decision inside it. Restrict the nation once on the category; put dynamic conditions in `available`/`visible` (since `allowed` is locked at game start).
+
 ### Performance Optimization
 
-**Always move ROOT-only conditions from `visible` to `target_root_trigger`.** This is the single most impactful decision optimization:
+**Always move ROOT-only conditions from `visible` to `target_root_trigger`.** Single most impactful decision optimization:
 
 - `visible` runs every tick, for every target — O(ticks × targets)
 - `target_root_trigger` runs once daily, ROOT only — O(1/day)
@@ -56,9 +69,7 @@ my_targeted_decision = {
 	targets = { BHR QAT SAU OMA YEM IRQ SYR LEB ISR PAL }
 	targets_dynamic = yes
 	target_trigger = {
-		FROM = {
-			has_idea = my_idea
-		}
+		FROM = { has_idea = my_idea }
 	}
 	icon = my_icon
 	cost = 20
@@ -126,9 +137,7 @@ URA_world_opr = {
 		OPR = { country_event = { id = subject_rus.121 days = 1 } }
 	}
 
-	ai_will_do = {
-		factor = 10
-	}
+	ai_will_do = { base = 10 }
 }
 ```
 
@@ -204,13 +213,14 @@ increase_military_spending = yes / decrease_military_spending = yes
 ### Political Effects
 
 ```
-# Party popularity (index 0-23)
+# Party popularity — defaults to the ruling party when party_index is unset
+set_temp_variable = { party_popularity_increase = 0.10 }
+change_relative_party_popularity = yes
+
+# Or target a specific party by index (0-23)
 set_temp_variable = { party_index = 2 }
 set_temp_variable = { party_popularity_increase = 0.10 }
-add_relative_party_popularity = yes
-
-# Or set to ruling party automatically
-set_party_index_to_ruling_party = yes
+change_relative_party_popularity = yes
 
 # Ban/unban party
 set_temp_variable = { party_index = 1 }
@@ -225,11 +235,10 @@ unban_party_scripted_call = yes
 set_temp_variable = { percent_change = 10 }
 change_domestic_influence_percentage = yes
 
-# Foreign influence (requires target)
+# Foreign influence (requires target; tag_index defaults to ROOT.id)
 set_temp_variable = { percent_change = 5 }
-set_temp_variable = { tag_index = ROOT }
 set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```
 
-For the full scripted effects library, see `docs/src/content/resources/code-resource.md`.
+For the full scripted effects library, see `docs/src/content/resources/scripted-effects-reference.md`.

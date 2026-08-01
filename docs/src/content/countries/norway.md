@@ -8,7 +8,7 @@ infobox:
   - section: Overview
     stats:
       - label: Tag
-        value: NOR
+        value: NRY
   - section: Military & Industry
     stats:
       - label: Divisions

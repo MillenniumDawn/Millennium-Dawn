@@ -356,6 +356,42 @@ country_event = {
 }
 
 country_event = {
+	id = georg.3
+	title = georg.3.t
+	desc = georg.3.d
+	picture = GFX_southern_options
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = georg.3.a
+		ai_chance = {
+			base = 80
+		}
+		log = "[GetDateText]: [This.GetName]: georg.3.a executed"
+		add_opinion_modifier = {
+			target = GEO
+			modifier = diplomatic_support
+		}
+		reverse_add_opinion_modifier = {
+			target = GEO
+			modifier = diplomatic_support
+		}
+		GEO = { country_event = georg.4 }
+	}
+
+	option = {
+		name = georg.3.b
+		ai_chance = {
+			base = 20
+		}
+		log = "[GetDateText]: [This.GetName]: georg.3.b executed"
+		GEO = { country_event = georg.5 }
+	}
+}
+
+country_event = {
 	id = georg.4
 	title = georg.4.t
 	desc = georg.4.d
@@ -400,16 +436,22 @@ country_event = {
 		hidden_effect = {
 			set_temp_variable = { rul_party_temp = 13 }
 			change_ruling_party_effect = yes
-			add_to_array = { gov_coalition_array = 0 }
+			set_temp_variable = { add_col_one = 0 }
+			add_coalition_members_effect = yes
 			set_temp_variable = { current_cons_popularity = party_pop_array^0 }
 			multiply_temp_variable = { current_cons_popularity = 9.5 }
 			# Remove most of support, retrack it to emerg communist party
-			subtract_from_variable = { party_pop_array^7 = current_cons_popularity }
-			add_to_variable = { party_pop_array^0 = current_cons_popularity }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = current_cons_popularity }
+			multiply_temp_variable = { party_popularity_increase = -1 }
+			change_relative_party_popularity = yes
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = current_cons_popularity }
+			change_relative_party_popularity = yes
 		}
-		add_to_variable = { party_pop_array^0 = 0.30 }
-		recalculate_party = yes
+		set_temp_variable = { party_index = 0 }
+		set_temp_variable = { party_popularity_increase = 0.30 }
+		change_relative_party_popularity = yes
 		create_country_leader = {
 			name = "Nino Burjanadze - Interim Government"
 			picture = "nino_burjanadze.dds"
@@ -1009,7 +1051,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: georg.24.a executed"
 		set_temp_variable = { party_index = 23 }
 		set_temp_variable = { party_popularity_increase = 0.25 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		if = {
 			limit = { NOT = { is_in_array = { ruling_party = 23 } } }
 			set_temp_variable = { rul_party_temp = 23 }
@@ -1024,7 +1066,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: georg.24.b executed"
 		set_temp_variable = { party_index = 23 }
 		set_temp_variable = { party_popularity_increase = 0.25 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		if = {
 			limit = { NOT = { is_in_array = { ruling_party = 23 } } }
 			set_temp_variable = { rul_party_temp = 23 }
@@ -1168,8 +1210,10 @@ country_event = {
 	option = {
 		name = geo_misc.5.a
 		trigger = {
-			tag = SOO
-			tag = ABK
+			OR = {
+				tag = SOO
+				tag = ABK
+			}
 		}
 		diplomatic_relation = {
 			country = GEO

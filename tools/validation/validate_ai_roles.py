@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
-##########################
-# AI Role Reference Validation Script
-# Cross-references role_ratio and build_army references in AI strategy files
-# against role definitions in AI template files.
-#
-# Checks:
-#   1. Collects all valid role names from common/ai_templates/*.txt
-#   2. Finds all role_ratio id = X and build_army id = X in common/ai_strategy/*.txt
-#   3. Reports any referenced role not found in the template definitions
-#   4. Suggests closest match for likely typos
-##########################
+# Cross-reference role_ratio and build_army role references in
+# common/ai_strategy/*.txt against role definitions in common/ai_templates/*.txt
+# and common/ai_equipment/*.txt (plus known vanilla roles), suggesting the
+# closest match for likely typos.
 import difflib
 import glob
 import os
 import re
-from typing import Dict, List, Set, Tuple
+from typing import List, Set, Tuple
 
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+from validator_common import BaseValidator, run_validator_main, strip_comments
 
 # Regex to match role definitions: role = <name>
 ROLE_DEF_RE = re.compile(r"role\s*=\s*(\w+)")
@@ -24,21 +17,14 @@ ROLE_DEF_RE = re.compile(r"role\s*=\s*(\w+)")
 # Regex to match role references: role_ratio id = <name> or build_army id = <name>
 ROLE_REF_RE = re.compile(r"(?:role_ratio|build_army)\s+id\s*=\s*(\w+)")
 
-# Vanilla HOI4 roles defined outside common/ai_templates/ (naval, air, missile, etc.)
-# These are valid roles handled by the base game engine, not mod templates.
+# Regex to match role declarations on equipment variants: roles = { a b c }
+ROLE_LIST_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
+
+# Vanilla HOI4 roles with neither an ai_templates nor an ai_equipment definition.
+# These are valid roles handled by the base game engine. Naval roles are NOT
+# listed here — they are declared per-variant in common/ai_equipment/ and picked
+# up by collect_variant_roles_from_file().
 VANILLA_ROLES = {
-    # Naval roles (defined in vanilla naval templates)
-    "naval_corvettes",
-    "naval_frigate",
-    "naval_destroyer",
-    "naval_screen_destroyer",
-    "naval_stealth_destroyer",
-    "naval_attack_submarine",
-    "naval_missile_submarine",
-    "naval_helicopter_operator",
-    "naval_carrier",
-    "naval_cruiser",
-    "naval_mine_sweeper",
     # Missile roles (no templates but valid engine roles)
     "missile",
     "sam_missile",
@@ -61,6 +47,21 @@ def collect_roles_from_file(filepath: str) -> Set[str]:
 
     content = strip_comments(content)
     return set(ROLE_DEF_RE.findall(content))
+
+
+def collect_variant_roles_from_file(filepath: str) -> Set[str]:
+    """Parse an AI equipment file and return roles declared on its variants."""
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except Exception:
+        return set()
+
+    content = strip_comments(content)
+    roles: Set[str] = set()
+    for match in ROLE_LIST_RE.finditer(content):
+        roles.update(match.group(1).split())
+    return roles
 
 
 def collect_references_from_file(
@@ -116,14 +117,10 @@ class Validator(BaseValidator):
         self.valid_roles: Set[str] = set()
 
     def _collect_valid_roles(self):
-        """Collect all role definitions from AI template files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Collecting role definitions from AI templates...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        """Collect role definitions from AI template and AI equipment files."""
+        self._log_section("Collecting role definitions from AI templates...")
 
-        # Always scan ALL template files for role definitions, even in staged mode.
+        # Always scan ALL definition files for roles, even in staged mode.
         # Role definitions are the "truth set" — we need the complete picture.
         template_pattern = os.path.join(
             self.mod_path, "common", "ai_templates", "*.txt"
@@ -131,6 +128,14 @@ class Validator(BaseValidator):
         template_files = glob.glob(template_pattern)
         for filepath in template_files:
             self.valid_roles.update(collect_roles_from_file(filepath))
+
+        # Naval/air roles have no ai_templates entry — they are declared on the
+        # equipment variants that fill them (roles = { naval_frigate }).
+        equipment_pattern = os.path.join(
+            self.mod_path, "common", "ai_equipment", "*.txt"
+        )
+        for filepath in glob.glob(equipment_pattern):
+            self.valid_roles.update(collect_variant_roles_from_file(filepath))
 
         # Add vanilla roles that are defined outside mod templates
         self.valid_roles.update(VANILLA_ROLES)
@@ -143,11 +148,7 @@ class Validator(BaseValidator):
 
     def _validate_strategy_references(self):
         """Validate that all role references in strategy files point to valid roles."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking role references in AI strategy files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking role references in AI strategy files...")
 
         strategy_files = self._collect_files(["common/ai_strategy/*.txt"])
         self.log(f"  Found {len(strategy_files)} strategy files to check")

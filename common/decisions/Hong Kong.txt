@@ -1,0 +1,365 @@
+HKG_legco_decision_categories = {
+
+	legco_current_special_motion_clock = {
+		activation = {
+			legco_has_a_special_active_motion = yes
+		}
+		available = {
+			always = no
+		}
+		days_mission_timeout = 60
+		is_good = yes
+		timeout_effect = {
+			if = {
+				limit = {
+					has_country_flag = HKG_electoral_reform_mainland_a
+				}
+				custom_effect_tooltip = legco_decision_effect_tt
+				if = {
+					limit = {
+						check_variable = {
+							HKG_legco_approval_seats > HKG_legco_required_seats
+						}
+					}
+					custom_effect_tooltip = legco_election_reform_a_effect_tt
+				}
+			}
+
+			if = {
+				limit = {
+					has_country_flag = HKG_electoral_reform_mainland_b
+				}
+				custom_effect_tooltip = legco_decision_effect_tt
+				if = {
+					limit = {
+						check_variable = {
+							HKG_legco_approval_seats > HKG_legco_required_seats
+						}
+					}
+					custom_effect_tooltip = legco_election_reform_b_effect_tt
+				}
+			}
+
+			if = {
+				limit = {
+					has_country_flag = HKG_electoral_reform_mainland_c
+				}
+				custom_effect_tooltip = legco_decision_effect_tt
+				if = {
+					limit = {
+						check_variable = {
+							HKG_legco_approval_seats > HKG_legco_required_seats
+						}
+					}
+					custom_effect_tooltip = legco_election_reform_c_effect_tt
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+}
+
+# HKG_protest_decision_categories = {
+
+# 	HKG_arrest_protesters = {
+# 		complete_effect = {
+# 		  add_political_power = 1
+# 		  log = "[GetDateText]: [Root.GetName]: Decision complete HKG_arrest_protesters"
+# 		}
+# 	}
+# }
+
+
+HKG_naval_contracts_category = {
+
+	HKG_contract_solicit_contract = {
+		icon = GFX_decision_generic_china
+
+		visible = {
+			has_country_flag = HKG_contract_active
+			NOT = { has_country_flag = HKG_contract_offer_pending }
+		}
+
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = HKG_contract_slots_free_tt
+				check_variable = { HKG_contract_count < HKG_contract_max_slots }
+			}
+			custom_trigger_tooltip = {
+				tooltip = HKG_contract_modules_tt
+				HKG_contract_can_build_ships = yes
+			}
+		}
+
+		cost = 25
+		days_re_enable = 90
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_solicit_contract"
+			custom_effect_tooltip = HKG_contract_tt_solicit
+			country_event = { id = HKG_contract.1 days = 2 }
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 0
+				has_country_flag = HKG_contract_offer_pending
+			}
+			modifier = {
+				factor = 0
+				NOT = { HKG_contract_can_finish_in_time = yes }
+			}
+		}
+	}
+
+	# Delivery is class-based by necessity: transfer_ship moves one ship of an
+	# archetype per call, and decisions take no text input, so name-based ship
+	# selection is impossible. Do not rewrite this as name filtering.
+	HKG_contract_deliver_destroyer = {
+		icon = GFX_decision_generic_naval
+
+		visible = {
+			has_country_flag = HKG_contract_active
+			HKG_contract_destroyer_active = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_contract_need_destroyer_tt
+				has_navy_size = { archetype = destroyer size > 0 }
+			}
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_destroyer"
+			custom_effect_tooltip = HKG_contract_tt_deliver
+			set_variable = { HKG_deliver_count_before = num_ships_with_type@destroyer }
+			transfer_ship = { type = destroyer target = CHI }
+			if = {
+				limit = { check_variable = { num_ships_with_type@destroyer < HKG_deliver_count_before } }
+				custom_effect_tooltip = HKG_contract_tt_deliver_reward
+				set_temp_variable = { deliver_class = 1 }
+				HKG_contract_credit_delivery = yes
+			}
+			else = {
+				country_event = { id = HKG_contract.30 hours = 1 }
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	HKG_contract_deliver_frigate = {
+		icon = GFX_decision_generic_naval
+
+		visible = {
+			has_country_flag = HKG_contract_active
+			HKG_contract_frigate_active = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_contract_need_frigate_tt
+				has_navy_size = { archetype = frigate size > 0 }
+			}
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_frigate"
+			custom_effect_tooltip = HKG_contract_tt_deliver
+			set_variable = { HKG_deliver_count_before = num_ships_with_type@frigate }
+			transfer_ship = { type = frigate target = CHI }
+			if = {
+				limit = { check_variable = { num_ships_with_type@frigate < HKG_deliver_count_before } }
+				custom_effect_tooltip = HKG_contract_tt_deliver_reward
+				set_temp_variable = { deliver_class = 2 }
+				HKG_contract_credit_delivery = yes
+			}
+			else = {
+				country_event = { id = HKG_contract.30 hours = 1 }
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	HKG_contract_deliver_submarine = {
+		icon = GFX_decision_generic_naval
+
+		visible = {
+			has_country_flag = HKG_contract_active
+			HKG_contract_submarine_active = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_contract_need_submarine_tt
+				has_navy_size = { archetype = attack_submarine size > 0 }
+			}
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_submarine"
+			custom_effect_tooltip = HKG_contract_tt_deliver
+			set_variable = { HKG_deliver_count_before = num_ships_with_type@attack_submarine }
+			transfer_ship = { type = attack_submarine target = CHI }
+			if = {
+				limit = { check_variable = { num_ships_with_type@attack_submarine < HKG_deliver_count_before } }
+				custom_effect_tooltip = HKG_contract_tt_deliver_reward
+				set_temp_variable = { deliver_class = 3 }
+				HKG_contract_credit_delivery = yes
+			}
+			else = {
+				country_event = { id = HKG_contract.30 hours = 1 }
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	HKG_contract_deliver_cruiser = {
+		icon = GFX_decision_generic_naval
+
+		visible = {
+			has_country_flag = HKG_contract_active
+			HKG_contract_cruiser_active = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_contract_need_cruiser_tt
+				has_navy_size = { archetype = cruiser size > 0 }
+			}
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_cruiser"
+			custom_effect_tooltip = HKG_contract_tt_deliver
+			set_variable = { HKG_deliver_count_before = num_ships_with_type@cruiser }
+			transfer_ship = { type = cruiser target = CHI }
+			if = {
+				limit = { check_variable = { num_ships_with_type@cruiser < HKG_deliver_count_before } }
+				custom_effect_tooltip = HKG_contract_tt_deliver_reward
+				set_temp_variable = { deliver_class = 4 }
+				HKG_contract_credit_delivery = yes
+			}
+			else = {
+				country_event = { id = HKG_contract.30 hours = 1 }
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	HKG_contract_deliver_carrier = {
+		icon = GFX_decision_HOL_air_carrier
+
+		visible = {
+			has_country_flag = HKG_contract_active
+			HKG_contract_carrier_active = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_contract_need_carrier_tt
+				has_navy_size = { archetype = carrier size > 0 }
+			}
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_carrier"
+			custom_effect_tooltip = HKG_contract_tt_deliver
+			set_variable = { HKG_deliver_count_before = num_ships_with_type@carrier }
+			transfer_ship = { type = carrier target = CHI }
+			if = {
+				limit = { check_variable = { num_ships_with_type@carrier < HKG_deliver_count_before } }
+				custom_effect_tooltip = HKG_contract_tt_deliver_reward
+				set_temp_variable = { deliver_class = 5 }
+				HKG_contract_credit_delivery = yes
+			}
+			else = {
+				country_event = { id = HKG_contract.30 hours = 1 }
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	HKG_contract_negotiate_terms = {
+		icon = GFX_decision_generic_china
+
+		visible = {
+			has_country_flag = HKG_contract_capstone_done
+			NOT = { has_country_flag = HKG_contract_better_terms }
+		}
+
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		cost = 100
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_negotiate_terms"
+			custom_effect_tooltip = HKG_contract_tt_negotiate
+			set_country_flag = HKG_contract_better_terms
+			add_to_variable = { HKG_contract_gui_dirty = 1 }
+		}
+
+		ai_will_do = { base = 80 }
+	}
+
+	HKG_contract_acquire_pearl_river = {
+		icon = GFX_decision_generic_china
+
+		visible = {
+			has_country_flag = HKG_contract_active
+			NOT = { has_country_flag = HKG_contract_pearl_river_acquired }
+		}
+
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+			has_completed_focus = HKG_gong_zyu_ou_integration
+			custom_trigger_tooltip = {
+				tooltip = HKG_contract_max_standing_tt
+				check_variable = { HKG_contract_standing = HKG_contract_standing_max }
+			}
+			CHI = { owns_state = 532 }
+		}
+
+		cost = 150
+		days_re_enable = 180
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_acquire_pearl_river"
+			set_temp_variable = { treasury_change = -50 }
+			modify_treasury_effect = yes
+			CHI = { country_event = { id = HKG_contract.20 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = HKG_contract_pearl_river_accept_tt
+		}
+
+		ai_will_do = { base = 0 }
+	}
+}

@@ -165,8 +165,8 @@ country_event = {
 				news_event = { id = KurdistanNews.3 hours = 6 }
 			}
 			swap_ideas = {
-				remove_idea = Non_State_Actor
-				add_idea = Lacks_International_Recognition
+				remove_idea = non_state_actor
+				add_idea = lacks_international_recognition
 			}
 			add_to_array = {
 				global.Unrecognised_States = THIS
@@ -225,13 +225,15 @@ country_event = {
 			factor = 50
 		}
 		country_event = { id = Kurdistan.6 hours = 6 }
-		IRQ = { transfer_state = 165 }
-		IRQ = { transfer_state = 641 }
+		IRQ = {
+			transfer_state = 165
+			transfer_state = 641
+		}
 		if = {
 			limit = { has_global_flag = KUR_demand_independence }
 			swap_ideas = {
-				remove_idea = Non_State_Actor
-				add_idea = Lacks_International_Recognition
+				remove_idea = non_state_actor
+				add_idea = lacks_international_recognition
 			}
 			add_to_array = {
 				global.Unrecognised_States = THIS
@@ -301,8 +303,8 @@ country_event = {
 		if = {
 			limit = { has_global_flag = KUR_demand_independence }
 			swap_ideas = {
-				remove_idea = Non_State_Actor
-				add_idea = Lacks_International_Recognition
+				remove_idea = non_state_actor
+				add_idea = lacks_international_recognition
 			}
 			add_to_array = {
 				global.Unrecognised_States = THIS
@@ -394,11 +396,9 @@ country_event = {
 	hidden = yes
 	is_triggered_only = yes
 	fire_only_once = yes
-	trigger = {
-		has_global_flag = battle_of_kirkuk_phase_1
-	}
 
 	immediate = {
+		log = "[GetDateText]: [This.GetName]: Kurdistan.12 executed"
 		if = {
 			limit = { has_global_flag = KUR_retreat_from_kirkuk }
 			IRQ = { transfer_state = 165 }
@@ -407,22 +407,22 @@ country_event = {
 		if = {
 			limit = { has_global_flag = KUR_fight_for_kirkuk }
 			random_list = {
-				75 = {			#Iraqi victory
-					IRQ = { transfer_state = 165 }
-					IRQ = { transfer_state = 641 }
+				75 = {
+					IRQ = {
+						transfer_state = 165
+						transfer_state = 641
+					}
 					news_event = KurdistanNews.6
 				}
-				25 = {			#Kurdish victory
+				25 = {
 					news_event = KurdistanNews.7
 				}
 			}
 		}
 	}
 
-	option = {
-		name = Kurdistan.12.a
-		log = "[GetDateText]: [This.GetName]: Kurdistan.12.a executed"
-		ai_chance = { factor = 100 }
+	trigger = {
+		has_global_flag = battle_of_kirkuk_phase_1
 	}
 }
 
@@ -518,13 +518,14 @@ country_event = {
 			add_state_core = 164
 		}
 		if = {
-			limit = { has_idea = Lacks_International_Recognition }
+			limit = { has_idea = lacks_international_recognition }
 			swap_ideas = {
-				remove_idea = Lacks_International_Recognition
-				add_idea = Non_State_Actor
+				remove_idea = lacks_international_recognition
+				add_idea = non_state_actor
 			}
-			remove_from_array = {
-				global.Unrecognised_States = THIS
+			if = {
+				limit = { is_in_array = { global.Unrecognised_States = THIS } }
+				remove_from_array = { global.Unrecognised_States = THIS }
 			}
 		}
 	}
@@ -610,8 +611,8 @@ country_event = { # KDP Proposes Re-Unification
 	option = { # Okay
 		name = Kurdistan.18.a
 		log = "[GetDateText]: [This.GetName]: Kurdistan.18.a executed"
-		KUR = { change_tag_from = PUK }
 		KUR = {
+			change_tag_from = PUK
 			country_event = Kurdistan.20
 			annex_country = {
 				target = PUK
@@ -621,7 +622,7 @@ country_event = { # KDP Proposes Re-Unification
 			add_coalition_members_effect = yes
 			set_temp_variable = { party_index = 15 }
 			set_temp_variable = { party_popularity_increase = 0.25 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_chance = {
 			base = 5
@@ -769,10 +770,12 @@ news_event = {
 		name = KurdistanNews.2.b
 		trigger = {
 			NOT = {
-				tag = IRQ
-				tag = SYR
-				tag = TUR
-				tag = PER
+				OR = {
+					tag = IRQ
+					tag = SYR
+					tag = TUR
+					tag = PER
+				}
 			}
 		}
 		ai_chance = { factor = 100 }
@@ -808,10 +811,12 @@ news_event = {
 		name = KurdistanNews.3.b
 		trigger = {
 			NOT = {
-				tag = IRQ
-				tag = SYR
-				tag = TUR
-				tag = PER
+				OR = {
+					tag = IRQ
+					tag = SYR
+					tag = TUR
+					tag = PER
+				}
 			}
 		}
 		ai_chance = { factor = 100 }
@@ -847,10 +852,12 @@ news_event = {
 		name = KurdistanNews.4.b
 		trigger = {
 			NOT = {
-				tag = IRQ
-				tag = SYR
-				tag = TUR
-				tag = PER
+				OR = {
+					tag = IRQ
+					tag = SYR
+					tag = TUR
+					tag = PER
+				}
 			}
 		}
 		ai_chance = { factor = 100 }
@@ -998,6 +1005,45 @@ news_event = {
 
 	option = {
 		name = KurdistanNews.11.a
+		ai_chance = { factor = 100 }
+	}
+
+}
+#Peshmerga Unification
+news_event = {
+	id = KurdistanNews.12
+	title = KurdistanNews.12.t
+	desc = KurdistanNews.12.d
+	picture = GFX_handshake_black
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = KurdistanNews.12.a
+		trigger = {
+			OR = {
+				tag = IRQ
+				tag = SYR
+				tag = TUR
+				tag = PER
+			}
+		}
+		ai_chance = { factor = 100 }
+	}
+	option = {
+		name = KurdistanNews.12.b
+		trigger = {
+			NOT = {
+				OR = {
+					tag = IRQ
+					tag = SYR
+					tag = TUR
+					tag = PER
+				}
+			}
+		}
 		ai_chance = { factor = 100 }
 	}
 

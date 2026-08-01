@@ -1,0 +1,9186 @@
+# Author(s): Manchu Yu
+# Last Modified 14/02/2022 by Angriest Bird
+focus_tree = {
+	id = korea_south_focus
+
+	country = {
+		factor = 0
+		modifier = {
+			add = 20
+			original_tag = KOR
+		}
+	}
+	shared_focus = KOR_korea_reunified
+	shared_focus = KOR_joint_peace
+
+	continuous_focus_position = { x = 0 y = 1000 }
+
+	##MILITARY##
+	focus = {
+		id = KOR_the_rok_armed_forces
+		icon = rok_armed_forces
+
+		x = 0
+		y = 0
+
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		completion_reward = {
+			army_experience = 25
+			navy_experience = 25
+			air_experience = 25
+			log = "[GetDateText]: [This.GetName]: focus KOR_the_rok_armed_forces executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_foreign_procurement
+		icon = united_states_dollar
+
+		x = -9
+		y = 1
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_the_rok_armed_forces }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			add_ideas = foreign_procurement
+			log = "[GetDateText]: [This.GetName]: focus KOR_foreign_procurement executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_p8_poseidon
+		icon = modern_bomber
+
+		x = -10
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_foreign_procurement }
+		mutually_exclusive = { focus = KOR_c295 }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_EQUIPMENT }
+
+		available = {
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				USA = {
+					has_opinion = {
+						target = ROOT
+						value > -1
+					}
+					has_tech = gen_3_large
+				}
+			}
+			else = {
+				USA = {
+					has_opinion = {
+						target = ROOT
+						value > -1
+					}
+					has_tech = naval_plane4
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_p8_poseidon executed"
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = large_plane_maritime_patrol_airframe_1
+					variant_name = "P-3 Orion"
+					amount = 20
+					producer = USA
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = naval_plane4
+					amount = 20
+					producer = USA
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_c295
+		icon = bombers
+
+		x = -8
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_foreign_procurement }
+		mutually_exclusive = { focus = KOR_p8_poseidon }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_EQUIPMENT }
+
+		available = {
+			country_exists = ITA
+			ITA = {
+				has_opinion = {
+					target = ROOT
+					value > -1
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = large_plane_air_transport_airframe_2
+					variant_name = "Alenia C-27J"
+					amount = 20
+					producer = ITA
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = naval_plane3
+					amount = 20
+					producer = ITA
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_c295 executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_upgrade_f16s
+		icon = fighter_plane
+
+		x = -9
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_c295 focus = KOR_p8_poseidon }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+
+		available = {
+			USA = {
+				has_opinion = {
+					target = ROOT
+					value > -1
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			add_ideas = f16_upgrades
+			log = "[GetDateText]: [This.GetName]: focus KOR_upgrade_f16s executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_order_f35s
+		icon = f35
+
+		x = -9
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_upgrade_f16s }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_EQUIPMENT }
+
+		available = {
+			USA = {
+				has_opinion = {
+					target = ROOT
+					value > -1
+				}
+				has_tech = MR_Fighter4
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = medium_plane_airframe_3
+					variant_name = "F-35"
+					amount = 60
+					producer = USA
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = MR_Fighter4
+					amount = 60
+					producer = USA
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_order_f35s executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_blue_water_navy
+		icon = navy3
+
+		x = -5
+		y = 1
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_the_rok_armed_forces }
+
+		search_filters = { FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_blue_water_navy executed"
+			navy_experience = 50
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			change_maritime_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_kss_program
+		icon = submarines
+
+		x = -6
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_blue_water_navy }
+
+		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_kss_program
+				bonus = 0.5
+				uses = 2
+				category = CAT_d_sub
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_kss_program executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_ffx_program
+		icon = battleships
+
+		x = -6
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_kss_program }
+
+		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_ffx_program
+				bonus = 0.5
+				uses = 2
+				category = CAT_frigate
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_ffx_program executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_kdx_program
+		icon = destroyers
+
+		x = -6
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_ffx_program }
+
+		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_kdx_program
+				bonus = 0.5
+				uses = 2
+				category = CAT_destroyer
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_kdx_program executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_lpx_program
+		icon = carriers
+
+		x = -6
+		y = 5
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_kdx_program }
+
+		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_lpx_program executed"
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_lpx_program
+				bonus = 0.5
+				uses = 2
+				category = CAT_helicopter_operators
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_jeju_complex
+		icon = navy
+
+		x = -4
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_blue_water_navy }
+
+		search_filters = { FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			608 = {
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					instant_build = yes
+					province = 1177
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_jeju_complex executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_expand_dockyards
+		icon = naval_dockyard
+
+		x = -4
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_jeju_complex }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			random_owned_state = {
+				limit = { is_coastal = yes }
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = dockyard
+					level = 2
+					instant_build = yes
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_expand_dockyards executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_dockyard = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_ship_building_effort
+		icon = production
+
+		x = -4
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_expand_dockyards }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			add_ideas = Bolster_The_Navy
+			log = "[GetDateText]: [This.GetName]: focus KOR_ship_building_effort executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_a_smart_navy
+		icon = naval_doctrine
+
+		x = -4
+		y = 5
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_ship_building_effort }
+
+		search_filters = { FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			add_ideas = KOR_smart_navy
+			log = "[GetDateText]: [This.GetName]: focus KOR_a_smart_navy executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_modernize_the_army
+		icon = military_mission
+
+		x = 0
+		y = 1
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_the_rok_armed_forces }
+
+		search_filters = { FOCUS_FILTER_ARMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_modernize_the_army executed"
+			army_experience = 50
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_rd_funding
+		icon = research3
+
+		x = -2
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_modernize_the_army }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = scientific_advances5
+				days = 1800
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_rd_funding executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_rifle_modernization_program
+		icon = small_arms_west
+
+		x = -2
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_rd_funding }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_rifle_modernization_program
+				bonus = 0.25
+				uses = 2
+				category = CAT_inf_wep
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_rifle_modernization_program executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_next_generation_ifvs
+		icon = tanks
+
+		x = -2
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_rifle_modernization_program }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_next_generation_ifvs
+				bonus = 0.25
+				uses = 2
+				category = CAT_ifv
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_next_generation_ifvs executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_tank_improvements
+		icon = tanks4
+
+		x = -2
+		y = 5
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_next_generation_ifvs }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_tank_improvements
+				bonus = 0.25
+				uses = 2
+				category = CAT_mbt
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_tank_improvements executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_women_in_the_special_forces
+		icon = military_women
+
+		x = 0
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 7
+
+		prerequisite = { focus = KOR_modernize_the_army }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		available = {
+			NOT = { has_idea = no_women_in_military }
+		}
+
+		completion_reward = {
+			add_ideas = KOR_idea_women_in_the_special_forces
+			log = "[GetDateText]: [This.GetName]: focus KOR_women_in_the_special_forces executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_ticn_program
+		icon = radio_communications
+
+		x = 0
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_women_in_the_special_forces }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_ticn_program
+				bonus = 0.25
+				uses = 2
+				category = CAT_cnc
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_ticn_program executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_bolster_cyber_security
+		icon = cryptography
+
+		x = 0
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_ticn_program }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_bolster_cyber_security
+				bonus = 0.25
+				uses = 2
+				category = CAT_encryption_tech
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_bolster_cyber_security executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_it_augmentation
+		icon = computer
+
+		x = 0
+		y = 5
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_bolster_cyber_security }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			add_doctrine_cost_reduction = {
+				name = GENERIC_land_doctrine_innovations
+				category = CAT_land_doctrine
+				uses = 2
+				cost_reduction = 0.5
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_it_augmentation executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_warrior_platform
+		icon = soldier
+
+		x = 2
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_modernize_the_army }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_warrior_platform
+				bonus = 0.25
+				uses = 3
+				technology = body_armor_3
+				technology = body_armor_4
+				category = CAT_l_drone
+				category = CAT_nvg
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_warrior_platform executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_new_uniforms
+		icon = general_staff
+
+		x = 2
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_warrior_platform }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_new_uniforms
+				bonus = 0.25
+				uses = 2
+				technology = camouflage_3
+				technology = camouflage_4
+				technology = camouflage_5
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_new_uniforms executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_focus_on_the_sof
+		icon = paratroopers
+
+		x = 2
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_new_uniforms }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			add_ideas = KOR_SOF_focus
+			log = "[GetDateText]: [This.GetName]: focus KOR_focus_on_the_sof executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_slimmer_but_smarter
+		icon = army_doctrine
+
+		x = 2
+		y = 5
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_focus_on_the_sof }
+
+		search_filters = { FOCUS_FILTER_ARMY FOCUS_FILTER_MANPOWER }
+
+		available = {
+			has_army_manpower = {
+				size < 500001
+			}
+		}
+
+		completion_reward = {
+			add_ideas = KOR_smart_army
+			custom_effect_tooltip = KOR_smart_army_tt
+			log = "[GetDateText]: [This.GetName]: focus KOR_slimmer_but_smarter executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_korea_aerospace_industries
+		icon = air_production
+
+		x = 4
+		y = 1
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 8
+
+		prerequisite = { focus = KOR_the_rok_armed_forces }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_RESEARCH }
+		available = {
+			if = {
+				limit = {
+					NOT = {
+						has_dlc = "Arms Against Tyranny"
+					}
+				}
+				has_idea = KOR_korea_aerospace_industries_aircraft_manufacturer
+				has_idea = KOR_korea_aerospace_industries_tank_manufacturer
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_korea_aerospace_industries executed"
+			air_experience = 50
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_korean_helicopters
+		icon = ka_heli
+
+		x = 4
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_korea_aerospace_industries }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_korean_helicopters
+				bonus = 0.25
+				uses = 2
+				category = CAT_heli
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_korean_helicopters executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_next_generation_uavs
+		icon = drone
+
+		x = 4
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_korean_helicopters }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -2.5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = KOR_next_generation_uavs
+				bonus = 0.5
+				uses = 1
+				category = CAT_a_uav
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_next_generation_uavs executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_experimental_fighter
+		icon = close_air_support
+
+		x = 4
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_next_generation_uavs }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_tech_bonus = {
+					name = KOR_experimental_fighter
+					bonus = 0.25
+					uses = 4
+					technology = gen_4_medium
+					technology = gen_5_light
+					technology = gen_5_medium
+					technology = stealth_tech_1
+					technology = redundant_1
+					technology = internal_weapons_1
+					technology = refueling_2
+					technology = diamond_wing_design
+					technology = fwdswept_wing_design
+				}
+			}
+
+			if = {
+				limit = { NOT = { has_dlc = "By Blood Alone" } }
+				add_tech_bonus = {
+					name = KOR_experimental_fighter
+					bonus = 0.25
+					uses = 4
+					technology = MR_Fighter2
+					technology = MR_Fighter3
+					technology = MR_upgrade_1
+					technology = MR_Fighter4
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_experimental_fighter executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_korean_space_program
+		icon = generic_space
+
+		x = 4
+		y = 5
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		prerequisite = { focus = KOR_experimental_fighter }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			if = {
+				limit = {
+					NOT = { has_completed_focus = KOR_satellite_assistance }
+				}
+				set_temp_variable = { treasury_change = -10 }
+				modify_treasury_effect = yes
+			}
+			else_if = {
+				limit = {
+					NOT = { has_completed_focus = KOR_satellite_assistance }
+				}
+				set_temp_variable = { treasury_change = -5 }
+				modify_treasury_effect = yes
+			}
+			add_ideas = Public_Sector_Space_Program
+			log = "[GetDateText]: [This.GetName]: focus KOR_korean_space_program executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_conscription_policy
+		icon = conscription
+
+		x = 7
+		y = 1
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_the_rok_armed_forces }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			add_political_power = 100
+			log = "[GetDateText]: [This.GetName]: focus KOR_conscription_policy executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_tolerate_objectors
+		icon = pro_immigration2
+
+		x = 6
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_conscription_policy }
+		mutually_exclusive = { focus = KOR_maintain_hardline_approach }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL }
+
+		bypass = {
+			OR = {
+				has_idea = no_military
+				has_idea = volunteer_army
+			}
+			NOT = { has_idea = drafted_women }
+		}
+
+		available = {
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			swap_ideas = {
+				remove_idea = KOR_conscientious_objectors
+				add_idea = KOR_conscientious_objectors1
+			}
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_tolerate_objectors executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_maintain_hardline_approach
+		icon = anti_immigration2
+
+		x = 8
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_conscription_policy }
+		mutually_exclusive = { focus = KOR_tolerate_objectors }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			OR = {
+				has_idea = partial_draft_army
+				has_idea = draft_army
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_maintain_hardline_approach executed"
+			add_war_support = 0.05
+			set_temp_variable = { temp_opinion = 15 }
+			change_the_military_opinion = yes
+			conservative_policy_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_repeal_article_92_6
+		icon = renounce_treaty
+
+		x = 6
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_tolerate_objectors focus = KOR_maintain_hardline_approach }
+		mutually_exclusive = { focus = KOR_favor_traditional_values }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL }
+
+		available = {
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			if = {
+				limit = { has_idea = KOR_conscientious_objectors }
+				swap_ideas = {
+					remove_idea = KOR_conscientious_objectors
+					add_idea = KOR_conscientious_objectors2
+				}
+			}
+			else_if = {
+				limit = { has_idea = KOR_conscientious_objectors1 }
+				swap_ideas = {
+					remove_idea = KOR_conscientious_objectors1
+					add_idea = KOR_conscientious_objectors3
+				}
+			}
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			progressive_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_repeal_article_92_6 executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_favor_traditional_values
+		icon = protestantism
+
+		x = 8
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_tolerate_objectors focus = KOR_maintain_hardline_approach }
+		mutually_exclusive = { focus = KOR_repeal_article_92_6 }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			change_the_clergy_opinion = yes
+			social_conservative_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_favor_traditional_values executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_reduce_conscription
+		icon = military_academy
+
+		x = 6
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_repeal_article_92_6 focus = KOR_favor_traditional_values }
+		mutually_exclusive = { focus = KOR_require_naturalized_citizens }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_MANPOWER FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				has_idea = partial_draft_army
+				has_idea = draft_army
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			if = {
+				limit = { has_idea = partial_draft_army }
+				swap_ideas = {
+					remove_idea = partial_draft_army
+					add_idea = volunteer_army
+				}
+			}
+			else_if = {
+				limit = { has_idea = draft_army }
+				swap_ideas = {
+					remove_idea = draft_army
+					add_idea = partial_draft_army
+				}
+			}
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_reduce_conscription executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_require_naturalized_citizens
+		icon = dangerous_laws
+
+		x = 8
+		y = 4
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 5
+
+		prerequisite = { focus = KOR_repeal_article_92_6 focus = KOR_favor_traditional_values }
+		mutually_exclusive = { focus = KOR_reduce_conscription }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_idea = draft_army
+		}
+
+		completion_reward = {
+
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			add_ideas = KOR_naturalized_citizens_serve
+			log = "[GetDateText]: [This.GetName]: focus KOR_require_naturalized_citizens executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##POLITICAL##
+	focus = {
+		id = KOR_state_of_the_republic
+		icon = rok_emblem
+
+		x = 27
+		y = 0
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus KOR_state_of_the_republic executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_the_korean_left
+		icon = improve_relations_blue
+
+		x = -4
+		y = 1
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 5
+
+		prerequisite = { focus = KOR_state_of_the_republic }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			custom_effect_tooltip = KOR_leftparties_tt
+			log = "[GetDateText]: [This.GetName]: focus KOR_the_korean_left executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_anti_capitalist_backlash
+		icon = break_free
+
+		x = -13
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_korean_left }
+		mutually_exclusive = { focus = KOR_address_inequality }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			add_stability = -0.05
+			log = "[GetDateText]: [This.GetName]: focus KOR_anti_capitalist_backlash executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_support_underground_organizations
+		icon = communist_spies
+
+		x = -13
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_anti_capitalist_backlash }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			change_relative_party_popularity = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_support_underground_organizations executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_spread_radical_beliefs
+		icon = militant_socialism
+
+		x = -13
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_support_underground_organizations }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.1 }
+			change_relative_party_popularity = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_spread_radical_beliefs executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_national_liberation
+		icon = align_to_north_korea
+
+		x = -13
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_spread_radical_beliefs }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.15 }
+			change_relative_party_popularity = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_national_liberation executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_form_armed_militias
+		icon = communist_army
+
+		x = -14
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_national_liberation }
+
+		search_filters = { FOCUS_FILTER_INSURGENCY }
+
+		completion_reward = {
+			unlock_decision_tooltip = KOR_recruitment_campaign
+			log = "[GetDateText]: [This.GetName]: focus KOR_form_armed_militias executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_make_preparations
+		icon = small_arms5
+
+		x = -12
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_national_liberation }
+
+		search_filters = { FOCUS_FILTER_INSURGENCY }
+
+		completion_reward = {
+			unlock_decision_tooltip = KOR_raid_armories
+			unlock_decision_tooltip = KOR_smuggle_arms
+			log = "[GetDateText]: [This.GetName]: focus KOR_make_preparations executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_ignite_the_rebellion
+		icon = war4
+
+		x = -13
+		y = 7
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_make_preparations }
+		prerequisite = { focus = KOR_form_armed_militias }
+
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_POLITICAL }
+
+		bypass = { has_government = communism }
+
+		completion_reward = {
+			set_capital = { state = 608 }
+			every_other_country = {
+				limit = {
+					has_guaranteed = KOR
+				}
+				diplomatic_relation = {
+					country = KOR
+					relation = guarantee
+					active = no
+				}
+			}
+			every_other_country = {
+				limit = {
+					has_military_access_to = KOR
+				}
+				diplomatic_relation = {
+					country = KOR
+					relation = military_access
+					active = no
+				}
+			}
+			start_civil_war = {
+				ruling_party = communism
+				ideology = ROOT
+				size = 0.9
+				capital = 604
+			}
+			hidden_effect = {
+				random_country_with_original_tag = {
+					original_tag_to_check = KOR
+					limit = { NOT = { has_government = communism } }
+					add_opinion_modifier = {
+						target = NKO
+						modifier = imminent_danger_to_national_security
+					}
+					reverse_add_opinion_modifier = {
+						target = NKO
+						modifier = imminent_danger_to_national_security
+					}
+				}
+				random_country_with_original_tag = {
+					original_tag_to_check = KOR
+					limit = { has_government = communism }
+					set_temp_variable = { rul_party_temp = 4 }
+					change_ruling_party_effect = yes
+					load_oob = KOR_juche
+					add_named_threat = {
+						threat = 5
+						name = KOR_juche_threat
+					}
+					remove_opinion_modifier = {
+						target = NKO
+						modifier = imminent_danger_to_national_security
+					}
+					NKO = {
+						remove_opinion_modifier = {
+							target = KOR
+							modifier = imminent_danger_to_national_security
+						}
+					}
+					swap_ideas = {
+						remove_idea = chaebols
+						add_idea = the_donju
+					}
+					swap_ideas = {
+						remove_idea = intelligence_community
+						add_idea = communist_cadres
+					}
+
+					set_cosmetic_tag = KOR_REB_S
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 0 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"2nd Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 1 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"3rd Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 2 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"4th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 3 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"5th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 4 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"6th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 5 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"7th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 6 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"8th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 7 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"9th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 8 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"10th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 9 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"11th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 10 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"12th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 11 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"13th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 12 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"14th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_volunteers > 13 } }
+					add_manpower = 4000
+					608 = {
+						create_unit = { division = " name = \"15th Volunteers\" division_template = \"National Liberation Volunteers\" start_experience_factor = 0.1 start_equipment_factor = 0.01" owner = KOR }
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 0 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 1 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 2 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 3 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 4 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 5 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 6 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 7 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 8 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 9 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 10 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 11 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 12 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms > 13 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_2
+						amount = 600
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = USA
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = USA
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 0 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 1 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 2 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 3 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 4 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 5 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 6 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 7 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 8 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 9 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 10 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 11 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 12 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+				if = {
+					limit = { check_variable = { juche_arms1 > 13 } }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons_1
+						amount = 600
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_tank_0
+						amount = 15
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = Anti_Air_0
+						amount = 5
+						producer = CHI
+					}
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_ignite_the_rebellion executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_request_northern_assistance
+		icon = forceful_treaty
+
+		x = -13
+		y = 8
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_ignite_the_rebellion }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INSURGENCY }
+
+		available = {
+			has_government = communism
+		}
+
+		bypass = { has_war = no }
+
+		completion_reward = {
+			NKO = {
+				country_event = {
+					id = korea.9
+					days = 1
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_request_northern_assistance executed"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_juche_in_the_south
+		icon = juche2
+
+		x = -13
+		y = 9
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_request_northern_assistance }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INSURGENCY }
+
+		available = {
+			has_government = communism
+			has_war = no
+		}
+
+		completion_reward = {
+			NKO = {
+				annex_country = {
+					target = KOR
+					transfer_troops = yes
+				}
+				add_ideas = KOR_reunification_shocks
+				add_ideas = KOR_divided_military
+				add_ideas = KOR_mass_migration
+				add_ideas = KOR_fragmented_governance
+				add_ideas = KOR_uneven_economy1
+				decrease_economic_growth = yes
+				set_country_flag = korea_peninsula_reunited
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_juche_in_the_south executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_address_inequality
+		icon = industry_democratic
+
+		x = -9
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_korean_left }
+		mutually_exclusive = { focus = KOR_anti_capitalist_backlash }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+		}
+
+		completion_reward = {
+			add_political_power = 100
+			log = "[GetDateText]: [This.GetName]: focus KOR_address_inequality executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_income_led_growth
+		icon = economic_prosperity
+
+		x = -11
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_address_inequality }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			increase_social_spending = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_chaebols_opinion = yes
+			liberal_policy_effect_small = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_income_led_growth executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_growth_by_innovation
+		icon = research3
+
+		x = -11
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_income_led_growth }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+		}
+
+		completion_reward = {
+
+			log = "[GetDateText]: [This.GetName]: focus KOR_growth_by_innovation executed"
+			add_ideas = KOR_idea_growth_by_innovation
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_investigate_corruption
+		icon = investigation
+
+		x = -9
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_address_inequality }
+
+		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+		}
+
+		completion_reward = {
+			decrease_corruption = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_chaebols_opinion = yes
+			decrease_chaebol_dependence = yes
+			liberal_policy_effect_small = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_investigate_corruption executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_clamp_down_on_anti_competitive_practices
+		icon = anti_establishment2
+
+		x = -9
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_investigate_corruption }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			increase_centralization = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_chaebols_opinion = yes
+			decrease_chaebol_dependence = yes
+			liberal_policy_effect = yes
+			set_temp_variable = { desire_change = 0.5 }
+			change_expected_bureaucracy_spending = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_clamp_down_on_anti_competitive_practices executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_empower_trade_unions
+		icon = labor_unions
+
+		x = -7
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_address_inequality }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			if = {
+				limit = {
+					NOT = {
+						OR = {
+							has_idea = KOR_improved_labor_protections
+							has_idea = KOR_improved_labor_protections2
+							has_idea = KOR_reduced_labor_protections
+							has_idea = KOR_reduced_labor_protections2
+						}
+					}
+				}
+				add_ideas = KOR_improved_labor_protections
+			}
+			else_if = {
+				limit = {
+					has_idea = KOR_improved_labor_protections
+				}
+				swap_ideas = {
+					remove_idea = KOR_improved_labor_protections
+					add_idea = KOR_improved_labor_protections2
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = KOR_improved_labor_protections2
+				}
+				add_political_power = 200
+			}
+			else_if = {
+				limit = {
+					has_idea = KOR_reduced_labor_protections
+				}
+				remove_ideas = KOR_reduced_labor_protections
+			}
+			else_if = {
+				limit = {
+					has_idea = KOR_reduced_labor_protections2
+				}
+				swap_ideas = {
+					remove_idea = KOR_reduced_labor_protections2
+					add_idea = KOR_reduced_labor_protections
+				}
+			}
+			set_temp_variable = { temp_opinion = -5 }
+			change_chaebols_opinion = yes
+			decrease_chaebol_dependence = yes
+			liberal_policy_effect_small = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_empower_trade_unions executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_ratify_ilo_conventions
+		icon = accept_treaty
+
+		x = -7
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_empower_trade_unions }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			if = {
+				limit = {
+					NOT = {
+						OR = {
+							has_idea = KOR_improved_labor_protections
+							has_idea = KOR_improved_labor_protections2
+							has_idea = KOR_reduced_labor_protections
+							has_idea = KOR_reduced_labor_protections2
+						}
+					}
+				}
+				add_ideas = KOR_improved_labor_protections
+			}
+			else_if = {
+				limit = {
+					has_idea = KOR_improved_labor_protections
+				}
+				swap_ideas = {
+					remove_idea = KOR_improved_labor_protections
+					add_idea = KOR_improved_labor_protections2
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = KOR_improved_labor_protections2
+				}
+				add_political_power = 200
+			}
+			else_if = {
+				limit = {
+					has_idea = KOR_reduced_labor_protections
+				}
+				remove_ideas = KOR_reduced_labor_protections
+			}
+			else_if = {
+				limit = {
+					has_idea = KOR_reduced_labor_protections2
+				}
+				swap_ideas = {
+					remove_idea = KOR_reduced_labor_protections2
+					add_idea = KOR_reduced_labor_protections
+				}
+			}
+			set_temp_variable = { temp_opinion = -5 }
+			change_chaebols_opinion = yes
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_ratify_ilo_conventions executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_a_fair_economy
+		icon = neutrality
+
+		x = -10
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_growth_by_innovation }
+		prerequisite = { focus = KOR_clamp_down_on_anti_competitive_practices }
+		prerequisite = { focus = KOR_ratify_ilo_conventions }
+		mutually_exclusive = { focus = KOR_a_liberated_economy }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			add_ideas = KOR_fair_economy
+			swap_ideas = {
+				remove_idea = chaebols
+				add_idea = small_medium_business_owners
+			}
+			set_variable = { small_medium_business_owners_opinion = 75 }
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence }
+				remove_ideas = KOR_chaebol_dependence
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence1 }
+				remove_ideas = KOR_chaebol_dependence1
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence2 }
+				remove_ideas = KOR_chaebol_dependence2
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence3 }
+				remove_ideas = KOR_chaebol_dependence3
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence4 }
+				remove_ideas = KOR_chaebol_dependence4
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence5 }
+				remove_ideas = KOR_chaebol_dependence5
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence6 }
+				remove_ideas = KOR_chaebol_dependence6
+			}
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_a_fair_economy executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_a_liberated_economy
+		icon = break_free2
+
+		x = -8
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_growth_by_innovation }
+		prerequisite = { focus = KOR_clamp_down_on_anti_competitive_practices }
+		prerequisite = { focus = KOR_ratify_ilo_conventions }
+		mutually_exclusive = { focus = KOR_a_fair_economy }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			add_ideas = KOR_liberated_economy
+			swap_ideas = {
+				remove_idea = chaebols
+				add_idea = labour_unions
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence }
+				remove_ideas = KOR_chaebol_dependence
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence1 }
+				remove_ideas = KOR_chaebol_dependence1
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence2 }
+				remove_ideas = KOR_chaebol_dependence2
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence3 }
+				remove_ideas = KOR_chaebol_dependence3
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence4 }
+				remove_ideas = KOR_chaebol_dependence4
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence5 }
+				remove_ideas = KOR_chaebol_dependence5
+			}
+			if = {
+				limit = { has_idea = KOR_chaebol_dependence6 }
+				remove_ideas = KOR_chaebol_dependence6
+			}
+			progressive_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_a_liberated_economy executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_repeal_the_national_security_law
+		icon = renounce_treaty
+
+		x = -5
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_protect_whistle_blowers }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					western_social_democrats_are_in_power = yes
+				}
+			}
+			NKO = { has_war = no }
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		bypass = {
+			NOT = { has_idea = KOR_national_security_law }
+		}
+
+		completion_reward = {
+
+			remove_ideas = KOR_national_security_law
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_repeal_the_national_security_law executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_reform_the_nis
+		icon = nis_broken
+
+		x = -3
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_korean_left }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_reform_the_nis executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_restrict_cyber_operations
+		icon = cryptography
+
+		x = -3
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_reform_the_nis }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			weaken_NIS = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_intelligence_community_opinion = yes
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_restrict_cyber_operations executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_protect_whistle_blowers
+		icon = black_market
+
+		x = -3
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_restrict_cyber_operations }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			weaken_NIS = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_intelligence_community_opinion = yes
+			liberal_policy_effect_small = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_protect_whistle_blowers executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_strengthen_oversight
+		icon = treaty
+
+		x = -3
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_protect_whistle_blowers }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			weaken_NIS = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_intelligence_community_opinion = yes
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_strengthen_oversight executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_decouple_politics_from_intelligence
+		icon = stolen_papers
+
+		x = -4
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_repeal_the_national_security_law }
+		prerequisite = { focus = KOR_strengthen_oversight }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		bypass = {
+			NOT = {
+				OR = {
+					has_idea = KOR_politicized_spy_agency
+					has_idea = KOR_politicized_spy_agency1
+					has_idea = KOR_politicized_spy_agency2
+					has_idea = KOR_politicized_spy_agency3
+				}
+			}
+		}
+
+		completion_reward = {
+
+			if = {
+				limit = { has_idea = KOR_politicized_spy_agency }
+				remove_ideas = KOR_politicized_spy_agency
+			}
+			if = {
+				limit = { has_idea = KOR_politicized_spy_agency1 }
+				remove_ideas = KOR_politicized_spy_agency1
+			}
+			if = {
+				limit = { has_idea = KOR_politicized_spy_agency2 }
+				remove_ideas = KOR_politicized_spy_agency2
+			}
+			if = {
+				limit = { has_idea = KOR_politicized_spy_agency3 }
+				remove_ideas = KOR_politicized_spy_agency3
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			hidden_effect = { change_intelligence_community_opinion = yes }
+			log = "[GetDateText]: [This.GetName]: focus KOR_decouple_politics_from_intelligence executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_electoral_reform
+		icon = Election
+
+		x = 0
+		y = 1
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 5
+
+		prerequisite = { focus = KOR_state_of_the_republic }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_elections = yes
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_electoral_reform executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_expand_proportional_representation
+		icon = generic_government
+
+		x = -1
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_electoral_reform }
+		mutually_exclusive = { focus = KOR_end_proportional_representation }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_elections = yes
+			NOT = { has_idea = KOR_national_assembly_conservative }
+		}
+
+		completion_reward = {
+
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.1 }
+			change_relative_party_popularity = yes
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.1 }
+			change_relative_party_popularity = yes
+
+			swap_ideas = {
+				remove_idea = KOR_de_facto_two_party_system
+				add_idea = KOR_multi_party_system
+			}
+			set_temp_variable = { threshold_change = 0.03 }
+			modify_election_threshold = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_expand_proportional_representation executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_end_proportional_representation
+		icon = colonial_crackdown
+
+		x = 1
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_electoral_reform }
+		mutually_exclusive = { focus = KOR_expand_proportional_representation }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			has_elections = yes
+			NOT = { has_idea = KOR_national_assembly_deadlocked }
+		}
+
+		completion_reward = {
+			custom_effect_tooltip = KOR_end_proportional_representation_tt
+			swap_ideas = {
+				remove_idea = KOR_de_facto_two_party_system
+				add_idea = KOR_two_party_system
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_end_proportional_representation executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_progressive_policies
+		icon = democracy6
+
+		x = -1
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 5
+
+		prerequisite = { focus = KOR_expand_proportional_representation }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			KOR_has_progressive_government = yes
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_progressive_policies executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_campaign_against_discrimination
+		icon = national_unity
+
+		x = -1
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_progressive_policies }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_progressive_coalition = yes
+			}
+		}
+
+		completion_reward = {
+			add_ideas = KOR_inclusive_korea
+			progressive_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_campaign_against_discrimination executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_migrant_protections
+		icon = refugees
+
+		x = -1
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_campaign_against_discrimination }
+
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_progressive_coalition = yes
+			}
+		}
+
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = KOR_inclusive_korea
+				add_idea = KOR_inclusive_korea1
+			}
+			progressive_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_migrant_protections executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_centrist_policies
+		icon = neutrality
+
+		x = 1
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 5
+
+		prerequisite = { focus = KOR_expand_proportional_representation }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = KOR_peoples_party_tt
+				OR = {
+					western_liberals_are_in_power = yes #liberalism
+					western_liberals_are_in_coalition = yes #liberalism
+				}
+			}
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_centrist_policies executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_liberal_economics
+		icon = science2
+
+		x = 1
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_centrist_policies }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_POLITICAL }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = KOR_peoples_party_tt
+				OR = {
+					western_liberals_are_in_power = yes #liberalism
+					western_liberals_are_in_coalition = yes #liberalism
+				}
+			}
+		}
+
+		completion_reward = {
+			increase_education_budget = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_liberal_economics executed"
+			set_temp_variable = { desire_change = 0.5 }
+			change_expected_education_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_support_entrepreneurs
+		icon = money
+
+		x = 1
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_liberal_economics }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = KOR_peoples_party_tt
+				OR = {
+					western_liberals_are_in_power = yes #liberalism
+					western_liberals_are_in_coalition = yes #liberalism
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
+			add_ideas = KOR_entrepreneurs_supported
+			log = "[GetDateText]: [This.GetName]: focus KOR_support_entrepreneurs executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_the_korean_right
+		icon = tripartite_pact
+
+		x = 4
+		y = 1
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 5
+
+		prerequisite = { focus = KOR_state_of_the_republic }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_the_korean_right executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_empower_the_nis
+		icon = nis
+
+		x = 3
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_korean_right }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			strengthen_NIS = yes
+			conservative_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_empower_the_nis executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_manipulate_public_opinion
+		icon = elections_rigged
+
+		x = 3
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_empower_the_nis }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.2 }
+			set_temp_variable = { temp_outlook_increase = 0.2 }
+			change_relative_party_popularity = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_manipulate_public_opinion executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_domestic_surveillance
+		icon = snitch
+
+		x = 3
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_manipulate_public_opinion }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			add_political_power = 150
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			strengthen_NIS = yes
+			random = {
+				chance = 60
+				set_temp_variable = { party_index = 1 }
+				set_temp_variable = { party_popularity_increase = -0.2 }
+				set_temp_variable = { temp_outlook_increase = -0.2 }
+				change_relative_party_popularity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_domestic_surveillance executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_blacklist_artists
+		icon = press_censorship
+
+		x = 3
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_domestic_surveillance }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			add_political_power = 200
+			random = {
+				chance = 50
+				set_temp_variable = { party_index = 1 }
+				set_temp_variable = { party_popularity_increase = -0.2 }
+				set_temp_variable = { temp_outlook_increase = -0.2 }
+				change_relative_party_popularity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_blacklist_artists executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_cut_taxes_on_the_rich
+		icon = champagne_bribes2
+
+		x = 5
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_korean_right }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			hidden_effect = {
+				subtract_from_variable = { corporate_tax_rate = 5 }
+				calculate_tax_rate = yes
+			}
+			custom_effect_tooltip = reduce_corporate_tax_rate_5_tt
+			conservative_policy_effect = yes
+
+			# Internal Faction Improvement
+			set_temp_variable = { temp_opinion = 5 }
+			change_chaebols_opinion = yes
+
+			log = "[GetDateText]: [This.GetName]: focus KOR_cut_taxes_on_the_rich executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_subsidize_chaebols
+		icon = generic_banks
+
+		x = 5
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_cut_taxes_on_the_rich }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_chaebols_opinion = yes
+			increase_chaebol_dependence = yes
+			conservative_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_subsidize_chaebols executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_restrict_union_activity
+		icon = social_democracy_purge
+
+		x = 5
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_subsidize_chaebols }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+
+		available = {
+			KOR_has_conservative_government = yes
+			NOT = { has_idea = KOR_national_assembly_liberal }
+		}
+
+		completion_reward = {
+
+			set_temp_variable = { temp_opinion = 5 }
+			change_chaebols_opinion = yes
+			increase_chaebol_dependence = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			conservative_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_restrict_union_activity executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_business_first
+		icon = business_man
+
+		x = 5
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_restrict_union_activity }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+
+		available = {
+			KOR_has_conservative_government = yes
+			NOT = { has_idea = KOR_national_assembly_liberal }
+		}
+
+		completion_reward = {
+
+			add_ideas = KOR_business_first
+			increase_chaebol_dependence = yes
+			conservative_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_business_first executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_the_threat_from_the_north
+		icon = kim_il_sung
+
+		x = 9
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_korean_right }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_the_threat_from_the_north executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_ban_pro_northern_groups
+		icon = juche3
+
+		x = 8
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_threat_from_the_north }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			has_idea = KOR_national_security_law
+		}
+
+		completion_reward = {
+			add_war_support = 0.02
+			add_stability = -0.02
+			add_popularity = {
+				ideology = communism
+				popularity = -0.02
+			}
+			recalculate_party = yes
+			support_for_reunification_1_less = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_ban_pro_northern_groups executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_arrest_sympathizers
+		icon = political_arrests
+
+		x = 8
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_ban_pro_northern_groups }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			has_idea = KOR_national_security_law
+		}
+
+		completion_reward = {
+			add_war_support = 0.05
+			add_stability = -0.05
+			add_popularity = {
+				ideology = communism
+				popularity = -0.05
+			}
+			recalculate_party = yes
+			support_for_reunification_1_less = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_arrest_sympathizers executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_praise_the_south
+		icon = propaganda
+
+		x = 10
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_threat_from_the_north }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+		}
+
+		completion_reward = {
+			add_political_power = 100
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.02
+			}
+			recalculate_party = yes
+			support_for_reunification_1_less = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_praise_the_south executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_champion_human_rights
+		icon = democracy5
+
+		x = 10
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_praise_the_south }
+		mutually_exclusive = { focus = KOR_commemorate_dictatorship }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			has_elections = yes
+			NKO = { has_elections = no }
+		}
+
+		completion_reward = {
+			add_political_power = 150
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+			recalculate_party = yes
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+			support_for_reunification_1_less = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_champion_human_rights executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_promote_patriotism
+		icon = political_pressure_blue
+
+		x = 14
+		y = 2
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_the_korean_right }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			add_war_support = 0.02
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.02
+			}
+			recalculate_party = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_promote_patriotism executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_venerate_park_chung_hee
+		icon = military_mission
+
+		x = 14
+		y = 3
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_promote_patriotism }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			conservative_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_venerate_park_chung_hee executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_commemorate_dictatorship
+		icon = anti_democracy
+
+		x = 14
+		y = 4
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_venerate_park_chung_hee }
+		mutually_exclusive = { focus = KOR_champion_human_rights }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			custom_effect_tooltip = KOR_yusin_emerges_tt
+			set_temp_variable = { add_col_one = 0 }
+			add_coalition_members_effect = yes
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.1 }
+			change_relative_party_popularity = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_commemorate_dictatorship executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_offensive_approach
+		icon = strike_at_democracy1
+
+		x = 7
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_arrest_sympathizers }
+		prerequisite = { focus = KOR_champion_human_rights focus = KOR_commemorate_dictatorship }
+		mutually_exclusive = { focus = KOR_defensive_approach }
+		mutually_exclusive = { focus = KOR_subversive_approach }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			NOT = { has_idea = KOR_wartime_control }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_offensive_approach executed"
+			add_ideas = KOR_aggressive_approach
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_military_buildup
+		icon = industry_military
+
+		x = 7
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_offensive_approach }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_KOREAN_PENINSULA }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_military_buildup executed"
+			add_timed_idea = {
+				idea = KOR_military_buildup
+				days = 70
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_provoke_confrontation
+		icon = attack_north_korea
+
+		x = 7
+		y = 7
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_military_buildup }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_KOREAN_PENINSULA }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			has_war_support > 0.6
+			NOT = { has_idea = KOR_wartime_control }
+		}
+
+		will_lead_to_war_with = NKO
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_provoke_confrontation executed"
+			set_temp_variable = { wargoal_on = NKO }
+			set_temp_variable = { wargoal_type = 2 }
+			add_threat_from_wargoal_effect = yes
+			create_wargoal = {
+				type = annex_everything
+				target = NKO
+			}
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				NKO = { is_guaranteed_by = CHI }
+			}
+			modifier = {
+				factor = 0
+				NKO = { is_subject_of = CHI }
+				NOT = { has_idea = NATO_member }
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_defensive_approach
+		icon = military_sphere
+
+		x = 9
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_arrest_sympathizers }
+		prerequisite = { focus = KOR_champion_human_rights focus = KOR_commemorate_dictatorship }
+		mutually_exclusive = { focus = KOR_offensive_approach }
+		mutually_exclusive = { focus = KOR_subversive_approach }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			has_war = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_defensive_approach executed"
+			add_ideas = KOR_defensive_approach
+			support_for_reunification_2_less = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_expanded_fortifications
+		icon = generic_entrenchment
+
+		x = 9
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_defensive_approach }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			has_war = no
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = KOR_forts_tt
+			hidden_effect = {
+				604 = {
+					add_building_construction = {
+						type = bunker
+						province = 3308
+						level = 3
+						instant_build = yes
+					}
+					add_building_construction = {
+						type = bunker
+						province = 7125
+						level = 3
+						instant_build = yes
+					}
+					add_building_construction = {
+						type = bunker
+						province = 4004
+						level = 3
+						instant_build = yes
+					}
+					add_building_construction = {
+						type = bunker
+						province = 11958
+						level = 3
+						instant_build = yes
+					}
+				}
+			}
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+			support_for_reunification_2_less = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_expanded_fortifications executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_prepare_for_the_worst
+		icon = rocketry
+
+		x = 9
+		y = 7
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_expanded_fortifications }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			has_war = no
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			604 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 3
+					instant_build = yes
+				}
+			}
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+			support_for_reunification_2_less = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_prepare_for_the_worst executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_subversive_approach
+		icon = secret_police
+
+		x = 11
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_arrest_sympathizers }
+		prerequisite = { focus = KOR_champion_human_rights focus = KOR_commemorate_dictatorship }
+		mutually_exclusive = { focus = KOR_offensive_approach }
+		mutually_exclusive = { focus = KOR_defensive_approach }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			NKO = {
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					NOT = {
+						has_dlc = "La Resistance"
+					}
+				}
+				add_ideas = KOR_subversive_approach
+			}
+			else = {
+				add_ideas = KOR_subversive_approach_lar
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_subversive_approach executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_intensify_propaganda
+		icon = torchbearers_of_tomorrow
+
+		x = 11
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_subversive_approach }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			NKO = {
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			NKO = {
+				add_timed_idea = {
+					idea = KOR_intensified_propaganda
+					days = 140
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_intensify_propaganda executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_spark_insurrection
+		icon = break_free2
+
+		x = 11
+		y = 7
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_intensify_propaganda }
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			country_exists = NKO
+			NKO = {
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+				OR = {
+					has_stability < 0.5
+					democratic > 0.5
+				}
+			}
+		}
+
+		completion_reward = {
+			NKO = {
+				if = {
+					limit = {
+						has_stability < 0.25
+						democratic > 0.75
+					}
+					start_civil_war = {
+						ideology = democratic
+						size = 0.8
+					}
+				}
+				else_if = {
+					limit = {
+						has_stability < 0.4
+						democratic > 0.6
+					}
+					start_civil_war = {
+						ideology = democratic
+						size = 0.7
+					}
+				}
+				else_if = {
+					limit = {
+						has_stability < 0.5
+						democratic > 0.5
+					}
+					start_civil_war = {
+						ideology = democratic
+						size = 0.6
+					}
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_stability < 0.5
+							democratic > 0.5
+						}
+					}
+					start_civil_war = {
+						ideology = democratic
+						size = 0.5
+					}
+				}
+			}
+			custom_effect_tooltip = KOR_spark_insurrection_tt
+			log = "[GetDateText]: [This.GetName]: focus KOR_spark_insurrection executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_raise_tensions
+		icon = irredentism
+
+		x = 13
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_arrest_sympathizers }
+		prerequisite = { focus = KOR_commemorate_dictatorship }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			custom_effect_tooltip = KOR_yusin_emerges_tt
+			if = {
+				limit = {
+					NOT = { is_in_array = { gov_coalition_array = 0 } }
+				}
+				set_temp_variable = { add_col_one = 0 }
+				add_coalition_members_effect = yes
+			}
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.25 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			change_relative_party_popularity = yes
+			add_stability = -0.05
+			log = "[GetDateText]: [This.GetName]: focus KOR_raise_tensions executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_clamp_down_on_political_activism
+		icon = attack_democracy2
+
+		x = 15
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_arrest_sympathizers }
+		prerequisite = { focus = KOR_commemorate_dictatorship }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			add_political_power = 100
+			add_stability = -0.05
+			log = "[GetDateText]: [This.GetName]: focus KOR_clamp_down_on_political_activism executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_impose_martial_law
+		icon = rok_mobilization
+
+		x = 13
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_raise_tensions }
+		prerequisite = { focus = KOR_clamp_down_on_political_activism }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			set_country_flag = do_not_retire
+			disable_elections_with_no_leader_change = yes
+			clr_country_flag = do_not_retire
+			if = {
+				limit = { has_idea = KOR_national_assembly_deadlocked }
+				remove_ideas = KOR_national_assembly_deadlocked
+			}
+			if = {
+				limit = { has_idea = KOR_national_assembly_conservative }
+				remove_ideas = KOR_national_assembly_conservative
+			}
+			if = {
+				limit = { has_idea = KOR_national_assembly_liberal }
+				remove_ideas = KOR_national_assembly_liberal
+			}
+			if = {
+				limit = { has_idea = KOR_de_facto_two_party_system }
+				remove_ideas = KOR_de_facto_two_party_system
+			}
+			if = {
+				limit = { has_idea = KOR_two_party_system }
+				remove_ideas = KOR_two_party_system
+			}
+			if = {
+				limit = { has_idea = KOR_multi_party_system }
+				remove_ideas = KOR_multi_party_system
+			}
+			add_stability = -0.05
+			log = "[GetDateText]: [This.GetName]: focus KOR_impose_martial_law executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_muzzle_the_media
+		icon = generic_controlled_press
+
+		x = 15
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_raise_tensions }
+		prerequisite = { focus = KOR_clamp_down_on_political_activism }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			add_political_power = 150
+			add_stability = -0.05
+			log = "[GetDateText]: [This.GetName]: focus KOR_muzzle_the_media executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_favor_armed_forces
+		icon = rok_armed_forces
+
+		x = 13
+		y = 7
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_impose_martial_law }
+		prerequisite = { focus = KOR_muzzle_the_media }
+		mutually_exclusive = { focus = KOR_favor_the_nis }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			KOR_has_conservative_government = yes
+			military_at_least_positive_opinion = yes
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_intelligence_community_opinion = yes
+			add_war_support = 0.1
+			log = "[GetDateText]: [This.GetName]: focus KOR_favor_armed_forces executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_favor_the_nis
+		icon = nis
+
+		x = 15
+		y = 7
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_impose_martial_law }
+		prerequisite = { focus = KOR_muzzle_the_media }
+		mutually_exclusive = { focus = KOR_favor_armed_forces }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+
+		available = {
+			KOR_has_conservative_government = yes
+			intelligence_community_at_least_positive_opinion = yes
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			add_political_power = 300
+			log = "[GetDateText]: [This.GetName]: focus KOR_favor_the_nis executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_install_the_yusin_dictatorship
+		icon = anti_democracy3
+
+		x = 14
+		y = 8
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_favor_armed_forces focus = KOR_favor_the_nis }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { KOR_has_conservative_government = yes }
+
+		completion_reward = {
+			hidden_effect = {
+				set_temp_variable = { rul_party_temp = 0 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
+			}
+			custom_effect_tooltip = KOR_yusin_takes_power_tt
+			add_ideas = GCC_censored_nation_01
+			log = "[GetDateText]: [This.GetName]: focus KOR_install_the_yusin_dictatorship executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_ban_demonstrations
+		icon = colonial_crackdown
+
+		x = 12
+		y = 9
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_install_the_yusin_dictatorship }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			KOR_has_conservative_government = yes
+			has_elections = no
+			NOT = {
+				OR = {
+					has_idea = defence_00
+					has_idea = defence_01
+					has_idea = defence_02
+					has_idea = defence_03
+				}
+			}
+			military_at_least_positive_opinion = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_ban_demonstrations executed"
+			GCC_censored_nation_level_up = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_increase_surveillance
+		icon = cctv
+
+		x = 16
+		y = 9
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_install_the_yusin_dictatorship }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			KOR_has_conservative_government = yes
+			has_elections = no
+			has_idea = police_05
+			intelligence_community_at_least_positive_opinion = yes
+		}
+
+		completion_reward = {
+			GCC_censored_nation_level_up = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_increase_surveillance executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_imprison_leftists
+		icon = political_arrests2
+
+		x = 14
+		y = 9
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		prerequisite = { focus = KOR_install_the_yusin_dictatorship }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			KOR_has_conservative_government = yes
+			has_elections = no
+			has_idea = bureau_05
+		}
+
+		completion_reward = {
+			GCC_censored_nation_level_up = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_imprison_leftists executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##DIPLOMATIC#
+	focus = {
+		id = KOR_middle_power_diplomacy
+		icon = global_community
+
+		x = 61
+		y = 0
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			add_ideas = KOR_global_korea
+			log = "[GetDateText]: [This.GetName]: focus KOR_middle_power_diplomacy executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_bridging_eurasia
+		icon = europe
+
+		x = -14
+		y = 1
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_middle_power_diplomacy }
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_bridging_eurasia executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_rapprochement_with_russia
+		icon = align_to_russia
+
+		x = -15
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 2
+
+		prerequisite = { focus = KOR_bridging_eurasia }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			NOT = { has_war_with = SOV }
+			SOV = {
+				has_opinion = {
+					target = KOR
+					value > -1
+				}
+			}
+		}
+
+		completion_reward = {
+			SOV = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_rapprochement_with_russia executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_satellite_assistance
+		icon = international_space_station
+
+		x = -15
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		prerequisite = { focus = KOR_rapprochement_with_russia }
+
+		available = {
+			NOT = { has_war_with = SOV }
+			SOV = {
+				has_opinion = {
+					target = KOR
+					value > -1
+				}
+			}
+		}
+
+		completion_reward = {
+			add_timed_idea = {
+				idea = KOR_russian_satellites
+				days = 90
+			}
+			custom_effect_tooltip = KOR_russian_satellites_tt
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = SOV.id }
+			change_influence_percentage = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_satellite_assistance executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_russian_energy
+		icon = RUS_gazprom
+
+		x = -15
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+
+		prerequisite = { focus = KOR_satellite_assistance }
+
+		available = {
+			NOT = { has_war_with = SOV }
+			SOV = {
+				has_opinion = {
+					target = KOR
+					value > -1
+				}
+			}
+		}
+
+		completion_reward = {
+			add_stability = 0.05
+			add_opinion_modifier = {
+				target = SOV
+				modifier = RUS_OIL
+			}
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = SOV.id }
+			change_influence_percentage = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_russian_energy executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_a_land_bridge_to_europe
+		icon = eurasia
+
+		x = -15
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = KOR_russian_energy }
+
+		available = {
+			NOT = { has_war_with = SOV }
+			SOV = {
+				has_opinion = {
+					target = KOR
+					value > 24
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 10 }
+			change_chaebols_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			add_opinion_modifier = {
+				target = SOV
+				modifier = large_commercial_relations
+			}
+			SOV = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = large_commercial_relations
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = RUS_OIL
+				}
+				set_temp_variable = { percent_change = 2 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_a_land_bridge_to_europe executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_czech_investments
+		icon = align_to_czechia
+
+		x = -13
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_bridging_eurasia }
+
+		available = {
+			NOT = { has_war_with = CZE }
+			CZE = {
+				has_opinion = {
+					target = KOR
+					value > 9
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			CZE = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = trade_mission
+				}
+				1018 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { percent_change = 5 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_czech_investments executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_lessons_from_germany
+		icon = align_to_germany
+
+		x = -13
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA }
+
+		prerequisite = { focus = KOR_czech_investments }
+
+		available = {
+			NOT = { has_war_with = GER }
+			GER = {
+				has_opinion = {
+					target = KOR
+					value > 9
+				}
+			}
+		}
+
+		completion_reward = {
+			support_for_reunification_2 = yes
+			GER = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+			ROOT = {
+				add_opinion_modifier = {
+					target = GER
+					modifier = political_outreach
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_lessons_from_germany executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_british_military_exercises
+		icon = align_to_britain
+
+		x = -13
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		prerequisite = { focus = KOR_lessons_from_germany }
+
+		available = {
+			NOT = { has_war_with = ENG }
+			ENG = {
+				has_opinion = {
+					target = KOR
+					value > 14
+				}
+			}
+			has_government = democratic
+		}
+
+		completion_reward = {
+			army_experience = 50
+			add_opinion_modifier = {
+				target = ENG
+				modifier = military_cooperation
+			}
+			ENG = {
+				army_experience = 50
+				add_opinion_modifier = {
+					target = KOR
+					modifier = military_cooperation
+				}
+			}
+			add_war_support = 0.05
+			log = "[GetDateText]: [This.GetName]: focus KOR_british_military_exercises executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_kic_europe
+		icon = align_to_europe
+
+		x = -13
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		prerequisite = { focus = KOR_british_military_exercises }
+
+		available = {
+			has_war = no
+			has_government = democratic
+			has_elections = yes
+		}
+
+		completion_reward = {
+			add_to_tech_sharing_group = korea_europe_Tech_Share
+			for_each_scope_loop = {
+				array = global.EU_member
+				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_to_tech_sharing_group = korea_europe_Tech_Share
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_kic_europe executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_turn_to_the_middle_east
+		icon = befriend_middle_east
+
+		x = -9
+		y = 1
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_middle_power_diplomacy }
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_turn_to_the_middle_east executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_cautious_optimism
+		icon = align_to_israel
+
+		x = -11
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 2
+
+		prerequisite = { focus = KOR_turn_to_the_middle_east }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			NOT = { has_war_with = ISR }
+			ISR = {
+				has_opinion = {
+					target = KOR
+					value > -1
+				}
+			}
+		}
+
+		completion_reward = {
+			ISR = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_cautious_optimism executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_a_free_trade_agreement
+		icon = trade_with_israel
+
+		x = -11
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = KOR_cautious_optimism }
+
+		available = {
+			NOT = { has_war_with = ISR }
+			ISR = {
+				has_opinion = {
+					target = KOR
+					value > 9
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_chaebols_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			add_opinion_modifier = {
+				target = ISR
+				modifier = mutual_trade_opinion
+			}
+			add_opinion_modifier = {
+				target = ISR
+				modifier = mutual_trade_agreement
+			}
+			ISR = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_opinion
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_agreement
+				}
+				set_temp_variable = { percent_change = 1 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_a_free_trade_agreement executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_iron_dome
+		icon = rocketry
+
+		x = -11
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 7
+
+		prerequisite = { focus = KOR_a_free_trade_agreement }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT }
+
+		available = {
+			NOT = { has_war_with = ISR }
+			ISR = {
+				has_opinion = {
+					target = KOR
+					value > 24
+				}
+			}
+		}
+
+		completion_reward = {
+			add_ideas = KOR_iron_dome
+			log = "[GetDateText]: [This.GetName]: focus KOR_iron_dome executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_technological_cooperation
+		icon = scientific_exchange
+
+		x = -11
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		prerequisite = { focus = KOR_iron_dome }
+
+		available = {
+			NOT = { has_war_with = ISR }
+			ISR = {
+				has_opinion = {
+					target = KOR
+					value > 49
+				}
+			}
+		}
+
+		completion_reward = {
+			add_to_tech_sharing_group = korea_israel_Tech_Share
+			ISR = { add_to_tech_sharing_group = korea_israel_Tech_Share }
+			log = "[GetDateText]: [This.GetName]: focus KOR_technological_cooperation executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_one_heart_one_soul
+		icon = align_to_iran
+
+		x = -9
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 3
+
+		prerequisite = { focus = KOR_turn_to_the_middle_east }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			NOT = { has_war_with = PER }
+			PER = {
+				has_opinion = {
+					target = KOR
+					value > 9
+				}
+			}
+		}
+
+		completion_reward = {
+			add_opinion_modifier = {
+				target = PER
+				modifier = diplomatic_proximity
+			}
+			PER = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = diplomatic_proximity
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_one_heart_one_soul executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_increase_trade_volume
+		icon = trade_with_iran
+
+		x = -9
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 4
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = KOR_one_heart_one_soul }
+
+		available = {
+			NOT = { has_war_with = PER }
+			PER = {
+				has_opinion = {
+					target = KOR
+					value > 14
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_chaebols_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			add_opinion_modifier = {
+				target = PER
+				modifier = mutual_trade_opinion
+			}
+			add_opinion_modifier = {
+				target = PER
+				modifier = mutual_trade_agreement
+			}
+			PER = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_opinion
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_agreement
+				}
+				set_temp_variable = { percent_change = 1 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_increase_trade_volume executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_iranian_infrastructure_projects
+		icon = infrastructure
+
+		x = -9
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_EXPENDITURE }
+
+		prerequisite = { focus = KOR_increase_trade_volume }
+
+		available = {
+			PER = {
+				has_war = no
+				has_opinion = {
+					target = KOR
+					value > 14
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			PER = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = trade_mission
+				}
+				399 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				400 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				978 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { percent_change = 2 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_iranian_infrastructure_projects executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_education_exchanges
+		icon = literacy_rate_improvment
+
+		x = -9
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		prerequisite = { focus = KOR_iranian_infrastructure_projects }
+
+		available = {
+			NOT = { has_war_with = PER }
+			PER = {
+				has_opinion = {
+					target = KOR
+					value > 14
+				}
+			}
+		}
+
+		completion_reward = {
+			PER = {
+				add_ideas = KOR_PER_education_exchanges
+				set_temp_variable = { percent_change = 2 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_education_exchanges executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_engage_the_arabs
+		icon = align_to_arab_league
+
+		x = -7
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 3
+
+		prerequisite = { focus = KOR_turn_to_the_middle_east }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = SAU
+						tag = UAE
+						tag = KUW
+						tag = OMA
+						tag = QAT
+						tag = BHR
+						tag = EGY
+						tag = IRQ
+						tag = JOR
+					}
+					no_jihadist_government = yes
+					has_war = no
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_engage_the_arabs executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_export_military_hardware
+		icon = combined_arms
+
+		x = -7
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		prerequisite = { focus = KOR_engage_the_arabs }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = SAU
+						tag = UAE
+						tag = KUW
+						tag = OMA
+						tag = QAT
+						tag = BHR
+						tag = EGY
+						tag = IRQ
+						tag = JOR
+					}
+					no_jihadist_government = yes
+					has_war = no
+				}
+				country_event = {
+					id = korea.11
+					days = 1
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_export_military_hardware executed"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_the_largest_shipyard_in_the_world
+		icon = naval_dockyard
+
+		x = -7
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_export_military_hardware }
+
+		available = {
+			SAU = {
+				has_war = no
+				has_opinion = {
+					target = KOR
+					value > -1
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -22.5 }
+			modify_treasury_effect = yes
+			SAU = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = trade_mission
+				}
+				174 = {
+					add_extra_state_shared_building_slots = 3
+					add_building_construction = {
+						type = dockyard
+						level = 3
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { percent_change = 2 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_the_largest_shipyard_in_the_world executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_dockyard = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_trade_with_the_gcc
+		icon = gcc
+
+		x = -7
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = KOR_the_largest_shipyard_in_the_world }
+
+		available = {
+			has_war = no
+			SAU = {
+				has_war = no
+				has_opinion = {
+					target = KOR
+					value > 9
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_chaebols_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			for_each_scope_loop = {
+				array = global.gcc_member_state
+				tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					reverse_add_opinion_modifier = {
+						target = KOR
+						modifier = mutual_trade_opinion
+					}
+					reverse_add_opinion_modifier = {
+						target = KOR
+						modifier = mutual_trade_agreement
+					}
+					add_opinion_modifier = {
+						target = KOR
+						modifier = mutual_trade_opinion
+					}
+					add_opinion_modifier = {
+						target = KOR
+						modifier = mutual_trade_agreement
+					}
+					set_temp_variable = { percent_change = 1 }
+					change_influence_percentage = yes
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_trade_with_the_gcc executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_peace_in_east_asia
+		icon = peace
+
+		x = 0
+		y = 1
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_middle_power_diplomacy }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_peace_in_east_asia executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_improve_relations_with_china
+		icon = peoples_republic_of_china
+
+		x = -4
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 2
+
+		prerequisite = { focus = KOR_peace_in_east_asia }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			NOT = { has_war_with = CHI }
+			CHI = {
+				has_opinion = {
+					target = KOR
+					value > 14
+				}
+			}
+		}
+
+		completion_reward = {
+			CHI = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_improve_relations_with_china executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_hallyu_in_china
+		icon = film_industry2
+
+		x = -5
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 3
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		prerequisite = { focus = KOR_improve_relations_with_china }
+
+		available = {
+			NOT = { has_war_with = CHI }
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			CHI = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = cultural_exchange
+				}
+				set_temp_variable = { percent_change = 1 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_hallyu_in_china executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_trading_partners
+		icon = trade_with_china
+
+		x = -3
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = KOR_improve_relations_with_china }
+
+		available = {
+			NOT = { has_war_with = CHI }
+			CHI = {
+				has_opinion = {
+					target = KOR
+					value > 14
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_chaebols_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			add_opinion_modifier = {
+				target = CHI
+				modifier = mutual_trade_opinion
+			}
+			add_opinion_modifier = {
+				target = CHI
+				modifier = mutual_trade_agreement
+			}
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI.id }
+			change_influence_percentage = yes
+			CHI = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_opinion
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_agreement
+				}
+				set_temp_variable = { percent_change = 1 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_trading_partners executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_military_exchanges
+		icon = peoples_liberation_army
+
+		x = -5
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 4
+
+		prerequisite = { focus = KOR_hallyu_in_china }
+		prerequisite = { focus = KOR_trading_partners }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			NOT = { has_war_with = CHI }
+			CHI = {
+				has_opinion = {
+					target = KOR
+					value > 24
+				}
+			}
+		}
+
+		completion_reward = {
+			army_experience = 25
+			add_timed_idea = {
+				idea = KOR_CHI_exchange
+				days = 365
+			}
+			add_opinion_modifier = {
+				target = CHI
+				modifier = military_cooperation
+			}
+			CHI = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = military_cooperation
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_military_exchanges executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_a_shared_history
+		icon = kempeitai
+
+		x = -3
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		prerequisite = { focus = KOR_hallyu_in_china }
+		prerequisite = { focus = KOR_trading_partners }
+		prerequisite = { focus = KOR_demand_reparations }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			NOT = { has_war_with = CHI }
+			CHI = {
+				has_opinion = {
+					target = KOR
+					value > 24
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_a_shared_history executed"
+			add_opinion_modifier = {
+				target = CHI
+				modifier = KOR_CHI_history
+			}
+			CHI = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = KOR_CHI_history
+				}
+			}
+			JAP = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = criticized_us
+				}
+				add_opinion_modifier = {
+					target = CHI
+					modifier = criticized_us
+				}
+			}
+			news_event = { id = korea.13 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_china_supports_the_south
+		icon = align_to_china
+
+		x = -3
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 7
+
+		prerequisite = { focus = KOR_military_exchanges }
+		prerequisite = { focus = KOR_a_shared_history }
+		prerequisite = { focus = KOR_defend_our_claims }
+
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			has_war = no
+			CHI = {
+				has_opinion = {
+					target = KOR
+					value > 99
+				}
+			}
+			NOT = { gives_military_access_to = USA }
+			NOT = { is_guaranteed_by = USA }
+			USA = { influence_less_10 = yes }
+		}
+
+		bypass = {
+			NKO = { NOT = { is_guaranteed_by = CHI } }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_china_supports_the_south executed"
+			if = {
+				limit = {
+					CHI = { is_ai = yes }
+				}
+				CHI = {
+					diplomatic_relation = {
+						country = NKO
+						relation = guarantee
+						active = no
+					}
+					add_ai_strategy = {
+						type = protect
+						id = "KOR"
+						value = 200
+					}
+					add_ai_strategy = {
+						type = support
+						id = "KOR"
+						value = 200
+					}
+					add_ai_strategy = {
+						type = contain
+						id = "NKO"
+						value = 200
+					}
+					add_ai_strategy = {
+						type = antagonize
+						id = "NKO"
+						value = 200
+					}
+				}
+				news_event = { id = korea.14 days = 1 }
+			}
+			else = {
+				CHI = {
+					country_event = {
+						id = korea.10
+						days = 1
+					}
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_revisit_historical_grievances
+		icon = japanese_imperialism
+
+		x = -1
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_peace_in_east_asia }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			country_exists = JAP
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			JAP = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = criticized_us
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_revisit_historical_grievances executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_country_flag = KOR_jap_accept_intellectual_platform
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_demand_reparations
+		icon = economic_crisis
+
+		x = -1
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 7
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_revisit_historical_grievances }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			country_exists = JAP
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_demand_reparations executed"
+			add_political_power = 100
+			set_temp_variable = { arg_popularity = 0.02 }
+			add_ruling_outlook_popularity = yes
+			JAP = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = recent_actions_negative
+				}
+			}
+			news_event = { id = korea.15 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_country_flag = KOR_jap_accept_intellectual_platform
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_defend_our_claims
+		icon = military_sphere
+
+		x = -1
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 7
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
+
+		prerequisite = { focus = KOR_demand_reparations }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			country_exists = JAP
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_defend_our_claims executed"
+			add_political_power = 150
+			set_temp_variable = { arg_popularity = 0.02 }
+			add_ruling_outlook_popularity = yes
+			add_ideas = KOR_dokdo_fortified
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_economic_showdown
+		icon = better_money
+
+		x = -1
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_defend_our_claims }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				KOR_has_liberal_government = yes
+			}
+			country_exists = JAP
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_economic_showdown executed"
+			add_political_power = 200
+			set_temp_variable = { arg_popularity = 0.05 }
+			add_ruling_outlook_popularity = yes
+			remove_opinion_modifier = {
+				target = JAP
+				modifier = large_commercial_relations
+			}
+			add_timed_idea = {
+				idea = KOR_JAP_trade_war
+				days = 180
+			}
+			set_temp_variable = { percent_change = -2 }
+			set_temp_variable = { tag_index = JAP.id }
+			change_influence_percentage = yes
+			JAP = {
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = large_commercial_relations
+				}
+				set_temp_variable = { percent_change = -2 }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_eternal_allies
+		icon = eternal_ally
+
+		x = 3
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 2
+
+		prerequisite = { focus = KOR_peace_in_east_asia }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			NOT = { has_war_with = USA }
+			is_guaranteed_by = USA
+			USA = {
+				has_opinion = {
+					target = KOR
+					value > 49
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_eternal_allies executed"
+			USA = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_draw_closer_to_japan
+		icon = align_to_japan
+
+		x = 1
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		prerequisite = { focus = KOR_peace_in_east_asia }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			KOR_has_conservative_government = yes
+			NOT = { has_war_with = JAP }
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > -1
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_draw_closer_to_japan executed"
+			JAP = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_improve_economic_relations
+		icon = trade_with_japan
+
+		x = 1
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = KOR_peace_in_east_asia }
+
+		available = {
+			KOR_has_conservative_government = yes
+			NOT = { has_war_with = JAP }
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > 14
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_improve_economic_relations executed"
+			set_temp_variable = { temp_opinion = 5 }
+			change_chaebols_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			add_opinion_modifier = {
+				target = JAP
+				modifier = mutual_trade_opinion
+			}
+			add_opinion_modifier = {
+				target = JAP
+				modifier = mutual_trade_agreement
+			}
+			set_temp_variable = { percent_change = -1 }
+			set_temp_variable = { tag_index = JAP.id }
+			change_influence_percentage = yes
+			JAP = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_opinion
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_agreement
+				}
+				set_temp_variable = { percent_change = -1 }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_step_up_military_exercises
+		icon = focus_generic_full_social_mobilization
+
+		x = 3
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_eternal_allies }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			NOT = { has_war_with = USA }
+			USA = {
+				has_opinion = {
+					target = KOR
+					value > 59
+				}
+				has_guaranteed = KOR
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_step_up_military_exercises executed"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA.id }
+			change_influence_percentage = yes
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+			support_for_reunification_2_less = yes
+			add_opinion_modifier = {
+				target = USA
+				modifier = military_cooperation
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = military_cooperation
+				}
+			}
+			NKO = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = imminent_danger_to_national_security
+				}
+			}
+			conservative_policy_effect = yes
+			if = {
+				limit = { has_idea = KOR_joint_us_exercises }
+				swap_ideas = {
+					remove_idea = KOR_joint_us_exercises
+					add_idea = KOR_joint_us_exercises1
+				}
+			}
+			else_if = {
+				limit = { has_idea = KOR_joint_us_exercises2 }
+				swap_ideas = {
+					remove_idea = KOR_joint_us_exercises2
+					add_idea = KOR_joint_us_exercises
+				}
+			}
+			else = {
+				add_ideas = KOR_joint_us_exercises2
+			}
+			conservative_policy_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_intelligence_cooperation
+		icon = espionage2
+
+		x = 1
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = KOR_improve_economic_relations }
+
+		available = {
+			KOR_has_conservative_government = yes
+			NOT = { has_war_with = JAP }
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > 24
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_intelligence_cooperation executed"
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			add_intel = {
+				target = NKO
+				army_intel = 25
+			}
+			JAP = {
+				add_intel = {
+					target = NKO
+					army_intel = 25
+				}
+			}
+			set_temp_variable = { arg_popularity = -0.05 }
+			add_ruling_outlook_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_strengthen_anti_northern_coalition
+		icon = american_shield
+
+		x = 3
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_improve_economic_relations }
+		prerequisite = { focus = KOR_step_up_military_exercises }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			NOT = { has_war_with = USA }
+			NOT = { has_war_with = JAP }
+			USA = {
+				has_opinion = {
+					target = KOR
+					value > 74
+				}
+			}
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > 49
+				}
+			}
+			USA = {
+				has_guaranteed = KOR
+				has_guaranteed = JAP
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus KOR_strengthen_anti_northern_coalition executed"
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = USA.id }
+			change_influence_percentage = yes
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+			support_for_reunification_2_less = yes
+			add_opinion_modifier = { target = USA modifier = military_cooperation }
+			add_opinion_modifier = { target = JAP modifier = military_cooperation }
+			reverse_add_opinion_modifier = { target = USA modifier = military_cooperation }
+			reverse_add_opinion_modifier = { target = JAP modifier = military_cooperation }
+			NKO = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = imminent_danger_to_national_security
+				}
+			}
+			conservative_policy_effect = yes
+			newline = yes
+			JAP = {
+				add_ideas = KOR_anti_dprk_coalition
+			}
+			USA = {
+				add_ideas = KOR_anti_dprk_coalition
+			}
+			KOR = {
+				add_ideas = KOR_anti_dprk_coalition
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_support_the_self_defense_forces
+		icon = japanese_imperial_glory
+
+		x = 1
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA }
+
+		prerequisite = { focus = KOR_intelligence_cooperation }
+		prerequisite = { focus = KOR_strengthen_anti_northern_coalition }
+
+		available = {
+			KOR_has_conservative_government = yes
+			NOT = { has_war_with = JAP }
+			JAP = {
+				has_government = democratic
+				has_opinion = {
+					target = KOR
+					value > 59
+				}
+			}
+		}
+
+		completion_reward = {
+			give_guarantee = JAP
+			JAP = {
+				give_guarantee = KOR
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = strategic_rivals
+				}
+			}
+			remove_opinion_modifier = {
+				target = JAP
+				modifier = strategic_rivals
+			}
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+			set_temp_variable = { arg_popularity = -0.1 }
+			add_ruling_outlook_popularity = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_support_the_self_defense_forces executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_distance_from_china
+		icon = stage_asia
+
+		x = 3
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 4
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_intelligence_cooperation }
+		prerequisite = { focus = KOR_strengthen_anti_northern_coalition }
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				western_liberals_are_in_power = yes
+			}
+			NOT = { has_war_with = USA }
+			NOT = { has_war_with = JAP }
+			USA = { has_guaranteed = KOR }
+		}
+
+		completion_reward = {
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = USA.id }
+			change_influence_percentage = yes
+			remove_opinion_modifier = {
+				target = CHI
+				modifier = large_commercial_relations
+			}
+			CHI = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = supports_rival
+				}
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = large_commercial_relations
+				}
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = diplomatic_proximity
+				}
+			}
+			set_temp_variable = { arg_popularity = 0.10 }
+			add_ruling_outlook_popularity = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_distance_from_china executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_revisit_the_alliance
+		icon = usa
+
+		x = 5
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_peace_in_east_asia }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					western_social_democrats_are_in_power = yes
+				}
+			}
+		}
+
+		completion_reward = {
+			remove_opinion_modifier = {
+				target = USA
+				modifier = diplomatic_proximity
+			}
+			USA = {
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = diplomatic_proximity
+				}
+			}
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_revisit_the_alliance executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_secure_wartime_control
+		icon = rok_mobilization
+
+		x = 5
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 4
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_wind_down_the_us_presence }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					western_social_democrats_are_in_power = yes
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { percent_change = -3 }
+			set_temp_variable = { tag_index = USA.id }
+			change_influence_percentage = yes
+			remove_ideas = KOR_wartime_control
+			custom_effect_tooltip = US_ROK_tt
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_secure_wartime_control executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_wind_down_the_us_presence
+		icon = american_air_supremacy
+
+		x = 5
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 4
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_revisit_the_alliance }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					western_social_democrats_are_in_power = yes
+				}
+			}
+		}
+
+		completion_reward = {
+			set_temp_variable = { percent_change = -2 }
+			set_temp_variable = { tag_index = USA.id }
+			change_influence_percentage = yes
+			custom_effect_tooltip = KOR_negotiation_success_tt
+			add_to_variable = { reunification_chance = 1 }
+			support_for_reunification_2 = yes
+			if = {
+				limit = { has_idea = KOR_joint_us_exercises }
+				swap_ideas = {
+					remove_idea = KOR_joint_us_exercises
+					add_idea = KOR_joint_us_exercises2
+				}
+			}
+			else = {
+				swap_ideas = {
+					remove_idea = KOR_joint_us_exercises1
+					add_idea = KOR_joint_us_exercises2
+				}
+			}
+			liberal_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_wind_down_the_us_presence executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_korean_security_in_korean_hands
+		icon = rok_emblem
+
+		x = 5
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_secure_wartime_control }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					western_social_democrats_are_in_power = yes
+				}
+			}
+			USA = { influence_less_10 = yes }
+		}
+
+		completion_reward = {
+			set_temp_variable = { percent_change = -5 }
+			set_temp_variable = { tag_index = USA.id }
+			change_influence_percentage = yes
+			custom_effect_tooltip = KOR_negotiation_success_tt
+			add_to_variable = { reunification_chance = 1 }
+			support_for_reunification_2 = yes
+			remove_ideas = KOR_joint_us_exercises2
+			remove_ideas = Major_Non_NATO_Ally
+			every_other_country = {
+				limit = {
+					has_guaranteed = KOR
+				}
+				diplomatic_relation = {
+					country = KOR
+					relation = guarantee
+					active = no
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = diplomatic_distance
+				}
+			}
+			every_other_country = {
+				limit = {
+					has_military_access_to = KOR
+				}
+				diplomatic_relation = {
+					country = KOR
+					relation = military_access
+					active = no
+				}
+			}
+			progressive_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_korean_security_in_korean_hands executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_southern_focus
+		icon = position_armies
+
+		x = 8
+		y = 1
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_middle_power_diplomacy }
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_southern_focus executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_overtures_to_asean
+		icon = align_to_asean
+
+		x = 7
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 2
+
+		prerequisite = { focus = KOR_southern_focus }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			every_other_country = {
+				limit = {
+					has_idea = ASEAN_Member
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_overtures_to_asean executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_support_development
+		icon = consumer_goods
+
+		x = 7
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_EXPENDITURE }
+
+		prerequisite = { focus = KOR_overtures_to_asean }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = BRM
+						tag = CBD
+						tag = LAO
+						tag = PHI
+						tag = VIE
+						tag = IND
+					}
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = development_assistance
+				}
+				add_ideas = KOR_development_assistance_idea
+				set_temp_variable = { percent_change = 5 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_support_development executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_asean_mediation
+		icon = union_negotiations
+
+		x = 7
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_KOREAN_PENINSULA }
+
+		prerequisite = { focus = KOR_support_development }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			custom_effect_tooltip = KOR_negotiation_success_tt
+			add_to_variable = { reunification_chance = 1 }
+			log = "[GetDateText]: [This.GetName]: focus KOR_asean_mediation executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_two_tigers
+		icon = south_asian_tiger
+
+		x = 9
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 2
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		prerequisite = { focus = KOR_southern_focus }
+
+		available = {
+			NOT = { has_war_with = RAJ }
+		}
+
+		completion_reward = {
+			RAJ = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_two_tigers executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_national_highways
+		icon = infrastructure1
+
+		x = 9
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_EXPENDITURE }
+
+		prerequisite = { focus = KOR_two_tigers }
+
+		available = {
+			NOT = { has_war_with = RAJ }
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -14 }
+			modify_treasury_effect = yes
+			RAJ = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = trade_mission
+				}
+				431 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+				432 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { percent_change = 1 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_national_highways executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_smart_phone_manufacturing
+		icon = trade_with_india
+
+		x = 9
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		prerequisite = { focus = KOR_national_highways }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			NOT = { has_war_with = RAJ }
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			RAJ = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = trade_mission
+				}
+				440 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { percent_change = 2 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_smart_phone_manufacturing executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_promote_korean_defense_companies
+		icon = license_production
+
+		x = 8
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 8
+
+		prerequisite = { focus = KOR_asean_mediation }
+		prerequisite = { focus = KOR_smart_phone_manufacturing }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = RAJ
+						has_idea = ASEAN_Member
+					}
+					no_jihadist_government = yes
+					has_war = no
+				}
+				country_event = {
+					id = korea.11
+					days = 1
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_promote_korean_defense_companies executed"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_engage_with_africa
+		icon = africa
+
+		x = 13
+		y = 1
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_middle_power_diplomacy }
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus KOR_engage_with_africa executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_a_responsible_power
+		icon = united_nations
+
+		x = 12
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+
+		prerequisite = { focus = KOR_engage_with_africa }
+		mutually_exclusive = { focus = KOR_corporate_interests }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			add_stability = 0.05
+			log = "[GetDateText]: [This.GetName]: focus KOR_a_responsible_power executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_development_assistance
+		icon = farming
+
+		x = 11
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		prerequisite = { focus = KOR_a_responsible_power }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = ETH
+						tag = EGY
+						tag = TNZ
+						tag = SEN
+					}
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = development_assistance
+				}
+				add_ideas = KOR_development_assistance_idea
+				set_temp_variable = { percent_change = 5 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_development_assistance executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_ethical_investments
+		icon = sustainable_development
+
+		x = 11
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+
+		prerequisite = { focus = KOR_development_assistance }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = -5 }
+			change_chaebols_opinion = yes
+			add_stability = 0.05
+			log = "[GetDateText]: [This.GetName]: focus KOR_ethical_investments executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_corporate_interests
+		icon = dangerous_deal3
+
+		x = 14
+		y = 2
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = KOR_engage_with_africa }
+		mutually_exclusive = { focus = KOR_a_responsible_power }
+
+		available = {
+			has_idea = chaebols
+		}
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = 10 }
+			change_chaebols_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_corporate_interests executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_peacekeeping_contributions
+		icon = un_pko
+
+		x = 13
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 8
+
+		prerequisite = { focus = KOR_a_responsible_power focus = KOR_corporate_interests }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_MILITARY_LAWS }
+
+		available = {
+			NOT = {
+				OR = {
+					has_idea = intervention_isolation
+					has_idea = intervention_local_security
+				}
+			}
+			has_war = no
+		}
+
+		completion_reward = {
+			add_ideas = { CHI_Peacekeepers }
+			log = "[GetDateText]: [This.GetName]: focus KOR_peacekeeping_contributions executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_anti_piracy_operations
+		icon = battleships
+
+		x = 13
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 5
+
+		prerequisite = { focus = KOR_peacekeeping_contributions }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_NAVY }
+
+		available = {
+			NOT = {
+				OR = {
+					has_idea = intervention_isolation
+					has_idea = intervention_local_security
+				}
+			}
+			has_war = no
+		}
+
+		completion_reward = {
+			add_ideas = { KOR_anti_piracy_operations }
+			log = "[GetDateText]: [This.GetName]: focus KOR_anti_piracy_operations executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_establish_manufacturing_plants
+		icon = industrialization
+
+		x = 15
+		y = 3
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_corporate_interests }
+
+		available = {
+			has_war = no
+			has_idea = chaebols
+		}
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = ETH
+						tag = EGY
+						tag = TNZ
+						tag = SEN
+					}
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = trade_mission
+				}
+				set_temp_variable = { percent_change = 5 }
+				change_influence_percentage = yes
+			}
+			215 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			255 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			233 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			364 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_establish_manufacturing_plants executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_land_acquisitions
+		icon = stage_africa
+
+		x = 15
+		y = 4
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESOURCE }
+
+		prerequisite = { focus = KOR_establish_manufacturing_plants }
+
+		available = {
+			has_war = no
+			has_idea = chaebols
+		}
+
+		completion_reward = {
+			add_ideas = KOR_neo_colonialism
+			for_each_scope_loop = {
+				array = global.AU_member
+				tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = {
+						target = KOR
+						modifier = landgrabs
+					}
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_land_acquisitions executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_improve_our_standing
+		icon = align_to_africa
+
+		x = 12
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 4
+
+		prerequisite = { focus = KOR_anti_piracy_operations }
+		prerequisite = { focus = KOR_ethical_investments }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			for_each_scope_loop = {
+				array = global.AU_member
+				tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = {
+						target = KOR
+						modifier = diplomatic_proximity
+					}
+					add_opinion_modifier = {
+						target = KOR
+						modifier = major_improve_trade
+					}
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_improve_our_standing executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_extend_our_influence
+		icon = become_puppet
+
+		x = 14
+		y = 5
+		relative_position_id = KOR_middle_power_diplomacy
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = KOR_anti_piracy_operations }
+		prerequisite = { focus = KOR_land_acquisitions }
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			add_political_power = 300
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = ETH
+						tag = EGY
+						tag = TNZ
+						tag = SEN
+					}
+				}
+				set_temp_variable = { percent_change = 10 }
+				change_influence_percentage = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_extend_our_influence executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_economics_improvement
+		icon = BRA_mensalao_new
+
+		x = 0
+		y = 2
+		relative_position_id = KOR_economic_showdown
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_economics_improvement "
+			add_stability = 0.05
+			add_political_power = 100
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_CELLTRION
+		icon = economic_it
+
+		x = -10
+		y = 1
+		relative_position_id = KOR_economics_improvement
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_economics_improvement }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_CELLTRION "
+			add_ideas = KOR_celltrion_idea1
+			set_technology = {
+				KOR_celltrion_tech = 1 # unlock first idea for south korea
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_establish_research_centers
+		icon = economic_sciencer
+
+		x = -2
+		y = 1.5
+		relative_position_id = KOR_CELLTRION
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_CELLTRION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_establish_research_centers "
+			605 = {
+				add_building_construction = {
+					type = land_facility
+					province = 4103
+					level = 1
+				}
+			}
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_army_support
+		icon = focus_generic_fascist_militarism
+
+		x = 2
+		y = 1
+		relative_position_id = KOR_CELLTRION
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_CELLTRION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_army_support "
+			swap_ideas = {
+				remove_idea = KOR_celltrion_idea1
+				add_idea = KOR_celltrion_idea2
+			}
+			army_experience = 50
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_civilians_first
+		icon = social_liberal
+
+		x = 0
+		y = 2
+		relative_position_id = KOR_CELLTRION
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_CELLTRION }
+		prerequisite = { focus = KOR_army_support }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_civilians_first "
+			add_tech_bonus = {
+				name = KOR_civilians_first
+				category = CAT_genes
+				bonus = 0.50
+				uses = 1
+			}
+			swap_ideas = {
+				remove_idea = KOR_celltrion_idea2
+				add_idea = KOR_celltrion_idea3
+			}
+			add_stability = 0.05
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_biotechnology_focus
+		icon = economic_recultivation
+
+		x = 0
+		y = 1.5
+		relative_position_id = KOR_establish_research_centers
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_establish_research_centers }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_biotechnology_focus "
+			add_tech_bonus = {
+				name = KOR_biotechnology_focus
+				category = CAT_genes
+				bonus = 0.25
+				uses = 1
+			}
+			one_random_agriculture_district = yes
+
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_agriculture_district = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_perfect_soldier
+		icon = army_nightvision
+
+		x = 1
+		y = 2
+		relative_position_id = KOR_biotechnology_focus
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_biotechnology_focus }
+		prerequisite = { focus = KOR_civilians_first }
+		prerequisite = { focus = KOR_hospitals }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_perfect_soldier "
+			army_experience = 15
+			swap_ideas = {
+				remove_idea = KOR_celltrion_idea4
+				add_idea = KOR_celltrion_idea5
+			}
+
+			division_template = {
+					name = "Perfect Soldier"
+					is_locked = no
+					regiments = {
+								L_Marine_Bat = { x = 0 y = 0 }
+								L_Marine_Bat = { x = 0 y = 1 }
+								L_Marine_Bat = { x = 0 y = 2 }
+
+								L_Marine_Bat = { x = 1 y = 0 }
+								L_Marine_Bat = { x = 1 y = 1 }
+								L_Marine_Bat = { x = 1 y = 2 }
+
+								L_Marine_Bat = { x = 2 y = 0 }
+								L_Marine_Bat = { x = 2 y = 1 }
+								L_Marine_Bat = { x = 2 y = 2 }
+
+								armor_Bat = { x = 3 y = 0 }
+								Mech_Marine_Bat = { x = 3 y = 1 }
+								SP_Arty_Bat = { x = 3 y = 2 }
+								SP_Arty_Bat = { x = 3 y = 3 }
+								SP_Arty_Bat = { x = 3 y = 4 }
+							}
+							support = {
+								L_Engi_Comp = { x = 0 y = 0 }
+								Mot_Recce_Comp = { x = 0 y = 1 }
+								combat_service_support_company = { x = 0 y = 2 }
+								SP_AA_Battery = { x = 0 y = 3 }
+							}
+					priority = 0
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"135st. Marine Division\" division_template = \"Perfect Soldier\" start_experience_factor = 1.0"
+						owner = ROOT
+						count = 1
+					}
+					create_unit = {
+						division = "name = \"2nd. Marine Division \" division_template = \"Perfect Soldier\" start_experience_factor = 1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_hospitals
+		icon = Generic_Support_Equipment
+
+		x = 2
+		y = 1
+		relative_position_id = KOR_civilians_first
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_army_support }
+		prerequisite = { focus = KOR_civilians_first }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_hospitals "
+			swap_ideas = {
+				remove_idea = KOR_celltrion_idea3
+				add_idea = KOR_celltrion_idea4
+			}
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_ultimate_protection
+		icon = defense
+
+		x = 1
+		y = 1
+		relative_position_id = KOR_perfect_soldier
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_perfect_soldier }
+		prerequisite = { focus = KOR_hospitals }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_ultimate_protection "
+			add_tech_bonus = {
+				name = KOR_ultimate_protection
+				ahead_reduction = 2
+				uses = 2
+				category = CAT_inf
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_posco
+		icon = coal_mining_2
+
+		x = -4
+		y = 2
+		relative_position_id = KOR_economics_improvement
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_economics_improvement }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_posco "
+			add_ideas = KOR_posco_idea1
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_posco_india
+		icon = steel_production
+
+		x = -2
+		y = 1.3
+		relative_position_id = KOR_posco
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_posco }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_posco_india "
+			RAJ = {
+			country_event = {
+					id = korea.60
+					days = 1
+			}
+		}
+
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_production_in_mexico
+		icon = coal_mining
+
+		x = 0
+		y = 1
+		relative_position_id = KOR_posco
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_posco }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_production_in_mexico "
+			MEX = {
+			country_event = {
+					id = korea.61
+					days = 1
+			}
+		}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_develop_vietnam
+		icon = steel_production2
+
+		x = 2
+		y = 2
+		relative_position_id = KOR_posco
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_posco }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_develop_vietnam "
+			VIE = {
+				country_event = { id = korea.62 days = 1 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_gwangyang_galvanizing
+		icon = baku_erzurum
+
+		x = -2
+		y = 2.6
+		relative_position_id = KOR_posco
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_posco_india }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_gwangyang_galvanizing "
+			605 = {
+				two_state_industrial_complex = yes
+			}
+			add_resource = {
+				type = steel
+				amount = 25
+				state = 605
+			}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_argentina_facility
+		icon = PB_Generic_Mining_Industry
+
+		x = 0
+		y = 3.5
+		relative_position_id = KOR_posco
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_production_in_mexico }
+		prerequisite = { focus = KOR_develop_vietnam }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_argentina_facility "
+			ARG = {
+				country_event = { id = korea.63 days = 1 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_local_production
+		icon = goal_JAP_seized
+
+		x = -1
+		y = 4.5
+		relative_position_id = KOR_posco
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_gwangyang_galvanizing }
+		prerequisite = { focus = KOR_argentina_facility }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_local_production "
+			605 = {
+				one_state_industrial_complex = yes
+			}
+			add_resource = {
+				type = steel
+				amount = 10
+				state = 605
+			}
+			add_resource = {
+				type = aluminium
+				amount = 10
+				state = 605
+			}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_worlds_second
+		icon = mining_truck
+
+		x = 0
+		y = 5.5
+		relative_position_id = KOR_posco
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_local_production }
+		prerequisite = { focus = KOR_argentina_facility }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_worlds_second "
+			swap_ideas = {
+				remove_idea = KOR_posco_idea1
+				add_idea = KOR_posco_idea3
+			}
+			add_tech_bonus = {
+				name = KOR_worlds_second
+				ahead_reduction = 1.5
+				uses = 2
+				category = CAT_excavation_tech
+			}
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_samsung
+		icon = circular_electron_positron_collider
+
+		x = 2
+		y = 2
+		relative_position_id = KOR_economics_improvement
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_economics_improvement }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_samsung "
+			add_tech_bonus = {
+				name = KOR_samsung
+				ahead_reduction = 1
+				uses = 1
+				category = CAT_internet_tech
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_samsung_galaxy_phones
+		icon = radar
+
+		x = -2
+		y = 1.2
+		relative_position_id = KOR_samsung
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_samsung }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_samsung_galaxy_phones "
+			add_ideas = KOR_samsung_phone_sales
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_samsung_thunder
+		icon = Focus_Examine_Foreign_Tanks
+
+		x = 0
+		y = 2
+		relative_position_id = KOR_samsung
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_samsung }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_samsung_thunder "
+			add_ideas = KOR_samsung_k9_thunder1
+			add_tech_bonus = {
+				name = KOR_samsung_thunder
+				ahead_reduction = 1
+				uses = 1
+				category = CAT_sp_r_arty
+			}
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_samsung_thunder_upgrade
+		icon = Focus_Mobile_Warfare_Doctrine
+
+		x = 0
+		y = 3
+		relative_position_id = KOR_samsung
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_samsung_thunder }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_samsung_thunder_upgrade "
+			add_tech_bonus = {
+				name = KOR_samsung_thunder_upgrade
+				ahead_reduction = 1
+				uses = 2
+				category = CAT_artillery
+			}
+			add_tech_bonus = {
+				name = KOR_samsung_thunder_upgrade
+				category = CAT_artillery
+				bonus = 0.25
+				uses = 1
+			}
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_samsung_thunder_tests
+		icon = explosion_with_badass_tank
+
+		x = -2.5
+		y = 4
+		relative_position_id = KOR_samsung
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_samsung_thunder }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_samsung_thunder_tests "
+			swap_ideas = {
+				remove_idea = KOR_samsung_k9_thunder1
+				add_idea = KOR_samsung_k9_thunder2
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_samsung_thunder_production
+		icon = focus_generic_railway_gun
+
+		x = -1
+		y = 5
+		relative_position_id = KOR_samsung
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_samsung_thunder_tests }
+		prerequisite = { focus = KOR_samsung_thunder_upgrade }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_samsung_thunder_production "
+			two_random_arms_factory = yes
+			swap_ideas = {
+				remove_idea = KOR_samsung_k9_thunder2
+				add_idea = KOR_samsung_k9_thunder3
+			}
+			add_tech_bonus = {
+				name = KOR_samsung_thunder_production
+				category = CAT_artillery
+				bonus = 0.25
+				uses = 1
+			}
+
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_arms_industry = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_lg
+		icon = hydroelectric2
+
+		x = 6
+		y = 1
+		relative_position_id = KOR_economics_improvement
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_economics_improvement }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_lg "
+			add_ideas = KOR_lg_idea
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_lg_cns
+		icon = MEX_Scientific_investment
+
+		x = 2
+		y = 1.5
+		relative_position_id = KOR_lg
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_lg }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_lg_cns "
+			add_tech_bonus = {
+				name = KOR_lg_cns
+				category = CAT_ai
+				bonus = 0.30
+				uses = 1
+			}
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_cloud_computing
+		icon = komplukter
+
+		x = 1
+		y = 2.5
+		relative_position_id = KOR_lg
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_lg_cns }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_cloud_computing "
+			add_tech_bonus = {
+				name = KOR_cloud_computing
+				category = CAT_computing_tech
+				bonus = 0.30
+				uses = 2
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_ai_focus
+		icon = literacy_rate_improvment2
+
+		x = 3
+		y = 2.5
+		relative_position_id = KOR_lg
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_lg_cns }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_ai_focus "
+			add_tech_bonus = {
+				name = KOR_ai_focus
+				ahead_reduction = 2.5
+				uses = 1
+				category = CAT_ai
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_lg_chem
+		icon = green_biomass_plant
+
+		x = -2
+		y = 1
+		relative_position_id = KOR_lg
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_lg }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_lg_chem "
+			add_resource = {
+				type = oil
+				amount = 10
+				state = 605
+			}
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			one_random_agriculture_district = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_agriculture_district = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_ochang_plant
+		icon = goal_JAP_restart_nukepowerplant
+
+		x = -2.5
+		y = 2
+		relative_position_id = KOR_lg
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_lg_chem }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_ochang_plant "
+			one_random_industrial_complex = yes
+			add_tech_bonus = {
+				name = KOR_ochang_plant
+				category = CAT_3d
+				bonus = 0.25
+				uses = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_sbl_plant
+		icon = generic_drill
+
+		x = -1
+		y = 3
+		relative_position_id = KOR_lg
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_lg_chem }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_sbl_plant "
+			one_random_industrial_complex = yes
+			add_tech_bonus = {
+				name = KOR_sbl_plant
+				category = CAT_renewable
+				bonus = 0.50
+				uses = 1
+			}
+
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_hyundai
+		icon = generic_ship_fix
+
+		x = 10
+		y = 5
+		relative_position_id = KOR_economics_improvement
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_economics_improvement }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_hyundai "
+			add_ideas = KOR_hyundai_idea
+			navy_experience = 50
+			two_random_dockyards = yes
+
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_dockyard = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_offshore_industry
+		icon = ENG_Expand_Trade_Fleet
+
+		x = -4
+		y = 1
+		relative_position_id = KOR_hyundai
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_hyundai }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_offshore_industry "
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = oil
+				amount = 10
+				state = 608
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_offshore_oil
+		icon = oil_trade
+
+		x = -6
+		y = 2
+		relative_position_id = KOR_hyundai
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_offshore_industry }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_offshore_oil "
+			two_random_dockyards = yes
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = oil
+				amount = 5
+				state = 1099
+			}
+			608 = {
+				add_building_construction = {
+					type = fuel_silo
+					level = 3
+				}
+			}
+			607 = {
+				add_building_construction = {
+					type = fuel_silo
+					level = 3
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_dockyard = no
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_offshore_natural_gas
+		icon = oilrig_design
+
+		x = -4
+		y = 2
+		relative_position_id = KOR_hyundai
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_offshore_industry }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_offshore_natural_gas "
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = oil
+				amount = 5
+				state = 606
+			}
+			606 = {
+				add_building_construction = {
+					type = fuel_silo
+					level = 3
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_offshore_barge
+		icon = focus_generic_offshore_oil_rig
+
+		x = -2
+		y = 2
+		relative_position_id = KOR_hyundai
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_offshore_industry }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_offshore_barge "
+			add_tech_bonus = {
+				name = KOR_offshore_barge
+				category = CAT_landing_craft
+				bonus = 0.30
+				uses = 3
+			}
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_naver
+		icon = south_east_asian_offensive
+
+		x = 13
+		y = 2
+		relative_position_id = KOR_economics_improvement
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_economics_improvement }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_naver "
+			add_ideas = KOR_naver_idea
+
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_webtoon
+		icon = MEX_Allign_the_government
+
+		x = -1
+		y = 1
+		relative_position_id = KOR_naver
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_naver }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_webtoon"
+			add_tech_bonus = {
+				name = KOR_webtoon
+				category = CAT_internet_tech
+				bonus = 0.30
+				uses = 1
+			}
+			two_random_network_infrastructure = yes
+			two_random_network_infrastructure = yes
+
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_naver_news
+		icon = propaganda
+
+		x = 1
+		y = 1
+		relative_position_id = KOR_naver
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = KOR_naver }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KOR_naver_news "
+			one_radar_station = yes
+			one_random_network_infrastructure = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+}

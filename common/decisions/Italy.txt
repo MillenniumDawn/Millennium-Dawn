@@ -1092,6 +1092,9 @@ mafia_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision infiltrate_cosa_nostra executed"
 		}
 		days_re_enable = 30
+
+		days_remove = 7
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove infiltrate_cosa_nostra"
 			custom_effect_tooltip = infiltrate_mafia_organizations_tt
@@ -1135,6 +1138,9 @@ mafia_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision infiltrate_camorra executed"
 		}
 		days_re_enable = 30
+
+		days_remove = 7
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove infiltrate_camorra"
 			custom_effect_tooltip = infiltrate_mafia_organizations_tt
@@ -1178,6 +1184,9 @@ mafia_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision infiltrate_ndrangheta executed"
 		}
 		days_re_enable = 30
+
+		days_remove = 7
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove infiltrate_ndrangheta"
 			custom_effect_tooltip = infiltrate_mafia_organizations_tt
@@ -1221,6 +1230,9 @@ mafia_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision infiltrate_sacra_corona_unita executed"
 		}
 		days_re_enable = 30
+
+		days_remove = 7
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove infiltrate_sacra_corona_unita"
 			custom_effect_tooltip = infiltrate_mafia_organizations_tt
@@ -1880,10 +1892,9 @@ mafia_ITA = {
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 			add_war_support = 0.2
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_to_variable = { cosa_nostra_strength = -0.02 }
 			add_to_variable = { camorra_strength = -0.02 }
 			add_to_variable = { ndrangheta_strength = -0.02 }
@@ -2293,16 +2304,20 @@ generic_ITA = {
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision bonus_to_stimulate_consumption executed"
-			set_temp_variable = { bonus_to_stimulate_consumption_cost = bonus_to_stimulate_consumption_times_taken_var }
-			set_temp_variable = { decision_gdp_cost = gdp_total }
-			multiply_temp_variable = { decision_gdp_cost = -0.001 }
-			multiply_temp_variable = { bonus_to_stimulate_consumption_cost = decision_gdp_cost }
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { treasury_change = bonus_to_stimulate_consumption_cost }
+			set_temp_variable = {
+				treasury_change = {
+					value = bonus_to_stimulate_consumption_times_taken_var
+					multiply = {
+						value = gdp_total
+						multiply = -0.001
+					}
+				}
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 			modify_treasury_effect = yes
 			set_temp_variable = { drift_switch_change = 0.004 }
-			modify_reform_expectance_effect = yes
+			ITA_modify_reform_expectance_temp_effect = yes
 			add_to_variable = { bonus_to_stimulate_consumption_times_taken_var = 1 }
 		}
 		ai_will_do = {
@@ -2345,13 +2360,21 @@ generic_ITA = {
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision forced_withdrawal_from_bank_accounts executed"
-			set_temp_variable = { forced_withdrawal_from_bank_accounts_cost = forced_withdrawal_from_bank_accounts_times_taken_var }
-			multiply_temp_variable = { forced_withdrawal_from_bank_accounts_cost = -0.005 }
-			set_temp_variable = { ITA_stability_factor_change = forced_withdrawal_from_bank_accounts_cost }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { decision_gdp_gain = gdp_total }
-			multiply_temp_variable = { decision_gdp_gain = 0.03 }
-			set_temp_variable = { treasury_change = decision_gdp_gain }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = {
+				var = ITA_stability_factor_var
+				value = {
+					value = forced_withdrawal_from_bank_accounts_times_taken_var
+					multiply = -0.005
+				}
+				tooltip = stability_factor_tt
+			}
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.03
+				}
+			}
 			modify_treasury_effect = yes
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
@@ -2388,18 +2411,21 @@ generic_ITA = {
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision one_time_paycheck_bonus executed"
-			set_temp_variable = { one_time_paycheck_bonus_cost = one_time_paycheck_bonus_times_taken_var }
-			set_temp_variable = { decision_gdp_cost = gdp_total }
-			multiply_temp_variable = { decision_gdp_cost = -0.002 }
-			multiply_temp_variable = { one_time_paycheck_bonus_cost = decision_gdp_cost }
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.08 }
 			set_temp_variable = { temp_outlook_increase = 0.04 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { treasury_change = one_time_paycheck_bonus_cost }
+			change_relative_party_popularity = yes
+			set_temp_variable = {
+				treasury_change = {
+					value = one_time_paycheck_bonus_times_taken_var
+					multiply = {
+						value = gdp_total
+						multiply = -0.002
+					}
+				}
+			}
 			modify_treasury_effect = yes
 			set_temp_variable = { drift_switch_change = 0.002 }
-			modify_reform_expectance_effect = yes
+			ITA_modify_reform_expectance_temp_effect = yes
 			add_to_variable = { one_time_paycheck_bonus_times_taken_var = 1 }
 		}
 		ai_will_do = {
@@ -2438,6 +2464,11 @@ generic_ITA = {
 					}
 				}
 			}
+			modifier = {
+				add = 5
+				check_variable = { government_coalition_strength < 0.6 }
+				has_stability < 0.5
+			}
 		}
 	}
 
@@ -2450,12 +2481,16 @@ generic_ITA = {
 		days_re_enable = 90
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision economic_concessions_to_oppositions executed"
-			set_temp_variable = { economic_concessions_to_oppositions_cost = economic_concessions_to_oppositions_times_taken_var }
-			set_temp_variable = { decision_gdp_cost = gdp_total }
-			multiply_temp_variable = { decision_gdp_cost = -0.002 }
-			multiply_temp_variable = { economic_concessions_to_oppositions_cost = decision_gdp_cost }
 			add_political_power = 250
-			set_temp_variable = { treasury_change = economic_concessions_to_oppositions_cost }
+			set_temp_variable = {
+				treasury_change = {
+					value = economic_concessions_to_oppositions_times_taken_var
+					multiply = {
+						value = gdp_total
+						multiply = -0.002
+					}
+				}
+			}
 			modify_treasury_effect = yes
 			add_to_variable = { economic_concessions_to_oppositions_times_taken_var = 1 }
 		}
@@ -2517,10 +2552,15 @@ generic_ITA = {
 		days_re_enable = 90
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision extraordinary_church_donation executed"
-			set_temp_variable = { extraordinary_church_donation_cost = extraordinary_church_donation_times_taken_var }
-			set_temp_variable = { decision_gdp_cost = gdp_total }
-			multiply_temp_variable = { decision_gdp_cost = -0.002 }
-			multiply_temp_variable = { extraordinary_church_donation_cost = decision_gdp_cost }
+			set_temp_variable = {
+				extraordinary_church_donation_cost = {
+					value = extraordinary_church_donation_times_taken_var
+					multiply = {
+						value = gdp_total
+						multiply = -0.002
+					}
+				}
+			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_clergy_opinion = yes
 			set_temp_variable = { treasury_change = extraordinary_church_donation_cost }
@@ -2552,13 +2592,19 @@ generic_ITA = {
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision levy_extra_church_tax executed"
-			set_temp_variable = { levy_extra_church_tax_cost = levy_extra_church_tax_times_taken_var }
-			multiply_temp_variable = { levy_extra_church_tax_cost = -1 }
-			set_temp_variable = { decision_gdp_gain = gdp_total }
-			multiply_temp_variable = { decision_gdp_gain = 0.02 }
-			set_temp_variable = { treasury_change = decision_gdp_gain }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.02
+				}
+			}
 			modify_treasury_effect = yes
-			set_temp_variable = { temp_opinion = levy_extra_church_tax_cost }
+			set_temp_variable = {
+				temp_opinion = {
+					value = levy_extra_church_tax_times_taken_var
+					multiply = -1
+				}
+			}
 			change_the_clergy_opinion = yes
 			add_to_variable = { levy_extra_church_tax_times_taken_var = 1 }
 		}
@@ -2607,7 +2653,7 @@ generic_ITA = {
 					set_temp_variable = { party_index = v }
 					set_temp_variable = { party_popularity_increase = -0.05 }
 					set_temp_variable = { temp_outlook_increase = -0.025 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 				}
 			}
 			for_each_loop = {
@@ -2632,7 +2678,7 @@ generic_ITA = {
 					set_temp_variable = { party_index = v }
 					set_temp_variable = { party_popularity_increase = -0.05 }
 					set_temp_variable = { temp_outlook_increase = -0.025 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 				}
 			}
 			custom_effect_tooltip = condemn_antiglobal_rhetoric_TT
@@ -2656,7 +2702,7 @@ generic_ITA = {
 		}
 		days_re_enable = 180
 		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision random_financial_police_surprise_checks executed"
+			log = "[GetDateText]: [This.GetName]: decision provide_local_party_positions_to_business_owners executed"
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			set_temp_variable = { provide_local_party_positions_to_business_owners_cost = provide_local_party_positions_to_business_owners_times_taken_var }
@@ -2687,9 +2733,12 @@ generic_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision random_financial_police_surprise_checks executed"
 			set_temp_variable = { temp_opinion = -5 }
 			change_small_medium_business_owners_opinion = yes
-			set_temp_variable = { decision_gdp_gain = gdp_total }
-			multiply_temp_variable = { decision_gdp_gain = 0.03 }
-			set_temp_variable = { treasury_change = decision_gdp_gain }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.03
+				}
+			}
 			modify_treasury_effect = yes
 		}
 		ai_will_do = {
@@ -2710,9 +2759,12 @@ generic_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision encourage_international_investments executed"
 			set_temp_variable = { temp_opinion = -5 }
 			change_international_bankers_opinion = yes
-			set_temp_variable = { decision_gdp_gain = gdp_total }
-			multiply_temp_variable = { decision_gdp_gain = 0.05 }
-			set_temp_variable = { int_investment_change = decision_gdp_gain }
+			set_temp_variable = {
+				int_investment_change = {
+					value = gdp_total
+					multiply = 0.05
+				}
+			}
 			modify_international_investment_effect = yes
 		}
 		ai_will_do = {
@@ -2724,7 +2776,6 @@ generic_ITA = {
 		icon = generic_decision
 		available = {
 			ITA_more_than_50_labour_unions_opinion = yes
-			has_idea = labour_unions
 		}
 		visible = {
 			has_idea = labour_unions
@@ -2734,8 +2785,8 @@ generic_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision call_in_favours_with_unions executed"
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 		}
 		ai_will_do = {
 			base = 10
@@ -2754,7 +2805,6 @@ generic_ITA = {
 		icon = generic_decision
 		available = {
 			ITA_less_than_100_labour_unions_opinion = yes
-			has_idea = labour_unions
 		}
 		visible = {
 			has_idea = labour_unions
@@ -2791,10 +2841,9 @@ generic_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision discredit_political_opponents_in_talk_shows executed"
 			set_variable = { discredit_political_opponents_in_talk_shows_cost = discredit_political_opponents_in_talk_shows_times_taken_var }
 			multiply_variable = { discredit_political_opponents_in_talk_shows_cost = 10 }
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_to_variable = { discredit_political_opponents_in_talk_shows_times_taken_var = 1 }
 		}
 		ai_will_do = {
@@ -2813,19 +2862,15 @@ generic_ITA = {
 			OR = {
 				has_stability < 0.25
 				AND = {
-					custom_trigger_tooltip = {
-						tooltip = interest_rate_greater_than_8_tt
-						check_variable = { interest_rate > 8 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = treasury_lower_than_10_tt
-						check_variable = { treasury < 10 }
-					}
+					interest_rate_higher_than_8 = yes
+					treasury_lower_than_10 = yes
 				}
 			}
 			NOT = {
-				has_country_leader_with_trait = western_technocrat
-				has_country_flag = ITA_undemocratic_coup
+				OR = {
+					has_country_leader_with_trait = western_technocrat
+					has_country_flag = ITA_undemocratic_coup
+				}
 			}
 		}
 		visible = {
@@ -2838,7 +2883,6 @@ generic_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision estabilish_technocratic_government executed"
 			country_event = italy_md.67
-			country_event = italy_md.67
 		}
 		ai_will_do = {
 			base = 8000
@@ -2847,15 +2891,14 @@ generic_ITA = {
 
 	ITA_tutorial_decision = {
 		icon = generic_decision
-		visible = {
-			always = yes
-		}
 
 		days_re_enable = 1
+
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_tutorial_decision executed"
 			country_event = italy_md.23
 		}
+
 		ai_will_do = {
 			base = 0
 		}
@@ -2904,10 +2947,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			81 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2965,10 +3007,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			81 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3026,10 +3067,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			82 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3071,13 +3111,13 @@ integrative_restoration_ITA = {
 			base = 10
 		}
 		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision restore_Pompeii executed"
+			log = "[GetDateText]: [This.GetName]: decision restore_the_Temple_Valley executed"
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 		}
 		days_remove = 365
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Pompeii"
+			log = "[GetDateText]: [Root.GetName]: Decision remove restore_the_Temple_Valley"
 			add_to_variable = { ITA_monuments_restored_counter = 1 }
 			if = {
 				limit = {
@@ -3087,10 +3127,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			83 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3148,10 +3187,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			553 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3209,10 +3247,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			388 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3270,10 +3307,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			127 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3331,10 +3367,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			561 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3392,10 +3427,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			961 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3453,10 +3487,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			216 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3514,10 +3547,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			141 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3575,10 +3607,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			156 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3636,10 +3667,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			143 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3697,10 +3727,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			920 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3758,10 +3787,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			380 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3819,10 +3847,9 @@ integrative_restoration_ITA = {
 				clear_variable = ITA_monuments_restored_counter
 			}
 			add_political_power = 250
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			968 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -3984,14 +4011,14 @@ ITA_italian_space_decision_category = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ITA_expand_space_program"
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_shrink_space_program"
 			set_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
 		}
 		cost = 50
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_expand_space_program"
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_shrink_space_program"
 			add_to_variable = { ITA_space_program_level = -1 }
 			add_to_variable = { ITA_peoples_support = 10.0 }
 			custom_effect_tooltip = ITA_increase_people_support_10_TT
@@ -4517,13 +4544,10 @@ ITA_italian_space_decision_category = {
 		icon = generic_decision
 
 		days_re_enable = 7
+		days_remove = 7
 
 		visible = {
 			check_variable = { ITA_asteroid_precious > 0 }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ITA_reduce_asteroid_mining_precious"
 		}
 
 		remove_effect = {
@@ -4546,13 +4570,10 @@ ITA_italian_space_decision_category = {
 		icon = generic_decision
 
 		days_re_enable = 7
+		days_remove = 7
 
 		visible = {
 			check_variable = { ITA_asteroid_aluminium > 0 }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ITA_reduce_asteroid_mining_aluminium"
 		}
 
 		remove_effect = {
@@ -4575,13 +4596,10 @@ ITA_italian_space_decision_category = {
 		icon = generic_decision
 
 		days_re_enable = 7
+		days_remove = 7
 
 		visible = {
 			check_variable = { ITA_asteroid_tungsten > 0 }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ITA_reduce_asteroid_mining_tungsten"
 		}
 
 		remove_effect = {
@@ -4726,18 +4744,17 @@ policies_ITA = {
 			}
 			set_temp_variable = { drift_switch_change = 0.02 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { party_index = 16 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_ideas = ITA_legalized_light_drugs
 		}
 		ai_will_do = {
@@ -4766,10 +4783,9 @@ policies_ITA = {
 			}
 			set_temp_variable = { drift_switch_change = -0.02 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.1 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_legalized_light_drugs
 		}
 		ai_will_do = {
@@ -4883,10 +4899,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_let_companies_fail_decision executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
 			add_ideas = ITA_dynamic_economy
@@ -4915,10 +4930,9 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_let_companies_fail_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			remove_ideas = ITA_dynamic_economy
@@ -4977,10 +4991,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_modify_article_18_decision executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
 			add_ideas = ITA_flexible_labour_market
@@ -5009,10 +5022,9 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_modify_article_18_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			remove_ideas = ITA_flexible_labour_market
@@ -5073,16 +5085,18 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_refound_IRI_decision executed"
 			set_temp_variable = { drift_switch_change = 0.005 }
 			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.25 }
-			modify_interest_rate_multiplier_modifier_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = -0.05 }
-			set_temp_variable = { treasury_change = money_amount }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_interest_rate_multiplier_modifier_var = 0.25 tooltip = interest_rate_multiplier_modifier_tt }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = -0.05
+				}
+			}
 			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_political_power = 150
 			add_ideas = ITA_IRI
 		}
@@ -5108,16 +5122,18 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_refound_IRI_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.25 }
-			modify_interest_rate_multiplier_modifier_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = 0.04 }
-			set_temp_variable = { treasury_change = money_amount }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_interest_rate_multiplier_modifier_var = -0.25 tooltip = interest_rate_multiplier_modifier_tt }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.04
+				}
+			}
 			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_IRI
 		}
 		ai_will_do = {
@@ -5165,10 +5181,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_citizenship_income_decision executed"
 			set_temp_variable = { drift_switch_change = 0.02 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_political_power = 150
 			add_ideas = ITA_citizenship_income_spirit
 		}
@@ -5198,10 +5213,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_citizenship_income_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.03 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_citizenship_income_spirit
 		}
 		ai_will_do = {
@@ -5267,16 +5281,18 @@ policies_ITA = {
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
 			add_ideas = ITA_privatizations
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.5 }
-			modify_interest_rate_multiplier_modifier_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = 0.05 }
-			set_temp_variable = { treasury_change = money_amount }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_interest_rate_multiplier_modifier_var = -0.5 tooltip = interest_rate_multiplier_modifier_tt }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.05
+				}
+			}
 			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
 			add_timed_idea = {
@@ -5304,16 +5320,18 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_sell_government_shares_in_companies_decision_repeal executed"
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.5 }
-			modify_interest_rate_multiplier_modifier_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = -0.06 }
-			set_temp_variable = { treasury_change = money_amount }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_interest_rate_multiplier_modifier_var = 0.5 tooltip = interest_rate_multiplier_modifier_tt }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = -0.06
+				}
+			}
 			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_international_bankers_opinion = yes
 			remove_ideas = ITA_privatizations
@@ -5385,18 +5403,19 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_water_distribution_decision executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_health_cost_multiplier_modifier_change = -0.15 }
-			modify_health_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = -0.1 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = 0.03 }
-			set_temp_variable = { treasury_change = money_amount }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_health_cost_multiplier_modifier_var = -0.15 tooltip = health_cost_multiplier_modifier_tt }
+			add_to_variable = { ITA_stability_factor_var = -0.1 tooltip = stability_factor_tt }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.03
+				}
+			}
 			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_country_flag = ITA_private_water
 		}
 		ai_will_do = {
@@ -5419,18 +5438,19 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_water_distribution_decision_repeal executed"
-			set_temp_variable = { ITA_health_cost_multiplier_modifier_change = 0.15 }
-			modify_health_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.1 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = -0.04 }
-			set_temp_variable = { treasury_change = money_amount }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_health_cost_multiplier_modifier_var = 0.15 tooltip = health_cost_multiplier_modifier_tt }
+			add_to_variable = { ITA_stability_factor_var = 0.1 tooltip = stability_factor_tt }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = -0.04
+				}
+			}
 			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			clr_country_flag = ITA_private_water
 		}
 		ai_will_do = {
@@ -5479,20 +5499,22 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_museum_system_decision executed"
-			set_temp_variable = { ITA_education_cost_multiplier_modifier_change = -0.1 }
-			modify_education_cost_multiplier_modifier_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_education_cost_multiplier_modifier_var = -0.1 tooltip = education_cost_multiplier_modifier_tt }
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = -0.05 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = 0.03 }
-			set_temp_variable = { treasury_change = money_amount }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = -0.05 tooltip = stability_factor_tt }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.03
+				}
+			}
 			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_country_flag = ITA_private_museums
 		}
 		ai_will_do = {
@@ -5515,19 +5537,20 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_museum_system_decision_repeal executed"
-			set_temp_variable = { ITA_education_cost_multiplier_modifier_change = 0.1 }
-			modify_education_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = -0.04 }
-			set_temp_variable = { treasury_change = money_amount }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_education_cost_multiplier_modifier_var = 0.1 tooltip = education_cost_multiplier_modifier_tt }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = -0.04
+				}
+			}
 			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
-			set_country_flag = ITA_private_museums
+			change_relative_party_popularity = yes
+			clr_country_flag = ITA_private_museums
 		}
 		ai_will_do = {
 			base = 0
@@ -5665,10 +5688,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_protect_prisoners_rights_decision executed"
 			set_temp_variable = { drift_switch_change = 0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_country_flag = ITA_prisoners_rights
 		}
 		ai_will_do = {
@@ -5689,10 +5711,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_protect_prisoners_rights_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			clr_country_flag = ITA_prisoners_rights
 		}
 		ai_will_do = {
@@ -5736,10 +5757,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_allow_euthanasia_decision executed"
 			set_temp_variable = { drift_switch_change = 0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_country_flag = ITA_allowed_euthanasia
 		}
 		ai_will_do = {
@@ -5760,10 +5780,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_allow_euthanasia_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			clr_country_flag = ITA_allowed_euthanasia
 		}
 		ai_will_do = {
@@ -5808,10 +5827,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_allow_same_sex_marriage_decision executed"
 			set_temp_variable = { drift_switch_change = 0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_country_flag = ITA_gay_marriage
 		}
 		ai_will_do = {
@@ -5832,10 +5850,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_allow_same_sex_marriage_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			clr_country_flag = ITA_gay_marriage
 		}
 		ai_will_do = {
@@ -5878,10 +5895,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_outlaw_lgbt_behaviour_decision executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_country_flag = ITA_banned_lgbt
 		}
 		ai_will_do = {
@@ -5902,10 +5918,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_outlaw_lgbt_behaviour_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = 0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			clr_country_flag = ITA_banned_lgbt
 		}
 		ai_will_do = {
@@ -5968,10 +5983,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_repeal_law_194_decision executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_country_flag = ITA_banned_abortion
 		}
 		ai_will_do = {
@@ -6062,10 +6076,9 @@ policies_ITA = {
 			}
 			set_temp_variable = { drift_switch_change = 0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			custom_effect_tooltip = ITA_focus_reduction_mafia_strength_TT
 			add_ideas = ITA_legalized_prostitution
 			custom_effect_tooltip = ITA_reopen_brothels_TT
@@ -6096,10 +6109,9 @@ policies_ITA = {
 			}
 			set_temp_variable = { drift_switch_change = -0.02 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_legalized_prostitution
 		}
 		ai_will_do = {
@@ -6154,10 +6166,9 @@ policies_ITA = {
 			modify_reform_expectance_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_political_power = 100
 			add_ideas = ITA_zombie_companies
 		}
@@ -6185,10 +6196,9 @@ policies_ITA = {
 			modify_reform_expectance_effect = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_zombie_companies
 		}
 		ai_will_do = {
@@ -6276,10 +6286,9 @@ policies_ITA = {
 				add_idea = ITA_migration_tolerated
 				remove_idea = ITA_migrants_from_africa
 			}
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			if = {
 				limit = {
 					has_idea = ITA_mafia
@@ -6311,10 +6320,9 @@ policies_ITA = {
 				add_idea = ITA_migrants_from_africa
 				remove_idea = ITA_migration_tolerated
 			}
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			if = {
 				limit = {
 					has_idea = ITA_mafia
@@ -6371,10 +6379,9 @@ policies_ITA = {
 				add_idea = ITA_migrants_from_africa_encouraged
 				remove_idea = ITA_migration_tolerated
 			}
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			if = {
 				limit = {
 					has_idea = ITA_mafia
@@ -6408,10 +6415,9 @@ policies_ITA = {
 				add_idea = ITA_migration_tolerated
 				remove_idea = ITA_migrants_from_africa_encouraged
 			}
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			if = {
 				limit = {
 					has_idea = ITA_mafia
@@ -6471,10 +6477,9 @@ policies_ITA = {
 			set_temp_variable = { drift_switch_change = -0.02 }
 			modify_reform_expectance_effect = yes
 			add_ideas = ITA_ius_soli_spirit
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.1 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			base = 800
@@ -6495,10 +6500,9 @@ policies_ITA = {
 			set_temp_variable = { drift_switch_change = 0.015 }
 			modify_reform_expectance_effect = yes
 			remove_ideas = ITA_ius_soli_spirit
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.08 }
 			set_temp_variable = { temp_outlook_increase = 0.04 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			base = 0
@@ -6542,10 +6546,9 @@ policies_ITA = {
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
 			add_ideas = ITA_ius_scholae_spirit
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			base = 0
@@ -6566,10 +6569,9 @@ policies_ITA = {
 			set_temp_variable = { drift_switch_change = 0.005 }
 			modify_reform_expectance_effect = yes
 			remove_ideas = ITA_ius_scholae_spirit
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			base = 20
@@ -6618,13 +6620,12 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_encourage_births_decision executed"
 			set_temp_variable = { drift_switch_change = 0.02 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.1 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { ITA_social_cost_multiplier_modifier_change = 0.2 }
-			modify_social_cost_multiplier_modifier_effect = yes
+			ITA_modify_reform_expectance_temp_effect = yes
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_social_cost_multiplier_modifier_var = 0.2 tooltip = social_cost_multiplier_modifier_tt }
 			add_ideas = ITA_encourage_births_idea
 		}
 		ai_will_do = {
@@ -6668,11 +6669,10 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_normalize_extraordinary_bonuses_decision executed"
 			set_temp_variable = { drift_switch_change = 0.05 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			ITA_modify_reform_expectance_temp_effect = yes
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
 			add_ideas = ITA_election_tips
 		}
 		ai_will_do = {
@@ -6697,10 +6697,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_normalize_extraordinary_bonuses_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.06 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_election_tips
 		}
 		ai_will_do = {
@@ -6753,10 +6752,9 @@ policies_ITA = {
 			modify_reform_expectance_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_political_power = 100
 			add_ideas = ITA_rigid_labour_market
 		}
@@ -6784,10 +6782,9 @@ policies_ITA = {
 			modify_reform_expectance_effect = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_rigid_labour_market
 		}
 		ai_will_do = {
@@ -6856,11 +6853,10 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_tax_the_rich_decision executed"
 			set_temp_variable = { drift_switch_change = 0.03 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			ITA_modify_reform_expectance_temp_effect = yes
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
 			add_ideas = ITA_capital_flight
 		}
 		ai_will_do = {
@@ -6885,10 +6881,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_tax_the_rich_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.04 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_capital_flight
 		}
 		ai_will_do = {
@@ -6952,10 +6947,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_flat_tax_decision executed"
 			set_temp_variable = { drift_switch_change = 0.02 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_ideas = ITA_flat_tax
 		}
 		ai_will_do = {
@@ -6980,10 +6974,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_flat_tax_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.03 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_flat_tax
 		}
 		ai_will_do = {
@@ -7108,10 +7101,9 @@ policies_ITA = {
 			change_labour_unions_opinion = yes
 			set_temp_variable = { drift_switch_change = 0.03 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_ideas = ITA_high_minimum_wage
 		}
 		ai_will_do = {
@@ -7138,10 +7130,9 @@ policies_ITA = {
 			change_labour_unions_opinion = yes
 			set_temp_variable = { drift_switch_change = -0.04 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_high_minimum_wage
 		}
 		ai_will_do = {
@@ -7194,11 +7185,10 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_ban_gmos_decision executed"
 			set_temp_variable = { drift_switch_change = 0.01 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			ITA_modify_reform_expectance_temp_effect = yes
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
 			add_ideas = ITA_gmos_banned
 		}
 		ai_will_do = {
@@ -7223,10 +7213,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_ban_gmos_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.02 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_gmos_banned
 		}
 		ai_will_do = {
@@ -7308,10 +7297,9 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_ban_nuclear_power_decision executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			every_owned_state = {
 				remove_building = {
 					type = nuclear_reactor
@@ -7343,10 +7331,9 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_ban_nuclear_power_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_nuclear_power_banned
 		}
 		ai_will_do = {
@@ -7388,11 +7375,10 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_encourage_renewables_decision executed"
 			set_temp_variable = { drift_switch_change = 0.01 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			ITA_modify_reform_expectance_temp_effect = yes
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
 			add_ideas = ITA_green_subsidies
 		}
 		ai_will_do = {
@@ -7417,10 +7403,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_encourage_renewables_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.02 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_green_subsidies
 		}
 		ai_will_do = {
@@ -7453,10 +7438,9 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_happy_degrowth_decision executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_ideas = ITA_happy_degrowth_spirit
 		}
 		ai_will_do = {
@@ -7479,10 +7463,9 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_happy_degrowth_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_happy_degrowth_spirit
 		}
 		ai_will_do = {
@@ -7505,13 +7488,10 @@ policies_ITA = {
 				neutrality_neutral_oligarch_are_in_power = yes
 				neutrality_neutral_autocracy_are_in_power = yes
 				emerging_autocracy_are_in_power = yes
-				neutrality_neutral_autocracy_are_in_power = yes
-				neutrality_neutral_oligarch_are_in_power = yes
 				nationalist_fascist_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 				emerging_anarchist_communism_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
-				nationalist_monarchists_are_in_power = yes
 				AND = {
 					has_country_leader_with_trait = roman_senate_trait
 					OR = {
@@ -7591,13 +7571,10 @@ policies_ITA = {
 						neutrality_neutral_oligarch_are_in_power = yes
 						neutrality_neutral_autocracy_are_in_power = yes
 						emerging_autocracy_are_in_power = yes
-						neutrality_neutral_autocracy_are_in_power = yes
-						neutrality_neutral_oligarch_are_in_power = yes
 						nationalist_fascist_are_in_power = yes
 						nationalist_right_wing_populists_are_in_power = yes
 						emerging_anarchist_communism_are_in_power = yes
 						emerging_reactionaries_are_in_power = yes
-						nationalist_monarchists_are_in_power = yes
 						AND = {
 							has_country_leader_with_trait = roman_senate_trait
 							OR = {
@@ -7648,19 +7625,21 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_building_amnesty_decision executed"
 			set_temp_variable = { drift_switch_change = 0.01 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			ITA_modify_reform_expectance_temp_effect = yes
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
 			add_political_power = 200
 			swap_ideas = {
 				remove_idea = ITA_building_abuse_1
 				add_idea = ITA_building_abuse_2
 			}
-			set_temp_variable = { recovered_amount = gdp_total }
-			multiply_temp_variable = { recovered_amount = 0.03 }
-			set_temp_variable = { treasury_change = recovered_amount }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.03
+				}
+			}
 			modify_treasury_effect = yes
 		}
 		ai_will_do = {
@@ -7743,13 +7722,15 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_widespread_expropriation_decision executed"
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { expropriated_amount = gdp_total }
-			multiply_temp_variable = { expropriated_amount = 0.2 }
-			set_temp_variable = { treasury_change = expropriated_amount }
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.1
+				}
+			}
 			modify_treasury_effect = yes
 			add_ideas = ITA_expropriations
 		}
@@ -7769,13 +7750,15 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_widespread_expropriation_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { expropriated_amount = gdp_total }
-			multiply_temp_variable = { expropriated_amount = -0.2 }
-			set_temp_variable = { treasury_change = expropriated_amount }
+			change_relative_party_popularity = yes
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = -0.1
+				}
+			}
 			modify_treasury_effect = yes
 			remove_ideas = ITA_expropriations
 		}
@@ -7814,16 +7797,18 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_redistribution_decision executed"
 			set_temp_variable = { drift_switch_change = 0.03 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.10 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { redistributed_amount = gdp_total }
-			multiply_temp_variable = { redistributed_amount = -0.2 }
-			set_temp_variable = { treasury_change = redistributed_amount }
+			change_relative_party_popularity = yes
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = -0.2
+				}
+			}
 			modify_treasury_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.2 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.2 tooltip = stability_factor_tt }
 		}
 		ai_will_do = {
 			base = 200
@@ -7919,26 +7904,20 @@ policies_ITA = {
 			modifier = {
 				factor = 0
 				OR = {
-					if = {
-						limit = {
-							has_idea = ITA_party_approved_media_f
-							nationalist_fascist_are_in_power = yes
+					AND = {
+						has_idea = ITA_party_approved_media_f
+						nationalist_fascist_are_in_power = yes
+					}
+					AND = {
+						has_idea = ITA_party_approved_media_c
+						OR = {
+							emerging_communist_state_are_in_power = yes
+							emerging_autocracy_are_in_power = yes
 						}
 					}
-					if = {
-						limit = {
-							has_idea = ITA_party_approved_media_c
-							OR = {
-								emerging_communist_state_are_in_power = yes
-								emerging_autocracy_are_in_power = yes
-							}
-						}
-					}
-					if = {
-						limit = {
-							has_idea = ITA_party_approved_media_n
-							neutrality_neutral_communism_are_in_power = yes
-						}
+					AND = {
+						has_idea = ITA_party_approved_media_n
+						neutrality_neutral_communism_are_in_power = yes
 					}
 				}
 			}
@@ -7967,10 +7946,9 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_silence_defeatists_decision executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_ideas = ITA_party_propaganda
 		}
 		ai_will_do = {
@@ -7989,10 +7967,9 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_silence_defeatists_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			remove_ideas = ITA_party_propaganda
 		}
 		ai_will_do = {
@@ -8024,7 +8001,7 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_safeguard_the_revolution_decision executed"
 			add_ideas = ITA_closed_nation
-			stop_elections = yes
+			disable_elections_with_no_leader_change = yes
 		}
 		ai_will_do = {
 			base = 200
@@ -8043,7 +8020,7 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_safeguard_the_revolution_decision_repeal executed"
 			remove_ideas = ITA_closed_nation
-			allow_elections = yes
+			enable_elections_with_no_leader_change = yes
 		}
 		ai_will_do = {
 			base = 1000
@@ -8115,11 +8092,10 @@ policies_ITA = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_Quota_100_decision executed"
 			set_temp_variable = { drift_switch_change = 0.02 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.1 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			ITA_modify_reform_expectance_temp_effect = yes
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			swap_ideas = {
@@ -8160,10 +8136,9 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_Quota_100_decision_repeal executed"
 			set_temp_variable = { drift_switch_change = -0.03 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.1 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
 			swap_ideas = {
@@ -8209,12 +8184,11 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_increase_pension_age_requirements_decision executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.25 }
-			modify_interest_rate_multiplier_modifier_effect = yes
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_interest_rate_multiplier_modifier_var = -0.25 tooltip = interest_rate_multiplier_modifier_tt }
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
 			swap_ideas = {
@@ -8248,13 +8222,12 @@ policies_ITA = {
 
 		days_re_enable = 365
 		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_increase_pension_age_requirements_decision executed"
-			set_party_index_to_ruling_party = yes
+			log = "[GetDateText]: [This.GetName]: decision ITA_increase_pension_age_requirements_decision_repeal executed"
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.25 }
-			modify_interest_rate_multiplier_modifier_effect = yes
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_interest_rate_multiplier_modifier_var = 0.25 tooltip = interest_rate_multiplier_modifier_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			swap_ideas = {
@@ -8298,12 +8271,11 @@ policies_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_recalculate_baby_pensions_decision executed"
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.25 }
-			modify_interest_rate_multiplier_modifier_effect = yes
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_interest_rate_multiplier_modifier_var = -0.25 tooltip = interest_rate_multiplier_modifier_tt }
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
 			remove_ideas = ITA_unsustainable_pension_system_1
@@ -8338,12 +8310,11 @@ policies_ITA = {
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision ITA_recalculate_baby_pensions_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.25 }
-			modify_interest_rate_multiplier_modifier_effect = yes
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_interest_rate_multiplier_modifier_var = 0.25 tooltip = interest_rate_multiplier_modifier_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			add_ideas = ITA_unsustainable_pension_system_1
@@ -8383,10 +8354,9 @@ policies_ITA = {
 			modify_reform_expectance_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			swap_ideas = {
 				remove_idea = ITA_unsustainable_pension_system_3
 				add_idea = ITA_unsustainable_pension_system_4
@@ -8427,10 +8397,9 @@ policies_ITA = {
 			modify_reform_expectance_effect = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			swap_ideas = {
 				remove_idea = ITA_unsustainable_pension_system_4
 				add_idea = ITA_unsustainable_pension_system_3
@@ -8469,13 +8438,7 @@ low_stability_protests_category = {
 			clr_country_flag = low_stability_protests_flag
 			if = {
 				limit = {
-					OR = {
-						AND = {
-						is_ai = yes
-						is_historical_focus_on = no
-						}
-						is_ai = no
-					}
+					is_ai = no
 				}
 				lsp_calculate_civil_war_volounteers = yes
 				if = {
@@ -8532,8 +8495,10 @@ low_stability_protests_category = {
 				if = {
 					limit = {
 						NOT = {
-							has_rightwing_populist_government = yes
-							has_leftwing_populist_government = yes
+							OR = {
+								has_rightwing_populist_government = yes
+								has_leftwing_populist_government = yes
+							}
 						}
 					}
 					set_variable = { ITA_civil_war_size_var_4 = party_pop_array^4 }
@@ -8566,19 +8531,18 @@ low_stability_protests_category = {
 			if = {
 				limit = {
 					is_ai = yes
-					is_historical_focus_on = yes
 				}
 				set_temp_variable = { treasury_change = -50 }
 				modify_treasury_effect = yes
-				set_temp_variable = { ITA_stability_factor_change = 0.1 }
-				modify_stability_factor_effect = yes
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+				add_to_variable = { ITA_stability_factor_var = 0.1 tooltip = stability_factor_tt }
 			}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision lsp_raise_stability_mission"
 			clr_country_flag = low_stability_protests_flag
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 			remove_ideas = ITA_low_stability_protests_spirit
 		}
 	}
@@ -8602,8 +8566,8 @@ low_stability_protests_category = {
 				value = 1
 			}
 			custom_effect_tooltip = disables_personal_tax_rate_change
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 		}
 	}
 	lsp_concede_populist_pension_reform = {
@@ -8652,16 +8616,18 @@ low_stability_protests_category = {
 			if = {
 				limit = {
 					NOT = {
-						has_idea = ITA_unsustainable_pension_system_1
-						has_idea = ITA_unsustainable_pension_system_2
-						has_idea = ITA_unsustainable_pension_system_3
-						has_idea = ITA_unsustainable_pension_system_4
+						OR = {
+							has_idea = ITA_unsustainable_pension_system_1
+							has_idea = ITA_unsustainable_pension_system_2
+							has_idea = ITA_unsustainable_pension_system_3
+							has_idea = ITA_unsustainable_pension_system_4
+						}
 					}
 				}
 				add_ideas = ITA_unsustainable_pension_system_1
 			}
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 			complete_national_focus = ITA_Quota_100
 			complete_national_focus = ITA_reintroduce_baby_pensions
 		}
@@ -8682,8 +8648,8 @@ low_stability_protests_category = {
 		days_re_enable = 1000
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision lsp_concede_populist_citizenship_income executed"
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 			add_ideas = ITA_citizenship_income_spirit
 			complete_national_focus = ITA_citizenship_income
 		}
@@ -8701,10 +8667,8 @@ low_stability_protests_category = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision lsp_disable_forced_withdrawal_from_bank_accounts executed"
 			set_country_flag = disabled_forced_withdrawal_from_bank_accounts
-			set_temp_variable = { ITA_stability_factor_change = 0.1 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { ITA_stability_weekly_change = 0.001 }
-			modify_stability_weekly_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.1 tooltip = stability_factor_tt }
 			custom_effect_tooltip = lsp_disable_forced_withdrawal_from_bank_accounts_TT
 		}
 	}
@@ -8727,8 +8691,8 @@ low_stability_protests_category = {
 			log = "[GetDateText]: [This.GetName]: decision lsp_increase_spending_welfare executed"
 			increase_social_spending = yes
 			block_social_decrease = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 		}
 	}
 	lsp_increase_spending_healthcare = {
@@ -8750,8 +8714,8 @@ low_stability_protests_category = {
 			log = "[GetDateText]: [This.GetName]: decision lsp_increase_spending_healthcare executed"
 			increase_healthcare_budget = yes
 			block_health_decrease = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 		}
 	}
 	lsp_snap_election = {
@@ -8761,9 +8725,11 @@ low_stability_protests_category = {
 		}
 		visible = {
 			NOT = {
-				has_country_flag = coalition_forming
-				has_country_flag = coalition_reshuffling
-				has_country_flag = elections_in_progress
+				OR = {
+					has_country_flag = coalition_forming
+					has_country_flag = coalition_reshuffling
+					has_country_flag = elections_in_progress
+				}
 			}
 			has_country_flag = low_stability_protests_flag
 		}
@@ -8775,8 +8741,8 @@ low_stability_protests_category = {
 			log = "[GetDateText]: [This.GetName]: decision lsp_snap_election executed"
 			set_temp_variable = { drift_switch_change = -0.02 }
 			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 			country_event = MD4_election_campaign.0
 		}
 	}
@@ -8790,13 +8756,17 @@ low_stability_protests_category = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision lsp_bonus_to_stimulate_consumption executed"
 			add_to_variable = { bonus_to_stimulate_consumption_times_taken_var = 1 }
-			set_temp_variable = { bonus_to_stimulate_consumption_cost = bonus_to_stimulate_consumption_times_taken_var }
-			set_temp_variable = { decision_gdp_cost = gdp_total }
-			multiply_temp_variable = { decision_gdp_cost = -0.00125 }
-			multiply_temp_variable = { bonus_to_stimulate_consumption_cost = decision_gdp_cost }
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { treasury_change = bonus_to_stimulate_consumption_cost }
+			set_temp_variable = {
+				treasury_change = {
+					value = bonus_to_stimulate_consumption_times_taken_var
+					multiply = {
+						value = gdp_total
+						multiply = -0.00125
+					}
+				}
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_stability_factor_var = 0.05 tooltip = stability_factor_tt }
 			modify_treasury_effect = yes
 		}
 		ai_will_do = {

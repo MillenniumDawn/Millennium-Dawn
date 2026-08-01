@@ -73,6 +73,14 @@ def convert_dds_to_legacy(input_path: str, output_path: str | None = None) -> bo
     with open(input_path, "rb") as f:
         raw = bytearray(f.read())
 
+    # A DDS needs at least the 4-byte magic + 124-byte header; a DX10 file adds
+    # a 20-byte extension. Guard here so a truncated/corrupt file reports and is
+    # skipped instead of raising struct.error mid-batch after earlier files were
+    # already overwritten.
+    if len(raw) < 128:
+        print(f"  SKIP  Truncated/corrupt DDS (only {len(raw)} bytes): {input_path}")
+        return False
+
     # ---- validate magic --------------------------------------------------- #
     if struct.unpack_from("<I", raw, 0)[0] != DDS_MAGIC:
         print(f"  SKIP  Not a DDS file: {input_path}")
@@ -83,7 +91,6 @@ def convert_dds_to_legacy(input_path: str, output_path: str | None = None) -> bo
         return False
 
     # ---- check pixel-format block ----------------------------------------- #
-    pf_flags = struct.unpack_from("<I", raw, 80)[0]
     pf_fourcc = struct.unpack_from("<I", raw, 84)[0]
 
     # --- already legacy? --------------------------------------------------- #
@@ -92,6 +99,9 @@ def convert_dds_to_legacy(input_path: str, output_path: str | None = None) -> bo
         return False
 
     # ---- read DX10 extension (starts at byte 128) ------------------------- #
+    if len(raw) < 148:
+        print(f"  SKIP  Truncated DX10 header: {input_path}")
+        return False
     dxgi_format = struct.unpack_from("<I", raw, 128)[0]
 
     if dxgi_format not in (DXGI_B8G8R8A8_SRGB, DXGI_B8G8R8A8_UNORM):
@@ -118,6 +128,13 @@ def convert_dds_to_legacy(input_path: str, output_path: str | None = None) -> bo
     # ================================================================== #
     pixel_data = raw[148:]  # everything after the 20-byte DX10 extension
 
+    if len(pixel_data) < width * height * 4:
+        print(
+            f"  SKIP  Truncated pixel data "
+            f"({len(pixel_data)} < {width * height * 4} bytes): {input_path}"
+        )
+        return False
+
     # Optionally linearise pixels (BGRA order, alpha unchanged)
     if apply_srgb_conversion:
         pixel_data = bytearray(pixel_data)
@@ -130,11 +147,8 @@ def convert_dds_to_legacy(input_path: str, output_path: str | None = None) -> bo
     # Copy the original 128-byte block (magic + header) and patch it
     new_header = bytearray(raw[:128])
 
-    # Replace pixel-format block (bytes 76–107 inside the file, i.e. 76–107)
+    # Replace pixel-format block (bytes 76–107 inside the file)
     new_header[76:108] = LEGACY_PIXELFORMAT
-
-    # Clear the DX10 FourCC that we just overwrote (sanity — already done above)
-    # Caps / reserved bytes stay the same
 
     # Write output
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
