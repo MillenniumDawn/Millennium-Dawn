@@ -879,6 +879,18 @@ on_actions = {
 				country_event = { id = preah_vihear.121 days = 1 }
 			}
 
+			# Safety net for the election killswitch set in history: thailand.19 clears it
+			# on the 6 Jan 2001 vote, but on_new_term_election never fires for a country
+			# that has lost its elections, which would strand the flag and kill elections
+			# permanently.
+			if = {
+				limit = {
+					date > 2001.2.1
+					has_country_flag = generic_election_killswitch
+				}
+				clr_country_flag = generic_election_killswitch
+			}
+
 			# Reclaimed-territory tallies for SIA_reconstruction_category. The three
 			# decisions there used to run any_owned_state in `available`, which the
 			# engine re-evaluates every tick while the category is open — at its widest
@@ -907,18 +919,6 @@ on_actions = {
 
 	on_daily_SIA = {
 		effect = {
-			# The 6 Jan 2001 general election is fixed history. Force the ballot-tilt focus
-			# through for a player who never took it: thailand.1's choice still lands inside
-			# the 14-day campaign window before MD4_election.0 counts the vote, and the
-			# 2001 trunk entries open either way. SIA_the_1997_constitution bypasses itself.
-			if = {
-				limit = {
-					date > 2001.1.6
-					date < 2001.2.1
-					NOT = { has_completed_focus = SIA_the_2001_election }
-				}
-				complete_national_focus = SIA_the_2001_election
-			}
 			# Populist wave -> Pheu Thai daily popularity lift.
 			if = {
 				limit = {
