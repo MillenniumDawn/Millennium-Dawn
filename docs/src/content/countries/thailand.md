@@ -46,7 +46,7 @@ The tree has 386 focuses. A shared economic and diplomatic trunk is open to any 
 - **Royalist Establishment** — the palace, the army and the network that outlasts elected governments.
 - **Democrat Establishment** — Chuan's party holding the centre against the Thaksinite tide.
 - **Reform Wave** — the 2020s protest generation, unlocked later than the others.
-- **Greater Thailand** — an irredentist branch off the military tree, locked behind a game rule.
+- **Greater Thailand** — an irredentist branch off the military tree, reached through the frontier focuses that grant the Greater Thailand mandate.
 
 A communist entry, *Ghosts of the Jungle*, revives the CPT insurgency as a sixth route.
 
@@ -78,4 +78,4 @@ A dynamic modifier scaled by Thailand's signed trade agreements, deliberately we
 
 ## Game Rules
 
-- **Alt-History Thailand** — gates the Greater Thailand branch, the Pan-Thai national spirit, and the two alternate-history wartime leaders. On by default.
+- **Thailand (AI behaviour)** — decides which road an AI Bangkok takes: *Default* establishment politics, *Pan-Thai* for the irredentist claims and ASEAN hegemony, *SEATO Leader* to build the regional pact, *Alt-History* for the communist path, or *Random*. It steers the AI only; every branch stays open to a human player.
