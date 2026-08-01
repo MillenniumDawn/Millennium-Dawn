@@ -29,6 +29,12 @@ on_actions = {
 			calculate_energy_load_sharing = yes
 			nuclear_reactor_fuel_consumption = yes
 
+			# Must follow ingame_update_setup — it charges the week via space_prod_weekly_expense, and the accrual here has to read the same var_space_paid_1X to bill the same amount
+			space_prod_weekly_bill = yes
+			if = { limit = { is_ai = no }
+				space_automation_weekly = yes
+			}
+
 			# Remove weekly rate from treasury
 			if = { limit = { check_variable = { int_reinvest_mode = 1 } }
 				add_to_variable = { int_investments = int_investments_rate }
@@ -907,38 +913,31 @@ on_actions = {
 							# Dense report list: auto_influence_array is sparse (removals zero the slot in place)
 							clear_array = auto_influence_target_array
 
+							# Unique iterator names: change_influence_percentage's nested loops write the shared temp v/i.
 							for_each_loop = {
 								array = auto_influence_array
-								value = v
+								value = auto_target
+								index = auto_slot
 								if = {
 									limit = {
-										NOT = { check_variable = { v = 0 } }
-										var:v = { exists = yes }
-										NOT = { var:v = { PREV = { has_country_flag = spread_influence@PREV } } }
+										NOT = { check_variable = { auto_target = 0 } }
+										var:auto_target = { exists = yes }
+										NOT = { var:auto_target = { PREV = { has_country_flag = spread_influence@PREV } } }
 									}
 									if = { limit = { is_debug = yes }
-										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
+										log = "[GetDateText]: [THIS.GetName]: Index:[?auto_slot], Auto influencing [?var:auto_target.GetName]"
 									}
-									set_temp_variable = { influence_target = v }
+									set_temp_variable = { influence_target = auto_target }
 									change_influence_percentage = yes
 									add_to_variable = { nations_influenced = 1 }
-									add_to_array = { auto_influence_target_array = v }
-
-									# Cooldown lives on the influencer keyed by target (shared with the manual-influence GUI);
-									# var:v -> PREV puts the target into PREV so spread_influence@PREV resolves to its tag.
-									if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
-										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 } } }
-									}
-									else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
-										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 } } }
-									}
-									else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
-										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 } } }
+									add_to_array = { auto_influence_target_array = auto_target }
+									var:auto_target = {
+										PREV = { spread_influence_cooldown_effect = yes }
 									}
 								}
 								else = {
 									if = { limit = { is_debug = yes }
-										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
+										log = "[GetDateText]: [THIS.GetName]: Index:[?auto_slot], Auto influencing failed to influence on index [?auto_slot]"
 									}
 								}
 							}
@@ -1250,6 +1249,13 @@ on_actions = {
 
 			# Currency system — runs for every country every month
 			calculate_currency_strength = yes
+
+			if = { limit = { is_ai = no }
+				space_automation_monthly = yes
+			}
+			else = {
+				space_auto_ai_monthly = yes
+			}
 		}
 	}
 }
