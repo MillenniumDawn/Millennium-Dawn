@@ -191,6 +191,59 @@ on_actions = {
 				SUB_update_separatism_stability = yes
 				SUB_update_separatism_rebellion = yes
 			}
+
+			#VDV vs Coastal Troops Balance of Power
+			set_temp_variable = {
+				SOV_vdv_battalions = {
+					value = 0
+					add = num_battalions_with_type@L_Air_Inf_Bat
+					add = num_battalions_with_type@Mot_Air_Inf_Bat
+					add = num_battalions_with_type@Mech_Air_Inf_Bat
+					add = num_battalions_with_type@Arm_Air_Inf_Bat
+				}
+			}
+			set_temp_variable = {
+				SOV_marine_battalions = {
+					value = 0
+					add = num_battalions_with_type@L_Marine_Bat
+					add = num_battalions_with_type@Mot_Marine_Bat
+					add = num_battalions_with_type@Mech_Marine_Bat
+					add = num_battalions_with_type@Arm_Marine_Bat
+				}
+			}
+			set_temp_variable = { SOV_vdv_coastal_total = { value = SOV_vdv_battalions add = SOV_marine_battalions } }
+			if = {
+				limit = { check_variable = { SOV_vdv_coastal_total > 4 } }
+				set_temp_variable = {
+					SOV_vdv_coastal_ratio = {
+						value = SOV_vdv_battalions
+						subtract = SOV_marine_battalions
+						divide = {
+							value = SOV_vdv_coastal_total
+							clamp = { min = 1 max = 100000 }
+						}
+						clamp = { min = -1 max = 1 }
+					}
+				}
+				set_variable = {
+					SOV_vdv_coastal_pressure_target = {
+						value = SOV_vdv_coastal_ratio
+						multiply = -0.75
+						clamp = { min = -0.75 max = 0.75 }
+					}
+				}
+			}
+			set_temp_variable = {
+				SOV_vdv_coastal_pressure_delta = {
+					value = SOV_vdv_coastal_pressure_target
+					subtract = SOV_vdv_coastal_pressure_applied
+				}
+			}
+			add_power_balance_value = {
+				id = SOV_vdv_coastal_bop
+				value = SOV_vdv_coastal_pressure_delta
+			}
+			set_variable = { SOV_vdv_coastal_pressure_applied = SOV_vdv_coastal_pressure_target }
 		}
 	}
 	# Deferred handoff for Warsaw Pact coup decisions. The coup decision flags the
