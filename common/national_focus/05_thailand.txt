@@ -1563,8 +1563,14 @@ focus_tree = {
 			country_event = { id = thailand.410 days = 1 }
 		}
 
+		# Grants the Greater Thailand mandate, so this is the gate the Pan-Thai AI
+		# has to pass to unlock ASEAN Hegemony. Base stays 0 for everyone else.
 		ai_will_do = {
 			base = 0
+			modifier = {
+				add = 40
+				has_global_flag = SIA_ai_pan_thai
+			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -8360,6 +8366,10 @@ focus_tree = {
 				is_historical_focus_on = no
 				check_variable = { party_pop_array^4 > 0.05 }
 			}
+			modifier = {
+				add = 40
+				has_global_flag = SIA_ai_alt_history
+			}
 		}
 	}
 
@@ -10277,10 +10287,9 @@ focus_tree = {
 	}
 
 	# STORY 2.6 — ASEAN CROSSROADS PIVOT
-	# Unifies the two ASEAN end-games into one pivot at Z4 (42,6). Its event
-	# thailand.392 completes EXACTLY ONE of SIA_asean_protector (peace, open to
-	# all) or SIA_asean_hegemony (hegemony, hard-gated). Absorbs the retired
-	# SIA_asean_security_community opinion payoff (the 8-tag boosts below).
+	# Unifies the two ASEAN end-games into one pivot at Z4 (42,6). The two roads
+	# are the mutually exclusive pair below it: SIA_asean_protector (peace, open
+	# to all) and SIA_asean_hegemony (hegemony, gated on the mastery trigger).
 	focus = {
 		id = SIA_asean_crossroads
 		icon = align_to_asean
@@ -10289,7 +10298,9 @@ focus_tree = {
 		y = 3
 		relative_position_id = SIA_asean_centrality
 
-		cost = 7
+		# A cheap gateway: the real decision is the mutually exclusive pair below it,
+		# so nothing of weight should hang on reaching the fork.
+		cost = 1
 
 		prerequisite = { focus = SIA_asean_centrality }
 
@@ -10301,8 +10312,6 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_asean_crossroads"
 			set_temp_variable = { percent_change = 3 }
 			change_domestic_influence_percentage = yes
-			custom_effect_tooltip = SIA_asean_crossroads_tt
-			country_event = { id = thailand.392 days = 1 }
 		}
 
 		ai_will_do = {
@@ -10311,25 +10320,10 @@ focus_tree = {
 				factor = 3
 				is_historical_focus_on = no
 			}
-			# thailand.392 is a one-shot: whichever road is open the day it fires is
-			# the road taken. Hold the Pan-Thai AI here until it holds the Greater
-			# Thailand mandate, or it would be offered the partnership road only.
-			# Released once no breakaway remains to claim, so a Burma that reconquers
-			# them cannot stall the branch forever.
-			modifier = {
-				factor = 0
-				has_global_flag = SIA_ai_pan_thai
-				NOT = { SIA_asean_hegemony_available = yes }
-				OR = {
-					country_exists = SHN
-					country_exists = KAR
-					country_exists = WAA
-				}
-			}
 		}
 	}
 
-	# ── PEACE PATH ENTRY (event-completed via Crossroads thailand.392 option a) ─
+	# ── PEACE PATH ENTRY ──────────────────────────────────────────────────────
 	focus = {
 		id = SIA_asean_protector
 		icon = align_to_asean
@@ -10345,7 +10339,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { always = no }
+		# The partnership road is open to any government, the Greater Thailand
+		# mandate included — holding the mandate does not oblige Bangkok to use it.
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_asean_protector_tt
+				always = yes
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_asean_protector"
@@ -10364,7 +10365,18 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 10
+			# Pan-Thai takes the other road; everyone else defaults to partnership.
+			modifier = {
+				factor = 0
+				has_global_flag = SIA_ai_pan_thai
+			}
+			modifier = {
+				factor = 3
+				has_global_flag = SIA_ai_seato_leader
+			}
+		}
 	}
 
 	focus = {
@@ -10389,14 +10401,21 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 0 }
+		# The gateway to founding SEATO, so only the SEATO AI pushes for it.
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 30
+				has_global_flag = SIA_ai_seato_leader
+			}
+		}
 	}
 
 	# STORY 2.5 / 2.6 — ASEAN MILITARY FACTION PATH (peace sub-arc)
 	# Retired SIA_asean_security_community (root, absorbed by
-	# SIA_asean_crossroads at 42,6). The faction chain now sequences off the
-	# guarantee sub-arc capstone (SIA_protector_of_asean_focus) and gates on the
-	# peace track flag set by thailand.392 option a.
+	# SIA_asean_crossroads at 42,6). The faction chain sequences off the guarantee
+	# sub-arc capstone (SIA_protector_of_asean_focus); every route to it runs
+	# through SIA_asean_protector, so the peace road needs no separate gate.
 	# Tags confirmed: MAY IND VIE PHI SIN LAO CBD BRM BRU SHN KAR WAA
 
 	focus = {
@@ -10412,8 +10431,6 @@ focus_tree = {
 		prerequisite = { focus = SIA_protector_of_asean_focus }
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_WAR_SUPPORT }
-
-		available = { has_country_flag = SIA_asean_peace_track }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_found_the_pact"
@@ -11436,10 +11453,9 @@ focus_tree = {
 	}
 
 	# ASEAN WAR & PEACE destinies (ASEAN Crossroads).
-	# Both are EVENT-completed (available = always no) from thailand.392's pivot:
-	# peace -> SIA_asean_protector (Z4 chain), war -> SIA_asean_hegemony (re-prereqed
-	# off SIA_lost_territories, Z5). Separated by track flags (SIA_asean_peace_track /
-	# SIA_asean_war_track), not by mutually_exclusive. Layout.
+	# Both are ordinary selectable focuses off SIA_asean_crossroads, separated by
+	# mutually_exclusive: peace -> SIA_asean_protector (Z4 chain),
+	# war -> SIA_asean_hegemony (Z5).
 	# ── WAR PATH ENTRY ────────────────────────────────────────────────────────
 	focus = {
 		id = SIA_asean_hegemony
@@ -11456,7 +11472,11 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
 
-		available = { always = no }
+		# The mastery road is reserved: either the Greater Thailand mandate, or a
+		# populist government roused to war.
+		available = {
+			SIA_asean_hegemony_available = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_asean_hegemony"
@@ -11476,8 +11496,14 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
+		# Base 0 keeps every other AI off the war road, so the Pan-Thai boost has to
+		# be additive to land.
 		ai_will_do = {
 			base = 0
+			modifier = {
+				add = 40
+				has_global_flag = SIA_ai_pan_thai
+			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -11693,6 +11719,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 0
+			modifier = {
+				add = 30
+				has_global_flag = SIA_ai_pan_thai
+			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -11998,10 +12028,6 @@ focus_tree = {
 				country_exists = WAA
 			}
 			has_war_support > 0.20
-			custom_trigger_tooltip = {
-				tooltip = SIA_frontier_divisions_tt
-				has_army_size = { size > 19 }
-			}
 		}
 
 		completion_reward = {
@@ -12012,7 +12038,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
+			base = 2
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -12062,6 +12088,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 0
+			modifier = {
+				add = 30
+				has_global_flag = SIA_ai_pan_thai
+			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
