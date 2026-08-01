@@ -1,62 +1,6 @@
 
 afghanistan_domestic_decisions = {
 
-	#might turn back on
-	AFG_first_election = {
-
-		visible = {
-			NOT = { has_country_flag = AFG_Election_over }
-			has_war = no
-			always = no
-		}
-
-		cost = 50
-
-		icon = GFX_decision_eng_trade_unions_support
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AFG_first_election"
-			AFG = { country_event = AFG_political_events.4 }
-			set_country_flag = AFG_Election_over
-			set_country_flag = {
-				flag = AFG_election_cooldown
-				days = 200
-				value = 1
-			}
-		}
-
-		ai_will_do = { base = 10 }
-	}
-
-	#might turn back on
-	AFG_second_election = {
-
-		available = {
-			has_country_flag = AFG_Election_over
-			NOT = { has_country_flag = AFG_Election_over2 }
-		}
-
-		visible = {
-			always = no
-			has_country_flag = AFG_Election_over
-			has_war = no
-			NOT = { has_country_flag = AFG_Election_over2 }
-			NOT = { has_country_flag = AFG_election_cooldown }
-		}
-
-		cost = 150
-
-		icon = GFX_decision_eng_trade_unions_support
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AFG_second_election"
-			AFG = { country_event = AFG_political_events.5 }
-			set_country_flag = AFG_Election_over2
-		}
-
-		ai_will_do = { base = 10 }
-	}
-
 	#Import Westernism
 	AFG_import_westernism = {
 
@@ -1027,11 +971,20 @@ AFG_agriculture_mech = {
 			modify_treasury_effect = yes
 		}
 
+		#Without this the flag never clears, and the parent decision's visible check hides the rest of the chain forever
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout AFG_pomegranate_investment1_collect"
+			clr_country_flag = AFG_pomegranate_investment1_complete
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.06 }
+			modify_treasury_effect = yes
+		}
+
 		ai_will_do = { base = 100 }
 	}
 
-	# Almond Investment - Limited to 5 uses, modest returns
-	# Investment: 5% GDP upfront, Returns: 6% GDP after harvest (20% profit margin)
+	# Almond Investment - Limited to 5 uses, slower than pomegranate but a better margin
+	# Investment: 5% GDP upfront, Returns: 8% GDP after a 90 day harvest (60% profit margin)
 	AFG_almond_investment1 = {
 
 		icon = resource_production
@@ -1077,7 +1030,7 @@ AFG_agriculture_mech = {
 			custom_effect_tooltip = AFG_almond_return_tt
 			effect_tooltip = {
 				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = 0.06 }
+				multiply_temp_variable = { treasury_change = 0.08 }
 				modify_treasury_effect = yes
 			}
 		}
@@ -1122,7 +1075,16 @@ AFG_agriculture_mech = {
 			clr_country_flag = AFG_almond_investment1_complete
 			custom_effect_tooltip = AFG_almond_return_tt
 			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.06 }
+			multiply_temp_variable = { treasury_change = 0.08 }
+			modify_treasury_effect = yes
+		}
+
+		#Without this the flag never clears, and the parent decision's visible check hides the rest of the chain forever
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout AFG_almond_investment1_collect"
+			clr_country_flag = AFG_almond_investment1_complete
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.08 }
 			modify_treasury_effect = yes
 		}
 
@@ -1315,35 +1277,29 @@ taliban_insurgency_category = {
 
 		icon = GFX_decision_chain_fence
 
-		custom_cost_trigger = { check_variable = { treasury > 1.9 } }
+		custom_cost_trigger = { check_variable = { treasury > 2 } }
 
 		custom_cost_text = cost_2_0
 
 		highlight_states = {
 			highlight_provinces = {
-				14690
 				2101
 				4949
 				5020
-				14688
 				5064
-				14690
-				8090
-				14688
 				5082
-				14687
-				14686
-				14684
-				14129
 				6114
-				14687
-				14686
-				12831
-				10826
-				14684
 				6209
-				14129
 				7519
+				8090
+				10826
+				12831
+				14129
+				14684
+				14686
+				14687
+				14688
+				14690
 			}
 		}
 
@@ -1373,24 +1329,15 @@ taliban_insurgency_category = {
 			custom_trigger_tooltip = {
 				tooltip = AFG_pakistan_border_less_than_three_fort_tt
 				OR = {
-					1154 = {
-						any_province_building_level = {
-							province = {
-								id = 10826
-							}
-							building = bunker
-							level < 1
-						}
-					}
 					411 = {
 						any_province_building_level = {
 							province = {
 								id = 7519
 								id = 6209
-								id = 10826
+								id = 14129
 							}
 							building = bunker
-							level < 1
+							level < 3
 						}
 					}
 					414 = {
@@ -1405,7 +1352,7 @@ taliban_insurgency_category = {
 								id = 8090
 							}
 							building = bunker
-							level < 1
+							level < 3
 						}
 					}
 					415 = {
@@ -1425,7 +1372,7 @@ taliban_insurgency_category = {
 								id = 5020
 							}
 							building = bunker
-							level < 1
+							level < 3
 						}
 					}
 					1153 = {
@@ -2166,7 +2113,7 @@ taliban_insurgency_category = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision isaf_provide_technical_equipment executed"
+			log = "[GetDateText]: [Root.GetName]: Decision isaf_provide_technical_equipment"
 			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
 			AFG = {
@@ -2226,7 +2173,7 @@ taliban_insurgency_category = {
 		available = { has_military_access_to = AFG }
 
 		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision isaf_withdraw_from_afghanistan executed"
+			log = "[GetDateText]: [Root.GetName]: Decision isaf_withdraw_from_afghanistan"
 			set_temp_variable = { arg_popularity = 0.02 }
 			add_ruling_outlook_popularity = yes
 			AFG = {
@@ -2580,7 +2527,7 @@ AFG_tal_insurgency_new = {
 				set_border_war_data = {
 					attacker = 1207
 					defender = 1154
-					defender_modifier = AFG.taliban_attack_strength
+					attacker_modifier = AFG.taliban_attack_strength
 				}
 			}
 			set_country_flag = TAL_attacking_1154
@@ -2696,8 +2643,8 @@ AFG_tal_insurgency_new = {
 			}
 			hidden_effect = {
 				set_border_war_data = {
-					attacker = 1207
-					defender = 1208
+					attacker = 1152
+					defender = 415
 					attacker_modifier = AFG.taliban_attack_strength
 				}
 			}
@@ -2792,6 +2739,11 @@ AFG_tal_insurgency_new = {
 					on_cancel = AFG_border_wars.9 # Draw
 				}
 			}
+			set_border_war_data = {
+				attacker = 414
+				defender = 1208
+				defender_modifier = AFG.taliban_attack_strength
+			}
 			set_country_flag = AFG_attacking_1208
 			set_country_flag = AFG_doing_border_raid
 		}
@@ -2835,6 +2787,11 @@ AFG_tal_insurgency_new = {
 					on_cancel = AFG_border_wars.9 # Draw
 				}
 			}
+			set_border_war_data = {
+				attacker = 414
+				defender = 1154
+				defender_modifier = AFG.taliban_attack_strength
+			}
 			set_country_flag = AFG_attacking_1154
 			set_country_flag = AFG_doing_border_raid
 		}
@@ -2871,12 +2828,17 @@ AFG_tal_insurgency_new = {
 					on_cancel = AFG_border_wars.9 # Draw
 				}
 				defender = { # Taliban Forces
-					state = 1154
+					state = 1152
 					num_provinces = 3
 					on_win = AFG_border_wars.8 # Taliban Victory
 					on_lose = AFG_border_wars.7 # Afghan Victory
 					on_cancel = AFG_border_wars.9 # Draw
 				}
+			}
+			set_border_war_data = {
+				attacker = 415
+				defender = 1152
+				defender_modifier = AFG.taliban_attack_strength
 			}
 			set_country_flag = AFG_attacking_1152
 			set_country_flag = AFG_doing_border_raid
@@ -2920,6 +2882,11 @@ AFG_tal_insurgency_new = {
 					on_lose = AFG_border_wars.7 # Afghan Victory
 					on_cancel = AFG_border_wars.9 # Draw
 				}
+			}
+			set_border_war_data = {
+				attacker = 412
+				defender = 415
+				defender_modifier = AFG.taliban_attack_strength
 			}
 			set_country_flag = AFG_attacking_415
 			set_country_flag = AFG_doing_border_raid
