@@ -83,6 +83,7 @@ Unit production has three layers — threat gate (`ai_is_threatened`), role rati
 ## Git Commits
 
 - Do NOT add `Co-Authored-By` or sign commits — the project does not use commit signing
+- Do NOT write `Changelog.txt` entries unless explicitly asked. A system new in 2.0.0 never needs an entry for its own changes
 
 ## Output Style
 
