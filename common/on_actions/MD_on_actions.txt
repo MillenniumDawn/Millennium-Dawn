@@ -687,50 +687,6 @@ on_actions = {
 								POTEF_election = yes
 							}
 						}
-
-						# Calculate Migrant Trigger
-						if = {
-							limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
-							set_temp_variable = {
-								total_population_refugees = {
-									value = 0
-									every_collection = {
-										named_collection = middle_eastern_nations_collection
-										if = {
-											limit = { value = enemies^num greater_than = 0 }
-											add = {
-												value = population_total
-												multiply = 0.025
-											}
-										}
-									}
-								}
-							}
-
-							if = { limit = { check_variable = { total_population_refugees > 65 } }
-								set_global_flag = EUU_migrant_crisis_triggered
-								if = {
-									limit = {
-										any_of_scopes = {
-											array = global.EU_member
-											is_ai = no
-										}
-									}
-									random_scope_in_array = {
-										array = global.EU_member
-										limit = { is_ai = no }
-
-										country_event = EUevent.22
-									}
-								}
-								else = {
-									random_scope_in_array = {
-										array = global.EU_member
-										country_event = EUevent.22
-									}
-								}
-							}
-						}
 					}
 
 					if = { limit = { check_variable = { global.EU_potential^num > 0 } }
@@ -743,6 +699,47 @@ on_actions = {
 						}
 						# Population-weighted europeanism, pre-accession drift, and UI dirty flag
 						EU_update_vars = yes
+					}
+
+					# Calculate Migrant Trigger
+					if = {
+						limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
+						set_temp_variable = {
+							total_population_refugees = {
+								value = 0
+								every_collection = {
+									named_collection = middle_eastern_refugee_source_nations_collection
+									add = {
+										value = population_total
+										multiply = 0.025
+									}
+								}
+							}
+						}
+
+						if = { limit = { check_variable = { total_population_refugees > 65 } }
+							set_global_flag = EUU_migrant_crisis_triggered
+							if = {
+								limit = {
+									any_of_scopes = {
+										array = global.EU_member
+										is_ai = no
+									}
+								}
+								random_scope_in_array = {
+									array = global.EU_member
+									limit = { is_ai = no }
+
+									country_event = EUevent.22
+								}
+							}
+							else = {
+								random_scope_in_array = {
+									array = global.EU_member
+									country_event = EUevent.22
+								}
+							}
+						}
 					}
 				}
 
