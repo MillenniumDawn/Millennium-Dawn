@@ -182,7 +182,7 @@ def test_worker_flags_unknown_target(tmp_path):
 
 EVENTS = """country_event = {
 	id = offer.1
-	option = { name = offer.1.a }
+	option = { name = offer.1.a add_political_power = 10 }
 	option = { name = offer.1.b }
 }
 
@@ -192,9 +192,19 @@ country_event = {
 }
 
 country_event = {
+	id = flavor.1
+	option = { name = flavor.1.a }
+	option = {
+		name = flavor.1.b
+		log = "[GetDateText]: [This.GetName]: flavor.1.b executed"
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = {
 	id = quiet.1
 	hidden = yes
-	option = { name = quiet.1.a }
+	option = { name = quiet.1.a add_political_power = 10 }
 	option = { name = quiet.1.b }
 }
 
@@ -212,10 +222,12 @@ country_event = {
 	option = {
 		name = routed.1.a
 		trigger = { original_tag = UKR }
+		add_political_power = 10
 	}
 	option = {
 		name = routed.1.b
 		trigger = { original_tag = SOV }
+		add_political_power = 10
 	}
 }
 
@@ -224,6 +236,7 @@ country_event = {
 	option = {
 		name = routed_shared.1.a
 		trigger = { tag = UKR }
+		add_political_power = 10
 	}
 	option = {
 		name = routed_shared.1.b
@@ -236,6 +249,7 @@ country_event = {
 	option = {
 		name = routed_negated.1.a
 		trigger = { tag = UKR }
+		add_political_power = 10
 	}
 	option = {
 		name = routed_negated.1.b
@@ -248,6 +262,7 @@ country_event = {
 	option = {
 		name = half_routed.1.a
 		trigger = { tag = UKR }
+		add_political_power = 10
 	}
 	option = { name = half_routed.1.b }
 }
@@ -271,6 +286,11 @@ def test_notification_index_marks_hidden(tmp_path):
 
 def test_notification_index_skips_answerable_event(tmp_path):
     assert "offer.1" not in _notifications(tmp_path)
+
+
+def test_notification_index_marks_flavor_only(tmp_path):
+    """Two options, neither with an outcome: a reaction notice, not an offer."""
+    assert "flavor.1" in _notifications(tmp_path)
 
 
 def test_notification_index_ignores_nested_fire(tmp_path):
