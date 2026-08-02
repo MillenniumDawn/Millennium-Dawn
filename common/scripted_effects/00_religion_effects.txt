@@ -1,34 +1,360 @@
-create_religion_pie_chart = {
-	clear_array = religion_chart
-	resize_array = {
-		array = religion_chart
-		value = 1
-		size = 100
+# Religion breakdown system.
+#
+# Slot order below is an invariant shared with three other files: the sprite frame
+# for slot N is N + 1 (GFX_religion_chart_segment in interface/MD_religion_chart.gfx),
+# and the legend rows in interface/MD_religion_chart.gui are ordered to match.
+# Inserting a religion anywhere but the end renumbers every saved chart.
+#
+#  0 sunni            5 orthodox_christian   10 shinto
+#  1 shia             6 uniate               11 cheondoism
+#  2 sufi             7 judaism              12 zoroastrianism
+#  3 ibadi            8 hinduism             13 folk
+#  4 christian        9 buddhism             14 irreligious
+
+# Effect: reset_state_religion
+# Purpose: Clears a state's religious breakdown to an empty 15-slot array
+# Scope: state
+reset_state_religion = {
+	clear_array = state_religion_share
+	resize_array = { array = state_religion_share size = 15 }
+}
+
+# Effect: add_state_religion_share
+# Purpose: Adds a share to one religion slot of the current state
+# Scope: state
+# Parameters (temp variables, set before calling):
+#   - religion_slot - Slot index 0-14
+#   - religion_share - Share to add, 0.0-1.0
+add_state_religion_share = {
+	if = {
+		limit = { check_variable = { state_religion_share^num < 15 } }
+		reset_state_religion = yes
 	}
 
-	# ISLAM
-		#sunni
-		#shia
-		#sufi
-		#ibadi
-	# CHRISTIAN
-		#christian
-		#orthodox
-	#pluralist
-	#buddhism
-	#hindu
-	#judaism
-	#shinto
-	#cheondo
-	#secular
-	#traditional african
+	add_to_variable = { state_religion_share^religion_slot = religion_share }
+	clamp_variable = { var = state_religion_share^religion_slot min = 0 max = 1 }
+}
 
+# Effect: convert_state_religion
+# Purpose: Moves share from one religion to another within the current state,
+#          capped by what the source religion actually holds
+# Scope: state
+# Parameters (temp variables, set before calling):
+#   - religion_from - Source slot index 0-14
+#   - religion_to - Destination slot index 0-14
+#   - religion_amount - Share to move, 0.0-1.0
+convert_state_religion = {
+	if = {
+		limit = { check_variable = { state_religion_share^num < 15 } }
+		reset_state_religion = yes
+	}
 
-	set_temp_variable = { islam_predominance = ROOT.islam_percent }
-	multiply_temp_variable = { islam_predominance = 100 }
-	round_temp_variable = islam_predominance
+	set_temp_variable = { religion_moved = religion_amount }
+	if = {
+		limit = { check_variable = { state_religion_share^religion_from < religion_moved } }
+		set_temp_variable = { religion_moved = state_religion_share^religion_from }
+	}
 
+	subtract_from_variable = { state_religion_share^religion_from = religion_moved }
+	add_to_variable = { state_religion_share^religion_to = religion_moved }
 
+	clamp_variable = { var = state_religion_share^religion_from min = 0 max = 1 }
+	clamp_variable = { var = state_religion_share^religion_to min = 0 max = 1 }
+}
+
+# Effect: normalise_state_religion
+# Purpose: Rescales a state's shares so they sum to exactly 1
+# Scope: state
+normalise_state_religion = {
+	set_temp_variable = { religion_sum = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 15
+		value = religion_slot
+		add_to_temp_variable = { religion_sum = state_religion_share^religion_slot }
+	}
+
+	if = {
+		limit = { check_variable = { religion_sum > 0 } }
+		for_loop_effect = {
+			start = 0
+			end = 15
+			value = religion_slot
+			divide_variable = { state_religion_share^religion_slot = religion_sum }
+		}
+	}
+}
+
+set_state_religion_sunni = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^0 = 1 }
+}
+
+set_state_religion_shia = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^1 = 1 }
+}
+
+set_state_religion_sufi = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^2 = 1 }
+}
+
+set_state_religion_ibadi = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^3 = 1 }
+}
+
+set_state_religion_christianity = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^4 = 1 }
+}
+
+set_state_religion_orthodoxy = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^5 = 1 }
+}
+
+set_state_religion_uniate = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^6 = 1 }
+}
+
+set_state_religion_judaism = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^7 = 1 }
+}
+
+set_state_religion_hinduism = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^8 = 1 }
+}
+
+set_state_religion_buddhism = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^9 = 1 }
+}
+
+set_state_religion_shinto = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^10 = 1 }
+}
+
+set_state_religion_cheondoism = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^11 = 1 }
+}
+
+set_state_religion_zoroastrianism = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^12 = 1 }
+}
+
+set_state_religion_folk = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^13 = 1 }
+}
+
+set_state_religion_irreligious = {
+	reset_state_religion = yes
+	set_variable = { state_religion_share^14 = 1 }
+}
+
+# Effect: country_religion_breakdown_from_idea
+# Purpose: Fallback breakdown for countries with no per-state data, derived from
+#          the country's religion idea so the chart still renders something true
+# Scope: country
+country_religion_breakdown_from_idea = {
+	if = { limit = { has_idea = shia }
+		set_variable = { country_religion_share^1 = 1 }
+	}
+	else_if = { limit = { has_idea = shia_iranian_school }
+		set_variable = { country_religion_share^1 = 1 }
+	}
+	else_if = { limit = { has_idea = sufi_islam }
+		set_variable = { country_religion_share^2 = 1 }
+	}
+	else_if = { limit = { has_idea = ibadi }
+		set_variable = { country_religion_share^3 = 1 }
+	}
+	else_if = { limit = { has_idea = christian }
+		set_variable = { country_religion_share^4 = 1 }
+	}
+	else_if = { limit = { has_idea = orthodox_christian }
+		set_variable = { country_religion_share^5 = 1 }
+	}
+	else_if = { limit = { has_idea = uniate_church }
+		set_variable = { country_religion_share^6 = 1 }
+	}
+	else_if = { limit = { has_idea = judaism }
+		set_variable = { country_religion_share^7 = 1 }
+	}
+	else_if = { limit = { has_idea = hindu }
+		set_variable = { country_religion_share^8 = 1 }
+	}
+	else_if = { limit = { has_idea = buddism }
+		set_variable = { country_religion_share^9 = 1 }
+	}
+	else_if = { limit = { has_idea = shinto }
+		set_variable = { country_religion_share^10 = 1 }
+	}
+	else_if = { limit = { has_idea = shinto2 }
+		set_variable = { country_religion_share^10 = 1 }
+	}
+	else_if = { limit = { has_idea = cheondo }
+		set_variable = { country_religion_share^11 = 1 }
+	}
+	else_if = { limit = { has_idea = zoroastrian }
+		set_variable = { country_religion_share^12 = 1 }
+	}
+	else_if = { limit = { has_idea = sunni }
+		set_variable = { country_religion_share^0 = 1 }
+	}
+	else = {
+		set_variable = { country_religion_share^14 = 1 }
+	}
+}
+
+# Effect: calculate_country_religion_breakdown
+# Purpose: Population-weighted average of every owned state's breakdown
+# Scope: country
+calculate_country_religion_breakdown = {
+	clear_array = country_religion_share
+	resize_array = { array = country_religion_share size = 15 }
+	set_variable = { religion_weight_total = 0 }
+
+	every_owned_state = {
+		limit = {
+			check_variable = { state_religion_share^num > 0 }
+			state_population_k > 0
+		}
+
+		set_temp_variable = { religion_state_weight = state_population_k }
+		add_to_variable = { PREV.religion_weight_total = religion_state_weight }
+
+		for_loop_effect = {
+			start = 0
+			end = 15
+			value = religion_slot
+
+			set_temp_variable = { religion_weighted = state_religion_share^religion_slot }
+			multiply_temp_variable = { religion_weighted = religion_state_weight }
+			add_to_variable = { PREV.country_religion_share^religion_slot = religion_weighted }
+		}
+	}
+
+	if = {
+		limit = { check_variable = { religion_weight_total > 0 } }
+		for_loop_effect = {
+			start = 0
+			end = 15
+			value = religion_slot
+			divide_variable = { country_religion_share^religion_slot = religion_weight_total }
+		}
+	}
+	else = {
+		country_religion_breakdown_from_idea = yes
+	}
+
+	clear_variable = religion_weight_total
+}
+
+# Effect: create_religion_pie_chart
+# Purpose: Converts country_religion_share into 100 wedge frames for the pie chart
+# Scope: country
+create_religion_pie_chart = {
+	clear_array = religion_chart
+	resize_array = { array = religion_chart size = 100 }
+
+	# Cumulative rounding, not per-slice rounding: rounding each share on its own
+	# lets 15 half-percent errors accumulate and leaves the ring short or overfull.
+	set_temp_variable = { chart_cursor = 0 }
+	set_temp_variable = { chart_cumulative = 0 }
+
+	for_loop_effect = {
+		start = 0
+		end = 15
+		value = religion_slot
+
+		add_to_temp_variable = { chart_cumulative = country_religion_share^religion_slot }
+
+		set_temp_variable = { chart_target = chart_cumulative }
+		multiply_temp_variable = { chart_target = 100 }
+		round_temp_variable = chart_target
+		clamp_temp_variable = { var = chart_target min = 0 max = 100 }
+
+		set_temp_variable = { chart_frame = religion_slot }
+		add_to_temp_variable = { chart_frame = 1 }
+
+		if = {
+			limit = { check_variable = { chart_target > chart_cursor } }
+
+			for_loop_effect = {
+				start = chart_cursor
+				end = chart_target
+				value = chart_wedge
+				set_variable = { religion_chart^chart_wedge = chart_frame }
+			}
+
+			set_temp_variable = { chart_last_frame = chart_frame }
+		}
+
+		set_temp_variable = { chart_cursor = chart_target }
+	}
+
+	# Shares that sum just under 1 leave a transparent gap; extend the last religion
+	# that actually drew rather than showing a hole in the ring.
+	if = {
+		limit = {
+			check_variable = { chart_cursor < 100 }
+			check_variable = { chart_last_frame > 0 }
+		}
+		for_loop_effect = {
+			start = chart_cursor
+			end = 100
+			value = chart_wedge
+			set_variable = { religion_chart^chart_wedge = chart_last_frame }
+		}
+	}
+}
+
+# Effect: setup_state_religion_data
+# Purpose: Seeds per-state breakdowns for every country that has authored data.
+#          Countries absent here fall back to their religion idea in
+#          country_religion_breakdown_from_idea, so the chart still works.
+# Scope: any
+setup_state_religion_data = {
+	FRA_setup_state_religion = yes
+}
+
+# Effect: build_religion_legend
+# Purpose: Lists the slots of religions actually present, in pie order, for the
+#          legend's dynamic list. Only populated slots are added, so the grid
+#          packs the rows with no gaps.
+# Scope: country
+build_religion_legend = {
+	clear_array = religion_legend_slots
+
+	for_loop_effect = {
+		start = 0
+		end = 15
+		value = religion_slot
+
+		if = {
+			limit = { check_variable = { country_religion_share^religion_slot > 0.004 } }
+			add_to_array = { religion_legend_slots = religion_slot }
+		}
+	}
+}
+
+# Effect: update_religion_pie_chart
+# Purpose: Rebuilds the breakdown and repaints the politics-view chart
+# Scope: country
+update_religion_pie_chart = {
+	calculate_country_religion_breakdown = yes
+	create_religion_pie_chart = yes
+	build_religion_legend = yes
+	add_to_variable = { religion_pie_dirty = 1 }
 }
 
 # Effect: configure_religious_setup
