@@ -687,6 +687,50 @@ on_actions = {
 								POTEF_election = yes
 							}
 						}
+
+						# Calculate Migrant Trigger
+						if = {
+							limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
+							set_temp_variable = {
+								total_population_refugees = {
+									value = 0
+									every_collection = {
+										named_collection = middle_eastern_nations_collection
+										if = {
+											limit = { value = enemies^num greater_than = 0 }
+											add = {
+												value = population_total
+												multiply = 0.025
+											}
+										}
+									}
+								}
+							}
+
+							if = { limit = { check_variable = { total_population_refugees > 65 } }
+								set_global_flag = EUU_migrant_crisis_triggered
+								if = {
+									limit = {
+										any_of_scopes = {
+											array = global.EU_member
+											is_ai = no
+										}
+									}
+									random_scope_in_array = {
+										array = global.EU_member
+										limit = { is_ai = no }
+
+										country_event = EUevent.22
+									}
+								}
+								else = {
+									random_scope_in_array = {
+										array = global.EU_member
+										country_event = EUevent.22
+									}
+								}
+							}
+						}
 					}
 
 					if = { limit = { check_variable = { global.EU_potential^num > 0 } }
@@ -699,52 +743,6 @@ on_actions = {
 						}
 						# Population-weighted europeanism, pre-accession drift, and UI dirty flag
 						EU_update_vars = yes
-					}
-
-					# Calculate the Migrant Trigger
-					if = { limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
-						set_temp_variable = { total_population_refugees = 0 }
-						for_each_loop = {
-							array = global.is_middle_eastern_africa_nations
-							value = v
-							var:v = {
-								if = {
-									limit = {
-										OR = {
-											has_war = yes
-											salafist_caliphate_are_in_power = yes
-										}
-									}
-									set_temp_variable = { population_refugees = population_total }
-									multiply_temp_variable = { population_refugees = 0.025 }
-									add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
-								}
-							}
-						}
-
-						if = { limit = { check_variable = { total_population_refugees > 65 } }
-							set_global_flag = EUU_migrant_crisis_triggered
-							if = {
-								limit = {
-									any_of_scopes = {
-										array = global.EU_member
-										is_ai = no
-									}
-								}
-								random_scope_in_array = {
-									array = global.EU_member
-									limit = { is_ai = no }
-
-									country_event = EUevent.22
-								}
-							}
-							else = {
-								random_scope_in_array = {
-									array = global.EU_member
-									country_event = EUevent.22
-								}
-							}
-						}
 					}
 				}
 
@@ -1069,16 +1067,19 @@ on_actions = {
 							difficulty > 1
 							has_game_rule = { rule = rule_monthly_domestic_independence_tick option = yes }
 						}
-						set_temp_variable = { percent_change = global.rule_monthly_domestic_independence_gain_amount }
-						add_to_temp_variable = { percent_change = modifier@foreign_influence_monthly_domestic_independence_gain_modifier }
-						set_temp_variable = { temp_percentage_modifier = 1 }
-						add_to_temp_variable = { temp_percentage_modifier = modifier@foreign_influence_monthly_domestic_independence_gain_factor }
-						multiply_temp_variable = { percent_change = temp_percentage_modifier }
+						set_temp_variable = {
+							percent_change = {
+								value = global.rule_monthly_domestic_independence_gain_amount
+								add = modifier@foreign_influence_monthly_domestic_independence_gain_modifier
+								multiply = {
+									value = 1
+									add = modifier@foreign_influence_monthly_domestic_independence_gain_factor
+								}
+							}
+						}
 						change_domestic_influence_percentage = yes
 					}
-
 					productivity_growth_effect = yes
-
 				}
 
 				international_systems_update = yes
@@ -1191,18 +1192,7 @@ on_actions = {
 								NOT = { has_country_flag = united_neo_baathist_uar }
 								NOT = { has_country_flag = united_baathist_uar }
 							}
-							#Calculate the total GDP of all Arabic countries
-							set_variable = { total_arabic_gdp = 0 }
-							for_each_scope_loop = {
-								array = global.arabic_countries
-								add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
-							}
-							#Calculate the GDP of UAR and their puppets
-							set_variable = { total_uar_gdp = gdp_total }
-							for_each_scope_loop = {
-								array = ROOT.subjects
-								add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
-							}
+							update_arabic_country_gdp_total_effect = yes
 						}
 					}
 				}
