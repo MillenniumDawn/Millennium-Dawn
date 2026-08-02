@@ -154,9 +154,12 @@ _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 # a completion_reward that fires a country_event into another nation's scope
 # should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT so the player sees the
 # acceptance outcome. Foreignness is decided by the fire's nearest enclosing
-# scope-change (see _country_event_target_is_foreign).
+# scope-change (see _country_event_target_is_foreign). TT_EFFECTS_FROM_EVENT
+# also clears the check: it fronts the same effect_tooltip preview for an event
+# whose options are not an accept/decline pair (the target picks how to react,
+# and every branch lands on the sender), where "if they accept" would be a lie.
 _COUNTRY_EVENT_RE = re.compile(r"\bcountry_event\b")
-_TT_IF_THEY_ACCEPT_RE = re.compile(r"\bTT_IF_THEY_ACCEPT\b")
+_TT_IF_THEY_ACCEPT_RE = re.compile(r"\b(?:TT_IF_THEY_ACCEPT|TT_EFFECTS_FROM_EVENT)\b")
 # Target of a fire, in both `country_event = foo.1` and
 # `country_event = { id = foo.1 days = 3 }` form.
 _FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w.]+)")
@@ -169,6 +172,11 @@ _EVENT_OPTION_RE = re.compile(r"\boption\s*=\s*\{")
 _EVENT_HIDDEN_RE = re.compile(r"\bhidden\s*=\s*yes\b")
 _OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
 _NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
+# Option bookkeeping that is not an outcome: the label, the log line, the AI
+# weight and the visibility trigger. An option with nothing else does nothing.
+_OPTION_NAME_RE = re.compile(r"\bname\s*=\s*[\w.\"]+")
+_OPTION_LOG_RE = re.compile(r"\blog\s*=\s*\"[^\"]*\"")
+_OPTION_INERT_BLOCK_RE = re.compile(r"\b(?:ai_chance|trigger)\s*=\s*\{")
 # `tag = XXX` / `original_tag = XXX`, in a focus_tree's `country = { }` block
 # (the owner) and in an event option's `trigger = { }` (the recipient).
 _FT_COUNTRY_BLOCK_RE = re.compile(r"\bcountry\s*=\s*\{")
@@ -429,6 +437,30 @@ def _is_tag_routed(option_bodies: List[str]) -> bool:
     return True
 
 
+def _is_flavor_only(option_bodies: List[str]) -> bool:
+    """True when no option carries an outcome — every one is just a label, a log
+    line, an ai_chance weight and maybe a visibility trigger.
+
+    `Liechtenstein.7` offers four ways to say "how interesting", none of which do
+    anything. An event like that is a reaction notification however many options
+    it lists, so there is no acceptance branch for a TT_IF_THEY_ACCEPT to preview.
+    """
+    for body in option_bodies:
+        rest = _OPTION_NAME_RE.sub("", body)
+        rest = _OPTION_LOG_RE.sub("", rest)
+        while True:
+            bm = _OPTION_INERT_BLOCK_RE.search(rest)
+            if not bm:
+                break
+            _, bend = _extract_block(rest, bm.start())
+            if bend == -1:
+                return False
+            rest = rest[: bm.start()] + rest[bend:]
+        if rest.strip():
+            return False
+    return True
+
+
 def _country_event_target_is_foreign(
     body: str, ce_pos: int, owner_tags: FrozenSet[str]
 ) -> bool:
@@ -634,7 +666,9 @@ def _extract_ai_guard_data(
     building types its rewards construct (directly or via a scripted effect
     from *staffable_map*, and never from inside an effect_tooltip, which only
     previews), the money its rewards spend (spend / has_cost / unknown, with
-    *money_effects* naming the scripted effects that spend money), and the
+    *money_effects* naming the scripted effects that spend money), whether an
+    effect_tooltip previews a cost the focus commits to but pays elsewhere
+    (a cross-country offer settled in the event), and the
     guard triggers present in factor = 0 ai_will_do modifiers (both the
     `X = no` and `NOT = { X = yes }` forms; guards hidden behind wrapper
     scripted triggers are not recognized). The staffable and money-effect maps
@@ -679,6 +713,7 @@ def _extract_ai_guard_data(
             spend = 0.0
             has_cost = False
             unknown_cost = False
+            previewed_cost = False
             rpos = fm.start()
             while True:
                 rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
@@ -718,6 +753,12 @@ def _extract_ai_guard_data(
                 spend += s
                 has_cost = has_cost or hc
                 unknown_cost = unknown_cost or u
+                previewed_cost = previewed_cost or any(
+                    _body_money_cost(
+                        rbody[rbody.index("{", s0) + 1 : e0 - 1], money_effects
+                    )[1]
+                    for s0, e0 in spans
+                )
                 rpos = rend
 
             guards: Set[str] = set()
@@ -763,6 +804,7 @@ def _extract_ai_guard_data(
                     "spend": spend,
                     "has_cost": has_cost,
                     "unknown": unknown_cost,
+                    "previewed_cost": previewed_cost,
                 }
             )
             pos = fend
@@ -770,7 +812,7 @@ def _extract_ai_guard_data(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.ai_guards.v5",
+        "focus_tree.ai_guards.v7",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
@@ -872,7 +914,13 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
                     rpos = rm.end()
                     continue
                 if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
+                    # A fire inside an effect_tooltip is a preview of something
+                    # that happens elsewhere (a decision, another focus), not a
+                    # fire this reward makes, so it needs no tooltip of its own.
+                    preview_spans = _effect_tooltip_spans(rbody, 0, len(rbody))
                     for ce in _COUNTRY_EVENT_RE.finditer(rbody):
+                        if any(s <= ce.start() < e for s, e in preview_spans):
+                            continue
                         tm = _FIRE_TARGET_RE.match(rbody, ce.start())
                         if tm and tm.group(1) in notifications:
                             continue
@@ -896,7 +944,7 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.cross_country_tt.v3",
+        "focus_tree.cross_country_tt.v5",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
@@ -1652,7 +1700,7 @@ class Validator(BaseValidator):
                         )
                     elif d["unknown"]:
                         unknown_spend_by_file[rel].append((d["id"], d["line"]))
-                elif not d["has_cost"]:
+                elif not d["has_cost"] and not d["previewed_cost"]:
                     unneeded_by_file[rel].append((d["id"], d["line"]))
 
                 if (
@@ -1722,8 +1770,9 @@ class Validator(BaseValidator):
         )
 
     def _notification_event_ids(self) -> FrozenSet[str]:
-        """Event ids the target cannot answer: hidden, fewer than 2 options, or
-        options tag-routed one per recipient (see _is_tag_routed).
+        """Event ids the target cannot answer: hidden, fewer than 2 options,
+        options tag-routed one per recipient (see _is_tag_routed), or options
+        that are pure flavor with no outcome at all (see _is_flavor_only).
 
         Firing one of these into a foreign scope is a notification, not an
         offer, so it never needs a TT_IF_THEY_ACCEPT tooltip.
@@ -1760,6 +1809,7 @@ class Validator(BaseValidator):
                         len(options) < 2
                         or _EVENT_HIDDEN_RE.search(body)
                         or _is_tag_routed(options)
+                        or _is_flavor_only(options)
                     ):
                         found.append(idm.group(1))
                 return found
@@ -1767,7 +1817,7 @@ class Validator(BaseValidator):
             ids.update(
                 disk_cache.per_file_cached_by_content(
                     self.mod_path,
-                    "focus_tree.notification_events.v3",
+                    "focus_tree.notification_events.v4",
                     fp,
                     text,
                     _compute,
