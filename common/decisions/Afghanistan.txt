@@ -256,7 +256,7 @@ AFG_northern_alliance_taloqan_siege = {
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AFG_taloqan_siege_mission"
 			AFG = { country_event = AFG_events.31 }
-			set_country_flag = AFG_holds_Taloqan
+			set_country_flag = AFG_holds_taloqan
 			effect_tooltip = {
 				newline = yes
 				custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
@@ -727,6 +727,7 @@ afghanistan_pashtunistan_decisions = {
 			NOT = { country_exists = TAL }
 			PAK = { has_civil_war = yes }
 			NOT = { has_border_war = yes }
+			NOT = { has_war_with = PAK }
 		}
 
 		cost = 75
@@ -793,22 +794,14 @@ afghanistan_pashtunistan_decisions = {
 		icon = generic_form_nation
 
 		visible = {
-			OR = {
-				AND = {
-					owns_state = 417
-					NOT = { 417 = { is_core_of = ROOT } }
-				}
-				AND = {
-					owns_state = 418
-					NOT = { 418 = { is_core_of = ROOT } }
-				}
-				AND = {
-					owns_state = 419
-					NOT = { 419 = { is_core_of = ROOT } }
-				}
-				AND = {
-					owns_state = 594
-					NOT = { 594 = { is_core_of = ROOT } }
+			any_owned_state = {
+				NOT = { is_core_of = ROOT }
+				OR = {
+					state = 417
+					state = 418
+					state = 419
+					state = 594
+					state = 1171
 				}
 			}
 		}
@@ -822,11 +815,18 @@ afghanistan_pashtunistan_decisions = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove afg_integrate_pashtunistan"
-			add_state_core = 417
-			add_state_core = 418
-			add_state_core = 419
-			add_state_core = 594
-			add_state_core = 1171
+			every_owned_state = {
+				limit = {
+					OR = {
+						state = 417
+						state = 418
+						state = 419
+						state = 594
+						state = 1171
+					}
+				}
+				add_core_of = ROOT
+			}
 		}
 
 		ai_will_do = { base = 0 }
@@ -971,13 +971,13 @@ AFG_agriculture_mech = {
 			modify_treasury_effect = yes
 		}
 
-		#Without this the flag never clears, and the parent decision's visible check hides the rest of the chain forever
+		#Without this the flag never clears, and the parent decision's visible check hides the rest of the chain forever.
+
+		#No payout: an uncollected harvest is the cost of missing the window, and paying here made the collect decision a pure 5 PP loss
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout AFG_pomegranate_investment1_collect"
 			clr_country_flag = AFG_pomegranate_investment1_complete
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.06 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = { base = 100 }
@@ -1079,13 +1079,13 @@ AFG_agriculture_mech = {
 			modify_treasury_effect = yes
 		}
 
-		#Without this the flag never clears, and the parent decision's visible check hides the rest of the chain forever
+		#Without this the flag never clears, and the parent decision's visible check hides the rest of the chain forever.
+
+		#No payout: an uncollected harvest is the cost of missing the window, and paying here made the collect decision a pure 5 PP loss
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout AFG_almond_investment1_collect"
 			clr_country_flag = AFG_almond_investment1_complete
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.08 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = { base = 100 }
@@ -2966,7 +2966,7 @@ AFG_tal_insurgency_new = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = AFG_more_than_20_percent_taliban_strength
-				check_variable = { taliban_strength > 19 }
+				AFG = { check_variable = { taliban_strength > 19 } }
 			}
 		}
 

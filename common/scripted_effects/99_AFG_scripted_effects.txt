@@ -85,6 +85,23 @@ AFG_clear_ci_supporters = {
 #Rebuilt monthly while the insurgency runs. global.UN_general_assembly membership is exactly is_full_state, so the
 #consumers iterate these instead of scanning every country; entries can go stale for up to a month, so loops re-check.
 AFG_refresh_insurgency_arrays = {
+	#A supporter that leaves the General Assembly drops out of the rebuild below, so clear its flag before the wipe or it keeps it forever
+	for_each_loop = {
+		array = AFG_ci_array
+		value = ci
+
+		if = {
+			limit = {
+				NOT = { is_in_array = { array = global.UN_general_assembly value = ci } }
+			}
+			var:ci = {
+				if = {
+					limit = { exists = yes }
+					clr_country_flag = wot_supporting_afghan_counter_insurgency
+				}
+			}
+		}
+	}
 	clear_array = AFG_coalition_array
 	clear_array = AFG_observer_array
 	clear_array = AFG_ci_array
@@ -367,24 +384,30 @@ update_afghan_toll = {
 
 #Monthly refresh for one transit state, so the on_action can address the six directly instead of filtering every owned state
 AFG_monthly_toll_state_update = {
+	#Seed the starting rate with the tax cost it implies, or the level and AFG_consumer_goods_factor_toll drift apart
 	if = {
 		limit = { check_variable = { var = AFG_toll_level value = 1 compare = less_than } }
 		set_variable = { AFG_toll_level = 3 }
+		OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = 0.06 } }
 	}
 	if = {
 		limit = {
-			OWNER = { is_ai = yes }
 			check_variable = { var = AFG_toll_level value = 5 compare = less_than }
-			OWNER = { check_variable = { treasury_rate < 0 } }
+			OWNER = {
+				is_ai = yes
+				check_variable = { treasury_rate < 0 }
+			}
 		}
 		add_to_variable = { AFG_toll_level = 1 }
 		OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = 0.02 } }
 	}
 	else_if = {
 		limit = {
-			OWNER = { is_ai = yes }
 			check_variable = { var = AFG_toll_level value = 1 compare = greater_than }
-			OWNER = { has_stability < 0.35 }
+			OWNER = {
+				is_ai = yes
+				has_stability < 0.35
+			}
 		}
 		add_to_variable = { AFG_toll_level = -1 }
 		OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = -0.02 } }
