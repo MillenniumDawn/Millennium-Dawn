@@ -50,6 +50,9 @@ CI_EXEMPT = {
     # git index, which the matrix jobs don't have: they restore a content
     # bundle that carries no .git and omits map/.
     "validate_file_paths.py",
+    # Runs in structural-lint because descriptors are root files in the
+    # prepared workspace and only need checking when a .mod file changes.
+    "validate_mod_descriptors.py",
 }
 
 # Validators intentionally without a pre-commit hook. Each needs a reason.
