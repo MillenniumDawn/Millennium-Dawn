@@ -171,6 +171,13 @@ def test_worker_skips_bare_notification_target(tmp_path):
     assert _ids(tmp_path, "GER = { country_event = x.1 }", frozenset({"x.1"})) == set()
 
 
+def test_worker_skips_fire_inside_effect_tooltip(tmp_path):
+    """A fire inside an effect_tooltip previews what a decision does elsewhere,
+    so the reward is not the thing making the offer."""
+    reward = "activate_decision = d\n\t\t\teffect_tooltip = { GER = { country_event = x.1 } }"
+    assert _ids(tmp_path, reward) == set()
+
+
 def test_worker_flags_unknown_target(tmp_path):
     reward = "GER = { country_event = { id = x.1 days = 1 } }"
     assert _ids(tmp_path, reward, notifications=frozenset({"other.9"})) == {

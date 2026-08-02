@@ -914,7 +914,13 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
                     rpos = rm.end()
                     continue
                 if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
+                    # A fire inside an effect_tooltip is a preview of something
+                    # that happens elsewhere (a decision, another focus), not a
+                    # fire this reward makes, so it needs no tooltip of its own.
+                    preview_spans = _effect_tooltip_spans(rbody, 0, len(rbody))
                     for ce in _COUNTRY_EVENT_RE.finditer(rbody):
+                        if any(s <= ce.start() < e for s, e in preview_spans):
+                            continue
                         tm = _FIRE_TARGET_RE.match(rbody, ce.start())
                         if tm and tm.group(1) in notifications:
                             continue
@@ -938,7 +944,7 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.cross_country_tt.v4",
+        "focus_tree.cross_country_tt.v5",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
