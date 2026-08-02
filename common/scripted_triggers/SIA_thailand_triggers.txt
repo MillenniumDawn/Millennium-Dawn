@@ -1,51 +1,16 @@
-## Thailand: scripted triggers
-## Political-trunk gating for the switchable focus trees (Story: political
-## realignment). Each political trunk is gated by the SIA_path_* country flags.
-## The 2001-election node forks into THREE entries — A Thaksinist
-## (SIA_thai_rak_thai), B Royalist / Network Monarchy (SIA_the_old_order) and
-## E Democrat Establishment (SIA_the_democrats_endure). C Reform and the
-## Communist alt were demoted out of the 2001 fork (now no-prereq, later-era
-## entries); the Greater Thailand branch is gated separately. This switchable
-## flag scheme replaces the engine's hard `mutually_exclusive`, which HOI4 can
-## never re-open by script.
-## Two flavours, to keep tooltips clean (cf. Iran/Singapore, which gate with bare
-## conditions and reserve custom_trigger_tooltip for the few meaningful nodes):
-##   * _trunk_open  — bare flag check, used on every DOWNSTREAM focus. Once a path
-##     is abandoned its flag clears and the un-taken focuses lock. No tooltip text
-##     (the engine renders the flag line itself); downstream nodes are already
-##     gated by their prerequisite, so the choice isn't decided here. Reform is the
-##     exception: its trunk_open is a live ruling-party gate, not a flag (see below).
-##   * _trunk_entry — used on the trunk-entry focuses only, where the "one path at
-##     a time" rule actually bites. Open when EITHER of:
-##       1. already on this path (its SIA_path_* flag is set), OR
-##       2. the CURRENT ruling party belongs to this trunk (live-state gate).
-##     There is deliberately no "free initial fork" branch. The 2001 election is
-##     no longer a menu the player forces: thailand.1 offers three popularity/outlook
-##     boosts, the in-game election decides who actually rules, and only the matching
-##     entry focus then unlocks (each 2001 entry is also date-gated to 2001.1.1 so
-##     the vote resolves first). Case 2 is the Iran-style live-state gate (cf.
-##     iran.txt, which gates its branch entries on live government strength rather
-##     than on a flag an event must set first): reading
-##     `is_in_array = { ruling_party = N }` directly (the canonical MD idiom, see
-##     01_political_triggers.txt) opens the matching entry focus the instant the
-##     party in power changes, independent of the event chain.
-##     Party->trunk map: 18 (Pheu Thai) = populist, {22,23} = royalist, 3 = reform,
-##     1 (conservatism) = democrat. Note idx 1 is the Democrats here: the start
-##     government rules at idx 1, the Thaksinite government at idx 18.
-##     Each entry still carries a readable tooltip (one per tree, naming the
-##     ruling party with its politics-view icon) explaining the re-open rule.
+## Thailand: scripted triggers.
+## The SIA_path_* flags replace the engine's mutually_exclusive, which script can
+## never re-open. _trunk_open gates downstream focuses on the flag alone;
+## _trunk_entry gates the entry focuses on the flag OR the live ruling party, so a
+## party change re-opens the matching tree without waiting on an event.
+## Party -> trunk: 18 Pheu Thai = populist, 22/23 = royalist, 3 = reform,
+## 1 conservatism = democrat (the Democrats, who hold the 2000 start).
 
 SIA_populist_trunk_open = { has_country_flag = SIA_path_populist }
 SIA_royalist_trunk_open = { has_country_flag = SIA_path_royalist }
 SIA_democrat_trunk_open = { has_country_flag = SIA_path_democrat }
 
-# Reform is the exception to the flag-based trunk_open scheme. Its entry
-# (SIA_seeds_of_reform) is a movement-building focus gated on a 5% Future Forward
-# (socialism, idx 3) vote share, not on holding power, and its big popularity
-# reward is meant to WIN the next election. So every downstream reform focus
-# ("A Future Forward" and onward) opens only while idx 3 actually rules, decided
-# at the ballot box, never picked as a focus. Wrapped so the lock reason renders
-# (is_in_array has no auto-tooltip).
+# Reform is the exception to the flag-based trunk_open scheme.
 SIA_reform_trunk_open = {
 	custom_trigger_tooltip = {
 		tooltip = SIA_reform_trunk_entry_tt
@@ -53,13 +18,7 @@ SIA_reform_trunk_open = {
 	}
 }
 
-# Same exception as Reform, for the same reason. SIA_path_communist is set at the
-# ENTRY focus (SIA_ghosts_of_the_jungle), while the party is still an insurgency, so
-# it marks "on the communist road", not "in power". Everything downstream of
-# SIA_people_seize_power is state-building that presupposes the CPT (idx 4) actually
-# governs, so those focuses gate on the live ruling party instead of the path flag.
-# On the armed road start_civil_war keeps the loyalists as the communist bloc, so the
-# tag that owns this tree is the one that reads idx 4.
+# Same exception as Reform, for the same reason.
 SIA_communist_trunk_open = {
 	custom_trigger_tooltip = {
 		tooltip = SIA_communist_trunk_entry_tt
@@ -67,11 +26,7 @@ SIA_communist_trunk_open = {
 	}
 }
 
-# The ASEAN Crossroads mastery path. Closed outright to a Democrat or Move
-# Forward government, and otherwise needs either the Greater Thailand mandate or
-# a country already roused to war. Gates the SIA_asean_hegemony focus against its
-# SIA_asean_protector alternative. The party check is wrapped because
-# is_in_array has no auto-tooltip and would render as a blank line.
+# The ASEAN Crossroads mastery path.
 SIA_asean_hegemony_available = {
 	custom_trigger_tooltip = {
 		tooltip = SIA_asean_hegemony_government_tt
@@ -135,12 +90,10 @@ SIA_coup_machinery_live = {
 	NOT = { has_completed_focus = SIA_civilian_control }
 }
 
-## Develop conquered land (breakaway-states + ASEAN-hegemony trees)
-## A "reclaimed" state is territory conquered on an expansion path but not yet
-## integrated: owned by Thailand, under a standing Thai claim (every expansion
-## focus stakes the claim before the war), and not yet a Thai core. This is the
-## land the SIA_reconstruction_category decisions pacify, develop, and finally
-## core (Russia-style broad integration). State scope.
+## Develop conquered land (breakaway-states + ASEAN-hegemony trees) A "reclaimed" state
+## is territory conquered on an expansion path but not yet integrated: owned by Thailand,
+## under a standing Thai claim (every expansion focus stakes the claim before the war),
+## and not yet a Thai core.
 SIA_is_reclaimed_state = {
 	is_owned_by = SIA
 	is_claimed_by = SIA

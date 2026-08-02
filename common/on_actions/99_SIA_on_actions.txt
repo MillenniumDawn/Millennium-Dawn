@@ -1,13 +1,11 @@
-## Thailand: recurring variable systems.
-## SIA_insurgency_intensity (0-100): Deep South conflict temperature; drives idea tier
-## and weekly incident chance. SIA_coup_risk (0-100): the price of populist overreach.
+## Thailand: recurring variable systems. Party indices used throughout:
+## 1 Democrats, 3 Move Forward, 18 Pheu Thai, 22 NCPO, 23 House of Mahidol.
 ## Game-start state lives in history/countries/SIA - Thailand.txt and the SIA OOBs.
 on_actions = {
 
 	on_weekly_SIA = {
 		effect = {
-			# National Strategy backstop: a player who reached the FTA decade but never
-			# adopted IGNITE Thailand by the mid-2010s gets the strategy imposed top-down.
+			# Backstop for anyone who reached the FTA decade without adopting IGNITE.
 			if = {
 				limit = {
 					date > 2016.1.1
@@ -18,19 +16,15 @@ on_actions = {
 				set_country_flag = SIA_ignite_strategy_forced
 				country_event = { id = thailand.432 days = 5 }
 			}
-			# Communist path — misery-gate counter
-			# SIA_misery_weeks counts consecutive weeks with stability < 0.35.
-			# Gates the SIA_ghosts_of_the_jungle focus entry at >= 52 weeks (≈1 year).
+			# Communist entry gate: 52 consecutive weeks under 35% stability.
 			if = {
 				limit = { has_stability < 0.35 }
 				add_to_variable = { SIA_misery_weeks = 1 }
 				clamp_variable = { var = SIA_misery_weeks min = 0 max = 999 }
 			}
 			else = {
-				# Reset counter as soon as stability recovers above 35%
 				set_variable = { SIA_misery_weeks = 0 }
 			}
-			# Set/clear the misery gate flag for focus available condition
 			if = {
 				limit = { check_variable = { SIA_misery_weeks > 51 } }
 				if = {
@@ -44,7 +38,6 @@ on_actions = {
 					clr_country_flag = SIA_misery_gate
 				}
 			}
-			# Consequence event: SIA_treaty_ally chosen — China spurned (90–180d delay handled here once)
 			if = {
 				limit = {
 					has_completed_focus = SIA_treaty_ally
@@ -54,7 +47,6 @@ on_actions = {
 				set_country_flag = SIA_treaty_ally_reaction_done
 				country_event = { id = thailand.217 days = 120 random_days = 60 }
 			}
-			# Consequence event: SIA_bamboo_bends_east chosen — US spurned
 			if = {
 				limit = {
 					has_completed_focus = SIA_bamboo_bends_east
@@ -64,7 +56,6 @@ on_actions = {
 				set_country_flag = SIA_bamboo_east_reaction_done
 				country_event = { id = thailand.218 days = 120 random_days = 60 }
 			}
-			# Consequence event: SIA_perpetual_guardianship — press reaction
 			if = {
 				limit = {
 					has_completed_focus = SIA_perpetual_guardianship
@@ -74,11 +65,7 @@ on_actions = {
 				country_event = { id = thailand.219 days = 90 random_days = 90 }
 			}
 
-			# General Strike weekly pulse (communist urban road)
-			# While the strike runs it bleeds -1% stability a week (~-25% across the
-			# full 180 days). Reaching SIA_strike_momentum 100 makes the government
-			# capitulate at once (thailand.250, peaceful road); the 180-day timeout
-			# below 100 is handled by the scheduled thailand.259 (junta coup).
+			# Momentum 100 capitulates at once; the 180-day timeout is thailand.259.
 			if = {
 				limit = { has_country_flag = SIA_strike_active }
 				add_stability = -0.01
@@ -90,26 +77,19 @@ on_actions = {
 				}
 			}
 
-			# Deep South weekly pulse
 			if = {
 				limit = {
 					SIA_ds_conflict_live = yes
 				}
 				SIA_ds_update_tier = yes
-				# legacy-save migration. A game already in the Deep
-				# South crisis from before the twin-meter rework has SIA_ds_active but no
-				# SIA_ds_grievance variable (HOI4 would read it as 0 → floor 0 → the crisis
-				# becomes trivially resolvable). Seed it once so in-progress saves inherit a
-				# sensible root grievance instead of bypassing the new constraint.
+				# Pre-twin-meter saves carry SIA_ds_active with no grievance variable, which
+				# would read 0 and leave the crisis trivially resolvable.
 				if = {
 					limit = { NOT = { has_variable = SIA_ds_grievance } }
 					set_variable = { SIA_ds_grievance = 40 }
 					SIA_ds_recompute_floor = yes
 				}
-				# Neglect breeds grievance. While the South is ablaze (intensity > 59)
-				# the root grievance festers on its own — a small weekly chance to creep up,
-				# raising the floor and making the conflict steadily harder to ever resolve
-				# if it is simply left to burn. Concessions are the only way back down.
+				# Left to burn the grievance creeps up and raises the floor; only concessions lower it.
 				if = {
 					limit = { check_variable = { SIA_insurgency_intensity > 59 } }
 					random = {
@@ -118,11 +98,7 @@ on_actions = {
 						SIA_ds_set_grievance = yes
 					}
 				}
-				# Untreated conflicts smolder upward — track-keyed and
-				# floor-aware (routed through SIA_ds_set_intensity so the tooltip
-				# surfaces and the permanent grievance floor is respected).
-				# Iron Fist's long-term recruitment penalty = 15%; dialogue cooling = 5%;
-				# else the baseline 10%.
+				# Routed through SIA_ds_set_intensity so the tooltip surfaces and the floor holds.
 				if = {
 					limit = { has_completed_focus = SIA_iron_fist_doctrine }
 					random = {
@@ -167,7 +143,6 @@ on_actions = {
 						country_event = { id = thailand.151 days = 1 }
 					}
 				}
-				# one-shot escalation crisis
 				if = {
 					limit = {
 						check_variable = { SIA_insurgency_intensity > 59 }
@@ -176,7 +151,6 @@ on_actions = {
 					set_country_flag = SIA_ds_crisis_fired
 					country_event = { id = thailand.155 days = 3 }
 				}
-				# one-shot near-peace opening
 				if = {
 					limit = {
 						check_variable = { SIA_insurgency_intensity < 11 }
@@ -188,10 +162,8 @@ on_actions = {
 				}
 			}
 
-			# Smoldering re-ignition pulse (Iron-Fist terminal)
-			# Runs OUTSIDE the SIA_ds_active block (cleanup clears that flag);
-			# gated on the smoldering idea so it is the visible cost of the
-			# _force-resolved peace. 2% weekly chance to refire thailand.151.
+			# Outside the SIA_ds_active block on purpose: cleanup clears that flag, and this
+			# is the standing cost of a force-resolved peace.
 			if = {
 				limit = { has_idea = SIA_pacified_but_smoldering }
 				random = {
@@ -200,12 +172,7 @@ on_actions = {
 				}
 			}
 
-			# Yellow Shirts - palace-network monarchist drift
-			# The SIA_yellow_shirts focus mobilises the royalist street. Each
-			# week a sliver of support drifts to the House of Mahidol
-			# (Monarchist, idx 23) until it plateaus at 0.35, so the boost is a
-			# slow accumulating pressure rather than a one-shot - and the cap
-			# stops it snowballing the party into a permanent supermajority.
+			# Capped so the drift cannot snowball the palace into a permanent supermajority.
 			if = {
 				limit = {
 					has_completed_focus = SIA_yellow_shirts
@@ -217,16 +184,7 @@ on_actions = {
 				recalculate_party = yes
 			}
 
-			# Generational political drift ("Two Thailands") —
-			# The productivity/stability barometers convert into a slow, capped party
-			# drift (Move Forward urban, Pheu Thai rural, palace recovery when calm), and
-			# fire cross-threshold protest events when discontent boils over. Runs from
-			# the early window so parties keep moving instead of freezing on the values
-			# the path-setting focuses leave them at (e.g. Pheu Thai stuck at 0, Thai
-			# Nation parked high on the network-monarchy route). Skipped on the communist
-			# path and once a republic is declared, where the party question is settled.
-			# See SIA_political_drift_update in
-			# common/scripted_effects/SIA_thailand_effects.txt.
+			# See SIA_political_drift_update. Skipped on the communist path and after a republic.
 			if = {
 				limit = {
 					date > 2002.1.1
@@ -247,7 +205,6 @@ on_actions = {
 						country_event = { id = thailand.363 days = 3 }
 					}
 				}
-				# The Bangkok/up-country fault line opens once both camps are agitated.
 				if = {
 					limit = {
 						check_variable = { SIA_reform_pressure > 40 }
@@ -258,9 +215,6 @@ on_actions = {
 					set_country_flag = SIA_two_thailands_done
 					country_event = { id = thailand.364 days = 3 }
 				}
-				# Prolonged misery revives the communist underground: an event route
-				# into the Ghosts of the Jungle path (embrace) or an NCPO crackdown
-				# (suppress). Fires once when the misery gate holds and pressure is high.
 				if = {
 					limit = {
 						has_country_flag = SIA_misery_gate
@@ -272,11 +226,7 @@ on_actions = {
 				}
 			}
 
-			# Coup risk - only while the Thaksinite party (idx 18, TRT/PPP/PTP)
-			# actually RULES. If an election or realignment moves power to
-			# another party the machinery pauses and the tier spirit is retired
-			# below, so "Generals Plotting" / "Tanks" never linger once the
-			# Thaksinites are out of power.
+			# Only while the Thaksinites actually rule; the teardown below retires the spirit.
 			set_party_index_to_ruling_party = yes
 			if = {
 				limit = {
@@ -291,21 +241,13 @@ on_actions = {
 					min = 0
 					max = 100
 				}
-				# Weekly coup-risk dynamics (rebalance): the meter NEVER bleeds off on
-				# its own. Populist–military distrust only ever mounts with time — a
-				# stable country slows the climb but does not reverse it. The only way
-				# down is active work (the SIA_coup_watch_category decisions and the
-				# SIA_reassure_high_command mission), so the elected populist always
-				# governs in the shadow of a gathering coup unless they manage it or
-				# leave the path. Instability accelerates the rise.
+				# The meter never bleeds off on its own. Only the coup-watch decisions and the
+				# SIA_reassure_high_command mission bring it down.
 				if = {
 					limit = { has_stability > 0.5 }
-					# Even a calm, well-run populist government cannot make the
-					# generals trust it — the suspicion still creeps upward.
 					add_to_variable = { SIA_coup_risk = 0.5 }
 				}
 				else = {
-					# Visible chaos emboldens the barracks.
 					add_to_variable = { SIA_coup_risk = 1 }
 				}
 				clamp_variable = {
@@ -313,11 +255,8 @@ on_actions = {
 					min = 0
 					max = 100
 				}
-				# Refresh the visible tier spirit (SIA_coup_tier_*).
 				SIA_coup_update_tier = yes
-				# Warning shots while risk simmers (40–84). The actual coup is
-				# no longer a weekly dice roll — it comes from the defusable
-				# SIA_reassure_high_command mission, which arms at 85+.
+				# Warning shots only; the coup itself comes from the mission that arms at 85+.
 				if = {
 					limit = {
 						check_variable = { SIA_coup_risk > 40 }
@@ -331,10 +270,8 @@ on_actions = {
 					}
 				}
 			}
-			# Catch-all teardown: once a junta rules or the government is
-			# coup-proofed, retire the coup-risk tier spirit. The populist gate
-			# above stops updating it, so without this it would linger after a
-			# historical 2006/2014 coup or the civilian-control focus.
+			# Without this the tier spirit lingers after a coup or the civilian-control focus,
+			# because the populist gate above stops updating it.
 			if = {
 				limit = {
 					OR = {
@@ -353,13 +290,7 @@ on_actions = {
 				SIA_coup_cleanup_effect = yes
 			}
 
-			# Branch E - the populist electoral tide. The meter only arms once the
-			# Democrats commit to their trunk (SIA_the_democrats_endure -> SIA_path_democrat);
-			# it does NOT accrue from game start. While the Democrats (idx 1) govern on
-			# that trunk and have not defected, Thaksin's machine gathers strength: the
-			# meter climbs a flat amount each week and never bleeds off on its own.
-			# Unmanaged, a high tide lifts Pheu Thai (idx 18) toward the majority that
-			# unseats the Democrats at the next MD election.
+			# Arms only once the Democrats commit to their trunk, and never bleeds off.
 			set_party_index_to_ruling_party = yes
 			if = {
 				limit = {
@@ -371,8 +302,7 @@ on_actions = {
 					NOT = { has_country_flag = SIA_path_communist }
 					NOT = { has_idea = SIA_junta_government }
 				}
-				# Seed at 0 the first tick after the trunk is committed, then climb a
-				# flat +2 a week. (The focus reward also seeds it, so this is a safety net.)
+				# The focus reward seeds this too; belt and braces.
 				SIA_pt_pressure_seed = yes
 				set_temp_variable = { pt_delta = 2 }
 				# The Isan beachhead (SIA_break_into_isan) slows the tide at its source.
@@ -382,8 +312,7 @@ on_actions = {
 				}
 				SIA_pt_pressure_set = yes
 			}
-			# Teardown - retire the tide spirits once the Democrats lose power or defect
-			# (party_index is still the ruling value here, before the boost below).
+			# party_index is still the ruling value here, before the boost below.
 			if = {
 				limit = {
 					OR = {
@@ -403,12 +332,7 @@ on_actions = {
 				}
 				SIA_pt_cleanup_effect = yes
 			}
-			# Royalist / monarchist suppression. When the NCPO (Nat_Autocracy, idx 22)
-			# or the House of Mahidol (Monarchist, idx 23) holds power — on the royalist
-			# trunk or via a junta install — the establishment quiets the Thaksinite tide
-			# outright: retire any tier spirit AND zero the meter so it neither lingers
-			# nor carries over if the Democrats ever return. (Belt-and-suspenders with the
-			# instant quiet in SIA_realign_to_royalist; this also catches coup installs.)
+			# Also catches coup installs, which SIA_realign_to_royalist does not.
 			if = {
 				limit = {
 					OR = {
@@ -429,56 +353,27 @@ on_actions = {
 				}
 				SIA_pt_quiet_effect = yes
 			}
-			# The active idx-18 popularity lift now runs DAILY, scaled by the wave
-			# tier (stirring/rising/surge -> +0.002/+0.003/+0.005 to Pheu Thai), in the
-			# on_daily block below (SIA_pt_wave_popularity_boost). It is no longer a
-			# flat weekly nudge here.
 
-			# Political realignment detector (switchable focus trunks)
-			# Watch the ruling party from game start. When it CHANGES to a party
-			# belonging to a different trunk — via an election (scheduled or the
-			# extraordinary-elections button), the junta-install coup (idx 22 ->
-			# royalist) or a player-driven realignment decision — swap the player
-			# onto that trunk and strip the outgoing party's signature ideas. The
-			# path flags gate focus availability (the SIA_*_trunk_open triggers),
-			# so the new trunk's un-taken focuses open while the abandoned trunk's
-			# un-taken focuses lock; completed focuses persist. Runs pre-commitment
-			# too: an unmapped party winning a snap election before any trunk is
-			# chosen must still be tracked, or the fail-open reset below can never
-			# fire and the political tree soft-locks.
-			# Party->trunk map: 18=populist (Pheu Thai), {22,23}=royalist,
-			# 3=reform, 1=democrat (conservatism). Idx 1 is the Democrats: the
-			# Thaksinite government always rules at idx 18 (Pheu Thai wins the
-			# election), never idx 1 (the start/Democrat government — see
-			# SIA_democrat_revival). A switch to idx 1 fires the Democrat branch.
+			# Political realignment detector. Watches the ruling party and swaps the player
+			# onto the matching trunk. Must run pre-commitment too, or the fail-open reset
+			# below can never fire and the political tree soft-locks.
 			if = {
 				limit = {
 					NOT = { has_country_flag = SIA_path_communist }
 					NOT = { has_country_flag = SIA_republic_declared }
 				}
 				set_party_index_to_ruling_party = yes
-				# Seed the tracker the first time so we only react to CHANGES, never
-				# to the initial party-vs-chosen-trunk divergence (a player may
-				# legitimately run an opposition trunk).
+				# Seed once so we react to changes only, not to the initial party-vs-trunk gap.
 				if = {
 					limit = { NOT = { has_variable = SIA_last_ruling_party } }
 					set_variable = { SIA_last_ruling_party = party_index }
 				}
 				if = {
 					limit = { NOT = { check_variable = { SIA_last_ruling_party = party_index } } }
-					# The ruling party changed this week. Fire the matching dramatic
-					# transition event; its option performs the trunk swap. The
-					# tracker is advanced immediately so the event fires once, not
-					# every week while the popup waits to be answered. The coup
-					# events (thailand.4/.6/.70/.216) set the royalist flag
-					# themselves, so a coup never trips a redundant second popup here.
+					# Advance the tracker immediately so the event fires once, not every week while
+					# the popup waits to be answered.
 					if = {
 						limit = {
-							# The Thaksinite government always rules at idx 18 (Pheu Thai).
-							# The election installs idx 18 when Pheu Thai wins,
-							# NEVER idx 1. Idx 1 (conservatism) is the Democrats (see
-							# SIA_democrat_revival / the start government), handled by the
-							# Democrat branch below.
 							check_variable = { party_index = 18 }
 							NOT = { has_country_flag = SIA_path_populist }
 						}
@@ -492,8 +387,6 @@ on_actions = {
 							}
 							NOT = { has_country_flag = SIA_path_royalist }
 						}
-						# NCPO (military) or House of Mahidol (palace) takes the
-						# levers -> the September-coup-style takeover event.
 						country_event = { id = thailand.421 days = 2 }
 					}
 					else_if = {
@@ -501,16 +394,10 @@ on_actions = {
 							check_variable = { party_index = 3 }
 							NOT = { has_country_flag = SIA_path_reform }
 						}
-						# The orange (Move Forward) wave takes power.
 						country_event = { id = thailand.422 days = 2 }
 					}
 					else_if = {
 						limit = {
-							# The Democrats (conservatism, idx 1) return to government —
-							# a lost election or the Constitutional Court handing power to
-							# the opposition (put_the_largest_opposition_party_in_power in
-							# thailand.423). The peaceful switch-to-Democrat path the other
-							# three branches couldn't express.
 							check_variable = { party_index = 1 }
 							NOT = { has_country_flag = SIA_path_democrat }
 						}
@@ -518,15 +405,8 @@ on_actions = {
 					}
 					else_if = {
 						limit = {
-							# Fail-open fallback: the ruling party belongs to no political
-							# trunk (idx not 18/22/23/3/1) — e.g. the Constitutional Court
-							# (thailand.423) or an election handing power to a party we don't
-							# model as a trunk (Nat_Populism 20, liberalism 2,...). Leaving
-							# the abandoned trunk's flag set would strand the player: the
-							# is_in_array entry gates can't match the new party, so no trunk
-							# could be re-opened. Clear the path flags so the trunk system
-							# resets and every entry focus becomes selectable again (the
-							# same "no flag set" state as the initial 2001 fork).
+							# Fail-open: an unmodelled ruling party must clear the path flags, or the
+							# is_in_array entry gates match nothing and no trunk can reopen.
 							NOT = { check_variable = { party_index = 18 } }
 							NOT = { check_variable = { party_index = 22 } }
 							NOT = { check_variable = { party_index = 23 } }
@@ -556,10 +436,6 @@ on_actions = {
 				country_event = { id = thailand.319 days = 1 }
 			}
 
-			# Yellow Shirts at the Border — fires once under a ruling Thaksinist (PT,
-			# idx 18) government once tension climbs past 60. Mirrors the
-			# SIA_path_populist + party_index = 18 ruling check used by the coup-risk
-			# block above.
 			set_party_index_to_ruling_party = yes
 			if = {
 				limit = {
@@ -583,10 +459,8 @@ on_actions = {
 				country_event = { id = preah_vihear.121 days = 1 }
 			}
 
-			# Safety net for the election killswitch set in history: thailand.19 clears it
-			# on the 6 Jan 2001 vote, but on_new_term_election never fires for a country
-			# that has lost its elections, which would strand the flag and kill elections
-			# permanently.
+			# thailand.19 clears this on the 6 Jan 2001 vote, but on_new_term_election never
+			# fires for a country that has lost its elections, which would strand the flag.
 			if = {
 				limit = {
 					date > 2001.2.1
@@ -595,11 +469,8 @@ on_actions = {
 				clr_country_flag = generic_election_killswitch
 			}
 
-			# Reclaimed-territory tallies for SIA_reconstruction_category. The three
-			# decisions there used to run any_owned_state in `available`, which the
-			# engine re-evaluates every tick while the category is open — at its widest
-			# exactly when Thailand holds the most conquered states. Counted once a week
-			# here instead; the decisions read the counters.
+			# Counted weekly because the decisions ran any_owned_state in available, which the
+			# engine re-evaluates every tick while the category is open.
 			if = {
 				limit = { has_country_flag = SIA_reconstruction_unlocked }
 				set_variable = { SIA_reclaimed_count = 0 }
@@ -626,9 +497,6 @@ on_actions = {
 			# Populist wave -> Pheu Thai daily popularity lift.
 			if = {
 				limit = {
-					# Only while committed to the Democrat trunk (the wave tier spirits
-					# only attach then) and the Democrats still actually govern (idx 1),
-					# Pheu Thai (idx 18) still below the 0.40 share cap, and not a junta.
 					has_country_flag = SIA_path_democrat
 					NOT = { has_idea = SIA_junta_government }
 					check_variable = { party_pop_array^18 < 0.4 }
@@ -649,11 +517,7 @@ on_actions = {
 
 	on_monthly_SIA = {
 		effect = {
-			# Opening-year Thaksinite surge (2000 -> the 2001 election). While Chuan's
-			# Democrats (idx 1) still govern and no political path is committed, Pheu Thai
-			# and the non-aligned bloc climb toward the landslide. The window closes after a
-			# year, a path commitment, or a change of government, at which point the standing
-			# systems (the Branch E tide, the Two Thailands drift) take over.
+			# Closes after a year, a path commitment, or a change of government.
 			if = {
 				limit = {
 					has_idea = SIA_thaksin_ascendant
@@ -675,23 +539,17 @@ on_actions = {
 					remove_ideas = SIA_thaksin_ascendant
 				}
 			}
-			# Thailand trade-diplomacy dividend and influence refresh. Runs
-			# Thailand only, once the SIA_regional_trade_network focus has armed the
-			# mechanic by setting SIA_trade_income_active.
 			if = {
 				limit = {
 					has_country_flag = SIA_trade_income_active
 				}
-				# Keep the influence-scaling variable in step with the current trade
-				# network, then bank the monthly tariff dividend. Both are capped in
-				# SIA_thailand_effects.txt so a big FTA web cannot snowball.
+				# Both capped in SIA_thailand_effects.txt so a big FTA web cannot snowball.
 				SIA_recalculate_trade_diplomacy = yes
 				SIA_collect_trade_dividend = yes
 			}
 
-			# Preah Vihear monthly decay (both sides, CBD via inner scope) — must hit
-			# GLOBAL.preah_vihear_tension itself or it never comes down, per the
-			# 99_RAJ_on_actions.txt:27 Kashmir bug.
+			# Must hit GLOBAL.preah_vihear_tension itself or it never comes down
+			# (99_RAJ_on_actions.txt Kashmir bug).
 			if = {
 				limit = {
 					date > 2008.7.1
@@ -712,10 +570,7 @@ on_actions = {
 						clamp_variable = { var = preah_vihear_readiness min = 0 max = 100 }
 					}
 				}
-				# Reverse domestic coupling: a lingering Preah Vihear crisis is a COST of
-				# the populist path, not free nationalist PP. Only while Pheu Thai (PT,
-				# idx 18) actually rules — mirrors the SIA_path_populist + party_index = 18
-				# ruling check the coup-risk block uses in on_weekly_SIA.
+				# A lingering crisis is a cost of the populist path, not free nationalist PP.
 				set_party_index_to_ruling_party = yes
 				if = {
 					limit = {
