@@ -1,192 +1,11 @@
-## Thailand: date-gated Thailand events + variable systems
+## Thailand: recurring variable systems.
 ## SIA_insurgency_intensity (0-100): Deep South conflict temperature; drives idea tier
 ## and weekly incident chance. SIA_coup_risk (0-100): the price of populist overreach.
+## Game-start state lives in history/countries/SIA - Thailand.txt and the SIA OOBs.
 on_actions = {
-
-	on_startup = {
-		effect = {
-			SIA = {
-				## Recovery Redesign: replace the base-MD timed asian_crisis with the
-				## player-defeated Tom Yum Kung spine. Base history adds asian_crisis via
-				## add_timed_idea, so remove it and hand the player the active crisis.
-				if = {
-					limit = { has_idea = asian_crisis }
-					remove_ideas = asian_crisis
-				}
-				## Thailand suite dynamic modifiers (99_SIA_dynamic_modifiers.txt). The
-				## crisis seed is the Tom Yum Kung tier-0 block; the three accumulators
-				## start empty and fill as the tree converts rewards into their variables.
-				set_variable = { SIA_crisis_stability_factor = -0.08 }
-				set_variable = { SIA_crisis_production_speed_buildings_factor = -0.12 }
-				set_variable = { SIA_crisis_trade_opinion_factor = -0.25 }
-				set_variable = { SIA_crisis_min_export = -0.08 }
-				set_variable = { SIA_crisis_industrial_capacity_factory = -0.12 }
-				set_variable = { SIA_crisis_production_factory_max_efficiency_factor = -0.12 }
-				set_variable = { SIA_crisis_consumer_goods_factor = 0.06 }
-				set_variable = { SIA_crisis_interest_rate_multiplier_modifier = 3 }
-				## Collapsed revenue base: firms folded, incomes fell, collection broke
-				## down. Cleared by SIA_recover_from_97_crisis (the baht float).
-				set_variable = { SIA_crisis_tax_gain_multiplier_modifier = -0.05 }
-				set_variable = { SIA_crisis_research_speed_factor = -0.04 }
-				add_dynamic_modifier = { modifier = SIA_crisis_modifier }
-				add_dynamic_modifier = { modifier = SIA_economy_modifier }
-				add_dynamic_modifier = { modifier = SIA_military_modifier }
-				add_dynamic_modifier = { modifier = SIA_politics_modifier }
-				## The Old Guard: the RTARF starts top-heavy and inefficient (general
-				## glut, patronage, barracks businesses). Negative dynamic modifier healed
-				## only by the force-model fork; Professional heals army org/xp, Mass-conscript
-				## the wage bill (99_SIA_dynamic_modifiers.txt SIA_armed_forces_state).
-				set_variable = { SIA_afs_army_org_factor = -0.10 }
-				set_variable = { SIA_afs_experience_gain_army_factor = -0.10 }
-				set_variable = { SIA_afs_army_personnel_cost_multiplier_modifier = 0.15 }
-				add_dynamic_modifier = { modifier = SIA_armed_forces_state }
-				## Opening-year Thaksinite surge: Thai Rak Thai's climb to the 2001
-				## landslide. Visible spirit + a monthly popularity lift, retired once a
-				## 2001 path is committed, the government changes, or a year passes.
-				set_variable = { SIA_thaksin_rise_months = 0 }
-				add_ideas = SIA_thaksin_ascendant
-				## 2000-start national spirits (see common/ideas/thai.txt). The
-				## identity anchor, the founding creed, and the Bangkok/provinces
-				## structural drag. Detroit of Asia and World's Rice Bowl are earned
-				## through their focuses, not present at start.
-				add_ideas = SIA_ninth_reign_barami
-				add_ideas = SIA_three_pillars_start
-				add_ideas = SIA_two_thailands
-				## Give the game-start leader the biography base MD history omits. The
-				## stock SIA history creates the Democrat leader with no desc, so his
-				## hover tooltip shows no bio (set_leader_SIA and thailand.15 already
-				## carry desc for every leader created later). A history country file
-				## cannot be partially overridden, so re-create the start leader here
-				## identically plus the desc key.
-				if = {
-					limit = {
-						has_government = democratic
-						has_country_leader_with_trait = western_conservatism
-					}
-					hidden_effect = { kill_country_leader = yes }
-					create_country_leader = {
-						name = "Chuan Leekpai"
-						desc = "SIA_chuan_leekpai_desc"
-						picture = "Chuan_Leekpai.dds"
-						ideology = conservatism
-						traits = {
-							western_conservatism
-							staunch_constitutionalist
-						}
-					}
-				}
-				## Starting military production lines. MD base leaves Thailand with no
-				## assigned lines; seed one per core land system plus a convoy line so
-				## the war economy is not idle at game start. Every type is enabled in
-				## both the NSB and non-NSB tech configs Thailand loads.
-				add_equipment_production = {
-					equipment = { type = infantry_weapons_2 creator = "SIA" }
-					requested_factories = 2
-				}
-				add_equipment_production = {
-					equipment = { type = cnc_equipment_1 creator = "SIA" }
-					requested_factories = 1
-				}
-				add_equipment_production = {
-					equipment = { type = util_vehicle_3 creator = "SIA" }
-					requested_factories = 1
-				}
-				add_equipment_production = {
-					equipment = { type = artillery_0 creator = "SIA" }
-					requested_factories = 1
-				}
-				add_equipment_production = {
-					equipment = { type = Anti_tank_0 creator = "SIA" }
-					requested_factories = 1
-				}
-				add_equipment_production = {
-					equipment = { type = transport_helicopter_2 creator = "SIA" }
-					requested_factories = 1
-				}
-				add_equipment_production = {
-					equipment = { type = Anti_Air_0 creator = "SIA" }
-					requested_factories = 1
-				}
-				add_equipment_production = {
-					equipment = { type = convoy creator = "SIA" }
-					requested_factories = 1
-				}
-				## Starting satellite fleet (2000). Seeded through the MD space
-				## system's payload API: 12X = COMSAT tier X, 13X = SPYSAT tier X.
-				## Thailand's real orbital assets at game start are the three Thaicom
-				## communications satellites (Thaicom 1A 1993, Thaicom 2 1994, Thaicom
-				## 3 1997) plus TMSAT, the 1998 remote-sensing microsatellite. No GNSS:
-				## like Poland and Denmark, Thailand owns none of its own and would
-				## gain access only through a later focus.
-				set_temp_variable = { cur = 0 } while_loop_effect = { limit = { check_variable = { cur < 2 } } add_to_temp_variable = { cur = 1 } add_to_array = { payload_array = 121 } add_satellite_from_payload = yes }
-				set_temp_variable = { cur = 0 } while_loop_effect = { limit = { check_variable = { cur < 1 } } add_to_temp_variable = { cur = 1 } add_to_array = { payload_array = 122 } add_satellite_from_payload = yes }
-				set_temp_variable = { cur = 0 } while_loop_effect = { limit = { check_variable = { cur < 1 } } add_to_temp_variable = { cur = 1 } add_to_array = { payload_array = 131 } add_satellite_from_payload = yes }
-			}
-		}
-	}
 
 	on_weekly_SIA = {
 		effect = {
-			# The Deep South crisis opens via the SIA_the_southern_question
-			# focus (fires thailand.350). For AI / players who never take the anchor
-			# focus, this fallback fires thailand.150, which auto-completes the focus
-			# itself so the full onset (insurgency seed + thailand.350 three-track
-			# answer) still happens. The grace window (2004 onset date to this 2005
-			# gate) leaves an engaged player time to take the focus on their own first.
-			if = {
-				limit = {
-					date > 2005.1.1
-					NOT = { has_country_flag = SIA_ds_started }
-					NOT = { has_completed_focus = SIA_the_southern_question }
-					NOT = { has_country_flag = SIA_ds_active }
-				}
-				set_country_flag = SIA_ds_started
-				country_event = { id = thailand.150 days = 2 }
-			}
-			if = {
-				limit = {
-					date > 2004.12.26
-					NOT = { has_country_flag = SIA_tsunami_done }
-				}
-				set_country_flag = SIA_tsunami_done
-				country_event = { id = thailand.52 days = 1 }
-			}
-			if = {
-				limit = {
-					date > 2011.7.1
-					NOT = { has_country_flag = SIA_flood_done }
-				}
-				set_country_flag = SIA_flood_done
-				country_event = { id = thailand.53 days = 2 }
-			}
-			if = {
-				limit = {
-					date > 2011.8.1
-					has_country_flag = SIA_path_populist
-					NOT = { has_country_flag = SIA_rice_pledge_done }
-					NOT = { has_completed_focus = SIA_rice_pledging_scheme }
-				}
-				set_country_flag = SIA_rice_pledge_done
-				country_event = { id = thailand.54 days = 5 }
-			}
-			if = {
-				limit = {
-					date > 2016.10.13
-					NOT = { has_country_flag = SIA_succession_done }
-					NOT = { has_country_flag = SIA_republic_declared }
-				}
-				# Royalist trunk: guarantee the managed premium before thailand.14 fires,
-				# regardless of whether the player reached the 35-day focus in time.
-				if = {
-					limit = {
-						has_country_flag = SIA_path_royalist
-						NOT = { has_completed_focus = SIA_royal_succession_managed }
-					}
-					complete_national_focus = SIA_royal_succession_managed
-				}
-				set_country_flag = SIA_succession_done
-				country_event = { id = thailand.14 days = 1 }
-			}
 			# National Strategy backstop: a player who reached the FTA decade but never
 			# adopted IGNITE Thailand by the mid-2010s gets the strategy imposed top-down.
 			if = {
@@ -225,25 +44,6 @@ on_actions = {
 					clr_country_flag = SIA_misery_gate
 				}
 			}
-			# 2020 protest wave fires on its own for governments that never face it by focus
-			if = {
-				limit = {
-					date > 2020.8.1
-					NOT = { has_country_flag = SIA_2020_protests_done }
-					NOT = { has_completed_focus = SIA_2020_protest_response }
-					NOT = { has_idea = SIA_consolidated_democracy_idea }
-				}
-				country_event = { id = thailand.71 days = 3 }
-			}
-			# 2008 Global Financial Crisis (once)
-			if = {
-				limit = {
-					date > 2008.9.15
-					NOT = { has_country_flag = SIA_gfc_done }
-				}
-				set_country_flag = SIA_gfc_done
-				country_event = { id = thailand.222 days = 3 }
-			}
 			# Consequence event: SIA_treaty_ally chosen — China spurned (90–180d delay handled here once)
 			if = {
 				limit = {
@@ -263,16 +63,6 @@ on_actions = {
 				}
 				set_country_flag = SIA_bamboo_east_reaction_done
 				country_event = { id = thailand.218 days = 120 random_days = 60 }
-			}
-			# Bhumjaithai entry event — fire once after 2019.3.24 for any non-communist path
-			if = {
-				limit = {
-					date > 2019.3.24
-					NOT = { has_country_flag = SIA_bhumjaithai_event_done }
-					NOT = { has_country_flag = SIA_path_communist }
-				}
-				set_country_flag = SIA_bhumjaithai_event_done
-				country_event = { id = thailand.270 days = 3 }
 			}
 			# Consequence event: SIA_perpetual_guardianship — press reaction
 			if = {
@@ -540,41 +330,6 @@ on_actions = {
 						country_event = { id = thailand.69 days = 2 }
 					}
 				}
-				# Scandal pulse (populist path) — the historical erosion of trust
-				# in the Thaksin governments. Each is a date-gated one-shot that
-				# raises coup risk and offers a double-down / back-down choice, so
-				# pressure accumulates toward 85 over a playthrough instead of
-				# plateauing. Dates follow the real timeline.
-				if = {
-					limit = { date > 2001.8.3 NOT = { has_country_flag = SIA_scandal_assets_done } }
-					set_country_flag = SIA_scandal_assets_done
-					country_event = { id = thailand.74 days = 3 }
-				}
-				if = {
-					limit = { date > 2004.10.25 NOT = { has_country_flag = SIA_scandal_takbai_done } }
-					set_country_flag = SIA_scandal_takbai_done
-					country_event = { id = thailand.75 days = 3 }
-				}
-				if = {
-					limit = { date > 2005.2.6 NOT = { has_country_flag = SIA_scandal_landslide_done } }
-					set_country_flag = SIA_scandal_landslide_done
-					country_event = { id = thailand.78 days = 3 }
-				}
-				if = {
-					limit = { date > 2005.6.1 NOT = { has_country_flag = SIA_scandal_ctx_done } }
-					set_country_flag = SIA_scandal_ctx_done
-					country_event = { id = thailand.76 days = 3 }
-				}
-				if = {
-					limit = { date > 2005.9.1 NOT = { has_country_flag = SIA_scandal_media_done } }
-					set_country_flag = SIA_scandal_media_done
-					country_event = { id = thailand.77 days = 3 }
-				}
-				if = {
-					limit = { date > 2006.1.23 NOT = { has_country_flag = SIA_scandal_shincorp_done } }
-					set_country_flag = SIA_scandal_shincorp_done
-					country_event = { id = thailand.73 days = 3 }
-				}
 			}
 			# Catch-all teardown: once a junta rules or the government is
 			# coup-proofed, retire the coup-risk tier spirit. The populist gate
@@ -790,16 +545,6 @@ on_actions = {
 				}
 			}
 
-			# WS-F — date-gated once-events ()
-			# F1: Border incident — Ta Muen Thom landmine (2025.7)
-			if = {
-				limit = {
-					date > 2025.7.1
-					NOT = { has_country_flag = SIA_border_incident_done }
-				}
-				set_country_flag = SIA_border_incident_done
-				country_event = { id = thailand.315 days = 1 }
-			}
 			# F3: F-35 rejection by Washington (2022.6)
 			if = {
 				limit = {
@@ -810,38 +555,7 @@ on_actions = {
 				set_country_flag = SIA_f35_rejected_done
 				country_event = { id = thailand.319 days = 1 }
 			}
-			# F4: Paetongtarn crisis — Constitutional Court removal (2025.8)
-			if = {
-				limit = {
-					date > 2025.8.1
-					NOT = { has_country_flag = SIA_paetongtarn_crisis_done }
-					NOT = { has_country_flag = SIA_path_communist }
-				}
-				set_country_flag = SIA_paetongtarn_crisis_done
-				country_event = { id = thailand.320 days = 1 }
-			}
 
-			# Preah Vihear domestic-politics gates — dated historical beats; ladder mechanics live in common/decisions/preah_vihear_decisions.txt.
-			# The Noppadon Communiqué — right after the.100/.101 UNESCO seed
-			if = {
-				limit = {
-					date > 2008.7.1
-					date < 2009.7.1
-					NOT = { has_country_flag = SIA_noppadon_communique_done }
-				}
-				set_country_flag = SIA_noppadon_communique_done
-				country_event = { id = preah_vihear.110 days = 1 }
-			}
-			# Thaksin appointed Cambodian economic adviser — the ambassador-recall crisis
-			if = {
-				limit = {
-					date > 2009.11.1
-					date < 2010.11.1
-					NOT = { has_country_flag = SIA_thaksin_phnom_penh_done }
-				}
-				set_country_flag = SIA_thaksin_phnom_penh_done
-				country_event = { id = preah_vihear.111 days = 1 }
-			}
 			# Yellow Shirts at the Border — fires once under a ruling Thaksinist (PT,
 			# idx 18) government once tension climbs past 60. Mirrors the
 			# SIA_path_populist + party_index = 18 ruling check used by the coup-risk
@@ -856,16 +570,6 @@ on_actions = {
 				}
 				set_country_flag = SIA_yellow_shirts_border_done
 				country_event = { id = preah_vihear.112 days = 1 }
-			}
-			# UNSC referral — flavour
-			if = {
-				limit = {
-					date > 2011.2.1
-					date < 2012.2.1
-					NOT = { has_country_flag = SIA_preah_vihear_unsc_done }
-				}
-				set_country_flag = SIA_preah_vihear_unsc_done
-				country_event = { id = preah_vihear.120 days = 1 }
 			}
 			# Indonesian observer mission offer
 			if = {
