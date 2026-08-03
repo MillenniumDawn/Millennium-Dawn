@@ -89,6 +89,14 @@ FALSE_POSITIVE_FILES = frozenset(
         "MD_regional_triggers.txt",
         "00_scripted_effects.txt",
         "00_law_blocking_effects.txt",
+        "00_budget_effects.txt",
+        "00_ct_effects.txt",
+        "00_economic_system_utilities.txt",
+        "00_generic_ideas_scripted_effects.txt",
+        "00_influence_scripted_effects.txt",
+        "00_internal_faction_effects.txt",
+        "00_pp_scripted_effects.txt",
+        "00_sanctions_scripted_effects.txt",
     }
 )
 
