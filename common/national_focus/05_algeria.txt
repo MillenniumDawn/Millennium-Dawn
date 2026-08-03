@@ -166,6 +166,7 @@ focus_tree = {
 			add_stability = 0.03
 			add_war_support = 0.03
 			army_experience = 10
+			country_event = AlgeriaPoliticalEvents.20
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ALG_the_State }
 			add_to_variable = { ALG_arms_factory_contruction_speed = 0.01 tooltip = production_speed_arms_factory_factor_tt }
 			newline = yes
@@ -13194,18 +13195,31 @@ focus_tree = {
 				amount = -400
 				producer = ALG
 			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { influence_target = SHA }
+			change_influence_percentage = yes
 			SHA = {
 				add_equipment_to_stockpile = {
 					type = util_vehicle_type
 					amount = 400
 					producer = ALG
 				}
-			}
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { influence_target = SHA }
-			change_influence_percentage = yes
-			SHA = {
 				one_random_arms_factory = yes
+				country_event = AlgeriaFocus.56
+			}
+			effect_tooltip = {
+				SHA = {
+					if = {
+						limit = { NOT = { has_idea = SHA_algerian_education } }
+						add_ideas = SHA_algerian_education
+					}
+					else = {
+						swap_ideas = {
+							add_idea = SHA_algerian_education_2
+							remove_idea = SHA_algerian_education
+						}
+					}
+				}
 			}
 		}
 
@@ -14968,9 +14982,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ALG_attract_foreign_inv"
+			add_political_power = 50
+			every_other_country = {
+				limit = {
+					OR = {
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = super_power
+					}
+					NOT = { has_war_with = ROOT }
+				}
+				country_event = { id = AlgeriaInvestment.1 days = 1 }
+			}
+			newline = yes
 			set_temp_variable = { treasury_change = 5 }
 			modify_treasury_effect = yes
-			add_political_power = 50
 		}
 
 		ai_will_do = { base = 10 }
@@ -22785,6 +22811,20 @@ focus_tree = {
 				set_temp_variable = { sender_nation = USA.id }
 				set_improved_trade_agreement = yes
 				custom_effect_tooltip = ALG_us_invest_tt
+				USA = { country_event = { id = Algeria.8 days = 1 } }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				effect_tooltip = {
+					USA = {
+						add_opinion_modifier = {
+							modifier = military_cooperation
+							target = ALG
+						}
+					}
+					add_opinion_modifier = {
+						modifier = military_cooperation
+						target = USA
+					}
+				}
 			}
 		}
 
@@ -23029,6 +23069,17 @@ focus_tree = {
 			}
 			set_temp_variable = { temp_opinion = 10 }
 			change_fossil_fuel_industry_opinion = yes
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+						NOT = { has_war_with = ROOT }
+					}
+					country_event = { id = AlgeriaInvestment.6 days = 1 }
+				}
+			}
 		}
 
 		ai_will_do = { base = 10 }
@@ -23063,6 +23114,10 @@ focus_tree = {
 			set_temp_variable = { ga_new_vote_nation = THIS }
 			update_ga_vote = yes
 			custom_effect_tooltip = ALG_seek_sc_seat_tt
+			every_other_country = {
+				limit = { has_idea = p5_member }
+				country_event = { id = Algeria.16 hours = 1 }
+			}
 		}
 
 		ai_will_do = { base = 10 }
@@ -23369,6 +23424,18 @@ focus_tree = {
 			set_temp_variable = { tag_index = CHI.id }
 			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
+			if = {
+				limit = {
+					country_exists = CHI
+					NOT = { has_war_with = CHI }
+				}
+				CHI = { country_event = { id = Algeria.11 days = 1 } }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				effect_tooltip = {
+					CHI = { give_guarantee = ALG }
+					give_military_access = CHI
+				}
+			}
 		}
 
 		ai_will_do = {
