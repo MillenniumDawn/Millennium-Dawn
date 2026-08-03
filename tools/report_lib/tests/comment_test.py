@@ -1,6 +1,15 @@
-"""Tests for `report_lib.comment.find_existing_comment`."""
+"""Tests for `report_lib.comment.find_existing_comment` and delete_comment."""
 
-from report_lib.comment import REPORT_MARKER, find_existing_comment
+from report_lib import comment as C
+from report_lib.comment import REPORT_MARKER, delete_comment, find_existing_comment
+
+
+class _Resp:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
 
 
 def _comment(body, bot=True, cid=1):
@@ -45,3 +54,42 @@ def test_returns_none_when_no_match():
         _comment("another bot saying something", cid=2),
     ]
     assert find_existing_comment(comments) is None
+
+
+def test_delete_comment_noop_without_existing(monkeypatch):
+    monkeypatch.setattr(C, "_get", lambda *a, **k: [])
+    success, message = delete_comment("owner", "repo", "7", "token")
+    assert success
+    assert "no report comment" in message
+
+
+def test_delete_comment_removes_marker_comment(monkeypatch):
+    comments = [_comment(f"{REPORT_MARKER}\n# Validation Report\nstuff", cid=42)]
+    monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
+    deleted = []
+
+    def fake_urlopen(req):
+        deleted.append(req.full_url)
+        assert req.method == "DELETE"
+        return _Resp()
+
+    monkeypatch.setattr(C.urllib.request, "urlopen", fake_urlopen)
+    success, message = delete_comment("owner", "repo", "7", "token")
+    assert success
+    assert "deleted comment #42" in message
+    assert deleted == ["https://api.github.com/repos/owner/repo/issues/comments/42"]
+
+
+def test_delete_comment_falls_back_to_legacy_title(monkeypatch):
+    comments = [_comment("# Validation Report\nlegacy, no marker", cid=9)]
+    monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
+    deleted = []
+
+    def fake_urlopen(req):
+        deleted.append(req.full_url)
+        return _Resp()
+
+    monkeypatch.setattr(C.urllib.request, "urlopen", fake_urlopen)
+    success, message = delete_comment("owner", "repo", "7", "token")
+    assert success
+    assert "deleted comment #9" in message

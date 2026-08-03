@@ -26,11 +26,27 @@ on:
       # workflow but skip every validator, posting an empty report.
       # Changes under tools/ are smoke-tested by tools-validation.yml instead.
       - ".github/workflows/coding-pipeline.yml"
+  # Manual re-runs for open PRs (e.g. after main advanced) and the periodic
+  # revalidation dispatched by nightly-pr-validation.yml. Dispatched runs are
+  # keyed on the PR's head branch (ref), so the same pull_request context is
+  # rebuilt from the inputs — see PR_NUMBER/BASE_SHA below.
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to validate (nightly revalidation)"
+        required: false
+        type: string
+      base_sha:
+        description: "PR base branch sha, for the workspace cache key"
+        required: false
+        type: string
 
 concurrency:
+  # Same group for a push-triggered run and a dispatched run of the same PR:
+  # the periodic revalidation cancels an in-flight run instead of doubling it.
   group: >-
-    ${{ github.workflow }}-${{ github.event.pull_request.number ||
-    github.ref }}
+    ${{ github.workflow }}-${{ inputs.pr_number ||
+    github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 # Least privilege: validator jobs run PR-authored code and only need to read.
@@ -50,8 +66,9 @@ permissions:
 # stale pre-advance bundle.
 env:
   WORKSPACE_KEY: >-
-    md-workspace-v1-${{ github.event.pull_request.number }}-${{
-    github.event.pull_request.head.sha }}-${{ github.sha }}
+    md-workspace-v1-${{ inputs.pr_number ||
+    github.event.pull_request.number }}-${{
+    github.event.pull_request.head.sha || github.sha }}-${{ github.sha }}
   WORKSPACE_PATHS: |
     common
     events
@@ -75,26 +92,69 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      common: ${{ steps.filter.outputs.common }}
-      events: ${{ steps.filter.outputs.events }}
-      history: ${{ steps.filter.outputs.history }}
-      localisation: ${{ steps.filter.outputs.localisation }}
-      ai-strategy: ${{ steps.filter.outputs.ai-strategy }}
-      ai-navy: ${{ steps.filter.outputs.ai-navy }}
-      ai-equipment: ${{ steps.filter.outputs.ai-equipment }}
-      factions: ${{ steps.filter.outputs.factions }}
-      oob: ${{ steps.filter.outputs.oob }}
-      decisions: ${{ steps.filter.outputs.decisions }}
-      scripted-loc: ${{ steps.filter.outputs.scripted-loc }}
-      scripted-guis: ${{ steps.filter.outputs.scripted-guis }}
-      interface: ${{ steps.filter.outputs.interface }}
-      national-focus: ${{ steps.filter.outputs.national-focus }}
-      on-actions: ${{ steps.filter.outputs.on-actions }}
-      scripted-effects: ${{ steps.filter.outputs.scripted-effects }}
-      style: ${{ steps.filter.outputs.style }}
+      common: >-
+        ${{ steps.filter.outputs.common ||
+        steps.dispatch.outputs.common }}
+      events: >-
+        ${{ steps.filter.outputs.events ||
+        steps.dispatch.outputs.events }}
+      history: >-
+        ${{ steps.filter.outputs.history ||
+        steps.dispatch.outputs.history }}
+      localisation: >-
+        ${{ steps.filter.outputs.localisation ||
+        steps.dispatch.outputs.localisation }}
+      ai-strategy: >-
+        ${{ steps.filter.outputs.ai-strategy ||
+        steps.dispatch.outputs.ai-strategy }}
+      ai-navy: >-
+        ${{ steps.filter.outputs.ai-navy ||
+        steps.dispatch.outputs.ai-navy }}
+      ai-equipment: >-
+        ${{ steps.filter.outputs.ai-equipment ||
+        steps.dispatch.outputs.ai-equipment }}
+      factions: >-
+        ${{ steps.filter.outputs.factions ||
+        steps.dispatch.outputs.factions }}
+      oob: >-
+        ${{ steps.filter.outputs.oob ||
+        steps.dispatch.outputs.oob }}
+      decisions: >-
+        ${{ steps.filter.outputs.decisions ||
+        steps.dispatch.outputs.decisions }}
+      scripted-loc: >-
+        ${{ steps.filter.outputs.scripted-loc ||
+        steps.dispatch.outputs.scripted-loc }}
+      scripted-guis: >-
+        ${{ steps.filter.outputs.scripted-guis ||
+        steps.dispatch.outputs.scripted-guis }}
+      interface: >-
+        ${{ steps.filter.outputs.interface ||
+        steps.dispatch.outputs.interface }}
+      national-focus: >-
+        ${{ steps.filter.outputs.national-focus ||
+        steps.dispatch.outputs.national-focus }}
+      on-actions: >-
+        ${{ steps.filter.outputs.on-actions ||
+        steps.dispatch.outputs.on-actions }}
+      scripted-effects: >-
+        ${{ steps.filter.outputs.scripted-effects ||
+        steps.dispatch.outputs.scripted-effects }}
+      style: >-
+        ${{ steps.filter.outputs.style ||
+        steps.dispatch.outputs.style }}
+      # Diff file list — only meaningful on pull_request; dispatch runs have
+      # no diff, so the style job is skipped outright (see dispatch step).
       style-files: ${{ steps.filter.outputs.style_files }}
-      mod: ${{ steps.filter.outputs.mod }}
-      content: ${{ steps.filter.outputs.content }}
+      mod: >-
+        ${{ steps.filter.outputs.mod ||
+        steps.dispatch.outputs.mod }}
+      content: >-
+        ${{ steps.filter.outputs.content ||
+        steps.dispatch.outputs.content }}
+      mios: >-
+        ${{ steps.filter.outputs.mios ||
+        steps.dispatch.outputs.mios }}
     steps:
       # No checkout — on pull_request events dorny/paths-filter fetches the
       # changed-file list straight from the GitHub API, so cloning the repo
@@ -150,6 +210,8 @@ jobs:
               - 'common/national_focus/**'
             on-actions:
               - 'common/on_actions/**'
+            mios:
+              - 'common/military_industrial_organization/**'
             scripted-effects:
               - 'common/scripted_effects/**'
             style:
@@ -169,6 +231,25 @@ jobs:
               - 'interface/**'
               - '*.mod'
 
+      # workflow_dispatch runs have no PR diff to filter, and paths-filter
+      # would need a checkout (plus a base ref) to diff anything — this job
+      # deliberately checks out nothing. Treat every group as changed so the
+      # full validation set runs; the job outputs above fall back to these.
+      - name: Treat all groups as changed on dispatch
+        if: github.event_name == 'workflow_dispatch'
+        id: dispatch
+        run: |
+          for out in common events history localisation ai-strategy \
+              ai-navy ai-equipment factions oob decisions scripted-loc \
+              scripted-guis interface national-focus on-actions \
+              scripted-effects mod content mios; do
+            echo "$out=true" >> "$GITHUB_OUTPUT"
+          done
+          # style is diff-scoped (MD_STAGED_FILES from the changed-file
+          # list); there is no diff on dispatch, so skip the style job
+          # instead of running it against an empty file list.
+          echo "style=false" >> "$GITHUB_OUTPUT"
+
   # ───────────────────────────────────────────────────────────────
   # Prepare workspace — the run's single checkout. Bundles the validated
   # directories plus the shared .validation_cache (warmed on main by
@@ -184,6 +265,13 @@ jobs:
       contents: read
       # actions: read lets the post-save step verify the bundle exists.
       actions: read
+    # PR context rebuilt for workflow_dispatch runs (inputs are null on
+    # pull_request, the event fields are null on dispatch — the `||` picks
+    # whichever is populated).
+    env:
+      PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
     steps:
       # Checkout precedes the cache steps: hashFiles() below needs tools/ on
       # disk. Cone mode also materialises root files (CLAUDE.md, *.mod).
@@ -219,7 +307,7 @@ jobs:
           key: >-
             md-valcache-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{
-            github.event.pull_request.base.sha }}
+            inputs.base_sha || github.event.pull_request.base.sha }}
           restore-keys: |
             md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
@@ -229,8 +317,8 @@ jobs:
         run: |
           mkdir -p .validation_cache
           {
-            echo "pr=${{ github.event.pull_request.number }}"
-            echo "head_sha=${{ github.event.pull_request.head.sha }}"
+            echo "pr=$PR_NUMBER"
+            echo "head_sha=$HEAD_SHA"
             echo "merge_sha=${{ github.sha }}"
             echo "run_id=${{ github.run_id }}"
             echo "cache=${{ steps.valcache.outputs.cache-matched-key }}"
@@ -478,6 +566,7 @@ jobs:
       needs.detect-changes.outputs.national-focus == 'true' ||
       needs.detect-changes.outputs.on-actions == 'true' ||
       needs.detect-changes.outputs.scripted-effects == 'true' ||
+      needs.detect-changes.outputs.mios == 'true' ||
       needs.detect-changes.outputs.events == 'true' ||
       needs.detect-changes.outputs.history == 'true' ||
       needs.detect-changes.outputs.localisation == 'true' ||
@@ -517,6 +606,11 @@ jobs:
             title: "Validate Faction System"
             strict: true
             should_run: ${{ needs.detect-changes.outputs.factions }}
+          - script: validate_mios.py
+            name: mios
+            title: "Validate MIO Organizations"
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.mios }}
           - script: validate_scripted_gui.py
             name: scripted-gui
             title: "Validate Scripted GUIs"
@@ -682,6 +776,10 @@ jobs:
     # was cancelled. (The workflow only triggers on pull_request, so no event
     # guard is needed.)
     if: ${{ !cancelled() }}
+    # PR context rebuilt for workflow_dispatch runs — see prepare-workspace.
+    env:
+      PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       # Checkout the report generator + the report_lib package it imports.
       # Stays much smaller than a full checkout — we skip everything else.
@@ -714,8 +812,8 @@ jobs:
           python3 tools/generate_validation_report.py \
             --results-dir validation-results \
             --output report.md \
-            --pr-number "${{ github.event.pull_request.number }}" \
-            --commit-sha "${{ github.event.pull_request.head.sha }}" \
+            --pr-number "$PR_NUMBER" \
+            --commit-sha "$HEAD_SHA" \
             --workflow-run-url "$workflow_url" \
             --github-repository "${{ github.repository }}" \
             --post-comment \

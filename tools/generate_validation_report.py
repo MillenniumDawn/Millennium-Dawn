@@ -28,6 +28,7 @@ from report_lib import (  # noqa: E402
     MAX_ISSUES_STEP_SUMMARY,
     ReportContext,
     dedupe,
+    delete_comment,
     load_all,
     post_checks,
     post_comment,
@@ -175,23 +176,39 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 return 1
-            success, message = post_comment(
-                repo_owner,
-                repo_name,
-                args.pr_number,
-                body,
-                args.github_token,
-            )
-            (print if success else _err)(f"PR comment: {message}")
-            # A read-only GITHUB_TOKEN (fork PRs get one regardless of the
-            # workflow's permissions block) can't post comments. Don't fail the
-            # job over it — the report still uploads as an artifact. Mirrors the
-            # Checks API handling below.
-            if not success:
-                _err(
-                    "PR comment could not be posted; continuing. "
-                    "See the validation-report artifact for the full report."
+            if not deduped:
+                # No findings: drop the previous run's comment instead of
+                # posting an empty report (#2702).
+                success, message = delete_comment(
+                    repo_owner,
+                    repo_name,
+                    args.pr_number,
+                    args.github_token,
                 )
+                (print if success else _err)(f"No findings — {message}")
+                if not success:
+                    _err(
+                        "Stale report comment could not be deleted; continuing. "
+                        "See the validation-report artifact for the full report."
+                    )
+            else:
+                success, message = post_comment(
+                    repo_owner,
+                    repo_name,
+                    args.pr_number,
+                    body,
+                    args.github_token,
+                )
+                (print if success else _err)(f"PR comment: {message}")
+                # A read-only GITHUB_TOKEN (fork PRs get one regardless of the
+                # workflow's permissions block) can't post comments. Don't fail the
+                # job over it — the report still uploads as an artifact. Mirrors the
+                # Checks API handling below.
+                if not success:
+                    _err(
+                        "PR comment could not be posted; continuing. "
+                        "See the validation-report artifact for the full report."
+                    )
 
         if args.checks_api:
             if not args.commit_sha:

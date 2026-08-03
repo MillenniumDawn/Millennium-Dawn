@@ -1624,6 +1624,37 @@ class Validator(BaseValidator):
             category="missing-decision-localisation",
         )
 
+    def validate_missing_log(self):
+        """Flag decisions whose complete_effect has effects but no log line.
+
+        AGENTS.md / decision-reference.md require a log in complete_effect:
+        `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. Decisions with
+        an empty complete_effect have nothing to log and are skipped.
+        """
+        self._log_section(
+            "Checking decisions with effects but no log in complete_effect..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+        for dec in factories:
+            if not dec.complete_effect:
+                continue
+            if re.search(r"\blog\s*=\s*\"", dec.complete_effect):
+                continue
+            results.append(
+                f"{dec.token} - {dec.source_basename}: complete_effect has "
+                "effects but no log line"
+            )
+
+        self._report(
+            results,
+            "✓ All decisions with effects log in complete_effect",
+            "Decisions with effects but no log in complete_effect:",
+            Severity.WARNING,
+            category="missing-decision-log",
+        )
+
     def validate_visible_in_missions(self):
         """Flag missions that have a visible block.
 
@@ -1966,6 +1997,7 @@ class Validator(BaseValidator):
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
         self.validate_missing_localisation()
+        self.validate_missing_log()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
         self.validate_missing_war_hint()

@@ -1,0 +1,47 @@
+name: Nightly PR Revalidation
+
+# Re-runs the coding pipeline for every open PR against its head branch, so
+# validation tracks the PR's merge ref after main advances. pull_request
+# events only fire on pushes: a PR that sits open while main moves gets stale
+# checks with no way to refresh them short of a re-push. This workflow
+# dispatches coding-pipeline.yml (workflow_dispatch) for each open PR, which
+# rebuilds the PR context from the pr_number/base_sha inputs.
+#
+# Fork PRs are skipped: workflow_dispatch refs must live in this repo, so a
+# fork's head branch cannot be dispatched. Fork PRs still validate on every
+# push via the normal pull_request trigger.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  # Needed to dispatch coding-pipeline.yml for each open PR.
+  actions: write
+
+concurrency:
+  group: nightly-pr-revalidation
+  cancel-in-progress: true
+
+jobs:
+  revalidate-open-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch validation for open PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pulls_url="repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100"
+          prs=$(gh api "$pulls_url" \
+            --jq '.[] | select(.head.repo.full_name == env.GITHUB_REPOSITORY) |
+            [.number, .head.ref, .base.sha] | @tsv')
+          count=0
+          while IFS=$'\t' read -r num ref base_sha; do
+            [ -z "$num" ] && continue
+            gh workflow run "coding-pipeline.yml" --ref "$ref" \
+              -f pr_number="$num" -f base_sha="$base_sha"
+            count=$((count + 1))
+          done <<< "$prs"
+          echo "Dispatched coding-pipeline for $count open PR(s)"

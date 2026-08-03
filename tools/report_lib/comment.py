@@ -76,6 +76,46 @@ def post_comment(
         return False, f"post comment: {e}"
 
 
+def delete_comment(
+    repo_owner: str,
+    repo_name: str,
+    pr_number: str,
+    github_token: str,
+) -> Tuple[bool, str]:
+    """Delete the bot's validation report comment, if one exists.
+
+    Used when a run has no findings: the previous run's comment would
+    otherwise linger with stale warnings, and there is nothing new to post.
+    Returns (success, message).
+    """
+    api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
+    headers = _auth_headers(github_token)
+
+    try:
+        comments = _get(f"{api_base}/issues/{pr_number}/comments", headers)
+    except urllib.error.HTTPError as e:
+        return False, _fmt_http_error("list comments", e)
+    except Exception as e:
+        return False, f"list comments: {e}"
+
+    existing = find_existing_comment(comments)
+    if not existing:
+        return True, "no report comment to delete"
+    try:
+        req = urllib.request.Request(
+            f"{api_base}/issues/comments/{existing['id']}",
+            headers=headers,
+            method="DELETE",
+        )
+        with urllib.request.urlopen(req):
+            pass
+        return True, f"deleted comment #{existing['id']}"
+    except urllib.error.HTTPError as e:
+        return False, _fmt_http_error("delete comment", e)
+    except Exception as e:
+        return False, f"delete comment: {e}"
+
+
 def _auth_headers(github_token: str) -> dict:
     return {
         "Authorization": f"Bearer {github_token}",
