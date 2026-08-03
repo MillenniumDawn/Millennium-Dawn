@@ -234,6 +234,7 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 | ------------------------------------ |
 | `civilian_chip_consumption_modifier` |
 | `industry_chip_consumption_modifier` |
+| `country_extra_microchip_per_plant_modifier` |
 
 ### Outlook Campaign Costs
 
