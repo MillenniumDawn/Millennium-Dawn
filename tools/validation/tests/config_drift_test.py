@@ -34,6 +34,7 @@ PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
+NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
 
 # Validators intentionally absent from the CI matrices. Each needs a reason.
 CI_EXEMPT = {
@@ -338,11 +339,34 @@ def test_validator_cache_restore_is_source_hash_scoped():
         )
 
 
+def test_nightly_keys_the_bundle_on_the_live_base_tip():
+    # WORKSPACE_KEY's base component is the only thing that invalidates the
+    # bundle when main advances under a PR that got no pushes. Cache keys are
+    # immutable, so a base that doesn't move makes cache/save a no-op and every
+    # validator restores the previous run's tree while the run reports green.
+    config = yaml.safe_load(NIGHTLY_WORKFLOW.read_text(encoding="utf-8"))
+    step = next(
+        step
+        for step in config["jobs"]["revalidate-open-prs"]["steps"]
+        if "gh workflow run" in step.get("run", "")
+    )
+    script = "\n".join(
+        line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
+    )
+    assert "commits/main" in script, (
+        "the nightly must resolve main's live head for base_sha"
+    )
+    assert ".base.sha" not in script, (
+        "the PR list's .base.sha does not track main, so it cannot key the bundle"
+    )
+
+
 def test_tools_validation_triggers_for_consumed_configuration():
     paths = _pull_request_paths(TOOLS_WORKFLOW)
     assert {
         ".pre-commit-config.yaml",
         ".github/workflows/coding-pipeline.yml",
+        ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/validator-cache.yml",
     } <= paths
 
@@ -355,7 +379,10 @@ def test_tools_tests_checkout_consumed_workflows():
         if step.get("uses", "").startswith("actions/checkout@")
     )
     sparse_paths = set(checkout["with"]["sparse-checkout"].splitlines())
-    assert ".github/workflows/validator-cache.yml" in sparse_paths
+    assert {
+        ".github/workflows/validator-cache.yml",
+        ".github/workflows/nightly-pr-validation.yml",
+    } <= sparse_paths
 
 
 def test_manual_texture_audit_always_runs():
