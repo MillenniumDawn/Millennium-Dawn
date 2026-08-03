@@ -2,6 +2,10 @@
 
 Pre-commit and CI do not run the same hook set. Things that pass locally can still fail CI, and vice versa. Read this before wiring, judging, or debugging any validator.
 
+## The validator test suite is a hard gate
+
+CI runs `python -m pytest` on every PR touching `tools/` (`report-lib-tests` job in `tools-validation.yml`; testpaths in `pyproject.toml` cover all six test dirs). It must be green permanently — do not introduce regressions into the testing schema. A validator's behavior and its regression tests are one change: when a `*_test.py` in `tools/validation/tests/` (or the other test dirs) breaks because a validator changed, update the test to the new correct behavior in the same commit. If the test reflects the correct invariant and the validator regressed, fix the validator instead. Never delete or weaken a regression test to make it pass; the suite is the acceptance gate for validator wiring, and a red `pytest` blocks the PR regardless of how clean the validators themselves run. Run `python -m pytest` locally before merging any `tools/` change.
+
 ## When the coding pipeline runs
 
 `coding-pipeline.yml` triggers on `pull_request` (`opened`, `synchronize`, `reopened`, `ready_for_review`, targeting `main`, content-path filtered). Two extra entry points cover open PRs that get no pushes:
