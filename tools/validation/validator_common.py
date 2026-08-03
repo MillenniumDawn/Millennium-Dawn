@@ -153,6 +153,7 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "mtg_usa_congress_large_support_tt",
         "mtg_usa_congress_medium_opposition_tt",
         "mtg_usa_congress_medium_support_tt",
+        "mtg_usa_congress_remove_state_tt",
         "mtg_usa_congress_small_opposition_tt",
         "mtg_usa_congress_small_support_tt",
         "mtg_usa_house_large_opposition_tt",
