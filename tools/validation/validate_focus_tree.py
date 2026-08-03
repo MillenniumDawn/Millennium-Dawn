@@ -158,8 +158,14 @@ _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 # also clears the check: it fronts the same effect_tooltip preview for an event
 # whose options are not an accept/decline pair (the target picks how to react,
 # and every branch lands on the sender), where "if they accept" would be a lie.
+# TT_IF_THIS_ACCEPTS and TT_IF_EACH_ACCEPTS are the same preview worded for one
+# named target and for a fan-out; the former renders [THIS.GetNameWithFlag], so
+# it sits inside the target's scope block rather than beside its effect_tooltip.
 _COUNTRY_EVENT_RE = re.compile(r"\bcountry_event\b")
-_TT_IF_THEY_ACCEPT_RE = re.compile(r"\b(?:TT_IF_THEY_ACCEPT|TT_EFFECTS_FROM_EVENT)\b")
+_TT_IF_THEY_ACCEPT_RE = re.compile(
+    r"\b(?:TT_IF_THEY_ACCEPT|TT_IF_THIS_ACCEPTS"
+    r"|TT_IF_EACH_ACCEPTS|TT_EFFECTS_FROM_EVENT)\b"
+)
 # Target of a fire, in both `country_event = foo.1` and
 # `country_event = { id = foo.1 days = 3 }` form.
 _FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w.]+)")
@@ -944,7 +950,7 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.cross_country_tt.v5",
+        "focus_tree.cross_country_tt.v6",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
