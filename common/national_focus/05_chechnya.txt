@@ -6385,6 +6385,10 @@ focus_tree = {
 				uses = 2
 				cost_reduction = 0.2
 			}
+
+			clr_country_flag = Chechnya_grozny_tripwire
+			clr_country_flag = Chechnya_grozny_leisure_room
+			clr_country_flag = Chechnya_grozny_breakout
 		}
 
 		ai_will_do = {
@@ -6491,6 +6495,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_raid_ingush_bases"
+			custom_effect_tooltip = CHE_ingushetia_uprising_tooltip
+			newline = yes
 			country_event = chechnya.16
 		}
 
@@ -6671,7 +6677,6 @@ focus_tree = {
 			
 			custom_effect_tooltip = add_event_chain_between_you_and_turkey_to_have_vol_also_allows_for_azerbijan_intervention
 		}
-
 		ai_will_do = {
 			base = 1
 		}
@@ -6689,18 +6694,52 @@ focus_tree = {
 
 		prerequisite = { focus = CHE_Bloodied_But_Unbroken }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		continue_if_invalid = no
 
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_Breakout_from_Grozny"
+		available = {
+			IF = {
+				limit = {
+					has_country_flag = Chechnya_grozny_tripwire
+					NOT = {
+						has_country_flag = Chechnya_grozny_leisure_room
+						has_country_flag = Chechnya_grozny_breakout
+					}
+				}
+				controls_province = 1239
+				has_army_size = {
+					size > 16
+				}
+			}
+		}
+
+		select_effect = {
+			log = "(select_effect) [GetDateText]: [Root.GetName]: Focus CHE_Breakout_from_Grozny"
+
+			clr_country_flag = Chechnya_grozny_tripwire
+			clr_country_flag = Chechnya_grozny_leisure_room
 			
-			custom_effect_tooltip = CHE_martyrs_of_war_tooltip
+			IF = {
+				limit = {
+					NOT = {
+						has_country_flag = Chechnya_grozny_breakout
+					}
+				}
+				
+				set_country_flag = Chechnya_grozny_leisure_room
 
-			line = yes
+				set_country_flag = Chechnya_grozny_tripwire
 
-			custom_effect_tooltip = CHE_grozny_holdout_tooltip
-			
-			hidden_effect = {
+				country_event = {
+					id = chechnya_events.9
+					days = 12
+				}
+			}
+
+			IF = {
+				limit = {
+					has_country_flag = Chechnya_grozny_breakout
+				}
+				#Event Chains
 				672 = {
 					add_province_modifier = {
 						static_modifiers = {
@@ -6712,8 +6751,62 @@ focus_tree = {
 					}
 				}
 			}
-			newline = yes
-			custom_effect_tooltip = Remove_idea_that_stops_cap_on_grozny_need_dual_focus_for_holding_grozny_should_be_other_focus_displayed_slashh_text
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_Breakout_from_Grozny"
+
+			IF = {
+				limit = {
+					OR = {
+						NOT = {
+							has_country_flag = Chechnya_grozny_tripwire
+							has_country_flag = Chechnya_grozny_breakout
+						}
+						has_country_flag = Chechnya_grozny_leisure_room
+					}
+				}
+				custom_effect_tooltip = CHE_hold_grozny_tooltip
+
+				hidden_effect = {
+					672 = {
+						add_province_modifier = {
+							static_modifiers = {
+								grozny_holdout
+							}
+							province = {
+								id = 666
+							}
+						}
+					}
+				}
+			}
+
+			IF = {
+				limit = {
+					has_country_flag = Chechnya_grozny_breakout
+				}
+				custom_effect_tooltip = CHE_martyrs_of_war_tooltip
+
+				line = yes
+
+				custom_effect_tooltip = CHE_grozny_holdout_tooltip
+
+				hidden_effect = {
+					672 = {
+						remove_province_modifier = {
+							static_modifiers = {
+								grozny_breakout
+							}
+							province = {
+								id = 666
+							}
+						}
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
