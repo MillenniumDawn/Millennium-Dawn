@@ -264,10 +264,9 @@ def _check_focus_standards(text: str, path: str):
 
 
 def _has_focus_format(focus_id: str) -> bool:
-    for prefix in _SHARED_FOCUS_PREFIXES:
-        if focus_id.startswith(prefix):
-            return True
-    return bool(_RE_FOCUS_FORMAT.match(focus_id))
+    return focus_id.startswith(_SHARED_FOCUS_PREFIXES) or bool(
+        _RE_FOCUS_FORMAT.match(focus_id)
+    )
 
 
 def _check_event_log_standards(text: str, path: str):

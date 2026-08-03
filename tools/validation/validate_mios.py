@@ -55,12 +55,9 @@ def _block_spans(text: str) -> List[Tuple[int, int, str]]:
 class Validator(BaseValidator):
     TITLE = "MIOS"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def _org_files(self) -> List[str]:
         pattern = str(Path(self.mod_path) / ORG_DIR / "*.txt")
-        files = sorted(glob.iglob(pattern))
+        files = sorted(glob.glob(pattern))
         if not self.staged_only:
             return files
         staged = set(os.path.abspath(f) for f in (self.staged_files or []))
@@ -93,7 +90,7 @@ class Validator(BaseValidator):
 
     @staticmethod
     def _is_shared(org_id: str) -> bool:
-        return any(org_id.startswith(p) for p in SHARED_PREFIXES)
+        return org_id.startswith(SHARED_PREFIXES)
 
     def _check_id(self, org_id: str, rel: str, body_offset: int):
         if self._is_shared(org_id):
@@ -142,9 +139,18 @@ class Validator(BaseValidator):
 
     def _check_positions(self, body: str, rel: str, body_offset: int):
         for m in POSITION_X_RE.finditer(body):
-            x = int(m.group(1))
+            line = body_offset + body.count("\n", 0, m.start()) + 1
+            try:
+                x = int(m.group(1))
+            except ValueError:
+                self.add_error(
+                    "trait-x-invalid",
+                    "trait position x must be an integer",
+                    rel,
+                    line,
+                )
+                continue
             if x > 9:
-                line = body_offset + body.count("\n", 0, m.start()) + 1
                 self.add_warning(
                     "trait-x-bounds",
                     f"trait position x = {x} must stay inside 0..9",

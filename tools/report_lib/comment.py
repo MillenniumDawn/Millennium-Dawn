@@ -47,7 +47,7 @@ def post_comment(
     headers = _auth_headers(github_token)
 
     try:
-        comments = _get(f"{api_base}/issues/{pr_number}/comments", headers)
+        comments = _get_comments(f"{api_base}/issues/{pr_number}/comments", headers)
     except urllib.error.HTTPError as e:
         return False, _fmt_http_error("list comments", e)
     except Exception as e:
@@ -92,7 +92,7 @@ def delete_comment(
     headers = _auth_headers(github_token)
 
     try:
-        comments = _get(f"{api_base}/issues/{pr_number}/comments", headers)
+        comments = _get_comments(f"{api_base}/issues/{pr_number}/comments", headers)
     except urllib.error.HTTPError as e:
         return False, _fmt_http_error("list comments", e)
     except Exception as e:
@@ -125,24 +125,43 @@ def _auth_headers(github_token: str) -> dict:
     }
 
 
+def _get_comments(url: str, headers: dict) -> list:
+    comments = []
+    separator = "&" if "?" in url else "?"
+    page = 1
+    while True:
+        batch = _get(f"{url}{separator}per_page=100&page={page}", headers)
+        comments.extend(batch)
+        if len(batch) < 100:
+            return comments
+        page += 1
+
+
 def _get(url: str, headers: dict) -> list:
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        return _decode_json(resp)
 
 
 def _post(url: str, payload: dict, headers: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
     with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        return _decode_json(resp)
 
 
 def _patch(url: str, payload: dict, headers: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="PATCH")
     with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        return _decode_json(resp)
+
+
+def _decode_json(response):
+    try:
+        return json.loads(response.read().decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        raise ValueError("invalid JSON response") from e
 
 
 def _fmt_http_error(label: str, e: urllib.error.HTTPError) -> str:

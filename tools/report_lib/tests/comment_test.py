@@ -1,15 +1,9 @@
 """Tests for `report_lib.comment.find_existing_comment` and delete_comment."""
 
+from contextlib import nullcontext
+
 from report_lib import comment as C
 from report_lib.comment import REPORT_MARKER, delete_comment, find_existing_comment
-
-
-class _Resp:
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        return False
 
 
 def _comment(body, bot=True, cid=1):
@@ -71,7 +65,7 @@ def test_delete_comment_removes_marker_comment(monkeypatch):
     def fake_urlopen(req):
         deleted.append(req.full_url)
         assert req.method == "DELETE"
-        return _Resp()
+        return nullcontext()
 
     monkeypatch.setattr(C.urllib.request, "urlopen", fake_urlopen)
     success, message = delete_comment("owner", "repo", "7", "token")
@@ -83,13 +77,7 @@ def test_delete_comment_removes_marker_comment(monkeypatch):
 def test_delete_comment_falls_back_to_legacy_title(monkeypatch):
     comments = [_comment("# Validation Report\nlegacy, no marker", cid=9)]
     monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
-    deleted = []
-
-    def fake_urlopen(req):
-        deleted.append(req.full_url)
-        return _Resp()
-
-    monkeypatch.setattr(C.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(C.urllib.request, "urlopen", lambda _req: nullcontext())
     success, message = delete_comment("owner", "repo", "7", "token")
     assert success
     assert "deleted comment #9" in message

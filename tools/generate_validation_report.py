@@ -69,6 +69,15 @@ def build_report(results_dir: str, ctx: ReportContext):
     return body, step_body, runs, deduped, truncated
 
 
+def should_delete_comment(runs, deduped, validation_scope: str) -> bool:
+    return (
+        validation_scope == "full"
+        and bool(runs)
+        and not deduped
+        and all(run.status == "passed" for run in runs)
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Generate the Millennium Dawn validation PR report",
@@ -79,6 +88,11 @@ def main() -> int:
     parser.add_argument("--commit-sha")
     parser.add_argument("--workflow-run-url")
     parser.add_argument("--artifact-url")
+    parser.add_argument(
+        "--validation-scope",
+        choices=("partial", "full"),
+        default="partial",
+    )
     parser.add_argument("--print", action="store_true")
     parser.add_argument(
         "--post-comment",
@@ -176,21 +190,25 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 return 1
-            if not deduped:
-                # No findings: drop the previous run's comment instead of
-                # posting an empty report (#2702).
+            if should_delete_comment(runs, deduped, args.validation_scope):
                 success, message = delete_comment(
                     repo_owner,
                     repo_name,
                     args.pr_number,
                     args.github_token,
                 )
-                (print if success else _err)(f"No findings — {message}")
+                (print if success else _err)(f"No findings: {message}")
                 if not success:
                     _err(
                         "Stale report comment could not be deleted; continuing. "
                         "See the validation-report artifact for the full report."
                     )
+            elif not deduped:
+                print(
+                    "No findings from partial or incomplete validation; retaining "
+                    "the existing PR comment.",
+                    file=sys.stderr,
+                )
             else:
                 success, message = post_comment(
                     repo_owner,
