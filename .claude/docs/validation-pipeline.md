@@ -2,6 +2,24 @@
 
 Pre-commit and CI do not run the same hook set. Things that pass locally can still fail CI, and vice versa. Read this before wiring, judging, or debugging any validator.
 
+## The validator test suite is a hard gate
+
+CI runs `python -m pytest` on every PR touching `tools/` (`report-lib-tests` job in `tools-validation.yml`; testpaths in `pyproject.toml` cover all six test dirs). It must be green permanently — do not introduce regressions into the testing schema. A validator's behavior and its regression tests are one change: when a `*_test.py` in `tools/validation/tests/` (or the other test dirs) breaks because a validator changed, update the test to the new correct behavior in the same commit. If the test reflects the correct invariant and the validator regressed, fix the validator instead. Never delete or weaken a regression test to make it pass; the suite is the acceptance gate for validator wiring, and a red `pytest` blocks the PR regardless of how clean the validators themselves run. Run `python -m pytest` locally before merging any `tools/` change.
+
+## When the coding pipeline runs
+
+`coding-pipeline.yml` triggers on `pull_request` (`opened`, `synchronize`, `reopened`, `ready_for_review`, targeting `main`, content-path filtered). Two extra entry points cover open PRs that get no pushes:
+
+- `workflow_dispatch` (inputs `pr_number`, `base_sha`) — manual re-run for an open PR, keyed on the PR's head branch as `ref`. The PR context is rebuilt from the inputs: `PR_NUMBER`/`HEAD_SHA`/`BASE_SHA` are `inputs.X || github.event.pull_request.X` everywhere they are used (workspace cache key, manifest, report). `detect-changes` skips `dorny/paths-filter` on dispatch (no checkout, no base ref) and treats every group as changed except `style` — the style job is diff-scoped, and a dispatch has no diff.
+- `nightly-pr-validation.yml` — cron (06:00 UTC) + manual dispatch. Lists open PRs targeting `main` and dispatches `coding-pipeline.yml` per PR, so validation tracks the merge ref after main advances. `base_sha` is main's live head, resolved once per sweep: it is the only component of the workspace cache key that moves when main does, and cache keys are immutable, so a stale value would make `cache/save` a no-op and replay the previous run's tree. Fork PRs are skipped (dispatch refs must live in this repo); they still validate on every push. Two more classes are warned about and skipped rather than dispatched: a PR with no `refs/pull/N/merge` (it conflicts with main, and the pipeline checks that ref out) and a PR whose head branch predates the `workflow_dispatch` trigger (a dispatch runs the workflow file as it exists on `--ref`, so those branches need a rebase first).
+
+A report comment is only created when a run has findings (#2702). A clean run never opens one, and what it does with an existing one depends on scope:
+
+- **full** (dispatch only, every validator ran and passed): deletes the comment.
+- **partial** (per-PR, only the changed groups' validators ran): rewrites the comment in place so it stops reporting an older commit, and leaves the PR uncommented if there was never a comment. It cannot delete, because a validator that did not run this time may still have live findings from an earlier push.
+
+Partial reports label themselves in the verdict banner and metadata strip. Scope is computed in the `validation-report` job and passed as `--validation-scope`.
+
 ## The split
 
 - Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `check_common_mistakes.py` and `validate_defines.py`. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
@@ -9,6 +27,9 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 - `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` (all `tools/linting/`) are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land BOM or encoding regressions. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
 - `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate the manifest with `gen_vanilla_defines_manifest.py` after a HOI4 version bump (same for `vanilla_sprites.txt` via `gen_vanilla_sprites_manifest.py`).
 - `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`--strict`) — the undefined-idea backlog was cleared, so both sides gate identically.
+- `validate_mios.py` runs on both sides with the same `--strict` (org-id format, `allowed = { original_tag = TAG }`, initial-trait naming, trait-grid x ≤ 9, non-empty `on_complete`). The id/allowed/on*complete checks gate; trait naming and x-bounds are WARNING-severity — the remaining ~30-item backlog surfaces in reports without gating. `generic*`/`GENERIC*`shared orgs are exempt, as are`generic*`-named initial traits (they reference shared traits in `MD_generic_organization.txt`). Negative x is the mod's standard organic-layout first column, so only the upper bound is a finding.
+- `validate_decisions.py` carries a WARNING-severity `missing-decision-log` check (complete_effect with effects but no `log =` line) — the ~650-decision backlog is report-only until cleared.
+- `validate_style.py` exempts `EH_` focus IDs via `_SHARED_FOCUS_PREFIXES` — the Event Horizon tree is generic (`event_horizon_generic_focus`) and `EH_` is its mod-wide domain prefix.
 - `validate_unused_textures.py` is wired into pre-commit as `stages: [manual]` only. CI cannot run it, so invoke the manual hook when a texture audit is needed.
 - `validate_set_variables.py` runs **CI-only**, `--strict` (its unused-variable backlog was cleared). No pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) for a local check.
 - `validate_scripted_localisation.py` runs **CI-only**, `--strict` (its missing/unused scripted-loc backlog was cleared). No pre-commit hook; run it directly for a local check.
