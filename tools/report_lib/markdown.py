@@ -49,7 +49,7 @@ def render(
     parts.append("# Validation Report")
     parts.append("")
 
-    verdict = _render_verdict(runs)
+    verdict = _render_verdict(runs, ctx.validation_scope)
     if verdict:
         parts.append(verdict)
         parts.append("")
@@ -137,7 +137,7 @@ def _severity_icon(errors: int, warnings: int) -> str:
 # ── Verdict banner ─────────────────────────────────────────────────────────────
 
 
-def _render_verdict(runs: List[ValidatorRun]) -> str:
+def _render_verdict(runs: List[ValidatorRun], validation_scope: str = "full") -> str:
     """A GitHub alert callout giving an at-a-glance pass/fail verdict."""
     if not runs:
         return ""
@@ -153,9 +153,12 @@ def _render_verdict(runs: List[ValidatorRun]) -> str:
         line = f"{_plural(total_warnings, 'warning')} to review. None block merge."
         return f"> [!WARNING]\n> ⚠️ {line}"
 
-    return (
-        f"> [!NOTE]\n> ✅ All {_plural(len(runs), 'validator')} passed. Nothing to fix."
+    tail = (
+        "Nothing to fix."
+        if validation_scope == "full"
+        else "Nothing to fix in the file groups this diff touches."
     )
+    return f"> [!NOTE]\n> ✅ All {_plural(len(runs), 'validator')} passed. {tail}"
 
 
 # ── Metadata strip ─────────────────────────────────────────────────────────────
@@ -171,6 +174,8 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
         bits.append(f"**Run:** [step summary]({ctx.workflow_run_url})")
     if ctx.date_utc:
         bits.append(f"**Date:** {ctx.date_utc}")
+    if ctx.validation_scope != "full":
+        bits.append("**Scope:** changed file groups only")
     return " · ".join(bits)
 
 

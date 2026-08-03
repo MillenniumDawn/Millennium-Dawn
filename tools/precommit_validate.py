@@ -135,6 +135,10 @@ _REGISTRY = [
         ],
     ),
     _Spec("validate_events", [("events/", TXT)]),
+    _Spec(
+        "validate_mios",
+        [("common/military_industrial_organization/organizations/", TXT)],
+    ),
 ]
 
 

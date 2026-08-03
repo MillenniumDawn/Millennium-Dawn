@@ -71,6 +71,10 @@ _GOLDEN = {
     },
     "localisation/english/MD_focus_SER_l_english.yml": {"validate_ideas"},
     "common/factions/x.txt": {"validate_style"},
+    "common/military_industrial_organization/organizations/MD_ISR_organizations.txt": {
+        "validate_style",
+        "validate_mios",
+    },
     "history/countries/x.txt": {
         "validate_style",
         "validate_ideas",
