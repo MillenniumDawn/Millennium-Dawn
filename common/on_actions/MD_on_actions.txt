@@ -47,6 +47,7 @@ on_actions = {
 
 			# No longer subject stop paying for subsidies
 			if = { limit = { NOT = { check_variable = { subject_subsidization^0 = 0 } } }
+				clear_array = subject_subsidization_to_remove
 				for_each_scope_loop = {
 					array = subject_subsidization
 					if = {
@@ -68,10 +69,16 @@ on_actions = {
 						PREV = {
 							set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
 							clr_country_flag = overlord_is_subsidizing_us_@PREV
-							remove_from_array = { subject_subsidization = PREV.id }
+							# Staged, not removed in place: removing while the loop walks the same array shifts later entries
+							add_to_array = { array = subject_subsidization_to_remove value = PREV }
 						}
 					}
 				}
+				for_each_scope_loop = {
+					array = subject_subsidization_to_remove
+					PREV = { remove_from_array = { array = subject_subsidization value = PREV } }
+				}
+				clear_array = subject_subsidization_to_remove
 			}
 
 			if = { limit = { NOT = { has_country_flag = disabled_economic_system } }

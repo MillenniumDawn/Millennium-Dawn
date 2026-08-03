@@ -146,6 +146,27 @@ def test_worker_clears_fire_with_tooltip(tmp_path):
     assert _ids(tmp_path, reward) == set()
 
 
+def test_worker_clears_fire_with_this_accepts_inside_target_scope(tmp_path):
+    reward = (
+        "GER = {\n"
+        "\t\t\t\tcountry_event = x.1\n"
+        "\t\t\t\tcustom_effect_tooltip = TT_IF_THIS_ACCEPTS\n"
+        "\t\t\t}\n"
+        "\t\t\teffect_tooltip = { add_stability = 0.05 }"
+    )
+    assert _ids(tmp_path, reward) == set()
+
+
+def test_worker_clears_fire_with_each_accepts(tmp_path):
+    reward = (
+        "custom_effect_tooltip = TT_IF_EACH_ACCEPTS\n"
+        "\t\t\teffect_tooltip = { add_stability = 0.05 }\n"
+        "\t\t\tGER = { country_event = x.1 }\n"
+        "\t\t\tFRA = { country_event = x.1 }"
+    )
+    assert _ids(tmp_path, reward) == set()
+
+
 def test_worker_ignores_self_owner_tag(tmp_path):
     assert _ids(tmp_path, "BUL = { country_event = x.1 }") == set()
 
