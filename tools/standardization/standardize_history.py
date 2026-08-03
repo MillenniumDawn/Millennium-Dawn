@@ -498,13 +498,9 @@ class HistoryStandardizer(BaseStandardizer):
 
     # -- formatting --------------------------------------------------------- #
 
-    def _emit_stmt(self, stmt: Dict[str, List[str]], out: List[str], seen: set) -> None:
-        key = "\n".join(stmt["lines"]).strip()
-        if key and key in seen:
-            log_message("DEBUG", f"Collapsed duplicate: {key[:60]}", self.verbose)
-            return
-        if key:
-            seen.add(key)
+    def _emit_stmt(self, stmt: Dict[str, List[str]], out: List[str]) -> None:
+        # Lossless: repeated statements (e.g. two add_equipment, two set_variable)
+        # are semantically meaningful in history files, so every one is kept.
         out.extend(c for c in stmt["comments"] if c.strip())
         out.extend(stmt["lines"])
 
@@ -518,9 +514,8 @@ class HistoryStandardizer(BaseStandardizer):
         if not stmts:
             return
         rendered: List[str] = []
-        seen: set = set()
         for stmt in stmts:
-            self._emit_stmt(stmt, rendered, seen)
+            self._emit_stmt(stmt, rendered)
         if not rendered:
             return
         out.append("")
@@ -531,9 +526,8 @@ class HistoryStandardizer(BaseStandardizer):
         if not stmts:
             return
         out.append("")
-        seen: set = set()
         for stmt in stmts:
-            self._emit_stmt(stmt, out, seen)
+            self._emit_stmt(stmt, out)
 
     def _emit_equipment(
         self, props: Dict[str, Any], indent: str, out: List[str]
@@ -587,11 +581,10 @@ class HistoryStandardizer(BaseStandardizer):
         if props["modifiers"]:
             out.append("")
             out.append(f"{indent}# Dynamic Modifiers")
-            seen: set = set()
             for name, slot in props["modifiers"].items():
-                self._emit_stmt(slot["stmt"], out, seen)
+                self._emit_stmt(slot["stmt"], out)
                 for var_stmt in slot["vars"]:
-                    self._emit_stmt(var_stmt, out, seen)
+                    self._emit_stmt(var_stmt, out)
 
         self._emit_group("System Variables", props["system_vars"], indent, out)
         self._emit_group("Special Projects", props["special_projects"], indent, out)

@@ -7,6 +7,7 @@ Standardizes HOI4 decision and decision category files according to Millennium D
 
 import argparse
 import os
+import re
 from typing import Any, Dict, List
 
 from common_utils import (
@@ -18,12 +19,28 @@ from common_utils import (
 )
 from shared_utils import (
     collapse_or_compact,
+    collapse_ws_outside_quotes,
     convert_root_factor_to_base,
     create_backup,
     extract_block,
     log_message,
     strip_inline_comment,
 )
+
+# Decision/category IDs, unlike the property keywords PROP_NAME_RE matches, may
+# contain hyphens (e.g. `Communist-State_invite`) — verified against every ID in
+# common/decisions/. A header this can't read is surfaced as an error, not guessed.
+_HEADER_ID_RE = re.compile(r"^([\w-]+)\s*=")
+
+
+def _read_header_id(block_lines: List[str]) -> str:
+    """Read the ID from a block's header line (block_lines[0]), or raise ValueError."""
+    header = block_lines[0].strip() if block_lines else ""
+    match = _HEADER_ID_RE.match(header)
+    if not match:
+        raise ValueError(f"cannot read an identifier from block header: {header!r}")
+    return match.group(1)
+
 
 _CATEGORY_SINGLE_LINE_PROPS = {
     "icon",
@@ -75,8 +92,8 @@ def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
         stripped = line.strip()
         if not stripped:
             continue
-        # Normalise internal whitespace (tabs → single spaces)
-        normalized = " ".join(stripped.split())
+        # Normalise internal whitespace (tabs → single spaces), quote-safe
+        normalized = collapse_ws_outside_quotes(stripped)
 
         opens, closes = _count_braces(normalized)
 
@@ -103,127 +120,6 @@ def _reindent_or_collapse(block_lines: List[str], base_indent: int) -> List[str]
     return multi
 
 
-class DecisionCategoryStandardizer(BaseStandardizer):
-    """Standardizer for HOI4 decision categories"""
-
-    def get_block_pattern(self) -> str:
-        """Return regex pattern to identify decision category blocks"""
-        return r"\s*\w+_category\s*=\s*{"
-
-    def extract_properties(self, block_lines: List[str]) -> Dict[str, Any]:
-        """Extract properties from decision category block lines"""
-        props: Dict[str, Any] = {
-            "id": "",
-            "allowed": [],
-            "icon": "",
-            "picture": "",
-            "priority": "",
-            "scripted_gui": "",
-            "visible_when_empty": "",
-            "visibility_type": "",
-            "visible": [],
-            "target_root_trigger": [],
-            "on_map_area": [],
-            "other": [],
-        }
-
-        if block_lines:
-            first_line = block_lines[0].strip()
-            if first_line and not first_line.startswith("#"):
-                id_match = PROP_NAME_RE.match(first_line)
-                if id_match:
-                    props["id"] = id_match.group(1)
-
-        i = 1  # Skip opening brace
-        while i < len(block_lines) - 1:  # Skip closing brace
-            line = block_lines[i].strip()
-            match = PROP_NAME_RE.match(line)
-            prop_name = match.group(1) if match else None
-
-            if prop_name in _CATEGORY_SINGLE_LINE_PROPS:
-                props[prop_name] = line
-            elif prop_name == "priority":
-                # priority can be `priority = 200` (single-line) or `priority = { base = 100 }` (block)
-                if "{" in line:
-                    block, next_i = extract_block(block_lines, i)
-                    props["priority"] = block
-                    i = next_i
-                    continue
-                else:
-                    props["priority"] = line
-            elif prop_name in _CATEGORY_BLOCK_PROPS:
-                block, next_i = extract_block(block_lines, i)
-                props[prop_name].append(block)
-                i = next_i
-                continue
-            else:
-                props["other"].append(block_lines[i])
-
-            i += 1
-
-        return props
-
-    def format_block(self, props: Dict[str, Any]) -> List[str]:
-        """Format decision category according to Millennium Dawn standard"""
-        lines = []
-
-        if props["id"]:
-            lines.append(f"{props['id']} = {{")
-        else:
-            lines.append("category = {")
-
-        for allowed in props["allowed"]:
-            lines.extend(_reindent_or_collapse(allowed, 1))
-            lines.append("")
-
-        if props["icon"]:
-            lines.append(f"\t{props['icon']}")
-
-        if props["picture"]:
-            lines.append(f"\t{props['picture']}")
-
-        if props["priority"]:
-            if isinstance(props["priority"], list):
-                lines.extend(_reindent_or_collapse(props["priority"], 1))
-                lines.append("")
-            else:
-                lines.append(f"\t{props['priority']}")
-
-        if props["scripted_gui"]:
-            lines.append(f"\t{props['scripted_gui']}")
-
-        if props["visible_when_empty"]:
-            lines.append(f"\t{props['visible_when_empty']}")
-
-        if props["visibility_type"]:
-            lines.append(f"\t{props['visibility_type']}")
-
-        for visible in props["visible"]:
-            lines.extend(_reindent_or_collapse(visible, 1))
-            lines.append("")
-
-        for target_root_trigger in props["target_root_trigger"]:
-            lines.extend(_reindent_or_collapse(target_root_trigger, 1))
-            lines.append("")
-
-        for on_map_area in props["on_map_area"]:
-            lines.extend(_reindent_or_collapse(on_map_area, 1))
-            lines.append("")
-
-        if props["other"]:
-            for line in props["other"]:
-                if line.strip():
-                    lines.append(f"\t{line.strip()}")
-            lines.append("")
-
-        # Remove trailing blank lines before closing brace
-        while lines and lines[-1] == "":
-            lines.pop()
-        lines.append("}")
-
-        return collapse_blank_runs(lines)
-
-
 def format_decision(block_lines: List[str]) -> List[str]:
     """Order-preserving reformat of a single decision block.
 
@@ -237,8 +133,7 @@ def format_decision(block_lines: List[str]) -> List[str]:
     if not block_lines:
         return block_lines
 
-    header_match = PROP_NAME_RE.match(block_lines[0].strip())
-    did = header_match.group(1) if header_match else "decision"
+    did = _read_header_id(block_lines)
 
     lines: List[str] = [f"\t{did} = {{", ""]
     i = 1  # skip opening header line
@@ -270,7 +165,7 @@ def format_decision(block_lines: List[str]) -> List[str]:
             lines.append("")
             i = next_i
         else:
-            lines.append(f"\t\t{' '.join(stripped.split())}")
+            lines.append(f"\t\t{collapse_ws_outside_quotes(stripped)}")
             lines.append("")
             i += 1
 
@@ -301,13 +196,7 @@ class DecisionStandardizer(BaseStandardizer):
         properties, ``decision`` for a nested decision block, ``raw`` for a
         comment or stray line kept verbatim.
         """
-        props: Dict[str, Any] = {"id": "", "children": []}
-
-        header_match = (
-            PROP_NAME_RE.match(block_lines[0].strip()) if block_lines else None
-        )
-        if header_match:
-            props["id"] = header_match.group(1)
+        props: Dict[str, Any] = {"id": _read_header_id(block_lines), "children": []}
 
         i = 1  # skip opening header line
         while i < len(block_lines) - 1:  # skip closing brace
@@ -349,8 +238,7 @@ class DecisionStandardizer(BaseStandardizer):
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Emit the category with its children reformatted in source order."""
-        cid = props["id"] or "category"
-        lines: List[str] = [f"{cid} = {{", ""]
+        lines: List[str] = [f"{props['id']} = {{", ""]
 
         for kind, data in props["children"]:
             if kind == "cat_single":

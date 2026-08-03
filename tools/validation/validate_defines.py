@@ -14,6 +14,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import find_hoi4_install
 from validator_common import BaseValidator, run_validator_main
 
+# Repo-relative path used in findings so GitHub error annotations resolve.
+_REL_DEFINES_PATH = "common/defines/MD_defines.lua"
+
 # Pattern: NDefines.NAMESPACE.NAME = value
 MD_DEFINE_RE = re.compile(r"NDefines\.(\w+)\.(\w+)\s*=", re.IGNORECASE)
 
@@ -256,7 +259,7 @@ class Validator(BaseValidator):
                     correct_ns = all_vanilla_names[matches[0]]
                     suggestion = f" (did you mean '{matches[0]}' in {correct_ns[0]}?)"
                 dead_results.append(
-                    f"MD_defines.lua:{line_num}: "
+                    f"{_REL_DEFINES_PATH}:{line_num}: "
                     f"{namespace}.{name} does not exist in vanilla{suggestion}"
                 )
             else:
@@ -264,7 +267,7 @@ class Validator(BaseValidator):
                 correct_namespaces = all_vanilla_names[name]
                 if namespace not in correct_namespaces:
                     namespace_results.append(
-                        f"MD_defines.lua:{line_num}: "
+                        f"{_REL_DEFINES_PATH}:{line_num}: "
                         f"{namespace}.{name} — wrong namespace, "
                         f"vanilla has it in {', '.join(correct_namespaces)}"
                     )
@@ -291,7 +294,7 @@ class Validator(BaseValidator):
             if key in seen:
                 prev_line, prev_text = seen[key]
                 duplicate_results.append(
-                    f"MD_defines.lua:{line_num}: duplicate {key} "
+                    f"{_REL_DEFINES_PATH}:{line_num}: duplicate {key} "
                     f"(first defined at line {prev_line})"
                 )
             seen[key] = (line_num, full_line)
