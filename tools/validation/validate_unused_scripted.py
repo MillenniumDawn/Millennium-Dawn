@@ -55,6 +55,9 @@ FALSE_POSITIVE_PATTERNS = [
     re.compile(
         r"^should_(not_)?activate_active_crypto_bonuses$"
     ),  # Vanilla engine crypto hooks — engine-read override points
+    re.compile(
+        r"^set_partial_draft_effect$"
+    ),  # Conscription-law preset kept for parity with its three called siblings
 ]
 
 # Files whose definitions are entirely engine-referenced (all contents are false positives)
