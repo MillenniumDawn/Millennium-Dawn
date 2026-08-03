@@ -139,23 +139,13 @@ class Validator(BaseValidator):
 
     def _check_positions(self, body: str, rel: str, body_offset: int):
         for m in POSITION_X_RE.finditer(body):
-            line = body_offset + body.count("\n", 0, m.start()) + 1
-            try:
-                x = int(m.group(1))
-            except ValueError:
-                self.add_error(
-                    "trait-x-invalid",
-                    "trait position x must be an integer",
-                    rel,
-                    line,
-                )
-                continue
+            x = int(m.group(1))
             if x > 9:
                 self.add_warning(
                     "trait-x-bounds",
                     f"trait position x = {x} must stay inside 0..9",
                     rel,
-                    line,
+                    body_offset + body.count("\n", 0, m.start()) + 1,
                 )
 
     def _check_on_complete(self, body: str, rel: str, body_offset: int):

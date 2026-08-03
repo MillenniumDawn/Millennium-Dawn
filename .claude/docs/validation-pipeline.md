@@ -7,9 +7,14 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 `coding-pipeline.yml` triggers on `pull_request` (`opened`, `synchronize`, `reopened`, `ready_for_review`, targeting `main`, content-path filtered). Two extra entry points cover open PRs that get no pushes:
 
 - `workflow_dispatch` (inputs `pr_number`, `base_sha`) — manual re-run for an open PR, keyed on the PR's head branch as `ref`. The PR context is rebuilt from the inputs: `PR_NUMBER`/`HEAD_SHA`/`BASE_SHA` are `inputs.X || github.event.pull_request.X` everywhere they are used (workspace cache key, manifest, report). `detect-changes` skips `dorny/paths-filter` on dispatch (no checkout, no base ref) and treats every group as changed except `style` — the style job is diff-scoped, and a dispatch has no diff.
-- `nightly-pr-validation.yml` — cron (06:00 UTC) + manual dispatch. Lists open PRs targeting `main` and dispatches `coding-pipeline.yml` per PR, so validation tracks the merge ref after main advances. Fork PRs are skipped (dispatch refs must live in this repo); they still validate on every push.
+- `nightly-pr-validation.yml` — cron (06:00 UTC) + manual dispatch. Lists open PRs targeting `main` and dispatches `coding-pipeline.yml` per PR, so validation tracks the merge ref after main advances. `base_sha` is main's live head, resolved once per sweep: it is the only component of the workspace cache key that moves when main does, and cache keys are immutable, so a stale value would make `cache/save` a no-op and replay the previous run's tree. Fork PRs are skipped (dispatch refs must live in this repo); they still validate on every push. Two more classes are warned about and skipped rather than dispatched: a PR with no `refs/pull/N/merge` (it conflicts with main, and the pipeline checks that ref out) and a PR whose head branch predates the `workflow_dispatch` trigger (a dispatch runs the workflow file as it exists on `--ref`, so those branches need a rebase first).
 
-The report comment is only posted when a run has findings. A clean run deletes the previous report comment instead (#2702) — no comment means the last validated state was clean.
+A report comment is only created when a run has findings (#2702). A clean run never opens one, and what it does with an existing one depends on scope:
+
+- **full** (dispatch only, every validator ran and passed): deletes the comment.
+- **partial** (per-PR, only the changed groups' validators ran): rewrites the comment in place so it stops reporting an older commit, and leaves the PR uncommented if there was never a comment. It cannot delete, because a validator that did not run this time may still have live findings from an earlier push.
+
+Partial reports label themselves in the verdict banner and metadata strip. Scope is computed in the `validation-report` job and passed as `--validation-scope`.
 
 ## The split
 

@@ -70,6 +70,7 @@ def build_report(results_dir: str, ctx: ReportContext):
 
 
 def should_delete_comment(runs, deduped, validation_scope: str) -> bool:
+    """Only a full run proves the PR clean, so only a full run may delete."""
     return (
         validation_scope == "full"
         and bool(runs)
@@ -123,6 +124,7 @@ def main() -> int:
         artifact_url=args.artifact_url,
         date_utc=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         repo=args.github_repository,
+        validation_scope=args.validation_scope,
     )
 
     body, step_body, runs, deduped, truncated = build_report(args.results_dir, ctx)
@@ -197,36 +199,29 @@ def main() -> int:
                     args.pr_number,
                     args.github_token,
                 )
-                (print if success else _err)(f"No findings: {message}")
-                if not success:
-                    _err(
-                        "Stale report comment could not be deleted; continuing. "
-                        "See the validation-report artifact for the full report."
-                    )
-            elif not deduped:
-                print(
-                    "No findings from partial or incomplete validation; retaining "
-                    "the existing PR comment.",
-                    file=sys.stderr,
-                )
             else:
+                # A clean partial run refreshes an existing comment so it stops
+                # reporting an older commit, but never opens a new one: only the
+                # changed groups' validators ran, so it cannot clear a finding
+                # an unrun validator would still report.
                 success, message = post_comment(
                     repo_owner,
                     repo_name,
                     args.pr_number,
                     body,
                     args.github_token,
+                    update_only=not deduped,
                 )
-                (print if success else _err)(f"PR comment: {message}")
-                # A read-only GITHUB_TOKEN (fork PRs get one regardless of the
-                # workflow's permissions block) can't post comments. Don't fail the
-                # job over it — the report still uploads as an artifact. Mirrors the
-                # Checks API handling below.
-                if not success:
-                    _err(
-                        "PR comment could not be posted; continuing. "
-                        "See the validation-report artifact for the full report."
-                    )
+            (print if success else _err)(f"PR comment: {message}")
+            # A read-only GITHUB_TOKEN (fork PRs get one regardless of the
+            # workflow's permissions block) can't write comments. Don't fail the
+            # job over it — the report still uploads as an artifact. Mirrors the
+            # Checks API handling below.
+            if not success:
+                _err(
+                    "PR comment could not be updated; continuing. "
+                    "See the validation-report artifact for the full report."
+                )
 
         if args.checks_api:
             if not args.commit_sha:

@@ -12,6 +12,7 @@ import urllib.request
 from typing import Optional, Tuple
 
 REPORT_MARKER = "<!-- md-validation-report:v1 -->"
+_PAGE_SIZE = 100
 
 
 def find_existing_comment(comments: list) -> Optional[dict]:
@@ -38,22 +39,22 @@ def post_comment(
     pr_number: str,
     body: str,
     github_token: str,
+    update_only: bool = False,
 ) -> Tuple[bool, str]:
     """Create or update the validation report PR comment.
 
-    Returns (success, message).
+    With *update_only* an absent comment stays absent: used when a run has
+    nothing to report but an older comment must stop showing an earlier
+    commit's findings. Returns (success, message).
     """
     api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
     headers = _auth_headers(github_token)
 
-    try:
-        comments = _get_comments(f"{api_base}/issues/{pr_number}/comments", headers)
-    except urllib.error.HTTPError as e:
-        return False, _fmt_http_error("list comments", e)
-    except Exception as e:
-        return False, f"list comments: {e}"
-
-    existing = find_existing_comment(comments)
+    existing, error = _find_report_comment(api_base, pr_number, headers)
+    if error:
+        return False, error
+    if not existing and update_only:
+        return True, "no existing comment to refresh"
     try:
         if existing:
             comment_id = existing["id"]
@@ -91,14 +92,9 @@ def delete_comment(
     api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
     headers = _auth_headers(github_token)
 
-    try:
-        comments = _get_comments(f"{api_base}/issues/{pr_number}/comments", headers)
-    except urllib.error.HTTPError as e:
-        return False, _fmt_http_error("list comments", e)
-    except Exception as e:
-        return False, f"list comments: {e}"
-
-    existing = find_existing_comment(comments)
+    existing, error = _find_report_comment(api_base, pr_number, headers)
+    if error:
+        return False, error
     if not existing:
         return True, "no report comment to delete"
     try:
@@ -125,16 +121,23 @@ def _auth_headers(github_token: str) -> dict:
     }
 
 
-def _get_comments(url: str, headers: dict) -> list:
+def _find_report_comment(api_base: str, pr_number: str, headers: dict):
+    """Return (comment_or_None, error_message_or_None)."""
     comments = []
-    separator = "&" if "?" in url else "?"
     page = 1
-    while True:
-        batch = _get(f"{url}{separator}per_page=100&page={page}", headers)
-        comments.extend(batch)
-        if len(batch) < 100:
-            return comments
-        page += 1
+    url = f"{api_base}/issues/{pr_number}/comments"
+    try:
+        while True:
+            batch = _get(f"{url}?per_page={_PAGE_SIZE}&page={page}", headers)
+            comments.extend(batch)
+            if len(batch) < _PAGE_SIZE:
+                break
+            page += 1
+    except urllib.error.HTTPError as e:
+        return None, _fmt_http_error("list comments", e)
+    except Exception as e:
+        return None, f"list comments: {e}"
+    return find_existing_comment(comments), None
 
 
 def _get(url: str, headers: dict) -> list:

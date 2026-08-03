@@ -37,7 +37,7 @@ on:
         required: false
         type: string
       base_sha:
-        description: "PR base branch sha, for the workspace cache key"
+        description: "Current head of the PR's base branch (workspace cache key)"
         required: false
         type: string
 
@@ -60,9 +60,13 @@ permissions:
 # resources/documentation carries modifiers_documentation.md, the vanilla
 # modifier list validate_modifiers.py needs (~4000 names it would otherwise
 # false-positive on).
-# The bundle key identifies the PR's exact merge tree. workflow_dispatch
-# receives the head SHA, so it substitutes the supplied base SHA for the merge
-# revision. A head/base pair invalidates the bundle after main moves.
+# The bundle key identifies the PR's exact merge tree as (pr, head sha, base
+# revision). On pull_request the base component is github.sha, the merge commit
+# itself. A workflow_dispatch run has no merge commit in context, so the caller
+# supplies the base branch's *current* head instead. Cache keys are immutable,
+# so a key that doesn't move when main moves makes cache/save a no-op and hands
+# every validator the previous run's bundle; nightly-pr-validation.yml resolves
+# that head live for exactly this reason.
 env:
   CHECKOUT_REF: >-
     ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number &&
@@ -342,7 +346,9 @@ jobs:
       # cache/save only warns on failure. Without this check a failed save
       # leaves this job green while every consumer dies on
       # fail-on-cache-miss, and "Re-run failed jobs" can never recover
-      # because the green prepare-workspace won't re-run.
+      # because the green prepare-workspace won't re-run. An entry left by an
+      # earlier run satisfies this check, which is correct: the key identifies
+      # the merge tree, so a same-key survivor holds the same content.
       - name: Verify the bundle exists
         env:
           GH_TOKEN: ${{ github.token }}
@@ -525,11 +531,20 @@ jobs:
         with:
           python-version: "3.x"
 
+      # Per-matrix opt-out: `strict: false` makes the validator informational
+      # (still produces the log + PR comment but exits 0 on findings). An entry
+      # that omits the field keeps gating behavior — never fail open by default.
       - name: Run validation
         run: |
-          python3 tools/validation/${{ matrix.validator.script }} \
-            --strict --no-color --workers 4 \
-            --output validation-${{ matrix.validator.name }}.log
+          if [ "${{ matrix.validator.strict }}" != "false" ]; then
+            python3 tools/validation/${{ matrix.validator.script }} \
+              --strict --no-color --workers 4 \
+              --output validation-${{ matrix.validator.name }}.log
+          else
+            python3 tools/validation/${{ matrix.validator.script }} \
+              --no-color --workers 4 \
+              --output validation-${{ matrix.validator.name }}.log
+          fi
 
       - name: Upload results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -771,10 +786,14 @@ jobs:
       pull-requests: write
       checks: write
     # Run the report whether validators passed or failed, but not if the run
-    # was cancelled. (The workflow only triggers on pull_request, so no event
-    # guard is needed.)
+    # was cancelled. Both triggers land here; the PR-specific steps are gated
+    # on PR_NUMBER, which a manual dispatch without pr_number leaves empty.
     if: ${{ !cancelled() }}
     # PR context rebuilt for workflow_dispatch runs — see prepare-workspace.
+    # VALIDATION_SCOPE is `full` only on a dispatch where every validator ran
+    # and passed. A pull_request run gates validators on the changed file
+    # groups, so its "no findings" may only refresh an existing report comment,
+    # never delete one.
     env:
       PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}

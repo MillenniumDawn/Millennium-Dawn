@@ -1635,9 +1635,8 @@ class Validator(BaseValidator):
             "Checking decisions with effects but no log in complete_effect..."
         )
 
-        factories = parse_all_decision_factories(self.mod_path)
         results = []
-        for dec in factories:
+        for dec in parse_all_decision_factories(self.mod_path):
             if not dec.complete_effect:
                 continue
             if re.search(r"\blog\s*=\s*\"", dec.complete_effect):
