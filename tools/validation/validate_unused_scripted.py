@@ -71,6 +71,12 @@ FALSE_POSITIVE_FILES = frozenset(
         # built flag/variable names; deliberately never called.
         "!_cwtools_dummy_effects.txt",
         # Convention/preset libraries
+        "00_alert_triggers.txt",
+        "00_continent_triggers.txt",
+        "00_cyber_triggers.txt",
+        "00_debt_ratio_triggers.txt",
+        "00_economic_triggers.txt",
+        "MD_antarctica_station_module_triggers.txt",
         "00_scripted_triggers.txt",
         "00_law_blocking_triggers.txt",
         "00_influence_scripted_triggers.txt",
