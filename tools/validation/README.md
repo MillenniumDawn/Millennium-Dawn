@@ -62,7 +62,7 @@ These cross-reference the entire codebase. A disk cache under `.validation_cache
 | **validate_set_variables.py**   | Variables set with `set_variable` are actually used somewhere                                    |
 | **validate_unused_scripted.py** | Scripted effects/triggers defined but never called                                               |
 | **validate_unused_textures.py** | Texture files not referenced in any `.gfx` file; `.gfx` entries with missing files. Manual-only. |
-| **validate_variables.py**       | Country/state/global flags and event targets: cleared-but-not-set, missing, unused               |
+| **validate_variables.py**       | Country/state/global flags and event targets: cleared-but-not-set, missing, unused; untooltipped `check_variable` in `available` (warning) |
 
 ---
 

@@ -76,7 +76,7 @@ Inside a math expression (`set_variable = { X = { value = ... } }`) a malformed 
 
 ## Variable and array operations do not auto-tooltip
 
-`check_variable`, `is_in_array`, `set/add_to/subtract_from/multiply/divide/clamp_variable`, `add_to/remove_from_array` produce no tooltip — bare in `available`/`visible` the player sees nothing (triggers) or a blank line (effects). Wrap triggers in `custom_trigger_tooltip = { tooltip = key ... }` and effects with `custom_effect_tooltip`. Named scripted triggers DO auto-tooltip via their name's loc key — prefer them over raw variable checks in player-facing blocks.
+`check_variable`, `is_in_array`, `set/add_to/subtract_from/multiply/divide/clamp_variable`, `add_to/remove_from_array` produce no tooltip — bare in `available`/`visible` the player sees nothing (triggers) or a blank line (effects). Wrap triggers in `custom_trigger_tooltip = { tooltip = key ... }` and effects with `custom_effect_tooltip`. Named scripted triggers DO auto-tooltip via their name's loc key — prefer them over raw variable checks in player-facing blocks. Bare `check_variable` in an `available` block is caught (warning) by `validate_variables.py`; `visible` is exempt, since a failing `visible` hides the object outright and renders no tooltip either way.
 
 ## Faction triggers
 
