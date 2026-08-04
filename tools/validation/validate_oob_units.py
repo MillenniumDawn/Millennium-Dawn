@@ -12,7 +12,7 @@ import os
 import re
 import sys
 from difflib import get_close_matches
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -505,6 +505,380 @@ def validate_oob_division_groups_file(
     return results
 
 
+# ---------------------------------------------------------------------------
+# create_unit effect validation
+# ---------------------------------------------------------------------------
+#
+# A create_unit only spawns units inside a state scope (capital_scope, a
+# state-scope effect, a numeric state-ID block, or a state-scoped decision).
+# Its division string must live on one physical line, name a division_template
+# that exists by the time the effect runs, and a template created in the same
+# reward must appear first and be guarded by has_template so an existing one
+# isn't clobbered.
+
+# Documented create_unit block keys; anything else is a typo.
+_CREATE_UNIT_KEYS = frozenset(
+    {
+        "division",
+        "owner",
+        "prioritize_location",
+        "allow_spawning_on_enemy_provs",
+        "count",
+        "id",
+        "country_score",
+        "divisional_commander_xp",
+    }
+)
+
+# Effect/block openers that yield a state scope (where create_unit may run).
+_STATE_SCOPE_LABELS = frozenset(
+    {
+        "capital_scope",
+        "random_owned_controlled_state",
+        "random_owned_state",
+        "random_controlled_state",
+        "random_state",
+        "random_owned_or_controlled_state",
+        "random_enemy_state",
+        "random_occupied_state",
+        "every_owned_state",
+        "every_controlled_state",
+        "every_owned_controlled_state",
+        "every_state",
+        "every_neighbor_state",
+        "random_neighbor_state",
+        "state_event",
+    }
+)
+
+_DIVISION_VALUE_RE = re.compile(r'\bdivision\s*=\s*"((?:[^"\\]|\\.)*)"', re.S)
+_TEMPLATE_REF_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
+_TEMPLATE_NAME_RE = re.compile(r'\bname\s*=\s*"([^"]*)"')
+_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
+_OWNER_RE = re.compile(r"\bowner\s*=")
+_ZERO_FACTOR_RE = re.compile(
+    r"\b(?:start_equipment_factor|start_manpower_factor)\s*=\s*0(?![.\d])"
+)
+_STATE_YES_RE = re.compile(r"\bstate\s*=\s*yes\b")
+_EXECUTE_EFFECT_RE = re.compile(r"\bexecute_effect\b")
+# An `if = { limit = { has_template = "X" } ... }` guard asserts the template
+# already exists, so a create_unit under it never races a definition below it.
+_HAS_TEMPLATE_IF_RE = re.compile(
+    r"\blimit\s*=\s*\{\s*has_template\s*=\s*\"([^\"]*)\"\s*\}", re.S
+)
+
+# Execution-boundary labels: when walking up a create_unit's enclosing scopes,
+# stop at these (a fresh effect sequence starts) so the ordering check doesn't
+# compare a template and a create_unit from two different rewards/decisions.
+_EFFECT_BOUNDARY_LABELS = frozenset(
+    {"completion_reward", "execute_effect", "remove_effect"}
+)
+
+
+_CREATE_UNIT_CATEGORIES = {
+    "scope": "CREATE UNIT: not in a state scope",
+    "multiline-division": "CREATE UNIT: division string spans lines",
+    "missing-division": "CREATE UNIT: missing division string",
+    "missing-owner": "CREATE UNIT: missing owner",
+    "missing-template": "CREATE UNIT: division string lacks division_template",
+    "unknown-key": "CREATE UNIT: unknown key",
+    "zero-factor": "CREATE UNIT: equipment/manpower factor is zero",
+    "template-order": "CREATE UNIT: template defined after create_unit",
+}
+
+
+class _CreateUnitChecks:
+    """Collector for one create_unit block; keeps the worker readable."""
+
+    __slots__ = ("issues", "file")
+
+    def __init__(self, file: str):
+        self.issues: List[Issue] = []
+        self.file = file
+
+    def warn(self, kind: str, message: str, line: int):
+        self.issues.append(
+            Issue(
+                severity=Severity.WARNING,
+                category=_CREATE_UNIT_CATEGORIES[kind],
+                message=message,
+                file=self.file,
+                line=line,
+            )
+        )
+
+
+def _line_of(text: str, pos: int) -> int:
+    return text[:pos].count("\n") + 1
+
+
+def _label_before_brace(text: str, brace_idx: int) -> Optional[str]:
+    j = brace_idx - 1
+    while j >= 0 and text[j] in " \t\r\n":
+        j -= 1
+    if j < 0 or text[j] != "=":
+        return None
+    j -= 1
+    while j >= 0 and text[j] in " \t\r\n":
+        j -= 1
+    end = j + 1
+    while j >= 0 and (text[j].isalnum() or text[j] in "_:.@"):
+        j -= 1
+    return text[j + 1 : end] or None
+
+
+def _matching_braces(text: str) -> Dict[int, int]:
+    stack = []
+    pairs = {}
+    in_str = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                stack.append(i)
+            elif c == "}" and stack:
+                pairs[stack.pop()] = i
+    return pairs
+
+
+def _build_block_nodes(text: str) -> List[Dict]:
+    """Flattened `key = { }` block tree: label/start/end/line/parent/children."""
+    pairs = _matching_braces(text)
+    nodes = []
+    stack = []
+    for op in sorted(pairs):
+        while stack and nodes[stack[-1]]["end"] < op:
+            stack.pop()
+        node = {
+            "label": _label_before_brace(text, op),
+            "start": op,
+            "end": pairs[op],
+            "line": _line_of(text, op),
+            "parent": stack[-1] if stack else -1,
+            "children": [],
+        }
+        idx = len(nodes)
+        if stack:
+            nodes[stack[-1]]["children"].append(idx)
+        nodes.append(node)
+        stack.append(idx)
+    return nodes
+
+
+def _ancestors(nodes: List[Dict], idx: int) -> List[int]:
+    chain = []
+    while nodes[idx]["parent"] != -1:
+        idx = nodes[idx]["parent"]
+        chain.append(idx)
+    return chain
+
+
+def _container_for(nodes: List[Dict], idx: int) -> int:
+    """Index of the nearest effect container (a boundary or top-level block)."""
+    a = nodes[idx]["parent"]
+    while a != -1:
+        label = nodes[a]["label"] or ""
+        if label in _EFFECT_BOUNDARY_LABELS or nodes[a]["parent"] == -1:
+            return a
+        a = nodes[a]["parent"]
+    return -1
+
+
+def _in_has_template_guard(nodes: List[Dict], text: str, idx: int, name: str) -> bool:
+    """True if *idx* sits under an `if = { limit = { has_template = name } }`."""
+    container = _container_for(nodes, idx)
+    for a in _ancestors(nodes, idx):
+        if nodes[a]["label"] == "if":
+            body = text[nodes[a]["start"] : nodes[a]["end"]]
+            m = _HAS_TEMPLATE_IF_RE.search(body)
+            if m and m.group(1) == name:
+                return True
+        if a == container:
+            break
+    return False
+
+
+def _top_level_keys(text: str, start: int, end: int) -> List[str]:
+    keys = []
+    depth = 0
+    in_str = False
+    i = start
+    while i < end:
+        c = text[i]
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+            i += 1
+            continue
+        if in_str:
+            i += 1
+            continue
+        if c == "{":
+            depth += 1
+            i += 1
+            continue
+        if c == "}":
+            depth -= 1
+            i += 1
+            continue
+        if depth == 0:
+            m = _KEY_RE.match(text, i)
+            if m:
+                keys.append(m.group(1))
+                i = m.end()
+                continue
+        i += 1
+    return keys
+
+
+def _template_defs_named(
+    nodes: List[Dict], text: str, container: int, name: str
+) -> List[int]:
+    """Indices of division_template blocks named *name* under *container*."""
+    out = []
+    stack = list(nodes[container]["children"])
+    while stack:
+        i = stack.pop()
+        if nodes[i]["label"] == "division_template":
+            body = text[nodes[i]["start"] : nodes[i]["end"]]
+            m = _TEMPLATE_NAME_RE.search(body)
+            if m and m.group(1) == name:
+                out.append(i)
+        stack.extend(nodes[i]["children"])
+    return out
+
+
+def _in_state_scope(nodes: List[Dict], text: str, idx: int) -> bool:
+    for a in _ancestors(nodes, idx):
+        node = nodes[a]
+        label = node["label"] or ""
+        if label in _STATE_SCOPE_LABELS:
+            return True
+        if label.isdigit():
+            return True
+        body = text[node["start"] : node["end"]]
+        if _EXECUTE_EFFECT_RE.search(body) and _STATE_YES_RE.search(body):
+            return True
+    return False
+
+
+def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
+    """Validate every create_unit block in one file. Returns warning Issues."""
+    filepath, rel, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            raw = f.read()
+    except OSError:
+        return []
+    content = strip_comments(raw)
+    nodes = disk_cache.per_file_cached_by_content(
+        mod_path,
+        "oob_units.blocks",
+        filepath,
+        content,
+        lambda: _build_block_nodes(content),
+    )
+
+    cu_nodes = [i for i, n in enumerate(nodes) if n["label"] == "create_unit"]
+    if not cu_nodes:
+        return []
+
+    out = _CreateUnitChecks(rel)
+    for cu_idx in cu_nodes:
+        cu = nodes[cu_idx]
+        body = content[cu["start"] + 1 : cu["end"]]
+        line = cu["line"]
+
+        if not _in_state_scope(nodes, content, cu_idx):
+            out.warn(
+                "scope",
+                f"{cu['line']}: create_unit outside a state scope (effect does "
+                f"nothing at country scope)",
+                line,
+            )
+
+        if not _OWNER_RE.search(body):
+            out.warn(
+                "missing-owner", f"{cu['line']}: create_unit missing `owner`", line
+            )
+
+        keys = _top_level_keys(content, cu["start"] + 1, cu["end"])
+        unknown = sorted(set(keys) - _CREATE_UNIT_KEYS)
+        if unknown:
+            out.warn(
+                "unknown-key",
+                f"{cu['line']}: create_unit unknown key(s): {', '.join(unknown)}",
+                line,
+            )
+
+        dm = _DIVISION_VALUE_RE.search(body)
+        if not dm:
+            out.warn(
+                "missing-division",
+                f"{cu['line']}: create_unit missing `division` string",
+                line,
+            )
+            continue
+        dval = dm.group(1)
+        if "\n" in dval:
+            out.warn(
+                "multiline-division",
+                f"{cu['line']}: division string must stay on one physical line",
+                line,
+            )
+        # The string carries escaped quotes (\"...\"); normalize so the inner
+        # name/template/factor tokens parse like the engine's parsed string.
+        dval_clean = dval.replace('\\"', '"')
+        if _ZERO_FACTOR_RE.search(dval_clean):
+            out.warn(
+                "zero-factor",
+                f"{cu['line']}: start_equipment_factor/start_manpower_factor of 0 is treated as 1",
+                line,
+            )
+
+        tm = _TEMPLATE_REF_RE.search(dval_clean)
+        if not tm:
+            out.warn(
+                "missing-template",
+                f'{cu["line"]}: division string lacks division_template="..."',
+                line,
+            )
+            continue
+        tname = tm.group(1)
+
+        # If an enclosing `if = { limit = { has_template = <tname> } }` guard
+        # asserts the template already exists, no ordering check applies — the
+        # definition lives in a mutually-exclusive else branch (the Iran/Indonesia
+        # Quds pattern) and is guaranteed present here.
+        if _in_has_template_guard(nodes, content, cu_idx, tname):
+            continue
+
+        # Ordering: walk the enclosing scopes up to the effect container
+        # (stopping at completion_reward/execute_effect/top-level) for a matching
+        # template definition. Report once for the nearest one.
+        container = _container_for(nodes, cu_idx)
+        for a in _ancestors(nodes, cu_idx):
+            defs = _template_defs_named(nodes, content, a, tname)
+            if not defs:
+                if a == container:
+                    break
+                continue
+            # A name can be defined multiple times in a container (a fresh
+            # definition per scope). Only the earliest matters: if a matching
+            # template already exists before this create_unit runs, there is no
+            # ordering bug.
+            t = nodes[min(defs, key=lambda d: nodes[d]["start"])]
+            if t["start"] > cu["start"]:
+                out.warn(
+                    "template-order",
+                    f"{cu['line']}: division_template '{tname}' is defined after the create_unit that uses it",
+                    line,
+                )
+            break
+
+    return out.issues
+
+
 class Validator(BaseValidator):
     TITLE = "OOB UNIT NAME VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -738,6 +1112,36 @@ class Validator(BaseValidator):
             "Ship variant modules invalid for their hull slot:",
         )
 
+    def validate_created_units(self):
+        """Check every `create_unit` effect across the mod for proper form.
+
+        A create_unit must run in a state scope, carry a single-line `division`
+        string naming a division_template, set `owner`, and (when it defines the
+        template itself) create it first behind a has_template guard.
+        """
+        self._log_section("Checking create_unit effects across the mod...")
+
+        files = self._collect_files(_VARIANT_SOURCE_PATTERNS)
+        if not files:
+            self.log("  No files to check")
+            return
+        self.log(f"  Found {len(files)} files to check")
+
+        args_list = [
+            (f, os.path.relpath(f, self.mod_path), self.mod_path) for f in files
+        ]
+        all_results = self._pool_map(_check_created_units, args_list, chunksize=20)
+
+        results = []
+        for file_results in all_results:
+            results.extend(file_results)
+
+        self._report(
+            results,
+            "✓ All create_unit effects are well-formed",
+            "create_unit effects with structural problems:",
+        )
+
     def run_validations(self):
         self._build_canonical_units()
         self.validate_unit_references()
@@ -745,6 +1149,7 @@ class Validator(BaseValidator):
         self.validate_division_names_group_references()
         self.validate_air_wing_names_template_loc()
         self.validate_created_variant_modules()
+        self.validate_created_units()
 
 
 if __name__ == "__main__":
