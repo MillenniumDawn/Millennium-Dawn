@@ -27,6 +27,8 @@ from pathlib import Path
 
 import pytest
 import yaml
+from precommit_validate import _REGISTRY
+from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATION_DIR = Path(__file__).resolve().parents[1]
@@ -411,6 +413,16 @@ def test_ci_run_steps_default_to_strict():
         assert 'matrix.validator.strict }}" != "false"' in run, (
             f"{job}'s Run step must default to --strict when `strict:` is absent."
         )
+
+
+def test_oob_routes_cover_every_create_unit_source():
+    # Derived from the validator's own glob list, not a copy of it: a directory
+    # added there must reach both routes or a PR touching only it never runs.
+    dirs = {p.rsplit("/", 1)[0] + "/" for p in _CREATE_UNIT_SOURCE_PATTERNS}
+    _, filters = _filter_definitions()
+    assert {d + "**" for d in dirs} <= set(filters["oob"])
+    spec = next(s for s in _REGISTRY if s.script == "validate_oob_units")
+    assert dirs <= {prefix for prefix, _ in spec.rules}
 
 
 def test_gfx_reference_validator_runs_for_all_reference_sources():
