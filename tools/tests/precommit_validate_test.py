@@ -29,9 +29,22 @@ def _selected(path):
 # scripted_params, simplifications, localisation, factions, history_techs, ...)
 # are stages:[manual] in the config and intentionally absent here.
 _GOLDEN = {
-    "common/national_focus/france.txt": {"validate_style", "validate_ideas"},
-    "events/Syria.txt": {"validate_style", "validate_ideas", "validate_events"},
-    "common/decisions/Sudan.txt": {"validate_style", "validate_ideas"},
+    "common/national_focus/france.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_oob_units",
+    },
+    "events/Syria.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+        "validate_oob_units",
+    },
+    "common/decisions/Sudan.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_oob_units",
+    },
     "common/on_actions/00_on_actions.txt": {"validate_style", "validate_ideas"},
     "common/scripted_triggers/00_triggers.txt": {"validate_style", "validate_ideas"},
     "common/scripted_effects/00_x.txt": {
@@ -58,7 +71,15 @@ _GOLDEN = {
     },
     "localisation/english/MD_focus_SER_l_english.yml": {"validate_ideas"},
     "common/factions/x.txt": {"validate_style"},
-    "history/countries/x.txt": {"validate_style", "validate_ideas"},
+    "common/military_industrial_organization/organizations/MD_ISR_organizations.txt": {
+        "validate_style",
+        "validate_mios",
+    },
+    "history/countries/x.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_oob_units",
+    },
 }
 
 

@@ -17,12 +17,43 @@ from typing import Dict, List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from naval_module_slots import build_indexes, check_created_variants
 from validator_common import (
     BaseValidator,
+    Issue,
     Severity,
     run_validator_main,
     strip_comments,
 )
+
+# Ship hulls live only in files carrying one of these engine hull-type markers,
+# so plane/tank equipment files are skipped without parsing their whole tree.
+_SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
+
+_VARIANT_SLOT_CATEGORIES = {
+    "unknown_hull": "SHIP VARIANT: unknown hull type",
+    "unknown_slot": "SHIP VARIANT: slot not on hull",
+    "unknown_module": "SHIP VARIANT: unknown module reference",
+    "category_mismatch": "SHIP VARIANT: module category not allowed in slot",
+}
+
+# Every directory where a create_equipment_variant effect actually appears.
+_VARIANT_SOURCE_PATTERNS = [
+    "history/countries/*.txt",
+    "common/national_focus/*.txt",
+    "events/*.txt",
+    "common/decisions/*.txt",
+    "common/special_projects/*.txt",
+    "common/scripted_effects/*.txt",
+]
+
+
+def _read_text(filepath: str) -> str:
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            return f.read()
+    except OSError:
+        return ""
 
 
 def _parse_canonical_units_file(content: str) -> Set[str]:
@@ -643,12 +674,77 @@ class Validator(BaseValidator):
             category="air-wing-template-loc",
         )
 
+    def validate_created_variant_modules(self):
+        """Check every `create_equipment_variant` ship design against its hull.
+
+        A module in a slot the hull does not have, or whose category that slot
+        rejects, is dropped at load with no error. The design still appears, so
+        the loss only shows as missing stats — a Type 32 Guardian naming the
+        tank slot `engine_type_slot` shipped with no engine at all.
+        """
+        self._log_section("Checking created ship variants against hull slot rules...")
+
+        units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
+        if not os.path.isdir(units_dir):
+            self.log("  common/units/equipment/ not found, skipping")
+            return
+
+        files = self._collect_files(_VARIANT_SOURCE_PATTERNS)
+        if not files:
+            self.log("  No files with equipment variants to check")
+            return
+        self.log(f"  Found {len(files)} files to check")
+
+        def _build():
+            hull_texts = []
+            for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt"))):
+                text = _read_text(fp)
+                if any(marker in text for marker in _SHIP_HULL_MARKERS):
+                    hull_texts.append(text)
+            module_texts = [
+                _read_text(fp)
+                for fp in sorted(
+                    glob.iglob(os.path.join(units_dir, "modules", "*.txt"))
+                )
+            ]
+            return build_indexes(hull_texts, module_texts)
+
+        hull_slots, module_category, known_categories = self.cached(
+            "ship_hull_index", _build
+        )
+
+        results = []
+        for filepath in files:
+            content = _read_text(filepath)
+            if "create_equipment_variant" not in content:
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            for f in check_created_variants(
+                content, hull_slots, module_category, known_categories
+            ):
+                results.append(
+                    Issue(
+                        severity=Severity.ERROR,
+                        category=_VARIANT_SLOT_CATEGORIES[f.kind],
+                        message=f.message,
+                        file=rel,
+                        line=f.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ All created ship variants match their hull slot rules",
+            "Ship variant modules invalid for their hull slot:",
+        )
+
     def run_validations(self):
         self._build_canonical_units()
         self.validate_unit_references()
         self.validate_namelist_references()
         self.validate_division_names_group_references()
         self.validate_air_wing_names_template_loc()
+        self.validate_created_variant_modules()
 
 
 if __name__ == "__main__":

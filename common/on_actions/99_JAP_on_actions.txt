@@ -56,6 +56,8 @@ on_actions = {
 
 	on_monthly_JAP = {
 		effect = {
+			clamp_variable = { var = JAP_demand_recovery_progress min = 0 max = 100 }
+
 			if = {
 				limit = {
 					has_idea = JAP_entrenched_demand_shortfall_idea_1
@@ -85,87 +87,346 @@ on_actions = {
 			}
 
 			if = {
-				limit = {
-					has_idea = JAP_banks_non_performing_loans_idea_1
-					check_variable = {
-						JAP_dangerous_npl_stock < 3
+				limit = { JAP_zombie_companies_resolved = no }
+
+				# Forbearance alone barely moves the ledger; the wind-down rate is set by the chosen path
+				set_temp_variable = { jap_zombie_recovery = 0.25 }
+				if = {
+					limit = { has_country_flag = JAP_downsize_path }
+					set_temp_variable = { jap_zombie_recovery = 3 }
+				}
+				else_if = {
+					limit = { has_country_flag = JAP_fusion_path }
+					set_temp_variable = { jap_zombie_recovery = 1.5 }
+				}
+
+				if = {
+					limit = { has_country_flag = JAP_zombie_report_strong }
+					multiply_temp_variable = { jap_zombie_recovery = 1.25 }
+				}
+				else_if = {
+					limit = { has_country_flag = JAP_zombie_report_whitewash }
+					multiply_temp_variable = { jap_zombie_recovery = 0.75 }
+				}
+
+				if = {
+					limit = { has_completed_focus = JAP_keiretsu_pact }
+					multiply_temp_variable = { jap_zombie_recovery = 0.8 }
+				}
+
+				add_to_variable = { JAP_corporate_restructuring_progress = jap_zombie_recovery }
+				clamp_variable = { var = JAP_corporate_restructuring_progress min = 0 max = 100 }
+
+				if = {
+					limit = {
+						has_idea = JAP_zombie_companies_1
+						check_variable = { JAP_corporate_restructuring_progress > 29 }
 					}
-					check_variable = {
-						JAP_banking_confidence > 29
+					swap_ideas = {
+						remove_idea = JAP_zombie_companies_1
+						add_idea = JAP_zombie_companies_2
 					}
 				}
-				country_event = Japan_economy.06
+				if = {
+					limit = {
+						has_idea = JAP_zombie_companies_2
+						check_variable = { JAP_corporate_restructuring_progress > 59 }
+					}
+					swap_ideas = {
+						remove_idea = JAP_zombie_companies_2
+						add_idea = JAP_zombie_companies_3
+					}
+				}
+				if = {
+					limit = {
+						has_idea = JAP_zombie_companies_3
+						check_variable = { JAP_corporate_restructuring_progress > 84 }
+					}
+					if = {
+						limit = { has_country_flag = JAP_fusion_path }
+						swap_ideas = {
+							remove_idea = JAP_zombie_companies_3
+							add_idea = JAP_consolidated_conglomerates
+						}
+						if = {
+							limit = { has_idea = JAP_fusion_restructuring }
+							remove_ideas = JAP_fusion_restructuring
+						}
+						country_event = { id = Japan_economy.35 days = 3 }
+					}
+					else = {
+						remove_ideas = JAP_zombie_companies_3
+						if = {
+							limit = { has_idea = JAP_liquidation_wave }
+							remove_ideas = JAP_liquidation_wave
+						}
+						country_event = { id = Japan_economy.34 days = 3 }
+					}
+				}
 			}
 
 			if = {
 				limit = {
-					has_idea = JAP_banks_non_performing_loans_idea_2
-					check_variable = {
-						JAP_dangerous_npl_stock < 2
-
-					}
-					check_variable = {
-						JAP_banking_confidence > 59
-					}
+					has_country_flag = JAP_zombie_investigation_running
+					NOT = { has_country_flag = JAP_zombie_probe_suspended }
 				}
-				country_event = Japan_economy.07
+
+				# Every case file hardens the resistance, and a keiretsu pushed below its comfort line fights harder
+				set_temp_variable = { jap_obstruction_gain = JAP_zombie_case_files }
+				multiply_temp_variable = { jap_obstruction_gain = 0.5 }
+				if = {
+					limit = { has_idea = industrial_conglomerates }
+					set_temp_variable = { jap_keiretsu_anger = 60 }
+					subtract_from_temp_variable = { jap_keiretsu_anger = industrial_conglomerates_opinion }
+					clamp_temp_variable = { var = jap_keiretsu_anger min = 0 max = 60 }
+					multiply_temp_variable = { jap_keiretsu_anger = 0.03 }
+					add_to_temp_variable = { jap_obstruction_gain = jap_keiretsu_anger }
+				}
+				if = {
+					limit = { has_country_flag = JAP_banks_self_report }
+					add_to_temp_variable = { jap_obstruction_gain = 0.5 }
+				}
+				if = {
+					limit = { has_completed_focus = JAP_special_investigation_unit }
+					multiply_temp_variable = { jap_obstruction_gain = 0.75 }
+				}
+				add_to_variable = { JAP_zombie_obstruction = jap_obstruction_gain }
+				clamp_variable = { var = JAP_zombie_obstruction min = 0 max = 100 }
+
+				if = {
+					limit = {
+						check_variable = { JAP_zombie_obstruction > 79 }
+						check_variable = { JAP_zombie_obstruction_stage < 3 }
+					}
+					set_variable = { JAP_zombie_obstruction_stage = 3 }
+					country_event = { id = Japan_economy.11 days = 3 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { JAP_zombie_obstruction > 54 }
+						check_variable = { JAP_zombie_obstruction_stage < 2 }
+					}
+					set_variable = { JAP_zombie_obstruction_stage = 2 }
+					country_event = { id = Japan_economy.10 days = 3 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { JAP_zombie_obstruction > 29 }
+						check_variable = { JAP_zombie_obstruction_stage < 1 }
+					}
+					set_variable = { JAP_zombie_obstruction_stage = 1 }
+					country_event = { id = Japan_economy.09 days = 3 }
+				}
 			}
 
 			if = {
 				limit = {
-					has_idea = JAP_banks_non_performing_loans_idea_3
-					check_variable = {
-						JAP_dangerous_npl_stock < 1
-
-					}
-					check_variable = {
-						JAP_banking_confidence > 84
-					}
+					has_country_flag = JAP_cultural_change
+					JAP_karoshi_resolved = no
 				}
-				country_event = Japan_economy.08
+				if = {
+					limit = {
+						NOT = { has_country_flag = JAP_downsize_path }
+						NOT = { has_country_flag = JAP_fusion_path }
+					}
+					subtract_from_variable = { JAP_cultural_change_progress = 1 }
+					clamp_variable = { var = JAP_cultural_change_progress min = 0 max = 100 }
+				}
+				set_temp_variable = { jap_culture_shift = JAP_cultural_change_progress }
+				multiply_temp_variable = { jap_culture_shift = 0.02 }
+				if = {
+					limit = { has_completed_focus = JAP_a_society_where_women_thrive }
+					multiply_temp_variable = { jap_culture_shift = 1.5 }
+				}
+				if = {
+					limit = { has_completed_focus = JAP_a_nation_reborn }
+					multiply_temp_variable = { jap_culture_shift = 1.5 }
+				}
+				if = {
+					limit = { JAP_zombie_companies_resolved = no }
+					multiply_temp_variable = { jap_culture_shift = 0.75 }
+				}
+				add_to_variable = { JAP_karoshi_wellbeing = jap_culture_shift }
+				clamp_variable = { var = JAP_karoshi_wellbeing min = 0 max = 100 }
 			}
 
 			if = {
 				limit = {
-					has_idea = JAP_corporate_excess_debt_idea_1
-					NOT = {
-						has_idea = JAP_banks_non_performing_loans_idea_1
-					}
-					check_variable = {
-						JAP_corporate_restructuring_progress > 29
-					}
-					has_completed_focus = JAP_request_for_exit
+					has_idea = JAP_karoshi_crisis_1
+					check_variable = { JAP_karoshi_wellbeing > 29 }
 				}
-				country_event = Japan_economy.09
+				swap_ideas = {
+					remove_idea = JAP_karoshi_crisis_1
+					add_idea = JAP_karoshi_crisis_2
+				}
+			}
+			if = {
+				limit = {
+					has_idea = JAP_karoshi_crisis_2
+					check_variable = { JAP_karoshi_wellbeing > 59 }
+				}
+				swap_ideas = {
+					remove_idea = JAP_karoshi_crisis_2
+					add_idea = JAP_karoshi_crisis_3
+				}
+			}
+			if = {
+				limit = {
+					has_idea = JAP_karoshi_crisis_3
+					check_variable = { JAP_karoshi_wellbeing > 84 }
+				}
+				remove_ideas = JAP_karoshi_crisis_3
+			}
+
+			if = {
+				limit = { has_variable = JAP_galapagos_openness }
+				clamp_variable = { var = JAP_galapagos_openness min = 0 max = 100 }
+			}
+			if = {
+				limit = { has_idea = JAP_galapagos_syndrome }
+				set_temp_variable = { jap_galapagos_drift = 100 }
+				subtract_from_temp_variable = { jap_galapagos_drift = JAP_galapagos_openness }
+				multiply_temp_variable = { jap_galapagos_drift = 0.00005 }
+				subtract_from_variable = { JAP_galapagos_research_drift = jap_galapagos_drift }
+			}
+			clamp_variable = { var = JAP_galapagos_research_drift min = -0.15 max = 0 }
+
+			if = {
+				limit = { has_country_flag = JAP_cool_japan_doctrine }
+				add_to_variable = { JAP_galapagos_recount_timer = 1 }
+				if = {
+					limit = { check_variable = { JAP_galapagos_recount_timer > 2 } }
+					set_variable = { JAP_galapagos_recount_timer = 0 }
+					set_variable = { JAP_galapagos_sphere_count = 0 }
+					every_other_country = {
+						limit = {
+							exists = yes
+							influence_higher_20 = yes
+						}
+						ROOT = { add_to_variable = { JAP_galapagos_sphere_count = 1 } }
+					}
+					set_temp_variable = { jap_sphere_yield = JAP_galapagos_sphere_count }
+					multiply_temp_variable = { jap_sphere_yield = 0.01 }
+					if = {
+						limit = { has_country_flag = JAP_galapagos_electronics_anchor }
+						multiply_temp_variable = { jap_sphere_yield = 1.5 }
+					}
+					if = {
+						limit = { has_country_flag = JAP_galapagos_consumer_base }
+						multiply_temp_variable = { jap_sphere_yield = 1.25 }
+					}
+					set_variable = { JAP_galapagos_influence_projection = jap_sphere_yield }
+					clamp_variable = { var = JAP_galapagos_influence_projection min = 0 max = 0.30 }
+					set_variable = { JAP_galapagos_roi = jap_sphere_yield }
+					multiply_variable = { JAP_galapagos_roi = 0.2 }
+					clamp_variable = { var = JAP_galapagos_roi min = 0 max = 0.06 }
+				}
 			}
 
 			if = {
 				limit = {
-					has_idea = JAP_corporate_excess_debt_idea_2
-					NOT = { has_idea = JAP_banks_non_performing_loans_idea_2 }
-					NOT = { has_idea = JAP_banks_non_performing_loans_idea_1 }
-					check_variable = {
-						JAP_corporate_restructuring_progress > 59
-					}
-					has_completed_focus = JAP_request_for_exit
+					has_idea = JAP_galapagos_syndrome
+					check_variable = { JAP_galapagos_openness > 84 }
+					has_country_flag = JAP_world_integration
 				}
-				country_event = Japan_economy.10
+				remove_ideas = JAP_galapagos_syndrome
+				set_variable = { JAP_galapagos_research_drift = 0 }
+				remove_dynamic_modifier = { modifier = JAP_galapagos_modifier }
 			}
+
+			# Electronics: Model Competition pressure, driven by China's semiconductor rise and offset by Japan's own resilience
+			set_temp_variable = { jap_ec_pressure = 1 }
+			if = {
+				limit = {
+					country_exists = CHI
+					CHI = {
+						OR = {
+							has_completed_focus = CHI_smic_advanced_node
+							has_completed_focus = CHI_domestic_eda
+							has_idea = CHI_semiconductor_backwardness_3
+							has_idea = CHI_semiconductor_backwardness_4
+						}
+					}
+				}
+				add_to_temp_variable = { jap_ec_pressure = 1 }
+			}
+			if = {
+				limit = {
+					country_exists = CHI
+					CHI = {
+						OR = {
+							has_completed_focus = CHI_sicarrier_euv
+							AND = {
+								has_completed_focus = CHI_big_fund_phase_1
+								NOT = { has_idea = CHI_semiconductor_backwardness }
+								NOT = { has_idea = CHI_semiconductor_backwardness_2 }
+								NOT = { has_idea = CHI_semiconductor_backwardness_3 }
+								NOT = { has_idea = CHI_semiconductor_backwardness_4 }
+							}
+						}
+					}
+				}
+				add_to_temp_variable = { jap_ec_pressure = 1 }
+			}
+			if = {
+				limit = { check_variable = { JAP_galapagos_openness < 25 } }
+				add_to_temp_variable = { jap_ec_pressure = 1 }
+			}
+			subtract_from_temp_variable = { jap_ec_pressure = JAP_electronics_resilience }
+			clamp_temp_variable = { var = jap_ec_pressure min = 0 max = 3 }
 
 			if = {
 				limit = {
-					has_idea = JAP_corporate_excess_debt_idea_3
-					NOT = {
-						has_idea = JAP_banks_non_performing_loans_idea_3
-					}
-					NOT = { has_idea = JAP_banks_non_performing_loans_idea_2 }
-					NOT = { has_idea = JAP_banks_non_performing_loans_idea_1 }
-					check_variable = {
-						JAP_corporate_restructuring_progress > 84
-					}
-					has_completed_focus = JAP_request_for_exit
+					check_variable = { jap_ec_pressure > 2 }
+					NOT = { has_idea = JAP_model_competition_3 }
 				}
-				country_event = Japan_economy.11
+				if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
+				if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
+				add_ideas = JAP_model_competition_3
+				if = {
+					limit = { check_variable = { JAP_electronics_competition_tier < 3 } }
+					country_event = { id = JAP_electronics.2 days = 3 }
+				}
+				set_variable = { JAP_electronics_competition_tier = 3 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { jap_ec_pressure = 2 }
+					NOT = { has_idea = JAP_model_competition_2 }
+				}
+				if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
+				if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+				add_ideas = JAP_model_competition_2
+				if = {
+					limit = { check_variable = { JAP_electronics_competition_tier < 2 } }
+					country_event = { id = JAP_electronics.1 days = 3 }
+				}
+				set_variable = { JAP_electronics_competition_tier = 2 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { jap_ec_pressure = 1 }
+					NOT = { has_idea = JAP_model_competition_1 }
+				}
+				if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
+				if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+				add_ideas = JAP_model_competition_1
+				set_variable = { JAP_electronics_competition_tier = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { jap_ec_pressure < 1 }
+					OR = {
+						has_idea = JAP_model_competition_1
+						has_idea = JAP_model_competition_2
+						has_idea = JAP_model_competition_3
+					}
+				}
+				if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
+				if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
+				if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+				country_event = { id = JAP_electronics.3 days = 3 }
+				set_variable = { JAP_electronics_competition_tier = 0 }
 			}
 		}
 	}

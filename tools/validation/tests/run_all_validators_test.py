@@ -31,6 +31,11 @@ def _launcher_with(issues, returncode=0):
     return launch
 
 
+def test_manual_texture_audit_is_not_auto_discovered():
+    scripts = {script for _name, script, _label in runner.discover_validators()}
+    assert "validate_unused_textures.py" not in scripts
+
+
 def test_clean_both_writes_text_and_json_reports(tmp_path, monkeypatch):
     report_path = tmp_path / "report.txt"
     monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))

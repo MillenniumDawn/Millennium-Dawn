@@ -96,6 +96,13 @@ _REGISTRY = [
             ("common/units/", TXT),
             ("common/ai_templates/", TXT),
             ("common/scripted_effects/", TXT),
+            # create_equipment_variant ship designs are slot-checked against
+            # their hull, so every directory that can hold one is routed here.
+            ("history/countries/", TXT),
+            ("common/national_focus/", TXT),
+            ("events/", TXT),
+            ("common/decisions/", TXT),
+            ("common/special_projects/", TXT),
         ],
     ),
     _Spec(
@@ -128,6 +135,10 @@ _REGISTRY = [
         ],
     ),
     _Spec("validate_events", [("events/", TXT)]),
+    _Spec(
+        "validate_mios",
+        [("common/military_industrial_organization/organizations/", TXT)],
+    ),
 ]
 
 

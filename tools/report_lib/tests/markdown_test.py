@@ -50,8 +50,20 @@ def test_render_verdict_note_when_all_pass():
     body = render(runs, [], _ctx())
     assert "> [!NOTE]" in body
     assert "All 2 validators passed" in body
+    assert "Nothing to fix." in body
     # No table when everything is clean.
     assert "| Validator | Errors | Warnings |" not in body
+
+
+def test_render_qualifies_a_clean_partial_run():
+    # A per-PR run only gates the validators covering the changed groups, so a
+    # clean result must not read as "the whole mod is clean".
+    runs = [ValidatorRun(name="events", title="Events", status="passed")]
+    ctx = _ctx()
+    ctx.validation_scope = "partial"
+    body = render(runs, [], ctx)
+    assert "Nothing to fix in the file groups this diff touches." in body
+    assert "**Scope:** changed file groups only" in body
 
 
 def test_render_links_file_to_blob_when_repo_known():

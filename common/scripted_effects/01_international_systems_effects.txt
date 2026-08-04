@@ -372,8 +372,10 @@ un_recog_setup_check = {
 		if = {
 			limit = {
 				NOT = {
-					is_in_array = { global.Unrecognised_States = THIS }
-					THIS = { has_idea = lacks_international_recognition }
+					OR = {
+						is_in_array = { global.Unrecognised_States = THIS }
+						THIS = { has_idea = lacks_international_recognition }
+					}
 				}
 			}
 			add_to_array = { global.Unrecognised_States = THIS }
@@ -1552,8 +1554,10 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_GNSS_mil_system_idx > var_GNSS_mil_system_idx }
 			}
 			NOT = {
-				check_variable = { FROM.var_GNSS_mil_system_idx = 0 }
-				is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id }
+				OR = {
+					check_variable = { FROM.var_GNSS_mil_system_idx = 0 }
+					is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id }
+				}
 			}
 		}
 		FROM = {
@@ -1575,8 +1579,10 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_GNSS_civ_system_idx > var_GNSS_civ_system_idx }
 			}
 			NOT = {
-				check_variable = { FROM.var_GNSS_civ_system_idx = 0 }
-				is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id }
+				OR = {
+					check_variable = { FROM.var_GNSS_civ_system_idx = 0 }
+					is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id }
+				}
 			}
 		}
 		FROM = {
@@ -1598,8 +1604,10 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_COM_mil_system_idx > var_COM_mil_system_idx }
 			}
 			NOT = {
-				check_variable = { FROM.var_COM_mil_system_idx = 0 }
-				is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id }
+				OR = {
+					check_variable = { FROM.var_COM_mil_system_idx = 0 }
+					is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id }
+				}
 			}
 		}
 		FROM = {
@@ -1621,8 +1629,10 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_COM_civ_system_idx > var_COM_civ_system_idx }
 			}
 			NOT = {
-				check_variable = { FROM.var_COM_civ_system_idx = 0 }
-				is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id }
+				OR = {
+					check_variable = { FROM.var_COM_civ_system_idx = 0 }
+					is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id }
+				}
 			}
 		}
 		FROM = {
@@ -1713,7 +1723,7 @@ check_for_subsidy_expiration = {
 			has_country_flag = is_getting_esco_subsidies
 			OR = {
 				check_variable = { research_check > global.target_research_speed_mod }
-				check_variable = { political_power_daily > 7 }
+				NOT = { political_power_daily < 7 }
 			}
 		}
 		clr_country_flag = is_getting_esco_subsidies
@@ -2556,6 +2566,25 @@ remove_from_bloc_membership_arrays = {
 # Non-bloc membership arrays: UN aid programs, unrecognised-state tracking, and other idea-tied
 # lists that would otherwise leave a stale annexed-country entry for their loop consumers.
 remove_from_secondary_membership_arrays = {
+	if = {
+		limit = { is_in_array = { global.unesco_recipients = THIS } }
+		remove_from_array = { global.unesco_recipients = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.unido_recipients = THIS } }
+		remove_from_array = { global.unido_recipients = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.uncdf_recipients = THIS } }
+		remove_from_array = { global.uncdf_recipients = THIS }
+	}
+	clr_country_flag = is_getting_esco_subsidies
+	clr_country_flag = is_getting_ido_subsidies
+	clr_country_flag = is_getting_cdf_subsidies
+	if = {
+		limit = { has_dynamic_modifier = { modifier = un_aid_subsidies_modifier } }
+		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+	}
 	if = {
 		limit = { is_in_array = { global.non_EU_EDU_ally = THIS } }
 		remove_from_array = { global.non_EU_EDU_ally = THIS }

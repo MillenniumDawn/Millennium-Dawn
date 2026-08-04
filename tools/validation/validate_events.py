@@ -106,6 +106,106 @@ _DYNAMIC_EVENT_NS_PATTERN = re.compile(
 )
 
 
+# Every way a script fires an event: the short form `country_event = foo.1` and
+# the block form `country_event = { id = foo.1 days = 3 }`. The block form is
+# matched by finding the keyword and then the first `id =` inside its braces, so
+# `days`/`hours`/`random_days` in any order are handled.
+_EVENT_FIRE_SHORT_RE = re.compile(
+    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*([A-Za-z_][\w.]*)"
+)
+_EVENT_FIRE_BLOCK_RE = re.compile(
+    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*\{([^{}]*)\}"
+)
+_FIRE_ID_RE = re.compile(r"\bid\s*=\s*([A-Za-z_][\w.]*)")
+
+
+# Keys that only ever appear in an event definition, never in a fire. Used to
+# tell `country_event = { id = x title = ... }` (a definition) from
+# `country_event = { id = x days = 3 }` (a fire).
+_DEFINITION_ONLY_RE = re.compile(
+    r"\b(?:title|desc|picture|is_triggered_only|fire_only_once|hidden|option|"
+    r"immediate|major|trigger|mean_time_to_happen|timeout_days)\s*="
+)
+_EVENT_BLOCK_OPEN_RE = re.compile(
+    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*\{"
+)
+
+
+def _matching_brace(text: str, open_pos: int) -> int:
+    depth = 0
+    for i in range(open_pos, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return -1
+
+
+def scan_event_definitions(args: Tuple[str, frozenset]) -> Set[str]:
+    """Pool worker: event IDs *defined* in one file.
+
+    Brace-matches each event block rather than keying off indentation, because
+    several event files indent their definitions one tab deeper than the norm
+    and a `^\\tid = ` pattern misses those entirely.
+    """
+    filename = args[0]
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+
+    found: Set[str] = set()
+    for m in _EVENT_BLOCK_OPEN_RE.finditer(cleaned):
+        ob = cleaned.index("{", m.end() - 1)
+        end = _matching_brace(cleaned, ob)
+        if end == -1:
+            continue
+        body = cleaned[ob + 1 : end]
+        idm = _FIRE_ID_RE.search(body)
+        if idm and _DEFINITION_ONLY_RE.search(body):
+            found.add(idm.group(1))
+    return found
+
+
+def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+    """Pool worker: every event ID fired from one file, as (id, file, line).
+
+    Only literal IDs are returned. An ID assembled at runtime (`UN.[ID]`) has no
+    literal form to resolve, so it is skipped rather than guessed at.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    cleaned = re.sub(r"#[^\n]*", "", text)
+
+    out: List[Tuple[str, str, int]] = []
+
+    def add(eid: str, pos: int, after: str) -> None:
+        # `UN.[ID]` matches as `UN.` and `MD_cyber.1[TYPE]` as `MD_cyber.1`, so
+        # a trailing dot or a following `[` both mean the ID is interpolated.
+        if "." not in eid or eid.endswith(".") or after.startswith("["):
+            return
+        out.append((eid, filename, cleaned.count("\n", 0, pos) + 1))
+
+    for m in _EVENT_FIRE_SHORT_RE.finditer(cleaned):
+        add(m.group(1), m.start(), cleaned[m.end() : m.end() + 1])
+    for m in _EVENT_FIRE_BLOCK_RE.finditer(cleaned):
+        idm = _FIRE_ID_RE.search(m.group(1))
+        if idm:
+            add(idm.group(1), m.start(), m.group(1)[idm.end() : idm.end() + 1])
+    return out
+
+
 def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
     """Pool worker: namespaces fired via string-interpolated event IDs in a file.
 
@@ -830,6 +930,64 @@ class Validator(BaseValidator):
             category="namespace-mismatch",
         )
 
+    def validate_undefined_event_fires(self):
+        """Flag scripts that fire an event ID no event file defines.
+
+        MD sets `replace_path = "events"`, so vanilla events are not loaded and
+        every fired ID has to resolve inside the mod. A fire at an undefined ID
+        compiles fine and silently does nothing, which is how a whole chain can
+        rot after its events are renamed or commented out.
+
+        IDs assembled at runtime (`country_event = UN.[ID]`) never appear as a
+        literal token, so any namespace dispatched that way is exempt.
+        """
+        self._log_section("Checking event fires resolve to a defined event...")
+
+        # Fires live all over the mod, not just in events/. Scan the full repo
+        # even in staged mode: a staged caller's target usually sits elsewhere.
+        files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+            ignore_staged=True,
+        )
+        args_list = [(f, frozenset()) for f in files]
+
+        # The definition scan must also cover the full repo in staged mode: a
+        # staged caller's target event almost always lives in an unstaged file.
+        event_files = [
+            (f, frozenset())
+            for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
+        ]
+        defined: Set[str] = set()
+        for s in self._pool_map(scan_event_definitions, event_files, chunksize=10):
+            defined.update(s)
+        self.log(f"  Found {len(defined)} defined event IDs")
+
+        dynamic_namespaces: Set[str] = set()
+        for s in self._pool_map(scan_dynamic_event_namespaces, args_list, chunksize=30):
+            dynamic_namespaces.update(s)
+
+        seen: Dict[str, Tuple[str, int]] = {}
+        for fires in self._pool_map(scan_event_fires, args_list, chunksize=30):
+            for eid, filename, line in fires:
+                if eid in defined or eid in seen:
+                    continue
+                if eid[: eid.rfind(".")] in dynamic_namespaces:
+                    continue
+                seen[eid] = (filename, line)
+
+        results = []
+        for eid in sorted(seen):
+            filename, line = seen[eid]
+            rel = os.path.relpath(filename, self.mod_path)
+            results.append(f"{eid} - fired from {rel}:{line}, no event defines it")
+
+        self._report(
+            results,
+            "✓ Every fired event ID resolves to a defined event",
+            "Fires at undefined event IDs (silently do nothing):",
+            category="undefined-event-fire",
+        )
+
     def validate_event_pictures(self):
         """Flag events whose `picture = GFX_x` sprite is not MD-defined.
 
@@ -945,6 +1103,7 @@ class Validator(BaseValidator):
         self.validate_hidden_event_localisation()
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
+        self.validate_undefined_event_fires()
         self.validate_event_pictures()
         self.validate_fire_only_once_in_loop()
 
