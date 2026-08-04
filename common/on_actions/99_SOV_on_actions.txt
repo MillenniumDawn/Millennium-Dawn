@@ -193,6 +193,12 @@ on_actions = {
 			}
 
 			#VDV vs Coastal Troops Balance of Power
+			# add_power_balance_value only ever accepts a literal number — a variable
+			# (bare or var:-prefixed) silently fails to apply in-game. Every branch below
+			# therefore commits to one of a small set of pre-determined literal amounts;
+			# SOV_vdv_coastal_applied_tier is the persistent record of which one is
+			# currently "owed" to the BOP, so a change in tier can be undone exactly
+			# before the new one is applied.
 			set_temp_variable = {
 				SOV_vdv_battalions = {
 					value = 0
@@ -225,66 +231,89 @@ on_actions = {
 						clamp = { min = -1 max = 1 }
 					}
 				}
-				set_variable = {
-					SOV_vdv_coastal_pressure_target = {
-						value = SOV_vdv_coastal_ratio
-						multiply = -0.75
-						clamp = { min = -0.75 max = 0.75 }
-					}
-				}
 			}
-			set_temp_variable = {
-				SOV_vdv_coastal_pressure_delta = {
-					value = SOV_vdv_coastal_pressure_target
-					subtract = SOV_vdv_coastal_pressure_applied
-				}
+			else = {
+				set_temp_variable = { SOV_vdv_coastal_ratio = 0 }
 			}
-			add_power_balance_value = {
-				id = SOV_vdv_coastal_bop
-				value = SOV_vdv_coastal_pressure_delta
+			log = "[GetDateText]: [THIS.GetName]: VDV/Coastal BOP - VDV Bat: [?SOV_vdv_battalions] Marine Bat: [?SOV_marine_battalions] Total: [?SOV_vdv_coastal_total] Ratio: [?SOV_vdv_coastal_ratio] Prev Tier: [?THIS.SOV_vdv_coastal_applied_tier]"
+
+			# Undo whatever tier was applied last month.
+			if = {
+				limit = { check_variable = { SOV_vdv_coastal_applied_tier = -3 } }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = 0.75 }
 			}
-			set_variable = { SOV_vdv_coastal_pressure_applied = SOV_vdv_coastal_pressure_target }
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_applied_tier = -2 } }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = 0.5 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_applied_tier = -1 } }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = 0.25 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_applied_tier = 1 } }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = -0.25 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_applied_tier = 2 } }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = -0.5 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_applied_tier = 3 } }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = -0.75 }
+			}
+
+			# Apply whichever of the 3 ranges per side the current ratio falls into
+			# (positive ratio = VDV-heavy, which pulls the BOP toward its negative/left side).
+			if = {
+				limit = { check_variable = { SOV_vdv_coastal_ratio > 0.7 } }
+				set_variable = { SOV_vdv_coastal_applied_tier = -3 }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = -0.75 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_ratio > 0.4 } }
+				set_variable = { SOV_vdv_coastal_applied_tier = -2 }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = -0.5 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_ratio > 0.1 } }
+				set_variable = { SOV_vdv_coastal_applied_tier = -1 }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = -0.25 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_ratio < -0.7 } }
+				set_variable = { SOV_vdv_coastal_applied_tier = 3 }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = 0.75 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_ratio < -0.4 } }
+				set_variable = { SOV_vdv_coastal_applied_tier = 2 }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = 0.5 }
+			}
+			else_if = {
+				limit = { check_variable = { SOV_vdv_coastal_ratio < -0.1 } }
+				set_variable = { SOV_vdv_coastal_applied_tier = 1 }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = 0.25 }
+			}
+			else = {
+				set_variable = { SOV_vdv_coastal_applied_tier = 0 }
+			}
 
 			# Ledger for temporary VDV/Coastal BOP swings: a decision granting a temporary
 			# shift must add_to_variable/subtract_from_variable this AND add_power_balance_value
-			# the same amount to SOV_vdv_coastal_bop in the same effect. This block only ever
-			# decays the ledger back toward 0 and removes the matching amount from the BOP —
-			# it never reads or touches the ratio-driver's pressure variables above.
-			clamp_variable = { var = SOV_vdv_coastal_pressure_applied min = -1 max = 1 }
+			# the same literal amount to SOV_vdv_coastal_bop in the same effect — every such
+			# amount used anywhere (decisions included) must be a multiple of 0.01, since decay
+			# here only ever steps by exactly +-0.01 and relies on landing on exactly 0.
+			clamp_variable = { var = SOV_vdv_coastal_temp_shift min = -1 max = 1 }
 			if = {
-				limit = { check_variable = { SOV_vdv_coastal_pressure_applied > 0.01 } }
-				subtract_from_variable = { SOV_vdv_coastal_pressure_applied = 0.01 }
-				add_power_balance_value = {
-					id = SOV_vdv_coastal_bop
-					value = -0.01
-				}
+				limit = { check_variable = { SOV_vdv_coastal_temp_shift > 0.005 } }
+				subtract_from_variable = { SOV_vdv_coastal_temp_shift = 0.01 }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = -0.01 }
 			}
 			else_if = {
-				limit = { check_variable = { SOV_vdv_coastal_pressure_applied < -0.01 } }
-				add_to_variable = { SOV_vdv_coastal_pressure_applied = 0.01 }
-				add_power_balance_value = {
-					id = SOV_vdv_coastal_bop
-					value = 0.01
-				}
-			}
-			else_if = {
-				limit = {
-					OR = {
-						check_variable = { SOV_vdv_coastal_pressure_applied > 0 }
-						check_variable = { SOV_vdv_coastal_pressure_applied < 0 }
-					}
-				}
-				set_temp_variable = {
-					SOV_vdv_coastal_pressure_applied_remainder = {
-						value = SOV_vdv_coastal_pressure_applied
-						multiply = -1
-					}
-				}
-				add_power_balance_value = {
-					id = SOV_vdv_coastal_bop
-					value = SOV_vdv_coastal_pressure_applied_remainder
-				}
-				set_variable = { SOV_vdv_coastal_pressure_applied = 0 }
+				limit = { check_variable = { SOV_vdv_coastal_temp_shift < -0.005 } }
+				add_to_variable = { SOV_vdv_coastal_temp_shift = 0.01 }
+				add_power_balance_value = { id = SOV_vdv_coastal_bop value = 0.01 }
 			}
 		}
 	}
