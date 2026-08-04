@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import blank_quoted_strings
+from shared_utils import blank_quoted_strings, strip_inline_comment
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -46,6 +46,44 @@ _DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
 _BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
 _SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
+
+# The four blocks the engine runs as a decision's effects, all of which log.
+EFFECT_BLOCKS = (
+    "complete_effect",
+    "remove_effect",
+    "timeout_effect",
+    "cancel_effect",
+)
+_LOG_STRING_RE = re.compile(r'\blog\s*=\s*"')
+_STATEMENT_NAME_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
+
+
+def _block_level_statements(block: str) -> List[str]:
+    """Statement names at an effect block's own level, in source order.
+
+    *block* is the ``{ ... }`` text of the block. Nested blocks are skipped, so
+    a ``log`` inside an ``if`` / ``hidden_effect`` does not read as a statement
+    of the block itself.
+    """
+    names: List[str] = []
+    depth = 0
+    for line in block.split("\n"):
+        code = blank_quoted_strings(strip_inline_comment(line))
+        i = 0
+        while i < len(code):
+            char = code[i]
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+            elif depth == 1:
+                match = _STATEMENT_NAME_RE.match(code, i)
+                if match:
+                    names.append(match.group(1))
+                    i = match.end()
+                    continue
+            i += 1
+    return names
 
 
 # --- Decision parsing helpers ---
@@ -452,6 +490,7 @@ class DecisionFactory:
         self.cancel_effect = extract_value_multi_line(dec, "cancel_effect")
         self.complete_effect = extract_value_multi_line(dec, "complete_effect")
         self.remove_effect = extract_value_multi_line(dec, "remove_effect")
+        self.timeout_effect = extract_value_multi_line(dec, "timeout_effect")
         self.cancel_trigger = extract_value_multi_line(dec, "cancel_trigger")
         self.cancel_if_not_visible = "cancel_if_not_visible = yes" in dec
         self.activation = extract_value_multi_line(dec, "activation")
@@ -1624,6 +1663,66 @@ class Validator(BaseValidator):
             category="missing-decision-localisation",
         )
 
+    def validate_missing_log(self):
+        """Flag decision effect blocks that carry no log line.
+
+        AGENTS.md / decision-reference.md require the log in every block the
+        engine runs as a decision's effects (complete_effect, remove_effect,
+        timeout_effect, cancel_effect):
+        `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. An effect block
+        with nothing in it is dead script, so it is reported too.
+        """
+        self._log_section("Checking decision effect blocks for a missing log...")
+
+        results = []
+        for dec in parse_all_decision_factories(self.mod_path):
+            for block_name in EFFECT_BLOCKS:
+                block = getattr(dec, block_name)
+                if not block or _LOG_STRING_RE.search(block):
+                    continue
+                results.append(
+                    f"{dec.token} - {dec.source_basename}: {block_name} has no log line"
+                )
+
+        self._report(
+            results,
+            "✓ Every decision effect block logs",
+            "Decision effect blocks with no log line:",
+            Severity.WARNING,
+            category="missing-decision-log",
+        )
+
+    def validate_log_not_first(self):
+        """Flag effect blocks whose log is not the block's first statement.
+
+        The log goes at the top so the game log reads in firing order. Only a
+        log at the block's own level counts: one nested inside an `if` /
+        `hidden_effect` records which branch ran and belongs where it sits.
+        """
+        self._log_section("Checking decision effect blocks for a log placed late...")
+
+        results = []
+        for dec in parse_all_decision_factories(self.mod_path):
+            for block_name in EFFECT_BLOCKS:
+                block = getattr(dec, block_name)
+                if not block:
+                    continue
+                statements = _block_level_statements(block)
+                if "log" not in statements or statements[0] == "log":
+                    continue
+                results.append(
+                    f"{dec.token} - {dec.source_basename}: {block_name} logs "
+                    f"after {statements[0]}, move the log to the top of the block"
+                )
+
+        self._report(
+            results,
+            "✓ Every decision effect block logs first",
+            "Decision effect blocks whose log is not the first statement:",
+            Severity.WARNING,
+            category="decision-log-not-first",
+        )
+
     def validate_visible_in_missions(self):
         """Flag missions that have a visible block.
 
@@ -1966,6 +2065,8 @@ class Validator(BaseValidator):
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
         self.validate_missing_localisation()
+        self.validate_missing_log()
+        self.validate_log_not_first()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
         self.validate_missing_war_hint()
