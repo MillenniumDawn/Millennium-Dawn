@@ -42,17 +42,22 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 - `validate_variables.py` carries a **clamp-range conflict** check (WARNING, `clamp-range-conflict`). It harvests every literal `clamp_variable = { var = X min = A max = B }` and flags any `check_variable` on `X` that compares against a value outside `A..B` (dead logic — always true or always false), plus the inverse scale slip: a sub-1 value compared against a variable clamped to a wide integer range. That second half is the `taliban_strength > 0.19` shape, the same failure class as the `threat > 40` trap in `general-rules.md`. It is deliberately anchored on the clamp rather than on observed value spread — a plain "this variable is compared on two scales" heuristic fires on `treasury`, `inflation_rate_var` and every percentage display variable, which legitimately use both. Variables only ever written by `set_temp_variable` are excluded: a clamp on a scratch parameter (`pp_gain`) constrains that one invocation, not the variable, so its range is no invariant for checks elsewhere.
 
 - `validate_oob_units.py` slot-checks ship variants through
-  `tools/validation/naval_module_slots.py` and structurally validates
-  `create_unit` effects. Its combined run gate covers `history/countries/`,
-  `common/national_focus/`, `events/`, `common/decisions/`,
-  `common/special_projects/`, `common/scripted_effects/`,
+  `tools/validation/naval_module_slots.py` and structurally checks `create_unit`
+  effects: state scope, `owner`, block keys, a single-line division string
+  naming a `division_template`, zero equipment/manpower factors, and the order
+  of a template defined in the same file and effect path as the `create_unit`
+  using it. It does not check that a referenced template is defined anywhere, so
+  a template that only ever exists for the wrong country, or a `has_template`
+  guard naming a template nothing defines, still passes. Its combined run gate
+  covers `history/countries/`, `common/national_focus/`, `events/`,
+  `common/decisions/`, `common/special_projects/`, `common/scripted_effects/`,
   `common/on_actions/`, `common/operations/`,
   `common/resistance_compliance_modifiers/`, and `common/scripted_guis/`, in
   both the pre-commit registry (`tools/precommit_validate.py`) and the CI
-  `oob` path filter. Keep the source lists in `validate_oob_units.py`, those
-  two routes, and the golden test in `tools/tests/precommit_validate_test.py`
-  together. Findings are **errors**. Non-ship variants are skipped by design.
-  Tank and plane slots are not validated anywhere yet. Their
+  `oob` path filter. `config_drift_test.py` derives both routes from
+  `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
+  both are updated. Findings are **errors**. Non-ship variants are skipped by
+  design. Tank and plane slots are not validated anywhere yet. Their
   `allowed_module_categories` blocks are often empty, so the naval resolver
   cannot be pointed at them as-is.
 

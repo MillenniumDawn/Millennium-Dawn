@@ -718,6 +718,9 @@ def _container_for(nodes: List[Dict], idx: int) -> int:
 
 
 def _scope_label(label: str) -> Optional[str]:
+    # State IDs 100-999 match the 3-char tag shape but never switch country.
+    if label.isdigit():
+        return None
     if label in _SCOPE_LABELS or label.startswith(_SCOPE_PREFIXES):
         return label
     if _LITERAL_TAG_SCOPE_RE.fullmatch(label) and label not in _SCOPE_KEYWORDS:

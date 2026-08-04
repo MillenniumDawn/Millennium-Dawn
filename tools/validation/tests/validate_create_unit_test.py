@@ -414,6 +414,42 @@ def test_country_iterator_template_does_not_mask_late_local_definition(tmp_path)
     )
 
 
+# A numeric state block leaves the country scope alone. State IDs 100-999 have
+# the same shape as a country tag, so both widths must reach the same verdict.
+def test_state_id_block_does_not_mask_late_local_definition(tmp_path):
+    div = _div_for("Militia", "Militia")
+    for state in ("129", "1054"):
+        content = """focus_tree = {
+	focus = {
+		id = TAG_focus
+		x = 0
+		y = 0
+		cost = 5
+		completion_reward = {
+			hidden_effect = {
+				RSK = {
+					{STATE} = {
+						create_unit = {
+							division = "{DIV}"
+							owner = RSK
+						}
+					}
+					division_template = {
+						name = "Militia"
+						regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+}
+""".replace("{STATE}", state).replace("{DIV}", div)
+        assert "CREATE UNIT: template defined after create_unit" in _cats(
+            _run(content, tmp_path, filename=f"state-{state}.txt")
+        )
+
+
 def test_other_event_option_does_not_mask_late_definition(tmp_path):
     div = _div_for("Militia", "Militia")
     content = """country_event = {
