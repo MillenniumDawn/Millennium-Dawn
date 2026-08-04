@@ -413,6 +413,16 @@ def test_ci_run_steps_default_to_strict():
         )
 
 
+def test_oob_filter_covers_create_unit_sources():
+    _, filters = _filter_definitions()
+    assert {
+        "common/on_actions/**",
+        "common/operations/**",
+        "common/resistance_compliance_modifiers/**",
+        "common/scripted_guis/**",
+    } <= set(filters["oob"])
+
+
 def test_gfx_reference_validator_runs_for_all_reference_sources():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     entry = next(

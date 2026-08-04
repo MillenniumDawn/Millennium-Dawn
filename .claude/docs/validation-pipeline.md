@@ -41,7 +41,20 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 
 - `validate_variables.py` carries a **clamp-range conflict** check (WARNING, `clamp-range-conflict`). It harvests every literal `clamp_variable = { var = X min = A max = B }` and flags any `check_variable` on `X` that compares against a value outside `A..B` (dead logic — always true or always false), plus the inverse scale slip: a sub-1 value compared against a variable clamped to a wide integer range. That second half is the `taliban_strength > 0.19` shape, the same failure class as the `threat > 40` trap in `general-rules.md`. It is deliberately anchored on the clamp rather than on observed value spread — a plain "this variable is compared on two scales" heuristic fires on `treasury`, `inflation_rate_var` and every percentage display variable, which legitimately use both. Variables only ever written by `set_temp_variable` are excluded: a clamp on a scratch parameter (`pp_gain`) constrains that one invocation, not the variable, so its range is no invariant for checks elsewhere.
 
-- `validate_oob_units.py` also slot-checks every `create_equipment_variant` ship design (shared resolver: `tools/validation/naval_module_slots.py`). That widened its run gate well past OOB files: it is now routed on `history/countries/`, `common/national_focus/`, `events/`, `common/decisions/`, `common/special_projects/` and all of `common/scripted_effects/`, in both the pre-commit registry (`tools/precommit_validate.py`) and the CI `oob` path filter. Those two lists and the golden test in `tools/tests/precommit_validate_test.py` must move together. Findings are **errors** — the backlog was cleared first, so any hit is a regression. Non-ship variants are skipped by design; tank and plane slots are not validated anywhere yet, and their frequently-empty `allowed_module_categories` blocks mean the naval resolver cannot be pointed at them as-is.
+- `validate_oob_units.py` slot-checks ship variants through
+  `tools/validation/naval_module_slots.py` and structurally validates
+  `create_unit` effects. Its combined run gate covers `history/countries/`,
+  `common/national_focus/`, `events/`, `common/decisions/`,
+  `common/special_projects/`, `common/scripted_effects/`,
+  `common/on_actions/`, `common/operations/`,
+  `common/resistance_compliance_modifiers/`, and `common/scripted_guis/`, in
+  both the pre-commit registry (`tools/precommit_validate.py`) and the CI
+  `oob` path filter. Keep the source lists in `validate_oob_units.py`, those
+  two routes, and the golden test in `tools/tests/precommit_validate_test.py`
+  together. Findings are **errors**. Non-ship variants are skipped by design.
+  Tank and plane slots are not validated anywhere yet. Their
+  `allowed_module_categories` blocks are often empty, so the naval resolver
+  cannot be pointed at them as-is.
 
 ## Tooling deprecation watch
 

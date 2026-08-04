@@ -37,7 +37,8 @@ on:
         required: false
         type: string
       base_sha:
-        description: "Current head of the PR's base branch (workspace cache key)"
+        description: >-
+          Current head of the PR's base branch (workspace cache key)
         required: false
         type: string
 
@@ -168,7 +169,7 @@ jobs:
       # just to diff locally is pure overhead.
       - name: Detect changed file groups
         if: github.event_name == 'pull_request'
-        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706
         id: filter
         with:
           # `style_files` (from list-files: json) carries the changed .txt paths
@@ -207,6 +208,10 @@ jobs:
               - 'events/**'
               - 'common/decisions/**'
               - 'common/special_projects/**'
+              - 'common/on_actions/**'
+              - 'common/operations/**'
+              - 'common/resistance_compliance_modifiers/**'
+              - 'common/scripted_guis/**'
             decisions:
               - 'common/decisions/**'
             scripted-loc:
@@ -478,36 +483,47 @@ jobs:
           - script: validate_variables.py
             name: variables
             title: "Variables"
+            strict: true
           - script: validate_scripted_localisation.py
             name: scripted-localisation
             title: "Scripted Localisation"
+            strict: true
           - script: validate_cosmetic_tags.py
             name: cosmetic-tags
             title: "Cosmetic Tags"
+            strict: true
           - script: validate_localisation.py
             name: localisation
             title: "Localisation"
+            strict: true
           - script: validate_events.py
             name: events
             title: "Events"
+            strict: true
           - script: validate_history.py
             name: history-files
             title: "History Files"
+            strict: true
           - script: validate_unused_scripted.py
             name: unused-scripted
             title: "Unused Scripted Effects & Triggers"
+            strict: true
           - script: validate_agency_upgrades.py
             name: agency-upgrades
             title: "Intelligence Agency Upgrades"
+            strict: true
           - script: validate_ideas.py
             name: ideas
             title: "Idea References"
+            strict: true
           - script: validate_set_variables.py
             name: set-variables
             title: "Set Variable References"
+            strict: true
           - script: validate_defines.py
             name: defines
             title: "Defines"
+            strict: true
             # cross-references the committed vanilla_defines.txt manifest (CI
             # has no HOI4 install); regenerate it after a game update via
             # gen_vanilla_defines_manifest.py.

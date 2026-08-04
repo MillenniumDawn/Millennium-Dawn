@@ -47,6 +47,14 @@ _VARIANT_SOURCE_PATTERNS = [
     "common/scripted_effects/*.txt",
 ]
 
+# create_unit also appears in these runtime effect sources.
+_CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
+    "common/on_actions/*.txt",
+    "common/operations/*.txt",
+    "common/resistance_compliance_modifiers/*.txt",
+    "common/scripted_guis/*.txt",
+]
+
 
 def _read_text(filepath: str) -> str:
     try:
@@ -511,10 +519,9 @@ def validate_oob_division_groups_file(
 #
 # A create_unit only spawns units inside a state scope (capital_scope, a
 # state-scope effect, a numeric state-ID block, or a state-scoped decision).
-# Its division string must live on one physical line, name a division_template
-# that exists by the time the effect runs, and a template created in the same
-# reward must appear first and be guarded by has_template so an existing one
-# isn't clobbered.
+# Its division string must live on one physical line and name a
+# division_template. A template defined in the same country/effect path must
+# appear before the create_unit that uses it.
 
 # Documented create_unit block keys; anything else is a typo.
 _CREATE_UNIT_KEYS = frozenset(
@@ -561,17 +568,42 @@ _ZERO_FACTOR_RE = re.compile(
 )
 _STATE_YES_RE = re.compile(r"\bstate\s*=\s*yes\b")
 _EXECUTE_EFFECT_RE = re.compile(r"\bexecute_effect\b")
-# An `if = { limit = { has_template = "X" } ... }` guard asserts the template
-# already exists, so a create_unit under it never races a definition below it.
-_HAS_TEMPLATE_IF_RE = re.compile(
-    r"\blimit\s*=\s*\{\s*has_template\s*=\s*\"([^\"]*)\"\s*\}", re.S
+_HAS_TEMPLATE_RE = re.compile(r'\bhas_template\s*=\s*"([^\"]*)"')
+_LITERAL_TAG_SCOPE_RE = re.compile(r"^[A-Z0-9_]{3}$")
+_SCOPE_KEYWORDS = frozenset({"AND", "NOT", "NOR", "OR"})
+_SCOPE_LABELS = frozenset(
+    {
+        "ROOT",
+        "THIS",
+        "PREV",
+        "FROM",
+        "OWNER",
+        "CONTROLLER",
+        "CAPITAL",
+        "OVERLORD",
+        "FROMFROM",
+        "PREVPREV",
+    }
 )
+_SCOPE_PREFIXES = ("event_target:", "global.event_target:", "var:")
+_COUNTRY_ITERATOR_RE = re.compile(
+    r"^(?:every|random|all)_(?:\w+_)?(?:country|puppet)(?:_|$)"
+)
+_NON_GUARANTEEING_GUARD_LABELS = frozenset({"NOT", "NAND", "NOR", "OR"})
 
 # Execution-boundary labels: when walking up a create_unit's enclosing scopes,
 # stop at these (a fresh effect sequence starts) so the ordering check doesn't
-# compare a template and a create_unit from two different rewards/decisions.
+# compare a template and a create_unit from separate effects or event options.
 _EFFECT_BOUNDARY_LABELS = frozenset(
-    {"completion_reward", "execute_effect", "remove_effect"}
+    {
+        "completion_reward",
+        "execute_effect",
+        "complete_effect",
+        "remove_effect",
+        "timeout_effect",
+        "cancel_effect",
+        "option",
+    }
 )
 
 
@@ -596,10 +628,10 @@ class _CreateUnitChecks:
         self.issues: List[Issue] = []
         self.file = file
 
-    def warn(self, kind: str, message: str, line: int):
+    def error(self, kind: str, message: str, line: int):
         self.issues.append(
             Issue(
-                severity=Severity.WARNING,
+                severity=Severity.ERROR,
                 category=_CREATE_UNIT_CATEGORIES[kind],
                 message=message,
                 file=self.file,
@@ -685,15 +717,93 @@ def _container_for(nodes: List[Dict], idx: int) -> int:
     return -1
 
 
+def _scope_label(label: str) -> Optional[str]:
+    if label in _SCOPE_LABELS or label.startswith(_SCOPE_PREFIXES):
+        return label
+    if _LITERAL_TAG_SCOPE_RE.fullmatch(label) and label not in _SCOPE_KEYWORDS:
+        return label
+    return None
+
+
+def _country_scope_path(
+    nodes: List[Dict], idx: int, include_self: bool = False
+) -> Tuple[str, ...]:
+    path = ["ROOT"]
+    chain = list(reversed(_ancestors(nodes, idx)))
+    if include_self:
+        chain.append(idx)
+    for i in chain:
+        label = nodes[i]["label"] or ""
+        if _COUNTRY_ITERATOR_RE.match(label):
+            path.append(f"@{i}")
+            continue
+        scope = _scope_label(label)
+        if scope == "ROOT":
+            path = ["ROOT"]
+        elif scope is not None:
+            path.append(scope)
+    return tuple(path)
+
+
+def _deepest_node_at(nodes: List[Dict], pos: int) -> int:
+    candidates = [
+        i for i, node in enumerate(nodes) if node["start"] < pos < node["end"]
+    ]
+    if not candidates:
+        return -1
+    return min(candidates, key=lambda i: nodes[i]["end"] - nodes[i]["start"])
+
+
+def _closest_if(nodes: List[Dict], idx: int) -> int:
+    for a in [idx] + _ancestors(nodes, idx):
+        if nodes[a]["label"] == "if":
+            return a
+    return -1
+
+
+def _is_positive_if_limit_condition(nodes: List[Dict], idx: int, if_idx: int) -> bool:
+    saw_limit = False
+    while idx != -1:
+        label = nodes[idx]["label"]
+        if label in _NON_GUARANTEEING_GUARD_LABELS:
+            return False
+        if label == "limit":
+            saw_limit = True
+        if idx == if_idx:
+            return saw_limit
+        idx = nodes[idx]["parent"]
+    return False
+
+
+def _runs_in_if_true_branch(nodes: List[Dict], idx: int, if_idx: int) -> bool:
+    child = idx
+    while nodes[child]["parent"] != if_idx:
+        child = nodes[child]["parent"]
+        if child == -1:
+            return False
+    return nodes[child]["label"] not in {"else", "else_if"}
+
+
 def _in_has_template_guard(nodes: List[Dict], text: str, idx: int, name: str) -> bool:
-    """True if *idx* sits under an `if = { limit = { has_template = name } }`."""
+    """True if a same-scope has_template condition dominates *idx*."""
+    scope_path = _country_scope_path(nodes, idx)
     container = _container_for(nodes, idx)
     for a in _ancestors(nodes, idx):
-        if nodes[a]["label"] == "if":
-            body = text[nodes[a]["start"] : nodes[a]["end"]]
-            m = _HAS_TEMPLATE_IF_RE.search(body)
-            if m and m.group(1) == name:
-                return True
+        if nodes[a]["label"] == "if" and _runs_in_if_true_branch(nodes, idx, a):
+            start = nodes[a]["start"]
+            body = text[start : nodes[a]["end"]]
+            for match in _HAS_TEMPLATE_RE.finditer(body):
+                if match.group(1) != name:
+                    continue
+                match_idx = _deepest_node_at(nodes, start + match.start())
+                if (
+                    match_idx != -1
+                    and _closest_if(nodes, match_idx) == a
+                    and _is_positive_if_limit_condition(nodes, match_idx, a)
+                    and _country_scope_path(nodes, match_idx, include_self=True)
+                    == scope_path
+                ):
+                    return True
         if a == container:
             break
     return False
@@ -732,14 +842,17 @@ def _top_level_keys(text: str, start: int, end: int) -> List[str]:
 
 
 def _template_defs_named(
-    nodes: List[Dict], text: str, container: int, name: str
+    nodes: List[Dict], text: str, container: int, name: str, scope_path: Tuple[str, ...]
 ) -> List[int]:
-    """Indices of division_template blocks named *name* under *container*."""
+    """Indices of same-scope division_template blocks named *name*."""
     out = []
     stack = list(nodes[container]["children"])
     while stack:
         i = stack.pop()
-        if nodes[i]["label"] == "division_template":
+        if (
+            nodes[i]["label"] == "division_template"
+            and _country_scope_path(nodes, i) == scope_path
+        ):
             body = text[nodes[i]["start"] : nodes[i]["end"]]
             m = _TEMPLATE_NAME_RE.search(body)
             if m and m.group(1) == name:
@@ -763,7 +876,7 @@ def _in_state_scope(nodes: List[Dict], text: str, idx: int) -> bool:
 
 
 def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
-    """Validate every create_unit block in one file. Returns warning Issues."""
+    """Validate every create_unit block in one file. Returns error Issues."""
     filepath, rel, mod_path = args
     try:
         with open(filepath, "r", encoding="utf-8-sig") as f:
@@ -790,7 +903,7 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
         line = cu["line"]
 
         if not _in_state_scope(nodes, content, cu_idx):
-            out.warn(
+            out.error(
                 "scope",
                 f"{cu['line']}: create_unit outside a state scope (effect does "
                 f"nothing at country scope)",
@@ -798,14 +911,14 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
             )
 
         if not _OWNER_RE.search(body):
-            out.warn(
+            out.error(
                 "missing-owner", f"{cu['line']}: create_unit missing `owner`", line
             )
 
         keys = _top_level_keys(content, cu["start"] + 1, cu["end"])
         unknown = sorted(set(keys) - _CREATE_UNIT_KEYS)
         if unknown:
-            out.warn(
+            out.error(
                 "unknown-key",
                 f"{cu['line']}: create_unit unknown key(s): {', '.join(unknown)}",
                 line,
@@ -813,7 +926,7 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
 
         dm = _DIVISION_VALUE_RE.search(body)
         if not dm:
-            out.warn(
+            out.error(
                 "missing-division",
                 f"{cu['line']}: create_unit missing `division` string",
                 line,
@@ -821,7 +934,7 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
             continue
         dval = dm.group(1)
         if "\n" in dval:
-            out.warn(
+            out.error(
                 "multiline-division",
                 f"{cu['line']}: division string must stay on one physical line",
                 line,
@@ -830,7 +943,7 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
         # name/template/factor tokens parse like the engine's parsed string.
         dval_clean = dval.replace('\\"', '"')
         if _ZERO_FACTOR_RE.search(dval_clean):
-            out.warn(
+            out.error(
                 "zero-factor",
                 f"{cu['line']}: start_equipment_factor/start_manpower_factor of 0 is treated as 1",
                 line,
@@ -838,7 +951,7 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
 
         tm = _TEMPLATE_REF_RE.search(dval_clean)
         if not tm:
-            out.warn(
+            out.error(
                 "missing-template",
                 f'{cu["line"]}: division string lacks division_template="..."',
                 line,
@@ -846,30 +959,22 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
             continue
         tname = tm.group(1)
 
-        # If an enclosing `if = { limit = { has_template = <tname> } }` guard
-        # asserts the template already exists, no ordering check applies — the
-        # definition lives in a mutually-exclusive else branch (the Iran/Indonesia
-        # Quds pattern) and is guaranteed present here.
         if _in_has_template_guard(nodes, content, cu_idx, tname):
             continue
 
-        # Ordering: walk the enclosing scopes up to the effect container
-        # (stopping at completion_reward/execute_effect/top-level) for a matching
-        # template definition. Report once for the nearest one.
+        scope_path = _country_scope_path(nodes, cu_idx)
         container = _container_for(nodes, cu_idx)
         for a in _ancestors(nodes, cu_idx):
-            defs = _template_defs_named(nodes, content, a, tname)
+            defs = _template_defs_named(nodes, content, a, tname, scope_path)
             if not defs:
                 if a == container:
                     break
                 continue
-            # A name can be defined multiple times in a container (a fresh
-            # definition per scope). Only the earliest matters: if a matching
-            # template already exists before this create_unit runs, there is no
-            # ordering bug.
+            # A name can be defined multiple times in one country/effect path.
+            # Only the earliest definition can make this create_unit valid.
             t = nodes[min(defs, key=lambda d: nodes[d]["start"])]
             if t["start"] > cu["start"]:
-                out.warn(
+                out.error(
                     "template-order",
                     f"{cu['line']}: division_template '{tname}' is defined after the create_unit that uses it",
                     line,
@@ -1113,15 +1218,10 @@ class Validator(BaseValidator):
         )
 
     def validate_created_units(self):
-        """Check every `create_unit` effect across the mod for proper form.
-
-        A create_unit must run in a state scope, carry a single-line `division`
-        string naming a division_template, set `owner`, and (when it defines the
-        template itself) create it first behind a has_template guard.
-        """
+        """Check every create_unit effect source for proper form."""
         self._log_section("Checking create_unit effects across the mod...")
 
-        files = self._collect_files(_VARIANT_SOURCE_PATTERNS)
+        files = self._collect_files(_CREATE_UNIT_SOURCE_PATTERNS)
         if not files:
             self.log("  No files to check")
             return

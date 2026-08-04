@@ -5,7 +5,8 @@ string naming a division_template, and must set owner. When it defines the
 template itself, the template must come first.
 """
 
-from validate_oob_units import _check_created_units
+from validate_oob_units import Validator, _check_created_units
+from validator_common import Severity
 
 # The engine stores inner quotes in the division string as backslash-escaped
 # (\\\"...\\\"). Build them explicitly so no source-level unescaping bites.
@@ -238,3 +239,205 @@ def test_decision_remove_effect_boundary(tmp_path):
 """.replace("{DIV}", div)
     issues = _run(content, tmp_path, filename="decisions.txt")
     assert all("template defined after" not in c for c in _cats(issues))
+
+
+def test_extra_create_unit_sources_are_checked(tmp_path):
+    content = _GUARDED.replace("\t\t\t\t\t\towner = ROOT\n", "")
+    sources = (
+        "common/on_actions/test.txt",
+        "common/operations/test.txt",
+        "common/resistance_compliance_modifiers/test.txt",
+        "common/scripted_guis/test.txt",
+    )
+    for source in sources:
+        target = tmp_path / source
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+
+    validator = Validator(str(tmp_path), workers=1)
+    validator.validate_created_units()
+
+    assert validator.errors_found == len(sources)
+    assert {issue.file for issue in validator._issues} == set(sources)
+    assert all(issue.severity == Severity.ERROR for issue in validator._issues)
+
+
+def test_foreign_template_does_not_mask_late_local_definition(tmp_path):
+    div = _div_for("Militia", "Militia")
+    content = """focus_tree = {
+	focus = {
+		id = TAG_focus
+		x = 0
+		y = 0
+		cost = 5
+		completion_reward = {
+			hidden_effect = {
+				FSA = {
+					division_template = {
+						name = "Militia"
+						regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "{DIV}"
+						owner = ROOT
+					}
+				}
+				division_template = {
+					name = "Militia"
+					regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+}
+""".replace("{DIV}", div)
+    assert "CREATE UNIT: template defined after create_unit" in _cats(
+        _run(content, tmp_path)
+    )
+
+
+def test_foreign_has_template_guard_does_not_mask_late_local_definition(tmp_path):
+    div = _div_for("Militia", "Militia")
+    content = """focus_tree = {
+	focus = {
+		id = TAG_focus
+		x = 0
+		y = 0
+		cost = 5
+		completion_reward = {
+			hidden_effect = {
+				if = {
+					limit = {
+						FSA = { has_template = "Militia" }
+					}
+					capital_scope = {
+						create_unit = {
+							division = "{DIV}"
+							owner = ROOT
+						}
+					}
+				}
+				division_template = {
+					name = "Militia"
+					regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+}
+""".replace("{DIV}", div)
+    assert "CREATE UNIT: template defined after create_unit" in _cats(
+        _run(content, tmp_path)
+    )
+
+
+def test_non_guaranteeing_has_template_guards_do_not_skip_ordering(tmp_path):
+    div = _div_for("Militia", "Militia")
+    for i, condition in enumerate(
+        (
+            'NOT = { has_template = "Militia" }',
+            'OR = { has_template = "Militia" always = yes }',
+        )
+    ):
+        content = """focus_tree = {
+	focus = {
+		id = TAG_focus
+		x = 0
+		y = 0
+		cost = 5
+		completion_reward = {
+			hidden_effect = {
+				if = {
+					limit = {
+						{CONDITION}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "{DIV}"
+							owner = ROOT
+						}
+					}
+				}
+				division_template = {
+					name = "Militia"
+					regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+}
+""".replace("{CONDITION}", condition).replace("{DIV}", div)
+        assert "CREATE UNIT: template defined after create_unit" in _cats(
+            _run(content, tmp_path, filename=f"guard-{i}.txt")
+        )
+
+
+def test_country_iterator_template_does_not_mask_late_local_definition(tmp_path):
+    div = _div_for("Militia", "Militia")
+    content = """focus_tree = {
+	focus = {
+		id = TAG_focus
+		x = 0
+		y = 0
+		cost = 5
+		completion_reward = {
+			hidden_effect = {
+				every_country = {
+					division_template = {
+						name = "Militia"
+						regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "{DIV}"
+						owner = ROOT
+					}
+				}
+				division_template = {
+					name = "Militia"
+					regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+}
+""".replace("{DIV}", div)
+    assert "CREATE UNIT: template defined after create_unit" in _cats(
+        _run(content, tmp_path)
+    )
+
+
+def test_other_event_option_does_not_mask_late_definition(tmp_path):
+    div = _div_for("Militia", "Militia")
+    content = """country_event = {
+	id = test.1
+	option = {
+		division_template = {
+			name = "Militia"
+			regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+		}
+	}
+	option = {
+		1 = {
+			create_unit = {
+				division = "{DIV}"
+				owner = ROOT
+			}
+		}
+		division_template = {
+			name = "Militia"
+			regiments = { L_Inf_Bat = { x = 0 y = 0 } }
+		}
+	}
+}
+""".replace("{DIV}", div)
+    assert "CREATE UNIT: template defined after create_unit" in _cats(
+        _run(content, tmp_path, filename="events.txt")
+    )
