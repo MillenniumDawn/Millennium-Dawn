@@ -115,7 +115,68 @@ on_actions = {
 				}
 
 				add_to_variable = { JAP_corporate_restructuring_progress = jap_zombie_recovery }
+if = {
+				limit = {
+					NOT = {
+						OR = {
+							has_country_flag = JAP_downsize_path
+							has_country_flag = JAP_fusion_path
+						}
+					}
+				}
+				clamp_variable = { var = JAP_corporate_restructuring_progress min = 0 max = 84 }
+			}
+			else = {
 				clamp_variable = { var = JAP_corporate_restructuring_progress min = 0 max = 100 }
+			}
+
+			if = {
+				limit = {
+					has_idea = JAP_zombie_companies_1
+					check_variable = { JAP_corporate_restructuring_progress > 29 }
+				}
+				swap_ideas = {
+					remove_idea = JAP_zombie_companies_1
+					add_idea = JAP_zombie_companies_2
+				}
+			}
+			if = {
+				limit = {
+					has_idea = JAP_zombie_companies_2
+					check_variable = { JAP_corporate_restructuring_progress > 59 }
+				}
+				swap_ideas = {
+					remove_idea = JAP_zombie_companies_2
+					add_idea = JAP_zombie_companies_3
+				}
+			}
+			if = {
+				limit = {
+					has_idea = JAP_zombie_companies_3
+					check_variable = { JAP_corporate_restructuring_progress > 84 }
+				}
+				if = {
+					limit = { has_country_flag = JAP_fusion_path }
+					swap_ideas = {
+						remove_idea = JAP_zombie_companies_3
+						add_idea = JAP_consolidated_conglomerates
+					}
+					if = {
+						limit = { has_idea = JAP_fusion_restructuring }
+						remove_ideas = JAP_fusion_restructuring
+					}
+					country_event = { id = Japan_economy.35 days = 3 }
+				}
+				else = {
+					remove_ideas = JAP_zombie_companies_3
+					if = {
+						limit = { has_idea = JAP_liquidation_wave }
+						remove_ideas = JAP_liquidation_wave
+					}
+					country_event = { id = Japan_economy.34 days = 3 }
+				}
+			}
+
 			}
 
 			if = {
