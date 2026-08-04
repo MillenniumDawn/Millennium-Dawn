@@ -70,6 +70,71 @@ def test_custom_override_tooltip_ok(tmp_path):
     assert out == []
 
 
+def test_inline_tooltip_ok(tmp_path):
+    # check_variable's own `tooltip` field renders the requirement line itself.
+    out = _findings(
+        tmp_path,
+        "my_decision = {\n"
+        "\tavailable = {\n"
+        "\t\tcheck_variable = {\n"
+        "\t\t\ttooltip = my_tt\n"
+        "\t\t\tvar = my_var\n"
+        "\t\t\tvalue = 5\n"
+        "\t\t\tcompare = less_than\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert out == []
+
+
+def test_inline_tooltip_with_nested_value_block_ok(tmp_path):
+    out = _findings(
+        tmp_path,
+        "my_decision = {\n"
+        "\tavailable = {\n"
+        "\t\tcheck_variable = {\n"
+        "\t\t\tvar = my_var\n"
+        "\t\t\tvalue = { base = 2 add = 3 }\n"
+        "\t\t\tcompare = less_than\n"
+        "\t\t\ttooltip = my_tt\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert out == []
+
+
+def test_long_form_without_tooltip_still_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "my_decision = {\n"
+        "\tavailable = {\n"
+        "\t\tcheck_variable = {\n"
+        "\t\t\tvar = my_var\n"
+        "\t\t\tvalue = 5\n"
+        "\t\t\tcompare = less_than\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert len(out) == 1
+
+
+def test_inline_tooltip_does_not_mask_following_check(tmp_path):
+    out = _findings(
+        tmp_path,
+        "my_decision = {\n"
+        "\tavailable = {\n"
+        "\t\tcheck_variable = { tooltip = my_tt var = a value = 5 compare = less_than }\n"
+        "\t\tcheck_variable = { b > 2 }\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert len(out) == 1
+    assert out[0][2] == 4
+
+
 def test_nested_in_boolean_still_flagged(tmp_path):
     out = _findings(
         tmp_path,

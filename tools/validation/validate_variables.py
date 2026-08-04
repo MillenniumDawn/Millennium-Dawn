@@ -231,7 +231,24 @@ _UNTOOLTIPPED_TRIGGER_RE = re.compile(r"\bcheck_variable\s*=\s*\{")
 _TOOLTIP_WRAPPER_TOKENS = frozenset(
     {"custom_trigger_tooltip", "hidden_trigger", "custom_override_tooltip"}
 )
+# check_variable takes its own inline `tooltip = KEY`, which renders the same
+# requirement line a wrapper would. `\b` does not match custom_trigger_tooltip.
+_INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
 _PLAYER_FACING_BLOCK = "available"
+
+
+def _matching_brace(text: str, open_idx: int) -> int:
+    """Index of the `}` closing the `{` at ``open_idx``, or ``len(text)`` if unbalanced."""
+    depth = 0
+    for i in range(open_idx, len(text)):
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return len(text)
 
 
 def collect_clamp_ranges(
@@ -321,7 +338,8 @@ def process_file_for_untooltipped_available_checks(
     """Pool worker: flag check_variable inside `available` with no tooltip wrapper.
 
     Walks the enclosing block stack outward from each check so a wrapper at any
-    depth above it counts, not just the direct parent.
+    depth above it counts, not just the direct parent. A check carrying its own
+    inline ``tooltip = KEY`` needs no wrapper.
     """
     filename, mod_path = args
     if should_skip_file(filename):
@@ -343,6 +361,10 @@ def process_file_for_untooltipped_available_checks(
     for m in re.finditer(r"\}", cleaned):
         events.append((m.start(), 1, ""))
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
+        open_idx = m.end() - 1
+        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
+        if _INLINE_TOOLTIP_RE.search(body):
+            continue
         events.append((m.start(), 2, ""))
     events.sort(key=lambda e: (e[0], e[1]))
 
