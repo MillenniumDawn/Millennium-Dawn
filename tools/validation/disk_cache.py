@@ -36,7 +36,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 # scripted_params token cache after the 3-tuple → 4-tuple token format change
 # (the cache keys on file content, not validator source, so a format change in
 # the token shape requires a version bump to avoid stale 3-tuple entries).
-CACHE_VERSION = 7
+CACHE_VERSION = 8
 
 
 # Cache entries include this fingerprint so parser changes invalidate results
