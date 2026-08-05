@@ -426,41 +426,41 @@ country_event = { #How do we appraoch our operation
 	picture = GFX_political_deal
 	is_triggered_only = yes
 
-	# option = {
-	# 	name = TUR_pkk.1.a
-	# 	log = "[GetDateText]: [This.GetName]: TUR_pkk.1.a executed"
-	# 	set_country_flag = TUR_PKK_conventional
-	# 	custom_effect_tooltip = TUR_PKK_TT
-	# 	hidden_effect = {
-	# 		PER = {
-	# 			country_event = {
-	# 				id = TUR_pkk.2
-	# 				days = 3
-	# 			}
-	# 		}
-	# 		SYR = {
-	# 			country_event = {
-	# 				id = TUR_pkk.2
-	# 				days = 3
-	# 			}
-	# 		}
-	# 		IRQ = {
-	# 			country_event = {
-	# 				id = TUR_pkk.2
-	# 				days = 3
-	# 			}
-	# 		}
-	# 		KUR = {
-	# 			country_event = {
-	# 				id = TUR_pkk.2
-	# 				days = 3
-	# 			}
-	# 		}
-	# 	}
-	# 	ai_chance = {
-	# 		base = 10
-	# 	}
-	# }
+	option = {
+		name = TUR_pkk.1.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.a executed"
+		set_country_flag = TUR_PKK_conventional
+		custom_effect_tooltip = TUR_PKK_TT
+		hidden_effect = {
+			PER = {
+				country_event = {
+					id = TUR_pkk.2
+					days = 3
+				}
+			}
+			SYR = {
+				country_event = {
+					id = TUR_pkk.2
+					days = 3
+				}
+			}
+			IRQ = {
+				country_event = {
+					id = TUR_pkk.2
+					days = 3
+				}
+			}
+			KUR = {
+				country_event = {
+					id = TUR_pkk.2
+					days = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
 	option = {
 		name = TUR_pkk.1.b
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.b executed"
@@ -528,6 +528,8 @@ country_event = { #X Country agrees to the terms
 	option = {
 		name = TUR_pkk.3.a
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.3.a executed"
+		custom_effect_tooltip = TUR_DECREASE_PKK_STRENGTH_2
+		add_to_variable = { TUR_PKK_strength = -2 }
 		ai_chance = {
 			base = 10
 		}
@@ -562,13 +564,17 @@ country_event = {
 	option = {
 		name = TUR_pkk.100.a
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.100.a executed"
-		50 = {
-			add_to_variable = { TUR_PKK_BASE_MANPOWER = -300 }
-			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
-			custom_effect_tooltip = TUR_PKK_DAMAGE_300_TT
-			add_to_variable = { TUR_PKK_BASE_MANPOWER = -200 }
-			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
-			custom_effect_tooltip = TUR_PKK_DAMAGE_200_TT
+		random_list = {
+			50 = {
+				custom_effect_tooltip = TUR_PKK_DAMAGE_300_TT
+				set_temp_variable = { TUR_preop_damage = -300 }
+				TUR_pkk_damage_targeted_base = yes
+			}
+			50 = {
+				custom_effect_tooltip = TUR_PKK_DAMAGE_200_TT
+				set_temp_variable = { TUR_preop_damage = -200 }
+				TUR_pkk_damage_targeted_base = yes
+			}
 		}
 		random_list = {
 			80 = {
@@ -593,13 +599,17 @@ country_event = {
 	option = {
 		name = TUR_pkk.100.b
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.100.b executed"
-		50 = {
-			add_to_variable = { TUR_PKK_BASE_MANPOWER = -300 }
-			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
-			custom_effect_tooltip = TUR_PKK_DAMAGE_300_TT
-			add_to_variable = { TUR_PKK_BASE_MANPOWER = -200 }
-			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
-			custom_effect_tooltip = TUR_PKK_DAMAGE_200_TT
+		random_list = {
+			50 = {
+				custom_effect_tooltip = TUR_PKK_DAMAGE_300_TT
+				set_temp_variable = { TUR_preop_damage = -300 }
+				TUR_pkk_damage_targeted_base = yes
+			}
+			50 = {
+				custom_effect_tooltip = TUR_PKK_DAMAGE_200_TT
+				set_temp_variable = { TUR_preop_damage = -200 }
+				TUR_pkk_damage_targeted_base = yes
+			}
 		}
 		random_list = {
 			80 = {
@@ -629,6 +639,7 @@ country_event = {
 			80 = {
 				if = {
 					limit = {
+						has_country_flag = TUR_targeting_van
 						935 = { is_owned_and_controlled_by = TUR }
 					}
 					935 = {
@@ -657,9 +668,39 @@ country_event = {
 				}
 				if = {
 					limit = {
+						has_country_flag = TUR_targeting_diyarbakir
 						162 = { is_owned_and_controlled_by = TUR }
 					}
 					162 = {
+						if = {
+							limit = { infrastructure > 0 }
+							damage_building = {
+								type = infrastructure
+								damage = 3.0
+							}
+						}
+						if = {
+							limit = { offices > 0 }
+							damage_building = {
+								type = offices
+								damage = 3.0
+							}
+						}
+						if = {
+							limit = { industrial_complex > 0 }
+							damage_building = {
+								type = industrial_complex
+								damage = 3.0
+							}
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = TUR_targeting_euphrates
+						1205 = { is_owned_and_controlled_by = TUR }
+					}
+					1205 = {
 						if = {
 							limit = { infrastructure > 0 }
 							damage_building = {
@@ -699,7 +740,7 @@ country_event = {
 	# Do nothing
 	option = {
 		name = TUR_pkk.100.d1
-		log = "[GetDateText]: [This.GetName]: TUR_pkk.100.c executed"
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.100.d1 executed"
 		ai_chance = {
 			base = 1
 		}
@@ -1109,9 +1150,9 @@ country_event = {
 	option = {
 		name = TUR_pkk.204.a
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.204.a executed"
-		add_to_variable = { TUR_PKK_BASE_MANPOWER = -100 }
-		clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
 		custom_effect_tooltip = TUR_PKK_DAMAGE_100_2_TT
+		set_temp_variable = { TUR_preop_damage = -100 }
+		TUR_pkk_damage_targeted_base = yes
 		newline = yes
 		custom_effect_tooltip = TUR_DECREASE_PKK_STRENGTH_3
 		add_to_variable = { TUR_PKK_strength = -3 }
@@ -2835,7 +2876,6 @@ country_event = {
 	trigger = {
 		original_tag = TUR
 		NOT = { has_country_flag = TUR_Baykal_scandal }
-		western_conservatism_are_in_power = yes
 	}
 
 	fire_only_once = yes
@@ -3448,222 +3488,6 @@ country_event = { #Greece event
 			min = 0
 			max = 100
 		}
-		ai_chance = { factor = 10 }
-	}
-}
-#
-country_event = { #Turkey Event
-	id = TurkeyFocusEvents.11
-	title = TurkeyFocusEvents.11.t
-	desc = TurkeyFocusEvents.11.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.11.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.11.a executed"
-		set_country_flag = GRE_TUR_CYP
-		ai_chance = { factor = 10 }
-	}
-}
-#
-country_event = { #Turkey asks us to invade Southern Cyprus
-	id = TurkeyFocusEvents.12
-	title = TurkeyFocusEvents.12.t
-	desc = TurkeyFocusEvents.12.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.12.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.12.a executed"
-		NCY = {
-			declare_war_on = {
-				target = CYP
-				type = annex_everything
-			}
-		}
-		ai_chance = { factor = 10 }
-	}
-	option = {
-		name = TurkeyFocusEvents.12.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.12.b executed"
-		set_temp_variable = { wargoal_on = NCY }
-		set_temp_variable = { wargoal_type = 2 }
-		add_threat_from_wargoal_effect = yes
-		create_wargoal = {
-			type = annex_everything
-			target = NCY
-		}
-		ai_chance = { factor = 0 }
-	}
-}
-#
-country_event = { #Turkey asks us to withdraw from Cyprus
-	id = TurkeyFocusEvents.14
-	title = TurkeyFocusEvents.14.t
-	desc = TurkeyFocusEvents.14.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.14.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.14.a executed"
-		812 = { transfer_state_to = NCY }
-		ai_chance = { factor = 4 }
-	}
-	option = {
-		name = TurkeyFocusEvents.14.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.14.b executed"
-		add_opinion_modifier = {
-			modifier = declaration_of_hostility
-			target = ENG
-		}
-		reverse_add_opinion_modifier = {
-			modifier = declaration_of_hostility
-			target = ENG
-		}
-		ai_chance = { factor = 6 }
-	}
-}
-#
-country_event = { #Turkey asks us to join them
-	id = TurkeyFocusEvents.15
-	title = TurkeyFocusEvents.15.t
-	desc = TurkeyFocusEvents.15.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.15.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.15.a executed"
-		NCY = {
-			every_owned_state = {
-				transfer_state_to = TUR
-			}
-		}
-		ai_chance = { factor = 10 }
-	}
-	option = {
-		name = TurkeyFocusEvents.15.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.15.b executed"
-		set_temp_variable = { wargoal_on = NCY }
-		set_temp_variable = { wargoal_type = 2 }
-		add_threat_from_wargoal_effect = yes
-		create_wargoal = {
-			type = annex_everything
-			target = NCY
-		}
-		ai_chance = { factor = 0 }
-	}
-}
-#
-country_event = { #Turkey asks us to join Cyprus
-	id = TurkeyFocusEvents.16
-	title = TurkeyFocusEvents.16.t
-	desc = TurkeyFocusEvents.16.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.16.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.16.a executed"
-		NCY = {
-			every_owned_state = {
-				transfer_state_to = CYP
-			}
-		}
-		ai_chance = { factor = 10 }
-	}
-	option = {
-		name = TurkeyFocusEvents.16.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.16.b executed"
-		CYP = {
-			set_temp_variable = { wargoal_on = NCY }
-			set_temp_variable = { wargoal_type = 2 }
-			add_threat_from_wargoal_effect = yes
-			create_wargoal = {
-				type = annex_everything
-				target = NCY
-			}
-		}
-		ai_chance = { factor = 0 }
-	}
-}
-#
-country_event = { #Turkey asks for the Aegean
-	id = TurkeyFocusEvents.17
-	title = TurkeyFocusEvents.17.t
-	desc = TurkeyFocusEvents.17.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.17.a #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.17.a executed"
-		TUR = {
-			country_event = TurkeyFocusEvents.171
-		}
-		143 = { transfer_state_to = TUR }
-		ai_chance = { factor = 10 }
-	}
-	option = {
-		name = TurkeyFocusEvents.17.b #No (Will let Turkey go down aggressive approach path)
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.17.b executed"
-		TUR = {
-			country_event = TurkeyFocusEvents.172
-		}
-		ai_chance = { factor = 0 }
-	}
-}
-#
-country_event = { #Greece gives the Aegean!
-	id = TurkeyFocusEvents.171
-	title = TurkeyFocusEvents.171.t
-	desc = TurkeyFocusEvents.171.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.171.a #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.171.a executed"
-		ai_chance = { factor = 10 }
-	}
-}
-#
-country_event = { #Greece doesnt give the Aegean!
-	id = TurkeyFocusEvents.172
-	title = TurkeyFocusEvents.172.t
-	desc = TurkeyFocusEvents.172.d
-	picture = GFX_treaty_rejected
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.172.a #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.172.a executed"
-		ai_chance = { factor = 10 }
-	}
-}
-#
-country_event = { #Greece doesnt give the Aegean!
-	id = TurkeyFocusEvents.18
-	title = TurkeyFocusEvents.18.t
-	desc = TurkeyFocusEvents.18.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.18.a #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.18.a executed"
 		ai_chance = { factor = 10 }
 	}
 }
@@ -4308,10 +4132,8 @@ country_event = { #Peshmerga Stance
 		TUR = {
 			country_event = TurkeyFocusEvents.322
 		}
-		KUR = {
-			diplomatic_relation = { country = TUR relation = non_aggression_pact active = yes }
-			diplomatic_relation = { country = PKK relation = non_aggression_pact active = yes }
-		}
+		diplomatic_relation = { country = TUR relation = non_aggression_pact active = yes }
+		diplomatic_relation = { country = PKK relation = non_aggression_pact active = yes }
 		ai_chance = { factor = 10 }
 	}
 	option = {
@@ -4324,11 +4146,9 @@ country_event = { #Peshmerga Stance
 				target = KUR
 			}
 		}
-		KUR = {
-			add_opinion_modifier = {
-				modifier = declaration_of_hostility
-				target = TUR
-			}
+		add_opinion_modifier = {
+			modifier = declaration_of_hostility
+			target = TUR
 		}
 		ai_chance = { factor = 10 }
 	}
