@@ -268,7 +268,6 @@ Exist only for a single country. Only use in content for that country.
 | `CZE_skoda_superb_productivity_modifier`    | CZE     | `CZE_modifier_definitions.txt` |
 | `ITA_ageing_population_drift_modifier`      | ITA     | `ITA_modifier_definitions.txt` |
 | `ITA_reform_expectance_drift`               | ITA     | `ITA_modifier_definitions.txt` |
-| `JAP_declining_birthrate_measures_modifier` | JAP     | `JAP_modifier_definitions.txt` |
 
 ## Special
 

@@ -2,6 +2,24 @@
 
 Pre-commit and CI do not run the same hook set. Things that pass locally can still fail CI, and vice versa. Read this before wiring, judging, or debugging any validator.
 
+## The validator test suite is a hard gate
+
+CI runs `python -m pytest` on every PR touching `tools/` (`report-lib-tests` job in `tools-validation.yml`; testpaths in `pyproject.toml` cover all six test dirs). It must be green permanently — do not introduce regressions into the testing schema. A validator's behavior and its regression tests are one change: when a `*_test.py` in `tools/validation/tests/` (or the other test dirs) breaks because a validator changed, update the test to the new correct behavior in the same commit. If the test reflects the correct invariant and the validator regressed, fix the validator instead. Never delete or weaken a regression test to make it pass; the suite is the acceptance gate for validator wiring, and a red `pytest` blocks the PR regardless of how clean the validators themselves run. Run `python -m pytest` locally before merging any `tools/` change.
+
+## When the coding pipeline runs
+
+`coding-pipeline.yml` triggers on `pull_request` (`opened`, `synchronize`, `reopened`, `ready_for_review`, targeting `main`, content-path filtered). Two extra entry points cover open PRs that get no pushes:
+
+- `workflow_dispatch` (inputs `pr_number`, `base_sha`) — manual re-run for an open PR, keyed on the PR's head branch as `ref`. The PR context is rebuilt from the inputs: `PR_NUMBER`/`HEAD_SHA`/`BASE_SHA` are `inputs.X || github.event.pull_request.X` everywhere they are used (workspace cache key, manifest, report). `detect-changes` skips `dorny/paths-filter` on dispatch (no checkout, no base ref) and treats every group as changed except `style` — the style job is diff-scoped, and a dispatch has no diff.
+- `nightly-pr-validation.yml` — cron (06:00 UTC) + manual dispatch. Lists open PRs targeting `main` and dispatches `coding-pipeline.yml` per PR, so validation tracks the merge ref after main advances. `base_sha` is main's live head, resolved once per sweep: it is the only component of the workspace cache key that moves when main does, and cache keys are immutable, so a stale value would make `cache/save` a no-op and replay the previous run's tree. Fork PRs are skipped (dispatch refs must live in this repo); they still validate on every push. Two more classes are warned about and skipped rather than dispatched: a PR with no `refs/pull/N/merge` (it conflicts with main, and the pipeline checks that ref out) and a PR whose head branch predates the `workflow_dispatch` trigger (a dispatch runs the workflow file as it exists on `--ref`, so those branches need a rebase first).
+
+A report comment is only created when a run has findings (#2702). A clean run never opens one, and what it does with an existing one depends on scope:
+
+- **full** (dispatch only, every validator ran and passed): deletes the comment.
+- **partial** (per-PR, only the changed groups' validators ran): rewrites the comment in place so it stops reporting an older commit, and leaves the PR uncommented if there was never a comment. It cannot delete, because a validator that did not run this time may still have live findings from an earlier push.
+
+Partial reports label themselves in the verdict banner and metadata strip. Scope is computed in the `validation-report` job and passed as `--validation-scope`.
+
 ## The split
 
 - Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `check_common_mistakes.py` and `validate_defines.py`. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
@@ -9,9 +27,43 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 - `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` (all `tools/linting/`) are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land BOM or encoding regressions. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
 - `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate the manifest with `gen_vanilla_defines_manifest.py` after a HOI4 version bump (same for `vanilla_sprites.txt` via `gen_vanilla_sprites_manifest.py`).
 - `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`--strict`) — the undefined-idea backlog was cleared, so both sides gate identically.
+- `validate_mios.py` is CI-only (`--strict`, no pre-commit hook): org-id format, `allowed = { original_tag = TAG }`, initial-trait naming, trait-grid x ≤ 9, non-empty `on_complete`. The id/allowed/on_complete checks gate; trait naming and x-bounds are WARNING-severity — that backlog surfaces in reports without gating. `generic_`/`GENERIC_` shared orgs are exempt, as are `generic_`-named initial traits (they reference shared traits in `MD_generic_organization.txt`). Negative x is the mod's standard organic-layout first column, so only the upper bound is a finding.
+- `validate_mios.py` also carries the **MIO localisation** checks (#2730). `header-text-not-tokenized` (ERROR) fires on a `tree_header_text` whose `text` is a literal quoted string — the engine prints it verbatim, so it never reaches the loc pipeline and cannot be translated. `header-text-loc-missing` (ERROR) fires on a header token with no English key, which renders the raw token as a column header. Both gate: the 118-literal + 4-orphan-key backlog was cleared in the same change, so they are clean on main. `trait-loc-missing` (WARNING) applies the same test to `trait` / `initial_trait` names and stays report-only for a 31-item backlog — 20 FRA traits carry no `name` at all (the engine then looks for `<org_id>_<token>`, which is undefined), 8 names point at keys that do not exist, and 3 reference generic initial-trait keys that were never localised. Key resolution mirrors the engine: `TAG_<key>` wins if it exists, else the bare key; shared orgs have no owner tag, so only the bare key is tried.
+- `validate_decisions.py` carries a WARNING-severity `missing-decision-log` check (complete_effect with effects but no `log =` line) — the ~650-decision backlog is report-only until cleared.
+- `validate_decisions.py`'s random-seed check (`validate_random_seed`, #2731) covers both `random_list = { ... }` and bare `random = { chance = N ... }`, and exempts `fire_only_once = yes` decisions (their roll resolves once, so a cached seed can never surface). It is ERROR-severity and gates: the 11-decision backlog was cleared in the same change, so it is clean on main. An explicit `fixed_random_seed = yes` counts as a deliberate choice; only an absent field is a finding.
+- `validate_style.py` exempts `EH_` focus IDs via `_SHARED_FOCUS_PREFIXES` — the Event Horizon tree is generic (`event_horizon_generic_focus`) and `EH_` is its mod-wide domain prefix.
 - `validate_unused_textures.py` is wired into pre-commit as `stages: [manual]` only. CI cannot run it, so invoke the manual hook when a texture audit is needed.
 - `validate_set_variables.py` runs **CI-only**, `--strict` (its unused-variable backlog was cleared). No pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) for a local check.
 - `validate_scripted_localisation.py` runs **CI-only**, `--strict` (its missing/unused scripted-loc backlog was cleared). No pre-commit hook; run it directly for a local check.
+- `validate_file_paths.py` runs **CI-only**, `--strict`, in its own `validate-paths` job rather than either matrix. It reads path names from the git index (`git ls-files`), so it needs a checkout with `.git`; the workspace bundle the matrix jobs restore has neither `.git` nor `map/`. The job checks out with `filter: blob:none` and a sparse `tools` cone — the index already names every shipped path, so no content is fetched. `descriptor.mod` is read for `replace_path` directives, and a missing descriptor is a hard setup error: reading it as "nothing is replaced" would turn every inert case clash into a blocking one. Cross-references the committed `vanilla_paths.txt` manifest (CI has no HOI4 install); regenerate it after a game update via `gen_vanilla_paths_manifest.py`. Its within-mod case-collision check overlaps the pre-commit `check-case-conflict` hook on purpose — that hook only sees staged files on machines with hooks enabled, so web-UI edits and hook-less contributors bypass it exactly like the BOM fixers below.
+
+## Check notes
+
+- `validate_file_paths.py` exists because Windows resolves paths case-insensitively and Linux does not. A mod file whose path differs from a vanilla one only in case replaces it on Windows but loads beside it on Linux, so the two platforms hash different file sets and cannot play multiplayer together — the Kaiserreich #28202 failure, whose culprits were `common/ai_focuses/usa.txt` against vanilla's `USA.txt` and friends. The checksummed set is not all of the mod: the game's own `checksum_manifest.txt` limits it to `common/**/{*.txt,*.lua}`, `events/**/*.txt`, `history/**/*.txt` and `map/**/{*.txt,*.map,*.bmp,*.csv}`, which is why `gfx/` and `interface/` case fixes never move a checksum. Collisions inside a `replace_path`'d directory are WARNINGs, not errors — the vanilla directory is not loaded at all there, so nothing diverges while that `replace_path` stands. `replace_path` is not recursive, so the check matches a parent directory exactly, never as a prefix.
+
+- `validate_variables.py` carries a **clamp-range conflict** check (WARNING, `clamp-range-conflict`). It harvests every literal `clamp_variable = { var = X min = A max = B }` and flags any `check_variable` on `X` that compares against a value outside `A..B` (dead logic — always true or always false), plus the inverse scale slip: a sub-1 value compared against a variable clamped to a wide integer range. That second half is the `taliban_strength > 0.19` shape, the same failure class as the `threat > 40` trap in `general-rules.md`. It is deliberately anchored on the clamp rather than on observed value spread — a plain "this variable is compared on two scales" heuristic fires on `treasury`, `inflation_rate_var` and every percentage display variable, which legitimately use both. Variables only ever written by `set_temp_variable` are excluded: a clamp on a scratch parameter (`pp_gain`) constrains that one invocation, not the variable, so its range is no invariant for checks elsewhere.
+
+- `validate_variables.py` also carries an **unlocalised available flag** check (WARNING, `unlocalised-available-flag`). HOI4 renders a `has_country_flag` line inside a player-facing `available` block from a localisation key named after the flag itself (vanilla does this for 672 of its 1680 country flags, e.g. `ARG_implemented_rural_reforms`), so an unlocalised flag shows the player the raw token as a requirement line. Findings are deduped per (flag, file). Checks wrapped in `custom_trigger_tooltip` / `custom_override_tooltip` / `hidden_trigger` are exempt because the wrapper supplies or suppresses the line, `visible` is excluded for the same reason as the untooltipped-`check_variable` check (a failing visible hides the object outright), and runtime-substituted flag names containing `@` are skipped as unresolvable statically.
+
+- `validate_oob_units.py` slot-checks ship variants through
+  `tools/validation/naval_module_slots.py` and structurally checks `create_unit`
+  effects: state scope, `owner`, block keys, a single-line division string
+  naming a `division_template`, zero equipment/manpower factors, and the order
+  of a template defined in the same file and effect path as the `create_unit`
+  using it. It does not check that a referenced template is defined anywhere, so
+  a template that only ever exists for the wrong country, or a `has_template`
+  guard naming a template nothing defines, still passes. Its combined run gate
+  covers `history/countries/`, `common/national_focus/`, `events/`,
+  `common/decisions/`, `common/special_projects/`, `common/scripted_effects/`,
+  `common/on_actions/`, `common/operations/`,
+  `common/resistance_compliance_modifiers/`, and `common/scripted_guis/`, in
+  both the pre-commit registry (`tools/precommit_validate.py`) and the CI
+  `oob` path filter. `config_drift_test.py` derives both routes from
+  `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
+  both are updated. Findings are **errors**. Non-ship variants are skipped by
+  design. Tank and plane slots are not validated anywhere yet. Their
+  `allowed_module_categories` blocks are often empty, so the naval resolver
+  cannot be pointed at them as-is.
 
 ## Tooling deprecation watch
 
