@@ -32,46 +32,23 @@ focus_tree = {
 		scroll_wheel_factor = 0.60
 	}
 	shortcut = {
-		name = SIA_amazing_thailand_shortcut
-		target = SIA_amazing_thailand
+		name = SIA_recover_from_97_crisis_shortcut
+		target = SIA_recover_from_97_crisis
 		scroll_wheel_factor = 0.60
 	}
 
-	continuous_focus_position = { x = 1500 y = 1100 }
+	continuous_focus_position = { x = 1000 y = 1100 }
 
 	initial_show_position = { x = 50 y = 0 }
-
-	focus = {
-		id = SIA_assess_the_kingdom
-		icon = political_pressure
-
-		x = 50
-		y = 0
-
-		cost = 1
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SIA_assess_the_kingdom"
-			add_political_power = 100
-			country_event = { id = thailand.215 days = 1 }
-		}
-
-		ai_will_do = { base = 100 }
-	}
 
 	focus = {
 		id = SIA_recover_from_97_crisis
 		icon = economic_crisis
 
-		x = -15
-		y = 1
-		relative_position_id = SIA_assess_the_kingdom
+		x = 25
+		y = 0
 
 		cost = 5
-
-		prerequisite = { focus = SIA_assess_the_kingdom }
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY }
 
@@ -79,12 +56,6 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_recover_from_97_crisis"
 			set_country_flag = SIA_imf_program_active
 			country_event = thailand.50
-			506 = {
-				add_resource = {
-					type = rubber
-					amount = 10
-				}
-			}
 			add_tech_bonus = {
 				name = SIA_recover_97_util
 				bonus = 1.0
@@ -111,18 +82,13 @@ focus_tree = {
 		id = SIA_the_1997_constitution
 		icon = legislative_palace
 
-		x = 15
-		y = 1
-		relative_position_id = SIA_assess_the_kingdom
+		x = 31
+		y = 0
+		relative_position_id = SIA_recover_from_97_crisis
 
 		cost = 5
 
-		prerequisite = { focus = SIA_assess_the_kingdom }
-
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		# The 6 Jan 2001 election is held under the 1997 charter either way; a player who never
-		# chartered it forfeits the spirit rather than blocking the tree.
 		bypass = { date > 2001.1.6 }
 
 		completion_reward = {
@@ -155,14 +121,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_repay_the_imf"
-			set_temp_variable = { debt_change = -60 }
-			modify_debt_effect = yes
 			clr_country_flag = SIA_imf_program_active
 			# Also granted by the SIA_tax_modernization decision - guard so the two sources never stack
 			# the same bonus twice.
 			add_stability = 0.10
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_crisis_modifier }
-			add_to_variable = { SIA_crisis_interest_rate_multiplier_modifier = -1 tooltip = interest_rate_multiplier_modifier_tt }
+			add_to_variable = { SIA_crisis_interest_rate_multiplier_modifier = -2 tooltip = interest_rate_multiplier_modifier_tt }
 			add_to_variable = { SIA_crisis_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
 			country_event = thailand.51
 			hidden_effect = { news_event = { id = thailand_news.7 days = 1 } }
@@ -486,6 +450,8 @@ focus_tree = {
 					amount = 8
 				}
 			}
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -907,9 +873,9 @@ focus_tree = {
 		id = SIA_armed_forces_modernization
 		icon = coalition_army
 
-		x = 58
+		x = 45
 		y = 0
-		relative_position_id = SIA_assess_the_kingdom
+		relative_position_id = SIA_the_1997_constitution
 
 		cost = 6
 
@@ -917,9 +883,36 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_armed_forces_modernization"
-			army_experience = 25
-			navy_experience = 25
-			air_experience = 25
+			if = {
+				limit = { has_selected_land_grand_doctrine = yes }
+				add_mastery = {
+					amount = 30
+					folder = land
+				}
+			}
+			else = {
+				army_experience = 25
+			}
+			if = {
+				limit = { has_selected_naval_grand_doctrine = yes }
+				add_mastery = {
+					amount = 30
+					folder = naval
+				}
+			}
+			else = {
+				navy_experience = 25
+			}
+			if = {
+				limit = { has_selected_air_grand_doctrine = yes }
+				add_mastery = {
+					amount = 30
+					folder = air
+				}
+			}
+			else = {
+				air_experience = 25
+			}
 			add_command_power = 50
 			set_variable = { SIA_prof_forces_tier = 1 }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
@@ -1187,6 +1180,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_high_readiness_army"
+			if = {
+				limit = {
+					has_selected_land_grand_doctrine = yes
+					NOT = { has_doctrine = guerrilla_warfare }
+				}
+				add_mastery = {
+					amount = 40
+					track = training
+				}
+			}
+			else = {
+				army_experience = 40
+			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_army_org_factor = 0.03 tooltip = army_org_factor_tt }
 			add_to_variable = { SIA_mil_planning_speed = 0.05 tooltip = planning_speed_tt }
@@ -1454,6 +1460,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_old_guard_endures"
+			if = {
+				limit = { has_selected_land_grand_doctrine = yes }
+				add_mastery = {
+					amount = 40
+					track = structure_doctrine
+				}
+			}
+			else = {
+				army_experience = 40
+			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_armed_forces_state }
 			add_to_variable = { SIA_afs_army_personnel_cost_multiplier_modifier = -0.05 tooltip = army_personnel_cost_multiplier_modifier_tt }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
@@ -1708,6 +1724,7 @@ focus_tree = {
 		cost = 4
 
 		prerequisite = { focus = SIA_the_1997_constitution }
+		bypass = { date > 2001.1.6 }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -2574,9 +2591,8 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_land_doctrine_cost_factor = -0.1 tooltip = land_doctrine_cost_factor_tt }
 			add_to_variable = { SIA_mil_personnel_cost_multiplier_modifier = -0.05 tooltip = personnel_cost_multiplier_modifier_tt }
-			add_to_variable = { SIA_reform_pressure = 10 }
-			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
-			custom_effect_tooltip = SIA_reform_pressure_increase_tt
+			set_temp_variable = { reform_delta = 10 }
+			SIA_reform_pressure_set = yes
 			country_event = thailand.18
 		}
 
@@ -2699,8 +2715,8 @@ focus_tree = {
 			add_timed_idea = { idea = SIA_judicialization days = 730 }
 			set_temp_variable = { temp_opinion = 5 }
 			change_landowners_opinion = yes
-			add_to_variable = { SIA_reform_pressure = 5 }
-			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+			set_temp_variable = { reform_delta = 5 }
+			SIA_reform_pressure_set = yes
 			custom_effect_tooltip = SIA_judicial_review_route_choice_tt
 			country_event = thailand.434
 		}
@@ -2788,8 +2804,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_constitutional_engineering"
-			add_to_variable = { SIA_reform_pressure = 10 }
-			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+			set_temp_variable = { reform_delta = 10 }
+			SIA_reform_pressure_set = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
 			add_to_variable = { SIA_pol_drift_defence_factor = 0.15 tooltip = drift_defence_factor_tt }
 			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
@@ -2939,7 +2955,6 @@ focus_tree = {
 			decrease_corruption = yes
 			set_temp_variable = { temp_opinion = 10 }
 			change_small_medium_business_owners_opinion = yes
-			add_stability = 0.03
 		}
 
 		ai_will_do = { base = 50 }
@@ -3894,7 +3909,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_modernize_the_rta"
-			army_experience = 75
+			if = {
+				limit = { has_selected_land_grand_doctrine = yes }
+				add_mastery = {
+					amount = 50
+					folder = land
+				}
+			}
+			else = {
+				army_experience = 75
+			}
 			if = {
 				limit = { NOT = { has_country_flag = SIA_modernized_rta_active } }
 				set_country_flag = SIA_modernized_rta_active
@@ -3939,7 +3963,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_blue_water_navy"
-			navy_experience = 75
+			if = {
+				limit = {
+					has_selected_naval_grand_doctrine = yes
+					NOT = { has_doctrine = jeune_ecole }
+				}
+				add_mastery = {
+					amount = 50
+					track = capital_ships
+				}
+			}
+			else = {
+				navy_experience = 75
+			}
 			if = {
 				limit = { NOT = { has_country_flag = SIA_blue_water_navy_active } }
 				set_country_flag = SIA_blue_water_navy_active
@@ -3982,7 +4018,16 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_gripen_squadrons_rearm"
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
-			air_experience = 75
+			if = {
+				limit = { has_selected_air_grand_doctrine = yes }
+				add_mastery = {
+					amount = 50
+					track = fighter_aircraft
+				}
+			}
+			else = {
+				air_experience = 75
+			}
 			if = {
 				limit = { NOT = { check_variable = { SIA_gripen_tier > 0 } } }
 				set_variable = { SIA_gripen_tier = 1 }
@@ -4908,7 +4953,16 @@ focus_tree = {
 				amount = 150
 				producer = CHI
 			}
-			air_experience = 25
+			if = {
+				limit = { has_doctrine = autonomous_air_operations }
+				add_mastery = {
+					amount = 30
+					track = drone_warfare
+				}
+			}
+			else = {
+				air_experience = 25
+			}
 		}
 
 		ai_will_do = {
@@ -5013,6 +5067,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_air_dominance_doctrine"
+			if = {
+				limit = { has_selected_air_grand_doctrine = yes }
+				add_mastery = {
+					amount = 50
+					folder = air
+				}
+			}
+			else = {
+				air_experience = 50
+			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_air_intercept_efficiency = 0.05 tooltip = air_intercept_efficiency_tt }
 			add_to_variable = { SIA_mil_air_defence_factor = 0.05 tooltip = air_defence_factor_tt }
@@ -5484,6 +5548,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_first_army_modernized"
+			if = {
+				limit = { has_selected_land_equipment_grand_doctrine = yes }
+				add_mastery = {
+					amount = 40
+					folder = equipment
+				}
+			}
+			else = {
+				army_experience = 50
+			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_army_morale_factor = 0.05 tooltip = army_morale_factor_tt }
 			add_to_variable = { SIA_mil_army_org_regain = 0.05 tooltip = army_org_regain_tt }
@@ -5516,6 +5590,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_stream_of_the_navy"
+			if = {
+				limit = { has_selected_naval_grand_doctrine = yes }
+				add_mastery = {
+					amount = 40
+					folder = naval
+				}
+			}
+			else = {
+				navy_experience = 40
+			}
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 			509 = {
@@ -5846,6 +5930,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_naval_self_reliance"
+			if = {
+				limit = { has_selected_naval_grand_doctrine = yes }
+				add_mastery = {
+					amount = 40
+					track = escort_ships
+				}
+			}
+			else = {
+				navy_experience = 40
+			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.1 tooltip = industrial_capacity_dockyard_tt }
 			add_to_variable = { SIA_mil_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
@@ -5881,6 +5975,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_command_of_the_seas"
+			if = {
+				limit = { has_selected_naval_grand_doctrine = yes }
+				add_mastery = {
+					amount = 50
+					folder = naval
+				}
+			}
+			else = {
+				navy_experience = 50
+			}
 			if = {
 				limit = { NOT = { has_country_flag = SIA_blue_water_navy_active } }
 				set_country_flag = SIA_blue_water_navy_active
@@ -7710,7 +7814,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_territorial_defense"
-			army_experience = 25
+			if = {
+				limit = { has_selected_land_grand_doctrine = yes }
+				add_mastery = {
+					amount = 30
+					track = structure_doctrine
+				}
+			}
+			else = {
+				army_experience = 25
+			}
 			add_command_power = 30
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_army_infantry_defence_factor = 0.05 tooltip = army_infantry_defence_factor_tt }
@@ -7846,24 +7959,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_defend_myanmar_border"
-			set_temp_variable = { treasury_change = -20 }
+			set_temp_variable = { treasury_change = -9 }
 			modify_treasury_effect = yes
 			custom_effect_tooltip = SIA_defend_myanmar_border_tt
 			hidden_effect = {
 				507 = {
-					add_building_construction = { type = bunker province = 7675 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 10371 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 1990 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 7559 level = 1 instant_build = yes }
+					add_building_construction = { type = bunker province = 7675 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 10371 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 1990 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 7559 level = 2 instant_build = yes }
 				}
 				508 = {
-					add_building_construction = { type = bunker province = 10193 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 4348 level = 1 instant_build = yes }
+					add_building_construction = { type = bunker province = 10193 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 4348 level = 2 instant_build = yes }
 				}
 				509 = {
-					add_building_construction = { type = bunker province = 4388 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 1308 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 10158 level = 1 instant_build = yes }
+					add_building_construction = { type = bunker province = 4388 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 1308 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 10158 level = 2 instant_build = yes }
 				}
 			}
 		}
@@ -7890,19 +8003,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_defend_cambodia_border"
-			set_temp_variable = { treasury_change = -14 }
+			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
 			custom_effect_tooltip = SIA_defend_cambodia_border_tt
 			hidden_effect = {
 				508 = {
-					add_building_construction = { type = bunker province = 7292 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 1244 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 10293 level = 1 instant_build = yes }
+					add_building_construction = { type = bunker province = 7292 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 1244 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 10293 level = 2 instant_build = yes }
 				}
 				506 = {
-					add_building_construction = { type = bunker province = 12264 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 7601 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 12417 level = 1 instant_build = yes }
+					add_building_construction = { type = bunker province = 12264 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 7601 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 12417 level = 2 instant_build = yes }
 				}
 			}
 		}
@@ -7929,18 +8042,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_defend_malaysia_border"
-			set_temp_variable = { treasury_change = -12 }
+			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 			custom_effect_tooltip = SIA_defend_malaysia_border_tt
 			hidden_effect = {
 				510 = {
-					add_building_construction = { type = bunker province = 1279 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 4297 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 12131 level = 1 instant_build = yes }
-					add_building_construction = { type = bunker province = 7236 level = 1 instant_build = yes }
+					add_building_construction = { type = bunker province = 1279 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 4297 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 12131 level = 2 instant_build = yes }
+					add_building_construction = { type = bunker province = 7236 level = 2 instant_build = yes }
 				}
 				509 = {
-					add_building_construction = { type = bunker province = 10156 level = 1 instant_build = yes }
+					add_building_construction = { type = bunker province = 10156 level = 2 instant_build = yes }
 				}
 			}
 		}
@@ -8137,7 +8250,19 @@ focus_tree = {
 			add_to_variable = { SIA_mil_army_morale_factor = 0.05 tooltip = army_morale_factor_tt }
 			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.1 tooltip = experience_gain_army_factor_tt }
 			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
-			army_experience = 25
+			if = {
+				limit = {
+					has_selected_land_grand_doctrine = yes
+					NOT = { has_doctrine = battlefield_support }
+				}
+				add_mastery = {
+					amount = 30
+					track = operational_theory
+				}
+			}
+			else = {
+				army_experience = 25
+			}
 			hidden_effect = {
 				news_event = { id = thailand_news.31 days = 2 }
 			}
@@ -8614,6 +8739,8 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
 			add_to_variable = { SIA_econ_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -8871,6 +8998,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_self_reliant_defense_base"
+			if = {
+				limit = { has_selected_land_equipment_grand_doctrine = yes }
+				add_mastery = {
+					amount = 40
+					folder = equipment
+				}
+			}
+			else = {
+				army_experience = 40
+			}
 			if = {
 				limit = { check_variable = { SIA_arsenal_tier = 1 } }
 				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
@@ -9184,7 +9321,19 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_training_time_army_factor = -0.1 tooltip = training_time_army_factor_tt }
 			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
-			army_experience = 50
+			if = {
+				limit = {
+					has_selected_land_grand_doctrine = yes
+					NOT = { has_doctrine = guerrilla_warfare }
+				}
+				add_mastery = {
+					amount = 40
+					track = training
+				}
+			}
+			else = {
+				army_experience = 50
+			}
 			country_event = { id = thailand.330 days = 3 }
 		}
 
@@ -9212,6 +9361,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_multi_domain_operations"
+			if = {
+				limit = {
+					has_selected_land_grand_doctrine = yes
+					NOT = { has_doctrine = battlefield_support }
+				}
+				add_mastery = {
+					amount = 40
+					track = operational_theory
+				}
+			}
+			else = {
+				army_experience = 40
+			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
 			add_to_variable = { SIA_mil_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
@@ -9280,7 +9442,7 @@ focus_tree = {
 		icon = general_staff
 
 		x = 0
-		y = 9
+		y = 8
 		relative_position_id = SIA_armed_forces_modernization
 
 		cost = 3
@@ -9405,6 +9567,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_jointness_reform"
 			if = {
+				limit = { has_selected_land_grand_doctrine = yes }
+				add_mastery = {
+					amount = 30
+					track = leadership
+				}
+			}
+			else = {
+				army_experience = 25
+			}
+			if = {
 				limit = { check_variable = { SIA_prof_forces_tier = 2 } }
 				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 				add_to_variable = { SIA_mil_experience_gain_army_factor = 0.02 tooltip = experience_gain_army_factor_tt }
@@ -9526,7 +9698,7 @@ focus_tree = {
 
 		x = -3
 		y = 0
-		relative_position_id = SIA_national_grid
+		relative_position_id = SIA_anti_graft_push
 
 		cost = 6
 
@@ -9658,7 +9830,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_dual_use_threshold"
 			# Capability anchor: stand up a uranium-enrichment fuel cycle.
-			set_temp_variable = { treasury_change = -6 }
+			set_temp_variable = { treasury_change = -15.5 }
 			modify_treasury_effect = yes
 			random_owned_state = { add_building_construction = { type = enrichment_facility level = 1 } }
 			add_tech_bonus = {
@@ -9668,6 +9840,20 @@ focus_tree = {
 				category = CAT_nuclear_reactors
 			}
 			add_political_power = 50
+			add_named_threat = {
+				threat = 4
+				name = SIA_threat_thai_enrichment
+			}
+			custom_effect_tooltip = SIA_nuclear_proliferation_tt
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						NOT = { is_in_faction_with = ROOT }
+						NOT = { is_subject_of = ROOT }
+					}
+					add_opinion_modifier = { target = ROOT modifier = SIA_nuclear_proliferation_concern }
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -9694,7 +9880,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 
 		available = {
-			has_completed_focus = SIA_dual_use_threshold
 			has_idea = nuclear_energy
 			is_special_project_completed = sp:sp_nuclear_warhead_program
 		}
@@ -9709,7 +9894,7 @@ focus_tree = {
 				uses = 2
 				category = CAT_nuclear_weapons
 			}
-			set_temp_variable = { treasury_change = -6 }
+			set_temp_variable = { treasury_change = -15.5 }
 			modify_treasury_effect = yes
 			random_owned_state = { add_building_construction = { type = enrichment_facility level = 1 } }
 			if = {
@@ -9724,7 +9909,7 @@ focus_tree = {
 				amount = 3
 			}
 			add_named_threat = {
-				threat = 5
+				threat = 8
 				name = SIA_threat_thai_bomb
 			}
 			# The world reacts, and the cabinet must choose a declaratory posture.
@@ -10030,6 +10215,13 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY }
 
+		bypass = {
+			NOT = { country_exists = VIE }
+			NOT = { country_exists = LAO }
+			NOT = { country_exists = CBD }
+			NOT = { country_exists = BRM }
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_invite_mainland"
 			set_temp_variable = { treasury_change = -50 }
@@ -10039,19 +10231,31 @@ focus_tree = {
 			# force-joining it.
 			if = {
 				limit = { country_exists = VIE is_faction_leader = yes NOT = { VIE = { is_in_faction = yes } } }
-				VIE = { country_event = { id = thailand.431 days = 2 } }
+				VIE = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = LAO is_faction_leader = yes NOT = { LAO = { is_in_faction = yes } } }
-				LAO = { country_event = { id = thailand.431 days = 2 } }
+				LAO = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = CBD is_faction_leader = yes NOT = { CBD = { is_in_faction = yes } } }
-				CBD = { country_event = { id = thailand.431 days = 2 } }
+				CBD = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = BRM is_faction_leader = yes NOT = { BRM = { is_in_faction = yes } } }
-				BRM = { country_event = { id = thailand.431 days = 2 } }
+				BRM = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 		}
 
@@ -10079,6 +10283,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY }
 
+		bypass = {
+			NOT = { country_exists = IND }
+			NOT = { country_exists = PHI }
+			NOT = { country_exists = MAY }
+			NOT = { country_exists = SIN }
+			NOT = { country_exists = BRU }
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_invite_maritime"
 			set_temp_variable = { treasury_change = -50 }
@@ -10087,23 +10299,38 @@ focus_tree = {
 			# Opt-in invitations (thailand.431), same pattern as the mainland focus.
 			if = {
 				limit = { country_exists = IND is_faction_leader = yes NOT = { IND = { is_in_faction = yes } } }
-				IND = { country_event = { id = thailand.431 days = 2 } }
+				IND = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = PHI is_faction_leader = yes NOT = { PHI = { is_in_faction = yes } } }
-				PHI = { country_event = { id = thailand.431 days = 2 } }
+				PHI = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = MAY is_faction_leader = yes NOT = { MAY = { is_in_faction = yes } } }
-				MAY = { country_event = { id = thailand.431 days = 2 } }
+				MAY = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = SIN is_faction_leader = yes NOT = { SIN = { is_in_faction = yes } } }
-				SIN = { country_event = { id = thailand.431 days = 2 } }
+				SIN = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = BRU is_faction_leader = yes NOT = { BRU = { is_in_faction = yes } } }
-				BRU = { country_event = { id = thailand.431 days = 2 } }
+				BRU = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 		}
 
@@ -10131,6 +10358,12 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY }
 
+		bypass = {
+			NOT = { country_exists = SHN }
+			NOT = { country_exists = KAR }
+			NOT = { country_exists = WAA }
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_invite_breakaways"
 			set_temp_variable = { treasury_change = -20 }
@@ -10140,15 +10373,24 @@ focus_tree = {
 			# only where they were released, so each guard no-ops otherwise.
 			if = {
 				limit = { country_exists = SHN is_faction_leader = yes NOT = { SHN = { is_in_faction = yes } } }
-				SHN = { country_event = { id = thailand.431 days = 2 } }
+				SHN = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = KAR is_faction_leader = yes NOT = { KAR = { is_in_faction = yes } } }
-				KAR = { country_event = { id = thailand.431 days = 2 } }
+				KAR = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 			if = {
 				limit = { country_exists = WAA is_faction_leader = yes NOT = { WAA = { is_in_faction = yes } } }
-				WAA = { country_event = { id = thailand.431 days = 2 } }
+				WAA = {
+					custom_effect_tooltip = SIA_seato_invite_line_tt
+					country_event = { id = thailand.431 days = 2 random_days = 6 }
+				}
 			}
 		}
 
@@ -10179,7 +10421,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_joint_command"
-			army_experience = 50
+			if = {
+				limit = { has_selected_land_grand_doctrine = yes }
+				add_mastery = {
+					amount = 40
+					track = leadership
+				}
+			}
+			else = {
+				army_experience = 50
+			}
 			add_tech_bonus = {
 				name = SIA_joint_command_doctrine
 				bonus = 0.5
@@ -10376,7 +10627,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_cobra_gold_focus"
-			army_experience = 50
+			if = {
+				limit = {
+					has_selected_land_grand_doctrine = yes
+					NOT = { has_doctrine = guerrilla_warfare }
+				}
+				add_mastery = {
+					amount = 40
+					track = training
+				}
+			}
+			else = {
+				army_experience = 50
+			}
 			add_opinion_modifier = { target = USA modifier = medium_increase }
 			add_tech_bonus = {
 				name = SIA_cobra_gold_land_doctrine
@@ -10612,9 +10875,9 @@ focus_tree = {
 		id = SIA_national_grid
 		icon = construction
 
-		x = -4
-		y = 0
-		relative_position_id = SIA_anti_graft_push
+		x = 3
+		y = -2
+		relative_position_id = SIA_tamc_workout
 
 		cost = 5
 
@@ -11693,7 +11956,6 @@ focus_tree = {
 			country_exists = SHN
 			NOT = { has_war_with = SHN }
 			NOT = { has_subject = SHN }
-			has_army_size = { size > 15 }
 		}
 
 		completion_reward = {
@@ -11741,7 +12003,6 @@ focus_tree = {
 			country_exists = KAR
 			NOT = { has_war_with = KAR }
 			NOT = { has_subject = KAR }
-			has_army_size = { size > 15 }
 		}
 
 		completion_reward = {
@@ -11789,7 +12050,6 @@ focus_tree = {
 			country_exists = WAA
 			NOT = { has_war_with = WAA }
 			NOT = { has_subject = WAA }
-			has_army_size = { size > 15 }
 		}
 
 		completion_reward = {
@@ -11869,8 +12129,8 @@ focus_tree = {
 		icon = construct_factory
 
 		x = 0
-		y = 11
-		relative_position_id = SIA_anti_graft_push
+		y = 13
+		relative_position_id = SIA_recover_from_97_crisis
 
 		cost = 5
 
@@ -11951,7 +12211,7 @@ focus_tree = {
 					province = 1427
 				}
 			}
-			set_temp_variable = { treasury_change = -2.5 }
+			set_temp_variable = { treasury_change = -4.5 }
 			modify_treasury_effect = yes
 		}
 
@@ -12102,6 +12362,8 @@ focus_tree = {
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_resource_export_multiplier_modifier = 0.05 tooltip = resource_export_multiplier_modifier_tt }
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -12315,6 +12577,8 @@ focus_tree = {
 				one_state_agriculture_district = yes
 			}
 			add_resource = { type = rubber amount = 6 state = 507 }
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
 			if = {
 				limit = { has_idea = farmers }
 				set_temp_variable = { temp_opinion = -5 }
@@ -12831,7 +13095,7 @@ focus_tree = {
 		id = SIA_phuket_andaman
 		icon = starttourismprojectscuba
 
-		x = 0
+		x = -2
 		y = 1
 		relative_position_id = SIA_tourism_masterplan
 
@@ -12863,7 +13127,7 @@ focus_tree = {
 		id = SIA_pattaya_eastern_riviera
 		icon = cattourism
 
-		x = -2
+		x = 0
 		y = 1
 		relative_position_id = SIA_tourism_masterplan
 
@@ -13426,6 +13690,8 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_resource_sector_workers_modifier = 0.06 tooltip = resource_sector_workers_modifier_tt }
 			add_to_variable = { SIA_econ_stability_factor = -0.05 tooltip = stability_factor_tt }
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
 			if = {
 				limit = { has_idea = fossil_fuel_industry }
 				set_temp_variable = { temp_opinion = 4 }
@@ -13513,6 +13779,8 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_base_migration_rate_value = 0.03 tooltip = base_migration_rate_value_tt }
 			add_to_variable = { SIA_econ_civ_facs_worker_requirement_modifier = -0.05 tooltip = civ_facs_worker_requirement_modifier_tt }
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
 			if = {
 				limit = { has_idea = landowners }
 				set_temp_variable = { temp_opinion = -6 }
@@ -13559,6 +13827,8 @@ focus_tree = {
 				subtract_from_temp_variable = { SIA_econ_stability_factor_temp = 0.05 }
 			}
 			add_to_variable = { SIA_econ_stability_factor = SIA_econ_stability_factor_temp tooltip = stability_factor_tt }
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -13597,8 +13867,8 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_fuel_gain_factor = 0.08 tooltip = fuel_gain_factor_tt }
 			add_to_variable = { SIA_econ_max_fuel_factor = 0.06 tooltip = max_fuel_factor_tt }
-			# Sacrifice: frontier offshore drilling is capital-intensive - the one_state_fuel_reserve
-			# above already charges the treasury for the build.
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
 			if = {
 				limit = { country_exists = CBD }
 				add_opinion_modifier = { target = CBD modifier = medium_decrease }
@@ -14102,8 +14372,8 @@ focus_tree = {
 					amount = 6
 				}
 			}
-			# Sacrifice: the one_state_industrial_complex above already charges the treasury for the
-			# multi-billion-dollar complex - no second explicit charge.
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
 			if = {
 				limit = { has_idea = industrial_conglomerates }
 				set_temp_variable = { temp_opinion = 4 }
@@ -14178,6 +14448,8 @@ focus_tree = {
 					amount = 8
 				}
 			}
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_fuel_gain_factor = 0.06 tooltip = fuel_gain_factor_tt }
 			# Sacrifice: resource assets abroad ride the same commodity cycle a domestic mine would - a

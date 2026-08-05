@@ -176,57 +176,46 @@ SIA_political_drift_update = {
 	if = {
 		limit = { has_idea = depression }
 		add_to_variable = { SIA_reform_pressure = 0.9 }
-		add_to_variable = { SIA_rural_discontent = 0.7 }
 	}
 	else_if = {
 		limit = { has_idea = recession }
 		add_to_variable = { SIA_reform_pressure = 0.6 }
-		add_to_variable = { SIA_rural_discontent = 0.45 }
 	}
 	else_if = {
 		limit = { has_idea = stagnation }
 		add_to_variable = { SIA_reform_pressure = 0.4 }
-		add_to_variable = { SIA_rural_discontent = 0.3 }
 	}
 	else_if = {
 		limit = { has_idea = stable_growth }
 		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.03 } }
-		subtract_from_variable = { SIA_rural_discontent = 0.03 }
 	}
 	else_if = {
 		limit = { has_idea = fast_growth }
 		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.1 } }
-		subtract_from_variable = { SIA_rural_discontent = 0.1 }
 	}
 	else_if = {
 		limit = { has_idea = economic_boom }
 		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.2 } }
-		subtract_from_variable = { SIA_rural_discontent = 0.2 }
 	}
 	if = {
 		limit = { has_stability < 0.35 }
 		add_to_variable = { SIA_reform_pressure = 0.4 }
-		add_to_variable = { SIA_rural_discontent = 0.5 }
 	}
 	else_if = {
 		limit = { has_stability < 0.5 }
 		add_to_variable = { SIA_reform_pressure = 0.2 }
-		add_to_variable = { SIA_rural_discontent = 0.25 }
 	}
 	else_if = {
 		limit = { has_stability > 0.7 }
 		if = { limit = { NOT = { has_country_flag = SIA_path_royalist } } subtract_from_variable = { SIA_reform_pressure = 0.05 } }
-		subtract_from_variable = { SIA_rural_discontent = 0.05 }
 	}
 	# Generational shift: the cohort that never knew the boom years.
-	if = { limit = { date > 2014.5.22 } add_to_variable = { SIA_reform_pressure = 0.3 } }   # 2014 coup
-	if = { limit = { date > 2018.3.15 } add_to_variable = { SIA_reform_pressure = 0.5 } }  # Future Forward founded
+	if = { limit = { date > 2014.5.22 } add_to_variable = { SIA_reform_pressure = 0.3 } } # 2014 coup
+	if = { limit = { date > 2018.3.15 } add_to_variable = { SIA_reform_pressure = 0.5 } } # Future Forward founded
 	if = { limit = { has_country_flag = SIA_path_royalist } add_to_variable = { SIA_reform_pressure = 0.4 } }
-	if = { limit = { has_country_flag = SIA_path_populist } add_to_variable = { SIA_rural_discontent = 0.2 } }
 	if = { limit = { has_country_flag = SIA_path_reform } add_to_variable = { SIA_reform_pressure = 0.35 } }
 
 	clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
-	clamp_variable = { var = SIA_rural_discontent min = 0 max = 100 }
 
 	# Convert the barometers into a capped weekly party drift Move Forward (socialism, idx 3):
 	if = {
@@ -241,22 +230,9 @@ SIA_political_drift_update = {
 		change_relative_party_popularity = yes
 		set_temp_variable = { sia_drift_moved = 1 }
 	}
-	# Pheu Thai populism (neutral_Social, idx 18): the countryside's anti-establishment vote.
-	if = {
-		limit = {
-			check_variable = { party_pop_array^18 < 0.4 }
-			check_variable = { SIA_rural_discontent > 0 }
-		}
-		set_temp_variable = { party_index = 18 }
-		set_temp_variable = { party_popularity_increase = SIA_rural_discontent }
-		multiply_temp_variable = { party_popularity_increase = 0.00014 }
-		change_relative_party_popularity = yes
-		set_temp_variable = { sia_drift_moved = 1 }
-	}
 	if = {
 		limit = {
 			check_variable = { SIA_reform_pressure < 20 }
-			check_variable = { SIA_rural_discontent < 20 }
 			check_variable = { party_pop_array^23 < 0.3 }
 			OR = { has_idea = fast_growth has_idea = economic_boom }
 		}
@@ -326,27 +302,27 @@ SIA_coup_update_tier = {
 		if = {
 			limit = { check_variable = { SIA_coup_risk > 84 } }
 			if = { limit = { has_idea = SIA_coup_tier_watchful } remove_ideas = SIA_coup_tier_watchful }
-			if = { limit = { has_idea = SIA_coup_tier_restless }  remove_ideas = SIA_coup_tier_restless }
-			if = { limit = { has_idea = SIA_coup_tier_plotting }  remove_ideas = SIA_coup_tier_plotting }
+			if = { limit = { has_idea = SIA_coup_tier_restless } remove_ideas = SIA_coup_tier_restless }
+			if = { limit = { has_idea = SIA_coup_tier_plotting } remove_ideas = SIA_coup_tier_plotting }
 			if = { limit = { NOT = { has_idea = SIA_coup_tier_tanks } } add_ideas = SIA_coup_tier_tanks }
 		}
 		else_if = {
 			limit = { check_variable = { SIA_coup_risk > 59 } }
 			if = { limit = { has_idea = SIA_coup_tier_watchful } remove_ideas = SIA_coup_tier_watchful }
-			if = { limit = { has_idea = SIA_coup_tier_restless }  remove_ideas = SIA_coup_tier_restless }
+			if = { limit = { has_idea = SIA_coup_tier_restless } remove_ideas = SIA_coup_tier_restless }
 			if = { limit = { has_idea = SIA_coup_tier_tanks } remove_ideas = SIA_coup_tier_tanks }
 			if = { limit = { NOT = { has_idea = SIA_coup_tier_plotting } } add_ideas = SIA_coup_tier_plotting }
 		}
 		else_if = {
 			limit = { check_variable = { SIA_coup_risk > 29 } }
 			if = { limit = { has_idea = SIA_coup_tier_watchful } remove_ideas = SIA_coup_tier_watchful }
-			if = { limit = { has_idea = SIA_coup_tier_plotting }  remove_ideas = SIA_coup_tier_plotting }
+			if = { limit = { has_idea = SIA_coup_tier_plotting } remove_ideas = SIA_coup_tier_plotting }
 			if = { limit = { has_idea = SIA_coup_tier_tanks } remove_ideas = SIA_coup_tier_tanks }
 			if = { limit = { NOT = { has_idea = SIA_coup_tier_restless } } add_ideas = SIA_coup_tier_restless }
 		}
 		else = {
-			if = { limit = { has_idea = SIA_coup_tier_restless }  remove_ideas = SIA_coup_tier_restless }
-			if = { limit = { has_idea = SIA_coup_tier_plotting }  remove_ideas = SIA_coup_tier_plotting }
+			if = { limit = { has_idea = SIA_coup_tier_restless } remove_ideas = SIA_coup_tier_restless }
+			if = { limit = { has_idea = SIA_coup_tier_plotting } remove_ideas = SIA_coup_tier_plotting }
 			if = { limit = { has_idea = SIA_coup_tier_tanks } remove_ideas = SIA_coup_tier_tanks }
 			if = { limit = { NOT = { has_idea = SIA_coup_tier_watchful } } add_ideas = SIA_coup_tier_watchful }
 		}
@@ -356,9 +332,6 @@ SIA_coup_update_tier = {
 # Signed coup-risk move with a tooltip (mirrors SIA_ds_set_intensity). The caller sets the
 # delta first: set_temp_variable = { coup_delta = N }.
 SIA_coup_set_risk = {
-	add_to_variable = { SIA_coup_risk = coup_delta }
-	clamp_variable = { var = SIA_coup_risk min = 0 max = 100 }
-	SIA_coup_update_tier = yes
 	if = {
 		limit = { check_variable = { coup_delta < 0 } }
 		custom_effect_tooltip = SIA_coup_risk_decrease_tt
@@ -367,21 +340,24 @@ SIA_coup_set_risk = {
 		limit = { check_variable = { coup_delta > 0 } }
 		custom_effect_tooltip = SIA_coup_risk_increase_tt
 	}
+	add_to_variable = { SIA_coup_risk = coup_delta }
+	clamp_variable = { var = SIA_coup_risk min = 0 max = 100 }
+	SIA_coup_update_tier = yes
 }
 
 SIA_coup_cleanup_effect = {
 	if = { limit = { has_idea = SIA_coup_tier_watchful } remove_ideas = SIA_coup_tier_watchful }
-	if = { limit = { has_idea = SIA_coup_tier_restless }  remove_ideas = SIA_coup_tier_restless }
-	if = { limit = { has_idea = SIA_coup_tier_plotting }  remove_ideas = SIA_coup_tier_plotting }
+	if = { limit = { has_idea = SIA_coup_tier_restless } remove_ideas = SIA_coup_tier_restless }
+	if = { limit = { has_idea = SIA_coup_tier_plotting } remove_ideas = SIA_coup_tier_plotting }
 	if = { limit = { has_idea = SIA_coup_tier_tanks } remove_ideas = SIA_coup_tier_tanks }
 }
 
 ## ─── General Strike momentum (communist urban road) ──────────────────────
 ## SIA_strike_momentum (0-100) is the revolutionary-momentum meter for the SIA_general_strike.
 SIA_strike_add_momentum = {
+	custom_effect_tooltip = SIA_strike_momentum_tt
 	add_to_variable = { SIA_strike_momentum = strike_delta }
 	clamp_variable = { var = SIA_strike_momentum min = 0 max = 100 }
-	custom_effect_tooltip = SIA_strike_momentum_tt
 }
 
 # Teardown shared by both strike outcomes: clear the flag, drop the ongoing idea, retire the
@@ -392,67 +368,76 @@ SIA_strike_cleanup_effect = {
 	set_variable = { SIA_strike_momentum = 0 }
 }
 
-# Swap the visible "tide" tier spirit to match SIA_pheu_thai_pressure. Two tiers: the tide
-# RISING (40-69) and a SURGE (70+) about to sweep the Democrats out.
+# Swap the visible "tide" tier spirit to match SIA_pheu_thai_pressure. Three tiers: dormant
+# (0-35), the tide RISING (36-70) and a SURGE (71+) about to sweep the Democrats out.
 SIA_pt_update_tier = {
 	if = {
 		# Tier spirits only attach once the player commits to the Democrat trunk
 		# (SIA_the_democrats_endure -> SIA_path_democrat).
 		limit = { has_country_flag = SIA_path_democrat }
-		clamp_variable = { var = SIA_pheu_thai_pressure min = 0 max = 100 }
 		if = {
-			limit = { check_variable = { SIA_pheu_thai_pressure > 69 } }
+			limit = { check_variable = { SIA_pheu_thai_pressure > 70 } }
 			if = { limit = { has_idea = SIA_pt_tier_dormant } remove_ideas = SIA_pt_tier_dormant }
-			if = { limit = { has_idea = SIA_pt_tier_stirring } remove_ideas = SIA_pt_tier_stirring }
 			if = { limit = { has_idea = SIA_pt_tier_rising } remove_ideas = SIA_pt_tier_rising }
 			if = { limit = { NOT = { has_idea = SIA_pt_tier_surge } } add_ideas = SIA_pt_tier_surge }
 		}
 		else_if = {
-			limit = { check_variable = { SIA_pheu_thai_pressure > 49 } }
+			limit = { check_variable = { SIA_pheu_thai_pressure > 35 } }
 			if = { limit = { has_idea = SIA_pt_tier_dormant } remove_ideas = SIA_pt_tier_dormant }
-			if = { limit = { has_idea = SIA_pt_tier_stirring } remove_ideas = SIA_pt_tier_stirring }
 			if = { limit = { has_idea = SIA_pt_tier_surge } remove_ideas = SIA_pt_tier_surge }
 			if = { limit = { NOT = { has_idea = SIA_pt_tier_rising } } add_ideas = SIA_pt_tier_rising }
 		}
-		else_if = {
-			limit = { check_variable = { SIA_pheu_thai_pressure > 29 } }
-			if = { limit = { has_idea = SIA_pt_tier_dormant } remove_ideas = SIA_pt_tier_dormant }
-			if = { limit = { has_idea = SIA_pt_tier_rising } remove_ideas = SIA_pt_tier_rising }
-			if = { limit = { has_idea = SIA_pt_tier_surge }  remove_ideas = SIA_pt_tier_surge }
-			if = { limit = { NOT = { has_idea = SIA_pt_tier_stirring } } add_ideas = SIA_pt_tier_stirring }
-		}
 		else = {
-			if = { limit = { has_idea = SIA_pt_tier_stirring } remove_ideas = SIA_pt_tier_stirring }
 			if = { limit = { has_idea = SIA_pt_tier_rising } remove_ideas = SIA_pt_tier_rising }
-			if = { limit = { has_idea = SIA_pt_tier_surge }  remove_ideas = SIA_pt_tier_surge }
+			if = { limit = { has_idea = SIA_pt_tier_surge } remove_ideas = SIA_pt_tier_surge }
 			if = { limit = { NOT = { has_idea = SIA_pt_tier_dormant } } add_ideas = SIA_pt_tier_dormant }
 		}
 	}
 }
 
-# Daily idx-18 popularity lift, scaled by the wave tier.
+# Daily idx-18 popularity lift, scaled by the wave tier. Without temp_outlook_increase the
+# party can only take share inside the neutrality bloc, which caps it well below the tide.
 SIA_pt_wave_popularity_boost = {
-	set_temp_variable = { party_index = 18 }
 	if = {
-		limit = { check_variable = { SIA_pheu_thai_pressure > 69 } }
-		set_temp_variable = { party_popularity_increase = 0.002 }
+		limit = {
+			check_variable = { SIA_pheu_thai_pressure > 35 }
+			check_variable = { party_popularity@neutrality < 0.50 }
+			check_variable = { party_pop_array^18 < 0.45 }
+		}
+		set_temp_variable = { party_index = 18 }
+		if = {
+			limit = { check_variable = { SIA_pheu_thai_pressure > 89 } }
+			set_temp_variable = { party_popularity_increase = 0.0005 }
+		}
+		else_if = {
+			limit = { check_variable = { SIA_pheu_thai_pressure > 70 } }
+			set_temp_variable = { party_popularity_increase = 0.0003 }
+		}
+		else = {
+			set_temp_variable = { party_popularity_increase = 0.0001 }
+		}
+		set_temp_variable = { temp_outlook_increase = party_popularity_increase }
+		change_relative_party_popularity = yes
+		recalculate_party = yes
+	}
+}
+
+# Signed reform-pressure move with a tooltip. Caller: set_temp_variable = { reform_delta = N }.
+SIA_reform_pressure_set = {
+	if = {
+		limit = { check_variable = { reform_delta < 0 } }
+		custom_effect_tooltip = SIA_reform_pressure_decrease_tt
 	}
 	else_if = {
-		limit = { check_variable = { SIA_pheu_thai_pressure > 49 } }
-		set_temp_variable = { party_popularity_increase = 0.001 }
+		limit = { check_variable = { reform_delta > 0 } }
+		custom_effect_tooltip = SIA_reform_pressure_increase_tt
 	}
-	else = {
-		set_temp_variable = { party_popularity_increase = 0.0005 }
-	}
-	change_relative_party_popularity = yes
-	recalculate_party = yes
+	add_to_variable = { SIA_reform_pressure = reform_delta }
+	clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
 }
 
 # Signed pressure move with a tooltip. Caller: set_temp_variable = { pt_delta = N }.
 SIA_pt_pressure_set = {
-	add_to_variable = { SIA_pheu_thai_pressure = pt_delta }
-	clamp_variable = { var = SIA_pheu_thai_pressure min = 0 max = 100 }
-	SIA_pt_update_tier = yes
 	if = {
 		limit = { check_variable = { pt_delta < 0 } }
 		custom_effect_tooltip = SIA_pt_pressure_decrease_tt
@@ -461,6 +446,9 @@ SIA_pt_pressure_set = {
 		limit = { check_variable = { pt_delta > 0 } }
 		custom_effect_tooltip = SIA_pt_pressure_increase_tt
 	}
+	add_to_variable = { SIA_pheu_thai_pressure = pt_delta }
+	clamp_variable = { var = SIA_pheu_thai_pressure min = 0 max = 100 }
+	SIA_pt_update_tier = yes
 }
 
 # Seed the meter the first time the Democrats take government (idempotent).
@@ -474,9 +462,8 @@ SIA_pt_pressure_seed = {
 
 SIA_pt_cleanup_effect = {
 	if = { limit = { has_idea = SIA_pt_tier_dormant } remove_ideas = SIA_pt_tier_dormant }
-	if = { limit = { has_idea = SIA_pt_tier_stirring } remove_ideas = SIA_pt_tier_stirring }
 	if = { limit = { has_idea = SIA_pt_tier_rising } remove_ideas = SIA_pt_tier_rising }
-	if = { limit = { has_idea = SIA_pt_tier_surge }  remove_ideas = SIA_pt_tier_surge }
+	if = { limit = { has_idea = SIA_pt_tier_surge } remove_ideas = SIA_pt_tier_surge }
 }
 
 SIA_pt_quiet_effect = {
@@ -496,7 +483,7 @@ SIA_strip_populist_ideas = {
 	if = { limit = { has_idea = SIA_ceo_state } remove_ideas = SIA_ceo_state }
 	if = { limit = { has_idea = SIA_populist_machine } remove_ideas = SIA_populist_machine }
 	if = { limit = { has_idea = SIA_dynasty_politics } remove_ideas = SIA_dynasty_politics }
-	if = { limit = { has_idea = SIA_institutionalized_party }  remove_ideas = SIA_institutionalized_party }
+	if = { limit = { has_idea = SIA_institutionalized_party } remove_ideas = SIA_institutionalized_party }
 	if = { limit = { has_idea = SIA_red_shirts_idea } remove_ideas = SIA_red_shirts_idea }
 	if = { limit = { has_idea = SIA_red_shirts_mobilized_idea } remove_ideas = SIA_red_shirts_mobilized_idea }
 }
@@ -511,7 +498,7 @@ SIA_strip_royalist_ideas = {
 SIA_strip_reform_ideas = {
 	if = { limit = { has_idea = SIA_reform_momentum } remove_ideas = SIA_reform_momentum }
 	if = { limit = { has_idea = SIA_youthquake } remove_ideas = SIA_youthquake }
-	if = { limit = { has_idea = SIA_reform_spring }   remove_ideas = SIA_reform_spring }
+	if = { limit = { has_idea = SIA_reform_spring } remove_ideas = SIA_reform_spring }
 }
 
 SIA_strip_democrat_ideas = {
@@ -526,7 +513,7 @@ SIA_strip_democrat_ideas = {
 SIA_clear_path_flags = {
 	if = { limit = { has_country_flag = SIA_path_populist } clr_country_flag = SIA_path_populist }
 	if = { limit = { has_country_flag = SIA_path_royalist } clr_country_flag = SIA_path_royalist }
-	if = { limit = { has_country_flag = SIA_path_reform }   clr_country_flag = SIA_path_reform }
+	if = { limit = { has_country_flag = SIA_path_reform } clr_country_flag = SIA_path_reform }
 	if = { limit = { has_country_flag = SIA_path_democrat } clr_country_flag = SIA_path_democrat }
 	# The communist road is entered before the party holds power, so its flag can still be set
 	# when another trunk realigns.

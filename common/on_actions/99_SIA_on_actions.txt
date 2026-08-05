@@ -204,7 +204,7 @@ on_actions = {
 				if = {
 					limit = {
 						check_variable = { SIA_reform_pressure > 40 }
-						check_variable = { SIA_rural_discontent > 40 }
+						check_variable = { party_pop_array^18 > 0.25 }
 						date > 2013.1.1
 						NOT = { has_country_flag = SIA_two_thailands_done }
 					}
@@ -298,13 +298,61 @@ on_actions = {
 				}
 				# The focus reward seeds this too; belt and braces.
 				SIA_pt_pressure_seed = yes
-				set_temp_variable = { pt_delta = 2 }
+				set_temp_variable = { pt_delta = 1 }
+				if = {
+					limit = { has_idea = depression }
+					add_to_temp_variable = { pt_delta = 1 }
+				}
+				else_if = {
+					limit = { has_idea = recession }
+					add_to_temp_variable = { pt_delta = 0.5 }
+				}
+				else_if = {
+					limit = { has_idea = stagnation }
+					add_to_temp_variable = { pt_delta = 0.25 }
+				}
+				else_if = {
+					limit = { has_idea = fast_growth }
+					subtract_from_temp_variable = { pt_delta = 0.25 }
+				}
+				else_if = {
+					limit = { has_idea = economic_boom }
+					subtract_from_temp_variable = { pt_delta = 0.5 }
+				}
+				if = {
+					limit = { has_stability < 0.35 }
+					add_to_temp_variable = { pt_delta = 0.5 }
+				}
+				else_if = {
+					limit = { has_stability < 0.5 }
+					add_to_temp_variable = { pt_delta = 0.25 }
+				}
+				else_if = {
+					limit = { has_stability > 0.7 }
+					subtract_from_temp_variable = { pt_delta = 0.5 }
+				}
 				# The Isan beachhead (SIA_break_into_isan) slows the tide at its source.
 				if = {
 					limit = { has_completed_focus = SIA_break_into_isan }
 					subtract_from_temp_variable = { pt_delta = 0.5 }
 				}
+				if = {
+					limit = { has_idea = SIA_rural_package_active }
+					subtract_from_temp_variable = { pt_delta = 0.5 }
+				}
 				SIA_pt_pressure_set = yes
+			}
+			if = {
+				limit = {
+					has_country_flag = SIA_path_democrat
+					check_variable = { SIA_pheu_thai_pressure > 99 }
+					NOT = { has_idea = SIA_junta_government }
+					NOT = { has_country_flag = SIA_pt_landslide_fired }
+					NOT = { has_idea = SIA_red_shirt_encampment }
+					NOT = { has_idea = SIA_red_shirt_crackdown }
+				}
+				set_country_flag = { flag = SIA_pt_landslide_fired days = 365 value = 1 }
+				country_event = { id = thailand.260 days = 7 }
 			}
 			# party_index is still the ruling value here, before the boost below.
 			if = {
@@ -319,7 +367,6 @@ on_actions = {
 					}
 					OR = {
 						has_idea = SIA_pt_tier_dormant
-						has_idea = SIA_pt_tier_stirring
 						has_idea = SIA_pt_tier_rising
 						has_idea = SIA_pt_tier_surge
 					}
@@ -340,7 +387,6 @@ on_actions = {
 							check_variable = { SIA_pheu_thai_pressure > 0 }
 						}
 						has_idea = SIA_pt_tier_dormant
-						has_idea = SIA_pt_tier_stirring
 						has_idea = SIA_pt_tier_rising
 						has_idea = SIA_pt_tier_surge
 					}
@@ -487,9 +533,8 @@ on_actions = {
 				limit = {
 					has_country_flag = SIA_path_democrat
 					NOT = { has_idea = SIA_junta_government }
-					check_variable = { party_pop_array^18 < 0.4 }
+					check_variable = { party_pop_array^18 < 0.45 }
 					OR = {
-						has_idea = SIA_pt_tier_stirring
 						has_idea = SIA_pt_tier_rising
 						has_idea = SIA_pt_tier_surge
 					}

@@ -1417,8 +1417,8 @@ SIA_political_gambits_category = {
 			set_country_flag = SIA_reform_radicalized
 			# The lid goes down but the grievance does not vent: a crackdown fills the reform-pressure
 			# cooker (SIA_political_drift_update -> thailand.363).
-			add_to_variable = { SIA_reform_pressure = 10 }
-			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+			set_temp_variable = { reform_delta = 10 }
+			SIA_reform_pressure_set = yes
 		}
 
 		ai_will_do = {
@@ -1457,8 +1457,8 @@ SIA_political_gambits_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_engage_reform_movement"
-			subtract_from_variable = { SIA_reform_pressure = 25 }
-			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+			set_temp_variable = { reform_delta = -25 }
+			SIA_reform_pressure_set = yes
 			add_stability = 0.02
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
@@ -1478,49 +1478,40 @@ SIA_political_gambits_category = {
 	SIA_rural_development_package = {
 		icon = GFX_decision_generic_construction
 		days_remove = 1
-		days_re_enable = 200
+		days_re_enable = 365
 		fire_only_once = no
 
 		visible = {
 			NOT = { has_idea = SIA_junta_government }
-			OR = {
-				has_country_flag = SIA_path_populist
-				has_country_flag = SIA_path_royalist
-				has_country_flag = SIA_path_reform
-			}
+			has_country_flag = SIA_path_democrat
 		}
 
 		available = {
+			NOT = { has_idea = SIA_rural_package_active }
 			custom_trigger_tooltip = {
-				tooltip = SIA_tt_rural_discontent
-				check_variable = { SIA_rural_discontent > 20 }
+				tooltip = SIA_tt_populist_tide_20
+				check_variable = { SIA_pheu_thai_pressure > 20 }
 			}
 		}
 
 		custom_cost_trigger = {
-			check_variable = { treasury > 2.9 }
+			check_variable = { treasury > 5.9 }
 		}
-		custom_cost_text = SIA_cost_3_0
+		custom_cost_text = SIA_cost_6_0
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_rural_development_package"
-			set_temp_variable = { treasury_change = -3 }
+			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
-			subtract_from_variable = { SIA_rural_discontent = 25 }
-			clamp_variable = { var = SIA_rural_discontent min = 0 max = 100 }
-			# And make the money tell: a steadier countryside and a direct dent in the Pheu Thai populist
-			# vote it feeds (neutral_Social, idx 18).
 			add_stability = 0.02
-			set_temp_variable = { party_index = 18 }
-			set_temp_variable = { party_popularity_increase = -0.02 }
-			change_relative_party_popularity = yes
-			recalculate_party = yes
+			set_temp_variable = { pt_delta = -15 }
+			SIA_pt_pressure_set = yes
+			add_timed_idea = { idea = SIA_rural_package_active days = 365 }
 		}
 
 		ai_will_do = {
-			base = 5
-			modifier = { factor = 3 check_variable = { SIA_rural_discontent > 55 } }
-			modifier = { factor = 2 has_country_flag = SIA_path_populist }
+			base = 6
+			modifier = { factor = 3 check_variable = { SIA_pheu_thai_pressure > 55 } }
 		}
 	}
 }
@@ -1530,8 +1521,8 @@ SIA_democrat_machine_category = {
 
 	SIA_constituency_machine = {
 		icon = GFX_decision_generic_political_discourse
-		cost = 35
-		days_re_enable = 60
+		cost = 60
+		days_re_enable = 90
 		fire_only_once = no
 
 		complete_effect = {
@@ -1541,7 +1532,7 @@ SIA_democrat_machine_category = {
 			set_temp_variable = { party_popularity_increase = 0.01 }
 			change_relative_party_popularity = yes
 			recalculate_party = yes
-			set_temp_variable = { pt_delta = -3 }
+			set_temp_variable = { pt_delta = -8 }
 			SIA_pt_pressure_set = yes
 		}
 
@@ -1550,16 +1541,16 @@ SIA_democrat_machine_category = {
 
 	SIA_match_the_populists = {
 		icon = GFX_decision_generic_political_rally
-		cost = 25
-		days_re_enable = 90
+		cost = 50
+		days_re_enable = 150
 		fire_only_once = no
 
-		custom_cost_trigger = { check_variable = { treasury > 2.9 } }
-		custom_cost_text = SIA_cost_3_0
+		custom_cost_trigger = { check_variable = { treasury > 5.9 } }
+		custom_cost_text = SIA_cost_6_0
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_match_the_populists"
-			set_temp_variable = { treasury_change = -3 }
+			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
 			add_stability = 0.01
 			set_temp_variable = { party_index = 18 }
@@ -1569,7 +1560,7 @@ SIA_democrat_machine_category = {
 			set_temp_variable = { party_popularity_increase = 0.01 }
 			change_relative_party_popularity = yes
 			recalculate_party = yes
-			set_temp_variable = { pt_delta = -4 }
+			set_temp_variable = { pt_delta = -12 }
 			SIA_pt_pressure_set = yes
 		}
 
@@ -1578,8 +1569,8 @@ SIA_democrat_machine_category = {
 
 	SIA_counter_messaging = {
 		icon = GFX_decision_generic_political_discourse
-		cost = 45
-		days_re_enable = 90
+		cost = 65
+		days_re_enable = 120
 		fire_only_once = no
 
 		complete_effect = {
@@ -1588,7 +1579,7 @@ SIA_democrat_machine_category = {
 			set_temp_variable = { party_popularity_increase = -0.01 }
 			change_relative_party_popularity = yes
 			recalculate_party = yes
-			set_temp_variable = { pt_delta = -4 }
+			set_temp_variable = { pt_delta = -10 }
 			SIA_pt_pressure_set = yes
 		}
 
@@ -1597,7 +1588,7 @@ SIA_democrat_machine_category = {
 
 	SIA_expose_corruption = {
 		icon = GFX_decision_generic_political_discourse
-		cost = 55
+		cost = 90
 		days_re_enable = 180
 		fire_only_once = no
 
@@ -1608,7 +1599,7 @@ SIA_democrat_machine_category = {
 			set_temp_variable = { party_popularity_increase = -0.02 }
 			change_relative_party_popularity = yes
 			recalculate_party = yes
-			set_temp_variable = { pt_delta = -12 }
+			set_temp_variable = { pt_delta = -25 }
 			SIA_pt_pressure_set = yes
 		}
 
@@ -1619,8 +1610,8 @@ SIA_democrat_machine_category = {
 	# standing drag (SIA_coalition_price), so it cannot just be spammed.
 	SIA_broaden_the_coalition = {
 		icon = GFX_decision_generic_political_discourse
-		cost = 70
-		days_re_enable = 180
+		cost = 120
+		days_re_enable = 240
 		fire_only_once = no
 
 		visible = { has_country_flag = SIA_democrat_machine_active }
@@ -1636,7 +1627,7 @@ SIA_democrat_machine_category = {
 			set_temp_variable = { party_popularity_increase = -0.02 }
 			change_relative_party_popularity = yes
 			recalculate_party = yes
-			set_temp_variable = { pt_delta = -20 }
+			set_temp_variable = { pt_delta = -35 }
 			SIA_pt_pressure_set = yes
 		}
 
@@ -2244,6 +2235,7 @@ SIA_political_gambits_category = {
 		# communist / NOT republic preserved from the former realignment category.
 		visible = {
 			NOT = { has_country_flag = SIA_path_royalist }
+			NOT = { has_country_flag = SIA_path_democrat }
 			NOT = { is_in_array = { ruling_party = 23 } }
 			NOT = { has_country_flag = SIA_path_communist }
 			NOT = { has_country_flag = SIA_republic_declared }
@@ -2283,6 +2275,7 @@ SIA_political_gambits_category = {
 		fire_only_once = no
 
 		visible = {
+			NOT = { has_country_flag = SIA_path_democrat }
 			NOT = { is_in_array = { ruling_party = 23 } }
 			NOT = { has_country_flag = SIA_path_communist }
 			NOT = { has_country_flag = SIA_republic_declared }
@@ -2635,8 +2628,8 @@ SIA_establishment_category = {
 			set_temp_variable = { party_popularity_increase = -0.06 }
 			change_relative_party_popularity = yes
 			recalculate_party = yes
-			add_to_variable = { SIA_reform_pressure = 4 }
-			clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+			set_temp_variable = { reform_delta = 4 }
+			SIA_reform_pressure_set = yes
 		}
 
 		ai_will_do = {

@@ -3347,7 +3347,7 @@ news_event = {
 	}
 }
 
-# Taking Stock of the Kingdom - mandate choice event (SIA_assess_the_kingdom)
+# Taking Stock of the Kingdom - mandate choice event
 country_event = {
 	id = thailand.215
 	title = thailand.215.t
@@ -3362,6 +3362,7 @@ country_event = {
 	option = {
 		name = thailand.215.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.215.a"
+		add_political_power = 100
 		add_timed_idea = { idea = SIA_mandate_recovery days = 730 }
 		ai_chance = {
 			base = 4
@@ -3372,6 +3373,7 @@ country_event = {
 		name = thailand.215.b
 		log = "[GetDateText]: [Root.GetName]: event thailand.215.b"
 		# Focus on Order: +5% stab, +10% drift defense, −5% PP, 730d.
+		add_political_power = 100
 		add_timed_idea = { idea = SIA_mandate_order days = 730 }
 		ai_chance = {
 			base = 3
@@ -3381,6 +3383,7 @@ country_event = {
 	option = {
 		name = thailand.215.c
 		log = "[GetDateText]: [Root.GetName]: event thailand.215.c"
+		add_political_power = 100
 		add_timed_idea = { idea = SIA_mandate_outreach days = 730 }
 		ai_chance = {
 			base = 3
@@ -4114,6 +4117,55 @@ country_event = {
 		add_to_variable = { SIA_pol_stability_factor = 0.05 tooltip = stability_factor_tt }
 		add_to_variable = { SIA_pol_drift_defence_factor = 0.1 tooltip = drift_defence_factor_tt }
 		add_stability = 0.05
+		ai_chance = { base = 6 }
+	}
+}
+
+# thailand.260 - The Red Shirts Take Ratchaprasong. Terminal event for SIA_pheu_thai_pressure.
+country_event = {
+	id = thailand.260
+	title = thailand.260.t
+	desc = thailand.260.d
+	picture = GFX_politics_protest
+
+	is_triggered_only = yes
+
+	# Armed a week earlier by on_weekly_SIA; the government can still defuse the tide, be couped
+	# or lose the trunk inside that window.
+	trigger = {
+		original_tag = SIA
+		has_country_flag = SIA_path_democrat
+		check_variable = { SIA_pheu_thai_pressure > 70 }
+		NOT = { has_idea = SIA_junta_government }
+	}
+
+	option = {
+		name = thailand.260.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.260.a"
+		add_timed_idea = { idea = SIA_red_shirt_encampment days = 365 }
+		set_temp_variable = { pt_delta = 40 }
+		subtract_from_temp_variable = { pt_delta = SIA_pheu_thai_pressure }
+		SIA_pt_pressure_set = yes
+		ai_chance = { base = 4 }
+	}
+
+	option = {
+		name = thailand.260.b
+		log = "[GetDateText]: [Root.GetName]: event thailand.260.b"
+		add_timed_idea = { idea = SIA_red_shirt_crackdown days = 365 }
+		508 = {
+			damage_building = {
+				type = industrial_complex
+				damage = 3
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 2
+			}
+		}
+		set_temp_variable = { pt_delta = 40 }
+		subtract_from_temp_variable = { pt_delta = SIA_pheu_thai_pressure }
+		SIA_pt_pressure_set = yes
 		ai_chance = { base = 6 }
 	}
 }
@@ -5440,7 +5492,10 @@ country_event = {
 		FROM = { add_to_faction = ROOT }
 		add_ideas = SIA_asean_defense_member
 		add_opinion_modifier = { target = FROM modifier = medium_increase }
-		FROM = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		FROM = {
+			add_opinion_modifier = { target = ROOT modifier = medium_increase }
+			country_event = { id = thailand.425 days = 1 }
+		}
 		ai_chance = {
 			base = 15
 			modifier = { factor = 3  has_opinion = { target = FROM value > 40 } }
@@ -5452,10 +5507,40 @@ country_event = {
 	option = {
 		name = thailand.431.b
 		log = "[GetDateText]: [Root.GetName]: event thailand.431.b"
+		FROM = { country_event = { id = thailand.426 days = 1 } }
 		ai_chance = {
 			base = 40
 			modifier = { factor = 0.4  has_opinion = { target = FROM value > 60 } }
 		}
+	}
+}
+
+# thailand.425 / .426 - the invitee's answer, reported back to Bangkok. Without these the
+# player completes an invite focus and sees nothing at all.
+country_event = {
+	id = thailand.425
+	title = thailand.425.t
+	desc = thailand.425.d
+	picture = GFX_message_signing
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.425.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.425.a"
+		add_political_power = 25
+	}
+}
+
+country_event = {
+	id = thailand.426
+	title = thailand.426.t
+	desc = thailand.426.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+
+	option = {
+		name = thailand.426.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.426.a"
 	}
 }
 
@@ -5788,9 +5873,10 @@ country_event = {
 		set_temp_variable = { party_index = 3 }
 		set_temp_variable = { party_popularity_increase = 0.12 }
 		change_relative_party_popularity = yes
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		change_relative_party_popularity = yes
 		recalculate_party = yes
-		add_to_variable = { SIA_rural_discontent = 12 }
-		clamp_variable = { var = SIA_rural_discontent min = 0 max = 100 }
 		ai_chance = {
 			base = 4
 			modifier = { factor = 3 has_country_flag = SIA_path_reform }
@@ -5804,8 +5890,8 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.12 }
 		change_relative_party_popularity = yes
 		recalculate_party = yes
-		add_to_variable = { SIA_reform_pressure = 12 }
-		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
+		set_temp_variable = { reform_delta = 12 }
+		SIA_reform_pressure_set = yes
 		ai_chance = {
 			base = 4
 			modifier = { factor = 3 has_country_flag = SIA_path_populist }
@@ -5819,11 +5905,12 @@ country_event = {
 		set_temp_variable = { party_index = 23 }
 		set_temp_variable = { party_popularity_increase = 0.12 }
 		change_relative_party_popularity = yes
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		change_relative_party_popularity = yes
 		recalculate_party = yes
-		add_to_variable = { SIA_reform_pressure = 6 }
-		clamp_variable = { var = SIA_reform_pressure min = 0 max = 100 }
-		add_to_variable = { SIA_rural_discontent = 6 }
-		clamp_variable = { var = SIA_rural_discontent min = 0 max = 100 }
+		set_temp_variable = { reform_delta = 6 }
+		SIA_reform_pressure_set = yes
 		ai_chance = {
 			base = 3
 			modifier = { factor = 3 has_country_flag = SIA_path_royalist }
