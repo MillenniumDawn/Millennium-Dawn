@@ -4337,3 +4337,128 @@ preah_vihear_decisions_category = {
 		}
 	}
 }
+
+SIA_seato_accession_category = {
+
+	# The vanilla invite-to-faction action is gated on world tension against the target's foreign
+	# intervention law, so SEATO recruits through SIA_seato_score_update instead.
+	SIA_renew_seato_invitation = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 150
+		days_re_enable = 180
+		fire_only_once = no
+
+		targets = { VIE LAO CBD BRM IND PHI MAY SIN BRU SHN KAR WAA }
+
+		# Only the existence check filters the list. Everything else lives in available so a
+		# blocked country stays on screen with its reason and its cooldown.
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		available = {
+			FROM = { is_in_faction = no }
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_renew_seato_invitation"
+			FROM = {
+				SIA_seato_score_update = yes
+				country_event = { id = thailand.431 days = 2 }
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = { factor = 3 FROM = { check_variable = { SIA_seato_score > 59 } } }
+		}
+	}
+
+	# Courtship: buy the goodwill the score is built on rather than re-rolling the invitation.
+	# Split by weight rather than priced in treasury: a fixed cash sum buys wildly different
+	# leverage in Jakarta and in Wa State.
+	SIA_seato_charm_offensive_major = {
+		icon = GFX_decision_generic_form_nation
+		cost = 100
+		days_remove = 30
+		days_re_enable = 180
+		fire_only_once = no
+
+		targets = { BRM IND MAY PHI VIE }
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		available = {
+			NOT = { has_idea = SIA_courting_mission }
+			NOT = { is_in_faction_with = FROM }
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_seato_charm_offensive_major"
+			add_ideas = SIA_courting_mission
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_seato_charm_offensive_major completed"
+			if = { limit = { has_idea = SIA_courting_mission } remove_ideas = SIA_courting_mission }
+			add_opinion_modifier = { target = FROM modifier = medium_increase }
+			FROM = {
+				add_opinion_modifier = { target = ROOT modifier = medium_increase }
+				SIA_seato_score_update = yes
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+
+	SIA_seato_charm_offensive_minor = {
+		icon = GFX_decision_generic_form_nation
+		cost = 50
+		days_remove = 30
+		days_re_enable = 180
+		fire_only_once = no
+
+		targets = { BRU CBD KAR LAO SHN SIN WAA }
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		available = {
+			NOT = { has_idea = SIA_courting_mission }
+			NOT = { is_in_faction_with = FROM }
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_seato_charm_offensive_minor"
+			add_ideas = SIA_courting_mission
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_seato_charm_offensive_minor completed"
+			if = { limit = { has_idea = SIA_courting_mission } remove_ideas = SIA_courting_mission }
+			add_opinion_modifier = { target = FROM modifier = medium_increase }
+			FROM = {
+				add_opinion_modifier = { target = ROOT modifier = medium_increase }
+				SIA_seato_score_update = yes
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+}

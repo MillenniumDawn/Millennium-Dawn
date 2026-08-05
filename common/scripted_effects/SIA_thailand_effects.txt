@@ -654,3 +654,65 @@ SIA_merge_chart_pattana_into_trt = {
 		}
 	}
 }
+
+## SEATO accession. Vanilla's invite-to-faction is gated on world tension against the target's
+## foreign intervention law and on outlook similarity, neither of which is scriptable, so the
+## pact recruits through this score instead. Runs in the candidate's scope with ROOT = Thailand.
+SIA_seato_score_update = {
+	set_temp_variable = { SIA_seato_temp = 0 }
+	if = {
+		limit = { has_opinion = { target = ROOT value > 39 } }
+		add_to_temp_variable = { SIA_seato_temp = 25 }
+		custom_effect_tooltip = SIA_seato_rec_opinion_yes
+	}
+	else = {
+		custom_effect_tooltip = SIA_seato_rec_opinion_no
+	}
+	if = {
+		limit = { is_in_faction = no }
+		add_to_temp_variable = { SIA_seato_temp = 20 }
+		custom_effect_tooltip = SIA_seato_rec_faction_yes
+	}
+	else = {
+		custom_effect_tooltip = SIA_seato_rec_faction_no
+	}
+	if = {
+		limit = { is_top3_twenty_influencer = yes }
+		add_to_temp_variable = { SIA_seato_temp = 20 }
+		custom_effect_tooltip = SIA_seato_rec_influence_yes
+	}
+	else = {
+		custom_effect_tooltip = SIA_seato_rec_influence_no
+	}
+	if = {
+		limit = {
+			OR = {
+				has_war = yes
+				any_neighbor_country = { has_war = yes }
+			}
+		}
+		add_to_temp_variable = { SIA_seato_temp = 15 }
+		custom_effect_tooltip = SIA_seato_rec_threat_yes
+	}
+	else = {
+		custom_effect_tooltip = SIA_seato_rec_threat_no
+	}
+	if = {
+		limit = { has_country_flag = trade_agreement@SIA }
+		add_to_temp_variable = { SIA_seato_temp = 10 }
+		custom_effect_tooltip = SIA_seato_rec_trade_yes
+	}
+	else = {
+		custom_effect_tooltip = SIA_seato_rec_trade_no
+	}
+	if = {
+		limit = { ROOT = { num_faction_members > 2 } }
+		add_to_temp_variable = { SIA_seato_temp = 10 }
+		custom_effect_tooltip = SIA_seato_rec_momentum_yes
+	}
+	else = {
+		custom_effect_tooltip = SIA_seato_rec_momentum_no
+	}
+	custom_effect_tooltip = SIA_seato_rec_total
+	set_variable = { SIA_seato_score = SIA_seato_temp }
+}
