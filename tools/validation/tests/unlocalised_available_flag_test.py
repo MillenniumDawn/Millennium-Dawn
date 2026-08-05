@@ -144,11 +144,7 @@ def test_dynamic_flag_not_flagged(tmp_path):
 def test_commented_line_ignored(tmp_path):
     out = _findings(
         tmp_path,
-        "my_decision = {\n"
-        "\tavailable = {\n"
-        "\t\t# has_country_flag = a\n"
-        "\t}\n"
-        "}\n",
+        "my_decision = {\n\tavailable = {\n\t\t# has_country_flag = a\n\t}\n}\n",
     )
     assert out == []
 

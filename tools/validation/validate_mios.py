@@ -116,9 +116,7 @@ class Validator(BaseValidator):
                 self._check_positions(body, rel, body_offset)
                 self._check_on_complete(body, rel, body_offset)
                 self._check_header_text(org_id, body, rel, body_offset, loc_keys)
-                self._check_trait_localisation(
-                    org_id, body, rel, body_offset, loc_keys
-                )
+                self._check_trait_localisation(org_id, body, rel, body_offset, loc_keys)
 
         self.log(f"  Scanned {len(files)} files | {org_count} organizations")
 
@@ -213,8 +211,7 @@ class Validator(BaseValidator):
             elif not self._resolves(value, tag, loc_keys):
                 self.add_error(
                     "header-text-loc-missing",
-                    f"tree_header_text key '{value}' has no English "
-                    "localisation entry",
+                    f"tree_header_text key '{value}' has no English localisation entry",
                     rel,
                     line,
                 )
