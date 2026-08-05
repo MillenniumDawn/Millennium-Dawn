@@ -235,6 +235,20 @@ _TOOLTIP_WRAPPER_TOKENS = frozenset(
 # requirement line a wrapper would. `\b` does not match custom_trigger_tooltip.
 _INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
 _PLAYER_FACING_BLOCK = "available"
+# Both `available` scans cover the same player-facing object types.
+_PLAYER_FACING_GLOBS = [
+    "common/decisions/**/*.txt",
+    "common/national_focus/*.txt",
+    "common/ideas/*.txt",
+    "common/military_industrial_organization/**/*.txt",
+    "common/operations/*.txt",
+    "common/special_projects/**/*.txt",
+    "common/scripted_diplomatic_actions/*.txt",
+]
+# Shorthand and long form: `has_country_flag = X` / `= { flag = X value > 0 }`.
+_AVAILABLE_FLAG_RE = re.compile(
+    r"\bhas_country_flag\s*=\s*(?:\{\s*flag\s*=\s*)?([A-Za-z_][A-Za-z0-9_.@]*)"
+)
 
 
 def _matching_brace(text: str, open_idx: int) -> int:
@@ -392,6 +406,61 @@ def process_file_for_untooltipped_available_checks(
                             line,
                         )
                     )
+                    break
+    return issues
+
+
+def process_file_for_available_flags(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: collect `has_country_flag` names checked inside `available`.
+
+    Returns (flag, relative path, line) triples; the parent owns the loc index
+    and does the missing-key filtering.
+    """
+    filename, mod_path = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = blank_quoted_strings(strip_comments(text))
+    if "has_country_flag" not in cleaned:
+        return []
+
+    events: List[Tuple[int, int, str]] = []
+    for m in _SCOPE_OPEN_RE.finditer(cleaned):
+        events.append((m.end() - 1, 0, m.group(1)))
+    for m in re.finditer(r"\}", cleaned):
+        events.append((m.start(), 1, ""))
+    for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
+        events.append((m.start(), 2, m.group(1)))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    rel = os.path.relpath(filename, mod_path)
+    stack: List[str] = []
+    issues: List[Tuple[str, str, int]] = []
+    for pos, kind, tok in events:
+        if kind == 0:
+            stack.append(tok)
+        elif kind == 1:
+            if stack:
+                stack.pop()
+        else:
+            if "@" in tok:
+                # Runtime-substituted flag names (e.g. trade_agreement@PREV)
+                # cannot be resolved to a loc key statically.
+                continue
+            for token in reversed(stack):
+                if token in _TOOLTIP_WRAPPER_TOKENS:
+                    break
+                if token == _PLAYER_FACING_BLOCK:
+                    line = cleaned[:pos].count("\n") + 1
+                    issues.append((tok, rel, line))
                     break
     return issues
 
@@ -1304,17 +1373,7 @@ class Validator(BaseValidator):
             "Checking for untooltipped check_variable in available blocks..."
         )
 
-        txt_files = self._collect_files(
-            [
-                "common/decisions/**/*.txt",
-                "common/national_focus/*.txt",
-                "common/ideas/*.txt",
-                "common/military_industrial_organization/**/*.txt",
-                "common/operations/*.txt",
-                "common/special_projects/**/*.txt",
-                "common/scripted_diplomatic_actions/*.txt",
-            ]
-        )
+        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
         if not txt_files:
             self.log("✓ No untooltipped check_variable in available blocks")
             return
@@ -1330,6 +1389,55 @@ class Validator(BaseValidator):
             "check_variable in `available` with no tooltip wrapper (the player sees a blank requirement line):",
             severity=Severity.WARNING,
             category="untooltipped-available-check",
+        )
+
+    def validate_unlocalised_available_flags(self):
+        """Flag `has_country_flag` in `available` whose flag has no loc key (WARNING).
+
+        HOI4 renders the requirement line from a loc key named after the flag;
+        with no key the player reads the raw token.
+        """
+        self._log_section(
+            "Checking for unlocalised country flags in available blocks..."
+        )
+
+        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
+        if not txt_files:
+            self.log("✓ No unlocalised country flags in available blocks")
+            return
+
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_available_flags, args_list, chunksize=30
+        )
+        loc_keys = self._load_localisation_keys()
+
+        seen: Set[Tuple[str, str]] = set()
+        issues = []
+        for file_results in all_results:
+            for flag, rel, line in file_results:
+                if flag in loc_keys:
+                    continue
+                key = (flag, rel)
+                if key in seen:
+                    continue
+                seen.add(key)
+                issues.append(
+                    (
+                        f"has_country_flag = {flag} in `available` has no localisation"
+                        " key - the player sees the raw flag name; add a loc key named"
+                        " after the flag",
+                        rel,
+                        line,
+                    )
+                )
+
+        self._report(
+            issues,
+            "✓ No unlocalised country flags in available blocks",
+            "country flags checked in `available` with no localisation key (the player sees the raw token):",
+            severity=Severity.WARNING,
+            category="unlocalised-available-flag",
         )
 
     def validate_flag_syntax(self):
@@ -1517,6 +1625,7 @@ class Validator(BaseValidator):
         self.validate_treasury_state_scope()
         self.validate_clamp_range_conflicts()
         self.validate_untooltipped_available_checks()
+        self.validate_unlocalised_available_flags()
 
         if self.staged_only:
             # Variable validation cross-references flags across all files
