@@ -1,0 +1,74 @@
+name: Nightly PR Revalidation
+
+# Re-runs the coding pipeline for every open PR against its head branch, so
+# validation tracks the PR's merge ref after main advances. pull_request
+# events only fire on pushes: a PR that sits open while main moves gets stale
+# checks with no way to refresh them short of a re-push. This workflow
+# dispatches coding-pipeline.yml (workflow_dispatch) for each open PR, which
+# rebuilds the PR context from the pr_number/base_sha inputs.
+#
+# Fork PRs are skipped: workflow_dispatch refs must live in this repo, so a
+# fork's head branch cannot be dispatched. Fork PRs still validate on every
+# push via the normal pull_request trigger.
+#
+# A dispatch runs the workflow file as it exists on the PR's head branch, so a
+# branch that predates the workflow_dispatch trigger cannot be revalidated
+# until it is rebased. Those PRs are warned about and skipped, not fatal.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  # Needed to dispatch coding-pipeline.yml for each open PR.
+  actions: write
+
+concurrency:
+  group: nightly-pr-revalidation
+  cancel-in-progress: true
+
+jobs:
+  revalidate-open-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch validation for open PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # main's live head, not each PR's `.base.sha`: that field is the base
+          # tip from the PR's last synchronize and does not move when main does,
+          # so it would never invalidate the workspace bundle keyed on it.
+          base_sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')
+          # --paginate: without it the sweep silently stops at the 100 most
+          # recently updated open PRs.
+          pulls_url="repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100"
+          prs=$(gh api --paginate "$pulls_url" \
+            --jq '.[] | select(.head.repo.full_name == env.GITHUB_REPOSITORY) |
+            [.number, .head.ref] | @tsv')
+          sent=0
+          skipped=0
+          while IFS=$'\t' read -r num ref; do
+            [ -z "$num" ] && continue
+            # A PR that conflicts with main has no refs/pull/N/merge, and
+            # coding-pipeline checks that ref out. Skip it instead of letting
+            # the dispatched run die on checkout and read as pipeline breakage.
+            if ! gh api "repos/$GITHUB_REPOSITORY/git/ref/pull/$num/merge" \
+                --silent 2>/dev/null; then
+              echo "::warning::PR #$num has no merge ref (conflicts with main?), skipped"
+              skipped=$((skipped + 1))
+              continue
+            fi
+            # A branch predating the trigger (or its inputs) is rejected with a
+            # 422, and `bash -e` would end the sweep at the first one.
+            if gh workflow run "coding-pipeline.yml" --ref "$ref" \
+                -f pr_number="$num" -f base_sha="$base_sha"; then
+              sent=$((sent + 1))
+            else
+              echo "::warning::PR #$num ($ref) could not be dispatched; rebase" \
+                "onto main to pick up the workflow_dispatch trigger"
+              skipped=$((skipped + 1))
+            fi
+          done <<< "$prs"
+          echo "Dispatched coding-pipeline for $sent open PR(s), skipped $skipped"

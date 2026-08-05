@@ -112,6 +112,18 @@ Regular `war_with_on_*` does not work with FROM. Use these instead:
 - `war_with_target_on_remove = yes`
 - `war_with_target_on_timeout = yes`
 
+## Effect Block Logging
+
+The engine runs four blocks as a decision's effects: `complete_effect` (player takes it), `remove_effect` (`days_remove` timer expires or `remove_trigger` fires), `timeout_effect` (mission `days_mission_timeout` expires) and `cancel_effect` (`cancel_trigger` fires). Each one logs its own line, as the block's first statement:
+
+```
+	log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"
+```
+
+Log first so the game log reads in firing order, and use the decision's own ID: a copied ID from a neighbouring decision is the most common mistake here (`tools/linting/fix_log_ids.py` rewrites those). A log nested inside an `if` / `else` / `hidden_effect` records which branch ran, so it belongs where it sits and does not substitute for the block's own log line.
+
+`validate_decisions.py` reports a block with no log as `missing-decision-log` and a block-level log that is not first as `decision-log-not-first`. A log that is the _only_ content of a `complete_effect` is a separate mistake: `check_common_mistakes.py` rejects it, because the block does nothing but log. Delete the dead block instead.
+
 ## Example: Basic Decision
 
 ```
@@ -161,6 +173,7 @@ ISR_pal_rooting_terrorists = {
 	cancel_if_not_visible = yes
 
 	timeout_effect = {
+		log = "[GetDateText]: [Root.GetName]: Decision ISR_pal_rooting_terrorists"
 		custom_effect_tooltip = ISR_operation_result_outcome_tt
 		custom_effect_tooltip = ISR_operation_failed_root_terr_tt
 		hidden_effect = {
