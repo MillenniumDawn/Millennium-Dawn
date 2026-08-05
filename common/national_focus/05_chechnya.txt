@@ -6458,7 +6458,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_uprise_in_dagestan
+		id = CHE_uprising_in_dagestan
 		icon = dagechechdeal
 
 		x = -4
@@ -6477,6 +6477,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_uprise_in_dagestan"
 			country_event = chechnya.17
+			custom_effect_tooltip = add_the_fornt_mechanics
 		}
 
 		ai_will_do = { base = 90 }
@@ -6501,30 +6502,60 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_raid_ingush_bases"
 
-			custom_effect_tooltip = CHE_ingushetia_uprising_tooltip
-
-			newline = yes
-
-			custom_effect_tooltip = CHE_available_military_high_command
-			show_ideas_tooltip = CHE_Ali_Musaevich_Taziev
-
-			newline = yes
-
-			custom_effect_tooltip = CHE_available_military_high_command
-			show_ideas_tooltip = CHE_Khuchbarov_Ruslan_Tagirovich
-
-			newline = yes
-
 			set_temp_variable = { party_index = 11 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
 			change_relative_party_popularity = yes
 
+			newline = yes
+
 			IF = {
 				Limit = {
-					#owns ingish state if not use state change on action
+					controls_state = 1126
+				}
+
+				custom_effect_tooltip = CHE_ingushetia_uprising_tooltip2
+
+				hidden_effect = {
+					if = {
+						limit = { has_template = "Ghalghai Lashkar" }
+						delete_unit_template_and_units = { division_template = "Ghalghai Lashkar" disband = yes }
+					}
+				}
+
+				division_template = {
+					name = "Ghalghai Lashkar"
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+						
+						Mot_Militia_Bat = { x = 1 y = 0 }
+						Mot_Militia_Bat = { x = 1 y = 1 }
+					}
+					priority = 1
+				}
+
+				hidden_effect = {
+					1126 = {
+						create_unit = {
+							division = "name = \"Bryhada Vikinhiv\" division_template = \"Ghalghai Lashkar\"start_experience_factor = 0.4 start_equipment_factor = 1.0"
+							count = 1
+							owner = CHE
+						}
+					}
 				}
 			}
+			else = {
+				custom_effect_tooltip = CHE_ingushetia_uprising_tooltip
+				set_country_flag = Chechnya_ingushetia_unit_token
+			}
+
+			newline = yes
+
+			custom_effect_tooltip = CHE_available_military_high_command
+			show_ideas_tooltip = CHE_Ali_Musaevich_Taziev
 		}
 
 		ai_will_do = { base = 1 }
@@ -6668,6 +6699,20 @@ focus_tree = {
 
 		cost = 2.2
 
+		available = {
+			country_exists = TUR
+			NOT = {
+				has_war_with = TUR
+				any_allied_country = {
+					has_war_with = TUR
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = TUR }
+			}
+		}
+
 		prerequisite = { focus = CHE_Bloodied_But_Unbroken }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -6675,12 +6720,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_Muster_the_Grey_Wolves"
 
-			set_temp_variable = { party_index = 21 }
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			set_temp_variable = { temp_outlook_increase = 0.025 }
-			change_relative_party_popularity = yes
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = chechnya_salman_raduev_captured
+					}
+				}
+				set_temp_variable = { party_index = 21 }
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				change_relative_party_popularity = yes
 
-			line = yes
+				line = yes
+			}
 
 			custom_effect_tooltip = CHE_white_wolves_units_tooltip
 
@@ -6917,6 +6969,20 @@ focus_tree = {
 			focus = CHE_Fire_Vakha_Arsanov
 		}
 
+		available = {
+			country_exists = ENG
+			NOT = {
+				has_war_with = ENG
+				any_allied_country = {
+					has_war_with = ENG
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = ENG }
+			}
+		}
+
 		prerequisite = { focus = CHE_Bloodied_But_Unbroken }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -6933,7 +6999,6 @@ focus_tree = {
 			line = yes
 
 			custom_effect_tooltip = CHE_unavailable_cheif_of_army
-
 			
 			show_ideas_tooltip = aslan_maskhadov
 
@@ -7073,6 +7138,20 @@ focus_tree = {
 			focus = CHE_Freedom_or_Death
 		}
 
+		available = {
+			country_exists = QAT
+			NOT = {
+				has_war_with = QAT
+				any_allied_country = {
+					has_war_with = QAT
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = QAT }
+			}
+		}
+
 		prerequisite = { focus = CHE_raid_ingush_bases }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7094,6 +7173,12 @@ focus_tree = {
 
 			newline = yes
 
+			set_temp_variable = { percent_change = 2.11 }
+			set_temp_variable = { tag_index = QAT }
+			change_influence_percentage = yes
+
+			newline = yes
+
 			CHE_zelimkhan_yandarbiyev = {
 				custom_effect_tooltip = CHE_add_Advisor_role
 				newline = line
@@ -7106,7 +7191,6 @@ focus_tree = {
 							slot = high_command
 							traits = {
 								CHE_Poet_on_a_Road_to_Jihad
-								army_artillery_1
 							}
 						}
 					}
@@ -7127,8 +7211,32 @@ focus_tree = {
 					}
 					clr_country_flag = CHE_zelimkhan_yandarbiyev_in_office
 				}
+
 				add_ideas= CHE_zelimkhan_yandarbiyev
+
+				
+
+				if = {
+					limit = {
+						has_template = "General Dudayevan Eskar"
+					}
+	
+					set_division_template_lock = {
+						division_template = "General Dudayevan Eskar"
+						is_locked = no
+					}
+
+					clear_division_template_cap = {
+						division_template = "General Dudayevan Eskar"
+					}
+
+					set_division_force_allow_recruiting = {
+						division_template = "General Dudayevan Eskar"
+					}
+				}
 			}
+
+			
 		}
 
 		ai_will_do = {
@@ -7152,12 +7260,43 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_fealty_to_the_akhmadov_brothers"
+			
 			set_temp_variable = { party_index = 10 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
 			change_relative_party_popularity = yes
 
 			newline = yes
+
+			CHE_Ramzan_Akhmadov = {
+				custom_effect_tooltip = CHE_add_Advisor_role
+				newline = line
+				line = yes
+				custom_effect_tooltip = CHE_akhmadov1_tooltip
+				
+				custom_effect_tooltip = CHE_akhmadov2_tooltip
+				
+				hidden_effect = {
+					add_advisor_role = {
+						advisor = {
+							slot = high_command
+							traits = {
+								CHE_ramzan_akhmadov_reconnaissance_assault_leader_trait
+							}
+						}
+					}
+				}
+			}
+
+			newline = yes
+
+			custom_effect_tooltip = CHE_available_military_high_command
+
+			show_ideas_tooltip = CHE_rizvan_akhmadov
+
+			newline = yes
+
+			custom_effect_tooltip = CHE_akhmadov_brothers_event_tooltip
 		}
 
 		ai_will_do = {
@@ -7179,6 +7318,10 @@ focus_tree = {
 			focus = CHE_The_Gulf_Networks
 		}
 
+		available = {
+			has_country_flag = chechnya_salman_raduev_active
+		}
+
 		prerequisite = { focus = CHE_raid_ingush_bases }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7186,20 +7329,63 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_conspire_with_the_fifth_columnists"
 
-			CHE_zelimkhan_yandarbiyev = {
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.025 }
+			change_relative_party_popularity = yes
+
+			newline = yes
+
+			CHE_salman_raduev = {
 				custom_effect_tooltip = CHE_add_Advisor_role
 				newline = line
 				line = yes
 				custom_effect_tooltip = CHE_manic_tooltip
+				custom_effect_tooltip = CHE_Monthly_nat_025
+				newline = yes
 				custom_effect_tooltip = CHE_manic_tooltip2
+				
 				hidden_effect = {
 					add_advisor_role = {
 						advisor = {
 							slot = high_command
 							traits = {
-								CHE_Poet_on_a_Road_to_Jihad
-								army_artillery_1
+								CHE_salman_raduev_son_of_saddam_trait
 							}
+						}
+					}
+				}
+			}
+
+			newline = yes
+
+			custom_effect_tooltip = CHE_general_dudayevan_eskar_upgrade_tooltip
+
+			hidden_effect = {
+				if = {
+					limit = {
+						has_template = "General Dudayevan Eskar"
+					}
+	
+					set_division_template_lock = {
+						division_template = "General Dudayevan Eskar"
+						is_locked = no
+					}
+
+					clear_division_template_cap = {
+						division_template = "General Dudayevan Eskar"
+					}
+
+					set_division_force_allow_recruiting = {
+						division_template = "General Dudayevan Eskar"
+					}
+
+					add_units_to_division_template = {
+						template_name = "General Dudayevan Eskar"
+						regiments = {
+							Special_Forces = 3
+							L_Inf_Bat = 3
+							Mot_Inf_Bat = 1
 						}
 					}
 				}
