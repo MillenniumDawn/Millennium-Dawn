@@ -19,7 +19,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus AUS_Renawable_Energy_Programmes"
+			log = "[GetDateText]: [Root.GetName]: Focus AUS_renewable_Energy_Programmes"
 			set_country_flag = AUS_renewable_energy_funds
 			AUS_energy_generated = yes
 		}
@@ -314,16 +314,29 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Fossil_Fuels"
-			# TODO: add effects
+			add_tech_bonus = {
+				name = expand_the_thermal_sector
+				bonus = 0.20
+				uses = 1
+				category = CAT_fuel_oil 
+			}
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+				set_temp_variable = { temp_opinion = 5 }
+				change_industrial_conglomerates_opinion = yes
+			}else_if = {
+				limit = { has_idea = fossil_fuel_industry }
+				set_temp_variable = { temp_opinion = 5 }
+				change_fossil_fuel_industry_opinion = yes
+			}
 		}
-
 		ai_will_do = {
 			base = 1
 		}
 	}
 
 	focus = {
-		id = AUS_Renawable_Energy_Programmes
+		id = AUS_Renewable_Energy_Programmes
 		icon = generic_political_pressure
 		x = 16
 		y = 4
@@ -332,7 +345,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus AUS_Renawable_Energy_Programmes"
+			log = "[GetDateText]: [Root.GetName]: Focus AUS_renewable_Energy_Programmes"
 			# TODO: add effects
 		}
 
@@ -654,7 +667,7 @@ focus_tree = {
 		x = 16
 		y = 5
 		cost = 10
-		prerequisite = { focus = AUS_Renawable_Energy_Programmes }
+		prerequisite = { focus = AUS_Renewable_Energy_Programmes }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
@@ -673,14 +686,53 @@ focus_tree = {
 		x = 19
 		y = 5
 		cost = 10
-		prerequisite = { focus = AUS_Renawable_Energy_Programmes }
+		prerequisite = { focus = AUS_Renewable_Energy_Programmes }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Subsidize_Rooftop_Solar"
-			# TODO: add effects
+			custom_effect_tooltip = AUS_renewable_energy_funds_TT
+			newline = yes
+			if = {
+				limit = { has_country_flag = AUS_renewable_energy_funds }
+				random_owned_state = {
+					add_building_construction = {
+						type = renewable_energy_infra
+						level = 2
+						instant_build = yes
+					}
+				add_extra_state_shared_building_slots = 2
+				}
+				newline = yes
+				set_temp_variable = { treasury_change = -19.00}
+				modify_treasury_effect = yes
+			}else = {
+				random_owned_state = {
+					add_building_construction = {
+						type = renewable_energy_infra
+						level = 1
+						instant_build = yes
+					}
+				add_extra_state_shared_building_slots = 1
+				}
+				newline = yes
+				set_temp_variable = { treasury_change = -9.50}
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = AUS_sustainable_economy
+			}
+			add_to_variable = { AUS_pop_energy_use_multiplier = -0.06 tooltip = pop_energy_use_multiplier_tt }
+			newline = yes
+			add_tech_bonus = {
+				name = AUS_subsidizes_rooftop_solar
+				bonus = 0.35
+				uses = 2
+				category = CAT_renewable
+			}
 		}
-
 		ai_will_do = {
 			base = 1
 		}
@@ -692,12 +744,31 @@ focus_tree = {
 		x = 21
 		y = 5
 		cost = 10
-		prerequisite = { focus = AUS_Renawable_Energy_Programmes }
+		prerequisite = { focus = AUS_Renewable_Energy_Programmes }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Build_Wind_Farms"
-			# TODO: add effects
+			custom_effect_tooltip = AUS_renewable_energy_funds_TT
+			newline = yes
+			random_owned_state = {
+				if = {
+					limit = {has_country_flag = AUS_renewable_energy_funds}
+					add_dynamic_modifier = { modifier = AUS_wind_farms2}
+				}else = {
+					add_dynamic_modifier = { modifier = AUS_wind_farms1}
+				}
+				newline = yes
+				add_building_construction = {
+					type = renewable_energy_infra
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -9.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -716,7 +787,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Construct_Data_Centers"
-			# TODO: add effects
+			add_to_variable = {AUS_office_park_income_tax_modifier = 0.03 tooltip = office_park_income_tax_modifier_tt }
+			add_to_variable = { AUS_energy_use_modifier_offices = 0.05 tooltip = energy_use_modifier_offices_tt}
 		}
 
 		ai_will_do = {
@@ -1053,9 +1125,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Invest_in_Powerplants"
-			# TODO: add effects
+			add_building_construction = {
+				type = fossil_powerplant
+				level = 1
+				instant_build = yes
+			}
+			set_temp_variable = {treasury_change = -2.25}
+			modify_treasury_effect = yes
 		}
-
 		ai_will_do = {
 			base = 1
 		}
@@ -1219,7 +1296,38 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Develop_pumped_hydro_storage"
-			# TODO: add effects
+			75 = {
+				add_to_variable = {
+					var = hydroelectric_energy_storage_var
+					value = {
+						value = hydroelectric_energy_production_var
+						multiply = 100
+					}
+				}
+			}
+			286 = {
+				add_to_variable = {
+					var = hydroelectric_energy_storage_var
+					value = {
+						value = hydroelectric_energy_production_var
+						multiply = 100
+					}
+				}
+			}
+			76 = {
+				add_to_variable = {
+					var = hydroelectric_energy_storage_var
+					value = {
+						value = hydroelectric_energy_production_var
+						multiply = 100
+					}
+				}
+			}
+			#Won't include Vienna
+			custom_effect_tooltip = AUS_develop_pumped_hydro_TT
+			newline = yes
+			set_temp_variable = { treasury_change = -22.5}
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -1238,7 +1346,25 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Simmering_Biomass_Plant"
-			# TODO: add effects
+			76 = {			#Vienna
+				add_dynamic_modifier = { modifier = AUS_simmering_plant }
+				newline = yes
+				add_building_construction = {
+					type = renewable_energy_infra
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -9.50}
+			modify_treasury_effect = yes
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = AUS_toll_system
+			}
+			add_to_variable = { AUS_agriculture_productivity_modifier = 0.05 tooltip = agricolture_productivity_modifier_tt }
 		}
 
 		ai_will_do = {
@@ -1327,7 +1453,7 @@ focus_tree = {
 	focus = {
 		id = AUS_Support_Startups
 		icon = generic_political_pressure
-		x = 28
+		x = 30
 		y = 6
 		cost = 10
 		prerequisite = { focus = AUS_Innovation_as_a_Good }
@@ -1350,7 +1476,7 @@ focus_tree = {
 	focus = {
 		id = AUS_Expand_Investments_in_Education
 		icon = generic_political_pressure
-		x = 30
+		x = 28
 		y = 6
 		cost = 10
 		prerequisite = { focus = AUS_Innovation_as_a_Good }
@@ -1491,6 +1617,7 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -3.00 }
 			modify_treasury_effect = yes
 		}
@@ -1594,7 +1721,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Weapon_Manufacturing"
-			# TODO: add effects
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = AUS_sustainable_economy
+			}
+			add_to_variable = { AUS_arms_factory_contruction_speed = 0.05 tooltip = arms_factory_contruction_speed_tt }
 		}
 
 		ai_will_do = {
@@ -1643,7 +1774,7 @@ focus_tree = {
 
 	focus = {
 		id = AUS_Increase_National_Oil_Reserves
-		icon = generic_political_pressure
+		icon = oil_production2
 		x = 11
 		y = 7
 		cost = 10
@@ -1718,10 +1849,39 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Subsidize_Farmers"
-			# TODO: add effects
+			random_owned_state = {
+				add_building_construction = {
+					type = renewable_energy_infra
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -8.5 }
+			modify_treasury_effect = yes
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = AUS_sustainable_economy
+			}
+			if = {
+				limit = {has_country_flag = AUS_renewable_energy_funds}
+				add_to_variable = { AUS_energy_use_modifier_agriculture_district = 0.125 tooltip = energy_use_modifier_agriculture_district_tt }
+				add_to_variable = { AUS_agriculture_productivity_modifier = 0.02 tooltip =  agricolture_productivity_modifier_tt }
+			}else = {
+				add_to_variable = { AUS_energy_use_modifier_agriculture_district = 0.075 tooltip = energy_use_modifier_agriculture_district_tt }
+				add_to_variable = { AUS_agriculture_productivity_modifier = 0.045 tooltip =  agricolture_productivity_modifier_tt }
+			}
+			newline = yes
+			add_tech_bonus = {
+				name = AUS_agri_pv
+				bonus = 0.15
+				uses = 3
+				category = CAT_agriculture_tech
+			}
 		}
 
-		ai_will_do = {
+		ai_will_fo = {fa
 			base = 1
 		}
 	}
@@ -1883,21 +2043,46 @@ focus_tree = {
 		}
 
 		completion_reward = {
+			# TODO: reduce energy generated from hydro
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Energy_Security_Achieved"
 			custom_effect_tooltip =  AUS_Energy_Security_tt
-			newline = yes
 			newline = yes
 			if = {
 				limit = {
 					has_country_flag = AUS_renewable_dominant
 				}
-				add_ideas = AUS_renewable_dominant
+				add_timed_idea = {
+					idea = AUS_renewable_dominant
+					days = 1200
+				}
+				newline = yes
+				set_temp_variable = { temp_change = 1 }
+				set_temp_variable = { skip_payment = 1 }
+				build_battery_park_effect = yes
+				newline = yes
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 1
+				}
+				newline = yes
+				set_temp_variable = { percent_change = 5 }
+				change_domestic_influence_percentage = yes
 			} else = {
-				add_ideas = AUS_fossil_dominant
+				add_timed_idea = {
+					idea = AUS_fossil_dominant
+					days = 1200
+				}
+				newline = yes
+				random_owned_state = {
+					add_building_construction = {
+							type = fossil_powerplant
+							level = 1
+							instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
 			}
 
 		}
-
 		ai_will_do = {
 			base = 1
 		}
@@ -1925,7 +2110,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = AUS_The_European_Center_of_Innovation
+		id = AUS_European_Center_of_Innovation
 		icon = generic_political_pressure
 		x = 29
 		y = 8
@@ -1935,7 +2120,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus AUS_The_European_Center_of_Innovation"
+			log = "[GetDateText]: [Root.GetName]: Focus AUS_European_Center_of_Innovation"
 			76 = {
 				add_dynamic_modifier = { modifier = AUS_european_center_of_innovation}
 			}
@@ -1996,7 +2181,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AUS_Munition_Investments"
-			# TODO: add effects
+			one_random_arms_factory = yes
+			newline = yes
+			add_tech_bonus = {
+				name = AUS_munition_investments
+				bonus =  0.70
+				uses = 1
+				category = CAT_art_ammo
+			}
 		}
 
 		ai_will_do = {
