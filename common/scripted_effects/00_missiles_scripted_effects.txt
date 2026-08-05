@@ -705,10 +705,7 @@ update_GNSS_system_stats = {
 	set_variable = { var_GNSS_mil_SBAS_num = 0 }
 	set_variable = { var_GNSS_mil_SBAS_bonus = 0 }
 	if = {
-		limit = {
-			check_variable = { var_GNSS_mil_sat_system_max > 0 }
-			NOT = { check_variable = { var_GNSS_mil_sat_system_num > var_GNSS_mil_sat_system_max } }
-		}
+		limit = { check_variable = { var_GNSS_mil_sat_system_max > 0 } }
 		update_GNSS_SBAS = yes
 	}
 	set_variable = {
@@ -737,10 +734,7 @@ update_GNSS_system_stats = {
 	set_variable = { var_GNSS_civ_SBAS_num = 0 }
 	set_variable = { var_GNSS_civ_SBAS_bonus = 0 }
 	if = {
-		limit = {
-			check_variable = { var_GNSS_civ_sat_system_max > 0 }
-			NOT = { check_variable = { var_GNSS_civ_sat_system_num > var_GNSS_civ_sat_system_max } }
-		}
+		limit = { check_variable = { var_GNSS_civ_sat_system_max > 0 } }
 		update_GNSS_SBAS = yes
 	}
 	set_variable = {
@@ -835,8 +829,14 @@ update_COM_system_stats = {
 
 	set_variable = {
 		var_COM_mil_coverage = {
-			value = var_COM_mil_sat_system_num
-			divide = { value = var_COM_mil_sat_system_max max = 0.001 }
+			value = 0
+			if = {
+				limit = { value = var_COM_mil_sat_system_max greater_than = 0 }
+				add = {
+					value = var_COM_mil_sat_system_num
+					divide = var_COM_mil_sat_system_max
+				}
+			}
 			min = 1
 		}
 	}
@@ -865,15 +865,12 @@ update_COM_system_stats = {
 	}
 	set_variable = {
 		var_COM_mil_sat_system_bonus = {
-			value = var_COM_mil_sat_system_bonus
+			value = 0
 			if = {
 				limit = { value = var_COM_mil_receiver_cap greater_than = 0 }
-				add = {
-					value = var_COM_mil_coverage
-					subtract = var_COM_mil_sat_system_bonus
-				}
+				add = var_COM_mil_coverage
 				if = {
-					limit = { value = var_sat_network_traffic_civ greater_than = 1 }
+					limit = { value = var_sat_network_traffic_mil greater_than = 1 }
 					subtract = {
 						value = var_sat_network_traffic_mil
 						subtract = 1
@@ -894,8 +891,14 @@ update_COM_system_stats = {
 	# Satellite Communication System - Civilian
 	set_variable = {
 		var_COM_civ_coverage = {
-			value = var_COM_civ_sat_system_num
-			divide = { value = var_COM_civ_sat_system_max max = 0.001 }
+			value = 0
+			if = {
+				limit = { value = var_COM_civ_sat_system_max greater_than = 0 }
+				add = {
+					value = var_COM_civ_sat_system_num
+					divide = var_COM_civ_sat_system_max
+				}
+			}
 			min = 1
 		}
 	}
@@ -964,9 +967,10 @@ add_treaty_COM_civ_receiver_num = {
 	set_variable = { var_treaty_COM_civ_receiver_num = 0 }
 	for_each_scope_loop = {
 		array = COM_civ_treaty_array
-		set_variable = {
-			PREV.var_treaty_COM_civ_receiver_num = {
-				value = num_controlled_states
+		add_to_variable = {
+			var = PREV.var_treaty_COM_civ_receiver_num
+			value = {
+				value = THIS.num_controlled_states
 				multiply = 100
 			}
 		}
@@ -1053,28 +1057,28 @@ update_SPY_mission_num = {
 update_SPY_mission_start_button = {
 	# refresh the coverage ratio the same way the +/- buttons do
 	update_SPY_mission_plus_minus_button = yes
-	set_variable = {
-		ROOT.var_SPY_mission_intel_add = {
-			value = ROOT.var_SPY_mission_intel_ratio
-			multiply = 30
-		}
-	}
 }
 
 update_SPY_mission_plus_minus_button = {
-	var:orbit_selected_TAG = {
-		set_variable = {
-			ROOT.var_SPY_mission_intel_ratio = {
-				value = 0
-				if = {
-					limit = { value = num_controlled_states greater_than = 0 }
-					add = {
-						value = ROOT.var_SPY_mission_num_gui
-						divide = num_controlled_states
+	if = {
+		limit = { check_variable = { orbit_selected_TAG > 0 } }
+		var:orbit_selected_TAG = {
+			set_variable = {
+				ROOT.var_SPY_mission_intel_ratio = {
+					value = 0
+					if = {
+						limit = { value = num_controlled_states greater_than = 0 }
+						add = {
+							value = ROOT.var_SPY_mission_num_gui
+							divide = num_controlled_states
+						}
 					}
 				}
 			}
 		}
+	}
+	else = {
+		set_variable = { ROOT.var_SPY_mission_intel_ratio = 0 }
 	}
 	set_variable = {
 		ROOT.var_SPY_mission_intel_add = {
