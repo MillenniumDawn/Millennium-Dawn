@@ -48,7 +48,7 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 
 ## Decisions
 
-- Logging in `complete_effect`: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"`
+- Logging: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"` as the first statement of every effect block the engine runs (`complete_effect`, `remove_effect`, `timeout_effect`, `cancel_effect`). A log nested inside an `if`/`hidden_effect` records which branch ran and stays there
 - `ai_will_do = { base = N }` — `base` not `factor` at root
 - Don't put `allowed` on a decision when it just repeats the parent category's `allowed` (e.g. `original_tag = TAG`) — the category gate already covers every decision inside it. Put nation-restriction on the category; dynamic conditions go in `available`/`visible` (`allowed` is evaluated once at game start)
 - Ref: `.claude/docs/decision-reference.md`

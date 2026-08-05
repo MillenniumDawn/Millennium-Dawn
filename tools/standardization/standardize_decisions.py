@@ -143,8 +143,8 @@ def format_decision(block_lines: List[str]) -> List[str]:
             i += 1
             continue
         if stripped.startswith("#"):
+            # No trailing blank: the comment hugs the property it describes.
             lines.append(f"\t\t{stripped}")
-            lines.append("")
             i += 1
             continue
 
