@@ -47,6 +47,7 @@ When `target_root_trigger` is false, the engine skips `target_trigger`, `visible
 - Dynamic flags like `has_country_flag = flag_@FROM` reference FROM to build the name — these need `target_trigger` (not `target_root_trigger`)
 - `hidden_trigger` is redundant inside `target_root_trigger` — it never generates tooltips
 - `always = yes` inside `target_root_trigger` is a no-op — remove it
+- Never restate what the target list already guarantees: with an explicit `targets = { ... }`, `NOT = { tag = ROOT }` and `NOT = { original_tag = X }` for a tag outside the list are dead conditions evaluated once per target per day
 
 ### Target Selection
 
