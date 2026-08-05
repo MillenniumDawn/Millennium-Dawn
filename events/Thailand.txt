@@ -259,6 +259,7 @@ country_event = {
 		add_stability = -0.02
 		set_temp_variable = { coup_delta = -10 }
 		SIA_coup_set_risk = yes
+		country_event = { id = thailand.20 days = 3 }
 		ai_chance = {
 			base = 6
 		}
@@ -469,6 +470,12 @@ country_event = {
 		recalculate_party = yes
 		add_stability = -0.03
 		add_political_power = -100
+		# The banner changes, the members do not — idx 3 keeps the slot as the People's Party.
+		if = {
+			limit = { NOT = { has_country_flag = SIA_peoples_party_founded } }
+			set_country_flag = SIA_peoples_party_founded
+			hidden_effect = { update_party_name = yes }
+		}
 	}
 }
 
@@ -887,6 +894,126 @@ country_event = {
 		name = thailand.19.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.19.a"
 		country_event = MD4_election_campaign.0
+	}
+}
+
+# thailand.20 - Thai Rak Thai is dissolved and the movement re-registers as the People's Power
+# Party (idx 18 keeps the slot, only the banner changes). Fires from the 30 May 2007 tribunal
+# ruling and from SIA_judicial_activism's court case, whichever comes first.
+country_event = {
+	id = thailand.20
+	title = thailand.20.t
+	desc = thailand.20.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SIA
+		has_country_flag = SIA_2006_coup_done
+		NOT = { has_country_flag = SIA_peoples_power_founded }
+		NOT = { has_country_flag = SIA_pheu_thai_founded }
+	}
+
+	immediate = {
+		set_country_flag = SIA_peoples_power_founded
+		hidden_effect = { update_party_name = yes }
+	}
+
+	option = {
+		name = thailand.20.a		# Re-register clean, under new management
+		log = "[GetDateText]: [Root.GetName]: event thailand.20.a"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		change_relative_party_popularity = yes
+		recalculate_party = yes
+		add_political_power = -50
+		hidden_effect = {
+			country_event = { id = thailand.21 days = 552 }
+		}
+		ai_chance = { base = 7 }
+	}
+
+	option = {
+		name = thailand.20.b		# The banned executives keep running it from outside
+		log = "[GetDateText]: [Root.GetName]: event thailand.20.b"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.08 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		change_relative_party_popularity = yes
+		recalculate_party = yes
+		add_stability = -0.03
+		set_temp_variable = { coup_delta = 5 }
+		SIA_coup_set_risk = yes
+		hidden_effect = {
+			country_event = { id = thailand.21 days = 552 }
+		}
+		ai_chance = { base = 3 }
+	}
+}
+
+# thailand.21 - The 2 December 2008 ruling. The People's Power Party becomes Pheu Thai and
+# Chart Thai's dissolution hands the national-conservative slot to Bhumjaithai.
+country_event = {
+	id = thailand.21
+	title = thailand.21.t
+	desc = thailand.21.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SIA
+		has_country_flag = SIA_peoples_power_founded
+		NOT = { has_country_flag = SIA_pheu_thai_founded }
+	}
+
+	immediate = {
+		clr_country_flag = SIA_peoples_power_founded
+		set_country_flag = SIA_pheu_thai_founded
+		SIA_found_bhumjaithai = yes
+		hidden_effect = { update_party_name = yes }
+	}
+
+	option = {
+		name = thailand.21.a		# Let the defectors go and hand the Democrats the chamber
+		log = "[GetDateText]: [Root.GetName]: event thailand.21.a"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		change_relative_party_popularity = yes
+		set_temp_variable = { party_index = 14 }
+		set_temp_variable = { party_popularity_increase = 0.06 }
+		change_relative_party_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		change_relative_party_popularity = yes
+		recalculate_party = yes
+		add_stability = 0.03
+		# The realignment detector in 99_SIA_on_actions.txt picks the Democrat trunk up from here.
+		if = {
+			limit = { is_in_array = { ruling_party = 18 } }
+			custom_effect_tooltip = SIA_bench_hands_power_to_democrats_tt
+			hidden_effect = {
+				set_temp_variable = { rul_party_temp = 1 }
+				change_ruling_party_effect = yes
+				update_party_name = yes
+				set_leader_SIA = yes
+			}
+		}
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		name = thailand.21.b		# Buy the defectors back and hold the coalition
+		log = "[GetDateText]: [Root.GetName]: event thailand.21.b"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		change_relative_party_popularity = yes
+		recalculate_party = yes
+		add_political_power = -150
+		add_stability = -0.05
+		set_temp_variable = { coup_delta = 10 }
+		SIA_coup_set_risk = yes
+		ai_chance = { base = 4 }
 	}
 }
 
@@ -4186,6 +4313,10 @@ country_event = {
 		NOT = { has_country_flag = SIA_path_communist }
 	}
 
+	immediate = {
+		SIA_found_bhumjaithai = yes
+	}
+
 	option = {
 		name = thailand.270.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.270.a"
@@ -4714,6 +4845,10 @@ country_event = {
 	trigger = {
 		original_tag = SIA
 		NOT = { has_country_flag = SIA_path_communist }
+	}
+
+	immediate = {
+		SIA_found_bhumjaithai = yes
 	}
 
 	option = {
