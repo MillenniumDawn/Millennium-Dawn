@@ -16,6 +16,7 @@ from validator_common import (
     BaseValidator,
     Severity,
     run_validator_main,
+    scan_meta_constructed_names,
     should_skip_file,
     strip_comments,
 )
@@ -30,31 +31,96 @@ _CUSTOM_TT_REF_RE = re.compile(
     r"custom_(?:effect|trigger)_tooltip\s*=\s*([A-Za-z_]\w*)\b"
 )
 
-# Patterns for known false positives — these are referenced by the game engine,
-# called dynamically, or serve as convention-based callbacks rather than being
+# Name patterns for known false positives — referenced by the game engine,
+# called dynamically, or serving as convention-based callbacks rather than being
 # explicitly invoked via `name = yes` in script files.
-FALSE_POSITIVE_PATTERNS = [
-    re.compile(r"^trigger_year_"),  # Year-based triggers, engine-referenced
-    re.compile(
-        r"^EU_update_AI_focus_.*_voting_modifier$"
-    ),  # EU voting AI, dynamically called
-    re.compile(r"_accepted$"),  # Focus accepted callbacks (engine convention)
-    re.compile(
-        r"^DIPLOMACY_.*_ENABLE_TRIGGER"
-    ),  # Game rule triggers, engine-referenced
-    re.compile(
-        r"^is_diplomatic_action_valid_"
-    ),  # Diplo-action validity gates, engine-referenced by action token
-    re.compile(
-        r"^_unlock_btn_enabled$"
-    ),  # MIO catalog meta-dispatch empty-token-key fallback
-    re.compile(
-        r"^should_initiate_resistance$"
-    ),  # Vanilla engine hook — called on controller/owner change and daily
-    re.compile(
-        r"^should_(not_)?activate_active_crypto_bonuses$"
-    ),  # Vanilla engine crypto hooks — engine-read override points
+FALSE_POSITIVE_PATTERN_SOURCES = [
+    r"^trigger_year_",  # Year-based triggers, engine-referenced
+    r"^EU_update_AI_focus_.*_voting_modifier$",  # EU voting AI, dynamically called
+    r"_accepted$",  # Focus accepted callbacks (engine convention)
+    r"^DIPLOMACY_.*_ENABLE_TRIGGER",  # Game rule triggers, engine-referenced
+    r"^is_diplomatic_action_valid_",  # Diplo-action validity gates, engine-referenced by action token
 ]
+FALSE_POSITIVE_PATTERNS = [re.compile(p) for p in FALSE_POSITIVE_PATTERN_SOURCES]
+
+# Individual definitions with no caller by design: engine-read override points,
+# or preset/utility names kept available for content authors.
+FALSE_POSITIVE_NAMES = frozenset(
+    {
+        # Vanilla engine hooks — read by the engine, never called from script
+        "should_initiate_resistance",
+        "should_activate_active_crypto_bonuses",
+        "should_not_activate_active_crypto_bonuses",
+        # MIO catalog meta-dispatch empty-token-key fallback
+        "_unlock_btn_enabled",
+        # Conscription-law preset kept for parity with its three called siblings
+        "set_partial_draft_effect",
+        # 00_alert_triggers.txt
+        "has_md_alert",
+        # 00_continent_triggers.txt
+        "is_in_the_americas",
+        # 00_cyber_triggers.txt
+        "cyber_target_not_on_cooldown",
+        # 00_debt_ratio_triggers.txt
+        "gdp_debt_ratio_lower_5",
+        # 00_economic_triggers.txt
+        "ai_has_acceptable_surplus",
+        "ai_has_acceptable_deficit_factories",
+        "interest_rate_lower_than_5_5",
+        "debt_higher_than_30",
+        "gdp_per_capita_greater_than_2",
+        "gdp_per_capita_greater_than_7",
+        "gdp_total_greater_than_7000",
+        # MD_antarctica_station_module_triggers.txt
+        "antarctica_is_life_support_slot_selected",
+        "antarctica_is_fuel_storage_slot_selected",
+        "antarctica_is_laboratory_slot_selected",
+        "antarctica_dynamic_station_matches_selected_filter",
+        # 00_budget_effects.txt
+        "disable_debt_rate_payments",
+        "enable_debt_rate_payments",
+        # 00_ct_effects.txt
+        "add_new_org",
+        # 00_economic_system_utilities.txt
+        "disable_corporate_tax_rate_change",
+        "enable_corporate_tax_rate_change",
+        # 00_generic_ideas_scripted_effects.txt
+        "upgrade_western_boost_idea",
+        "upgrade_emerging_boost_idea",
+        "upgrade_nationalist_boost_idea",
+        "upgrade_salafist_boost_idea",
+        # 00_influence_scripted_effects.txt
+        "economic_exploitation_action",
+        # 00_internal_faction_effects.txt
+        "reset_all_internal_faction_opinions",
+        # 00_pp_scripted_effects.txt
+        "lose_pp_for_6_months",
+        "lose_pp_for_5_months",
+        # 00_sanctions_scripted_effects.txt
+        "increase_sanctions",
+    }
+)
+
+# Dead code deliberately retained pending tracked implementation work.
+# Remove entries here as each mechanic is implemented and gains real callers.
+PENDING_IMPLEMENTATION_NAMES = frozenset(
+    {
+        # Brazil Amazon acreage adjustment hooks
+        "BRA_target_acreage_effect",
+        "BRA_acre_rate_gain_effect",
+        "BRA_acre_rate_loss_effect",
+        # North Korea Supreme People's Assembly session handling — pending rework
+        # (NKO_spa_resync_active_mandates is reached via this one, so needs no entry)
+        "NKO_spa_open_session",
+        # US Congress elections — pending the American midterm elections issue (#2719)
+        "USA_congress_remove_state",
+        "USA_election_senate",
+        "USA_election_house",
+        "USA_return_majority",
+        "USA_flip_support",
+        "usa_congress_oppposition_elections",
+    }
+)
 
 # Files whose definitions are entirely engine-referenced (all contents are false positives)
 FALSE_POSITIVE_FILES = frozenset(
@@ -86,83 +152,13 @@ FALSE_POSITIVE_FILES = frozenset(
 )
 
 
-# Regex: identifier containing at least one [VAR] placeholder with a non-empty
-# constant prefix (e.g. "set_leader_[IDEOLOGY]", "tooltip_EU_[EUXXX]_approve").
-# Requires a non-empty prefix so pure "[VAR]" expansions (like "[TECH] = 1") are
-# excluded — those don't call scripted effects/triggers by constructed name.
-_TEMPLATE_RE = re.compile(
-    r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
-    r")"
-)
-
-# Regex: quoted meta-substitution value carrying the constant anchor, where the
-# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
-# Here the `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives
-# in the quoted assignment, so a leading placeholder with only a trailing constant
-# must still resolve. The suffix anchor keeps the match from over-firing.
-_QUOTED_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
-
-
-def scan_for_meta_constructed_names(
-    files: List[str], defined_names: Set[str]
-) -> Set[str]:
-    """Return the subset of *defined_names* that are called via meta_effect/
-    meta_trigger template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
-
-    For every file that contains a ``meta_effect`` or ``meta_trigger`` keyword,
-    we extract identifier templates of the form ``prefix_[VAR]_suffix``, split
-    them on ``[VAR]`` segments to recover the constant (prefix, suffix) pair,
-    and match any defined name whose lower-cased form starts with *prefix* and
-    ends with *suffix*.
-    """
-    defined_lower = {n.lower(): n for n in defined_names}
-    used: Set[str] = set()
-
-    for filepath in files:
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as fh:
-                content = fh.read()
-        except Exception:
-            continue
-
-        if "meta_effect" not in content and "meta_trigger" not in content:
-            continue
-
-        content_clean = strip_comments(content)
-
-        templates = [m.group(1) for m in _TEMPLATE_RE.finditer(content_clean)]
-        templates += [m.group(1) for m in _QUOTED_TEMPLATE_RE.finditer(content_clean)]
-
-        for template in templates:
-            # Split on every [VAR] segment — constant parts become prefix/suffix
-            parts = re.split(r"\[[^\]]+\]", template)
-            prefix = parts[0].lower()
-            suffix = parts[-1].lower() if len(parts) > 1 else ""
-
-            # Skip pure-placeholder templates where no constant anchors the match
-            if not prefix and not suffix:
-                continue
-
-            for name_lower, name_orig in defined_lower.items():
-                if name_orig in used:
-                    continue
-                if name_lower.startswith(prefix) and name_lower.endswith(suffix):
-                    # Guard: VAR must resolve to something non-empty
-                    if len(name_lower) > len(prefix) + len(suffix):
-                        used.add(name_orig)
-
-    return used
-
-
 def _is_false_positive(name: str, filepath: str) -> bool:
     """Check if a definition name is a known false positive."""
-    basename = os.path.basename(filepath)
-    if basename in FALSE_POSITIVE_FILES:
+    if os.path.basename(filepath) in FALSE_POSITIVE_FILES:
         return True
-    for pattern in FALSE_POSITIVE_PATTERNS:
-        if pattern.search(name):
-            return True
-    return False
+    if name in FALSE_POSITIVE_NAMES or name in PENDING_IMPLEMENTATION_NAMES:
+        return True
+    return any(pattern.search(name) for pattern in FALSE_POSITIVE_PATTERNS)
 
 
 def extract_definitions(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
@@ -423,9 +419,7 @@ class Validator(BaseValidator):
         # names still remaining after the first two passes to keep cost low.
         still_remaining = all_names - used_names
         if still_remaining:
-            used_names.update(
-                scan_for_meta_constructed_names(all_files, still_remaining)
-            )
+            used_names.update(scan_meta_constructed_names(all_files, still_remaining))
 
         # Build result lists, partitioned by kind
         name_to_location: dict = {}

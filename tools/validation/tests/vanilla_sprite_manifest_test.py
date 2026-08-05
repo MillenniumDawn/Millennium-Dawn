@@ -40,3 +40,22 @@ def test_sprite_names_from_gfx_text():
         "}\n"
     )
     assert vg.sprite_names_from_gfx_text(text) == {"GFX_manifest_probe"}
+
+
+def test_sprite_names_double_slash_in_quoted_texturefile():
+    # `//` inside a quoted texturefile path is not a comment. Stripping it
+    # blindly leaves an unterminated quote that drops the sprite definition.
+    text = (
+        "\tspriteType = {\n"
+        '\t\tname = "GFX_slash_probe"\n'
+        '\t\ttexturefile = "gfx//interface/politicsview/probe.dds"\n'
+        "\t}\n"
+        "\tspriteType = {\n"
+        '\t\tname = "GFX_after_slash"\n'
+        '\t\ttexturefile = "gfx/interface/x.dds"\n'
+        "\t}\n"
+    )
+    assert vg.sprite_names_from_gfx_text(text) == {
+        "GFX_slash_probe",
+        "GFX_after_slash",
+    }

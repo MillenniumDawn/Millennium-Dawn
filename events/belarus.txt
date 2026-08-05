@@ -72,7 +72,7 @@ country_event = {
 		newline = yes
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 10
 		}
@@ -160,7 +160,7 @@ country_event = {
 			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = 0.5 }
 			set_temp_variable = { temp_outlook_increase = 0.07 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		create_country_leader = {
 			name = "Andrey Sannikov"
@@ -191,7 +191,7 @@ country_event = {
 				set_temp_variable = { party_index = 1 }
 				set_temp_variable = { party_popularity_increase = 0.50 }
 				set_temp_variable = { temp_outlook_increase = 0.07 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 	}
 }
@@ -1281,7 +1281,7 @@ country_event = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.005 }
 		set_temp_variable = { temp_outlook_increase = 0.005 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { percent_change = 2 }
 		change_domestic_influence_percentage = yes
 		set_temp_variable = { percent_change = -5.20 }
@@ -1422,11 +1422,13 @@ country_event = {
 				has_global_flag = BLR_DEMOCRATIC_PATH
 			}
 		}
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_opinion_modifier = { target = BLR modifier = supports_us }
 			}
-			add_opinion_modifier = { target = BLR modifier = supports_us }
 		}
 		add_popularity = {
 			ideology = democratic
@@ -1437,11 +1439,13 @@ country_event = {
 	option = {
 		name = belarus_another.8.b
 		log = "[GetDateText]: [This.GetName]: belarus_another.8.b executed"
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_opinion_modifier = { target = BLR modifier = recent_actions_negative }
 			}
-			add_opinion_modifier = { target = BLR modifier = recent_actions_negative }
 		}
 		set_temp_variable = { treasury_change = 5 }
 		modify_treasury_effect = yes
@@ -1512,11 +1516,13 @@ country_event = {
 		name = belarus_another.10.a
 		log = "[GetDateText]: [This.GetName]: belarus_another.10.a executed"
 
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_opinion_modifier = { target = BLR modifier = recent_actions_negative }
 			}
-			add_opinion_modifier = { target = BLR modifier = recent_actions_negative }
 		}
 		add_opinion_modifier = {
 			modifier = recent_actions_positive
@@ -1543,11 +1549,13 @@ country_event = {
 	option = {
 		name = belarus_another.10.b
 		log = "[GetDateText]: [This.GetName]: belarus_another.10.b executed"
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_opinion_modifier = { target = BLR modifier = recent_actions_positive }
 			}
-			add_opinion_modifier = { target = BLR modifier = recent_actions_positive }
 		}
 		set_temp_variable = { percent_change = 5 }
 		change_domestic_influence_percentage = yes
@@ -1625,7 +1633,7 @@ country_event = {
 		add_political_power = -100
 		set_temp_variable = { party_index = 22 }
 		set_temp_variable = { party_popularity_increase = 0.06 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 	option = {
 		name = belarus_another.12.b
@@ -1839,27 +1847,34 @@ country_event = {
 				add = 10
 			}
 		}
-		country_event = { id = belarus_another.20  days = 1 }
 		if = {
 			limit = {
 				has_global_flag = GAME_RULE_allow_colored_puppets
 			}
-			set_autonomy = {
-				target = POL
-				autonomy_state = autonomy_satellite_state_colored
-				end_wars = no
-				end_civil_wars = no
+			FROM = {
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_satellite_state_colored
+					end_wars = no
+					end_civil_wars = no
+				}
 			}
 		}
 		else = {
-			set_autonomy = {
-				target = POL
-				autonomy_state = autonomy_satellite_state
-				end_wars = no
-				end_civil_wars = no
+			FROM = {
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_satellite_state
+					end_wars = no
+					end_civil_wars = no
+				}
 			}
 		}
-		country_event = diplomatic_response.1
+		hidden_effect = {
+			FROM = {
+				country_event = { id = belarus_another.20 days = 1 }
+			}
+		}
 	}
 
 	option = {
@@ -1908,9 +1923,9 @@ country_event = {
 				capital = 1014
 				states = { 1014 }
 			}
+			add_political_power = -550
+			decrease_economic_growth = yes
 		}
-		add_political_power = -550
-		decrease_economic_growth = yes
 		hidden_effect = {
 			BLR = {
 				set_temp_variable = { wargoal_on = POL }
@@ -1937,7 +1952,6 @@ country_event = {
 				SIL = { country_event = { id = belarus_another.22 days = 1 }
 						transfer_state = 115
 						transfer_state = 626 }
-				country_event = diplomatic_response.1
 			if = {
 				limit = {
 					has_global_flag = GAME_RULE_allow_colored_puppets
@@ -2286,7 +2300,7 @@ country_event = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.020 }
 		set_temp_variable = { temp_outlook_increase = 0.020 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_opinion_modifier = {
 			modifier = recent_actions_negative
 			target = SOV
@@ -2323,7 +2337,7 @@ country_event = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = -0.020 }
 		set_temp_variable = { temp_outlook_increase = -0.020 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_opinion_modifier = {
 			modifier = recent_actions_positive
 			target = SOV
@@ -2529,8 +2543,10 @@ country_event = {
 	date < 2008.2.1
 	tag = BLR
 	NOT = {
-		is_subject = yes
-	has_autonomy_state = autonomy_union_state
+		OR = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+		}
 	}
 	}
 
@@ -2790,7 +2806,7 @@ country_event = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.035 }
 		set_temp_variable = { temp_outlook_increase = 0.035 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 	option = {
 		name = belarus_another.43.b
@@ -2823,7 +2839,7 @@ country_event = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.035 }
 		set_temp_variable = { temp_outlook_increase = 0.035 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 	option = {
 		name = belarus_another.44.b
@@ -2854,7 +2870,7 @@ country_event = {
 			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = 0.50 }
 			set_temp_variable = { temp_outlook_increase = 0.07 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		create_country_leader = {
 			name = "Svetlana Tikhanovskaya"
@@ -3087,7 +3103,7 @@ country_event = {
 						set_temp_variable = { party_index = 2 }
 						set_temp_variable = { party_popularity_increase = 0.10 }
 						set_temp_variable = { temp_outlook_increase = 0.10 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 					30 = {
 						if = {
@@ -3100,7 +3116,7 @@ country_event = {
 						set_temp_variable = { party_index = 20 }
 						set_temp_variable = { party_popularity_increase = 0.10 }
 						set_temp_variable = { temp_outlook_increase = 0.10 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 				}
 			}
@@ -3371,7 +3387,7 @@ country_event = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 10
 		}

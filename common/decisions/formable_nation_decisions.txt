@@ -298,7 +298,24 @@ form_BLT_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_BLT
@@ -309,39 +326,59 @@ form_BLT_category = {
 		}
 
 		target_array = global.BLT_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BLT_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel BLT_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BLT_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -839,7 +876,24 @@ form_FCA_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_FCA
@@ -850,39 +904,59 @@ form_FCA_category = {
 		}
 
 		target_array = global.FCA_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision FCA_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel FCA_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove FCA_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -1222,7 +1296,24 @@ form_GCL_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_GCL
@@ -1233,39 +1324,59 @@ form_GCL_category = {
 		}
 
 		target_array = global.GCL_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GCL_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel GCL_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GCL_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -1786,7 +1897,24 @@ form_SCA_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_SCA
@@ -1797,39 +1925,59 @@ form_SCA_category = {
 		}
 
 		target_array = global.SCA_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SCA_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel SCA_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SCA_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -3569,7 +3717,24 @@ form_SOU_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_SOU
@@ -3580,39 +3745,59 @@ form_SOU_category = {
 		}
 
 		target_array = global.SOU_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SOU_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel SOU_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOU_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -3830,6 +4015,7 @@ form_HBL_category = {
 		visible = {
 			has_country_flag = is_HBL
 			NOT = { has_cosmetic_tag = HBL }
+			NOT = { has_cosmetic_tag = HBL_REB }
 		}
 		highlight_states = {
 			highlight_state_targets = {
@@ -3865,7 +4051,19 @@ form_HBL_category = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HBL_update_flag"
-			set_cosmetic_tag = HBL
+			if = {
+				limit = {
+					original_tag = HOL
+					OR = {
+						western_autocrats_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+					}
+				}
+				set_cosmetic_tag = HBL_REB
+			}
+			else = {
+				set_cosmetic_tag = HBL
+			}
 			remove_ideas = reshaping_national_identity
 		}
 	}
@@ -3874,7 +4072,24 @@ form_HBL_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_HBL
@@ -3885,39 +4100,59 @@ form_HBL_category = {
 		}
 
 		target_array = global.HBL_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HBL_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel HBL_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove HBL_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -4765,7 +5000,24 @@ form_USNA_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_USNA
@@ -4776,39 +5028,59 @@ form_USNA_category = {
 		}
 
 		target_array = global.USNA_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USNA_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel USNA_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USNA_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -5244,7 +5516,24 @@ form_UTS_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_UTS
@@ -5255,39 +5544,59 @@ form_UTS_category = {
 		}
 
 		target_array = global.UTS_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UTS_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel UTS_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UTS_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -5852,7 +6161,24 @@ form_MAPHI_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_MAPHI
@@ -5863,39 +6189,59 @@ form_MAPHI_category = {
 		}
 
 		target_array = global.MAPHI_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision MAPHI_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel MAPHI_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove MAPHI_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -6185,7 +6531,24 @@ form_INDOCHI_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_INDOCHI
@@ -6196,39 +6559,59 @@ form_INDOCHI_category = {
 		}
 
 		target_array = global.INDOCHI_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision INDOCHI_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel INDOCHI_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove INDOCHI_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -6532,7 +6915,24 @@ form_ANDES_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_ANDES
@@ -6543,39 +6943,59 @@ form_ANDES_category = {
 		}
 
 		target_array = global.ANDES_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ANDES_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel ANDES_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ANDES_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -6871,7 +7291,24 @@ form_ANTCONF_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_ANTCONF
@@ -6882,39 +7319,59 @@ form_ANTCONF_category = {
 		}
 
 		target_array = global.ANTCONF_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ANTCONF_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel ANTCONF_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ANTCONF_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -7386,9 +7843,11 @@ form_CANZUK_category = {
 		visible = {
 			has_country_flag = is_CANZUK
 			NOT = {
-				has_global_flag = european_federation
-				has_idea = EU_member
-				has_cosmetic_tag = CANZUK
+				OR = {
+					has_global_flag = european_federation
+					has_idea = EU_member
+					has_cosmetic_tag = CANZUK
+				}
 			}
 		}
 		highlight_states = {
@@ -7521,7 +7980,24 @@ form_CANZUK_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_CANZUK
@@ -7532,39 +8008,59 @@ form_CANZUK_category = {
 		}
 
 		target_array = global.CANZUK_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CANZUK_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel CANZUK_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove CANZUK_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -7983,7 +8479,24 @@ form_RDLP_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_RDLP
@@ -7994,39 +8507,59 @@ form_RDLP_category = {
 		}
 
 		target_array = global.RDLP_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision RDLP_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel RDLP_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove RDLP_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -8603,7 +9136,24 @@ form_NORDEM_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_NORDEM
@@ -8614,39 +9164,59 @@ form_NORDEM_category = {
 		}
 
 		target_array = global.NORDEM_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NORDEM_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel NORDEM_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NORDEM_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -9249,9 +9819,11 @@ form_MAGHREB_category = {
 		visible = {
 			has_country_flag = is_MAGHREB
 			NOT = {
-				has_global_flag = european_federation
-				has_idea = EU_member
-				has_cosmetic_tag = MAGHREB
+				OR = {
+					has_global_flag = european_federation
+					has_idea = EU_member
+					has_cosmetic_tag = MAGHREB
+				}
 			}
 		}
 		highlight_states = {
@@ -9369,7 +9941,24 @@ form_MAGHREB_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_MAGHREB
@@ -9380,39 +9969,59 @@ form_MAGHREB_category = {
 		}
 
 		target_array = global.MAGHREB_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision MAGHREB_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel MAGHREB_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove MAGHREB_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -10130,7 +10739,24 @@ form_WESTFED_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_WESTFED
@@ -10141,39 +10767,59 @@ form_WESTFED_category = {
 		}
 
 		target_array = global.WESTFED_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision WESTFED_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel WESTFED_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove WESTFED_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -11056,7 +11702,24 @@ form_AUSHUN_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_AUSHUN
@@ -11067,39 +11730,59 @@ form_AUSHUN_category = {
 		}
 
 		target_array = global.AUSHUN_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AUSHUN_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel AUSHUN_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AUSHUN_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -11611,7 +12294,24 @@ form_PBL_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_PBL
@@ -11622,39 +12322,59 @@ form_PBL_category = {
 		}
 
 		target_array = global.PBL_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision PBL_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel PBL_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove PBL_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -11965,7 +12685,24 @@ form_UAS_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_UAS
@@ -11976,39 +12713,59 @@ form_UAS_category = {
 		}
 
 		target_array = global.UAS_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UAS_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel UAS_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAS_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }
@@ -12130,6 +12887,7 @@ form_AVG_category = {
 			}
 		}
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AVG_integrate_FRA"
 			add_state_core = 55
 			add_state_core = 59
 			add_state_core = 60
@@ -12185,6 +12943,7 @@ form_AVG_category = {
 			}
 		}
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AVG_integrate_IRE"
 			add_state_core = 27
 			add_state_core = 28
 			if = {
@@ -12250,6 +13009,7 @@ form_AVG_category = {
 			}
 		}
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AVG_integrate_ENG"
 			add_state_core = 10
 			add_state_core = 11
 			add_state_core = 12
@@ -12364,7 +13124,24 @@ form_AVG_category = {
 		icon = GFX_decision_generic_form_nation
 		state_target = yes
 		fixed_random_seed = no
-		ai_will_do = { base = 1 }
+		days_remove = 60
+		ai_hint_pp_cost = 150
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 200 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { treasury > 400 }
+			}
+		}
 
 		visible = {
 			has_country_flag = is_AVG
@@ -12380,39 +13157,59 @@ form_AVG_category = {
 		}
 
 		target_array = global.AVG_buy_core_state
+		# Second OR branch: a running offer's own target must stay selectable, because a targeted decision whose target_trigger goes false mid-timer is dropped without running remove_effect or cancel_effect. cancel_trigger retires it instead.
 		target_trigger = {
 			FROM = {
-				NOT = { is_owned_by = ROOT }
-				owner = {
-					exists = yes
-					NOT = { tag = ROOT }
-					NOT = { is_subject_of = ROOT }
-					NOT = { has_war_with = ROOT }
-					NOT = { has_country_flag = formable_purchase_offer_pending }
-					NOT = { ROOT = { has_country_flag = formable_purchase_cooldown@PREV } }
+				OR = {
+					formable_purchase_state_is_purchasable = yes
+					AND = {
+						has_state_flag = formable_purchase_offer_target@ROOT
+						ROOT = { has_country_flag = formable_purchase_offer_active }
+					}
 				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = formable_purchase_one_offer_at_a_time_tt
+				NOT = { has_country_flag = formable_purchase_offer_active }
 			}
 		}
 
 		custom_cost_trigger = {
 			check_variable = { treasury > 100 }
+			has_political_power > 149
 		}
-		custom_cost_text = cost_100_0
+		custom_cost_text = formable_buy_core_state_cost
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AVG_buy_core_state on state [?FROM.id]"
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
-			set_variable = { formable_offer_state_id = FROM.id }
+			hidden_effect = { add_political_power = -150 }
+			set_country_flag = { flag = formable_purchase_offer_active value = 1 days = 120 }
+			FROM = { set_state_flag = formable_purchase_offer_target@ROOT }
+			custom_effect_tooltip = formable_purchase_offer_sent_tt
+		}
+
+		cancel_trigger = {
 			FROM = {
-				owner = {
-					ROOT = { set_variable = { formable_offer_holder_id = PREV.id } }
-					set_country_flag = formable_purchase_offer_pending
-					set_variable = { formable_offer_buyer_id = ROOT.id }
-					set_variable = { formable_offer_state_id = PREV.id }
-					country_event = { id = formable_buy.1 hours = 6 }
+				OR = {
+					is_owned_by = ROOT
+					owner = { has_war_with = ROOT }
 				}
 			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel AVG_buy_core_state on state [?FROM.id]"
+			formable_purchase_cancel_offer = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AVG_buy_core_state on state [?FROM.id]"
+			formable_purchase_deliver_offer = yes
 		}
 	}
 }

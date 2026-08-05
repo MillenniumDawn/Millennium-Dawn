@@ -6,7 +6,6 @@ add_namespace = TUR_pkk
 add_namespace = TUR_osman_dead
 add_namespace = TUR_flavor_event
 add_namespace = TurkicConfederation
-add_namespace = Armenian_University
 add_namespace = Turkish_mafia
 add_namespace = Turkish_parties
 ######################## TURKISH ECONOMY EVENTS
@@ -427,41 +426,41 @@ country_event = { #How do we appraoch our operation
 	picture = GFX_political_deal
 	is_triggered_only = yes
 
-	# option = {
-	# 	name = TUR_pkk.1.a
-	# 	log = "[GetDateText]: [This.GetName]: TUR_pkk.1.a executed"
-	# 	set_country_flag = TUR_PKK_conventional
-	# 	custom_effect_tooltip = TUR_PKK_TT
-	# 	hidden_effect = {
-	# 		PER = {
-	# 			country_event = {
-	# 				id = TUR_pkk.2
-	# 				days = 3
-	# 			}
-	# 		}
-	# 		SYR = {
-	# 			country_event = {
-	# 				id = TUR_pkk.2
-	# 				days = 3
-	# 			}
-	# 		}
-	# 		IRQ = {
-	# 			country_event = {
-	# 				id = TUR_pkk.2
-	# 				days = 3
-	# 			}
-	# 		}
-	# 		KUR = {
-	# 			country_event = {
-	# 				id = TUR_pkk.2
-	# 				days = 3
-	# 			}
-	# 		}
-	# 	}
-	# 	ai_chance = {
-	# 		base = 10
-	# 	}
-	# }
+	option = {
+		name = TUR_pkk.1.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.a executed"
+		set_country_flag = TUR_PKK_conventional
+		custom_effect_tooltip = TUR_PKK_TT
+		hidden_effect = {
+			PER = {
+				country_event = {
+					id = TUR_pkk.2
+					days = 3
+				}
+			}
+			SYR = {
+				country_event = {
+					id = TUR_pkk.2
+					days = 3
+				}
+			}
+			IRQ = {
+				country_event = {
+					id = TUR_pkk.2
+					days = 3
+				}
+			}
+			KUR = {
+				country_event = {
+					id = TUR_pkk.2
+					days = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
 	option = {
 		name = TUR_pkk.1.b
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.b executed"
@@ -529,6 +528,8 @@ country_event = { #X Country agrees to the terms
 	option = {
 		name = TUR_pkk.3.a
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.3.a executed"
+		custom_effect_tooltip = TUR_DECREASE_PKK_STRENGTH_2
+		add_to_variable = { TUR_PKK_strength = -2 }
 		ai_chance = {
 			base = 10
 		}
@@ -563,13 +564,17 @@ country_event = {
 	option = {
 		name = TUR_pkk.100.a
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.100.a executed"
-		50 = {
-			add_to_variable = { TUR_PKK_BASE_MANPOWER = -300 }
-			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
-			custom_effect_tooltip = TUR_PKK_DAMAGE_300_TT
-			add_to_variable = { TUR_PKK_BASE_MANPOWER = -200 }
-			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
-			custom_effect_tooltip = TUR_PKK_DAMAGE_200_TT
+		random_list = {
+			50 = {
+				custom_effect_tooltip = TUR_PKK_DAMAGE_300_TT
+				set_temp_variable = { TUR_preop_damage = -300 }
+				TUR_pkk_damage_targeted_base = yes
+			}
+			50 = {
+				custom_effect_tooltip = TUR_PKK_DAMAGE_200_TT
+				set_temp_variable = { TUR_preop_damage = -200 }
+				TUR_pkk_damage_targeted_base = yes
+			}
 		}
 		random_list = {
 			80 = {
@@ -594,25 +599,29 @@ country_event = {
 	option = {
 		name = TUR_pkk.100.b
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.100.b executed"
-		50 = {
-			add_to_variable = { TUR_PKK_BASE_MANPOWER = -300 }
-			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
-			custom_effect_tooltip = TUR_PKK_DAMAGE_300_TT
-			add_to_variable = { TUR_PKK_BASE_MANPOWER = -200 }
-			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
-			custom_effect_tooltip = TUR_PKK_DAMAGE_200_TT
+		random_list = {
+			50 = {
+				custom_effect_tooltip = TUR_PKK_DAMAGE_300_TT
+				set_temp_variable = { TUR_preop_damage = -300 }
+				TUR_pkk_damage_targeted_base = yes
+			}
+			50 = {
+				custom_effect_tooltip = TUR_PKK_DAMAGE_200_TT
+				set_temp_variable = { TUR_preop_damage = -200 }
+				TUR_pkk_damage_targeted_base = yes
+			}
 		}
 		random_list = {
 			80 = {
 				add_stability = -0.05
 				set_temp_variable = { party_popularity_increase = -0.035 }
 				set_temp_variable = { temp_outlook_increase = -0.025 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			10 = {
 				set_temp_variable = { party_popularity_increase = -0.05 }
 				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			10 = {
 				# Nothing
@@ -630,6 +639,7 @@ country_event = {
 			80 = {
 				if = {
 					limit = {
+						has_country_flag = TUR_targeting_van
 						935 = { is_owned_and_controlled_by = TUR }
 					}
 					935 = {
@@ -658,9 +668,39 @@ country_event = {
 				}
 				if = {
 					limit = {
+						has_country_flag = TUR_targeting_diyarbakir
 						162 = { is_owned_and_controlled_by = TUR }
 					}
 					162 = {
+						if = {
+							limit = { infrastructure > 0 }
+							damage_building = {
+								type = infrastructure
+								damage = 3.0
+							}
+						}
+						if = {
+							limit = { offices > 0 }
+							damage_building = {
+								type = offices
+								damage = 3.0
+							}
+						}
+						if = {
+							limit = { industrial_complex > 0 }
+							damage_building = {
+								type = industrial_complex
+								damage = 3.0
+							}
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = TUR_targeting_euphrates
+						1205 = { is_owned_and_controlled_by = TUR }
+					}
+					1205 = {
 						if = {
 							limit = { infrastructure > 0 }
 							damage_building = {
@@ -700,7 +740,7 @@ country_event = {
 	# Do nothing
 	option = {
 		name = TUR_pkk.100.d1
-		log = "[GetDateText]: [This.GetName]: TUR_pkk.100.c executed"
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.100.d1 executed"
 		ai_chance = {
 			base = 1
 		}
@@ -990,7 +1030,7 @@ country_event = {
 		}
 		set_temp_variable = { party_popularity_increase = -0.025 }
 		set_temp_variable = { temp_outlook_increase = -0.025 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		newline = yes
 		random_army_leader = {
 			add_skill_level = 1
@@ -1110,9 +1150,9 @@ country_event = {
 	option = {
 		name = TUR_pkk.204.a
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.204.a executed"
-		add_to_variable = { TUR_PKK_BASE_MANPOWER = -100 }
-		clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
 		custom_effect_tooltip = TUR_PKK_DAMAGE_100_2_TT
+		set_temp_variable = { TUR_preop_damage = -100 }
+		TUR_pkk_damage_targeted_base = yes
 		newline = yes
 		custom_effect_tooltip = TUR_DECREASE_PKK_STRENGTH_3
 		add_to_variable = { TUR_PKK_strength = -3 }
@@ -1126,7 +1166,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.204.b executed"
 		set_temp_variable = { party_popularity_increase = 0.1 }
 		set_temp_variable = { temp_outlook_increase = 0.1 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		newline = yes
 		custom_effect_tooltip = TUR_DECREASE_PKK_STRENGTH_3
 		add_to_variable = { TUR_PKK_strength = -3 }
@@ -1767,7 +1807,7 @@ country_event = { # Failed Promise
 				set_temp_variable = { party_index = 5 }
 				set_temp_variable = { party_popularity_increase = 0.40 }
 				set_temp_variable = { temp_outlook_increase = 0.40 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 				hidden_effect = {
 					set_temp_variable = { rul_party_temp = 5 }
 					set_temp_variable = { disable_elections = 1 }
@@ -2007,7 +2047,7 @@ country_event = { # PKK Breaks Free
 				set_temp_variable = { party_index = 5 }
 				set_temp_variable = { party_popularity_increase = 0.40 }
 				set_temp_variable = { temp_outlook_increase = 0.40 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 				hidden_effect = {
 					set_temp_variable = { rul_party_temp = 5 }
 					set_temp_variable = { disable_elections = 1 }
@@ -2209,13 +2249,13 @@ country_event = {
 		set_temp_variable = { party_index = 3 }
 		set_temp_variable = { party_popularity_increase = party_change }
 		multiply_temp_variable = { party_popularity_increase = -1 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		custom_effect_tooltip = TUR_DSP_LOSS_TT
 		#Half of the lost MPs go to CHP
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = chp_boost }
 		set_temp_variable = { temp_outlook_increase = outlook_change }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		custom_effect_tooltip = TUR_CHP_BOOST_TT
 	}
 	option = {
@@ -2265,8 +2305,10 @@ country_event = {
 	trigger = {
 		has_idea = TUR_party_rumours
 		NOT = {
-			has_country_flag = Turkey_Ozkan_purged
-			is_ai = yes
+			OR = {
+				has_country_flag = Turkey_Ozkan_purged
+				is_ai = yes
+			}
 		}
 	}
 
@@ -2277,7 +2319,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Turkey.3.a executed"
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hidden_effect = {
 			meta_effect = {
 				text = {
@@ -2325,7 +2367,7 @@ country_event = {
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hidden_effect = {
 			remove_from_array = { gov_coalition_array = 20 }
 			update_government_coalition_strength = yes
@@ -2349,7 +2391,7 @@ country_event = {
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hidden_effect = {
 			remove_from_array = { gov_coalition_array = 20 }
 			update_government_coalition_strength = yes
@@ -2447,7 +2489,7 @@ country_event = {
 		add_stability = 0.025
 		set_temp_variable = { party_popularity_increase = 0.025 }
 		set_temp_variable = { temp_outlook_increase = 0.025 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 
 }
@@ -2473,7 +2515,7 @@ country_event = {
 		set_temp_variable = { party_index = 3 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 
 }
@@ -2573,7 +2615,7 @@ country_event = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 
 }
@@ -2728,7 +2770,7 @@ country_event = {
 				change_ruling_party_effect = yes
 				set_temp_variable = { party_index = 22 }
 				set_temp_variable = { party_popularity_increase = 0.20 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 				meta_effect = {
 					text = {
 						set_country_flag = [META_SET_RULING_PARTY]
@@ -2757,7 +2799,7 @@ country_event = {
 				change_ruling_party_effect = yes
 				set_temp_variable = { party_index = 22 }
 				set_temp_variable = { party_popularity_increase = 0.20 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 				meta_effect = {
 					text = {
 						set_country_flag = [META_SET_RULING_PARTY]
@@ -2834,7 +2876,6 @@ country_event = {
 	trigger = {
 		original_tag = TUR
 		NOT = { has_country_flag = TUR_Baykal_scandal }
-		western_conservatism_are_in_power = yes
 	}
 
 	fire_only_once = yes
@@ -2849,7 +2890,7 @@ country_event = {
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_country_flag = TUR_Baykal_scandal
 	}
 	option = {
@@ -2861,7 +2902,7 @@ country_event = {
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = -0.10 }
 		set_temp_variable = { temp_outlook_increase = -0.10 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 	option = {
 		name = TurkeyRandomEvents.1.c	#I guess we have to have new elections
@@ -2880,7 +2921,7 @@ country_event = {
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_country_flag = TUR_Baykal_scandal
 		country_event = MD4_election_campaign.0
 		hidden_effect = {
@@ -3059,7 +3100,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3082,7 +3123,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3105,7 +3146,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3128,7 +3169,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3163,7 +3204,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3186,7 +3227,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3209,7 +3250,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3232,7 +3273,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3267,7 +3308,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3290,7 +3331,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3313,7 +3354,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3336,7 +3377,7 @@ country_event = {
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					hidden_effect = {
 						set_temp_variable = { rul_party_temp = 5 }
 						set_temp_variable = { disable_elections = 1 }
@@ -3447,222 +3488,6 @@ country_event = { #Greece event
 			min = 0
 			max = 100
 		}
-		ai_chance = { factor = 10 }
-	}
-}
-#
-country_event = { #Turkey Event
-	id = TurkeyFocusEvents.11
-	title = TurkeyFocusEvents.11.t
-	desc = TurkeyFocusEvents.11.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.11.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.11.a executed"
-		set_country_flag = GRE_TUR_CYP
-		ai_chance = { factor = 10 }
-	}
-}
-#
-country_event = { #Turkey asks us to invade Southern Cyprus
-	id = TurkeyFocusEvents.12
-	title = TurkeyFocusEvents.12.t
-	desc = TurkeyFocusEvents.12.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.12.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.12.a executed"
-		NCY = {
-			declare_war_on = {
-				target = CYP
-				type = annex_everything
-			}
-		}
-		ai_chance = { factor = 10 }
-	}
-	option = {
-		name = TurkeyFocusEvents.12.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.12.b executed"
-		set_temp_variable = { wargoal_on = NCY }
-		set_temp_variable = { wargoal_type = 2 }
-		add_threat_from_wargoal_effect = yes
-		create_wargoal = {
-			type = annex_everything
-			target = NCY
-		}
-		ai_chance = { factor = 0 }
-	}
-}
-#
-country_event = { #Turkey asks us to withdraw from Cyprus
-	id = TurkeyFocusEvents.14
-	title = TurkeyFocusEvents.14.t
-	desc = TurkeyFocusEvents.14.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.14.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.14.a executed"
-		812 = { transfer_state_to = NCY }
-		ai_chance = { factor = 4 }
-	}
-	option = {
-		name = TurkeyFocusEvents.14.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.14.b executed"
-		add_opinion_modifier = {
-			modifier = declaration_of_hostility
-			target = ENG
-		}
-		reverse_add_opinion_modifier = {
-			modifier = declaration_of_hostility
-			target = ENG
-		}
-		ai_chance = { factor = 6 }
-	}
-}
-#
-country_event = { #Turkey asks us to join them
-	id = TurkeyFocusEvents.15
-	title = TurkeyFocusEvents.15.t
-	desc = TurkeyFocusEvents.15.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.15.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.15.a executed"
-		NCY = {
-			every_owned_state = {
-				transfer_state_to = TUR
-			}
-		}
-		ai_chance = { factor = 10 }
-	}
-	option = {
-		name = TurkeyFocusEvents.15.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.15.b executed"
-		set_temp_variable = { wargoal_on = NCY }
-		set_temp_variable = { wargoal_type = 2 }
-		add_threat_from_wargoal_effect = yes
-		create_wargoal = {
-			type = annex_everything
-			target = NCY
-		}
-		ai_chance = { factor = 0 }
-	}
-}
-#
-country_event = { #Turkey asks us to join Cyprus
-	id = TurkeyFocusEvents.16
-	title = TurkeyFocusEvents.16.t
-	desc = TurkeyFocusEvents.16.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.16.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.16.a executed"
-		NCY = {
-			every_owned_state = {
-				transfer_state_to = CYP
-			}
-		}
-		ai_chance = { factor = 10 }
-	}
-	option = {
-		name = TurkeyFocusEvents.16.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.16.b executed"
-		CYP = {
-			set_temp_variable = { wargoal_on = NCY }
-			set_temp_variable = { wargoal_type = 2 }
-			add_threat_from_wargoal_effect = yes
-			create_wargoal = {
-				type = annex_everything
-				target = NCY
-			}
-		}
-		ai_chance = { factor = 0 }
-	}
-}
-#
-country_event = { #Turkey asks for the Aegean
-	id = TurkeyFocusEvents.17
-	title = TurkeyFocusEvents.17.t
-	desc = TurkeyFocusEvents.17.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.17.a #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.17.a executed"
-		TUR = {
-			country_event = TurkeyFocusEvents.171
-		}
-		143 = { transfer_state_to = TUR }
-		ai_chance = { factor = 10 }
-	}
-	option = {
-		name = TurkeyFocusEvents.17.b #No (Will let Turkey go down aggressive approach path)
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.17.b executed"
-		TUR = {
-			country_event = TurkeyFocusEvents.172
-		}
-		ai_chance = { factor = 0 }
-	}
-}
-#
-country_event = { #Greece gives the Aegean!
-	id = TurkeyFocusEvents.171
-	title = TurkeyFocusEvents.171.t
-	desc = TurkeyFocusEvents.171.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.171.a #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.171.a executed"
-		ai_chance = { factor = 10 }
-	}
-}
-#
-country_event = { #Greece doesnt give the Aegean!
-	id = TurkeyFocusEvents.172
-	title = TurkeyFocusEvents.172.t
-	desc = TurkeyFocusEvents.172.d
-	picture = GFX_treaty_rejected
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.172.a #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.172.a executed"
-		ai_chance = { factor = 10 }
-	}
-}
-#
-country_event = { #Greece doesnt give the Aegean!
-	id = TurkeyFocusEvents.18
-	title = TurkeyFocusEvents.18.t
-	desc = TurkeyFocusEvents.18.d
-	picture = GFX_political_deal
-
-	is_triggered_only = yes
-
-	option = {
-		name = TurkeyFocusEvents.18.a #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.18.a executed"
 		ai_chance = { factor = 10 }
 	}
 }
@@ -4307,10 +4132,8 @@ country_event = { #Peshmerga Stance
 		TUR = {
 			country_event = TurkeyFocusEvents.322
 		}
-		KUR = {
-			diplomatic_relation = { country = TUR relation = non_aggression_pact active = yes }
-			diplomatic_relation = { country = PKK relation = non_aggression_pact active = yes }
-		}
+		diplomatic_relation = { country = TUR relation = non_aggression_pact active = yes }
+		diplomatic_relation = { country = PKK relation = non_aggression_pact active = yes }
 		ai_chance = { factor = 10 }
 	}
 	option = {
@@ -4323,11 +4146,9 @@ country_event = { #Peshmerga Stance
 				target = KUR
 			}
 		}
-		KUR = {
-			add_opinion_modifier = {
-				modifier = declaration_of_hostility
-				target = TUR
-			}
+		add_opinion_modifier = {
+			modifier = declaration_of_hostility
+			target = TUR
 		}
 		ai_chance = { factor = 10 }
 	}
@@ -5283,7 +5104,7 @@ country_event = { #2003 Kurdish laws for EU
 		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.17.a executed"
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { factor = 5 }
 	}
 	option = { # Ease restrictions
@@ -5291,7 +5112,7 @@ country_event = { #2003 Kurdish laws for EU
 		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.17.b executed"
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { factor = 5 }
 	}
 }
@@ -5559,17 +5380,19 @@ country_event = { #2008 Refugee Crisis
 		random_owned_state = {
 			limit = {
 				NOT = {
-					has_state_category = state_08
-					has_state_category = state_09
-					has_state_category = state_10
-					has_state_category = state_11
-					has_state_category = state_12
-					has_state_category = state_13
-					has_state_category = state_14
-					has_state_category = state_15
-					has_state_category = state_16
-					has_state_category = state_17
-					has_state_category = state_18
+					OR = {
+						has_state_category = state_08
+						has_state_category = state_09
+						has_state_category = state_10
+						has_state_category = state_11
+						has_state_category = state_12
+						has_state_category = state_13
+						has_state_category = state_14
+						has_state_category = state_15
+						has_state_category = state_16
+						has_state_category = state_17
+						has_state_category = state_18
+					}
 				}
 			}
 			add_manpower = movable_pop
@@ -5744,7 +5567,7 @@ country_event = { #2012 Nowruz protests
 		set_temp_variable = { party_index = 19 }
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { factor = 5 }
 	}
 	option = { #Let them demonstrate
@@ -5754,7 +5577,7 @@ country_event = { #2012 Nowruz protests
 		set_temp_variable = { party_index = 19 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { factor = 5 }
 	}
 }
@@ -6209,20 +6032,6 @@ country_event = { #Turkemnistan Refuses Offer!
 	}
 }
 #
-news_event = { #Moscow Governmental University in Armenia Blows up!
-	id = Armenian_University.1
-	title = Armenian_University.1.t
-	desc = Armenian_University.1.d
-	picture = GFX_bwooom
-	major = yes
-	is_triggered_only = yes
-
-	option = { #Boowoomp
-		name = Armenian_University.1.a
-		ai_chance = { factor = 5 }
-	}
-}
-#
 news_event = { #Cyprus Unifies under NCY
 	id = Turkey.77
 	title = Turkey.77.t
@@ -6270,7 +6079,7 @@ country_event = { #2002 General Elections (FOR AI)
 		set_temp_variable = { party_index = 12 }
 		set_temp_variable = { party_popularity_increase = 0.65 }
 		set_temp_variable = { temp_outlook_increase = 0.65 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { rul_party_temp = 12 }
 		change_ruling_party_effect = yes
 		ai_chance = {
@@ -6287,7 +6096,7 @@ country_event = { #2002 General Elections (FOR AI)
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.65 }
 		set_temp_variable = { temp_outlook_increase = 0.65 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { rul_party_temp = 1 }
 		change_ruling_party_effect = yes
 		ai_chance = {
@@ -6848,7 +6657,7 @@ country_event = { #assassination attempt by the Mafia
 		add_stability = -0.02
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { factor = 5 }
 	}
 }
@@ -6995,25 +6804,25 @@ country_event = { #Liberal parties gain traction
 				set_temp_variable = { party_index = 1 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 2 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 16 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 13 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 		}
 		ai_chance = { factor = 5 }
@@ -7035,25 +6844,25 @@ country_event = { #Conservative parties gain traction
 				set_temp_variable = { party_index = 0 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 6 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 12 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 14 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 		}
 		ai_chance = { factor = 5 }
@@ -7076,25 +6885,25 @@ country_event = { #Left-wing parties gain traction
 				set_temp_variable = { party_index = 3 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 4 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 5 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 18 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 		}
 		ai_chance = { factor = 5 }
@@ -7116,25 +6925,25 @@ country_event = { #Right-wing parties gain traction
 				set_temp_variable = { party_index = 20 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 21 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 22 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 			25 = {
 				set_temp_variable = { party_index = 23 }
 				set_temp_variable = { party_popularity_increase = 0.05 }
 				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 		}
 		ai_chance = { factor = 5 }
@@ -7217,7 +7026,7 @@ country_event = { # Rise of Mr.No Good Economy
 			set_temp_variable = { party_index = 12 }
 			set_temp_variable = { party_popularity_increase = 0.65 }
 			set_temp_variable = { temp_outlook_increase = 0.65 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_chance = { factor = 5 }
 	}

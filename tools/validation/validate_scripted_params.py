@@ -46,10 +46,6 @@ HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
         "required": ["remove_col_one"],
         "optional": [],
     },
-    "modify_missile_inventory_count": {
-        "required": ["missile_index", "missile_count"],
-        "optional": ["missile_type"],
-    },
     "change_arab_spring_strength": {
         "required": ["temp_strength"],
         "optional": [],
@@ -354,14 +350,21 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
 
         line_tokens = []
         for m in _SET_TEMP_RE.finditer(raw):
-            line_tokens.append((m.start(), 0, ("set_temp", lineno, m.group(1), m.group(2).strip())))
+            line_tokens.append(
+                (m.start(), 0, ("set_temp", lineno, m.group(1), m.group(2).strip()))
+            )
         for m in _KW_OPEN_RE.finditer(raw):
             kw = m.group(1)
             line_tokens.append(
                 (
                     m.start(),
                     1,
-                    ("scope_open" if kw in SCOPE_CHANGING_KEYWORDS else "plain_open", lineno, kw, ""),
+                    (
+                        "scope_open" if kw in SCOPE_CHANGING_KEYWORDS else "plain_open",
+                        lineno,
+                        kw,
+                        "",
+                    ),
                 )
             )
         for m in re.finditer(r"\}", raw):

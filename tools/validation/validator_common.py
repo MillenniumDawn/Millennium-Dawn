@@ -10,7 +10,7 @@ import sys
 import time
 from dataclasses import dataclass
 from multiprocessing import Pool, cpu_count
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -33,12 +33,22 @@ from shared_utils import (
     timing_enabled,
 )
 
+# Generic type for the cross-pass result cache accessor (see BaseValidator.cached).
+T = TypeVar("T")
+
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
 # constant prefix (e.g. "set_leader_[IDEOLOGY]", "tooltip_EU_[EUXXX]_approve").
 _META_TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
 )
+
+# Quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# The `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives in
+# the quoted assignment, so a leading placeholder with only a trailing constant must
+# still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_META_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
 
 _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
 
@@ -220,9 +230,11 @@ def scan_meta_constructed_names(files, defined_names):
     template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
 
     For every file containing ``meta_effect`` or ``meta_trigger``, extracts
-    identifier templates of the form ``prefix_[VAR]_suffix``, splits on ``[VAR]``
-    segments, and matches any defined name whose lower-cased form starts with
-    *prefix* and ends with *suffix*.
+    identifier templates of the form ``prefix_[VAR]_suffix`` — both bare
+    identifiers and quoted meta-substitution values (tooltips/templates such as
+    ``"[?var]_unlock_btn_enabled"``) — splits on ``[VAR]`` segments, and matches
+    any defined name whose lower-cased form starts with *prefix* and ends with
+    *suffix*.
     """
     defined_lower = {n.lower(): n for n in defined_names}
     used = set()
@@ -239,8 +251,12 @@ def scan_meta_constructed_names(files, defined_names):
 
         content_clean = strip_comments(content)
 
-        for m in _META_TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
+        templates = {m.group(1) for m in _META_TEMPLATE_RE.finditer(content_clean)}
+        templates.update(
+            m.group(1) for m in _QUOTED_META_TEMPLATE_RE.finditer(content_clean)
+        )
+
+        for template in templates:
             parts = re.split(r"\[[^\]]+\]", template)
             prefix = parts[0].lower()
             suffix = parts[-1].lower() if len(parts) > 1 else ""
@@ -433,11 +449,11 @@ class BaseValidator:
             if not self.staged_files:
                 logging.warning("No staged files found")
 
-    def cached(self, key: str, factory_fn):
+    def cached(self, key: str, factory_fn: Callable[[], T]) -> T:
         # Pool workers don't see this cache; populate from the main process.
         if key not in self._shared_cache:
             self._shared_cache[key] = factory_fn()
-        return self._shared_cache[key]
+        return cast(T, self._shared_cache[key])
 
     def parse_files_cached(
         self,

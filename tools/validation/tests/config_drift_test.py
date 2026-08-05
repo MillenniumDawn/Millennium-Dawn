@@ -27,6 +27,8 @@ from pathlib import Path
 
 import pytest
 import yaml
+from precommit_validate import _REGISTRY
+from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATION_DIR = Path(__file__).resolve().parents[1]
@@ -34,6 +36,7 @@ PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
+NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
 
 # Validators intentionally absent from the CI matrices. Each needs a reason.
 CI_EXEMPT = {
@@ -46,6 +49,13 @@ CI_EXEMPT = {
     # ~22k pre-existing unreferenced textures plus a slow full-repo scan make
     # this a periodic mod-size audit, not a per-PR gate. Manual hook only.
     "validate_unused_textures.py",
+    # Runs in the standalone validate-paths job. It reads path names from the
+    # git index, which the matrix jobs don't have: they restore a content
+    # bundle that carries no .git and omits map/.
+    "validate_file_paths.py",
+    # Runs in structural-lint because descriptors are root files in the
+    # prepared workspace and only need checking when a .mod file changes.
+    "validate_mod_descriptors.py",
 }
 
 # Validators intentionally without a pre-commit hook. Each needs a reason.
@@ -58,9 +68,6 @@ STRICT_MISMATCH_ALLOWED = {
     # CI runs --strict; pre-commit runs without it because pre-existing
     # equipment-coverage gaps would otherwise block every commit.
     "validate_ai_equipment.py",
-    # pre-commit runs --strict; CI runs informational (strict: false) because of
-    # ~30 pre-existing undefined-idea references on main awaiting triage.
-    "validate_ideas.py",
 }
 
 
@@ -118,6 +125,21 @@ def _parse_ci():
         for entry in matrix:
             # CI Run step passes --strict unless `strict: false` is set.
             result[entry["script"]] = {"strict": bool(entry.get("strict", True))}
+    return result
+
+
+def _parse_ci_standalone():
+    """Map validate_*.py -> {'strict': bool} for jobs that invoke one directly.
+
+    The matrices name their script through `${{ matrix.validator.script }}`, so
+    only the standalone jobs (styling-check, validate-paths) match here."""
+    wf = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    result = {}
+    for job in wf["jobs"].values():
+        for step in job.get("steps", []):
+            command = step.get("run") or ""
+            for m in re.finditer(r"tools/validation/(validate_\w+\.py)", command):
+                result[m.group(1)] = {"strict": "--strict" in command}
     return result
 
 
@@ -181,6 +203,11 @@ def ci():
     return _parse_ci()
 
 
+@pytest.fixture(scope="module")
+def ci_standalone():
+    return _parse_ci_standalone()
+
+
 def test_every_disk_validator_runs_on_ci(disk, ci):
     missing = sorted(disk - set(ci) - CI_EXEMPT)
     assert not missing, (
@@ -190,13 +217,15 @@ def test_every_disk_validator_runs_on_ci(disk, ci):
     )
 
 
-def test_every_disk_validator_runs_somewhere(disk, precommit, ci):
+def test_every_disk_validator_runs_somewhere(disk, precommit, ci, ci_standalone):
     # A validator must run on pre-commit OR in CI, or it is dead code. The
     # expensive cross-reference validators run CI-only (their unused manual
-    # pre-commit hooks were removed); the CI-exempt ones (style,
-    # unused_textures) run pre-commit-only. Neither side is required alone,
-    # but a validator in NEITHER place runs nowhere.
-    orphaned = sorted(disk - set(precommit) - set(ci) - PRECOMMIT_EXEMPT)
+    # pre-commit hooks were removed); unused_textures runs pre-commit-only.
+    # Neither side is required alone, but a validator in NEITHER place runs
+    # nowhere.
+    orphaned = sorted(
+        disk - set(precommit) - set(ci) - set(ci_standalone) - PRECOMMIT_EXEMPT
+    )
     assert not orphaned, (
         f"Validators run neither on pre-commit nor in CI: {orphaned}. Wire each "
         "into .pre-commit-config.yaml or the CI matrix, or add to "
@@ -204,10 +233,13 @@ def test_every_disk_validator_runs_somewhere(disk, precommit, ci):
     )
 
 
-def test_ci_exempt_validators_run_on_precommit(disk, precommit, ci):
-    # A validator that CI cannot run (CI_EXEMPT) has pre-commit as its only home,
-    # so it must be wired there or it runs nowhere.
-    homeless = sorted((CI_EXEMPT & disk) - set(precommit) - set(ci))
+def test_ci_exempt_validators_run_on_precommit(disk, precommit, ci, ci_standalone):
+    # CI_EXEMPT only means "not in a matrix". A validator that is also absent
+    # from the standalone CI jobs has pre-commit as its only home, so it must be
+    # wired there or it runs nowhere.
+    homeless = sorted(
+        (CI_EXEMPT & disk) - set(precommit) - set(ci) - set(ci_standalone)
+    )
     assert not homeless, (
         f"CI-exempt validators with no pre-commit hook: {homeless}. They run "
         "nowhere — add a hook in .pre-commit-config.yaml."
@@ -250,9 +282,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert (
-        not gone
-    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    assert not gone, (
+        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    )
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -300,13 +332,35 @@ def test_validator_cache_restore_is_source_hash_scoped():
                     restore_steps.extend(
                         step.get("with", {}).get("restore-keys", "").splitlines()
                     )
-        assert (
-            restore_steps
-        ), f"No validator cache restore keys found in {workflow.name}"
+        assert restore_steps, (
+            f"No validator cache restore keys found in {workflow.name}"
+        )
         assert all(key.startswith(expected_prefix) for key in restore_steps), (
             f"{workflow.name} has a validator cache fallback outside the current "
             "validator source-hash generation"
         )
+
+
+def test_nightly_keys_the_bundle_on_the_live_base_tip():
+    # WORKSPACE_KEY's base component is the only thing that invalidates the
+    # bundle when main advances under a PR that got no pushes. Cache keys are
+    # immutable, so a base that doesn't move makes cache/save a no-op and every
+    # validator restores the previous run's tree while the run reports green.
+    config = yaml.safe_load(NIGHTLY_WORKFLOW.read_text(encoding="utf-8"))
+    step = next(
+        step
+        for step in config["jobs"]["revalidate-open-prs"]["steps"]
+        if "gh workflow run" in step.get("run", "")
+    )
+    script = "\n".join(
+        line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
+    )
+    assert "commits/main" in script, (
+        "the nightly must resolve main's live head for base_sha"
+    )
+    assert ".base.sha" not in script, (
+        "the PR list's .base.sha does not track main, so it cannot key the bundle"
+    )
 
 
 def test_tools_validation_triggers_for_consumed_configuration():
@@ -314,6 +368,7 @@ def test_tools_validation_triggers_for_consumed_configuration():
     assert {
         ".pre-commit-config.yaml",
         ".github/workflows/coding-pipeline.yml",
+        ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/validator-cache.yml",
     } <= paths
 
@@ -326,17 +381,69 @@ def test_tools_tests_checkout_consumed_workflows():
         if step.get("uses", "").startswith("actions/checkout@")
     )
     sparse_paths = set(checkout["with"]["sparse-checkout"].splitlines())
-    assert ".github/workflows/validator-cache.yml" in sparse_paths
+    assert {
+        ".github/workflows/validator-cache.yml",
+        ".github/workflows/nightly-pr-validation.yml",
+    } <= sparse_paths
+
+
+def test_manual_texture_audit_always_runs():
+    config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
+    hook = next(
+        hook
+        for repo in config["repos"]
+        for hook in repo.get("hooks", [])
+        if hook.get("id") == "md-validate-unused-textures"
+    )
+    assert hook.get("always_run") is True
+    assert hook.get("pass_filenames") is False
+
+
+def test_ci_run_steps_default_to_strict():
+    # _parse_ci models an omitted `strict:` as --strict. Both Run steps must
+    # agree: keying off `= "true"` instead would silently drop the gate for any
+    # entry added without the field, and this guard could not see it.
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    for job in ("validate-core", "validate-targeted"):
+        run = next(
+            step["run"]
+            for step in workflow["jobs"][job]["steps"]
+            if step.get("name") == "Run validation"
+        )
+        assert 'matrix.validator.strict }}" != "false"' in run, (
+            f"{job}'s Run step must default to --strict when `strict:` is absent."
+        )
+
+
+def test_oob_routes_cover_every_create_unit_source():
+    # Derived from the validator's own glob list, not a copy of it: a directory
+    # added there must reach both routes or a PR touching only it never runs.
+    dirs = {p.rsplit("/", 1)[0] + "/" for p in _CREATE_UNIT_SOURCE_PATTERNS}
+    _, filters = _filter_definitions()
+    assert {d + "**" for d in dirs} <= set(filters["oob"])
+    spec = next(s for s in _REGISTRY if s.script == "validate_oob_units")
+    assert dirs <= {prefix for prefix, _ in spec.rules}
+
+
+def test_gfx_reference_validator_runs_for_all_reference_sources():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    entry = next(
+        entry
+        for entry in workflow["jobs"]["validate-targeted"]["strategy"]["matrix"][
+            "validator"
+        ]
+        if entry["script"] == "validate_gfx_references.py"
+    )
+    expression = entry["should_run"]
+    for output in ("interface", "common", "events", "history", "localisation"):
+        assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
 
 
 def test_scripted_localisation_core_runs_for_interface_changes():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     core = workflow["jobs"]["validate-core"]
     assert "needs.detect-changes.outputs.interface == 'true'" in core["if"]
-    scripts = {
-        entry["script"]
-        for entry in core["strategy"]["matrix"]["validator"]
-    }
+    scripts = {entry["script"] for entry in core["strategy"]["matrix"]["validator"]}
     assert "validate_scripted_localisation.py" in scripts
 
 

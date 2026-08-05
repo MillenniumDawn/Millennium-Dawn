@@ -621,6 +621,26 @@ calculate_tax_gain = {
 	}
 	else = { set_variable = { internet_station_tax = 0 } }
 
+	# Rail Terminals
+	if = { limit = { check_variable = { rail_terminal_total > 0 } }
+		set_variable = {
+			rail_terminal_tax = {
+				value = rail_terminal_total
+				multiply = {
+					value = 1
+					add = modifier@infrastructure_tax_gain_multiplier_modifier
+					multiply = rail_terminal_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 0.4375
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
+	}
+	else = { set_variable = { rail_terminal_tax = 0 } }
+
 	# Healthcare Corporate Income Tax
 	# Represents the private healthcare market: hospitals, pharmaceutical companies, medical devices, insurance
 	# Uses healthcare_gdp_var computed in calculate_gdp (last cycle) as the tax base
@@ -675,6 +695,7 @@ calculate_tax_gain = {
 			add = fossil_powerplant_tax
 			add = renewable_energy_tax
 			add = internet_station_tax
+			add = rail_terminal_tax
 
 			clamp = { min = 0 max = 100000000 }
 		}
@@ -1127,14 +1148,24 @@ calculate_additional_income_rate = {
 	# Bosnia
 	else_if = { limit = { original_tag = BOS }
 		if = {
-			limit = { has_idea = bos_international_funding }
-			set_variable = { Bosnia_united_nations_aid = 0.4 }
-			add_to_variable = { additional_income_rate = Bosnia_united_nations_aid }
+			limit = { has_idea = BOS_SFOR }
+			set_variable = { BOS_united_nations_aid = 0.4 }
+			add_to_variable = { additional_income_rate = BOS_united_nations_aid }
 		}
 		if = {
 			limit = { has_idea = BOS_EUFOR }
 			set_variable = { BOS_EUFOR_aid_money = 0.2 }
 			add_to_variable = { additional_income_rate = BOS_EUFOR_aid_money }
+		}
+		if = {
+			limit = { has_idea = BOS_diaspora_remittances }
+			set_variable = { BOS_diaspora_remittances_income = gdp_total }
+			multiply_variable = { BOS_diaspora_remittances_income = 0.002 }	#10% of GDP yearly
+			if = {
+				limit = { has_country_flag = BOS_expanded_dual_citizenship }
+				multiply_variable = { BOS_diaspora_remittances_income = 1.2 }
+			}
+			add_to_variable = { additional_income_rate = BOS_diaspora_remittances_income }
 		}
 	}
 	# Botswana
@@ -2312,12 +2343,19 @@ calculate_interest_rate = {
 		set_variable = { interest_rate = 0 }
 		set_variable = { debt_rate = 0 }
 		set_variable = { debt_ratio = 0 }
+		set_variable = { debt_interest_premium = 0 }
+		set_variable = { interest_rate_multiplier = 0 }
+		set_variable = { cb_rate_premium = 0 }
+		set_variable = { threat_interest_premium = 0 }
+		set_variable = { adjusted_tension_premium = 0 }
+		set_variable = { interest_rate_clamp_adjustment = 0 }
 	}
 	else = {
 		# Country has debt - calculate interest rate, debt_rate, and debt_ratio
 		clamp_variable = { var = gdp_total min = 0.001 }
 		#Base value comes from debt/gdp ratio
-		set_variable = { interest_rate = { value = debt divide = gdp_total multiply = 10 } }
+		set_variable = { debt_interest_premium = { value = debt divide = gdp_total multiply = 10 } }
+		set_variable = { interest_rate = debt_interest_premium }
 
 		#Additional additive modifiers
 		set_variable = { interest_rate_multiplier = modifier@interest_rate_multiplier_modifier }
@@ -2325,14 +2363,13 @@ calculate_interest_rate = {
 
 		#CB policy rate raises sovereign borrowing premium — tighter monetary policy = costlier debt
 		#Coefficient 0.5: a 6% CB rate adds +3pp to interest_rate
-		set_temp_variable = { cb_rate_premium = { value = cb_policy_rate multiply = 0.5 } }
+		set_variable = { cb_rate_premium = { value = cb_policy_rate multiply = 0.5 } }
 		add_to_variable = { interest_rate = cb_rate_premium }
 
 		# Threat premium - current threat level raises borrowing costs; decays with world tension.
 		# as 1.825% per year. 80% (0.8) tensioon -> 4% interest rate (4.0).
 		set_variable = { threat_interest_premium = { value = global.threat multiply = 5 clamp = { min = 0 max = 5 } } }
 		add_to_variable = { interest_rate = threat_interest_premium }
-		multiply_variable = { threat_interest_premium = 0.01 } # For localisation display.
 
 		# World tension cause premium - Countries which cause world tension are chaotic and less
 		# stable.
@@ -2342,10 +2379,11 @@ calculate_interest_rate = {
 		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
 		add_to_variable = { interest_rate = adjusted_tension_premium }
 		set_variable = { tracked_threat = has_added_tension_amount }
-		multiply_variable = { adjusted_tension_premium = 0.01 } # For localisation display.
 
-
+		set_temp_variable = { pre_clamp_interest_rate = interest_rate }
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
+		set_variable = { interest_rate_clamp_adjustment = interest_rate }
+		subtract_from_variable = { interest_rate_clamp_adjustment = pre_clamp_interest_rate }
 
 		#Calculate weekly debt rate based on interest (52 weeks in a year)
 		set_variable = { debt_rate = { value = debt multiply = 0.00019 multiply = interest_rate } }
@@ -3218,6 +3256,14 @@ update_social_rate = {
 # Effect: update_infra_rate
 # Purpose: Computes daily infrastructure maintenance costs for power plants and network
 update_infra_rate = {
+	# Nations under ~1M population pay proportionally less upkeep; floor keeps it non-trivial
+	set_temp_variable = {
+		infra_size_scaling = {
+			value = population_total_m
+			clamp = { min = 0.25 max = 1 }
+		}
+	}
+
 	set_variable = {
 		nuclear_infra_expense = {
 			value = nuclear_reactors
@@ -3229,6 +3275,7 @@ update_infra_rate = {
 				add = modifier@nuclear_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3243,6 +3290,7 @@ update_infra_rate = {
 				add = modifier@fossil_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3257,6 +3305,7 @@ update_infra_rate = {
 				add = modifier@renewable_infra_cost_multiplier_modifier
 				clamp = { min = 0 max = 100000000 }
 			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3269,6 +3318,20 @@ update_infra_rate = {
 				add = modifier@infrastructure_cost_multiplier_modifier
 				multiply = common_money_modifier
 			}
+			multiply = infra_size_scaling
+		}
+	}
+
+	set_variable = {
+		rail_infra_expense = {
+			value = rail_terminal_total
+			multiply = 0.015
+			multiply = {
+				value = 1
+				add = modifier@infrastructure_cost_multiplier_modifier
+				multiply = common_money_modifier
+			}
+			multiply = infra_size_scaling
 		}
 	}
 
@@ -3278,6 +3341,7 @@ update_infra_rate = {
 			add = fossil_infra_expense
 			add = renewable_infra_expense
 			add = internet_infra_expense
+			add = rail_infra_expense
 			clamp = { min = 0 max = 100000000 }
 		}
 	}
@@ -3370,15 +3434,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 		}
 		if = {
-			limit = {
-				OR = {
-					has_country_flag = infrastructure_investiture_flag
-					has_country_flag = industrial_projects_flag
-					has_country_flag = service_constructions_flag
-					has_country_flag = arms_industry_stipends_flag
-					has_country_flag = retool_shipyards_flag
-				}
-			}
+			limit = { has_country_flag = active_economic_project }
 			set_variable = { project_decisions_cost = { value = gdp_total multiply = 0.001 } }
 
 			set_temp_variable = { project_cost_multiplier = { value = 1 add = modifier@projects_cost_modifier } }
@@ -3401,6 +3457,22 @@ calculate_additional_expense_rate = {
 		limit = { has_country_flag = DEF_military_industry_thriving_expense }
 		set_variable = { defence_industry_subsidies = { value = gdp_total multiply = 0.002 } }
 		add_to_variable = { additional_expenses_rate = defence_industry_subsidies }
+	}
+	if = {
+		limit = {
+			OR = {
+				has_active_mission = missile_construction_10
+				has_active_mission = missile_construction_11
+				has_active_mission = missile_construction_12
+				has_active_mission = missile_construction_13
+				has_active_mission = missile_construction_14
+			}
+		}
+		space_prod_weekly_expense = yes
+		add_to_variable = { additional_expenses_rate = space_prod_expense }
+	}
+	else = {
+		set_variable = { space_prod_expense = 0 }
 	}
 	if = {
 		limit = {
@@ -4192,8 +4264,10 @@ update_display = {
 	if = {
 		limit = {
 			NOT = {
-				has_active_mission = cheap_loan_from_the_imf_mission
-				has_country_flag = paused_debt_repayment
+				OR = {
+					has_active_mission = cheap_loan_from_the_imf_mission
+					has_country_flag = paused_debt_repayment
+				}
 			}
 		}
 		add_to_variable = { display_expense = debt_rate }
@@ -4607,6 +4681,15 @@ update_state_variables = {
 			}
 		}
 		set_variable = {
+			rail_terminal_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@rail_terminal
+				}
+			}
+		}
+		set_variable = {
 			undamaged_enrichment_facilities = {
 				value = 0
 				every_collection = {
@@ -5001,6 +5084,7 @@ calculate_gdp = {
 	set_temp_variable = { workers_per_fossil_powerplant = 0.0075 }
 	set_temp_variable = { workers_per_renewable_energy = 0.0225 }
 	set_temp_variable = { workers_per_internet_station = 0.012 }
+	set_temp_variable = { workers_per_rail_terminal = 0.015 }
 
 	set_temp_variable = {
 		mil_facs_worker_requirement_multiplier = {
@@ -5572,6 +5656,39 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_internet_stations }
 	}
 
+	# Rail Terminals
+	if = { limit = { check_variable = { rail_terminal_total = 0 } }
+		set_variable = { rail_terminal_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_temp_variable = {
+			max_workers_in_rail_terminals = {
+				value = rail_terminal_total
+				multiply = workers_per_rail_terminal
+				multiply = {
+					value = 1
+					add = modifier@buildings_worker_requirement_modifier
+					add = modifier@infrastructure_workforce_requirement_modifier
+					clamp = { min = 0.10 max = @math_expressions_max }
+				}
+			}
+		}
+		set_variable = {
+			workers_in_rail_terminals = {
+				value = max_workers_in_rail_terminals
+				multiply = rail_terminal_employment_var
+				clamp = { min = 0 max = workforce_total }
+			}
+		}
+		set_variable = {
+			rail_terminal_manpower_fulfillment = {
+				value = workers_in_rail_terminals
+				divide = { value = max_workers_in_rail_terminals clamp = { min = 0.001 max = @math_expressions_max } }
+			}
+		}
+		subtract_from_temp_variable = { workforce_total = workers_in_rail_terminals }
+	}
+
 	# Healthcare Sector — Workforce
 	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.15 } }
 	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 0.30 } }
@@ -5686,9 +5803,10 @@ calculate_gdp = {
 			add = fossil_powerplants_manpower_fulfillment
 			add = renewable_energy_infra_manpower_fulfillment
 			add = internet_stations_manpower_fulfillment
+			add = rail_terminal_manpower_fulfillment
 			add = healthcare_manpower_fulfillment
 			add = bureaucracy_manpower_fulfillment
-			divide = 14
+			divide = 15
 		}
 	}
 
@@ -5819,6 +5937,13 @@ calculate_gdp = {
 			multiply = internet_stations_manpower_fulfillment
 		}
 	}
+	set_temp_variable = {
+		gdp_from_rail_terminals = {
+			value = rail_terminal_total
+			multiply = 2.5
+			multiply = rail_terminal_manpower_fulfillment
+		}
+	}
 
 	# Healthcare Sector — GDP Contribution
 	# Formula: population_total * 0.01 * gdp_per_capita * level_mult * fulfillment
@@ -5857,6 +5982,7 @@ calculate_gdp = {
 			add = gdp_from_fossil_powerplants
 			add = gdp_from_renewable_energy
 			add = gdp_from_internet_stations
+			add = gdp_from_rail_terminals
 			add = gdp_from_healthcare
 			add = gdp_from_agriculture
 			add = gdp_from_resource_sector
@@ -5940,6 +6066,7 @@ calculate_gdp = {
 			add = gdp_from_fossil_powerplants
 			add = gdp_from_renewable_energy
 			add = gdp_from_internet_stations
+			add = gdp_from_rail_terminals
 			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 1 }
 		}
@@ -6067,7 +6194,7 @@ calculate_gdp_modifiers = {
 
 # Effect: calculate_ai_taxes_desire
 # Purpose: Calculates the tax rate for the AI to change
-# Runs monthly from MD_on_actions (AI path only). Changes are ±1 per week.
+# Runs monthly from MD_on_actions (AI path only). Changes are ±1 per run.
 calculate_ai_taxes_desire = {
 	if = { limit = { NOT = { has_variable = population_tax_rate } } set_variable = { var = population_tax_rate value = 20 } }
 	if = { limit = { NOT = { has_variable = corporate_tax_rate } } set_variable = { var = corporate_tax_rate value = 20 } }
@@ -6449,6 +6576,7 @@ setup_employment_variables = {
 		set_variable = { fossil_powerplant_employment_var = 1 }
 		set_variable = { renewable_energy_employment_var = 1 }
 		set_variable = { internet_station_employment_var = 1 }
+		set_variable = { rail_terminal_employment_var = 1 }
 		if = {
 			limit = { NOT = { has_variable = corporate_tax_rate } }
 			set_variable = { var = corporate_tax_rate value = 20 }
@@ -6472,6 +6600,7 @@ setup_employment_variables = {
 			set_variable = { PREV.fossil_powerplant_employment_var = fossil_powerplant_employment_var }
 			set_variable = { PREV.renewable_energy_employment_var = renewable_energy_employment_var }
 			set_variable = { PREV.internet_station_employment_var = internet_station_employment_var }
+			set_variable = { PREV.rail_terminal_employment_var = rail_terminal_employment_var }
 			set_variable = { var = PREV.corporate_tax_rate value = corporate_tax_rate }
 			set_variable = { var = PREV.population_tax_rate value = population_tax_rate }
 		}

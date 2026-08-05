@@ -15,8 +15,10 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 from _reference_finder import build_parser, run_reference_search  # noqa: E402
+from shared_utils import strip_inline_comment  # noqa: E402
 
 SEARCH_DIRS = [
     "common/events",
@@ -42,6 +44,14 @@ PATTERNS = [
     r"idea.*=",
     r"=\s*idea",
 ]
+
+# Effects whose `{ ... }` body lists bare idea names, one per line, with no
+# surrounding key. A name inside such a block is a reference even though the
+# line itself matches none of PATTERNS.
+IDEA_BLOCK_RE = re.compile(
+    r"\b(?:add_ideas|remove_ideas|swap_ideas|modify_ideas|add_timed_idea"
+    r"|remove_timed_idea)\b"
+)
 
 SKIP_KEYWORDS = {
     "ideas",
@@ -91,6 +101,7 @@ def make_idea_searcher(search_dirs: list[Path]):
 
     def search(idea: str) -> list[tuple[str, int, str]]:
         refs: list[tuple[str, int, str]] = []
+        token_re = re.compile(r"(?<![\w])" + re.escape(idea) + r"(?![\w])")
         for search_dir in search_dirs:
             if not search_dir.is_dir():
                 continue
@@ -101,12 +112,24 @@ def make_idea_searcher(search_dirs: list[Path]):
                     ).splitlines()
                 except OSError:
                     continue
+                # Depth of the innermost open add_ideas/remove_ideas/... block, so
+                # a bare idea name listed on its own line inside it still counts.
+                block_depth = 0
                 for i, line in enumerate(lines, 1):
-                    if idea not in line:
-                        continue
-                    if any(re.search(p, line) for p in PATTERNS):
+                    in_block = block_depth > 0
+                    if idea in line and (
+                        any(re.search(p, line) for p in PATTERNS)
+                        or (in_block and token_re.search(line))
+                    ):
                         rel = txt_file.relative_to(REPO_ROOT)
                         refs.append((str(rel), i, line.strip()))
+                    if in_block or IDEA_BLOCK_RE.search(line):
+                        # Count braces on the code portion only: a `#` comment
+                        # may carry an unbalanced brace that would desync depth.
+                        code = strip_inline_comment(line)
+                        block_depth += code.count("{") - code.count("}")
+                        if block_depth < 0:
+                            block_depth = 0
         return refs
 
     return search

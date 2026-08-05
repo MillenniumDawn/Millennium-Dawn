@@ -32,6 +32,10 @@ Default to no comments. Add one only when the WHY is non-obvious: a hidden const
 
 # Scripting Patterns
 
+## Don't seed variables to 0
+
+Unset script variables already read as `0`. Never write `set_variable = { X = 0 }` to "initialise" a var — it is redundant. This includes dynamic-modifier vars: `add_dynamic_modifier` with its backing vars unset applies a 0-effect modifier until a focus/decision `add_to_variable`s them, so no zero-seed is needed in history. Only seed a variable when its start value is non-zero.
+
 ## NOT blocks and "NOR"
 
 `NOT = { A B }` means NOT(A AND B) — "not both at once", almost never intended. For "neither" write separate `NOT` blocks or `NOT = { OR = { A B } }`. `NOR` is not a HOI4 trigger keyword. Bare multi-child NOTs are flagged (warning) by `validate_simplifications.py`.
@@ -72,7 +76,7 @@ Inside a math expression (`set_variable = { X = { value = ... } }`) a malformed 
 
 ## Variable and array operations do not auto-tooltip
 
-`check_variable`, `is_in_array`, `set/add_to/subtract_from/multiply/divide/clamp_variable`, `add_to/remove_from_array` produce no tooltip — bare in `available`/`visible` the player sees nothing (triggers) or a blank line (effects). Wrap triggers in `custom_trigger_tooltip = { tooltip = key ... }` and effects with `custom_effect_tooltip`. Named scripted triggers DO auto-tooltip via their name's loc key — prefer them over raw variable checks in player-facing blocks.
+`check_variable`, `is_in_array`, `set/add_to/subtract_from/multiply/divide/clamp_variable`, `add_to/remove_from_array` produce no tooltip — bare in `available`/`visible` the player sees nothing (triggers) or a blank line (effects). Wrap triggers in `custom_trigger_tooltip = { tooltip = key ... }` and effects with `custom_effect_tooltip`. Named scripted triggers DO auto-tooltip via their name's loc key — prefer them over raw variable checks in player-facing blocks. Bare `check_variable` in an `available` block is caught (warning) by `validate_variables.py`; `visible` is exempt, since a failing `visible` hides the object outright and renders no tooltip either way.
 
 ## Faction triggers
 
