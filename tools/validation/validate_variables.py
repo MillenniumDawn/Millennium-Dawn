@@ -7,7 +7,7 @@ import os
 import re
 import sys
 from multiprocessing import Pool
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -194,6 +194,205 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
                 f"{rel}:{line} - math expression literal with >5 decimal places"
                 f" (engine truncates silently): {m.group(0).strip()}"
             )
+    return issues
+
+
+# A variable clamped to a literal range can never hold a value outside it, so a
+# check_variable comparing against one is dead logic — always true or always false.
+# The sub-1 case is the same bug seen from the other side: a 0-1 scale value written
+# against a variable clamped to a wide integer range (taliban_strength > 0.19 on a
+# 0..100 clamp fires immediately instead of at 19%). Same failure class as the
+# `threat > 40` trap in general-rules.md.
+_CLAMP_RE = re.compile(
+    r"clamp_variable\s*=\s*\{(?P<body>[^{}]*?)\}",
+    re.S,
+)
+_CLAMP_VAR_RE = re.compile(r"\bvar\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)")
+_CLAMP_MIN_RE = re.compile(r"\bmin\s*=\s*(-?\d+(?:\.\d+)?)")
+_CLAMP_MAX_RE = re.compile(r"\bmax\s*=\s*(-?\d+(?:\.\d+)?)")
+# `check_variable = { my_var > 5 }` and `check_variable = { var = my_var value = 5 ... }`
+_CHECKVAR_SHORT_RE = re.compile(
+    r"check_variable\s*=\s*\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*[<>=]\s*(-?\d+(?:\.\d+)?)\s*\}"
+)
+_CHECKVAR_LONG_RE = re.compile(
+    r"check_variable\s*=\s*\{\s*var\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)\s+value\s*=\s*(-?\d+(?:\.\d+)?)"
+)
+# A clamp on a scratch parameter constrains that one invocation, not the variable,
+# so its range says nothing about what a check elsewhere may compare against.
+_SET_TEMP_VAR_RE = re.compile(
+    r"set_temp_variable\s*=\s*\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.]*)"
+)
+_SET_PERSISTENT_VAR_RE = re.compile(
+    r"set(?:_global)?_variable\s*=\s*\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.]*)"
+)
+
+
+_UNTOOLTIPPED_TRIGGER_RE = re.compile(r"\bcheck_variable\s*=\s*\{")
+_TOOLTIP_WRAPPER_TOKENS = frozenset(
+    {"custom_trigger_tooltip", "hidden_trigger", "custom_override_tooltip"}
+)
+# check_variable takes its own inline `tooltip = KEY`, which renders the same
+# requirement line a wrapper would. `\b` does not match custom_trigger_tooltip.
+_INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
+_PLAYER_FACING_BLOCK = "available"
+
+
+def _matching_brace(text: str, open_idx: int) -> int:
+    """Index of the `}` closing the `{` at ``open_idx``, or ``len(text)`` if unbalanced."""
+    depth = 0
+    for i in range(open_idx, len(text)):
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return len(text)
+
+
+def collect_clamp_ranges(
+    args: Tuple[str, str],
+) -> Tuple[List[Tuple[str, float, float]], List[str], List[str]]:
+    """Pool worker: harvest ``clamp_variable`` min/max pairs and variable writes."""
+    filename, _mod_path = args
+    if should_skip_file(filename):
+        return [], [], []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+        cleaned = blank_quoted_strings(strip_comments(text))
+    except Exception:
+        return [], [], []
+    found: List[Tuple[str, float, float]] = []
+    for m in _CLAMP_RE.finditer(cleaned):
+        body = m.group("body")
+        var = _CLAMP_VAR_RE.search(body)
+        lo = _CLAMP_MIN_RE.search(body)
+        hi = _CLAMP_MAX_RE.search(body)
+        if var and lo and hi:
+            name = var.group(1)
+            if name.startswith("global."):
+                name = name[7:]
+            try:
+                lower = float(lo.group(1))
+                upper = float(hi.group(1))
+            except ValueError:
+                continue
+            found.append((name, lower, upper))
+    temp_written = _SET_TEMP_VAR_RE.findall(cleaned)
+    persistent_written = _SET_PERSISTENT_VAR_RE.findall(cleaned)
+    return found, temp_written, persistent_written
+
+
+def process_file_for_clamp_conflicts(args) -> List[str]:
+    """Pool worker: flag check_variable comparisons that contradict a clamp range."""
+    filename, mod_path, ranges = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+        cleaned = blank_quoted_strings(strip_comments(text))
+    except Exception:
+        return []
+    rel = os.path.relpath(filename, mod_path)
+
+    issues: List[str] = []
+    seen_ends: set = set()
+    for pattern in (_CHECKVAR_SHORT_RE, _CHECKVAR_LONG_RE):
+        for m in pattern.finditer(cleaned):
+            if m.end() in seen_ends:
+                continue
+            name, raw = m.group(1), m.group(2)
+            base = name[7:] if name.startswith("global.") else name
+            bounds = ranges.get(base)
+            if not bounds:
+                continue
+            lo, hi = bounds
+            try:
+                value = float(raw)
+            except ValueError:
+                continue
+            line = cleaned[: m.start()].count("\n") + 1
+            if value < lo or value > hi:
+                seen_ends.add(m.end())
+                issues.append(
+                    f"{rel}:{line} - {base} is clamped to {lo}..{hi} but compared"
+                    f" against {raw} — the check can never change outcome"
+                )
+            elif hi >= 10 and 0 < abs(value) < 1:
+                seen_ends.add(m.end())
+                issues.append(
+                    f"{rel}:{line} - {base} is clamped to {lo}..{hi} but compared"
+                    f" against {raw} — looks like a 0-1 scale value on a 0-{hi:g} variable"
+                )
+    return issues
+
+
+def process_file_for_untooltipped_available_checks(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag check_variable inside `available` with no tooltip wrapper.
+
+    Walks the enclosing block stack outward from each check so a wrapper at any
+    depth above it counts, not just the direct parent. A check carrying its own
+    inline ``tooltip = KEY`` needs no wrapper.
+    """
+    filename, mod_path = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = blank_quoted_strings(strip_comments(text))
+    if "check_variable" not in cleaned:
+        return []
+
+    events: List[Tuple[int, int, str]] = []
+    for m in _SCOPE_OPEN_RE.finditer(cleaned):
+        events.append((m.end() - 1, 0, m.group(1)))
+    for m in re.finditer(r"\}", cleaned):
+        events.append((m.start(), 1, ""))
+    for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
+        open_idx = m.end() - 1
+        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
+        if _INLINE_TOOLTIP_RE.search(body):
+            continue
+        events.append((m.start(), 2, ""))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    rel = os.path.relpath(filename, mod_path)
+    stack: List[str] = []
+    issues: List[Tuple[str, str, int]] = []
+    for pos, kind, tok in events:
+        if kind == 0:
+            stack.append(tok)
+        elif kind == 1:
+            if stack:
+                stack.pop()
+        else:
+            for token in reversed(stack):
+                if token in _TOOLTIP_WRAPPER_TOKENS:
+                    break
+                if token == _PLAYER_FACING_BLOCK:
+                    line = cleaned[:pos].count("\n") + 1
+                    issues.append(
+                        (
+                            "check_variable in `available` renders no tooltip line"
+                            " - the player sees a blank requirement; wrap it in"
+                            " custom_trigger_tooltip = { tooltip = KEY ... }",
+                            rel,
+                            line,
+                        )
+                    )
+                    break
     return issues
 
 
@@ -1042,6 +1241,97 @@ class Validator(BaseValidator):
             category="treasury-state-scope",
         )
 
+    def validate_clamp_range_conflicts(self):
+        """Flag check_variable comparisons that contradict the variable's own clamp.
+
+        A variable clamped to a literal min/max can never hold a value outside
+        that range, so comparing against one is dead logic. The paired sub-1
+        heuristic catches the inverse slip: a 0-1 scale value written against a
+        variable clamped to a wide integer range.
+        """
+        self._log_section("Checking clamp ranges against check_variable values...")
+
+        txt_files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
+        if not txt_files:
+            self.log("✓ No clamp-range conflicts found")
+            return
+
+        # Clamps are harvested repo-wide even in staged mode: the clamp and the
+        # check that contradicts it almost never sit in the same file.
+        clamp_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt"], ignore_staged=True
+        )
+        args_list = [(f, self.mod_path) for f in clamp_files]
+        harvested = self._pool_map(collect_clamp_ranges, args_list, chunksize=30)
+        ranges: Dict[str, Tuple[float, float]] = {}
+        temp_names: Set[str] = set()
+        persistent_names: Set[str] = set()
+        for file_ranges, temp_written, persistent_written in harvested:
+            for name, lo, hi in file_ranges:
+                if name in ranges:
+                    prev = ranges[name]
+                    ranges[name] = (min(prev[0], lo), max(prev[1], hi))
+                else:
+                    ranges[name] = (lo, hi)
+            temp_names.update(temp_written)
+            persistent_names.update(persistent_written)
+        for name in temp_names - persistent_names:
+            ranges.pop(name, None)
+        if not ranges:
+            self.log("✓ No clamp-range conflicts found")
+            return
+
+        conflict_args = [(f, self.mod_path, ranges) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_clamp_conflicts, conflict_args, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No clamp-range conflicts found",
+            "check_variable comparisons that contradict the variable's clamp range:",
+            severity=Severity.WARNING,
+            category="clamp-range-conflict",
+        )
+
+    def validate_untooltipped_available_checks(self):
+        """Flag bare check_variable inside `available` blocks (WARNING).
+
+        `visible` is excluded: a failing visible hides the object outright, so
+        there is no tooltip surface for the check to render into.
+        """
+        self._log_section(
+            "Checking for untooltipped check_variable in available blocks..."
+        )
+
+        txt_files = self._collect_files(
+            [
+                "common/decisions/**/*.txt",
+                "common/national_focus/*.txt",
+                "common/ideas/*.txt",
+                "common/military_industrial_organization/**/*.txt",
+                "common/operations/*.txt",
+                "common/special_projects/**/*.txt",
+                "common/scripted_diplomatic_actions/*.txt",
+            ]
+        )
+        if not txt_files:
+            self.log("✓ No untooltipped check_variable in available blocks")
+            return
+
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_untooltipped_available_checks, args_list, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No untooltipped check_variable in available blocks",
+            "check_variable in `available` with no tooltip wrapper (the player sees a blank requirement line):",
+            severity=Severity.WARNING,
+            category="untooltipped-available-check",
+        )
+
     def validate_flag_syntax(self):
         """Combined check for two flag syntax issues in a single pool_map pass:
 
@@ -1225,6 +1515,8 @@ class Validator(BaseValidator):
         self.validate_math_precision()
         self.validate_orphan_money_setters()
         self.validate_treasury_state_scope()
+        self.validate_clamp_range_conflicts()
+        self.validate_untooltipped_available_checks()
 
         if self.staged_only:
             # Variable validation cross-references flags across all files
