@@ -35,13 +35,7 @@ _HEADER_SINGLE_PROPS = {
     "fire_only_once",
 }
 
-# Maps script property name -> (props key, section tag for comment placement)
-_BLOCK_PROPS = {
-    "mean_time_to_happen": ("mean_time_to_happen", "mtth"),
-    "trigger": ("trigger", "trigger"),
-    "immediate": ("immediate", "immediate"),
-    "option": ("option", "options"),
-}
+_BLOCK_PROPS = frozenset({"mean_time_to_happen", "trigger", "immediate", "option"})
 
 
 _OPTION_STATEMENT_RE = re.compile(r"[A-Za-z_]\w*\s*=")
@@ -197,11 +191,13 @@ class EventStandardizer(BaseStandardizer):
             "trigger": [],
             "immediate": [],
             "option": [],
-            "comments_after_header": [],
-            "comments_after_mtth": [],
-            "comments_after_trigger": [],
-            "comments_after_immediate": [],
-            "comments_after_options": [],
+            # A comment describes what comes next, so each block carries the
+            # comments written above it. Same order and length as the block list.
+            "mean_time_to_happen_comments": [],
+            "trigger_comments": [],
+            "immediate_comments": [],
+            "option_comments": [],
+            "comments_trailing": [],
         }
 
         first_line = block_lines[0].strip()
@@ -210,8 +206,7 @@ class EventStandardizer(BaseStandardizer):
                 props["event_type"] = event_type
                 break
 
-        # Track which section we're in for comment placement
-        current_section = "header"
+        pending: List[str] = []
 
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
@@ -221,30 +216,27 @@ class EventStandardizer(BaseStandardizer):
 
             if prop_name in _HEADER_SINGLE_PROPS:
                 props[prop_name] = line
-                current_section = "header"
             elif prop_name in ("title", "desc"):
                 if "{" in line:
                     block, next_i = extract_block(block_lines, i)
                     props[prop_name].append(block)
                     i = next_i
-                    current_section = "header"
                     continue
                 else:
                     props[prop_name].append(line)
-                    current_section = "header"
             elif prop_name in _BLOCK_PROPS:
-                key, section = _BLOCK_PROPS[prop_name]
                 block, next_i = extract_block(block_lines, i)
-                props[key].append(block)
+                props[prop_name].append(block)
+                props[f"{prop_name}_comments"].append(pending)
+                pending = []
                 i = next_i
-                current_section = section
                 continue
             else:
-                # Comment or unrecognized line: bucket it under the current section.
-                props[f"comments_after_{current_section}"].append(block_lines[i])
+                pending.append(block_lines[i])
 
             i += 1
 
+        props["comments_trailing"] = pending
         return props
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
@@ -292,28 +284,29 @@ class EventStandardizer(BaseStandardizer):
 
         lines.append("")
 
-        emit_comments(lines, props["comments_after_header"])
-
         # 8. Mean time to happen
-        for mtth in props["mean_time_to_happen"]:
+        for comments, mtth in zip(
+            props["mean_time_to_happen_comments"], props["mean_time_to_happen"]
+        ):
+            emit_comments(lines, comments)
             lines.extend(collapse_or_compact(mtth[:]))
             lines.append("")
-        emit_comments(lines, props["comments_after_mtth"])
 
         # 9. Trigger
-        for trigger in props["trigger"]:
+        for comments, trigger in zip(props["trigger_comments"], props["trigger"]):
+            emit_comments(lines, comments)
             lines.extend(collapse_or_compact(trigger[:]))
             lines.append("")
-        emit_comments(lines, props["comments_after_trigger"])
 
         # 10. Immediate effects
-        for immediate in props["immediate"]:
+        for comments, immediate in zip(props["immediate_comments"], props["immediate"]):
+            emit_comments(lines, comments)
             lines.extend(collapse_or_compact(immediate[:]))
             lines.append("")
-        emit_comments(lines, props["comments_after_immediate"])
 
         # 11. Options
-        for option in props["option"]:
+        for comments, option in zip(props["option_comments"], props["option"]):
+            emit_comments(lines, comments)
             if (
                 _option_has_effects(option)
                 and not block_has_log(option)
@@ -328,8 +321,8 @@ class EventStandardizer(BaseStandardizer):
             lines.extend(collapse_or_compact(option[:]))
             lines.append("")
 
-        emit_comments(lines, props["comments_after_options"])
-        if props["comments_after_options"]:
+        emit_comments(lines, props["comments_trailing"])
+        if props["comments_trailing"]:
             lines.append("")
 
         lines.append("}")

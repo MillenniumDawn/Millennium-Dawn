@@ -1,0 +1,96 @@
+add_namespace = yugoslavia
+add_namespace = yugoslavia_news
+
+# Invitation to join a restored Yugoslav federation
+country_event = {
+	id = yugoslavia.1
+	title = yugoslavia.1.t
+	desc = yugoslavia.1.d
+	picture = GFX_bosnia_yugo_men
+	is_triggered_only = yes
+
+	trigger = { FROM = { is_yugoslav_successor_trigger = yes } }
+
+	option = {
+		name = yugoslavia.1.a
+		log = "[GetDateText]: [This.GetName]: yugoslavia.1.a executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = yugo_invite_accept_tt }
+		ROOT = {
+			every_core_state = { add_core_of = FROM }
+		}
+		FROM = {
+			annex_country = {
+				target = ROOT
+				transfer_troops = yes
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 35 has_opinion = { target = FROM value > 50 } }
+			modifier = { add = 25 sender_influence_higher_30 = yes }
+			modifier = { add = 25 check_variable = { yugo_nostalgia > 74 } }
+			modifier = { add = 20 communism > 0.35 }
+			modifier = { add = 15 check_variable = { global.yugo_dominant = FROM.id } }
+			modifier = { factor = 0.1 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+
+	option = {
+		name = yugoslavia.1.b
+		log = "[GetDateText]: [This.GetName]: yugoslavia.1.b executed"
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		effect_tooltip = { custom_effect_tooltip = yugo_invite_reject_tt }
+		FROM = {
+			set_temp_variable = { wargoal_on = ROOT }
+			set_temp_variable = { wargoal_type = 2 }
+			add_threat_from_wargoal_effect = yes
+			create_wargoal = {
+				type = annex_everything
+				target = ROOT
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
+			modifier = { factor = 0.25 sender_influence_higher_30 = yes }
+		}
+	}
+
+}
+
+# A member crosses the 75% Yugonostalgia threshold. Fires once per country.
+country_event = {
+	id = yugoslavia.30
+	title = yugoslavia.30.t
+	desc = yugoslavia.30.d
+	picture = GFX_bosnia_yugo_men
+	is_triggered_only = yes
+
+	option = {
+		name = yugoslavia.30.a
+		log = "[GetDateText]: [This.GetName]: yugoslavia.30.a executed"
+		add_political_power = 25
+		ai_chance = { base = 1 }
+	}
+}
+
+# The dominant member of the Yugoslav revival changes hands.
+news_event = {
+	id = yugoslavia_news.20
+	title = yugoslavia_news.20.t
+	desc = yugoslavia_news.20.d
+	picture = GFX_bosnia_yugo_men
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = yugoslavia_news.20.a
+		trigger = { is_yugo_dominant_trigger = yes }
+	}
+
+	option = {
+		name = yugoslavia_news.20.b
+		trigger = { NOT = { is_yugo_dominant_trigger = yes } }
+	}
+}

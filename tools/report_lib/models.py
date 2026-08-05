@@ -77,3 +77,6 @@ class ReportContext:
     artifact_url: Optional[str] = None
     date_utc: Optional[str] = None
     repo: Optional[str] = None  # "owner/name", used to build blob links to file:line
+    # "partial" when only the validators covering the diff ran, which makes a
+    # clean report a weaker claim, so the rendered body has to say which.
+    validation_scope: str = "full"

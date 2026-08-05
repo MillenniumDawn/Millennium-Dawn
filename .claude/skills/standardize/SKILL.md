@@ -23,6 +23,8 @@ Steps:
    python3 standardize.py <type> <absolute_file_path> --backup --verbose
    ```
 
+   For focus trees, add `--check-naming` to also enforce `TAG_snake_case` on country-specific `MODIFIER` names. It scans the whole file, so a tree carrying pre-existing violations will fail without writing anything — only use it when you intend to clean those up.
+
 3. Report what changed: list each block that was reformatted and what was fixed (missing logging, property reordering, removed performance-hurting patterns, etc.)
 
 4. If any issues were warned about but not auto-fixed, list them so the user can address them manually.

@@ -39,7 +39,8 @@ _RE_FOCUS_FORMAT = re.compile(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", re.M | re.U)
 _RE_NEWS_EVENT = re.compile(r"news_event\s*=\s*\{")
 _RE_OPTION = re.compile(r"\boption\s*=\s*\{")
 
-_SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC")
+# EH is the Event Horizon generic tree's mod-wide domain prefix, not a tag.
+_SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC", "EH")
 
 
 def _check_brace_matching(text: str, path: str):
@@ -258,10 +259,9 @@ def _check_focus_standards(text: str, path: str):
 
 
 def _has_focus_format(focus_id: str) -> bool:
-    for prefix in _SHARED_FOCUS_PREFIXES:
-        if focus_id.startswith(prefix):
-            return True
-    return bool(_RE_FOCUS_FORMAT.match(focus_id))
+    return focus_id.startswith(_SHARED_FOCUS_PREFIXES) or bool(
+        _RE_FOCUS_FORMAT.match(focus_id)
+    )
 
 
 def _check_event_log_standards(text: str, path: str):

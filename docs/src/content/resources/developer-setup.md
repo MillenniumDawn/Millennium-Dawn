@@ -25,7 +25,7 @@ Optional but useful:
 | Tool                                | Purpose                                                                                |
 | ----------------------------------- | -------------------------------------------------------------------------------------- |
 | **Node.js 24 LTS** + **Bun**        | Docs site development only (see the [Contributing Guide](/dev-resources/contributing/) |
-| **GitKraken** or **GitHub Desktop** | Git GUI (pick one)                                                                     |
+| **GitHub Desktop**                 | Git GUI (recommended)                                                                  |
 | **Claude Code**                     | AI-assisted development (see [AI Modding Guide](/dev-resources/ai-modding-guide/)      |
 
 ---

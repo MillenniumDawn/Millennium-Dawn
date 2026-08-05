@@ -42,6 +42,36 @@ def test_body_comment_preserved():
     assert any("cost = 80" in line for line in out)
 
 
+def test_body_comment_follows_its_property_through_reordering():
+    block = _idea(
+        [
+            "\tTAG_test_idea = {",
+            "\t\t# scales with the coalition",
+            "\t\tmodifier = { stability_factor = 0.05 }",
+            "\t\tpicture = test_picture",
+            "\t}",
+        ]
+    )
+    out = _standardize(block)
+    comment = out.index("\t\t# scales with the coalition")
+    assert "modifier" in out[comment + 1]
+
+
+def test_comment_on_a_dropped_always_no_block_survives():
+    block = _idea(
+        [
+            "\tTAG_test_idea = {",
+            "\t\tpicture = test_picture",
+            "\t\t# why this was gated off",
+            "\t\tallowed = { always = no }",
+            "\t}",
+        ]
+    )
+    out = _standardize(block)
+    assert any("# why this was gated off" in line for line in out)
+    assert not any("always = no" in line for line in out)
+
+
 def test_unknown_nested_block_preserved_and_indented():
     block = _idea(
         [

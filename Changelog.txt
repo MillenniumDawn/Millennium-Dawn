@@ -1,8 +1,9 @@
 v2.0.0
 
  Content:
-  - NEW TREES: United Kingdom, Algeria, Benelux, Greenland, Japan, Hong Kong
-  - IMPROVED TREE: Greece, North Korea, South Korea, Netherlands, Unified Korea, Bulgaria, Serbia, Romania, Montenegro, Kosovo, Denmark, Sweden, Norway, Switzerland
+  - Added Space Program Automation: a toggle that orders, launches and upgrades satellites and launch vehicles on its own, with nine plans, an adjustable launch rotation, and switches for deficit spending, building the whole program ahead, and restricting flights to the newest launch vehicle
+  - NEW TREES: United Kingdom, Algeria, Benelux, Greenland, Japan, Hong Kong, China
+  - IMPROVED TREE: Greece, North Korea, South Korea, Netherlands, Unified Korea, Bulgaria, Serbia, Romania, Montenegro, Kosovo, Denmark, Sweden, Norway, Switzerland, Bosnia
   - NEW MIO TREES: United States of America, Italy, France, Greece, Belgium, The Netherlands and Russia
     - Includes a complete rework of Generic MIOs and defense companies for both AAT and non-AAT owners
   - NEW SYSTEMS: United Nations, International UN Aid, International Recognition, Antarctica, Resource Storage, Expanded Economic Features
@@ -97,6 +98,10 @@ v2.0.0
   - [USA] The United States can no longer take the decision to establish a government in Afghanistan if they have lost in Iraq
   - [UKR] Added Natsionalna Hvardiya division template creation to the UKR_national_guard focus completion reward
   - [BOS] Added BOS_aggressive_nation national spirit for use in Bosnian civil war scenarios
+  - [BOS] Modernized the political, economic, military, diplomatic, and civil war branches of the focus tree
+  - [BOS] Reworked constituent group management, presidential rotation, postwar recovery, and country-specific AI priorities
+  - [BOS] Added date events for the 2006 April Package constitutional vote and state VAT, the 2008 Kosovo independence reaction, the EU Stabilisation and Association Agreement (which now gates the 2016 membership application), the 2009 Butmir talks, the Mostar electoral deadlock, and the 2018 Una-Sana migrant crisis
+  - [BOS] Added an Economic Development decision category (Turkish, Gulf, and Chinese-financed investment, privatization, and hydro refurbishment), added Brcko supervision and police restructuring decisions to State Reform, and seeded Turkey into the starting foreign-influence array
   - Boosting party popularity through political power now has the added flight risk of increasing corruption
   - If another coalition member is the larger party they become the ruling party and the others shift to the coalition to show popularity shifts (Issue #692)
   - [SMA] Added 30 new equipment purchase events (SMA_equipment.1-30) for buying weapons, vehicles, artillery, and support equipment from Italy and Spain
@@ -149,6 +154,8 @@ v2.0.0
   - [USA/TAL/AFG] Added a peaceful Afghan settlement path: Washington can put terms to Kabul and the Taliban, and if both sign, the civil war ends with the Taliban surviving as a sanctioned pariah state, instead of Enduring Freedom being the only way out. Either side can refuse
   - Reworked the bin Laden manhunt: hideout selection can no longer silently stall, captures, kills and escapes are proper news events, and refusing a raid request now lets the USA go in unilaterally, at the risk of hitting an empty house
   - [PER] Blocking the Strait of Hormuz now spikes the world market price of oil and throttles Gulf oil exports until the strait reopens
+  - Added a new La Resistance mission "Lobby Government" that lets you temporarily disrupt the target nations ability to combat your influence
+  - Focuses that send an offer to another nation now preview what you receive if it is accepted, across 40 country trees
 
  Achievements:
   - Add around 70 different achievements for various nations for additional goals/plans for the players
@@ -285,8 +292,12 @@ v2.0.0
   - Added reusable raid AI scripted triggers (raid_ai_target_relevant, raid_skip_target_non_hostile_no_retaliation, raid_alliance_unfavorable, raid_intervention_doctrine_reach_block) replacing duplicate predicate blocks across all raid types
   - Improved AI priority handling for special projects
   - AI no longer backs both sides of the same war: it will not send a military attaché to a country while already supporting that country's war enemy with volunteers, an attaché, or lend-lease, and recalls an existing attaché if it starts doing so (Issue #2276)
+  - The AI now builds Rail Terminals once it has Post-Conventional Rail and a state with a free slot, instead of never building them at all (Issue #2732)
+  - The AI no longer over-builds Internet Stations: five stacking build strategies with an inverted free-slot check were replaced by a single correct one (Issue #2732)
+  - [CHI] Fixed the same inverted free-slot check on China's early Internet Station and infrastructure build strategies (Issue #2732)
 
  Balance:
+  - Space and missile production is now paid off weekly across the build instead of as an upfront lump sum, for manual orders as well as automated ones
   - Productivity bonuses now center on the global average productivity instead of a fixed 1000, so nations must keep pace with global growth to retain their economic bonuses
   - Increased naval_strike_attack on all anti-ship drone missile modules
   - Increased Conditional Peace Deal base AI reluctance from -50 to -100 to make the AI harder to convince
@@ -425,8 +436,15 @@ v2.0.0
   - [ITA] Clamped ITA_stability_factor_var to plus or minus 0.2 to prevent runaway accumulation from the weekly stability modifier (Issue #1130)
   - Rebalanced landmark bonuses to a small stability boost plus tourism income for whichever country owns the state
   - Reduced political power cost for Korwin's balance of power decisions from 55 to 35, after he wins with Wałęsa
+  - Increased sub_attack on all anti-submarine missile modules so they no longer underperform anti-submarine torpedo modules of the same tier despite costing more (Issue #2525)
+  - Rail Terminals are no longer free to run: they now cost infrastructure maintenance, employ 15.000 workers per level, pay corporate tax, and contribute to GDP, like every other infrastructure building (Issue #2732)
 
  Bugfix:
+  - Removed the unreachable AI space production placeholder, which indexed undefined variables and never launched anything
+  - [PMC] The Halo Corporation can now be hired by the United States and the United Kingdom - the sponsor check was always true, so both were forced down the path requiring each country to hold an opinion of itself
+  - Space program constellations now advance to a newly researched generation - nothing in the mod ever promoted them, so a constellation stayed on its game-start tier no matter what was researched or launched
+  - Space production price and duration are now read from the tier of the selected model rather than its position in the display list, so skipping a generation no longer prices a new satellite as an old one
+  - The ctrl-click and shift-click variants of the space production amount and parallel-line buttons now respect an in-progress batch, matching the plain buttons
   - [USA] Fixed the Red Junta war-plan focuses (Canada, Mexico, Cuba, Britain, Germany, Serbia, Australia, India, China) never bypassing when the target was already a US subject or no longer existed
   - [CUB] Fixed the Russian Bases focus never bypassing when the Soviet Union already had military access or no longer existed
   - [CUB] Fixed the Nationalist Revolutions focus never bypassing once Spain and Mexico had both turned nationalist or ceased to exist
@@ -488,7 +506,7 @@ v2.0.0
   - [CHI] Fixed a BRI presence tier spirit never being removed when presence fell back below its threshold
   - [CHI] Removed a dead Belt and Road event that fired at Pakistan a China-only event it could never accept
   - [CHI] Belt and Road eligibility is now checked once on the decision category instead of separately in each of the eight application decisions
-  - [TAT/BSH/BLR/CHE] Fixed the erase_nationalist focuses never applying their party popularity boost: the temp variables were set then overwritten before add_relative_party_popularity ever consumed them, silently dropping a +7% outlook bonus in all four trees
+  - [TAT/BSH/BLR/CHE] Fixed the erase_nationalist focuses never applying their party popularity boost: the temp variables were set then overwritten before change_relative_party_popularity ever consumed them, silently dropping a +7% outlook bonus in all four trees
   - [TAT/BSH/BLR/CHE] Fixed erase_nationalist leaking its outlook bonus into the follow-up calls, which handed nationalists +21% popularity from a focus that jails them
   - [KUB] Fixed kuban.43 granting three state cores to the wrong, unrelated state instead of the one just transferred
   - [KUB] Fixed the NATO membership focus routing through Belarus's own NATO-join event, which tried to remove a Belarus-only idea, instead of Kuban's own copy of that event
@@ -920,6 +938,20 @@ v2.0.0
   - [CHI/TAI] Fixed the Great Chip Empire national spirit never actually being granted to Taiwan, chinese_aggression being read and written on the wrong scope so the SCO's China-aggression joining and dismissal rules never applied and China puppeting a country credited the aggression to the puppet, and the Taiwan Strait war-declaration events firing with no guard against an existing war, shared faction, or Taiwan already being a subject
   - Fixed a Security Council auto-reject not counting as a veto, letting a permanent member be outvoted on its own veto; split the General Assembly and Security Council sway lockouts so a concluding Assembly vote no longer freed up a second Council sway on the same member; and fixed aborting a Security Council vote leaking the subject flag, which left the target immune to every future Council proposal for the rest of the campaign
   - [PER] Fixed the Strait of Hormuz closure applying its fuel and oil-export penalty to every country in the world instead of the Gulf exporters who actually ship through the strait
+  - [Yugoslavia] Fixed the Yugonostalgia startup values resetting on every save load, since the initialization ran unguarded; it now seeds once and persists
+  - [Yugoslavia] Fixed forming Yugoslavia setting the founder's capital to Belgrade even when a non-Serbian successor led unification, and moved the founder's threat, national spirit and cosmetic tag out of the hidden effect so the forming player sees their own gains
+  - [Yugoslavia] The invitation-to-join AI now weighs the invited state's own Yugonostalgia and whether the inviter leads the revival, instead of ignoring the support system entirely
+  - [Yugoslavia] The Serbian restore-Yugoslavia focus now requires independence like the Kosovo and Montenegro paths, and the Bosnian unite decision reads the shared consensus check instead of re-listing seven raw variable checks
+  - [BOS] Fixed the Dayton Accords spirit making subject annexation free instead of more expensive (annex cost sign was inverted)
+  - [BOS] Roll the Dice no longer silently sets stability to an absolute 20%; it now applies a visible stability penalty
+  - [BOS] Merged the Belgrade Conference's duplicated pro-Srpska timer extensions, closed the four-month window where the House of Representatives focus was simultaneously available and bypassed, and gave the Milorad Dodik focus a bypass so it can no longer become a permanent dead leaf when the 2010 event is missed
+  - [BOS] Localisation cleanup: restored diacritics on the rotating-presidency names, fixed the SFOR/EUFOR intervention tooltips, and corrected spelling and grammar across the tree; added the missing civilian-factory decision cost text
+  - [BOS] Fixed the civil war militia spawns for Republika Srpska and Herzeg-Bosnia silently failing because the breakaway tags never had the militia division template
+  - [BOS] Fixed two blank decision icons, the entitled-lands decision being able to take a state occupied by an unrelated third country, the presidency rotation decision consuming political power when no rotation could happen, and the aircraft purchase focus gating on a third of its real cost
+  - [BOS] The Islamic takeover decision no longer declares a duplicate regular war alongside its scripted civil war or grants Herzeg-Bosnia its cores twice, and the workers' republic and caliphate cosmetic tags now drop on regime change
+  - [BOS] The SFOR and Dayton Accords spirits now survive a civil war split, the postwar grievance and NATO Membership Action Plan spirits have icons again, and the state landmine modifier no longer shares an identifier with the landmine idea
+  - [Balkans] Cross-nation fallout in the Gotovina, Ohrid, Prespa, and Kosovo events is now visible in tooltips instead of applied silently, the Kosovo normalization answer is opinion-driven instead of a coin flip, and the Banjska event text now attributes the contested claims instead of stating them as fact
+  - [SER] Serbia's adjusted starting economy (treasury, investments, tax rates) supports the Yugoslavia revival arc
   - Fixed the "asks for a debt bailout" events taking no money from the donor while still granting influence and debt relief (Issue #2464)
   - Accepting a bailout request now applies the payment, debt cut, influence gain, and opinion shift together at answer time, and does nothing if the request has already lapsed
   - Fixed AI bailout donors ignoring the bailout cost when deciding whether to accept, so poor nations no longer bankrupt themselves helping others
@@ -931,6 +963,21 @@ v2.0.0
   - Fixed the drought apology payment to a neighbour charging nothing
   - Fixed the raid reparations preview showing a $0 payment for the paying side
   - Fixed annexation GDP, inflation, and literacy blending ignoring the annexed nation's values
+  - Fixed frigates fitted with the Heavy Frigate upgrade module becoming permanently undeployable (Issue #2508)
+  - Fixed the Naval Radar Jammer tech line reducing detection less at higher tiers than lower tiers, and corrected a designer hint typo (Issue #2536)
+  - [BNL] Fixed the Vlissingenklasse design fitting a minelaying module into its radar slot, leaving it with no radar or sonar
+  - [CHI] Fixed the Type 054A design losing its fire control system and VLS launcher to slots that reject them
+  - [ENG] Fixed the Type 32 Guardian design being built with no engine, no main gun and no AA missiles
+  - [ENG] Fixed the River Class design silently dropping its AA missiles
+  - [GER] Fixed the Frankenthal 2 and Köln designs silently dropping their anti-ship missiles
+  - [GER] Fixed the Frankenthal Class starting design naming its sonar module with the wrong capitalization, so the module never loaded
+  - [GRE] Fixed the Kimon Class design losing its heavy frigate upgrade package to a slot that rejects it
+  - [GRN] Fixed the Itilleq and Narsaq designs silently dropping their deck guns
+  - [JAP] Fixed the Hyūga design losing its flight deck and missile launcher to slots that reject them, and corrected the variant name
+  - [VRP] Fixed the Volhynian referendum granting autonomy to Lviv instead of Volhynia
+  - Removed 24 event IDs that were being fired with no event behind them, so the affected focuses, decisions and event chains no longer stop dead partway through
+  - [NKO] North Korea's AI no longer foments a southern insurrection in the opening years or while the South is under the American guarantee, and Korean reunification now broadcasts a world news event with Japan, Taiwan, the United States and the Philippines reacting to a northern conquest (Issue #2749)
+  - [HOL] Fixed the carrier acquisition decisions never becoming available: the top-five-influencer requirement was checked against the Netherlands' own influence array instead of the partner nation's, so it could never be met (Issue #2746)
 
  Database:
   - [FRA] Added Tripartite, Flamant, Lapérouse and P400 class ships to start date, given to their operating countries FRA, BEL, HOL with historical vessel names.
@@ -1125,10 +1172,6 @@ v2.0.0
   - Fixed Austria, Norway, Finland, Slovakia, Georgia, and Maoist Nepal sharing near-identical political map colors with their neighbours, making them distinguishable on political map screenshots (Issue #2099)
 
  Performance:
-  - [CHI] Converted China's static/hardcoded dynamic modifiers to cheaper mechanisms: permanent state buffs (disputed waters, Okinawa, Rason SEZ, northeast mobilization, all BRI project/seizure state modifiers) now use add_state_modifier, and the BRI global-presence and partner tiers are now tiered national spirits instead of monthly-recalculated dynamic modifiers
-  - [CHI] Split the BRI state modifiers into state-scope effects (applied to the state) and country-scope effects (folded into the BRI partner-tier spirits), removing country modifiers that silently did nothing when attached to a state
-  - [CHI] Removed three unused dynamic modifiers (Wakhan buffer, Asian Century Concord, BRI Debt Dependency) that were defined but never applied
-  - [ENG] Replaced the is_commonwealth_member dynamic-modifier lookup with a global.commonwealth_member id array; the array is populated from the 54 Commonwealth history files and kept in sync at the Rwanda event and the denounce-Commonwealth decision (Issue #1515)
   - The international systems GUI dirty counter is now only bumped from player-initiated paths, preventing AI voters and recognition grants from waking every open GUI
   - Added dirty variable (global.CPD_dirty) to the Conditional Peace Deal GUI so it only refreshes on player interaction instead of per-tick
   - AI paths in the peace deal system no longer bump the GUI dirty variable, preventing unnecessary GUI refreshes for all players when the AI builds deals
@@ -1241,7 +1284,6 @@ v2.0.0
   - Reduced precision in several menus so you do not see 5 decimal points in areas where it does not matter
   - Fixed the user interface for the politics screen when you are a subject and the faction screen overlaps the menu
   - Fixed the "View Factions" button missing when you were in a faction
-  - Fixed MIO Unlock Catalogue requirements being shifted by one entry, leaving Central Heavy Atomics & Power with no criteria and unlockable only via console (Issue #1955)
   - Reworked the state-investments window into a new modular MD_investments.gui/.gfx, replacing the legacy investments_window.gui layout with a single-grid building selector and animated show/hide panel
   - Switched investment and economy-view building selection from ON/OFF sprite-swapping to static buttons with an animated glow overlay (GFX_building_icon_glow)
   - Removed the two-page investment building selector in favor of a single grid showing all building types
