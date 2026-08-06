@@ -387,24 +387,34 @@ civil_war_cleanup_ivory_coast = {
 	if = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_ivorian_first_civil_war_cleanup_complete }
+			NOT = { has_global_flag = GLOBAL_ivorian_first_civil_war_cleanup_pending }
 			has_global_flag = GLOBAL_ivorian_first_civil_war
 			OR = { original_tag = CDI original_tag = FNC }
-			FROM = { OR = { original_tag = CDI original_tag = FNC } }
 			owns_state = 352
 			owns_state = 353
 			owns_state = 354
+		}
+		set_global_flag = {
+			flag = GLOBAL_ivorian_first_civil_war_cleanup_pending
+			days = 7
+			value = 1
 		}
 		country_event = { id = ivory_coast_md.10 days = 1 }
 	}
 	if = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_ivorian_second_civil_war_cleanup_complete }
+			NOT = { has_global_flag = GLOBAL_ivorian_second_civil_war_cleanup_pending }
 			has_global_flag = GLOBAL_ivorian_second_civil_war
 			OR = { original_tag = CDI original_tag = FNC }
-			FROM = { OR = { original_tag = CDI original_tag = FNC } }
 			owns_state = 352
 			owns_state = 353
 			owns_state = 354
+		}
+		set_global_flag = {
+			flag = GLOBAL_ivorian_second_civil_war_cleanup_pending
+			days = 7
+			value = 1
 		}
 		country_event = { id = ivory_coast_md.15 days = 1 }
 	}
@@ -414,7 +424,6 @@ civil_war_cleanup_senegal = {
 	if = {
 		limit = {
 			original_tag = SEN
-			NOT = { tag = FROM }
 			has_global_flag = GLOBAL_senegalese_civil_war
 			NOT = { has_global_flag = GLOBAL_senegalese_civil_war_cleanup_complete }
 			NOT = { has_global_flag = GLOBAL_senegalese_civil_war_cleanup_pending }
@@ -433,7 +442,6 @@ civil_war_cleanup_haiti = {
 	if = {
 		limit = {
 			original_tag = HAI
-			FROM = { original_tag = HAI }
 			has_global_flag = GLOBAL_haitian_civil_war
 			NOT = { has_global_flag = GLOBAL_haitian_civil_war_cleanup_complete }
 			owns_state = 859
@@ -447,7 +455,6 @@ civil_war_cleanup_car_bush_war = {
 	if = {
 		limit = {
 			original_tag = CAR
-			FROM = { original_tag = CAR }
 			has_global_flag = GLOBAL_central_african_bush_war_escalated
 			NOT = { has_global_flag = GLOBAL_central_african_bush_war_begun }
 			NOT = { has_global_flag = GLOBAL_central_african_bush_war_cleanup_complete }
@@ -497,7 +504,6 @@ civil_war_cleanup_somalia = {
 			has_global_flag = GLOBAL_somali_civil_war_begun
 			NOT = { has_global_flag = GLOBAL_somali_civil_war_cleanup_complete }
 			OR = { original_tag = SOM original_tag = SHB }
-			NOT = { tag = FROM }
 			if = {
 				limit = { original_tag = SOM }
 				NOT = { country_exists = SHB }
@@ -517,8 +523,15 @@ civil_war_cleanup_afghanistan = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_afghan_civil_war_over }
 			OR = { original_tag = AFG original_tag = TAL }
-			NOT = { tag = FROM }
-			FROM = { OR = { original_tag = AFG original_tag = TAL } }
+			exists = yes
+			if = {
+				limit = { original_tag = AFG }
+				NOT = { country_exists = TAL }
+			}
+			if = {
+				limit = { original_tag = TAL }
+				NOT = { country_exists = AFG }
+			}
 		}
 		set_global_flag = GLOBAL_afghan_civil_war_over
 		409 = { remove_core_of = AFG remove_core_of = TAL }
@@ -559,8 +572,15 @@ civil_war_cleanup_angola = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_angolan_civil_war_over }
 			OR = { original_tag = AGL original_tag = UNI }
-			NOT = { tag = FROM }
-			FROM = { OR = { original_tag = AGL original_tag = UNI } }
+			exists = yes
+			if = {
+				limit = { original_tag = AGL }
+				NOT = { country_exists = UNI }
+			}
+			if = {
+				limit = { original_tag = UNI }
+				NOT = { country_exists = AGL }
+			}
 		}
 		296 = { remove_core_of = AGL remove_core_of = UNI }
 		297 = { remove_core_of = AGL remove_core_of = UNI }
@@ -592,8 +612,15 @@ civil_war_cleanup_sierra_leone = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_sierra_leonean_civil_war_over }
 			OR = { original_tag = SIE original_tag = AFR }
-			NOT = { tag = FROM }
-			FROM = { OR = { original_tag = SIE original_tag = AFR } }
+			exists = yes
+			if = {
+				limit = { original_tag = SIE }
+				NOT = { country_exists = AFR }
+			}
+			if = {
+				limit = { original_tag = AFR }
+				NOT = { country_exists = SIE }
+			}
 		}
 		country_event = { id = SierraLeone.0 days = 1 random_days = 14 }
 	}
@@ -604,8 +631,15 @@ civil_war_cleanup_liberia = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_liberian_civil_war_over }
 			OR = { original_tag = LIB original_tag = LUR }
-			NOT = { tag = FROM }
-			FROM = { OR = { original_tag = LIB original_tag = LUR } }
+			exists = yes
+			if = {
+				limit = { original_tag = LIB }
+				NOT = { country_exists = LUR }
+			}
+			if = {
+				limit = { original_tag = LUR }
+				NOT = { country_exists = LIB }
+			}
 		}
 		country_event = { id = Liberia.0 days = 1 random_days = 14 }
 	}
@@ -617,52 +651,20 @@ civil_war_cleanup_syria = {
 			NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
 			has_global_flag = GLOBAL_syrian_civil_war_started
 			OR = { original_tag = SYR original_tag = FSA original_tag = NUS }
-			NOT = { tag = FROM }
-			FROM = { OR = { original_tag = SYR original_tag = FSA original_tag = NUS original_tag = ISI } }
+			exists = yes
 			if = {
-				limit = {
-					NOT = {
-						OR = {
-							original_tag = SYR
-							FROM = { original_tag = SYR }
-						}
-					}
-				}
+				limit = { NOT = { original_tag = SYR } }
 				NOT = { country_exists = SYR }
 			}
 			if = {
-				limit = {
-					NOT = {
-						OR = {
-							original_tag = FSA
-							FROM = { original_tag = FSA }
-						}
-					}
-				}
+				limit = { NOT = { original_tag = FSA } }
 				NOT = { country_exists = FSA }
 			}
 			if = {
-				limit = {
-					NOT = {
-						OR = {
-							original_tag = NUS
-							FROM = { original_tag = NUS }
-						}
-					}
-				}
+				limit = { NOT = { original_tag = NUS } }
 				NOT = { country_exists = NUS }
 			}
-			if = {
-				limit = {
-					NOT = {
-						OR = {
-							original_tag = ISI
-							FROM = { original_tag = ISI }
-						}
-					}
-				}
-				NOT = { country_exists = ISI }
-			}
+			NOT = { country_exists = ISI }
 		}
 		every_state = {
 			limit = { OR = { is_core_of = ISI is_claimed_by = ISI } }
@@ -855,6 +857,7 @@ civil_war_cleanup_second_libya_war = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_libyan_civil_war_over }
 			OR = { original_tag = HOR original_tag = GNA original_tag = GNC }
+			exists = yes
 			NOT = { has_war_with = HOR }
 			NOT = { has_war_with = GNA }
 			NOT = { has_war_with = GNC }
@@ -862,6 +865,40 @@ civil_war_cleanup_second_libya_war = {
 		}
 		LBA_civil_war_cleanup_effect = yes
 	}
+}
+
+# Guards above self-validate, so this is safe to fire from any war-ending on_action;
+# a call that comes too early is a no-op and the next hook retries it.
+civil_war_cleanup_hooks = {
+	AFG = { civil_war_cleanup_afghanistan = yes }
+	TAL = { civil_war_cleanup_afghanistan = yes }
+	AGL = { civil_war_cleanup_angola = yes }
+	UNI = { civil_war_cleanup_angola = yes }
+	SIE = { civil_war_cleanup_sierra_leone = yes }
+	AFR = { civil_war_cleanup_sierra_leone = yes }
+	LIB = { civil_war_cleanup_liberia = yes }
+	LUR = { civil_war_cleanup_liberia = yes }
+	SEN = { civil_war_cleanup_senegal = yes }
+	SOM = { civil_war_cleanup_somalia = yes }
+	SHB = { civil_war_cleanup_somalia = yes }
+	SYR = { civil_war_cleanup_syria = yes }
+	FSA = { civil_war_cleanup_syria = yes }
+	NUS = { civil_war_cleanup_syria = yes }
+	YEM = { civil_war_cleanup_yemen = yes }
+	HOU = { civil_war_cleanup_yemen = yes }
+	AQY = { civil_war_cleanup_yemen = yes }
+	STC = { civil_war_cleanup_yemen = yes }
+	CDI = { civil_war_cleanup_ivory_coast = yes }
+	FNC = { civil_war_cleanup_ivory_coast = yes }
+	MAL = { civil_war_cleanup_mali = yes }
+	TUA = { civil_war_cleanup_mali = yes }
+	CAR = { civil_war_cleanup_car_phase_two = yes }
+	LGN = { civil_war_cleanup_car_phase_two = yes }
+	SEL = { civil_war_cleanup_car_phase_two = yes }
+	BAL = { civil_war_cleanup_car_phase_two = yes }
+	HOR = { civil_war_cleanup_second_libya_war = yes }
+	GNA = { civil_war_cleanup_second_libya_war = yes }
+	GNC = { civil_war_cleanup_second_libya_war = yes }
 }
 
 civil_war_startup_repairs = {
@@ -880,7 +917,7 @@ civil_war_startup_repairs = {
 			NOT = { has_global_flag = GLOBAL_angolan_orphan_cores_repaired }
 			NOT = { country_exists = AGL }
 			NOT = { country_exists = UNI }
-			NOT = { 414 = { is_core_of = AGL } }
+			NOT = { 298 = { is_core_of = AGL } }
 		}
 		296 = { remove_core_of = AGL remove_core_of = UNI }
 		297 = { remove_core_of = AGL remove_core_of = UNI }
