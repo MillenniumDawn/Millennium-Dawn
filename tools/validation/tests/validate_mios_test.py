@@ -57,9 +57,20 @@ def test_generic_initial_trait_reference_is_exempt(tmp_path):
 
 def test_position_x_bounds(tmp_path):
     v = _validator(tmp_path)
-    v._check_positions("\tposition = { x = -1 y = 0 }\n", "f.txt", 0)
+    v._check_positions("TST_org", "\tposition = { x = -1 y = 0 }\n", "f.txt", 0)
     assert not v._issues
-    v._check_positions("\tposition = { x = 12 y = 3 }\n", "f.txt", 0)
+    v._check_positions("TST_org", "\tposition = { x = 12 y = 3 }\n", "f.txt", 0)
+    assert v._issues[0].category == "trait-x-bounds"
+
+
+def test_position_x_bounds_exempt_orgs(tmp_path):
+    body = "\tposition = { x = 16 y = 0 }\n"
+    v = _validator(tmp_path)
+    v._check_positions("generic_naval_equipment_organization", body, "f.txt", 0)
+    assert not v._issues
+
+    v = _validator(tmp_path)
+    v._check_positions("generic_some_new_org", body, "f.txt", 0)
     assert v._issues[0].category == "trait-x-bounds"
 
 

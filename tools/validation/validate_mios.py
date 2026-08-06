@@ -31,6 +31,24 @@ ORG_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
 TAG_PREFIX_RE = re.compile(r"^([A-Z]{3})_")
 SHARED_PREFIXES = ("GENERIC_", "generic_")
 
+# Shared generic trees are wider than the country-MIO grid; their branch roots are
+# absolute-positioned lane origins at x = 10..16 and their children stay relative.
+X_BOUNDS_EXEMPT_ORGS = frozenset(
+    {
+        "generic_AFV_equipment_organization",
+        "generic_air_equipment_organization",
+        "generic_fixed_wing_and_helicopter_equipment_organization",
+        "generic_infantry_equipment_organization",
+        "generic_mixed_naval_equipment_organization",
+        "generic_naval_equipment_organization",
+        "generic_naval_light_equipment_organization",
+        "generic_small_naval_Manufacturer",
+        "generic_specialized_helicopter_aa_at_organization",
+        "generic_tank_equipment_organization",
+        "generic_utility_vehicle_manufacturer",
+    }
+)
+
 ORIGINAL_TAG_RE = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
 INITIAL_TRAIT_NAME_RE = re.compile(
     r"initial_trait\s*=\s*\{\s*name\s*=\s*([A-Za-z0-9_]+)"
@@ -113,7 +131,7 @@ class Validator(BaseValidator):
                 self._check_id(org_id, rel, body_offset)
                 self._check_allowed(org_id, body, rel, body_offset)
                 self._check_initial_trait(org_id, body, rel, body_offset)
-                self._check_positions(body, rel, body_offset)
+                self._check_positions(org_id, body, rel, body_offset)
                 self._check_on_complete(body, rel, body_offset)
                 self._check_header_text(org_id, body, rel, body_offset, loc_keys)
                 self._check_trait_localisation(org_id, body, rel, body_offset, loc_keys)
@@ -169,7 +187,9 @@ class Validator(BaseValidator):
                 line,
             )
 
-    def _check_positions(self, body: str, rel: str, body_offset: int):
+    def _check_positions(self, org_id: str, body: str, rel: str, body_offset: int):
+        if org_id in X_BOUNDS_EXEMPT_ORGS:
+            return
         for m in POSITION_X_RE.finditer(body):
             x = int(m.group(1))
             if x > 9:
