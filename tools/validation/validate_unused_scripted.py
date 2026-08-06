@@ -81,6 +81,10 @@ FALSE_POSITIVE_NAMES = frozenset(
         "enable_debt_rate_payments",
         # 00_ct_effects.txt
         "add_new_org",
+        # 00_economic_effects.txt - industry loss/relocation library, deliberately
+        # callerless; a caller sets reduction_factor then invokes one of these.
+        "remove_civilian_industry_effect",
+        "migrate_industry_to_random_effect",
         # 00_economic_system_utilities.txt
         "disable_corporate_tax_rate_change",
         "enable_corporate_tax_rate_change",
