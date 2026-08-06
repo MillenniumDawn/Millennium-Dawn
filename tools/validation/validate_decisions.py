@@ -515,6 +515,8 @@ class DecisionFactory:
         self.cost = extract_value_single_line(dec, "cost")
         self.has_tooltip = "tooltip =" in dec
         self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", dec))
+        self.has_random_effect = bool(re.search(r"\brandom\s*=\s*\{", dec))
+        self.fire_only_once = "fire_only_once = yes" in dec
         self.fixed_random_seed_explicit = bool(
             re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
         )
@@ -1177,34 +1179,39 @@ class Validator(BaseValidator):
             "Decisions in categories without allowed check that also lack their own allowed trigger:",
         )
 
-    def validate_random_list_seed(self):
-        """Flag decisions using ``random_list`` without an explicit ``fixed_random_seed`` setting.
+    def validate_random_seed(self):
+        """Flag repeatable decisions rolling randomness without an explicit ``fixed_random_seed``.
 
         HOI4 caches RNG outcomes by default within a single tick/save state, so
-        a ``random_list`` inside a decision will deterministically pick the same
-        branch every time it's evaluated unless ``fixed_random_seed = no`` is
-        set on the decision. This defeats the point of the random_list and
-        leads to confusingly stuck behavior.
+        a ``random_list`` or ``random = { chance = N ... }`` inside a decision
+        will deterministically pick the same branch every time it's evaluated
+        unless ``fixed_random_seed = no`` is set on the decision. This defeats
+        the point of the roll and leads to confusingly stuck behavior.
+
+        ``fire_only_once = yes`` decisions are exempt: they resolve their roll
+        once, so a repeating seed can never surface.
 
         We only flag decisions where ``fixed_random_seed`` is omitted entirely;
         an explicit ``fixed_random_seed = yes`` is treated as a deliberate
         choice (e.g. reproducible AI rolls) and left alone.
         """
         self._log_section(
-            "Checking decisions with random_list missing fixed_random_seed = no..."
+            "Checking repeatable decisions with random rolls missing fixed_random_seed = no..."
         )
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
         for d in factories:
-            if d.has_random_list and not d.fixed_random_seed_explicit:
+            if d.fire_only_once or d.fixed_random_seed_explicit:
+                continue
+            if d.has_random_list or d.has_random_effect:
                 results.append(f"{d.token:<55}{d.source_basename}")
 
         self._report(
             results,
-            "✓ No random_list decisions missing an explicit fixed_random_seed setting",
-            "Decisions with random_list but no explicit 'fixed_random_seed' (RNG will deterministically repeat — set 'fixed_random_seed = no' to randomise, or 'fixed_random_seed = yes' to acknowledge intentional determinism):",
+            "✓ No repeatable random decisions missing an explicit fixed_random_seed setting",
+            "Repeatable decisions with random_list or random but no explicit 'fixed_random_seed' (RNG will deterministically repeat — set 'fixed_random_seed = no' to randomise, or 'fixed_random_seed = yes' to acknowledge intentional determinism):",
         )
 
     def validate_redundant_tag_checks(self):
@@ -2057,7 +2064,7 @@ class Validator(BaseValidator):
         self.validate_targets_no_trigger()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
-        self.validate_random_list_seed()
+        self.validate_random_seed()
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
         self.validate_tag_redundant_with_category()

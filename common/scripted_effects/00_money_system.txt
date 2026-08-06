@@ -621,6 +621,26 @@ calculate_tax_gain = {
 	}
 	else = { set_variable = { internet_station_tax = 0 } }
 
+	# Rail Terminals
+	if = { limit = { check_variable = { rail_terminal_total > 0 } }
+		set_variable = {
+			rail_terminal_tax = {
+				value = rail_terminal_total
+				multiply = {
+					value = 1
+					add = modifier@infrastructure_tax_gain_multiplier_modifier
+					multiply = rail_terminal_manpower_fulfillment
+					multiply = {
+						value = unified_building_multiplier
+						multiply = 0.4375
+					}
+				}
+				clamp = { min = 0 max = 100000000 }
+			}
+		}
+	}
+	else = { set_variable = { rail_terminal_tax = 0 } }
+
 	# Healthcare Corporate Income Tax
 	# Represents the private healthcare market: hospitals, pharmaceutical companies, medical devices, insurance
 	# Uses healthcare_gdp_var computed in calculate_gdp (last cycle) as the tax base
@@ -675,6 +695,7 @@ calculate_tax_gain = {
 			add = fossil_powerplant_tax
 			add = renewable_energy_tax
 			add = internet_station_tax
+			add = rail_terminal_tax
 
 			clamp = { min = 0 max = 100000000 }
 		}
@@ -3326,11 +3347,25 @@ update_infra_rate = {
 	}
 
 	set_variable = {
+		rail_infra_expense = {
+			value = rail_terminal_total
+			multiply = 0.015
+			multiply = {
+				value = 1
+				add = modifier@infrastructure_cost_multiplier_modifier
+				multiply = common_money_modifier
+			}
+			multiply = infra_size_scaling
+		}
+	}
+
+	set_variable = {
 		infra_gain = {
 			value = nuclear_infra_expense
 			add = fossil_infra_expense
 			add = renewable_infra_expense
 			add = internet_infra_expense
+			add = rail_infra_expense
 			clamp = { min = 0 max = 100000000 }
 		}
 	}
@@ -4681,6 +4716,15 @@ update_state_variables = {
 			}
 		}
 		set_variable = {
+			rail_terminal_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@rail_terminal
+				}
+			}
+		}
+		set_variable = {
 			undamaged_enrichment_facilities = {
 				value = 0
 				every_collection = {
@@ -5075,6 +5119,7 @@ calculate_gdp = {
 	set_temp_variable = { workers_per_fossil_powerplant = 0.0075 }
 	set_temp_variable = { workers_per_renewable_energy = 0.0225 }
 	set_temp_variable = { workers_per_internet_station = 0.012 }
+	set_temp_variable = { workers_per_rail_terminal = 0.015 }
 
 	set_temp_variable = {
 		mil_facs_worker_requirement_multiplier = {
@@ -5646,6 +5691,39 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_internet_stations }
 	}
 
+	# Rail Terminals
+	if = { limit = { check_variable = { rail_terminal_total = 0 } }
+		set_variable = { rail_terminal_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_temp_variable = {
+			max_workers_in_rail_terminals = {
+				value = rail_terminal_total
+				multiply = workers_per_rail_terminal
+				multiply = {
+					value = 1
+					add = modifier@buildings_worker_requirement_modifier
+					add = modifier@infrastructure_workforce_requirement_modifier
+					clamp = { min = 0.10 max = @math_expressions_max }
+				}
+			}
+		}
+		set_variable = {
+			workers_in_rail_terminals = {
+				value = max_workers_in_rail_terminals
+				multiply = rail_terminal_employment_var
+				clamp = { min = 0 max = workforce_total }
+			}
+		}
+		set_variable = {
+			rail_terminal_manpower_fulfillment = {
+				value = workers_in_rail_terminals
+				divide = { value = max_workers_in_rail_terminals clamp = { min = 0.001 max = @math_expressions_max } }
+			}
+		}
+		subtract_from_temp_variable = { workforce_total = workers_in_rail_terminals }
+	}
+
 	# Healthcare Sector — Workforce
 	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.15 } }
 	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 0.30 } }
@@ -5760,9 +5838,10 @@ calculate_gdp = {
 			add = fossil_powerplants_manpower_fulfillment
 			add = renewable_energy_infra_manpower_fulfillment
 			add = internet_stations_manpower_fulfillment
+			add = rail_terminal_manpower_fulfillment
 			add = healthcare_manpower_fulfillment
 			add = bureaucracy_manpower_fulfillment
-			divide = 14
+			divide = 15
 		}
 	}
 
@@ -5893,6 +5972,13 @@ calculate_gdp = {
 			multiply = internet_stations_manpower_fulfillment
 		}
 	}
+	set_temp_variable = {
+		gdp_from_rail_terminals = {
+			value = rail_terminal_total
+			multiply = 2.5
+			multiply = rail_terminal_manpower_fulfillment
+		}
+	}
 
 	# Healthcare Sector — GDP Contribution
 	# Formula: population_total * 0.01 * gdp_per_capita * level_mult * fulfillment
@@ -5931,6 +6017,7 @@ calculate_gdp = {
 			add = gdp_from_fossil_powerplants
 			add = gdp_from_renewable_energy
 			add = gdp_from_internet_stations
+			add = gdp_from_rail_terminals
 			add = gdp_from_healthcare
 			add = gdp_from_agriculture
 			add = gdp_from_resource_sector
@@ -6014,6 +6101,7 @@ calculate_gdp = {
 			add = gdp_from_fossil_powerplants
 			add = gdp_from_renewable_energy
 			add = gdp_from_internet_stations
+			add = gdp_from_rail_terminals
 			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 1 }
 		}
@@ -6523,6 +6611,7 @@ setup_employment_variables = {
 		set_variable = { fossil_powerplant_employment_var = 1 }
 		set_variable = { renewable_energy_employment_var = 1 }
 		set_variable = { internet_station_employment_var = 1 }
+		set_variable = { rail_terminal_employment_var = 1 }
 		if = {
 			limit = { NOT = { has_variable = corporate_tax_rate } }
 			set_variable = { var = corporate_tax_rate value = 20 }
@@ -6546,6 +6635,7 @@ setup_employment_variables = {
 			set_variable = { PREV.fossil_powerplant_employment_var = fossil_powerplant_employment_var }
 			set_variable = { PREV.renewable_energy_employment_var = renewable_energy_employment_var }
 			set_variable = { PREV.internet_station_employment_var = internet_station_employment_var }
+			set_variable = { PREV.rail_terminal_employment_var = rail_terminal_employment_var }
 			set_variable = { var = PREV.corporate_tax_rate value = corporate_tax_rate }
 			set_variable = { var = PREV.population_tax_rate value = population_tax_rate }
 		}
