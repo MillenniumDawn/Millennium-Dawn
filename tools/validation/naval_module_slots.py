@@ -103,6 +103,17 @@ def _scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
     return None
 
 
+def _quoted_scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
+    """First ``key = "value"`` at brace-depth 0 of the ``text[lo:hi]`` span."""
+    for m in re.compile(r"\b" + re.escape(key) + r'\s*=\s*"([^"]*)"').finditer(
+        text, lo, hi
+    ):
+        seg = text[lo : m.start()]
+        if seg.count("{") == seg.count("}"):
+            return m.group(1)
+    return None
+
+
 def blank_comments(text: str) -> str:
     """Replace every ``#`` comment with spaces, preserving line lengths and
     offsets so character positions still map to the original line numbers."""
@@ -434,6 +445,22 @@ def check_created_variants(
         )
     findings.sort(key=lambda f: f.line)
     return findings
+
+
+def parse_variant_names(content: str) -> List[Tuple[str, str, int]]:
+    """``(type, name, line)`` for every ``create_equipment_variant`` in *content*.
+
+    Blocks missing either field are skipped: an OOB ``version_name`` lookup can
+    never resolve to them.
+    """
+    text = blank_comments(content)
+    out: List[Tuple[str, str, int]] = []
+    for vlo, vhi in _iter_named_blocks(text, 0, len(text), "create_equipment_variant"):
+        etype = _scalar(text, vlo, vhi, "type")
+        name = _quoted_scalar(text, vlo, vhi, "name")
+        if etype and name:
+            out.append((etype, name, text.count("\n", 0, vlo) + 1))
+    return out
 
 
 def build_indexes(
