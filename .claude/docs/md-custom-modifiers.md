@@ -103,6 +103,7 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 | `comsat_production_cost_modifier`        |
 | `spysat_production_cost_modifier`        |
 | `killsat_production_cost_modifier`       |
+| `olv_launch_reliability_modifier`        |
 | `nuclear_reactor_fuel_production_factor` |
 | `nuclear_reactor_fuel_production`        |
 
@@ -268,11 +269,11 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 
 Exist only for a single country. Only use in content for that country.
 
-| Modifier                                    | Country | File                           |
-| ------------------------------------------- | ------- | ------------------------------ |
-| `CZE_skoda_superb_productivity_modifier`    | CZE     | `CZE_modifier_definitions.txt` |
-| `ITA_ageing_population_drift_modifier`      | ITA     | `ITA_modifier_definitions.txt` |
-| `ITA_reform_expectance_drift`               | ITA     | `ITA_modifier_definitions.txt` |
+| Modifier                                 | Country | File                           |
+| ---------------------------------------- | ------- | ------------------------------ |
+| `CZE_skoda_superb_productivity_modifier` | CZE     | `CZE_modifier_definitions.txt` |
+| `ITA_ageing_population_drift_modifier`   | ITA     | `ITA_modifier_definitions.txt` |
+| `ITA_reform_expectance_drift`            | ITA     | `ITA_modifier_definitions.txt` |
 
 ## Special
 
