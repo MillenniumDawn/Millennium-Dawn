@@ -1731,9 +1731,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = SYR
-	}
+	trigger = { tag = SYR }
 
 	option = {
 		name = usa.53.o1
@@ -1756,9 +1754,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = ISR
-	}
+	trigger = { tag = ISR }
 
 	option = {
 		name = usa.54.o1
@@ -1789,9 +1785,7 @@ country_event = {
 		NOT = { has_country_flag = collapsed_nation }
 	}
 
-	immediate = {
-		set_country_flag = USA_death_of_gus_hall
-	}
+	immediate = { set_country_flag = USA_death_of_gus_hall }
 
 	option = {
 		name = usa.60.o1
@@ -1810,8 +1804,10 @@ country_event = {
 		if = {
 			limit = {
 				NOT = {
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { gov_coalition_array = 4 }
+					OR = {
+						is_in_array = { ruling_party = 4 }
+						is_in_array = { gov_coalition_array = 4 }
+					}
 				}
 			}
 			add_country_leader_trait = communist_sympathizer
@@ -1951,6 +1947,7 @@ country_event = {
 		set_temp_variable = { temp_opinion = -15 }
 		change_communist_cadres_opinion = yes
 	}
+
 }
 
 ##NATO Interaction Events
@@ -1967,8 +1964,10 @@ news_event = {
 				has_idea = Major_Non_NATO_Ally
 			}
 			NOT = {
-				tag = SOV
-				is_in_faction_with = SOV
+				OR = {
+					tag = SOV
+					is_in_faction_with = SOV
+				}
 			}
 		}
 	}
@@ -1980,9 +1979,11 @@ news_event = {
 				is_in_faction_with = SOV
 			}
 			NOT = {
-				tag = USA
-				has_idea = NATO_member
-				has_idea = Major_Non_NATO_Ally
+				OR = {
+					tag = USA
+					has_idea = NATO_member
+					has_idea = Major_Non_NATO_Ally
+				}
 			}
 		}
 	}
@@ -2136,9 +2137,11 @@ news_event = {
 				is_in_faction_with = SOV
 			}
 			NOT = {
-				tag = USA
-				has_idea = NATO_member
-				has_idea = Major_Non_NATO_Ally
+				OR = {
+					tag = USA
+					has_idea = NATO_member
+					has_idea = Major_Non_NATO_Ally
+				}
 			}
 		}
 	}
@@ -2287,28 +2290,27 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		original_tag = USA
+		country_exists = PER
+		NOT = { original_tag = USA }
+		NOT = { has_country_flag = collapsed_nation }
 	}
 
 	option = { #Condem
 		name = USA_FOCUS.8.a
 		log = "[GetDateText]: [This.GetName]: USA_FOCUS.8.a executed"
-		this = {
-			add_opinion_modifier = { target = PER modifier = insult }
-			reverse_add_opinion_modifier = { target = PER modifier = insult }
-			reverse_add_opinion_modifier = { target = USA modifier = gratitude }
-			add_political_power = 25
-		}
+		add_opinion_modifier = { target = PER modifier = insult }
+		reverse_add_opinion_modifier = { target = PER modifier = insult }
+		reverse_add_opinion_modifier = { target = USA modifier = gratitude }
+		add_political_power = 25
 		ai_chance = { base = 50 }
 	}
 
 	option = { #No
 		name = USA_FOCUS.8.b
 		log = "[GetDateText]: [This.GetName]: USA_FOCUS.8.b executed"
-		this = {
-			add_opinion_modifier = { target = USA modifier = USA_Decline_PER_Embargo }
-			reverse_add_opinion_modifier = { target = USA modifier = USA_Decline_PER_Embargo }
-		}
+		add_opinion_modifier = { target = USA modifier = USA_Decline_PER_Embargo }
+		reverse_add_opinion_modifier = { target = USA modifier = USA_Decline_PER_Embargo }
+		ai_chance = { base = 50 }
 	}
 
 }
@@ -2897,11 +2899,12 @@ country_event = {
 	#So?
 	immediate = {
 		CAN = { country_event = { id = canada.600 days = 1 } } #Canada Recession Event
-		BOS = { country_event = { id = bosnia_political.5 days = 20 random_days = 14 } }
+		BOS = { country_event = { id = BOS_political.5 days = 20 random_days = 14 } }
 		hidden_effect = {
 			every_country = {
 				limit = {
 					NOT = { tag = CAN } # Custom content for Canada
+					NOT = { tag = BOS } # Custom content for Bosnia (BOS_political.5)
 					OR = {
 						AND = {
 							check_variable = { influence_array^0 = USA }
@@ -3078,9 +3081,6 @@ country_event = {
 					add_stability = -0.07
 				}
 			}
-		}
-		hidden_effect = {
-			country_event = { id = usa_economic_events.30 days = 70 random_hours = 35 }
 		}
 		ai_chance = {
 			base = 0
@@ -3930,9 +3930,7 @@ country_event = {
 	picture = GFX_oil_refinery # FIXME: Replace with a proper icon of an oil barrel w/ something in the background
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = USA
-	}
+	trigger = { original_tag = USA }
 
 	# Well, the price of gas will be over 2.25!
 	option = {
@@ -3954,6 +3952,7 @@ country_event = {
 		}
 		set_variable = { global.oil_price = new_price }
 	}
+
 }
 
 # News - Lehman Brothers Collapse
@@ -4021,10 +4020,6 @@ news_event = {
 news_event = {
 	id = usa_economic_events_news.2
 	title = usa_economic_events_news.2.t
-	trigger = {
-		NOT = { USA = { has_country_flag = collapsed_nation } }
-		NOT = { USA = { has_country_flag = USA_housing_problems_detected } }
-	}
 	desc = {
 		text = usa_economic_events_news.2.d1
 		trigger = {
@@ -4046,6 +4041,11 @@ news_event = {
 	picture = GFX_world_fanniemae
 	is_triggered_only = yes
 	major = yes
+
+	trigger = {
+		NOT = { USA = { has_country_flag = collapsed_nation } }
+		NOT = { USA = { has_country_flag = USA_housing_problems_detected } }
+	}
 
 	option = {
 		name = usa_economic_events_news.2.a
@@ -4092,10 +4092,6 @@ news_event = {
 news_event = {
 	id = usa_economic_events_news.3
 	title = usa_economic_events_news.3.t
-	trigger = {
-		NOT = { USA = { has_country_flag = collapsed_nation } }
-		NOT = { USA = { has_country_flag = USA_housing_problems_detected } }
-	}
 	desc = {
 		text = usa_economic_events_news.3.d1
 		trigger = {
@@ -4117,6 +4113,11 @@ news_event = {
 	picture = GFX_world_bearstearns
 	is_triggered_only = yes
 	major = yes
+
+	trigger = {
+		NOT = { USA = { has_country_flag = collapsed_nation } }
+		NOT = { USA = { has_country_flag = USA_housing_problems_detected } }
+	}
 
 	option = {
 		name = usa_economic_events_news.3.a
@@ -4288,9 +4289,11 @@ news_event = {
 	major = yes
 
 	option = {
+		log = "[GetDateText]: [This.GetName]: usa_economic_events_news.7.a executed"
 		name = usa_economic_events_news.7.a
 		custom_effect_tooltip = oil_current_price_tt
 	}
+
 }
 
 ########################## Asteroid Mining Event Chain #########################
@@ -4495,6 +4498,10 @@ country_event = {
 		hidden_effect = {
 			random_list = {
 				50 = {
+					news_event = {
+						id = donald_trump_news.4
+						days = 25
+					}
 					country_event = {
 						id = donald_trump.14
 						days = 365
@@ -4668,8 +4675,10 @@ country_event = {
 		if = {
 			limit = {
 				NOT = {
-					has_country_flag = space_race
-					has_country_flag = spacex_reaches_mars_first
+					OR = {
+						has_country_flag = space_race
+						has_country_flag = spacex_reaches_mars_first
+					}
 				}
 			}
 			custom_effect_tooltip = mission_to_mars_chain_end_tt
@@ -4734,8 +4743,10 @@ country_event = {
 		if = {
 			limit = {
 				NOT = {
-					has_country_flag = space_race
-					has_country_flag = spacex_reaches_mars_first
+					OR = {
+						has_country_flag = space_race
+						has_country_flag = spacex_reaches_mars_first
+					}
 				}
 			}
 			custom_effect_tooltip = mission_to_mars_chain_end_tt
@@ -4759,8 +4770,10 @@ country_event = {
 		if = {
 			limit = {
 				NOT = {
-					has_country_flag = space_race
-					has_country_flag = spacex_reaches_mars_first
+					OR = {
+						has_country_flag = space_race
+						has_country_flag = spacex_reaches_mars_first
+					}
 				}
 			}
 			custom_effect_tooltip = mission_to_mars_chain_end_tt
@@ -4959,6 +4972,7 @@ country_event = {
 	option = { #Launch!
 		name = donald_trump.26.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.26.o1 executed"
+		news_event = donald_trump_news.9
 		hidden_effect = {
 			country_event = { id = donald_trump.27 days = 20 random_hours = 480 }
 		}
@@ -5011,6 +5025,7 @@ country_event = {
 			remove_idea = continued_space_efforts5
 			add_idea = continued_space_efforts6
 		}
+		news_event = donald_trump_news.10
 	}
 
 }
@@ -5047,6 +5062,7 @@ country_event = {
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = -0.01 }
 		change_relative_party_popularity = yes
+		news_event = donald_trump_news.11
 	}
 
 }
@@ -5110,6 +5126,7 @@ country_event = {
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = -0.01 }
 		change_relative_party_popularity = yes
+		news_event = donald_trump_news.11
 	}
 
 }
@@ -5173,8 +5190,10 @@ news_event = {
 			log = "[GetDateText]: [This.GetName]: donald_trump_news.2.o3 executed"
 		trigger = {
 			NOT = {
-				num_of_factories > 25
-				original_tag = USA
+				OR = {
+					num_of_factories > 25
+					original_tag = USA
+				}
 			}
 		}
 		name = donald_trump_news.2.o3
@@ -5213,8 +5232,10 @@ news_event = {
 			log = "[GetDateText]: [This.GetName]: donald_trump_news.3.o3 executed"
 		trigger = {
 			NOT = {
-				num_of_factories > 25
-				original_tag = USA
+				OR = {
+					num_of_factories > 25
+					original_tag = USA
+				}
 			}
 		}
 		name = donald_trump_news.3.o3
@@ -7971,9 +7992,10 @@ country_event = {
 		}
 	}
 	picture = GFX_battleship_event_USA
+	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
-	is_triggered_only = yes
+
 	# Both ships
 	option = {
 		name = USA_events_domestic_policies.20.a
@@ -7997,6 +8019,7 @@ country_event = {
 		navy_experience = 25
 		ai_chance = { base = 1 }
 	}
+
 	option = {
 		name = USA_events_domestic_policies.20.b
 		log = "[GetDateText]: [This.GetName]: USA_events_domestic_policies.20.b executed"
@@ -8014,6 +8037,7 @@ country_event = {
 		modify_treasury_effect = yes
 		ai_chance = { base = 1 }
 	}
+
 	option = {
 		name = USA_events_domestic_policies.20.a1
 		log = "[GetDateText]: [This.GetName]: USA_events_domestic_policies.20.a1 executed"
@@ -8036,6 +8060,7 @@ country_event = {
 		navy_experience = 25
 		ai_chance = { base = 1 }
 	}
+
 	option = {
 		name = USA_events_domestic_policies.20.b1
 		log = "[GetDateText]: [This.GetName]: USA_events_domestic_policies.20.b1 executed"
@@ -8053,6 +8078,7 @@ country_event = {
 		modify_treasury_effect = yes
 		ai_chance = { base = 1 }
 	}
+
 	option = {
 		name = USA_events_domestic_policies.20.c
 		log = "[GetDateText]: [This.GetName]: USA_events_domestic_policies.20.c executed"
@@ -8073,7 +8099,7 @@ country_event = {
 		modify_treasury_effect = yes
 		ai_chance = { base = 1 }
 	}
-	# No Ships at all
+
 	option = {
 		name = USA_events_domestic_policies.20.d1
 		log = "[GetDateText]: [This.GetName]: USA_events_domestic_policies.20.d1 executed"
@@ -8094,6 +8120,9 @@ country_event = {
 			}
 		}
 	}
+
+	# No Ships at all
+
 }
 
 ## US Econ Tree Events
@@ -8597,7 +8626,6 @@ country_event = {
 				random_scope_in_array = {
 					array = global.EU_member
 					limit = { is_ai = no }
-
 					country_event = EUevent.7
 				}
 			}
@@ -10330,8 +10358,9 @@ country_event = {
 	title = USA_econ_event.30.t
 	desc = USA_econ_event.30.d
 	picture = GFX_stock_market
-	fire_only_once = yes
 	is_triggered_only = yes
+	fire_only_once = yes
+
 	trigger = {
 		tag = USA
 		NOT = { has_country_flag = usa_bae_acquired_united_defense }
@@ -10361,6 +10390,7 @@ country_event = {
 			base = 15
 		}
 	}
+
 }
 
 #Public Discomfort With The Media
@@ -11153,7 +11183,7 @@ country_event = {
 	fire_only_once = yes
 
 	trigger = {
-		tag = USA
+		original_tag = USA
 		has_completed_focus = USA_truly_free_market
 		NOT = { has_country_flag = collapsed_nation }
 	}
@@ -11165,6 +11195,9 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.30 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
 		change_relative_party_popularity = yes
+		ai_chance = {
+			base = 3
+		}
 	}
 
 	option = {
@@ -11177,8 +11210,8 @@ country_event = {
 		set_temp_variable = { party_index = 21 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		change_relative_party_popularity = yes
-		hidden_effect = {
-			#set_country_flag = Oligarchs_prevail
+		ai_chance = {
+			base = 1
 		}
 	}
 
@@ -11189,8 +11222,8 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.30 }
 		set_temp_variable = { temp_outlook_increase = 0.1 }
 		change_relative_party_popularity = yes
-		hidden_effect = {
-			#set_country_flag = Technocracy_victory
+		ai_chance = {
+			base = 1
 		}
 	}
 
@@ -12554,9 +12587,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = {
 		name = USA_collapse_event.5.o1
@@ -14525,9 +14556,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = {
 		name = USA_collapse_event.20.o1
@@ -14550,9 +14579,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = {
 		name = USA_collapse_event.21.o1
@@ -14582,9 +14609,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = {
 		name = USA_collapse_event.22.o1
@@ -14826,9 +14851,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_country_flag = collapsed_nation }
-	}
+	trigger = { USA = { has_country_flag = collapsed_nation } }
 
 	option = {
 		name = USA_collapse_event.100.o1
@@ -14853,9 +14876,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_country_flag = collapsed_nation }
-	}
+	trigger = { USA = { has_country_flag = collapsed_nation } }
 
 	option = {
 		name = USA_collapse_event.101.o1
@@ -15315,7 +15336,6 @@ country_event = {
 	id = USA_treason_event.1 #2000 election
 	title = USA_treason_event.1.t
 	desc = USA_treason_event.1.d
-	picture = GFX_election_2000_bush_gore
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -15428,7 +15448,6 @@ country_event = {
 	id = USA_treason_event.2 #2004 election
 	title = USA_treason_event.2.t
 	desc = USA_treason_event.2.d
-	picture = GFX_election_2004_bush_kerry
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -15541,7 +15560,6 @@ country_event = {
 	id = USA_treason_event.3 #2008 election
 	title = USA_treason_event.3.t
 	desc = USA_treason_event.3.d
-	picture = GFX_election_2008_mccain_obama
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -15654,7 +15672,6 @@ country_event = {
 	id = USA_treason_event.4 #2012 election
 	title = USA_treason_event.4.t
 	desc = USA_treason_event.4.d
-	picture = GFX_election_2012_romney_obama
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -15767,7 +15784,6 @@ country_event = {
 	id = USA_treason_event.5 #2016 election
 	title = USA_treason_event.5.t
 	desc = USA_treason_event.5.d
-	picture = GFX_election_2016_trump_clinton
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -15880,7 +15896,6 @@ country_event = {
 	id = USA_treason_event.6 #2020 election
 	title = USA_treason_event.6.t
 	desc = USA_treason_event.6.d
-	picture = GFX_election
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -15993,7 +16008,6 @@ country_event = {
 	id = USA_treason_event.7 #2024 election
 	title = USA_treason_event.7.t
 	desc = USA_treason_event.7.d
-	picture = GFX_election
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -16106,7 +16120,6 @@ country_event = {
 	id = USA_treason_event.8 #2004 election
 	title = USA_treason_event.8.t
 	desc = USA_treason_event.8.d
-	picture = GFX_election_2004_bush_kerry
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -16173,7 +16186,6 @@ country_event = {
 	id = USA_treason_event.9 #2004 election
 	title = USA_treason_event.9.t
 	desc = USA_treason_event.9.d
-	picture = GFX_election_2004_bush_kerry
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -16240,7 +16252,6 @@ country_event = {
 	id = USA_treason_event.10 #2004 election
 	title = USA_treason_event.10.t
 	desc = USA_treason_event.10.d
-	picture = GFX_election_2004_bush_kerry
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -16295,7 +16306,6 @@ country_event = {
 	id = USA_treason_event.11 #2008 election
 	title = USA_treason_event.11.t
 	desc = USA_treason_event.11.d
-	picture = GFX_election_2008_mccain_obama
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
@@ -16364,14 +16374,11 @@ country_event = {
 	id = USA_treason_event.12 #2008 election
 	title = USA_treason_event.12.t
 	desc = USA_treason_event.12.d
-	picture = GFX_election_2008_mccain_obama
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Commit Election Fraud Greens
 		name = USA_treason_event.12.o1
@@ -16430,14 +16437,11 @@ country_event = {
 	id = USA_treason_event.13 #2008 election
 	title = USA_treason_event.13.t
 	desc = USA_treason_event.13.d
-	picture = GFX_election_2008_mccain_obama
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Commit Election Fraud Velvet Coalition
 		name = USA_treason_event.13.o1
@@ -16483,14 +16487,11 @@ country_event = {
 	id = USA_treason_event.14 #2012 election
 	title = USA_treason_event.14.t
 	desc = USA_treason_event.14.d
-	picture = GFX_election_2012_romney_obama
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Commit Election Fraud Libertarians
 		name = USA_treason_event.14.o1
@@ -16549,14 +16550,11 @@ country_event = {
 	id = USA_treason_event.15 #2012 election
 	title = USA_treason_event.15.t
 	desc = USA_treason_event.15.d
-	picture = GFX_election_2012_romney_obama
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Commit Election Fraud Greens
 		name = USA_treason_event.15.o1
@@ -16615,14 +16613,11 @@ country_event = {
 	id = USA_treason_event.16 #2012 election
 	title = USA_treason_event.16.t
 	desc = USA_treason_event.16.d
-	picture = GFX_election_2012_romney_obama
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Commit Election Fraud Velvet Coalition
 		name = USA_treason_event.16.o1
@@ -16668,14 +16663,11 @@ country_event = {
 	id = USA_treason_event.17 #2016 election
 	title = USA_treason_event.17.t
 	desc = USA_treason_event.17.d
-	picture = GFX_election_2016_trump_clinton
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Commit Election Fraud Libertarians
 		name = USA_treason_event.17.o1
@@ -16734,14 +16726,11 @@ country_event = {
 	id = USA_treason_event.18 #2016 election
 	title = USA_treason_event.18.t
 	desc = USA_treason_event.18.d
-	picture = GFX_election_2016_trump_clinton
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Commit Election Fraud Greens
 		name = USA_treason_event.18.o1
@@ -16800,14 +16789,11 @@ country_event = {
 	id = USA_treason_event.19 #2016 election
 	title = USA_treason_event.19.t
 	desc = USA_treason_event.19.d
-	picture = GFX_election_2016_trump_clinton
 	is_triggered_only = yes
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Commit Election Fraud Velvet Coalition
 		name = USA_treason_event.19.o1
@@ -17806,9 +17792,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = TEX
-	}
+	trigger = { tag = TEX }
 
 	option = { # Defenses
 		name = USA_crisis_event.1120.o1
@@ -17879,9 +17863,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = CSA
-	}
+	trigger = { tag = CSA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1121.o1
@@ -17952,9 +17934,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = LKT
-	}
+	trigger = { tag = LKT }
 
 	option = { # Defenses
 		name = USA_crisis_event.1122.o1
@@ -18025,9 +18005,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = NEN
-	}
+	trigger = { tag = NEN }
 
 	option = { # Defenses
 		name = USA_crisis_event.1123.o1
@@ -18203,9 +18181,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = WVA
-	}
+	trigger = { tag = WVA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1126.o1
@@ -18275,9 +18251,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1127.o1
@@ -18299,9 +18273,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = CSA
-	}
+	trigger = { tag = CSA }
 
 	immediate = {
 		hidden_effect = {
@@ -18347,9 +18319,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = FLA
-	}
+	trigger = { tag = FLA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1129.o1
@@ -18419,9 +18389,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1130.o1
@@ -18496,9 +18464,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = IDH
-	}
+	trigger = { tag = IDH }
 
 	option = { # Defenses
 		name = USA_crisis_event.1132.o1
@@ -18568,9 +18534,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1133.o1
@@ -18672,9 +18636,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = CAL
-	}
+	trigger = { tag = CAL }
 
 	option = { # Defenses
 		name = USA_crisis_event.1135.o1
@@ -18742,9 +18704,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1136.o1
@@ -18845,9 +18805,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = GLC
-	}
+	trigger = { tag = GLC }
 
 	option = { # Defenses
 		name = USA_crisis_event.1138.o1
@@ -18917,9 +18875,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1139.o1
@@ -18945,9 +18901,7 @@ country_event = {
 	major = yes
 	fire_only_once = yes
 
-	trigger = {
-		tag = USA
-	}
+	trigger = { tag = USA }
 
 	option = { # Defenses
 		name = USA_crisis_event.1140.o1
@@ -19144,9 +19098,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_supplying_our_sierra_leone }
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_supplying_our_sierra_leone } }
 
 	option = { #We Appreciate The Help
 		name = USA_foreign_event.1.o1
@@ -19261,10 +19213,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_advising_sierra_leone
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_advising_sierra_leone } }
 
 	option = { #We Thank You For The Knowledge
 		name = USA_foreign_event.2.o1
@@ -19363,10 +19312,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_muslim_legion
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_muslim_legion } }
 
 	option = {
 		name = USA_foreign_event.3.o1
@@ -19465,10 +19411,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_advising_the_legion
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_advising_the_legion } }
 
 	option = {
 		name = USA_foreign_event.4.o1
@@ -19588,10 +19531,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_supplying_democracy
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_supplying_democracy } }
 
 	option = {
 		name = USA_foreign_event.5.o1
@@ -19701,10 +19641,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_modern_war_advisors
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_modern_war_advisors } }
 
 	option = {
 		name = USA_foreign_event.6.o1
@@ -19804,10 +19741,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_oil_for_aid
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_oil_for_aid } }
 
 	option = {
 		name = USA_foreign_event.7.o1
@@ -19821,7 +19755,6 @@ country_event = {
 		KUW = {
 			set_temp_variable = { treasury_change = 25 }
 			modify_treasury_effect = yes
-
 			172 = {
 				add_resource = {
 					type = oil
@@ -19922,10 +19855,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_every_man_a_tow
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_every_man_a_tow } }
 
 	option = {
 		name = USA_foreign_event.8.o1
@@ -19939,7 +19869,6 @@ country_event = {
 		KUW = {
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
-
 			add_equipment_to_stockpile = {
 				type = Anti_tank_2
 				amount = 250
@@ -20029,10 +19958,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_political_oligarchs
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_political_oligarchs } }
 
 	option = {
 		name = USA_foreign_event.9.o1
@@ -20133,10 +20059,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_limited_supplies
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_limited_supplies } }
 
 	option = {
 		name = USA_foreign_event.10.o1
@@ -20245,10 +20168,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_increased_advisors
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_increased_advisors } }
 
 	option = {
 		name = USA_foreign_event.11.o1
@@ -20346,10 +20266,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = { has_completed_focus = USA_focus_arab_legion
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_arab_legion } }
 
 	option = {
 		name = USA_foreign_event.12.o1
@@ -20448,11 +20365,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = {
-			has_completed_focus = USA_focus_monetary_policy
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_monetary_policy } }
 
 	option = {
 		name = USA_foreign_event.13.o1
@@ -20509,11 +20422,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = {
-			has_completed_focus = USA_focus_arms_to_the_highest_bidder
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_arms_to_the_highest_bidder } }
 
 	option = {
 		name = USA_foreign_event.14.o1
@@ -20672,11 +20581,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = {
-			has_completed_focus = USA_focus_foreign_aid
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_foreign_aid } }
 
 	option = {
 		name = USA_foreign_event.15.o1
@@ -20735,11 +20640,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = {
-			has_completed_focus = USA_focus_sending_advisors
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_sending_advisors } }
 
 	option = {
 		name = USA_foreign_event.16.o1
@@ -20786,11 +20687,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = {
-			has_completed_focus = USA_focus_back_door_arms_dealing
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_back_door_arms_dealing } }
 
 	option = {
 		name = USA_foreign_event.17.o1
@@ -20862,11 +20759,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		USA = {
-			has_completed_focus = USA_focus_everyone_has_their_price
-		}
-	}
+	trigger = { USA = { has_completed_focus = USA_focus_everyone_has_their_price } }
 
 	option = {
 		name = USA_foreign_event.18.o1
@@ -22940,9 +22833,7 @@ country_event = {
 	picture = GFX_f_plane_usa
 	is_triggered_only = yes
 
-	trigger = {
-		NOT = { has_country_flag = collapsed_nation }
-	}
+	trigger = { NOT = { has_country_flag = collapsed_nation } }
 
 	option = {
 		name = usa.81.o1
@@ -23597,7 +23488,6 @@ country_event = {
 					}
 				}
 				modify_treasury_effect = yes
-
 				set_temp_variable = {
 					treasury_change = {
 						value = gdp_total
@@ -23652,7 +23542,6 @@ country_event = {
 					}
 				}
 				modify_treasury_effect = yes
-
 				set_temp_variable = {
 					treasury_change = {
 						value = gdp_total
@@ -23707,7 +23596,6 @@ country_event = {
 					}
 				}
 				modify_treasury_effect = yes
-
 				set_temp_variable = {
 					treasury_change = {
 						value = gdp_total
@@ -23762,7 +23650,6 @@ country_event = {
 					}
 				}
 				modify_treasury_effect = yes
-
 				set_temp_variable = {
 					treasury_change = {
 						value = gdp_total
@@ -24161,6 +24048,7 @@ country_event = {
 			base = 10
 		}
 	}
+
 }
 
 # F-22A Enters Low Rate Production
@@ -24170,9 +24058,8 @@ country_event = {
 	desc = usa.200.d
 	picture = GFX_f_plane_usa
 	is_triggered_only = yes
-	trigger = {
-		original_tag = USA
-	}
+
+	trigger = { original_tag = USA }
 
 	immediate = {
 		hidden_effect = {
@@ -24199,7 +24086,6 @@ country_event = {
 		name = usa.200.a
 		log = "[GetDateText]: [This.GetName]: usa.200.a executed"
 		add_political_power = -25
-
 		set_temp_variable = {
 			USA_f22_next_days = {
 				value = USA_f22_stage_base
@@ -24207,20 +24093,17 @@ country_event = {
 				round = yes
 			}
 		}
-
 		add_timed_idea = { idea = USA_fifth_generation_fighter_woes_2 days = USA_f22_next_days }
 		add_timed_idea = { idea = USA_f22_rushed_production days = USA_f22_next_days }
 		ai_chance = { base = 30 }
 	}
 
-	# Hold to a deliberate, low-rate build
 	option = {
 		name = usa.200.b
 		log = "[GetDateText]: [This.GetName]: usa.200.b executed"
 		add_political_power = -50
 		set_temp_variable = { treasury_change = -0.5 }
 		modify_treasury_effect = yes
-
 		set_temp_variable = {
 			USA_f22_next_days = {
 				value = USA_f22_stage_base
@@ -24228,10 +24111,12 @@ country_event = {
 				round = yes
 			}
 		}
-
 		add_timed_idea = { idea = USA_fifth_generation_fighter_woes_2 days = USA_f22_next_days }
 		ai_chance = { base = 70 }
 	}
+
+	# Hold to a deliberate, low-rate build
+
 }
 
 # F-22 Structural Issues
@@ -24241,9 +24126,8 @@ country_event = {
 	desc = usa.201.d
 	picture = GFX_f_plane_usa
 	is_triggered_only = yes
-	trigger = {
-		original_tag = USA
-	}
+
+	trigger = { original_tag = USA }
 
 	immediate = {
 		hidden_effect = {
@@ -24265,7 +24149,6 @@ country_event = {
 		name = usa.201.a
 		log = "[GetDateText]: [This.GetName]: usa.201.a executed"
 		add_political_power = -25
-
 		set_temp_variable = {
 			USA_f22_next_days = {
 				value = USA_f22_stage_base
@@ -24273,20 +24156,17 @@ country_event = {
 				round = yes
 			}
 		}
-
 		add_timed_idea = { idea = USA_fifth_generation_fighter_woes_3 days = USA_f22_next_days }
 		add_timed_idea = { idea = USA_f22_rushed_production days = USA_f22_next_days }
 		ai_chance = { base = 30 }
 	}
 
-	# Ground the fleet for a proper structural redesign
 	option = {
 		name = usa.201.b
 		log = "[GetDateText]: [This.GetName]: usa.201.b executed"
 		add_political_power = -50
 		set_temp_variable = { treasury_change = -0.75 }
 		modify_treasury_effect = yes
-
 		set_temp_variable = {
 			USA_f22_next_days = {
 				value = USA_f22_stage_base
@@ -24294,10 +24174,12 @@ country_event = {
 				round = yes
 			}
 		}
-
 		add_timed_idea = { idea = USA_fifth_generation_fighter_woes_3 days = USA_f22_next_days }
 		ai_chance = { base = 70 }
 	}
+
+	# Ground the fleet for a proper structural redesign
+
 }
 
 # F-22 Avionics Software Issues
@@ -24307,9 +24189,8 @@ country_event = {
 	desc = usa.202.d
 	picture = GFX_f_plane_usa
 	is_triggered_only = yes
-	trigger = {
-		original_tag = USA
-	}
+
+	trigger = { original_tag = USA }
 
 	immediate = {
 		hidden_effect = {
@@ -24331,7 +24212,6 @@ country_event = {
 		name = usa.202.a
 		log = "[GetDateText]: [This.GetName]: usa.202.a executed"
 		add_political_power = -25
-
 		set_temp_variable = {
 			USA_f22_next_days = {
 				value = USA_f22_stage_base
@@ -24339,30 +24219,29 @@ country_event = {
 				round = yes
 			}
 		}
-
 		add_timed_idea = { idea = USA_f22_rushed_production days = USA_f22_next_days }
 		country_event = { id = usa.203 days = USA_f22_next_days }
 		ai_chance = { base = 30 }
 	}
 
-	# Crash-priority software effort before IOT&E
 	option = {
 		name = usa.202.b
 		log = "[GetDateText]: [This.GetName]: usa.202.b executed"
 		add_political_power = -75
 		set_temp_variable = { treasury_change = -1 }
 		modify_treasury_effect = yes
-
 		set_temp_variable = {
 			USA_f22_next_days = {
 				value = USA_f22_stage_base
 				round = yes
 			}
 		}
-
 		country_event = { id = usa.203 days = USA_f22_next_days }
 		ai_chance = { base = 70 }
 	}
+
+	# Crash-priority software effort before IOT&E
+
 }
 
 # F-22 - Finalized + Rolled Out
@@ -24372,9 +24251,8 @@ country_event = {
 	desc = usa.203.d
 	picture = GFX_f_plane_usa
 	is_triggered_only = yes
-	trigger = {
-		original_tag = USA
-	}
+
+	trigger = { original_tag = USA }
 
 	immediate = {
 		remove_ideas = USA_f22_rushed_production
@@ -24390,6 +24268,7 @@ country_event = {
 		add_timed_idea = { idea = USA_f22_raptor_operational days = 180 }
 		air_experience = 50
 	}
+
 }
 
 # This is for the AI game rule
@@ -24782,9 +24661,7 @@ country_event = {
 	picture = GFX_generic_solar_farms
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.3.a
-	}
+	option = { name = department_of_state.3.a }
 
 }
 
@@ -25009,9 +24886,7 @@ country_event = {
 	picture = GFX_generic_factory
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.7.a
-	}
+	option = { name = department_of_state.7.a }
 
 }
 
@@ -25932,16 +25807,18 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: department_of_state.31.b executed"
 		trigger = {
 			NOT = {
-				EST = {
-					is_in_faction_with = USA
+				OR = {
+					EST = {
+						is_in_faction_with = USA
+					}
+					LAT = {
+						is_in_faction_with = USA
+					}
+					LIT = {
+						is_in_faction_with = USA
+					}
+					is_historical_focus_on = no
 				}
-				LAT = {
-					is_in_faction_with = USA
-				}
-				LIT = {
-					is_in_faction_with = USA
-				}
-				is_historical_focus_on = no
 			}
 		}
 		news_event = department_of_state.34
@@ -25950,8 +25827,10 @@ country_event = {
 				country_exists = EST
 				EST = {
 					NOT = {
-						has_idea = NATO_member
-						is_in_faction_with = USA
+						OR = {
+							has_idea = NATO_member
+							is_in_faction_with = USA
+						}
 					}
 				}
 			}
@@ -25965,8 +25844,10 @@ country_event = {
 				country_exists = LAT
 				LAT = {
 					NOT = {
-						has_idea = NATO_member
-						is_in_faction_with = USA
+						OR = {
+							has_idea = NATO_member
+							is_in_faction_with = USA
+						}
 					}
 				}
 			}
@@ -25980,8 +25861,10 @@ country_event = {
 				country_exists = LIT
 				LIT = {
 					NOT = {
-						has_idea = NATO_member
-						is_in_faction_with = USA
+						OR = {
+							has_idea = NATO_member
+							is_in_faction_with = USA
+						}
 					}
 				}
 			}
@@ -26269,8 +26152,10 @@ country_event = {
 				limit = {
 					is_core_of = SOV
 					NOT = {
-						is_core_of = ESB
-						is_core_of = CSB
+						OR = {
+							is_core_of = ESB
+							is_core_of = CSB
+						}
 					}
 				}
 				add_core_of = RUS
@@ -26366,8 +26251,10 @@ country_event = {
 			limit = {
 				is_core_of = SOV
 				NOT = {
-					is_core_of = ESB
-					is_core_of = CSB
+					OR = {
+						is_core_of = ESB
+						is_core_of = CSB
+					}
 				}
 			}
 			add_core_of = RUS
@@ -26399,8 +26286,10 @@ country_event = {
 			limit = {
 				is_core_of = SOV
 				NOT = {
-					is_core_of = ESB
-					is_core_of = CSB
+					OR = {
+						is_core_of = ESB
+						is_core_of = CSB
+					}
 				}
 			}
 			add_core_of = RUS
@@ -27143,11 +27032,7 @@ country_event = {
 	is_triggered_only = yes
 	hidden = yes
 
-	immediate = {
-		OVERLORD = {
-			set_country_flag = NATO_RUS_puppet
-		}
-	}
+	immediate = { OVERLORD = { set_country_flag = NATO_RUS_puppet } }
 
 }
 
@@ -27174,13 +27059,15 @@ country_event = {
 				limit = {
 					is_core_of = RUS
 					NOT = {
-						is_core_of = CSB
-						is_core_of = ESB
-						is_core_of = KOM
-						is_core_of = KAE
-						is_core_of = TAT
-						is_core_of = BSH
-						is_core_of = DON
+						OR = {
+							is_core_of = CSB
+							is_core_of = ESB
+							is_core_of = KOM
+							is_core_of = KAE
+							is_core_of = TAT
+							is_core_of = BSH
+							is_core_of = DON
+						}
 					}
 				}
 				THIS = {
@@ -27337,6 +27224,7 @@ country_event = {
 			leave_faction = yes
 		}
 		create_faction_from_template = faction_template_seato
+		news_event = department_of_state.51
 		TAI = {
 			country_event = {
 				id = department_of_state.50
@@ -27857,6 +27745,7 @@ country_event = {
 			type = topple_government
 		}
 		activate_mission = PER_american_iranian_war
+		news_event = department_of_state.65
 		ai_chance = {
 			base = 15
 		}
@@ -27971,7 +27860,6 @@ country_event = {
 	id = department_of_state.68
 	title = department_of_state.68.t
 	desc = department_of_state.68.d
-	picture = GFX_stock_market
 	is_triggered_only = yes
 
 	option = { # Okay
@@ -28003,7 +27891,6 @@ country_event = {
 	id = department_of_state.69
 	title = department_of_state.69.t
 	desc = department_of_state.69.d
-	picture = GFX_handshake_black
 	is_triggered_only = yes
 
 	option = { # Okay
@@ -28043,9 +27930,7 @@ country_event = {
 	id = department_of_state.70
 	title = department_of_state.70.t
 	desc = department_of_state.70.d
-	picture = GFX_handshake_black
 	is_triggered_only = yes
-
 	option = { # Okay
 		name = department_of_state.70.a
 		log = "[GetDateText]: [This.GetName]: department_of_state.70.a executed"
@@ -28070,6 +27955,10 @@ country_event = {
 				set_temp_variable = { party_popularity_increase = 0.15 }
 				set_temp_variable = { temp_outlook_increase = 0.25 }
 				change_relative_party_popularity = yes
+				country_event = {
+					id = department_of_state.71
+					days = 70
+				}
 			}
 		}
 		ai_chance = {
@@ -28083,7 +27972,6 @@ country_event = {
 	id = department_of_state.71
 	title = department_of_state.71.t
 	desc = department_of_state.71.d
-	picture = GFX_handshake_black
 	is_triggered_only = yes
 
 	option = { # Okay
@@ -29569,13 +29457,15 @@ country_event = {
 				limit = {
 					is_core_of = RUS
 					NOT = {
-						is_core_of = CSB
-						is_core_of = ESB
-						is_core_of = KOM
-						is_core_of = KAE
-						is_core_of = TAT
-						is_core_of = BSH
-						is_core_of = DON
+						OR = {
+							is_core_of = CSB
+							is_core_of = ESB
+							is_core_of = KOM
+							is_core_of = KAE
+							is_core_of = TAT
+							is_core_of = BSH
+							is_core_of = DON
+						}
 					}
 				}
 				THIS = {
@@ -29660,11 +29550,7 @@ country_event = {
 	picture = GFX_USA_afghanistan_casualties
 	is_triggered_only = yes
 
-	trigger = {
-		NOT = {
-			has_country_flag = USA_disabled_casualty_report
-		}
-	}
+	trigger = { NOT = { has_country_flag = USA_disabled_casualty_report } }
 
 	option = { # Okay
 		name = department_of_state.200.a
@@ -29899,7 +29785,6 @@ country_event = {
 		}
 	}
 
-	# Decline
 	option = {
 		name = department_of_state.220.b
 		log = "[GetDateText]: [This.GetName]: department_of_state.220.b executed"
@@ -29912,6 +29797,8 @@ country_event = {
 			}
 		}
 	}
+
+	# Decline
 
 }
 
@@ -30003,7 +29890,6 @@ country_event = {
 		}
 	}
 
-	# Reject the application
 	option = {
 		name = department_of_state.230.b
 		log = "[GetDateText]: [This.GetName]: department_of_state.230.b executed"
@@ -30052,6 +29938,9 @@ country_event = {
 			}
 		}
 	}
+
+	# Reject the application
+
 }
 
 # MNNA Application Response - fires on applicant
@@ -30093,13 +29982,15 @@ country_event = {
 		}
 		add_stability = -0.01
 	}
+
 }
 
 # MNNA Dummy Event
 country_event = {
 	id = department_of_state.1000
-	hidden = yes
 	is_triggered_only = yes
+	hidden = yes
+
 	immediate = {
 		random_scope_in_array = {
 			array = global.nato_members
@@ -30117,6 +30008,7 @@ country_event = {
 			country_event = { id = department_of_state.232 days = 2 }
 		}
 	}
+
 }
 
 # MNNA Under Attack - NATO Faction leader dilemma
@@ -30255,7 +30147,6 @@ country_event = {
 		}
 	}
 
-	# Provide arms and sanctions - no direct war
 	option = {
 		name = department_of_state.232.b
 		log = "[GetDateText]: [This.GetName]: department_of_state.232.b executed"
@@ -30347,7 +30238,6 @@ country_event = {
 		}
 	}
 
-	# Stay out entirely
 	option = {
 		name = department_of_state.232.c
 		log = "[GetDateText]: [This.GetName]: department_of_state.232.c executed"
@@ -30423,6 +30313,10 @@ country_event = {
 			}
 		}
 	}
+
+	# Provide arms and sanctions - no direct war
+	# Stay out entirely
+
 }
 
 # NATO Coup via Influence — NATO faction leader dilemma
@@ -30471,7 +30365,6 @@ country_event = {
 		}
 	}
 
-	# Clandestine operations to back the democratic opposition
 	option = {
 		name = department_of_state.233.b
 		log = "[GetDateText]: [This.GetName]: department_of_state.233.b executed"
@@ -30513,7 +30406,6 @@ country_event = {
 		}
 	}
 
-	# Accept the new regime and hope for the best
 	option = {
 		name = department_of_state.233.c
 		log = "[GetDateText]: [This.GetName]: department_of_state.233.c executed"
@@ -30538,6 +30430,10 @@ country_event = {
 			}
 		}
 	}
+
+	# Clandestine operations to back the democratic opposition
+	# Accept the new regime and hope for the best
+
 }
 
 # Greenland Purchase — Denmark decides
@@ -30586,7 +30482,6 @@ country_event = {
 		}
 	}
 
-	# Reject the sale
 	option = {
 		name = department_of_state.240.b
 		log = "[GetDateText]: [This.GetName]: department_of_state.240.b executed"
@@ -30602,6 +30497,9 @@ country_event = {
 			}
 		}
 	}
+
+	# Reject the sale
+
 }
 
 # Greenland Sale — news event
@@ -30616,6 +30514,7 @@ news_event = {
 		name = department_of_state.241.a
 		log = "[GetDateText]: [This.GetName]: department_of_state.241.a executed"
 	}
+
 }
 
 # Trump NATO Dilemma
@@ -30654,7 +30553,6 @@ country_event = {
 		}
 	}
 
-	# Threaten to leave unless allies step up their spending
 	option = {
 		name = department_of_state.242.b
 		log = "[GetDateText]: [This.GetName]: department_of_state.242.b executed"
@@ -30676,7 +30574,6 @@ country_event = {
 		}
 	}
 
-	# Reaffirm American commitment to NATO
 	option = {
 		name = department_of_state.242.c
 		log = "[GetDateText]: [This.GetName]: department_of_state.242.c executed"
@@ -30695,6 +30592,10 @@ country_event = {
 			base = 30
 		}
 	}
+
+	# Threaten to leave unless allies step up their spending
+	# Reaffirm American commitment to NATO
+
 }
 
 # NATO Coup — notification to the couped country
@@ -30709,6 +30610,7 @@ country_event = {
 		name = department_of_state.234.a
 		log = "[GetDateText]: [This.GetName]: department_of_state.234.a executed"
 	}
+
 }
 
 country_event = {
@@ -31106,9 +31008,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.101.a
-	}
+	option = { name = department_of_state.101.a }
 
 }
 
@@ -31160,9 +31060,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.103.a
-	}
+	option = { name = department_of_state.103.a }
 
 }
 
@@ -31231,9 +31129,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.105.a
-	}
+	option = { name = department_of_state.105.a }
 
 }
 
@@ -31246,9 +31142,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.106.a
-	}
+	option = { name = department_of_state.106.a }
 
 }
 
@@ -31300,9 +31194,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.108.a
-	}
+	option = { name = department_of_state.108.a }
 
 }
 
@@ -31315,9 +31207,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.109.a
-	}
+	option = { name = department_of_state.109.a }
 
 }
 
@@ -31390,9 +31280,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.112.a
-	}
+	option = { name = department_of_state.112.a }
 
 }
 
@@ -31455,9 +31343,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.116.a
-	}
+	option = { name = department_of_state.116.a }
 
 }
 
@@ -31509,9 +31395,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.119.a
-	}
+	option = { name = department_of_state.119.a }
 
 }
 
@@ -31544,9 +31428,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.121.a
-	}
+	option = { name = department_of_state.121.a }
 
 }
 
@@ -31559,9 +31441,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.124.a
-	}
+	option = { name = department_of_state.124.a }
 
 }
 
@@ -31613,9 +31493,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.126.a
-	}
+	option = { name = department_of_state.126.a }
 
 }
 
@@ -31686,29 +31564,6 @@ country_event = {
 
 }
 
-# THAAD - China Reaction
-country_event = {
-	id = department_of_state.128
-	title = department_of_state.128.t
-	desc = department_of_state.128.d
-	picture = GFX_handshake_black
-	is_triggered_only = yes
-
-	option = {
-		name = department_of_state.128.a
-		log = "[GetDateText]: [This.GetName]: department_of_state.128.a executed"
-		add_opinion_modifier = {
-			target = USA
-			modifier = usa_fp_diplomatic_rejection
-		}
-		add_opinion_modifier = {
-			target = KOR
-			modifier = usa_fp_diplomatic_rejection
-		}
-	}
-
-}
-
 # THAAD News
 news_event = {
 	id = department_of_state.129
@@ -31718,9 +31573,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.129.a
-	}
+	option = { name = department_of_state.129.a }
 
 }
 
@@ -31737,9 +31590,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.130.a
-	}
+	option = { name = department_of_state.130.a }
 
 }
 
@@ -31772,9 +31623,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.132.a
-	}
+	option = { name = department_of_state.132.a }
 
 }
 
@@ -31807,9 +31656,7 @@ news_event = {
 	is_triggered_only = yes
 	major = yes
 
-	option = {
-		name = department_of_state.134.a
-	}
+	option = { name = department_of_state.134.a }
 
 }
 
@@ -32339,9 +32186,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.160.a
-	}
+	option = { name = department_of_state.160.a }
 
 }
 
@@ -32353,9 +32198,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.161.a
-	}
+	option = { name = department_of_state.161.a }
 
 }
 
@@ -32367,9 +32210,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.162.a
-	}
+	option = { name = department_of_state.162.a }
 
 }
 
@@ -32381,9 +32222,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.163.a
-	}
+	option = { name = department_of_state.163.a }
 
 }
 
@@ -32395,9 +32234,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.164.a
-	}
+	option = { name = department_of_state.164.a }
 
 }
 
@@ -32409,9 +32246,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.165.a
-	}
+	option = { name = department_of_state.165.a }
 
 }
 
@@ -32423,9 +32258,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.166.a
-	}
+	option = { name = department_of_state.166.a }
 
 }
 
@@ -32437,9 +32270,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.167.a
-	}
+	option = { name = department_of_state.167.a }
 
 }
 
@@ -32451,9 +32282,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.168.a
-	}
+	option = { name = department_of_state.168.a }
 
 }
 
@@ -32465,9 +32294,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.169.a
-	}
+	option = { name = department_of_state.169.a }
 
 }
 
@@ -32479,9 +32306,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.180.a
-	}
+	option = { name = department_of_state.180.a }
 
 }
 
@@ -32493,9 +32318,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.181.a
-	}
+	option = { name = department_of_state.181.a }
 
 }
 
@@ -32507,9 +32330,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.182.a
-	}
+	option = { name = department_of_state.182.a }
 
 }
 
@@ -32521,9 +32342,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.183.a
-	}
+	option = { name = department_of_state.183.a }
 
 }
 
@@ -32535,9 +32354,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.184.a
-	}
+	option = { name = department_of_state.184.a }
 
 }
 
@@ -32549,9 +32366,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.185.a
-	}
+	option = { name = department_of_state.185.a }
 
 }
 
@@ -32563,9 +32378,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.186.a
-	}
+	option = { name = department_of_state.186.a }
 
 }
 
@@ -32577,9 +32390,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.187.a
-	}
+	option = { name = department_of_state.187.a }
 
 }
 
@@ -32591,9 +32402,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.188.a
-	}
+	option = { name = department_of_state.188.a }
 
 }
 
@@ -32605,9 +32414,7 @@ country_event = {
 	picture = GFX_handshake_black
 	is_triggered_only = yes
 
-	option = {
-		name = department_of_state.189.a
-	}
+	option = { name = department_of_state.189.a }
 
 }
 
@@ -32677,6 +32484,7 @@ country_event = {
 			base = 5
 		}
 	}
+
 }
 
 # Vietnam Comprehensive Partnership Proposal
@@ -32740,6 +32548,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 # CAATSA Sanctions Ultimatum (Turkey S-400)
@@ -32781,6 +32590,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 # Guaidó Recognition Ultimatum (Venezuela)
@@ -32850,6 +32660,7 @@ country_event = {
 			base = 95
 		}
 	}
+
 }
 
 # Cuba Normalization Offer
@@ -32897,6 +32708,7 @@ country_event = {
 			base = 15
 		}
 	}
+
 }
 
 # Cuba Sanctions Tightening
@@ -32936,6 +32748,7 @@ country_event = {
 			base = 90
 		}
 	}
+
 }
 
 # Huawei Export Blacklist Notification
@@ -32973,6 +32786,7 @@ country_event = {
 			base = 95
 		}
 	}
+
 }
 
 # Semiconductor Export Controls Notification
@@ -33010,6 +32824,7 @@ country_event = {
 			base = 95
 		}
 	}
+
 }
 
 # Hong Kong Autonomy Act Sanctions Notification
@@ -33057,6 +32872,7 @@ country_event = {
 			base = 95
 		}
 	}
+
 }
 
 # Fentanyl Cartel FTO Designation (Mexico)
@@ -33118,4 +32934,5 @@ country_event = {
 			}
 		}
 	}
+
 }

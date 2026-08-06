@@ -6,6 +6,7 @@ on:
       - 'tools/**'
       - '.pre-commit-config.yaml'
       - '.github/workflows/coding-pipeline.yml'
+      - '.github/workflows/nightly-pr-validation.yml'
       - '.github/workflows/tools-validation.yml'
       - '.github/workflows/validator-cache.yml'
 
@@ -60,14 +61,16 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 1
-          # config_drift_test reads these two config files to compare the
-          # validator set declared in each. pyproject.toml supplies the pytest
-          # testpaths so all four test dirs are collected.
+          # config_drift_test reads the pre-commit config and these workflows to
+          # compare the validator set declared in each, and to check the
+          # pipeline wiring around them. pyproject.toml supplies the pytest
+          # testpaths so all six test dirs are collected.
           sparse-checkout: |
             tools
             pyproject.toml
             .pre-commit-config.yaml
             .github/workflows/coding-pipeline.yml
+            .github/workflows/nightly-pr-validation.yml
             .github/workflows/tools-validation.yml
             .github/workflows/validator-cache.yml
           sparse-checkout-cone-mode: false
