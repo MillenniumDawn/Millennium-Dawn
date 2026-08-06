@@ -82,8 +82,11 @@ _DEFAULT_REMOVALS = {
     "available_if_capitulated = no",
 }
 
+# Empty commented-out placeholders are dropped, not kept and re-sorted into the
+# `other` slot away from the position that gave them their meaning.
 _COMMENTED_EMPTY_BLOCK_RE = re.compile(
-    r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$"
+    r"^#\s*(allow_branch|available|bypass|bypass_effect|cancel|visible"
+    r"|mutually_exclusive)\s*=\s*\{\s*\}$"
 )
 
 # Matches an existing log line so we can correct a wrong focus ID or missing prefix.
