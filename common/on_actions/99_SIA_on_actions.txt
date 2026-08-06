@@ -527,7 +527,9 @@ on_actions = {
 		}
 	}
 
-	on_daily_SIA = {
+	# Weekly, not daily: the boost ends in recalculate_party, which re-sorts the whole 24-party
+	# array. Every comparable MD political tick runs at weekly cadence or slower.
+	on_weekly_SIA = {
 		effect = {
 			if = {
 				limit = {
@@ -550,6 +552,27 @@ on_actions = {
 
 	on_monthly_SIA = {
 		effect = {
+			# Cached here because the Preah Vihear decision category re-evaluates its visible every
+			# frame the decision tab is open, for both claimants, from 2008 to game end.
+			if = {
+				limit = {
+					country_exists = CBD
+					OR = {
+						is_subject_of = CBD
+						is_in_faction_with = CBD
+						CBD = { is_subject_of = SIA }
+						AND = {
+							is_subject = yes
+							CBD = { is_subject = yes }
+							OVERLORD = { has_subject = CBD }
+						}
+					}
+				}
+				set_global_flag = GLOBAL_preah_vihear_suspended
+			}
+			else = {
+				clr_global_flag = GLOBAL_preah_vihear_suspended
+			}
 			# Closes after a year, a path commitment, or a change of government.
 			if = {
 				limit = {

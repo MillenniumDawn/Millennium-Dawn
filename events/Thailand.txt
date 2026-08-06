@@ -2684,6 +2684,7 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event thailand.359.b"
 		add_stability = 0.02
 		set_country_flag = SIA_ds_resolved_peace
+		SIA_ds_cleanup_effect = yes
 		add_ideas = SIA_limited_devolution
 		ai_chance = { base = 2 }
 	}
@@ -4120,10 +4121,7 @@ country_event = {
 				add_ideas = SIA_junta_government
 				SIA_junta_party_shift = yes
 			}
-			clr_country_flag = SIA_path_communist
-			clr_country_flag = SIA_communist_armed_path
-			clr_country_flag = SIA_communist_peaceful_path
-			set_country_flag = SIA_path_royalist
+			SIA_realign_to_royalist = yes
 			if = { limit = { has_idea = SIA_red_revival } remove_ideas = SIA_red_revival }
 			add_stability = -0.05
 			add_war_support = 0.05
@@ -4780,6 +4778,14 @@ country_event = {
 	option = {
 		name = thailand.318.b
 		log = "[GetDateText]: [Root.GetName]: event thailand.318.b"
+		# Relapsing bounces back to thailand.317, which can route here again; cap the cycle so the
+		# war-support reward cannot be farmed indefinitely.
+		trigger = {
+			check_variable = { SIA_border_war_relapses < 2 }
+		}
+		hidden_effect = {
+			add_to_variable = { SIA_border_war_relapses = 1 }
+		}
 		clr_country_flag = SIA_border_war_ceasefire
 		set_country_flag = SIA_border_war_escalated
 		country_event = { id = thailand.317 days = 7 }
@@ -5148,8 +5154,8 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event thailand.380.a"
 		complete_national_focus = SIA_kra_patron_china
 		set_temp_variable = { percent_change = 15 }
-		set_temp_variable = { tag_index = SIA }
-		set_temp_variable = { influence_target = CHI }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
 		change_influence_percentage = yes
 		CHI = { add_opinion_modifier = { target = SIA modifier = large_increase } }
 		if = {
@@ -5164,8 +5170,8 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event thailand.380.b"
 		complete_national_focus = SIA_kra_patron_japan
 		set_temp_variable = { percent_change = 8 }
-		set_temp_variable = { tag_index = SIA }
-		set_temp_variable = { influence_target = JAP }
+		set_temp_variable = { tag_index = JAP }
+		set_temp_variable = { influence_target = SIA }
 		change_influence_percentage = yes
 		JAP = { add_opinion_modifier = { target = SIA modifier = medium_increase } }
 		ai_chance = { base = 8 }
@@ -5352,8 +5358,8 @@ country_event = {
 		name = thailand.386.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.386.a"
 		set_temp_variable = { percent_change = 10 }
-		set_temp_variable = { tag_index = SIA }
-		set_temp_variable = { influence_target = CHI }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
 		change_influence_percentage = yes
 		CHI = { add_opinion_modifier = { target = SIA modifier = medium_increase } }
 		# Concession must replace the debt trap.
@@ -5384,8 +5390,8 @@ country_event = {
 		add_named_threat = { threat = 8 name = SIA_kra_default_threat }
 		CHI = { add_opinion_modifier = { target = SIA modifier = large_decrease } }
 		set_temp_variable = { percent_change = -25 }
-		set_temp_variable = { tag_index = SIA }
-		set_temp_variable = { influence_target = CHI }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
 		change_influence_percentage = yes
 		add_ideas = SIA_kra_default_pariah
 		country_event = { id = thailand.388 days = 30 }
@@ -5447,8 +5453,8 @@ country_event = {
 		name = thailand.389.b
 		log = "[GetDateText]: [Root.GetName]: event thailand.389.b"
 		set_temp_variable = { percent_change = 5 }
-		set_temp_variable = { tag_index = SIA }
-		set_temp_variable = { influence_target = CHI }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = SIA }
 		change_influence_percentage = yes
 		if = {
 			limit = { country_exists = USA }
@@ -6457,12 +6463,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		original_tag = SIA
+		has_completed_focus = SIA_minimum_deterrent
+	}
+
 	option = {
 		name = thailand.430.a		# Strategic retaliation only - a minimal second-strike deterrent
 		log = "[GetDateText]: [Root.GetName]: event thailand.430.a"
-		trigger = {
-			has_completed_focus = SIA_minimum_deterrent
-		}
 		if = {
 			limit = { has_idea = no_use_case }
 			swap_ideas = {
@@ -6477,9 +6485,6 @@ country_event = {
 	option = {
 		name = thailand.430.b		# Tactical and strategic retaliation
 		log = "[GetDateText]: [Root.GetName]: event thailand.430.b"
-		trigger = {
-			has_completed_focus = SIA_minimum_deterrent
-		}
 		if = {
 			limit = { has_idea = no_use_case }
 			swap_ideas = {
@@ -6493,9 +6498,6 @@ country_event = {
 	option = {
 		name = thailand.430.c		# Declared first-use posture
 		log = "[GetDateText]: [Root.GetName]: event thailand.430.c"
-		trigger = {
-			has_completed_focus = SIA_minimum_deterrent
-		}
 		if = {
 			limit = { has_idea = no_use_case }
 			swap_ideas = {

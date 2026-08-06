@@ -178,31 +178,6 @@ SIA_deep_south_category = {
 		}
 	}
 
-	SIA_ds_autonomy_framework = {
-		icon = GFX_decision_generic_political_discourse
-		cost = 50
-		days_remove = 180
-		fire_only_once = yes
-
-		visible = {
-			has_completed_focus = SIA_deep_south_peace
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_autonomy_framework"
-			add_stability = 0.02
-			510 = {
-				add_extra_state_shared_building_slots = 1
-			}
-			set_temp_variable = { ds_grievance_delta = -12 }
-			SIA_ds_set_grievance = yes
-		}
-
-		ai_will_do = {
-			base = 8
-		}
-	}
-
 	SIA_isr_persistent_sweep = {
 		icon = GFX_decision_generic_military
 		cost = 25
@@ -439,6 +414,33 @@ SIA_deep_south_category = {
 # Consolidated into SIA_economy_category ("Thai Strategic and Economic Decisions"). HOI4
 # merges decision blocks sharing a category key.
 SIA_economy_category = {
+	# Post-settlement Deep South governance. Lives here because SIA_deep_south_category is gated on
+	# the conflict still being live, which completing SIA_deep_south_peace ends.
+	SIA_ds_autonomy_framework = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 50
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_deep_south_peace
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_autonomy_framework"
+			add_stability = 0.02
+			510 = {
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { ds_grievance_delta = -12 }
+			SIA_ds_set_grievance = yes
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
 	SIA_asean_rotating_summit = {
 		icon = GFX_decision_generic_speech
 		cost = 50
@@ -1867,6 +1869,12 @@ SIA_coup_watch_category = {
 		is_good = no
 		days_mission_timeout = 90
 
+		# Losing the coup machinery mid-mission (palace bargain, civilian control) must retire the
+		# clock, or it times out into a coup against a government that can no longer be couped.
+		cancel_trigger = {
+			NOT = { SIA_coup_machinery_live = yes }
+		}
+
 		available = {
 			check_variable = { SIA_coup_risk < 70 }
 		}
@@ -1879,6 +1887,10 @@ SIA_coup_watch_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_reassure_high_command"
+			# Drop below the activation bar so the mission cannot re-arm while thailand.70 -> .216
+			# is still resolving and install a second junta.
+			set_temp_variable = { coup_delta = -25 }
+			SIA_coup_set_risk = yes
 			country_event = { id = thailand.70 hours = 6 }
 		}
 	}

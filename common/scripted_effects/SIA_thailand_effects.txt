@@ -395,7 +395,7 @@ SIA_pt_update_tier = {
 	}
 }
 
-# Daily idx-18 popularity lift, scaled by the wave tier. Without temp_outlook_increase the
+# Weekly idx-18 popularity lift, scaled by the wave tier. Without temp_outlook_increase the
 # party can only take share inside the neutrality bloc, which caps it well below the tide.
 SIA_pt_wave_popularity_boost = {
 	if = {
@@ -407,14 +407,14 @@ SIA_pt_wave_popularity_boost = {
 		set_temp_variable = { party_index = 18 }
 		if = {
 			limit = { check_variable = { SIA_pheu_thai_pressure > 89 } }
-			set_temp_variable = { party_popularity_increase = 0.0005 }
+			set_temp_variable = { party_popularity_increase = 0.0035 }
 		}
 		else_if = {
 			limit = { check_variable = { SIA_pheu_thai_pressure > 70 } }
-			set_temp_variable = { party_popularity_increase = 0.0003 }
+			set_temp_variable = { party_popularity_increase = 0.0021 }
 		}
 		else = {
-			set_temp_variable = { party_popularity_increase = 0.0001 }
+			set_temp_variable = { party_popularity_increase = 0.0007 }
 		}
 		set_temp_variable = { temp_outlook_increase = party_popularity_increase }
 		change_relative_party_popularity = yes
@@ -726,4 +726,30 @@ SIA_seato_score_update = {
 	}
 	custom_effect_tooltip = SIA_seato_rec_total
 	set_variable = { SIA_seato_score = SIA_seato_temp }
+}
+
+# Both of these are reachable from two separate branches. The grant is flag-guarded so it cannot
+# stack, which means whichever branch lands first decides the payload - so the payload lives here,
+# once, rather than being restated at each call site.
+SIA_grant_blue_water_navy = {
+	if = {
+		limit = { NOT = { has_country_flag = SIA_blue_water_navy_active } }
+		set_country_flag = SIA_blue_water_navy_active
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+		add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.05 tooltip = industrial_capacity_dockyard_tt }
+		add_to_variable = { SIA_mil_production_speed_dockyard_factor = 0.10 tooltip = production_speed_dockyard_factor_tt }
+		add_to_variable = { SIA_mil_experience_gain_navy_factor = 0.10 tooltip = experience_gain_navy_factor_tt }
+		add_to_variable = { SIA_mil_naval_coordination = 0.05 tooltip = naval_coordination_tt }
+		add_to_variable = { SIA_mil_navy_max_range_factor = 0.05 tooltip = navy_max_range_factor_tt }
+	}
+}
+
+SIA_grant_war_economy_mobilization = {
+	if = {
+		limit = { NOT = { has_country_flag = SIA_war_economy_mobilization_active } }
+		set_country_flag = SIA_war_economy_mobilization_active
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
+		add_to_variable = { SIA_mil_industrial_capacity_factory = 0.03 tooltip = industrial_capacity_factory_tt }
+		add_to_variable = { SIA_mil_consumer_goods_factor = 0.03 tooltip = consumer_goods_factor_tt }
+	}
 }
