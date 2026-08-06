@@ -98,6 +98,11 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 | `comsat_production_speed_modifier`       |
 | `spysat_production_speed_modifier`       |
 | `killsat_production_speed_modifier`      |
+| `olv_production_cost_modifier`           |
+| `gnss_production_cost_modifier`          |
+| `comsat_production_cost_modifier`        |
+| `spysat_production_cost_modifier`        |
+| `killsat_production_cost_modifier`       |
 | `nuclear_reactor_fuel_production_factor` |
 | `nuclear_reactor_fuel_production`        |
 
