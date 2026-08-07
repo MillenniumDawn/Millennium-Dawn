@@ -165,9 +165,9 @@ AFG_national_assembly_checks = {
 }
 
 
-#Toll rate per transit province. Called in state scope: the state copy drives the province panel,
-#the OWNER copy is what calculate_additional_income_rate sums into additional income.
-update_afghan_toll = {
+#Toll rate for one transit state. Called in state scope: the state copy drives the province panel,
+#the OWNER copy feeds AFG_update_national_tollage.
+AFG_update_state_tollage = {
 	if = {
 		limit = {
 			state = 412
@@ -357,43 +357,55 @@ update_afghan_toll = {
 			set_variable = { AFG_Bactria_earnings_tollage = PREV.AFG_Bactria_earnings_tollage }
 		}
 	}
-	OWNER = {
-		#A state we no longer control keeps its last rate otherwise, and goes on paying tolls we cannot collect
-		if = {
-			limit = { NOT = { controls_state = 412 } }
-			clear_variable = AFG_Hazarajat_earnings_tollage
+}
+
+#Country scope. Sole writer of additional_income_AFG_tolls_income1: tollage only moves when a toll level or
+#state control does, so calculate_additional_income_rate reads this rather than re-summing it every money tick.
+AFG_update_national_tollage = {
+	#A state we no longer control keeps its last rate otherwise, and goes on paying tolls we cannot collect
+	if = {
+		limit = { NOT = { controls_state = 412 } }
+		clear_variable = AFG_Hazarajat_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 409 } }
+		clear_variable = AFG_Herat_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 415 } }
+		clear_variable = AFG_Sistan_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 414 } }
+		clear_variable = AFG_Hindu_Kush_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 411 } }
+		clear_variable = AFG_Badakshan_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 410 } }
+		clear_variable = AFG_Bactria_earnings_tollage
+	}
+	set_variable = {
+		additional_income_AFG_tolls_income1 = {
+			value = AFG_Bactria_earnings_tollage
+			add = AFG_Badakshan_earnings_tollage
+			add = AFG_Hindu_Kush_earnings_tollage
+			add = AFG_Herat_earnings_tollage
+			add = AFG_Sistan_earnings_tollage
+			add = AFG_Hazarajat_earnings_tollage
 		}
-		if = {
-			limit = { NOT = { controls_state = 409 } }
-			clear_variable = AFG_Herat_earnings_tollage
-		}
-		if = {
-			limit = { NOT = { controls_state = 415 } }
-			clear_variable = AFG_Sistan_earnings_tollage
-		}
-		if = {
-			limit = { NOT = { controls_state = 414 } }
-			clear_variable = AFG_Hindu_Kush_earnings_tollage
-		}
-		if = {
-			limit = { NOT = { controls_state = 411 } }
-			clear_variable = AFG_Badakshan_earnings_tollage
-		}
-		if = {
-			limit = { NOT = { controls_state = 410 } }
-			clear_variable = AFG_Bactria_earnings_tollage
-		}
-		set_variable = { additional_income_AFG_tolls_income1 = 0 }
-		add_to_variable = { additional_income_AFG_tolls_income1 = AFG_Hazarajat_earnings_tollage }
-		add_to_variable = { additional_income_AFG_tolls_income1 = AFG_Herat_earnings_tollage }
-		add_to_variable = { additional_income_AFG_tolls_income1 = AFG_Sistan_earnings_tollage }
-		add_to_variable = { additional_income_AFG_tolls_income1 = AFG_Hindu_Kush_earnings_tollage }
-		add_to_variable = { additional_income_AFG_tolls_income1 = AFG_Badakshan_earnings_tollage }
-		add_to_variable = { additional_income_AFG_tolls_income1 = AFG_Bactria_earnings_tollage }
 	}
 }
 
-#Monthly refresh for one transit state, so the on_action can address the six directly instead of filtering every owned state
+#State scope. The panel's single-state path: recalculate this state, then roll the national total up.
+update_afghan_toll = {
+	AFG_update_state_tollage = yes
+	OWNER = { AFG_update_national_tollage = yes }
+}
+
+#Monthly refresh for one transit state. The on_action rolls the national total up once after the loop.
 AFG_monthly_toll_state_update = {
 	#Seed at the floor the panel can return to. Anything higher would charge consumer goods nobody opted into,
 	#and the panel cannot lower a state below 1, so the charge would be unrefundable
@@ -423,5 +435,5 @@ AFG_monthly_toll_state_update = {
 		add_to_variable = { AFG_toll_level = -1 }
 		OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = -0.02 } }
 	}
-	update_afghan_toll = yes
+	AFG_update_state_tollage = yes
 }
