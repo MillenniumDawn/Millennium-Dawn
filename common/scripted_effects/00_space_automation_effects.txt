@@ -1166,30 +1166,6 @@ space_auto_start_olv_batch = {
 	set_variable = { var_space_production_OLV = var_space_auto_newest_olv }
 	set_variable = { var_gui_prod_10_price_unit = global.prod_10_price_unit^temp_idx }
 	set_variable = { var_gui_prod_10_days_unit = global.prod_10_duration_unit^temp_idx }
-	if = {
-		limit = {
-			has_tech = part_reusable_OLV6
-			check_variable = { var_space_auto_newest_olv = 106 }
-		}
-		add_to_variable = { var_gui_prod_10_price_unit = -0.005 }
-		add_to_variable = { var_gui_prod_10_days_unit = -10 }
-	}
-	if = {
-		limit = {
-			has_tech = full_reusable_OLV7
-			check_variable = { var_space_auto_newest_olv = 107 }
-		}
-		add_to_variable = { var_gui_prod_10_price_unit = -0.01 }
-		add_to_variable = { var_gui_prod_10_days_unit = -25 }
-	}
-	if = {
-		limit = {
-			has_tech = full_reusable_OLV8
-			check_variable = { var_space_auto_newest_olv = 108 }
-		}
-		add_to_variable = { var_gui_prod_10_price_unit = -0.03 }
-		add_to_variable = { var_gui_prod_10_days_unit = -45 }
-	}
 	set_variable = { var_gui_prod_10_amount = temp_need }
 	space_auto_fit_multiplier_10 = yes
 	if = {
@@ -1275,7 +1251,16 @@ space_auto_execute_launch = {
 	}
 
 	set_variable = { var_OLV_type = var_space_auto_olv }
-	set_variable = { var_OLV_reliability = global.OLV_reliability_array^temp_olv_idx }
+	set_variable = {
+		var_OLV_reliability = {
+			value = global.OLV_reliability_array^temp_olv_idx
+			multiply = {
+				value = 1
+				add = modifier@olv_launch_reliability_modifier
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
 	set_variable = { var_OLV_payload_mass = global.OLV_payload_mass_array^temp_olv_idx }
 	set_variable = { var_OLV_inventory = missile_inventory_array^var_space_auto_olv }
 	set_variable = { var_OLV_flights = temp_flights }
