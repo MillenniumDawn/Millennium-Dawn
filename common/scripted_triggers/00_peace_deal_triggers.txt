@@ -109,7 +109,7 @@
 						multiply = 100
 						round = yes
 						subtract = 100
-						clamp = { min = -500 max = 1000 }
+						clamp = { min = -500 max = 200 }
 					}
 				}
 				# Dampen when ROOT has no faction — engine metric includes all
@@ -318,6 +318,17 @@
 						add_to_temp_variable = { CPD_FP_aversion_temp = 100 }
 					}
 				}
+				# Full annexation — receiver refuses to sign away its entire country.
+				# Mirrors CPD_full_annexation_aversion in 01_peace_deal_diplomatic_actions.txt.
+				set_temp_variable = { CPD_receiver_controlled_states = THIS.num_of_controlled_states }
+				set_temp_variable = { CPD_FA_aversion_temp = 0 }
+				if = {
+					limit = {
+						ROOT = { check_variable = { CPD_annex_state_DEMANDS^num > 0 } }
+						NOT = { check_variable = { ROOT.CPD_annex_state_DEMANDS^num < CPD_receiver_controlled_states } }
+					}
+					set_temp_variable = { CPD_FA_aversion_temp = -200 }
+				}
 				set_temp_variable = { CPD_RC_aversion_temp = 0 }
 				if = {
 					limit = { ROOT = { has_country_flag = CPD_regime_change_demand } }
@@ -384,6 +395,7 @@
 						add = v
 						add = CPD_DF_temp
 						add = CPD_FP_aversion_temp
+						add = CPD_FA_aversion_temp
 						add = CPD_RC_aversion_temp
 						add = CPD_FN_aversion_temp
 						add = CPD_MB_aversion_temp
