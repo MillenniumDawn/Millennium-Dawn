@@ -994,3 +994,41 @@ SAU_debug_reset_reign = {
 	clr_country_flag = SAU_salman_dead
 	set_country_flag = set_Kingdom
 }
+
+SAU_faisalite_clear_spirits = {
+	if = { limit = { has_idea = SAU_faisalite_interventionist_dominant } remove_ideas = SAU_faisalite_interventionist_dominant }
+	if = { limit = { has_idea = SAU_faisalite_interventionist_leaning } remove_ideas = SAU_faisalite_interventionist_leaning }
+	if = { limit = { has_idea = SAU_faisalite_balanced } remove_ideas = SAU_faisalite_balanced }
+	if = { limit = { has_idea = SAU_faisalite_isolationist_leaning } remove_ideas = SAU_faisalite_isolationist_leaning }
+	if = { limit = { has_idea = SAU_faisalite_isolationist_dominant } remove_ideas = SAU_faisalite_isolationist_dominant }
+}
+
+# Interventionist minus isolationist decides the spirit. Called by every decision, focus
+# and event that moves either count.
+SAU_faisalite_update_balance = {
+	clamp_variable = { var = SAU_faisalite_interventionist min = 0 }
+	clamp_variable = { var = SAU_faisalite_isolationist min = 0 }
+	set_temp_variable = { SAU_faisalite_diff = SAU_faisalite_interventionist }
+	subtract_from_temp_variable = { SAU_faisalite_diff = SAU_faisalite_isolationist }
+	SAU_faisalite_clear_spirits = yes
+
+	if = {
+		limit = { check_variable = { SAU_faisalite_diff > 7 } }
+		add_ideas = SAU_faisalite_interventionist_dominant
+	}
+	else_if = {
+		limit = { check_variable = { SAU_faisalite_diff > 2 } }
+		add_ideas = SAU_faisalite_interventionist_leaning
+	}
+	else_if = {
+		limit = { check_variable = { SAU_faisalite_diff > -3 } }
+		add_ideas = SAU_faisalite_balanced
+	}
+	else_if = {
+		limit = { check_variable = { SAU_faisalite_diff > -8 } }
+		add_ideas = SAU_faisalite_isolationist_leaning
+	}
+	else = {
+		add_ideas = SAU_faisalite_isolationist_dominant
+	}
+}
