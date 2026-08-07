@@ -1656,24 +1656,24 @@ full_satellite_system_access = {
 #While spending a higher percentage will increase your benefits
 calculate_final_un_benefits = {
 	#add up everything we are receiving aid wise
-	set_temp_variable = { current_receiving_budget_tracker = un_esco_political_power_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_esco_research_speed_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_ido_construction_speed_var }
-
-	add_to_temp_variable = {
-		var = current_receiving_budget_tracker
-		value = {
-			value = un_ido_current_building_count
-			multiply = 0.14
+	#adds up all the incoming aid first
+	#then divide it to get the % of aid we are receiving
+	#then multiply it to flip it negative, to add back to nations receiving benefits
+	set_temp_variable = {
+		current_receiving_budget_tracker = {
+			value = un_esco_political_power_var
+			add = un_esco_research_speed_var
+			add = un_ido_construction_speed_var
+			add = {
+				value = un_ido_current_building_count
+				multiply = 0.14
+			}
+			add = un_cdf_productivity_var
+			add = un_cdf_construction_cost_var
+			divide = global.full_aid_budget_calculator
+			multiply = -1
 		}
 	}
-	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_productivity_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_construction_cost_var }
-
-	#Divide here to see how much % of the money we are getting
-	#then flip it to negative; we need to add this back into the nations that are getting benefits
-	divide_temp_variable = { current_receiving_budget_tracker = global.full_aid_budget_calculator }
-	multiply_temp_variable = { current_receiving_budget_tracker = -2 }
 
 	#if you receive aid, you begin to lose some of the gains from giving aid
 	set_temp_variable = { contribution_multiplier = 1 }
@@ -1696,24 +1696,44 @@ calculate_final_un_benefits = {
 		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 
-	set_temp_variable = { aid_program_adder = united_nations_aid_program_contribution_percent }
-	multiply_temp_variable = { aid_program_adder = contribution_multiplier }
+	set_temp_variable = {
+		aid_program_adder = {
+			value = united_nations_aid_program_contribution_percent
+			multiply = contribution_multiplier
+		}
+	}
 
-	set_variable = { united_nations_political_power_var = aid_program_adder }
-	multiply_variable = { united_nations_political_power_var = 0.5 }
+	set_variable = {
+		united_nations_political_power_var = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			multiply = 0.5
+		}
+	}
 
-	set_variable = { united_nations_influence_gain_var = united_nations_contribution_percent }
-	add_to_variable = { united_nations_influence_gain_var = aid_program_adder }
-	add_to_variable = { united_nations_influence_gain_var = current_receiving_budget_tracker }
+	set_variable = {
+		united_nations_influence_gain_var = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			add = current_receiving_budget_tracker
+		}
+	}
 
-	set_variable = { united_nations_influence_defense_var = united_nations_contribution_percent }
-	add_to_variable = { united_nations_influence_defense_var = aid_program_adder }
-	add_to_variable = { united_nations_influence_defense_var = current_receiving_budget_tracker }
+	set_variable = {
+		united_nations_influence_defense_var = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			add = current_receiving_budget_tracker
+		}
+	}
 
-	#Investments get calculated as the average of contributions
-	set_temp_variable = { investment_adder = united_nations_contribution_percent }
-	add_to_temp_variable = { investment_adder = aid_program_adder }
-	multiply_temp_variable = { investment_adder = -0.5 }
+	set_temp_variable = {
+		investment_adder = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			multiply = -0.5
+		}
+	}
 
 	set_variable = { united_nations_investment_duration_var = investment_adder }
 	set_variable = { united_nations_investment_cost_var = investment_adder }
