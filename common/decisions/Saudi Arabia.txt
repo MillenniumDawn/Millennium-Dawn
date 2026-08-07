@@ -3585,6 +3585,243 @@ SAU_vision2030_category = {
 
 SAU_crown_prince_category = {
 
+	#### KING SALMAN'S HEALTH ####
+
+	# Readout only; the tiers themselves are hidden ideas so they stay out of the spirit bar.
+	SAU_salman_health_status = {
+		icon = GFX_decision_generic_civil_support
+		priority = 200
+
+		visible = {
+			check_variable = { SAU_current_king = 2 }
+			NOT = { has_country_flag = SAU_monarchy_abolished }
+		}
+
+		available = { always = no }
+
+		cost = 0
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_salman_royal_physicians = {
+		icon = GFX_decision_generic_civil_support
+		cost = 60
+		days_re_enable = 180
+
+		visible = {
+			check_variable = { SAU_current_king = 2 }
+			NOT = { has_country_flag = SAU_monarchy_abolished }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_salman_royal_physicians"
+			add_to_variable = { SAU_salman_health = 12 }
+			clamp_variable = { var = SAU_salman_health min = 0 max = 100 }
+			SAU_salman_health_set_tier = yes
+			custom_effect_tooltip = SAU_salman_health_improve_tt
+		}
+
+		ai_will_do = { base = 30 }
+	}
+
+	SAU_salman_burden_of_state = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 40
+		days_re_enable = 180
+
+		visible = {
+			check_variable = { SAU_current_king = 2 }
+			has_country_flag = SAU_crown_prince_named
+			NOT = { has_country_flag = SAU_monarchy_abolished }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_salman_burden_of_state"
+			subtract_from_variable = { SAU_salman_health = 12 }
+			clamp_variable = { var = SAU_salman_health min = 0 max = 100 }
+			SAU_salman_health_set_tier = yes
+			custom_effect_tooltip = SAU_salman_health_worsen_tt
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	#### KING SALMAN'S HEIR - MBS against MBN for Crown Prince ####
+
+	SAU_back_mbs_heir = {
+		icon = GFX_decision_generic_political_rally
+		cost = 0
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = SAU_crown_prince_race_active
+			check_variable = { SAU_heir_choice = 0 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_back_mbs_heir"
+			set_variable = { SAU_heir_choice = 1 }
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SAU_back_mbn_heir = {
+		icon = GFX_decision_generic_political_rally
+		cost = 0
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = SAU_crown_prince_race_active
+			check_variable = { SAU_heir_choice = 0 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_back_mbn_heir"
+			set_variable = { SAU_heir_choice = 2 }
+		}
+
+		ai_will_do = { base = 15 }
+	}
+
+	SAU_heir_rally_support = {
+		icon = GFX_decision_influence
+		cost = 30
+		days_remove = 30
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SAU_crown_prince_race_active
+			NOT = { check_variable = { SAU_heir_choice = 0 } }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_heir_rally_support"
+			random_list = {
+				55 = { set_temp_variable = { heir = SAU_heir_choice } set_temp_variable = { amount = 2 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_rally_slight_tt }
+				33 = { set_temp_variable = { heir = SAU_heir_choice } set_temp_variable = { amount = 5 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_rally_normal_tt }
+				12 = { set_temp_variable = { heir = SAU_heir_choice } set_temp_variable = { amount = 10 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_rally_major_tt }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	SAU_heir_undermine_mbs = {
+		icon = GFX_decision_generic_intelligence_operation
+		cost = 35
+		days_remove = 30
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SAU_crown_prince_race_active
+			NOT = { check_variable = { SAU_heir_choice = 0 } }
+			NOT = { check_variable = { SAU_heir_choice = 1 } }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_heir_undermine_mbs"
+			random_list = {
+				20 = { custom_effect_tooltip = SAU_undermine_fail_tt }
+				50 = { set_temp_variable = { heir = 1 } set_temp_variable = { amount = -3 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_undermine_minor_tt }
+				30 = { set_temp_variable = { heir = 1 } set_temp_variable = { amount = -6 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_undermine_major_tt }
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	SAU_heir_undermine_mbn = {
+		icon = GFX_decision_generic_intelligence_operation
+		cost = 35
+		days_remove = 30
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SAU_crown_prince_race_active
+			NOT = { check_variable = { SAU_heir_choice = 0 } }
+			NOT = { check_variable = { SAU_heir_choice = 2 } }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_heir_undermine_mbn"
+			random_list = {
+				20 = { custom_effect_tooltip = SAU_undermine_fail_tt }
+				50 = { set_temp_variable = { heir = 2 } set_temp_variable = { amount = -3 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_undermine_minor_tt }
+				30 = { set_temp_variable = { heir = 2 } set_temp_variable = { amount = -6 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_undermine_major_tt }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	SAU_heir_mbs_maneuver = {
+		icon = GFX_decision_generic_political_discourse
+		fire_only_once = no
+		is_good = no
+		selectable_mission = no
+		days_mission_timeout = 30
+
+		activation = {
+			has_country_flag = SAU_crown_prince_race_active
+			NOT = { check_variable = { SAU_heir_choice = 0 } }
+			NOT = { check_variable = { SAU_heir_choice = 1 } }
+		}
+		available = {
+			NOT = { has_country_flag = SAU_crown_prince_race_active }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout SAU_heir_mbs_maneuver"
+			random_list = {
+				45 = { set_temp_variable = { heir = 1 } set_temp_variable = { amount = 3 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_maneuver_slight_tt }
+				25 = { set_temp_variable = { heir = 1 } set_temp_variable = { amount = 5 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_maneuver_normal_tt }
+				10 = { set_temp_variable = { heir = 1 } set_temp_variable = { amount = 8 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_maneuver_major_tt }
+				20 = {
+					set_temp_variable = { heir = 1 } set_temp_variable = { amount = 3 } SAU_add_heir_points = yes
+					custom_effect_tooltip = SAU_maneuver_scheme_tt
+					hidden_effect = {
+						set_temp_variable = { heir = 2 } set_temp_variable = { amount = -3 } SAU_add_heir_points = yes
+					}
+				}
+			}
+		}
+	}
+
+	SAU_heir_mbn_maneuver = {
+		icon = GFX_decision_generic_political_discourse
+		fire_only_once = no
+		is_good = no
+		selectable_mission = no
+		days_mission_timeout = 30
+
+		activation = {
+			has_country_flag = SAU_crown_prince_race_active
+			NOT = { check_variable = { SAU_heir_choice = 0 } }
+			NOT = { check_variable = { SAU_heir_choice = 2 } }
+		}
+		available = {
+			NOT = { has_country_flag = SAU_crown_prince_race_active }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout SAU_heir_mbn_maneuver"
+			random_list = {
+				45 = { set_temp_variable = { heir = 2 } set_temp_variable = { amount = 2 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_maneuver_slight_tt }
+				25 = { set_temp_variable = { heir = 2 } set_temp_variable = { amount = 4 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_maneuver_normal_tt }
+				10 = { set_temp_variable = { heir = 2 } set_temp_variable = { amount = 7 } SAU_add_heir_points = yes custom_effect_tooltip = SAU_maneuver_major_tt }
+				20 = {
+					set_temp_variable = { heir = 2 } set_temp_variable = { amount = 2 } SAU_add_heir_points = yes
+					custom_effect_tooltip = SAU_maneuver_scheme_tt
+					hidden_effect = {
+						set_temp_variable = { heir = 1 } set_temp_variable = { amount = -3 } SAU_add_heir_points = yes
+					}
+				}
+			}
+		}
+	}
+
 	#### STEP 1 - Back a candidate (one-time) ####
 
 	SAU_back_salman = {
@@ -4062,7 +4299,7 @@ arab_spring_category = {
 		allowed = { original_tag = SAU }
 		activation = {
 			has_country_flag = arab_spring_active
-			has_government = fascism
+			salafist_kingdom_are_in_power = yes
 			check_variable = { var = arab_spring value = 100 compare = greater_than_or_equals }
 			NOT = { has_country_flag = SAU_arab_spring_fired }
 		}
@@ -4136,3 +4373,458 @@ HOU_break_ceasefire_category = {
 	}
 }
 
+SAU_reigning_monarch_category = {
+
+	### King Abdullah (SAU_current_king = 1) ###
+	SAU_king_abdullah_national_dialogue = {
+		icon = generic_political_actions
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 1 } }
+
+		available = {
+			has_war = no
+			has_stability > 0.4
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_abdullah_national_dialogue"
+			add_stability = 0.03
+			add_popularity = { ideology = fascism popularity = 0.02 }
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	SAU_king_abdullah_scholarship_program = {
+		icon = generic_research
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 1 } }
+
+		available = {
+			has_war = no
+		}
+
+		cost = 100
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_abdullah_scholarship_program"
+			add_timed_idea = { idea = SAU_research_modifier_01 days = 730 }
+		}
+
+		ai_will_do = { base = 6 }
+	}
+
+	SAU_king_abdullah_arab_peace_initiative = {
+		icon = GFX_decision_generic_form_nation
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 1 } }
+
+		available = {
+			has_war = no
+			country_exists = EGY
+			country_exists = JOR
+		}
+
+		cost = 100
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_abdullah_arab_peace_initiative"
+			add_political_power = 60
+			add_opinion_modifier = { target = EGY modifier = medium_increase }
+			add_opinion_modifier = { target = JOR modifier = medium_increase }
+			EGY = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+			JOR = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		}
+
+		ai_will_do = { base = 7 }
+	}
+
+	SAU_king_abdullah_social_spending_package = {
+		icon = petro_dollar
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 1 } }
+
+		available = {
+			has_stability < 0.7
+		}
+
+		cost = 150
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_abdullah_social_spending_package"
+			add_stability = 0.06
+			add_war_support = -0.02
+		}
+
+		ai_will_do = { base = 9 }
+	}
+
+	### King Salman (SAU_current_king = 2) ###
+	SAU_king_salman_consolidate_court = {
+		icon = generic_political_actions
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 2 } }
+
+		available = {
+			has_stability > 0.3
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_salman_consolidate_court"
+			add_political_power = 120
+			add_stability = 0.02
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	SAU_king_salman_mobilise_the_gulf = {
+		icon = generic_army_support
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 2 } }
+
+		available = {
+			has_war = yes
+		}
+
+		cost = 100
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_salman_mobilise_the_gulf"
+			add_war_support = 0.05
+			army_experience = 25
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	SAU_king_salman_restore_allowances = {
+		icon = generic_factory
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 2 } }
+
+		available = {
+			has_stability < 0.75
+		}
+
+		cost = 125
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_salman_restore_allowances"
+			add_stability = 0.05
+			add_war_support = 0.03
+		}
+
+		ai_will_do = { base = 9 }
+	}
+
+	SAU_king_salman_expand_the_haram = {
+		icon = generic_construction
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 2 } }
+
+		available = {
+			has_war = no
+		}
+
+		cost = 100
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_salman_expand_the_haram"
+			add_political_power = 100
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 7 }
+	}
+
+	### Mohammed bin Nayef (SAU_current_king = 3) ###
+	SAU_king_mbn_counterterror_sweep = {
+		icon = generic_operation
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 3 } }
+
+		available = {
+			has_stability > 0.25
+		}
+
+		cost = 75
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mbn_counterterror_sweep"
+			add_stability = 0.04
+			add_war_support = 0.02
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	SAU_king_mbn_western_intelligence_ties = {
+		icon = generic_intelligence_operation
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 3 } }
+
+		available = {
+			country_exists = USA
+			NOT = { has_war_with = USA }
+		}
+
+		cost = 100
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mbn_western_intelligence_ties"
+			add_opinion_modifier = { target = USA modifier = medium_increase }
+			USA = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		}
+
+		ai_will_do = { base = 7 }
+	}
+
+	SAU_king_mbn_munasaha_program = {
+		icon = GFX_decision_generic_civil_support
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 3 } }
+
+		available = {
+			has_war = no
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mbn_munasaha_program"
+			add_stability = 0.05
+			add_political_power = 40
+		}
+
+		ai_will_do = { base = 9 }
+	}
+
+	SAU_king_mbn_secure_eastern_province = {
+		icon = military_buildup
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 3 } }
+
+		available = {
+			has_stability < 0.8
+		}
+
+		cost = 100
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mbn_secure_eastern_province"
+			add_stability = 0.03
+			add_war_support = 0.03
+			army_experience = 15
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	### Mutaib bin Abdullah (SAU_current_king = 4) ###
+	SAU_king_mutaib_expand_national_guard = {
+		icon = generic_army_support
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 4 } }
+
+		available = {
+			has_stability > 0.25
+		}
+
+		cost = 100
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mutaib_expand_national_guard"
+			army_experience = 20
+			add_war_support = 0.04
+		}
+
+		ai_will_do = { base = 9 }
+	}
+
+	SAU_king_mutaib_tribal_stipends = {
+		icon = generic_political_actions
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 4 } }
+
+		available = {
+			has_war = no
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mutaib_tribal_stipends"
+			add_stability = 0.04
+			add_political_power = 50
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	SAU_king_mutaib_sang_modernisation = {
+		icon = generic_army_support
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 4 } }
+
+		available = {
+			country_exists = USA
+			NOT = { has_war_with = USA }
+		}
+
+		cost = 125
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mutaib_sang_modernisation"
+			army_experience = 25
+			add_manpower = 20000
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	SAU_king_mutaib_guard_the_holy_cities = {
+		icon = GFX_decision_generic_nationalism
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 4 } }
+
+		available = {
+			has_stability > 0.2
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mutaib_guard_the_holy_cities"
+			add_stability = 0.05
+			add_political_power = 50
+		}
+
+		ai_will_do = { base = 9 }
+	}
+
+	### Mohammed bin Salman (SAU_current_king = 5) ###
+	SAU_king_mbs_giga_projects = {
+		icon = generic_construction
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 5 } }
+
+		available = {
+			has_war = no
+		}
+
+		cost = 125
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mbs_giga_projects"
+			add_timed_idea = { idea = SAU_diversification days = 730 }
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	SAU_king_mbs_anticorruption_drive = {
+		icon = generic_political_actions
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 5 } }
+
+		available = {
+			has_stability > 0.35
+		}
+
+		cost = 100
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mbs_anticorruption_drive"
+			add_political_power = 150
+			add_stability = -0.02
+		}
+
+		ai_will_do = { base = 7 }
+	}
+
+	SAU_king_mbs_public_investment_fund = {
+		icon = petro_dollar
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 5 } }
+
+		available = {
+			has_war = no
+		}
+
+		cost = 150
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mbs_public_investment_fund"
+			set_temp_variable = { treasury_change = 8 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = { base = 9 }
+	}
+
+	SAU_king_mbs_social_liberalisation = {
+		icon = power_struggle
+		priority = 100
+
+		visible = { check_variable = { SAU_current_king = 5 } }
+
+		available = {
+			has_stability > 0.4
+		}
+
+		cost = 100
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_king_mbs_social_liberalisation"
+			add_political_power = 75
+			add_stability = -0.03
+			add_popularity = { ideology = democratic popularity = 0.03 }
+		}
+
+		ai_will_do = { base = 6 }
+	}
+}

@@ -618,7 +618,6 @@ SAU_add_crown_points = {
 
 # Crown the prince with the most points. Ties resolve to Salman (most senior). Installs via the generic leader system.
 SAU_resolve_succession = {
-	complete_national_focus = SAU_The_death_of_king_abdullah
 	set_country_flag = set_Kingdom
 	if = {
 		limit = {
@@ -638,13 +637,13 @@ SAU_resolve_succession = {
 		set_variable = { Kingdom_leader = 0 }
 	}
 	set_leader_SAU = yes
-	# Bypass-complete the winner's accession focus so his branch opens without a manual click
+	# Hand the Reigning Monarch decisions to the winner: 2 Salman, 3 MBN, 4 Mutaib.
 	if = {
 		limit = {
 			check_variable = { SAU_mbn_points > SAU_salman_points }
 			check_variable = { SAU_mbn_points > SAU_mutaib_points }
 		}
-		complete_national_focus = SAU_focus_MBN
+		set_variable = { SAU_current_king = 3 }
 		clr_country_flag = SAU_abdullah_legacy_active
 	}
 	else_if = {
@@ -652,13 +651,142 @@ SAU_resolve_succession = {
 			check_variable = { SAU_mutaib_points > SAU_salman_points }
 			check_variable = { SAU_mutaib_points > SAU_mbn_points }
 		}
-		complete_national_focus = SAU_focus_Miteb_sonofAbdullah
+		set_variable = { SAU_current_king = 4 }
 	}
 	else = {
-		complete_national_focus = SAU_Salman_Abdulaziz
+		set_variable = { SAU_current_king = 2 }
 		clr_country_flag = SAU_abdullah_legacy_active
+		# Only Salman's reign opens the contest over who follows him.
+		SAU_init_crown_prince_race = yes
+		set_variable = { SAU_salman_health = 100 }
+		SAU_salman_health_set_tier = yes
 	}
 	clr_country_flag = SAU_succession_race_active
+}
+
+# Second race, under King Salman: MBS against MBN for Crown Prince. SAU_mbn_points is reused
+# on purpose so the standing he built in the Abdullah-era race carries into this one.
+# SAU_heir_choice: 0 = undecided, 1 = MBS, 2 = MBN.
+SAU_init_crown_prince_race = {
+	set_variable = { SAU_mbs_points = 40 }
+	clamp_variable = { var = SAU_mbn_points min = 20 }
+	set_variable = { SAU_heir_choice = 0 }
+	set_country_flag = SAU_crown_prince_race_active
+	SAU_recompute_heir_shares = yes
+}
+
+SAU_recompute_heir_shares = {
+	set_temp_variable = { SAU_heir_total = SAU_mbs_points }
+	add_to_temp_variable = { var = SAU_heir_total value = SAU_mbn_points }
+	if = { limit = { check_variable = { SAU_heir_total < 1 } } set_temp_variable = { SAU_heir_total = 1 } }
+
+	set_variable = { SAU_heir_mbs_share = SAU_mbs_points }
+	multiply_variable = { SAU_heir_mbs_share = 100 }
+	divide_variable = { var = SAU_heir_mbs_share value = SAU_heir_total }
+
+	set_variable = { SAU_heir_mbn_share = SAU_mbn_points }
+	multiply_variable = { SAU_heir_mbn_share = 100 }
+	divide_variable = { var = SAU_heir_mbn_share value = SAU_heir_total }
+}
+
+# temp args: heir (1 MBS / 2 MBN), amount (may be negative). Floor of 1 keeps the pie non-empty.
+SAU_add_heir_points = {
+	if = {
+		limit = { check_variable = { heir = 1 } }
+		add_to_variable = { var = SAU_mbs_points value = amount }
+		clamp_variable = { var = SAU_mbs_points min = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { heir = 2 } }
+		add_to_variable = { var = SAU_mbn_points value = amount }
+		clamp_variable = { var = SAU_mbn_points min = 1 }
+	}
+	SAU_recompute_heir_shares = yes
+}
+
+# Names the Crown Prince using the same ids the Reigning Monarch decisions read: 5 MBS, 3 MBN.
+# MBS is the fallthrough so an untouched race gives the historical 2017 outcome, mirroring
+# Salman's position in SAU_resolve_succession.
+SAU_resolve_crown_prince = {
+	if = {
+		limit = { check_variable = { SAU_mbn_points > SAU_mbs_points } }
+		set_variable = { SAU_crown_prince = 3 }
+	}
+	else = {
+		set_variable = { SAU_crown_prince = 5 }
+	}
+	clr_country_flag = SAU_crown_prince_race_active
+	set_country_flag = SAU_crown_prince_named
+}
+
+# King Salman's health, 100 down to 0. Decline accelerates with age so he passes of his own
+# accord around 2030, aged 94; SAU_on_actions forces the issue in 2032 if he has been propped up.
+SAU_salman_health_tick = {
+	if = {
+		limit = { date < 2020.1.1 }
+		subtract_from_variable = { SAU_salman_health = 0.3 }
+	}
+	else_if = {
+		limit = { date < 2025.1.1 }
+		subtract_from_variable = { SAU_salman_health = 0.5 }
+	}
+	else_if = {
+		limit = { date < 2028.1.1 }
+		subtract_from_variable = { SAU_salman_health = 0.8 }
+	}
+	else = {
+		subtract_from_variable = { SAU_salman_health = 1 }
+	}
+	clamp_variable = { var = SAU_salman_health min = 0 max = 100 }
+	SAU_salman_health_set_tier = yes
+}
+
+SAU_salman_health_set_tier = {
+	SAU_salman_health_clear = yes
+
+	if = {
+		limit = { check_variable = { SAU_salman_health > 80 } }
+		add_ideas = SAU_salman_health_stable
+	}
+	else_if = {
+		limit = { check_variable = { SAU_salman_health > 60 } }
+		add_ideas = SAU_salman_health_declining
+	}
+	else_if = {
+		limit = { check_variable = { SAU_salman_health > 40 } }
+		add_ideas = SAU_salman_health_serious
+	}
+	else_if = {
+		limit = { check_variable = { SAU_salman_health > 20 } }
+		add_ideas = SAU_salman_health_critical
+	}
+	else = {
+		add_ideas = SAU_salman_health_near_death
+	}
+}
+
+SAU_salman_health_clear = {
+	if = { limit = { has_idea = SAU_salman_health_stable }     remove_ideas = SAU_salman_health_stable }
+	if = { limit = { has_idea = SAU_salman_health_declining }  remove_ideas = SAU_salman_health_declining }
+	if = { limit = { has_idea = SAU_salman_health_serious }    remove_ideas = SAU_salman_health_serious }
+	if = { limit = { has_idea = SAU_salman_health_critical }   remove_ideas = SAU_salman_health_critical }
+	if = { limit = { has_idea = SAU_salman_health_near_death } remove_ideas = SAU_salman_health_near_death }
+}
+
+# Salman passes; the named Crown Prince takes the throne. Kingdom_leader: 2 MBS, 1 MBN.
+SAU_crown_prince_accedes = {
+	SAU_salman_health_clear = yes
+	set_variable = { SAU_current_king = SAU_crown_prince }
+	if = {
+		limit = { check_variable = { SAU_crown_prince = 5 } }
+		set_variable = { Kingdom_leader = 2 }
+	}
+	else = {
+		set_variable = { Kingdom_leader = 1 }
+	}
+	set_leader_SAU = yes
+	clr_country_flag = SAU_crown_prince_named
+	set_country_flag = SAU_salman_dead
 }
 
 
