@@ -153,7 +153,7 @@ def test_trait_name_without_loc_flagged(tmp_path):
         "ROM_romarm_material_manufacturer", body, "f.txt", 0, set()
     )
     assert v._issues[0].category == "trait-loc-missing"
-    assert v._issues[0].severity == "warning"
+    assert v._issues[0].severity == "error"
     assert "ROM_romarm_trait_export_ammo" in v._issues[0].message
 
 
@@ -215,4 +215,4 @@ def test_full_run_on_fixture_dir(tmp_path):
     assert by_cat["on-complete-empty"].severity == "error"
     assert by_cat["trait-x-bounds"].severity == "warning"
     assert by_cat["initial-trait-name"].severity == "warning"
-    assert by_cat["trait-loc-missing"].severity == "warning"
+    assert by_cat["trait-loc-missing"].severity == "error"

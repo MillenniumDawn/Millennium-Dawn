@@ -261,7 +261,7 @@ class Validator(BaseValidator):
                 )
             else:
                 continue
-            self.add_warning("trait-loc-missing", message, rel, line)
+            self.add_error("trait-loc-missing", message, rel, line)
 
     def _check_on_complete(self, body: str, rel: str, body_offset: int):
         for m in ON_COMPLETE_RE.finditer(body):
