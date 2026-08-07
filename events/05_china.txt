@@ -6238,7 +6238,48 @@ country_event = {
 		}
 	}
 
-
+	option = {
+		name = CHI_foreign.200.e
+		log = "[GetDateText]: [This.GetName]: CHI_foreign.200.e executed"
+		add_to_variable = { CHI_chinese_aggression = 5 tooltip = CHI_chinese_aggression_tt }
+		clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
+		JAP = { country_event = { id = Japan.6 days = 1 } }
+		every_country = {
+			limit = {
+				NOT = { original_tag = JAP }
+				NOT = { original_tag = CHI }
+			}
+			news_event = { id = Japan.7 days = 2 }
+		}
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			JAP = {
+				create_wargoal = {
+					type = topple_government
+					target = CHI
+				}
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 15
+				check_variable = {
+					var = CHI_chinese_aggression
+					value = 20
+					compare = greater_than_or_equals
+				}
+			}
+			modifier = {
+				add = -5
+				any_country = { has_guaranteed = JAP }
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
 }
 
 country_event = {
@@ -11249,6 +11290,20 @@ country_event = {
 			add_core_of = CHI
 			remove_core_of = HKG
 			remove_dynamic_modifier = { modifier = CHI_HKG_sinicization_modifier }
+		}
+		if = {
+			limit = {
+				country_exists = ENG
+				ENG = { has_government = democratic }
+				NOT = { has_war_with = ENG }
+			}
+			if = {
+				limit = { ENG = { has_war_support > 0.5 } }
+				country_event = { id = hongkong.5 days = 5 }
+			}
+			else = {
+				country_event = { id = hongkong.6 days = 5 }
+			}
 		}
 		ai_chance = { base = 1 }
 	}

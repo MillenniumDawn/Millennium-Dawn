@@ -11013,9 +11013,11 @@ focus_tree = {
 			if = {
 				limit = {
 					NOT = {
-						owns_state = 326
-						CHA = {
-							is_subject_of = ROOT
+						OR = {
+							owns_state = 326
+							CHA = {
+								is_subject_of = ROOT
+							}
 						}
 					}
 				}
@@ -11056,7 +11058,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
 		available = {
-			country_exists = DAR
+			OR = {
+				country_exists = DAR
+				country_exists = SUD
+			}
 			NOT = { SUD = { is_subject_of = ROOT } }
 			NOT = { SSU = { is_subject_of = ROOT } }
 		}
@@ -11065,16 +11070,22 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_support_darfur"
-			set_temp_variable = { influence_target = DAR }
-			set_temp_variable = { percent_change = 4 }
-			change_influence_percentage = yes
-			add_opinion_modifier = {
-				target = DAR
-				modifier = supports_us
+			if = {
+				limit = { NOT = { country_exists = DAR } }
+				SUD = { country_event = { id = LibyaFocus.76 hours = 6 } }
 			}
-			reverse_add_opinion_modifier = {
-				target = DAR
-				modifier = supports_us
+			else = {
+				set_temp_variable = { influence_target = DAR }
+				set_temp_variable = { percent_change = 4 }
+				change_influence_percentage = yes
+				add_opinion_modifier = {
+					target = DAR
+					modifier = supports_us
+				}
+				reverse_add_opinion_modifier = {
+					target = DAR
+					modifier = supports_us
+				}
 			}
 		}
 
@@ -11849,18 +11860,7 @@ focus_tree = {
 			clr_country_flag = dynamic_rebel_flag
 			custom_effect_tooltip = create_uar_effect_tt
 			custom_effect_tooltip = announce_uar_warning_tt
-			#Calculate the total GDP of all Arabic countries
-			set_variable = { total_arabic_gdp = 0 }
-			for_each_scope_loop = {
-				array = global.arabic_countries
-				add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
-			}
-			#Calculate the GDP of UAR and their puppets
-			set_variable = { total_uar_gdp = gdp_total }
-			for_each_scope_loop = {
-				array = ROOT.subjects
-				add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
-			}
+			update_arabic_country_gdp_total_effect = yes
 			hidden_effect = { news_event = { id = UAR_news.1 hours = 6 } }
 		}
 
@@ -11934,6 +11934,7 @@ focus_tree = {
 						}
 						country_event = AfricanUnion.1
 					}
+					news_event = { id = AfricanUnion_news.1 days = 7 }
 				}
 			}
 			custom_effect_tooltip = LBA_strive_for_african_union_tt
@@ -12524,7 +12525,7 @@ focus_tree = {
 			}
 			if = {
 				limit = {
-					NOT = { has_global_flag = SOM_victor_of_the_somali_civil_war_cleanedup }
+					NOT = { has_global_flag = GLOBAL_somali_civil_war_cleanup_complete }
 				}
 				every_country = {
 					limit = {

@@ -462,7 +462,7 @@ IRQ_preparation_for_the_war = {
 IRQ_economic_union_menu = {
 	IRQ_invite_to_economic_union_targeted_decision = {
 		visible = { has_country_flag = economic_union_formed_iraq }
-		fire_only_once = yes
+		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_invite_to_economic_union_targeted_decision"
 			every_country = {
@@ -474,6 +474,36 @@ IRQ_economic_union_menu = {
 		}
 		ai_will_do = {
 			base = 2
+		}
+	}
+	IRQ_expel_economic_union_members_decision = {
+		visible = { has_country_flag = economic_union_formed_iraq }
+		cost = 50
+		days_re_enable = 180
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IRQ_members_in_union_TT
+				check_variable = {
+					number_of_iraq_economic_union_members > 1
+				}
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_expel_economic_union_members_decision"
+			every_country = {
+				limit = {
+					has_country_flag = joined_iraqi_economic_union
+					NOT = { original_tag = IRQ }
+				}
+				country_event = iraqi_events.14
+			}
+		}
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 3
+				has_stability < 0.40
+			}
 		}
 	}
 }
@@ -2010,6 +2040,7 @@ IRQ_sunni_in_politics = {
 			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_satisfy_sunnis"
 			set_country_flag = IRQ_doing_decision
 		}
 		remove_effect = {
@@ -2041,6 +2072,7 @@ IRQ_sunni_in_politics = {
 			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_redirect_sunni_resources"
 			set_country_flag = IRQ_doing_decision
 		}
 		remove_effect = {
@@ -2385,6 +2417,9 @@ IRQ_fao_decisions = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ask_for_iranian_arms"
+			PER = {
+				country_event = iraq_md.21
+			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				add_equipment_to_stockpile = {
@@ -2456,6 +2491,9 @@ IRQ_fao_decisions = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ask_for_iranian_funds"
+			PER = {
+				country_event = iraq_md.22
+			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				set_temp_variable = { treasury_change = 75.00 }
@@ -3066,6 +3104,7 @@ IRQ_spring_of_islam = {
 		}
 		fire_only_once = yes
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_islamic_spring_in_jordan"
 			random_list = {
 				50 = {
 					custom_effect_tooltip = IRQ_coup_TT
@@ -3328,6 +3367,7 @@ IRQ_spring_of_islam = {
 		}
 		fire_only_once = yes
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_islamic_spring_in_kuwait"
 			custom_effect_tooltip = IRQ_coup_TT
 			hidden_effect = {
 				KUW = {
@@ -3560,6 +3600,7 @@ IRQ_spring_of_islam = {
 		}
 		fire_only_once = yes
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_islamic_spring_in_turkey"
 			custom_effect_tooltip = IRQ_coup_TT
 			random_list = {
 				50 = {
@@ -3836,16 +3877,19 @@ IRQ_spring_of_islam = {
 			AFG = {
 				NOT = {
 					OR = {
-						emerging_hardline_shiite_are_in_power = yes
-						emerging_moderate_shiite_are_in_power = yes
-						is_subject_of = IRQ
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+							is_subject_of = IRQ
+						}
+						has_war_with = TAL
 					}
-					has_war_with = TAL
 				}
 			}
 		}
 		fire_only_once = yes
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_islamic_spring_in_afghanistan"
 			custom_effect_tooltip = IRQ_coup_TT
 			random_list = {
 				50 = {
@@ -3960,6 +4004,58 @@ IRQ_spring_of_islam = {
 						}
 					}
 				}
+			}
+		}
+		ai_will_do = {
+			base = 10
+		}
+	}
+}
+
+IRQ_saddams_pissfits = {
+	IRQ_demand_kuwait_naval_base = {
+		cost = 50
+		days_remove = 90
+		days_re_enable = 90
+		visible = {
+			country_exists = KUW
+			NOT = {
+				owns_state = 488
+			}
+		}
+		available = {
+			NOT = {
+				has_country_flag = IRQ_demanded_kuwait_naval_base
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_demand_kuwait_naval_base"
+			set_country_flag = IRQ_demanded_kuwait_naval_base
+			KUW = {
+				country_event = iraq_saddam.1
+			}
+		}
+		ai_will_do = {
+			base = 10
+		}
+	}
+	IRQ_propose_kurdistan_defensive_pact = {
+		cost = 50
+		days_remove = 90
+		days_re_enable = 90
+		visible = {
+			country_exists = KUR
+		}
+		available = {
+			NOT = {
+				has_country_flag = IRQ_proposed_kurdistan_pact
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_propose_kurdistan_defensive_pact"
+			set_country_flag = IRQ_proposed_kurdistan_pact
+			KUR = {
+				country_event = iraq_saddam.5
 			}
 		}
 		ai_will_do = {

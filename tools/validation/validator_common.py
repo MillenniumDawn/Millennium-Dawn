@@ -10,7 +10,7 @@ import sys
 import time
 from dataclasses import dataclass
 from multiprocessing import Pool, cpu_count
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -32,6 +32,9 @@ from shared_utils import (
     strip_comments,
     timing_enabled,
 )
+
+# Generic type for the cross-pass result cache accessor (see BaseValidator.cached).
+T = TypeVar("T")
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
@@ -446,11 +449,11 @@ class BaseValidator:
             if not self.staged_files:
                 logging.warning("No staged files found")
 
-    def cached(self, key: str, factory_fn):
+    def cached(self, key: str, factory_fn: Callable[[], T]) -> T:
         # Pool workers don't see this cache; populate from the main process.
         if key not in self._shared_cache:
             self._shared_cache[key] = factory_fn()
-        return self._shared_cache[key]
+        return cast(T, self._shared_cache[key])
 
     def parse_files_cached(
         self,

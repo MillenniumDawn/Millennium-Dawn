@@ -28,6 +28,7 @@ from report_lib import (  # noqa: E402
     MAX_ISSUES_STEP_SUMMARY,
     ReportContext,
     dedupe,
+    delete_comment,
     load_all,
     post_checks,
     post_comment,
@@ -68,6 +69,16 @@ def build_report(results_dir: str, ctx: ReportContext):
     return body, step_body, runs, deduped, truncated
 
 
+def should_delete_comment(runs, deduped, validation_scope: str) -> bool:
+    """Only a full run proves the PR clean, so only a full run may delete."""
+    return (
+        validation_scope == "full"
+        and bool(runs)
+        and not deduped
+        and all(run.status == "passed" for run in runs)
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Generate the Millennium Dawn validation PR report",
@@ -78,6 +89,11 @@ def main() -> int:
     parser.add_argument("--commit-sha")
     parser.add_argument("--workflow-run-url")
     parser.add_argument("--artifact-url")
+    parser.add_argument(
+        "--validation-scope",
+        choices=("partial", "full"),
+        default="partial",
+    )
     parser.add_argument("--print", action="store_true")
     parser.add_argument(
         "--post-comment",
@@ -108,6 +124,7 @@ def main() -> int:
         artifact_url=args.artifact_url,
         date_utc=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         repo=args.github_repository,
+        validation_scope=args.validation_scope,
     )
 
     body, step_body, runs, deduped, truncated = build_report(args.results_dir, ctx)
@@ -175,21 +192,34 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 return 1
-            success, message = post_comment(
-                repo_owner,
-                repo_name,
-                args.pr_number,
-                body,
-                args.github_token,
-            )
+            if should_delete_comment(runs, deduped, args.validation_scope):
+                success, message = delete_comment(
+                    repo_owner,
+                    repo_name,
+                    args.pr_number,
+                    args.github_token,
+                )
+            else:
+                # A clean partial run refreshes an existing comment so it stops
+                # reporting an older commit, but never opens a new one: only the
+                # changed groups' validators ran, so it cannot clear a finding
+                # an unrun validator would still report.
+                success, message = post_comment(
+                    repo_owner,
+                    repo_name,
+                    args.pr_number,
+                    body,
+                    args.github_token,
+                    update_only=not deduped,
+                )
             (print if success else _err)(f"PR comment: {message}")
             # A read-only GITHUB_TOKEN (fork PRs get one regardless of the
-            # workflow's permissions block) can't post comments. Don't fail the
+            # workflow's permissions block) can't write comments. Don't fail the
             # job over it — the report still uploads as an artifact. Mirrors the
             # Checks API handling below.
             if not success:
                 _err(
-                    "PR comment could not be posted; continuing. "
+                    "PR comment could not be updated; continuing. "
                     "See the validation-report artifact for the full report."
                 )
 
