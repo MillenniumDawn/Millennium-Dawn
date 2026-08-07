@@ -518,9 +518,7 @@ def check_oob_variant_refs(
     return findings
 
 
-def check_attributed_archetypes(
-    content: str, archetypes: Set[str]
-) -> List[Finding]:
+def check_attributed_archetypes(content: str, archetypes: Set[str]) -> List[Finding]:
     """Production lines naming an archetype together with a producer.
 
     No country ever designs an archetype, so attributing one sends the engine
@@ -1378,9 +1376,7 @@ class Validator(BaseValidator):
 
         def _build_variants():
             sources = []
-            for fp in self._collect_files(
-                _VARIANT_SOURCE_PATTERNS, ignore_staged=True
-            ):
+            for fp in self._collect_files(_VARIANT_SOURCE_PATTERNS, ignore_staged=True):
                 sources.append((os.path.relpath(fp, self.mod_path), _read_text(fp)))
             return build_variant_name_index(sources)
 

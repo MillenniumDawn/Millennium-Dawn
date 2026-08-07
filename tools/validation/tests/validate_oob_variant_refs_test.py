@@ -55,7 +55,7 @@ equipments = {
 def _ship(hull, name, **fields):
     attrs = " ".join(f"{k} = {v}" for k, v in fields.items())
     return (
-        "units = { fleet = { task_force = { ship = { name = \"Test\" "
+        'units = { fleet = { task_force = { ship = { name = "Test" '
         f'equipment = {{ {hull} = {{ amount = 1 {attrs} version_name = "{name}" }} }}'
         " } } } }"
     )
@@ -118,9 +118,12 @@ def test_creator_takes_precedence_over_owner():
 
 def test_owner_used_when_no_creator():
     by_tag, wildcard = _index(("history/countries/CHI - China.txt", _CHI_VARIANTS))
-    assert check_oob_variant_refs(
-        _ship("frigate_hull_2", "Naresuan Class", owner="CHI"), by_tag, wildcard
-    ) == []
+    assert (
+        check_oob_variant_refs(
+            _ship("frigate_hull_2", "Naresuan Class", owner="CHI"), by_tag, wildcard
+        )
+        == []
+    )
     assert _kinds(
         check_oob_variant_refs(
             _ship("frigate_hull_2", "Naresuan Class", owner="SIA"), by_tag, wildcard
@@ -139,7 +142,7 @@ def test_runtime_created_variant_satisfies_any_tag():
 def test_ship_without_version_name_is_skipped():
     by_tag, wildcard = _index(("history/countries/CHI - China.txt", _CHI_VARIANTS))
     content = (
-        "units = { fleet = { task_force = { ship = { name = \"Test\" "
+        'units = { fleet = { task_force = { ship = { name = "Test" '
         "equipment = { frigate_hull_3 = { amount = 1 owner = CHI } } } } } }"
     )
     assert check_oob_variant_refs(content, by_tag, wildcard) == []
@@ -171,21 +174,27 @@ def test_archetype_with_creator_fails():
 
 
 def test_archetype_with_producer_fails():
-    content = "add_equipment_to_stockpile = { type = convoy amount = 40 producer = GRE }"
+    content = (
+        "add_equipment_to_stockpile = { type = convoy amount = 40 producer = GRE }"
+    )
     assert _kinds(check_attributed_archetypes(content, {"convoy"})) == [
         "attributed_archetype"
     ]
 
 
 def test_concrete_equipment_with_producer_passes():
-    content = "add_equipment_to_stockpile = { type = convoy_1 amount = 40 producer = GRE }"
+    content = (
+        "add_equipment_to_stockpile = { type = convoy_1 amount = 40 producer = GRE }"
+    )
     assert check_attributed_archetypes(content, {"convoy"}) == []
 
 
 def test_archetype_without_attribution_passes():
     """calculate_starting_utility_stockpile grants the archetype unattributed,
     which never triggers a variant lookup."""
-    content = "add_equipment_to_stockpile = { type = convoy amount = dockyard_increase }"
+    content = (
+        "add_equipment_to_stockpile = { type = convoy amount = dockyard_increase }"
+    )
     assert check_attributed_archetypes(content, {"convoy"}) == []
 
 

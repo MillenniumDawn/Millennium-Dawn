@@ -343,3 +343,51 @@ def test_project_jxx_regression():
     categories = [category for category, _, _ in _scan(script)]
     assert categories.count("dlc_tech_bonus") == 3
     assert categories.count("dlc_special_project") == 1
+
+
+# --- sanitize -----------------------------------------------------------
+
+
+def test_sanitize_handles_escaped_quote_ahead_of_braces():
+    """A single escaped quote inside a string used to leave the old
+    quote-blanker's regex one `"` short, so it never found a closing quote for
+    the rest of the string and left everything after it — including a
+    `key = {` -shaped fragment — as raw, unblanked text that `_child_blocks`
+    would misread as a real block, desyncing the brace-depth walk."""
+    script = (
+        "completion_reward = {\n"
+        '\tlog = "note \\"quoted bit: fake = { should_be_invisible = yes }"\n'
+        "\tif = {\n"
+        f'\t\tlimit = {{ has_dlc = "{BBA}" }}\n'
+        + _bonus("gen_5_light", "\t\t")
+        + "\t}\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
+# --- scan_file cache ------------------------------------------------------
+
+
+def test_scan_file_cache_invalidates_when_gate_maps_change(tmp_path, monkeypatch):
+    """`scan_file`'s disk cache used to key only on the scanned file's own
+    content. A `has_dlc` gate added to `common/technologies/` (etc.) without
+    touching the referencing file would then return a stale "clean" result
+    forever, defeating the validator (see the module docstring's CTD)."""
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    filepath = _write(
+        tmp_path,
+        "events/test_events.txt",
+        "completion_reward = {\n" + _bonus("gen_5_light") + "}\n",
+    )
+    mod_path = str(tmp_path) + "/"
+
+    ungated = {"gen_5_light": frozenset()}
+    V._init_worker(ungated, {}, {}, V._fingerprint_gates(ungated, {}, {}), mod_path)
+    assert V.scan_file(str(filepath)) == []
+
+    gated = {"gen_5_light": frozenset({("require", BBA)})}
+    V._init_worker(gated, {}, {}, V._fingerprint_gates(gated, {}, {}), mod_path)
+    findings = V.scan_file(str(filepath))
+    assert len(findings) == 1
+    assert "gen_5_light" in findings[0][3]

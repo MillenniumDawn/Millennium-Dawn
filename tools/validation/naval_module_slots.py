@@ -91,27 +91,28 @@ def _depth0_text(text: str, lo: int, hi: int) -> str:
     return "".join(out)
 
 
-def _scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
-    """First ``key = value`` at brace-depth 0 of the ``text[lo:hi]`` span.
+def _first_at_depth0(
+    text: str, lo: int, hi: int, key: str, value_pattern: str
+) -> Optional[str]:
+    """First ``key = <value_pattern>`` at brace-depth 0 of the ``text[lo:hi]`` span.
     Comments must already be blanked so ``#`` braces don't skew the depth count."""
-    for m in re.compile(r"\b" + re.escape(key) + r"\s*=\s*([A-Za-z_]\w*)").finditer(
+    for m in re.compile(r"\b" + re.escape(key) + r"\s*=\s*" + value_pattern).finditer(
         text, lo, hi
     ):
         seg = text[lo : m.start()]
         if seg.count("{") == seg.count("}"):
             return m.group(1)
     return None
+
+
+def _scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
+    """First ``key = value`` at brace-depth 0 of the ``text[lo:hi]`` span."""
+    return _first_at_depth0(text, lo, hi, key, r"([A-Za-z_]\w*)")
 
 
 def _quoted_scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
     """First ``key = "value"`` at brace-depth 0 of the ``text[lo:hi]`` span."""
-    for m in re.compile(r"\b" + re.escape(key) + r'\s*=\s*"([^"]*)"').finditer(
-        text, lo, hi
-    ):
-        seg = text[lo : m.start()]
-        if seg.count("{") == seg.count("}"):
-            return m.group(1)
-    return None
+    return _first_at_depth0(text, lo, hi, key, r'"([^"]*)"')
 
 
 def blank_comments(text: str) -> str:

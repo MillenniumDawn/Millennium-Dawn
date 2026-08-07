@@ -33,7 +33,11 @@ from typing import Dict, FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
-from shared_utils import compute_line_offsets, line_for_offset  # noqa: E402
+from shared_utils import (  # noqa: E402
+    blank_quoted_strings,
+    compute_line_offsets,
+    line_for_offset,
+)
 from validate_history import _extract_dlc_conditions  # noqa: E402
 from validator_common import (  # noqa: E402
     BaseValidator,
@@ -47,7 +51,6 @@ Conditions = List[Tuple[str, str]]
 # Numeric names so `random_list` weight buckets (`50 = { ... }`) parse as blocks.
 _BLOCK_RE = re.compile(r"([A-Za-z_0-9@][A-Za-z0-9_.@]*(?::[A-Za-z0-9_]+)?)\s*=\s*\{")
 _HAS_DLC_RE = re.compile(r'has_dlc\s*=\s*"([^"\n]+)"')
-_QUOTED_RE = re.compile(r'"[^"\n]*"')
 _TECH_ENTRY_RE = re.compile(r"\btechnology\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _CATEGORY_ENTRY_RE = re.compile(r"\bcategory\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _FOLDER_NAME_RE = re.compile(r"\bname\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
@@ -88,14 +91,8 @@ def _sanitize(text: str) -> str:
     are kept so `has_dlc = "X"` still yields X.
     """
     text = strip_comments(text)
-    keep = {m.start(1) - 1 for m in _HAS_DLC_RE.finditer(text)}
-
-    def _blank(match: "re.Match") -> str:
-        if match.start() in keep:
-            return match.group(0)
-        return '"' + " " * (len(match.group(0)) - 2) + '"'
-
-    return _QUOTED_RE.sub(_blank, text)
+    keep_start = {m.start(1) - 1 for m in _HAS_DLC_RE.finditer(text)}
+    return blank_quoted_strings(text, keep_start)
 
 
 def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, int]]:
@@ -384,17 +381,41 @@ class Scanner:
             self.walk(body_start, body_end, ctx)
 
 
+def _fingerprint_gates(
+    tech_gates: Dict[str, Gates],
+    category_gates: Dict[str, Gates],
+    project_gates: Dict[str, Gates],
+) -> str:
+    """Stable digest of the three derived gate maps.
+
+    Folded into ``scan_file``'s cache key so a `has_dlc` change anywhere in
+    `common/technology_tags/`, `common/technologies/`, or
+    `common/special_projects/projects/` invalidates every cached scan, even
+    for a referencing file whose own content didn't change.
+    """
+
+    def _fmt(gates: Dict[str, Gates]) -> str:
+        return ";".join(
+            f"{name}:{','.join(f'{kind}={dlc}' for kind, dlc in sorted(gate))}"
+            for name, gate in sorted(gates.items())
+        )
+
+    return "|".join(_fmt(g) for g in (tech_gates, category_gates, project_gates))
+
+
 _TECH_GATES: Dict[str, Gates] = {}
 _CATEGORY_GATES: Dict[str, Gates] = {}
 _PROJECT_GATES: Dict[str, Gates] = {}
+_GATE_FINGERPRINT = ""
 _MOD_PATH = ""
 
 
-def _init_worker(tech_gates, category_gates, project_gates, mod_path):
-    global _TECH_GATES, _CATEGORY_GATES, _PROJECT_GATES, _MOD_PATH
+def _init_worker(tech_gates, category_gates, project_gates, gate_fingerprint, mod_path):
+    global _TECH_GATES, _CATEGORY_GATES, _PROJECT_GATES, _GATE_FINGERPRINT, _MOD_PATH
     _TECH_GATES = tech_gates
     _CATEGORY_GATES = category_gates
     _PROJECT_GATES = project_gates
+    _GATE_FINGERPRINT = gate_fingerprint
     _MOD_PATH = mod_path
 
 
@@ -414,7 +435,11 @@ def scan_file(filepath: str) -> List[Tuple[str, str, int, str]]:
         return scanner.findings
 
     findings = disk_cache.per_file_cached_by_content(
-        _MOD_PATH, "dlc_guards_scan", filepath, raw, compute
+        _MOD_PATH,
+        "dlc_guards_scan",
+        filepath,
+        raw + "\x00" + _GATE_FINGERPRINT,
+        compute,
     )
     relative = os.path.relpath(filepath, _MOD_PATH).replace(os.sep, "/")
     return [(category, relative, line, message) for category, line, message in findings]
@@ -433,12 +458,19 @@ class Validator(BaseValidator):
             f"{len(category_gates)} gated categories, {len(project_gates)} gated projects"
         )
 
+        gate_fingerprint = _fingerprint_gates(tech_gates, category_gates, project_gates)
         files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
         results = self._pool_map_init(
             scan_file,
             files,
             _init_worker,
-            (tech_gates, category_gates, project_gates, self.mod_path),
+            (
+                tech_gates,
+                category_gates,
+                project_gates,
+                gate_fingerprint,
+                self.mod_path,
+            ),
         )
 
         issues = sorted(row for rows in results for row in rows)
