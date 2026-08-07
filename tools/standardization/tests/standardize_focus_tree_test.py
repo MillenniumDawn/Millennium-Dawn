@@ -43,6 +43,25 @@ def test_multiple_war_targets_all_preserved_in_order():
     ]
 
 
+def test_every_empty_commented_placeholder_is_dropped():
+    # The stylization guide's example focus writes these as slot markers; the
+    # formatter drops all of them rather than keeping some and re-sorting them.
+    placeholders = (
+        "allow_branch",
+        "available",
+        "bypass",
+        "bypass_effect",
+        "cancel",
+        "mutually_exclusive",
+        "visible",
+    )
+    lines = ["\tfocus = {\n", "\t\tid = TST_slots\n"]
+    lines.extend(f"\t\t# {name} = {{ }}\n" for name in placeholders)
+    lines.append("\t}\n")
+    out = format_focus_block(extract_focus_properties(lines))
+    assert not [line for line in out if "#" in line]
+
+
 def test_no_war_target():
     props = extract_focus_properties(["\tfocus = {\n", "\t\tid = TST_peace\n", "\t}\n"])
     assert props["will_lead_to_war_with"] == []
