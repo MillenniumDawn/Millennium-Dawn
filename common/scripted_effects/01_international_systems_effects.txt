@@ -1655,23 +1655,33 @@ full_satellite_system_access = {
 #This makes it so that receiving money reduces your benefits from the main UN modifier
 #While spending a higher percentage will increase your benefits
 calculate_final_un_benefits = {
-	#add up everything we are receiving aid wise
-	#adds up all the incoming aid first
-	#then divide it to get the % of aid we are receiving
-	#then multiply it to flip it negative, to add back to nations receiving benefits
+	set_temp_variable = { current_receiving_budget_tracker = 0 }
+	if = {
+		limit = { is_in_array = { global.unesco_recipients = THIS } }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.unescoe_budget divide = global.unesco_recipients^num }
+		}
+	}
+	if = {
+		limit = { is_in_array = { global.unido_recipients = THIS } }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.undio_budget divide = global.unido_recipients^num }
+		}
+	}
+	if = {
+		limit = { is_in_array = { global.uncdf_recipients = THIS } }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.uncdf_budget divide = global.uncdf_recipients^num }
+		}
+	}
 	set_temp_variable = {
 		current_receiving_budget_tracker = {
-			value = un_esco_political_power_var
-			add = un_esco_research_speed_var
-			add = un_ido_construction_speed_var
-			add = {
-				value = un_ido_current_building_count
-				multiply = 0.14
-			}
-			add = un_cdf_productivity_var
-			add = un_cdf_construction_cost_var
+			value = current_receiving_budget_tracker
 			divide = global.full_aid_budget_calculator
-			multiply = -1
+			multiply = -2
 		}
 	}
 
@@ -1705,8 +1715,7 @@ calculate_final_un_benefits = {
 
 	set_variable = {
 		united_nations_political_power_var = {
-			value = united_nations_contribution_percent
-			add = aid_program_adder
+			value = aid_program_adder
 			multiply = 0.5
 		}
 	}
