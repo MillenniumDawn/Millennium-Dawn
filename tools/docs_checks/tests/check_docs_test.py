@@ -10,9 +10,11 @@ import check_docs
 import check_link_syntax as link_syntax
 import check_og_images as og
 import pytest
-from check_docs import Check, run_checks
 
-from common import CheckResult
+# CheckResult via check_docs, not `from common import`: ruff classifies `common`
+# first-party locally (the repo root has the mod's common/ dir) but third-party
+# on CI's sparse checkout, so a direct import has no stable I001-canonical form.
+from check_docs import Check, CheckResult, run_checks
 
 
 @pytest.mark.parametrize(
