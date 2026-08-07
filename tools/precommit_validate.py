@@ -138,10 +138,16 @@ _REGISTRY = [
             ("localisation/english/", YML),
         ],
     ),
-    _Spec("validate_events", [("events/", TXT)]),
+    _Spec(
+        "validate_events",
+        [("common/", TXT), ("events/", TXT), ("history/", TXT)],
+    ),
     _Spec(
         "validate_mios",
-        [("common/military_industrial_organization/organizations/", TXT)],
+        [
+            ("common/military_industrial_organization/organizations/", TXT),
+            ("localisation/english/", YML),
+        ],
     ),
 ]
 

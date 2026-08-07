@@ -17,7 +17,6 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
 """
 
 import glob
-import os
 import re
 from pathlib import Path
 from typing import FrozenSet, List, Optional, Set, Tuple, Union
@@ -100,14 +99,21 @@ def _sub_blocks(body: str, keyword: str) -> List[Tuple[int, str]]:
 
 class Validator(BaseValidator):
     TITLE = "MIOS"
+    STAGED_EXTENSIONS = (".txt", ".yml")
 
     def _org_files(self) -> List[str]:
         pattern = str(Path(self.mod_path) / ORG_DIR / "*.txt")
         files = sorted(glob.glob(pattern))
         if not self.staged_only:
             return files
-        staged = set(os.path.abspath(f) for f in (self.staged_files or []))
-        return [f for f in files if os.path.abspath(f) in staged]
+        staged = {Path(f).resolve() for f in self.staged_files or []}
+        localisation_dir = (Path(self.mod_path) / "localisation" / "english").resolve()
+        if any(
+            path.suffix == ".yml" and path.is_relative_to(localisation_dir)
+            for path in staged
+        ):
+            return files
+        return [f for f in files if Path(f).resolve() in staged]
 
     def run_validations(self):
         files = self._org_files()
@@ -191,7 +197,10 @@ class Validator(BaseValidator):
         if org_id in X_BOUNDS_EXEMPT_ORGS:
             return
         for m in POSITION_X_RE.finditer(body):
-            x = int(m.group(1))
+            try:
+                x = int(m.group(1))
+            except ValueError:
+                continue
             if x > 9:
                 self.add_warning(
                     "trait-x-bounds",

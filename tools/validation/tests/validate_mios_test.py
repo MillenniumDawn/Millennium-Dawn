@@ -182,6 +182,31 @@ def test_initial_trait_name_without_loc_flagged(tmp_path):
     assert [i.category for i in v._issues] == ["trait-loc-missing"]
 
 
+def test_staged_english_localisation_scans_all_mios(tmp_path, monkeypatch):
+    org_dir = tmp_path / V.ORG_DIR
+    org_dir.mkdir(parents=True)
+    (org_dir / "MD_TEST_organizations.txt").write_text(
+        "TST_test_org = {\n"
+        "\tallowed = { original_tag = TST }\n"
+        "\ttrait = {\n"
+        "\t\tname = TST_missing_trait\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    loc_dir = tmp_path / "localisation" / "english"
+    loc_dir.mkdir(parents=True)
+    (loc_dir / "MD_mio_l_english.yml").write_text(
+        'l_english:\n other:0 "Other"\n', encoding="utf-8-sig"
+    )
+    monkeypatch.setenv("MD_STAGED_FILES", "localisation/english/MD_mio_l_english.yml")
+
+    v = V.Validator(str(tmp_path), staged_only=True)
+    v.run_validations()
+
+    assert [issue.category for issue in v._issues] == ["trait-loc-missing"]
+
+
 def test_full_run_on_fixture_dir(tmp_path):
     org_dir = tmp_path / V.ORG_DIR
     org_dir.mkdir(parents=True)

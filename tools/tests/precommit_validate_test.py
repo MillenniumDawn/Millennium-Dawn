@@ -49,6 +49,7 @@ _GOLDEN = {
         "validate_style",
         "validate_ideas",
         "validate_oob_units",
+        "validate_events",
     },
     "common/operations/00_operations.txt": {
         "validate_style",
@@ -85,8 +86,11 @@ _GOLDEN = {
         "validate_style",
         "validate_agency_upgrades",
     },
-    "localisation/english/MD_focus_SER_l_english.yml": {"validate_ideas"},
-    "common/factions/x.txt": {"validate_style"},
+    "localisation/english/MD_focus_SER_l_english.yml": {
+        "validate_ideas",
+        "validate_mios",
+    },
+    "common/factions/x.txt": {"validate_style", "validate_events"},
     "common/military_industrial_organization/organizations/MD_ISR_organizations.txt": {
         "validate_style",
         "validate_mios",
@@ -95,6 +99,7 @@ _GOLDEN = {
         "validate_style",
         "validate_ideas",
         "validate_oob_units",
+        "validate_events",
     },
 }
 
