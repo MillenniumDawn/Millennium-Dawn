@@ -494,17 +494,17 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_updating_equipment"
 			army_experience = 10
 			add_tech_bonus = {
-				name = AFG_enlisting_personal
+				name = AFG_updating_equipment
 				bonus = 0.3
 				category = CAT_inf_wep
 			}
 			add_tech_bonus = {
-				name = AFG_enlisting_personal
+				name = AFG_updating_equipment
 				bonus = 0.3
 				category = CAT_cnc
 			}
 			add_tech_bonus = {
-				name = AFG_enlisting_personal
+				name = AFG_updating_equipment
 				bonus = 0.3
 				category = CAT_support_weapons
 				uses = 2
@@ -1175,10 +1175,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				is_historical_focus_on = yes
-			}
-			modifier = {
-				factor = 0
 				check_variable = { treasury < 0.99 }
 			}
 			modifier = {
@@ -1226,10 +1222,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				is_historical_focus_on = yes
-			}
-			modifier = {
-				factor = 0
 				check_variable = { treasury < 1.99 }
 			}
 			modifier = {
@@ -1268,7 +1260,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_the_end_of_war"
 			increase_economic_growth = yes
 			decrease_corruption = yes
-			remove_ideas = AFG_idea_enhanced_recruitment_efforts
+			if = {
+				limit = { has_idea = AFG_idea_enhanced_recruitment_efforts }
+				remove_ideas = AFG_idea_enhanced_recruitment_efforts
+			}
 			if = {
 				limit = { has_idea = AFG_idea_war_experience }
 				remove_ideas = AFG_idea_war_experience
@@ -4214,7 +4209,6 @@ focus_tree = {
 			}
 			recalculate_party = yes
 			if = { limit = { date < 2017.1.1 }
-				retire_character = AFG_mohammad_ismail_khan
 				retire_character = AFG_atta_muhammad_nur
 				retire_character = AFG_mohammed_fahim
 			}
@@ -4678,8 +4672,8 @@ focus_tree = {
 					}
 				}
 				set_temp_variable = { percent_change = 10 }
-				set_temp_variable = { tag_index = PER }
-				set_temp_variable = { influence_target = AFG }
+				set_temp_variable = { tag_index = PER.id }
+				set_temp_variable = { influence_target = AFG.id }
 				change_influence_percentage = yes
 			}
 		}
@@ -5906,11 +5900,19 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_the_islamic_republic"
 			add_stability = 0.05
 			add_political_power = 100
-			remove_ideas = AFG_idea_factional_infighting
+			if = {
+				limit = { has_idea = AFG_idea_factional_infighting }
+				remove_ideas = AFG_idea_factional_infighting
+			}
 			hidden_effect = {
-				add_ideas = AFG_tolls_income1
-				remove_ideas = AFG_iranian_airbridge
-				remove_ideas = AFG_headquarters_taloqan
+				if = {
+					limit = { has_idea = AFG_iranian_airbridge }
+					remove_ideas = AFG_iranian_airbridge
+				}
+				if = {
+					limit = { has_idea = AFG_headquarters_taloqan }
+					remove_ideas = AFG_headquarters_taloqan
+				}
 			}
 		}
 
@@ -6121,15 +6123,6 @@ focus_tree = {
 		prerequisite = { focus = AFG_the_new_chairman }
 
 		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
-
-		available = {
-			414 = {
-				free_building_slots = {
-					building = infrastructure
-					size > 1
-				}
-			}
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_rebuilding_the_state"
@@ -6515,10 +6508,13 @@ focus_tree = {
 				every_controlled_state = {
 					add_to_variable = { productivity_state_var = 10 }
 				}
-				add_ideas = AFG_agro_income1
+				if = {
+					limit = { NOT = { has_idea = AFG_agro_income1 } }
+					add_ideas = AFG_agro_income1
+				}
 			}
 			custom_effect_tooltip = AFG_overall_productivity_10
-			custom_effect_tooltip = AFG_argro_modernisationTT
+			custom_effect_tooltip = AFG_agro_modernisation_focus_tt
 		}
 
 		ai_will_do = { base = 1 }
@@ -6704,7 +6700,10 @@ focus_tree = {
 					add_to_variable = { productivity_state_var = 2 }
 				}
 				add_to_variable = { overall_productivity = 2 }
-				add_ideas = AFG_agro_income1
+				if = {
+					limit = { NOT = { has_idea = AFG_agro_income1 } }
+					add_ideas = AFG_agro_income1
+				}
 			}
 			custom_effect_tooltip = AFG_overall_productivity_2
 			AFG_national_assembly_checks = yes
@@ -7153,7 +7152,7 @@ focus_tree = {
 				add_ideas = hybrid_regime_western
 			}
 			newline = yes
-			custom_effect_tooltip = AFG_western_klep_TT1
+			custom_effect_tooltip = AFG_western_klep_tt1
 			hidden_effect = {
 				add_ideas = AFG_western_klep1
 			}
@@ -7210,7 +7209,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_secretly_support_the_opium_industry"
 			hidden_effect = {
-				add_ideas = AFG_idea_state_sponsored_opium_industry
+				if = {
+					limit = { NOT = { has_idea = AFG_idea_state_sponsored_opium_industry } }
+					add_ideas = AFG_idea_state_sponsored_opium_industry
+				}
 			}
 			custom_effect_tooltip = afghan_opium_idea_TT
 			add_stability = -0.05
@@ -7400,7 +7402,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_anjuman_pass"
-			custom_effect_tooltip = AFG_tech_AFG_Return_of_Shah_tooltip
+			custom_effect_tooltip = AFG_tech_the_lion_of_panjshir_tooltip
 			hidden_effect = {
 				set_technology = { AFG_the_lion_of_panjshir = 1 popup = no }
 			}
@@ -7669,7 +7671,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_heirs_o_the_mujahideen"
 			custom_effect_tooltip = AFG_Mujahideen_units_tooltip
-			custom_effect_tooltip = AFG_Legacy_of_the_Mujahideen_tech_tooltip
+			custom_effect_tooltip = AFG_legacy_of_the_mujahideen_tech_tooltip
 			hidden_effect = {
 				if = { #no cheating allowed
 					limit = { has_template = "Mrdan Kewhstana" }
@@ -8018,7 +8020,33 @@ focus_tree = {
 			custom_effect_tooltip = AFG_training_of_local_police_officers_tooltip_units
 			custom_effect_tooltip = AFG_training_of_local_police_officers_tooltip
 			hidden_effect = {
-				load_oob = "AFG_Legacy_of_the_Mujahideen"
+				#Its own template, not the mujahideen OOB: that reload spawned on fixed 2000 provinces and re-added
+				#the divisions AFG_heirs_o_the_mujahideen deletes to stop stacking
+				if = {
+					limit = { NOT = { has_template = "Afghan National Police" } }
+					division_template = {
+						name = "Afghan National Police"
+						priority = 0
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+						}
+					}
+				}
+				411 = {
+					create_unit = {
+						division = "name = \"Afghan National Police\" division_template = \"Afghan National Police\" start_experience_factor = 0.3"
+						prioritize_location = 12653
+						allow_spawning_on_enemy_provs = yes
+						owner = AFG
+						count = 2
+					}
+				}
 				set_technology = { AFG_tech_training_of_local_police_officers = 1 popup = no }
 			}
 			newline = yes
@@ -8327,7 +8355,10 @@ focus_tree = {
 					add_to_variable = { productivity_state_var = 2 }
 				}
 				add_to_variable = { overall_productivity = 2 }
-				add_ideas = AFG_agro_income1
+				if = {
+					limit = { NOT = { has_idea = AFG_agro_income1 } }
+					add_ideas = AFG_agro_income1
+				}
 			}
 			custom_effect_tooltip = AFG_overall_productivity_2
 		}

@@ -138,6 +138,17 @@ AFG_refresh_insurgency_arrays = {
 	}
 }
 
+#Own counter rather than global.md_gui_dirty, which every other country's panel also bumps
+update_afg_toll_dirty_variable = {
+	if = {
+		limit = { check_variable = { global.AFG_toll_dirty_update_var < 10000 } }
+		add_to_variable = { global.AFG_toll_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.AFG_toll_dirty_update_var = 1 }
+	}
+}
+
 AFG_national_assembly_checks = {
 	if = {
 		limit = {
@@ -384,11 +395,11 @@ update_afghan_toll = {
 
 #Monthly refresh for one transit state, so the on_action can address the six directly instead of filtering every owned state
 AFG_monthly_toll_state_update = {
-	#Seed the starting rate with the tax cost it implies, or the level and AFG_consumer_goods_factor_toll drift apart
+	#Seed at the floor the panel can return to. Anything higher would charge consumer goods nobody opted into,
+	#and the panel cannot lower a state below 1, so the charge would be unrefundable
 	if = {
 		limit = { check_variable = { var = AFG_toll_level value = 1 compare = less_than } }
-		set_variable = { AFG_toll_level = 3 }
-		OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = 0.06 } }
+		set_variable = { AFG_toll_level = 1 }
 	}
 	if = {
 		limit = {
