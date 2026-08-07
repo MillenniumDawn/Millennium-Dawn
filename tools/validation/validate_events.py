@@ -1307,14 +1307,14 @@ class Validator(BaseValidator):
         )
         results = [r for file_res in all_results for r in file_res]
 
-        # WARNING until the 11-site pre-existing backlog is cleared, then ERROR.
+        # ERROR: the 11-site pre-existing backlog was cleared.
         self._report(
             results,
             "✓ No fire_only_once events fired inside iterators",
             "fire_only_once events fired inside every_*/for_each_* iterators"
             " (only the first recipient gets it; drop fire_only_once or fire"
             " the event outside the loop):",
-            Severity.WARNING,
+            Severity.ERROR,
             category="fire-only-once-in-loop",
         )
 
