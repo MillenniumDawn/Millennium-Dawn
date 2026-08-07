@@ -17,7 +17,16 @@ from typing import Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from naval_module_slots import build_indexes, check_created_variants
+from naval_module_slots import (
+    Finding,
+    _iter_blocks,
+    _iter_named_blocks,
+    _scalar,
+    blank_comments,
+    build_indexes,
+    check_created_variants,
+    parse_variant_names,
+)
 from validator_common import (
     BaseValidator,
     Issue,
@@ -46,6 +55,27 @@ _VARIANT_SOURCE_PATTERNS = [
     "common/special_projects/*.txt",
     "common/scripted_effects/*.txt",
 ]
+
+_VARIANT_REF_CATEGORIES = {
+    "unknown_variant": "OOB SHIP: version_name has no matching equipment variant",
+    "attributed_archetype": "PRODUCTION: archetype attributed to a producer",
+}
+
+# The archetype rule only covers startup-loaded history. Focus and event rewards
+# use the archetype+producer form in ~300 places as an established idiom, and
+# there the fallback picks a sensible concrete equipment.
+_HISTORY_PRODUCTION_PATTERNS = [
+    "history/units/*.txt",
+    "history/countries/*.txt",
+]
+
+_OOB_EQUIPMENT_RE = re.compile(
+    r"equipment\s*=\s*\{\s*([A-Za-z_]\w*)\s*=\s*\{([^{}]*)\}"
+)
+_VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
+_OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
+_OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
+_PRODUCER_RE = re.compile(r'\b(?:creator|producer)\s*=\s*"?([A-Za-z_]\w*)"?')
 
 # create_unit also appears in these runtime effect sources.
 _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
@@ -404,6 +434,120 @@ def _check_refs(
         )
         results.append(msg)
     return results
+
+
+def variant_tag_from_path(rel: str) -> Optional[str]:
+    """Tag owning the variants declared in *rel*, or None when the executing
+    scope cannot be resolved statically."""
+    norm = rel.replace("\\", "/")
+    if not norm.startswith("history/countries/"):
+        return None
+    return os.path.basename(norm).split(" ")[0].split(".")[0].upper()
+
+
+def build_variant_name_index(
+    sources: List[Tuple[str, str]],
+) -> Tuple[Dict[str, Set[Tuple[str, str]]], Set[Tuple[str, str]]]:
+    """``(per-tag, wildcard)`` ``(type, name)`` sets from ``(relpath, content)``.
+
+    A variant in `history/countries/` belongs to that file's tag. Everywhere else
+    (focus rewards, events, decisions, scripted effects) the effect runs in a
+    scope no static pass can pin down (Egypt's carrier purchase creates its
+    design in FRA scope inside `events/Egypt.txt`), so those go to the wildcard
+    set and satisfy a reference from any tag.
+    """
+    by_tag: Dict[str, Set[Tuple[str, str]]] = {}
+    wildcard: Set[Tuple[str, str]] = set()
+    for rel, content in sources:
+        if "create_equipment_variant" not in content:
+            continue
+        tag = variant_tag_from_path(rel)
+        for etype, name, _ in parse_variant_names(content):
+            if tag:
+                by_tag.setdefault(tag, set()).add((etype, name))
+            else:
+                wildcard.add((etype, name))
+    return by_tag, wildcard
+
+
+def parse_archetypes(equipment_texts: List[str]) -> Set[str]:
+    """Equipment names declared `is_archetype = yes`."""
+    archetypes: Set[str] = set()
+    for raw in equipment_texts:
+        text = blank_comments(raw)
+        for elo, ehi in _iter_named_blocks(text, 0, len(text), "equipments"):
+            for name, blo, bhi, _ in _iter_blocks(text, elo, ehi):
+                if _scalar(text, blo, bhi, "is_archetype") == "yes":
+                    archetypes.add(name)
+    return archetypes
+
+
+def check_oob_variant_refs(
+    content: str,
+    by_tag: Dict[str, Set[Tuple[str, str]]],
+    wildcard: Set[Tuple[str, str]],
+) -> List[Finding]:
+    """OOB ships whose `version_name` their producer never created.
+
+    The design is looked up in the `creator`'s pool, falling back to `owner`.
+    A miss silently downgrades the ship to version 0 of the hull (stock modules,
+    no icon, no name group) and logs `equipmentpool.cpp`.
+    """
+    text = blank_comments(content)
+    findings: List[Finding] = []
+    for m in _OOB_EQUIPMENT_RE.finditer(text):
+        hull, body = m.group(1), m.group(2)
+        version = _VERSION_NAME_RE.search(body)
+        if not version:
+            continue
+        who = _OOB_CREATOR_RE.search(body) or _OOB_OWNER_RE.search(body)
+        if not who or len(who.group(1)) != 3:
+            continue
+        tag = who.group(1).upper()
+        ref = (hull, version.group(1))
+        if ref in wildcard or ref in by_tag.get(tag, ()):
+            continue
+        findings.append(
+            Finding(
+                text.count("\n", 0, m.start()) + 1,
+                "unknown_variant",
+                f"{tag} has no '{hull}' variant named \"{version.group(1)}\": "
+                f"the ship falls back to version 0 of the hull",
+            )
+        )
+    return findings
+
+
+def check_attributed_archetypes(content: str, archetypes: Set[str]) -> List[Finding]:
+    """Production lines naming an archetype together with a producer.
+
+    No country ever designs an archetype, so attributing one sends the engine
+    looking for a national variant that cannot exist. It falls back to the latest
+    concrete equipment and logs `equipmentvariant.cpp` on every game start.
+    """
+    text = blank_comments(content)
+    findings: List[Finding] = []
+    for effect in ("add_equipment_production", "add_equipment_to_stockpile"):
+        for blo, bhi in _iter_named_blocks(text, 0, len(text), effect):
+            producer = _PRODUCER_RE.search(text, blo, bhi)
+            if not producer:
+                continue
+            equipment = _scalar(text, blo, bhi, "type")
+            if equipment is None:
+                for elo, ehi in _iter_named_blocks(text, blo, bhi, "equipment"):
+                    equipment = _scalar(text, elo, ehi, "type")
+                    break
+            if equipment not in archetypes:
+                continue
+            findings.append(
+                Finding(
+                    text.count("\n", 0, blo) + 1,
+                    "attributed_archetype",
+                    f"'{equipment}' is an archetype but is attributed to "
+                    f"{producer.group(1)}, name the concrete equipment instead",
+                )
+            )
+    return findings
 
 
 def validate_oob_file(
@@ -1220,6 +1364,77 @@ class Validator(BaseValidator):
             "Ship variant modules invalid for their hull slot:",
         )
 
+    def validate_oob_variant_references(self):
+        """Check that every ship design an OOB or production line names exists.
+
+        Both misses are silent in game and only surface as a log line plus a ship
+        that quietly carries the wrong modules. Thailand's Naresuan frigates
+        asked China for a `frigate_hull_3` design China only had as
+        `frigate_hull_2`, and its convoy line named the archetype.
+        """
+        self._log_section("Checking OOB and production equipment references...")
+
+        def _build_variants():
+            sources = []
+            for fp in self._collect_files(_VARIANT_SOURCE_PATTERNS, ignore_staged=True):
+                sources.append((os.path.relpath(fp, self.mod_path), _read_text(fp)))
+            return build_variant_name_index(sources)
+
+        by_tag, wildcard = self.cached("variant_name_index", _build_variants)
+        if not by_tag and not wildcard:
+            self.log("  No equipment variants found, skipping")
+            return
+
+        def _build_archetypes():
+            units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
+            return parse_archetypes(
+                [
+                    _read_text(fp)
+                    for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt")))
+                ]
+            )
+
+        archetypes = self.cached("equipment_archetypes", _build_archetypes)
+
+        results = []
+        for filepath in self._collect_files(["history/units/*.txt"]):
+            content = _read_text(filepath)
+            if "version_name" not in content:
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            for f in check_oob_variant_refs(content, by_tag, wildcard):
+                results.append(
+                    Issue(
+                        severity=Severity.ERROR,
+                        category=_VARIANT_REF_CATEGORIES[f.kind],
+                        message=f.message,
+                        file=rel,
+                        line=f.line,
+                    )
+                )
+
+        for filepath in self._collect_files(_HISTORY_PRODUCTION_PATTERNS):
+            content = _read_text(filepath)
+            if "add_equipment_" not in content:
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            for f in check_attributed_archetypes(content, archetypes):
+                results.append(
+                    Issue(
+                        severity=Severity.ERROR,
+                        category=_VARIANT_REF_CATEGORIES[f.kind],
+                        message=f.message,
+                        file=rel,
+                        line=f.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ All OOB and production equipment references resolve",
+            "Equipment references with no matching variant:",
+        )
+
     def validate_created_units(self):
         """Check every create_unit effect source for proper form."""
         self._log_section("Checking create_unit effects across the mod...")
@@ -1252,6 +1467,7 @@ class Validator(BaseValidator):
         self.validate_division_names_group_references()
         self.validate_air_wing_names_template_loc()
         self.validate_created_variant_modules()
+        self.validate_oob_variant_references()
         self.validate_created_units()
 
 

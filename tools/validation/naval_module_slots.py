@@ -91,16 +91,28 @@ def _depth0_text(text: str, lo: int, hi: int) -> str:
     return "".join(out)
 
 
-def _scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
-    """First ``key = value`` at brace-depth 0 of the ``text[lo:hi]`` span.
+def _first_at_depth0(
+    text: str, lo: int, hi: int, key: str, value_pattern: str
+) -> Optional[str]:
+    """First ``key = <value_pattern>`` at brace-depth 0 of the ``text[lo:hi]`` span.
     Comments must already be blanked so ``#`` braces don't skew the depth count."""
-    for m in re.compile(r"\b" + re.escape(key) + r"\s*=\s*([A-Za-z_]\w*)").finditer(
+    for m in re.compile(r"\b" + re.escape(key) + r"\s*=\s*" + value_pattern).finditer(
         text, lo, hi
     ):
         seg = text[lo : m.start()]
         if seg.count("{") == seg.count("}"):
             return m.group(1)
     return None
+
+
+def _scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
+    """First ``key = value`` at brace-depth 0 of the ``text[lo:hi]`` span."""
+    return _first_at_depth0(text, lo, hi, key, r"([A-Za-z_]\w*)")
+
+
+def _quoted_scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
+    """First ``key = "value"`` at brace-depth 0 of the ``text[lo:hi]`` span."""
+    return _first_at_depth0(text, lo, hi, key, r'"([^"]*)"')
 
 
 def blank_comments(text: str) -> str:
@@ -434,6 +446,22 @@ def check_created_variants(
         )
     findings.sort(key=lambda f: f.line)
     return findings
+
+
+def parse_variant_names(content: str) -> List[Tuple[str, str, int]]:
+    """``(type, name, line)`` for every ``create_equipment_variant`` in *content*.
+
+    Blocks missing either field are skipped: an OOB ``version_name`` lookup can
+    never resolve to them.
+    """
+    text = blank_comments(content)
+    out: List[Tuple[str, str, int]] = []
+    for vlo, vhi in _iter_named_blocks(text, 0, len(text), "create_equipment_variant"):
+        etype = _scalar(text, vlo, vhi, "type")
+        name = _quoted_scalar(text, vlo, vhi, "name")
+        if etype and name:
+            out.append((etype, name, text.count("\n", 0, vlo) + 1))
+    return out
 
 
 def build_indexes(
