@@ -2,7 +2,7 @@ add_namespace = AUS_diplomacy
 add_namespace = AUs_diplomacy_answer
 add_namespace = AUS_economy
 
-country_event = { 					#accept
+country_event = { 					#accepted investment
 	id = AUS_diplomacy_answer.1
 	title = AUS_diplomacy_answer.1.t
 	desc = AUS_diplomacy_answer.1.d
@@ -18,7 +18,7 @@ country_event = { 					#accept
 		}
 	}
 }
-country_event = { 					#Reject
+country_event = { 					#rejected investment 
 	id = AUS_diplomacy_answer.2
 	title = AUS_diplomacy_answer.2.t
 	desc = AUS_diplomacy_answer.2.d
@@ -182,14 +182,17 @@ country_event = {
 		}
 		newline = yes
 		ROOT = {
-			add_ideas = AUS_toll_system_foreign_investment
+			add_timed_idea = {
+				idea = AUS_toll_system_foreign_investment
+				days = 920
+			}
 			random_owned_state = {
 				add_building_construction = {
 					type = infrastructure
 					level = 1
 					instant_build = yes
 				}
-		}
+			}
 		}
 		ai_chance = {
 			base = 1
@@ -203,6 +206,119 @@ country_event = {
 		AUS = {
 			country_event = { id = AUS_diplomacy_answer.2 days = 1 }
 		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+country_event = { 					#accepted offer
+	id = AUS_diplomacy_answer.3
+	title = AUS_diplomacy_answer.3.t
+	desc = AUS_diplomacy_answer.3.d
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = { #Good Guys
+		name = AUS_diplomacy_answer.3.a
+		log = "[GetDateText]: [This.GetName]: AUS_Diplomacy_answer.1.a executed"
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+country_event = { 					#rejected offer
+	id = AUS_diplomacy_answer.4
+	title = AUS_diplomacy_answer.4.t
+	desc = AUS_diplomacy_answer.4.d
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = { #Whatever
+		name = AUS_Diplomacy_answer.4.b
+		log = "[GetDateText]: [This.GetName]: AUS_Diplomacy_answer.2.b executed"
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = AUS_diplomacy.3
+	title = AUS_diplomacy.3.t
+	desc =  AUS_diplomacy.3.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = AUS_diplomacy.3.a #accept
+		custom_effect_tooltip = AUS_diplomacy.3.a_desc
+		log = "[GetDateText]: [This.GetName]: AUS_diplomacy.3.a executed"
+		AUS = {
+			country_event = { id = AUS_diplomacy_answer.3 days = 1 }
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = AUS_diplomacy
+			}
+			add_to_variable = { AUS_return_on_investment_modifier = 0.0005 tooltip = return_on_investment_modifier_tt }
+			add_to_variable = { AUS_investment_cost_modifier = -0.025 tooltip = investment_cost_modifier_tt }
+		}
+		newline = yes
+		ROOT = {
+			add_timed_idea = {
+				idea = AUS_strengthen_financial_ties
+				days = 600
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = AUS_diplomacy.3.b #reject
+		log = "[GetDateText]: [This.GetName]: AUS_diplomacy.3.b executed"
+		custom_effect_tooltip = AUS_diplomacy.3.b_desc
+		AUS = {
+			country_event = { id = AUS_diplomacy_answer.4 days = 1 }
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = AUS_economy.1
+	title = AUS_economy.1.t
+	desc =  AUS_economy.1.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = AUS_economy.1.a #accept
+		custom_effect_tooltip = AUS_economy.1.a_desc
+		log = "[GetDateText]: [This.GetName]: AUS_economy.1.a executed"
+		build_railway = {
+			level = 2
+			path = { 11666 11651 3684 9665 688 }
+		}
+		set_temp_variable = { treasury_change = -0.10}
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = AUS_economy.1.b #reject
+		log = "[GetDateText]: [This.GetName]: AUS_economy.1.b executed"
+		custom_effect_tooltip = AUS_economy.1.b_desc
+		build_railway = {
+			level = 2
+			path = { 11666 9661 9646 6687 3673 }
+		}
+		set_temp_variable = { treasury_change = -0.10}
+		modify_treasury_effect = yes
 		ai_chance = {
 			base = 1
 		}
