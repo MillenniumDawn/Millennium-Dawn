@@ -14,6 +14,13 @@ on_actions = {
 				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
 					set_variable = { global.md_gui_dirty = 1 }
 				}
+				if = {
+					limit = {
+						has_global_flag = NATO_CSTO_treaty_ratified
+						NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
+					}
+					NATO_CSTO_calculate_number_of_batallions = yes
+				}
 			}
 
 			microchip_update = yes
@@ -160,15 +167,6 @@ on_actions = {
 						33 = { }
 					}
 				}
-			}
-
-			if = {
-				limit = {
-					has_global_flag = NATO_CSTO_treaty_ratified
-					NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
-				}
-
-				NATO_CSTO_calculate_number_of_batallions = yes
 			}
 
 			if = {
@@ -320,6 +318,8 @@ on_actions = {
 	#ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
 	on_annex = {
 		effect = {
+			civil_war_cleanup_hooks = yes
+
 			if = {
 				limit = {
 					ROOT = { original_tag = CAN }
@@ -535,9 +535,35 @@ on_actions = {
 		}
 	}
 
+	# ROOT is capitulated country, FROM is winner
+	on_capitulation_immediate = {
+		effect = {
+			civil_war_cleanup_hooks = yes
+
+			if = {
+				limit = {
+					ROOT = {
+						original_tag = AQY
+						is_in_faction = yes
+					}
+					NOT = { has_global_flag = GLOBAL_yemeni_civil_war_over }
+				}
+				remove_from_faction = AQY
+			}
+		}
+	}
+
 	#ROOT is winner #FROM gets annexed
 	on_civil_war_end = {
 		effect = {
+			ROOT = {
+				civil_war_cleanup_ivory_coast = yes
+				civil_war_cleanup_senegal = yes
+				civil_war_cleanup_haiti = yes
+				civil_war_cleanup_car_bush_war = yes
+				civil_war_cleanup_mali = yes
+			}
+
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 				EU_resync_member_array = yes
@@ -548,6 +574,8 @@ on_actions = {
 
 	on_peaceconference_ended = {
 		effect = {
+			civil_war_cleanup_hooks = yes
+
 			if = {
 				limit = {
 					ROOT = { original_tag = USA }
@@ -878,8 +906,25 @@ on_actions = {
 
 					AGRI_plow_the_fields = yes
 					monthly_tick_internal_factions_opinion = yes
-					# Event fire rebases ROOT per country; the satellite effects are ROOT-relative and recompute onto the wrong country under every_country.
-					country_event = satellites.9
+					if = {
+						limit = {
+							OR = {
+								has_completed_space_program = yes
+								check_variable = { var_GNSS_sat_total > 0 }
+								check_variable = { var_COM_sat_total > 0 }
+								check_variable = { var_SPY_sat_total > 0 }
+								check_variable = { var_KILL_sat_total > 0 }
+								check_variable = { GNSS_mil_access_array^num > 0 }
+								check_variable = { GNSS_civ_access_array^num > 0 }
+								check_variable = { COM_mil_access_array^num > 0 }
+								check_variable = { COM_civ_access_array^num > 0 }
+								check_variable = { SPY_mil_access_array^num > 0 }
+								check_variable = { SPY_civ_access_array^num > 0 }
+								check_variable = { spy_mission_array^num > 0 }
+							}
+						}
+						country_event = satellites.9
+					}
 
 					calculate_expected_spending = yes
 					apply_protest_effects = yes

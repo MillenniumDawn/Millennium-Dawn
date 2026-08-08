@@ -17,7 +17,6 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
 """
 
 import glob
-import os
 import re
 from pathlib import Path
 from typing import FrozenSet, List, Optional, Set, Tuple, Union
@@ -30,6 +29,24 @@ ORG_DIR = "common/military_industrial_organization/organizations"
 ORG_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
 TAG_PREFIX_RE = re.compile(r"^([A-Z]{3})_")
 SHARED_PREFIXES = ("GENERIC_", "generic_")
+
+# Shared generic trees are wider than the country-MIO grid; their branch roots are
+# absolute-positioned lane origins at x = 10..16 and their children stay relative.
+X_BOUNDS_EXEMPT_ORGS = frozenset(
+    {
+        "generic_AFV_equipment_organization",
+        "generic_air_equipment_organization",
+        "generic_fixed_wing_and_helicopter_equipment_organization",
+        "generic_infantry_equipment_organization",
+        "generic_mixed_naval_equipment_organization",
+        "generic_naval_equipment_organization",
+        "generic_naval_light_equipment_organization",
+        "generic_small_naval_Manufacturer",
+        "generic_specialized_helicopter_aa_at_organization",
+        "generic_tank_equipment_organization",
+        "generic_utility_vehicle_manufacturer",
+    }
+)
 
 ORIGINAL_TAG_RE = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
 INITIAL_TRAIT_NAME_RE = re.compile(
@@ -82,14 +99,21 @@ def _sub_blocks(body: str, keyword: str) -> List[Tuple[int, str]]:
 
 class Validator(BaseValidator):
     TITLE = "MIOS"
+    STAGED_EXTENSIONS = (".txt", ".yml")
 
     def _org_files(self) -> List[str]:
         pattern = str(Path(self.mod_path) / ORG_DIR / "*.txt")
         files = sorted(glob.glob(pattern))
         if not self.staged_only:
             return files
-        staged = set(os.path.abspath(f) for f in (self.staged_files or []))
-        return [f for f in files if os.path.abspath(f) in staged]
+        staged = {Path(f).resolve() for f in self.staged_files or []}
+        localisation_dir = (Path(self.mod_path) / "localisation" / "english").resolve()
+        if any(
+            path.suffix == ".yml" and path.is_relative_to(localisation_dir)
+            for path in staged
+        ):
+            return files
+        return [f for f in files if Path(f).resolve() in staged]
 
     def run_validations(self):
         files = self._org_files()
@@ -113,7 +137,7 @@ class Validator(BaseValidator):
                 self._check_id(org_id, rel, body_offset)
                 self._check_allowed(org_id, body, rel, body_offset)
                 self._check_initial_trait(org_id, body, rel, body_offset)
-                self._check_positions(body, rel, body_offset)
+                self._check_positions(org_id, body, rel, body_offset)
                 self._check_on_complete(body, rel, body_offset)
                 self._check_header_text(org_id, body, rel, body_offset, loc_keys)
                 self._check_trait_localisation(org_id, body, rel, body_offset, loc_keys)
@@ -169,9 +193,14 @@ class Validator(BaseValidator):
                 line,
             )
 
-    def _check_positions(self, body: str, rel: str, body_offset: int):
+    def _check_positions(self, org_id: str, body: str, rel: str, body_offset: int):
+        if org_id in X_BOUNDS_EXEMPT_ORGS:
+            return
         for m in POSITION_X_RE.finditer(body):
-            x = int(m.group(1))
+            try:
+                x = int(m.group(1))
+            except ValueError:
+                continue
             if x > 9:
                 self.add_warning(
                     "trait-x-bounds",
@@ -241,7 +270,7 @@ class Validator(BaseValidator):
                 )
             else:
                 continue
-            self.add_warning("trait-loc-missing", message, rel, line)
+            self.add_error("trait-loc-missing", message, rel, line)
 
     def _check_on_complete(self, body: str, rel: str, body_offset: int):
         for m in ON_COMPLETE_RE.finditer(body):
