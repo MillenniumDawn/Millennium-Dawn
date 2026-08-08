@@ -452,7 +452,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_war_experience"
-			army_experience = 10
+			army_experience = 50
 			if = {
 				limit = {
 					has_idea = AFG_idea_afghan_defence
@@ -703,11 +703,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_infrastructure_equal_war"
 			411 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
+				AFG_build_two_infrastructure_or_internet = yes
 			}
 			set_temp_variable = { treasury_change = -7 }
 			modify_treasury_effect = yes
@@ -1826,19 +1822,18 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_focusing_on_infrastructure"
 			every_owned_state = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				AFG_build_infrastructure_or_internet = yes
 			}
 			swap_ideas = {
 				remove_idea = AFG_idea_opium_economy
 				add_idea = AFG_idea_changing_economy
 			}
-			swap_ideas = {
-				remove_idea = farmers
-				add_idea = industrial_conglomerates
+			if = {
+				limit = { has_idea = farmers }
+				swap_ideas = {
+					remove_idea = farmers
+					add_idea = industrial_conglomerates
+				}
 			}
 			decrease_economic_growth = yes
 			set_temp_variable = { treasury_change = -21 }
@@ -1985,11 +1980,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -21 }
 			modify_treasury_effect = yes
 			every_owned_state = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				AFG_build_infrastructure_or_internet = yes
 				add_extra_state_shared_building_slots = 1
 			}
 			swap_ideas = {
@@ -2080,22 +2071,23 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_the_towns"
 			set_temp_variable = { temp_opinion = -5 }
 			change_landowners_opinion = yes
-			hidden_effect = {
-				set_temp_variable = { party_index = 11 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.10 }
-				change_relative_party_popularity = yes
-				random_owned_controlled_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = industrial_complex
-						level = 1
-						instant_build = yes
-					}
+			newline = yes
+			random_owned_controlled_state = {
+				limit = {
+					free_shared_building_slots = yes
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
 				}
 			}
-			custom_effect_tooltip = AFG_factory_from_investor_tt
-			custom_effect_tooltip = AFG_taliban_tribal_support_tt
+			newline = yes
+			set_temp_variable = { party_index = 11 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			change_relative_party_popularity = yes
 			if = {
 				limit = {
 					has_country_flag = AFG_active_taliban_insurgency
@@ -2189,11 +2181,7 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
 			414 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
+				AFG_build_two_infrastructure_or_internet = yes
 				add_extra_state_shared_building_slots = 3
 				add_building_construction = {
 					type = offices
@@ -2375,6 +2363,13 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 			every_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = internet_station
+						size > 0
+						include_locked = no
+					}
+				}
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = internet_station
@@ -2412,11 +2407,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -21 }
 			modify_treasury_effect = yes
 			every_owned_state = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				AFG_build_infrastructure_or_internet = yes
 			}
 		}
 
@@ -5112,14 +5103,14 @@ focus_tree = {
 			411 = {
 				add_building_construction = {
 					type = radar_station
-					level = 3
+					level = 1
 					instant_build = yes
 				}
 			}
 			415 = {
 				add_building_construction = {
 					type = radar_station
-					level = 3
+					level = 1
 					instant_build = yes
 				}
 			}
@@ -5130,8 +5121,11 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			add_ideas = AFG_offensive_war_preparation
-			set_temp_variable = { treasury_change = -25 }
+			add_timed_idea = {
+				idea = AFG_offensive_war_preparation
+				days = 365
+			}
+			set_temp_variable = { treasury_change = -8.50 }
 			modify_treasury_effect = yes
 		}
 
@@ -5331,7 +5325,7 @@ focus_tree = {
 				set_temp_variable = { taliban_strength_decrease = 2 }
 				decrease_taliban_strength = yes
 			}
-			set_temp_variable = { treasury_change = -6 }
+			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
 
@@ -5501,7 +5495,7 @@ focus_tree = {
 				set_temp_variable = { taliban_strength_decrease = 5 }
 				decrease_taliban_strength = yes
 			}
-			set_temp_variable = { treasury_change = -16 }
+			set_temp_variable = { treasury_change = -8.50 }
 			modify_treasury_effect = yes
 		}
 
@@ -5613,20 +5607,6 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			410 = {
-				add_building_construction = {
-					type = anti_air_building
-					level = 1
-					instant_build = yes
-				}
-			}
-			411 = {
-				add_building_construction = {
-					type = anti_air_building
-					level = 1
-					instant_build = yes
-				}
-			}
 			414 = {
 				add_building_construction = {
 					type = anti_air_building
@@ -5641,7 +5621,7 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { treasury_change = -16.25 }
+			set_temp_variable = { treasury_change = -9.75 }
 			modify_treasury_effect = yes
 			if = {
 				limit = {
@@ -6937,25 +6917,13 @@ focus_tree = {
 			}
 			custom_effect_tooltip = AFG_overall_productivity_20
 			414 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				AFG_build_infrastructure_or_internet = yes
 			}
 			410 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				AFG_build_infrastructure_or_internet = yes
 			}
 			412 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				AFG_build_infrastructure_or_internet = yes
 			}
 			set_temp_variable = { treasury_change = -10.5 }
 			modify_treasury_effect = yes
@@ -7302,7 +7270,6 @@ focus_tree = {
 			change_influence_percentage = yes
 			newline = yes
 			unlock_decision_tooltip = AFG_import_westernism
-			unlock_decision_tooltip = AFG_join_nato_war
 		}
 
 		ai_will_do = { base = 1 }
@@ -7441,12 +7408,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 		}
 
@@ -7476,12 +7440,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 		}
 
@@ -7511,12 +7472,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 			country_exists = PER
 			OR = {
@@ -7575,12 +7533,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 			country_exists = RAJ
 		}
@@ -7731,12 +7686,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_EXPENDITURE }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 			country_exists = SOV
 		}
@@ -7796,12 +7748,9 @@ focus_tree = {
 
 		available = {
 			has_country_flag = AFG_russian_airlift_is_active
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 			country_exists = SOV
 		}
@@ -7836,12 +7785,9 @@ focus_tree = {
 
 		available = {
 			has_country_flag = AFG_russian_airlift_is_active
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 			country_exists = SOV
 		}
@@ -7886,12 +7832,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 			country_exists = USA
 		}
@@ -7926,12 +7869,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 			country_exists = USA
 		}
@@ -7968,12 +7908,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_MANPOWER }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 		}
 
@@ -8007,12 +7944,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_MANPOWER }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 		}
 
@@ -8072,12 +8006,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_MANPOWER }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 		}
 
@@ -8133,12 +8064,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 		}
 
@@ -8188,15 +8116,12 @@ focus_tree = {
 
 		prerequisite = { focus = AFG_local_military_pressure }
 
-		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_EXPENDITURE }
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_EXPENDITURE }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = AFG_war_with_taliban
-				OR = {
-					has_war_with = TAL
-					has_civil_war = yes
-				}
+			OR = {
+				has_war_with = TAL
+				has_civil_war = yes
 			}
 		}
 
@@ -8210,8 +8135,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_the_lions_guard"
 			custom_effect_tooltip = AFG_enhance_leader_protection_tt
-			set_temp_variable = { treasury_change = -7 }
+			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
+			newline = yes
+			add_war_support = 0.04
 		}
 
 		ai_will_do = {
