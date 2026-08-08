@@ -161,11 +161,13 @@ class _FakeValidator(V.Validator):
         self.collected.extend(results)
 
 
-def _run(monkeypatch, gated, fires, graph):
+def _run(monkeypatch, gated, fires, graph, random_events=(), polls=()):
     validator = _FakeValidator("/tmp")
     monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: ["f.txt"])
     monkeypatch.setattr(validator, "_rel_posix", lambda f: f)
     monkeypatch.setattr(validator, "_get_event_fires", lambda: fires)
+    monkeypatch.setattr(validator, "_get_random_event_ids", lambda: set(random_events))
+    monkeypatch.setattr(validator, "_get_probability_rolled_ids", lambda: set(polls))
     monkeypatch.setattr(
         validator,
         "_pool_map",
@@ -230,6 +232,32 @@ def test_on_action_fired_event_flagged(monkeypatch):
     )
     assert len(results) == 1
     assert "common/on_actions/99_GER.txt" in results[0]
+
+
+def test_random_events_pool_event_exempt(monkeypatch):
+    """A `random_events` pool weights its events by MTTH; the pool is the
+    schedule, so a date-gated event in one is not dead content."""
+    results = _run(
+        monkeypatch,
+        gated=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("other.1", _YE, 5)],
+        graph=[],
+        random_events=["foo.1"],
+    )
+    assert results == []
+
+
+def test_probability_rolled_poll_event_exempt(monkeypatch):
+    """A chance-rolled on_action poll emulates MTTH and has no deterministic
+    yearly slot, so a date-gated event fired from one is not dead content."""
+    results = _run(
+        monkeypatch,
+        gated=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("other.1", _YE, 5), ("foo.1", "common/on_actions/99_GER.txt", 12)],
+        graph=[],
+        polls=["foo.1"],
+    )
+    assert results == []
 
 
 def test_missing_scheduling_file_skips_check(monkeypatch):
