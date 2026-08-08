@@ -11,7 +11,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -151,6 +151,90 @@ def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
         return results
     if not any("l_english:" in line for line in lines):
         results.append(f"{os.path.basename(filename)} - l_english: line is absent")
+    return results
+
+
+# .claude/docs/typo-watchlist.md's catalogued misspellings, lowered. `it's`
+# (possessive-rule, context-dependent) and `civilisation` (legitimate British
+# spelling) are excluded; `civillisation` (double-L) has no legitimate reading
+# and stays in.
+_TYPO_WATCHLIST: Dict[str, str] = {
+    "estabilish": "establish",
+    "innvoations": "innovations",
+    "irreperable": "irreparable",
+    "irrepairable": "irreparable",
+    "unrepairable": "irreparable",
+    "unenmployed": "unemployed",
+    "existance": "existence",
+    "effectivness": "effectiveness",
+    "disproportinate": "disproportionate",
+    "tarditions": "traditions",
+    "contrats": "by contrast",
+    "airforce": "Air Force",
+    "miltiary": "military",
+    "coaltion": "coalition",
+    "tumultous": "tumultuous",
+    "recgonized": "recognized",
+    "propgramme": "Programme",
+    "poeple": "people",
+    "unloyal": "disloyal",
+    "isreal": "Israel",
+    "bocme": "become",
+    "hovewer": "however",
+    "acomplish": "accomplish",
+    "endevours": "Endeavours",
+    "quiantified": "Quantified",
+    "convering": "converting",
+    "encomapassing": "encompassing",
+    "fundamnetals": "fundamentals",
+    "civillian": "civilian",
+    "civillisation": "civilization",
+    "suprised": "surprised",
+    "alledged": "alleged",
+    "succesful": "successful",
+    "succesfull": "successful",
+    "huminliating": "humiliating",
+    "reffered": "referred",
+    "stronly": "strongly",
+    "togeather": "together",
+    "disasterous": "disastrous",
+    "religous": "religious",
+    "suzerainity": "suzerainty",
+    "seperation": "separation",
+    "seperate": "separate",
+    "seperated": "separated",
+}
+
+# Exact-phrase substrings exempt from typo flagging (populate as intentional uses surface).
+_TYPO_EXEMPTIONS: Set[str] = set()
+
+_TYPO_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(t) for t in _TYPO_WATCHLIST) + r")\b",
+    re.IGNORECASE,
+)
+_TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
+
+
+def process_yml_for_typos(args: Tuple[str]) -> List[str]:
+    filename = args[0]
+    results = []
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
+    lines = text_file.split("\n")[1:]
+    for line_idx, line in enumerate(lines):
+        if not line.strip():
+            continue
+        value_match = _TYPO_VALUE_RE.match(line)
+        if not value_match:
+            continue
+        value = value_match.group(1)
+        if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
+            continue
+        for m in _TYPO_RE.finditer(value):
+            correction = _TYPO_WATCHLIST[m.group(0).lower()]
+            results.append(
+                f"{os.path.basename(filename)} - line {line_idx + 2} - "
+                f"'{m.group(0)}' -> '{correction}'"
+            )
     return results
 
 
@@ -495,6 +579,26 @@ class Validator(BaseValidator):
             "Missing l_english: line in localisation files:",
         )
 
+    def validate_typo_watchlist(self):
+        self._log_section("Checking localisation values against the typo watchlist...")
+
+        yml_files = self._get_yml_files()
+        args_list = [(f,) for f in yml_files]
+
+        all_results = self._pool_map(process_yml_for_typos, args_list, chunksize=10)
+
+        results = []
+        for file_results in all_results:
+            results.extend(file_results)
+
+        self._report(
+            results,
+            "✓ No typo-watchlist matches in localisation",
+            "Typo-watchlist matches in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-typo-watchlist",
+        )
+
     def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
         """Scan txt files with a worker that needs the valid/scripted key sets,
         shipped once per worker (loc_keys is ~200k entries; per-task shipping
@@ -716,6 +820,7 @@ class Validator(BaseValidator):
         self.validate_brackets()
         self.validate_syntax()
         self.validate_mandatory_line()
+        self.validate_typo_watchlist()
 
         # Cross-reference checks scan all .txt/.gui files — skip in staged mode
         if not self.staged_only:
