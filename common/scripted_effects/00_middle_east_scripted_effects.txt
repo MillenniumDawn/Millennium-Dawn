@@ -1039,6 +1039,18 @@ clamp_shia = {
 
 # Arab Spring Section
 
+AS_remove_from_arab_spring_pending = {
+	if = { limit = { is_in_array = { global.arab_spring_pending_countries = THIS.id } }
+		remove_from_array = { array = global.arab_spring_pending_countries value = THIS.id }
+	}
+}
+
+AS_remove_from_arab_spring_active = {
+	if = { limit = { is_in_array = { global.arab_spring_active_countries = THIS.id } }
+		remove_from_array = { array = global.arab_spring_active_countries value = THIS.id }
+	}
+}
+
 AS_register_arab_spring_country = {
 	if = {
 		limit = {
@@ -1047,18 +1059,18 @@ AS_register_arab_spring_country = {
 				has_country_flag = AS_arab_spring_completed
 			}
 		}
-		remove_from_array = { global.arab_spring_pending_countries = THIS.id }
-		remove_from_array = { global.arab_spring_active_countries = THIS.id }
+		AS_remove_from_arab_spring_pending = yes
+		AS_remove_from_arab_spring_active = yes
 	}
 	else_if = {
 		limit = { has_country_flag = arab_spring_active }
-		remove_from_array = { global.arab_spring_pending_countries = THIS.id }
+		AS_remove_from_arab_spring_pending = yes
 		if = { limit = { NOT = { is_in_array = { global.arab_spring_active_countries = THIS.id } } }
 			add_to_array = { global.arab_spring_active_countries = THIS.id }
 		}
 	}
 	else = {
-		remove_from_array = { global.arab_spring_active_countries = THIS.id }
+		AS_remove_from_arab_spring_active = yes
 		if = { limit = { NOT = { is_in_array = { global.arab_spring_pending_countries = THIS.id } } }
 			add_to_array = { global.arab_spring_pending_countries = THIS.id }
 		}
@@ -1066,8 +1078,8 @@ AS_register_arab_spring_country = {
 }
 
 AS_unregister_arab_spring_country = {
-	remove_from_array = { global.arab_spring_pending_countries = THIS.id }
-	remove_from_array = { global.arab_spring_active_countries = THIS.id }
+	AS_remove_from_arab_spring_pending = yes
+	AS_remove_from_arab_spring_active = yes
 }
 
 AS_activate_arab_spring = {
@@ -1077,7 +1089,7 @@ AS_activate_arab_spring = {
 			NOT = { has_country_flag = AS_arab_spring_completed }
 		}
 		set_country_flag = arab_spring_active
-		remove_from_array = { global.arab_spring_pending_countries = THIS.id }
+		AS_remove_from_arab_spring_pending = yes
 		if = { limit = { NOT = { is_in_array = { global.arab_spring_active_countries = THIS.id } } }
 			add_to_array = { global.arab_spring_active_countries = THIS.id }
 		}
@@ -1086,7 +1098,7 @@ AS_activate_arab_spring = {
 
 AS_deactivate_arab_spring = {
 	clr_country_flag = arab_spring_active
-	remove_from_array = { global.arab_spring_active_countries = THIS.id }
+	AS_remove_from_arab_spring_active = yes
 	if = {
 		limit = {
 			NOT = { has_country_flag = AS_disabled_arab_spring }
@@ -1100,8 +1112,8 @@ AS_deactivate_arab_spring = {
 AS_complete_arab_spring = {
 	set_country_flag = AS_arab_spring_completed
 	clr_country_flag = arab_spring_active
-	remove_from_array = { global.arab_spring_pending_countries = THIS.id }
-	remove_from_array = { global.arab_spring_active_countries = THIS.id }
+	AS_remove_from_arab_spring_pending = yes
+	AS_remove_from_arab_spring_active = yes
 }
 
 AS_rebuild_arab_spring_work_arrays = {
