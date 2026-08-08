@@ -4,6 +4,7 @@
 # covered in a custom or shared file, and flag role templates whose names
 # collide across overlapping files.
 import glob
+import logging
 import os
 import re
 import sys
@@ -149,7 +150,10 @@ def _read_text(filepath: str) -> str:
     try:
         with open(filepath, "r", encoding="utf-8-sig") as f:
             return f.read()
-    except Exception:
+    except OSError:
+        logging.warning(
+            "Could not read %s; its variant modules will not be checked", filepath
+        )
         return ""
 
 
@@ -202,11 +206,12 @@ class Validator(BaseValidator):
     TITLE = "AI EQUIPMENT COVERAGE"
     STAGED_EXTENSIONS = [".txt"]
 
-    # WARNING until the ~600-site pre-existing backlog on main is cleared, then
-    # ERROR. PR #2510 fixed the screen-hull fire-control class but left other
-    # category mismatches (light engines on destroyers, ESM on subs, mineclearing
-    # on corvettes, engine modules in weapon slots) untouched; the tank and plane
-    # templates came into scope later and carry their own share.
+    # WARNING until the ~390-site pre-existing backlog on main is cleared, then
+    # ERROR (measured 2026-08: 262 naval + 124 land/air). PR #2510 fixed the
+    # screen-hull fire-control class but left other category mismatches (light
+    # engines on destroyers, ESM on subs, mineclearing on corvettes, engine
+    # modules in weapon slots) untouched; the tank and plane templates came into
+    # scope later and carry their own share.
     SLOT_SEVERITY = Severity.WARNING
 
     def run_validations(self):

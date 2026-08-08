@@ -25,6 +25,7 @@ one — absent is unconstrained, empty means the modules decide. And
 """
 
 import glob
+import logging
 import os
 import re
 import sys
@@ -596,6 +597,10 @@ def _read_text(filepath: str) -> str:
         with open(filepath, "r", encoding="utf-8-sig") as f:
             return f.read()
     except OSError:
+        logging.warning(
+            "Could not read equipment file %s; its hulls/modules are not indexed",
+            filepath,
+        )
         return ""
 
 
