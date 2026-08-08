@@ -568,6 +568,38 @@ def _extract_random_event_ids(text: str) -> set:
     return ids
 
 
+# A `random = { chance = N ... }` block: the on_action poll that emulates MTTH.
+# `\brandom\s*=\s*\{` cannot match `random_country` / `random_list` /
+# `random_events` (those carry `_` after `random`, not `=`), so only the plain
+# chance-rolled poll is matched.
+_RANDOM_BLOCK_PATTERN = re.compile(r"\brandom\s*=\s*\{")
+_CHANCE_PATTERN = re.compile(r"\bchance\s*=")
+
+
+def scan_probability_rolled_fires(args: Tuple[str, frozenset]) -> Set[str]:
+    """Pool worker: event IDs fired inside a `random = { chance = N ... }` poll.
+
+    A chance-rolled on_action poll emulates MTTH: each tick it rolls a chance
+    and fires the event when it wins. The event has no deterministic yearly
+    slot, so the date-gated scheduling check must not flag it as dead content.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return set()
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    ids: set = set()
+    for m in _RANDOM_BLOCK_PATTERN.finditer(cleaned):
+        body, _ = extract_block_from_text(cleaned, m.end() - 1)
+        if _CHANCE_PATTERN.search(body):
+            for eid, _pos in _iter_fired_ids(body):
+                ids.add(eid)
+    return ids
+
+
 def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str]]:
     namespaces: Set[str] = set(_ADD_NAMESPACE_PATTERN.findall(text))
     meta: List[dict] = []
@@ -612,6 +644,7 @@ class Validator(BaseValidator):
         self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
+        self._probability_rolled_cache: Optional[set] = None
         self._fire_only_once_ids_cache: Optional[set] = None
         self._fire_scan_args_cache: Optional[List[Tuple[str, frozenset]]] = None
         self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
@@ -720,6 +753,31 @@ class Validator(BaseValidator):
             ids.update(_extract_random_event_ids(text))
 
         self._random_events_cache = ids
+        return ids
+
+    def _get_probability_rolled_ids(self) -> set:
+        """Return event IDs fired from chance-rolled on_action polls.
+
+        A `random = { chance = N ... }` poll emulates MTTH: each tick it rolls
+        a chance and fires the event when it wins, so the event has no
+        deterministic yearly slot. The date-gated scheduling check must not
+        flag such an event as dead content.
+        """
+        if self._probability_rolled_cache is not None:
+            return self._probability_rolled_cache
+
+        # Lookup pass: must scan full repo even in staged mode, mirroring
+        # `_get_random_event_ids`.
+        files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
+        ids: set = set()
+        for result in self._pool_map(
+            scan_probability_rolled_fires,
+            [(f, frozenset()) for f in files],
+            chunksize=30,
+        ):
+            ids.update(result)
+
+        self._probability_rolled_cache = ids
         return ids
 
     def _get_fire_only_once_ids(self) -> set:
@@ -935,8 +993,9 @@ class Validator(BaseValidator):
 
         A `date <` bound alone is an expiry guard on a chain event and says
         nothing about scheduling, so only `date >` counts. Chain events inherit
-        whatever schedules an ancestor, and focus/decision fires are
-        player-driven availability windows. Both are exempt.
+        whatever schedules an ancestor, focus/decision fires are player-driven
+        availability windows, `random_events` pools weight their events by
+        MTTH, and chance-rolled on_action polls emulate MTTH. All are exempt.
         """
         self._log_section(
             "Checking date-gated events are scheduled from the yearly effects..."
@@ -963,7 +1022,7 @@ class Validator(BaseValidator):
             results,
             "✓ Every date-gated event is scheduled from the yearly effects",
             f"Date-gated events missing a {_YEARLY_EFFECTS_REL} entry:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="date-gated-not-scheduled",
         )
 
@@ -994,8 +1053,18 @@ class Validator(BaseValidator):
                 parents.setdefault(child, set()).add(parent)
 
         results = []
+        random_events_ids = self._get_random_event_ids()
+        probability_rolled_ids = self._get_probability_rolled_ids()
         for eid, filename, line in sorted(gated):
             if _is_scheduled_chain(eid, scheduled, parents):
+                continue
+            if eid in random_events_ids:
+                # A `random_events` pool weights its events by MTTH; the pool
+                # is the schedule.
+                continue
+            if eid in probability_rolled_ids:
+                # A chance-rolled on_action poll emulates MTTH and has no
+                # deterministic yearly slot.
                 continue
             rels = sources.get(eid, set())
             if any(r.startswith(d) for r in rels for d in _PLAYER_DRIVEN_FIRE_DIRS):
@@ -1307,14 +1376,14 @@ class Validator(BaseValidator):
         )
         results = [r for file_res in all_results for r in file_res]
 
-        # WARNING until the 11-site pre-existing backlog is cleared, then ERROR.
+        # ERROR: the 11-site pre-existing backlog was cleared.
         self._report(
             results,
             "✓ No fire_only_once events fired inside iterators",
             "fire_only_once events fired inside every_*/for_each_* iterators"
             " (only the first recipient gets it; drop fire_only_once or fire"
             " the event outside the loop):",
-            Severity.WARNING,
+            Severity.ERROR,
             category="fire-only-once-in-loop",
         )
 
