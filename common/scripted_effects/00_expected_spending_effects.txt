@@ -1,5 +1,6 @@
 calculate_expected_spending = {
 	resolve_gdp_c_deltas = yes
+	calculate_expected_spending_totals = yes
 	calculate_expected_welfare_spending = yes
 	calculate_expected_healthcare_spending = yes
 	calculate_expected_education_spending = yes
@@ -9,18 +10,62 @@ calculate_expected_spending = {
 	md_check_spending_alerts = yes
 }
 
-calculate_expected_welfare_spending = {
-	set_variable = { expected_welfare_spending = 0 }
+calculate_expected_spending_totals = {
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = v
 
-		set_temp_variable = { buf = global.expected_social_sp^v }
-		add_to_temp_variable = { buf = gdp_c_delta }
-		multiply_temp_variable = { buf = party_pop_array^v }
-		add_to_variable = { expected_welfare_spending = buf }
-	}
+		set_variable = {
+			expected_welfare_spending = {
+				value = global.expected_social_sp^v
+				add = gdp_c_delta
+				multiply = party_pop_array^v
+			}
+		}
 
+		set_variable = {
+			expected_health_spending = {
+				value = global.expected_med_sp^v
+				add = gdp_c_delta
+				multiply = party_pop_array^v
+			}
+		}
+
+		set_variable = {
+			expected_edu_spending = {
+				value = global.expected_ed_sp^v
+				add = gdp_c_delta_lvl5
+				multiply = party_pop_array^v
+			}
+		}
+
+		set_variable = {
+			expected_police_spending = {
+				value = global.expected_police_sp^v
+				add = gdp_c_delta_lvl5
+				multiply = party_pop_array^v
+			}
+		}
+
+		set_variable = {
+			expected_adm_spending = {
+				value = global.expected_adm_sp^v
+				add = gdp_c_delta_lvl5
+				multiply = party_pop_array^v
+			}
+		}
+
+		set_variable = {
+			expected_military_sp = {
+				value = global.expected_military_sp^v
+				add = gdp_c_delta_mil
+				multiply = party_pop_array^v
+			}
+		}
+	}
+}
+
+calculate_expected_welfare_spending = {
 	if = {
 		limit = { THIS = { has_war = yes } }
 		subtract_from_variable = { expected_welfare_spending = 1 }
@@ -39,17 +84,6 @@ calculate_expected_welfare_spending = {
 }
 
 calculate_expected_healthcare_spending = {
-	set_variable = { expected_health_spending = 0 }
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-
-		set_temp_variable = { buf = global.expected_med_sp^v }
-		add_to_temp_variable = { buf = gdp_c_delta }
-		multiply_temp_variable = { buf = party_pop_array^v }
-		add_to_variable = { expected_health_spending = buf }
-	}
-
 	if = {
 		limit = { THIS = { has_war = yes } }
 		subtract_from_variable = { expected_health_spending = 1 }
@@ -69,17 +103,6 @@ calculate_expected_healthcare_spending = {
 }
 
 calculate_expected_education_spending = {
-	set_variable = { expected_edu_spending = 0 }
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-
-		set_temp_variable = { buf = global.expected_ed_sp^v }
-		add_to_temp_variable = { buf = gdp_c_delta_lvl5 }
-		multiply_temp_variable = { buf = party_pop_array^v }
-		add_to_variable = { expected_edu_spending = buf }
-	}
-
 	if = {
 		limit = { THIS = { has_war = yes } }
 		subtract_from_variable = { expected_edu_spending = 1 }
@@ -99,17 +122,6 @@ calculate_expected_education_spending = {
 }
 
 calculate_expected_police_spending = {
-	set_variable = { expected_police_spending = 0 }
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-
-		set_temp_variable = { buf = global.expected_police_sp^v }
-		add_to_temp_variable = { buf = gdp_c_delta_lvl5 }
-		multiply_temp_variable = { buf = party_pop_array^v }
-		add_to_variable = { expected_police_spending = buf }
-	}
-
 	if = {
 		limit = { THIS = { has_war = yes } }
 		subtract_from_variable = { expected_police_spending = 1 }
@@ -129,17 +141,6 @@ calculate_expected_police_spending = {
 }
 
 calculate_expected_adm_spending = {
-	set_variable = { expected_adm_spending = 0 }
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-
-		set_temp_variable = { buf = global.expected_adm_sp^v }
-		add_to_temp_variable = { buf = gdp_c_delta_lvl5 }
-		multiply_temp_variable = { buf = party_pop_array^v }
-		add_to_variable = { expected_adm_spending = buf }
-	}
-
 	if = {
 		limit = { THIS = { has_war = yes } }
 		subtract_from_variable = { expected_adm_spending = 1 }
@@ -159,17 +160,6 @@ calculate_expected_adm_spending = {
 }
 
 calculate_expected_military_spending = {
-	set_variable = { expected_military_sp = 0 }
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-
-		set_temp_variable = { buf = global.expected_military_sp^v }
-		add_to_temp_variable = { buf = gdp_c_delta_mil }
-		multiply_temp_variable = { buf = party_pop_array^v }
-		add_to_variable = { expected_military_sp = buf }
-	}
-
 	if = {
 		limit = { THIS = { has_war = yes } }
 		add_to_variable = { expected_military_sp = 3 }
