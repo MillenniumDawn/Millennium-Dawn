@@ -188,6 +188,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | Karandash1984        | @karandash1984                  | @Karandash1984 | -             | -                             |
 | Natin                | @nothing4182                    | @NothingMD     | -             | -                             |
 | Ironfury             | -                               | -              | -             | -                             |
+| Calvin C.            | -                               | @cal-chu       | -             | -                             |
 
 # Fellow Modders/Teams
 

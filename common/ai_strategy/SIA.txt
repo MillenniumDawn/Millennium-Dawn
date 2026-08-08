@@ -1,7 +1,7 @@
 ##Thailand unique AI for combat units
 SIA_default_naval_breakdown = {
 	allowed = { original_tag = SIA }
-	enable = { original_tag = SIA }
+	enable = { always = yes }
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = naval_corvettes value = 17 }
@@ -10,4 +10,101 @@ SIA_default_naval_breakdown = {
 	ai_strategy = { type = role_ratio id = naval_attack_submarine value = 25 }
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 5 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 3 }
+	ai_strategy = { type = role_ratio id = naval_cruiser value = 2 }
+	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 2 }
+}
+
+SIA_historical_alignment = {
+	allowed = { original_tag = SIA }
+	enable = {
+		NOT = { has_completed_focus = SIA_bamboo_bends_east }
+		NOT = { has_country_flag = SIA_path_communist }
+		NOT = { has_completed_focus = SIA_lost_territories }
+		NOT = { check_variable = { global.SIA_ai_road = 3 } }
+	}
+	abort_when_not_enabled = yes
+
+	# Lean toward the USA (Cobra Gold treaty exercises) while maintaining ASEAN ties
+	ai_strategy = { type = alliance id = "USA" value = 50 }
+	ai_strategy = { type = befriend id = "MAY" value = 25 }
+	ai_strategy = { type = befriend id = "SIN" value = 25 }
+	ai_strategy = { type = befriend id = "IND" value = 15 } # Indonesia
+	ai_strategy = { type = befriend id = "RAJ" value = 10 } # India
+
+	# Manage China relationship
+	ai_strategy = { type = alliance id = "CHI" value = -20 }
+	ai_strategy = { type = influence id = "LAO" value = 20 }
+	ai_strategy = { type = influence id = "CBD" value = 10 }
+
+}
+
+SIA_bamboo_east_alignment = {
+	allowed = { original_tag = SIA }
+	enable = {
+		has_completed_focus = SIA_bamboo_bends_east
+		NOT = { has_country_flag = SIA_path_communist }
+	}
+	abort_when_not_enabled = yes
+
+	# After bamboo east decision — lean toward China
+	ai_strategy = { type = alliance id = "CHI" value = 40 }
+	ai_strategy = { type = alliance id = "USA" value = -30 }
+	ai_strategy = { type = befriend id = "LAO" value = 30 }
+	ai_strategy = { type = befriend id = "CBD" value = 20 }
+}
+
+SIA_kra_canal_economy = {
+	allowed = { original_tag = SIA }
+	enable = {
+		has_completed_focus = SIA_two_oceans_one_kingdom
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = alliance id = "SIN" value = -15 } # Singapore sees us as competition
+}
+
+SIA_border_war_antagonize = {
+	allowed = { original_tag = SIA }
+	enable = {
+		has_country_flag = SIA_border_war_active
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "CBD" value = 100 }
+	ai_strategy = { type = conquer id = "CBD" value = 20 }
+}
+
+SIA_pan_thai_branch_d = {
+	allowed = { original_tag = SIA }
+	enable = {
+		has_completed_focus = SIA_lost_territories
+	}
+	abort_when_not_enabled = yes
+
+	# Reacts to the Pan-Thai branch actually being taken, by player or AI. The
+	# SIA_ai_behavior rule decides whether the AI heads here; it must not also
+	# decide whether a player who got here gets the matching posture.
+	ai_strategy = { type = antagonize id = "BRM" value = 50 }
+	ai_strategy = { type = antagonize id = "LAO" value = 30 }
+	ai_strategy = { type = antagonize id = "CBD" value = 40 }
+	ai_strategy = { type = antagonize id = "MAY" value = 30 }
+	ai_strategy = { type = conquer id = "BRM" value = 20 }
+}
+
+# SIA_asean_defense_member only carries ai_get_ally_desire_factor, which makes other countries
+# want the member as an ally. Nothing made the member want to stay, so the AI re-evaluated the
+# alliance on its own terms and left within weeks of joining.
+SIA_seato_member_cohesion = {
+	allowed = {
+		is_asean_nation = yes
+		NOT = { original_tag = SIA }
+	}
+	enable = {
+		has_idea = SIA_asean_defense_member
+		is_in_faction_with = SIA
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = alliance id = "SIA" value = 200 }
+	ai_strategy = { type = befriend id = "SIA" value = 100 }
 }

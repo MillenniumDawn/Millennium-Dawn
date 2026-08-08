@@ -578,7 +578,7 @@ def strip_comments(text: str) -> str:
     return "\n".join(result)
 
 
-def blank_quoted_strings(text: str) -> str:
+def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> str:
     """Replace the interior of double-quoted strings with spaces.
 
     Quotes, string length, and newlines are preserved so byte offsets and line
@@ -586,15 +586,24 @@ def blank_quoted_strings(text: str) -> str:
     braces / ``#`` / ``=`` inside a quoted log string that would otherwise
     desync a brace-depth or token scan. Run AFTER comment stripping — a stray
     ``"`` in a ``#`` comment would otherwise flip the in-string state.
+
+    ``keep_start``, if given, is a set of offsets of opening ``"`` characters
+    whose string contents are left untouched — for a caller that must preserve
+    specific quoted values (e.g. a ``has_dlc = "X"`` name) while still handling
+    escaped quotes (``\\"``) correctly everywhere else.
     """
     if '"' not in text:
         return text
     out = list(text)
     in_str = False
+    start = -1
+    keep = keep_start or ()
     for i, c in enumerate(text):
         if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            if not in_str:
+                start = i
             in_str = not in_str
-        elif in_str and c != "\n":
+        elif in_str and c != "\n" and start not in keep:
             out[i] = " "
     return "".join(out)
 

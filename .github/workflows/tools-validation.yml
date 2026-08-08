@@ -3,12 +3,13 @@ name: Tools Validation
 on:
   pull_request:
     paths:
-      - 'tools/**'
-      - '.pre-commit-config.yaml'
-      - '.github/workflows/coding-pipeline.yml'
-      - '.github/workflows/nightly-pr-validation.yml'
-      - '.github/workflows/tools-validation.yml'
-      - '.github/workflows/validator-cache.yml'
+      - "tools/**"
+      - ".claude/docs/typo-watchlist.md"
+      - ".pre-commit-config.yaml"
+      - ".github/workflows/coding-pipeline.yml"
+      - ".github/workflows/nightly-pr-validation.yml"
+      - ".github/workflows/tools-validation.yml"
+      - ".github/workflows/validator-cache.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -22,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -37,16 +38,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: '3.x'
+          python-version: "3.x"
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --group runtime
       - name: Run tools validation
         run: |
-          python tools/validate_tools.py --strict --no-color --output tools_validation.log
+          python tools/validate_tools.py --strict --no-color --output \
+            tools_validation.log
       - name: Upload validation report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: tools-validation-report
@@ -58,17 +61,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
           # config_drift_test reads the pre-commit config and these workflows to
           # compare the validator set declared in each, and to check the
           # pipeline wiring around them. pyproject.toml supplies the pytest
-          # testpaths so all six test dirs are collected.
+          # testpaths so all six test dirs are collected. typo-watchlist.md is
+          # read by loc_typo_watchlist_test's doc-sync guard.
           sparse-checkout: |
             tools
             pyproject.toml
             .pre-commit-config.yaml
+            .claude/docs/typo-watchlist.md
             .github/workflows/coding-pipeline.yml
             .github/workflows/nightly-pr-validation.yml
             .github/workflows/tools-validation.yml
@@ -77,7 +82,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: '3.x'
+          python-version: "3.x"
       - name: Install test deps
         run: |
           python -m pip install --upgrade pip
@@ -94,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -104,7 +109,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: '3.x'
+          python-version: "3.x"
       - name: Install ruff
         run: |
           python -m pip install --upgrade pip
