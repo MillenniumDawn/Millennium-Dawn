@@ -1,15 +1,16 @@
-"""Tests for the naval variant module/slot cross-check.
+"""Tests for the equipment variant module/slot cross-check.
 
 The engine silently drops a module assigned to a slot that does not exist on the
 hull, or whose category is not in that slot's allowed set (upstream PR #2510).
-These cover the resolver (archetype inheritance, module->category) and each
-finding kind against synthetic hull/module fixtures.
+These cover the resolver (archetype inheritance, cloned archetypes,
+module->category, module-driven slot unlocks) and each finding kind against
+synthetic hull/module fixtures.
 """
 
-from naval_module_slots import (
+from equipment_module_slots import (
     build_indexes,
     check_created_variants,
-    check_naval_variants,
+    check_target_variants,
 )
 from validate_ai_equipment import Validator
 
@@ -27,6 +28,11 @@ equipments = {
 \t\t\tfixed_ship_fire_control_system_slot = {
 \t\t\t\trequired = no
 \t\t\t\tallowed_module_categories = { module_screen_fire_control_system_category }
+\t\t\t}
+\t\t\tfixed_ship_ammo_slot = {
+\t\t\t\trequired = yes
+\t\t\t\tallowed_module_categories = {
+\t\t\t\t}
 \t\t\t}
 \t\t}
 \t}
@@ -48,10 +54,23 @@ equipments = {
 }
 """
 
+# A cloned family: every test_ship_hull_N gains a test_boat_hull_N twin.
+DUPLICATES = """
+duplicate_archetypes = {
+\ttest_boat = {
+\t\tarchetype = test_ship
+\t\ttype = screen_ship
+\t}
+}
+"""
+
 MODULES = """
 equipment_modules = {
 \tmodule_test_gun = {
 \t\tcategory = module_light_guns_category
+\t\tallowed_module_categories = {
+\t\t\tfixed_ship_ammo_slot = { module_gun_ammo_category }
+\t\t}
 \t\tcan_convert_from = { module_category = module_gun_battery_category }
 \t}
 \tmodule_test_screen_fc = {
@@ -63,12 +82,15 @@ equipment_modules = {
 \tmodule_test_helipad = {
 \t\tcategory = module_light_helipad_category
 \t}
+\tmodule_test_gun_ammo = {
+\t\tcategory = module_gun_ammo_category
+\t}
 }
 """
 
 
 def _indexes():
-    return build_indexes([HULLS], [MODULES])
+    return build_indexes([HULLS, DUPLICATES], [MODULES])
 
 
 def _variant(hull, modules_body):
@@ -89,26 +111,38 @@ def _variant(hull, modules_body):
 
 
 def _kinds(content):
-    hull_slots, module_category, known = _indexes()
-    return [
-        f.kind
-        for f in check_naval_variants(content, hull_slots, module_category, known)
-    ]
+    return [f.kind for f in check_target_variants(content, _indexes())]
 
 
 def test_build_indexes_resolves_inheritance_and_categories():
-    hull_slots, module_category, known = _indexes()
+    index = _indexes()
     assert (
-        module_category["module_test_plain_fc"] == "module_fire_control_system_category"
+        index.module_category["module_test_plain_fc"]
+        == "module_fire_control_system_category"
     )
     # can_convert_from's module_category must not be mistaken for the module's own.
-    assert module_category["module_test_gun"] == "module_light_guns_category"
-    # hull_1 inherits the archetype's two slots.
-    assert set(hull_slots["test_ship_hull_1"]) == {
+    assert index.module_category["module_test_gun"] == "module_light_guns_category"
+    # hull_1 inherits the archetype's three slots.
+    assert set(index.hull_slots["test_ship_hull_1"]) == {
         "fixed_ship_battery_slot",
         "fixed_ship_fire_control_system_slot",
+        "fixed_ship_ammo_slot",
     }
-    assert "module_screen_fire_control_system_category" in known
+    assert "module_screen_fire_control_system_category" in index.known_categories
+    # A module's own allowed_module_categories is a slot unlock, not its category.
+    assert index.slot_unlocks["module_test_gun"]["fixed_ship_ammo_slot"] == {
+        "module_gun_ammo_category"
+    }
+    # The same unlock is reachable through the category, for designs that name it.
+    assert index.slot_unlocks["module_light_guns_category"]["fixed_ship_ammo_slot"] == {
+        "module_gun_ammo_category"
+    }
+
+
+def test_duplicate_archetype_clones_the_whole_family():
+    index = _indexes()
+    assert index.hull_slots["test_boat_hull_1"] == index.hull_slots["test_ship_hull_1"]
+    assert index.hull_slots["test_boat"] == index.hull_slots["test_ship"]
 
 
 def test_correct_category_passes():
@@ -189,7 +223,9 @@ def test_overriding_hull_uses_own_slots():
     assert _kinds(content) == ["unknown_slot"]
 
 
-def test_non_naval_template_ignored():
+def test_non_naval_template_also_checked():
+    # Tank and plane templates follow the same slot rules; skipping them by
+    # category hid every land and air mismatch.
     content = (
         "TST_tank = {\n"
         "\tcategory = land\n"
@@ -202,6 +238,36 @@ def test_non_naval_template_ignored():
         "\t\t}\n"
         "\t}\n"
         "}\n"
+    )
+    assert _kinds(content) == ["category_mismatch"]
+
+
+def test_empty_allowed_set_permits_nothing_on_its_own():
+    # fixed_ship_ammo_slot declares an empty allowed_module_categories, so the
+    # ammo only fits once a module unlocks its category.
+    content = _variant(
+        "test_ship_hull_1",
+        "\t\t\t\tfixed_ship_ammo_slot = module_test_gun_ammo\n",
+    )
+    assert _kinds(content) == ["category_mismatch"]
+
+
+def test_module_unlocks_its_own_slot():
+    content = _variant(
+        "test_ship_hull_1",
+        "\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
+        "\t\t\t\tfixed_ship_ammo_slot = module_test_gun_ammo\n",
+    )
+    assert _kinds(content) == []
+
+
+def test_category_reference_unlocks_its_slot():
+    # Generic AI designs name the category they want the best available of, so
+    # the unlocks of everything in it are in play.
+    content = _variant(
+        "test_ship_hull_1",
+        "\t\t\t\tfixed_ship_battery_slot = module_light_guns_category\n"
+        "\t\t\t\tfixed_ship_ammo_slot = module_test_gun_ammo\n",
     )
     assert _kinds(content) == []
 
@@ -229,11 +295,7 @@ def _created(hull, modules_body):
 
 
 def _created_kinds(content):
-    hull_slots, module_category, known = _indexes()
-    return [
-        f.kind
-        for f in check_created_variants(content, hull_slots, module_category, known)
-    ]
+    return [f.kind for f in check_created_variants(content, _indexes())]
 
 
 def test_created_variant_correct_passes():
@@ -286,8 +348,7 @@ def test_created_variant_reports_real_line_number():
         "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
         "\t\t\t\t\t\tnonexistent_slot = module_test_gun\n",
     )
-    hull_slots, module_category, known = _indexes()
-    findings = check_created_variants(content, hull_slots, module_category, known)
+    findings = check_created_variants(content, _indexes())
     assert len(findings) == 1
     assert (
         content.split("\n")[findings[0].line - 1].strip().startswith("nonexistent_slot")
@@ -331,7 +392,7 @@ def test_oob_validator_integration_reports_errors(tmp_path):
     assert "module_test_plain_fc" in variant[0].message
 
 
-def test_validator_integration_reports_errors(tmp_path):
+def test_validator_integration_reports_warnings(tmp_path):
     _write(tmp_path, "common/units/equipment/MD_test_ships.txt", HULLS)
     _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
     _write(
@@ -347,7 +408,7 @@ def test_validator_integration_reports_errors(tmp_path):
     validator.run_validations()
     naval = [i for i in validator._issues if i.category.startswith("NAVAL VARIANT")]
     assert len(naval) == 1
-    assert naval[0].severity == "error"
+    assert naval[0].severity == "warning"
     assert naval[0].file == "common/ai_equipment/TST_naval.txt"
     assert "module_test_plain_fc" in naval[0].message
 
