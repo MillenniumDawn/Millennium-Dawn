@@ -384,20 +384,12 @@ un_recog_setup_check = {
 			}
 			add_to_array = { global.Unrecognised_States = THIS }
 
-			for_each_loop = {
-				array = global.UN_general_assembly
-				value = v
-
-				var:v = {
-					if = {
-						limit = {
-							has_country_flag = original_owner_@PREV
-						}
-						set_temp_variable = { spot_tracker = THIS }
-						PREV = {
-							set_variable = { prev_owner = spot_tracker }
-						}
-					}
+			every_collection_element = {
+				input = { input = collection:un_general_assembly_members_collection }
+				if = {
+					limit = { has_country_flag = original_owner_@PREV }
+					set_temp_variable = { spot_tracker = THIS }
+					PREV = { set_variable = { prev_owner = spot_tracker } }
 				}
 			}
 
@@ -411,20 +403,12 @@ un_recog_setup_check = {
 				value = THIS
 				index = 0
 			}
-			for_each_loop = {
-				array = global.UN_general_assembly
-				value = v
-
-				var:v = {
-					if = {
-						limit = {
-							has_country_flag = original_owner_@PREV
-						}
-						set_temp_variable = { spot_tracker = THIS }
-						PREV = {
-							set_variable = { prev_owner = spot_tracker }
-						}
-					}
+			every_collection_element = {
+				input = { input = collection:un_general_assembly_members_collection }
+				if = {
+					limit = { has_country_flag = original_owner_@PREV }
+					set_temp_variable = { spot_tracker = THIS }
+					PREV = { set_variable = { prev_owner = spot_tracker } }
 				}
 			}
 		}
@@ -1655,25 +1639,35 @@ full_satellite_system_access = {
 #This makes it so that receiving money reduces your benefits from the main UN modifier
 #While spending a higher percentage will increase your benefits
 calculate_final_un_benefits = {
-	#add up everything we are receiving aid wise
-	set_temp_variable = { current_receiving_budget_tracker = un_esco_political_power_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_esco_research_speed_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_ido_construction_speed_var }
-
-	add_to_temp_variable = {
-		var = current_receiving_budget_tracker
-		value = {
-			value = un_ido_current_building_count
-			multiply = 0.14
+	set_temp_variable = { current_receiving_budget_tracker = 0 }
+	if = {
+		limit = { has_country_flag = is_getting_esco_subsidies }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.unescoe_budget divide = global.esco_recipient_divisor }
 		}
 	}
-	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_productivity_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_construction_cost_var }
-
-	#Divide here to see how much % of the money we are getting
-	#then flip it to negative; we need to add this back into the nations that are getting benefits
-	divide_temp_variable = { current_receiving_budget_tracker = global.full_aid_budget_calculator }
-	multiply_temp_variable = { current_receiving_budget_tracker = -2 }
+	if = {
+		limit = { has_country_flag = is_getting_ido_subsidies }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.undio_budget divide = global.ido_recipient_divisor }
+		}
+	}
+	if = {
+		limit = { has_country_flag = is_getting_cdf_subsidies }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.uncdf_budget divide = global.cdf_recipient_divisor }
+		}
+	}
+	set_temp_variable = {
+		current_receiving_budget_tracker = {
+			value = current_receiving_budget_tracker
+			divide = global.full_aid_budget_calculator
+			multiply = -2
+		}
+	}
 
 	#if you receive aid, you begin to lose some of the gains from giving aid
 	set_temp_variable = { contribution_multiplier = 1 }
@@ -1696,24 +1690,43 @@ calculate_final_un_benefits = {
 		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 
-	set_temp_variable = { aid_program_adder = united_nations_aid_program_contribution_percent }
-	multiply_temp_variable = { aid_program_adder = contribution_multiplier }
+	set_temp_variable = {
+		aid_program_adder = {
+			value = united_nations_aid_program_contribution_percent
+			multiply = contribution_multiplier
+		}
+	}
 
-	set_variable = { united_nations_political_power_var = aid_program_adder }
-	multiply_variable = { united_nations_political_power_var = 0.5 }
+	set_variable = {
+		united_nations_political_power_var = {
+			value = aid_program_adder
+			multiply = 0.5
+		}
+	}
 
-	set_variable = { united_nations_influence_gain_var = united_nations_contribution_percent }
-	add_to_variable = { united_nations_influence_gain_var = aid_program_adder }
-	add_to_variable = { united_nations_influence_gain_var = current_receiving_budget_tracker }
+	set_variable = {
+		united_nations_influence_gain_var = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			add = current_receiving_budget_tracker
+		}
+	}
 
-	set_variable = { united_nations_influence_defense_var = united_nations_contribution_percent }
-	add_to_variable = { united_nations_influence_defense_var = aid_program_adder }
-	add_to_variable = { united_nations_influence_defense_var = current_receiving_budget_tracker }
+	set_variable = {
+		united_nations_influence_defense_var = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			add = current_receiving_budget_tracker
+		}
+	}
 
-	#Investments get calculated as the average of contributions
-	set_temp_variable = { investment_adder = united_nations_contribution_percent }
-	add_to_temp_variable = { investment_adder = aid_program_adder }
-	multiply_temp_variable = { investment_adder = -0.5 }
+	set_temp_variable = {
+		investment_adder = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			multiply = -0.5
+		}
+	}
 
 	set_variable = { united_nations_investment_duration_var = investment_adder }
 	set_variable = { united_nations_investment_cost_var = investment_adder }
@@ -1781,17 +1794,14 @@ check_for_subsidy_expiration = {
 rebuild_ga_ai_active_pool = {
 	set_global_flag = { flag = ga_ai_pool_rebuild_cooldown days = 60 value = 1 }
 	clear_array = global.ga_ai_active_pool
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-		var:v = {
-			if = {
-				limit = {
-					is_ai = yes
-					has_political_power > 250
-				}
-				add_to_array = { global.ga_ai_active_pool = THIS }
+	every_collection_element = {
+		input = { input = collection:un_general_assembly_members_collection }
+		if = {
+			limit = {
+				is_ai = yes
+				has_political_power > 250
 			}
+			add_to_array = { global.ga_ai_active_pool = THIS }
 		}
 	}
 }
@@ -1926,7 +1936,7 @@ un_ai_sc_consider_action = {
 un_ai_ga_consider_resolution = {
 	if = {
 		limit = {
-			is_in_array = { global.UN_general_assembly = THIS }
+			has_dynamic_modifier = { modifier = united_nations_member }
 			NOT = { has_global_flag = current_ongoing_ga_vote }
 		}
 
@@ -2098,16 +2108,17 @@ un_ai_ga_consider_resolution = {
 
 # Sanctions Effects
 apply_united_nations_sanctions = {
+	set_temp_variable = { un_member_count = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
 	set_variable = {
 		security_council_trade_sanctions_var = {
-			value = global.UN_general_assembly^num
+			value = un_member_count
 			multiply = -0.005
 			clamp = { min = -1.00 max = 0 }
 		}
 	}
 	set_variable = {
 		security_council_research_sanctions_var = {
-			value = global.UN_general_assembly^num
+			value = un_member_count
 			multiply = -0.003
 			clamp = { min = -0.50 max = 0 }
 		}
@@ -2199,7 +2210,7 @@ recognition_grant_increment = {
 	# One-time notification when recognition first reaches the UN-ascension threshold (40% of GA)
 	if = {
 		limit = { NOT = { has_country_flag = un_ascension_eligible_notified } }
-		set_temp_variable = { recog_threshold = global.UN_general_assembly^num }
+		set_temp_variable = { recog_threshold = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
 		multiply_temp_variable = { recog_threshold = 0.4 }
 		if = {
 			limit = { check_variable = { Granted_Recognition > recog_threshold } }

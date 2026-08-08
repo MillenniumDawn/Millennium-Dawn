@@ -82,8 +82,7 @@ AFG_clear_ci_supporters = {
 	AFG = { clear_array = AFG_ci_array }
 }
 
-#Rebuilt monthly while the insurgency runs. global.UN_general_assembly membership is exactly is_full_state, so the
-#consumers iterate these instead of scanning every country; entries can go stale for up to a month, so loops re-check.
+# Rebuilt monthly while the insurgency runs from current UN members.
 AFG_refresh_insurgency_arrays = {
 	#A supporter that leaves the General Assembly drops out of the rebuild below, so clear its flag before the wipe or it keeps it forever
 	for_each_loop = {
@@ -105,34 +104,30 @@ AFG_refresh_insurgency_arrays = {
 	clear_array = AFG_coalition_array
 	clear_array = AFG_observer_array
 	clear_array = AFG_ci_array
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-
+	every_collection_element = {
+		input = { input = collection:un_general_assembly_members_collection }
 		if = {
-			limit = { var:v = { has_country_flag = wot_supporting_afghan_counter_insurgency } }
-			add_to_array = { AFG_ci_array = v }
+			limit = { has_country_flag = wot_supporting_afghan_counter_insurgency }
+			AFG = { add_to_array = { AFG_ci_array = PREV.id } }
 		}
 		if = {
-			limit = { NOT = { check_variable = { v = THIS.id } } }
+			limit = { NOT = { tag = AFG } }
 			if = {
-				limit = { var:v = { has_military_access_to = AFG } }
-				add_to_array = { AFG_coalition_array = v }
-				add_to_array = { AFG_observer_array = v }
+				limit = { has_military_access_to = AFG }
+				AFG = {
+					add_to_array = { AFG_coalition_array = PREV.id }
+					add_to_array = { AFG_observer_array = PREV.id }
+				}
 			}
 			else_if = {
 				limit = {
 					OR = {
-						is_in_array = { influence_array = v }
-						var:v = {
-							OR = {
-								is_neighbor_of = AFG
-								has_guaranteed = AFG
-							}
-						}
+						AFG = { is_in_array = { influence_array = PREV.id } }
+						is_neighbor_of = AFG
+						has_guaranteed = AFG
 					}
 				}
-				add_to_array = { AFG_observer_array = v }
+				AFG = { add_to_array = { AFG_observer_array = PREV.id } }
 			}
 		}
 	}
