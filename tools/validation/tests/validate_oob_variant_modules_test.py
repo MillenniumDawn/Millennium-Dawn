@@ -52,11 +52,11 @@ equipment_modules = {
 """
 
 
-def _variant(modules_body, hull="test_tank_chassis_1"):
+def _variant(modules_body):
     return (
         "create_equipment_variant = {\n"
         '\tname = "Test Tank"\n'
-        f"\ttype = {hull}\n"
+        "\ttype = test_tank_chassis_1\n"
         "\tmodules = {\n"
         f"{modules_body}"
         "\t}\n"

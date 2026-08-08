@@ -11,7 +11,7 @@ from typing import Dict, List, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from naval_module_slots import build_equipment_index, check_target_variants
+from equipment_module_slots import build_equipment_index, check_target_variants
 from shared_utils import strip_inline_comment
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
 
@@ -207,7 +207,7 @@ class Validator(BaseValidator):
     # category mismatches (light engines on destroyers, ESM on subs, mineclearing
     # on corvettes, engine modules in weapon slots) untouched; the tank and plane
     # templates came into scope later and carry their own share.
-    NAVAL_SLOT_SEVERITY = Severity.WARNING
+    SLOT_SEVERITY = Severity.WARNING
 
     def run_validations(self):
         self._validate_coverage()
@@ -249,7 +249,7 @@ class Validator(BaseValidator):
                 )
                 results.append(
                     Issue(
-                        severity=self.NAVAL_SLOT_SEVERITY,
+                        severity=self.SLOT_SEVERITY,
                         category=labels[f.kind],
                         message=f.message,
                         file=rel,
@@ -261,7 +261,7 @@ class Validator(BaseValidator):
             results,
             "✓ All AI variant modules match their hull slot rules",
             "AI variant modules invalid for their hull slot:",
-            severity=self.NAVAL_SLOT_SEVERITY,
+            severity=self.SLOT_SEVERITY,
         )
 
     def _validate_history_consistency(self):

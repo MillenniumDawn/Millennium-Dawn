@@ -37,7 +37,7 @@ from shared_utils import strip_comments, strip_inline_comment
 
 # Ship hulls live only in files carrying one of these engine hull-type markers,
 # so the ship/land-air split needs no per-hull annotation.
-SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
+_SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
 
 _NAME_BLOCK_RE = re.compile(r"([A-Za-z_][\w.]*)\s*=\s*\{")
 _ASSIGN_RE = re.compile(r"([A-Za-z_]\w*)\s*=\s*")
@@ -169,7 +169,7 @@ class _Hull:
     inherit: bool
 
 
-def parse_ship_hulls(text: str) -> Dict[str, _Hull]:
+def parse_hulls(text: str) -> Dict[str, _Hull]:
     """Parse an equipment file into ``{hull: _Hull}``. Hulls with
     ``module_slots = inherit`` carry no slots until resolved against their
     archetype (see :func:`resolve_hull_slots`)."""
@@ -550,26 +550,19 @@ def _add_duplicate_hulls(
 
 
 def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIndex:
-    """Build the index from the raw text of the hull and module definition files.
-
-    ``ship_hulls`` is left empty; :func:`build_equipment_index` fills it.
-    """
+    """Build the index from the raw text of the hull and module definition files."""
     hulls: Dict[str, _Hull] = {}
     duplicates: Dict[str, str] = {}
+    ship_hulls: Set[str] = set()
     for text in hull_texts:
         stripped = strip_comments(text)
-        hulls.update(parse_ship_hulls(stripped))
+        parsed = parse_hulls(stripped)
+        hulls.update(parsed)
         duplicates.update(parse_duplicate_archetypes(stripped))
+        if any(marker in text for marker in _SHIP_HULL_MARKERS):
+            ship_hulls.update(parsed)
     resolved = resolve_hull_slots(hulls)
     _add_duplicate_hulls(resolved, duplicates)
-
-    categories: Set[str] = set()
-    for slots in resolved.values():
-        if not slots:
-            continue
-        for cats in slots.values():
-            if cats:
-                categories.update(cats)
 
     module_category: Dict[str, str] = {}
     module_unlocks: Dict[str, Dict[str, Set[str]]] = {}
@@ -578,11 +571,17 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
         module_category.update(mods)
         module_unlocks.update(unlocks)
 
-    categories.update(module_category.values())
+    categories: Set[str] = set(module_category.values())
+    for slots in resolved.values():
+        for cats in (slots or {}).values():
+            if cats:
+                categories.update(cats)
     for slot_cats in module_unlocks.values():
         for cats in slot_cats.values():
             categories.update(cats)
-    return EquipmentIndex(resolved, module_category, categories, module_unlocks, set())
+    return EquipmentIndex(
+        resolved, module_category, categories, module_unlocks, ship_hulls
+    )
 
 
 def _read_text(filepath: str) -> str:
@@ -594,24 +593,12 @@ def _read_text(filepath: str) -> str:
 
 
 def build_equipment_index(units_dir: str) -> EquipmentIndex:
-    """Index every hull and module under *units_dir* (``common/units/equipment``).
-
-    ``ship_hulls`` names the subset defined in a ship file, so a caller can label
-    a finding as a ship or a land/air one without re-reading the tree.
-    """
-    hull_texts: List[str] = []
-    ship_texts: List[str] = []
-    for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt"))):
-        text = _read_text(fp)
-        hull_texts.append(text)
-        if any(marker in text for marker in SHIP_HULL_MARKERS):
-            ship_texts.append(text)
+    """Index every hull and module under *units_dir* (``common/units/equipment``)."""
+    hull_texts = [
+        _read_text(fp) for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt")))
+    ]
     module_texts = [
         _read_text(fp)
         for fp in sorted(glob.iglob(os.path.join(units_dir, "modules", "*.txt")))
     ]
-
-    index = build_indexes(hull_texts, module_texts)
-    for text in ship_texts:
-        index.ship_hulls.update(parse_ship_hulls(strip_comments(text)))
-    return index
+    return build_indexes(hull_texts, module_texts)

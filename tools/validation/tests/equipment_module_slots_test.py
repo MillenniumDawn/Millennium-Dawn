@@ -7,7 +7,7 @@ module->category, module-driven slot unlocks) and each finding kind against
 synthetic hull/module fixtures.
 """
 
-from naval_module_slots import (
+from equipment_module_slots import (
     build_indexes,
     check_created_variants,
     check_target_variants,

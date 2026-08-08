@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from naval_module_slots import (
+from equipment_module_slots import (
     Finding,
     _iter_blocks,
     _iter_named_blocks,

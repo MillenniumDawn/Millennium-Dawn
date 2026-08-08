@@ -410,7 +410,7 @@ Two traps worth naming:
 
 `validate_oob_units.py` checks every `create_equipment_variant` in `history/countries/`, `common/national_focus/`, `events/`, `common/decisions/`, `common/special_projects/` and `common/scripted_effects/` against the hull it names — ship, tank and plane designs alike. It runs on commit and in CI, and errors block merge.
 
-The equivalent check for AI `target_variant` designs in `common/ai_equipment/` lives in `validate_ai_equipment.py`, covering `category = naval`, `land` and `air` alike. Both share `tools/validation/naval_module_slots.py`.
+The equivalent check for AI `target_variant` designs in `common/ai_equipment/` lives in `validate_ai_equipment.py`, covering `category = naval`, `land` and `air` alike. Both share `tools/validation/equipment_module_slots.py`.
 
 ```bash
 python3 tools/validation/validate_oob_units.py --strict
