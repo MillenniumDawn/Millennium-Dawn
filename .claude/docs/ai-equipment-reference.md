@@ -52,7 +52,7 @@ my_design_name = {
     }
 
     name = "My Tank"          # Optional: preset name. Without it, uses TAG_type_N_short loc.
-    history = yes             # Optional: marks as historical design
+    history = yes             # Optional: puts the design in the designer's preset folder
     role_icon_index = 2       # Optional: ship role icon (naval only)
 
     enable = { ... }          # Optional: trigger for when AI should aim for this design
@@ -107,21 +107,21 @@ my_design_name = {
 
 ### Design Arguments
 
-| Argument                            | Required | Description                                                           |
-| ----------------------------------- | -------- | --------------------------------------------------------------------- |
-| `priority = { ... }`                | Yes      | MTTH block for design importance within the role template             |
-| `target_variant = { ... }`          | Yes      | The variant AI should aim for                                         |
-| `target_variant.match_value`        | Yes      | How much the template is worth to AI if matched                       |
-| `target_variant.type`               | Yes      | Specific equipment type (chassis) to use                              |
-| `target_variant.modules = { ... }`  | Yes      | Module slot assignments                                               |
-| `target_variant.upgrades = { ... }` | No       | Upgrade priorities                                                    |
-| `name = "..."`                      | No       | Preset name for the equipment                                         |
-| `history = yes`                     | No       | Marks as historical design                                            |
-| `role_icon_index = N`               | No       | Ship role icon (naval only)                                           |
-| `enable = { ... }`                  | No       | Trigger for when AI should use this design                            |
-| `requirements = { ... }`            | No       | Required modules not tied to specific slots                           |
-| `allowed_modules = { ... }`         | No       | Modules AI can pick beyond target_variant. Not listed = never picked. |
-| `allowed_types = { ... }`           | No       | Sub-units AI can add. Omitted = never added.                          |
+| Argument                            | Required | Description                                                                     |
+| ----------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `priority = { ... }`                | Yes      | MTTH block for design importance within the role template                       |
+| `target_variant = { ... }`          | Yes      | The variant AI should aim for                                                   |
+| `target_variant.match_value`        | Yes      | How much the template is worth to AI if matched                                 |
+| `target_variant.type`               | Yes      | Specific equipment type (chassis) to use                                        |
+| `target_variant.modules = { ... }`  | Yes      | Module slot assignments                                                         |
+| `target_variant.upgrades = { ... }` | No       | Upgrade priorities                                                              |
+| `name = "..."`                      | No       | Preset name for the equipment                                                   |
+| `history = yes`                     | No       | Design appears in the designer's preset folder. Apply per group, not per design |
+| `role_icon_index = N`               | No       | Ship role icon (naval only)                                                     |
+| `enable = { ... }`                  | No       | Trigger for when AI should use this design                                      |
+| `requirements = { ... }`            | No       | Required modules not tied to specific slots                                     |
+| `allowed_modules = { ... }`         | No       | Modules AI can pick beyond target_variant. Not listed = never picked.           |
+| `allowed_types = { ... }`           | No       | Sub-units AI can add. Omitted = never added.                                    |
 
 ### Module Slot Assignment Formats
 
