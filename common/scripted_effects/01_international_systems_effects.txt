@@ -384,20 +384,12 @@ un_recog_setup_check = {
 			}
 			add_to_array = { global.Unrecognised_States = THIS }
 
-			for_each_loop = {
-				array = global.UN_general_assembly
-				value = v
-
-				var:v = {
-					if = {
-						limit = {
-							has_country_flag = original_owner_@PREV
-						}
-						set_temp_variable = { spot_tracker = THIS }
-						PREV = {
-							set_variable = { prev_owner = spot_tracker }
-						}
-					}
+			every_collection_element = {
+				input = { input = collection:un_general_assembly_members_collection }
+				if = {
+					limit = { has_country_flag = original_owner_@PREV }
+					set_temp_variable = { spot_tracker = THIS }
+					PREV = { set_variable = { prev_owner = spot_tracker } }
 				}
 			}
 
@@ -411,20 +403,12 @@ un_recog_setup_check = {
 				value = THIS
 				index = 0
 			}
-			for_each_loop = {
-				array = global.UN_general_assembly
-				value = v
-
-				var:v = {
-					if = {
-						limit = {
-							has_country_flag = original_owner_@PREV
-						}
-						set_temp_variable = { spot_tracker = THIS }
-						PREV = {
-							set_variable = { prev_owner = spot_tracker }
-						}
-					}
+			every_collection_element = {
+				input = { input = collection:un_general_assembly_members_collection }
+				if = {
+					limit = { has_country_flag = original_owner_@PREV }
+					set_temp_variable = { spot_tracker = THIS }
+					PREV = { set_variable = { prev_owner = spot_tracker } }
 				}
 			}
 		}
@@ -1657,24 +1641,24 @@ full_satellite_system_access = {
 calculate_final_un_benefits = {
 	set_temp_variable = { current_receiving_budget_tracker = 0 }
 	if = {
-		limit = { is_in_array = { global.unesco_recipients = THIS } }
+		limit = { has_country_flag = is_getting_esco_subsidies }
 		add_to_temp_variable = {
 			var = current_receiving_budget_tracker
-			value = { value = global.unescoe_budget divide = global.unesco_recipients^num }
+			value = { value = global.unescoe_budget divide = global.esco_recipient_divisor }
 		}
 	}
 	if = {
-		limit = { is_in_array = { global.unido_recipients = THIS } }
+		limit = { has_country_flag = is_getting_ido_subsidies }
 		add_to_temp_variable = {
 			var = current_receiving_budget_tracker
-			value = { value = global.undio_budget divide = global.unido_recipients^num }
+			value = { value = global.undio_budget divide = global.ido_recipient_divisor }
 		}
 	}
 	if = {
-		limit = { is_in_array = { global.uncdf_recipients = THIS } }
+		limit = { has_country_flag = is_getting_cdf_subsidies }
 		add_to_temp_variable = {
 			var = current_receiving_budget_tracker
-			value = { value = global.uncdf_budget divide = global.uncdf_recipients^num }
+			value = { value = global.uncdf_budget divide = global.cdf_recipient_divisor }
 		}
 	}
 	set_temp_variable = {
@@ -1810,17 +1794,14 @@ check_for_subsidy_expiration = {
 rebuild_ga_ai_active_pool = {
 	set_global_flag = { flag = ga_ai_pool_rebuild_cooldown days = 60 value = 1 }
 	clear_array = global.ga_ai_active_pool
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-		var:v = {
-			if = {
-				limit = {
-					is_ai = yes
-					has_political_power > 250
-				}
-				add_to_array = { global.ga_ai_active_pool = THIS }
+	every_collection_element = {
+		input = { input = collection:un_general_assembly_members_collection }
+		if = {
+			limit = {
+				is_ai = yes
+				has_political_power > 250
 			}
+			add_to_array = { global.ga_ai_active_pool = THIS }
 		}
 	}
 }
@@ -1955,7 +1936,7 @@ un_ai_sc_consider_action = {
 un_ai_ga_consider_resolution = {
 	if = {
 		limit = {
-			is_in_array = { global.UN_general_assembly = THIS }
+			has_dynamic_modifier = { modifier = united_nations_member }
 			NOT = { has_global_flag = current_ongoing_ga_vote }
 		}
 
@@ -2127,16 +2108,17 @@ un_ai_ga_consider_resolution = {
 
 # Sanctions Effects
 apply_united_nations_sanctions = {
+	set_temp_variable = { un_member_count = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
 	set_variable = {
 		security_council_trade_sanctions_var = {
-			value = global.UN_general_assembly^num
+			value = un_member_count
 			multiply = -0.005
 			clamp = { min = -1.00 max = 0 }
 		}
 	}
 	set_variable = {
 		security_council_research_sanctions_var = {
-			value = global.UN_general_assembly^num
+			value = un_member_count
 			multiply = -0.003
 			clamp = { min = -0.50 max = 0 }
 		}
@@ -2228,7 +2210,7 @@ recognition_grant_increment = {
 	# One-time notification when recognition first reaches the UN-ascension threshold (40% of GA)
 	if = {
 		limit = { NOT = { has_country_flag = un_ascension_eligible_notified } }
-		set_temp_variable = { recog_threshold = global.UN_general_assembly^num }
+		set_temp_variable = { recog_threshold = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
 		multiply_temp_variable = { recog_threshold = 0.4 }
 		if = {
 			limit = { check_variable = { Granted_Recognition > recog_threshold } }
