@@ -191,23 +191,26 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 ### `MD_combat_ai_strategies.txt` — Production & Combat
 
 **Army production (3 tiers by factory count):**
-| Strategy | MIL Range | Key Ratios |
-|----------|-----------|------------|
-| `default_army_production_strategy` | < 11 | L_Inf=30, infantry=20, mech/IFV=50, armor=35 |
-| `default_army_production_strategy_maj` | > 10 | IFV=50, armor=40, SF=50, marines=20 |
-| `default_army_production_strategy_global` | > 29 | Further IFV/armor emphasis |
 
-**Note:** `_maj` and `_global` stack at MIL > 29, doubling role weights.
+| Strategy | MIL Range | Key Ratios |
+| ---------- | ----------- | ------------ |
+| `default_army_production_strategy` | < 11 | L_Inf=30, infantry=20, mech/IFV=50, armor=35 |
+| `default_army_production_strategy_maj` | 11–29 | IFV=50, armor=40, SF=50, marines=25 |
+| `default_army_production_strategy_global` | 30+ | Infantry=25, APC=30, IFV=35, armor=25 |
+
+**Note:** `_maj` covers 11–29 MIL. `_global` replaces it at 30+ MIL so advanced-role weights do not stack.
 
 **Emergency strategies:**
 
 - `default_AI_needs_to_live`: surrender > 49% → L_Inf=150
-- `MD_build_equipment_not_units_while_at_war`: At war + low stocks → halt training, boost weapons
+- `MD_wartime_low_infantry_weapons`: At war + low weapons → halt training and prioritize weapons
+- `MD_wartime_low_command_equipment` / `_utility_vehicles` / `_light_at` / `_aa`: Shift wartime recruitment toward emergency light infantry while prioritizing the missing equipment
 - `MD_desperately_need_guns`: Zero infantry weapons → massive production, all training halted
 
 **Equipment production (3 tiers):**
+
 | Strategy | MIL Range | Focus |
-|----------|-----------|-------|
+| ---------- | ----------- | ------- |
 | `MD_poor_production_strategy` | < 6 | Infantry weapons dominate |
 | `MD_default_production_strategy` | 6-10 | Balanced with mech/armor intro |
 | `MD_major_production_strategy` | > 10 | Full spectrum with min factory targets |
@@ -238,8 +241,9 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 - `AI_idea_focus`: Surplus + lacking top ideas → massive idea spending (5000)
 
 **Factory building targets (scaled by power level):**
+
 | Power Level | CIC Target |
-|-------------|-----------|
+| ------------- | ----------- |
 | Minor/non-power | +50 |
 | Regional | +75 |
 | Large | +100 |
@@ -421,6 +425,6 @@ Used throughout the AI system for priorities, weights, and `ai_will_do` values.
 | `role = armored` in templates                  | Template never selected               | Use `armor`                              |
 | Case-mismatched unit names                     | Battalion silently missing            | `validate_oob_units` pre-commit hook     |
 | Factory threshold gaps                         | No template at specific factory count | Ensure contiguous ranges                 |
-| `_maj` + `_global` stacking at MIL > 29        | Doubled role weights                  | By design but notable                    |
+| Overlapping MIL-tier enable ranges               | Role weights stack unexpectedly         | Keep generic, major, and global tiers exclusive   |
 | Missing equipment coverage for blocked nations | AI can't produce equipment            | Check all roles covered                  |
 | CAS designs with `medium_as_fighter` role      | Deployed as air superiority           | Use `medium_cas_fighter`                 |
