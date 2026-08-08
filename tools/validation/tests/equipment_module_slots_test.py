@@ -130,7 +130,11 @@ def test_build_indexes_resolves_inheritance_and_categories():
     }
     assert "module_screen_fire_control_system_category" in index.known_categories
     # A module's own allowed_module_categories is a slot unlock, not its category.
-    assert index.module_unlocks["module_test_gun"]["fixed_ship_ammo_slot"] == {
+    assert index.slot_unlocks["module_test_gun"]["fixed_ship_ammo_slot"] == {
+        "module_gun_ammo_category"
+    }
+    # The same unlock is reachable through the category, for designs that name it.
+    assert index.slot_unlocks["module_light_guns_category"]["fixed_ship_ammo_slot"] == {
         "module_gun_ammo_category"
     }
 
@@ -252,6 +256,17 @@ def test_module_unlocks_its_own_slot():
     content = _variant(
         "test_ship_hull_1",
         "\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
+        "\t\t\t\tfixed_ship_ammo_slot = module_test_gun_ammo\n",
+    )
+    assert _kinds(content) == []
+
+
+def test_category_reference_unlocks_its_slot():
+    # Generic AI designs name the category they want the best available of, so
+    # the unlocks of everything in it are in play.
+    content = _variant(
+        "test_ship_hull_1",
+        "\t\t\t\tfixed_ship_battery_slot = module_light_guns_category\n"
         "\t\t\t\tfixed_ship_ammo_slot = module_test_gun_ammo\n",
     )
     assert _kinds(content) == []

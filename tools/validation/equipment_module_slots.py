@@ -315,7 +315,9 @@ class EquipmentIndex:
     hull_slots: Dict[str, Optional[Dict[str, Optional[Set[str]]]]]
     module_category: Dict[str, str]
     known_categories: Set[str]
-    module_unlocks: Dict[str, Dict[str, Set[str]]]
+    # Keyed by module *and* by category: a generic AI design names the category
+    # it wants the best available of, so anything in it may end up equipped.
+    slot_unlocks: Dict[str, Dict[str, Set[str]]]
     ship_hulls: Set[str]
 
 
@@ -428,7 +430,7 @@ def _check_variant(
     unlocked: Dict[str, Set[str]] = {}
     for _, refs, _ in assignments:
         for ref in refs:
-            for slot, cats in index.module_unlocks.get(ref, {}).items():
+            for slot, cats in index.slot_unlocks.get(ref, {}).items():
                 unlocked.setdefault(slot, set()).update(cats)
 
     for slot, refs, off in assignments:
@@ -571,16 +573,21 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
         module_category.update(mods)
         module_unlocks.update(unlocks)
 
+    slot_unlocks: Dict[str, Dict[str, Set[str]]] = {}
     categories: Set[str] = set(module_category.values())
+    for mod, per_slot in module_unlocks.items():
+        for ref in (mod, module_category[mod]):
+            by_slot = slot_unlocks.setdefault(ref, {})
+            for slot, cats in per_slot.items():
+                by_slot.setdefault(slot, set()).update(cats)
+                categories.update(cats)
+
     for slots in resolved.values():
         for cats in (slots or {}).values():
             if cats:
                 categories.update(cats)
-    for slot_cats in module_unlocks.values():
-        for cats in slot_cats.values():
-            categories.update(cats)
     return EquipmentIndex(
-        resolved, module_category, categories, module_unlocks, ship_hulls
+        resolved, module_category, categories, slot_unlocks, ship_hulls
     )
 
 
