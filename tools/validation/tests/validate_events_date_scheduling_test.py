@@ -16,7 +16,11 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import validate_events as V
-from validate_events import scan_date_gated_events, scan_event_fire_graph
+from validate_events import (
+    scan_date_gated_events,
+    scan_event_fire_graph,
+    scan_probability_rolled_fires,
+)
 
 
 def _write(tmp_path, name, body):
@@ -147,6 +151,110 @@ def test_fire_graph_pairs(tmp_path):
     }
 
 
+# --- fire-path detection ---
+#
+# The date-gated scheduling check exempts two on_action fire paths: a
+# `random_events = { weight = id }` pool (the pool is the schedule) and a
+# chance-rolled `random = { chance = N country_event = X }` poll (emulates
+# MTTH). These tests exercise the scanners that recognise those paths, which
+# the exemption-logic tests below mock out.
+
+
+def _poll_ids(tmp_path, body, name="common/on_actions/99_GER.txt"):
+    return scan_probability_rolled_fires((_write(tmp_path, name, body), frozenset()))
+
+
+def test_poll_short_form_detected(tmp_path):
+    body = """on_actions = {
+\ton_monthly_GER = {
+\t\teffect = {
+\t\t\tif = {
+\t\t\t\tlimit = { date > 2005.1.1 }
+\t\t\t\trandom = {
+\t\t\t\t\tchance = 17
+\t\t\t\t\tcountry_event = foo.1
+\t\t\t\t}
+\t\t\t}
+\t\t}
+\t}
+}
+"""
+    assert _poll_ids(tmp_path, body) == {"foo.1"}
+
+
+def test_poll_block_form_detected(tmp_path):
+    body = """on_actions = {
+\ton_monthly_GER = {
+\t\teffect = {
+\t\t\trandom = {
+\t\t\t\tchance = 50
+\t\t\t\tcountry_event = { id = foo.1 random_days = 210 random_hours = 10 }
+\t\t\t}
+\t\t}
+\t}
+}
+"""
+    assert _poll_ids(tmp_path, body) == {"foo.1"}
+
+
+def test_poll_without_chance_not_detected(tmp_path):
+    """A `random = { }` block with no `chance =` is not a chance-rolled poll."""
+    body = """on_actions = {
+\ton_monthly_GER = {
+\t\teffect = {
+\t\t\trandom = {
+\t\t\t\tcountry_event = foo.1
+\t\t\t}
+\t\t}
+\t}
+}
+"""
+    assert _poll_ids(tmp_path, body) == set()
+
+
+def test_poll_scope_keywords_not_confused(tmp_path):
+    """`random_country`/`random_list`/`random_events` are not `random = {`."""
+    body = """on_actions = {
+\ton_monthly_GER = {
+\t\teffect = {
+\t\t\trandom_country = { country_event = foo.1 }
+\t\t\trandom_list = { 50 = foo.2 }
+\t\t\trandom_events = { 50 = foo.3 }
+\t\t}
+\t}
+}
+"""
+    assert _poll_ids(tmp_path, body) == set()
+
+
+def test_poll_commented_out_not_detected(tmp_path):
+    body = """on_actions = {
+\ton_monthly_GER = {
+\t\teffect = {
+\t\t\t# random = {
+\t\t\t# \tchance = 17
+\t\t\t# \tcountry_event = foo.1
+\t\t\t# }
+\t\t}
+\t}
+}
+"""
+    assert _poll_ids(tmp_path, body) == set()
+
+
+def test_extract_random_event_ids():
+    body = """on_actions = {
+\ton_new_term_election = {
+\t\trandom_events = {
+\t\t\t100 = foo.1
+\t\t\t1000 = bar.2
+\t\t}
+\t}
+}
+"""
+    assert V._extract_random_event_ids(body) == {"foo.1", "bar.2"}
+
+
 # --- exemption logic ---
 
 
@@ -156,16 +264,20 @@ class _FakeValidator(V.Validator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.collected = []
+        self.last_severity = None
 
     def _report(self, results, ok_msg, fail_msg, severity=None, category=""):
         self.collected.extend(results)
+        self.last_severity = severity
 
 
-def _run(monkeypatch, gated, fires, graph):
+def _run(monkeypatch, gated, fires, graph, random_events=(), polls=()):
     validator = _FakeValidator("/tmp")
     monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: ["f.txt"])
     monkeypatch.setattr(validator, "_rel_posix", lambda f: f)
     monkeypatch.setattr(validator, "_get_event_fires", lambda: fires)
+    monkeypatch.setattr(validator, "_get_random_event_ids", lambda: set(random_events))
+    monkeypatch.setattr(validator, "_get_probability_rolled_ids", lambda: set(polls))
     monkeypatch.setattr(
         validator,
         "_pool_map",
@@ -232,6 +344,32 @@ def test_on_action_fired_event_flagged(monkeypatch):
     assert "common/on_actions/99_GER.txt" in results[0]
 
 
+def test_random_events_pool_event_exempt(monkeypatch):
+    """A `random_events` pool weights its events by MTTH; the pool is the
+    schedule, so a date-gated event in one is not dead content."""
+    results = _run(
+        monkeypatch,
+        gated=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("other.1", _YE, 5)],
+        graph=[],
+        random_events=["foo.1"],
+    )
+    assert results == []
+
+
+def test_probability_rolled_poll_event_exempt(monkeypatch):
+    """A chance-rolled on_action poll emulates MTTH and has no deterministic
+    yearly slot, so a date-gated event fired from one is not dead content."""
+    results = _run(
+        monkeypatch,
+        gated=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("other.1", _YE, 5), ("foo.1", "common/on_actions/99_GER.txt", 12)],
+        graph=[],
+        polls=["foo.1"],
+    )
+    assert results == []
+
+
 def test_missing_scheduling_file_skips_check(monkeypatch):
     """A rename of the yearly effects must skip, not flood with findings."""
     results = _run(
@@ -241,3 +379,57 @@ def test_missing_scheduling_file_skips_check(monkeypatch):
         graph=[],
     )
     assert results == []
+
+
+def test_date_gated_check_reports_error_severity(monkeypatch):
+    """The check is an ERROR, not a WARNING, once the backlog is clear."""
+    validator = _FakeValidator("/tmp")
+    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: ["f.txt"])
+    monkeypatch.setattr(validator, "_pool_map", lambda fn, args, **kw: [])
+    validator.validate_date_gated_scheduling()
+    assert validator.last_severity == V.Severity.ERROR
+
+
+def test_get_probability_rolled_ids_wiring(tmp_path, monkeypatch):
+    """The wrapper scans on_actions files and caches the result."""
+    body = """on_actions = {
+\ton_monthly_GER = {
+\t\teffect = {
+\t\t\trandom = {
+\t\t\t\tchance = 17
+\t\t\t\tcountry_event = foo.1
+\t\t\t}
+\t\t}
+\t}
+}
+"""
+    f = _write(tmp_path, "common/on_actions/99_GER.txt", body)
+    validator = _FakeValidator("/tmp")
+    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: [f])
+    calls = []
+
+    def fake_pool_map(fn, args, **kw):
+        calls.append(fn)
+        return [fn(a) for a in args]
+
+    monkeypatch.setattr(validator, "_pool_map", fake_pool_map)
+    assert validator._get_probability_rolled_ids() == {"foo.1"}
+    assert validator._get_probability_rolled_ids() == {"foo.1"}  # cached
+    assert calls == [V.scan_probability_rolled_fires]
+
+
+def test_get_random_event_ids_wiring(tmp_path, monkeypatch):
+    """The wrapper scans on_actions files and caches the result."""
+    body = """on_actions = {
+\ton_new_term_election = {
+\t\trandom_events = {
+\t\t\t100 = foo.1
+\t\t}
+\t}
+}
+"""
+    f = _write(tmp_path, "common/on_actions/99_GER.txt", body)
+    validator = _FakeValidator("/tmp")
+    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: [f])
+    assert validator._get_random_event_ids() == {"foo.1"}
+    assert validator._get_random_event_ids() == {"foo.1"}  # cached
