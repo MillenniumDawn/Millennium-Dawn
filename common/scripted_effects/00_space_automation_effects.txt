@@ -125,6 +125,119 @@ space_auto_pick_oldest_family = {
 	set_variable = { var_space_auto_focus = temp_auto_fam }
 }
 
+# Active sharing drives one spare service slot. Automation temporarily prioritises the family that needs the largest supported level increase.
+space_auto_pick_access_capacity_family = {
+	set_temp_variable = { temp_access_fam = 99 }
+	set_temp_variable = { temp_access_gap = 0 }
+	set_temp_variable = { temp_fam = 0 }
+	set_temp_variable = { temp_attainable_level = { value = space_auto_newest_array^temp_fam subtract = 1 } }
+	set_temp_variable = { temp_family_gap = 0 }
+	if = {
+		limit = { check_variable = { GNSS_mil_treaty_array^num > 0 } }
+		set_temp_variable = { temp_service_demand = { value = GNSS_mil_treaty_array^num add = 1 } }
+		set_temp_variable = { temp_service_gap = { value = temp_service_demand subtract = var_GNSS_mil_system_idx } }
+		if = {
+			limit = {
+				check_variable = { temp_service_gap > temp_family_gap }
+				check_variable = { var = temp_attainable_level value = temp_service_demand compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_family_gap = temp_service_gap }
+		}
+	}
+	if = {
+		limit = { check_variable = { GNSS_civ_treaty_array^num > 0 } }
+		set_temp_variable = { temp_service_demand = { value = GNSS_civ_treaty_array^num add = 1 } }
+		set_temp_variable = { temp_service_gap = { value = temp_service_demand subtract = var_GNSS_civ_system_idx } }
+		if = {
+			limit = {
+				check_variable = { temp_service_gap > temp_family_gap }
+				check_variable = { var = temp_attainable_level value = temp_service_demand compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_family_gap = temp_service_gap }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { temp_family_gap > temp_access_gap }
+			check_variable = { space_auto_short_array^temp_fam > 0 }
+		}
+		set_temp_variable = { temp_access_gap = temp_family_gap }
+		set_temp_variable = { temp_access_fam = temp_fam }
+	}
+
+	set_temp_variable = { temp_fam = 1 }
+	set_temp_variable = { temp_attainable_level = { value = space_auto_newest_array^temp_fam subtract = 1 } }
+	set_temp_variable = { temp_family_gap = 0 }
+	if = {
+		limit = { check_variable = { COM_mil_treaty_array^num > 0 } }
+		set_temp_variable = { temp_service_demand = { value = COM_mil_treaty_array^num add = 1 } }
+		set_temp_variable = { temp_service_gap = { value = temp_service_demand subtract = var_COM_mil_system_idx } }
+		if = {
+			limit = {
+				check_variable = { temp_service_gap > temp_family_gap }
+				check_variable = { var = temp_attainable_level value = temp_service_demand compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_family_gap = temp_service_gap }
+		}
+	}
+	if = {
+		limit = { check_variable = { COM_civ_treaty_array^num > 0 } }
+		set_temp_variable = { temp_service_demand = { value = COM_civ_treaty_array^num add = 1 } }
+		set_temp_variable = { temp_service_gap = { value = temp_service_demand subtract = var_COM_civ_system_idx } }
+		if = {
+			limit = {
+				check_variable = { temp_service_gap > temp_family_gap }
+				check_variable = { var = temp_attainable_level value = temp_service_demand compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_family_gap = temp_service_gap }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { temp_family_gap > temp_access_gap }
+			check_variable = { space_auto_short_array^temp_fam > 0 }
+		}
+		set_temp_variable = { temp_access_gap = temp_family_gap }
+		set_temp_variable = { temp_access_fam = temp_fam }
+	}
+
+	set_temp_variable = { temp_fam = 2 }
+	set_temp_variable = { temp_attainable_level = { value = space_auto_newest_array^temp_fam subtract = 1 } }
+	set_temp_variable = { temp_family_gap = 0 }
+	if = {
+		limit = { check_variable = { SPY_mil_treaty_array^num > 0 } }
+		set_temp_variable = { temp_service_demand = { value = SPY_mil_treaty_array^num add = 1 } }
+		set_temp_variable = { temp_service_gap = { value = temp_service_demand subtract = var_SPY_mil_system_idx } }
+		if = {
+			limit = {
+				check_variable = { temp_service_gap > temp_family_gap }
+				check_variable = { var = temp_attainable_level value = temp_service_demand compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_family_gap = temp_service_gap }
+		}
+	}
+	if = {
+		limit = { check_variable = { SPY_civ_treaty_array^num > 0 } }
+		set_temp_variable = { temp_service_demand = { value = SPY_civ_treaty_array^num add = 1 } }
+		set_temp_variable = { temp_service_gap = { value = temp_service_demand subtract = var_SPY_civ_system_idx } }
+		if = {
+			limit = {
+				check_variable = { temp_service_gap > temp_family_gap }
+				check_variable = { var = temp_attainable_level value = temp_service_demand compare = greater_than_or_equals }
+			}
+			set_temp_variable = { temp_family_gap = temp_service_gap }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { temp_family_gap > temp_access_gap }
+			check_variable = { space_auto_short_array^temp_fam > 0 }
+		}
+		set_temp_variable = { temp_access_gap = temp_family_gap }
+		set_temp_variable = { temp_access_fam = temp_fam }
+	}
+}
+
 space_auto_preset_slots = {
 	if = {
 		limit = { check_variable = { var_space_auto_preset = 1 } }
@@ -179,7 +292,17 @@ space_auto_preset_slots = {
 space_auto_resolve_source = {
 	clear_array = space_auto_source_array
 	set_variable = { var_space_auto_focus = 99 }
+	space_auto_pick_access_capacity_family = yes
 	if = {
+		limit = { check_variable = { temp_access_fam < 3 } }
+		set_variable = { var_space_auto_focus = temp_access_fam }
+		set_temp_variable = { temp_fam = temp_access_fam }
+		space_auto_push_slot = yes
+		space_auto_push_slot = yes
+		space_auto_push_slot = yes
+		space_auto_push_slot = yes
+	}
+	else_if = {
 		limit = { check_variable = { var_space_auto_preset = 8 } }
 		set_temp_variable = { temp_scan = 0 }
 		while_loop_effect = {

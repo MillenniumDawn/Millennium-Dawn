@@ -610,6 +610,7 @@ set_COM_sat_receiver_tech_array = {
 
 update_sat_systems_stats = {
 	check_sat_systems_min_sat_num = yes
+	reconcile_satellite_access_capacity = yes
 	set_satellites_gui = yes
 	update_GNSS_system_stats = yes
 	update_COM_system_stats = yes
@@ -626,6 +627,255 @@ update_sat_systems_stats = {
 	add_access_COM_civ_vars = yes
 	add_access_SPY_mil_vars = yes
 	add_access_SPY_civ_vars = yes
+	calculate_satellite_access_capacity = yes
+}
+
+calculate_satellite_access_capacity = {
+	set_variable = {
+		MD_GNSS_mil_access_capacity_remaining = {
+			value = var_GNSS_mil_system_idx
+			subtract = GNSS_mil_treaty_array^num
+			clamp = { min = 0 max = 12 }
+		}
+	}
+	set_variable = {
+		MD_GNSS_civ_access_capacity_remaining = {
+			value = var_GNSS_civ_system_idx
+			subtract = GNSS_civ_treaty_array^num
+			clamp = { min = 0 max = 12 }
+		}
+	}
+	set_variable = {
+		MD_COM_mil_access_capacity_remaining = {
+			value = var_COM_mil_system_idx
+			subtract = COM_mil_treaty_array^num
+			clamp = { min = 0 max = 12 }
+		}
+	}
+	set_variable = {
+		MD_COM_civ_access_capacity_remaining = {
+			value = var_COM_civ_system_idx
+			subtract = COM_civ_treaty_array^num
+			clamp = { min = 0 max = 12 }
+		}
+	}
+	set_variable = {
+		MD_SPY_mil_access_capacity_remaining = {
+			value = var_SPY_mil_system_idx
+			subtract = SPY_mil_treaty_array^num
+			clamp = { min = 0 max = 12 }
+		}
+	}
+	set_variable = {
+		MD_SPY_civ_access_capacity_remaining = {
+			value = var_SPY_civ_system_idx
+			subtract = SPY_civ_treaty_array^num
+			clamp = { min = 0 max = 12 }
+		}
+	}
+}
+
+reconcile_satellite_access_capacity = {
+	set_temp_variable = { MD_satellite_capacity_changed = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { GNSS_mil_treaty_array^num > var_GNSS_mil_system_idx } }
+		set_temp_variable = { MD_satellite_access_type = 1 }
+		remove_latest_satellite_access_for_capacity = yes
+	}
+	while_loop_effect = {
+		limit = { check_variable = { GNSS_civ_treaty_array^num > var_GNSS_civ_system_idx } }
+		set_temp_variable = { MD_satellite_access_type = 2 }
+		remove_latest_satellite_access_for_capacity = yes
+	}
+	while_loop_effect = {
+		limit = { check_variable = { COM_mil_treaty_array^num > var_COM_mil_system_idx } }
+		set_temp_variable = { MD_satellite_access_type = 3 }
+		remove_latest_satellite_access_for_capacity = yes
+	}
+	while_loop_effect = {
+		limit = { check_variable = { COM_civ_treaty_array^num > var_COM_civ_system_idx } }
+		set_temp_variable = { MD_satellite_access_type = 4 }
+		remove_latest_satellite_access_for_capacity = yes
+	}
+	while_loop_effect = {
+		limit = { check_variable = { SPY_mil_treaty_array^num > var_SPY_mil_system_idx } }
+		set_temp_variable = { MD_satellite_access_type = 5 }
+		remove_latest_satellite_access_for_capacity = yes
+	}
+	while_loop_effect = {
+		limit = { check_variable = { SPY_civ_treaty_array^num > var_SPY_civ_system_idx } }
+		set_temp_variable = { MD_satellite_access_type = 6 }
+		remove_latest_satellite_access_for_capacity = yes
+	}
+	if = {
+		limit = {
+			check_variable = { MD_satellite_capacity_changed > 0 }
+		}
+		calculate_satellite_access_weekly_rates = yes
+		ingame_update_setup = yes
+		if = { limit = { is_ai = no } country_event = satellites.47 }
+	}
+}
+
+remove_latest_satellite_access_for_capacity = {
+	set_temp_variable = { MD_satellite_capacity_index = 0 }
+	set_temp_variable = { MD_satellite_capacity_recipient = 0 }
+	if = {
+		limit = { check_variable = { MD_satellite_access_type = 1 } }
+		set_temp_variable = { MD_satellite_capacity_index = GNSS_mil_treaty_array^num }
+		subtract_from_temp_variable = { MD_satellite_capacity_index = 1 }
+		set_temp_variable = { MD_satellite_capacity_recipient = GNSS_mil_treaty_array^MD_satellite_capacity_index }
+		remove_from_array = { array = GNSS_mil_treaty_rate_array index = MD_satellite_capacity_index }
+		remove_from_array = { array = GNSS_mil_treaty_array index = MD_satellite_capacity_index }
+		var:MD_satellite_capacity_recipient = {
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = GNSS_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = GNSS_mil_access_rate_array index = i }
+					remove_from_array = { array = GNSS_mil_access_system_idx_array index = i }
+					remove_from_array = { array = GNSS_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			country_event = satellites.9
+			if = { limit = { is_ai = no } country_event = satellites.47 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { MD_satellite_access_type = 2 } }
+		set_temp_variable = { MD_satellite_capacity_index = GNSS_civ_treaty_array^num }
+		subtract_from_temp_variable = { MD_satellite_capacity_index = 1 }
+		set_temp_variable = { MD_satellite_capacity_recipient = GNSS_civ_treaty_array^MD_satellite_capacity_index }
+		remove_from_array = { array = GNSS_civ_treaty_rate_array index = MD_satellite_capacity_index }
+		remove_from_array = { array = GNSS_civ_treaty_array index = MD_satellite_capacity_index }
+		var:MD_satellite_capacity_recipient = {
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = GNSS_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = GNSS_civ_access_rate_array index = i }
+					remove_from_array = { array = GNSS_civ_access_system_idx_array index = i }
+					remove_from_array = { array = GNSS_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			country_event = satellites.9
+			if = { limit = { is_ai = no } country_event = satellites.47 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { MD_satellite_access_type = 3 } }
+		set_temp_variable = { MD_satellite_capacity_index = COM_mil_treaty_array^num }
+		subtract_from_temp_variable = { MD_satellite_capacity_index = 1 }
+		set_temp_variable = { MD_satellite_capacity_recipient = COM_mil_treaty_array^MD_satellite_capacity_index }
+		remove_from_array = { array = COM_mil_treaty_rate_array index = MD_satellite_capacity_index }
+		remove_from_array = { array = COM_mil_treaty_array index = MD_satellite_capacity_index }
+		var:MD_satellite_capacity_recipient = {
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = COM_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = COM_mil_access_rate_array index = i }
+					remove_from_array = { array = COM_mil_access_system_idx_array index = i }
+					remove_from_array = { array = COM_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			country_event = satellites.9
+			if = { limit = { is_ai = no } country_event = satellites.47 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { MD_satellite_access_type = 4 } }
+		set_temp_variable = { MD_satellite_capacity_index = COM_civ_treaty_array^num }
+		subtract_from_temp_variable = { MD_satellite_capacity_index = 1 }
+		set_temp_variable = { MD_satellite_capacity_recipient = COM_civ_treaty_array^MD_satellite_capacity_index }
+		remove_from_array = { array = COM_civ_treaty_rate_array index = MD_satellite_capacity_index }
+		remove_from_array = { array = COM_civ_treaty_array index = MD_satellite_capacity_index }
+		var:MD_satellite_capacity_recipient = {
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = COM_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = COM_civ_access_rate_array index = i }
+					remove_from_array = { array = COM_civ_access_system_idx_array index = i }
+					remove_from_array = { array = COM_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			country_event = satellites.9
+			if = { limit = { is_ai = no } country_event = satellites.47 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { MD_satellite_access_type = 5 } }
+		set_temp_variable = { MD_satellite_capacity_index = SPY_mil_treaty_array^num }
+		subtract_from_temp_variable = { MD_satellite_capacity_index = 1 }
+		set_temp_variable = { MD_satellite_capacity_recipient = SPY_mil_treaty_array^MD_satellite_capacity_index }
+		remove_from_array = { array = SPY_mil_treaty_rate_array index = MD_satellite_capacity_index }
+		remove_from_array = { array = SPY_mil_treaty_array index = MD_satellite_capacity_index }
+		var:MD_satellite_capacity_recipient = {
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = SPY_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = SPY_mil_access_rate_array index = i }
+					remove_from_array = { array = SPY_mil_access_system_idx_array index = i }
+					remove_from_array = { array = SPY_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			country_event = satellites.9
+			if = { limit = { is_ai = no } country_event = satellites.47 }
+		}
+	}
+	else = {
+		set_temp_variable = { MD_satellite_capacity_index = SPY_civ_treaty_array^num }
+		subtract_from_temp_variable = { MD_satellite_capacity_index = 1 }
+		set_temp_variable = { MD_satellite_capacity_recipient = SPY_civ_treaty_array^MD_satellite_capacity_index }
+		remove_from_array = { array = SPY_civ_treaty_rate_array index = MD_satellite_capacity_index }
+		remove_from_array = { array = SPY_civ_treaty_array index = MD_satellite_capacity_index }
+		var:MD_satellite_capacity_recipient = {
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = SPY_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = SPY_civ_access_rate_array index = i }
+					remove_from_array = { array = SPY_civ_access_system_idx_array index = i }
+					remove_from_array = { array = SPY_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			country_event = satellites.9
+			if = { limit = { is_ai = no } country_event = satellites.47 }
+		}
+	}
+	set_temp_variable = { MD_satellite_capacity_changed = 1 }
 }
 
 check_sat_systems_min_sat_num = {
@@ -1463,6 +1713,7 @@ add_access_GNSS_mil_vars = {
 	for_each_loop = {
 		array = GNSS_mil_access_array
 		value = v
+		index = i
 		if = {
 			limit = {
 				NOT = { check_variable = { v = 0 } }
@@ -1470,19 +1721,24 @@ add_access_GNSS_mil_vars = {
 				NOT = { is_in_array = { array = temp_GNSS_mil_access_array value = v } }
 			}
 			add_to_array = { array = temp_GNSS_mil_access_array value = v }
+			add_to_array = { array = temp_GNSS_mil_access_rate_array value = ROOT.GNSS_mil_access_rate_array^i }
 		}
 	}
 	clear_array = GNSS_mil_access_array
 	clear_array = GNSS_mil_access_system_idx_array
+	clear_array = GNSS_mil_access_rate_array
 	for_each_loop = {
 		array = temp_GNSS_mil_access_array
 		value = v
+		index = i
 		add_to_array = { array = GNSS_mil_access_array value = v }
+		add_to_array = { array = GNSS_mil_access_rate_array value = temp_GNSS_mil_access_rate_array^i }
 		var:v = {
 			add_to_array = { array = ROOT.GNSS_mil_access_system_idx_array value = var_GNSS_mil_system_idx }
 		}
 	}
 	clear_array = temp_GNSS_mil_access_array
+	clear_array = temp_GNSS_mil_access_rate_array
 	set_temp_variable = { temp_GNSS_mil_access_system_highest_idx = 0 }
 	set_variable = { var_GNSS_mil_army_speed_factor = var_GNSS_mil_army_speed_factor_base }
 	set_variable = { var_GNSS_mil_air_cas_efficiency = var_GNSS_mil_air_cas_efficiency_base }
@@ -1561,6 +1817,7 @@ add_access_GNSS_civ_vars = {
 	for_each_loop = {
 		array = GNSS_civ_access_array
 		value = v
+		index = i
 		if = {
 			limit = {
 				NOT = { check_variable = { v = 0 } }
@@ -1568,19 +1825,24 @@ add_access_GNSS_civ_vars = {
 				NOT = { is_in_array = { array = temp_GNSS_civ_access_array value = v } }
 			}
 			add_to_array = { array = temp_GNSS_civ_access_array value = v }
+			add_to_array = { array = temp_GNSS_civ_access_rate_array value = ROOT.GNSS_civ_access_rate_array^i }
 		}
 	}
 	clear_array = GNSS_civ_access_array
 	clear_array = GNSS_civ_access_system_idx_array
+	clear_array = GNSS_civ_access_rate_array
 	for_each_loop = {
 		array = temp_GNSS_civ_access_array
 		value = v
+		index = i
 		add_to_array = { array = GNSS_civ_access_array value = v }
+		add_to_array = { array = GNSS_civ_access_rate_array value = temp_GNSS_civ_access_rate_array^i }
 		var:v = {
 			add_to_array = { array = ROOT.GNSS_civ_access_system_idx_array value = var_GNSS_civ_system_idx }
 		}
 	}
 	clear_array = temp_GNSS_civ_access_array
+	clear_array = temp_GNSS_civ_access_rate_array
 	set_temp_variable = { temp_GNSS_civ_access_system_highest_idx = 0 }
 	set_variable = { var_GNSS_civ_production_speed_buildings_factor = var_GNSS_civ_production_speed_buildings_factor_base }
 	set_variable = { var_GNSS_civ_production_speed_infrastructure_factor = var_GNSS_civ_production_speed_infrastructure_factor_base }
@@ -2245,59 +2507,84 @@ add_satellite_from_payload = {
 	resize_array = { COM_satellite_array = 12 }
 	resize_array = { SPY_satellite_array = 12 }
 	resize_array = { KILL_satellite_array = 10 }
+	set_satellites_gui = yes
+	set_temp_variable = {
+		sat_active_total = {
+			value = var_GNSS_sat_total
+			add = var_COM_sat_total
+			add = var_SPY_sat_total
+			add = var_KILL_sat_total
+		}
+	}
+	set_temp_variable = { sat_limit_reported = 0 }
 
 	for_each_loop = {
 		array = payload_array
 		set_temp_variable = { payload_id = payload_array^i }
 		if = {
 			limit = {
-				check_variable = { payload_id > 120 }
-				check_variable = { payload_id < 139 }
+				check_variable = { sat_active_total < 3000 }
 			}
-			set_temp_variable = { sat_idx = { value = payload_id subtract = 121 } }
-			add_to_variable = { GNSS_satellite_array^sat_idx = 1 }
-			add_to_array = { orbit_array = payload_id }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
+			if = {
+				limit = {
+					check_variable = { payload_id > 120 }
+					check_variable = { payload_id < 139 }
+				}
+				set_temp_variable = { sat_idx = { value = payload_id subtract = 121 } }
+				add_to_variable = { GNSS_satellite_array^sat_idx = 1 }
+				add_to_array = { orbit_array = payload_id }
+				set_variable = { var_orbit_display_ID = orbit_array^num }
+				subtract_from_variable = { var_orbit_display_ID = 1 }
+				add_new_satellite_to_orbit = yes
+				add_to_temp_variable = { sat_active_total = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { payload_id > 140 }
+					check_variable = { payload_id < 159 }
+				}
+				set_temp_variable = { sat_idx = { value = payload_id subtract = 141 } }
+				add_to_variable = { COM_satellite_array^sat_idx = 1 }
+				add_to_array = { orbit_array = payload_id }
+				set_variable = { var_orbit_display_ID = orbit_array^num }
+				subtract_from_variable = { var_orbit_display_ID = 1 }
+				add_new_satellite_to_orbit = yes
+				add_to_temp_variable = { sat_active_total = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { payload_id > 160 }
+					check_variable = { payload_id < 179 }
+				}
+				set_temp_variable = { sat_idx = { value = payload_id subtract = 161 } }
+				add_to_variable = { SPY_satellite_array^sat_idx = 1 }
+				add_to_array = { orbit_array = payload_id }
+				set_variable = { var_orbit_display_ID = orbit_array^num }
+				subtract_from_variable = { var_orbit_display_ID = 1 }
+				add_new_satellite_to_orbit = yes
+				add_to_temp_variable = { sat_active_total = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { payload_id > 180 }
+					check_variable = { payload_id < 199 }
+				}
+				set_temp_variable = { sat_idx = { value = payload_id subtract = 181 } }
+				add_to_variable = { KILL_satellite_array^sat_idx = 1 }
+				add_to_array = { orbit_array = payload_id }
+				set_variable = { var_orbit_display_ID = orbit_array^num }
+				subtract_from_variable = { var_orbit_display_ID = 1 }
+				add_new_satellite_to_orbit = yes
+				add_to_temp_variable = { sat_active_total = 1 }
+			}
 		}
 		else_if = {
-			limit = {
-				check_variable = { payload_id > 140 }
-				check_variable = { payload_id < 159 }
-			}
-			set_temp_variable = { sat_idx = { value = payload_id subtract = 141 } }
-			add_to_variable = { COM_satellite_array^sat_idx = 1 }
-			add_to_array = { orbit_array = payload_id }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		else_if = {
-			limit = {
-				check_variable = { payload_id > 160 }
-				check_variable = { payload_id < 179 }
-			}
-			set_temp_variable = { sat_idx = { value = payload_id subtract = 161 } }
-			add_to_variable = { SPY_satellite_array^sat_idx = 1 }
-			add_to_array = { orbit_array = payload_id }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		else_if = {
-			limit = {
-				check_variable = { payload_id > 180 }
-				check_variable = { payload_id < 199 }
-			}
-			set_temp_variable = { sat_idx = { value = payload_id subtract = 181 } }
-			add_to_variable = { KILL_satellite_array^sat_idx = 1 }
-			add_to_array = { orbit_array = payload_id }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
+			limit = { check_variable = { sat_limit_reported = 0 } }
+			ROOT = { news_event = satellites.8 }
+			set_temp_variable = { sat_limit_reported = 1 }
 		}
 	}
+	set_satellites_gui = yes
 	clear_array = payload_array
 }
 
@@ -2578,16 +2865,15 @@ add_new_satellite_to_orbit_5 = {
 add_new_satellite_to_orbit_6 = {
 	if = {
 		limit = {
-			all_of = {
+			any_of = {
 				array = sat_6_array
-				check_variable = { v > 0 }
+				check_variable = { v = -1 }
 			}
-			check_variable = { sat_6_array^num > 1503 }
 		}
-		ROOT = { news_event = satellites.8 }
+		set_variable = { sat_6_array^i = var_orbit_display_ID }
 	}
 	else = {
-		add_to_array = { sat_6_array = var_orbit_display_ID } #add_to_array = { sat_6_array = 1 }
+		add_to_array = { sat_6_array = var_orbit_display_ID }
 	}
 }
 
@@ -2694,6 +2980,95 @@ remove_satellite_from_system = {
 			subtract_from_variable = { KILL_satellite_array^sat_idx = 1 }
 		}
 	}
+}
+
+remove_deorbited_satellite_target_reference = {
+	set_temp_variable = { MD_deorbit_target_removed = 0 }
+	for_each_loop = {
+		array = sat_target_array
+		value = v
+		index = i
+		break = MD_deorbit_target_removed
+		if = {
+			limit = {
+				check_variable = { v = var_sat_ID }
+				check_variable = { sat_target_TAG_array^i = ROOT.id }
+			}
+			remove_from_array = { array = sat_target_TAG_array index = i }
+			remove_from_array = { array = sat_target_array index = i }
+			set_temp_variable = { MD_deorbit_target_removed = 1 }
+		}
+	}
+}
+
+deorbit_selected_satellite = {
+	set_variable = { tempTAG = ROOT.id }
+	set_variable = { var_sat_ID = var_deorbit_sat_ID }
+	remove_satellite_from_system = yes
+	remove_satellite_from_orbit = yes
+	remove_deorbited_satellite_target_reference = yes
+	clear_variable = var_selected_sat
+	clear_variable = var_deorbit_sat_ID
+	clr_country_flag = MD_confirm_deorbit_satellite
+	clr_country_flag = MD_satellite_orbit_selection_active
+	country_event = satellites.9
+}
+
+stage_bulk_deorbit_selected_model = {
+	set_variable = { MD_bulk_deorbit_model = orbit_array^var_selected_sat }
+	set_variable = { MD_bulk_deorbit_count = 0 }
+	for_each_loop = {
+		array = orbit_array
+		if = {
+			limit = {
+				check_variable = { v = MD_bulk_deorbit_model }
+				check_variable = { v > 0 }
+			}
+			add_to_variable = { MD_bulk_deorbit_count = 1 }
+		}
+	}
+	set_country_flag = MD_confirm_bulk_deorbit_satellites
+	clr_country_flag = MD_confirm_deorbit_satellite
+	international_systems_update = yes
+}
+
+clear_bulk_deorbit_state = {
+	clear_variable = MD_bulk_deorbit_model
+	clear_variable = MD_bulk_deorbit_count
+	clr_country_flag = MD_confirm_bulk_deorbit_satellites
+}
+
+bulk_deorbit_selected_model = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { MD_bulk_deorbit_model < 161 }
+				check_variable = { MD_bulk_deorbit_model > 178 }
+				check_variable = { MD_bulk_deorbit_count < var_SPY_mission_num_available }
+				check_variable = { MD_bulk_deorbit_count = var_SPY_mission_num_available }
+			}
+		}
+		set_variable = { tempTAG = ROOT.id }
+		for_each_loop = {
+			array = orbit_array
+			if = {
+				limit = {
+					check_variable = { v = MD_bulk_deorbit_model }
+					check_variable = { v > 0 }
+				}
+				set_variable = { var_sat_ID = i }
+				remove_satellite_from_system = yes
+				remove_satellite_from_orbit = yes
+				remove_deorbited_satellite_target_reference = yes
+			}
+		}
+	}
+	clear_variable = var_selected_sat
+	clear_variable = var_deorbit_sat_ID
+	clear_bulk_deorbit_state = yes
+	clr_country_flag = MD_confirm_deorbit_satellite
+	clr_country_flag = MD_satellite_orbit_selection_active
+	country_event = satellites.9
 }
 
 advanced_filter_effect = {
@@ -3271,6 +3646,7 @@ setup_missile_configuration_effect = {
 		COM_civ_button_update = yes
 		SPY_mil_button_update = yes
 		SPY_civ_button_update = yes
+		update_satellite_access_standard_rates = yes
 
 		#for testing network traffic
 		set_COM_sat_receiver_tech_array = yes
@@ -3279,7 +3655,16 @@ setup_missile_configuration_effect = {
 }
 
 GNSS_mil_button_update = {
+	set_temp_variable = { MD_previous_satellite_service_level = var_GNSS_mil_system_idx }
 	set_variable = { var_GNSS_mil_system_idx = GNSS_mil_systems_array^i }
+	if = {
+		limit = {
+			is_ai = no
+			check_variable = { var_GNSS_mil_system_idx > MD_previous_satellite_service_level }
+			check_variable = { GNSS_mil_treaty_array^num > 0 }
+		}
+		set_country_flag = MD_GNSS_mil_access_upgrade_available
+	}
 	set_variable = { var_GNSS_mil_sat_system_max = global.GNSS_sat_system_max_array^i }
 	set_variable = { var_GNSS_mil_army_speed_factor = GNSS_mil_army_speed_factor_array^i }
 	set_variable = { var_GNSS_mil_air_cas_efficiency = GNSS_mil_air_cas_efficiency_array^i }
@@ -3293,7 +3678,16 @@ GNSS_mil_button_update = {
 }
 
 GNSS_civ_button_update = {
+	set_temp_variable = { MD_previous_satellite_service_level = var_GNSS_civ_system_idx }
 	set_variable = { var_GNSS_civ_system_idx = GNSS_civ_systems_array^i }
+	if = {
+		limit = {
+			is_ai = no
+			check_variable = { var_GNSS_civ_system_idx > MD_previous_satellite_service_level }
+			check_variable = { GNSS_civ_treaty_array^num > 0 }
+		}
+		set_country_flag = MD_GNSS_civ_access_upgrade_available
+	}
 	set_variable = { var_GNSS_civ_sat_system_max = global.GNSS_sat_system_max_array^i }
 	set_variable = { var_GNSS_civ_production_speed_buildings_factor = GNSS_civ_production_speed_buildings_factor_array^i }
 	set_variable = { var_GNSS_civ_production_speed_infrastructure_factor = GNSS_civ_production_speed_infrastructure_factor_array^i }
@@ -3304,7 +3698,16 @@ GNSS_civ_button_update = {
 }
 
 COM_mil_button_update = {
+	set_temp_variable = { MD_previous_satellite_service_level = var_COM_mil_system_idx }
 	set_variable = { var_COM_mil_system_idx = COM_mil_systems_array^i }
+	if = {
+		limit = {
+			is_ai = no
+			check_variable = { var_COM_mil_system_idx > MD_previous_satellite_service_level }
+			check_variable = { COM_mil_treaty_array^num > 0 }
+		}
+		set_country_flag = MD_COM_mil_access_upgrade_available
+	}
 	set_variable = { var_COM_mil_sat_system_max = global.COM_sat_system_max_array^i }
 	set_variable = { var_COM_mil_max_command_power = COM_mil_max_command_power_array^i }
 	set_variable = { var_COM_mil_army_org_factor = COM_mil_army_org_factor_array^i }
@@ -3318,7 +3721,16 @@ COM_mil_button_update = {
 }
 
 COM_civ_button_update = {
+	set_temp_variable = { MD_previous_satellite_service_level = var_COM_civ_system_idx }
 	set_variable = { var_COM_civ_system_idx = COM_civ_systems_array^i }
+	if = {
+		limit = {
+			is_ai = no
+			check_variable = { var_COM_civ_system_idx > MD_previous_satellite_service_level }
+			check_variable = { COM_civ_treaty_array^num > 0 }
+		}
+		set_country_flag = MD_COM_civ_access_upgrade_available
+	}
 	set_variable = { var_COM_civ_sat_system_max = global.COM_sat_system_max_array^i }
 	set_variable = { var_COM_civ_political_power_factor = COM_civ_political_power_factor_array^i }
 	set_variable = { var_COM_civ_decryption_factor = COM_civ_decryption_factor_array^i }
@@ -3331,7 +3743,16 @@ COM_civ_button_update = {
 }
 
 SPY_mil_button_update = {
+	set_temp_variable = { MD_previous_satellite_service_level = var_SPY_mil_system_idx }
 	set_variable = { var_SPY_mil_system_idx = SPY_mil_systems_array^i }
+	if = {
+		limit = {
+			is_ai = no
+			check_variable = { var_SPY_mil_system_idx > MD_previous_satellite_service_level }
+			check_variable = { SPY_mil_treaty_array^num > 0 }
+		}
+		set_country_flag = MD_SPY_mil_access_upgrade_available
+	}
 	set_variable = { var_SPY_mil_sat_system_max = global.SPY_sat_system_max_array^i }
 	set_variable = { var_SPY_mil_max_planning_factor = SPY_mil_max_planning_factor_array^i }
 	set_variable = { var_SPY_mil_recon_factor = SPY_mil_recon_factor_array^i }
@@ -3345,7 +3766,16 @@ SPY_mil_button_update = {
 }
 
 SPY_civ_button_update = {
+	set_temp_variable = { MD_previous_satellite_service_level = var_SPY_civ_system_idx }
 	set_variable = { var_SPY_civ_system_idx = SPY_civ_systems_array^i }
+	if = {
+		limit = {
+			is_ai = no
+			check_variable = { var_SPY_civ_system_idx > MD_previous_satellite_service_level }
+			check_variable = { SPY_civ_treaty_array^num > 0 }
+		}
+		set_country_flag = MD_SPY_civ_access_upgrade_available
+	}
 	set_variable = { var_SPY_civ_sat_system_max = global.SPY_sat_system_max_array^i }
 	set_variable = { var_SPY_civ_research_speed_factor = SPY_civ_research_speed_factor_array^i }
 	set_variable = { var_SPY_civ_civilian_intel_factor = SPY_civ_civilian_intel_factor_array^i }
@@ -3361,7 +3791,847 @@ SPY_civ_button_update = {
 
 update_space_system_values = {
 	update_sat_systems_stats = yes
+	update_satellite_access_standard_rates = yes
 	clear_spy_sat_mission_arrays = yes
 	update_SPY_mission_num = yes
 	international_systems_update = yes
+}
+
+set_satellite_access_standard_rate = {
+	if = {
+		limit = {
+			check_variable = { MD_satellite_access_type > 0 }
+			check_variable = { MD_satellite_access_type < 3 }
+		}
+		set_temp_variable = { MD_satellite_access_level_rate = var_GNSS_mil_system_idx }
+		if = {
+			limit = { check_variable = { MD_satellite_access_type = 2 } }
+			set_temp_variable = { MD_satellite_access_level_rate = var_GNSS_civ_system_idx }
+		}
+		set_temp_variable = {
+			MD_satellite_access_rate = {
+				value = MD_satellite_access_level_rate
+				subtract = 1
+				multiply = 0.01
+				add = 0.1
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { MD_satellite_access_type > 2 }
+			check_variable = { MD_satellite_access_type < 5 }
+		}
+		set_temp_variable = { MD_satellite_access_level_rate = var_COM_mil_system_idx }
+		if = {
+			limit = { check_variable = { MD_satellite_access_type = 4 } }
+			set_temp_variable = { MD_satellite_access_level_rate = var_COM_civ_system_idx }
+		}
+		set_temp_variable = {
+			MD_satellite_access_rate = {
+				value = MD_satellite_access_level_rate
+				subtract = 1
+				multiply = 0.02
+				add = 0.2
+			}
+		}
+	}
+	else = {
+		set_temp_variable = { MD_satellite_access_level_rate = var_SPY_mil_system_idx }
+		if = {
+			limit = { check_variable = { MD_satellite_access_type = 6 } }
+			set_temp_variable = { MD_satellite_access_level_rate = var_SPY_civ_system_idx }
+		}
+		set_temp_variable = {
+			MD_satellite_access_rate = {
+				value = MD_satellite_access_level_rate
+				subtract = 1
+				multiply = 0.03
+				add = 0.3
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { MD_satellite_access_level_rate < 1 } }
+		set_temp_variable = { MD_satellite_access_rate = 0 }
+	}
+}
+
+update_satellite_access_standard_rates = {
+	set_temp_variable = { MD_satellite_access_type = 1 }
+	set_satellite_access_standard_rate = yes
+	set_variable = { MD_GNSS_mil_standard_rate = MD_satellite_access_rate }
+	set_temp_variable = { MD_satellite_access_type = 2 }
+	set_satellite_access_standard_rate = yes
+	set_variable = { MD_GNSS_civ_standard_rate = MD_satellite_access_rate }
+	set_temp_variable = { MD_satellite_access_type = 3 }
+	set_satellite_access_standard_rate = yes
+	set_variable = { MD_COM_mil_standard_rate = MD_satellite_access_rate }
+	set_temp_variable = { MD_satellite_access_type = 4 }
+	set_satellite_access_standard_rate = yes
+	set_variable = { MD_COM_civ_standard_rate = MD_satellite_access_rate }
+	set_temp_variable = { MD_satellite_access_type = 5 }
+	set_satellite_access_standard_rate = yes
+	set_variable = { MD_SPY_mil_standard_rate = MD_satellite_access_rate }
+	set_temp_variable = { MD_satellite_access_type = 6 }
+	set_satellite_access_standard_rate = yes
+	set_variable = { MD_SPY_civ_standard_rate = MD_satellite_access_rate }
+}
+
+withdraw_satellite_access_agreement = {
+	THIS = {
+		if = {
+			limit = { check_variable = { MD_satellite_access_type = 1 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = GNSS_mil_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = GNSS_mil_treaty_rate_array index = i }
+					remove_from_array = { array = GNSS_mil_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 2 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = GNSS_civ_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = GNSS_civ_treaty_rate_array index = i }
+					remove_from_array = { array = GNSS_civ_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 3 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = COM_mil_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = COM_mil_treaty_rate_array index = i }
+					remove_from_array = { array = COM_mil_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 4 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = COM_civ_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = COM_civ_treaty_rate_array index = i }
+					remove_from_array = { array = COM_civ_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 5 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = SPY_mil_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = SPY_mil_treaty_rate_array index = i }
+					remove_from_array = { array = SPY_mil_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else = {
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = SPY_civ_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = SPY_civ_treaty_rate_array index = i }
+					remove_from_array = { array = SPY_civ_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+	}
+	ROOT = {
+		set_temp_variable = { MD_satellite_access_type = PREV.MD_satellite_access_type }
+		if = {
+			limit = { check_variable = { MD_satellite_access_type = 1 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = GNSS_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = GNSS_mil_access_rate_array index = i }
+					remove_from_array = { array = GNSS_mil_access_system_idx_array index = i }
+					remove_from_array = { array = GNSS_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_GNSS_mil_vars = yes
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 2 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = GNSS_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = GNSS_civ_access_rate_array index = i }
+					remove_from_array = { array = GNSS_civ_access_system_idx_array index = i }
+					remove_from_array = { array = GNSS_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_GNSS_civ_vars = yes
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 3 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = COM_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = COM_mil_access_rate_array index = i }
+					remove_from_array = { array = COM_mil_access_system_idx_array index = i }
+					remove_from_array = { array = COM_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_COM_mil_vars = yes
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 4 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = COM_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = COM_civ_access_rate_array index = i }
+					remove_from_array = { array = COM_civ_access_system_idx_array index = i }
+					remove_from_array = { array = COM_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_COM_civ_vars = yes
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 5 } }
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = SPY_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = SPY_mil_access_rate_array index = i }
+					remove_from_array = { array = SPY_mil_access_system_idx_array index = i }
+					remove_from_array = { array = SPY_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_SPY_mil_vars = yes
+		}
+		else = {
+			set_temp_variable = { MD_satellite_access_removed = 0 }
+			for_each_loop = {
+				array = SPY_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = SPY_civ_access_rate_array index = i }
+					remove_from_array = { array = SPY_civ_access_system_idx_array index = i }
+					remove_from_array = { array = SPY_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_SPY_civ_vars = yes
+		}
+	}
+	ROOT = {
+		country_event = satellites.9
+	}
+	THIS = {
+		country_event = satellites.9
+	}
+}
+
+revoke_satellite_access_agreement = {
+	ROOT = {
+		set_temp_variable = { MD_satellite_access_removed = 0 }
+		if = {
+			limit = { check_variable = { MD_satellite_access_type = 1 } }
+			for_each_loop = {
+				array = GNSS_mil_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = GNSS_mil_treaty_rate_array index = i }
+					remove_from_array = { array = GNSS_mil_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 2 } }
+			for_each_loop = {
+				array = GNSS_civ_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = GNSS_civ_treaty_rate_array index = i }
+					remove_from_array = { array = GNSS_civ_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 3 } }
+			for_each_loop = {
+				array = COM_mil_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = COM_mil_treaty_rate_array index = i }
+					remove_from_array = { array = COM_mil_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 4 } }
+			for_each_loop = {
+				array = COM_civ_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = COM_civ_treaty_rate_array index = i }
+					remove_from_array = { array = COM_civ_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { MD_satellite_access_type = 5 } }
+			for_each_loop = {
+				array = SPY_mil_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = SPY_mil_treaty_rate_array index = i }
+					remove_from_array = { array = SPY_mil_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+		else = {
+			for_each_loop = {
+				array = SPY_civ_treaty_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = SPY_civ_treaty_rate_array index = i }
+					remove_from_array = { array = SPY_civ_treaty_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+		}
+	}
+	THIS = {
+		set_temp_variable = { MD_satellite_access_removed = 0 }
+		if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 1 } }
+			for_each_loop = {
+				array = GNSS_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = GNSS_mil_access_rate_array index = i }
+					remove_from_array = { array = GNSS_mil_access_system_idx_array index = i }
+					remove_from_array = { array = GNSS_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_GNSS_mil_vars = yes
+		}
+		else_if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 2 } }
+			for_each_loop = {
+				array = GNSS_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = GNSS_civ_access_rate_array index = i }
+					remove_from_array = { array = GNSS_civ_access_system_idx_array index = i }
+					remove_from_array = { array = GNSS_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_GNSS_civ_vars = yes
+		}
+		else_if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 3 } }
+			for_each_loop = {
+				array = COM_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = COM_mil_access_rate_array index = i }
+					remove_from_array = { array = COM_mil_access_system_idx_array index = i }
+					remove_from_array = { array = COM_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_COM_mil_vars = yes
+		}
+		else_if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 4 } }
+			for_each_loop = {
+				array = COM_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = COM_civ_access_rate_array index = i }
+					remove_from_array = { array = COM_civ_access_system_idx_array index = i }
+					remove_from_array = { array = COM_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_COM_civ_vars = yes
+		}
+		else_if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 5 } }
+			for_each_loop = {
+				array = SPY_mil_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = SPY_mil_access_rate_array index = i }
+					remove_from_array = { array = SPY_mil_access_system_idx_array index = i }
+					remove_from_array = { array = SPY_mil_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_SPY_mil_vars = yes
+		}
+		else = {
+			for_each_loop = {
+				array = SPY_civ_access_array
+				value = v
+				index = i
+				break = MD_satellite_access_removed
+				if = {
+					limit = { check_variable = { v = ROOT.id } }
+					remove_from_array = { array = SPY_civ_access_rate_array index = i }
+					remove_from_array = { array = SPY_civ_access_system_idx_array index = i }
+					remove_from_array = { array = SPY_civ_access_array index = i }
+					set_temp_variable = { MD_satellite_access_removed = 1 }
+				}
+			}
+			add_access_SPY_civ_vars = yes
+		}
+	}
+	ROOT = { country_event = satellites.9 }
+	THIS = { country_event = satellites.9 }
+}
+
+calculate_satellite_access_weekly_rates = {
+	set_variable = { MD_satellite_access_income = 0 }
+	set_variable = { MD_satellite_access_expense = 0 }
+
+	for_each_loop = {
+		array = GNSS_mil_access_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = {
+					check_variable = { var_GNSS_mil_system_idx > 0 }
+					is_in_array = { array = GNSS_mil_treaty_array value = ROOT.id }
+				}
+				ROOT = {
+					add_to_variable = { MD_satellite_access_expense = GNSS_mil_access_rate_array^i }
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = GNSS_civ_access_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = {
+					check_variable = { var_GNSS_civ_system_idx > 0 }
+					is_in_array = { array = GNSS_civ_treaty_array value = ROOT.id }
+				}
+				ROOT = {
+					add_to_variable = { MD_satellite_access_expense = GNSS_civ_access_rate_array^i }
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = COM_mil_access_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = {
+					check_variable = { var_COM_mil_system_idx > 0 }
+					is_in_array = { array = COM_mil_treaty_array value = ROOT.id }
+				}
+				ROOT = {
+					add_to_variable = { MD_satellite_access_expense = COM_mil_access_rate_array^i }
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = COM_civ_access_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = {
+					check_variable = { var_COM_civ_system_idx > 0 }
+					is_in_array = { array = COM_civ_treaty_array value = ROOT.id }
+				}
+				ROOT = {
+					add_to_variable = { MD_satellite_access_expense = COM_civ_access_rate_array^i }
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = SPY_mil_access_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = {
+					check_variable = { var_SPY_mil_system_idx > 0 }
+					is_in_array = { array = SPY_mil_treaty_array value = ROOT.id }
+				}
+				ROOT = {
+					add_to_variable = { MD_satellite_access_expense = SPY_mil_access_rate_array^i }
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = SPY_civ_access_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = {
+					check_variable = { var_SPY_civ_system_idx > 0 }
+					is_in_array = { array = SPY_civ_treaty_array value = ROOT.id }
+				}
+				ROOT = {
+					add_to_variable = { MD_satellite_access_expense = SPY_civ_access_rate_array^i }
+				}
+			}
+		}
+	}
+
+	for_each_loop = {
+		array = GNSS_mil_treaty_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = { is_in_array = { array = GNSS_mil_access_array value = ROOT.id } }
+				ROOT = {
+					if = {
+						limit = { check_variable = { var_GNSS_mil_system_idx > 0 } }
+						add_to_variable = { MD_satellite_access_income = GNSS_mil_treaty_rate_array^i }
+					}
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = GNSS_civ_treaty_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = { is_in_array = { array = GNSS_civ_access_array value = ROOT.id } }
+				ROOT = {
+					if = {
+						limit = { check_variable = { var_GNSS_civ_system_idx > 0 } }
+						add_to_variable = { MD_satellite_access_income = GNSS_civ_treaty_rate_array^i }
+					}
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = COM_mil_treaty_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = { is_in_array = { array = COM_mil_access_array value = ROOT.id } }
+				ROOT = {
+					if = {
+						limit = { check_variable = { var_COM_mil_system_idx > 0 } }
+						add_to_variable = { MD_satellite_access_income = COM_mil_treaty_rate_array^i }
+					}
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = COM_civ_treaty_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = { is_in_array = { array = COM_civ_access_array value = ROOT.id } }
+				ROOT = {
+					if = {
+						limit = { check_variable = { var_COM_civ_system_idx > 0 } }
+						add_to_variable = { MD_satellite_access_income = COM_civ_treaty_rate_array^i }
+					}
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = SPY_mil_treaty_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = { is_in_array = { array = SPY_mil_access_array value = ROOT.id } }
+				ROOT = {
+					if = {
+						limit = { check_variable = { var_SPY_mil_system_idx > 0 } }
+						add_to_variable = { MD_satellite_access_income = SPY_mil_treaty_rate_array^i }
+					}
+				}
+			}
+		}
+	}
+	for_each_loop = {
+		array = SPY_civ_treaty_array
+		value = v
+		index = i
+		var:v = {
+			if = {
+				limit = { is_in_array = { array = SPY_civ_access_array value = ROOT.id } }
+				ROOT = {
+					if = {
+						limit = { check_variable = { var_SPY_civ_system_idx > 0 } }
+						add_to_variable = { MD_satellite_access_income = SPY_civ_treaty_rate_array^i }
+					}
+				}
+			}
+		}
+	}
+}
+
+send_satellite_access_renegotiations = {
+	if = {
+		limit = { has_country_flag = MD_GNSS_mil_access_upgrade_available }
+		set_temp_variable = { MD_satellite_access_type = 1 }
+		set_satellite_access_standard_rate = yes
+		set_variable = { MD_GNSS_mil_standard_rate = MD_satellite_access_rate }
+		for_each_loop = {
+			array = GNSS_mil_treaty_array
+			set_temp_variable = { MD_satellite_recipient = v }
+			var:MD_satellite_recipient = { country_event = { id = satellites.10 days = 1 } }
+		}
+		clr_country_flag = MD_GNSS_mil_access_upgrade_available
+	}
+	if = {
+		limit = { has_country_flag = MD_GNSS_civ_access_upgrade_available }
+		set_temp_variable = { MD_satellite_access_type = 2 }
+		set_satellite_access_standard_rate = yes
+		set_variable = { MD_GNSS_civ_standard_rate = MD_satellite_access_rate }
+		for_each_loop = {
+			array = GNSS_civ_treaty_array
+			set_temp_variable = { MD_satellite_recipient = v }
+			var:MD_satellite_recipient = { country_event = { id = satellites.11 days = 1 } }
+		}
+		clr_country_flag = MD_GNSS_civ_access_upgrade_available
+	}
+	if = {
+		limit = { has_country_flag = MD_COM_mil_access_upgrade_available }
+		set_temp_variable = { MD_satellite_access_type = 3 }
+		set_satellite_access_standard_rate = yes
+		set_variable = { MD_COM_mil_standard_rate = MD_satellite_access_rate }
+		for_each_loop = {
+			array = COM_mil_treaty_array
+			set_temp_variable = { MD_satellite_recipient = v }
+			var:MD_satellite_recipient = { country_event = { id = satellites.12 days = 1 } }
+		}
+		clr_country_flag = MD_COM_mil_access_upgrade_available
+	}
+	if = {
+		limit = { has_country_flag = MD_COM_civ_access_upgrade_available }
+		set_temp_variable = { MD_satellite_access_type = 4 }
+		set_satellite_access_standard_rate = yes
+		set_variable = { MD_COM_civ_standard_rate = MD_satellite_access_rate }
+		for_each_loop = {
+			array = COM_civ_treaty_array
+			set_temp_variable = { MD_satellite_recipient = v }
+			var:MD_satellite_recipient = { country_event = { id = satellites.13 days = 1 } }
+		}
+		clr_country_flag = MD_COM_civ_access_upgrade_available
+	}
+	if = {
+		limit = { has_country_flag = MD_SPY_mil_access_upgrade_available }
+		set_temp_variable = { MD_satellite_access_type = 5 }
+		set_satellite_access_standard_rate = yes
+		set_variable = { MD_SPY_mil_standard_rate = MD_satellite_access_rate }
+		for_each_loop = {
+			array = SPY_mil_treaty_array
+			set_temp_variable = { MD_satellite_recipient = v }
+			var:MD_satellite_recipient = { country_event = { id = satellites.14 days = 1 } }
+		}
+		clr_country_flag = MD_SPY_mil_access_upgrade_available
+	}
+	if = {
+		limit = { has_country_flag = MD_SPY_civ_access_upgrade_available }
+		set_temp_variable = { MD_satellite_access_type = 6 }
+		set_satellite_access_standard_rate = yes
+		set_variable = { MD_SPY_civ_standard_rate = MD_satellite_access_rate }
+		for_each_loop = {
+			array = SPY_civ_treaty_array
+			set_temp_variable = { MD_satellite_recipient = v }
+			var:MD_satellite_recipient = { country_event = { id = satellites.15 days = 1 } }
+		}
+		clr_country_flag = MD_SPY_civ_access_upgrade_available
+	}
+	international_systems_update = yes
+}
+
+accept_satellite_access_renegotiation = {
+	FROM = {
+		set_temp_variable = { MD_satellite_access_updated = 0 }
+		if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 1 } }
+			for_each_loop = { array = GNSS_mil_treaty_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = ROOT.id } } set_variable = { GNSS_mil_treaty_rate_array^i = ROOT.MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+		}
+		else_if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 2 } }
+			for_each_loop = { array = GNSS_civ_treaty_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = ROOT.id } } set_variable = { GNSS_civ_treaty_rate_array^i = ROOT.MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+		}
+		else_if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 3 } }
+			for_each_loop = { array = COM_mil_treaty_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = ROOT.id } } set_variable = { COM_mil_treaty_rate_array^i = ROOT.MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+		}
+		else_if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 4 } }
+			for_each_loop = { array = COM_civ_treaty_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = ROOT.id } } set_variable = { COM_civ_treaty_rate_array^i = ROOT.MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+		}
+		else_if = {
+			limit = { check_variable = { ROOT.MD_satellite_access_type = 5 } }
+			for_each_loop = { array = SPY_mil_treaty_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = ROOT.id } } set_variable = { SPY_mil_treaty_rate_array^i = ROOT.MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+		}
+		else = {
+			for_each_loop = { array = SPY_civ_treaty_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = ROOT.id } } set_variable = { SPY_civ_treaty_rate_array^i = ROOT.MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+		}
+	}
+	set_temp_variable = { MD_satellite_access_updated = 0 }
+	if = {
+		limit = { check_variable = { MD_satellite_access_type = 1 } }
+		for_each_loop = { array = GNSS_mil_access_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = FROM.id } } set_variable = { GNSS_mil_access_rate_array^i = MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+	}
+	else_if = {
+		limit = { check_variable = { MD_satellite_access_type = 2 } }
+		for_each_loop = { array = GNSS_civ_access_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = FROM.id } } set_variable = { GNSS_civ_access_rate_array^i = MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+	}
+	else_if = {
+		limit = { check_variable = { MD_satellite_access_type = 3 } }
+		for_each_loop = { array = COM_mil_access_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = FROM.id } } set_variable = { COM_mil_access_rate_array^i = MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+	}
+	else_if = {
+		limit = { check_variable = { MD_satellite_access_type = 4 } }
+		for_each_loop = { array = COM_civ_access_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = FROM.id } } set_variable = { COM_civ_access_rate_array^i = MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+	}
+	else_if = {
+		limit = { check_variable = { MD_satellite_access_type = 5 } }
+		for_each_loop = { array = SPY_mil_access_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = FROM.id } } set_variable = { SPY_mil_access_rate_array^i = MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+	}
+	else = {
+		for_each_loop = { array = SPY_civ_access_array value = v index = i break = MD_satellite_access_updated if = { limit = { check_variable = { v = FROM.id } } set_variable = { SPY_civ_access_rate_array^i = MD_satellite_renegotiation_rate } set_temp_variable = { MD_satellite_access_updated = 1 } } }
+	}
+	clear_variable = MD_satellite_access_type
+	clear_variable = MD_satellite_renegotiation_rate
+	FROM = { country_event = satellites.9 }
+	country_event = satellites.9
+}
+
+decline_satellite_access_renegotiation = {
+	FROM = {
+		set_temp_variable = { MD_satellite_access_type = ROOT.MD_satellite_access_type }
+		withdraw_satellite_access_agreement = yes
+	}
+	clear_variable = MD_satellite_access_type
+	clear_variable = MD_satellite_renegotiation_rate
 }
