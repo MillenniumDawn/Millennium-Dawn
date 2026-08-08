@@ -159,3 +159,22 @@ def test_quoted_brace_does_not_desync_statement_scan(monkeypatch):
     results = _results_for([factory], monkeypatch, "validate_log_not_first")
     assert len(results) == 1
     assert "custom_effect_tooltip" in results[0]
+
+
+def test_missing_log_is_error_severity_on_real_validator(tmp_path):
+    decisions_dir = tmp_path / "common" / "decisions"
+    decisions_dir.mkdir(parents=True)
+    (decisions_dir / "test.txt").write_text(
+        "test_category = {\n"
+        "\ttest_decision = {\n"
+        "\t\ticon = GFX_decision_generic\n"
+        "\t\tcomplete_effect = {\n"
+        "\t\t\tadd_political_power = 10\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_missing_log()
+    assert validator.errors_found >= 1
