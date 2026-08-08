@@ -331,7 +331,7 @@ def test_oob_validator_integration_reports_errors(tmp_path):
     assert "module_test_plain_fc" in variant[0].message
 
 
-def test_validator_integration_reports_warnings(tmp_path):
+def test_validator_integration_reports_errors(tmp_path):
     _write(tmp_path, "common/units/equipment/MD_test_ships.txt", HULLS)
     _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
     _write(
@@ -347,6 +347,50 @@ def test_validator_integration_reports_warnings(tmp_path):
     validator.run_validations()
     naval = [i for i in validator._issues if i.category.startswith("NAVAL VARIANT")]
     assert len(naval) == 1
-    assert naval[0].severity == "warning"
+    assert naval[0].severity == "error"
     assert naval[0].file == "common/ai_equipment/TST_naval.txt"
     assert "module_test_plain_fc" in naval[0].message
+
+
+def _group(designs):
+    """A naval design group where each (name, history) design opts in or out."""
+    body = ""
+    for name, history in designs:
+        body += f"\t{name} = {{\n"
+        if history:
+            body += "\t\thistory = yes\n"
+        body += "\t\ttarget_variant = {\n\t\t\ttype = test_ship_hull_1\n\t\t}\n\t}\n"
+    return (
+        "TST_navy = {\n"
+        "\tcategory = naval\n"
+        "\troles = { naval_destroyer }\n" + body + "}\n"
+    )
+
+
+def test_partial_history_is_flagged(tmp_path):
+    _write(tmp_path, "common/units/equipment/MD_test_ships.txt", HULLS)
+    _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
+    _write(
+        tmp_path,
+        "common/ai_equipment/TST_naval.txt",
+        _group([("TST_a", True), ("TST_b", False)]),
+    )
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    issues = [i for i in validator._issues if "partial history" in i.category]
+    assert len(issues) == 1
+    assert "TST_b" in issues[0].message
+    assert "1/2" in issues[0].message
+
+
+def test_uniform_history_is_not_flagged(tmp_path):
+    _write(tmp_path, "common/units/equipment/MD_test_ships.txt", HULLS)
+    _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
+    for designs in (
+        [("TST_a", True), ("TST_b", True)],
+        [("TST_a", False), ("TST_b", False)],
+    ):
+        _write(tmp_path, "common/ai_equipment/TST_naval.txt", _group(designs))
+        validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+        validator.run_validations()
+        assert not [i for i in validator._issues if "partial history" in i.category]
