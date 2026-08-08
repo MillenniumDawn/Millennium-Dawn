@@ -392,7 +392,7 @@ def test_oob_validator_integration_reports_errors(tmp_path):
     assert "module_test_plain_fc" in variant[0].message
 
 
-def test_validator_integration_reports_errors(tmp_path):
+def test_validator_integration_reports_warnings(tmp_path):
     _write(tmp_path, "common/units/equipment/MD_test_ships.txt", HULLS)
     _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
     _write(
@@ -408,7 +408,7 @@ def test_validator_integration_reports_errors(tmp_path):
     validator.run_validations()
     naval = [i for i in validator._issues if i.category.startswith("NAVAL VARIANT")]
     assert len(naval) == 1
-    assert naval[0].severity == "error"
+    assert naval[0].severity == "warning"
     assert naval[0].file == "common/ai_equipment/TST_naval.txt"
     assert "module_test_plain_fc" in naval[0].message
 
