@@ -23,7 +23,7 @@ from naval_module_slots import (
     _iter_named_blocks,
     _scalar,
     blank_comments,
-    build_indexes,
+    build_equipment_index,
     check_created_variants,
     parse_variant_names,
 )
@@ -35,15 +35,18 @@ from validator_common import (
     strip_comments,
 )
 
-# Ship hulls live only in files carrying one of these engine hull-type markers,
-# so plane/tank equipment files are skipped without parsing their whole tree.
-_SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
-
 _VARIANT_SLOT_CATEGORIES = {
     "unknown_hull": "SHIP VARIANT: unknown hull type",
     "unknown_slot": "SHIP VARIANT: slot not on hull",
     "unknown_module": "SHIP VARIANT: unknown module reference",
     "category_mismatch": "SHIP VARIANT: module category not allowed in slot",
+}
+
+_EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
+    "unknown_hull": "EQUIPMENT VARIANT: unknown hull type",
+    "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
+    "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
+    "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
 }
 
 # Every directory where a create_equipment_variant effect actually appears.
@@ -1301,14 +1304,18 @@ class Validator(BaseValidator):
         )
 
     def validate_created_variant_modules(self):
-        """Check every `create_equipment_variant` ship design against its hull.
+        """Check every `create_equipment_variant` design against its hull's slots.
 
         A module in a slot the hull does not have, or whose category that slot
         rejects, is dropped at load with no error. The design still appears, so
         the loss only shows as missing stats — a Type 32 Guardian naming the
-        tank slot `engine_type_slot` shipped with no engine at all.
+        tank slot `engine_type_slot` shipped with no engine at all. Ship hulls,
+        tank chassis and plane airframes all follow the same rules, so every
+        design is checked, whatever it builds.
         """
-        self._log_section("Checking created ship variants against hull slot rules...")
+        self._log_section(
+            "Checking created equipment variants against hull slot rules..."
+        )
 
         units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
         if not os.path.isdir(units_dir):
@@ -1321,22 +1328,8 @@ class Validator(BaseValidator):
             return
         self.log(f"  Found {len(files)} files to check")
 
-        def _build():
-            hull_texts = []
-            for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt"))):
-                text = _read_text(fp)
-                if any(marker in text for marker in _SHIP_HULL_MARKERS):
-                    hull_texts.append(text)
-            module_texts = [
-                _read_text(fp)
-                for fp in sorted(
-                    glob.iglob(os.path.join(units_dir, "modules", "*.txt"))
-                )
-            ]
-            return build_indexes(hull_texts, module_texts)
-
-        hull_slots, module_category, known_categories = self.cached(
-            "ship_hull_index", _build
+        index = self.cached(
+            "equipment_hull_index", lambda: build_equipment_index(units_dir)
         )
 
         results = []
@@ -1345,13 +1338,17 @@ class Validator(BaseValidator):
             if "create_equipment_variant" not in content:
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
-            for f in check_created_variants(
-                content, hull_slots, module_category, known_categories
-            ):
+
+            for f in check_created_variants(content, index):
+                labels = (
+                    _VARIANT_SLOT_CATEGORIES
+                    if f.hull in index.ship_hulls
+                    else _EQUIPMENT_VARIANT_SLOT_CATEGORIES
+                )
                 results.append(
                     Issue(
                         severity=Severity.ERROR,
-                        category=_VARIANT_SLOT_CATEGORIES[f.kind],
+                        category=labels[f.kind],
                         message=f.message,
                         file=rel,
                         line=f.line,
@@ -1360,8 +1357,8 @@ class Validator(BaseValidator):
 
         self._report(
             results,
-            "✓ All created ship variants match their hull slot rules",
-            "Ship variant modules invalid for their hull slot:",
+            "✓ All created variants match their hull slot rules",
+            "Created variant modules invalid for their hull slot:",
         )
 
     def validate_oob_variant_references(self):

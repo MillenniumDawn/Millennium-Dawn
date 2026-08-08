@@ -47,8 +47,10 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 
 - `validate_events.py` carries a **date-gated scheduling** check (ERROR, `date-gated-not-scheduled`). MD fires its historical events from `common/scripted_effects/00_yearly_effects.txt` and uses the event's own `date >` check only as a guard, so an event carrying the guard with no scheduling entry is dead content: it is triggered-only, and nothing fires it. Only `date >` counts: a `date <` bound alone is an expiry guard on a chain event and says nothing about scheduling. Three exemptions: an event reachable from a scheduled ancestor in the event→event fire graph inherits that schedule; a fire from `common/national_focus/` or `common/decisions/` is a player-driven availability window with no scheduled moment to belong to; and if the scheduling file schedules nothing at all (a rename, or a scoping mistake) the check logs and skips rather than reporting all ~75 scheduled events. A fire from `common/on_actions/` is deliberately **not** exempt: a daily on_action waiting for a date is a poll, and the yearly effects are its intended home. Two on_action fire paths are modeled as schedules rather than dead content: a `random_events = { weight = ... }` pool weights its events by MTTH (the pool is the schedule), and a chance-rolled `random = { chance = N ... }` poll emulates MTTH and has no deterministic yearly slot. Both are exempt. The check ships as an **ERROR**.
 
-- `validate_oob_units.py` slot-checks ship variants through
-  `tools/validation/naval_module_slots.py` and structurally checks `create_unit`
+- `validate_oob_units.py` slot-checks every `create_equipment_variant` through
+  `tools/validation/naval_module_slots.py` — ship, tank and plane designs alike,
+  resolving module-driven slot unlocks and `duplicate_archetypes` clones first.
+  All findings are ERROR. It also structurally checks `create_unit`
   effects: state scope, `owner`, block keys, a single-line division string
   naming a `division_template`, zero equipment/manpower factors, and the order
   of a template defined in the same file and effect path as the `create_unit`
