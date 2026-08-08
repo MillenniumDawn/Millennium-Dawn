@@ -57,9 +57,20 @@ def test_generic_initial_trait_reference_is_exempt(tmp_path):
 
 def test_position_x_bounds(tmp_path):
     v = _validator(tmp_path)
-    v._check_positions("\tposition = { x = -1 y = 0 }\n", "f.txt", 0)
+    v._check_positions("TST_org", "\tposition = { x = -1 y = 0 }\n", "f.txt", 0)
     assert not v._issues
-    v._check_positions("\tposition = { x = 12 y = 3 }\n", "f.txt", 0)
+    v._check_positions("TST_org", "\tposition = { x = 12 y = 3 }\n", "f.txt", 0)
+    assert v._issues[0].category == "trait-x-bounds"
+
+
+def test_position_x_bounds_exempt_orgs(tmp_path):
+    body = "\tposition = { x = 16 y = 0 }\n"
+    v = _validator(tmp_path)
+    v._check_positions("generic_naval_equipment_organization", body, "f.txt", 0)
+    assert not v._issues
+
+    v = _validator(tmp_path)
+    v._check_positions("generic_some_new_org", body, "f.txt", 0)
     assert v._issues[0].category == "trait-x-bounds"
 
 
@@ -142,7 +153,7 @@ def test_trait_name_without_loc_flagged(tmp_path):
         "ROM_romarm_material_manufacturer", body, "f.txt", 0, set()
     )
     assert v._issues[0].category == "trait-loc-missing"
-    assert v._issues[0].severity == "warning"
+    assert v._issues[0].severity == "error"
     assert "ROM_romarm_trait_export_ammo" in v._issues[0].message
 
 
@@ -169,6 +180,31 @@ def test_initial_trait_name_without_loc_flagged(tmp_path):
     body = "initial_trait = {\n\tname = generic_infantry_equipment_organization\n}"
     v._check_trait_localisation("ARG_bersa_manufacturer", body, "f.txt", 0, set())
     assert [i.category for i in v._issues] == ["trait-loc-missing"]
+
+
+def test_staged_english_localisation_scans_all_mios(tmp_path, monkeypatch):
+    org_dir = tmp_path / V.ORG_DIR
+    org_dir.mkdir(parents=True)
+    (org_dir / "MD_TEST_organizations.txt").write_text(
+        "TST_test_org = {\n"
+        "\tallowed = { original_tag = TST }\n"
+        "\ttrait = {\n"
+        "\t\tname = TST_missing_trait\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    loc_dir = tmp_path / "localisation" / "english"
+    loc_dir.mkdir(parents=True)
+    (loc_dir / "MD_mio_l_english.yml").write_text(
+        'l_english:\n other:0 "Other"\n', encoding="utf-8-sig"
+    )
+    monkeypatch.setenv("MD_STAGED_FILES", "localisation/english/MD_mio_l_english.yml")
+
+    v = V.Validator(str(tmp_path), staged_only=True)
+    v.run_validations()
+
+    assert [issue.category for issue in v._issues] == ["trait-loc-missing"]
 
 
 def test_full_run_on_fixture_dir(tmp_path):
@@ -204,4 +240,4 @@ def test_full_run_on_fixture_dir(tmp_path):
     assert by_cat["on-complete-empty"].severity == "error"
     assert by_cat["trait-x-bounds"].severity == "warning"
     assert by_cat["initial-trait-name"].severity == "warning"
-    assert by_cat["trait-loc-missing"].severity == "warning"
+    assert by_cat["trait-loc-missing"].severity == "error"

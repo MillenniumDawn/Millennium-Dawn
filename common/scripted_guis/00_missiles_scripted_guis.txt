@@ -1158,30 +1158,6 @@ scripted_gui = {
 				subtract_from_temp_variable = { prod_10_tier_idx = 101 }
 				set_variable = { var_gui_prod_10_price_unit = global.prod_10_price_unit^prod_10_tier_idx }
 				set_variable = { var_gui_prod_10_days_unit = global.prod_10_duration_unit^prod_10_tier_idx }
-				if = {
-					limit = {
-						has_tech = part_reusable_OLV6
-						check_variable = { prod_10_display_array^i = 106 }
-					}
-					add_to_variable = { var_gui_prod_10_price_unit = -0.005 }
-					add_to_variable = { var_gui_prod_10_days_unit = -10 }
-				}
-				if = {
-					limit = {
-						has_tech = full_reusable_OLV7
-						check_variable = { prod_10_display_array^i = 107 }
-					}
-					add_to_variable = { var_gui_prod_10_price_unit = -0.01 }
-					add_to_variable = { var_gui_prod_10_days_unit = -25 }
-				}
-				if = {
-					limit = {
-						has_tech = full_reusable_OLV8
-						check_variable = { prod_10_display_array^i = 108 }
-					}
-					add_to_variable = { var_gui_prod_10_price_unit = -0.03 }
-					add_to_variable = { var_gui_prod_10_days_unit = -45 }
-				}
 				set_variable = { var_gui_prod_10_amount = 1 }
 				set_variable = { prod_10_multiplier = 1 }
 				calculate_production_vars_10 = yes
@@ -1862,7 +1838,16 @@ scripted_gui = {
 		effects = {
 			OLV_type_button_click = {
 				set_variable = { var_OLV_type = OLV_display_array^i }
-				set_variable = { var_OLV_reliability = global.OLV_reliability_array^i }
+				set_variable = {
+					var_OLV_reliability = {
+						value = global.OLV_reliability_array^i
+						multiply = {
+							value = 1
+							add = modifier@olv_launch_reliability_modifier
+						}
+						clamp = { min = 0 max = 1 }
+					}
+				}
 				set_variable = { var_OLV_payload_mass = global.OLV_payload_mass_array^i }
 				set_variable = { var_OLV_inventory = missile_inventory_array^OLV_display_array^i }
 				clear_array = OLV_display_array

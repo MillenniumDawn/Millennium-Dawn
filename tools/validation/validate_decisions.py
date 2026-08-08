@@ -1695,7 +1695,7 @@ class Validator(BaseValidator):
             results,
             "✓ Every decision effect block logs",
             "Decision effect blocks with no log line:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="missing-decision-log",
         )
 
